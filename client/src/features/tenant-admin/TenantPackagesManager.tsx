@@ -1,4 +1,5 @@
-import { Plus, Pencil, Trash2, AlertTriangle, Layers } from "lucide-react";
+import { useCallback } from "react";
+import { Plus, Pencil, Trash2, AlertTriangle, Layers, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PackageDto, SegmentDto } from "@macon/contracts";
 import { PackagePhotoUploader } from "@/components/PackagePhotoUploader";
@@ -56,16 +57,16 @@ export function TenantPackagesManager({
   });
 
   // Handle edit - load package into form and fetch photos
-  const handleEdit = async (pkg: PackageDto) => {
+  const handleEdit = useCallback(async (pkg: PackageDto) => {
     packageForm.loadPackage(pkg);
     await packageManager.handleEdit(pkg);
-  };
+  }, [packageForm.loadPackage, packageManager.handleEdit]);
 
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     await packageForm.submitForm(packageManager.editingPackageId);
-  };
+  }, [packageForm.submitForm, packageManager.editingPackageId]);
 
   // Render segment form if creating/editing segment
   if (segmentManager.isCreatingSegment) {
@@ -200,11 +201,14 @@ export function TenantPackagesManager({
           <details
             key={segment.id}
             open
-            className="border border-sage-light/20 rounded-2xl overflow-hidden group/details"
+            className="border border-sage-light/20 rounded-2xl overflow-hidden group"
           >
-            <summary className="px-6 py-4 cursor-pointer font-serif text-lg font-bold flex items-center justify-between hover:bg-sage-light/5 transition-colors list-none [&::-webkit-details-marker]:hidden">
-              <span className="text-text-primary">
-                {segment.name} <span className="font-normal text-text-muted">({segment.packages.length})</span>
+            <summary className="px-6 py-4 cursor-pointer font-serif text-lg font-bold flex items-center justify-between hover:bg-sage-light/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2 transition-colors list-none [&::-webkit-details-marker]:hidden">
+              <span className="flex items-center gap-2">
+                <ChevronRight className="w-5 h-5 text-sage transition-transform duration-200 group-open:rotate-90" />
+                <span className="text-text-primary">
+                  {segment.name} <span className="font-normal text-text-muted">({segment.packages.length})</span>
+                </span>
               </span>
               <div className="flex gap-2" onClick={e => e.stopPropagation()}>
                 <Button

@@ -4,7 +4,7 @@
  * Manages data fetching for the tenant dashboard
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { api } from "../../../lib/api";
 import { logger } from "../../../lib/logger";
 import type { PackageDto, BookingDto, SegmentDto } from "@macon/contracts";
@@ -43,7 +43,7 @@ export function useDashboardData(activeTab: string) {
   const [isLoading, setIsLoading] = useState(false);
 
   /** Load packages and segments in parallel for the packages tab */
-  const loadPackagesAndSegments = async () => {
+  const loadPackagesAndSegments = useCallback(async () => {
     setIsLoading(true);
     try {
       const [packagesResult, segmentsResult] = await Promise.all([
@@ -63,9 +63,9 @@ export function useDashboardData(activeTab: string) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const loadBlackouts = async () => {
+  const loadBlackouts = useCallback(async () => {
     setIsLoading(true);
     try {
       const result = await api.tenantAdminGetBlackouts();
@@ -77,9 +77,9 @@ export function useDashboardData(activeTab: string) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const loadBookings = async () => {
+  const loadBookings = useCallback(async () => {
     setIsLoading(true);
     try {
       const result = await api.tenantAdminGetBookings();
@@ -91,9 +91,9 @@ export function useDashboardData(activeTab: string) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const loadBranding = async () => {
+  const loadBranding = useCallback(async () => {
     setIsLoading(true);
     try {
       const result = await api.tenantAdminGetBranding();
@@ -105,7 +105,7 @@ export function useDashboardData(activeTab: string) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (activeTab === "packages") {
@@ -117,7 +117,7 @@ export function useDashboardData(activeTab: string) {
     } else if (activeTab === "branding") {
       loadBranding();
     }
-  }, [activeTab]);
+  }, [activeTab, loadPackagesAndSegments, loadBlackouts, loadBookings, loadBranding]);
 
   // Client-side grouping: segments with their packages
   const grouped = useMemo<SegmentWithPackages[]>(() => {
