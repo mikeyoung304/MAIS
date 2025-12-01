@@ -5,10 +5,10 @@
  * Design: Minimal, rounded pills with sage accent on active state
  */
 
-import { Package, Layers, CalendarOff, Calendar, Palette, CreditCard } from "lucide-react";
+import { Package, CalendarOff, Calendar, Palette, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type DashboardTab = "packages" | "segments" | "blackouts" | "bookings" | "branding" | "payments";
+export type DashboardTab = "packages" | "blackouts" | "bookings" | "branding" | "payments";
 
 interface TabNavigationProps {
   activeTab: DashboardTab;
@@ -18,7 +18,6 @@ interface TabNavigationProps {
 export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   const tabs: { id: DashboardTab; label: string; icon: typeof Package }[] = [
     { id: "packages", label: "Packages", icon: Package },
-    { id: "segments", label: "Segments", icon: Layers },
     { id: "blackouts", label: "Blackouts", icon: CalendarOff },
     { id: "bookings", label: "Bookings", icon: Calendar },
     { id: "branding", label: "Branding", icon: Palette },

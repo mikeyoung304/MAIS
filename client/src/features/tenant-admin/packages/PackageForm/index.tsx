@@ -22,6 +22,8 @@ interface PackageFormProps {
   // Segment data for organization section
   segments?: SegmentDto[];
   isLoadingSegments?: boolean;
+  /** When true, segment selection is required (2+ segments exist) */
+  requireSegment?: boolean;
 }
 
 /**
@@ -41,6 +43,7 @@ export function PackageForm({
   onCancel,
   segments = [],
   isLoadingSegments = false,
+  requireSegment = false,
 }: PackageFormProps) {
   const [validationErrors, setValidationErrors] = useState<FormError[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -75,6 +78,11 @@ export function PackageForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const errors = ValidationService.validateForm(form);
+
+    // Validate segment selection when required
+    if (requireSegment && !form.segmentId) {
+      errors.push({ field: 'segmentId', message: 'Please select a segment for this package' });
+    }
 
     if (errors.length > 0) {
       setValidationErrors(errors);
@@ -137,6 +145,7 @@ export function PackageForm({
             segments={segments}
             isLoadingSegments={isLoadingSegments}
             isSaving={isSaving}
+            requireSegment={requireSegment}
           />
 
           <FormActions

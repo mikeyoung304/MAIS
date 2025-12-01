@@ -22,6 +22,8 @@ interface OrganizationSectionProps {
   segments: SegmentDto[];
   isLoadingSegments: boolean;
   isSaving: boolean;
+  /** When true, segment selection is required (2+ segments exist) */
+  requireSegment?: boolean;
 }
 
 /**
@@ -40,6 +42,7 @@ export function OrganizationSection({
   segments,
   isLoadingSegments,
   isSaving,
+  requireSegment = false,
 }: OrganizationSectionProps) {
   /**
    * Handle tier selection - also sets the groupingOrder automatically
@@ -64,7 +67,7 @@ export function OrganizationSection({
       {/* Segment Dropdown */}
       <div className="space-y-2">
         <Label htmlFor="segmentId" className="text-white/90">
-          Customer Segment
+          Customer Segment {requireSegment && <span className="text-red-400">*</span>}
         </Label>
         <Select
           value={form.segmentId || "none"}
@@ -75,12 +78,14 @@ export function OrganizationSection({
         >
           <SelectTrigger
             id="segmentId"
-            className="bg-macon-navy-900 border-white/20 text-white h-12"
+            className={`bg-macon-navy-900 border-white/20 text-white h-12 ${
+              requireSegment && !form.segmentId ? "border-red-400/50" : ""
+            }`}
           >
-            <SelectValue placeholder="Select a segment (optional)" />
+            <SelectValue placeholder={requireSegment ? "Select a segment (required)" : "Select a segment (optional)"} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">None (Root level)</SelectItem>
+            {!requireSegment && <SelectItem value="none">None (Root level)</SelectItem>}
             {segments.map((seg) => (
               <SelectItem key={seg.id} value={seg.id}>
                 {seg.name}
@@ -89,7 +94,9 @@ export function OrganizationSection({
           </SelectContent>
         </Select>
         <p className="text-sm text-white/50">
-          Which customer type is this package for?
+          {requireSegment
+            ? "Package must be assigned to a segment"
+            : "Which customer type is this package for?"}
         </p>
       </div>
 

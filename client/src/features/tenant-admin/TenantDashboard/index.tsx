@@ -18,7 +18,6 @@ import { BlackoutsManager } from "../BlackoutsManager";
 import { TenantBookingList } from "../TenantBookingList";
 import { BrandingEditor } from "../BrandingEditor";
 import { StripeConnectCard } from "./StripeConnectCard";
-import { SegmentsManager } from "../../admin/segments/SegmentsManager";
 import { AdminLayout } from "../../../layouts/AdminLayout";
 import { MetricsCards } from "./MetricsCards";
 import { TabNavigation, type DashboardTab } from "./TabNavigation";
@@ -37,6 +36,10 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
 
   const {
     packages,
+    segments,
+    grouped,
+    orphanedPackages,
+    showGroupedView,
     blackouts,
     bookings,
     branding,
@@ -124,11 +127,14 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
             style={{ animationDelay: "0.4s", animationFillMode: "backwards" }}
           >
             {activeTab === "packages" && (
-              <TenantPackagesManager packages={packages} onPackagesChange={loadPackages} />
-            )}
-
-            {activeTab === "segments" && (
-              <SegmentsManager />
+              <TenantPackagesManager
+                packages={packages}
+                segments={segments}
+                grouped={grouped}
+                orphanedPackages={orphanedPackages}
+                showGroupedView={showGroupedView}
+                onPackagesChange={loadPackages}
+              />
             )}
 
             {activeTab === "blackouts" && (
