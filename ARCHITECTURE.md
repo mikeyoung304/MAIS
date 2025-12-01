@@ -621,20 +621,20 @@ curl https://app.maconaisolutions.com/v1/packages \
 
 ## Migration History
 
-**Phase 2B (2025-10-29)**: Integrated Supabase as production database:
+**Phase 2B (2024-10-29)**: Integrated Supabase as production database:
 
 - Added `directUrl` to Prisma schema for migration support
 - Deployed schema with critical constraints (`Booking.date @unique`, `Payment.processorId @unique`)
 - Configured connection pooling via Supabase
 - Seeded production database with admin user and sample packages
 
-**Phase 2A (2025-10-23)**: Restored core functionality post-migration:
+**Phase 2A (2024-10-23)**: Restored core functionality post-migration:
 
 - Fixed TypeScript errors from Phase 1 restructuring
 - Restored Stripe payment integration
 - Added `User.passwordHash` field for admin authentication
 
-**Phase 1 (2025-10-23)**: Migrated from hexagonal to layered architecture:
+**Phase 1 (2024-10-23)**: Migrated from hexagonal to layered architecture:
 
 - apps/api → server
 - apps/web → client
