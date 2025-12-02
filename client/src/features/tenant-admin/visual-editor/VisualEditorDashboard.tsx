@@ -6,13 +6,15 @@
  * - Draft count indicator
  * - Saving/publishing status indicators
  * - Responsive package grid
+ * - Segment navigation (tabs to switch between segments)
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,13 +25,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Save, X, RefreshCw, AlertTriangle, CheckCircle } from "lucide-react";
+import { Loader2, Save, X, RefreshCw, AlertTriangle, CheckCircle, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
+import { api } from "@/lib/api";
 import { useVisualEditor } from "./hooks/useVisualEditor";
 import { EditablePackageGrid } from "./components/EditablePackageGrid";
 import type { PackagePhoto, DraftUpdate } from "./hooks/useVisualEditor";
 
+interface Segment {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export function VisualEditorDashboard() {
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [segments, setSegments] = useState<Segment[]>([]);
+  const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
 
   const {
     packages,
@@ -44,6 +56,33 @@ export function VisualEditorDashboard() {
     discardAll,
     updateLocalPackage,
   } = useVisualEditor();
+
+  // Fetch segments on mount
+  useEffect(() => {
+    const fetchSegments = async () => {
+      try {
+        const { status, body } = await api.tenantAdminGetSegments();
+        if (status === 200 && body) {
+          setSegments(body as Segment[]);
+          // Auto-select first segment if only one exists
+          if (body.length === 1) {
+            setSelectedSegmentId((body as Segment[])[0].id);
+          }
+        }
+      } catch {
+        // Segments are optional, fail silently
+      }
+    };
+    fetchSegments();
+  }, []);
+
+  // Filter packages by selected segment
+  const filteredPackages = useMemo(() => {
+    if (!selectedSegmentId || selectedSegmentId === "all") {
+      return packages;
+    }
+    return packages.filter((pkg) => pkg.segmentId === selectedSegmentId);
+  }, [packages, selectedSegmentId]);
 
   const handleDiscardClick = useCallback(() => {
     if (draftCount === 0) return;
@@ -112,11 +151,18 @@ export function VisualEditorDashboard() {
     <div className="space-y-6 pb-24">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Visual Editor</h2>
-          <p className="text-muted-foreground">
-            Edit your packages directly. Changes auto-save as you type.
-          </p>
+        <div className="flex items-center gap-4">
+          <Link to="/tenant/dashboard">
+            <Button variant="ghost" size="icon" title="Back to Dashboard">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div>
+            <h2 className="text-2xl font-bold">Visual Editor</h2>
+            <p className="text-muted-foreground">
+              Edit your packages directly. Changes auto-save as you type.
+            </p>
+          </div>
         </div>
         <Button
           variant="ghost"
@@ -129,9 +175,27 @@ export function VisualEditorDashboard() {
         </Button>
       </div>
 
+      {/* Segment tabs - only show when there are multiple segments */}
+      {segments.length > 1 && (
+        <Tabs
+          value={selectedSegmentId || "all"}
+          onValueChange={setSelectedSegmentId}
+          className="w-full"
+        >
+          <TabsList className="w-full justify-start overflow-x-auto">
+            <TabsTrigger value="all">All Packages</TabsTrigger>
+            {segments.map((segment) => (
+              <TabsTrigger key={segment.id} value={segment.id}>
+                {segment.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      )}
+
       {/* Package grid */}
       <EditablePackageGrid
-        packages={packages}
+        packages={filteredPackages}
         onUpdatePackage={handleUpdatePackage}
         onPhotosChange={handlePhotosChange}
         disabled={isPublishing}

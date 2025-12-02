@@ -344,7 +344,9 @@ export function createV1Router(
       services.tenantAuth,
       tenantRepo,
       apiKeyService,
-      mailProvider
+      mailProvider,
+      services.segment,
+      services.catalog
     );
     app.use('/v1/auth', unifiedAuthRoutes);
 
