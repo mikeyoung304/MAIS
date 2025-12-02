@@ -16,6 +16,7 @@ import type { CatalogService } from '../services/catalog.service';
 import type { BookingService } from '../services/booking.service';
 import type { BlackoutRepository } from '../lib/ports';
 import type { SegmentService } from '../services/segment.service';
+import type { PackageDraftService } from '../services/package-draft.service';
 import {
   createPackageSchema,
   updatePackageSchema,
@@ -247,7 +248,8 @@ export function createTenantAdminRoutes(
   catalogService: CatalogService,
   bookingService: BookingService,
   blackoutRepo: BlackoutRepository,
-  segmentService?: SegmentService
+  segmentService?: SegmentService,
+  packageDraftService?: PackageDraftService
 ): Router {
   const router = Router();
   const controller = new TenantAdminController(tenantRepository);
@@ -636,6 +638,204 @@ export function createTenantAdminRoutes(
       }
     }
   );
+
+  // ============================================================================
+  // Visual Editor Draft Endpoints
+  // ============================================================================
+
+  /**
+   * GET /v1/tenant-admin/packages/drafts
+   * Get all packages with draft fields for visual editor
+   */
+  router.get('/packages/drafts', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const tenantId = tenantAuth.tenantId;
+
+      if (!packageDraftService) {
+        res.status(501).json({ error: 'Package draft service not available' });
+        return;
+      }
+
+      const packagesWithDrafts = await packageDraftService.getAllPackagesWithDrafts(tenantId);
+
+      // Map to DTO format
+      const packagesDto = packagesWithDrafts.map((pkg) => ({
+        id: pkg.id,
+        slug: pkg.slug,
+        title: pkg.name, // Map name to title for frontend compatibility
+        description: pkg.description,
+        priceCents: pkg.basePrice, // Map basePrice to priceCents for frontend compatibility
+        photoUrl: pkg.photos?.[0]?.url,
+        photos: pkg.photos,
+        segmentId: pkg.segmentId,
+        grouping: pkg.grouping,
+        groupingOrder: pkg.groupingOrder,
+        active: pkg.active,
+        // Draft fields
+        draftTitle: pkg.draftTitle,
+        draftDescription: pkg.draftDescription,
+        draftPriceCents: pkg.draftPriceCents,
+        draftPhotos: pkg.draftPhotos,
+        hasDraft: pkg.hasDraft,
+        draftUpdatedAt: pkg.draftUpdatedAt?.toISOString() ?? null,
+      }));
+
+      res.json(packagesDto);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * PATCH /v1/tenant-admin/packages/:id/draft
+   * Update package draft (autosave target)
+   */
+  router.patch('/packages/:id/draft', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const tenantId = tenantAuth.tenantId;
+      const { id: packageId } = req.params;
+
+      if (!packageDraftService) {
+        res.status(501).json({ error: 'Package draft service not available' });
+        return;
+      }
+
+      // Validate request body
+      const draftSchema = z.object({
+        title: z.string().max(100).optional(),
+        description: z.string().max(500).optional(),
+        priceCents: z.number().int().min(0).optional(),
+        photos: z.array(z.object({
+          url: z.string().url(),
+          filename: z.string().optional(),
+          size: z.number().optional(),
+          order: z.number().optional(),
+        })).optional(),
+      });
+
+      const data = draftSchema.parse(req.body);
+
+      const updatedPackage = await packageDraftService.saveDraft(tenantId, packageId, data);
+
+      // Map to DTO format
+      res.json({
+        id: updatedPackage.id,
+        slug: updatedPackage.slug,
+        title: updatedPackage.name,
+        description: updatedPackage.description,
+        priceCents: updatedPackage.basePrice,
+        photoUrl: updatedPackage.photos?.[0]?.url,
+        photos: updatedPackage.photos,
+        segmentId: updatedPackage.segmentId,
+        grouping: updatedPackage.grouping,
+        groupingOrder: updatedPackage.groupingOrder,
+        active: updatedPackage.active,
+        draftTitle: updatedPackage.draftTitle,
+        draftDescription: updatedPackage.draftDescription,
+        draftPriceCents: updatedPackage.draftPriceCents,
+        draftPhotos: updatedPackage.draftPhotos,
+        hasDraft: updatedPackage.hasDraft,
+        draftUpdatedAt: updatedPackage.draftUpdatedAt?.toISOString() ?? null,
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        res.status(400).json({
+          error: 'Validation error',
+          details: error.issues,
+        });
+        return;
+      }
+      if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  /**
+   * POST /v1/tenant-admin/packages/publish
+   * Publish all package drafts to live
+   */
+  router.post('/packages/publish', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const tenantId = tenantAuth.tenantId;
+
+      if (!packageDraftService) {
+        res.status(501).json({ error: 'Package draft service not available' });
+        return;
+      }
+
+      // Optional: filter to specific packages
+      const { packageIds } = req.body || {};
+      const validatedPackageIds = packageIds && Array.isArray(packageIds) ? packageIds.filter((id: unknown) => typeof id === 'string') : undefined;
+
+      const result = await packageDraftService.publishDrafts(tenantId, validatedPackageIds);
+
+      // Map to DTO format
+      const packagesDto = result.packages.map((pkg) => ({
+        id: pkg.id,
+        slug: pkg.slug,
+        title: pkg.title,
+        description: pkg.description,
+        priceCents: pkg.priceCents,
+        photoUrl: pkg.photoUrl,
+        photos: pkg.photos,
+      }));
+
+      res.json({
+        published: result.published,
+        packages: packagesDto,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * DELETE /v1/tenant-admin/packages/drafts
+   * Discard all package drafts
+   */
+  router.delete('/packages/drafts', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const tenantId = tenantAuth.tenantId;
+
+      if (!packageDraftService) {
+        res.status(501).json({ error: 'Package draft service not available' });
+        return;
+      }
+
+      // Optional: filter to specific packages
+      const { packageIds } = req.body || {};
+      const validatedPackageIds = packageIds && Array.isArray(packageIds) ? packageIds.filter((id: unknown) => typeof id === 'string') : undefined;
+
+      const result = await packageDraftService.discardDrafts(tenantId, validatedPackageIds);
+
+      res.json({ discarded: result.discarded });
+    } catch (error) {
+      next(error);
+    }
+  });
 
   // ============================================================================
   // Blackout Management Endpoints

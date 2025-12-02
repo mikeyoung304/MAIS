@@ -10,6 +10,8 @@ import type {
   CreateAddOnInput,
   UpdateAddOnInput,
   PackagePhoto,
+  PackageWithDraft,
+  UpdatePackageDraftInput,
 } from '../lib/ports';
 import type { Package, AddOn } from '../lib/entities';
 import { DomainError } from '../lib/errors';
@@ -435,6 +437,122 @@ export class PrismaCatalogRepository implements CatalogRepository {
     return addOns.map(this.toDomainAddOn);
   }
 
+  // ============================================================================
+  // DRAFT METHODS (Visual Editor)
+  // ============================================================================
+
+  /**
+   * Get all packages with draft fields for visual editor
+   */
+  async getAllPackagesWithDrafts(tenantId: string): Promise<PackageWithDraft[]> {
+    const packages = await this.prisma.package.findMany({
+      where: { tenantId },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return packages.map((pkg) => this.toDomainPackageWithDraft(pkg));
+  }
+
+  /**
+   * Update draft fields for a package (autosave)
+   */
+  async updateDraft(
+    tenantId: string,
+    packageId: string,
+    draft: UpdatePackageDraftInput
+  ): Promise<PackageWithDraft> {
+    const pkg = await this.prisma.package.update({
+      where: { id: packageId, tenantId },
+      data: {
+        ...(draft.title !== undefined && { draftTitle: draft.title }),
+        ...(draft.description !== undefined && { draftDescription: draft.description }),
+        ...(draft.priceCents !== undefined && { draftPriceCents: draft.priceCents }),
+        ...(draft.photos !== undefined && { draftPhotos: draft.photos as unknown as Prisma.InputJsonValue }),
+        hasDraft: true,
+        draftUpdatedAt: new Date(),
+      },
+    });
+
+    return this.toDomainPackageWithDraft(pkg);
+  }
+
+  /**
+   * Publish all drafts to live values atomically
+   */
+  async publishDrafts(tenantId: string, packageIds?: string[]): Promise<Package[]> {
+    // Get packages with drafts
+    const where: Prisma.PackageWhereInput = {
+      tenantId,
+      hasDraft: true,
+      ...(packageIds && { id: { in: packageIds } }),
+    };
+
+    const packagesWithDrafts = await this.prisma.package.findMany({ where });
+
+    if (packagesWithDrafts.length === 0) {
+      return [];
+    }
+
+    // Apply drafts to live fields in a transaction
+    const publishedPackages = await this.prisma.$transaction(
+      packagesWithDrafts.map((pkg) =>
+        this.prisma.package.update({
+          where: { id: pkg.id, tenantId },
+          data: {
+            // Apply draft values (fall back to current if draft is null)
+            name: pkg.draftTitle ?? pkg.name,
+            description: pkg.draftDescription ?? pkg.description,
+            basePrice: pkg.draftPriceCents ?? pkg.basePrice,
+            photos: pkg.draftPhotos ?? pkg.photos,
+            // Clear all draft fields
+            draftTitle: null,
+            draftDescription: null,
+            draftPriceCents: null,
+            draftPhotos: null,
+            hasDraft: false,
+            draftUpdatedAt: null,
+          },
+        })
+      )
+    );
+
+    return publishedPackages.map((pkg) => this.toDomainPackage(pkg));
+  }
+
+  /**
+   * Discard all drafts without publishing
+   */
+  async discardDrafts(tenantId: string, packageIds?: string[]): Promise<number> {
+    const where: Prisma.PackageWhereInput = {
+      tenantId,
+      hasDraft: true,
+      ...(packageIds && { id: { in: packageIds } }),
+    };
+
+    const result = await this.prisma.package.updateMany({
+      where,
+      data: {
+        draftTitle: null,
+        draftDescription: null,
+        draftPriceCents: null,
+        draftPhotos: Prisma.JsonNull,
+        hasDraft: false,
+        draftUpdatedAt: null,
+      },
+    });
+
+    return result.count;
+  }
+
+  /**
+   * Count packages with unpublished drafts
+   */
+  async countDrafts(tenantId: string): Promise<number> {
+    return this.prisma.package.count({
+      where: { tenantId, hasDraft: true },
+    });
+  }
+
   // Mappers
   private toDomainPackage(pkg: {
     id: string;
@@ -504,6 +622,53 @@ export class PrismaCatalogRepository implements CatalogRepository {
       title: addOn.name,
       priceCents: addOn.price,
       photoUrl: undefined,
+    };
+  }
+
+  /**
+   * Map Prisma package to domain PackageWithDraft
+   */
+  private toDomainPackageWithDraft(pkg: {
+    id: string;
+    tenantId: string;
+    slug: string;
+    name: string;
+    description: string | null;
+    basePrice: number;
+    active: boolean;
+    segmentId: string | null;
+    grouping: string | null;
+    groupingOrder: number | null;
+    photos: Prisma.JsonValue;
+    draftTitle: string | null;
+    draftDescription: string | null;
+    draftPriceCents: number | null;
+    draftPhotos: Prisma.JsonValue;
+    hasDraft: boolean;
+    draftUpdatedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): PackageWithDraft {
+    return {
+      id: pkg.id,
+      tenantId: pkg.tenantId,
+      slug: pkg.slug,
+      name: pkg.name,
+      description: pkg.description,
+      basePrice: pkg.basePrice,
+      active: pkg.active,
+      segmentId: pkg.segmentId,
+      grouping: pkg.grouping,
+      groupingOrder: pkg.groupingOrder,
+      photos: this.parsePhotosJson(pkg.photos),
+      draftTitle: pkg.draftTitle,
+      draftDescription: pkg.draftDescription,
+      draftPriceCents: pkg.draftPriceCents,
+      draftPhotos: pkg.draftPhotos ? this.parsePhotosJson(pkg.draftPhotos) : null,
+      hasDraft: pkg.hasDraft,
+      draftUpdatedAt: pkg.draftUpdatedAt,
+      createdAt: pkg.createdAt,
+      updatedAt: pkg.updatedAt,
     };
   }
 }

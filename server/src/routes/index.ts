@@ -58,6 +58,7 @@ interface Services {
   segment: SegmentService;
   stripeConnect?: any; // StripeConnectService
   schedulingAvailability?: any; // SchedulingAvailabilityService
+  packageDraft?: any; // PackageDraftService - Visual editor draft management
 }
 
 interface Repositories {
@@ -327,7 +328,8 @@ export function createV1Router(
       services.catalog,
       services.booking,
       blackoutRepo,
-      services.segment
+      services.segment,
+      services.packageDraft
     );
     app.use('/v1/tenant-admin', tenantAuthMiddleware, tenantAdminRoutes);
 

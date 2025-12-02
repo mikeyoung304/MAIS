@@ -30,6 +30,13 @@ export interface CatalogRepository {
   getPackagesBySegment(tenantId: string, segmentId: string): Promise<Package[]>;
   getPackagesBySegmentWithAddOns(tenantId: string, segmentId: string): Promise<(Package & { addOns: AddOn[] })[]>;
   getAddOnsForSegment(tenantId: string, segmentId: string): Promise<AddOn[]>;
+
+  // Draft methods (Visual Editor)
+  getAllPackagesWithDrafts(tenantId: string): Promise<PackageWithDraft[]>;
+  updateDraft(tenantId: string, packageId: string, draft: UpdatePackageDraftInput): Promise<PackageWithDraft>;
+  publishDrafts(tenantId: string, packageIds?: string[]): Promise<Package[]>;
+  discardDrafts(tenantId: string, packageIds?: string[]): Promise<number>;
+  countDrafts(tenantId: string): Promise<number>;
 }
 
 /**
@@ -439,6 +446,42 @@ export interface UpdatePackageInput {
   segmentId?: string | null;
   grouping?: string | null;
   groupingOrder?: number | null;
+}
+
+/**
+ * Package with draft fields for Visual Editor
+ */
+export interface PackageWithDraft {
+  id: string;
+  tenantId: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  basePrice: number;
+  active: boolean;
+  segmentId: string | null;
+  grouping: string | null;
+  groupingOrder: number | null;
+  photos: PackagePhoto[];
+  // Draft fields
+  draftTitle: string | null;
+  draftDescription: string | null;
+  draftPriceCents: number | null;
+  draftPhotos: PackagePhoto[] | null;
+  hasDraft: boolean;
+  draftUpdatedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Input for updating package draft (Visual Editor autosave)
+ */
+export interface UpdatePackageDraftInput {
+  title?: string;
+  description?: string;
+  priceCents?: number;
+  photos?: PackagePhoto[];
 }
 
 /**

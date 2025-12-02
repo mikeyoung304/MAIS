@@ -12,7 +12,7 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowUpRight, Sparkles, Pencil } from "lucide-react";
 import { TenantPackagesManager } from "../TenantPackagesManager";
 import { BlackoutsManager } from "../BlackoutsManager";
 import { TenantBookingList } from "../TenantBookingList";
@@ -86,13 +86,22 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
                 )}
               </div>
 
-              <Link
-                to="/packages"
-                className="group inline-flex items-center gap-2 px-5 py-2.5 bg-sage hover:bg-sage-hover text-white text-sm font-medium rounded-full transition-all duration-300 shadow-soft hover:shadow-medium"
-              >
-                View Storefront
-                <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/tenant/editor"
+                  className="group inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-sage-light/20 text-sage border border-sage/30 text-sm font-medium rounded-full transition-all duration-300 shadow-soft hover:shadow-medium"
+                >
+                  <Pencil className="w-4 h-4" />
+                  Visual Editor
+                </Link>
+                <Link
+                  to="/packages"
+                  className="group inline-flex items-center gap-2 px-5 py-2.5 bg-sage hover:bg-sage-hover text-white text-sm font-medium rounded-full transition-all duration-300 shadow-soft hover:shadow-medium"
+                >
+                  View Storefront
+                  <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </Link>
+              </div>
             </div>
           </header>
 

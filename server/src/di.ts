@@ -19,6 +19,7 @@ import { IdempotencyService } from './services/idempotency.service';
 import { SegmentService } from './services/segment.service';
 import { GoogleCalendarService } from './services/google-calendar.service';
 import { SchedulingAvailabilityService } from './services/scheduling-availability.service';
+import { PackageDraftService } from './services/package-draft.service';
 import { PackagesController } from './routes/packages.routes';
 import { AvailabilityController } from './routes/availability.routes';
 import { BookingsController } from './routes/bookings.routes';
@@ -73,6 +74,7 @@ export interface Container {
     segment: SegmentService;
     googleCalendar?: GoogleCalendarService; // Optional - only if calendar provider supports sync
     schedulingAvailability?: SchedulingAvailabilityService; // Scheduling slot generation
+    packageDraft: PackageDraftService; // Visual editor draft management
   };
   repositories?: {
     service?: PrismaServiceRepository;
@@ -165,6 +167,9 @@ export function buildContainer(config: Config): Container {
       adapters.bookingRepo
     );
 
+    // Create PackageDraftService with mock catalog repository
+    const packageDraftService = new PackageDraftService(adapters.catalogRepo, cacheAdapter);
+
     const controllers = {
       packages: new PackagesController(catalogService),
       availability: new AvailabilityController(availabilityService),
@@ -189,6 +194,7 @@ export function buildContainer(config: Config): Container {
       segment: segmentService,
       googleCalendar: googleCalendarService,
       schedulingAvailability: schedulingAvailabilityService,
+      packageDraft: packageDraftService,
     };
 
     const repositories = {
@@ -372,6 +378,9 @@ export function buildContainer(config: Config): Container {
     bookingRepo
   );
 
+  // Create PackageDraftService with real catalog repository
+  const packageDraftService = new PackageDraftService(catalogRepo, cacheAdapter);
+
   // Subscribe to BookingPaid events to send confirmation emails
   eventEmitter.subscribe<{
     bookingId: string;
@@ -465,6 +474,7 @@ export function buildContainer(config: Config): Container {
     segment: segmentService,
     googleCalendar: googleCalendarService,
     schedulingAvailability: schedulingAvailabilityService,
+    packageDraft: packageDraftService,
   };
 
   const repositories = {

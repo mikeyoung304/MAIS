@@ -43,6 +43,9 @@ const TenantSchedulingServicesPage = lazy(() => import("./pages/tenant/TenantSch
 const TenantSchedulingAvailabilityPage = lazy(() => import("./pages/tenant/TenantSchedulingAvailability").then(m => ({ default: m.TenantSchedulingAvailabilityPage })));
 const TenantSchedulingAppointmentsPage = lazy(() => import("./pages/tenant/TenantSchedulingAppointments").then(m => ({ default: m.TenantSchedulingAppointmentsPage })));
 
+// Visual editor page
+const TenantVisualEditorPage = lazy(() => import("./pages/tenant/TenantVisualEditor").then(m => ({ default: m.TenantVisualEditorPage })));
+
 // Tenant storefront layout (white-label customer-facing routes)
 const TenantStorefrontLayout = lazy(() => import("./app/TenantStorefrontLayout").then(m => ({ default: m.TenantStorefrontLayout })));
 
@@ -231,6 +234,15 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedSuspenseWrapper allowedRoles={["TENANT_ADMIN"]}>
         <TenantSchedulingAppointmentsPage />
+      </ProtectedSuspenseWrapper>
+    ),
+  },
+  // Visual editor route
+  {
+    path: "tenant/editor",
+    element: (
+      <ProtectedSuspenseWrapper allowedRoles={["TENANT_ADMIN"]}>
+        <TenantVisualEditorPage />
       </ProtectedSuspenseWrapper>
     ),
   },

@@ -317,6 +317,61 @@ export const PackageWithPhotosDtoSchema = z.object({
 
 export type PackageWithPhotosDto = z.infer<typeof PackageWithPhotosDtoSchema>;
 
+// ============================================================================
+// Visual Editor Draft DTOs
+// ============================================================================
+
+// Package with Draft fields (for visual editor)
+export const PackageWithDraftDtoSchema = PackageDtoSchema.extend({
+  draftTitle: z.string().nullable(),
+  draftDescription: z.string().nullable(),
+  draftPriceCents: z.number().int().nullable(),
+  draftPhotos: z.array(PackagePhotoDtoSchema).nullable(),
+  hasDraft: z.boolean(),
+  draftUpdatedAt: z.string().datetime().nullable(),
+});
+
+export type PackageWithDraftDto = z.infer<typeof PackageWithDraftDtoSchema>;
+
+// Update Package Draft DTO (for autosave)
+export const UpdatePackageDraftDtoSchema = z.object({
+  title: z.string().max(100).optional(),
+  description: z.string().max(500).optional(),
+  priceCents: z.number().int().min(0).optional(),
+  photos: z.array(PackagePhotoDtoSchema).optional(),
+});
+
+export type UpdatePackageDraftDto = z.infer<typeof UpdatePackageDraftDtoSchema>;
+
+// Publish Drafts DTO
+export const PublishDraftsDtoSchema = z.object({
+  packageIds: z.array(z.string()).optional(), // Empty = publish all
+});
+
+export type PublishDraftsDto = z.infer<typeof PublishDraftsDtoSchema>;
+
+// Publish Drafts Response DTO
+export const PublishDraftsResponseDtoSchema = z.object({
+  published: z.number().int(),
+  packages: z.array(PackageDtoSchema),
+});
+
+export type PublishDraftsResponseDto = z.infer<typeof PublishDraftsResponseDtoSchema>;
+
+// Discard Drafts DTO
+export const DiscardDraftsDtoSchema = z.object({
+  packageIds: z.array(z.string()).optional(), // Empty = discard all
+});
+
+export type DiscardDraftsDto = z.infer<typeof DiscardDraftsDtoSchema>;
+
+// Discard Drafts Response DTO
+export const DiscardDraftsResponseDtoSchema = z.object({
+  discarded: z.number().int(),
+});
+
+export type DiscardDraftsResponseDto = z.infer<typeof DiscardDraftsResponseDtoSchema>;
+
 // Stripe Connect DTOs
 export const StripeConnectDtoSchema = z.object({
   accountId: z.string(),

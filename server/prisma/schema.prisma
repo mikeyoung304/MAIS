@@ -203,6 +203,15 @@ model Package {
   // Max 5 photos per package, order determines display sequence
   photos Json @default("[]")
 
+  // Draft fields for Visual Editor (null = no pending changes)
+  // Tenants can edit packages in draft mode, then publish all changes at once
+  draftTitle       String?
+  draftDescription String?
+  draftPriceCents  Int?
+  draftPhotos      Json?     // Same structure as photos: [{url, filename, size, order}]
+  hasDraft         Boolean   @default(false)
+  draftUpdatedAt   DateTime?
+
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
   tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -213,6 +222,7 @@ model Package {
   @@unique([tenantId, slug]) // Each tenant has unique package slugs
   @@index([tenantId, active])
   @@index([tenantId])
+  @@index([tenantId, hasDraft]) // Query packages with pending drafts
   @@index([slug])
   @@index([segmentId]) // Query packages by segment
   @@index([segmentId, grouping]) // Query packages by segment and grouping

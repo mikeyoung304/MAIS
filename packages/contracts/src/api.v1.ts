@@ -51,6 +51,13 @@ import {
   AppointmentCheckoutResponseDtoSchema,
   // Public tenant DTO (for storefront routing)
   TenantPublicDtoSchema,
+  // Visual Editor Draft DTOs
+  PackageWithDraftDtoSchema,
+  UpdatePackageDraftDtoSchema,
+  PublishDraftsDtoSchema,
+  PublishDraftsResponseDtoSchema,
+  DiscardDraftsDtoSchema,
+  DiscardDraftsResponseDtoSchema,
   // Error response schemas
   BadRequestErrorSchema,
   UnauthorizedErrorSchema,
@@ -420,6 +427,85 @@ export const Contracts = c.router({
       500: InternalServerErrorSchema,
     },
     summary: 'Delete package photo (requires tenant admin authentication)',
+  },
+
+  // ============================================================================
+  // Tenant Admin Visual Editor Draft Endpoints
+  // ============================================================================
+
+  /**
+   * Get all packages with draft fields for visual editor
+   * GET /v1/tenant-admin/packages/drafts
+   */
+  tenantAdminGetPackagesWithDrafts: {
+    method: 'GET',
+    path: '/v1/tenant-admin/packages/drafts',
+    responses: {
+      200: z.array(PackageWithDraftDtoSchema),
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Get all packages with draft fields for visual editor (requires tenant admin authentication)',
+  },
+
+  /**
+   * Update package draft (autosave target)
+   * PATCH /v1/tenant-admin/packages/:id/draft
+   */
+  tenantAdminUpdatePackageDraft: {
+    method: 'PATCH',
+    path: '/v1/tenant-admin/packages/:id/draft',
+    pathParams: z.object({
+      id: z.string(),
+    }),
+    body: UpdatePackageDraftDtoSchema,
+    responses: {
+      200: PackageWithDraftDtoSchema,
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      404: NotFoundErrorSchema,
+      422: UnprocessableEntityErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Update package draft for autosave (requires tenant admin authentication)',
+  },
+
+  /**
+   * Publish all package drafts
+   * POST /v1/tenant-admin/packages/publish
+   */
+  tenantAdminPublishDrafts: {
+    method: 'POST',
+    path: '/v1/tenant-admin/packages/publish',
+    body: PublishDraftsDtoSchema,
+    responses: {
+      200: PublishDraftsResponseDtoSchema,
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Publish all package drafts to live (requires tenant admin authentication)',
+  },
+
+  /**
+   * Discard all package drafts
+   * DELETE /v1/tenant-admin/packages/drafts
+   */
+  tenantAdminDiscardDrafts: {
+    method: 'DELETE',
+    path: '/v1/tenant-admin/packages/drafts',
+    body: DiscardDraftsDtoSchema,
+    responses: {
+      200: DiscardDraftsResponseDtoSchema,
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Discard all package drafts (requires tenant admin authentication)',
   },
 
   // ============================================================================

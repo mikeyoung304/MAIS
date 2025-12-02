@@ -4,7 +4,7 @@
 
 import { toUtcMidnight } from '@macon/shared';
 import type { Package, AddOn } from '../lib/entities';
-import type { CatalogRepository } from '../lib/ports';
+import type { CatalogRepository, PackageWithDraft, UpdatePackageDraftInput } from '../lib/ports';
 import type { Booking } from '../lib/entities';
 import type { BookingRepository, TimeslotBooking, AppointmentDto } from '../lib/ports';
 import type {
@@ -385,6 +385,65 @@ export class MockCatalogRepository implements CatalogRepository {
     const segmentPackages = await this.getPackagesBySegment(tenantId, segmentId);
     const packageIds = new Set(segmentPackages.map((p) => p.id));
     return Array.from(addOns.values()).filter((a) => packageIds.has(a.packageId));
+  }
+
+  // Draft methods (Visual Editor)
+  async getAllPackagesWithDrafts(tenantId: string): Promise<PackageWithDraft[]> {
+    // Mock mode: Return packages with draft fields (all null since mock doesn't persist drafts)
+    return Array.from(packages.values()).map((pkg) => ({
+      ...pkg,
+      name: pkg.title, // Map title to name for compatibility
+      basePrice: pkg.priceCents, // Map priceCents to basePrice for compatibility
+      draftTitle: null,
+      draftDescription: null,
+      draftPriceCents: null,
+      draftPhotos: null,
+      hasDraft: false,
+      draftUpdatedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }));
+  }
+
+  async updateDraft(
+    tenantId: string,
+    packageId: string,
+    draft: UpdatePackageDraftInput
+  ): Promise<PackageWithDraft> {
+    const pkg = packages.get(packageId);
+    if (!pkg) {
+      throw new Error(`Package with id "${packageId}" not found`);
+    }
+
+    // Mock mode: Just return the package with draft fields set
+    return {
+      ...pkg,
+      name: pkg.title,
+      basePrice: pkg.priceCents,
+      draftTitle: draft.title ?? null,
+      draftDescription: draft.description ?? null,
+      draftPriceCents: draft.priceCents ?? null,
+      draftPhotos: draft.photos ?? null,
+      hasDraft: true,
+      draftUpdatedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+
+  async publishDrafts(tenantId: string, packageIds?: string[]): Promise<Package[]> {
+    // Mock mode: Return empty array (no drafts to publish)
+    return [];
+  }
+
+  async discardDrafts(tenantId: string, packageIds?: string[]): Promise<number> {
+    // Mock mode: Return 0 (no drafts to discard)
+    return 0;
+  }
+
+  async countDrafts(tenantId: string): Promise<number> {
+    // Mock mode: Return 0 (no drafts)
+    return 0;
   }
 }
 
