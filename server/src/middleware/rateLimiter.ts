@@ -163,6 +163,39 @@ export const publicTenantLookupLimiter = rateLimit({
     }),
 });
 
+/**
+ * P1-145 FIX: Rate limiter for public booking management actions
+ * 10 requests per 15 minutes per IP - prevents token brute-force and DoS
+ * Actions: view, reschedule, cancel
+ */
+export const publicBookingActionsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: isTestEnvironment ? 500 : 10, // 10 actions per 15 minutes per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req: Request, res: Response) =>
+    res.status(429).json({
+      error: 'too_many_booking_actions',
+      message: 'Too many booking actions from this IP. Please try again later.',
+    }),
+});
+
+/**
+ * P1-145 FIX: Rate limiter for balance payment checkout creation
+ * 5 requests per hour per IP - prevents Stripe API abuse and checkout spam
+ */
+export const publicBalancePaymentLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: isTestEnvironment ? 500 : 5, // 5 checkout sessions per hour per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req: Request, res: Response) =>
+    res.status(429).json({
+      error: 'too_many_payment_attempts',
+      message: 'Too many payment attempts. Please try again later.',
+    }),
+});
+
 export const skipIfHealth = (req: Request, _res: Response, next: NextFunction) => {
   if (req.path === '/health' || req.path === '/ready') {
     return next();

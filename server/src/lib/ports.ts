@@ -54,6 +54,38 @@ export interface TimeslotBooking {
 /**
  * Booking Repository - Booking persistence
  */
+/**
+ * Update fields for booking modifications
+ */
+export interface BookingUpdateInput {
+  // Reschedule fields
+  eventDate?: string;            // New date (YYYY-MM-DD format)
+
+  // Status transitions
+  status?: 'PENDING' | 'DEPOSIT_PAID' | 'PAID' | 'CONFIRMED' | 'CANCELED' | 'REFUNDED' | 'FULFILLED';
+
+  // Cancellation fields
+  cancelledAt?: Date;
+  cancelledBy?: 'CUSTOMER' | 'TENANT' | 'ADMIN' | 'SYSTEM';
+  cancellationReason?: string;
+
+  // Refund tracking
+  refundStatus?: 'NONE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'PARTIAL' | 'FAILED';
+  refundAmount?: number;
+  refundedAt?: Date;
+  stripeRefundId?: string;
+
+  // Reminder tracking
+  reminderSentAt?: Date;
+  reminderDueDate?: Date;
+
+  // Deposit tracking
+  depositPaidAmount?: number;
+  balanceDueDate?: Date;
+  balancePaidAmount?: number;
+  balancePaidAt?: Date;
+}
+
 export interface BookingRepository {
   create(
     tenantId: string,
@@ -69,6 +101,49 @@ export interface BookingRepository {
   isDateBooked(tenantId: string, date: string): Promise<boolean>;
   getUnavailableDates(tenantId: string, startDate: Date, endDate: Date): Promise<Date[]>;
   updateGoogleEventId(tenantId: string, bookingId: string, googleEventId: string): Promise<void>;
+
+  /**
+   * Update booking fields (reschedule, cancel, refund status, etc.)
+   *
+   * @param tenantId - Tenant ID for isolation
+   * @param bookingId - Booking identifier
+   * @param data - Fields to update
+   * @returns Updated booking
+   */
+  update(tenantId: string, bookingId: string, data: BookingUpdateInput): Promise<Booking>;
+
+  /**
+   * Reschedule booking to a new date with advisory lock protection
+   *
+   * Uses PostgreSQL advisory locks (ADR-006) to prevent race conditions
+   * when multiple reschedule requests target the same date.
+   *
+   * @param tenantId - Tenant ID for isolation
+   * @param bookingId - Booking identifier
+   * @param newDate - New event date (YYYY-MM-DD format)
+   * @returns Updated booking
+   * @throws {BookingConflictError} If new date is already booked
+   * @throws {BookingAlreadyCancelledError} If booking is already cancelled
+   */
+  reschedule(tenantId: string, bookingId: string, newDate: string): Promise<Booking>;
+
+  /**
+   * Complete balance payment atomically with advisory lock protection
+   *
+   * P1-147 FIX: Uses PostgreSQL advisory locks to prevent race conditions
+   * when concurrent balance payment webhooks arrive for the same booking.
+   *
+   * @param tenantId - Tenant ID for isolation
+   * @param bookingId - Booking identifier
+   * @param balanceAmountCents - Balance amount paid in cents
+   * @returns Updated booking with balance paid, or null if already paid (idempotent)
+   * @throws {NotFoundError} If booking doesn't exist
+   */
+  completeBalancePayment(
+    tenantId: string,
+    bookingId: string,
+    balanceAmountCents: number
+  ): Promise<Booking | null>;
 
   /**
    * Find all TIMESLOT bookings that overlap with a date range
@@ -138,6 +213,28 @@ export interface BookingRepository {
       offset?: number;
     }
   ): Promise<AppointmentDto[]>;
+
+  /**
+   * Find bookings that need reminders sent (lazy reminder evaluation)
+   *
+   * Returns bookings where:
+   * - reminderDueDate <= today
+   * - reminderSentAt is null
+   * - status is PAID/CONFIRMED (not cancelled)
+   *
+   * @param tenantId - Tenant ID for isolation
+   * @param limit - Maximum number of reminders to process (default 10)
+   * @returns Array of bookings needing reminders
+   */
+  findBookingsNeedingReminders(tenantId: string, limit?: number): Promise<Booking[]>;
+
+  /**
+   * Mark a booking's reminder as sent
+   *
+   * @param tenantId - Tenant ID for isolation
+   * @param bookingId - Booking identifier
+   */
+  markReminderSent(tenantId: string, bookingId: string): Promise<void>;
 }
 
 /**

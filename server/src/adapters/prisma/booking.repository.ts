@@ -6,7 +6,7 @@ import { PrismaClientKnownRequestError, Decimal } from '@prisma/client/runtime/l
 import type { PrismaClient } from '../../generated/prisma';
 import type { BookingRepository, TimeslotBooking, AppointmentDto } from '../lib/ports';
 import type { Booking } from '../lib/entities';
-import { BookingConflictError, BookingLockTimeoutError } from '../lib/errors';
+import { BookingConflictError, BookingLockTimeoutError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/core/logger';
 import { toISODate } from '../lib/date-utils';
 
@@ -31,6 +31,22 @@ function hashTenantDate(tenantId: string, date: string): number {
   }
 
   // Convert to 32-bit signed integer (PostgreSQL bigint range)
+  return hash | 0;
+}
+
+/**
+ * Generate deterministic lock ID from tenantId + bookingId for advisory locks
+ * P1-147 FIX: Provides booking-specific locking for balance payment race prevention
+ */
+function hashTenantBooking(tenantId: string, bookingId: string): number {
+  const str = `${tenantId}:balance:${bookingId}`;
+  let hash = 2166136261; // FNV offset basis
+
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 16777619); // FNV prime
+  }
+
   return hash | 0;
 }
 
@@ -223,6 +239,20 @@ export class PrismaBookingRepository implements BookingRepository {
             status: this.mapToPrismaStatus(booking.status),
             commissionAmount: booking.commissionAmount ?? 0,
             commissionPercent: booking.commissionPercent ?? 0,
+            // Reminder fields
+            reminderDueDate: booking.reminderDueDate ? new Date(booking.reminderDueDate) : null,
+            // Cancellation and refund fields (optional on create)
+            cancelledBy: booking.cancelledBy ?? null,
+            cancellationReason: booking.cancellationReason ?? null,
+            refundStatus: booking.refundStatus ?? undefined,
+            refundAmount: booking.refundAmount ?? null,
+            refundedAt: booking.refundedAt ? new Date(booking.refundedAt) : null,
+            stripeRefundId: booking.stripeRefundId ?? null,
+            // Deposit fields (optional on create)
+            depositPaidAmount: booking.depositPaidAmount ?? null,
+            balanceDueDate: booking.balanceDueDate ? new Date(booking.balanceDueDate) : null,
+            balancePaidAmount: booking.balancePaidAmount ?? null,
+            balancePaidAt: booking.balancePaidAt ? new Date(booking.balancePaidAt) : null,
             addOns: {
               create: booking.addOnIds.map((addOnId) => ({
                 addOnId,
@@ -717,15 +747,189 @@ export class PrismaBookingRepository implements BookingRepository {
     }));
   }
 
+  /**
+   * Update booking fields (reschedule, cancel, refund status, etc.)
+   *
+   * @param tenantId - Tenant ID for isolation
+   * @param bookingId - Booking identifier
+   * @param data - Fields to update
+   * @returns Updated booking
+   */
+  async update(
+    tenantId: string,
+    bookingId: string,
+    data: {
+      eventDate?: string;
+      status?: 'CANCELED';
+      cancelledAt?: Date;
+      cancelledBy?: 'CUSTOMER' | 'TENANT' | 'ADMIN' | 'SYSTEM';
+      cancellationReason?: string;
+      refundStatus?: 'NONE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'PARTIAL' | 'FAILED';
+      refundAmount?: number;
+      refundedAt?: Date;
+      stripeRefundId?: string;
+      reminderSentAt?: Date;
+      reminderDueDate?: Date;
+      depositPaidAmount?: number;
+      balanceDueDate?: Date;
+      balancePaidAmount?: number;
+      balancePaidAt?: Date;
+    }
+  ): Promise<Booking> {
+    const updateData: Record<string, unknown> = {};
+
+    if (data.eventDate !== undefined) {
+      updateData.date = new Date(data.eventDate);
+    }
+    if (data.status !== undefined) {
+      updateData.status = data.status;
+    }
+    if (data.cancelledAt !== undefined) {
+      updateData.cancelledAt = data.cancelledAt;
+    }
+    if (data.cancelledBy !== undefined) {
+      updateData.cancelledBy = data.cancelledBy;
+    }
+    if (data.cancellationReason !== undefined) {
+      updateData.cancellationReason = data.cancellationReason;
+    }
+    if (data.refundStatus !== undefined) {
+      updateData.refundStatus = data.refundStatus;
+    }
+    if (data.refundAmount !== undefined) {
+      updateData.refundAmount = data.refundAmount;
+    }
+    if (data.refundedAt !== undefined) {
+      updateData.refundedAt = data.refundedAt;
+    }
+    if (data.stripeRefundId !== undefined) {
+      updateData.stripeRefundId = data.stripeRefundId;
+    }
+    if (data.reminderSentAt !== undefined) {
+      updateData.reminderSentAt = data.reminderSentAt;
+    }
+    if (data.reminderDueDate !== undefined) {
+      updateData.reminderDueDate = data.reminderDueDate;
+    }
+    if (data.depositPaidAmount !== undefined) {
+      updateData.depositPaidAmount = data.depositPaidAmount;
+    }
+    if (data.balanceDueDate !== undefined) {
+      updateData.balanceDueDate = data.balanceDueDate;
+    }
+    if (data.balancePaidAmount !== undefined) {
+      updateData.balancePaidAmount = data.balancePaidAmount;
+    }
+    if (data.balancePaidAt !== undefined) {
+      updateData.balancePaidAt = data.balancePaidAt;
+    }
+
+    const updated = await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: updateData,
+      include: {
+        customer: true,
+        addOns: {
+          select: {
+            addOnId: true,
+          },
+        },
+      },
+    });
+
+    // Verify tenant ownership
+    if (updated.tenantId !== tenantId) {
+      throw new Error('Tenant mismatch');
+    }
+
+    return this.toDomainBooking(updated);
+  }
+
+  /**
+   * Reschedule booking to a new date with advisory lock protection
+   *
+   * Uses PostgreSQL advisory locks (ADR-006) to prevent race conditions.
+   *
+   * @param tenantId - Tenant ID for isolation
+   * @param bookingId - Booking identifier
+   * @param newDate - New event date (YYYY-MM-DD format)
+   * @returns Updated booking
+   * @throws {BookingConflictError} If new date is already booked
+   */
+  async reschedule(tenantId: string, bookingId: string, newDate: string): Promise<Booking> {
+    return this.retryTransaction(async () => {
+      return await this.prisma.$transaction(async (tx) => {
+        // Acquire advisory lock for the new date
+        const lockId = hashTenantDate(tenantId, newDate);
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
+
+        // Verify booking exists and belongs to tenant
+        const booking = await tx.booking.findFirst({
+          where: { id: bookingId, tenantId },
+        });
+
+        if (!booking) {
+          throw new Error(`Booking ${bookingId} not found`);
+        }
+
+        if (booking.status === 'CANCELED') {
+          throw new Error(`Booking ${bookingId} is already cancelled`);
+        }
+
+        // Check if new date is available
+        const existing = await tx.booking.findFirst({
+          where: {
+            tenantId,
+            date: new Date(newDate),
+            status: { notIn: ['CANCELED'] },
+            id: { not: bookingId }, // Exclude current booking
+          },
+        });
+
+        if (existing) {
+          throw new BookingConflictError(newDate);
+        }
+
+        // Update booking date
+        const updated = await tx.booking.update({
+          where: { id: bookingId },
+          data: { date: new Date(newDate) },
+          include: {
+            customer: true,
+            addOns: {
+              select: {
+                addOnId: true,
+              },
+            },
+          },
+        });
+
+        return this.toDomainBooking(updated);
+      }, {
+        timeout: BOOKING_TRANSACTION_TIMEOUT_MS,
+        isolationLevel: this.isolationLevel as any,
+      });
+    }, `reschedule-booking-${tenantId}-${bookingId}-${newDate}`);
+  }
+
   // Mappers
-  private mapToPrismaStatus(status: string): 'PENDING' | 'CONFIRMED' | 'CANCELED' | 'FULFILLED' {
+  // P1-149 FIX: Updated to include all BookingStatus values
+  private mapToPrismaStatus(status: string): 'PENDING' | 'DEPOSIT_PAID' | 'PAID' | 'CONFIRMED' | 'CANCELED' | 'REFUNDED' | 'FULFILLED' {
     switch (status) {
+      case 'PENDING':
+        return 'PENDING';
+      case 'DEPOSIT_PAID':
+        return 'DEPOSIT_PAID';
       case 'PAID':
+        return 'PAID';
+      case 'CONFIRMED':
         return 'CONFIRMED';
       case 'CANCELED':
         return 'CANCELED';
       case 'REFUNDED':
-        return 'CANCELED';
+        return 'REFUNDED';
+      case 'FULFILLED':
+        return 'FULFILLED';
       default:
         return 'PENDING';
     }
@@ -746,28 +950,48 @@ export class PrismaBookingRepository implements BookingRepository {
       phone: string | null;
     };
     addOns: { addOnId: string }[];
+    // New booking management fields
+    cancelledBy?: string | null;
+    cancellationReason?: string | null;
+    refundStatus?: string | null;
+    refundAmount?: number | null;
+    refundedAt?: Date | null;
+    stripeRefundId?: string | null;
+    reminderDueDate?: Date | null;
+    reminderSentAt?: Date | null;
+    depositPaidAmount?: number | null;
+    balanceDueDate?: Date | null;
+    balancePaidAmount?: number | null;
+    balancePaidAt?: Date | null;
   }): Booking {
     // Map Prisma BookingStatus to domain status
-    const mapStatus = (prismaStatus: string): 'PAID' | 'REFUNDED' | 'CANCELED' => {
+    // P1-149 FIX: Updated to include all status types
+    const mapStatus = (prismaStatus: string): Booking['status'] => {
       switch (prismaStatus) {
-        case 'FULFILLED':
-        case 'CONFIRMED':
+        case 'PENDING':
+          return 'PENDING';
+        case 'DEPOSIT_PAID':
+          return 'DEPOSIT_PAID';
+        case 'PAID':
           return 'PAID';
+        case 'CONFIRMED':
+          return 'CONFIRMED';
         case 'CANCELED':
-          // NOTE: Cannot distinguish between CANCELED and REFUNDED
-          // Consider adding refundedAt field to schema for proper distinction
           return 'CANCELED';
+        case 'REFUNDED':
+          return 'REFUNDED';
+        case 'FULFILLED':
+          return 'FULFILLED';
         default:
-          return 'PAID'; // Default to PAID for PENDING
+          return 'PENDING';
       }
     };
 
-    return {
+    const domainBooking: Booking = {
       id: booking.id,
       packageId: booking.packageId,
       coupleName: booking.customer.name,
       email: booking.customer.email || '',
-      ...(booking.customer.phone && { phone: booking.customer.phone }),
       eventDate: toISODate(booking.date),
       addOnIds: booking.addOns.map((a) => a.addOnId),
       totalCents: booking.totalPrice,
@@ -776,5 +1000,158 @@ export class PrismaBookingRepository implements BookingRepository {
       status: mapStatus(booking.status),
       createdAt: booking.createdAt.toISOString(),
     };
+
+    // Add optional phone
+    if (booking.customer.phone) {
+      domainBooking.phone = booking.customer.phone;
+    }
+
+    // Add cancellation fields if present
+    if (booking.cancelledBy) {
+      domainBooking.cancelledBy = booking.cancelledBy as Booking['cancelledBy'];
+    }
+    if (booking.cancellationReason) {
+      domainBooking.cancellationReason = booking.cancellationReason;
+    }
+
+    // Add refund fields if present
+    if (booking.refundStatus) {
+      domainBooking.refundStatus = booking.refundStatus as Booking['refundStatus'];
+    }
+    if (booking.refundAmount !== null && booking.refundAmount !== undefined) {
+      domainBooking.refundAmount = booking.refundAmount;
+    }
+    if (booking.refundedAt) {
+      domainBooking.refundedAt = booking.refundedAt.toISOString();
+    }
+    if (booking.stripeRefundId) {
+      domainBooking.stripeRefundId = booking.stripeRefundId;
+    }
+
+    // Add reminder fields if present
+    if (booking.reminderDueDate) {
+      domainBooking.reminderDueDate = toISODate(booking.reminderDueDate);
+    }
+    if (booking.reminderSentAt) {
+      domainBooking.reminderSentAt = booking.reminderSentAt.toISOString();
+    }
+
+    // Add deposit fields if present
+    if (booking.depositPaidAmount !== null && booking.depositPaidAmount !== undefined) {
+      domainBooking.depositPaidAmount = booking.depositPaidAmount;
+    }
+    if (booking.balanceDueDate) {
+      domainBooking.balanceDueDate = toISODate(booking.balanceDueDate);
+    }
+    if (booking.balancePaidAmount !== null && booking.balancePaidAmount !== undefined) {
+      domainBooking.balancePaidAmount = booking.balancePaidAmount;
+    }
+    if (booking.balancePaidAt) {
+      domainBooking.balancePaidAt = booking.balancePaidAt.toISOString();
+    }
+
+    return domainBooking;
+  }
+
+  /**
+   * Find bookings that need reminders (reminderDueDate <= today, reminderSentAt is null, status is PAID)
+   */
+  async findBookingsNeedingReminders(tenantId: string, limit: number = 10): Promise<Booking[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const bookings = await this.prisma.booking.findMany({
+      where: {
+        tenantId,
+        reminderDueDate: { lte: today },
+        reminderSentAt: null,
+        status: 'CONFIRMED',
+      },
+      include: {
+        customer: true,
+        addOns: { select: { addOnId: true } },
+      },
+      take: limit,
+      orderBy: { reminderDueDate: 'asc' },
+    });
+
+    return bookings.map((b) => this.toDomainBooking(b));
+  }
+
+  /**
+   * Mark a booking's reminder as sent
+   */
+  async markReminderSent(tenantId: string, bookingId: string): Promise<void> {
+    await this.prisma.booking.update({
+      where: { id: bookingId, tenantId },
+      data: { reminderSentAt: new Date() },
+    });
+  }
+
+  /**
+   * Complete balance payment atomically with advisory lock protection
+   *
+   * P1-147 FIX: Uses PostgreSQL advisory locks to prevent race conditions
+   * when concurrent balance payment webhooks arrive for the same booking.
+   *
+   * @param tenantId - Tenant ID for isolation
+   * @param bookingId - Booking identifier
+   * @param balanceAmountCents - Balance amount paid in cents
+   * @returns Updated booking with balance paid, or null if already paid (idempotent)
+   * @throws {NotFoundError} If booking doesn't exist
+   */
+  async completeBalancePayment(
+    tenantId: string,
+    bookingId: string,
+    balanceAmountCents: number
+  ): Promise<Booking | null> {
+    return this.retryTransaction(async () => {
+      return await this.prisma.$transaction(async (tx) => {
+        // Acquire advisory lock for this specific booking's balance payment
+        const lockId = hashTenantBooking(tenantId, bookingId);
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
+
+        // Check current booking state within the lock
+        const booking = await tx.booking.findUnique({
+          where: { id: bookingId },
+          include: {
+            customer: true,
+            addOns: { select: { addOnId: true } },
+          },
+        });
+
+        if (!booking) {
+          throw new NotFoundError(`Booking ${bookingId} not found`);
+        }
+
+        if (booking.tenantId !== tenantId) {
+          throw new NotFoundError(`Booking ${bookingId} not found for tenant`);
+        }
+
+        // Idempotent: If balance already paid, return null (not an error)
+        if (booking.balancePaidAt) {
+          return null;
+        }
+
+        // Update booking with balance paid and mark as PAID
+        const updated = await tx.booking.update({
+          where: { id: bookingId },
+          data: {
+            balancePaidAmount: balanceAmountCents,
+            balancePaidAt: new Date(),
+            status: 'PAID',
+          },
+          include: {
+            customer: true,
+            addOns: { select: { addOnId: true } },
+          },
+        });
+
+        return this.toDomainBooking(updated);
+      }, {
+        timeout: BOOKING_TRANSACTION_TIMEOUT_MS,
+        isolationLevel: this.isolationLevel as any,
+      });
+    }, `complete-balance-payment-${tenantId}-${bookingId}`);
   }
 }

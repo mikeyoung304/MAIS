@@ -81,6 +81,10 @@ model Tenant {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Deposit Settings (MVP Gaps Phase 4)
+  depositPercent Decimal? @db.Decimal(5, 2) // null = full payment required
+  balanceDueDays Int      @default(30)       // Days before event balance is due
+
   // Relations
   users            User[] // Tenant admin users
   customers        Customer[] // Tenant-scoped customers
@@ -305,6 +309,26 @@ model Booking {
   confirmedAt DateTime? // When payment completed
   cancelledAt DateTime? // When cancelled
 
+  // Cancellation tracking (MVP Gaps Phase 1)
+  cancelledBy        CancelledBy?  // Who cancelled the booking
+  cancellationReason String?       // Reason for cancellation
+
+  // Refund tracking (MVP Gaps Phase 1)
+  refundStatus    RefundStatus @default(NONE)
+  refundAmount    Int?         // Amount refunded in cents
+  refundedAt      DateTime?    // When refund was processed
+  stripeRefundId  String?      // Stripe refund ID
+
+  // Reminder tracking (MVP Gaps Phase 2)
+  reminderSentAt  DateTime?    // When reminder email was sent
+  reminderDueDate DateTime?    // When reminder should be sent (eventDate - 7 days)
+
+  // Deposit tracking (MVP Gaps Phase 4)
+  depositPaidAmount Int?       // Amount paid as deposit in cents
+  balanceDueDate    DateTime?  // When balance payment is due
+  balancePaidAmount Int?       // Balance amount paid in cents
+  balancePaidAt     DateTime?  // When balance was paid
+
   tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   customer Customer       @relation(fields: [customerId], references: [id])
   package  Package        @relation(fields: [packageId], references: [id])
@@ -334,15 +358,36 @@ model Booking {
 }
 
 enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CANCELED
-  FULFILLED
+  PENDING       // Initial state, awaiting payment
+  DEPOSIT_PAID  // Deposit received, balance due later
+  PAID          // Full payment received (deposit + balance or full upfront)
+  CONFIRMED     // Payment confirmed, booking finalized
+  CANCELED      // Booking cancelled
+  REFUNDED      // Full refund processed
+  FULFILLED     // Event completed
 }
 
 enum BookingType {
   DATE     // Legacy date-only bookings (weddings)
   TIMESLOT // Time-slot based scheduling
+}
+
+// MVP Gaps Phase 1: Cancellation tracking
+enum CancelledBy {
+  CUSTOMER  // Customer self-service cancellation
+  TENANT    // Tenant admin cancelled
+  ADMIN     // Platform admin cancelled
+  SYSTEM    // Automated system cancellation
+}
+
+// MVP Gaps Phase 1: Refund tracking
+enum RefundStatus {
+  NONE       // No refund requested
+  PENDING    // Refund requested, not yet processed
+  PROCESSING // Refund in progress
+  COMPLETED  // Refund successfully completed
+  PARTIAL    // Partial refund completed
+  FAILED     // Refund failed
 }
 
 // ============================================================================

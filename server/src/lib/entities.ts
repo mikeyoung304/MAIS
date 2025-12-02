@@ -53,8 +53,24 @@ export interface Booking {
   totalCents: number;
   commissionAmount?: number; // Platform commission in cents
   commissionPercent?: number; // Commission percentage (e.g., 12.5)
-  status: 'PAID' | 'REFUNDED' | 'CANCELED';
+  status: 'PENDING' | 'DEPOSIT_PAID' | 'PAID' | 'CONFIRMED' | 'CANCELED' | 'REFUNDED' | 'FULFILLED';
   createdAt: string; // ISO 8601 format
+  // Cancellation fields
+  cancelledBy?: 'CUSTOMER' | 'TENANT' | 'ADMIN' | 'SYSTEM';
+  cancellationReason?: string;
+  // Refund fields
+  refundStatus?: 'NONE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'PARTIAL' | 'FAILED';
+  refundAmount?: number;
+  refundedAt?: string;
+  stripeRefundId?: string;
+  // Reminder fields (lazy reminders - Phase 2)
+  reminderDueDate?: string; // YYYY-MM-DD format - when to send reminder (7 days before event)
+  reminderSentAt?: string; // ISO 8601 format - when reminder was sent
+  // Deposit fields (Phase 4)
+  depositPaidAmount?: number; // Amount paid as deposit
+  balanceDueDate?: string; // When balance payment is due
+  balancePaidAmount?: number; // Amount paid as balance
+  balancePaidAt?: string; // When balance was paid
 }
 
 /**

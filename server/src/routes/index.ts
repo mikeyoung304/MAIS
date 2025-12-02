@@ -28,6 +28,9 @@ import { createAdminTenantsRoutes } from './admin/tenants.routes';
 import { createAdminStripeRoutes } from './admin/stripe.routes';
 import { createTenantAdminRoutes } from './tenant-admin.routes';
 import { createTenantAdminStripeRoutes } from './tenant-admin-stripe.routes';
+import { createTenantAdminReminderRoutes } from './tenant-admin-reminders.routes';
+import { createTenantAdminCalendarRoutes } from './tenant-admin-calendar.routes';
+import { createTenantAdminDepositRoutes } from './tenant-admin-deposits.routes';
 import { createTenantAuthRoutes } from './tenant-auth.routes';
 import { createUnifiedAuthRoutes } from './auth.routes';
 import { createSegmentsRouter } from './segments.routes';
@@ -35,7 +38,20 @@ import { createTenantAdminSegmentsRouter } from './tenant-admin-segments.routes'
 import { createPublicSchedulingRoutes } from './public-scheduling.routes';
 import { createTenantAdminSchedulingRoutes } from './tenant-admin-scheduling.routes';
 import { createPublicTenantRoutes } from './public-tenant.routes';
-import { loginLimiter, publicTenantLookupLimiter } from '../middleware/rateLimiter';
+import {
+  createPublicBookingManagementRouter,
+  PublicBookingManagementController,
+} from './public-booking-management.routes';
+import {
+  createPublicBalancePaymentRouter,
+  PublicBalancePaymentController,
+} from './public-balance-payment.routes';
+import {
+  loginLimiter,
+  publicTenantLookupLimiter,
+  publicBookingActionsLimiter,
+  publicBalancePaymentLimiter,
+} from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
 import { apiKeyService } from '../lib/api-key.service';
 
@@ -59,6 +75,8 @@ interface Services {
   stripeConnect?: any; // StripeConnectService
   schedulingAvailability?: any; // SchedulingAvailabilityService
   packageDraft?: any; // PackageDraftService - Visual editor draft management
+  tenantOnboarding?: any; // TenantOnboardingService - Signup default data creation
+  reminder?: any; // ReminderService - Lazy reminder evaluation (Phase 2)
 }
 
 interface Repositories {
@@ -339,15 +357,14 @@ export function createV1Router(
     // /v1/auth/signup - public - self-service tenant signup
     // /v1/auth/forgot-password - public - request password reset
     // /v1/auth/reset-password - public - complete password reset
-    const unifiedAuthRoutes = createUnifiedAuthRoutes(
+    const unifiedAuthRoutes = createUnifiedAuthRoutes({
       identityService,
-      services.tenantAuth,
+      tenantAuthService: services.tenantAuth,
       tenantRepo,
       apiKeyService,
       mailProvider,
-      services.segment,
-      services.catalog
-    );
+      tenantOnboardingService: services?.tenantOnboarding,
+    });
     app.use('/v1/auth', unifiedAuthRoutes);
 
     // Register public tenant lookup routes (for storefront routing)
@@ -357,6 +374,33 @@ export function createV1Router(
     const publicTenantRoutes = createPublicTenantRoutes(tenantRepo);
     app.use('/v1/public/tenants', publicTenantLookupLimiter, publicTenantRoutes);
     logger.info('✅ Public tenant lookup routes mounted at /v1/public/tenants');
+
+    // Register public booking management routes (for customer self-service)
+    // NO authentication required - uses JWT tokens in query params for access
+    // Allows customers to reschedule/cancel bookings via links in confirmation emails
+    const publicBookingManagementController = new PublicBookingManagementController(
+      services.booking,
+      services.catalog
+    );
+    const publicBookingManagementRouter = createPublicBookingManagementRouter(
+      publicBookingManagementController
+    );
+    // P1-145 FIX: Apply rate limiting to prevent token brute-force and DoS
+    app.use('/v1/public/bookings', publicBookingActionsLimiter, publicBookingManagementRouter);
+    logger.info('✅ Public booking management routes mounted at /v1/public/bookings (rate limited)');
+
+    // Register public balance payment routes (for deposit payment flow)
+    // NO authentication required - uses JWT tokens in query params for access
+    // Allows customers to pay remaining balance via links in confirmation emails
+    const publicBalancePaymentController = new PublicBalancePaymentController(
+      services.booking
+    );
+    const publicBalancePaymentRouter = createPublicBalancePaymentRouter(
+      publicBalancePaymentController
+    );
+    // P1-145 FIX: Apply stricter rate limiting for payment actions
+    app.use('/v1/public/bookings', publicBalancePaymentLimiter, publicBalancePaymentRouter);
+    logger.info('✅ Public balance payment routes mounted at /v1/public/bookings (rate limited)');
 
     // Register public segment routes (for customer browsing)
     // Requires tenant context via X-Tenant-Key header
@@ -377,6 +421,26 @@ export function createV1Router(
       app.use('/v1/tenant-admin/stripe', tenantAuthMiddleware, tenantAdminStripeRoutes);
       logger.info('✅ Tenant admin Stripe Connect routes mounted at /v1/tenant-admin/stripe');
     }
+
+    // Register tenant admin reminder routes (for lazy reminder evaluation)
+    // Requires tenant admin authentication
+    if (services.reminder) {
+      const tenantAdminReminderRoutes = createTenantAdminReminderRoutes(services.reminder);
+      app.use('/v1/tenant-admin/reminders', tenantAuthMiddleware, tenantAdminReminderRoutes);
+      logger.info('✅ Tenant admin reminder routes mounted at /v1/tenant-admin/reminders');
+    }
+
+    // Register tenant admin calendar routes (for per-tenant calendar configuration)
+    // Requires tenant admin authentication
+    const tenantAdminCalendarRoutes = createTenantAdminCalendarRoutes(tenantRepo);
+    app.use('/v1/tenant-admin/calendar', tenantAuthMiddleware, tenantAdminCalendarRoutes);
+    logger.info('✅ Tenant admin calendar routes mounted at /v1/tenant-admin/calendar');
+
+    // Register tenant admin deposit settings routes (for deposit configuration)
+    // Requires tenant admin authentication
+    const tenantAdminDepositRoutes = createTenantAdminDepositRoutes(tenantRepo);
+    app.use('/v1/tenant-admin', tenantAuthMiddleware, tenantAdminDepositRoutes);
+    logger.info('✅ Tenant admin deposit settings routes mounted at /v1/tenant-admin/settings/deposits');
 
     // Register public scheduling routes (for customer booking widget)
     // Requires tenant context via X-Tenant-Key header

@@ -81,6 +81,26 @@ export class BookingLockTimeoutError extends BookingError {
 }
 
 /**
+ * Booking already cancelled - cannot perform operation on cancelled booking
+ */
+export class BookingAlreadyCancelledError extends BookingError {
+  constructor(bookingId: string) {
+    super(`Booking ${bookingId} is already cancelled`, 'BOOKING_ALREADY_CANCELLED');
+    this.name = 'BookingAlreadyCancelledError';
+  }
+}
+
+/**
+ * Booking cannot be rescheduled (status or policy violation)
+ */
+export class BookingCannotBeRescheduledError extends BookingError {
+  constructor(bookingId: string, reason: string) {
+    super(`Booking ${bookingId} cannot be rescheduled: ${reason}`, 'BOOKING_CANNOT_BE_RESCHEDULED');
+    this.name = 'BookingCannotBeRescheduledError';
+  }
+}
+
+/**
  * Payment-specific errors
  */
 export class PaymentError extends AppError {

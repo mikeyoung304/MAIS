@@ -6,7 +6,12 @@ import type { BookingRepository, PaymentProvider, ServiceRepository } from '../l
 import type { Booking, CreateBookingInput } from '../lib/entities';
 import type { CatalogRepository } from '../lib/ports';
 import type { EventEmitter } from '../lib/core/events';
-import { NotFoundError } from '../lib/errors';
+import {
+  NotFoundError,
+  BookingAlreadyCancelledError,
+  BookingCannotBeRescheduledError,
+  BookingConflictError,
+} from '../lib/errors';
 import { CommissionService } from './commission.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import { IdempotencyService } from './idempotency.service';
@@ -156,6 +161,24 @@ export class BookingService {
       // If still no response, proceed anyway (edge case)
     }
 
+    // Check if deposit is required
+    const depositPercent = tenant.depositPercent ? Number(tenant.depositPercent) : null;
+    let amountToCharge = calculation.subtotal;
+    let isDeposit = false;
+    let depositCommissionAmount = 0;
+    let balanceCommissionAmount = calculation.commissionAmount;
+
+    if (depositPercent !== null && depositPercent > 0) {
+      // Calculate deposit amount
+      amountToCharge = Math.round((calculation.subtotal * depositPercent) / 100);
+      isDeposit = true;
+
+      // P1-148 FIX: Split commission proportionally between deposit and balance
+      // Commission is calculated on full total, then split by payment amounts
+      depositCommissionAmount = Math.round((calculation.commissionAmount * depositPercent) / 100);
+      balanceCommissionAmount = calculation.commissionAmount - depositCommissionAmount;
+    }
+
     // Prepare session metadata
     const metadata = {
       tenantId, // CRITICAL: Include tenantId in metadata
@@ -164,8 +187,13 @@ export class BookingService {
       email: input.email,
       coupleName: input.coupleName,
       addOnIds: JSON.stringify(input.addOnIds || []),
-      commissionAmount: String(calculation.commissionAmount),
+      commissionAmount: String(calculation.commissionAmount), // Total commission (for reference)
+      depositCommissionAmount: String(depositCommissionAmount), // Commission on deposit
+      balanceCommissionAmount: String(balanceCommissionAmount), // Commission on balance
       commissionPercent: String(calculation.commissionPercent),
+      isDeposit: String(isDeposit),
+      totalCents: String(calculation.subtotal), // Store full total for balance calculation
+      depositPercent: depositPercent !== null ? String(depositPercent) : '',
     };
 
     // Create Stripe checkout session with idempotency key
@@ -174,22 +202,24 @@ export class BookingService {
 
     if (tenant.stripeAccountId && tenant.stripeOnboarded) {
       // Stripe Connect checkout - payment goes to tenant's account
+      // P1-148 FIX: Charge proportional commission on deposit payments
       session = await this.paymentProvider.createConnectCheckoutSession({
-        amountCents: calculation.subtotal,
+        amountCents: amountToCharge,
         email: input.email,
         metadata,
         stripeAccountId: tenant.stripeAccountId,
-        applicationFeeAmount: calculation.commissionAmount,
+        applicationFeeAmount: isDeposit ? depositCommissionAmount : calculation.commissionAmount,
         idempotencyKey,
       });
     } else {
       // Standard Stripe checkout - payment goes to platform account
       // This is backwards compatible for tenants without Stripe Connect
+      // P1-148 FIX: Charge proportional commission on deposit payments
       session = await this.paymentProvider.createCheckoutSession({
-        amountCents: calculation.subtotal,
+        amountCents: amountToCharge,
         email: input.email,
         metadata,
-        applicationFeeAmount: calculation.commissionAmount,
+        applicationFeeAmount: isDeposit ? depositCommissionAmount : calculation.commissionAmount,
         idempotencyKey,
       });
     }
@@ -201,6 +231,210 @@ export class BookingService {
     });
 
     return { checkoutUrl: session.url };
+  }
+
+  /**
+   * Creates a Stripe checkout session for balance payment
+   *
+   * MULTI-TENANT: Accepts tenantId for data isolation
+   * Validates booking has deposit paid and balance due, calculates remaining amount,
+   * and creates Stripe checkout session for balance payment.
+   *
+   * @param tenantId - Tenant ID for data isolation
+   * @param bookingId - Booking identifier
+   *
+   * @returns Object containing the Stripe checkout URL and balance amount
+   *
+   * @throws {NotFoundError} If booking doesn't exist
+   * @throws {Error} If booking doesn't have deposit or balance already paid
+   *
+   * @example
+   * ```typescript
+   * const checkout = await bookingService.createBalancePaymentCheckout('tenant_123', 'booking_abc');
+   * // Returns: { checkoutUrl: 'https://checkout.stripe.com/...', balanceAmountCents: 150000 }
+   * ```
+   */
+  async createBalancePaymentCheckout(
+    tenantId: string,
+    bookingId: string
+  ): Promise<{ checkoutUrl: string; balanceAmountCents: number }> {
+    // Validate booking exists
+    const booking = await this.bookingRepo.findById(tenantId, bookingId);
+    if (!booking) {
+      throw new NotFoundError(`Booking ${bookingId} not found`);
+    }
+
+    // Check if booking has deposit paid
+    const extendedBooking = booking as Booking & {
+      depositPaidAmount?: number;
+      balancePaidAmount?: number;
+      balancePaidAt?: Date | string;
+    };
+
+    if (!extendedBooking.depositPaidAmount) {
+      throw new Error('Booking does not have a deposit paid');
+    }
+
+    if (extendedBooking.balancePaidAmount || extendedBooking.balancePaidAt) {
+      throw new Error('Balance has already been paid for this booking');
+    }
+
+    // Calculate balance amount
+    const balanceAmountCents = booking.totalCents - extendedBooking.depositPaidAmount;
+
+    if (balanceAmountCents <= 0) {
+      throw new Error('No balance due for this booking');
+    }
+
+    // Fetch tenant to get Stripe account ID
+    const tenant = await this.tenantRepo.findById(tenantId);
+    if (!tenant) {
+      throw new NotFoundError(`Tenant ${tenantId} not found`);
+    }
+
+    // P1-148 FIX: Calculate balance commission proportionally from original booking commission
+    // The total commission was split at checkout time: deposit commission + balance commission = total
+    // Balance commission = total commission - deposit commission
+    // deposit commission = total commission * (deposit amount / total amount)
+    const totalCommission = booking.commissionAmount || 0;
+    const depositPercent = extendedBooking.depositPaidAmount / booking.totalCents;
+    const depositCommission = Math.round(totalCommission * depositPercent);
+    const balanceCommission = totalCommission - depositCommission;
+
+    // Generate idempotency key for checkout session
+    const idempotencyKey = this.idempotencyService.generateCheckoutKey(
+      tenantId,
+      booking.email,
+      bookingId,
+      'balance',
+      Date.now()
+    );
+
+    // Check if this request has already been processed
+    const cachedResponse = await this.idempotencyService.getStoredResponse(idempotencyKey);
+    if (cachedResponse) {
+      const data = cachedResponse.data as { url: string };
+      return { checkoutUrl: data.url, balanceAmountCents };
+    }
+
+    // Store idempotency key before making Stripe call
+    const isNew = await this.idempotencyService.checkAndStore(idempotencyKey);
+    if (!isNew) {
+      // Race condition: another request stored the key while we were checking
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const retryResponse = await this.idempotencyService.getStoredResponse(idempotencyKey);
+      if (retryResponse) {
+        const retryData = retryResponse.data as { url: string };
+        return { checkoutUrl: retryData.url, balanceAmountCents };
+      }
+    }
+
+    // Prepare session metadata
+    const metadata = {
+      tenantId,
+      bookingId,
+      isBalancePayment: 'true',
+      balanceAmountCents: String(balanceAmountCents),
+      email: booking.email,
+      coupleName: booking.coupleName,
+      eventDate: booking.eventDate,
+      commissionAmount: String(balanceCommission), // P1-148 FIX: Use proportional balance commission
+      commissionPercent: String(booking.commissionPercent), // Use stored rate from original booking
+    };
+
+    // Create Stripe checkout session
+    let session;
+
+    if (tenant.stripeAccountId && tenant.stripeOnboarded) {
+      // Stripe Connect checkout - payment goes to tenant's account
+      // P1-148 FIX: Use proportional balance commission instead of full commission
+      session = await this.paymentProvider.createConnectCheckoutSession({
+        amountCents: balanceAmountCents,
+        email: booking.email,
+        metadata,
+        stripeAccountId: tenant.stripeAccountId,
+        applicationFeeAmount: balanceCommission,
+        idempotencyKey,
+      });
+    } else {
+      // Standard Stripe checkout - payment goes to platform account
+      // P1-148 FIX: Use proportional balance commission instead of full commission
+      session = await this.paymentProvider.createCheckoutSession({
+        amountCents: balanceAmountCents,
+        email: booking.email,
+        metadata,
+        applicationFeeAmount: balanceCommission,
+        idempotencyKey,
+      });
+    }
+
+    // Cache the response for future duplicate requests
+    await this.idempotencyService.updateResponse(idempotencyKey, {
+      data: session,
+      timestamp: new Date().toISOString(),
+    });
+
+    return { checkoutUrl: session.url, balanceAmountCents };
+  }
+
+  /**
+   * Handles balance payment completion
+   *
+   * MULTI-TENANT: Accepts tenantId for data isolation
+   * Called by Stripe webhook handler after successful balance payment.
+   * Updates booking with balance paid details and changes status to PAID.
+   *
+   * @param tenantId - Tenant ID for data isolation
+   * @param bookingId - Booking identifier
+   * @param balanceAmountCents - Balance amount paid in cents
+   *
+   * @returns Updated booking with balance paid
+   *
+   * @throws {NotFoundError} If booking doesn't exist
+   *
+   * @example
+   * ```typescript
+   * const booking = await bookingService.onBalancePaymentCompleted(
+   *   'tenant_123',
+   *   'booking_abc',
+   *   150000
+   * );
+   * ```
+   */
+  async onBalancePaymentCompleted(
+    tenantId: string,
+    bookingId: string,
+    balanceAmountCents: number
+  ): Promise<Booking> {
+    // P1-147 FIX: Use atomic balance payment completion with advisory lock
+    // This prevents race conditions when concurrent balance payment webhooks arrive
+    const updated = await this.bookingRepo.completeBalancePayment(
+      tenantId,
+      bookingId,
+      balanceAmountCents
+    );
+
+    // If null returned, balance was already paid (idempotent success)
+    if (!updated) {
+      // Fetch the booking to return it (already in correct state)
+      const existing = await this.bookingRepo.findById(tenantId, bookingId);
+      if (!existing) {
+        throw new NotFoundError(`Booking ${bookingId} not found`);
+      }
+      return existing;
+    }
+
+    // Emit event for downstream processing (notifications)
+    await this._eventEmitter.emit('BalancePaymentCompleted', {
+      bookingId: updated.id,
+      tenantId,
+      email: updated.email,
+      coupleName: updated.coupleName,
+      eventDate: updated.eventDate,
+      balanceAmountCents,
+    });
+
+    return updated;
   }
 
   /**
@@ -336,6 +570,8 @@ export class BookingService {
     totalCents: number;
     commissionAmount?: number;
     commissionPercent?: number;
+    isDeposit?: boolean;
+    depositPercent?: number;
   }): Promise<Booking> {
     // Fetch package details for event payload
     const pkg = await this.catalogRepo.getPackageBySlug(tenantId, input.packageId);
@@ -351,7 +587,36 @@ export class BookingService {
       addOnTitles.push(...selectedAddOns.map((a) => a.title));
     }
 
-    // Create PAID booking with commission data
+    // Calculate reminder due date (7 days before event)
+    // Only set if the event is more than 7 days away
+    const eventDate = new Date(input.eventDate + 'T00:00:00Z');
+    const now = new Date();
+    const daysUntilEvent = Math.floor((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const reminderDueDate = daysUntilEvent > 7
+      ? new Date(eventDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      : undefined;
+
+    // Handle deposit vs full payment
+    let depositPaidAmount: number | undefined;
+    let balanceDueDate: string | undefined;
+    let bookingStatus: Booking['status'] = 'PAID';
+
+    if (input.isDeposit && input.depositPercent) {
+      // This is a deposit payment - P1-149 FIX: Use DEPOSIT_PAID status
+      depositPaidAmount = input.totalCents;
+      bookingStatus = 'DEPOSIT_PAID'; // Indicates deposit received, balance due later
+
+      // Fetch tenant to get balanceDueDays
+      const tenant = await this.tenantRepo.findById(tenantId);
+      if (tenant) {
+        const balanceDueDays = tenant.balanceDueDays || 30;
+        balanceDueDate = new Date(eventDate.getTime() - balanceDueDays * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split('T')[0];
+      }
+    }
+
+    // Create booking with commission data and reminder
     const booking: Booking = {
       id: `booking_${Date.now()}`,
       packageId: pkg.id, // Use actual package ID from fetched package (input.packageId is a slug)
@@ -362,8 +627,11 @@ export class BookingService {
       totalCents: input.totalCents,
       commissionAmount: input.commissionAmount,
       commissionPercent: input.commissionPercent,
-      status: 'PAID',
+      status: bookingStatus,
       createdAt: new Date().toISOString(),
+      reminderDueDate,
+      depositPaidAmount,
+      balanceDueDate,
     };
 
     // P2 #037 FIX: Create booking AND payment record atomically
@@ -701,5 +969,258 @@ export class BookingService {
     };
 
     return this.bookingRepo.findAppointments(tenantId, repositoryFilters);
+  }
+
+  // ============================================================================
+  // Booking Management Methods (MVP Gaps Phase 1)
+  // ============================================================================
+
+  /**
+   * Reschedule a booking to a new date
+   *
+   * Uses advisory locks (ADR-006) to prevent race conditions when multiple
+   * reschedule requests target the same new date.
+   *
+   * @param tenantId - Tenant ID for data isolation
+   * @param bookingId - Booking identifier
+   * @param newDate - New event date (YYYY-MM-DD format)
+   *
+   * @returns Updated booking with new date
+   *
+   * @throws {NotFoundError} If booking doesn't exist
+   * @throws {BookingAlreadyCancelledError} If booking is already cancelled
+   * @throws {BookingConflictError} If new date is already booked
+   *
+   * @example
+   * ```typescript
+   * const updated = await bookingService.rescheduleBooking(
+   *   'tenant_123',
+   *   'booking_abc',
+   *   '2025-07-15'
+   * );
+   * ```
+   */
+  async rescheduleBooking(
+    tenantId: string,
+    bookingId: string,
+    newDate: string
+  ): Promise<Booking> {
+    // Validate booking exists
+    const booking = await this.bookingRepo.findById(tenantId, bookingId);
+    if (!booking) {
+      throw new NotFoundError(`Booking ${bookingId} not found`);
+    }
+
+    // Cannot reschedule cancelled bookings
+    if (booking.status === 'CANCELED') {
+      throw new BookingAlreadyCancelledError(bookingId);
+    }
+
+    // Check if trying to reschedule to the same date
+    if (booking.eventDate === newDate) {
+      throw new BookingCannotBeRescheduledError(bookingId, 'New date is the same as current date');
+    }
+
+    // Reschedule with advisory lock protection
+    const updated = await this.bookingRepo.reschedule(tenantId, bookingId, newDate);
+
+    // Emit event for downstream processing (calendar sync, notifications)
+    await this._eventEmitter.emit('BookingRescheduled', {
+      bookingId: updated.id,
+      tenantId,
+      email: updated.email,
+      coupleName: updated.coupleName,
+      oldDate: booking.eventDate,
+      newDate: updated.eventDate,
+    });
+
+    return updated;
+  }
+
+  /**
+   * Cancel a booking with 3-phase pattern
+   *
+   * Phase 1: Mark booking as CANCELED
+   * Phase 2: Record cancellation details
+   * Phase 3: Initiate refund (if paid) - async via event
+   *
+   * @param tenantId - Tenant ID for data isolation
+   * @param bookingId - Booking identifier
+   * @param cancelledBy - Who is cancelling (CUSTOMER, TENANT, ADMIN, SYSTEM)
+   * @param reason - Optional reason for cancellation
+   *
+   * @returns Cancelled booking
+   *
+   * @throws {NotFoundError} If booking doesn't exist
+   * @throws {BookingAlreadyCancelledError} If booking is already cancelled
+   *
+   * @example
+   * ```typescript
+   * const cancelled = await bookingService.cancelBooking(
+   *   'tenant_123',
+   *   'booking_abc',
+   *   'CUSTOMER',
+   *   'Found a different venue'
+   * );
+   * ```
+   */
+  async cancelBooking(
+    tenantId: string,
+    bookingId: string,
+    cancelledBy: 'CUSTOMER' | 'TENANT' | 'ADMIN' | 'SYSTEM',
+    reason?: string
+  ): Promise<Booking> {
+    // Validate booking exists
+    const booking = await this.bookingRepo.findById(tenantId, bookingId);
+    if (!booking) {
+      throw new NotFoundError(`Booking ${bookingId} not found`);
+    }
+
+    // Cannot cancel already cancelled bookings
+    if (booking.status === 'CANCELED') {
+      throw new BookingAlreadyCancelledError(bookingId);
+    }
+
+    // Phase 1 & 2: Mark as cancelled and record details
+    const cancelled = await this.bookingRepo.update(tenantId, bookingId, {
+      status: 'CANCELED',
+      cancelledAt: new Date(),
+      cancelledBy,
+      cancellationReason: reason,
+      // Start refund process for paid bookings
+      refundStatus: booking.status === 'PAID' ? 'PENDING' : 'NONE',
+    });
+
+    // Emit event for downstream processing (refund, notifications, calendar)
+    await this._eventEmitter.emit('BookingCancelled', {
+      bookingId: cancelled.id,
+      tenantId,
+      email: cancelled.email,
+      coupleName: cancelled.coupleName,
+      eventDate: cancelled.eventDate,
+      totalCents: cancelled.totalCents,
+      cancelledBy,
+      reason,
+      needsRefund: booking.status === 'PAID',
+    });
+
+    return cancelled;
+  }
+
+  /**
+   * Process refund for a cancelled booking
+   *
+   * Called after cancellation to initiate the refund with Stripe.
+   * Updates refund status and stores Stripe refund ID.
+   *
+   * @param tenantId - Tenant ID for data isolation
+   * @param bookingId - Booking identifier
+   * @param paymentIntentId - Stripe PaymentIntent ID for refund
+   * @param amountCents - Optional amount for partial refund (full refund if omitted)
+   *
+   * @returns Updated booking with refund status
+   *
+   * @throws {NotFoundError} If booking doesn't exist
+   * @throws {Error} If booking is not cancelled or doesn't need refund
+   *
+   * @example
+   * ```typescript
+   * const refunded = await bookingService.processRefund(
+   *   'tenant_123',
+   *   'booking_abc',
+   *   'pi_stripe_123'
+   * );
+   * ```
+   */
+  async processRefund(
+    tenantId: string,
+    bookingId: string,
+    paymentIntentId: string,
+    amountCents?: number
+  ): Promise<Booking> {
+    // Validate booking exists
+    const booking = await this.bookingRepo.findById(tenantId, bookingId);
+    if (!booking) {
+      throw new NotFoundError(`Booking ${bookingId} not found`);
+    }
+
+    // Only refund cancelled bookings with pending refund status
+    // Note: We check using the extended booking type (with refundStatus)
+    const extendedBooking = booking as Booking & {
+      refundStatus?: string;
+      depositPaidAmount?: number;
+      balancePaidAmount?: number;
+    };
+    if (booking.status !== 'CANCELED' || extendedBooking.refundStatus !== 'PENDING') {
+      throw new Error(`Booking ${bookingId} does not need a refund`);
+    }
+
+    // P1-150 FIX: Calculate total paid and validate refund amount
+    // Total paid = deposit + balance (if applicable), falling back to totalCents for legacy bookings
+    const totalPaid = (extendedBooking.depositPaidAmount ?? 0) +
+                     (extendedBooking.balancePaidAmount ?? 0) ||
+                     booking.totalCents;
+
+    // Track cumulative refunds to prevent over-refunds
+    const previousRefunds = booking.refundAmount ?? 0;
+    const maxRefundable = totalPaid - previousRefunds;
+
+    // Determine refund amount (requested or remaining amount)
+    const refundAmount = amountCents ?? maxRefundable;
+
+    // Validate refund doesn't exceed what's available
+    if (refundAmount <= 0) {
+      throw new Error(`No refundable amount remaining for booking ${bookingId}`);
+    }
+    if (refundAmount > maxRefundable) {
+      throw new Error(
+        `Refund amount ${refundAmount} cents exceeds remaining refundable amount ${maxRefundable} cents`
+      );
+    }
+
+    // Mark as processing
+    await this.bookingRepo.update(tenantId, bookingId, {
+      refundStatus: 'PROCESSING',
+    });
+
+    try {
+      // Process refund via Stripe
+      const refundResult = await this.paymentProvider.refund({
+        paymentIntentId,
+        amountCents: refundAmount,
+        reason: 'Customer cancelled booking',
+      });
+
+      // P1-150 FIX: Track cumulative refunds and determine if partial vs complete
+      const cumulativeRefund = previousRefunds + refundResult.amountCents;
+      const isPartial = cumulativeRefund < totalPaid;
+
+      // Update with refund details
+      const refunded = await this.bookingRepo.update(tenantId, bookingId, {
+        refundStatus: isPartial ? 'PARTIAL' : 'COMPLETED',
+        refundAmount: cumulativeRefund, // P1-150 FIX: Use cumulative, not just latest
+        refundedAt: new Date(),
+        stripeRefundId: refundResult.refundId,
+        status: isPartial ? 'CANCELED' : 'REFUNDED', // Mark as REFUNDED only if fully refunded
+      });
+
+      // Emit event for notifications
+      await this._eventEmitter.emit('BookingRefunded', {
+        bookingId: refunded.id,
+        tenantId,
+        email: refunded.email,
+        coupleName: refunded.coupleName,
+        refundAmount: refundResult.amountCents,
+        isPartial,
+      });
+
+      return refunded;
+    } catch (error) {
+      // Mark refund as failed
+      await this.bookingRepo.update(tenantId, bookingId, {
+        refundStatus: 'FAILED',
+      });
+      throw error;
+    }
   }
 }

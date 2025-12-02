@@ -58,6 +58,14 @@ import {
   PublishDraftsResponseDtoSchema,
   DiscardDraftsDtoSchema,
   DiscardDraftsResponseDtoSchema,
+  // Booking Management DTOs (MVP Gaps Phase 1)
+  RescheduleBookingDtoSchema,
+  CancelBookingDtoSchema,
+  BookingManagementDtoSchema,
+  PublicBookingDetailsDtoSchema,
+  // Reminder DTOs (MVP Gaps Phase 2)
+  ReminderStatusResponseSchema,
+  ProcessRemindersResponseSchema,
   // Error response schemas
   BadRequestErrorSchema,
   UnauthorizedErrorSchema,
@@ -567,7 +575,7 @@ export const Contracts = c.router({
     method: 'GET',
     path: '/v1/tenant-admin/bookings',
     query: z.object({
-      status: z.enum(['PAID', 'REFUNDED', 'CANCELED']).optional(),
+      status: z.enum(['PENDING', 'DEPOSIT_PAID', 'PAID', 'CONFIRMED', 'CANCELED', 'REFUNDED', 'FULFILLED']).optional(),
       startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
       endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     }).optional(),
@@ -1346,7 +1354,7 @@ export const Contracts = c.router({
     method: 'GET',
     path: '/v1/tenant-admin/appointments',
     query: z.object({
-      status: z.enum(['PENDING', 'CONFIRMED', 'CANCELED', 'FULFILLED']).optional(),
+      status: z.enum(['PENDING', 'DEPOSIT_PAID', 'PAID', 'CONFIRMED', 'CANCELED', 'REFUNDED', 'FULFILLED']).optional(),
       serviceId: z.string().optional(),
       startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
       endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -1359,5 +1367,128 @@ export const Contracts = c.router({
       500: InternalServerErrorSchema,
     },
     summary: 'Get all appointments (time-slot bookings) for tenant with optional filters (requires tenant admin authentication)',
+  },
+
+  // ============================================================================
+  // Public Booking Management Endpoints (MVP Gaps Phase 1)
+  // Unauthenticated - uses JWT token in query param for access
+  // ============================================================================
+
+  /**
+   * Get booking details for management page
+   * GET /v1/public/bookings/manage
+   * Query param: token (JWT with booking access)
+   */
+  publicGetBookingDetails: {
+    method: 'GET',
+    path: '/v1/public/bookings/manage',
+    query: z.object({
+      token: z.string().min(1, 'Token is required'),
+    }),
+    responses: {
+      200: PublicBookingDetailsDtoSchema,
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema, // Invalid/expired token
+      404: NotFoundErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Get booking details for customer self-service (requires valid JWT token)',
+  },
+
+  /**
+   * Reschedule a booking to a new date
+   * POST /v1/public/bookings/reschedule
+   * Query param: token (JWT with reschedule permission)
+   */
+  publicRescheduleBooking: {
+    method: 'POST',
+    path: '/v1/public/bookings/reschedule',
+    query: z.object({
+      token: z.string().min(1, 'Token is required'),
+    }),
+    body: RescheduleBookingDtoSchema,
+    responses: {
+      200: BookingManagementDtoSchema,
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema, // Invalid/expired token
+      404: NotFoundErrorSchema,
+      409: ConflictErrorSchema, // Date already booked
+      422: UnprocessableEntityErrorSchema, // Cannot reschedule (already cancelled, etc.)
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Reschedule booking to a new date (requires valid JWT token)',
+  },
+
+  /**
+   * Cancel a booking
+   * POST /v1/public/bookings/cancel
+   * Query param: token (JWT with cancel permission)
+   */
+  publicCancelBooking: {
+    method: 'POST',
+    path: '/v1/public/bookings/cancel',
+    query: z.object({
+      token: z.string().min(1, 'Token is required'),
+    }),
+    body: CancelBookingDtoSchema,
+    responses: {
+      200: BookingManagementDtoSchema,
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema, // Invalid/expired token
+      404: NotFoundErrorSchema,
+      422: UnprocessableEntityErrorSchema, // Cannot cancel (already cancelled, etc.)
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Cancel a booking (requires valid JWT token)',
+  },
+
+  // ============================================================================
+  // Tenant Admin Reminder Endpoints (MVP Gaps Phase 2)
+  // Lazy reminder evaluation - no cron jobs, processed on dashboard load
+  // ============================================================================
+
+  /**
+   * Get reminder status for dashboard display
+   * GET /v1/tenant-admin/reminders/status
+   *
+   * Returns pending count for badge display and preview of upcoming reminders.
+   * Used to show tenant admins how many reminder emails need to be sent.
+   */
+  tenantAdminGetReminderStatus: {
+    method: 'GET',
+    path: '/v1/tenant-admin/reminders/status',
+    responses: {
+      200: ReminderStatusResponseSchema,
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Get reminder status for dashboard (requires tenant admin authentication)',
+  },
+
+  /**
+   * Trigger lazy reminder processing
+   * POST /v1/tenant-admin/reminders/process
+   *
+   * Processes pending reminders inline when tenant admin loads dashboard.
+   * Optional query param: limit (default 10, max 100)
+   *
+   * Returns count of successfully processed and failed reminders.
+   */
+  tenantAdminProcessReminders: {
+    method: 'POST',
+    path: '/v1/tenant-admin/reminders/process',
+    query: z.object({
+      limit: z.coerce.number().int().min(1).max(100).optional(),
+    }).optional(),
+    body: z.undefined(),
+    responses: {
+      200: ProcessRemindersResponseSchema,
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Process pending reminders (requires tenant admin authentication)',
   },
 });

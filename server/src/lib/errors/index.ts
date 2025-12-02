@@ -56,6 +56,8 @@ export {
   BookingExpiredError,
   BookingConflictError,
   BookingLockTimeoutError,
+  BookingAlreadyCancelledError,
+  BookingCannotBeRescheduledError,
   PaymentError,
   PaymentAlreadyProcessedError,
   PaymentFailedError,

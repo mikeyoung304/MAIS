@@ -123,7 +123,7 @@ export const BookingDtoSchema = z.object({
   eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
   addOnIds: z.array(z.string()),
   totalCents: z.number().int(),
-  status: z.enum(['PAID', 'REFUNDED', 'CANCELED']),
+  status: z.enum(['PENDING', 'DEPOSIT_PAID', 'PAID', 'CONFIRMED', 'CANCELED', 'REFUNDED', 'FULFILLED']),
   createdAt: z.string().datetime(), // ISO datetime
 });
 
@@ -667,7 +667,7 @@ export const AppointmentDtoSchema = z.object({
   startTime: z.string().datetime(), // Full UTC datetime
   endTime: z.string().datetime(), // Full UTC datetime
   clientTimezone: z.string().nullable(),
-  status: z.enum(['PENDING', 'CONFIRMED', 'CANCELED', 'FULFILLED']),
+  status: z.enum(['PENDING', 'DEPOSIT_PAID', 'PAID', 'CONFIRMED', 'CANCELED', 'REFUNDED', 'FULFILLED']),
   totalPrice: z.number().int(),
   notes: z.string().nullable(),
   createdAt: z.string().datetime(),
@@ -739,3 +739,167 @@ export const TenantPublicDtoSchema = z.object({
 });
 
 export type TenantPublicDto = z.infer<typeof TenantPublicDtoSchema>;
+
+// ============================================================================
+// Booking Management DTOs (MVP Gaps Phase 1)
+// ============================================================================
+
+/**
+ * Request body for reschedule endpoint
+ */
+export const RescheduleBookingDtoSchema = z.object({
+  newDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+});
+
+export type RescheduleBookingDto = z.infer<typeof RescheduleBookingDtoSchema>;
+
+/**
+ * Request body for cancel endpoint
+ */
+export const CancelBookingDtoSchema = z.object({
+  reason: z.string().max(500, 'Reason must be 500 characters or less').optional(),
+});
+
+export type CancelBookingDto = z.infer<typeof CancelBookingDtoSchema>;
+
+/**
+ * Extended booking DTO with management fields
+ * Used for public booking management responses
+ */
+export const BookingManagementDtoSchema = BookingDtoSchema.extend({
+  cancelledBy: z.enum(['CUSTOMER', 'TENANT', 'ADMIN', 'SYSTEM']).optional(),
+  cancellationReason: z.string().optional(),
+  refundStatus: z.enum(['NONE', 'PENDING', 'PROCESSING', 'COMPLETED', 'PARTIAL', 'FAILED']).optional(),
+  refundAmount: z.number().int().optional(),
+  refundedAt: z.string().datetime().optional(),
+});
+
+export type BookingManagementDto = z.infer<typeof BookingManagementDtoSchema>;
+
+/**
+ * Response for public booking lookup with management URLs
+ * Used by customer-facing manage booking page
+ */
+export const PublicBookingDetailsDtoSchema = z.object({
+  booking: BookingManagementDtoSchema,
+  canReschedule: z.boolean(),
+  canCancel: z.boolean(),
+  packageTitle: z.string(),
+  addOnTitles: z.array(z.string()),
+});
+
+export type PublicBookingDetailsDto = z.infer<typeof PublicBookingDetailsDtoSchema>;
+
+// ============================================================================
+// Reminder DTOs (MVP Gaps Phase 2)
+// ============================================================================
+
+/**
+ * Upcoming reminder preview item
+ * Used in dashboard to show which reminders are pending
+ */
+export const UpcomingReminderDtoSchema = z.object({
+  bookingId: z.string(),
+  coupleName: z.string(),
+  eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  reminderDueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  daysUntilEvent: z.number().int(),
+});
+
+export type UpcomingReminderDto = z.infer<typeof UpcomingReminderDtoSchema>;
+
+/**
+ * Reminder status response (for dashboard badge)
+ * Shows how many pending reminders exist and preview of upcoming ones
+ */
+export const ReminderStatusResponseSchema = z.object({
+  pendingCount: z.number().int().min(0),
+  upcomingReminders: z.array(UpcomingReminderDtoSchema),
+});
+
+export type ReminderStatusResponse = z.infer<typeof ReminderStatusResponseSchema>;
+
+/**
+ * Process reminders response
+ * Shows how many reminders were successfully processed vs failed
+ */
+export const ProcessRemindersResponseSchema = z.object({
+  processed: z.number().int().min(0),
+  failed: z.number().int().min(0),
+});
+
+export type ProcessRemindersResponse = z.infer<typeof ProcessRemindersResponseSchema>;
+
+// ============================================================================
+// Deposit Settings DTOs (MVP Gaps Phase 4)
+// ============================================================================
+
+/**
+ * Deposit settings for tenant
+ * Controls deposit amount and balance due timeline
+ */
+export const DepositSettingsDtoSchema = z.object({
+  depositPercent: z.number().min(0).max(100).nullable(), // null = full payment required
+  balanceDueDays: z.number().int().min(1).max(90),
+});
+
+export type DepositSettingsDto = z.infer<typeof DepositSettingsDtoSchema>;
+
+/**
+ * Update deposit settings request
+ */
+export const UpdateDepositSettingsDtoSchema = z.object({
+  depositPercent: z.number().min(0).max(100).nullable().optional(),
+  balanceDueDays: z.number().int().min(1).max(90).optional(),
+});
+
+export type UpdateDepositSettingsDto = z.infer<typeof UpdateDepositSettingsDtoSchema>;
+
+/**
+ * Balance payment response (after creating Stripe checkout)
+ */
+export const BalancePaymentResponseSchema = z.object({
+  checkoutUrl: z.string().url(),
+  balanceAmountCents: z.number().int().min(0),
+});
+
+export type BalancePaymentResponse = z.infer<typeof BalancePaymentResponseSchema>;
+
+// ============================================================================
+// Calendar Configuration DTOs (MVP Gaps Phase 3)
+// ============================================================================
+
+/**
+ * Calendar status response
+ * Shows whether tenant has configured their own calendar
+ */
+export const CalendarStatusResponseSchema = z.object({
+  configured: z.boolean(),
+  calendarId: z.string().nullable(), // Masked for security (e.g., "test@gro...e.com")
+});
+
+export type CalendarStatusResponse = z.infer<typeof CalendarStatusResponseSchema>;
+
+/**
+ * Calendar configuration input
+ * Tenant provides their Google Calendar ID and service account JSON
+ */
+export const CalendarConfigInputSchema = z.object({
+  calendarId: z.string().min(1, 'Calendar ID is required'),
+  serviceAccountJson: z.string().min(1, 'Service account JSON is required'),
+});
+
+export type CalendarConfigInput = z.infer<typeof CalendarConfigInputSchema>;
+
+/**
+ * Calendar test response
+ * Shows whether connection test succeeded
+ */
+export const CalendarTestResponseSchema = z.object({
+  success: z.boolean(),
+  calendarId: z.string().optional(), // Masked calendar ID
+  calendarName: z.string().optional(), // Calendar display name
+  error: z.string().optional(), // Error message if test failed
+});
+
+export type CalendarTestResponse = z.infer<typeof CalendarTestResponseSchema>;

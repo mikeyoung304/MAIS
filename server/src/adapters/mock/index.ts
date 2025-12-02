@@ -15,7 +15,7 @@ import type {
 import type { PaymentProvider, CheckoutSession } from '../lib/ports';
 import type { EmailProvider } from '../lib/ports';
 import type { User, UserRepository } from '../lib/ports';
-import { BookingConflictError } from '../lib/errors';
+import { BookingConflictError, NotFoundError } from '../../lib/errors';
 import bcrypt from 'bcryptjs';
 import type Stripe from 'stripe';
 import { logger } from '../lib/core/logger';
@@ -547,6 +547,97 @@ export class MockBookingRepository implements BookingRepository {
     }
   }
 
+  async update(
+    tenantId: string,
+    bookingId: string,
+    data: {
+      eventDate?: string;
+      status?: 'CANCELED';
+      cancelledAt?: Date;
+      cancelledBy?: 'CUSTOMER' | 'TENANT' | 'ADMIN' | 'SYSTEM';
+      cancellationReason?: string;
+      refundStatus?: 'NONE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'PARTIAL' | 'FAILED';
+      refundAmount?: number;
+      refundedAt?: Date;
+      stripeRefundId?: string;
+    }
+  ): Promise<Booking> {
+    const booking = bookings.get(bookingId);
+    if (!booking) {
+      throw new Error(`Booking ${bookingId} not found`);
+    }
+
+    // Apply updates
+    if (data.eventDate !== undefined) {
+      // Update date mapping
+      const oldDateKey = toUtcMidnight(booking.eventDate);
+      const newDateKey = toUtcMidnight(data.eventDate);
+      bookingsByDate.delete(oldDateKey);
+      bookingsByDate.set(newDateKey, bookingId);
+      booking.eventDate = data.eventDate;
+    }
+    if (data.status !== undefined) {
+      booking.status = data.status;
+    }
+
+    // Store extra fields in mock
+    if (data.cancelledAt !== undefined) {
+      (booking as any).cancelledAt = data.cancelledAt;
+    }
+    if (data.cancelledBy !== undefined) {
+      (booking as any).cancelledBy = data.cancelledBy;
+    }
+    if (data.cancellationReason !== undefined) {
+      (booking as any).cancellationReason = data.cancellationReason;
+    }
+    if (data.refundStatus !== undefined) {
+      (booking as any).refundStatus = data.refundStatus;
+    }
+    if (data.refundAmount !== undefined) {
+      (booking as any).refundAmount = data.refundAmount;
+    }
+    if (data.refundedAt !== undefined) {
+      (booking as any).refundedAt = data.refundedAt;
+    }
+    if (data.stripeRefundId !== undefined) {
+      (booking as any).stripeRefundId = data.stripeRefundId;
+    }
+
+    logger.debug({ bookingId, data }, 'Mock booking updated');
+    return booking;
+  }
+
+  async reschedule(tenantId: string, bookingId: string, newDate: string): Promise<Booking> {
+    const booking = bookings.get(bookingId);
+    if (!booking) {
+      throw new Error(`Booking ${bookingId} not found`);
+    }
+
+    if (booking.status === 'CANCELED') {
+      throw new Error(`Booking ${bookingId} is already cancelled`);
+    }
+
+    const newDateKey = toUtcMidnight(newDate);
+
+    // Check if new date is taken by a different booking
+    const existingId = bookingsByDate.get(newDateKey);
+    if (existingId && existingId !== bookingId) {
+      const existingBooking = bookings.get(existingId);
+      if (existingBooking && existingBooking.status !== 'CANCELED') {
+        throw new BookingConflictError(newDate);
+      }
+    }
+
+    // Update date
+    const oldDateKey = toUtcMidnight(booking.eventDate);
+    bookingsByDate.delete(oldDateKey);
+    bookingsByDate.set(newDateKey, bookingId);
+    booking.eventDate = newDate;
+
+    logger.debug({ bookingId, newDate }, 'Mock booking rescheduled');
+    return booking;
+  }
+
   async findTimeslotBookings(
     tenantId: string,
     date: Date,
@@ -598,6 +689,67 @@ export class MockBookingRepository implements BookingRepository {
     // Mock bookings don't have TIMESLOT type
     logger.debug({ tenantId, filters, limit, offset }, 'findAppointments called');
     return [];
+  }
+
+  async findBookingsNeedingReminders(tenantId: string, limit: number = 10): Promise<Booking[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Find bookings where reminderDueDate is in the past and reminderSentAt is not set
+    const result: Booking[] = [];
+    for (const booking of bookings.values()) {
+      if (booking.status !== 'PAID') continue;
+
+      const reminderDueDate = (booking as any).reminderDueDate;
+      const reminderSentAt = (booking as any).reminderSentAt;
+
+      if (reminderDueDate && !reminderSentAt) {
+        const dueDate = new Date(reminderDueDate);
+        dueDate.setHours(0, 0, 0, 0);
+        if (dueDate <= today) {
+          result.push(booking);
+          if (result.length >= limit) break;
+        }
+      }
+    }
+
+    logger.debug({ tenantId, count: result.length }, 'findBookingsNeedingReminders called');
+    return result;
+  }
+
+  async markReminderSent(tenantId: string, bookingId: string): Promise<void> {
+    const booking = bookings.get(bookingId);
+    if (booking) {
+      (booking as any).reminderSentAt = new Date().toISOString();
+      logger.debug({ bookingId }, 'Reminder marked as sent');
+    }
+  }
+
+  /**
+   * Complete balance payment atomically
+   * P1-147 FIX: Mock implementation - in-memory is naturally atomic
+   */
+  async completeBalancePayment(
+    tenantId: string,
+    bookingId: string,
+    balanceAmountCents: number
+  ): Promise<Booking | null> {
+    const booking = bookings.get(bookingId);
+    if (!booking) {
+      throw new NotFoundError(`Booking ${bookingId} not found`);
+    }
+
+    // Idempotent: If balance already paid, return null
+    if ((booking as any).balancePaidAt) {
+      return null;
+    }
+
+    // Update booking with balance paid
+    (booking as any).balancePaidAmount = balanceAmountCents;
+    (booking as any).balancePaidAt = new Date().toISOString();
+    booking.status = 'PAID';
+
+    return booking;
   }
 }
 
