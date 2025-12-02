@@ -123,6 +123,27 @@ export const uploadLimiterTenant = rateLimit({
 export const uploadLimiter = uploadLimiterIP;
 
 /**
+ * Rate limiter for visual editor draft autosave endpoints
+ * Allows frequent saves (1 per second client debounce) while preventing abuse
+ * 120 saves per minute per tenant (2 per second to allow for bursts)
+ */
+export const draftAutosaveLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: process.env.NODE_ENV === 'test' ? 500 : 120, // 120 saves per minute (2/sec)
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Key by tenantId for per-tenant limiting
+  keyGenerator: (_req, res) => res.locals.tenantAuth?.tenantId || normalizeIp(_req.ip),
+  skip: (_req, res) => !res.locals.tenantAuth, // Only apply to authenticated requests
+  validate: false,
+  handler: (_req: Request, res: Response) =>
+    res.status(429).json({
+      error: 'too_many_save_requests',
+      message: 'Saving too frequently. Please slow down.',
+    }),
+});
+
+/**
  * Rate limiter for public tenant lookup (storefront routing)
  * 100 requests per 15 minutes per IP - generous for legitimate storefront use
  * Prevents enumeration attacks on tenant slugs

@@ -43,7 +43,9 @@ export function EditableText({
 }: EditableTextProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
-  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+  // Use separate refs for proper TypeScript type safety
+  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Sync edit value when external value changes
   useEffect(() => {
@@ -54,13 +56,16 @@ export function EditableText({
 
   // Focus input when entering edit mode
   useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      // Move cursor to end
-      const length = inputRef.current.value.length;
-      inputRef.current.setSelectionRange(length, length);
+    if (isEditing) {
+      const element = multiline ? textareaRef.current : inputRef.current;
+      if (element) {
+        element.focus();
+        // Move cursor to end
+        const length = element.value.length;
+        element.setSelectionRange(length, length);
+      }
     }
-  }, [isEditing]);
+  }, [isEditing, multiline]);
 
   const handleClick = useCallback(() => {
     if (!disabled) {
@@ -125,27 +130,42 @@ export function EditableText({
     );
   }
 
-  // Edit mode
-  const commonProps = {
-    ref: inputRef as any,
-    value: editValue,
-    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-      setEditValue(e.target.value),
-    onBlur: handleBlur,
-    onKeyDown: handleKeyDown,
-    maxLength,
-    placeholder,
-    "aria-label": ariaLabel || `Edit ${placeholder}`,
-    className: cn(
-      "w-full rounded border border-input bg-background px-2 py-1",
-      "focus:outline-none focus:ring-2 focus:ring-ring",
-      inputClassName
-    ),
-  };
+  // Edit mode - shared props without ref (ref is added per-element for type safety)
+  const sharedClassName = cn(
+    "w-full rounded border border-input bg-background px-2 py-1",
+    "focus:outline-none focus:ring-2 focus:ring-ring",
+    inputClassName
+  );
 
   if (multiline) {
-    return <textarea {...commonProps} rows={rows} />;
+    return (
+      <textarea
+        ref={textareaRef}
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        maxLength={maxLength}
+        placeholder={placeholder}
+        aria-label={ariaLabel || `Edit ${placeholder}`}
+        className={sharedClassName}
+        rows={rows}
+      />
+    );
   }
 
-  return <input {...commonProps} type="text" />;
+  return (
+    <input
+      ref={inputRef}
+      type="text"
+      value={editValue}
+      onChange={(e) => setEditValue(e.target.value)}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      maxLength={maxLength}
+      placeholder={placeholder}
+      aria-label={ariaLabel || `Edit ${placeholder}`}
+      className={sharedClassName}
+    />
+  );
 }

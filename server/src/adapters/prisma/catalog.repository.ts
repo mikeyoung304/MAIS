@@ -494,16 +494,20 @@ export class PrismaCatalogRepository implements CatalogRepository {
     }
 
     // Apply drafts to live fields in a transaction
+    // IMPORTANT: Use explicit null checks (not ??) to preserve intentional field clearing
+    // When draftField is "" (empty string), we WANT to apply it, not fall back to live value
+    // nullish coalescing (??) treats empty strings correctly, but explicit checks are clearer
     const publishedPackages = await this.prisma.$transaction(
       packagesWithDrafts.map((pkg) =>
         this.prisma.package.update({
           where: { id: pkg.id, tenantId },
           data: {
-            // Apply draft values (fall back to current if draft is null)
-            name: pkg.draftTitle ?? pkg.name,
-            description: pkg.draftDescription ?? pkg.description,
-            basePrice: pkg.draftPriceCents ?? pkg.basePrice,
-            photos: pkg.draftPhotos ?? pkg.photos,
+            // Apply draft values - use draft if edited (not null), else keep current live value
+            // Empty strings are valid edits and should NOT fall back to live values
+            name: pkg.draftTitle !== null ? pkg.draftTitle : pkg.name,
+            description: pkg.draftDescription !== null ? pkg.draftDescription : pkg.description,
+            basePrice: pkg.draftPriceCents !== null ? pkg.draftPriceCents : pkg.basePrice,
+            photos: pkg.draftPhotos !== null ? pkg.draftPhotos : pkg.photos,
             // Clear all draft fields
             draftTitle: null,
             draftDescription: null,

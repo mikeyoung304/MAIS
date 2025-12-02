@@ -11,6 +11,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { api, baseUrl } from "@/lib/api";
+import { logger } from "@/lib/logger";
 
 // Types for visual editor packages (with draft fields)
 export interface PackageWithDraft {
@@ -132,6 +133,7 @@ export function useVisualEditor(): UseVisualEditorReturn {
 
   /**
    * Update draft for a package with 1s debounce
+   * Includes rollback on save failure to maintain UI consistency with server state
    */
   const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
     // Clear any pending save for this package
@@ -140,9 +142,11 @@ export function useVisualEditor(): UseVisualEditorReturn {
       clearTimeout(existingTimeout);
     }
 
-    // Optimistically update local state
-    setPackages((prev) =>
-      prev.map((pkg) =>
+    // Capture original state BEFORE optimistic update for potential rollback
+    let originalPackage: PackageWithDraft | undefined;
+    setPackages((prev) => {
+      originalPackage = prev.find((pkg) => pkg.id === packageId);
+      return prev.map((pkg) =>
         pkg.id === packageId
           ? {
               ...pkg,
@@ -154,8 +158,8 @@ export function useVisualEditor(): UseVisualEditorReturn {
               draftUpdatedAt: new Date().toISOString(),
             }
           : pkg
-      )
-    );
+      );
+    });
 
     // Debounced save to server (1 second)
     const timeout = setTimeout(async () => {
@@ -184,10 +188,25 @@ export function useVisualEditor(): UseVisualEditorReturn {
           prev.map((pkg) => (pkg.id === packageId ? updatedPackage : pkg))
         );
       } catch (err) {
-        console.error("Failed to save draft:", err);
-        toast.error("Failed to save changes", {
-          description: "Your changes may not have been saved. Please try again.",
+        logger.error("Failed to save draft", {
+          component: "useVisualEditor",
+          packageId,
+          error: err,
         });
+
+        // Rollback optimistic update on failure
+        if (originalPackage) {
+          setPackages((prev) =>
+            prev.map((pkg) => (pkg.id === packageId ? originalPackage! : pkg))
+          );
+          toast.error("Failed to save changes", {
+            description: "Your changes have been reverted. Please try again.",
+          });
+        } else {
+          toast.error("Failed to save changes", {
+            description: "Your changes may not have been saved. Please try again.",
+          });
+        }
       } finally {
         setIsSaving(false);
       }

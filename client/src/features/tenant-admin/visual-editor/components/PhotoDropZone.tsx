@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Image, X, Upload, GripVertical } from "lucide-react";
 import { packagePhotoApi } from "@/lib/package-photo-api";
+import { logger } from "@/lib/logger";
 
 interface PackagePhoto {
   url: string;
@@ -79,7 +80,11 @@ export function PhotoDropZone({
         order: photos.length,
       };
     } catch (err) {
-      console.error("Failed to upload photo:", err);
+      logger.error("Failed to upload photo", {
+        component: "PhotoDropZone",
+        packageId,
+        error: err,
+      });
       toast.error("Failed to upload photo", {
         description: err instanceof Error ? err.message : "Please try again.",
       });
@@ -170,7 +175,12 @@ export function PhotoDropZone({
       onPhotosChange(newPhotos);
       toast.success("Photo deleted");
     } catch (err) {
-      console.error("Failed to delete photo:", err);
+      logger.error("Failed to delete photo", {
+        component: "PhotoDropZone",
+        packageId,
+        filename: photo.filename,
+        error: err,
+      });
       toast.error("Failed to delete photo");
     }
   }, [packageId, photos, onPhotosChange]);

@@ -28,7 +28,7 @@ import {
   ValidationError,
   ForbiddenError,
 } from '../lib/errors';
-import { uploadLimiterIP, uploadLimiterTenant } from '../middleware/rateLimiter';
+import { uploadLimiterIP, uploadLimiterTenant, draftAutosaveLimiter } from '../middleware/rateLimiter';
 
 // Configure multer for memory storage
 const upload = multer({
@@ -647,7 +647,7 @@ export function createTenantAdminRoutes(
    * GET /v1/tenant-admin/packages/drafts
    * Get all packages with draft fields for visual editor
    */
-  router.get('/packages/drafts', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/packages/drafts', draftAutosaveLimiter, async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -695,7 +695,7 @@ export function createTenantAdminRoutes(
    * PATCH /v1/tenant-admin/packages/:id/draft
    * Update package draft (autosave target)
    */
-  router.patch('/packages/:id/draft', async (req: Request, res: Response, next: NextFunction) => {
+  router.patch('/packages/:id/draft', draftAutosaveLimiter, async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -767,7 +767,7 @@ export function createTenantAdminRoutes(
    * POST /v1/tenant-admin/packages/publish
    * Publish all package drafts to live
    */
-  router.post('/packages/publish', async (req: Request, res: Response, next: NextFunction) => {
+  router.post('/packages/publish', draftAutosaveLimiter, async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -811,7 +811,7 @@ export function createTenantAdminRoutes(
    * DELETE /v1/tenant-admin/packages/drafts
    * Discard all package drafts
    */
-  router.delete('/packages/drafts', async (req: Request, res: Response, next: NextFunction) => {
+  router.delete('/packages/drafts', draftAutosaveLimiter, async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
