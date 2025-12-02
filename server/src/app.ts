@@ -210,6 +210,7 @@ export function createApp(
     segment: container.services.segment,
     stripeConnect: container.services.stripeConnect,
     schedulingAvailability: container.services.schedulingAvailability,
+    packageDraft: container.services.packageDraft,
   }, container.mailProvider, container.prisma, container.repositories);
 
   // Mount dev routes (mock mode only)
