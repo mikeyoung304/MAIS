@@ -239,20 +239,16 @@ export function useVisualEditor(): UseVisualEditorReturn {
       return;
     }
 
+    // Lock UI early to prevent new edits during publish process
+    // This prevents race conditions where user edits during flush
+    setIsPublishing(true);
+
     // Flush any pending changes first
     if (saveTimeout.current) {
       clearTimeout(saveTimeout.current);
       saveTimeout.current = null;
     }
     await flushPendingChanges();
-
-    // Re-check if new changes arrived during flush (race condition prevention)
-    // If user made edits during the 100-500ms flush, those need to be flushed too
-    if (pendingChanges.current.size > 0) {
-      await flushPendingChanges();
-    }
-
-    setIsPublishing(true);
 
     try {
       const { status, body } = await api.tenantAdminPublishDrafts({

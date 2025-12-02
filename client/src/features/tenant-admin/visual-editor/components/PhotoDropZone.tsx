@@ -114,9 +114,12 @@ export function PhotoDropZone({
 
   /**
    * Handle file selection (from input or drop)
+   * Note: Calculate canAddMore inside callback to avoid stale closure during async uploads
    */
   const handleFiles = useCallback(async (files: FileList) => {
-    if (disabled || !canAddMore) return;
+    // Calculate fresh value to avoid stale closure (photos may change during async uploads)
+    const currentCanAddMore = photos.length < maxPhotos;
+    if (disabled || !currentCanAddMore) return;
 
     const remainingSlots = maxPhotos - photos.length;
     const filesToUpload = Array.from(files).slice(0, remainingSlots);
@@ -145,7 +148,7 @@ export function PhotoDropZone({
     } finally {
       setIsUploading(false);
     }
-  }, [disabled, canAddMore, maxPhotos, photos, uploadPhoto, onPhotosChange]);
+  }, [disabled, maxPhotos, photos, uploadPhoto, onPhotosChange]);
 
   /**
    * Handle file input change
@@ -231,7 +234,7 @@ export function PhotoDropZone({
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
           {photos.map((photo, index) => (
             <div
-              key={photo.filename ? `${index}-${photo.filename}` : `photo-${index}`}
+              key={photo.filename || `temp-${index}`}
               draggable={!disabled}
               onDragStart={() => {
                 setDraggedIndex(index);
