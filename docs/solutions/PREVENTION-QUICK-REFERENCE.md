@@ -116,12 +116,60 @@ console.log('User logged in', userId); // ← ESLint will block this
 ### UI Patterns
 
 ```typescript
-// ✅ Use React controlled components
-const [email, setEmail] = useState('');
-<Input value={email} onChange={e => setEmail(e.target.value)} />
+// ✅ Use AlertDialog for confirmations
+import { AlertDialog, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
+
+<AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+  <AlertDialogContent>
+    <AlertDialogTitle>Confirm Action?</AlertDialogTitle>
+    <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+      <AlertDialogAction onClick={handleConfirm}>Confirm</AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
 
 // ❌ NEVER use browser prompt/alert/confirm
 const email = prompt('Enter email'); // ← ESLint will block this
+if (!window.confirm('Delete?')) return; // ← ESLint will block this
+```
+
+```typescript
+// ✅ Memoize derived values
+const effectiveValues = useMemo(() => ({
+  title: draft.title ?? live.title,
+  price: draft.price ?? live.price,
+}), [draft.title, live.title, draft.price, live.price]);
+
+// ❌ Recalculated on every render
+const effectiveTitle = draft.title ?? live.title;
+const effectivePrice = draft.price ?? live.price;
+```
+
+---
+
+### Backend Logging Pattern
+
+```typescript
+// ✅ Use structured logger with audit trail
+import { logger } from '../lib/core/logger';
+
+async saveDraft(tenantId: string, id: string, draft: DraftInput) {
+  const result = await this.repo.updateDraft(tenantId, id, draft);
+
+  logger.info({
+    action: 'package_draft_saved',
+    tenantId,
+    packageId: id,
+    changedFields: Object.keys(draft),
+  }, 'Package draft saved');
+
+  return result;
+}
+
+// ❌ NEVER use console.log in production code
+console.log('Draft saved', id); // ← ESLint will block this
 ```
 
 ---
@@ -147,6 +195,18 @@ Copy-paste this into your PR description:
 - [ ] Indexes exist for WHERE clauses
 - [ ] No new PrismaClient() instantiated
 - [ ] Pagination for unbounded queries
+
+## React UI & Performance
+- [ ] No window.confirm/alert/prompt (use AlertDialog)
+- [ ] Derived values wrapped in useMemo()
+- [ ] Event handlers wrapped in useCallback()
+- [ ] WCAG focus indicators (focus-visible:ring-2)
+
+## Backend Logging
+- [ ] All mutations have logger.info() calls
+- [ ] Logs include action, tenantId, resourceId, changedFields
+- [ ] No console.log usage
+- [ ] Appropriate log level (info/warn/error)
 
 ## Feature Completeness
 - [ ] Backend routes implemented
@@ -329,8 +389,12 @@ rg 'new PrismaClient\(\)' server/src/routes --type ts
 # Check for console.log
 rg 'console\.log' server/src --type ts
 
-# Check for prompt/alert/confirm
+# Check for prompt/alert/confirm (window.confirm anti-pattern)
 rg 'prompt\(|alert\(|confirm\(' client/src --type ts
+grep -r "window\.confirm\|window\.alert\|window\.prompt" client/src/
+
+# Check for missing audit logs in mutations
+grep -E "async (create|update|delete|save|publish|discard)" server/src/services/*.ts -A 20 | grep -L "logger\."
 
 # Check for magic tenantId strings
 rg 'tenantId.*=.*(unknown|default|test)' --type ts

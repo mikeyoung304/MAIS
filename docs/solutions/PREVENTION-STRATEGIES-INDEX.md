@@ -154,6 +154,52 @@ draftPhotos: Prisma.JsonNull
 
 ---
 
+### 2.5. Code Review Pattern Guides
+
+#### [React UI Patterns & Audit Logging Review](./code-review-patterns/react-ui-patterns-audit-logging-review.md)
+**Purpose:** Prevent UI anti-patterns and missing audit trails
+**Audience:** Engineers working on React components and backend services
+**Key Patterns:** AlertDialog vs window.confirm, useMemo for performance, structured logging
+
+**Quick Rules:**
+```typescript
+// ✅ Use AlertDialog (not window.confirm)
+<AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+  <AlertDialogAction onClick={handleConfirm}>Confirm</AlertDialogAction>
+</AlertDialog>
+
+// ✅ Memoize derived values
+const effectiveValues = useMemo(() => ({
+  title: draft.title ?? live.title,
+}), [draft.title, live.title]);
+
+// ✅ Audit log important operations
+logger.info({
+  action: 'package_draft_saved',
+  tenantId,
+  packageId,
+  changedFields: Object.keys(draft),
+}, 'Package draft saved');
+```
+
+#### [React Hooks Performance & WCAG Review](./code-review-patterns/react-hooks-performance-wcag-review.md)
+**Purpose:** Prevent performance issues and accessibility violations
+**Audience:** Engineers working on React components
+**Key Patterns:** useCallback for stability, WCAG focus indicators, event handler memoization
+
+**Quick Rules:**
+```typescript
+// ✅ useCallback for event handlers
+const handleEdit = useCallback(async (pkg: PackageDto) => {
+  await manager.edit(pkg);
+}, [manager.edit]);
+
+// ✅ WCAG 2.4.7 focus indicator
+className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage"
+```
+
+---
+
 ### 3. Testing Guides
 
 #### Test Templates
@@ -298,6 +344,44 @@ cp server/test/templates/tenant-isolation.test.ts \
 
 ---
 
+### "I'm adding React UI components"
+
+**Read:**
+1. [React UI Patterns & Audit Logging Review](./code-review-patterns/react-ui-patterns-audit-logging-review.md)
+2. [React Hooks Performance & WCAG Review](./code-review-patterns/react-hooks-performance-wcag-review.md)
+
+**Checklist:**
+- [ ] No window.confirm/alert/prompt (use AlertDialog)
+- [ ] Derived values wrapped in useMemo()
+- [ ] Event handlers wrapped in useCallback()
+- [ ] WCAG focus indicators (focus-visible:ring-2)
+- [ ] Keyboard accessible (Escape, Tab navigation)
+
+**Test:**
+- [ ] Accessibility test
+- [ ] Performance test (React DevTools Profiler)
+
+---
+
+### "I'm adding backend service methods"
+
+**Read:**
+1. [React UI Patterns & Audit Logging Review - Pattern 3](./code-review-patterns/react-ui-patterns-audit-logging-review.md#pattern-3-audit-logging-for-important-operations)
+2. [Quick Reference - Logging & Debugging](./PREVENTION-QUICK-REFERENCE.md#logging--debugging)
+
+**Checklist:**
+- [ ] All mutations have audit logs (logger.info)
+- [ ] Logs include: action, tenantId, resourceId, changedFields
+- [ ] No console.log usage
+- [ ] Appropriate log level (info/warn/error)
+- [ ] No PII in logs
+
+**Test:**
+- [ ] Verify logs are created (test suite)
+- [ ] Verify structured format
+
+---
+
 ### "I'm fixing a production issue"
 
 **Read:**
@@ -370,6 +454,21 @@ cp server/test/templates/tenant-isolation.test.ts \
 
 ---
 
+### React UI & Performance Issues
+
+**Prevention docs:**
+- [React UI Patterns & Audit Logging Review](./code-review-patterns/react-ui-patterns-audit-logging-review.md)
+- [React Hooks Performance & WCAG Review](./code-review-patterns/react-hooks-performance-wcag-review.md)
+
+**Key patterns:**
+- AlertDialog instead of window.confirm()
+- useMemo() for derived values
+- useCallback() for event handlers
+- WCAG focus indicators
+- Audit logging for mutations
+
+---
+
 ### TypeScript & Build Issues
 
 **Prevention docs:**
@@ -435,8 +534,15 @@ rg 'new PrismaClient\(\)' server/src/routes --type ts
 # Find console.log
 rg 'console\.log' server/src --type ts
 
-# Find prompt/alert/confirm
+# Find prompt/alert/confirm (window.confirm anti-pattern)
 rg 'prompt\(|alert\(|confirm\(' client/src --type ts
+grep -r "window\.confirm" client/src/
+
+# Find mutations without logger calls
+grep -E "async (create|update|delete|save|publish|discard)" server/src/services/*.ts -A 20 | grep -L "logger\."
+
+# Find missing useMemo for derived values
+grep -A 20 "export.*function.*Component" client/src/**/*.tsx | grep -E "(const .* = .*\?\?|const .* = .*\.filter|const .* = .*\.map|const .* = .*\.sort)"
 ```
 
 ### CI/CD Checks
