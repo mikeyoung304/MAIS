@@ -44,6 +44,8 @@ export function PhotoDropZone({
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  // Track intended drop position for visual feedback (only reorder on drop)
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const canAddMore = photos.length < maxPhotos;
@@ -213,19 +215,43 @@ export function PhotoDropZone({
             <div
               key={photo.url}
               draggable={!disabled}
-              onDragStart={() => setDraggedIndex(index)}
-              onDragEnd={() => setDraggedIndex(null)}
+              onDragStart={() => {
+                setDraggedIndex(index);
+                setDropTargetIndex(null);
+              }}
+              onDragEnd={() => {
+                setDraggedIndex(null);
+                setDropTargetIndex(null);
+              }}
               onDragOver={(e) => {
                 e.preventDefault();
+                // Only update drop target position, don't reorder yet
+                if (draggedIndex !== null && draggedIndex !== index) {
+                  setDropTargetIndex(index);
+                }
+              }}
+              onDragLeave={() => {
+                // Clear drop target when leaving this element
+                if (dropTargetIndex === index) {
+                  setDropTargetIndex(null);
+                }
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Only reorder once on drop - prevents 50-100+ reorders per drag
                 if (draggedIndex !== null && draggedIndex !== index) {
                   handlePhotoReorder(draggedIndex, index);
-                  setDraggedIndex(index);
                 }
+                setDraggedIndex(null);
+                setDropTargetIndex(null);
               }}
               className={cn(
                 "relative aspect-square rounded-lg overflow-hidden border",
                 "group cursor-move transition-transform",
-                draggedIndex === index && "opacity-50 scale-95"
+                draggedIndex === index && "opacity-50 scale-95",
+                // Visual indicator for drop target
+                dropTargetIndex === index && draggedIndex !== index && "ring-2 ring-primary ring-offset-2"
               )}
             >
               <img

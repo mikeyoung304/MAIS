@@ -135,6 +135,23 @@ if (container.prisma) await container.prisma.$disconnect();
 it('bulk test', async () => { ... }, 30000);
 ```
 
+#### [Prisma TypeScript Build Failure Prevention](./PRISMA-TYPESCRIPT-BUILD-PREVENTION.md)
+**Purpose:** Prevent TypeScript compilation failures with Prisma JSON types
+**Audience:** Engineers working with Prisma JSON fields
+**Key Patterns:** Proper imports, `Prisma.InputJsonValue` casting, `Prisma.JsonNull` for nullification
+
+**Quick Rules:**
+```typescript
+// ✅ Correct imports
+import { Prisma, type PrismaClient } from '../../generated/prisma';
+
+// ✅ JSON field updates
+photos: data.photos as Prisma.InputJsonValue
+
+// ✅ Clearing JSON fields
+draftPhotos: Prisma.JsonNull
+```
+
 ---
 
 ### 3. Testing Guides
@@ -350,6 +367,18 @@ cp server/test/templates/tenant-isolation.test.ts \
 - Use logger (not console.log)
 - Use React components (not prompt/alert)
 - Follow TypeScript strict mode
+
+---
+
+### TypeScript & Build Issues
+
+**Prevention docs:**
+- [Prisma TypeScript Build Failure Prevention](./PRISMA-TYPESCRIPT-BUILD-PREVENTION.md)
+
+**Key patterns:**
+- Correct Prisma imports (value, not type-only)
+- JSON field casting with `Prisma.InputJsonValue`
+- Null handling with `Prisma.JsonNull`
 
 ---
 
