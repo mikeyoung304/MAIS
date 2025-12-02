@@ -268,15 +268,11 @@ export function useVisualEditor(): UseVisualEditorReturn {
   /**
    * Discard all drafts without publishing
    * Uses type-safe ts-rest client for compile-time type checking
+   * Note: Confirmation is handled by the UI component (AlertDialog)
    */
   const discardAll = useCallback(async () => {
     if (draftCount === 0) {
       toast.info("No changes to discard");
-      return;
-    }
-
-    // Confirm before discarding
-    if (!window.confirm(`Are you sure you want to discard changes to ${draftCount} package${draftCount !== 1 ? "s" : ""}?`)) {
       return;
     }
 

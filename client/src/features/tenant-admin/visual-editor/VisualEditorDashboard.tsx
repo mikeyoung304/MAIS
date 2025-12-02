@@ -8,17 +8,29 @@
  * - Responsive package grid
  */
 
-import { useCallback } from "react";
+import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Loader2, Save, X, RefreshCw, AlertTriangle, CheckCircle } from "lucide-react";
 import { useVisualEditor } from "./hooks/useVisualEditor";
 import { EditablePackageGrid } from "./components/EditablePackageGrid";
 import type { PackagePhoto, DraftUpdate } from "./hooks/useVisualEditor";
 
 export function VisualEditorDashboard() {
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+
   const {
     packages,
     loading,
@@ -32,6 +44,16 @@ export function VisualEditorDashboard() {
     discardAll,
     updateLocalPackage,
   } = useVisualEditor();
+
+  const handleDiscardClick = useCallback(() => {
+    if (draftCount === 0) return;
+    setShowDiscardDialog(true);
+  }, [draftCount]);
+
+  const handleConfirmDiscard = useCallback(async () => {
+    setShowDiscardDialog(false);
+    await discardAll();
+  }, [discardAll]);
 
   const handleUpdatePackage = useCallback(
     (packageId: string, update: DraftUpdate) => {
@@ -151,7 +173,7 @@ export function VisualEditorDashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={discardAll}
+                onClick={handleDiscardClick}
                 disabled={draftCount === 0 || isPublishing}
               >
                 <X className="h-4 w-4 mr-1" />
@@ -179,6 +201,28 @@ export function VisualEditorDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Discard confirmation dialog */}
+      <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard Changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to discard changes to {draftCount} package{draftCount !== 1 ? "s" : ""}?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDiscard}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Discard All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

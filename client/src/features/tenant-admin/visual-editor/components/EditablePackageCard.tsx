@@ -5,7 +5,7 @@
  * Shows draft values with visual indicators when different from live.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,20 +31,34 @@ export function EditablePackageCard({
 }: EditablePackageCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Get effective values (draft or live)
-  const effectiveTitle = pkg.draftTitle ?? pkg.title;
-  const effectiveDescription = pkg.draftDescription ?? pkg.description ?? "";
-  const effectivePriceCents = pkg.draftPriceCents ?? pkg.priceCents;
-  const effectivePhotos = pkg.draftPhotos ?? pkg.photos ?? [];
+  // Memoize effective values to prevent recalculation on every render
+  const effectiveValues = useMemo(() => ({
+    title: pkg.draftTitle ?? pkg.title,
+    description: pkg.draftDescription ?? pkg.description ?? "",
+    priceCents: pkg.draftPriceCents ?? pkg.priceCents,
+    photos: pkg.draftPhotos ?? pkg.photos ?? [],
+  }), [
+    pkg.draftTitle, pkg.title,
+    pkg.draftDescription, pkg.description,
+    pkg.draftPriceCents, pkg.priceCents,
+    pkg.draftPhotos, pkg.photos
+  ]);
 
-  // Determine which fields have drafts
-  const hasTitleDraft = pkg.draftTitle !== null && pkg.draftTitle !== pkg.title;
-  const hasDescriptionDraft = pkg.draftDescription !== null && pkg.draftDescription !== pkg.description;
-  const hasPriceDraft = pkg.draftPriceCents !== null && pkg.draftPriceCents !== pkg.priceCents;
-  const hasPhotoDraft = pkg.draftPhotos !== null;
+  // Memoize draft flags to prevent recalculation on every render
+  const draftFlags = useMemo(() => ({
+    hasTitle: pkg.draftTitle !== null && pkg.draftTitle !== pkg.title,
+    hasDescription: pkg.draftDescription !== null && pkg.draftDescription !== pkg.description,
+    hasPrice: pkg.draftPriceCents !== null && pkg.draftPriceCents !== pkg.priceCents,
+    hasPhotos: pkg.draftPhotos !== null,
+  }), [
+    pkg.draftTitle, pkg.title,
+    pkg.draftDescription, pkg.description,
+    pkg.draftPriceCents, pkg.priceCents,
+    pkg.draftPhotos
+  ]);
 
   // Get primary photo for card display
-  const primaryPhoto = effectivePhotos[0]?.url || pkg.photoUrl;
+  const primaryPhoto = effectiveValues.photos[0]?.url || pkg.photoUrl;
 
   const handleTitleChange = useCallback((title: string) => {
     onUpdate({ title });
@@ -97,7 +111,7 @@ export function EditablePackageCard({
         {primaryPhoto ? (
           <img
             src={primaryPhoto}
-            alt={effectiveTitle}
+            alt={effectiveValues.title}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -107,7 +121,7 @@ export function EditablePackageCard({
         )}
 
         {/* Photo draft indicator */}
-        {hasPhotoDraft && (
+        {draftFlags.hasPhotos && (
           <div className="absolute bottom-2 left-2 px-2 py-1 rounded bg-amber-500/90 text-white text-xs flex items-center gap-1">
             <AlertCircle className="h-3 w-3" />
             Photo changes pending
@@ -118,12 +132,12 @@ export function EditablePackageCard({
       <CardHeader className="pb-2">
         {/* Editable title */}
         <EditableText
-          value={effectiveTitle}
+          value={effectiveValues.title}
           onChange={handleTitleChange}
           placeholder="Package name"
           className="font-semibold text-lg"
           maxLength={100}
-          hasDraft={hasTitleDraft}
+          hasDraft={draftFlags.hasTitle}
           disabled={disabled}
           aria-label="Package title"
         />
@@ -132,16 +146,16 @@ export function EditablePackageCard({
       <CardContent className="space-y-3">
         {/* Editable price */}
         <EditablePrice
-          value={effectivePriceCents}
+          value={effectiveValues.priceCents}
           onChange={handlePriceChange}
-          hasDraft={hasPriceDraft}
+          hasDraft={draftFlags.hasPrice}
           disabled={disabled}
           aria-label="Package price"
         />
 
         {/* Editable description (truncated in collapsed mode) */}
         <EditableText
-          value={effectiveDescription}
+          value={effectiveValues.description}
           onChange={handleDescriptionChange}
           placeholder="Package description"
           className={cn(
@@ -152,7 +166,7 @@ export function EditablePackageCard({
           maxLength={500}
           multiline
           rows={4}
-          hasDraft={hasDescriptionDraft}
+          hasDraft={draftFlags.hasDescription}
           disabled={disabled}
           aria-label="Package description"
         />
@@ -186,7 +200,7 @@ export function EditablePackageCard({
               <h4 className="text-sm font-medium mb-2">Photos</h4>
               <PhotoDropZone
                 packageId={pkg.id}
-                photos={effectivePhotos}
+                photos={effectiveValues.photos}
                 onPhotosChange={handlePhotosUpdate}
                 disabled={disabled}
               />
