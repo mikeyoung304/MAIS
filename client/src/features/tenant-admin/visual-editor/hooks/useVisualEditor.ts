@@ -188,21 +188,23 @@ export function useVisualEditor(): UseVisualEditorReturn {
       saveTimeout.current = null;
     }
 
-    // Capture original state BEFORE first change for this package
-    if (!originalStates.current.has(packageId)) {
-      const original = packages.find((pkg) => pkg.id === packageId);
-      if (original) {
-        originalStates.current.set(packageId, original);
-      }
-    }
-
     // Merge this update with any pending changes for this package
     const existing = pendingChanges.current.get(packageId) || {};
     pendingChanges.current.set(packageId, { ...existing, ...update });
 
     // Apply optimistic update to UI immediately
-    setPackages((prev) =>
-      prev.map((pkg) =>
+    // Use functional update to capture original state from current state (avoids stale closure)
+    setPackages((prev) => {
+      // Capture original state BEFORE first change for this package
+      // Done inside functional update to always get fresh state
+      if (!originalStates.current.has(packageId)) {
+        const original = prev.find((pkg) => pkg.id === packageId);
+        if (original) {
+          originalStates.current.set(packageId, original);
+        }
+      }
+
+      return prev.map((pkg) =>
         pkg.id === packageId
           ? {
               ...pkg,
@@ -214,15 +216,15 @@ export function useVisualEditor(): UseVisualEditorReturn {
               draftUpdatedAt: new Date().toISOString(),
             }
           : pkg
-      )
-    );
+      );
+    });
 
     // Schedule batched save after debounce window
     saveTimeout.current = setTimeout(() => {
       saveTimeout.current = null;
       flushPendingChanges();
     }, 1000);
-  }, [packages, flushPendingChanges]);
+  }, [flushPendingChanges]);
 
   /**
    * Publish all drafts to live
