@@ -15,7 +15,7 @@
  * - Partial saves when one request fails while another succeeds
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
@@ -74,8 +74,11 @@ export function useVisualEditor(): UseVisualEditorReturn {
   // Flag to track if a save is in progress
   const saveInProgress = useRef<boolean>(false);
 
-  // Calculate draft count
-  const draftCount = packages.filter((pkg) => pkg.hasDraft).length;
+  // Calculate draft count (memoized to avoid recomputation on every render)
+  const draftCount = useMemo(
+    () => packages.filter((pkg) => pkg.hasDraft).length,
+    [packages]
+  );
 
   /**
    * Load packages with draft fields from API
@@ -242,6 +245,12 @@ export function useVisualEditor(): UseVisualEditorReturn {
       saveTimeout.current = null;
     }
     await flushPendingChanges();
+
+    // Re-check if new changes arrived during flush (race condition prevention)
+    // If user made edits during the 100-500ms flush, those need to be flushed too
+    if (pendingChanges.current.size > 0) {
+      await flushPendingChanges();
+    }
 
     setIsPublishing(true);
 

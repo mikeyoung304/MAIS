@@ -9,19 +9,13 @@
  * - Max 5 photos limit
  */
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Image, X, Upload, GripVertical } from "lucide-react";
 import { packagePhotoApi } from "@/lib/package-photo-api";
 import { logger } from "@/lib/logger";
-
-interface PackagePhoto {
-  url: string;
-  filename?: string;
-  size?: number;
-  order?: number;
-}
+import type { PackagePhoto } from "../hooks/useVisualEditor";
 
 interface PhotoDropZoneProps {
   packageId: string;
@@ -47,6 +41,30 @@ export function PhotoDropZone({
   // Track intended drop position for visual feedback (only reorder on drop)
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropTargetTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced drop target setter to prevent excessive re-renders (dragOver fires 50-100+/sec)
+  const setDropTargetDebounced = useMemo(
+    () => (index: number | null) => {
+      if (dropTargetTimeout.current) {
+        clearTimeout(dropTargetTimeout.current);
+      }
+      dropTargetTimeout.current = setTimeout(() => {
+        setDropTargetIndex(index);
+        dropTargetTimeout.current = null;
+      }, 50);
+    },
+    []
+  );
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (dropTargetTimeout.current) {
+        clearTimeout(dropTargetTimeout.current);
+      }
+    };
+  }, []);
 
   const canAddMore = photos.length < maxPhotos;
 
@@ -213,7 +231,7 @@ export function PhotoDropZone({
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
           {photos.map((photo, index) => (
             <div
-              key={photo.url}
+              key={photo.filename ? `${index}-${photo.filename}` : `photo-${index}`}
               draggable={!disabled}
               onDragStart={() => {
                 setDraggedIndex(index);
@@ -226,8 +244,9 @@ export function PhotoDropZone({
               onDragOver={(e) => {
                 e.preventDefault();
                 // Only update drop target position, don't reorder yet
+                // Use debounced setter to prevent excessive re-renders (dragOver fires 50-100+/sec)
                 if (draggedIndex !== null && draggedIndex !== index) {
-                  setDropTargetIndex(index);
+                  setDropTargetDebounced(index);
                 }
               }}
               onDragLeave={() => {
