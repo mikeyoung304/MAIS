@@ -28,19 +28,15 @@ import {
 import { Loader2, Save, X, RefreshCw, AlertTriangle, CheckCircle, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import { useVisualEditor } from "./hooks/useVisualEditor";
 import { EditablePackageGrid } from "./components/EditablePackageGrid";
 import type { PackagePhoto, DraftUpdate } from "./hooks/useVisualEditor";
-
-interface Segment {
-  id: string;
-  name: string;
-  slug: string;
-}
+import type { SegmentDto } from "@macon/contracts";
 
 export function VisualEditorDashboard() {
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
-  const [segments, setSegments] = useState<Segment[]>([]);
+  const [segments, setSegments] = useState<SegmentDto[]>([]);
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
 
   const {
@@ -59,21 +55,37 @@ export function VisualEditorDashboard() {
 
   // Fetch segments on mount
   useEffect(() => {
+    const abortController = new AbortController();
+    let isCancelled = false;
+
     const fetchSegments = async () => {
       try {
         const { status, body } = await api.tenantAdminGetSegments();
+        // Check if component unmounted before updating state
+        if (isCancelled) return;
         if (status === 200 && body) {
-          setSegments(body as Segment[]);
+          setSegments(body);
           // Auto-select first segment if only one exists
           if (body.length === 1) {
-            setSelectedSegmentId((body as Segment[])[0].id);
+            setSelectedSegmentId(body[0].id);
           }
         }
-      } catch {
-        // Segments are optional, fail silently
+      } catch (error) {
+        // Check if this is an abort error (component unmounted)
+        if (isCancelled) return;
+        // Segments are optional, log but don't fail
+        logger.warn("Failed to load segments", {
+          error,
+          component: "VisualEditorDashboard"
+        });
       }
     };
     fetchSegments();
+
+    return () => {
+      isCancelled = true;
+      abortController.abort();
+    };
   }, []);
 
   // Filter packages by selected segment

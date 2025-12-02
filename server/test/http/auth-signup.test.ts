@@ -34,11 +34,27 @@ const generateTestEmail = () => {
 // Cleanup all test tenants after all tests
 afterAll(async () => {
   if (allTestEmails.length > 0) {
-    await prisma.tenant.deleteMany({
-      where: {
-        email: { in: allTestEmails },
-      },
+    // First find all tenant IDs for cleanup
+    const tenants = await prisma.tenant.findMany({
+      where: { email: { in: allTestEmails } },
+      select: { id: true },
     });
+    const tenantIds = tenants.map(t => t.id);
+
+    if (tenantIds.length > 0) {
+      // Delete packages first (references segments)
+      await prisma.package.deleteMany({
+        where: { tenantId: { in: tenantIds } },
+      });
+      // Delete segments next
+      await prisma.segment.deleteMany({
+        where: { tenantId: { in: tenantIds } },
+      });
+      // Finally delete tenants
+      await prisma.tenant.deleteMany({
+        where: { id: { in: tenantIds } },
+      });
+    }
   }
   await prisma.$disconnect();
 });
@@ -114,7 +130,34 @@ describe('POST /v1/auth/signup - Tenant Signup', () => {
       expect(Number(tenant?.commissionPercent)).toBe(10);
       expect(tenant?.stripeOnboarded).toBe(false);
 
-      // Test 2: Token validity - use the token to access a protected endpoint
+      // Test 2: Verify default segment and packages were created
+      // TenantOnboardingService creates these in a transaction during signup
+      const segments = await prisma.segment.findMany({
+        where: { tenantId: res.body.tenantId },
+      });
+      expect(segments).toHaveLength(1);
+      expect(segments[0].slug).toBe('general');
+      expect(segments[0].name).toBe('General');
+      expect(segments[0].heroTitle).toBe('Our Services');
+
+      // Verify 3 default packages were created
+      const packages = await prisma.package.findMany({
+        where: { tenantId: res.body.tenantId },
+        orderBy: { groupingOrder: 'asc' },
+      });
+      expect(packages).toHaveLength(3);
+      expect(packages[0].slug).toBe('basic-package');
+      expect(packages[0].name).toBe('Basic Package');
+      expect(packages[0].groupingOrder).toBe(1);
+      expect(packages[1].slug).toBe('standard-package');
+      expect(packages[1].groupingOrder).toBe(2);
+      expect(packages[2].slug).toBe('premium-package');
+      expect(packages[2].groupingOrder).toBe(3);
+
+      // All packages should be linked to the default segment
+      expect(packages.every(p => p.segmentId === segments[0].id)).toBe(true);
+
+      // Test 3: Token validity - use the token to access a protected endpoint
       const verifyRes = await request(app)
         .get('/v1/auth/verify')
         .set('Authorization', `Bearer ${res.body.token}`)

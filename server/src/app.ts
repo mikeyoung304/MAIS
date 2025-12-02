@@ -211,6 +211,8 @@ export function createApp(
     stripeConnect: container.services.stripeConnect,
     schedulingAvailability: container.services.schedulingAvailability,
     packageDraft: container.services.packageDraft,
+    tenantOnboarding: container.services.tenantOnboarding,
+    reminder: container.services.reminder,
   }, container.mailProvider, container.prisma, container.repositories);
 
   // Mount dev routes (mock mode only)
@@ -248,6 +250,30 @@ export function createApp(
         await container.controllers.dev!.reset();
         reqLogger.info('reset completed');
         res.status(200).json({ ok: true });
+      } catch (error) {
+        next(error);
+      }
+    });
+
+    // POST /v1/dev/generate-booking-token - Generate a booking management token
+    app.post('/v1/dev/generate-booking-token', async (req, res, next) => {
+      try {
+        const reqLogger = res.locals.logger || logger;
+        reqLogger.info({ body: req.body }, 'generate-booking-token requested');
+        const result = await container.controllers.dev!.generateBookingToken(req.body);
+        res.json(result);
+      } catch (error) {
+        next(error);
+      }
+    });
+
+    // POST /v1/dev/create-booking-with-token - Create booking and return management token
+    app.post('/v1/dev/create-booking-with-token', async (req, res, next) => {
+      try {
+        const reqLogger = res.locals.logger || logger;
+        reqLogger.info({ body: req.body }, 'create-booking-with-token requested');
+        const result = await container.controllers.dev!.createBookingWithToken(req.body);
+        res.json(result);
       } catch (error) {
         next(error);
       }

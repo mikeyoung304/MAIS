@@ -46,6 +46,9 @@ const TenantSchedulingAppointmentsPage = lazy(() => import("./pages/tenant/Tenan
 // Visual editor page
 const TenantVisualEditorPage = lazy(() => import("./pages/tenant/TenantVisualEditor").then(m => ({ default: m.TenantVisualEditorPage })));
 
+// Public booking management (customer self-service)
+const ManageBookingPage = lazy(() => import("./pages/booking-management").then(m => ({ default: m.ManageBookingPage })));
+
 // Tenant storefront layout (white-label customer-facing routes)
 const TenantStorefrontLayout = lazy(() => import("./app/TenantStorefrontLayout").then(m => ({ default: m.TenantStorefrontLayout })));
 
@@ -245,5 +248,10 @@ export const router = createBrowserRouter([
         <TenantVisualEditorPage />
       </ProtectedSuspenseWrapper>
     ),
+  },
+  // Public booking management (customer self-service via JWT token)
+  {
+    path: "bookings/manage",
+    element: <SuspenseWrapper><ManageBookingPage /></SuspenseWrapper>,
   },
 ]);

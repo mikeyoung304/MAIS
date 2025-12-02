@@ -48,13 +48,21 @@ interface StripeCheckoutSession {
 // Zod schema for metadata validation
 const MetadataSchema = z.object({
   tenantId: z.string(), // CRITICAL: Multi-tenant data isolation
-  packageId: z.string(),
-  eventDate: z.string(),
+  packageId: z.string().optional(), // Optional for balance payments
+  eventDate: z.string().optional(), // Optional for balance payments
   email: z.string().email(),
-  coupleName: z.string(),
+  coupleName: z.string().optional(), // Optional for balance payments
   addOnIds: z.string().optional(),
   commissionAmount: z.string().optional(),
   commissionPercent: z.string().optional(),
+  // Deposit fields
+  isDeposit: z.string().optional(),
+  totalCents: z.string().optional(), // Full total for deposit bookings
+  depositPercent: z.string().optional(),
+  // Balance payment fields
+  isBalancePayment: z.string().optional(),
+  bookingId: z.string().optional(),
+  balanceAmountCents: z.string().optional(),
 });
 
 export class WebhooksController {
@@ -220,71 +228,118 @@ export class WebhooksController {
           throw new WebhookValidationError('Invalid webhook metadata');
         }
 
-        const { tenantId: validatedTenantId, packageId, eventDate, email, coupleName, addOnIds, commissionAmount, commissionPercent } = metadataResult.data;
-
-        // Parse add-on IDs with Zod validation
-        let parsedAddOnIds: string[] = [];
-        if (addOnIds) {
-          try {
-            const parsed = JSON.parse(addOnIds);
-
-            // Validate it's an array
-            if (!Array.isArray(parsed)) {
-              logger.warn({ addOnIds, parsed }, 'addOnIds is not an array, ignoring');
-            } else {
-              // Validate all elements are strings
-              const arrayResult = z.array(z.string()).safeParse(parsed);
-              if (arrayResult.success) {
-                parsedAddOnIds = arrayResult.data;
-              } else {
-                logger.warn({
-                  addOnIds,
-                  errors: arrayResult.error.flatten()
-                }, 'addOnIds array contains non-string values, ignoring');
-              }
-            }
-          } catch (error) {
-            logger.warn({
-              addOnIds,
-              error: error instanceof Error ? error.message : String(error)
-            }, 'Invalid JSON in addOnIds, ignoring');
-          }
-        }
-
-        // Calculate total from Stripe session (in cents)
-        const totalCents = session.amount_total ?? 0;
-
-        logger.info(
-          {
-            eventId: event.id,
-            sessionId: session.id,
-            tenantId: validatedTenantId,
-            packageId,
-            eventDate,
-            email,
-          },
-          'Processing checkout completion'
-        );
-
-        // Parse commission data from metadata
-        const commissionAmountNum = commissionAmount ? parseInt(commissionAmount, 10) : undefined;
-        const commissionPercentNum = commissionPercent ? parseFloat(commissionPercent) : undefined;
-
-        // Create booking in database (tenant-scoped)
-        // BookingConflictError is handled below as idempotent success
-        await this.bookingService.onPaymentCompleted(validatedTenantId, {
-          sessionId: session.id,
+        const {
+          tenantId: validatedTenantId,
           packageId,
           eventDate,
           email,
           coupleName,
-          addOnIds: parsedAddOnIds,
-          totalCents,
-          commissionAmount: commissionAmountNum,
-          commissionPercent: commissionPercentNum,
-        });
+          addOnIds,
+          commissionAmount,
+          commissionPercent,
+          isDeposit,
+          totalCents: metadataTotalCents,
+          depositPercent,
+          isBalancePayment,
+          bookingId,
+          balanceAmountCents,
+        } = metadataResult.data;
 
-        logger.info({ eventId: event.id, sessionId: session.id, tenantId: validatedTenantId }, 'Booking created successfully');
+        // Check if this is a balance payment
+        if (isBalancePayment === 'true' && bookingId) {
+          // This is a balance payment - update existing booking
+          const balanceAmount = balanceAmountCents ? parseInt(balanceAmountCents, 10) : session.amount_total ?? 0;
+
+          logger.info(
+            {
+              eventId: event.id,
+              sessionId: session.id,
+              tenantId: validatedTenantId,
+              bookingId,
+              balanceAmount,
+            },
+            'Processing balance payment completion'
+          );
+
+          await this.bookingService.onBalancePaymentCompleted(
+            validatedTenantId,
+            bookingId,
+            balanceAmount
+          );
+
+          logger.info({ eventId: event.id, sessionId: session.id, tenantId: validatedTenantId, bookingId }, 'Balance payment processed successfully');
+        } else {
+          // This is a regular booking (deposit or full payment)
+          // Parse add-on IDs with Zod validation
+          let parsedAddOnIds: string[] = [];
+          if (addOnIds) {
+            try {
+              const parsed = JSON.parse(addOnIds);
+
+              // Validate it's an array
+              if (!Array.isArray(parsed)) {
+                logger.warn({ addOnIds, parsed }, 'addOnIds is not an array, ignoring');
+              } else {
+                // Validate all elements are strings
+                const arrayResult = z.array(z.string()).safeParse(parsed);
+                if (arrayResult.success) {
+                  parsedAddOnIds = arrayResult.data;
+                } else {
+                  logger.warn({
+                    addOnIds,
+                    errors: arrayResult.error.flatten()
+                  }, 'addOnIds array contains non-string values, ignoring');
+                }
+              }
+            } catch (error) {
+              logger.warn({
+                addOnIds,
+                error: error instanceof Error ? error.message : String(error)
+              }, 'Invalid JSON in addOnIds, ignoring');
+            }
+          }
+
+          // Calculate total from Stripe session (in cents)
+          // For deposits, use the original totalCents from metadata
+          const totalCents = isDeposit === 'true' && metadataTotalCents
+            ? parseInt(metadataTotalCents, 10)
+            : session.amount_total ?? 0;
+
+          logger.info(
+            {
+              eventId: event.id,
+              sessionId: session.id,
+              tenantId: validatedTenantId,
+              packageId,
+              eventDate,
+              email,
+              isDeposit: isDeposit === 'true',
+            },
+            'Processing checkout completion'
+          );
+
+          // Parse commission data from metadata
+          const commissionAmountNum = commissionAmount ? parseInt(commissionAmount, 10) : undefined;
+          const commissionPercentNum = commissionPercent ? parseFloat(commissionPercent) : undefined;
+
+          // Create booking in database (tenant-scoped)
+          // BookingConflictError is handled below as idempotent success
+          await this.bookingService.onPaymentCompleted(validatedTenantId, {
+            sessionId: session.id,
+            packageId: packageId!,
+            eventDate: eventDate!,
+            email,
+            coupleName: coupleName!,
+            addOnIds: parsedAddOnIds,
+            totalCents,
+            commissionAmount: commissionAmountNum,
+            commissionPercent: commissionPercentNum,
+            isDeposit: isDeposit === 'true',
+            depositPercent: depositPercent ? parseFloat(depositPercent) : undefined,
+          });
+
+          logger.info({ eventId: event.id, sessionId: session.id, tenantId: validatedTenantId }, 'Booking created successfully');
+        }
       } else {
         logger.info({ eventId: event.id, type: event.type }, 'Ignoring unhandled webhook event type');
       }

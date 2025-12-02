@@ -8,41 +8,27 @@ import { Router, type Request, type Response, type NextFunction } from 'express'
 import crypto from 'node:crypto';
 import type { IdentityService } from '../services/identity.service';
 import type { TenantAuthService } from '../services/tenant-auth.service';
+import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import type { ApiKeyService } from '../lib/api-key.service';
-import type { SegmentService } from '../services/segment.service';
-import type { CatalogService } from '../services/catalog.service';
 import { loginLimiter, signupLimiter } from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
 import { UnauthorizedError, ConflictError, ValidationError } from '../lib/errors';
 
 /**
- * Default packages to create for new tenants
- * These help guide users toward a 3-tier pricing structure
+ * Options for creating unified auth routes
+ * Uses an options object pattern to avoid parameter explosion
  */
-const DEFAULT_PACKAGES = [
-  {
-    slug: 'basic-package',
-    name: 'Basic Package',
-    description: 'Your starter option - perfect for budget-conscious clients',
-    basePrice: 0,
-    groupingOrder: 1,
-  },
-  {
-    slug: 'standard-package',
-    name: 'Standard Package',
-    description: 'Our most popular option - great value for most clients',
-    basePrice: 0,
-    groupingOrder: 2,
-  },
-  {
-    slug: 'premium-package',
-    name: 'Premium Package',
-    description: 'The full experience - for clients who want the best',
-    basePrice: 0,
-    groupingOrder: 3,
-  },
-];
+export interface UnifiedAuthRoutesOptions {
+  identityService: IdentityService;
+  tenantAuthService: TenantAuthService;
+  tenantRepo: PrismaTenantRepository;
+  apiKeyService: ApiKeyService;
+  mailProvider?: {
+    sendPasswordReset: (to: string, resetToken: string, resetUrl: string) => Promise<void>;
+  };
+  tenantOnboardingService?: TenantOnboardingService;
+}
 
 /**
  * Unified login DTO
@@ -253,15 +239,16 @@ export class UnifiedAuthController {
  * Create unified authentication routes
  * Exports a router factory that requires both IdentityService and TenantAuthService
  */
-export function createUnifiedAuthRoutes(
-  identityService: IdentityService,
-  tenantAuthService: TenantAuthService,
-  tenantRepo: PrismaTenantRepository,
-  apiKeyService: ApiKeyService,
-  mailProvider?: { sendPasswordReset: (to: string, resetToken: string, resetUrl: string) => Promise<void> },
-  segmentService?: SegmentService,
-  catalogService?: CatalogService
-): Router {
+export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Router {
+  const {
+    identityService,
+    tenantAuthService,
+    tenantRepo,
+    apiKeyService,
+    mailProvider,
+    tenantOnboardingService,
+  } = options;
+
   const router = Router();
   const controller = new UnifiedAuthController(identityService, tenantAuthService, tenantRepo);
 
@@ -418,35 +405,10 @@ export function createUnifiedAuthRoutes(
       });
 
       // Create default segment and packages for new tenant
-      // This helps guide them toward a 3-tier pricing structure
-      if (segmentService && catalogService) {
+      // Uses TenantOnboardingService for transactional, parallel creation
+      if (tenantOnboardingService) {
         try {
-          // Create default "General" segment
-          const defaultSegment = await segmentService.createSegment({
-            tenantId: tenant.id,
-            name: 'General',
-            slug: 'general',
-            heroTitle: 'Our Services',
-            description: 'Your main service offerings',
-          });
-
-          // Create 3 default placeholder packages
-          for (const pkgData of DEFAULT_PACKAGES) {
-            await catalogService.createPackage(tenant.id, {
-              slug: pkgData.slug,
-              title: pkgData.name,
-              description: pkgData.description,
-              priceCents: pkgData.basePrice,
-              segmentId: defaultSegment.id,
-              groupingOrder: pkgData.groupingOrder,
-            });
-          }
-
-          logger.info({
-            tenantId: tenant.id,
-            segmentId: defaultSegment.id,
-            packagesCreated: DEFAULT_PACKAGES.length,
-          }, 'Created default segment and packages for new tenant');
+          await tenantOnboardingService.createDefaultData({ tenantId: tenant.id });
         } catch (defaultDataError) {
           // Don't fail signup if default data creation fails
           // The tenant can still create their own packages manually

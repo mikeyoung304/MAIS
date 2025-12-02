@@ -9,6 +9,7 @@ import type { CalendarProvider } from '../lib/ports';
 import { GoogleCalendarAdapter } from './gcal.adapter';
 import { createGServiceAccountJWT } from './gcal.jwt';
 import { logger } from '../lib/core/logger';
+import type { PrismaTenantRepository } from './prisma/tenant.repository';
 
 interface CalendarEvent {
   summary: string;
@@ -36,20 +37,28 @@ interface EventResponse {
  * - Delete events when appointments are cancelled
  *
  * Inherits date availability checking from GoogleCalendarAdapter.
+ * Supports per-tenant calendar configuration via tenant secrets.
  */
 export class GoogleCalendarSyncAdapter extends GoogleCalendarAdapter implements CalendarProvider {
   private readonly calendarId: string;
   private readonly serviceAccountJsonBase64: string;
 
-  constructor(config: {
-    calendarId: string;
-    serviceAccountJsonBase64: string;
-  }) {
+  constructor(
+    config: {
+      calendarId: string;
+      serviceAccountJsonBase64: string;
+    },
+    tenantRepo?: PrismaTenantRepository
+  ) {
     // Initialize parent GoogleCalendarAdapter for date availability checking
-    super({
-      calendarId: config.calendarId,
-      serviceAccountJsonBase64: config.serviceAccountJsonBase64,
-    });
+    // Pass tenantRepo to enable per-tenant calendar configuration
+    super(
+      {
+        calendarId: config.calendarId,
+        serviceAccountJsonBase64: config.serviceAccountJsonBase64,
+      },
+      tenantRepo
+    );
 
     this.calendarId = config.calendarId;
     this.serviceAccountJsonBase64 = config.serviceAccountJsonBase64;

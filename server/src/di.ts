@@ -17,9 +17,11 @@ import { TenantAuthService } from './services/tenant-auth.service';
 import { AuditService } from './services/audit.service';
 import { IdempotencyService } from './services/idempotency.service';
 import { SegmentService } from './services/segment.service';
+import { TenantOnboardingService } from './services/tenant-onboarding.service';
 import { GoogleCalendarService } from './services/google-calendar.service';
 import { SchedulingAvailabilityService } from './services/scheduling-availability.service';
 import { PackageDraftService } from './services/package-draft.service';
+import { ReminderService } from './services/reminder.service';
 import { PackagesController } from './routes/packages.routes';
 import { AvailabilityController } from './routes/availability.routes';
 import { BookingsController } from './routes/bookings.routes';
@@ -72,9 +74,11 @@ export interface Container {
     booking: BookingService;
     audit: AuditService;
     segment: SegmentService;
+    tenantOnboarding: TenantOnboardingService; // Tenant signup default data creation
     googleCalendar?: GoogleCalendarService; // Optional - only if calendar provider supports sync
     schedulingAvailability?: SchedulingAvailabilityService; // Scheduling slot generation
     packageDraft: PackageDraftService; // Visual editor draft management
+    reminder: ReminderService; // Lazy reminder evaluation (Phase 2)
   };
   repositories?: {
     service?: PrismaServiceRepository;
@@ -155,6 +159,9 @@ export function buildContainer(config: Config): Container {
     const segmentRepo = new PrismaSegmentRepository(mockPrisma);
     const segmentService = new SegmentService(segmentRepo, cacheAdapter);
 
+    // Create TenantOnboardingService with mock Prisma
+    const tenantOnboardingService = new TenantOnboardingService(mockPrisma);
+
     // Create GoogleCalendarService with mock calendar provider
     const googleCalendarService = new GoogleCalendarService(adapters.calendarProvider);
 
@@ -181,8 +188,15 @@ export function buildContainer(config: Config): Container {
       platformAdmin: new PlatformAdminController(mockPrisma),
       tenant: new TenantController(mockTenantRepo),
       tenantAuth: new TenantAuthController(tenantAuthService),
-      dev: new DevController(bookingService, adapters.catalogRepo),
+      dev: new DevController(bookingService, adapters.catalogRepo, adapters.bookingRepo),
     };
+
+    // Create ReminderService with mock adapters
+    const reminderService = new ReminderService(
+      adapters.bookingRepo,
+      adapters.catalogRepo,
+      eventEmitter
+    );
 
     const services = {
       identity: identityService,
@@ -192,9 +206,11 @@ export function buildContainer(config: Config): Container {
       booking: bookingService,
       audit: auditService,
       segment: segmentService,
+      tenantOnboarding: tenantOnboardingService,
       googleCalendar: googleCalendarService,
       schedulingAvailability: schedulingAvailabilityService,
       packageDraft: packageDraftService,
+      reminder: reminderService,
     };
 
     const repositories = {
@@ -324,12 +340,16 @@ export function buildContainer(config: Config): Container {
   // Build Google Calendar adapter (or fallback to mock if creds missing)
   let calendarProvider;
   if (config.GOOGLE_CALENDAR_ID && config.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64) {
-    logger.info('📅 Using Google Calendar sync adapter (one-way sync enabled)');
+    logger.info('📅 Using Google Calendar sync adapter (one-way sync enabled, per-tenant config supported)');
     // Use GoogleCalendarSyncAdapter for full sync capabilities (extends GoogleCalendarAdapter)
-    calendarProvider = new GoogleCalendarSyncAdapter({
-      calendarId: config.GOOGLE_CALENDAR_ID,
-      serviceAccountJsonBase64: config.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64,
-    });
+    // Pass tenantRepo to enable per-tenant calendar configuration
+    calendarProvider = new GoogleCalendarSyncAdapter(
+      {
+        calendarId: config.GOOGLE_CALENDAR_ID,
+        serviceAccountJsonBase64: config.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64,
+      },
+      tenantRepo
+    );
   } else {
     logger.warn('⚠️  Google Calendar credentials not configured; using mock calendar (all dates available)');
     const mockAdapters = buildMockAdapters();
@@ -366,6 +386,9 @@ export function buildContainer(config: Config): Container {
   // Create SegmentService with real Prisma segment repo
   const segmentService = new SegmentService(segmentRepo, cacheAdapter);
 
+  // Create TenantOnboardingService with real Prisma
+  const tenantOnboardingService = new TenantOnboardingService(prisma);
+
   // Create GoogleCalendarService with real calendar provider
   const googleCalendarService = new GoogleCalendarService(calendarProvider);
 
@@ -380,6 +403,13 @@ export function buildContainer(config: Config): Container {
 
   // Create PackageDraftService with real catalog repository
   const packageDraftService = new PackageDraftService(catalogRepo, cacheAdapter);
+
+  // Create ReminderService with real adapters
+  const reminderService = new ReminderService(
+    bookingRepo,
+    catalogRepo,
+    eventEmitter
+  );
 
   // Subscribe to BookingPaid events to send confirmation emails
   eventEmitter.subscribe<{
@@ -400,6 +430,31 @@ export function buildContainer(config: Config): Container {
       });
     } catch (err) {
       logger.error({ err, bookingId: payload.bookingId }, 'Failed to send booking confirmation email');
+    }
+  });
+
+  // Subscribe to BookingReminderDue events to send reminder emails (Phase 2)
+  eventEmitter.subscribe<{
+    bookingId: string;
+    tenantId: string;
+    email: string;
+    coupleName: string;
+    eventDate: string;
+    packageTitle: string;
+    daysUntilEvent: number;
+    manageUrl: string;
+  }>('BookingReminderDue', async (payload) => {
+    try {
+      await mailProvider.sendBookingReminder(payload.email, {
+        coupleName: payload.coupleName,
+        eventDate: payload.eventDate,
+        packageTitle: payload.packageTitle,
+        daysUntilEvent: payload.daysUntilEvent,
+        manageUrl: payload.manageUrl,
+      });
+      logger.info({ bookingId: payload.bookingId }, 'Booking reminder email sent');
+    } catch (err) {
+      logger.error({ err, bookingId: payload.bookingId }, 'Failed to send booking reminder email');
     }
   });
 
@@ -472,9 +527,11 @@ export function buildContainer(config: Config): Container {
     booking: bookingService,
     audit: auditService,
     segment: segmentService,
+    tenantOnboarding: tenantOnboardingService,
     googleCalendar: googleCalendarService,
     schedulingAvailability: schedulingAvailabilityService,
     packageDraft: packageDraftService,
+    reminder: reminderService,
   };
 
   const repositories = {
