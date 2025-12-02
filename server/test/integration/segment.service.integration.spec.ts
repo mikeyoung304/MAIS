@@ -256,14 +256,14 @@ describe.sequential('SegmentService Integration Tests', () => {
       // First call - cache miss
       const result1 = await service.getSegments(tenant.id, true);
       expect(result1).toHaveLength(1);
-      expect(ctx.cache.getStats().misses).toBe(1);
-      expect(ctx.cache.getStats().hits).toBe(0);
+      expect((await ctx.cache.getStats()).misses).toBe(1);
+      expect((await ctx.cache.getStats()).hits).toBe(0);
 
       // Second call - cache hit
       const result2 = await service.getSegments(tenant.id, true);
       expect(result2).toHaveLength(1);
-      expect(ctx.cache.getStats().misses).toBe(1);
-      expect(ctx.cache.getStats().hits).toBe(1);
+      expect((await ctx.cache.getStats()).misses).toBe(1);
+      expect((await ctx.cache.getStats()).hits).toBe(1);
 
       // Cache key should include tenantId
       const cacheKey = `segments:${tenant.id}:active`;
@@ -288,12 +288,12 @@ describe.sequential('SegmentService Integration Tests', () => {
       // First call - cache miss
       const result1 = await service.getSegmentBySlug(tenant.id, 'cached-segment');
       expect(result1.slug).toBe('cached-segment');
-      expect(ctx.cache.getStats().misses).toBe(1);
+      expect((await ctx.cache.getStats()).misses).toBe(1);
 
       // Second call - cache hit
       const result2 = await service.getSegmentBySlug(tenant.id, 'cached-segment');
       expect(result2.slug).toBe('cached-segment');
-      expect(ctx.cache.getStats().hits).toBe(1);
+      expect((await ctx.cache.getStats()).hits).toBe(1);
     });
 
     it('should cache getSegmentWithRelations results separately', async () => {
@@ -312,11 +312,11 @@ describe.sequential('SegmentService Integration Tests', () => {
 
       // First call - cache miss
       await service.getSegmentWithRelations(tenant.id, 'test-segment');
-      expect(ctx.cache.getStats().misses).toBe(1);
+      expect((await ctx.cache.getStats()).misses).toBe(1);
 
       // Second call - cache hit
       await service.getSegmentWithRelations(tenant.id, 'test-segment');
-      expect(ctx.cache.getStats().hits).toBe(1);
+      expect((await ctx.cache.getStats()).hits).toBe(1);
 
       // Cache keys should be different for basic and with-relations queries
       const basicKey = `segments:${tenant.id}:slug:test-segment`;

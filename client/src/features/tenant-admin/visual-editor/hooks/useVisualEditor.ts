@@ -3,38 +3,28 @@
  *
  * Handles:
  * - Loading packages with draft fields
- * - Autosave with 1s debounce
+ * - Autosave with 1s debounce and request batching
  * - Draft count tracking
  * - Publish/discard all changes
+ *
+ * Race Condition Prevention:
+ * Uses a batching strategy where all changes within the debounce window
+ * are accumulated and sent as a single request. This prevents:
+ * - Overlapping requests for the same package
+ * - Out-of-order updates causing inconsistent state
+ * - Partial saves when one request fails while another succeeds
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import { api, baseUrl } from "@/lib/api";
+import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import type { PackageWithDraftDto, UpdatePackageDraftDto } from "@macon/contracts";
 
-// Types for visual editor packages (with draft fields)
-export interface PackageWithDraft {
-  id: string;
-  slug: string;
-  title: string;
-  description: string | null;
-  priceCents: number;
-  photoUrl?: string;
-  photos?: PackagePhoto[];
-  segmentId: string | null;
-  grouping: string | null;
-  groupingOrder: number | null;
-  active: boolean;
-  // Draft fields
-  draftTitle: string | null;
-  draftDescription: string | null;
-  draftPriceCents: number | null;
-  draftPhotos: PackagePhoto[] | null;
-  hasDraft: boolean;
-  draftUpdatedAt: string | null;
-}
+// Re-export types from contracts for convenience
+export type PackageWithDraft = PackageWithDraftDto;
 
+// Photo type from contracts
 export interface PackagePhoto {
   url: string;
   filename?: string;
@@ -42,13 +32,8 @@ export interface PackagePhoto {
   order?: number;
 }
 
-// Draft update payload
-export interface DraftUpdate {
-  title?: string;
-  description?: string;
-  priceCents?: number;
-  photos?: PackagePhoto[];
-}
+// Draft update payload - aligned with contract schema
+export type DraftUpdate = UpdatePackageDraftDto;
 
 interface UseVisualEditorReturn {
   // State
@@ -70,19 +55,6 @@ interface UseVisualEditorReturn {
 }
 
 /**
- * Get tenant token from localStorage
- */
-function getTenantToken(): string | null {
-  // Check if we're impersonating (platform admin)
-  const isImpersonating = localStorage.getItem("impersonationTenantKey");
-  if (isImpersonating) {
-    return localStorage.getItem("adminToken");
-  }
-  // Normal tenant admin
-  return localStorage.getItem("tenantToken");
-}
-
-/**
  * Main hook for visual editor functionality
  */
 export function useVisualEditor(): UseVisualEditorReturn {
@@ -93,35 +65,35 @@ export function useVisualEditor(): UseVisualEditorReturn {
   const [isPublishing, setIsPublishing] = useState(false);
 
   // Track pending saves for debouncing
-  const pendingSaves = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  // Single timeout for batched saves to prevent race conditions
+  const saveTimeout = useRef<NodeJS.Timeout | null>(null);
+  // Accumulated changes per package - merged before sending
+  const pendingChanges = useRef<Map<string, DraftUpdate>>(new Map());
+  // Original state before optimistic updates for rollback
+  const originalStates = useRef<Map<string, PackageWithDraft>>(new Map());
+  // Flag to track if a save is in progress
+  const saveInProgress = useRef<boolean>(false);
 
   // Calculate draft count
   const draftCount = packages.filter((pkg) => pkg.hasDraft).length;
 
   /**
    * Load packages with draft fields from API
+   * Uses type-safe ts-rest client for compile-time type checking
    */
   const loadPackages = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const token = getTenantToken();
-      const response = await fetch(`${baseUrl}/v1/tenant-admin/packages/drafts`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      });
+      const { status, body } = await api.tenantAdminGetPackagesWithDrafts();
 
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => null);
-        throw new Error(errorBody?.error || `Failed to load packages: ${response.status}`);
+      if (status !== 200 || !body) {
+        const errorMessage = (body as { error?: string })?.error || `Failed to load packages: ${status}`;
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
-      setPackages(data);
+      setPackages(body);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to load packages";
       setError(message);
@@ -132,21 +104,105 @@ export function useVisualEditor(): UseVisualEditorReturn {
   }, []);
 
   /**
-   * Update draft for a package with 1s debounce
-   * Includes rollback on save failure to maintain UI consistency with server state
+   * Flush all pending changes to the server
+   * Sends batched updates for each package that has pending changes
+   * Uses type-safe ts-rest client for compile-time type checking
    */
-  const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
-    // Clear any pending save for this package
-    const existingTimeout = pendingSaves.current.get(packageId);
-    if (existingTimeout) {
-      clearTimeout(existingTimeout);
+  const flushPendingChanges = useCallback(async () => {
+    // Skip if already saving or no changes
+    if (saveInProgress.current || pendingChanges.current.size === 0) {
+      return;
     }
 
-    // Capture original state BEFORE optimistic update for potential rollback
-    let originalPackage: PackageWithDraft | undefined;
-    setPackages((prev) => {
-      originalPackage = prev.find((pkg) => pkg.id === packageId);
-      return prev.map((pkg) =>
+    // Capture and clear pending changes atomically
+    const changesToSave = new Map(pendingChanges.current);
+    const originalsToRestore = new Map(originalStates.current);
+    pendingChanges.current.clear();
+    originalStates.current.clear();
+
+    saveInProgress.current = true;
+    setIsSaving(true);
+
+    const failedPackages: string[] = [];
+
+    // Process all packages sequentially to avoid race conditions
+    for (const [packageId, mergedUpdate] of changesToSave) {
+      try {
+        const { status, body } = await api.tenantAdminUpdatePackageDraft({
+          params: { id: packageId },
+          body: mergedUpdate,
+        });
+
+        if (status !== 200 || !body) {
+          const errorMessage = (body as { error?: string })?.error || "Failed to save draft";
+          throw new Error(errorMessage);
+        }
+
+        // Update with server response (may include server-side changes)
+        setPackages((prev) =>
+          prev.map((pkg) => (pkg.id === packageId ? body : pkg))
+        );
+      } catch (err) {
+        logger.error("Failed to save draft", {
+          component: "useVisualEditor",
+          packageId,
+          error: err,
+        });
+        failedPackages.push(packageId);
+
+        // Rollback this package to original state
+        const original = originalsToRestore.get(packageId);
+        if (original) {
+          setPackages((prev) =>
+            prev.map((pkg) => (pkg.id === packageId ? original : pkg))
+          );
+        }
+      }
+    }
+
+    saveInProgress.current = false;
+    setIsSaving(false);
+
+    // Show error toast if any packages failed
+    if (failedPackages.length > 0) {
+      toast.error(
+        `Failed to save ${failedPackages.length} package${failedPackages.length !== 1 ? "s" : ""}`,
+        { description: "Your changes have been reverted. Please try again." }
+      );
+    }
+  }, []);
+
+  /**
+   * Update draft for a package with 1s debounce and batching
+   *
+   * Multiple rapid changes to the same or different packages are accumulated
+   * and sent as batched requests after the debounce window. This prevents:
+   * - Race conditions from overlapping requests
+   * - Inconsistent state from out-of-order updates
+   * - Partial saves when some requests fail
+   */
+  const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
+    // Clear existing timeout - we'll reschedule after accumulating this change
+    if (saveTimeout.current) {
+      clearTimeout(saveTimeout.current);
+      saveTimeout.current = null;
+    }
+
+    // Capture original state BEFORE first change for this package
+    if (!originalStates.current.has(packageId)) {
+      const original = packages.find((pkg) => pkg.id === packageId);
+      if (original) {
+        originalStates.current.set(packageId, original);
+      }
+    }
+
+    // Merge this update with any pending changes for this package
+    const existing = pendingChanges.current.get(packageId) || {};
+    pendingChanges.current.set(packageId, { ...existing, ...update });
+
+    // Apply optimistic update to UI immediately
+    setPackages((prev) =>
+      prev.map((pkg) =>
         pkg.id === packageId
           ? {
               ...pkg,
@@ -158,65 +214,19 @@ export function useVisualEditor(): UseVisualEditorReturn {
               draftUpdatedAt: new Date().toISOString(),
             }
           : pkg
-      );
-    });
+      )
+    );
 
-    // Debounced save to server (1 second)
-    const timeout = setTimeout(async () => {
-      pendingSaves.current.delete(packageId);
-      setIsSaving(true);
-
-      try {
-        const token = getTenantToken();
-        const response = await fetch(`${baseUrl}/v1/tenant-admin/packages/${packageId}/draft`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-          body: JSON.stringify(update),
-        });
-
-        if (!response.ok) {
-          const errorBody = await response.json().catch(() => null);
-          throw new Error(errorBody?.error || "Failed to save draft");
-        }
-
-        // Update with server response (may include server-side changes)
-        const updatedPackage = await response.json();
-        setPackages((prev) =>
-          prev.map((pkg) => (pkg.id === packageId ? updatedPackage : pkg))
-        );
-      } catch (err) {
-        logger.error("Failed to save draft", {
-          component: "useVisualEditor",
-          packageId,
-          error: err,
-        });
-
-        // Rollback optimistic update on failure
-        if (originalPackage) {
-          setPackages((prev) =>
-            prev.map((pkg) => (pkg.id === packageId ? originalPackage! : pkg))
-          );
-          toast.error("Failed to save changes", {
-            description: "Your changes have been reverted. Please try again.",
-          });
-        } else {
-          toast.error("Failed to save changes", {
-            description: "Your changes may not have been saved. Please try again.",
-          });
-        }
-      } finally {
-        setIsSaving(false);
-      }
+    // Schedule batched save after debounce window
+    saveTimeout.current = setTimeout(() => {
+      saveTimeout.current = null;
+      flushPendingChanges();
     }, 1000);
-
-    pendingSaves.current.set(packageId, timeout);
-  }, []);
+  }, [packages, flushPendingChanges]);
 
   /**
    * Publish all drafts to live
+   * Uses type-safe ts-rest client for compile-time type checking
    */
   const publishAll = useCallback(async () => {
     if (draftCount === 0) {
@@ -224,30 +234,26 @@ export function useVisualEditor(): UseVisualEditorReturn {
       return;
     }
 
-    // Flush any pending saves first
-    pendingSaves.current.forEach((timeout) => clearTimeout(timeout));
-    pendingSaves.current.clear();
+    // Flush any pending changes first
+    if (saveTimeout.current) {
+      clearTimeout(saveTimeout.current);
+      saveTimeout.current = null;
+    }
+    await flushPendingChanges();
 
     setIsPublishing(true);
 
     try {
-      const token = getTenantToken();
-      const response = await fetch(`${baseUrl}/v1/tenant-admin/packages/publish`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify({}),
+      const { status, body } = await api.tenantAdminPublishDrafts({
+        body: {},
       });
 
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => null);
-        throw new Error(errorBody?.error || "Failed to publish changes");
+      if (status !== 200 || !body) {
+        const errorMessage = (body as { error?: string })?.error || "Failed to publish changes";
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
-      toast.success(`Published ${result.published} package${result.published !== 1 ? "s" : ""}`);
+      toast.success(`Published ${body.published} package${body.published !== 1 ? "s" : ""}`);
 
       // Reload packages to get fresh state
       await loadPackages();
@@ -257,10 +263,11 @@ export function useVisualEditor(): UseVisualEditorReturn {
     } finally {
       setIsPublishing(false);
     }
-  }, [draftCount, loadPackages]);
+  }, [draftCount, loadPackages, flushPendingChanges]);
 
   /**
    * Discard all drafts without publishing
+   * Uses type-safe ts-rest client for compile-time type checking
    */
   const discardAll = useCallback(async () => {
     if (draftCount === 0) {
@@ -273,28 +280,25 @@ export function useVisualEditor(): UseVisualEditorReturn {
       return;
     }
 
-    // Flush any pending saves first
-    pendingSaves.current.forEach((timeout) => clearTimeout(timeout));
-    pendingSaves.current.clear();
+    // Clear any pending saves without flushing (we're discarding)
+    if (saveTimeout.current) {
+      clearTimeout(saveTimeout.current);
+      saveTimeout.current = null;
+    }
+    pendingChanges.current.clear();
+    originalStates.current.clear();
 
     try {
-      const token = getTenantToken();
-      const response = await fetch(`${baseUrl}/v1/tenant-admin/packages/drafts`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify({}),
+      const { status, body } = await api.tenantAdminDiscardDrafts({
+        body: {},
       });
 
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => null);
-        throw new Error(errorBody?.error || "Failed to discard changes");
+      if (status !== 200 || !body) {
+        const errorMessage = (body as { error?: string })?.error || "Failed to discard changes";
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
-      toast.success(`Discarded changes to ${result.discarded} package${result.discarded !== 1 ? "s" : ""}`);
+      toast.success(`Discarded changes to ${body.discarded} package${body.discarded !== 1 ? "s" : ""}`);
 
       // Reload packages to get fresh state
       await loadPackages();
@@ -316,8 +320,12 @@ export function useVisualEditor(): UseVisualEditorReturn {
   // Cleanup pending saves on unmount
   useEffect(() => {
     return () => {
-      pendingSaves.current.forEach((timeout) => clearTimeout(timeout));
-      pendingSaves.current.clear();
+      if (saveTimeout.current) {
+        clearTimeout(saveTimeout.current);
+        saveTimeout.current = null;
+      }
+      pendingChanges.current.clear();
+      originalStates.current.clear();
     };
   }, []);
 

@@ -433,13 +433,13 @@ describe.sequential('Catalog Segment Integration Tests', () => {
 
       // First call - cache miss
       await catalogService.getPackagesBySegment(tenant.id, segment.id);
-      expect(ctx.cache.getStats().misses).toBe(1);
-      expect(ctx.cache.getStats().hits).toBe(0);
+      expect((await ctx.cache.getStats()).misses).toBe(1);
+      expect((await ctx.cache.getStats()).hits).toBe(0);
 
       // Second call - cache hit
       await catalogService.getPackagesBySegment(tenant.id, segment.id);
-      expect(ctx.cache.getStats().misses).toBe(1);
-      expect(ctx.cache.getStats().hits).toBe(1);
+      expect((await ctx.cache.getStats()).misses).toBe(1);
+      expect((await ctx.cache.getStats()).hits).toBe(1);
 
       // Verify cache key format
       const cacheKey = `catalog:${tenant.id}:segment:${segment.id}:packages`;
@@ -512,11 +512,11 @@ describe.sequential('Catalog Segment Integration Tests', () => {
 
       // First call - cache miss
       await catalogService.getAddOnsForSegment(tenant.id, segment.id);
-      expect(ctx.cache.getStats().misses).toBe(1);
+      expect((await ctx.cache.getStats()).misses).toBe(1);
 
       // Second call - cache hit
       await catalogService.getAddOnsForSegment(tenant.id, segment.id);
-      expect(ctx.cache.getStats().hits).toBe(1);
+      expect((await ctx.cache.getStats()).hits).toBe(1);
 
       // Verify cache key
       const cacheKey = `catalog:${tenant.id}:segment:${segment.id}:addons`;
