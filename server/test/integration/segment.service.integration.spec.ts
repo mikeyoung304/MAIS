@@ -267,7 +267,7 @@ describe.sequential('SegmentService Integration Tests', () => {
 
       // Cache key should include tenantId
       const cacheKey = `segments:${tenant.id}:active`;
-      const cached = ctx.cache.cache.get(cacheKey);
+      const cached = await ctx.cache.cache.get(cacheKey);
       expect(cached).toBeTruthy();
     });
 
@@ -323,11 +323,11 @@ describe.sequential('SegmentService Integration Tests', () => {
       const relationsKey = `segments:${tenant.id}:slug:test-segment:with-relations`;
 
       // getSegmentWithRelations should NOT populate basic cache
-      const basicCached = ctx.cache.cache.get(basicKey);
-      expect(basicCached).toBeUndefined();
+      const basicCached = await ctx.cache.cache.get(basicKey);
+      expect(basicCached).toBeNull();
 
       // But should populate relations cache
-      const relationsCached = ctx.cache.cache.get(relationsKey);
+      const relationsCached = await ctx.cache.cache.get(relationsKey);
       expect(relationsCached).toBeTruthy();
     });
 
@@ -337,7 +337,7 @@ describe.sequential('SegmentService Integration Tests', () => {
       // Populate cache
       await service.getSegments(tenant.id, true);
       const cacheKey = `segments:${tenant.id}:active`;
-      expect(ctx.cache.cache.get(cacheKey)).toBeTruthy();
+      expect(await ctx.cache.cache.get(cacheKey)).toBeTruthy();
 
       // Create new segment - should invalidate cache
       await service.createSegment({
@@ -350,7 +350,7 @@ describe.sequential('SegmentService Integration Tests', () => {
       });
 
       // Cache should be invalidated
-      expect(ctx.cache.cache.get(cacheKey)).toBeUndefined();
+      expect(await ctx.cache.cache.get(cacheKey)).toBeNull();
     });
 
     it('should invalidate cache on update', async () => {
@@ -372,14 +372,14 @@ describe.sequential('SegmentService Integration Tests', () => {
       const listKey = `segments:${tenant.id}:active`;
       const slugKey = `segments:${tenant.id}:slug:test-segment`;
 
-      expect(ctx.cache.cache.get(listKey)).toBeTruthy();
-      expect(ctx.cache.cache.get(slugKey)).toBeTruthy();
+      expect(await ctx.cache.cache.get(listKey)).toBeTruthy();
+      expect(await ctx.cache.cache.get(slugKey)).toBeTruthy();
 
       // Update segment - should invalidate caches
       await service.updateSegment(tenant.id, segment.id, { name: 'Updated' });
 
-      expect(ctx.cache.cache.get(listKey)).toBeUndefined();
-      expect(ctx.cache.cache.get(slugKey)).toBeUndefined();
+      expect(await ctx.cache.cache.get(listKey)).toBeNull();
+      expect(await ctx.cache.cache.get(slugKey)).toBeNull();
     });
 
     it('should invalidate cache on delete', async () => {
@@ -401,14 +401,14 @@ describe.sequential('SegmentService Integration Tests', () => {
       const listKey = `segments:${tenant.id}:active`;
       const slugKey = `segments:${tenant.id}:slug:to-delete`;
 
-      expect(ctx.cache.cache.get(listKey)).toBeTruthy();
-      expect(ctx.cache.cache.get(slugKey)).toBeTruthy();
+      expect(await ctx.cache.cache.get(listKey)).toBeTruthy();
+      expect(await ctx.cache.cache.get(slugKey)).toBeTruthy();
 
       // Delete segment - should invalidate caches
       await service.deleteSegment(tenant.id, segment.id);
 
-      expect(ctx.cache.cache.get(listKey)).toBeUndefined();
-      expect(ctx.cache.cache.get(slugKey)).toBeUndefined();
+      expect(await ctx.cache.cache.get(listKey)).toBeNull();
+      expect(await ctx.cache.cache.get(slugKey)).toBeNull();
     });
 
     it('should invalidate both old and new slug caches when updating slug', async () => {
@@ -426,17 +426,17 @@ describe.sequential('SegmentService Integration Tests', () => {
       // Populate cache for old slug
       await service.getSegmentBySlug(tenant.id, 'old-slug');
       const oldSlugKey = `segments:${tenant.id}:slug:old-slug`;
-      expect(ctx.cache.cache.get(oldSlugKey)).toBeTruthy();
+      expect(await ctx.cache.cache.get(oldSlugKey)).toBeTruthy();
 
       // Update slug
       await service.updateSegment(tenant.id, segment.id, { slug: 'new-slug' });
 
       // Old slug cache should be invalidated
-      expect(ctx.cache.cache.get(oldSlugKey)).toBeUndefined();
+      expect(await ctx.cache.cache.get(oldSlugKey)).toBeNull();
 
       // New slug should not be cached yet (not accessed)
       const newSlugKey = `segments:${tenant.id}:slug:new-slug`;
-      expect(ctx.cache.cache.get(newSlugKey)).toBeUndefined();
+      expect(await ctx.cache.cache.get(newSlugKey)).toBeNull();
     });
   });
 
@@ -475,8 +475,8 @@ describe.sequential('SegmentService Integration Tests', () => {
       const cacheKeyA = `segments:${tenantA.id}:active`;
       const cacheKeyB = `segments:${tenantB.id}:active`;
 
-      const cachedA = ctx.cache.cache.get(cacheKeyA);
-      const cachedB = ctx.cache.cache.get(cacheKeyB);
+      const cachedA = await ctx.cache.cache.get(cacheKeyA);
+      const cachedB = await ctx.cache.cache.get(cacheKeyB);
 
       expect(cachedA).toBeTruthy();
       expect(cachedB).toBeTruthy();
@@ -495,7 +495,7 @@ describe.sequential('SegmentService Integration Tests', () => {
       // Populate tenant A cache
       await service.getSegments(tenantA.id, true);
       const cacheKeyA = `segments:${tenantA.id}:active`;
-      expect(ctx.cache.cache.get(cacheKeyA)).toEqual([]);
+      expect(await ctx.cache.cache.get(cacheKeyA)).toEqual([]);
 
       // Create segment for tenant B - should NOT invalidate tenant A cache
       await service.createSegment({
@@ -508,7 +508,7 @@ describe.sequential('SegmentService Integration Tests', () => {
       });
 
       // Tenant A cache should still exist (empty array)
-      const cachedA = ctx.cache.cache.get(cacheKeyA);
+      const cachedA = await ctx.cache.cache.get(cacheKeyA);
       expect(cachedA).toEqual([]);
     });
   });

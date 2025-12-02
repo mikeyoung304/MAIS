@@ -202,15 +202,14 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
       const isDupe1 = await webhookRepo.isDuplicate(testTenantId, eventId);
       expect(isDupe1).toBe(true);
 
-      // Try to record again (should handle gracefully via P2002 catch)
-      await expect(
-        webhookRepo.recordWebhook({
-          tenantId: testTenantId,
-          eventId,
-          eventType: 'checkout.session.completed',
-          rawPayload: JSON.stringify({ test: 'data' }),
-        })
-      ).resolves.toBeUndefined(); // Should resolve successfully, not throw
+      // Try to record again (should return false for duplicate, not throw)
+      const isNew = await webhookRepo.recordWebhook({
+        tenantId: testTenantId,
+        eventId,
+        eventType: 'checkout.session.completed',
+        rawPayload: JSON.stringify({ test: 'data' }),
+      });
+      expect(isNew).toBe(false); // Duplicate detected
 
       // Verify only one record exists (second call was gracefully ignored)
       const events = await ctx.prisma.webhookEvent.findMany({

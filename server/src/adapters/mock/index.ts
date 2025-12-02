@@ -761,13 +761,18 @@ export class MockWebhookRepository implements WebhookRepository {
     eventId: string;
     eventType: string;
     rawPayload: string;
-  }): Promise<void> {
+  }): Promise<boolean> {
     // Mock mode: Ignore tenantId
+    // Check if already exists (duplicate)
+    if (webhookEvents.has(input.eventId)) {
+      return false; // Duplicate
+    }
     webhookEvents.set(input.eventId, {
       eventId: input.eventId,
       eventType: input.eventType,
       status: 'PENDING',
     });
+    return true; // New record
   }
 
   async markProcessed(tenantId: string, eventId: string): Promise<void> {

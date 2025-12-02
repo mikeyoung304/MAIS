@@ -392,7 +392,7 @@ export interface WebhookRepository {
     eventId: string;
     eventType: string;
     rawPayload: string;
-  }): Promise<void>;
+  }): Promise<boolean>;
   isDuplicate(tenantId: string, eventId: string): Promise<boolean>;
   markProcessed(tenantId: string, eventId: string): Promise<void>;
   markFailed(tenantId: string, eventId: string, errorMessage: string): Promise<void>;
@@ -406,7 +406,11 @@ export class FakeWebhookRepository implements WebhookRepository {
     eventId: string;
     eventType: string;
     rawPayload: string;
-  }): Promise<void> {
+  }): Promise<boolean> {
+    // Check if already exists (duplicate)
+    if (this.events.some((e) => e.eventId === input.eventId)) {
+      return false; // Duplicate
+    }
     const event: WebhookEvent = {
       id: `wh_${Date.now()}`,
       eventId: input.eventId,
@@ -417,6 +421,7 @@ export class FakeWebhookRepository implements WebhookRepository {
       createdAt: new Date(),
     };
     this.events.push(event);
+    return true; // New record
   }
 
   async isDuplicate(tenantId: string, eventId: string): Promise<boolean> {

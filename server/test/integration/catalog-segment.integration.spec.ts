@@ -443,7 +443,7 @@ describe.sequential('Catalog Segment Integration Tests', () => {
 
       // Verify cache key format
       const cacheKey = `catalog:${tenant.id}:segment:${segment.id}:packages`;
-      const cached = ctx.cache.cache.get(cacheKey);
+      const cached = await ctx.cache.cache.get(cacheKey);
       expect(cached).toBeTruthy();
     });
 
@@ -481,8 +481,8 @@ describe.sequential('Catalog Segment Integration Tests', () => {
       const packagesKey = `catalog:${tenant.id}:segment:${segment.id}:packages`;
       const withAddOnsKey = `catalog:${tenant.id}:segment:${segment.id}:packages-with-addons`;
 
-      expect(ctx.cache.cache.get(packagesKey)).toBeTruthy();
-      expect(ctx.cache.cache.get(withAddOnsKey)).toBeTruthy();
+      expect(await ctx.cache.cache.get(packagesKey)).toBeTruthy();
+      expect(await ctx.cache.cache.get(withAddOnsKey)).toBeTruthy();
     });
 
     it('should cache getAddOnsForSegment results', async () => {
@@ -520,7 +520,7 @@ describe.sequential('Catalog Segment Integration Tests', () => {
 
       // Verify cache key
       const cacheKey = `catalog:${tenant.id}:segment:${segment.id}:addons`;
-      expect(ctx.cache.cache.get(cacheKey)).toBeTruthy();
+      expect(await ctx.cache.cache.get(cacheKey)).toBeTruthy();
     });
   });
 
@@ -623,8 +623,8 @@ describe.sequential('Catalog Segment Integration Tests', () => {
 
       expect(cacheKeyA).not.toBe(cacheKeyB);
 
-      const cachedA = ctx.cache.cache.get(cacheKeyA);
-      const cachedB = ctx.cache.cache.get(cacheKeyB);
+      const cachedA = await ctx.cache.cache.get(cacheKeyA);
+      const cachedB = await ctx.cache.cache.get(cacheKeyB);
 
       expect(cachedA).toBeTruthy();
       expect(cachedB).toBeTruthy();

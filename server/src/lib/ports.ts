@@ -174,12 +174,16 @@ export interface UserRepository {
  * Webhook Repository - Webhook event tracking and deduplication
  */
 export interface WebhookRepository {
+  /**
+   * Records a webhook event. Returns true if this is a new record, false if duplicate.
+   * Used for idempotency - if false, caller should return early (duplicate detected).
+   */
   recordWebhook(input: {
     tenantId: string;
     eventId: string;
     eventType: string;
     rawPayload: string;
-  }): Promise<void>;
+  }): Promise<boolean>;
   markProcessed(tenantId: string, eventId: string): Promise<void>;
   markFailed(tenantId: string, eventId: string, errorMessage: string): Promise<void>;
   isDuplicate(tenantId: string, eventId: string): Promise<boolean>;

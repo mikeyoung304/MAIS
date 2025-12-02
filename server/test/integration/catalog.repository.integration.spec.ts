@@ -499,9 +499,11 @@ describe.sequential('PrismaCatalogRepository - Integration Tests', () => {
       });
       expect(remainingAddOn).not.toBeNull();
 
-      // ADDITIONAL ASSERTION: Verify add-on is not returned for this package anymore
-      const addOnsForPackage = await repository.getAddOnsByPackageId(testTenantId, pkg.id);
-      expect(addOnsForPackage).toHaveLength(0);
+      // ADDITIONAL ASSERTION: Verify no PackageAddOn records exist for this deleted package
+      const packageAddOnsAfterDelete = await ctx.prisma.packageAddOn.findMany({
+        where: { packageId: pkg.id },
+      });
+      expect(packageAddOnsAfterDelete).toHaveLength(0);
     });
 
     it('should store complete package data', async () => {

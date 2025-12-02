@@ -550,43 +550,6 @@ describe('Issue 3: Demo/Dev Credentials Sync', () => {
     });
   });
 
-  describe('Frontend and Backend Credential Sync', () => {
-    // Skip: This test is redundant with other tests and hits rate limits in CI
-    // The functionality is covered by 'should use same credentials in seed and signup'
-    it.skip('should allow user to test frontend with backend credentials', async () => {
-      // In development, frontend should be able to auto-fill with
-      // the same credentials that backend provides
-      // This ensures frontend UI works with valid backend data
-
-      const testEmail = `frontend-${Date.now()}@example.com`;
-      const testPassword = 'FrontendPassword123!';
-
-      // Backend creates user (simulating seed or signup)
-      const signupRes = await request(app)
-        .post('/v1/auth/signup')
-        .send({
-          email: testEmail,
-          password: testPassword,
-          businessName: 'Frontend Sync Test',
-        })
-        .expect(201);
-
-      // Frontend should be able to use these credentials
-      // This simulates frontend autofill trying to login
-      const loginRes = await request(app)
-        .post('/v1/auth/login')
-        .send({
-          email: testEmail,
-          password: testPassword,
-        })
-        .expect(200);
-
-      expect(loginRes.body.token).toBeDefined();
-
-      // Cleanup
-      await prisma.tenant.delete({ where: { id: signupRes.body.tenantId } });
-    });
-  });
 
   describe('Credential Format Validation', () => {
     it('should enforce minimum password length', async () => {

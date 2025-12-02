@@ -170,12 +170,22 @@ export class WebhooksController {
 
     // Record webhook event (with tenant or _global namespace for audit)
     // Note: We already checked for duplicates using _global namespace above
-    await this.webhookRepo.recordWebhook({
+    // recordWebhook returns false if duplicate detected (P2002 unique constraint)
+    const isNewRecord = await this.webhookRepo.recordWebhook({
       tenantId: effectiveTenantId,
       eventId: event.id,
       eventType: event.type,
       rawPayload: rawBody,
     });
+
+    // RACE CONDITION FIX: If recordWebhook detected a duplicate (another concurrent
+    // call already recorded this event), return early to avoid double-processing.
+    // This handles the case where two concurrent calls both passed the initial
+    // isDuplicate check before either recorded.
+    if (!isNewRecord) {
+      logger.info({ eventId: event.id }, 'Webhook duplicate detected during recording - returning 200 OK');
+      return;
+    }
 
     // Process webhook with error handling
     try {
@@ -261,6 +271,7 @@ export class WebhooksController {
         const commissionPercentNum = commissionPercent ? parseFloat(commissionPercent) : undefined;
 
         // Create booking in database (tenant-scoped)
+        // BookingConflictError is handled below as idempotent success
         await this.bookingService.onPaymentCompleted(validatedTenantId, {
           sessionId: session.id,
           packageId,

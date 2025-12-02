@@ -78,15 +78,19 @@ export class PrismaWebhookRepository implements WebhookRepository {
    * @param input.eventType - Event type (e.g., "checkout.session.completed")
    * @param input.rawPayload - Raw JSON payload from Stripe
    *
-   * @returns Promise that resolves when recorded (or duplicate detected)
+   * @returns true if new record created, false if duplicate detected
    *
    * @example
    * ```typescript
-   * await webhookRepo.recordWebhook({
+   * const isNew = await webhookRepo.recordWebhook({
    *   eventId: 'evt_abc123',
    *   eventType: 'checkout.session.completed',
    *   rawPayload: JSON.stringify(event)
    * });
+   * if (!isNew) {
+   *   // Duplicate detected, return early
+   *   return;
+   * }
    * ```
    */
   async recordWebhook(input: {
@@ -94,7 +98,7 @@ export class PrismaWebhookRepository implements WebhookRepository {
     eventId: string;
     eventType: string;
     rawPayload: string;
-  }): Promise<void> {
+  }): Promise<boolean> {
     try {
       await this.prisma.webhookEvent.create({
         data: {
@@ -108,6 +112,7 @@ export class PrismaWebhookRepository implements WebhookRepository {
       });
 
       logger.info({ tenantId: input.tenantId, eventId: input.eventId, eventType: input.eventType }, 'Webhook event recorded');
+      return true; // New record created
     } catch (error) {
       // Only ignore unique constraint violations (duplicate eventId)
       // Use duck typing instead of instanceof due to module resolution issues
@@ -117,7 +122,7 @@ export class PrismaWebhookRepository implements WebhookRepository {
       // Check for P2002 (unique constraint) via error code and name
       if (errorCode === 'P2002' && errorName === 'PrismaClientKnownRequestError') {
         logger.info({ tenantId: input.tenantId, eventId: input.eventId }, 'Webhook already recorded (duplicate eventId)');
-        return;  // Graceful handling of duplicates
+        return false; // Duplicate detected
       }
 
       // Log and re-throw other errors
