@@ -1,6 +1,8 @@
 # Multi-Tenant Quick Start Guide
 
-**Status:** Production Live | **Phase:** 1-4 Complete (95%)
+**Status:** Production Live (December 2025)
+**Architecture Completion:** 95%
+**Current Phase:** Phase 5 - Self-Service Foundation (In Progress)
 
 ---
 
@@ -356,52 +358,58 @@ const key = `catalog:${tenantId}:packages`;
 
 ## Current Branch Status
 
-**Branch:** `multi-tenant-embeddable`
+**Branch:** `main` (production-ready)
 
-**Completed:**
-- ✅ Database schema updated
-- ✅ Migration script created
+**Completed (Phase 1-4):**
+- ✅ Database schema with multi-tenant isolation
+- ✅ Tenant middleware and authentication
 - ✅ Core services (encryption, API keys, commission)
-- ✅ Tenant middleware
+- ✅ All service layers tenant-scoped
+- ✅ API routes with tenant isolation
+- ✅ Tenant admin dashboard operational
+- ✅ Package photo uploads (Phase 5.1)
 
-**In Progress:**
-- 🚧 Service layer updates (catalog done, booking/availability pending)
-- 🚧 API route updates
+**In Progress (Phase 5):**
+- 🚧 Add-on management UI
+- 🚧 Email template customization
 
-**Pending:**
-- ⏳ Migration application (waiting for DB access)
-- ⏳ DI container updates
-- ⏳ Widget SDK (Phase 2)
-- ⏳ Admin dashboard (Phase 4)
+**Future Phases:**
+- ⏳ Content/Copy CMS (Phase 6)
+- ⏳ Cloud storage migration (Phase 7)
+- ⏳ Advanced features (Phase 8+)
 
 ---
 
-## Files Modified/Created This Session
+## Key Implementation Files
 
-### Modified
-- `server/prisma/schema.prisma` - Added Tenant model, tenantId to all models
-- `server/src/services/catalog.service.ts` - Added tenantId parameters
-
-### Created
-- `server/prisma/migrations/03_add_multi_tenancy.sql` - Migration script
-- `server/src/lib/encryption.service.ts` - Tenant secrets encryption
+### Core Multi-Tenant Infrastructure
+- `server/prisma/schema.prisma` - Tenant model with all entity relationships
+- `server/src/lib/encryption.service.ts` - Tenant secrets encryption (AES-256-GCM)
 - `server/src/lib/api-key.service.ts` - API key generation/validation
-- `server/src/middleware/tenant.ts` - Tenant resolution
-- `server/src/services/commission.service.ts` - Commission calculation
-- `EMBEDDABLE_MULTI_TENANT_IMPLEMENTATION_PLAN.md` - Full 24-week plan
-- `MULTI_TENANT_IMPLEMENTATION_GUIDE.md` - Consolidated guide
-- `MULTI_TENANT_QUICK_START.md` - This document
+- `server/src/middleware/tenant.ts` - Tenant resolution middleware
+- `server/src/services/commission.service.ts` - Variable commission calculation
+
+### Service Layer
+- All services updated with `tenantId` as first parameter
+- Repository pattern enforces tenant isolation
+- Cache keys scoped by tenant
+
+### API Routes
+- Tenant middleware applied via ts-rest globalMiddleware
+- All routes properly tenant-scoped
+- Admin routes for tenant management
 
 ---
 
-## Next Steps
+## Migration to Production
 
-1. **Apply migration** when database is accessible
-2. **Update booking.service.ts** with commission integration
-3. **Update availability.service.ts** with tenant scoping
-4. **Apply tenant middleware** to all API routes
-5. **Update DI container** with new services
-6. **Create test tenant** and verify isolation
+All Phase 1-4 changes have been applied to the production database. The system is live with:
+- Multiple active tenants
+- Complete data isolation verified
+- Commission calculation operational
+- Tenant admin dashboard functional
+
+For new deployments, see the migration guides in MULTI_TENANT_IMPLEMENTATION_GUIDE.md.
 
 ---
 

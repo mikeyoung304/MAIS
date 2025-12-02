@@ -1,10 +1,10 @@
 # Documentation Index
 
-Welcome to the Elope documentation hub. This index helps you navigate all available documentation organized by purpose.
+Welcome to the MAIS documentation hub. This index helps you navigate all available documentation organized by purpose.
 
 ## 🚀 Quick Start
 
-**New to Elope?** Start here:
+**New to MAIS?** Start here:
 
 - **[README.md](../README.md)** - Project overview, features, and quick start guide
 - **[DEVELOPING.md](../DEVELOPING.md)** - Development setup and workflow
@@ -79,7 +79,7 @@ Welcome to the Elope documentation hub. This index helps you navigate all availa
 
 ## 🚨 Operations & Production
 
-**Running Elope in production:**
+**Running MAIS in production:**
 
 - **[operations/RUNBOOK.md](./operations/RUNBOOK.md)** - Operational procedures and troubleshooting
 - **[operations/INCIDENT_RESPONSE.md](./operations/INCIDENT_RESPONSE.md)** - Production incident response playbook

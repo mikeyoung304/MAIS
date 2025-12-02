@@ -21,7 +21,7 @@ Successfully implemented the MAIS Widget SDK loader as a lightweight, ES5-compat
 | `mais-sdk.js` | 6.6KB | 2.2KB | Development version with comments |
 | `mais-sdk.min.js` | 3.4KB | 1.4KB | Production minified version |
 
-**Location:** `/Users/mikeyoung/CODING/Elope/client/public/`
+**Location:** `client/public/`
 
 ### Documentation & Examples
 
@@ -422,7 +422,7 @@ Connects to production widget application.
 ## File Locations
 
 ```
-/Users/mikeyoung/CODING/Elope/client/public/
+client/public/
 ├── mais-sdk.js              # Development SDK (6.6KB)
 ├── mais-sdk.min.js          # Production SDK (3.4KB)
 ├── SDK_README.md            # Full documentation

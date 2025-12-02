@@ -1,10 +1,12 @@
-# Welcome to Elope Documentation
+# MAIS Documentation
 
-Welcome! You've found the main documentation hub for Elope, a multi-tenant wedding venue booking platform. Whether you're setting up your development environment, responding to a production incident, or understanding the architecture, this guide will help you find what you need quickly.
+**MAIS (Macon AI Solutions)** is a multi-tenant business growth club platform partnering with entrepreneurs and small business owners through revenue-sharing partnerships. Built as a modular monolith with Express + React, featuring complete data isolation, config-driven architecture, and mock-first development.
+
+Whether you're setting up your development environment, responding to a production incident, or understanding the architecture, this guide will help you find what you need quickly.
 
 ## About Our Documentation System
 
-Elope documentation follows the **Diátaxis framework**, a systematic approach to technical documentation that organizes content based on your needs and context. Instead of searching through a single monolithic guide, you can navigate directly to the type of documentation that matches what you're trying to accomplish right now.
+MAIS documentation follows the **Diátaxis framework**, a systematic approach to technical documentation that organizes content based on your needs and context. Instead of searching through a single monolithic guide, you can navigate directly to the type of documentation that matches what you're trying to accomplish right now.
 
 The Diátaxis framework recognizes that documentation serves different purposes at different times. Sometimes you need to learn a new concept (tutorials), sometimes you need to solve a specific problem (how-to guides), sometimes you need to look up technical details (reference), and sometimes you need to understand why things work the way they do (explanation). By organizing documentation into these four types, we make it easier for you to find exactly what you need, when you need it.
 
@@ -196,7 +198,7 @@ See [sprints/](./sprints/) for detailed sprint documentation.
 
 ## Agent-Powered Platform (2025)
 
-Elope is transforming into a config-driven architecture with agent integration:
+MAIS is transforming into a config-driven architecture with agent integration:
 
 - **Sprint Documentation:** [archive/2025-11/sprints/sprint-4/](./archive/2025-11/sprints/sprint-4/), [archive/2025-11/sprints/sprint-5-6/](./archive/2025-11/sprints/sprint-5-6/)
 - **Planning Documentation:** [archive/planning/2025-01-analysis/](./archive/planning/2025-01-analysis/)

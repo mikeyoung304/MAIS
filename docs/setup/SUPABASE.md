@@ -2,13 +2,13 @@
 
 **Last Updated:** October 29, 2025
 **Status:** ✅ Production Ready
-**Project:** Elope Wedding Booking Platform
+**Project:** MAIS Wedding Booking Platform
 
 ---
 
 ## Overview
 
-Elope uses **Supabase** as its production PostgreSQL database with built-in connection pooling, automatic backups, and high availability.
+MAIS uses **Supabase** as its production PostgreSQL database with built-in connection pooling, automatic backups, and high availability.
 
 **Integration Type:** Database Only (Simple)
 - ✅ PostgreSQL database with connection pooling

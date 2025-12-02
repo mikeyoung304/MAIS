@@ -26,7 +26,7 @@
 **Steps:**
 1. Open http://localhost:3000 in your browser
 2. You should see 6 elopement packages:
-   - Basic Elopement ($999)
+   - Basic MAISment ($999)
    - Micro Ceremony ($2,499)
    - Garden Romance ($4,499)
    - Luxury Escape ($8,999)
@@ -44,7 +44,7 @@
 **Current Mode:** Mock (No real Stripe charges)
 
 **Steps:**
-1. Select a package (e.g., "Basic Elopement")
+1. Select a package (e.g., "Basic MAISment")
 2. Choose a date (avoid 2025-12-25 - it's a blackout date)
 3. Add optional add-ons (Video Recording, Floral Arrangement)
 4. Fill in booking details:
@@ -194,7 +194,7 @@ lsof -ti:3001,3000 | xargs kill -9
 ### Restart Services
 ```bash
 # From project root
-cd /Users/mikeyoung/CODING/Elope
+cd /Users/mikeyoung/CODING/MAIS
 
 # Start API server (in background)
 cd server && pnpm run dev > /tmp/elope-server.log 2>&1 &
@@ -215,7 +215,7 @@ pnpm run dev  # If available
 - Password: `admin123`
 
 ### Seeded Packages (6 total)
-1. **pkg_basic** - Basic Elopement ($999)
+1. **pkg_basic** - Basic MAISment ($999)
 2. **pkg_micro** - Micro Ceremony ($2,499)
 3. **pkg_garden** - Garden Romance ($4,499)
 4. **pkg_luxury** - Luxury Escape ($8,999)

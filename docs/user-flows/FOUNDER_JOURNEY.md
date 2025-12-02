@@ -114,7 +114,7 @@ npm exec prisma db seed
 
 2. **Test Tenant (E2E):**
    - Slug: `elope-e2e`
-   - Name: "Elope E2E Test Tenant"
+   - Name: "MAIS E2E Test Tenant"
    - API Key: `pk_live_elope-e2e_000000000000`
    - Secret Key: (hashed) `sk_live_elope-e2e_...`
    - Location: `Tenant` table, lines 35-64 in seed.ts

@@ -932,7 +932,7 @@ RestartSec=10s
 
 ### Memory Leak Identification
 
-#### Common Causes in Elope Codebase
+#### Common Causes in MAIS Codebase
 
 **1. Database Connection Leaks**
 ```typescript
@@ -1292,7 +1292,7 @@ EOF
 
 ### Customer: Booking Manual Recovery
 
-**Subject:** Your Elope Wedding Booking - Action Required
+**Subject:** Your MAIS Wedding Booking - Action Required
 
 ```
 Dear [Customer Name],
@@ -1321,7 +1321,7 @@ If you have any questions, please call us directly at [Phone Number] or reply to
 
 Best regards,
 [Your Name]
-Elope Customer Care
+MAIS Customer Care
 [Contact Information]
 ```
 
@@ -1332,7 +1332,7 @@ Elope Customer Care
 **PHONE CALL SCRIPT** (Use this before email)
 
 ```
-"Hello [Customer Name], this is [Your Name] from Elope. I'm calling about your wedding booking.
+"Hello [Customer Name], this is [Your Name] from MAIS. I'm calling about your wedding booking.
 
 I need to inform you of a serious error on our part. Due to a technical issue, we accidentally double-booked the date you selected [Event Date]. I am deeply, deeply sorry for this.
 
@@ -1356,7 +1356,7 @@ Can we schedule a call tomorrow to discuss alternative dates that work for you?"
 
 **FOLLOW-UP EMAIL**
 
-**Subject:** Regarding Your Elope Booking - Our Sincere Apology
+**Subject:** Regarding Your MAIS Booking - Our Sincere Apology
 
 ```
 Dear [Customer Name],
@@ -1388,7 +1388,7 @@ Please call me directly at [Direct Phone] if you have any questions or concerns.
 Our deepest apologies,
 [Your Name]
 [Title]
-Elope
+MAIS
 [Direct Contact Information]
 ```
 

@@ -48,7 +48,7 @@ The MAIS platform provides a complete business management solution for wedding a
 - $50k-$500k annual revenue
 
 **Business Models Supported:**
-- **Elopement Photographers**: Intimate ceremony packages with add-on services
+- **MAISment Photographers**: Intimate ceremony packages with add-on services
 - **Micro-Wedding Venues**: Small venue rentals with catering/coordination packages
 - **Wellness Retreat Hosts**: Multi-day retreat packages with tiered pricing
 - **Event Coordinators**: Day-of coordination, full-service planning packages

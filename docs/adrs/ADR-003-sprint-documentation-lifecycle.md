@@ -10,7 +10,7 @@
 
 ## Context
 
-Elope's sprint documentation is severely fragmented across multiple locations with no clear lifecycle management. Analysis of Sprints 4-6 reveals systematic problems:
+MAIS's sprint documentation is severely fragmented across multiple locations with no clear lifecycle management. Analysis of Sprints 4-6 reveals systematic problems:
 
 ### Current Sprint Documentation Chaos
 
@@ -339,7 +339,7 @@ docs/sprints/
 - Difficult to archive (must identify all Sprint N files)
 - Search returns too many results (grep "blocker" matches 10 sprints)
 
-**Why Rejected**: Doesn't scale beyond 5-6 sprints. Elope already at Sprint 6, will reach 20+ sprints.
+**Why Rejected**: Doesn't scale beyond 5-6 sprints. MAIS already at Sprint 6, will reach 20+ sprints.
 
 ### Alternative 2: Archive Immediately on Completion
 

@@ -1,6 +1,6 @@
 # Diátaxis Implementation Guide
 
-**Elope Documentation Framework Adoption**
+**MAIS Documentation Framework Adoption**
 **Version:** 1.0
 **Date:** November 12, 2025
 **Status:** Proposed
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This guide establishes Diátaxis as the foundational framework for Elope's documentation system. With 248+ markdown files showing drift just 5 days after reorganization, we need a systematic approach grounded in user needs rather than arbitrary categories.
+This guide establishes Diátaxis as the foundational framework for MAIS's documentation system. With 248+ markdown files showing drift just 5 days after reorganization, we need a systematic approach grounded in user needs rather than arbitrary categories.
 
 **Key Problem:** Current organization (setup, api, operations, security, etc.) mixes different documentation types within each category, making it unclear where new docs belong and hard for users to find what they need.
 
@@ -59,8 +59,8 @@ Diátaxis addresses what to write (content), how to write it (style), and how to
 - New feature requires hands-on introduction
 - Complex workflow needs guided walkthrough
 
-**Elope Examples (proposed):**
-- "Your First Elope Tenant" (setup → first booking)
+**MAIS Examples (proposed):**
+- "Your First MAIS Tenant" (setup → first booking)
 - "Widget Integration in 10 Minutes"
 - "Creating Your First Custom Package"
 
@@ -89,7 +89,7 @@ Diátaxis addresses what to write (content), how to write it (style), and how to
 - Specific problem needs documented solution
 - Common workflow needs optimization guidance
 
-**Elope Examples (existing, to migrate):**
+**MAIS Examples (existing, to migrate):**
 - `operations/DEPLOYMENT_GUIDE.md` → "How to Deploy to Production"
 - `security/SECRET_ROTATION_GUIDE.md` → "How to Rotate Secrets"
 - `setup/LOCAL_TESTING_GUIDE.md` → "How to Test Locally"
@@ -120,7 +120,7 @@ Diátaxis addresses what to write (content), how to write it (style), and how to
 - Commands/CLI need parameter reference
 - Data models need field definitions
 
-**Elope Examples (existing, to migrate):**
+**MAIS Examples (existing, to migrate):**
 - `api/` directory → Reference section
 - `setup/ENVIRONMENT.md` → "Environment Variables Reference"
 - `packages/contracts/` schemas → "API Contracts Reference"
@@ -152,7 +152,7 @@ Diátaxis addresses what to write (content), how to write it (style), and how to
 - Complex system interactions need clarification
 - Users need mental models to work effectively
 
-**Elope Examples (existing, to migrate):**
+**MAIS Examples (existing, to migrate):**
 - `ARCHITECTURE.md` → "System Architecture Explained"
 - `DECISIONS.md` → "Architecture Decision Records"
 - `multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md` → "Understanding Multi-Tenancy"
@@ -336,7 +336,7 @@ After determining the quadrant, use domain-specific subdirectories:
 
 ## Mapping Current Categories to Diátaxis
 
-Here's how Elope's existing 9-category structure maps to Diátaxis:
+Here's how MAIS's existing 9-category structure maps to Diátaxis:
 
 ### Current `setup/` → Split Across Quadrants
 
@@ -514,7 +514,7 @@ find docs/ -name "*.md" | wc -l  # Should match known count
 
 ---
 
-## Examples: Classifying Real Elope Docs
+## Examples: Classifying Real MAIS Docs
 
 ### Example 1: "SECRET_ROTATION_GUIDE.md"
 
@@ -596,7 +596,7 @@ last_updated: 2025-11-12
 **Frontmatter:**
 ```yaml
 ---
-title: How to Test Elope Locally
+title: How to Test MAIS Locally
 quadrant: how-to
 domain: development
 audience: developers
@@ -973,7 +973,7 @@ We'll know Diátaxis implementation succeeded when:
 - Website: https://diataxis.fr/
 - GitHub: https://github.com/evildmp/diataxis-documentation-framework
 
-**Elope-Specific:**
+**MAIS-Specific:**
 - This guide: `docs/DIATAXIS_IMPLEMENTATION_GUIDE.md`
 - Documentation index: `docs/INDEX.md`
 - Contributing guide: `contributing/documentation-guide.md` (to be created)

@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document outlines the testing philosophy, strategy, and best practices for the Elope project. For detailed test implementation guidance, see `/Users/mikeyoung/CODING/Elope/server/test/README.md`.
+This document outlines the testing philosophy, strategy, and best practices for the MAIS project. For detailed test implementation guidance, see `/Users/mikeyoung/CODING/MAIS/server/test/README.md`.
 
 ## Testing Philosophy
 
@@ -134,7 +134,7 @@ describe('PrismaBookingRepository', () => {
 ```typescript
 test('customer can book a package', async ({ page }) => {
   await page.goto('/packages');
-  await page.click('text=Basic Elopement');
+  await page.click('text=Basic MAISment');
   await page.fill('input[name="coupleName"]', 'John & Jane');
   await page.click('text=Book Now');
 
@@ -172,7 +172,7 @@ npm run test:watch
 npm run test:coverage
 ```
 
-For detailed commands and options, see `/Users/mikeyoung/CODING/Elope/server/test/README.md`.
+For detailed commands and options, see `/Users/mikeyoung/CODING/MAIS/server/test/README.md`.
 
 ## Multi-Tenancy Testing Patterns
 
@@ -623,9 +623,9 @@ it('creates booking and returns checkout URL', async () => {
 
 ### Internal Documentation
 
-- `/Users/mikeyoung/CODING/Elope/server/test/README.md` - Detailed test implementation guide
-- `/Users/mikeyoung/CODING/Elope/docs/architecture/MULTI_TENANT_ISOLATION.md` - Multi-tenancy architecture
-- `/Users/mikeyoung/CODING/Elope/docs/api/README.md` - API documentation
+- `/Users/mikeyoung/CODING/MAIS/server/test/README.md` - Detailed test implementation guide
+- `/Users/mikeyoung/CODING/MAIS/docs/architecture/MULTI_TENANT_ISOLATION.md` - Multi-tenancy architecture
+- `/Users/mikeyoung/CODING/MAIS/docs/api/README.md` - API documentation
 
 ### External Resources
 
@@ -639,7 +639,7 @@ it('creates booking and returns checkout URL', async () => {
 ### Test Failures
 
 1. Read the error message carefully
-2. Check `/Users/mikeyoung/CODING/Elope/server/test/README.md` for common issues
+2. Check `/Users/mikeyoung/CODING/MAIS/server/test/README.md` for common issues
 3. Run test in isolation to rule out state pollution
 4. Check for missing `tenantId` parameter
 5. Verify test database is properly configured
@@ -673,7 +673,7 @@ it('creates booking and returns checkout URL', async () => {
 ### Test File Locations
 
 ```
-/Users/mikeyoung/CODING/Elope/
+/Users/mikeyoung/CODING/MAIS/
 ├── server/
 │   └── test/
 │       ├── README.md                    # Test implementation guide

@@ -342,6 +342,31 @@ Optional (graceful fallbacks in real mode):
 - **docs/solutions/PREVENTION-STRATEGIES-INDEX.md** - Prevention strategies for avoiding critical issues
 - **docs/solutions/PREVENTION-QUICK-REFERENCE.md** - Quick reference cheat sheet (print and pin!)
 
+## Documentation Conventions
+
+### Directory Structure
+- `docs/guides/` - How-to guides (task-oriented)
+- `docs/reference/` - API, architecture, ADRs (information-oriented)
+- `docs/solutions/` - Patterns, prevention strategies (understanding-oriented)
+- `docs/operations/` - Runbooks, monitoring (operational)
+- `docs/archive/YYYY-MM/` - Historical documents by month
+
+### When Adding Documentation
+- **New feature guide**: Add to `docs/guides/`
+- **API or architecture**: Add to `docs/reference/`
+- **Pattern or solution**: Add to `docs/solutions/`
+- **ADR**: Add to `docs/adrs/` using ADR template, update DECISIONS.md index
+
+### When Archiving
+- Move completed phase/sprint docs to `docs/archive/YYYY-MM/`
+- Use date prefix: `YYYY-MM-DD_original-filename.md`
+- Never delete historical docs - archive them
+
+### Naming Conventions
+- Use SCREAMING_SNAKE_CASE for documentation files (e.g., `SETUP_GUIDE.md`)
+- Use kebab-case for directories (e.g., `design-system/`)
+- ADRs: `ADR-NNN-short-title.md` (e.g., `ADR-013-advisory-locks.md`)
+
 ## Code Patterns to Follow
 
 ### Error Handling Pattern

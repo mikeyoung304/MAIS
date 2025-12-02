@@ -10,7 +10,7 @@
 
 ## Context
 
-Elope's documentation contains sensitive information but lacks systematic security review, resulting in credential exposures that persist for weeks or months before discovery.
+MAIS's documentation contains sensitive information but lacks systematic security review, resulting in credential exposures that persist for weeks or months before discovery.
 
 ### The Security Documentation Problem
 
@@ -182,7 +182,7 @@ chmod +x .git/hooks/pre-commit
 
 **Configuration**: `.gitleaks.toml`
 ```toml
-title = "Elope gitleaks config"
+title = "MAIS gitleaks config"
 
 # Detect common secrets
 [[rules]]

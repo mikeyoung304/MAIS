@@ -6,7 +6,7 @@
 
 ## Mission Summary
 
-Successfully generated complete OpenAPI/Swagger documentation for the Elope Wedding Booking API and set up an interactive Swagger UI endpoint for API exploration and testing.
+Successfully generated complete OpenAPI/Swagger documentation for the MAIS Wedding Booking API and set up an interactive Swagger UI endpoint for API exploration and testing.
 
 ## Tasks Completed
 
@@ -18,7 +18,7 @@ Successfully generated complete OpenAPI/Swagger documentation for the Elope Wedd
 
 ### 2. OpenAPI Specification Generation (COMPLETED)
 
-Created `/Users/mikeyoung/CODING/Elope/server/src/api-docs.ts` with:
+Created `/Users/mikeyoung/CODING/MAIS/server/src/api-docs.ts` with:
 
 - Complete OpenAPI 3.0 specification
 - All 16 API endpoints documented with full details
@@ -29,7 +29,7 @@ Created `/Users/mikeyoung/CODING/Elope/server/src/api-docs.ts` with:
 
 ### 3. Swagger UI Setup (COMPLETED)
 
-Added two new endpoints to `/Users/mikeyoung/CODING/Elope/server/src/app.ts`:
+Added two new endpoints to `/Users/mikeyoung/CODING/MAIS/server/src/app.ts`:
 
 1. `GET /api/docs/openapi.json` - Serves the raw OpenAPI specification
 2. `GET /api/docs` - Interactive Swagger UI for exploring and testing the API
@@ -205,11 +205,11 @@ The documentation integrates seamlessly with:
 ## Files Modified/Created
 
 ### Created:
-- `/Users/mikeyoung/CODING/Elope/server/src/api-docs.ts` (1024 lines)
+- `/Users/mikeyoung/CODING/MAIS/server/src/api-docs.ts` (1024 lines)
 
 ### Modified:
-- `/Users/mikeyoung/CODING/Elope/server/src/app.ts` (Added Swagger UI middleware and routes)
-- `/Users/mikeyoung/CODING/Elope/server/package.json` (Added dependencies)
+- `/Users/mikeyoung/CODING/MAIS/server/src/app.ts` (Added Swagger UI middleware and routes)
+- `/Users/mikeyoung/CODING/MAIS/server/package.json` (Added dependencies)
 
 ### Dependencies Added:
 - `swagger-ui-express@^5.0.0`
@@ -222,7 +222,7 @@ To verify the implementation:
 
 ```bash
 # 1. Start the server
-cd /Users/mikeyoung/CODING/Elope/server
+cd /Users/mikeyoung/CODING/MAIS/server
 npm run dev:mock
 
 # 2. Test OpenAPI JSON endpoint

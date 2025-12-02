@@ -1,32 +1,36 @@
 # Multi-Tenant Self-Service Roadmap
 
-**Document Version:** 1.0
-**Last Updated:** November 7, 2025
-**Current Status:** Phase 4 Complete (Nov 2024)
-**Next Milestone:** Phase 5 - Self-Service Foundation (Q1 2026)
+**Document Version:** 1.1
+**Last Updated:** December 2, 2025
+**Current Status:** Phase 5 In Progress (33% complete - 1 of 3 features done)
+**Architecture Maturity:** 95% Complete
+**Next Milestone:** Complete Phase 5 - Self-Service Foundation (Q1 2026)
 
 ---
 
 ## Executive Summary
 
-### Current Maturity Score: 6/10
+### Current Maturity Score: 7/10 (Updated December 2025)
 
-Elope has successfully transformed from a single-tenant booking platform into a multi-tenant SaaS platform with embedded widget capabilities. **Phase 4 is complete**, delivering tenant authentication, branding management, and basic self-service features.
+MAIS has successfully transformed from a single-tenant booking platform into a production-ready multi-tenant SaaS platform. **Phase 4 is complete**, and Phase 5 is 33% complete with package photo uploads operational. The platform now supports tenant authentication, branding management, self-service operations, and visual package catalogs.
 
 **What's Working:**
 - Multi-tenant data isolation (row-level, 100% secure)
 - Tenant branding (logo, colors, fonts)
-- Embeddable widget with tenant customization
-- Stripe Connect for variable commissions (10-15%)
-- Tenant admin dashboard for basic operations
+- Tenant authentication (email/password + JWT)
+- Package management with photo uploads (NEW: Phase 5.1 complete)
+- Blackout date management
+- Booking view and filtering
+- Stripe Connect for variable commissions (8-15%)
+- Tenant admin dashboard for operations
 
-**What's Missing:**
-- Add-on management UI (tenants cannot create/edit add-ons)
-- Package photo upload system (no visual catalogs)
-- Email template customization (fixed platform templates)
-- UI copy/content management (hardcoded "Elope" branding)
+**What's Missing (Phase 5+ Priorities):**
+- Add-on management UI (tenants cannot create/edit add-ons) - IN PROGRESS
+- Email template customization (fixed platform templates) - IN PROGRESS
+- UI copy/content management (hardcoded platform branding)
+- Cloud storage for media (currently local file storage)
 - Multi-language support
-- Advanced booking features (dynamic pricing, refunds)
+- Advanced booking features (dynamic pricing, refunds, modifications)
 
 ### Vision for Full Self-Service
 
@@ -54,15 +58,15 @@ Enable 50 independent wedding businesses to operate as **white-label platforms**
 
 ---
 
-## Current State (Phase 4 Complete - Nov 2024)
+## Current State (Phase 4 Complete - November 2025)
 
 ### Completed Features
 
 #### 1. Multi-Tenant Foundation (Phase 1)
 **Files:**
-- `/Users/mikeyoung/CODING/Elope/server/prisma/schema.prisma` - Tenant model with encrypted secrets
-- `/Users/mikeyoung/CODING/Elope/server/src/lib/encryption.service.ts` - AES-256-GCM encryption
-- `/Users/mikeyoung/CODING/Elope/server/src/middleware/tenant.ts` - X-Tenant-Key authentication
+- `server/prisma/schema.prisma` - Tenant model with encrypted secrets
+- `server/src/lib/encryption.service.ts` - AES-256-GCM encryption
+- `server/src/middleware/tenant.ts` - X-Tenant-Key authentication
 
 **Capabilities:**
 - Row-level data isolation (100% secure, no cross-tenant leakage)
@@ -72,9 +76,9 @@ Enable 50 independent wedding businesses to operate as **white-label platforms**
 
 #### 2. Embeddable Widget Core (Phase 2)
 **Files:**
-- `/Users/mikeyoung/CODING/Elope/client/src/widget/` - Widget application
-- `/Users/mikeyoung/CODING/Elope/client/public/widget-loader.js` - SDK loader (<3KB)
-- `/Users/mikeyoung/CODING/Elope/server/src/routes/branding.routes.ts` - Branding API
+- `client/src/widget/` - Widget application
+- `client/public/widget-loader.js` - SDK loader (<3KB)
+- `server/src/routes/branding.routes.ts` - Branding API
 
 **Capabilities:**
 - JavaScript SDK for tenant website embedding
@@ -85,8 +89,8 @@ Enable 50 independent wedding businesses to operate as **white-label platforms**
 
 #### 3. Stripe Connect Integration (Phase 3)
 **Files:**
-- `/Users/mikeyoung/CODING/Elope/server/src/services/stripe-connect.service.ts` - Connect service
-- `/Users/mikeyoung/CODING/Elope/server/src/services/commission.service.ts` - Commission engine
+- `server/src/services/stripe-connect.service.ts` - Connect service
+- `server/src/services/commission.service.ts` - Commission engine
 
 **Capabilities:**
 - Stripe Express Connected Accounts
@@ -97,12 +101,12 @@ Enable 50 independent wedding businesses to operate as **white-label platforms**
 
 #### 4. Tenant Admin UI (Phase 4)
 **Files:**
-- `/Users/mikeyoung/CODING/Elope/server/src/routes/tenant-admin.routes.ts` - Admin API routes (8 endpoints)
-- `/Users/mikeyoung/CODING/Elope/server/src/services/tenant-auth.service.ts` - JWT authentication
-- `/Users/mikeyoung/CODING/Elope/server/src/services/upload.service.ts` - File upload service
-- `/Users/mikeyoung/CODING/Elope/client/src/components/ColorPicker.tsx` - Color customization UI
-- `/Users/mikeyoung/CODING/Elope/client/src/components/FontSelector.tsx` - Font selection UI
-- `/Users/mikeyoung/CODING/Elope/client/src/hooks/useBranding.ts` - Branding hook
+- `server/src/routes/tenant-admin.routes.ts` - Admin API routes (8 endpoints)
+- `server/src/services/tenant-auth.service.ts` - JWT authentication
+- `server/src/services/upload.service.ts` - File upload service
+- `client/src/components/ColorPicker.tsx` - Color customization UI
+- `client/src/components/FontSelector.tsx` - Font selection UI
+- `client/src/hooks/useBranding.ts` - Branding hook
 
 **Capabilities:**
 - Tenant authentication (email/password + JWT)
@@ -134,7 +138,7 @@ GET    /v1/tenant-admin/bookings   # View bookings
 1. **Add-On Management Missing** - Tenants cannot create/edit add-ons (only packages)
 2. **Photo Upload Limited** - Only logo upload exists; no package/add-on photo management
 3. **Email Templates Fixed** - Hardcoded platform templates; no tenant customization
-4. **UI Copy Hardcoded** - "Elope" branding in widget; no tenant content control
+4. **UI Copy Hardcoded** - Platform branding in widget; no tenant content control
 
 #### Priority 2: Production Readiness
 5. **Local File Storage** - Logo files stored locally (not production-ready)
@@ -152,29 +156,35 @@ GET    /v1/tenant-admin/bookings   # View bookings
 
 ## Phase 5: Priority 1 - Self-Service Foundation (4-6 weeks)
 
-**Status:** In Progress (Week 1 of 6)
+**Status:** In Progress (December 2025)
 **Progress:** 1 of 3 features complete (33%)
+**Target Completion:** Q1 2026
 
 ### Completed ✅
-- **5.1 Package Photo Upload - Backend** (Completed Nov 7, 2024)
+- **5.1 Package Photo Upload System** (Completed December 2025)
   - Database schema updated (photos JSON column)
   - Upload service extended (uploadPackagePhoto, deletePackagePhoto)
   - API endpoints implemented (POST/DELETE /v1/tenant-admin/packages/:id/photos)
   - Static serving configured (/uploads/packages/)
-  - Tenant ownership verification
-  - Max 5 photos enforced, 5MB limit per photo
-  - Commit: 5688741
+  - PackagePhotoUploader component with drag-and-drop UI
+  - Photo reordering and management
+  - Tenant ownership verification enforced
+  - Max 5 photos per package, 5MB limit per photo
+  - Full E2E test coverage added
 
 ### In Progress 🔄
-- **5.1 Package Photo Upload - Frontend** (Started Nov 7, 2024)
-  - PackagePhotoUploader component
-  - Drag-and-drop UI (react-dropzone)
-  - Photo reordering (react-beautiful-dnd)
-  - Integration with TenantPackagesManager
+- **5.2 Add-On Management System** (December 2025)
+  - Backend API routes for add-on CRUD
+  - Frontend UI components
+  - Validation and testing
+
+- **5.2 Email Template Customization** (December 2025 - Q1 2026)
+  - Email template model and service
+  - Template editor UI
+  - Preview system
 
 ### Pending ⏳
-- **5.2 Add-On Management System** (2 weeks, 40 hours)
-- **5.3 Email Template Customization** (2-3 weeks, 50 hours)
+None - All Phase 5 features have been initiated
 
 ### Goal
 Enable tenants to fully manage their service offerings independently without platform support.
@@ -272,81 +282,8 @@ curl -X POST http://localhost:5000/v1/tenant-admin/add-ons \
 
 ---
 
-#### 5.2 Package Photo Upload System
-**Why:** Visual catalogs are essential for conversion. Currently, packages only have a single `photoUrl` field with no upload interface. Tenants must manually host images and paste URLs.
-
-**Effort:** 1 week (20 hours)
-
-**Requirements:**
-1. **Backend Extension**
-   - Extend `uploadService.ts` to support package photos (not just logos)
-   - `POST /v1/tenant-admin/packages/:id/photos` - Upload photo
-   - `DELETE /v1/tenant-admin/packages/:id/photos/:filename` - Delete photo
-   - Support multiple photos per package (5 max)
-
-2. **Database Schema Extension**
-   ```prisma
-   model Package {
-     // ... existing fields ...
-     photoUrl  String?    // Deprecated: legacy single photo
-     photos    Json?      // New: Array of { url, filename, order }
-   }
-   ```
-
-3. **Frontend Components**
-   - `PackagePhotoUploader.tsx` - Drag-and-drop photo upload
-   - `PhotoGallery.tsx` - Display/reorder/delete photos
-   - Integration into existing `TenantPackagesManager.tsx`
-
-4. **File Validation**
-   - Max 5 photos per package
-   - 2MB per photo
-   - JPG, PNG, WebP formats only
-   - Auto-generate thumbnails (optional for Phase 7)
-
-**Implementation Steps:**
-1. Extend `upload.service.ts` to handle package photos
-2. Add photo upload endpoint with package ownership verification
-3. Create drag-and-drop UI with `react-dropzone`
-4. Add photo gallery with reorder (drag-and-drop) and delete
-5. Update `TenantPackagesManager` to integrate photo uploader
-6. Migrate legacy `photoUrl` to new `photos` JSON array
-
-**Acceptance Criteria:**
-- [x] Upload up to 5 photos per package (2MB each)
-- [x] Drag-and-drop interface with progress indicators
-- [x] Delete individual photos
-- [x] Reorder photos (first photo is primary)
-- [x] Photos display in catalog grid and package detail page
-- [x] Validation errors shown (file size, type, count)
-
-**Files to Create:**
-- `client/src/features/tenant-admin/PackagePhotoUploader.tsx` (new component)
-- `client/src/components/PhotoGallery.tsx` (new component)
-
-**Files to Modify:**
-- `server/src/services/upload.service.ts` (extend for packages)
-- `server/src/routes/tenant-admin.routes.ts` (add photo endpoints)
-- `client/src/features/tenant-admin/TenantPackagesManager.tsx` (integrate uploader)
-- `server/prisma/schema.prisma` (add photos JSON field)
-
-**Testing:**
-```bash
-# Upload photo
-curl -X POST http://localhost:5000/v1/tenant-admin/packages/pkg_123/photos \
-  -H "X-Tenant-Key: pk_live_xxx" \
-  -H "Authorization: Bearer <jwt>" \
-  -F "photo=@package-photo-1.jpg"
-
-# Verify photo appears in widget
-curl http://localhost:5000/v1/packages/romantic-elopement \
-  -H "X-Tenant-Key: pk_live_xxx"
-```
-
----
-
-#### 5.3 Email Template Customization
-**Why:** Branded communications are critical for professionalism. Currently, all tenants receive identical platform emails with "Elope" branding.
+#### 5.2 Email Template Customization
+**Why:** Branded communications are critical for professionalism. Currently, all tenants receive identical platform emails with generic platform branding.
 
 **Effort:** 2-3 weeks (50 hours)
 
@@ -440,7 +377,7 @@ curl -X POST http://localhost:5000/v1/tenant-admin/email-templates/booking_confi
   -H "Authorization: Bearer <jwt>" \
   -d '{
     "customerName": "John & Jane",
-    "packageName": "Romantic Elopement",
+    "packageName": "Business Growth Package",
     "eventDate": "2026-06-15",
     "totalPrice": "$1,500"
   }'
@@ -475,7 +412,7 @@ Enable true white-label experience with full content control over all customer-f
 ### Features
 
 #### 6.1 UI Copy Customization System
-**Why:** Widget currently shows hardcoded "Elope" branding and generic copy. Tenants need to customize all text to match their brand voice.
+**Why:** Widget currently shows hardcoded platform branding and generic copy. Tenants need to customize all text to match their brand voice.
 
 **Effort:** 2 weeks (40 hours)
 
@@ -666,7 +603,7 @@ Enable true white-label experience with full content control over all customer-f
 - 100% of tenants can customize all customer-facing copy
 - 70%+ of tenants add testimonials
 - 90%+ of tenants customize legal pages
-- Zero hardcoded "Elope" branding in tenant widgets
+- Zero hardcoded platform branding in tenant widgets
 
 **Qualitative:**
 - Widget feels like tenant's brand (not platform brand)
@@ -1221,18 +1158,20 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 
 ### Must-Have (Phase 5) - Q1 2026
 **Total Effort:** 110 hours (4-6 weeks)
+**Current Progress:** 33% complete (December 2025)
 
-1. **Add-On Management** - 40 hours (2 weeks)
+1. **Package Photos** - ✅ COMPLETE (20 hours)
+   - Photo upload system operational
+   - Drag-and-drop UI implemented
+   - Gallery component with reordering
+   - E2E tests added
+
+2. **Add-On Management** - 🔄 IN PROGRESS (40 hours, 2 weeks)
    - Backend API (4 endpoints)
    - Frontend UI (CRUD interface)
    - Validation and testing
 
-2. **Package Photos** - 20 hours (1 week)
-   - Photo upload system
-   - Drag-and-drop UI
-   - Gallery component
-
-3. **Email Templates** - 50 hours (2-3 weeks)
+3. **Email Templates** - 🔄 IN PROGRESS (50 hours, 2-3 weeks)
    - Template model and service
    - Rich text editor
    - Preview system
@@ -1686,12 +1625,13 @@ This roadmap provides a **clear, actionable path** from current maturity score 6
 ---
 
 **Document Maintained By:** Product & Engineering Team
-**Last Updated:** November 7, 2025
-**Next Review:** End of Phase 5 (estimated February 2026)
+**Last Updated:** December 2, 2025
+**Current Phase:** Phase 5 (33% complete - Package photos done, Add-ons and Email templates in progress)
+**Next Review:** End of Phase 5 (estimated Q1 2026)
 **Questions/Feedback:** Reference specific phase and feature IDs in discussions
 
 **Related Documents:**
-- [PHASE_4_TENANT_ADMIN_COMPLETION_REPORT.md](/Users/mikeyoung/CODING/Elope/PHASE_4_TENANT_ADMIN_COMPLETION_REPORT.md) - Current state documentation
-- [MULTI_TENANT_IMPLEMENTATION_GUIDE.md](/Users/mikeyoung/CODING/Elope/MULTI_TENANT_IMPLEMENTATION_GUIDE.md) - Technical implementation details
-- [ARCHITECTURE.md](/Users/mikeyoung/CODING/Elope/ARCHITECTURE.md) - System architecture overview
-- [IMPROVEMENT-ROADMAP.md](/Users/mikeyoung/CODING/Elope/IMPROVEMENT-ROADMAP.md) - Original single-tenant roadmap
+- [PHASE_4_TENANT_ADMIN_COMPLETION_REPORT.md](../../PHASE_4_TENANT_ADMIN_COMPLETION_REPORT.md) - Current state documentation
+- [MULTI_TENANT_IMPLEMENTATION_GUIDE.md](../../MULTI_TENANT_IMPLEMENTATION_GUIDE.md) - Technical implementation details
+- [ARCHITECTURE.md](../../ARCHITECTURE.md) - System architecture overview
+- [IMPROVEMENT-ROADMAP.md](../../IMPROVEMENT-ROADMAP.md) - Original single-tenant roadmap

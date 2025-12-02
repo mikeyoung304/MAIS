@@ -1,0 +1,135 @@
+---
+# Codify Documentation Template - Visual Editor E2E Testing
+# Context: Code review found 3 bugs in visual editor, 2 already fixed, added E2E test coverage
+
+# ============================================================================
+# YAML FRONTMATTER - Copy to /docs/solutions/code-review-patterns/
+# ============================================================================
+
+title: "Visual Editor E2E Testing: Shipping Pre-Fixed Bugs + Test Coverage"
+category: testing-gaps  # From: build-errors, test-failures, runtime-errors, performance-issues, database-issues, security-issues, ui-bugs, integration-issues, logic-errors, testing-gaps, code-review-patterns
+severity: P2  # P0-P3 scale
+component: visual-editor  # UI component or module name
+symptoms:
+  - "Code review identified 3 bugs in useVisualEditor.ts"
+  - "Missing E2E test coverage for visual editor workflows"
+  - "Stale closures in updateDraft callback"
+  - "Race condition in publishAll function"
+  - "Type assertion bypass in EditableText.tsx"
+  - "Rate limiting blocked E2E tests during signup"
+tags:
+  - visual-editor
+  - e2e-testing
+  - inline-editing
+  - draft-management
+  - rate-limiting
+  - regression-prevention
+  - code-review-patterns
+date_solved: 2025-12-02
+
+---
+
+# ============================================================================
+# CONTENT STRUCTURE - For the full documentation
+# ============================================================================
+
+## Pattern: Three-Part Investigation Discovery
+
+### Part 1: Code Review Findings
+- **What was found:** 3 bugs in useVisualEditor.ts
+- **Severity:** 1 CRITICAL, 1 HIGH, 1 MEDIUM
+- **Impact:** Data loss, stale closures, type safety issues
+
+### Part 2: Investigation Results
+- **Finding:** 2 of 3 bugs ALREADY FIXED in codebase
+  - Bug #1 (Stale Closure): Fixed in catalog.repository.ts:506-511
+  - Bug #2 (Type Assertion): Fixed in EditableText.tsx:47-48
+- **Finding:** Bug #3 marked WONTFIX
+  - Reason: Race window is 16ms (1 React frame)
+  - No production impact evidence
+  - Proposed fix would defeat other optimizations
+
+### Part 3: Solution Implementation
+- **What was done:** Added comprehensive E2E test coverage
+- **Files created:** e2e/tests/visual-editor.spec.ts (9 test cases)
+- **Files modified:** rateLimiter.ts, playwright.config.ts
+- **Result:** Full regression prevention
+
+## Key Implementation Details
+
+### E2E Test Coverage Pattern
+```
+Serial test mode + cached auth token
+├── Single signup per test run (prevents rate limiting)
+├── Auth token cached and reused across tests
+├── Draft cleanup helper to reset state
+└── Aria-label selectors for semantic testing
+```
+
+### Rate Limiting Strategy
+```
+Environment check: process.env.E2E_TEST === '1'
+├── Normal mode: 5 signups/hour
+├── E2E mode: 100 signups/hour
+└── Test mode (NODE_ENV=test): 100 signups/hour
+```
+
+### Test Isolation Pattern
+```
+test.describe.configure({ mode: 'serial' })
+├── Shared isSetup flag
+├── Cached authToken
+├── ensureLoggedIn() - signup once, reuse token
+├── goToVisualEditor() - navigate and wait for load
+└── discardDraftsIfAny() - cleanup before each test
+```
+
+## Prevention Strategies
+
+### Code Review Checklist
+- [ ] Check dependency arrays - are mutable references included unnecessarily?
+- [ ] Look for async/await windows - can state change between await and usage?
+- [ ] Verify type safety - any `as any` assertions that should be fixed at type level?
+- [ ] Test isolation - do E2E tests handle rate limiting and auth caching?
+
+### Testing Requirements
+- [ ] Unit tests for business logic (services)
+- [ ] Integration tests for database operations
+- [ ] E2E tests for user workflows
+- [ ] Rate limit tests for test environments
+
+### Rate Limiting Best Practice
+- Always provide test-mode overrides via environment variables
+- Document the variable name and when it's active
+- Test that E2E tests don't hit rate limits
+- Consider separate limits for CI/CD vs local development
+
+## Lessons Learned
+
+1. **Verify before fixing** - Check if code review findings are already addressed
+2. **Document WONTFIX decisions** - Explain why some bugs aren't worth fixing
+3. **Test environment overrides** - External services (rate limiting) need test modes
+4. **Shared state in E2E** - Reusing auth tokens speeds up test suites dramatically
+5. **Ref typing** - Proper TypeScript types eliminate need for assertions
+
+## Related Concepts
+
+- **Testing Gaps:** Missing test coverage that allows regressions
+- **Code Review Patterns:** Systematic issues found in code review
+- **E2E Testing:** End-to-end user workflows in real browsers
+- **Rate Limiting:** Infrastructure concerns that impact testing
+- **Regression Prevention:** Documenting fixes to prevent re-introduction
+
+## Commit Reference
+
+- **Hash:** 3e9a0b8
+- **Message:** `test(visual-editor): add E2E coverage for inline editing`
+- **Files:** e2e/tests/visual-editor.spec.ts (NEW), rateLimiter.ts (MODIFIED), playwright.config.ts (MODIFIED)
+
+## File Locations
+
+- Full documentation: `/Users/mikeyoung/CODING/MAIS/docs/solutions/code-review-patterns/visual-editor-e2e-testing.md`
+- E2E tests: `/Users/mikeyoung/CODING/MAIS/e2e/tests/visual-editor.spec.ts`
+- Rate limiter: `/Users/mikeyoung/CODING/MAIS/server/src/middleware/rateLimiter.ts`
+- Implementation plan: `/Users/mikeyoung/CODING/MAIS/plans/fix-usevisualeditor-remaining-bugs.md`
+- Related review docs: `/Users/mikeyoung/CODING/MAIS/docs/code-review/useVisualEditor-*.md`

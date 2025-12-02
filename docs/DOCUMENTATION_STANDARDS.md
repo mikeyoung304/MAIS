@@ -9,7 +9,7 @@
 
 ## Purpose
 
-This document establishes clear, actionable standards for creating, organizing, and maintaining documentation in the Elope project. These standards prevent documentation drift, eliminate confusion about file placement, and ensure long-term sustainability.
+This document establishes clear, actionable standards for creating, organizing, and maintaining documentation in the MAIS project. These standards prevent documentation drift, eliminate confusion about file placement, and ensure long-term sustainability.
 
 **Context:** After a major documentation reorganization on Nov 7, 2025, the system showed significant drift within 5 days—Sprint 4-6 docs scattered across directories, 23% duplication rate, and developers uncertain about where to place new documentation. These standards address the root causes of that drift.
 

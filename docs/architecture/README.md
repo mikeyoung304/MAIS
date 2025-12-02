@@ -1,6 +1,6 @@
 # Architecture Documentation
 
-This directory contains architectural documentation for the Elope project, including system design documents and Architectural Decision Records (ADRs).
+This directory contains architectural documentation for the MAIS project, including system design documents and Architectural Decision Records (ADRs).
 
 ## Core Architecture
 - [ARCHITECTURE.md](../../ARCHITECTURE.md) - System architecture overview

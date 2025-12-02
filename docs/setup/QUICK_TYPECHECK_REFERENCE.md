@@ -107,8 +107,8 @@ To prevent similar issues:
 
 ## Related Documentation
 
-- Full Report: `/Users/mikeyoung/CODING/Elope/TYPESCRIPT_AUDIT_PHASE_1_2.md`
-- Summary: `/Users/mikeyoung/CODING/Elope/TYPESCRIPT_AUDIT_SUMMARY.txt`
+- Full Report: `/Users/mikeyoung/CODING/MAIS/TYPESCRIPT_AUDIT_PHASE_1_2.md`
+- Summary: `/Users/mikeyoung/CODING/MAIS/TYPESCRIPT_AUDIT_SUMMARY.txt`
 
 ---
 

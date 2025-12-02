@@ -10,7 +10,7 @@
 
 ## Context
 
-Elope's documentation archive is disorganized with severe chronological inconsistencies that undermine its usefulness for historical research and compliance tracking.
+MAIS's documentation archive is disorganized with severe chronological inconsistencies that undermine its usefulness for historical research and compliance tracking.
 
 ### Current Archive Problems
 
@@ -118,7 +118,7 @@ docs/archive/
 
 ## Decision
 
-**Adopt ISO 8601 date-based archive structure** with consistent categorization and clear archival triggers for all Elope documentation.
+**Adopt ISO 8601 date-based archive structure** with consistent categorization and clear archival triggers for all MAIS documentation.
 
 ### Archive Structure: docs/archive/YYYY-MM/category/
 

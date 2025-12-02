@@ -6,14 +6,14 @@ Generated: November 7, 2025
 This document provides the precise execution order to minimize broken links during the documentation reorganization. Follow these steps sequentially.
 
 ## Prerequisites
-- [x] Directory structure created in `/Users/mikeyoung/CODING/Elope/docs/`
+- [x] Directory structure created in `/Users/mikeyoung/CODING/MAIS/docs/`
 - [x] Navigation README.md files created in each subdirectory
 - [x] Migration plan reviewed and approved
 - [ ] Backup created (recommended: create git branch)
 
 ## Pre-Migration: Create Safety Branch
 ```bash
-cd /Users/mikeyoung/CODING/Elope
+cd /Users/mikeyoung/CODING/MAIS
 git checkout -b docs-reorganization
 git add docs/
 git commit -m "docs: create directory structure and navigation files"
@@ -192,7 +192,7 @@ git mv LOCAL_TESTING_GUIDE.md docs/setup/
 **Risk Level:** CRITICAL - Must be done carefully
 
 #### Step 7.1: Update README.md
-Edit `/Users/mikeyoung/CODING/Elope/README.md` and update these links:
+Edit `/Users/mikeyoung/CODING/MAIS/README.md` and update these links:
 
 ```markdown
 # Old → New
@@ -214,7 +214,7 @@ Edit `/Users/mikeyoung/CODING/Elope/README.md` and update these links:
 ```
 
 #### Step 7.2: Update DEVELOPING.md
-Edit `/Users/mikeyoung/CODING/Elope/DEVELOPING.md`:
+Edit `/Users/mikeyoung/CODING/MAIS/DEVELOPING.md`:
 
 ```markdown
 # Old → New
@@ -227,7 +227,7 @@ Edit `/Users/mikeyoung/CODING/Elope/DEVELOPING.md`:
 ```
 
 #### Step 7.3: Update CONTRIBUTING.md
-Edit `/Users/mikeyoung/CODING/Elope/CONTRIBUTING.md`:
+Edit `/Users/mikeyoung/CODING/MAIS/CONTRIBUTING.md`:
 
 ```markdown
 # Old → New
@@ -235,7 +235,7 @@ Edit `/Users/mikeyoung/CODING/Elope/CONTRIBUTING.md`:
 ```
 
 #### Step 7.4: Update ARCHITECTURE.md
-Edit `/Users/mikeyoung/CODING/Elope/ARCHITECTURE.md`:
+Edit `/Users/mikeyoung/CODING/MAIS/ARCHITECTURE.md`:
 
 ```markdown
 # Old → New

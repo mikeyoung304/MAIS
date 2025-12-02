@@ -152,6 +152,37 @@ photos: data.photos as Prisma.InputJsonValue
 draftPhotos: Prisma.JsonNull
 ```
 
+#### [Visual Editor E2E Testing Rate Limit Solution](./visual-editor-e2e-testing.md)
+**Purpose:** Prevent E2E tests from hitting signup rate limits (429 errors)
+**Audience:** Engineers running E2E tests, test infrastructure maintainers
+**Key Patterns:** Environment-aware rate limiter, token caching, serial test execution
+
+**Quick Rules:**
+```typescript
+// ✅ Rate limiter with test environment detection
+const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.E2E_TEST === '1';
+export const signupLimiter = rateLimit({
+  max: isTestEnvironment ? 100 : 5,  // 100/hr in tests, 5/hr in production
+});
+
+// ✅ Playwright config with E2E_TEST
+webServer: {
+  command: 'ADAPTERS_PRESET=real E2E_TEST=1 ...',
+}
+
+// ✅ Token caching in E2E tests
+let authToken: string | null = null;
+async function ensureLoggedIn(page) {
+  if (!isSetup) {
+    // Signup once, cache token
+    authToken = await page.evaluate(() => localStorage.getItem('tenantToken'));
+  } else if (authToken) {
+    // Restore cached token
+    localStorage.setItem('tenantToken', authToken);
+  }
+}
+```
+
 ---
 
 ### 2.5. Code Review Pattern Guides
@@ -395,6 +426,47 @@ cp server/test/templates/tenant-isolation.test.ts \
 4. If not, create new prevention strategy
 5. Update quick reference guide
 6. Add test to prevent regression
+
+---
+
+### "I'm running E2E tests that are failing with 429 rate limit errors"
+
+**Read:**
+1. [Visual Editor E2E Testing Rate Limit Solution](./visual-editor-e2e-testing.md)
+2. [Quick Reference - E2E Testing Setup](./visual-editor-e2e-quick-reference.md)
+
+**Checklist:**
+- [ ] Verify E2E_TEST=1 is in playwright.config.ts webServer command
+- [ ] Check rate limiter has environment detection (`NODE_ENV === 'test' || E2E_TEST === '1'`)
+- [ ] Implement auth token caching in test helpers
+- [ ] Use serial test execution for shared state tests
+- [ ] Tests pass locally and in CI
+
+**Implementation Pattern:**
+```typescript
+// playwright.config.ts
+webServer: {
+  command: 'E2E_TEST=1 npm run dev:api',
+}
+
+// Rate limiter
+const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.E2E_TEST === '1';
+export const signupLimiter = rateLimit({
+  max: isTestEnvironment ? 100 : 5,
+});
+
+// Tests
+test.describe.configure({ mode: 'serial' });
+let authToken: string | null = null;
+async function ensureLoggedIn(page) {
+  if (!isSetup) {
+    // Signup, cache token
+    authToken = await page.evaluate(() => localStorage.getItem('token'));
+  } else if (authToken) {
+    localStorage.setItem('token', authToken);
+  }
+}
+```
 
 ---
 

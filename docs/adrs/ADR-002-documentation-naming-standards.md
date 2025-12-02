@@ -10,7 +10,7 @@
 
 ## Context
 
-Elope's documentation system suffers from severe naming inconsistencies that create confusion and undermine discoverability. Analysis of 248 files reveals multiple naming problems:
+MAIS's documentation system suffers from severe naming inconsistencies that create confusion and undermine discoverability. Analysis of 248 files reveals multiple naming problems:
 
 ### Current Naming Chaos
 
@@ -75,7 +75,7 @@ Rebuild 6.0 enforces **4 strict naming patterns** with clear purposes:
 
 ## Decision
 
-**Adopt 4 standardized naming patterns** for all Elope documentation, each with clear semantic meaning and usage rules.
+**Adopt 4 standardized naming patterns** for all MAIS documentation, each with clear semantic meaning and usage rules.
 
 ### Pattern 1: UPPERCASE_UNDERSCORE
 **Purpose**: Living status documents that change frequently

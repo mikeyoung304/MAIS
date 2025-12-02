@@ -742,7 +742,7 @@ Checkout Click → API Request → Booking Service → Commission Calc → Strip
           unit_amount: input.amountCents,
           product_data: {
             name: 'Wedding Package',
-            description: 'Elopement/Micro-Wedding Package',
+            description: 'MAISment/Micro-Wedding Package',
           },
         },
         quantity: 1,

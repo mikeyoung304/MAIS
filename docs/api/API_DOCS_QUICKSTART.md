@@ -1,4 +1,4 @@
-# Elope API Documentation - Quick Start Guide
+# MAIS API Documentation - Quick Start Guide
 
 ## Accessing the Documentation
 
@@ -106,7 +106,7 @@ Now all admin endpoints will automatically include your token. Try:
 
 ### Multi-Tenant Authentication
 
-Elope is a **multi-tenant platform** supporting up to 50 independent wedding businesses. Each tenant has unique API keys:
+MAIS is a **multi-tenant platform** supporting up to 50 independent wedding businesses. Each tenant has unique API keys:
 
 **Public Key Format:** `pk_live_{slug}_{random}`
 - Example: `pk_live_bella-weddings_7a9f3c2e1b4d8f6a`

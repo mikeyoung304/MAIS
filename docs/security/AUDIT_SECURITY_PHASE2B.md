@@ -3,7 +3,7 @@
 **Audit Date**: 2025-10-29
 **Auditor**: Claude Code Security Agent 2
 **Scope**: Comprehensive security audit of Phase 2B changes
-**Codebase**: Elope Wedding Booking System
+**Codebase**: MAIS Wedding Booking System
 
 ---
 
@@ -138,7 +138,7 @@ The commit message explicitly states "Rotated JWT_SECRET with 256-bit secure val
 **Description**:
 The JWT token verification in `IdentityService.verifyToken()` does not validate the `exp` (expiration) claim. While tokens are issued with `expiresIn: '24h'`, the verification does not enforce this, allowing potentially expired tokens to be accepted.
 
-**Code Location**: `/Users/mikeyoung/CODING/Elope/server/src/services/identity.service.ts:37-42`
+**Code Location**: `/Users/mikeyoung/CODING/MAIS/server/src/services/identity.service.ts:37-42`
 
 **Vulnerable Code**:
 
@@ -193,7 +193,7 @@ verifyToken(token: string): TokenPayload {
 **Description**:
 The database seed script creates an admin user with a weak, hardcoded password: `"admin"`. This poses a significant security risk in any non-development environment.
 
-**Code Location**: `/Users/mikeyoung/CODING/Elope/server/prisma/seed.ts:8`
+**Code Location**: `/Users/mikeyoung/CODING/MAIS/server/prisma/seed.ts:8`
 
 **Vulnerable Code**:
 
@@ -245,7 +245,7 @@ const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
 **Description**:
 Password hashing uses bcrypt with only 10 rounds. While acceptable, OWASP recommends 12+ rounds for modern security standards.
 
-**Code Location**: `/Users/mikeyoung/CODING/Elope/server/prisma/seed.ts:8`
+**Code Location**: `/Users/mikeyoung/CODING/MAIS/server/prisma/seed.ts:8`
 
 **Current Configuration**:
 
@@ -278,7 +278,7 @@ const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 **Description**:
 The booking repository uses `$queryRawUnsafe` for the locking query. While the current implementation uses parameterized queries correctly, the use of "Unsafe" variant is a code smell.
 
-**Code Location**: `/Users/mikeyoung/CODING/Elope/server/src/adapters/prisma/booking.repository.ts:18-25`
+**Code Location**: `/Users/mikeyoung/CODING/MAIS/server/src/adapters/prisma/booking.repository.ts:18-25`
 
 **Vulnerable Code**:
 
@@ -391,7 +391,7 @@ Some error messages may leak implementation details that could aid attackers.
 
 **Examples**:
 
-1. **Booking Lock Error** (`/Users/mikeyoung/CODING/Elope/server/src/lib/errors.ts:42`):
+1. **Booking Lock Error** (`/Users/mikeyoung/CODING/MAIS/server/src/lib/errors.ts:42`):
 
 ```typescript
 super(`Could not acquire lock on booking date (timeout): ${date}`);
@@ -399,7 +399,7 @@ super(`Could not acquire lock on booking date (timeout): ${date}`);
 
 Reveals: Database locking mechanism, timeout behavior
 
-2. **Webhook Validation Error** (`/Users/mikeyoung/CODING/Elope/server/src/routes/webhooks.routes.ts:85`):
+2. **Webhook Validation Error** (`/Users/mikeyoung/CODING/MAIS/server/src/routes/webhooks.routes.ts:85`):
 
 ```typescript
 `Invalid metadata: ${JSON.stringify(metadataResult.error.flatten())}`;
@@ -440,9 +440,9 @@ Three source files use `console.log` or `console.error` instead of structured lo
 
 **Affected Files**:
 
-1. `/Users/mikeyoung/CODING/Elope/server/src/adapters/mock/index.ts`
-2. `/Users/mikeyoung/CODING/Elope/server/src/index.ts`
-3. `/Users/mikeyoung/CODING/Elope/server/src/lib/core/config.ts:32-33`
+1. `/Users/mikeyoung/CODING/MAIS/server/src/adapters/mock/index.ts`
+2. `/Users/mikeyoung/CODING/MAIS/server/src/index.ts`
+3. `/Users/mikeyoung/CODING/MAIS/server/src/lib/core/config.ts:32-33`
 
 **Vulnerable Code** (`config.ts`):
 
@@ -507,7 +507,7 @@ git log --all --source --full-history -S "@Orangegoat11"
 
 ### Current Secret Status
 
-**Environment File**: `/Users/mikeyoung/CODING/Elope/server/.env`
+**Environment File**: `/Users/mikeyoung/CODING/MAIS/server/.env`
 
 | Secret                    | Length              | Strength          | Status                  |
 | ------------------------- | ------------------- | ----------------- | ----------------------- |
@@ -531,7 +531,7 @@ git log --all --source --full-history -S "@Orangegoat11"
 
 **Status**: EFFECTIVE ✅ (but breached)
 
-**Configuration** (`/Users/mikeyoung/CODING/Elope/.gitignore`):
+**Configuration** (`/Users/mikeyoung/CODING/MAIS/.gitignore`):
 
 ```gitignore
 # Environment
@@ -539,7 +539,7 @@ git log --all --source --full-history -S "@Orangegoat11"
 !.env.example
 ```
 
-**Configuration** (`/Users/mikeyoung/CODING/Elope/server/.gitignore`):
+**Configuration** (`/Users/mikeyoung/CODING/MAIS/server/.gitignore`):
 
 ```gitignore
 node_modules

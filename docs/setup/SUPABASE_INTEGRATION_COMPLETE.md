@@ -8,7 +8,7 @@
 
 ## Summary
 
-Successfully integrated Supabase as the production database for the Elope wedding booking platform. The system now has a production-ready PostgreSQL database with connection pooling, automatic backups, and critical data integrity constraints.
+Successfully integrated Supabase as the production database for the MAIS wedding booking platform. The system now has a production-ready PostgreSQL database with connection pooling, automatic backups, and critical data integrity constraints.
 
 ---
 

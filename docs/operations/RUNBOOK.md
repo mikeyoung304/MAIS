@@ -290,7 +290,7 @@ The API uses Google Calendar's **freeBusy API** to check date availability. Resu
 3. **Create a Service Account:**
    - Go to **IAM & Admin** → **Service Accounts**
    - Click **Create Service Account**
-   - Give it a name (e.g., "Elope Calendar Reader")
+   - Give it a name (e.g., "MAIS Calendar Reader")
    - Click **Create and Continue**
    - Skip the optional permissions
    - Click **Done**

@@ -2,7 +2,7 @@
 
 ## Multi-Tenant Security (Phase 1)
 
-Elope is a **multi-tenant SaaS platform** supporting up to 50 independent wedding businesses. Complete data isolation is critical for security and compliance.
+MAIS is a **multi-tenant SaaS platform** supporting up to 50 independent wedding businesses. Complete data isolation is critical for security and compliance.
 
 ### Tenant Isolation Guarantees
 

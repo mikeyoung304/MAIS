@@ -1,4 +1,4 @@
-# Security Summary - Elope Wedding Booking Platform
+# Security Summary - MAIS Wedding Booking Platform
 
 Comprehensive overview of security features, vulnerabilities fixed, and best practices implemented in v1.1.0.
 

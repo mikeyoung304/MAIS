@@ -10,7 +10,7 @@
 
 ## Context
 
-Elope's documentation system is experiencing severe structural drift despite recent reorganization efforts. Analysis reveals:
+MAIS's documentation system is experiencing severe structural drift despite recent reorganization efforts. Analysis reveals:
 
 ### Current State (248 Files)
 - **Recent reorganization failure**: Major restructuring on Nov 7, 2025 created 9 categories
@@ -36,7 +36,7 @@ The Nov 7 reorganization created **9 ad-hoc categories** (setup/, api/, operatio
 - No distinction between learning, reference, and troubleshooting content
 
 ### Comparative Evidence: Rebuild 6.0 Success
-The rebuild 6.0 project handles 281 files (17% more than Elope) with minimal drift because it adopted the **Diátaxis framework**:
+The rebuild 6.0 project handles 281 files (17% more than MAIS) with minimal drift because it adopted the **Diátaxis framework**:
 - Clear 4-quadrant structure (Tutorials, How-To Guides, Explanation, Reference)
 - 15 navigation hubs serving different personas
 - Strict naming conventions (4 patterns)
@@ -49,7 +49,7 @@ The rebuild 6.0 project handles 281 files (17% more than Elope) with minimal dri
 
 ## Decision
 
-**Adopt the Diátaxis documentation framework** as the foundational structure for all Elope documentation.
+**Adopt the Diátaxis documentation framework** as the foundational structure for all MAIS documentation.
 
 ### What is Diátaxis?
 
@@ -98,7 +98,7 @@ Diátaxis (developed by Daniele Procida, adopted by Django, Cloudflare, and many
    - Audience: Users who know what they need
    - Content: Exhaustive, precise technical details
 
-### Elope's Implementation Structure
+### MAIS's Implementation Structure
 
 ```
 docs/

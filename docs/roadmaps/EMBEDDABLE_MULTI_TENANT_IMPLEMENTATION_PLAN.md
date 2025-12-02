@@ -11,7 +11,7 @@
 
 ## Executive Summary
 
-This plan transforms the Elope wedding booking application into **MAIS** - a multi-tenant embeddable storefront platform. Each tenant integrates our booking widget into their existing website using a simple JavaScript snippet.
+This plan transforms the MAIS application into **MAIS** - a multi-tenant embeddable storefront platform. Each tenant integrates our booking widget into their existing website using a simple JavaScript snippet.
 
 ### Key Architectural Decisions
 

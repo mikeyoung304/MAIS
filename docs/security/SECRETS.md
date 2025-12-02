@@ -1,6 +1,6 @@
 # Secrets Matrix
 
-This document lists every environment variable used in the Elope API, organized by feature. Use the `npm run doctor` script to validate your configuration.
+This document lists every environment variable used in the MAIS API, organized by feature. Use the `npm run doctor` script to validate your configuration.
 
 ---
 
@@ -411,7 +411,7 @@ brew install git-secrets  # macOS
 sudo apt-get install git-secrets  # Linux
 
 # 2. Configure for repository
-cd /Users/mikeyoung/CODING/Elope
+cd /Users/mikeyoung/CODING/MAIS
 git secrets --install
 git secrets --register-aws  # Built-in patterns
 
