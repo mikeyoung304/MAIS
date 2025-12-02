@@ -20,6 +20,7 @@ import type {
 import type { Package } from '../lib/entities';
 import { NotFoundError } from '../lib/errors';
 import { invalidateCacheKeys, getCatalogInvalidationKeys } from '../lib/cache-helpers';
+import { logger } from '../lib/core/logger';
 
 export class PackageDraftService {
   constructor(
@@ -64,7 +65,18 @@ export class PackageDraftService {
     }
 
     // Update draft fields
-    return this.repository.updateDraft(tenantId, packageId, draft);
+    const result = await this.repository.updateDraft(tenantId, packageId, draft);
+
+    // Audit log for draft save
+    logger.info({
+      action: 'package_draft_saved',
+      tenantId,
+      packageId,
+      packageSlug: existing.slug,
+      changedFields: Object.keys(draft).filter(k => draft[k as keyof UpdatePackageDraftInput] !== undefined),
+    }, 'Package draft saved');
+
+    return result;
   }
 
   /**
@@ -87,6 +99,15 @@ export class PackageDraftService {
     // Invalidate catalog cache after publishing
     await this.invalidateCatalogCache(tenantId);
 
+    // Audit log for publish operation
+    logger.info({
+      action: 'package_drafts_published',
+      tenantId,
+      publishedCount: packages.length,
+      packageIds: packages.map(p => p.id),
+      packageSlugs: packages.map(p => p.slug),
+    }, `Published ${packages.length} package draft(s)`);
+
     return {
       published: packages.length,
       packages,
@@ -107,7 +128,20 @@ export class PackageDraftService {
     tenantId: string,
     packageIds?: string[]
   ): Promise<{ discarded: number }> {
+    // Log BEFORE discard to capture what will be lost
+    const draftCount = await this.repository.countDrafts(tenantId);
+
     const discarded = await this.repository.discardDrafts(tenantId, packageIds);
+
+    // Audit log for discard operation
+    logger.info({
+      action: 'package_drafts_discarded',
+      tenantId,
+      discardedCount: discarded,
+      requestedPackageIds: packageIds ?? 'all',
+      previousDraftCount: draftCount,
+    }, `Discarded ${discarded} package draft(s)`);
+
     return { discarded };
   }
 
