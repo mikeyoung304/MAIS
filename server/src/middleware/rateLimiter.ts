@@ -84,8 +84,8 @@ export const uploadLimiterIP = rateLimit({
   legacyHeaders: false,
   // Use normalized IP to handle IPv6 addresses properly
   keyGenerator: (req) => normalizeIp(req.ip),
-  // Disable validation since we handle IPv6 ourselves
-  validate: { xForwardedForHeader: false },
+  // Disable all validation - we handle IPv6 with normalizeIp()
+  validate: false,
   handler: (_req: Request, res: Response) =>
     res.status(429).json({
       error: 'too_many_uploads_ip',
@@ -106,8 +106,8 @@ export const uploadLimiterTenant = rateLimit({
   // Prefer tenantId, fallback to normalized IP
   keyGenerator: (req, res) => res.locals.tenantAuth?.tenantId || normalizeIp(req.ip),
   skip: (_req, res) => !res.locals.tenantAuth, // Only apply to authenticated requests
-  // Disable validation since we handle IPv6 ourselves
-  validate: { xForwardedForHeader: false },
+  // Disable all validation - we handle IPv6 with normalizeIp()
+  validate: false,
   handler: (_req: Request, res: Response) =>
     res.status(429).json({
       error: 'too_many_uploads_tenant',
