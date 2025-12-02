@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the Playwright MCP (Model Context Protocol) server configuration for the Elope project. The Playwright MCP server provides browser automation capabilities directly within Claude Code, allowing for automated testing, web scraping, screenshot generation, and browser-based interactions.
+This document describes the Playwright MCP (Model Context Protocol) server configuration for the MAIS project. The Playwright MCP server provides browser automation capabilities directly within Claude Code, allowing for automated testing, web scraping, screenshot generation, and browser-based interactions.
 
 ## What Was Configured
 
@@ -241,6 +241,6 @@ Contains:
 
 1. **Restart Claude Code** to load the new MCP server configuration
 2. **Test basic functionality** with a simple navigation and screenshot command
-3. **Integrate into workflows** for automated testing of the Elope application
+3. **Integrate into workflows** for automated testing of the MAIS application
 4. **Create test scripts** for common user flows (registration, login, booking, etc.)
 5. **Monitor performance** and adjust timeouts as needed for your specific use cases

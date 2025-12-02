@@ -1,4 +1,4 @@
-# Elope Widget Implementation (Phase 2)
+# MAIS Widget Implementation (Phase 2)
 
 ## Overview
 
@@ -13,7 +13,7 @@ SDK Loader (Phase 3 - not yet implemented)
     ↓
 iframe → Widget App (this implementation)
     ↓
-Elope API Server (with tenant isolation)
+MAIS API Server (with tenant isolation)
 ```
 
 ## Files Created
@@ -97,7 +97,7 @@ HTML entry point for widget build.
 **Features:**
 - CSS reset to prevent parent styles bleeding in
 - Preconnects to Google Fonts
-- Isolated styling with `.elope-widget` class
+- Isolated styling with `.mais-widget` class
 
 ### 7. Vite Configuration
 **File:** `/client/vite.config.ts` (modified)
@@ -236,7 +236,7 @@ Upload `dist/widget.html` and `dist/widget/assets/*` to your CDN.
 
 Widget URL will be:
 ```
-https://cdn.elope.com/widget.html?tenant=acme&apiKey=pk_live_xxx
+https://cdn.mais.com/widget.html?tenant=acme&apiKey=pk_live_xxx
 ```
 
 ## Integration with Parent Page (Phase 3)
@@ -244,10 +244,10 @@ https://cdn.elope.com/widget.html?tenant=acme&apiKey=pk_live_xxx
 Once the SDK loader is implemented (Phase 3), parent pages will embed the widget like this:
 
 ```html
-<div id="elope-widget"></div>
+<div id="mais-widget"></div>
 <script>
-  ElopeWidget.init({
-    element: '#elope-widget',
+  MaisWidget.init({
+    element: '#mais-widget',
     tenant: 'acme',
     apiKey: 'pk_live_xxx',
     mode: 'embedded'
@@ -290,7 +290,7 @@ The SDK loader will:
 
 **Solution:**
 - Widget HTML template includes CSS reset
-- All widget styles scoped to `.elope-widget` class
+- All widget styles scoped to `.mais-widget` class
 - `box-sizing: border-box` for all widget elements
 
 ### Issue 4: Auto-Resize Implementation

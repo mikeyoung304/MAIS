@@ -1,4 +1,4 @@
-# Local Testing Guide - Elope Application
+# Local Testing Guide - MAIS Application
 
 ## ✅ Application Status: RUNNING
 
@@ -364,10 +364,10 @@ To test with actual Stripe payments and database:
 
 ## Happy Testing! 🎉
 
-Your Elope application is now running locally and ready for testing.
+Your MAIS application is now running locally and ready for testing.
 
 **Access Points:**
 - 🌐 Web: http://localhost:3000
 - 🔌 API: http://localhost:3001
 
-Enjoy testing your elopement booking platform!
+Enjoy testing your business growth platform!

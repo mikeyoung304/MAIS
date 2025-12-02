@@ -1,6 +1,6 @@
 # Authentication Context Implementation
 
-This directory contains the unified authentication context for the Elope application with role-based access control.
+This directory contains the unified authentication context for the MAIS application with role-based access control.
 
 ## Files
 

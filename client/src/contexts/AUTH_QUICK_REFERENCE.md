@@ -1,6 +1,6 @@
 # AuthContext Quick Reference
 
-Quick reference guide for common authentication patterns in the Elope application.
+Quick reference guide for common authentication patterns in the MAIS application.
 
 ## Import
 

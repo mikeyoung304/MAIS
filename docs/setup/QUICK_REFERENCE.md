@@ -1,4 +1,4 @@
-# Elope Platform - Quick Reference Guide
+# MAIS Platform - Quick Reference Guide
 
 ## Current Status at a Glance
 
@@ -337,7 +337,7 @@ npx prisma generate  # Regenerate types
 
 ## Summary
 
-The Elope platform has reached an excellent state of production readiness:
+The MAIS platform has reached an excellent state of production readiness:
 - **90% complete** on codebase automation (Phase A)
 - **100% complete** on segment management admin UI (Phase 2)
 - **Verified** multi-tenant isolation and data security

@@ -1,4 +1,4 @@
-# Lessons Learned - Elope Platform
+# Lessons Learned - MAIS Platform
 
 ## Critical Authentication Bug - Platform Admin Login (Nov 2025)
 

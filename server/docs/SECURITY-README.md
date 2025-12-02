@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains a comprehensive security assessment of the logo and file upload functionality in the Elope platform. The analysis identified critical vulnerabilities that must be addressed before production deployment.
+This directory contains a comprehensive security assessment of the logo and file upload functionality in the MAIS platform. The analysis identified critical vulnerabilities that must be addressed before production deployment.
 
 ## Documents in This Assessment
 

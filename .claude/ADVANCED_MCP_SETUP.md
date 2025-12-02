@@ -1,10 +1,10 @@
 # Advanced MCP Server Setup
 
-This document describes the advanced MCP (Model Context Protocol) servers configured for the Elope project, focusing on the sequential-thinking, memory, and GitHub integrations.
+This document describes the advanced MCP (Model Context Protocol) servers configured for the MAIS project, focusing on the sequential-thinking, memory, and GitHub integrations.
 
 ## Overview
 
-The Elope project now has 8 MCP servers configured to provide comprehensive development capabilities:
+The MAIS project now has 8 MCP servers configured to provide comprehensive development capabilities:
 
 1. **filesystem** - File system operations
 2. **git** - Git version control operations

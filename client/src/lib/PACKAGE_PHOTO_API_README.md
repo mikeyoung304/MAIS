@@ -2,22 +2,22 @@
 
 ## Overview
 
-This implementation provides a complete API service layer for handling package photo uploads in the Elope wedding booking platform. It includes TypeScript type safety, comprehensive error handling, and React hooks for easy component integration.
+This implementation provides a complete API service layer for handling package photo uploads in the MAIS business growth platform. It includes TypeScript type safety, comprehensive error handling, and React hooks for easy component integration.
 
 ## Files Created
 
-1. **`/Users/mikeyoung/CODING/Elope/client/src/lib/package-photo-api.ts`**
+1. **`/Users/mikeyoung/CODING/MAIS/client/src/lib/package-photo-api.ts`**
    - Core API service with upload/delete/fetch methods
    - TypeScript types and interfaces
    - Error handling utilities
    - Client-side validation
 
-2. **`/Users/mikeyoung/CODING/Elope/client/src/hooks/usePackagePhotos.ts`**
+2. **`/Users/mikeyoung/CODING/MAIS/client/src/hooks/usePackagePhotos.ts`**
    - React hook for photo management
    - State management (loading, error, uploading)
    - Optimistic UI updates
 
-3. **`/Users/mikeyoung/CODING/Elope/client/src/lib/package-photo-api.test.example.ts`**
+3. **`/Users/mikeyoung/CODING/MAIS/client/src/lib/package-photo-api.test.example.ts`**
    - Example usage scenarios
    - Utility functions
    - Type definitions

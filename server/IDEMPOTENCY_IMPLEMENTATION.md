@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the idempotency implementation for all Stripe operations in the Elope platform. Idempotency keys prevent duplicate charges, refunds, and transfers by ensuring each operation is processed exactly once, even if the request is retried.
+This document describes the idempotency implementation for all Stripe operations in the MAIS platform. Idempotency keys prevent duplicate charges, refunds, and transfers by ensuring each operation is processed exactly once, even if the request is retried.
 
 ## Architecture
 

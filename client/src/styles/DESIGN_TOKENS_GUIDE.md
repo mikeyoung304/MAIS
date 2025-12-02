@@ -1,4 +1,4 @@
-# Elope Design System - Design Tokens Guide
+# MAIS Design System - Design Tokens Guide
 
 ## Overview
 
@@ -60,7 +60,7 @@ Use the complete interactive state tokens for buttons and controls.
 
 ### Brand Colors (Macon Palette)
 
-The Elope platform uses three primary brand colors:
+The MAIS platform uses three primary brand colors:
 
 - **Navy (`--macon-navy`)**: Primary brand color - #1a365d
 - **Orange (`--macon-orange`)**: Secondary brand color - #fb923c
@@ -723,4 +723,4 @@ For questions or design token requests, please contact the design system team or
 
 **Design System Version**: 1.0
 **Last Updated**: November 2025
-**Maintained by**: Elope Platform Team
+**Maintained by**: MAIS Platform Team

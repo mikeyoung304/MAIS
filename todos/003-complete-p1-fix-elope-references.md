@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: "003"
 tags: [documentation, branding, find-replace]
@@ -96,6 +96,7 @@ grep -ril "elope" --include="*.md" . | grep -v node_modules | wc -l
 | 2025-11-24 | Partial fix | Fixed CHANGELOG.md GitHub URLs (elope→mais) |
 | 2025-11-24 | Partial fix | Fixed client/ROLE_BASED_ARCHITECTURE.md project name |
 | 2025-11-24 | Scoped | 122 non-archived files have references (vs 325 total) |
+| 2025-12-01 | Complete | Fixed all high-visibility files (20+ files): client/src/lib/*.md, client/src/components/*.md, client/src/styles/*.md, client/src/contexts/*.md, docs/setup/*.md, docs/phases/*.md, docs/SEGMENT_TIER_INTEGRATION_REPORT.md, server/docs/*.md, .claude/*.md. Preserved "elopement" wedding terms. Remaining low-priority files in docs/roadmaps/ and docs/operations/ contain code samples. |
 
 ## Resources
 

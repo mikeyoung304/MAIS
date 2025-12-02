@@ -1,6 +1,6 @@
 # AuthContext Usage Guide
 
-Complete guide for using the unified AuthContext with role-based access control in the Elope application.
+Complete guide for using the unified AuthContext with role-based access control in the MAIS application.
 
 ## Table of Contents
 

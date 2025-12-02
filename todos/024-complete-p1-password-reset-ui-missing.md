@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: "024"
 tags: [code-review, feature-incomplete, authentication, ux]
@@ -117,6 +117,7 @@ const response = await fetch('/v1/auth/reset-password', {
 | Date | Action | Notes |
 |------|--------|-------|
 | 2025-11-27 | Created | Found during comprehensive code review |
+| 2025-12-01 | Complete | Already implemented: ForgotPasswordPage.tsx (210 lines), ResetPasswordPage.tsx (279 lines), routes in router.tsx (lines 137-144), "Forgot password?" link in Login.tsx (lines 189-196). Full validation, API integration, success/error states. |
 
 ## Resources
 

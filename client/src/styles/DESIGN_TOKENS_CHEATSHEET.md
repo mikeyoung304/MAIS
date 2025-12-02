@@ -1,6 +1,6 @@
 # Design Tokens Cheat Sheet
 
-Quick reference for the most commonly used design tokens in the Elope platform.
+Quick reference for the most commonly used design tokens in the MAIS platform.
 
 ---
 

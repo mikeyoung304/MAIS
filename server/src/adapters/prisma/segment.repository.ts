@@ -228,43 +228,45 @@ export class PrismaSegmentRepository {
       })
     | null
   > {
-    const segment = await this.prisma.segment.findUnique({
-      where: {
-        tenantId_slug: {
-          tenantId,
-          slug,
+    // Use Promise.all to fetch segment and global add-ons in parallel (single round-trip)
+    const [segment, globalAddOns] = await Promise.all([
+      this.prisma.segment.findUnique({
+        where: {
+          tenantId_slug: {
+            tenantId,
+            slug,
+          },
         },
-      },
-      include: {
-        packages: {
-          where: { active: true },
-          orderBy: [{ groupingOrder: 'asc' }, { name: 'asc' }],
-          include: {
-            addOns: {
-              include: {
-                addOn: true,
+        include: {
+          packages: {
+            where: { active: true },
+            orderBy: [{ groupingOrder: 'asc' }, { name: 'asc' }],
+            include: {
+              addOns: {
+                include: {
+                  addOn: true,
+                },
               },
             },
           },
+          addOns: {
+            where: { active: true },
+          },
         },
-        addOns: {
-          where: { active: true },
+      }),
+      // Fetch global add-ons (segmentId = null) in parallel
+      this.prisma.addOn.findMany({
+        where: {
+          tenantId,
+          segmentId: null,
+          active: true,
         },
-      },
-    });
+      }),
+    ]);
 
     if (!segment) {
       return null;
     }
-
-    // Also fetch global add-ons (segmentId = null) and merge them
-    const globalAddOns = await this.prisma.addOn.findMany({
-      where: {
-        tenantId,
-        segmentId: null,
-        active: true,
-      },
-    });
 
     // Merge segment-specific and global add-ons
     return {

@@ -1,6 +1,6 @@
 # PackagePhotoUploader Component
 
-Production-ready React component for uploading and managing package photos in the Elope wedding booking platform.
+Production-ready React component for uploading and managing package photos in the MAIS business growth platform.
 
 ## Features
 
@@ -253,4 +253,4 @@ To test the component:
 
 ## License
 
-Internal component for the Elope wedding booking platform.
+Internal component for the MAIS business growth platform.

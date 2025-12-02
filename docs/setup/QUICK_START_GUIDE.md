@@ -1,4 +1,4 @@
-# ⚡ QUICK START GUIDE - Elope Platform Launch
+# ⚡ QUICK START GUIDE - MAIS Platform Launch
 
 **Choose Your Path** → **Execute** → **Launch in 4-5 weeks**
 

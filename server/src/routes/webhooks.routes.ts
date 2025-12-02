@@ -123,9 +123,21 @@ export class WebhooksController {
 
     logger.info({ eventId: event.id, type: event.type }, 'Stripe webhook received');
 
-    // Extract tenantId from metadata (for idempotency and recording)
+    // CRITICAL: Stripe event IDs are globally unique across all Stripe accounts
+    // Use event.id FIRST for idempotency to prevent race conditions
+    // This prevents the "unknown tenant bucket" issue where failed extractions
+    // would share idempotency checks
+
+    // Step 1: Check global idempotency BEFORE tenant extraction
+    // This uses a temporary "global" namespace just for the duplicate check
+    const isGlobalDupe = await this.webhookRepo.isDuplicate('_global', event.id);
+    if (isGlobalDupe) {
+      logger.info({ eventId: event.id }, 'Duplicate webhook (global check) - returning 200 OK to Stripe');
+      return;
+    }
+
+    // Step 2: Extract tenantId from metadata (for recording and processing)
     // For checkout.session.completed, tenantId is REQUIRED - fail fast if missing
-    // For other event types, use 'system' namespace to prevent cross-tenant collision
     let tenantId: string | undefined;
     try {
       // Type-safe extraction using Stripe's event data structure
@@ -146,25 +158,18 @@ export class WebhooksController {
       throw new WebhookValidationError('Webhook missing required tenantId in metadata');
     }
 
-    // For non-critical events (payment_intent.created, etc.), use 'system' namespace
-    // This prevents cross-tenant collision while preserving audit trail
-    const effectiveTenantId = tenantId || 'system';
+    // For non-critical events (payment_intent.created, etc.), use '_global' namespace
+    // This is only for audit trail - idempotency is already handled above
+    const effectiveTenantId = tenantId || '_global';
     if (!tenantId) {
       logger.warn(
         { eventId: event.id, type: event.type },
-        'Webhook event missing tenantId - recording under system namespace (non-critical for this event type)'
+        'Webhook event missing tenantId - recording under _global namespace (non-critical for this event type)'
       );
     }
 
-    // Idempotency check - prevent duplicate processing (tenant-scoped)
-    const isDupe = await this.webhookRepo.isDuplicate(effectiveTenantId, event.id);
-    if (isDupe) {
-      logger.info({ eventId: event.id, tenantId: effectiveTenantId }, 'Duplicate webhook ignored - returning 200 OK to Stripe');
-      // Return early without throwing - Stripe expects 200 for successful receipt
-      return;
-    }
-
-    // Record webhook event (tenant-scoped)
+    // Record webhook event (with tenant or _global namespace for audit)
+    // Note: We already checked for duplicates using _global namespace above
     await this.webhookRepo.recordWebhook({
       tenantId: effectiveTenantId,
       eventId: event.id,

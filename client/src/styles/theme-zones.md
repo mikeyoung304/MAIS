@@ -1,4 +1,4 @@
-# Elope Theme Zones Documentation
+# MAIS Theme Zones Documentation
 
 **Created**: November 17, 2025
 **Purpose**: Define which pages use light theme vs dark theme for consistent UI/UX
@@ -7,7 +7,7 @@
 
 ## Theme Strategy
 
-The Elope application uses **two distinct theme zones** to optimize user experience:
+The MAIS application uses **two distinct theme zones** to optimize user experience:
 
 ### 🌞 **Light Theme** - Customer-Facing Pages
 - **Purpose**: Welcoming, clean, professional browsing and booking experience

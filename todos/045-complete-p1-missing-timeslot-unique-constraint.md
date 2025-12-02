@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: "045"
 tags: [code-review, scheduling, data-integrity, database, double-booking, critical]
@@ -202,6 +202,7 @@ WHERE "bookingType" = 'TIMESLOT';
 | Date | Action | Notes |
 |------|--------|-------|
 | 2025-11-27 | Created | Found during Data Integrity Guardian review - BLOCKS MERGE |
+| 2025-12-01 | Complete | Already implemented in `07_add_scheduling_platform.sql` (lines 147-159): `CREATE UNIQUE INDEX IF NOT EXISTS "Booking_timeslot_unique" ON "Booking"("tenantId", "serviceId", "startTime") WHERE "startTime" IS NOT NULL AND "serviceId" IS NOT NULL;` |
 
 ## Resources
 

@@ -1,6 +1,6 @@
 # Integration Test Helpers
 
-Reusable utilities for multi-tenant integration tests in the Elope platform.
+Reusable utilities for multi-tenant integration tests in the MAIS platform.
 
 ## Overview
 
