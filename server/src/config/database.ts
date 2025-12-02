@@ -90,13 +90,24 @@ export async function verifyDatabaseConnection(): Promise<void> {
       .limit(1);
 
     if (error) {
-      throw new Error(`Database query failed: ${error.message}`);
+      logger.error({
+        errorCode: error.code,
+        errorMessage: error.message,
+        errorDetails: error.details,
+        errorHint: error.hint,
+      }, '❌ Supabase query error');
+      throw new Error(`Database query failed: ${error.message} (code: ${error.code})`);
     }
 
     logger.info('✅ Database connection verified successfully');
     logger.info(`📊 Database contains ${data?.length ?? 0} tenant(s) (sample query)`);
   } catch (error) {
-    logger.error({ error }, '❌ Database connection verification failed');
+    const err = error as Error;
+    logger.error({
+      errorName: err.name,
+      errorMessage: err.message,
+      errorStack: err.stack,
+    }, '❌ Database connection verification failed');
     throw error;
   }
 }

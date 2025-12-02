@@ -1,6 +1,27 @@
 import rateLimit from 'express-rate-limit';
 import type { Request, Response, NextFunction } from 'express';
 
+/**
+ * Helper to normalize IP addresses for rate limiting
+ * Handles IPv6 addresses properly by extracting the /64 prefix
+ * This prevents IPv6 users from bypassing limits
+ */
+function normalizeIp(ip: string | undefined): string {
+  if (!ip) return 'unknown';
+
+  // Check if it's an IPv6 address
+  if (ip.includes(':')) {
+    // Extract the /64 prefix (first 4 groups) for IPv6
+    // This groups users by network rather than individual IPs
+    const parts = ip.split(':');
+    if (parts.length >= 4) {
+      return parts.slice(0, 4).join(':') + '::';
+    }
+  }
+
+  return ip;
+}
+
 export const publicLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 300, // 300 requests per 15 minutes
@@ -61,7 +82,10 @@ export const uploadLimiterIP = rateLimit({
   max: process.env.NODE_ENV === 'test' ? 500 : 200, // 200 uploads per hour per IP
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.ip || 'unknown',
+  // Use normalized IP to handle IPv6 addresses properly
+  keyGenerator: (req) => normalizeIp(req.ip),
+  // Disable validation since we handle IPv6 ourselves
+  validate: { xForwardedForHeader: false },
   handler: (_req: Request, res: Response) =>
     res.status(429).json({
       error: 'too_many_uploads_ip',
@@ -79,8 +103,11 @@ export const uploadLimiterTenant = rateLimit({
   max: process.env.NODE_ENV === 'test' ? 500 : 50, // 50 uploads per hour per tenant
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req, res) => res.locals.tenantAuth?.tenantId || req.ip || 'unknown',
-  skip: (req, res) => !res.locals.tenantAuth, // Only apply to authenticated requests
+  // Prefer tenantId, fallback to normalized IP
+  keyGenerator: (req, res) => res.locals.tenantAuth?.tenantId || normalizeIp(req.ip),
+  skip: (_req, res) => !res.locals.tenantAuth, // Only apply to authenticated requests
+  // Disable validation since we handle IPv6 ourselves
+  validate: { xForwardedForHeader: false },
   handler: (_req: Request, res: Response) =>
     res.status(429).json({
       error: 'too_many_uploads_tenant',
