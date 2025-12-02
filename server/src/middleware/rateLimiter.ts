@@ -60,10 +60,13 @@ export const loginLimiter = rateLimit({
     }),
 });
 
+// Check if we're in a test environment (unit tests OR E2E tests)
+const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.E2E_TEST === '1';
+
 export const signupLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   // Allow more signups in test environment for testing
-  max: process.env.NODE_ENV === 'test' ? 100 : 5,
+  max: isTestEnvironment ? 100 : 5,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req: Request, res: Response) =>
