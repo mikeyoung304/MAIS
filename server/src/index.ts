@@ -9,7 +9,34 @@ import { createApp } from './app';
 import { registerGracefulShutdown } from './lib/shutdown';
 import { buildContainer } from './di';
 import { validateEnv } from './config/env.schema';
-import { verifyDatabaseConnection, closeSupabaseConnections } from './config/database';
+import { closeSupabaseConnections } from './config/database';
+import type { PrismaClient } from './generated/prisma';
+
+/**
+ * Verify database connection using Prisma
+ * Tests connection by running a simple query on the Tenant table
+ */
+async function verifyDatabaseWithPrisma(prisma: PrismaClient): Promise<void> {
+  try {
+    logger.info('🔍 Verifying database connection via Prisma...');
+
+    // Simple query to verify connection - use raw query for fastest execution
+    const result = await prisma.$queryRaw<{ count: bigint }[]>`SELECT COUNT(*) as count FROM "Tenant" LIMIT 1`;
+    const tenantCount = Number(result[0]?.count ?? 0);
+
+    logger.info('✅ Database connection verified successfully');
+    logger.info(`📊 Database contains ${tenantCount} tenant(s)`);
+  } catch (error) {
+    const err = error as Error & { code?: string };
+    logger.error({
+      errorName: err.name,
+      errorMessage: err.message,
+      errorCode: err.code,
+      errorStack: err.stack,
+    }, '❌ Database connection verification failed');
+    throw error;
+  }
+}
 
 async function main(): Promise<void> {
   const startTime = Date.now();
@@ -21,18 +48,18 @@ async function main(): Promise<void> {
     const config = loadConfig();
     logger.info('Configuration loaded');
 
-    // Verify Supabase database connection (real mode only)
-    if (config.ADAPTERS_PRESET === 'real') {
-      await verifyDatabaseConnection();
-    } else {
-      logger.info('⏭️  Skipping database verification (mock mode)');
-    }
-
     // Initialize Sentry error tracking (optional - gracefully degrades if no DSN)
     initSentry();
 
     // Build DI container (creates Prisma client in real mode)
     const container = buildContainer(config);
+
+    // Verify database connection using Prisma (real mode only)
+    if (config.ADAPTERS_PRESET === 'real' && container.prisma) {
+      await verifyDatabaseWithPrisma(container.prisma);
+    } else {
+      logger.info('⏭️  Skipping database verification (mock mode)');
+    }
 
     // Create Express app with health checks
     const app = createApp(config, container, startTime);

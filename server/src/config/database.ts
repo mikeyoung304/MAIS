@@ -1,6 +1,12 @@
 /**
- * Supabase Database Configuration
- * Based on rebuild-6.0 pattern
+ * Supabase Client Configuration
+ *
+ * NOTE: Supabase clients are ONLY used for:
+ * - Storage uploads (segment hero images)
+ * - Auth flows (if using Supabase Auth)
+ *
+ * Database queries use PRISMA, not Supabase JS client.
+ * See: docs/setup/SUPABASE.md
  */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
@@ -72,44 +78,16 @@ export function getSupabaseAuthClient(): SupabaseClient {
 }
 
 /**
- * Verify database connection on startup
- * Tests connection by querying Tenant table
+ * @deprecated Use Prisma for database verification instead.
+ * This function used the Supabase JS client which queries via REST API,
+ * but the Tenant table is not exposed via Supabase API.
  *
- * @throws Error if connection fails
+ * Database verification now happens in index.ts using Prisma directly
+ * after the DI container is built.
  */
 export async function verifyDatabaseConnection(): Promise<void> {
-  try {
-    logger.info('🔍 Verifying Supabase database connection...');
-
-    const supabase = getSupabaseClient();
-
-    // Simple query to verify connection
-    const { data, error } = await supabase
-      .from('Tenant')
-      .select('id')
-      .limit(1);
-
-    if (error) {
-      logger.error({
-        errorCode: error.code,
-        errorMessage: error.message,
-        errorDetails: error.details,
-        errorHint: error.hint,
-      }, '❌ Supabase query error');
-      throw new Error(`Database query failed: ${error.message} (code: ${error.code})`);
-    }
-
-    logger.info('✅ Database connection verified successfully');
-    logger.info(`📊 Database contains ${data?.length ?? 0} tenant(s) (sample query)`);
-  } catch (error) {
-    const err = error as Error;
-    logger.error({
-      errorName: err.name,
-      errorMessage: err.message,
-      errorStack: err.stack,
-    }, '❌ Database connection verification failed');
-    throw error;
-  }
+  logger.warn('⚠️  verifyDatabaseConnection() is deprecated. Use Prisma for DB verification.');
+  // No-op - kept for backwards compatibility
 }
 
 /**
