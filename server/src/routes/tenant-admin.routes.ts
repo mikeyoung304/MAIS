@@ -8,7 +8,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
 import { ZodError } from 'zod';
-import { UpdateBrandingDtoSchema } from '@macon/contracts';
+import { UpdateBrandingDtoSchema, UpdatePackageDraftDtoSchema } from '@macon/contracts';
 import { uploadService, checkUploadConcurrency, releaseUploadConcurrency } from '../services/upload.service';
 import { logger } from '../lib/core/logger';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
@@ -710,20 +710,8 @@ export function createTenantAdminRoutes(
         return;
       }
 
-      // Validate request body
-      const draftSchema = z.object({
-        title: z.string().max(100).optional(),
-        description: z.string().max(500).optional(),
-        priceCents: z.number().int().min(0).optional(),
-        photos: z.array(z.object({
-          url: z.string().url(),
-          filename: z.string().optional(),
-          size: z.number().optional(),
-          order: z.number().optional(),
-        })).optional(),
-      });
-
-      const data = draftSchema.parse(req.body);
+      // Validate request body using canonical schema from contracts
+      const data = UpdatePackageDraftDtoSchema.parse(req.body);
 
       const updatedPackage = await packageDraftService.saveDraft(tenantId, packageId, data);
 
