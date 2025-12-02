@@ -2,7 +2,7 @@
  * Prisma Catalog Repository Adapter
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import { Prisma, type PrismaClient } from '../../generated/prisma';
 import type {
   CatalogRepository,
   CreatePackageInput,
@@ -16,7 +16,6 @@ import type {
 import type { Package, AddOn } from '../lib/entities';
 import { DomainError } from '../lib/errors';
 import { NotFoundError } from '../lib/errors/http';
-import type { Prisma } from '../../generated/prisma';
 
 export class PrismaCatalogRepository implements CatalogRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -507,12 +506,14 @@ export class PrismaCatalogRepository implements CatalogRepository {
             name: pkg.draftTitle !== null ? pkg.draftTitle : pkg.name,
             description: pkg.draftDescription !== null ? pkg.draftDescription : pkg.description,
             basePrice: pkg.draftPriceCents !== null ? pkg.draftPriceCents : pkg.basePrice,
-            photos: pkg.draftPhotos !== null ? pkg.draftPhotos : pkg.photos,
+            photos: pkg.draftPhotos !== null
+              ? (pkg.draftPhotos as Prisma.InputJsonValue)
+              : (pkg.photos as Prisma.InputJsonValue),
             // Clear all draft fields
             draftTitle: null,
             draftDescription: null,
             draftPriceCents: null,
-            draftPhotos: null,
+            draftPhotos: Prisma.JsonNull,
             hasDraft: false,
             draftUpdatedAt: null,
           },

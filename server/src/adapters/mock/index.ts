@@ -391,9 +391,17 @@ export class MockCatalogRepository implements CatalogRepository {
   async getAllPackagesWithDrafts(tenantId: string): Promise<PackageWithDraft[]> {
     // Mock mode: Return packages with draft fields (all null since mock doesn't persist drafts)
     return Array.from(packages.values()).map((pkg) => ({
-      ...pkg,
+      id: pkg.id,
+      tenantId: pkg.tenantId,
+      slug: pkg.slug,
       name: pkg.title, // Map title to name for compatibility
+      description: pkg.description,
       basePrice: pkg.priceCents, // Map priceCents to basePrice for compatibility
+      active: pkg.active ?? true,
+      segmentId: pkg.segmentId ?? null,
+      grouping: pkg.grouping ?? null,
+      groupingOrder: pkg.groupingOrder ?? null,
+      photos: pkg.photos ?? [],
       draftTitle: null,
       draftDescription: null,
       draftPriceCents: null,
@@ -417,9 +425,17 @@ export class MockCatalogRepository implements CatalogRepository {
 
     // Mock mode: Just return the package with draft fields set
     return {
-      ...pkg,
+      id: pkg.id,
+      tenantId: pkg.tenantId,
+      slug: pkg.slug,
       name: pkg.title,
+      description: pkg.description,
       basePrice: pkg.priceCents,
+      active: pkg.active ?? true,
+      segmentId: pkg.segmentId ?? null,
+      grouping: pkg.grouping ?? null,
+      groupingOrder: pkg.groupingOrder ?? null,
+      photos: pkg.photos ?? [],
       draftTitle: draft.title ?? null,
       draftDescription: draft.description ?? null,
       draftPriceCents: draft.priceCents ?? null,
