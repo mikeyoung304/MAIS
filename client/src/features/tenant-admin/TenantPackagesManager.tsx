@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { Plus, Pencil, Trash2, AlertTriangle, Layers, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, AlertTriangle, Layers, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PackageDto, SegmentDto } from "@macon/contracts";
 import { PackagePhotoUploader } from "@/components/PackagePhotoUploader";
@@ -60,13 +60,13 @@ export function TenantPackagesManager({
   const handleEdit = useCallback(async (pkg: PackageDto) => {
     packageForm.loadPackage(pkg);
     await packageManager.handleEdit(pkg);
-  }, [packageForm.loadPackage, packageManager.handleEdit]);
+  }, [packageForm, packageManager]);
 
   // Handle form submission
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     await packageForm.submitForm(packageManager.editingPackageId);
-  }, [packageForm.submitForm, packageManager.editingPackageId]);
+  }, [packageForm, packageManager]);
 
   // Render segment form if creating/editing segment
   if (segmentManager.isCreatingSegment) {
@@ -203,18 +203,21 @@ export function TenantPackagesManager({
             open
             className="border border-sage-light/20 rounded-2xl overflow-hidden group"
           >
-            <summary className="px-6 py-4 cursor-pointer font-serif text-lg font-bold flex items-center justify-between hover:bg-sage-light/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2 transition-colors list-none [&::-webkit-details-marker]:hidden">
+            <summary className="px-6 py-4 cursor-pointer font-serif text-lg font-bold flex items-center justify-between hover:bg-sage-light/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-macon-orange focus-visible:outline-offset-2 transition-colors list-none [&::-webkit-details-marker]:hidden">
               <span className="flex items-center gap-2">
-                <ChevronRight className="w-5 h-5 text-sage transition-transform duration-200 group-open:rotate-90" />
+                <ChevronDown className="h-5 w-5 text-sage transition-transform duration-200 group-open:rotate-180" />
                 <span className="text-text-primary">
                   {segment.name} <span className="font-normal text-text-muted">({segment.packages.length})</span>
                 </span>
               </span>
-              <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+              <div className="flex gap-2">
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => segmentManager.handleEditSegment(segment)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    segmentManager.handleEditSegment(segment);
+                  }}
                   className="text-text-muted hover:text-sage hover:bg-sage/10"
                   aria-label={`Edit segment: ${segment.name}`}
                 >
@@ -223,7 +226,10 @@ export function TenantPackagesManager({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => segmentManager.handleDeleteSegment(segment.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    segmentManager.handleDeleteSegment(segment.id);
+                  }}
                   className="text-text-muted hover:text-danger-600 hover:bg-danger-50"
                   aria-label={`Delete segment: ${segment.name}`}
                 >

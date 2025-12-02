@@ -21,9 +21,12 @@ async function main(): Promise<void> {
     const config = loadConfig();
     logger.info('Configuration loaded');
 
-    // Verify Supabase database connection
-    // TODO: Re-enable once SUPABASE_SERVICE_KEY is configured
-    // await verifyDatabaseConnection();
+    // Verify Supabase database connection (real mode only)
+    if (config.ADAPTERS_PRESET === 'real') {
+      await verifyDatabaseConnection();
+    } else {
+      logger.info('⏭️  Skipping database verification (mock mode)');
+    }
 
     // Initialize Sentry error tracking (optional - gracefully degrades if no DSN)
     initSentry();
