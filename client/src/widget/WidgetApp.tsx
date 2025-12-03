@@ -4,15 +4,8 @@ import { WidgetMessenger } from './WidgetMessenger';
 import { WidgetCatalogGrid } from './WidgetCatalogGrid';
 import { WidgetPackagePage } from './WidgetPackagePage';
 import { api } from '../lib/api';
-
-// TenantBrandingDto type definition (will be imported from contracts once built)
-interface TenantBrandingDto {
-  primaryColor?: string;
-  secondaryColor?: string;
-  logo?: string;
-  fontFamily?: string;
-  customCss?: string;
-}
+import { useTenantBranding } from '../hooks/useTenantBranding';
+import type { TenantBrandingDto } from '@macon/contracts';
 
 interface WidgetConfig {
   tenant: string;
@@ -63,39 +56,8 @@ export function WidgetApp({ config }: Props): JSX.Element {
     },
   });
 
-  // Apply branding CSS variables
-  useEffect(() => {
-    if (branding) {
-      const root = document.documentElement;
-
-      if (branding.primaryColor) {
-        root.style.setProperty('--primary-color', branding.primaryColor);
-      }
-
-      if (branding.secondaryColor) {
-        root.style.setProperty('--secondary-color', branding.secondaryColor);
-      }
-
-      if (branding.fontFamily) {
-        root.style.setProperty('--font-family', branding.fontFamily);
-      }
-
-      // Apply custom CSS if provided
-      if (branding.customCss) {
-        const styleEl = document.createElement('style');
-        styleEl.id = 'tenant-custom-css';
-        styleEl.textContent = branding.customCss;
-        document.head.appendChild(styleEl);
-
-        return () => {
-          const existingStyle = document.getElementById('tenant-custom-css');
-          if (existingStyle) {
-            existingStyle.remove();
-          }
-        };
-      }
-    }
-  }, [branding]);
+  // Apply branding CSS variables via shared hook
+  useTenantBranding(branding);
 
   // Notify parent that widget is ready
   useEffect(() => {

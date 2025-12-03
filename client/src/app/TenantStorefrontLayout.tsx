@@ -10,28 +10,29 @@
  * /t/little-bit-farm/book → Appointment booking
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Outlet, useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { api, baseUrl } from '../lib/api';
+import { api } from '../lib/api';
+import { useTenantBranding } from '../hooks/useTenantBranding';
 import { Loading } from '../ui/Loading';
 import { Container } from '../ui/Container';
 import type { TenantPublicDto } from '@macon/contracts';
 
 export function TenantStorefrontLayout() {
   const { tenantSlug } = useParams<{ tenantSlug: string }>();
-  const [apiKeySet, setApiKeySet] = useState(false);
 
   // Fetch tenant by slug
   const { data: tenant, isLoading, error } = useQuery<TenantPublicDto>({
     queryKey: ['tenant-public', tenantSlug],
     queryFn: async () => {
-      // Build the URL manually since this is a new endpoint
-      const response = await fetch(`${baseUrl}/v1/public/tenants/${tenantSlug}`);
-      if (response.status === 200) {
-        return response.json();
+      const result = await api.getTenantPublic({ params: { slug: tenantSlug! } });
+      if (result.status === 200) {
+        // Set API key synchronously when data arrives
+        api.setTenantKey(result.body.apiKeyPublic);
+        return result.body;
       }
-      if (response.status === 404) {
+      if (result.status === 404) {
         throw new Error('Tenant not found');
       }
       throw new Error('Failed to fetch tenant');
@@ -40,51 +41,15 @@ export function TenantStorefrontLayout() {
     staleTime: 1000 * 60 * 15, // Cache 15 minutes
   });
 
-  // Set API key when tenant loads
+  // Cleanup API key on unmount
   useEffect(() => {
-    if (tenant?.apiKeyPublic) {
-      api.setTenantKey(tenant.apiKeyPublic);
-      setApiKeySet(true);
-    }
     return () => {
-      api.setTenantKey(null); // Clear on unmount
-      setApiKeySet(false);
+      api.setTenantKey(null);
     };
-  }, [tenant?.apiKeyPublic]);
+  }, []);
 
-  // Apply branding CSS variables
-  useEffect(() => {
-    if (tenant?.branding) {
-      const root = document.documentElement;
-      const b = tenant.branding;
-      if (b.primaryColor) {
-        root.style.setProperty('--color-primary', b.primaryColor);
-        root.style.setProperty('--macon-navy', b.primaryColor);
-      }
-      if (b.secondaryColor) {
-        root.style.setProperty('--color-secondary', b.secondaryColor);
-        root.style.setProperty('--macon-orange', b.secondaryColor);
-      }
-      if (b.accentColor) {
-        root.style.setProperty('--color-accent', b.accentColor);
-        root.style.setProperty('--macon-teal', b.accentColor);
-      }
-      if (b.backgroundColor) {
-        root.style.setProperty('--color-background', b.backgroundColor);
-      }
-    }
-    return () => {
-      // Reset branding on unmount
-      const root = document.documentElement;
-      root.style.removeProperty('--color-primary');
-      root.style.removeProperty('--color-secondary');
-      root.style.removeProperty('--color-accent');
-      root.style.removeProperty('--color-background');
-      root.style.removeProperty('--macon-navy');
-      root.style.removeProperty('--macon-orange');
-      root.style.removeProperty('--macon-teal');
-    };
-  }, [tenant?.branding]);
+  // Apply tenant branding CSS variables
+  useTenantBranding(tenant?.branding);
 
   if (isLoading) {
     return (
@@ -109,15 +74,6 @@ export function TenantStorefrontLayout() {
             Return to MaconAI
           </Link>
         </Container>
-      </div>
-    );
-  }
-
-  // Wait for API key to be set before rendering children
-  if (!apiKeySet) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loading label="Setting up" />
       </div>
     );
   }
