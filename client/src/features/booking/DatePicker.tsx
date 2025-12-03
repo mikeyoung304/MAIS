@@ -35,7 +35,7 @@ export function DatePicker({ selected, onSelect }: DatePickerProps) {
   const { startDate, endDate } = useMemo(() => getDateRange(), []);
 
   // Batch fetch unavailable dates using React Query
-  const { data: unavailableData, isLoading } = useQuery({
+  const { data: unavailableData, isLoading, error: fetchError } = useQuery({
     queryKey: queryKeys.availability.dateRange(startDate, endDate),
     queryFn: async () => {
       const response = await api.getUnavailableDates?.({
@@ -45,6 +45,7 @@ export function DatePicker({ selected, onSelect }: DatePickerProps) {
     },
     staleTime: queryOptions.availability.staleTime,
     gcTime: queryOptions.availability.gcTime,
+    retry: 2, // Retry failed requests twice before giving up
   });
 
   // Convert string dates to Date objects
@@ -105,8 +106,12 @@ export function DatePicker({ selected, onSelect }: DatePickerProps) {
         onSelect(undefined);
       }
     } catch (error) {
-      // On error, allow selection (fail open)
-      onSelect(date);
+      // FAIL CLOSED: On error, reject selection to prevent double-bookings
+      toast.error("Unable to Verify Availability", {
+        description: "We couldn't verify availability for this date. Please try again or contact support.",
+        duration: 5000,
+      });
+      onSelect(undefined);
     }
   };
 
@@ -120,7 +125,32 @@ export function DatePicker({ selected, onSelect }: DatePickerProps) {
         </p>
       </div>
 
-      {isLoading ? (
+      {fetchError ? (
+        <div className="border border-red-300 bg-red-50 rounded-lg p-6">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-red-800 mb-1">
+                Unable to Load Availability
+              </h3>
+              <p className="text-red-700 mb-4">
+                We're having trouble loading available dates. Please refresh the page to try again.
+                If the problem persists, contact support.
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              >
+                Refresh Page
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : isLoading ? (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-8 h-8 animate-spin text-macon-orange" />
           <span className="ml-3 text-lg text-neutral-700">Loading availability...</span>

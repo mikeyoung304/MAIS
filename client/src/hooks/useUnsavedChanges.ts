@@ -18,6 +18,12 @@ interface UseUnsavedChangesOptions {
    * @default true
    */
   enabled?: boolean;
+
+  /**
+   * Optional custom confirm function (for testing or custom dialogs)
+   * @default browser's confirm dialog
+   */
+  confirmFn?: (message: string) => Promise<boolean>;
 }
 
 /**
@@ -34,12 +40,18 @@ interface UseUnsavedChangesOptions {
  * function MyForm() {
  *   const [formData, setFormData] = useState(initialData);
  *   const [savedData, setSavedData] = useState(initialData);
+ *   const { confirm } = useConfirmDialog();
  *
  *   const isDirty = JSON.stringify(formData) !== JSON.stringify(savedData);
  *
  *   useUnsavedChanges({
  *     isDirty,
- *     message: "You have unsaved changes. Leave anyway?"
+ *     message: "You have unsaved changes. Leave anyway?",
+ *     confirmFn: (msg) => confirm({
+ *       title: "Unsaved Changes",
+ *       description: msg,
+ *       variant: "destructive"
+ *     })
  *   });
  *
  *   return <form>...</form>;
@@ -50,13 +62,16 @@ export function useUnsavedChanges({
   isDirty,
   message = "You have unsaved changes. Are you sure you want to leave?",
   enabled = true,
+  confirmFn,
 }: UseUnsavedChangesOptions) {
   const messageRef = useRef(message);
+  const confirmFnRef = useRef(confirmFn);
 
-  // Update message ref when it changes
+  // Update refs when they change
   useEffect(() => {
     messageRef.current = message;
-  }, [message]);
+    confirmFnRef.current = confirmFn;
+  }, [message, confirmFn]);
 
   /**
    * Block navigation with React Router when form is dirty
@@ -79,12 +94,25 @@ export function useUnsavedChanges({
    */
   useEffect(() => {
     if (blocker.state === "blocked") {
-      const shouldProceed = window.confirm(messageRef.current);
-      if (shouldProceed) {
-        blocker.proceed();
-      } else {
-        blocker.reset();
-      }
+      const handleConfirm = async () => {
+        let shouldProceed: boolean;
+
+        if (confirmFnRef.current) {
+          // Use custom confirm function (e.g., ConfirmDialog)
+          shouldProceed = await confirmFnRef.current(messageRef.current);
+        } else {
+          // Fallback to browser confirm (deprecated, but kept for backwards compatibility)
+          shouldProceed = window.confirm(messageRef.current);
+        }
+
+        if (shouldProceed) {
+          blocker.proceed();
+        } else {
+          blocker.reset();
+        }
+      };
+
+      handleConfirm();
     }
   }, [blocker]);
 

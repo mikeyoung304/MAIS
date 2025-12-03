@@ -7,6 +7,8 @@
  */
 
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SuccessMessage } from "@/components/shared/SuccessMessage";
 import { BlackoutForm } from "./BlackoutForm";
 import { BlackoutsList } from "./BlackoutsList";
@@ -39,15 +41,39 @@ export function BlackoutsManager({ blackouts, isLoading, onBlackoutsChange }: Bl
     cancelDelete,
   } = useBlackoutsManager(onBlackoutsChange);
 
-  // Enable unsaved changes warning
+  // Setup confirmation dialog for unsaved changes
+  const { confirm, dialogState, handleOpenChange } = useConfirmDialog();
+
+  // Enable unsaved changes warning with ConfirmDialog
   useUnsavedChanges({
     isDirty,
-    message: "You have unsaved blackout date information. Leave anyway?",
-    enabled: true
+    message: "You have unsaved blackout date information. Are you sure you want to leave?",
+    enabled: true,
+    confirmFn: (msg) => confirm({
+      title: "Unsaved Changes",
+      description: msg,
+      confirmLabel: "Leave",
+      cancelLabel: "Stay",
+      variant: "destructive"
+    })
   });
 
   return (
     <div className="space-y-6">
+      {/* Confirmation Dialog for Unsaved Changes */}
+      {dialogState && (
+        <ConfirmDialog
+          open={dialogState.isOpen}
+          onOpenChange={handleOpenChange}
+          title={dialogState.title}
+          description={dialogState.description}
+          confirmLabel={dialogState.confirmLabel}
+          cancelLabel={dialogState.cancelLabel}
+          variant={dialogState.variant}
+          onConfirm={dialogState.onConfirm}
+        />
+      )}
+
       {/* Success Message */}
       <SuccessMessage message={successMessage} />
 

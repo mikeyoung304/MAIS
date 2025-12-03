@@ -638,6 +638,17 @@ export const CreateAvailabilityRuleDtoSchema = z.object({
 
 export type CreateAvailabilityRuleDto = z.infer<typeof CreateAvailabilityRuleDtoSchema>;
 
+export const UpdateAvailabilityRuleDtoSchema = z.object({
+  serviceId: z.string().nullable().optional(),
+  dayOfWeek: z.number().int().min(0).max(6).optional(),
+  startTime: z.string().regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Format: HH:MM (e.g., 09:00)').optional(),
+  endTime: z.string().regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Format: HH:MM (e.g., 17:00)').optional(),
+  effectiveFrom: z.string().datetime().optional(),
+  effectiveTo: z.string().datetime().nullable().optional(),
+});
+
+export type UpdateAvailabilityRuleDto = z.infer<typeof UpdateAvailabilityRuleDtoSchema>;
+
 // Time Slot DTOs
 export const TimeSlotDtoSchema = z.object({
   startTime: z.string().datetime(), // ISO datetime (UTC)

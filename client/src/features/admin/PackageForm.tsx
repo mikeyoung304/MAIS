@@ -7,9 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImageUploadField } from "@/components/ImageUploadField";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatCurrency } from "@/lib/utils";
 import { baseUrl } from "@/lib/api";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import type { PackageFormProps, PackageFormData } from "./types";
 
 export function PackageForm({
@@ -22,21 +24,27 @@ export function PackageForm({
   onSubmit,
   onCancel,
 }: PackageFormProps) {
-  const isValidSlug = (slug: string): boolean => {
-    return /^[a-z0-9-]+$/.test(slug);
-  };
-
   // Track initial form state for unsaved changes detection
   const [initialForm, setInitialForm] = useState<PackageFormData>(packageForm);
+
+  // Setup confirmation dialog
+  const { confirm, dialogState, handleOpenChange } = useConfirmDialog();
 
   // Calculate if form has unsaved changes
   const isDirty = JSON.stringify(packageForm) !== JSON.stringify(initialForm);
 
-  // Enable unsaved changes warning
+  // Enable unsaved changes warning with ConfirmDialog
   useUnsavedChanges({
     isDirty,
-    message: "You have unsaved package changes. Leave anyway?",
-    enabled: true
+    message: "You have unsaved package changes. Are you sure you want to leave?",
+    enabled: true,
+    confirmFn: (msg) => confirm({
+      title: "Unsaved Changes",
+      description: msg,
+      confirmLabel: "Leave",
+      cancelLabel: "Stay",
+      variant: "destructive"
+    })
   });
 
   // Update initial form when editing a different package or after successful save
@@ -53,6 +61,20 @@ export function PackageForm({
 
   return (
     <>
+      {/* Confirmation Dialog */}
+      {dialogState && (
+        <ConfirmDialog
+          open={dialogState.isOpen}
+          onOpenChange={handleOpenChange}
+          title={dialogState.title}
+          description={dialogState.description}
+          confirmLabel={dialogState.confirmLabel}
+          cancelLabel={dialogState.cancelLabel}
+          variant={dialogState.variant}
+          onConfirm={dialogState.onConfirm}
+        />
+      )}
+
       {/* Back button */}
       <Button
         variant="ghost"

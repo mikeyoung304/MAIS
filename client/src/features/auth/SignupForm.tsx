@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { InputEnhanced } from "@/components/ui/input-enhanced";
 import { ErrorSummary, type FormError } from "@/components/ui/ErrorSummary";
-import { Mail, Lock, Building2, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Building2, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useForm } from "@/hooks/useForm";
 import { api } from "@/lib/api";
 import { storeToken } from "@/lib/auth";
@@ -157,7 +157,10 @@ export function SignupForm() {
       {/* Server Error */}
       {serverError && (
         <div role="alert" className="p-4 bg-red-900/50 border border-red-400 text-red-100 rounded">
-          <p className="text-sm">{serverError}</p>
+          <div className="flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <p className="text-sm">{serverError}</p>
+          </div>
         </div>
       )}
 

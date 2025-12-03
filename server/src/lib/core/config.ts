@@ -12,7 +12,16 @@ const ConfigSchema = z.object({
   ADAPTERS_PRESET: z.enum(['mock', 'real']).default('mock'),
   API_PORT: z.coerce.number().int().positive().default(3001),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
+  // CORS allowed origins for production (comma-separated list)
+  ALLOWED_ORIGINS: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val) return [];
+      return val.split(',').map((origin) => origin.trim());
+    }),
   JWT_SECRET: z.string().min(1),
+  BOOKING_TOKEN_SECRET: z.string().optional(),
   // Real mode only (optional for mock preset)
   DATABASE_URL: z.string().optional(),
   // Connection pooling configuration for serverless (Supabase/Vercel)
@@ -28,6 +37,8 @@ const ConfigSchema = z.object({
   POSTMARK_FROM_EMAIL: z.string().email().optional(),
   GOOGLE_CALENDAR_ID: z.string().optional(),
   GOOGLE_SERVICE_ACCOUNT_JSON_BASE64: z.string().optional(),
+  // Graceful shutdown timeout (milliseconds)
+  SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(30000), // 30 seconds
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
@@ -39,4 +50,12 @@ export function loadConfig(): Config {
     throw new Error('Invalid environment configuration');
   }
   return result.data;
+}
+
+/**
+ * Get booking token secret with fallback to JWT_SECRET
+ * Separate secret for booking tokens allows key rotation without invalidating tenant sessions
+ */
+export function getBookingTokenSecret(config: Config): string {
+  return config.BOOKING_TOKEN_SECRET || config.JWT_SECRET;
 }

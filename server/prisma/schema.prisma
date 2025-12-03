@@ -355,6 +355,10 @@ model Booking {
   @@index([googleEventId])
   @@index([createdAt])
   @@index([tenantId, confirmedAt])
+  @@index([tenantId, reminderDueDate, reminderSentAt, status]) // For reminder queries (TODO-153)
+  // Note: Partial index for reminder queries exists via manual migration 08
+  // CREATE INDEX idx_booking_reminder_due ON Booking (tenantId, reminderDueDate)
+  // WHERE reminderSentAt IS NULL AND status = 'CONFIRMED'
 }
 
 enum BookingStatus {

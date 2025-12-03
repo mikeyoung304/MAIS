@@ -3,6 +3,7 @@ import { PackageForm } from "../PackageForm";
 import { SuccessMessage } from "./SuccessMessage";
 import { CreatePackageButton } from "./CreatePackageButton";
 import { PackagesList } from "./PackagesList";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useSuccessMessage } from "./hooks/useSuccessMessage";
 import { usePackageManager } from "./hooks/usePackageManager";
 import { useAddOnManager } from "./hooks/useAddOnManager";
@@ -48,6 +49,32 @@ export function PackagesManager({ packages, onPackagesChange }: PackagesManagerP
   return (
     <div className="space-y-6">
       {successMessage && <SuccessMessage message={successMessage} />}
+
+      {/* Confirmation Dialogs */}
+      {handleDeletePackage.confirmDialog?.dialogState && (
+        <ConfirmDialog
+          open={handleDeletePackage.confirmDialog.dialogState.isOpen}
+          onOpenChange={handleDeletePackage.confirmDialog.handleOpenChange}
+          title={handleDeletePackage.confirmDialog.dialogState.title}
+          description={handleDeletePackage.confirmDialog.dialogState.description}
+          confirmLabel={handleDeletePackage.confirmDialog.dialogState.confirmLabel}
+          cancelLabel={handleDeletePackage.confirmDialog.dialogState.cancelLabel}
+          onConfirm={handleDeletePackage.confirmDialog.dialogState.onConfirm}
+          variant={handleDeletePackage.confirmDialog.dialogState.variant}
+        />
+      )}
+      {handleDeleteAddOn.confirmDialog?.dialogState && (
+        <ConfirmDialog
+          open={handleDeleteAddOn.confirmDialog.dialogState.isOpen}
+          onOpenChange={handleDeleteAddOn.confirmDialog.handleOpenChange}
+          title={handleDeleteAddOn.confirmDialog.dialogState.title}
+          description={handleDeleteAddOn.confirmDialog.dialogState.description}
+          confirmLabel={handleDeleteAddOn.confirmDialog.dialogState.confirmLabel}
+          cancelLabel={handleDeleteAddOn.confirmDialog.dialogState.cancelLabel}
+          onConfirm={handleDeleteAddOn.confirmDialog.dialogState.onConfirm}
+          variant={handleDeleteAddOn.confirmDialog.dialogState.variant}
+        />
+      )}
 
       {!isCreatingPackage && <CreatePackageButton onClick={handleCreatePackage} />}
 

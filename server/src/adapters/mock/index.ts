@@ -224,6 +224,11 @@ export class MockCatalogRepository implements CatalogRepository {
     return packages.get(id) || null;
   }
 
+  async getPackagesByIds(tenantId: string, ids: string[]): Promise<Package[]> {
+    // Mock mode: Ignore tenantId
+    return ids.map((id) => packages.get(id)).filter((pkg): pkg is Package => pkg !== undefined);
+  }
+
   async getAddOnsByPackageId(tenantId: string, packageId: string): Promise<AddOn[]> {
     // Mock mode: Ignore tenantId
     return Array.from(addOns.values()).filter((a) => a.packageId === packageId);
@@ -633,6 +638,18 @@ export class MockBookingRepository implements BookingRepository {
     bookingsByDate.delete(oldDateKey);
     bookingsByDate.set(newDateKey, bookingId);
     booking.eventDate = newDate;
+
+    // TODO-154 FIX: Calculate new reminder due date (7 days before new event date)
+    // Only set if the event is more than 7 days away
+    const eventDate = new Date(newDate + 'T00:00:00Z');
+    const now = new Date();
+    const daysUntilEvent = Math.floor((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    (booking as any).reminderDueDate = daysUntilEvent > 7
+      ? new Date(eventDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      : undefined;
+
+    // TODO-154 FIX: Reset reminderSentAt so new reminder will be sent
+    (booking as any).reminderSentAt = undefined;
 
     logger.debug({ bookingId, newDate }, 'Mock booking rescheduled');
     return booking;

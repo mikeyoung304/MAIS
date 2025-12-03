@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { InputEnhanced } from "@/components/ui/input-enhanced";
 import { Logo } from "@/components/brand/Logo";
 import { ErrorSummary, type FormError } from "@/components/ui/ErrorSummary";
-import { Mail, Lock, ArrowLeft } from "lucide-react";
+import { Mail, Lock, ArrowLeft, AlertCircle } from "lucide-react";
 import { useForm } from "@/hooks/useForm";
 import { useAuth } from "../contexts/AuthContext";
 import { logger } from "../lib/logger";
@@ -139,22 +139,27 @@ export function Login() {
           {/* Server Error */}
           {error && (
             <div role="alert" className="mb-6 p-4 bg-red-900/50 border border-red-400 text-red-100 rounded">
-              <p className="text-lg mb-3">{error}</p>
-              <div className="space-y-2 pt-3 border-t border-red-400/30">
-                <p className="text-sm text-red-200 font-medium">Need help?</p>
-                <div className="flex flex-col gap-2">
-                  <a
-                    href="mailto:support@maconai.com"
-                    className="text-sm text-red-100 underline hover:text-white transition-colors inline-flex items-center gap-1"
-                  >
-                    Contact support
-                  </a>
-                  <Link
-                    to="/"
-                    className="text-sm text-red-100 underline hover:text-white transition-colors inline-flex items-center gap-1"
-                  >
-                    Back to homepage
-                  </Link>
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="flex-1">
+                  <p className="text-lg mb-3">{error}</p>
+                  <div className="space-y-2 pt-3 border-t border-red-400/30">
+                    <p className="text-sm text-red-200 font-medium">Need help?</p>
+                    <div className="flex flex-col gap-2">
+                      <a
+                        href="mailto:support@maconai.com"
+                        className="text-sm text-red-100 underline hover:text-white transition-colors inline-flex items-center gap-1"
+                      >
+                        Contact support
+                      </a>
+                      <Link
+                        to="/"
+                        className="text-sm text-red-100 underline hover:text-white transition-colors inline-flex items-center gap-1"
+                      >
+                        Back to homepage
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

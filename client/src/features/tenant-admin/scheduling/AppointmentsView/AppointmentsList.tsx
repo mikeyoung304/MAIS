@@ -3,7 +3,7 @@
  * Table display for appointments with enriched customer and service data
  */
 
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle, Clock, XCircle, Check } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -38,20 +38,41 @@ function formatDateTime(isoString: string): string {
 }
 
 /**
- * Get badge color classes based on appointment status
+ * Get badge configuration (color and icon) based on appointment status
+ * Icons provide non-color visual cue for accessibility (WCAG compliance)
  */
-function getStatusColor(status: string): string {
+function getStatusConfig(status: string): { className: string; icon: React.ReactNode; label: string } {
   switch (status) {
     case 'CONFIRMED':
-      return 'border-green-500 bg-green-900/20 text-green-300';
+      return {
+        className: 'border-green-500 bg-green-900/20 text-green-300',
+        icon: <CheckCircle className="h-3 w-3" aria-hidden="true" />,
+        label: 'Confirmed',
+      };
     case 'PENDING':
-      return 'border-yellow-500 bg-yellow-900/20 text-yellow-300';
+      return {
+        className: 'border-yellow-500 bg-yellow-900/20 text-yellow-300',
+        icon: <Clock className="h-3 w-3" aria-hidden="true" />,
+        label: 'Pending',
+      };
     case 'CANCELED':
-      return 'border-red-500 bg-red-900/20 text-red-300';
+      return {
+        className: 'border-red-500 bg-red-900/20 text-red-300',
+        icon: <XCircle className="h-3 w-3" aria-hidden="true" />,
+        label: 'Canceled',
+      };
     case 'FULFILLED':
-      return 'border-blue-500 bg-blue-900/20 text-blue-300';
+      return {
+        className: 'border-blue-500 bg-blue-900/20 text-blue-300',
+        icon: <Check className="h-3 w-3" aria-hidden="true" />,
+        label: 'Fulfilled',
+      };
     default:
-      return 'border-white/30 bg-macon-navy-700 text-white/70';
+      return {
+        className: 'border-white/30 bg-macon-navy-700 text-white/70',
+        icon: <Clock className="h-3 w-3" aria-hidden="true" />,
+        label: status,
+      };
   }
 }
 
@@ -154,13 +175,18 @@ export function AppointmentsList({
 
                 {/* Status */}
                 <TableCell>
-                  <Badge
-                    variant="outline"
-                    className={getStatusColor(appointment.status)}
-                  >
-                    {appointment.status.charAt(0) +
-                      appointment.status.slice(1).toLowerCase()}
-                  </Badge>
+                  {(() => {
+                    const config = getStatusConfig(appointment.status);
+                    return (
+                      <Badge
+                        variant="outline"
+                        className={`gap-1.5 ${config.className}`}
+                      >
+                        {config.icon}
+                        {config.label}
+                      </Badge>
+                    );
+                  })()}
                 </TableCell>
 
                 {/* Notes */}

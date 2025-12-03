@@ -1,7 +1,7 @@
 import { Container } from "@/ui/Container";
 import { Card, CardContent } from "@/components/ui/card";
 import { AnimatedSection } from "@/components/AnimatedSection";
-import { Quote, Star } from "lucide-react";
+import { Quote, Star, TrendingUp } from "lucide-react";
 
 const testimonials = [
   {
@@ -52,7 +52,8 @@ export function TestimonialsSection() {
                 <Card className="bg-neutral-50 border-neutral-200/30 hover:shadow-elevation-2 transition-shadow relative h-full">
                 <CardContent className="p-8 flex flex-col h-full">
                   {/* Metric Badge */}
-                  <div className="inline-flex self-start px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full mb-4">
+                  <div className="inline-flex items-center gap-1.5 self-start px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full mb-4">
+                    <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" />
                     {testimonial.metric}
                   </div>
 

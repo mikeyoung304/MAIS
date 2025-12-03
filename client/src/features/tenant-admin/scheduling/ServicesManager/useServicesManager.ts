@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import type { ServiceDto, CreateServiceDto, UpdateServiceDto } from "@macon/contracts";
@@ -156,6 +156,9 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
           onServicesChange();
         } else {
           setError("Failed to update service");
+          toast.error("Failed to update service", {
+            description: "Please try again or contact support.",
+          });
         }
       } else {
         // Create new service
@@ -182,10 +185,19 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
           onServicesChange();
         } else {
           setError("Failed to create service");
+          toast.error("Failed to create service", {
+            description: "Please try again or contact support.",
+          });
         }
       }
     } catch (err) {
+      if (import.meta.env.DEV) {
+        console.error("[useServicesManager] Failed to save service:", err);
+      }
       setError("An error occurred while saving the service");
+      toast.error("An error occurred while saving the service", {
+        description: "Please try again or contact support.",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -216,6 +228,9 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
         });
       }
     } catch (err) {
+      if (import.meta.env.DEV) {
+        console.error("[useServicesManager] Failed to delete service:", err);
+      }
       toast.error("An error occurred while deleting the service", {
         description: "Please try again or contact support.",
       });
@@ -243,6 +258,9 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
         });
       }
     } catch (err) {
+      if (import.meta.env.DEV) {
+        console.error("[useServicesManager] Failed to toggle service status:", err);
+      }
       toast.error("An error occurred while toggling service status", {
         description: "Please try again or contact support.",
       });

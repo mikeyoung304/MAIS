@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { Users, LogIn } from "lucide-react";
+import { useState } from "react";
+import { Users, LogIn, XCircle, CheckCircle } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 
@@ -48,13 +49,17 @@ export function TenantsTab({ tenants, isLoading, onRefresh }: TenantsTabProps) {
         if (import.meta.env.DEV) {
           console.error("Impersonation failed:", result.status);
         }
-        alert("Failed to impersonate tenant. Please try again.");
+        toast.error("Failed to impersonate tenant", {
+          description: "Please try again or contact support.",
+        });
       }
     } catch (error) {
       if (import.meta.env.DEV) {
         console.error("Impersonation error:", error);
       }
-      alert("An error occurred while impersonating tenant.");
+      toast.error("An error occurred while impersonating tenant", {
+        description: "Please try again or contact support.",
+      });
     } finally {
       setImpersonating(null);
     }
@@ -108,12 +113,14 @@ export function TenantsTab({ tenants, isLoading, onRefresh }: TenantsTabProps) {
                     {tenant.name}
                   </h3>
                   {!tenant.isActive && (
-                    <span className="px-2 py-1 bg-red-900/50 text-red-300 text-xs rounded">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-900/50 text-red-300 text-xs rounded">
+                      <XCircle className="h-3 w-3" aria-hidden="true" />
                       Inactive
                     </span>
                   )}
                   {tenant.stripeOnboarded && (
-                    <span className="px-2 py-1 bg-green-900/50 text-green-300 text-xs rounded">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-900/50 text-green-300 text-xs rounded">
+                      <CheckCircle className="h-3 w-3" aria-hidden="true" />
                       Stripe Connected
                     </span>
                   )}

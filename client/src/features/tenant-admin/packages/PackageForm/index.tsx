@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import type { FormError } from "@/components/ui/ErrorSummary";
 import type { PackageFormData } from "../hooks/usePackageForm";
 import type { SegmentDto } from "@macon/contracts";
@@ -50,14 +52,24 @@ export function PackageForm({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [initialForm, setInitialForm] = useState<PackageFormData>(form);
 
+  // Setup confirmation dialog
+  const { confirm, dialogState, handleOpenChange } = useConfirmDialog();
+
   // Calculate if form has unsaved changes
   const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm);
 
-  // Enable unsaved changes warning
+  // Enable unsaved changes warning with ConfirmDialog
   useUnsavedChanges({
     isDirty,
-    message: "You have unsaved package changes. Leave anyway?",
-    enabled: true
+    message: "You have unsaved package changes. Are you sure you want to leave?",
+    enabled: true,
+    confirmFn: (msg) => confirm({
+      title: "Unsaved Changes",
+      description: msg,
+      confirmLabel: "Leave",
+      cancelLabel: "Stay",
+      variant: "destructive"
+    })
   });
 
   // Validate field on blur
@@ -110,6 +122,20 @@ export function PackageForm({
 
   return (
     <>
+      {/* Confirmation Dialog */}
+      {dialogState && (
+        <ConfirmDialog
+          open={dialogState.isOpen}
+          onOpenChange={handleOpenChange}
+          title={dialogState.title}
+          description={dialogState.description}
+          confirmLabel={dialogState.confirmLabel}
+          cancelLabel={dialogState.cancelLabel}
+          variant={dialogState.variant}
+          onConfirm={dialogState.onConfirm}
+        />
+      )}
+
       <Card className="p-6 bg-macon-navy-800 border-white/20">
         <FormHeader
           editingPackageId={editingPackageId}

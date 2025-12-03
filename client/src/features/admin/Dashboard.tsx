@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { api } from "../../lib/api";
 import type { BookingDto, PackageDto } from "@macon/contracts";
@@ -100,6 +101,9 @@ export function Dashboard() {
       if (import.meta.env.DEV) {
         console.error("Failed to load bookings:", error);
       }
+      toast.error("Failed to load bookings", {
+        description: "Please refresh the page or contact support.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -116,6 +120,9 @@ export function Dashboard() {
       if (import.meta.env.DEV) {
         console.error("Failed to load blackouts:", error);
       }
+      toast.error("Failed to load blackout dates", {
+        description: "Please refresh the page or contact support.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -132,6 +139,9 @@ export function Dashboard() {
       if (import.meta.env.DEV) {
         console.error("Failed to load packages:", error);
       }
+      toast.error("Failed to load packages", {
+        description: "Please refresh the page or contact support.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -148,6 +158,9 @@ export function Dashboard() {
       if (import.meta.env.DEV) {
         console.error("Failed to load tenants:", error);
       }
+      toast.error("Failed to load tenants", {
+        description: "Please refresh the page or contact support.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -164,11 +177,15 @@ export function Dashboard() {
 
       if (result.status === 200) {
         loadBlackouts();
+        toast.success("Blackout date added successfully");
       }
     } catch (error) {
       if (import.meta.env.DEV) {
         console.error("Failed to create blackout:", error);
       }
+      toast.error("Failed to create blackout date", {
+        description: "Please try again or contact support.",
+      });
     }
   };
 

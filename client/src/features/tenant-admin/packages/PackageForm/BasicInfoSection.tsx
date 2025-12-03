@@ -43,6 +43,7 @@ export function BasicInfoSection({
             setForm({ ...form, title: e.target.value });
             // Clear error when user starts typing
             if (fieldErrors.title) {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { title, ...rest } = fieldErrors;
               setFieldErrors(rest);
             }
@@ -76,6 +77,7 @@ export function BasicInfoSection({
           onChange={(e) => {
             setForm({ ...form, description: e.target.value });
             if (fieldErrors.description) {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { description, ...rest } = fieldErrors;
               setFieldErrors(rest);
             }

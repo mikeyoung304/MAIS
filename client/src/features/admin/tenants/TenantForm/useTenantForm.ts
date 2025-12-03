@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { TenantFormData, TenantFormErrors } from "./types";
 
-export function useTenantForm(tenantId?: string) {
+export function useTenantForm() {
   const [formData, setFormData] = useState<TenantFormData>({
     name: "",
     slug: "",

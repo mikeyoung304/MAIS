@@ -25,6 +25,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import { ANIMATION_TRANSITION } from "@/lib/animation-constants";
 
 /**
  * Validates that a URL is a legitimate Stripe domain
@@ -239,7 +240,7 @@ export function StripeConnectCard() {
   if (loading) {
     return (
       <div className="bg-surface-alt rounded-2xl border border-sage-light/20 p-12 text-center">
-        <Loader2 className="w-8 h-8 animate-spin mx-auto text-sage" />
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-sage" aria-hidden="true" />
         <p className="text-text-muted mt-3">Loading payment status...</p>
       </div>
     );
@@ -264,24 +265,24 @@ export function StripeConnectCard() {
             <>
               {error && (
                 <div className="p-4 bg-danger-50 border border-danger-100 rounded-xl flex items-start gap-3 mb-4">
-                  <AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
                   <span className="text-sm text-danger-700">{error}</span>
                 </div>
               )}
               <Button
                 onClick={handleOpenOnboardingDialog}
                 disabled={creating}
-                className="bg-sage hover:bg-sage-hover text-white rounded-full px-8 h-12 shadow-soft hover:shadow-medium transition-all duration-300 group"
+                className={`bg-sage hover:bg-sage-hover text-white rounded-full px-8 h-12 shadow-soft hover:shadow-medium ${ANIMATION_TRANSITION.HOVER} group`}
               >
                 {creating ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
                     Creating Account...
                   </>
                 ) : (
                   <>
                     Connect Stripe
-                    <ArrowUpRight className="w-4 h-4 ml-2 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    <ArrowUpRight className={`w-4 h-4 ml-2 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${ANIMATION_TRANSITION.TRANSFORM}`} aria-hidden="true" />
                   </>
                 )}
               </Button>
@@ -362,7 +363,7 @@ export function StripeConnectCard() {
                 className="bg-sage hover:bg-sage-hover text-white rounded-full"
               >
                 Continue to Stripe
-                <ArrowUpRight className="w-4 h-4 ml-2" />
+                <ArrowUpRight className="w-4 h-4 ml-2" aria-hidden="true" />
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -382,9 +383,9 @@ export function StripeConnectCard() {
         enabled ? "bg-sage/10" : "bg-warning-100"
       }`}>
         {enabled ? (
-          <Check className="w-4 h-4 text-sage" />
+          <Check className="w-4 h-4 text-sage" aria-hidden="true" />
         ) : (
-          <X className="w-4 h-4 text-warning-600" />
+          <X className="w-4 h-4 text-warning-600" aria-hidden="true" />
         )}
       </div>
     </div>
@@ -401,7 +402,7 @@ export function StripeConnectCard() {
         </div>
         {isFullyOnboarded && (
           <div className="flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-sage" />
+            <CheckCircle2 className="w-4 h-4 text-sage" aria-hidden="true" />
             <StatusBadge status="Connected" />
           </div>
         )}
@@ -409,7 +410,7 @@ export function StripeConnectCard() {
 
       {error && (
         <div className="p-4 bg-danger-50 border border-danger-100 rounded-xl flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
           <span className="text-sm text-danger-700">{error}</span>
         </div>
       )}
@@ -436,7 +437,7 @@ export function StripeConnectCard() {
         <div className="p-5 bg-warning-50 border border-warning-200 rounded-xl">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 bg-warning-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="w-5 h-5 text-warning-600" />
+              <AlertCircle className="w-5 h-5 text-warning-600" aria-hidden="true" />
             </div>
             <div>
               <h4 className="font-medium text-warning-900 mb-1">Action Required</h4>
@@ -461,17 +462,17 @@ export function StripeConnectCard() {
           <Button
             onClick={handleOnboard}
             disabled={onboarding}
-            className="flex-1 bg-sage hover:bg-sage-hover text-white rounded-full h-11 shadow-soft hover:shadow-medium transition-all duration-300"
+            className={`flex-1 bg-sage hover:bg-sage-hover text-white rounded-full h-11 shadow-soft hover:shadow-medium ${ANIMATION_TRANSITION.HOVER}`}
           >
             {onboarding ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
                 Loading...
               </>
             ) : (
               <>
                 Complete Setup
-                <ArrowUpRight className="w-4 h-4 ml-2" />
+                <ArrowUpRight className="w-4 h-4 ml-2" aria-hidden="true" />
               </>
             )}
           </Button>
@@ -482,7 +483,7 @@ export function StripeConnectCard() {
           variant="ghost"
           className={`text-text-muted hover:text-sage hover:bg-sage/10 rounded-full h-11 ${!isFullyOnboarded ? "" : "flex-1"}`}
         >
-          <ArrowUpRight className="w-4 h-4 mr-2" />
+          <ArrowUpRight className="w-4 h-4 mr-2" aria-hidden="true" />
           Open Stripe Dashboard
         </Button>
       </div>

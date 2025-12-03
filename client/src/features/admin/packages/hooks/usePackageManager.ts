@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import type {
   PackageDto,
   CreatePackageDto,
@@ -19,6 +20,7 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [segments, setSegments] = useState<Array<{ id: string; name: string; active: boolean }>>([]);
+  const { confirm, dialogState, handleOpenChange } = useConfirmDialog();
 
   const [packageForm, setPackageForm] = useState<PackageFormData>({
     slug: "",
@@ -127,6 +129,9 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
           onPackagesChange();
         } else {
           setError("Failed to update package");
+          toast.error("Failed to update package", {
+            description: "Please try again or contact support.",
+          });
         }
       } else {
         const createData: CreatePackageDto = {
@@ -149,6 +154,9 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
           onPackagesChange();
         } else {
           setError("Failed to create package");
+          toast.error("Failed to create package", {
+            description: "Please try again or contact support.",
+          });
         }
       }
     } catch (err) {
@@ -156,13 +164,24 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
         console.error("Failed to save package:", err);
       }
       setError("An error occurred while saving the package");
+      toast.error("An error occurred while saving the package", {
+        description: "Please try again or contact support.",
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleDeletePackage = async (packageId: string) => {
-    if (!window.confirm("Are you sure you want to delete this package? This action cannot be undone.")) {
+    const confirmed = await confirm({
+      title: "Delete Package",
+      description: "Are you sure you want to delete this package? This action cannot be undone.",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      variant: "destructive",
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -211,5 +230,6 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
     handleSavePackage,
     handleDeletePackage,
     handleCancelPackageForm,
+    confirmDialog: { dialogState, handleOpenChange },
   };
 }

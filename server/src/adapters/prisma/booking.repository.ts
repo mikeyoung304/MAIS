@@ -850,6 +850,10 @@ export class PrismaBookingRepository implements BookingRepository {
    *
    * Uses PostgreSQL advisory locks (ADR-006) to prevent race conditions.
    *
+   * TODO-154 FIX: Recalculates reminderDueDate and resets reminderSentAt
+   * when a booking is rescheduled to ensure reminders are sent at the
+   * correct time based on the new event date.
+   *
    * @param tenantId - Tenant ID for isolation
    * @param bookingId - Booking identifier
    * @param newDate - New event date (YYYY-MM-DD format)
@@ -890,10 +894,24 @@ export class PrismaBookingRepository implements BookingRepository {
           throw new BookingConflictError(newDate);
         }
 
-        // Update booking date
+        // TODO-154 FIX: Calculate new reminder due date (7 days before new event date)
+        // Only set if the event is more than 7 days away
+        const eventDate = new Date(newDate + 'T00:00:00Z');
+        const now = new Date();
+        const daysUntilEvent = Math.floor((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        const newReminderDueDate = daysUntilEvent > 7
+          ? new Date(eventDate.getTime() - 7 * 24 * 60 * 60 * 1000)
+          : null;
+
+        // Update booking date and reminder fields
         const updated = await tx.booking.update({
           where: { id: bookingId },
-          data: { date: new Date(newDate) },
+          data: {
+            date: new Date(newDate),
+            // TODO-154 FIX: Update reminder due date and reset sent flag
+            reminderDueDate: newReminderDueDate,
+            reminderSentAt: null, // Reset so new reminder will be sent
+          },
           include: {
             customer: true,
             addOns: {

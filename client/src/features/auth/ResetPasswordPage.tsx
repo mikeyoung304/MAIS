@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InputEnhanced } from "@/components/ui/input-enhanced";
 import { Logo } from "@/components/brand/Logo";
 import { ErrorSummary, type FormError } from "@/components/ui/ErrorSummary";
-import { Lock, ArrowLeft, CheckCircle, XCircle } from "lucide-react";
+import { Lock, ArrowLeft, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { useForm } from "@/hooks/useForm";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
@@ -211,15 +211,20 @@ export function ResetPasswordPage() {
             {/* Server Error */}
             {error && (
               <div role="alert" className="mb-6 p-4 bg-red-900/50 border border-red-400 text-red-100 rounded">
-                <p>{error}</p>
-                {error.includes("expired") && (
-                  <Link
-                    to="/forgot-password"
-                    className="mt-2 inline-block text-sm underline hover:text-white"
-                  >
-                    Request a new reset link
-                  </Link>
-                )}
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                  <div className="flex-1">
+                    <p>{error}</p>
+                    {error.includes("expired") && (
+                      <Link
+                        to="/forgot-password"
+                        className="mt-2 inline-block text-sm underline hover:text-white"
+                      >
+                        Request a new reset link
+                      </Link>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 

@@ -20,6 +20,7 @@
 import { useState, useEffect } from "react";
 import type { AvailabilityRuleDto, ServiceDto } from "@macon/contracts";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 import { SuccessMessage } from "@/components/shared/SuccessMessage";
 import { CreateRuleButton } from "./CreateRuleButton";
 import { RuleForm } from "./RuleForm";
@@ -40,7 +41,12 @@ export function AvailabilityRulesManager() {
         setRules(result.body);
       }
     } catch (error) {
-      // Error is handled by UI state
+      if (import.meta.env.DEV) {
+        console.error("[AvailabilityRulesManager] Failed to fetch availability rules:", error);
+      }
+      toast.error("Failed to load availability rules", {
+        description: "Please refresh the page or contact support.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +61,12 @@ export function AvailabilityRulesManager() {
         setServices(sortedServices);
       }
     } catch (error) {
-      // Error is handled by UI state
+      if (import.meta.env.DEV) {
+        console.error("[AvailabilityRulesManager] Failed to fetch services:", error);
+      }
+      toast.error("Failed to load services", {
+        description: "Service dropdown may be empty. Please refresh the page.",
+      });
     }
   };
 

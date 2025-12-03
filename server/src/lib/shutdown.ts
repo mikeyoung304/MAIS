@@ -18,6 +18,7 @@ export interface ShutdownManager {
   prisma?: PrismaClient;
   cleanup?: () => Promise<void>; // DI container cleanup method
   onShutdown?: () => Promise<void> | void;
+  timeoutMs?: number; // Shutdown timeout in milliseconds (default: 30000)
 }
 
 /**
@@ -36,7 +37,7 @@ export interface ShutdownManager {
  * ```
  */
 export function registerGracefulShutdown(manager: ShutdownManager): void {
-  const { server, prisma, cleanup, onShutdown } = manager;
+  const { server, prisma, cleanup, onShutdown, timeoutMs = 30000 } = manager;
 
   let isShuttingDown = false;
 
@@ -47,13 +48,13 @@ export function registerGracefulShutdown(manager: ShutdownManager): void {
     }
 
     isShuttingDown = true;
-    logger.info(`${signal} signal received: starting graceful shutdown`);
+    logger.info(`${signal} signal received: starting graceful shutdown (timeout: ${timeoutMs}ms)`);
 
-    // Set shutdown timeout (30 seconds)
+    // Set shutdown timeout (configurable, default 30 seconds)
     const shutdownTimeout = setTimeout(() => {
-      logger.error('Graceful shutdown timeout exceeded, forcing exit');
+      logger.error(`Graceful shutdown timeout exceeded (${timeoutMs}ms), forcing exit`);
       process.exit(1);
-    }, 30000);
+    }, timeoutMs);
 
     try {
       // 1. Stop accepting new connections

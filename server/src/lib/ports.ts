@@ -17,6 +17,7 @@ export interface CatalogRepository {
   getAllPackagesWithAddOns(tenantId: string): Promise<(Package & { addOns: AddOn[] })[]>;
   getPackageBySlug(tenantId: string, slug: string): Promise<Package | null>;
   getPackageById(tenantId: string, id: string): Promise<Package | null>;
+  getPackagesByIds(tenantId: string, ids: string[]): Promise<Package[]>;
   getAddOnsByPackageId(tenantId: string, packageId: string): Promise<AddOn[]>;
   getAddOnById(tenantId: string, id: string): Promise<AddOn | null>;
   createPackage(tenantId: string, data: CreatePackageInput): Promise<Package>;
@@ -315,6 +316,7 @@ export interface AvailabilityRuleRepository {
   getByDayOfWeek(tenantId: string, dayOfWeek: number, serviceId?: string | null): Promise<AvailabilityRule[]>;
   getEffectiveRules(tenantId: string, date: Date, serviceId?: string | null): Promise<AvailabilityRule[]>;
   create(tenantId: string, data: CreateAvailabilityRuleData): Promise<AvailabilityRule>;
+  update(tenantId: string, id: string, data: UpdateAvailabilityRuleData): Promise<AvailabilityRule>;
   delete(tenantId: string, id: string): Promise<void>;
   deleteByService(tenantId: string, serviceId: string): Promise<void>;
 }
@@ -343,6 +345,19 @@ export interface CreateAvailabilityRuleData {
   dayOfWeek: number;
   startTime: string;
   endTime: string;
+  effectiveFrom?: Date;
+  effectiveTo?: Date | null;
+}
+
+/**
+ * Input for updating an existing availability rule
+ * All fields are optional for partial updates
+ */
+export interface UpdateAvailabilityRuleData {
+  serviceId?: string | null;
+  dayOfWeek?: number;
+  startTime?: string;
+  endTime?: string;
   effectiveFrom?: Date;
   effectiveTo?: Date | null;
 }

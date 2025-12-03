@@ -35,8 +35,8 @@ export function MobileActionDropdown({ actions, className = "" }: MobileActionDr
     <div className={`sm:hidden ${className}`}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="text-text-muted">
-            <MoreVertical className="w-4 h-4" />
+          <Button variant="ghost" size="sm" className="text-text-muted" aria-label="Open actions menu">
+            <MoreVertical className="w-4 h-4" aria-hidden="true" />
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
@@ -50,7 +50,7 @@ export function MobileActionDropdown({ actions, className = "" }: MobileActionDr
                 disabled={action.disabled}
                 className={action.variant === "danger" ? "text-danger-600" : "text-text-primary"}
               >
-                {Icon && <Icon className="w-4 h-4 mr-2" />}
+                {Icon && <Icon className="w-4 h-4 mr-2" aria-hidden="true" />}
                 {action.label}
               </DropdownMenuItem>
             );

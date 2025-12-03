@@ -2,7 +2,8 @@
  * Unit tests for Demo seed (seeds/demo.ts)
  *
  * Tests:
- * - Random key generation (security)
+ * - Random key generation (security) on first create
+ * - Key preservation on subsequent seeds (idempotency)
  * - Tenant creation with demo data
  * - Package and add-on creation
  * - Blackout date creation
@@ -45,64 +46,113 @@ describe('Demo Seed', () => {
   });
 
   describe('Demo Tenant Creation', () => {
-    it('should create tenant with slug "little-bit-farm"', async () => {
-      const mockPrisma = createMockPrisma();
+    it('should create new tenant when it does not exist', async () => {
+      const mockPrisma = createMockPrisma(null); // No existing tenant
 
       await seedDemo(mockPrisma);
 
-      expect(mockPrisma.tenant.upsert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { slug: 'little-bit-farm' },
-        })
-      );
+      expect(mockPrisma.tenant.findUnique).toHaveBeenCalledWith({
+        where: { slug: 'little-bit-farm' },
+      });
+      expect(mockPrisma.tenant.create).toHaveBeenCalled();
     });
 
-    it('should set tenant as active', async () => {
-      const mockPrisma = createMockPrisma();
+    it('should update existing tenant without changing keys', async () => {
+      const existingTenant = {
+        id: 'tenant-demo-123',
+        slug: 'little-bit-farm',
+        name: 'Little Bit Farm',
+        apiKeyPublic: 'pk_live_little-bit-farm_existing1234',
+        apiKeySecret: 'hashed-existing-secret',
+      };
+      const mockPrisma = createMockPrisma(existingTenant);
 
       await seedDemo(mockPrisma);
 
-      const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
-      expect(upsertCall.create.isActive).toBe(true);
+      expect(mockPrisma.tenant.findUnique).toHaveBeenCalledWith({
+        where: { slug: 'little-bit-farm' },
+      });
+      expect(mockPrisma.tenant.update).toHaveBeenCalled();
+      expect(mockPrisma.tenant.create).not.toHaveBeenCalled();
+
+      // Verify update does not include API keys
+      const updateCall = mockPrisma.tenant.update.mock.calls[0][0];
+      expect(updateCall.data.apiKeyPublic).toBeUndefined();
+      expect(updateCall.data.apiKeySecret).toBeUndefined();
+    });
+
+    it('should set tenant as active on create', async () => {
+      const mockPrisma = createMockPrisma(null);
+
+      await seedDemo(mockPrisma);
+
+      const createCall = mockPrisma.tenant.create.mock.calls[0][0];
+      expect(createCall.data.isActive).toBe(true);
+    });
+
+    it('should preserve active status on update', async () => {
+      const existingTenant = {
+        id: 'tenant-demo-123',
+        slug: 'little-bit-farm',
+        name: 'Little Bit Farm',
+        apiKeyPublic: 'pk_live_little-bit-farm_existing1234',
+        apiKeySecret: 'hashed-existing-secret',
+      };
+      const mockPrisma = createMockPrisma(existingTenant);
+
+      await seedDemo(mockPrisma);
+
+      const updateCall = mockPrisma.tenant.update.mock.calls[0][0];
+      expect(updateCall.data.isActive).toBe(true);
     });
 
     it('should set demo email', async () => {
-      const mockPrisma = createMockPrisma();
+      const mockPrisma = createMockPrisma(null);
 
       await seedDemo(mockPrisma);
 
-      const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
-      expect(upsertCall.create.email).toBe('demo@example.com');
+      const createCall = mockPrisma.tenant.create.mock.calls[0][0];
+      expect(createCall.data.email).toBe('demo@example.com');
     });
   });
 
   describe('Random Key Generation (Security)', () => {
-    it('should generate public key with random suffix', async () => {
-      const mockPrisma = createMockPrisma();
+    it('should generate public key with random suffix on first create', async () => {
+      const mockPrisma = createMockPrisma(null); // No existing tenant
 
       await seedDemo(mockPrisma);
 
-      const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
+      const createCall = mockPrisma.tenant.create.mock.calls[0][0];
       // Public key format: pk_live_little-bit-farm_{16 hex chars}
-      expect(upsertCall.create.apiKeyPublic).toMatch(
+      expect(createCall.data.apiKeyPublic).toMatch(
         /^pk_live_little-bit-farm_[0-9a-f]{16}$/
       );
     });
 
-    it('should regenerate keys on each seed (update operation)', async () => {
-      const mockPrisma = createMockPrisma();
+    it('should NOT regenerate keys on subsequent seeds (idempotency)', async () => {
+      const existingTenant = {
+        id: 'tenant-demo-123',
+        slug: 'little-bit-farm',
+        name: 'Little Bit Farm',
+        apiKeyPublic: 'pk_live_little-bit-farm_existing1234',
+        apiKeySecret: 'hashed-existing-secret',
+      };
+      const mockPrisma = createMockPrisma(existingTenant);
 
       await seedDemo(mockPrisma);
 
-      const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
-      // Update operation should also set new keys
-      expect(upsertCall.update.apiKeyPublic).toBeDefined();
-      expect(upsertCall.update.apiKeySecret).toBeDefined();
+      // Should use update, not create
+      expect(mockPrisma.tenant.update).toHaveBeenCalled();
+      const updateCall = mockPrisma.tenant.update.mock.calls[0][0];
+
+      // Update should NOT include API keys
+      expect(updateCall.data.apiKeyPublic).toBeUndefined();
+      expect(updateCall.data.apiKeySecret).toBeUndefined();
     });
 
-    it('should hash secret key before storing', async () => {
+    it('should hash secret key before storing on first create', async () => {
       const { apiKeyService } = await import('../../src/lib/api-key.service');
-      const mockPrisma = createMockPrisma();
+      const mockPrisma = createMockPrisma(null);
 
       await seedDemo(mockPrisma);
 
@@ -110,6 +160,23 @@ describe('Demo Seed', () => {
       const hashCall = (apiKeyService.hashSecretKey as ReturnType<typeof vi.fn>).mock.calls[0][0];
       // Secret key format: sk_live_little-bit-farm_{32 hex chars}
       expect(hashCall).toMatch(/^sk_live_little-bit-farm_[0-9a-f]{32}$/);
+    });
+
+    it('should NOT hash secret key on update (keys preserved)', async () => {
+      vi.clearAllMocks(); // Clear any previous calls
+      const existingTenant = {
+        id: 'tenant-demo-123',
+        slug: 'little-bit-farm',
+        name: 'Little Bit Farm',
+        apiKeyPublic: 'pk_live_little-bit-farm_existing1234',
+        apiKeySecret: 'hashed-existing-secret',
+      };
+      const mockPrisma = createMockPrisma(existingTenant);
+
+      await seedDemo(mockPrisma);
+
+      const { apiKeyService } = await import('../../src/lib/api-key.service');
+      expect(apiKeyService.hashSecretKey).not.toHaveBeenCalled();
     });
   });
 
@@ -230,26 +297,49 @@ describe('Demo Seed', () => {
   });
 
   describe('Idempotency', () => {
-    it('should use upsert for all operations (safe to run multiple times)', async () => {
+    it('should be safe to run multiple times (upserts for packages/add-ons)', async () => {
       const mockPrisma = createMockPrisma();
 
       // Run twice
       await seedDemo(mockPrisma);
       await seedDemo(mockPrisma);
 
-      // All operations should use upsert
-      expect(mockPrisma.tenant.upsert).toHaveBeenCalled();
+      // All operations except tenant should use upsert
       expect(mockPrisma.package.upsert).toHaveBeenCalled();
       expect(mockPrisma.addOn.upsert).toHaveBeenCalled();
       expect(mockPrisma.packageAddOn.upsert).toHaveBeenCalled();
       expect(mockPrisma.blackoutDate.upsert).toHaveBeenCalled();
     });
+
+    it('should preserve keys on second run (tenant update)', async () => {
+      const mockPrisma = createMockPrisma(null);
+
+      // First run: creates tenant
+      await seedDemo(mockPrisma);
+      expect(mockPrisma.tenant.create).toHaveBeenCalledOnce();
+
+      // Second run: updates tenant (keys preserved)
+      const existingTenant = {
+        id: 'tenant-demo-123',
+        slug: 'little-bit-farm',
+        name: 'Little Bit Farm',
+        apiKeyPublic: 'pk_live_little-bit-farm_existing1234',
+        apiKeySecret: 'hashed-existing-secret',
+      };
+      const mockPrismaUpdate = createMockPrisma(existingTenant);
+      await seedDemo(mockPrismaUpdate);
+
+      expect(mockPrismaUpdate.tenant.update).toHaveBeenCalled();
+      const updateCall = mockPrismaUpdate.tenant.update.mock.calls[0][0];
+      expect(updateCall.data.apiKeyPublic).toBeUndefined();
+      expect(updateCall.data.apiKeySecret).toBeUndefined();
+    });
   });
 
   describe('Logging', () => {
-    it('should log created tenant info', async () => {
+    it('should log created tenant info on first create', async () => {
       const { logger } = await import('../../src/lib/core/logger');
-      const mockPrisma = createMockPrisma();
+      const mockPrisma = createMockPrisma(null);
 
       await seedDemo(mockPrisma);
 
@@ -258,9 +348,27 @@ describe('Demo Seed', () => {
       );
     });
 
-    it('should warn about secret key (save it!)', async () => {
+    it('should log updated tenant info on subsequent seeds', async () => {
       const { logger } = await import('../../src/lib/core/logger');
-      const mockPrisma = createMockPrisma();
+      const existingTenant = {
+        id: 'tenant-demo-123',
+        slug: 'little-bit-farm',
+        name: 'Little Bit Farm',
+        apiKeyPublic: 'pk_live_little-bit-farm_existing1234',
+        apiKeySecret: 'hashed-existing-secret',
+      };
+      const mockPrisma = createMockPrisma(existingTenant);
+
+      await seedDemo(mockPrisma);
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Demo tenant updated (keys preserved)')
+      );
+    });
+
+    it('should warn about secret key on first create (save it!)', async () => {
+      const { logger } = await import('../../src/lib/core/logger');
+      const mockPrisma = createMockPrisma(null);
 
       await seedDemo(mockPrisma);
 
@@ -269,14 +377,32 @@ describe('Demo Seed', () => {
       );
     });
 
-    it('should warn that keys change on each seed', async () => {
+    it('should warn that keys will NOT be regenerated on first create', async () => {
       const { logger } = await import('../../src/lib/core/logger');
-      const mockPrisma = createMockPrisma();
+      const mockPrisma = createMockPrisma(null);
 
       await seedDemo(mockPrisma);
 
       expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('change on each seed')
+        expect.stringContaining('will not be regenerated')
+      );
+    });
+
+    it('should inform that keys are unchanged on update', async () => {
+      const { logger } = await import('../../src/lib/core/logger');
+      const existingTenant = {
+        id: 'tenant-demo-123',
+        slug: 'little-bit-farm',
+        name: 'Little Bit Farm',
+        apiKeyPublic: 'pk_live_little-bit-farm_existing1234',
+        apiKeySecret: 'hashed-existing-secret',
+      };
+      const mockPrisma = createMockPrisma(existingTenant);
+
+      await seedDemo(mockPrisma);
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Secret key unchanged')
       );
     });
   });
@@ -284,12 +410,15 @@ describe('Demo Seed', () => {
 
 /**
  * Create a mock PrismaClient for testing
+ * @param existingTenant - Pass existing tenant to simulate update scenario, null for create scenario
  */
-function createMockPrisma(): PrismaClient {
-  const mockTenant = {
+function createMockPrisma(existingTenant?: { id: string; slug: string; name: string; apiKeyPublic: string; apiKeySecret: string } | null): PrismaClient {
+  const mockTenant = existingTenant || {
     id: 'tenant-demo-123',
     slug: 'little-bit-farm',
     name: 'Little Bit Farm',
+    apiKeyPublic: 'pk_live_little-bit-farm_0000000000000000',
+    apiKeySecret: 'hashed-secret-key',
   };
 
   const mockPackage = {
@@ -306,7 +435,9 @@ function createMockPrisma(): PrismaClient {
 
   return {
     tenant: {
-      upsert: vi.fn().mockResolvedValue(mockTenant),
+      findUnique: vi.fn().mockResolvedValue(existingTenant || null),
+      create: vi.fn().mockResolvedValue(mockTenant),
+      update: vi.fn().mockResolvedValue(mockTenant),
     },
     package: {
       upsert: vi.fn().mockResolvedValue(mockPackage),

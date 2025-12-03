@@ -1,4 +1,4 @@
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,7 +57,10 @@ export function RuleForm({
 
       {error && (
         <div className="mb-4 p-3 bg-red-900/20 border border-red-700 rounded text-red-300 text-sm">
-          {error}
+          <div className="flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <span>{error}</span>
+          </div>
         </div>
       )}
 

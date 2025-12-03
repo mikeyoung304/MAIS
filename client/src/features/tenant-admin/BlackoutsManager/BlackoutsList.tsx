@@ -2,6 +2,7 @@ import { Trash2, Loader2, CalendarOff, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { BlackoutDto } from "./types";
+import { ANIMATION_TRANSITION } from "@/lib/animation-constants";
 
 interface BlackoutsListProps {
   blackouts: BlackoutDto[];
@@ -30,7 +31,7 @@ export function BlackoutsList({ blackouts, isLoading, onDeleteClick }: Blackouts
   if (isLoading) {
     return (
       <div className="bg-surface-alt rounded-2xl border border-sage-light/20 p-12 text-center">
-        <Loader2 className="w-8 h-8 animate-spin mx-auto text-sage" />
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-sage" aria-hidden="true" />
         <p className="text-text-muted mt-3">Loading blackout dates...</p>
       </div>
     );
@@ -54,7 +55,7 @@ export function BlackoutsList({ blackouts, isLoading, onDeleteClick }: Blackouts
 
     return (
       <div
-        className={`group flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 ${
+        className={`group flex items-center gap-4 p-4 rounded-xl border ${ANIMATION_TRANSITION.DEFAULT} ${
           isPast
             ? "bg-surface-alt/50 border-sage-light/10 opacity-60"
             : "bg-surface-alt border-sage-light/20 hover:border-sage-light/40 hover:shadow-soft"
@@ -94,10 +95,10 @@ export function BlackoutsList({ blackouts, isLoading, onDeleteClick }: Blackouts
           onClick={() => onDeleteClick(blackout)}
           variant="ghost"
           size="sm"
-          className="text-text-muted hover:text-danger-600 hover:bg-danger-50 transition-colors opacity-0 group-hover:opacity-100"
+          className={`text-text-muted hover:text-danger-600 hover:bg-danger-50 ${ANIMATION_TRANSITION.COLORS} opacity-0 group-hover:opacity-100`}
           aria-label={`Delete blackout date: ${date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`}
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-4 h-4" aria-label="Delete" />
         </Button>
       </div>
     );
@@ -109,7 +110,7 @@ export function BlackoutsList({ blackouts, isLoading, onDeleteClick }: Blackouts
       {upcomingBlackouts.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-sage" />
+            <Calendar className="w-4 h-4 text-sage" aria-hidden="true" />
             <h3 className="text-sm font-medium text-text-primary">
               Upcoming ({upcomingBlackouts.length})
             </h3>
@@ -126,7 +127,7 @@ export function BlackoutsList({ blackouts, isLoading, onDeleteClick }: Blackouts
       {pastBlackouts.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <CalendarOff className="w-4 h-4 text-text-muted" />
+            <CalendarOff className="w-4 h-4 text-text-muted" aria-hidden="true" />
             <h3 className="text-sm font-medium text-text-muted">
               Past ({pastBlackouts.length})
             </h3>

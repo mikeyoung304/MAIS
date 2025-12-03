@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import type {
   AddOnDto,
   CreateAddOnDto,
@@ -19,6 +20,7 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [segments, setSegments] = useState<Array<{ id: string; name: string; active: boolean }>>([]);
+  const { confirm, dialogState, handleOpenChange } = useConfirmDialog();
 
   const [addOnForm, setAddOnForm] = useState<AddOnFormData>({
     title: "",
@@ -145,7 +147,15 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
   };
 
   const handleDeleteAddOn = async (addOnId: string) => {
-    if (!window.confirm("Are you sure you want to delete this add-on?")) {
+    const confirmed = await confirm({
+      title: "Delete Add-on",
+      description: "Are you sure you want to delete this add-on?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      variant: "destructive",
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -195,5 +205,6 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
     handleSaveAddOn,
     handleDeleteAddOn,
     handleCancelAddOn,
+    confirmDialog: { dialogState, handleOpenChange },
   };
 }

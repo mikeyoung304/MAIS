@@ -22,6 +22,7 @@
 import { useState, useEffect } from "react";
 import type { ServiceDto } from "@macon/contracts";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 import { useSuccessMessage } from "@/hooks/useSuccessMessage";
 import { SuccessMessage } from "@/components/shared/SuccessMessage";
 import { ServiceForm } from "./ServiceForm";
@@ -45,7 +46,12 @@ export function ServicesManager() {
         setServices(sortedServices);
       }
     } catch (error) {
-      // Error is handled by UI state
+      if (import.meta.env.DEV) {
+        console.error("[ServicesManager] Failed to fetch services:", error);
+      }
+      toast.error("Failed to load services", {
+        description: "Please refresh the page or contact support.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -83,6 +89,7 @@ export function ServicesManager() {
     if (form.name !== serviceForm.name) {
       handleNameChange(form.name);
       // Then update other fields (excluding name and slug which handleNameChange already set)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { name, slug, ...otherFields } = form;
       setServiceForm(prev => ({ ...prev, ...otherFields }));
     } else {

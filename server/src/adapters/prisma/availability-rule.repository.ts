@@ -7,6 +7,7 @@ import type {
   AvailabilityRuleRepository,
   AvailabilityRule,
   CreateAvailabilityRuleData,
+  UpdateAvailabilityRuleData,
 } from '../lib/ports';
 
 export class PrismaAvailabilityRuleRepository implements AvailabilityRuleRepository {
@@ -106,6 +107,33 @@ export class PrismaAvailabilityRuleRepository implements AvailabilityRuleReposit
     });
 
     return this.mapToEntity(rule);
+  }
+
+  async update(tenantId: string, id: string, data: UpdateAvailabilityRuleData): Promise<AvailabilityRule> {
+    const updateData: any = {};
+
+    if (data.serviceId !== undefined) updateData.serviceId = data.serviceId;
+    if (data.dayOfWeek !== undefined) updateData.dayOfWeek = data.dayOfWeek;
+    if (data.startTime !== undefined) updateData.startTime = data.startTime;
+    if (data.endTime !== undefined) updateData.endTime = data.endTime;
+    if (data.effectiveFrom !== undefined) updateData.effectiveFrom = data.effectiveFrom;
+    if (data.effectiveTo !== undefined) updateData.effectiveTo = data.effectiveTo;
+
+    const rule = await this.prisma.availabilityRule.updateMany({
+      where: { id, tenantId },
+      data: updateData,
+    });
+
+    // Fetch the updated rule to return
+    const updated = await this.prisma.availabilityRule.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!updated) {
+      throw new Error('Availability rule not found or does not belong to this tenant');
+    }
+
+    return this.mapToEntity(updated);
   }
 
   async delete(tenantId: string, id: string): Promise<void> {

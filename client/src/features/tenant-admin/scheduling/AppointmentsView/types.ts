@@ -2,7 +2,7 @@
  * Type definitions for AppointmentsView component
  */
 
-import type { AppointmentDto, ServiceDto } from '@macon/contracts';
+import type { AppointmentDto } from '@macon/contracts';
 
 /**
  * Appointment with enriched customer and service data

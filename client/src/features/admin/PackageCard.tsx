@@ -22,7 +22,6 @@ export function PackageCard({
   onToggleExpand,
   onEdit,
   onDelete,
-  onAddOnChange,
 }: PackageCardProps) {
   const handleEdit = () => {
     onEdit(pkg);

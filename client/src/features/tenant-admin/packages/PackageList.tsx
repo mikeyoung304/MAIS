@@ -93,18 +93,18 @@ export const PackageList = memo(function PackageList({ packages, onEdit, onDelet
                     }}
                   />
                   <div className="hidden w-full h-full min-h-[120px] bg-sage-light/10 items-center justify-center">
-                    <Image className="w-10 h-10 text-sage-light/50" />
+                    <Image className="w-10 h-10 text-sage-light/50" aria-hidden="true" />
                   </div>
                   {pkg.photos.length > 1 && (
                     <span className="absolute bottom-2 left-2 bg-text-primary/80 backdrop-blur-sm text-white text-xs font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <ImageIcon className="w-3 h-3" />
+                      <ImageIcon className="w-3 h-3" aria-hidden="true" />
                       {pkg.photos.length}
                     </span>
                   )}
                 </>
               ) : (
                 <div className="w-full h-full min-h-[120px] bg-sage-light/10 flex items-center justify-center">
-                  <Image className="w-10 h-10 text-sage-light/50" />
+                  <Image className="w-10 h-10 text-sage-light/50" aria-hidden="true" />
                 </div>
               )}
             </div>
@@ -145,7 +145,7 @@ export const PackageList = memo(function PackageList({ packages, onEdit, onDelet
                       className="text-text-muted hover:text-sage hover:bg-sage/10 transition-colors"
                       aria-label={`Edit package: ${pkg.title}`}
                     >
-                      <Pencil className="w-4 h-4" />
+                      <Pencil className="w-4 h-4" aria-label="Edit" />
                     </Button>
                     <Button
                       onClick={() => handleDeleteClick(pkg)}
@@ -154,7 +154,7 @@ export const PackageList = memo(function PackageList({ packages, onEdit, onDelet
                       className="text-text-muted hover:text-danger-600 hover:bg-danger-50 transition-colors"
                       aria-label={`Delete package: ${pkg.title}`}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" aria-label="Delete" />
                     </Button>
                   </div>
 
@@ -187,7 +187,7 @@ export const PackageList = memo(function PackageList({ packages, onEdit, onDelet
           <AlertDialogHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-12 h-12 bg-danger-50 rounded-xl flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-danger-600" />
+                <AlertTriangle className="w-6 h-6 text-danger-600" aria-hidden="true" />
               </div>
               <AlertDialogTitle className="font-serif text-2xl text-text-primary">
                 Delete Package?
@@ -231,7 +231,7 @@ export const PackageList = memo(function PackageList({ packages, onEdit, onDelet
               onClick={confirmDelete}
               className="bg-danger-600 hover:bg-danger-700 text-white rounded-xl"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
+              <Trash2 className="w-4 h-4 mr-2" aria-hidden="true" />
               Delete Package
             </AlertDialogAction>
           </AlertDialogFooter>

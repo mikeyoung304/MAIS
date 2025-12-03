@@ -84,37 +84,31 @@ export function createApp(
     })
   );
 
-  // CORS - Multi-origin support for widget embedding
+  // CORS - Environment-aware origin validation
   app.use(
     cors({
       origin: (origin, callback) => {
         // Allow requests with no origin (mobile apps, Postman, curl)
         if (!origin) return callback(null, true);
 
-        // Whitelist of allowed origins (development + production)
-        const allowed = [
-          'http://localhost:5173',
-          'http://localhost:3000',
-          'https://maconaisolutions.com',
-          'https://www.maconaisolutions.com',
-          'https://app.maconaisolutions.com',
-          'https://widget.maconaisolutions.com',
-        ];
+        // In development, allow all origins
+        if (process.env.NODE_ENV === 'development') {
+          return callback(null, true);
+        }
 
-        // Allow whitelisted origins or any HTTPS origin in production (for widget embedding)
-        if (allowed.includes(origin)) {
-          callback(null, true);
-        } else if (process.env.NODE_ENV === 'production' && origin.startsWith('https://')) {
-          // Allow all HTTPS origins in production (widget embedding on customer sites)
-          callback(null, true);
-        } else if (process.env.NODE_ENV === 'development') {
-          // Allow all origins in development
+        // In production, use explicit allowlist from environment variable
+        const allowedOrigins = config.ALLOWED_ORIGINS || [];
+
+        if (allowedOrigins.includes(origin)) {
           callback(null, true);
         } else {
+          logger.warn({ origin, allowedOrigins }, 'CORS request blocked - origin not in allowlist');
           callback(new Error('Not allowed by CORS'));
         }
       },
       credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-Key'],
       exposedHeaders: ['X-Tenant-Key'], // Allow clients to read this header
     })
   );

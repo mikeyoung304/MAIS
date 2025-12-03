@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { baseUrl } from "@/lib/api";
 import { getAuthToken } from "@/lib/auth";
 import { logger } from "@/lib/logger";

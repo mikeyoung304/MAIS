@@ -1,4 +1,5 @@
 import { AlertCircle, LogOut } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 
@@ -31,13 +32,17 @@ export function ImpersonationBanner({
         if (import.meta.env.DEV) {
           console.error("Stop impersonation failed:", result.status);
         }
-        alert("Failed to stop impersonation. Please try again.");
+        toast.error("Failed to stop impersonation", {
+          description: "Please try again or contact support.",
+        });
       }
     } catch (error) {
       if (import.meta.env.DEV) {
         console.error("Stop impersonation error:", error);
       }
-      alert("An error occurred while stopping impersonation.");
+      toast.error("An error occurred while stopping impersonation", {
+        description: "Please try again or contact support.",
+      });
     }
   };
 

@@ -36,13 +36,13 @@ export function RoleBasedNav({ variant = "sidebar" }: { variant?: "sidebar" | "h
     {
       label: "Dashboard",
       path: "/admin/dashboard",
-      icon: <Building2 className="w-5 h-5" />,
+      icon: <Building2 className="w-5 h-5" aria-hidden="true" />,
       description: "System overview & tenants"
     },
     {
       label: "Segments",
       path: "/admin/segments",
-      icon: <Users className="w-5 h-5" />,
+      icon: <Users className="w-5 h-5" aria-hidden="true" />,
       description: "Manage customer segments"
     }
   ];
@@ -51,7 +51,7 @@ export function RoleBasedNav({ variant = "sidebar" }: { variant?: "sidebar" | "h
     {
       label: "Dashboard",
       path: "/tenant/dashboard",
-      icon: <Building2 className="w-5 h-5" />,
+      icon: <Building2 className="w-5 h-5" aria-hidden="true" />,
       description: "Tenant overview"
     }
     // TODO: Uncomment routes as they are implemented

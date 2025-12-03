@@ -45,6 +45,7 @@ export function PricingSection({
             onChange={(e) => {
               setForm({ ...form, priceCents: e.target.value });
               if (fieldErrors.priceCents) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { priceCents, ...rest } = fieldErrors;
                 setFieldErrors(rest);
               }

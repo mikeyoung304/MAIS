@@ -9,7 +9,7 @@ import { TimeSlotPicker } from "./TimeSlotPicker";
 import { baseUrl } from "@/lib/api";
 import { toast } from "sonner";
 import { toUtcMidnight } from "@macon/shared";
-import { User, Mail, Phone, FileText, ArrowLeft } from "lucide-react";
+import { User, Mail, Phone, ArrowLeft } from "lucide-react";
 import type { ServiceDto } from "@macon/contracts";
 import "react-day-picker/style.css";
 

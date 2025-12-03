@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { packagePhotoApi } from "@/lib/package-photo-api";
 import { useSuccessMessage } from "@/hooks/useSuccessMessage";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import type { PackageDto } from "@macon/contracts";
 import type { PackagePhoto } from "@/features/photos";
 
@@ -11,6 +12,7 @@ export function usePackageManager(onPackagesChange: () => void) {
   const [editingPackageId, setEditingPackageId] = useState<string | null>(null);
   const { message: successMessage, showSuccess } = useSuccessMessage();
   const [packagePhotos, setPackagePhotos] = useState<PackagePhoto[]>([]);
+  const { confirm, dialogState, handleOpenChange } = useConfirmDialog();
 
   const handleCreate = () => {
     setIsCreating(true);
@@ -30,6 +32,9 @@ export function usePackageManager(onPackagesChange: () => void) {
       if (import.meta.env.DEV) {
         console.error("Failed to load package photos:", err);
       }
+      toast.error("Failed to load package photos", {
+        description: "Photos may not be displayed. Please try again.",
+      });
       setPackagePhotos([]);
     }
 
@@ -37,7 +42,15 @@ export function usePackageManager(onPackagesChange: () => void) {
   };
 
   const handleDelete = async (packageId: string) => {
-    if (!window.confirm("Are you sure you want to delete this package?")) {
+    const confirmed = await confirm({
+      title: "Delete Package",
+      description: "Are you sure you want to delete this package?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      variant: "destructive",
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -89,5 +102,6 @@ export function usePackageManager(onPackagesChange: () => void) {
     handleDelete,
     handleCancel,
     handleFormSuccess,
+    confirmDialog: { dialogState, handleOpenChange },
   };
 }

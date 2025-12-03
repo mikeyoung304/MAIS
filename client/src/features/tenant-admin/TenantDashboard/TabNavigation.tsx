@@ -7,6 +7,7 @@
 
 import { Package, CalendarOff, Calendar, Palette, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ANIMATION_TRANSITION } from "@/lib/animation-constants";
 
 export type DashboardTab = "packages" | "blackouts" | "bookings" | "branding" | "payments";
 
@@ -42,7 +43,7 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
                 aria-selected={isActive}
                 aria-controls={`${tab.id}-panel`}
                 className={cn(
-                  "relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 min-h-[44px]",
+                  `relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium ${ANIMATION_TRANSITION.DEFAULT} min-h-[44px]`,
                   isActive
                     ? "bg-white text-text-primary shadow-soft"
                     : "text-text-muted hover:text-text-primary hover:bg-white/50"
@@ -50,9 +51,10 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
               >
                 <Icon
                   className={cn(
-                    "w-4 h-4 transition-colors",
+                    `w-4 h-4 ${ANIMATION_TRANSITION.COLORS}`,
                     isActive ? "text-sage" : "text-text-muted"
                   )}
+                  aria-hidden="true"
                 />
                 <span>{tab.label}</span>
 

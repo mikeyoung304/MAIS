@@ -1,4 +1,4 @@
-import { Edit, Trash2, Loader2, Layers, GripVertical } from "lucide-react";
+import { Edit, Trash2, Loader2, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileActionDropdown } from "@/components/shared/MobileActionDropdown";
 import { StatusBadge } from "@/components/shared/StatusBadge";

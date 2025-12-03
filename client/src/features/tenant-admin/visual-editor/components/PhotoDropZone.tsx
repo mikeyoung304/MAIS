@@ -12,7 +12,7 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Image, X, Upload, GripVertical } from "lucide-react";
+import { X, Upload, GripVertical } from "lucide-react";
 import { packagePhotoApi } from "@/lib/package-photo-api";
 import { logger } from "@/lib/logger";
 import type { PackagePhoto } from "../hooks/useVisualEditor";

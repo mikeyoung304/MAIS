@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import type {
   SegmentDto,
   CreateSegmentDto,
@@ -18,6 +19,7 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
   const [editingSegmentId, setEditingSegmentId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { confirm, dialogState, handleOpenChange } = useConfirmDialog();
 
   const [segmentForm, setSegmentForm] = useState<SegmentFormData>({
     slug: "",
@@ -181,7 +183,15 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
   };
 
   const handleDeleteSegment = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this segment? This action cannot be undone.")) {
+    const confirmed = await confirm({
+      title: "Delete Segment",
+      description: "Are you sure you want to delete this segment? This action cannot be undone.",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      variant: "destructive",
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -242,5 +252,6 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
     handleDeleteSegment,
     handleCancelSegmentForm,
     handleNameChange,
+    confirmDialog: { dialogState, handleOpenChange },
   };
 }

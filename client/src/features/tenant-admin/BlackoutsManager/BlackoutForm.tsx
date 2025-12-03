@@ -2,6 +2,7 @@ import { Plus, Loader2, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ANIMATION_TRANSITION } from "@/lib/animation-constants";
 
 interface BlackoutFormProps {
   newBlackoutDate: string;
@@ -30,7 +31,7 @@ export function BlackoutForm({
     <div className="bg-surface-alt rounded-2xl border border-sage-light/20 p-6">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 bg-sage/10 rounded-xl flex items-center justify-center">
-          <CalendarPlus className="w-5 h-5 text-sage" />
+          <CalendarPlus className="w-5 h-5 text-sage" aria-hidden="true" />
         </div>
         <div>
           <h2 className="font-serif text-xl font-bold text-text-primary">Add Blackout Date</h2>
@@ -70,17 +71,17 @@ export function BlackoutForm({
         <div className="flex items-end">
           <Button
             type="submit"
-            className="bg-sage hover:bg-sage-hover text-white h-11 px-6 rounded-full shadow-soft hover:shadow-medium transition-all duration-300"
+            className={`bg-sage hover:bg-sage-hover text-white h-11 px-6 rounded-full shadow-soft hover:shadow-medium ${ANIMATION_TRANSITION.HOVER}`}
             disabled={isAdding}
           >
             {isAdding ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
                 Adding...
               </>
             ) : (
               <>
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
                 Add Date
               </>
             )}

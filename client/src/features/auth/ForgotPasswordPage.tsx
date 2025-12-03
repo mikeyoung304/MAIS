@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { InputEnhanced } from "@/components/ui/input-enhanced";
 import { Logo } from "@/components/brand/Logo";
 import { ErrorSummary, type FormError } from "@/components/ui/ErrorSummary";
-import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import { Mail, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
 import { useForm } from "@/hooks/useForm";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
@@ -162,7 +162,10 @@ export function ForgotPasswordPage() {
             {/* Server Error */}
             {error && (
               <div role="alert" className="mb-6 p-4 bg-red-900/50 border border-red-400 text-red-100 rounded">
-                <p>{error}</p>
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                  <p>{error}</p>
+                </div>
               </div>
             )}
 

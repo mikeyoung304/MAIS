@@ -1,4 +1,4 @@
-import { Edit, Trash2, Loader2 } from "lucide-react";
+import { Edit, Trash2, Loader2, CheckCircle, XCircle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -83,13 +83,16 @@ export function ServicesList({
                   <button
                     onClick={() => onToggleActive(service)}
                     className="cursor-pointer"
+                    aria-label={`Toggle service status (currently ${service.active ? 'active' : 'inactive'})`}
                   >
                     {service.active ? (
-                      <Badge className="bg-green-900 text-green-100 border-green-700 hover:bg-green-800">
+                      <Badge className="gap-1.5 bg-green-900 text-green-100 border-green-700 hover:bg-green-800">
+                        <CheckCircle className="h-3 w-3" aria-hidden="true" />
                         Active
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="bg-macon-navy-700 text-white/70 border-white/20 hover:bg-macon-navy-600">
+                      <Badge variant="secondary" className="gap-1.5 bg-macon-navy-700 text-white/70 border-white/20 hover:bg-macon-navy-600">
+                        <XCircle className="h-3 w-3" aria-hidden="true" />
                         Inactive
                       </Badge>
                     )}

@@ -18,6 +18,7 @@ import { clsx } from 'clsx';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
 import { cardStyles } from './cardStyles';
+import { ANIMATION_DURATION, ANIMATION_TRANSITION } from '@/lib/animation-constants';
 
 export interface ChoiceCardBaseProps {
   /** Card title (segment heroTitle or package title) */
@@ -77,7 +78,7 @@ export const ChoiceCardBase = memo(function ChoiceCardBase({
             src={imageUrl}
             alt={imageAlt}
             loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className={`w-full h-full object-cover transition-transform ${ANIMATION_DURATION.NORMAL} group-hover:scale-105`}
             onError={(e) => {
               // Hide broken image, fallback will show via bg-neutral-100
               e.currentTarget.style.display = 'none';
@@ -123,7 +124,7 @@ export const ChoiceCardBase = memo(function ChoiceCardBase({
         {/* CTA - styled div, not nested button (a11y fix) */}
         <div
           className={clsx(
-            'w-full min-h-[52px] text-lg flex items-center justify-center rounded-md border-2 font-medium transition-colors',
+            `w-full min-h-[52px] text-lg flex items-center justify-center rounded-md border-2 font-medium ${ANIMATION_TRANSITION.COLORS}`,
             highlighted
               ? 'bg-macon-orange text-white border-macon-orange'
               : 'border-macon-orange text-macon-orange group-hover:bg-macon-orange group-hover:text-white'

@@ -1,7 +1,6 @@
 import { Calendar, DollarSign, Package, XCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
-import type { PackageDto } from "@macon/contracts";
 
 interface DashboardMetricsProps {
   totalBookings: number;

@@ -53,9 +53,6 @@ export function TierSelector({
     [tiers]
   );
 
-  // Check completeness (used for pricing psychology note)
-  const isComplete = configuredTiers.length === 3;
-
   return (
     <div className="py-12">
       <Container>

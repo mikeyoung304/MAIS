@@ -14,7 +14,7 @@
  */
 
 import jwt from 'jsonwebtoken';
-import { loadConfig } from './core/config';
+import { loadConfig, getBookingTokenSecret } from './core/config';
 import { logger } from './core/logger';
 
 /**
@@ -68,7 +68,7 @@ export function generateBookingToken(
 
   const token = jwt.sign(
     { bookingId, tenantId, action },
-    config.JWT_SECRET,
+    getBookingTokenSecret(config), // Use dedicated secret with fallback to JWT_SECRET
     { expiresIn: `${expiresInDays}d` }
   );
 
@@ -128,7 +128,7 @@ export function validateBookingToken(
   const config = loadConfig();
 
   try {
-    const payload = jwt.verify(token, config.JWT_SECRET) as BookingTokenPayload;
+    const payload = jwt.verify(token, getBookingTokenSecret(config)) as BookingTokenPayload;
 
     // Validate payload structure
     if (!payload.bookingId || !payload.tenantId || !payload.action) {

@@ -44,6 +44,7 @@ import {
   UpdateServiceDtoSchema,
   AvailabilityRuleDtoSchema,
   CreateAvailabilityRuleDtoSchema,
+  UpdateAvailabilityRuleDtoSchema,
   TimeSlotDtoSchema,
   AvailableSlotsQuerySchema,
   AppointmentDtoSchema,

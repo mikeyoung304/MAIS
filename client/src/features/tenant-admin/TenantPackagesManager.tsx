@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { Plus, Pencil, Trash2, AlertTriangle, Layers, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { PackageDto, SegmentDto } from "@macon/contracts";
 import { PackagePhotoUploader } from "@/components/PackagePhotoUploader";
 import { SuccessMessage } from "@/components/shared/SuccessMessage";
@@ -122,6 +123,32 @@ export function TenantPackagesManager({
       <div className="space-y-6">
         <SuccessMessage message={packageManager.successMessage || segmentSuccessMessage} />
 
+        {/* Confirmation Dialogs */}
+        {packageManager.confirmDialog.dialogState && (
+          <ConfirmDialog
+            open={packageManager.confirmDialog.dialogState.isOpen}
+            onOpenChange={packageManager.confirmDialog.handleOpenChange}
+            title={packageManager.confirmDialog.dialogState.title}
+            description={packageManager.confirmDialog.dialogState.description}
+            confirmLabel={packageManager.confirmDialog.dialogState.confirmLabel}
+            cancelLabel={packageManager.confirmDialog.dialogState.cancelLabel}
+            onConfirm={packageManager.confirmDialog.dialogState.onConfirm}
+            variant={packageManager.confirmDialog.dialogState.variant}
+          />
+        )}
+        {segmentManager.confirmDialog.dialogState && (
+          <ConfirmDialog
+            open={segmentManager.confirmDialog.dialogState.isOpen}
+            onOpenChange={segmentManager.confirmDialog.handleOpenChange}
+            title={segmentManager.confirmDialog.dialogState.title}
+            description={segmentManager.confirmDialog.dialogState.description}
+            confirmLabel={segmentManager.confirmDialog.dialogState.confirmLabel}
+            cancelLabel={segmentManager.confirmDialog.dialogState.cancelLabel}
+            onConfirm={segmentManager.confirmDialog.dialogState.onConfirm}
+            variant={segmentManager.confirmDialog.dialogState.variant}
+          />
+        )}
+
         {/* Header with Create Buttons */}
         <div className="flex items-center justify-between">
           <div>
@@ -165,6 +192,32 @@ export function TenantPackagesManager({
   return (
     <div className="space-y-6">
       <SuccessMessage message={packageManager.successMessage || segmentSuccessMessage} />
+
+      {/* Confirmation Dialogs */}
+      {packageManager.confirmDialog.dialogState && (
+        <ConfirmDialog
+          open={packageManager.confirmDialog.dialogState.isOpen}
+          onOpenChange={packageManager.confirmDialog.handleOpenChange}
+          title={packageManager.confirmDialog.dialogState.title}
+          description={packageManager.confirmDialog.dialogState.description}
+          confirmLabel={packageManager.confirmDialog.dialogState.confirmLabel}
+          cancelLabel={packageManager.confirmDialog.dialogState.cancelLabel}
+          onConfirm={packageManager.confirmDialog.dialogState.onConfirm}
+          variant={packageManager.confirmDialog.dialogState.variant}
+        />
+      )}
+      {segmentManager.confirmDialog.dialogState && (
+        <ConfirmDialog
+          open={segmentManager.confirmDialog.dialogState.isOpen}
+          onOpenChange={segmentManager.confirmDialog.handleOpenChange}
+          title={segmentManager.confirmDialog.dialogState.title}
+          description={segmentManager.confirmDialog.dialogState.description}
+          confirmLabel={segmentManager.confirmDialog.dialogState.confirmLabel}
+          cancelLabel={segmentManager.confirmDialog.dialogState.cancelLabel}
+          onConfirm={segmentManager.confirmDialog.dialogState.onConfirm}
+          variant={segmentManager.confirmDialog.dialogState.variant}
+        />
+      )}
 
       {/* Header with Create Buttons */}
       <div className="flex items-center justify-between">

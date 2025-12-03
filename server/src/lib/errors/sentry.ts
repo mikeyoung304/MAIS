@@ -39,7 +39,7 @@ export function initSentry(config?: SentryConfig): void {
       dsn,
       environment: config?.environment || process.env.NODE_ENV || 'development',
       release: config?.release || process.env.APP_VERSION,
-      tracesSampleRate: config?.tracesSampleRate || 0.1,
+      tracesSampleRate: config?.tracesSampleRate || 0.5, // 50% (increased from 10%)
       profilesSampleRate: config?.profilesSampleRate || 0.1,
 
       // Performance monitoring
@@ -49,11 +49,23 @@ export function initSentry(config?: SentryConfig): void {
 
       // Error filtering
       beforeSend(event, hint) {
+        // Filter out health check requests
+        if (event.request?.url?.includes('/health')) {
+          return null;
+        }
+
+        // Filter out 404 and 429 responses (operational noise)
+        if (event.contexts?.response?.status_code === 404 ||
+            event.contexts?.response?.status_code === 429) {
+          return null;
+        }
+
         // Filter out operational errors (already logged)
         const error = hint.originalException as any;
         if (error && error.isOperational === true) {
           return null;
         }
+
         return event;
       },
 

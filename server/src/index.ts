@@ -79,6 +79,7 @@ async function main(): Promise<void> {
     registerGracefulShutdown({
       server,
       cleanup: container.cleanup, // Use DI container cleanup (handles Prisma, cache, event emitter)
+      timeoutMs: config.SHUTDOWN_TIMEOUT_MS,
       onShutdown: async () => {
         // Custom cleanup: close Supabase connections, flush logs, etc.
         logger.info('Running custom shutdown tasks');

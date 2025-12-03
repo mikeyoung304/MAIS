@@ -25,6 +25,7 @@ import { useDashboardData } from "./useDashboardData";
 import { ImpersonationBanner } from "../../admin/dashboard/components/ImpersonationBanner";
 import { useAuth } from "../../../contexts/AuthContext";
 import type { TenantDto } from "./types";
+import { ANIMATION_TRANSITION, ANIMATION_DURATION } from "../../../lib/animation-constants";
 
 interface TenantDashboardProps {
   tenantInfo?: TenantDto;
@@ -89,17 +90,17 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
               <div className="flex items-center gap-3">
                 <Link
                   to="/tenant/editor"
-                  className="group inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-sage-light/20 text-sage border border-sage/30 text-sm font-medium rounded-full transition-all duration-300 shadow-soft hover:shadow-medium"
+                  className={`group inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-sage-light/20 text-sage border border-sage/30 text-sm font-medium rounded-full ${ANIMATION_TRANSITION.HOVER} shadow-soft hover:shadow-medium`}
                 >
                   <Pencil className="w-4 h-4" />
                   Visual Editor
                 </Link>
                 <Link
                   to="/packages"
-                  className="group inline-flex items-center gap-2 px-5 py-2.5 bg-sage hover:bg-sage-hover text-white text-sm font-medium rounded-full transition-all duration-300 shadow-soft hover:shadow-medium"
+                  className={`group inline-flex items-center gap-2 px-5 py-2.5 bg-sage hover:bg-sage-hover text-white text-sm font-medium rounded-full ${ANIMATION_TRANSITION.HOVER} shadow-soft hover:shadow-medium`}
                 >
                   View Storefront
-                  <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  <ArrowUpRight className={`w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${ANIMATION_TRANSITION.TRANSFORM}`} />
                 </Link>
               </div>
             </div>

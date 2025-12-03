@@ -11,7 +11,7 @@
  */
 
 import type { BookingRepository, CatalogRepository } from '../lib/ports';
-import type { Booking } from '../lib/entities';
+import type { Booking, Package } from '../lib/entities';
 import type { EventEmitter } from '../lib/core/events';
 import { logger } from '../lib/core/logger';
 import { generateManageBookingUrl } from '../lib/booking-tokens';
@@ -82,10 +82,16 @@ export class ReminderService {
         'Processing overdue reminders'
       );
 
+      // Batch fetch all packages to avoid N+1 query
+      const packageIds = [...new Set(bookingsToRemind.map((b) => b.packageId))];
+      const packages = await this.catalogRepo.getPackagesByIds(tenantId, packageIds);
+      const packageMap = new Map(packages.map((p) => [p.id, p]));
+
       // Process each reminder
       for (const booking of bookingsToRemind) {
         try {
-          await this.sendReminderForBooking(tenantId, booking);
+          const pkg = packageMap.get(booking.packageId);
+          await this.sendReminderForBooking(tenantId, booking, pkg);
 
           // Mark reminder as sent
           await this.bookingRepo.markReminderSent(tenantId, booking.id);
@@ -131,10 +137,10 @@ export class ReminderService {
    */
   private async sendReminderForBooking(
     tenantId: string,
-    booking: Booking
+    booking: Booking,
+    pkg?: Package
   ): Promise<void> {
-    // Get package details for the email
-    const pkg = await this.catalogRepo.getPackageById(tenantId, booking.packageId);
+    // Use provided package (batch-fetched) or default
     const packageTitle = pkg?.title || 'Your Booking';
 
     // Calculate days until event

@@ -3,6 +3,9 @@
  *
  * Use for: Local development, demos, screenshots
  * Creates realistic looking data with multiple packages, add-ons, etc.
+ *
+ * IMPORTANT: API keys are only generated once on first seed. Re-running this seed
+ * will preserve existing keys to avoid breaking local development environments.
  */
 
 import { PrismaClient } from '../../src/generated/prisma';
@@ -10,42 +13,69 @@ import { apiKeyService } from '../../src/lib/api-key.service';
 import crypto from 'crypto';
 import { logger } from '../../src/lib/core/logger';
 
-export async function seedDemo(prisma: PrismaClient): Promise<void> {
-  // Generate unique keys for demo tenant (different each time for security)
-  const demoSlug = 'little-bit-farm';
-  const demoPublicKey = `pk_live_little-bit-farm_${crypto.randomBytes(8).toString('hex')}`;
-  const demoSecretKey = `sk_live_little-bit-farm_${crypto.randomBytes(16).toString('hex')}`;
+// Fixed slug for demo tenant
+const DEMO_SLUG = 'little-bit-farm';
 
-  // Create demo tenant
-  const tenant = await prisma.tenant.upsert({
-    where: { slug: demoSlug },
-    update: {
-      // Regenerate keys on each seed for security
-      apiKeyPublic: demoPublicKey,
-      apiKeySecret: apiKeyService.hashSecretKey(demoSecretKey),
-    },
-    create: {
-      slug: demoSlug,
-      name: 'Little Bit Farm',
-      email: 'demo@example.com',
-      commissionPercent: 5.0,
-      apiKeyPublic: demoPublicKey,
-      apiKeySecret: apiKeyService.hashSecretKey(demoSecretKey),
-      stripeAccountId: null,
-      stripeOnboarded: false,
-      isActive: true,
-      primaryColor: '#1a365d',
-      secondaryColor: '#fb923c',
-      accentColor: '#38b2ac',
-      backgroundColor: '#ffffff',
-      branding: { fontFamily: 'Inter, system-ui, sans-serif' },
-    },
+export async function seedDemo(prisma: PrismaClient): Promise<void> {
+  // Check if demo tenant already exists
+  const existingTenant = await prisma.tenant.findUnique({
+    where: { slug: DEMO_SLUG },
   });
 
-  logger.info(`Demo tenant created: ${tenant.name}`);
-  logger.info(`Public Key: ${demoPublicKey}`);
-  logger.warn(`Secret Key: ${demoSecretKey}`);
-  logger.warn('Save these keys - they change on each seed!');
+  let tenant;
+  let publicKey: string;
+  let secretKey: string | null = null;
+
+  if (existingTenant) {
+    // Tenant exists - preserve keys, only update non-sensitive fields
+    tenant = await prisma.tenant.update({
+      where: { slug: DEMO_SLUG },
+      data: {
+        name: 'Little Bit Farm',
+        email: 'demo@example.com',
+        commissionPercent: 5.0,
+        primaryColor: '#1a365d',
+        secondaryColor: '#fb923c',
+        accentColor: '#38b2ac',
+        backgroundColor: '#ffffff',
+        branding: { fontFamily: 'Inter, system-ui, sans-serif' },
+        isActive: true,
+      },
+    });
+
+    publicKey = tenant.apiKeyPublic;
+    logger.info(`Demo tenant updated (keys preserved): ${tenant.name}`);
+    logger.info(`Public Key: ${publicKey}`);
+    logger.info('Secret key unchanged - using existing value');
+  } else {
+    // New tenant - generate keys
+    publicKey = `pk_live_${DEMO_SLUG}_${crypto.randomBytes(8).toString('hex')}`;
+    secretKey = `sk_live_${DEMO_SLUG}_${crypto.randomBytes(16).toString('hex')}`;
+
+    tenant = await prisma.tenant.create({
+      data: {
+        slug: DEMO_SLUG,
+        name: 'Little Bit Farm',
+        email: 'demo@example.com',
+        commissionPercent: 5.0,
+        apiKeyPublic: publicKey,
+        apiKeySecret: apiKeyService.hashSecretKey(secretKey),
+        stripeAccountId: null,
+        stripeOnboarded: false,
+        isActive: true,
+        primaryColor: '#1a365d',
+        secondaryColor: '#fb923c',
+        accentColor: '#38b2ac',
+        backgroundColor: '#ffffff',
+        branding: { fontFamily: 'Inter, system-ui, sans-serif' },
+      },
+    });
+
+    logger.info(`Demo tenant created: ${tenant.name}`);
+    logger.info(`Public Key: ${publicKey}`);
+    logger.warn(`Secret Key: ${secretKey}`);
+    logger.warn('SAVE THESE KEYS - they will not be regenerated on subsequent seeds!');
+  }
 
   // Create realistic packages
   const [starter, growth, enterprise] = await Promise.all([

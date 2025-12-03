@@ -69,6 +69,14 @@ export class PrismaCatalogRepository implements CatalogRepository {
     return pkg ? this.toDomainPackage(pkg) : null;
   }
 
+  async getPackagesByIds(tenantId: string, ids: string[]): Promise<Package[]> {
+    const packages = await this.prisma.package.findMany({
+      where: { tenantId, id: { in: ids } },
+    });
+
+    return packages.map((pkg) => this.toDomainPackage(pkg));
+  }
+
   async getAddOnsByPackageId(tenantId: string, packageId: string): Promise<AddOn[]> {
     // CRITICAL: Verify package belongs to tenant before querying add-ons
     // This prevents cross-tenant reference attacks where an attacker
