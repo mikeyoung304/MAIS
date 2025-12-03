@@ -128,7 +128,6 @@ interface TenantBrandingDto {
   secondaryColor?: string;
   logo?: string;
   fontFamily?: string;
-  customCss?: string;
 }
 ```
 

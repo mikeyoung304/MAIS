@@ -156,7 +156,6 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
           resetServiceForm();
           onServicesChange();
         } else {
-          setError("Failed to update service");
           toast.error("Failed to update service", {
             description: "Please try again or contact support.",
           });
@@ -185,7 +184,6 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
           resetServiceForm();
           onServicesChange();
         } else {
-          setError("Failed to create service");
           toast.error("Failed to create service", {
             description: "Please try again or contact support.",
           });
@@ -197,7 +195,6 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
         component: "useServicesManager",
         editingServiceId,
       });
-      setError("An error occurred while saving the service");
       toast.error("An error occurred while saving the service", {
         description: "Please try again or contact support.",
       });

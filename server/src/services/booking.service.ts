@@ -77,6 +77,107 @@ export class BookingService {
     private readonly serviceRepo?: ServiceRepository
   ) {}
 
+  // ============================================================================
+  // Shared Checkout Logic (P2 #156 FIX)
+  // ============================================================================
+
+  /**
+   * Shared checkout session creation logic
+   *
+   * Handles idempotency, race conditions, and Stripe Connect/Standard checkout routing.
+   * This method prevents duplication of checkout session creation logic across
+   * wedding bookings, balance payments, and appointment bookings.
+   *
+   * P2 #156 FIX: Extracted from createCheckout, createBalancePaymentCheckout, and
+   * createAppointmentCheckout to eliminate 120+ lines of duplicated code.
+   *
+   * @private
+   * @param params - Checkout session parameters
+   * @param params.tenantId - Tenant ID for data isolation
+   * @param params.amountCents - Amount to charge in cents
+   * @param params.email - Customer email address
+   * @param params.metadata - Stripe session metadata
+   * @param params.applicationFeeAmount - Platform commission amount
+   * @param params.idempotencyKeyParts - Parts to generate idempotency key
+   *
+   * @returns Object containing the Stripe checkout URL
+   */
+  private async createCheckoutSession(params: {
+    tenantId: string;
+    amountCents: number;
+    email: string;
+    metadata: Record<string, string>;
+    applicationFeeAmount: number;
+    idempotencyKeyParts: [string, string, string, string, number];
+  }): Promise<{ checkoutUrl: string }> {
+    const { tenantId, amountCents, email, metadata, applicationFeeAmount, idempotencyKeyParts } = params;
+
+    // Fetch tenant to get Stripe account ID
+    const tenant = await this.tenantRepo.findById(tenantId);
+    if (!tenant) {
+      throw new NotFoundError(`Tenant ${tenantId} not found`);
+    }
+
+    // Generate idempotency key for checkout session
+    const idempotencyKey = this.idempotencyService.generateCheckoutKey(...idempotencyKeyParts);
+
+    // Check if this request has already been processed
+    const cachedResponse = await this.idempotencyService.getStoredResponse(idempotencyKey);
+    if (cachedResponse) {
+      const data = cachedResponse.data as { url: string };
+      return { checkoutUrl: data.url };
+    }
+
+    // Store idempotency key before making Stripe call
+    const isNew = await this.idempotencyService.checkAndStore(idempotencyKey);
+    if (!isNew) {
+      // Race condition: another request stored the key while we were checking
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const retryResponse = await this.idempotencyService.getStoredResponse(idempotencyKey);
+      if (retryResponse) {
+        const retryData = retryResponse.data as { url: string };
+        return { checkoutUrl: retryData.url };
+      }
+      // If still no response, proceed anyway (edge case)
+    }
+
+    // Create Stripe checkout session
+    let session;
+
+    if (tenant.stripeAccountId && tenant.stripeOnboarded) {
+      // Stripe Connect checkout - payment goes to tenant's account
+      session = await this.paymentProvider.createConnectCheckoutSession({
+        amountCents,
+        email,
+        metadata,
+        stripeAccountId: tenant.stripeAccountId,
+        applicationFeeAmount,
+        idempotencyKey,
+      });
+    } else {
+      // Standard Stripe checkout - payment goes to platform account
+      session = await this.paymentProvider.createCheckoutSession({
+        amountCents,
+        email,
+        metadata,
+        applicationFeeAmount,
+        idempotencyKey,
+      });
+    }
+
+    // Cache the response for future duplicate requests
+    await this.idempotencyService.updateResponse(idempotencyKey, {
+      data: session,
+      timestamp: new Date().toISOString(),
+    });
+
+    return { checkoutUrl: session.url };
+  }
+
+  // ============================================================================
+  // Wedding Package Booking
+  // ============================================================================
+
   /**
    * Creates a Stripe checkout session for a wedding package booking
    *
@@ -129,38 +230,6 @@ export class BookingService {
       input.addOnIds || []
     );
 
-    // Generate idempotency key for checkout session
-    // This prevents duplicate checkout sessions if the request is retried
-    const idempotencyKey = this.idempotencyService.generateCheckoutKey(
-      tenantId,
-      input.email,
-      pkg.id,
-      input.eventDate,
-      Date.now()
-    );
-
-    // Check if this request has already been processed
-    const cachedResponse = await this.idempotencyService.getStoredResponse(idempotencyKey);
-    if (cachedResponse) {
-      // Return cached checkout session URL
-      const data = cachedResponse.data as { url: string };
-      return { checkoutUrl: data.url };
-    }
-
-    // Store idempotency key before making Stripe call
-    const isNew = await this.idempotencyService.checkAndStore(idempotencyKey);
-    if (!isNew) {
-      // Race condition: another request stored the key while we were checking
-      // Wait briefly and try to get the cached response
-      await new Promise(resolve => setTimeout(resolve, 100));
-      const retryResponse = await this.idempotencyService.getStoredResponse(idempotencyKey);
-      if (retryResponse) {
-        const retryData = retryResponse.data as { url: string };
-        return { checkoutUrl: retryData.url };
-      }
-      // If still no response, proceed anyway (edge case)
-    }
-
     // Check if deposit is required
     const depositPercent = tenant.depositPercent ? Number(tenant.depositPercent) : null;
     let amountToCharge = calculation.subtotal;
@@ -196,41 +265,15 @@ export class BookingService {
       depositPercent: depositPercent !== null ? String(depositPercent) : '',
     };
 
-    // Create Stripe checkout session with idempotency key
-    // Use Stripe Connect if tenant has connected account, otherwise use standard checkout
-    let session;
-
-    if (tenant.stripeAccountId && tenant.stripeOnboarded) {
-      // Stripe Connect checkout - payment goes to tenant's account
-      // P1-148 FIX: Charge proportional commission on deposit payments
-      session = await this.paymentProvider.createConnectCheckoutSession({
-        amountCents: amountToCharge,
-        email: input.email,
-        metadata,
-        stripeAccountId: tenant.stripeAccountId,
-        applicationFeeAmount: isDeposit ? depositCommissionAmount : calculation.commissionAmount,
-        idempotencyKey,
-      });
-    } else {
-      // Standard Stripe checkout - payment goes to platform account
-      // This is backwards compatible for tenants without Stripe Connect
-      // P1-148 FIX: Charge proportional commission on deposit payments
-      session = await this.paymentProvider.createCheckoutSession({
-        amountCents: amountToCharge,
-        email: input.email,
-        metadata,
-        applicationFeeAmount: isDeposit ? depositCommissionAmount : calculation.commissionAmount,
-        idempotencyKey,
-      });
-    }
-
-    // Cache the response for future duplicate requests
-    await this.idempotencyService.updateResponse(idempotencyKey, {
-      data: session,
-      timestamp: new Date().toISOString(),
+    // P2 #156 FIX: Use shared checkout session creation logic
+    return this.createCheckoutSession({
+      tenantId,
+      amountCents: amountToCharge,
+      email: input.email,
+      metadata,
+      applicationFeeAmount: isDeposit ? depositCommissionAmount : calculation.commissionAmount,
+      idempotencyKeyParts: [tenantId, input.email, pkg.id, input.eventDate, Date.now()],
     });
-
-    return { checkoutUrl: session.url };
   }
 
   /**
@@ -265,31 +308,19 @@ export class BookingService {
     }
 
     // Check if booking has deposit paid
-    const extendedBooking = booking as Booking & {
-      depositPaidAmount?: number;
-      balancePaidAmount?: number;
-      balancePaidAt?: Date | string;
-    };
-
-    if (!extendedBooking.depositPaidAmount) {
+    if (!booking.depositPaidAmount) {
       throw new Error('Booking does not have a deposit paid');
     }
 
-    if (extendedBooking.balancePaidAmount || extendedBooking.balancePaidAt) {
+    if (booking.balancePaidAmount || booking.balancePaidAt) {
       throw new Error('Balance has already been paid for this booking');
     }
 
     // Calculate balance amount
-    const balanceAmountCents = booking.totalCents - extendedBooking.depositPaidAmount;
+    const balanceAmountCents = booking.totalCents - booking.depositPaidAmount;
 
     if (balanceAmountCents <= 0) {
       throw new Error('No balance due for this booking');
-    }
-
-    // Fetch tenant to get Stripe account ID
-    const tenant = await this.tenantRepo.findById(tenantId);
-    if (!tenant) {
-      throw new NotFoundError(`Tenant ${tenantId} not found`);
     }
 
     // P1-148 FIX: Calculate balance commission proportionally from original booking commission
@@ -297,37 +328,9 @@ export class BookingService {
     // Balance commission = total commission - deposit commission
     // deposit commission = total commission * (deposit amount / total amount)
     const totalCommission = booking.commissionAmount || 0;
-    const depositPercent = extendedBooking.depositPaidAmount / booking.totalCents;
+    const depositPercent = booking.depositPaidAmount / booking.totalCents;
     const depositCommission = Math.round(totalCommission * depositPercent);
     const balanceCommission = totalCommission - depositCommission;
-
-    // Generate idempotency key for checkout session
-    const idempotencyKey = this.idempotencyService.generateCheckoutKey(
-      tenantId,
-      booking.email,
-      bookingId,
-      'balance',
-      Date.now()
-    );
-
-    // Check if this request has already been processed
-    const cachedResponse = await this.idempotencyService.getStoredResponse(idempotencyKey);
-    if (cachedResponse) {
-      const data = cachedResponse.data as { url: string };
-      return { checkoutUrl: data.url, balanceAmountCents };
-    }
-
-    // Store idempotency key before making Stripe call
-    const isNew = await this.idempotencyService.checkAndStore(idempotencyKey);
-    if (!isNew) {
-      // Race condition: another request stored the key while we were checking
-      await new Promise(resolve => setTimeout(resolve, 100));
-      const retryResponse = await this.idempotencyService.getStoredResponse(idempotencyKey);
-      if (retryResponse) {
-        const retryData = retryResponse.data as { url: string };
-        return { checkoutUrl: retryData.url, balanceAmountCents };
-      }
-    }
 
     // Prepare session metadata
     const metadata = {
@@ -342,39 +345,17 @@ export class BookingService {
       commissionPercent: String(booking.commissionPercent), // Use stored rate from original booking
     };
 
-    // Create Stripe checkout session
-    let session;
-
-    if (tenant.stripeAccountId && tenant.stripeOnboarded) {
-      // Stripe Connect checkout - payment goes to tenant's account
-      // P1-148 FIX: Use proportional balance commission instead of full commission
-      session = await this.paymentProvider.createConnectCheckoutSession({
-        amountCents: balanceAmountCents,
-        email: booking.email,
-        metadata,
-        stripeAccountId: tenant.stripeAccountId,
-        applicationFeeAmount: balanceCommission,
-        idempotencyKey,
-      });
-    } else {
-      // Standard Stripe checkout - payment goes to platform account
-      // P1-148 FIX: Use proportional balance commission instead of full commission
-      session = await this.paymentProvider.createCheckoutSession({
-        amountCents: balanceAmountCents,
-        email: booking.email,
-        metadata,
-        applicationFeeAmount: balanceCommission,
-        idempotencyKey,
-      });
-    }
-
-    // Cache the response for future duplicate requests
-    await this.idempotencyService.updateResponse(idempotencyKey, {
-      data: session,
-      timestamp: new Date().toISOString(),
+    // P2 #156 FIX: Use shared checkout session creation logic
+    const result = await this.createCheckoutSession({
+      tenantId,
+      amountCents: balanceAmountCents,
+      email: booking.email,
+      metadata,
+      applicationFeeAmount: balanceCommission,
+      idempotencyKeyParts: [tenantId, booking.email, bookingId, 'balance', Date.now()],
     });
 
-    return { checkoutUrl: session.url, balanceAmountCents };
+    return { ...result, balanceAmountCents };
   }
 
   /**
@@ -727,41 +708,7 @@ export class BookingService {
       throw new Error(`Time slot starting at ${input.startTime.toISOString()} is not available`);
     }
 
-    // 4. Fetch tenant to get Stripe account ID
-    const tenant = await this.tenantRepo.findById(tenantId);
-    if (!tenant) {
-      throw new NotFoundError(`Tenant ${tenantId} not found`);
-    }
-
-    // 5. Generate idempotency key for checkout session
-    const idempotencyKey = this.idempotencyService.generateCheckoutKey(
-      tenantId,
-      input.clientEmail,
-      input.serviceId,
-      input.startTime.toISOString(),
-      Date.now()
-    );
-
-    // 6. Check if this request has already been processed
-    const cachedResponse = await this.idempotencyService.getStoredResponse(idempotencyKey);
-    if (cachedResponse) {
-      const data = cachedResponse.data as { url: string };
-      return { checkoutUrl: data.url };
-    }
-
-    // 7. Store idempotency key before making Stripe call
-    const isNew = await this.idempotencyService.checkAndStore(idempotencyKey);
-    if (!isNew) {
-      // Race condition: another request stored the key while we were checking
-      await new Promise(resolve => setTimeout(resolve, 100));
-      const retryResponse = await this.idempotencyService.getStoredResponse(idempotencyKey);
-      if (retryResponse) {
-        const retryData = retryResponse.data as { url: string };
-        return { checkoutUrl: retryData.url };
-      }
-    }
-
-    // 8. Prepare session metadata for TIMESLOT booking
+    // 4. Prepare session metadata for TIMESLOT booking
     const metadata = {
       tenantId, // CRITICAL: Include tenantId in metadata
       bookingType: 'TIMESLOT',
@@ -775,37 +722,15 @@ export class BookingService {
       notes: input.notes || '',
     };
 
-    // 9. Create Stripe checkout session
-    let session;
-
-    if (tenant.stripeAccountId && tenant.stripeOnboarded) {
-      // Stripe Connect checkout - payment goes to tenant's account
-      session = await this.paymentProvider.createConnectCheckoutSession({
-        amountCents: service.priceCents,
-        email: input.clientEmail,
-        metadata,
-        stripeAccountId: tenant.stripeAccountId,
-        applicationFeeAmount: 0, // No commission for appointments (can be configured later)
-        idempotencyKey,
-      });
-    } else {
-      // Standard Stripe checkout - payment goes to platform account
-      session = await this.paymentProvider.createCheckoutSession({
-        amountCents: service.priceCents,
-        email: input.clientEmail,
-        metadata,
-        applicationFeeAmount: 0, // No commission for appointments
-        idempotencyKey,
-      });
-    }
-
-    // 10. Cache the response for future duplicate requests
-    await this.idempotencyService.updateResponse(idempotencyKey, {
-      data: session,
-      timestamp: new Date().toISOString(),
+    // P2 #156 FIX: Use shared checkout session creation logic
+    return this.createCheckoutSession({
+      tenantId,
+      amountCents: service.priceCents,
+      email: input.clientEmail,
+      metadata,
+      applicationFeeAmount: 0, // No commission for appointments (can be configured later)
+      idempotencyKeyParts: [tenantId, input.clientEmail, input.serviceId, input.startTime.toISOString(), Date.now()],
     });
-
-    return { checkoutUrl: session.url };
   }
 
   /**
@@ -869,31 +794,35 @@ export class BookingService {
     // 2. Create booking record with TIMESLOT type
     // Note: This will use the BookingRepository which should support TIMESLOT bookings
     // The booking will be created with pessimistic locking to prevent double-booking
-    const booking = {
+    const booking: Booking = {
       id: `booking_${Date.now()}`,
       tenantId,
       serviceId: input.serviceId,
       customerId: `customer_${Date.now()}`, // TODO: Integrate with Customer management
       packageId: '', // Not applicable for TIMESLOT bookings
       venueId: null,
-      date: new Date(input.startTime.getFullYear(), input.startTime.getMonth(), input.startTime.getDate()),
-      startTime: input.startTime,
-      endTime: input.endTime,
-      bookingType: 'TIMESLOT',
+      coupleName: input.clientName,
+      email: input.clientEmail,
+      phone: input.clientPhone,
+      eventDate: new Date(input.startTime.getFullYear(), input.startTime.getMonth(), input.startTime.getDate()).toISOString().split('T')[0],
+      addOnIds: [], // No add-ons for appointments
+      startTime: input.startTime.toISOString(),
+      endTime: input.endTime.toISOString(),
+      bookingType: 'TIMESLOT' as const,
       clientTimezone: input.clientTimezone || null,
       status: 'CONFIRMED',
-      totalPrice: input.totalCents,
+      totalCents: input.totalCents,
       notes: input.notes || null,
       commissionAmount: 0, // No commission for appointments (can be configured later)
       commissionPercent: 0,
       stripePaymentIntentId: input.sessionId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     // 3. Persist booking
-    // Note: The BookingRepository.create method should handle the Prisma schema mapping
-    const created = await this.bookingRepo.create(tenantId, booking as any);
+    // Note: The BookingRepository.create method handles the Prisma schema mapping
+    const created = await this.bookingRepo.create(tenantId, booking);
 
     // 4. Emit AppointmentBooked event for notifications
     await this._eventEmitter.emit('AppointmentBooked', {
@@ -1145,20 +1074,14 @@ export class BookingService {
     }
 
     // Only refund cancelled bookings with pending refund status
-    // Note: We check using the extended booking type (with refundStatus)
-    const extendedBooking = booking as Booking & {
-      refundStatus?: string;
-      depositPaidAmount?: number;
-      balancePaidAmount?: number;
-    };
-    if (booking.status !== 'CANCELED' || extendedBooking.refundStatus !== 'PENDING') {
+    if (booking.status !== 'CANCELED' || booking.refundStatus !== 'PENDING') {
       throw new Error(`Booking ${bookingId} does not need a refund`);
     }
 
     // P1-150 FIX: Calculate total paid and validate refund amount
     // Total paid = deposit + balance (if applicable), falling back to totalCents for legacy bookings
-    const totalPaid = (extendedBooking.depositPaidAmount ?? 0) +
-                     (extendedBooking.balancePaidAmount ?? 0) ||
+    const totalPaid = (booking.depositPaidAmount ?? 0) +
+                     (booking.balancePaidAmount ?? 0) ||
                      booking.totalCents;
 
     // Track cumulative refunds to prevent over-refunds

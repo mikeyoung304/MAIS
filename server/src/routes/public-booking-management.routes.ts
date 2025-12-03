@@ -15,12 +15,7 @@ import {
   type BookingTokenPayload,
 } from '../lib/booking-tokens';
 import { logger } from '../lib/core/logger';
-import {
-  BookingConflictError,
-  BookingAlreadyCancelledError,
-  BookingCannotBeRescheduledError,
-  NotFoundError,
-} from '../lib/errors';
+import { handlePublicRouteError } from '../lib/public-route-error-handler';
 
 /**
  * Public Booking Management Controller
@@ -198,40 +193,7 @@ export function createPublicBookingManagementRouter(
 
       return res.status(200).json(result);
     } catch (error: any) {
-      logger.error({ error: error.message }, 'Failed to get booking details');
-
-      if (error.message.includes('Token validation failed')) {
-        if (error.message.includes('expired')) {
-          return res.status(401).json({
-            status: 'error',
-            statusCode: 401,
-            error: 'TOKEN_EXPIRED',
-            message: 'Your link has expired. Please request a new one.',
-          });
-        }
-        return res.status(401).json({
-          status: 'error',
-          statusCode: 401,
-          error: 'INVALID_TOKEN',
-          message: 'Invalid access link. Please request a new one.',
-        });
-      }
-
-      if (error instanceof NotFoundError) {
-        return res.status(404).json({
-          status: 'error',
-          statusCode: 404,
-          error: 'NOT_FOUND',
-          message: error.message,
-        });
-      }
-
-      return res.status(500).json({
-        status: 'error',
-        statusCode: 500,
-        error: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to retrieve booking details',
-      });
+      return handlePublicRouteError(error, res, 'get booking details');
     }
   });
 
@@ -276,67 +238,7 @@ export function createPublicBookingManagementRouter(
 
       return res.status(200).json(result);
     } catch (error: any) {
-      logger.error({ error: error.message }, 'Failed to reschedule booking');
-
-      if (error.message.includes('Token validation failed')) {
-        if (error.message.includes('expired')) {
-          return res.status(401).json({
-            status: 'error',
-            statusCode: 401,
-            error: 'TOKEN_EXPIRED',
-            message: 'Your link has expired. Please request a new one.',
-          });
-        }
-        return res.status(401).json({
-          status: 'error',
-          statusCode: 401,
-          error: 'INVALID_TOKEN',
-          message: 'Invalid access link. Please request a new one.',
-        });
-      }
-
-      if (error instanceof BookingConflictError) {
-        return res.status(409).json({
-          status: 'error',
-          statusCode: 409,
-          error: 'BOOKING_CONFLICT',
-          message: error.message,
-        });
-      }
-
-      if (error instanceof BookingAlreadyCancelledError) {
-        return res.status(422).json({
-          status: 'error',
-          statusCode: 422,
-          error: 'BOOKING_ALREADY_CANCELLED',
-          message: error.message,
-        });
-      }
-
-      if (error instanceof BookingCannotBeRescheduledError) {
-        return res.status(422).json({
-          status: 'error',
-          statusCode: 422,
-          error: 'BOOKING_CANNOT_BE_RESCHEDULED',
-          message: error.message,
-        });
-      }
-
-      if (error instanceof NotFoundError) {
-        return res.status(404).json({
-          status: 'error',
-          statusCode: 404,
-          error: 'NOT_FOUND',
-          message: error.message,
-        });
-      }
-
-      return res.status(500).json({
-        status: 'error',
-        statusCode: 500,
-        error: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to reschedule booking',
-      });
+      return handlePublicRouteError(error, res, 'reschedule booking');
     }
   });
 
@@ -372,49 +274,7 @@ export function createPublicBookingManagementRouter(
 
       return res.status(200).json(result);
     } catch (error: any) {
-      logger.error({ error: error.message }, 'Failed to cancel booking');
-
-      if (error.message.includes('Token validation failed')) {
-        if (error.message.includes('expired')) {
-          return res.status(401).json({
-            status: 'error',
-            statusCode: 401,
-            error: 'TOKEN_EXPIRED',
-            message: 'Your link has expired. Please request a new one.',
-          });
-        }
-        return res.status(401).json({
-          status: 'error',
-          statusCode: 401,
-          error: 'INVALID_TOKEN',
-          message: 'Invalid access link. Please request a new one.',
-        });
-      }
-
-      if (error instanceof BookingAlreadyCancelledError) {
-        return res.status(422).json({
-          status: 'error',
-          statusCode: 422,
-          error: 'BOOKING_ALREADY_CANCELLED',
-          message: error.message,
-        });
-      }
-
-      if (error instanceof NotFoundError) {
-        return res.status(404).json({
-          status: 'error',
-          statusCode: 404,
-          error: 'NOT_FOUND',
-          message: error.message,
-        });
-      }
-
-      return res.status(500).json({
-        status: 'error',
-        statusCode: 500,
-        error: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to cancel booking',
-      });
+      return handlePublicRouteError(error, res, 'cancel booking');
     }
   });
 

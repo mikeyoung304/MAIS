@@ -111,7 +111,9 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
           resetAddOnForm();
           onPackagesChange();
         } else {
-          setError("Failed to update add-on");
+          toast.error("Failed to update add-on", {
+            description: "Please try again or contact support.",
+          });
         }
       } else {
         const createData: CreateAddOnDto = {
@@ -133,14 +135,18 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
           resetAddOnForm();
           onPackagesChange();
         } else {
-          setError("Failed to create add-on");
+          toast.error("Failed to create add-on", {
+            description: "Please try again or contact support.",
+          });
         }
       }
     } catch (err) {
       if (import.meta.env.DEV) {
         console.error("Failed to save add-on:", err);
       }
-      setError("An error occurred while saving the add-on");
+      toast.error("An error occurred while saving the add-on", {
+        description: "Please try again or contact support.",
+      });
     } finally {
       setIsSaving(false);
     }

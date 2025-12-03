@@ -52,7 +52,13 @@ export function checkUploadConcurrency(tenantId: string): void {
  */
 export function releaseUploadConcurrency(tenantId: string): void {
   const current = uploadSemaphores.get(tenantId) || 1;
-  uploadSemaphores.set(tenantId, Math.max(0, current - 1));
+  const newCount = Math.max(0, current - 1);
+
+  if (newCount === 0) {
+    uploadSemaphores.delete(tenantId); // Clean up to prevent memory leak
+  } else {
+    uploadSemaphores.set(tenantId, newCount);
+  }
 }
 
 export class UploadAdapter implements StorageProvider {

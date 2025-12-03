@@ -15,6 +15,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { logger } from '@/lib/logger';
+import { useSuccessMessage } from '@/hooks/useSuccessMessage';
 import type { TenantBrandingDto } from '@macon/contracts';
 
 export interface BrandingForm {
@@ -59,7 +60,7 @@ export function useBrandingManager({
   const [form, setForm] = useState<BrandingForm>(DEFAULT_BRANDING);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const { message: successMessage, showSuccess } = useSuccessMessage();
 
   // Sync form state with branding prop changes
   useEffect(() => {
@@ -95,7 +96,6 @@ export function useBrandingManager({
     async (e: React.FormEvent) => {
       e.preventDefault();
       setError(null);
-      setSuccessMessage(null);
 
       // Validate all hex colors
       if (!validateHexColor(form.primaryColor, 'Primary color')) return;
@@ -117,10 +117,8 @@ export function useBrandingManager({
         });
 
         if (result.status === 200) {
-          setSuccessMessage('Branding updated successfully');
+          showSuccess('Branding updated successfully');
           onBrandingChange();
-          // Auto-hide success message after 3 seconds
-          setTimeout(() => setSuccessMessage(null), 3000);
         } else {
           setError('Failed to update branding');
         }
@@ -131,7 +129,7 @@ export function useBrandingManager({
         setIsSaving(false);
       }
     },
-    [form, onBrandingChange]
+    [form, onBrandingChange, showSuccess]
   );
 
   return {

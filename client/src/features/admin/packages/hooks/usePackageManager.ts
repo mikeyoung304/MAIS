@@ -128,7 +128,6 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
           resetPackageForm();
           onPackagesChange();
         } else {
-          setError("Failed to update package");
           toast.error("Failed to update package", {
             description: "Please try again or contact support.",
           });
@@ -153,7 +152,6 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
           resetPackageForm();
           onPackagesChange();
         } else {
-          setError("Failed to create package");
           toast.error("Failed to create package", {
             description: "Please try again or contact support.",
           });
@@ -163,7 +161,6 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
       if (import.meta.env.DEV) {
         console.error("Failed to save package:", err);
       }
-      setError("An error occurred while saving the package");
       toast.error("An error occurred while saving the package", {
         description: "Please try again or contact support.",
       });

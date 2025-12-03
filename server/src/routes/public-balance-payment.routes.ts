@@ -13,7 +13,7 @@ import {
   validateBookingToken,
 } from '../lib/booking-tokens';
 import { logger } from '../lib/core/logger';
-import { NotFoundError } from '../lib/errors';
+import { handlePublicRouteError } from '../lib/public-route-error-handler';
 
 /**
  * Public Balance Payment Controller
@@ -85,67 +85,7 @@ export function createPublicBalancePaymentRouter(
 
       return res.status(200).json(result);
     } catch (error: any) {
-      logger.error({ error: error.message }, 'Failed to create balance payment checkout');
-
-      if (error.message.includes('Token validation failed')) {
-        if (error.message.includes('expired')) {
-          return res.status(401).json({
-            status: 'error',
-            statusCode: 401,
-            error: 'TOKEN_EXPIRED',
-            message: 'Your link has expired. Please request a new one.',
-          });
-        }
-        return res.status(401).json({
-          status: 'error',
-          statusCode: 401,
-          error: 'INVALID_TOKEN',
-          message: 'Invalid access link. Please request a new one.',
-        });
-      }
-
-      if (error instanceof NotFoundError) {
-        return res.status(404).json({
-          status: 'error',
-          statusCode: 404,
-          error: 'NOT_FOUND',
-          message: error.message,
-        });
-      }
-
-      if (error.message.includes('does not have a deposit paid')) {
-        return res.status(422).json({
-          status: 'error',
-          statusCode: 422,
-          error: 'NO_DEPOSIT_PAID',
-          message: 'This booking does not have a deposit paid',
-        });
-      }
-
-      if (error.message.includes('Balance has already been paid')) {
-        return res.status(422).json({
-          status: 'error',
-          statusCode: 422,
-          error: 'BALANCE_ALREADY_PAID',
-          message: 'Balance has already been paid for this booking',
-        });
-      }
-
-      if (error.message.includes('No balance due')) {
-        return res.status(422).json({
-          status: 'error',
-          statusCode: 422,
-          error: 'NO_BALANCE_DUE',
-          message: 'No balance is due for this booking',
-        });
-      }
-
-      return res.status(500).json({
-        status: 'error',
-        statusCode: 500,
-        error: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to create balance payment checkout',
-      });
+      return handlePublicRouteError(error, res, 'create balance payment checkout');
     }
   });
 

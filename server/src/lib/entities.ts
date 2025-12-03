@@ -44,17 +44,34 @@ export interface AddOn {
 
 export interface Booking {
   id: string;
+  tenantId?: string; // Tenant isolation (optional for backward compatibility)
   packageId: string;
+  customerId?: string; // Customer reference (for timeslot bookings)
+  venueId?: string | null; // Venue reference
   coupleName: string;
   email: string;
   phone?: string;
   eventDate: string; // YYYY-MM-DD format
   addOnIds: string[];
   totalCents: number;
+  // Scheduling fields - supports both date-only (legacy) and time-slot bookings
+  startTime?: string; // ISO 8601 format - for timeslot bookings
+  endTime?: string; // ISO 8601 format - for timeslot bookings
+  bookingType?: 'DATE' | 'TIMESLOT'; // Booking type
+  serviceId?: string; // Service reference (for timeslot bookings)
+  clientTimezone?: string | null; // Client timezone for display
+  notes?: string | null; // Booking notes
   commissionAmount?: number; // Platform commission in cents
   commissionPercent?: number; // Commission percentage (e.g., 12.5)
   status: 'PENDING' | 'DEPOSIT_PAID' | 'PAID' | 'CONFIRMED' | 'CANCELED' | 'REFUNDED' | 'FULFILLED';
   createdAt: string; // ISO 8601 format
+  updatedAt?: string; // ISO 8601 format
+  confirmedAt?: string | null; // When payment completed
+  cancelledAt?: string | null; // When cancelled
+  // Stripe Payment
+  stripePaymentIntentId?: string | null; // Stripe PaymentIntent ID
+  // Google Calendar sync
+  googleEventId?: string | null; // Google Calendar event ID
   // Cancellation fields
   cancelledBy?: 'CUSTOMER' | 'TENANT' | 'ADMIN' | 'SYSTEM';
   cancellationReason?: string;

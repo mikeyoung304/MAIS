@@ -1,7 +1,7 @@
 /**
  * Tenant Branding Hook
  *
- * Shared hook for applying tenant branding (colors, fonts, custom CSS).
+ * Shared hook for applying tenant branding (colors, fonts).
  * Used by both TenantStorefrontLayout and WidgetApp to maintain consistent
  * branding application across all tenant-facing surfaces.
  *
@@ -22,7 +22,6 @@ export interface TenantBranding {
   backgroundColor?: string;
   fontFamily?: string;
   logoUrl?: string;
-  customCss?: string; // For WidgetApp custom CSS injection
 }
 
 /**
@@ -41,9 +40,6 @@ export interface TenantBranding {
  * - `--secondary-color` ← secondaryColor
  * - `--font-family` ← fontFamily
  *
- * **Custom CSS:**
- * - If `customCss` is provided, injects a `<style>` element into document head
- *
  * @param branding - Tenant branding configuration (null/undefined = no branding)
  *
  * @example
@@ -56,8 +52,21 @@ export interface TenantBranding {
  * ```
  */
 export function useTenantBranding(branding?: TenantBranding | TenantBrandingDto | null): void {
+  // Destructure specific branding properties to avoid unnecessary re-renders
+  // when the branding object reference changes but values remain the same
+  const {
+    primaryColor,
+    secondaryColor,
+    accentColor,
+    backgroundColor,
+    fontFamily,
+  } = branding || {};
+
   useEffect(() => {
-    if (!branding) return;
+    // Early return if no branding values are present
+    if (!primaryColor && !secondaryColor && !accentColor && !backgroundColor && !fontFamily) {
+      return;
+    }
 
     const root = document.documentElement;
     const appliedVariables: string[] = [];
@@ -67,58 +76,46 @@ export function useTenantBranding(branding?: TenantBranding | TenantBrandingDto 
     // ========================================================================
 
     // Primary color: Navy in storefront, primary in widget
-    if (branding.primaryColor) {
+    if (primaryColor) {
       const primaryVars = ['--color-primary', '--macon-navy', '--primary-color'];
       primaryVars.forEach((varName) => {
-        root.style.setProperty(varName, branding.primaryColor!);
+        root.style.setProperty(varName, primaryColor);
         appliedVariables.push(varName);
       });
     }
 
     // Secondary color: Orange in storefront, secondary in widget
-    if (branding.secondaryColor) {
+    if (secondaryColor) {
       const secondaryVars = ['--color-secondary', '--macon-orange', '--secondary-color'];
       secondaryVars.forEach((varName) => {
-        root.style.setProperty(varName, branding.secondaryColor!);
+        root.style.setProperty(varName, secondaryColor);
         appliedVariables.push(varName);
       });
     }
 
     // Accent color: Teal in storefront (success color mapping)
-    if (branding.accentColor) {
+    if (accentColor) {
       const accentVars = ['--color-accent', '--macon-teal'];
       accentVars.forEach((varName) => {
-        root.style.setProperty(varName, branding.accentColor!);
+        root.style.setProperty(varName, accentColor);
         appliedVariables.push(varName);
       });
     }
 
     // Background color: Applies to body element as well
-    if (branding.backgroundColor) {
-      root.style.setProperty('--color-background', branding.backgroundColor);
+    if (backgroundColor) {
+      root.style.setProperty('--color-background', backgroundColor);
       appliedVariables.push('--color-background');
-      document.body.style.backgroundColor = branding.backgroundColor;
+      document.body.style.backgroundColor = backgroundColor;
     }
 
     // ========================================================================
     // Font Family
     // ========================================================================
 
-    if (branding.fontFamily) {
-      root.style.setProperty('--font-family', branding.fontFamily);
+    if (fontFamily) {
+      root.style.setProperty('--font-family', fontFamily);
       appliedVariables.push('--font-family');
-    }
-
-    // ========================================================================
-    // Custom CSS Injection (for widget advanced customization)
-    // ========================================================================
-
-    let customStyleEl: HTMLStyleElement | null = null;
-    if (branding.customCss) {
-      customStyleEl = document.createElement('style');
-      customStyleEl.id = 'tenant-custom-css';
-      customStyleEl.textContent = branding.customCss;
-      document.head.appendChild(customStyleEl);
     }
 
     // ========================================================================
@@ -132,20 +129,9 @@ export function useTenantBranding(branding?: TenantBranding | TenantBrandingDto 
       });
 
       // Reset body background if it was set
-      if (branding.backgroundColor) {
+      if (backgroundColor) {
         document.body.style.backgroundColor = '';
       }
-
-      // Remove custom CSS if it was injected
-      if (customStyleEl) {
-        customStyleEl.remove();
-      } else {
-        // Fallback: remove by ID in case element was created differently
-        const existingStyle = document.getElementById('tenant-custom-css');
-        if (existingStyle) {
-          existingStyle.remove();
-        }
-      }
     };
-  }, [branding]);
+  }, [primaryColor, secondaryColor, accentColor, backgroundColor, fontFamily]);
 }

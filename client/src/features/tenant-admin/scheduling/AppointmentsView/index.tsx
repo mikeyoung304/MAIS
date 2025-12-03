@@ -116,11 +116,23 @@ export function AppointmentsView() {
 
   const customers = customersResponse ?? [];
 
+  // Build Maps for O(1) lookups instead of O(N*M*K) array searches
+  const serviceMap = useMemo(
+    () => new Map(services.map((s) => [s.id, s])),
+    [services]
+  );
+
+  const customerMap = useMemo(
+    () => new Map(customers.map((c) => [c.id, c])),
+    [customers]
+  );
+
   // Enrich appointments with service and customer data
+  // O(N+M+K) instead of O(N*M*K) - build maps once, then constant-time lookups
   const enrichedAppointments: EnrichedAppointment[] = useMemo(() => {
     return appointments.map((appointment) => {
-      const service = services.find((s) => s.id === appointment.serviceId);
-      const customer = customers.find((c) => c.id === appointment.customerId);
+      const service = serviceMap.get(appointment.serviceId);
+      const customer = customerMap.get(appointment.customerId);
 
       return {
         ...appointment,
@@ -130,7 +142,7 @@ export function AppointmentsView() {
         customerPhone: customer?.phone ?? undefined,
       };
     });
-  }, [appointments, services, customers]);
+  }, [appointments, serviceMap, customerMap]);
 
   const isLoading = appointmentsLoading || servicesLoading || customersLoading;
 

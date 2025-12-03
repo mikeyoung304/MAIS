@@ -142,7 +142,9 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
           resetSegmentForm();
           onSegmentsChange();
         } else {
-          setError("Failed to update segment");
+          toast.error("Failed to update segment", {
+            description: "Please try again or contact support.",
+          });
         }
       } else {
         // Create new segment
@@ -169,14 +171,18 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
           resetSegmentForm();
           onSegmentsChange();
         } else {
-          setError("Failed to create segment");
+          toast.error("Failed to create segment", {
+            description: "Please try again or contact support.",
+          });
         }
       }
     } catch (err) {
       if (import.meta.env.DEV) {
         console.error("Failed to save segment:", err);
       }
-      setError("An error occurred while saving the segment");
+      toast.error("An error occurred while saving the segment", {
+        description: "Please try again or contact support.",
+      });
     } finally {
       setIsSaving(false);
     }
