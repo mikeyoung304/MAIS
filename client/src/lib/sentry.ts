@@ -44,8 +44,8 @@ export function initSentry(config?: SentryConfig): void {
         }),
       ],
 
-      // Trace sampling
-      tracesSampleRate: config?.tracesSampleRate || 0.1,
+      // Trace sampling (increased from 0.1 to 0.5 for better monitoring coverage)
+      tracesSampleRate: config?.tracesSampleRate || 0.5,
 
       // Session replay sampling
       replaysSessionSampleRate: config?.replaysSessionSampleRate || 0.01,

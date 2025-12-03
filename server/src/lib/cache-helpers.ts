@@ -109,8 +109,16 @@ export async function invalidateCacheKeys(cache: CacheServicePort | undefined, k
  * Cache invalidation pattern builder
  * Generates all cache keys that should be invalidated for a tenant operation
  *
+ * PERFORMANCE: Only invalidates all-packages when no slug is provided.
+ * When slug is provided, only invalidates that specific package cache.
+ * This prevents thundering herd when updating single packages.
+ *
  * @example
  * ```typescript
+ * // Invalidate all packages (e.g., after creating new package)
+ * const keys = getCatalogInvalidationKeys(tenantId);
+ *
+ * // Invalidate only specific package (e.g., after updating package)
  * const keys = getCatalogInvalidationKeys(tenantId, 'intimate-ceremony');
  * invalidateCacheKeys(this.cache, keys);
  * ```
@@ -120,13 +128,13 @@ export async function invalidateCacheKeys(cache: CacheServicePort | undefined, k
  * @returns Array of cache keys to invalidate
  */
 export function getCatalogInvalidationKeys(tenantId: string, slug?: string): string[] {
-  const keys = [buildCacheKey('catalog', tenantId, 'all-packages')];
-
+  // If slug provided, only invalidate that specific package (granular invalidation)
   if (slug) {
-    keys.push(buildCacheKey('catalog', tenantId, 'package', slug));
+    return [buildCacheKey('catalog', tenantId, 'package', slug)];
   }
 
-  return keys;
+  // No slug - invalidate all packages (e.g., new package created)
+  return [buildCacheKey('catalog', tenantId, 'all-packages')];
 }
 
 /**

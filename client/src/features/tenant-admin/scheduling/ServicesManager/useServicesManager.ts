@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import type { ServiceDto, CreateServiceDto, UpdateServiceDto } from "@macon/contracts";
 import type { ServiceFormData } from "./types";
 
@@ -191,9 +192,11 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
         }
       }
     } catch (err) {
-      if (import.meta.env.DEV) {
-        console.error("[useServicesManager] Failed to save service:", err);
-      }
+      logger.error("Failed to save service", {
+        error: err,
+        component: "useServicesManager",
+        editingServiceId,
+      });
       setError("An error occurred while saving the service");
       toast.error("An error occurred while saving the service", {
         description: "Please try again or contact support.",
@@ -228,9 +231,11 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
         });
       }
     } catch (err) {
-      if (import.meta.env.DEV) {
-        console.error("[useServicesManager] Failed to delete service:", err);
-      }
+      logger.error("Failed to delete service", {
+        error: err,
+        component: "useServicesManager",
+        serviceId: serviceToDelete.id,
+      });
       toast.error("An error occurred while deleting the service", {
         description: "Please try again or contact support.",
       });
@@ -258,9 +263,11 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
         });
       }
     } catch (err) {
-      if (import.meta.env.DEV) {
-        console.error("[useServicesManager] Failed to toggle service status:", err);
-      }
+      logger.error("Failed to toggle service status", {
+        error: err,
+        component: "useServicesManager",
+        serviceId: service.id,
+      });
       toast.error("An error occurred while toggling service status", {
         description: "Please try again or contact support.",
       });

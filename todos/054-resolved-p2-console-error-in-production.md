@@ -1,5 +1,5 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: "054"
 tags: [code-review, scheduling, logging, standards]
@@ -51,12 +51,13 @@ For client-side, use error boundary or error reporting service.
 
 ## Acceptance Criteria
 
-- [ ] All console.error statements replaced with logger
-- [ ] Errors include relevant context (tenantId, serviceId, etc.)
-- [ ] Client-side errors reported to error tracking (if available)
+- [x] All console.error statements replaced with logger
+- [x] Errors include relevant context (tenantId, serviceId, etc.)
+- [x] Client-side errors reported to error tracking (if available)
 
 ## Work Log
 
 | Date | Action | Notes |
 |------|--------|-------|
 | 2025-11-27 | Created | Found during Code Quality review |
+| 2025-12-02 | Resolved | Replaced all console.error with logger.error; added proper context (component, error, serviceId, etc.) |

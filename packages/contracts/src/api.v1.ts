@@ -44,7 +44,7 @@ import {
   UpdateServiceDtoSchema,
   AvailabilityRuleDtoSchema,
   CreateAvailabilityRuleDtoSchema,
-  // UpdateAvailabilityRuleDtoSchema - TODO-056: Will be used when update endpoint is added
+  UpdateAvailabilityRuleDtoSchema,
   TimeSlotDtoSchema,
   AvailableSlotsQuerySchema,
   AppointmentDtoSchema,
@@ -1324,6 +1324,28 @@ export const Contracts = c.router({
       500: InternalServerErrorSchema,
     },
     summary: 'Create availability rule (requires tenant admin authentication)',
+  },
+
+  /**
+   * Update an availability rule
+   * PUT /v1/tenant-admin/availability-rules/:id
+   */
+  tenantAdminUpdateAvailabilityRule: {
+    method: 'PUT',
+    path: '/v1/tenant-admin/availability-rules/:id',
+    pathParams: z.object({
+      id: z.string(),
+    }),
+    body: UpdateAvailabilityRuleDtoSchema,
+    responses: {
+      200: AvailabilityRuleDtoSchema,
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      404: NotFoundErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Update availability rule (requires tenant admin authentication)',
   },
 
   /**

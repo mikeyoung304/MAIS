@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: "006"
 tags: [documentation, archive, phases]
 dependencies: []
+resolved_date: 2025-11-12
+resolved_by: commit f650a6b
 ---
 
 # Archive Completed Phase and Sprint Documents in docs/
@@ -90,16 +92,36 @@ git mv docs/sprints/sprint-9/ docs/archive/2025-11/sprints/
 
 ## Acceptance Criteria
 
-- [ ] 25 files moved to archive
-- [ ] docs/phases/ and docs/sprints/ contain only active planning docs
-- [ ] README.md in phases/ and sprints/ updated to note archive location
-- [ ] No broken internal links
+- [x] 53+ files moved to archive (exceeded expectations)
+- [x] docs/phases/ and docs/sprints/ directories removed (fully archived)
+- [x] Navigation updated (README.md links point to archive)
+- [x] No broken internal links
 
 ## Work Log
 
 | Date | Action | Notes |
 |------|--------|-------|
 | 2025-11-24 | Created | 25 completion reports identified |
+| 2025-11-12 | Resolved | Archive migration completed in commit f650a6b |
+| 2025-12-02 | Verified | Confirmed all files archived, original directories removed |
+
+## Resolution Summary
+
+This TODO was already resolved on November 12, 2025 as part of commit f650a6b9db ("docs: Complete Phase 3 archive migration - ISO 8601 consolidation").
+
+**What was done:**
+- All phase documents (22 files) moved to `docs/archive/2025-11/phases/`
+- All sprint documents (31 files) moved to `docs/archive/2025-11/sprints/`
+- Original `docs/phases/` and `docs/sprints/` directories completely removed
+- Navigation links updated in README.md and INDEX.md
+- Broken links fixed
+- Total: 53 files archived (exceeded original estimate of 25)
+
+**Current status:**
+- No `docs/phases/` directory exists
+- No `docs/sprints/` directory exists
+- All historical documents properly archived in `docs/archive/2025-11/`
+- Archive follows ADR-004 time-based organization (YYYY-MM format)
 
 ## Resources
 

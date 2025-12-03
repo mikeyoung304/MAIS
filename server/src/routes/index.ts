@@ -24,6 +24,8 @@ import type { SegmentService } from '../services/segment.service';
 import { resolveTenant, requireTenant, getTenantId, type TenantRequest } from '../middleware/tenant';
 import { PrismaClient } from '../generated/prisma';
 import { PrismaTenantRepository, PrismaBlackoutRepository } from '../adapters/prisma';
+import type { ServiceRepository, AvailabilityRuleRepository, BookingRepository } from '../lib/ports';
+import type { Request } from 'express';
 import { createAdminTenantsRoutes } from './admin/tenants.routes';
 import { createAdminStripeRoutes } from './admin/stripe.routes';
 import { createTenantAdminRoutes } from './tenant-admin.routes';
@@ -54,6 +56,11 @@ import {
 } from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
 import { apiKeyService } from '../lib/api-key.service';
+import type { StripeConnectService } from '../services/stripe-connect.service';
+import type { SchedulingAvailabilityService } from '../services/scheduling-availability.service';
+import type { PackageDraftService } from '../services/package-draft.service';
+import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
+import type { ReminderService } from '../services/reminder.service';
 
 interface Controllers {
   packages: PackagesController;
@@ -72,17 +79,17 @@ interface Services {
   booking: BookingService;
   tenantAuth: TenantAuthService;
   segment: SegmentService;
-  stripeConnect?: any; // StripeConnectService
-  schedulingAvailability?: any; // SchedulingAvailabilityService
-  packageDraft?: any; // PackageDraftService - Visual editor draft management
-  tenantOnboarding?: any; // TenantOnboardingService - Signup default data creation
-  reminder?: any; // ReminderService - Lazy reminder evaluation (Phase 2)
+  stripeConnect?: StripeConnectService;
+  schedulingAvailability?: SchedulingAvailabilityService;
+  packageDraft?: PackageDraftService;
+  tenantOnboarding?: TenantOnboardingService;
+  reminder?: ReminderService;
 }
 
 interface Repositories {
-  service?: any; // ServiceRepository
-  availabilityRule?: any; // AvailabilityRuleRepository
-  booking?: any; // BookingRepository
+  service?: ServiceRepository;
+  availabilityRule?: AvailabilityRuleRepository;
+  booking?: BookingRepository;
 }
 
 export function createV1Router(
@@ -108,51 +115,55 @@ export function createV1Router(
 
   const s = initServer();
 
-  // ts-rest express has type compatibility issues with Express 5
+  // Type assertion required: ts-rest v3 has type compatibility issues with Express 4.x
+  // The router implementation is correct at runtime but TypeScript can't infer the exact type
+  // See: https://github.com/ts-rest/ts-rest/issues (Express middleware signature mismatch)
+  type RouterImplementation = ReturnType<typeof s.router>;
+
   createExpressEndpoints(Contracts, s.router(Contracts, {
-    getPackages: async ({ req }: { req: any }) => {
+    getPackages: async ({ req }: { req: Request }) => {
       const tenantId = getTenantId(req as TenantRequest);
       const data = await controllers.packages.getPackages(tenantId);
       return { status: 200 as const, body: data };
     },
 
-    getPackageBySlug: async ({ req, params }: { req: any; params: { slug: string } }) => {
+    getPackageBySlug: async ({ req, params }: { req: Request; params: { slug: string } }) => {
       const tenantId = getTenantId(req as TenantRequest);
       const data = await controllers.packages.getPackageBySlug(tenantId, params.slug);
       return { status: 200 as const, body: data };
     },
 
-    getAvailability: async ({ req, query }: { req: any; query: { date: string } }) => {
+    getAvailability: async ({ req, query }: { req: Request; query: { date: string } }) => {
       const tenantId = getTenantId(req as TenantRequest);
       const data = await controllers.availability.getAvailability(tenantId, query.date);
       return { status: 200 as const, body: data };
     },
 
-    getUnavailableDates: async ({ req, query }: { req: any; query: { startDate: string; endDate: string } }) => {
+    getUnavailableDates: async ({ req, query }: { req: Request; query: { startDate: string; endDate: string } }) => {
       const tenantId = getTenantId(req as TenantRequest);
       const data = await controllers.availability.getUnavailableDates(tenantId, query.startDate, query.endDate);
       return { status: 200 as const, body: data };
     },
 
-    createCheckout: async ({ req, body }: { req: any; body: { packageId: string; eventDate: string; coupleName: string; email: string; addOnIds?: string[] } }) => {
+    createCheckout: async ({ req, body }: { req: Request; body: { packageId: string; eventDate: string; coupleName: string; email: string; addOnIds?: string[] } }) => {
       const tenantId = getTenantId(req as TenantRequest);
       const data = await controllers.bookings.createCheckout(tenantId, body);
       return { status: 200 as const, body: data };
     },
 
-    getBookingById: async ({ req, params }: { req: any; params: { id: string } }) => {
+    getBookingById: async ({ req, params }: { req: Request; params: { id: string } }) => {
       const tenantId = getTenantId(req as TenantRequest);
       const data = await controllers.bookings.getBookingById(tenantId, params.id);
       return { status: 200 as const, body: data };
     },
 
-    getTenantBranding: async ({ req }: { req: any }) => {
+    getTenantBranding: async ({ req }: { req: Request }) => {
       const tenantId = getTenantId(req as TenantRequest);
       const data = await controllers.tenant.getBranding(tenantId);
       return { status: 200 as const, body: data };
     },
 
-    stripeWebhook: async ({ req }: { req: any }) => {
+    stripeWebhook: async ({ req }: { req: Request }) => {
       // Extract raw body (Buffer) and Stripe signature header
       const rawBody = req.body ? req.body.toString('utf8') : '';
       const signature = req.headers['stripe-signature'] || '';
@@ -161,7 +172,7 @@ export function createV1Router(
       return { status: 204 as const, body: undefined };
     },
 
-    adminLogin: async ({ req, body }: { req: any; body: { email: string; password: string } }) => {
+    adminLogin: async ({ req, body }: { req: Request; body: { email: string; password: string } }) => {
       const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
       try {
         const data = await controllers.admin.login(body);
@@ -180,7 +191,7 @@ export function createV1Router(
       }
     },
 
-    tenantLogin: async ({ req, body }: { req: any; body: { email: string; password: string } }) => {
+    tenantLogin: async ({ req, body }: { req: Request; body: { email: string; password: string } }) => {
       const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
       try {
         if (!services) {
@@ -205,7 +216,7 @@ export function createV1Router(
       return { status: 200 as const, body: data };
     },
 
-    platformCreateTenant: async ({ body }: { body: any }) => {
+    platformCreateTenant: async ({ body }: { body: unknown }) => {
       // Note: Actual tenant creation is handled by the Express route
       // This is just a placeholder for ts-rest contract compliance
       // See /server/src/routes/admin/tenants.routes.ts
@@ -217,7 +228,7 @@ export function createV1Router(
       throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
     },
 
-    platformUpdateTenant: async ({ params, body }: { params: { id: string }; body: any }) => {
+    platformUpdateTenant: async ({ params, body }: { params: { id: string }; body: unknown }) => {
       // Note: Actual implementation in Express routes
       throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
     },
@@ -286,7 +297,7 @@ export function createV1Router(
       await controllers.adminPackages.deleteAddOn(params.id);
       return { status: 204 as const, body: undefined };
     },
-  } as any), app, {
+  }) as RouterImplementation, app, {
     // Apply middleware based on route path
     globalMiddleware: [
       (req, res, next) => {
@@ -300,10 +311,10 @@ export function createV1Router(
             req.path.startsWith('/v1/availability') ||
             req.path.startsWith('/v1/tenant')) {
           // Chain tenant middleware with requireTenant
-          tenantMiddleware(req as any, res, (err?: any) => {
+          tenantMiddleware(req as TenantRequest, res, (err?: unknown) => {
             if (err) return next(err);
             if (res.headersSent) return; // Middleware already sent response
-            requireTenant(req as any, res, next);
+            requireTenant(req as TenantRequest, res, next);
           });
         }
         // Admin routes require authentication

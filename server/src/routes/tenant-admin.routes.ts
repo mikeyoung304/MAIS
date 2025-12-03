@@ -51,7 +51,7 @@ const uploadPackagePhoto = multer({
  * Converts multer-specific errors (file size, field count, etc.) to proper HTTP status codes
  */
 function handleMulterError(
-  error: any,
+  error: unknown,
   req: Request,
   res: Response,
   next: NextFunction
@@ -96,7 +96,7 @@ export class TenantAdminController {
       }
 
       // Upload file
-      const result = await uploadService.uploadLogo(req.file as any, tenantId);
+      const result = await uploadService.uploadLogo(req.file as Express.Multer.File, tenantId);
 
       // Update tenant branding with logo URL
       const tenant = await this.tenantRepository.findById(tenantId);
@@ -106,7 +106,7 @@ export class TenantAdminController {
         return;
       }
 
-      const currentBranding = (tenant.branding as any) || {};
+      const currentBranding = (tenant.branding as Record<string, unknown>) || {};
       const updatedBranding = {
         ...currentBranding,
         logo: result.url,
@@ -128,7 +128,7 @@ export class TenantAdminController {
       logger.error({ error }, 'Error uploading logo');
 
       // Handle 429 status from concurrency limiter
-      if (error instanceof Error && (error as any).status === 429) {
+      if (error instanceof Error && 'status' in error && (error as { status: number }).status === 429) {
         res.status(429).json({ error: error.message });
         return;
       }
@@ -172,7 +172,7 @@ export class TenantAdminController {
       }
 
       // Merge with existing branding (preserve logo URL)
-      const currentBranding = (tenant.branding as any) || {};
+      const currentBranding = (tenant.branding as Record<string, unknown>) || {};
       const updatedBranding = {
         ...currentBranding,
         ...validation.data,
@@ -223,7 +223,7 @@ export class TenantAdminController {
         return;
       }
 
-      const branding = (tenant.branding as any) || {};
+      const branding = (tenant.branding as Record<string, unknown>) || {};
 
       res.status(200).json({
         primaryColor: branding.primaryColor,
@@ -641,7 +641,7 @@ export function createTenantAdminRoutes(
         }
 
         // Check photo count (max 5)
-        const currentPhotos = (pkg.photos as any[]) || [];
+        const currentPhotos = (pkg.photos as Array<{ url: string; filename: string; size: number; order: number }>) || [];
         if (currentPhotos.length >= 5) {
           releaseUploadConcurrency(tenantId);
           res.status(400).json({ error: 'Maximum 5 photos per package' });
@@ -649,7 +649,7 @@ export function createTenantAdminRoutes(
         }
 
         // Upload photo (pass tenantId for Supabase storage path)
-        const uploadResult = await uploadService.uploadPackagePhoto(req.file as any, packageId, tenantId);
+        const uploadResult = await uploadService.uploadPackagePhoto(req.file as Express.Multer.File, packageId, tenantId);
 
         // Add photo to package photos array
         const newPhoto = {
@@ -678,7 +678,7 @@ export function createTenantAdminRoutes(
         logger.error({ error }, 'Error uploading package photo');
 
         // Handle 429 status from concurrency limiter
-        if (error instanceof Error && (error as any).status === 429) {
+        if (error instanceof Error && 'status' in error && (error as { status: number }).status === 429) {
           res.status(429).json({ error: error.message });
           return;
         }
@@ -744,8 +744,8 @@ export function createTenantAdminRoutes(
         }
 
         // Verify photo exists in package photos array
-        const currentPhotos = (pkg.photos as any[]) || [];
-        const updatedPhotos = currentPhotos.filter((p: any) => p.filename !== filename);
+        const currentPhotos = (pkg.photos as Array<{ url: string; filename: string; size: number; order: number }>) || [];
+        const updatedPhotos = currentPhotos.filter((p) => p.filename !== filename);
 
         if (updatedPhotos.length === currentPhotos.length) {
           res.status(404).json({ error: 'Photo not found in package' });
@@ -849,7 +849,17 @@ export function createTenantAdminRoutes(
       const tenantId = tenantAuth.tenantId;
 
       // Need to fetch full records with IDs
-      const prisma = (blackoutRepo as any).prisma;
+      // Type assertion needed because BlackoutRepository interface doesn't expose prisma
+      // but PrismaBlackoutRepository implementation has it
+      const prisma = (blackoutRepo as { prisma: unknown }).prisma as {
+        blackoutDate: {
+          findMany: (args: {
+            where: { tenantId: string };
+            orderBy: { date: string };
+            select: { id: boolean; date: boolean; reason: boolean };
+          }) => Promise<Array<{ id: string; date: Date; reason: string | null }>>;
+        };
+      };
       const fullBlackouts = await prisma.blackoutDate.findMany({
         where: { tenantId },
         orderBy: { date: 'asc' },
@@ -860,7 +870,7 @@ export function createTenantAdminRoutes(
         },
       });
 
-      const blackouts = fullBlackouts.map((b: any) => ({
+      const blackouts = fullBlackouts.map((b) => ({
         id: b.id,
         date: b.date.toISOString().split('T')[0],
         ...(b.reason && { reason: b.reason }),
@@ -1031,7 +1041,7 @@ export function createTenantAdminRoutes(
         }
 
         // Upload segment image
-        const uploadResult = await uploadService.uploadSegmentImage(req.file as any, tenantId);
+        const uploadResult = await uploadService.uploadSegmentImage(req.file as Express.Multer.File, tenantId);
 
         logger.info(
           { tenantId, filename: uploadResult.filename },
@@ -1045,7 +1055,7 @@ export function createTenantAdminRoutes(
         logger.error({ error }, 'Error uploading segment image');
 
         // Handle 429 status from concurrency limiter
-        if (error instanceof Error && (error as any).status === 429) {
+        if (error instanceof Error && 'status' in error && (error as { status: number }).status === 429) {
           res.status(429).json({ error: error.message });
           return;
         }

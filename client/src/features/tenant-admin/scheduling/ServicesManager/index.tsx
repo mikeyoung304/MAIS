@@ -22,6 +22,7 @@
 import { useState, useEffect } from "react";
 import type { ServiceDto } from "@macon/contracts";
 import { api } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import { toast } from "sonner";
 import { useSuccessMessage } from "@/hooks/useSuccessMessage";
 import { SuccessMessage } from "@/components/shared/SuccessMessage";
@@ -46,9 +47,10 @@ export function ServicesManager() {
         setServices(sortedServices);
       }
     } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error("[ServicesManager] Failed to fetch services:", error);
-      }
+      logger.error("Failed to fetch services", {
+        error,
+        component: "ServicesManager",
+      });
       toast.error("Failed to load services", {
         description: "Please refresh the page or contact support.",
       });

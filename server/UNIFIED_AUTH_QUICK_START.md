@@ -155,7 +155,7 @@ The original endpoints continue to work:
 
 ### New Files
 - `/server/src/routes/auth.routes.ts` - Unified auth controller
-- `/server/UNIFIED_AUTH_IMPLEMENTATION_REPORT.md` - Full documentation
+- `/server/docs/archive/implementation-reports/UNIFIED_AUTH_IMPLEMENTATION_REPORT.md` - Full documentation
 - `/server/test-unified-auth.sh` - Test script
 
 ### Modified Files
@@ -171,5 +171,5 @@ The original endpoints continue to work:
 ## Support
 
 For detailed information, see:
-- [Full Implementation Report](./UNIFIED_AUTH_IMPLEMENTATION_REPORT.md)
+- [Full Implementation Report](./docs/archive/implementation-reports/UNIFIED_AUTH_IMPLEMENTATION_REPORT.md)
 - [Auth Quick Reference](../client/AUTH_QUICK_REFERENCE.md)

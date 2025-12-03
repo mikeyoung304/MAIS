@@ -11,6 +11,7 @@ import {
   CreateServiceDtoSchema,
   UpdateServiceDtoSchema,
   CreateAvailabilityRuleDtoSchema,
+  UpdateAvailabilityRuleDtoSchema,
 } from '@macon/contracts';
 import type { ServiceRepository, AvailabilityRuleRepository, BookingRepository } from '../lib/ports';
 import type { BookingService } from '../services/booking.service';
@@ -417,6 +418,104 @@ export function createTenantAdminSchedulingRoutes(
       }
       if (error instanceof ValidationError) {
         res.status(400).json({ error: error.message });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  /**
+   * PUT /v1/tenant-admin/availability-rules/:id
+   * Update availability rule
+   * Verifies rule belongs to authenticated tenant
+   *
+   * Request body: Partial<CreateAvailabilityRuleDto>
+   * All fields optional for partial updates
+   *
+   * @param id - Availability rule CUID
+   * @returns 200 - Updated availability rule object
+   * @returns 400 - Validation error
+   * @returns 401 - Missing or invalid authentication
+   * @returns 404 - Rule not found or belongs to different tenant
+   * @returns 500 - Internal server error
+   */
+  router.put('/availability-rules/:id', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const tenantId = tenantAuth.tenantId;
+
+      const { id } = req.params;
+
+      // Validate update data
+      const data = UpdateAvailabilityRuleDtoSchema.parse(req.body);
+
+      // Verify rule exists and belongs to tenant (repository will check during update)
+      // Convert ISO date strings to Date objects if provided
+      const updateData: any = {};
+      if (data.serviceId !== undefined) updateData.serviceId = data.serviceId;
+      if (data.dayOfWeek !== undefined) updateData.dayOfWeek = data.dayOfWeek;
+      if (data.startTime !== undefined) updateData.startTime = data.startTime;
+      if (data.endTime !== undefined) updateData.endTime = data.endTime;
+      if (data.effectiveFrom !== undefined) updateData.effectiveFrom = new Date(data.effectiveFrom);
+      if (data.effectiveTo !== undefined) {
+        updateData.effectiveTo = data.effectiveTo ? new Date(data.effectiveTo) : null;
+      }
+
+      // Verify service exists if serviceId is being updated
+      if (data.serviceId) {
+        const service = await serviceRepo.getById(tenantId, data.serviceId);
+        if (!service) {
+          res.status(404).json({ error: 'Service not found' });
+          return;
+        }
+      }
+
+      // Update availability rule
+      const rule = await availabilityRuleRepo.update(tenantId, id, updateData);
+
+      logger.info(
+        { tenantId, ruleId: rule.id, dayOfWeek: rule.dayOfWeek },
+        'Availability rule updated by tenant admin'
+      );
+
+      // Map to DTO format
+      const ruleDto = {
+        id: rule.id,
+        tenantId: rule.tenantId,
+        serviceId: rule.serviceId,
+        dayOfWeek: rule.dayOfWeek,
+        startTime: rule.startTime,
+        endTime: rule.endTime,
+        effectiveFrom: rule.effectiveFrom.toISOString(),
+        effectiveTo: rule.effectiveTo ? rule.effectiveTo.toISOString() : null,
+        createdAt: rule.createdAt.toISOString(),
+        updatedAt: rule.updatedAt.toISOString(),
+      };
+
+      res.json(ruleDto);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        res.status(400).json({
+          error: 'Validation error',
+          details: error.issues,
+        });
+        return;
+      }
+      if (error instanceof ValidationError) {
+        res.status(400).json({ error: error.message });
+        return;
+      }
+      if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
+      // Handle repository error for rule not found
+      if (error instanceof Error && error.message.includes('not found')) {
+        res.status(404).json({ error: 'Availability rule not found' });
         return;
       }
       next(error);

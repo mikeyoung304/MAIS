@@ -96,8 +96,12 @@ export class PackageDraftService {
   ): Promise<{ published: number; packages: Package[] }> {
     const packages = await this.repository.publishDrafts(tenantId, packageIds);
 
-    // Invalidate catalog cache after publishing
-    await this.invalidateCatalogCache(tenantId);
+    // Targeted cache invalidation - only invalidate affected packages
+    // Invalidate each published package's cache individually (no thundering herd)
+    const invalidationKeys = packages.map(pkg =>
+      getCatalogInvalidationKeys(tenantId, pkg.slug)[0]
+    );
+    await invalidateCacheKeys(this.cache, invalidationKeys);
 
     // Audit log for publish operation
     logger.info({
@@ -155,13 +159,5 @@ export class PackageDraftService {
    */
   async countDrafts(tenantId: string): Promise<number> {
     return this.repository.countDrafts(tenantId);
-  }
-
-  /**
-   * Invalidate catalog cache after publishing
-   * @private
-   */
-  private async invalidateCatalogCache(tenantId: string): Promise<void> {
-    await invalidateCacheKeys(this.cache, getCatalogInvalidationKeys(tenantId));
   }
 }

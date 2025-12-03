@@ -1,9 +1,10 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: "032"
 tags: [code-review, devops, monitoring, sentry]
 dependencies: []
+resolved_date: 2025-12-02
 ---
 
 # Sentry Sample Rates Too Low - Missing 90% of Traces
@@ -50,13 +51,34 @@ beforeSend(event, hint) {
 
 ## Acceptance Criteria
 
-- [ ] Trace sample rate increased to 50%
-- [ ] Health check requests filtered out
-- [ ] 404/429 responses not sent to Sentry
-- [ ] Environment variable override works
+- [x] Trace sample rate increased to 50% (server + client)
+- [x] Health check requests filtered out
+- [x] 404/429 responses not sent to Sentry
+- [x] Environment variable override works
 
 ## Work Log
 
 | Date | Action | Notes |
 |------|--------|-------|
 | 2025-11-27 | Created | Found during DevOps analysis |
+| 2025-12-02 | Resolved | Server config already updated, applied same changes to client |
+
+## Resolution Summary
+
+**Changes Applied:**
+
+1. **Server (`server/src/lib/errors/sentry.ts`):**
+   - ✅ Already updated with tracesSampleRate: 0.5 (50%)
+   - ✅ Already filtering health checks, 404s, and 429s
+   - ✅ Environment variable overrides working via SentryConfig
+
+2. **Client (`client/src/lib/sentry.ts`):**
+   - ✅ Updated tracesSampleRate from 0.1 → 0.5 (50%)
+   - ✅ Added comment explaining monitoring coverage improvement
+   - ✅ Environment variable overrides already supported
+
+**Impact:**
+- 5x improvement in trace capture rate (10% → 50%)
+- Reduced noise from operational events (health checks, 404s, 429s)
+- Better production observability for performance debugging
+- No breaking changes to existing functionality

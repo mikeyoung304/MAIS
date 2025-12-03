@@ -6,7 +6,7 @@ This directory contains a comprehensive security assessment of the logo and file
 
 ## Documents in This Assessment
 
-### 1. **security-assessment-logo-upload.md** (Main Report)
+### 1. **archive/security-assessments/security-assessment-logo-upload.md** (Main Report)
 Complete security analysis including:
 - Architecture overview
 - Detailed findings for each security component
@@ -29,7 +29,7 @@ Visual reference guide including:
 
 **Use this for quick lookups and status checking.**
 
-### 3. **security-fixes-implementation-guide.md** (Implementation)
+### 3. **archive/security-assessments/security-fixes-implementation-guide.md** (Implementation)
 Step-by-step implementation guide with:
 - Current vs. fixed code for each vulnerability
 - Installation instructions for required packages
@@ -107,10 +107,10 @@ npm install file-type
 npm install clamscan
 
 # 3. Implement upload rate limiting
-# See security-fixes-implementation-guide.md Fix #3
+# See archive/security-assessments/security-fixes-implementation-guide.md Fix #3
 
 # 4. Fix file permissions
-# See security-fixes-implementation-guide.md Fix #4
+# See archive/security-assessments/security-fixes-implementation-guide.md Fix #4
 ```
 
 ### Week 2 (High/Medium Issues)
@@ -169,7 +169,7 @@ Before deploying to production, you MUST implement:
 
 ## Testing Recommendations
 
-Use the test cases in `security-fixes-implementation-guide.md` to verify:
+Use the test cases in `archive/security-assessments/security-fixes-implementation-guide.md` to verify:
 
 1. MIME type spoofing is blocked
 2. Malicious files are detected
@@ -194,8 +194,8 @@ Use the test cases in `security-fixes-implementation-guide.md` to verify:
 
 ## Next Steps
 
-1. **Read** `security-assessment-logo-upload.md` for full details
-2. **Review** `security-fixes-implementation-guide.md` for each fix
+1. **Read** `archive/security-assessments/security-assessment-logo-upload.md` for full details
+2. **Review** `archive/security-assessments/security-fixes-implementation-guide.md` for each fix
 3. **Implement** fixes in priority order (see Week 1-3 above)
 4. **Test** using provided test cases
 5. **Deploy** to staging environment first

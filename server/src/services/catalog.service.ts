@@ -173,7 +173,7 @@ export class CatalogService {
     }
 
     // Invalidate catalog cache for this tenant
-    this.invalidateCatalogCache(tenantId);
+    await this.invalidateCatalogCache(tenantId);
 
     return result;
   }
@@ -221,11 +221,14 @@ export class CatalogService {
       });
     }
 
-    // Invalidate catalog cache (both old and potentially new slug)
-    this.invalidateCatalogCache(tenantId);
-    this.invalidatePackageCache(tenantId, existing.slug);
+    // Targeted cache invalidation
+    // PERFORMANCE: Only invalidate specific package cache(s), not all-packages
+    // Updating package details (price, title) doesn't affect the package list itself
+    // Must invalidate all-packages ONLY when it might appear in cached list differently
+    await this.invalidateCatalogCache(tenantId); // all-packages contains package summaries
+    await this.invalidatePackageCache(tenantId, existing.slug);
     if (data.slug && data.slug !== existing.slug) {
-      this.invalidatePackageCache(tenantId, data.slug);
+      await this.invalidatePackageCache(tenantId, data.slug);
     }
 
     return result;
@@ -260,9 +263,10 @@ export class CatalogService {
       });
     }
 
-    // Invalidate catalog cache
-    this.invalidateCatalogCache(tenantId);
-    this.invalidatePackageCache(tenantId, existing.slug);
+    // Invalidate all-packages cache (package removed from list)
+    await this.invalidateCatalogCache(tenantId);
+    // Also invalidate the specific package cache
+    await this.invalidatePackageCache(tenantId, existing.slug);
   }
 
   // AddOn CRUD operations
@@ -280,9 +284,9 @@ export class CatalogService {
 
     const result = await this.repository.createAddOn(tenantId, data);
 
-    // Invalidate catalog cache (affects package details)
-    this.invalidateCatalogCache(tenantId);
-    this.invalidatePackageCache(tenantId, pkg.slug);
+    // Targeted cache invalidation - only invalidate affected package
+    // Add-on creation doesn't affect all-packages list, just the specific package's add-ons
+    await this.invalidatePackageCache(tenantId, pkg.slug);
 
     return result;
   }
@@ -311,18 +315,16 @@ export class CatalogService {
     const result = await this.repository.updateAddOn(tenantId, id, data);
 
     // Targeted cache invalidation - only invalidate affected packages
+    // No need to invalidate all-packages since add-on updates don't affect package list
     const oldPackage = await this.repository.getPackageById(tenantId, existing.packageId);
     if (oldPackage) {
-      this.invalidatePackageCache(tenantId, oldPackage.slug);
+      await this.invalidatePackageCache(tenantId, oldPackage.slug);
     }
 
     // If package changed, also invalidate new package cache
     if (newPackage && newPackage.id !== existing.packageId) {
-      this.invalidatePackageCache(tenantId, newPackage.slug);
+      await this.invalidatePackageCache(tenantId, newPackage.slug);
     }
-
-    // Invalidate list cache (all-packages includes add-ons)
-    this.invalidateCatalogCache(tenantId);
 
     return result;
   }
@@ -337,13 +339,11 @@ export class CatalogService {
     await this.repository.deleteAddOn(tenantId, id);
 
     // Targeted cache invalidation - only invalidate affected package
+    // No need to invalidate all-packages since add-on deletion doesn't affect package list
     const pkg = await this.repository.getPackageById(tenantId, existing.packageId);
     if (pkg) {
-      this.invalidatePackageCache(tenantId, pkg.slug);
+      await this.invalidatePackageCache(tenantId, pkg.slug);
     }
-
-    // Invalidate list cache (all-packages includes add-ons)
-    this.invalidateCatalogCache(tenantId);
   }
 
   // ============================================================================

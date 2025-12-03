@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import { useSuccessMessage } from "@/hooks/useSuccessMessage";
 import type { AvailabilityRuleDto, RuleFormData } from "./types";
 import { getTodayISODate } from "./utils";
@@ -91,9 +92,10 @@ export function useAvailabilityRulesManager(onRulesChange: () => void) {
         });
       }
     } catch (err) {
-      if (import.meta.env.DEV) {
-        console.error("[useAvailabilityRulesManager] Failed to create availability rule:", err);
-      }
+      logger.error("Failed to create availability rule", {
+        error: err,
+        component: "useAvailabilityRulesManager",
+      });
       setError("An error occurred while creating the rule");
       toast.error("An error occurred while creating the availability rule", {
         description: "Please try again or contact support.",
@@ -128,9 +130,11 @@ export function useAvailabilityRulesManager(onRulesChange: () => void) {
         });
       }
     } catch (err) {
-      if (import.meta.env.DEV) {
-        console.error("[useAvailabilityRulesManager] Failed to delete availability rule:", err);
-      }
+      logger.error("Failed to delete availability rule", {
+        error: err,
+        component: "useAvailabilityRulesManager",
+        ruleId: ruleToDelete.id,
+      });
       toast.error("An error occurred while deleting the availability rule", {
         description: "Please try again or contact support.",
       });

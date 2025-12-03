@@ -4,6 +4,20 @@ import { apiKeyService } from '../lib/api-key.service';
 import { logger } from '../lib/core/logger';
 
 /**
+ * Tenant branding configuration stored in Prisma Json field
+ * Contains theme customization for embeddable widget
+ */
+export interface TenantBranding {
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  backgroundColor?: string;
+  fontFamily?: string;
+  logo?: string;
+  [key: string]: unknown; // Allow additional properties for future extensibility
+}
+
+/**
  * Extended Express Request with tenant context
  * Available after resolveTenant middleware runs
  */
@@ -14,7 +28,7 @@ export interface TenantRequest extends Request {
     slug: string;
     name: string;
     commissionPercent: number;
-    branding: any;
+    branding: TenantBranding;
     stripeAccountId: string | null;
     stripeOnboarded: boolean;
   };
@@ -129,7 +143,7 @@ export function resolveTenant(prisma: PrismaClient) {
         slug: tenant.slug,
         name: tenant.name,
         commissionPercent: Number(tenant.commissionPercent),
-        branding: tenant.branding,
+        branding: tenant.branding as TenantBranding,
         stripeAccountId: tenant.stripeAccountId,
         stripeOnboarded: tenant.stripeOnboarded,
       };
