@@ -152,6 +152,60 @@ photos: data.photos as Prisma.InputJsonValue
 draftPhotos: Prisma.JsonNull
 ```
 
+#### [Entity Type Error Prevention](./PREVENTION-ENTITY-TYPE-ERRORS.md)
+**Purpose:** Prevent cascading entity type errors when modifying entity interfaces
+**Audience:** All backend engineers, especially those adding/modifying entities
+**Companion Docs:** [Quick Ref](./ENTITY-ERRORS-QUICK-REF.md) | [Code Review](./ENTITY-CHANGE-CODE-REVIEW.md)
+**Length:** ~5,000 words
+**Key Patterns:** 10 prevention strategies, 5-7 required update locations, entity invariant testing
+
+**Issues Prevented:**
+- Build failures from missing entity field mappings
+- Runtime errors from undefined fields
+- Incomplete object creation across 5+ code paths
+- Type safety gaps in repository patterns
+- Inconsistent optional field handling
+
+**Quick Rules:**
+```typescript
+// 1. Entity Invariant Tests
+describe('Entity Invariants', () => {
+  it('all creation paths include required fields', () => {
+    const entities = [mockRepo.get(), prismaRepo.get(), service.create()];
+    entities.forEach(e => expect(e?.requiredField).toBeDefined());
+  });
+});
+
+// 2. Strict Mapper Input Type
+private toDomainPackage(pkg: {
+  id: string;
+  name: string;
+  newField: string;  // Must list ALL Prisma fields
+}): Package {
+  return {
+    id: pkg.id,
+    title: pkg.name,
+    newField: pkg.newField,  // Safe to map
+  };
+}
+
+// 3. Entity Change Checklist
+// When modifying entities.ts, update these 5-7 locations:
+// □ entities.ts (definition)
+// □ contracts/ (API DTOs)
+// □ ports.ts (input types)
+// □ adapters/mock/ (seed data)
+// □ adapters/prisma/ (mappers)
+// □ routes/ (responses)
+// □ services/ (factories)
+```
+
+**When to Use:**
+- Adding any field to an entity (Package, Booking, Service, AddOn)
+- Modifying entity required/optional status
+- Creating new entity types
+- Code reviewing entity-related PRs
+
 #### [Visual Editor E2E Testing Rate Limit Solution](./visual-editor-e2e-testing.md)
 **Purpose:** Prevent E2E tests from hitting signup rate limits (429 errors)
 **Audience:** Engineers running E2E tests, test infrastructure maintainers

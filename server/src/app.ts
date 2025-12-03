@@ -5,6 +5,7 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+import compression from 'compression';
 import path from 'path';
 import { randomUUID } from 'crypto';
 import swaggerUi from 'swagger-ui-express';
@@ -33,6 +34,23 @@ export function createApp(
   // Sentry request tracking (MUST be first)
   app.use(sentryRequestHandler());
 
+  // Response compression (gzip) - reduces payload size for large JSON responses
+  // Placed early to compress all responses, but after Sentry for accurate request tracking
+  app.use(
+    compression({
+      filter: (req, res) => {
+        // Allow clients to opt-out via header
+        if (req.headers['x-no-compression']) {
+          return false;
+        }
+        // Use compression's default filter (checks Content-Type, etc.)
+        return compression.filter(req, res);
+      },
+      threshold: 1024, // Only compress responses > 1KB
+      level: 6, // Balance between compression ratio and CPU usage (default: 6, range: 0-9)
+    })
+  );
+
   // Security middleware with custom CSP
   app.use(
     helmet({
@@ -51,13 +69,15 @@ export function createApp(
           imgSrc: [
             "'self'",
             "data:",
-            "https:", // Allow HTTPS images (package photos, logos)
+            "https:", // Allow HTTPS images (package photos, logos, landing page images)
             "blob:",
+            "https://*.supabase.co", // Supabase storage for tenant uploads
           ],
           connectSrc: [
             "'self'",
             "https://api.stripe.com",
             "https://uploads.stripe.com",
+            "https://*.supabase.co", // Supabase storage API for uploads
           ],
           frameSrc: [
             "https://js.stripe.com",

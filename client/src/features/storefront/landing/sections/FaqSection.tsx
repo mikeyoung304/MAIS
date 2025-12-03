@@ -1,19 +1,4 @@
-/**
- * FaqSection Component
- *
- * Accordion-style FAQ section with expand/collapse functionality.
- * Full keyboard accessibility per WAI-ARIA accordion pattern.
- *
- * Keyboard Navigation:
- * - Enter/Space: Toggle accordion item
- * - Arrow Up/Down: Navigate between items
- * - Home: Jump to first item
- * - End: Jump to last item
- *
- * @see https://www.w3.org/WAI/ARIA/apg/patterns/accordion/
- */
-
-import { useState, useRef, useCallback, type KeyboardEvent } from 'react';
+import { memo, useState, useRef, useCallback, type KeyboardEvent } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Container } from '@/ui/Container';
 
@@ -65,7 +50,7 @@ function FaqAccordionItem({
           aria-controls={answerId}
           onClick={onToggle}
           onKeyDown={(e) => onKeyDown(e, index)}
-          className="w-full py-6 text-left flex items-start justify-between gap-4 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg -mx-2 px-2"
+          className="w-full py-6 text-left flex items-start justify-between gap-4 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg -mx-2 px-2"
         >
           <span className="text-lg font-semibold text-neutral-900 group-hover:text-primary transition-colors">
             {item?.question ?? ''}
@@ -99,7 +84,53 @@ function FaqAccordionItem({
   );
 }
 
-export function FaqSection({ config }: FaqSectionProps) {
+/**
+ * FAQ section for landing pages
+ *
+ * Displays frequently asked questions in an accessible accordion-style interface.
+ * Only one FAQ item can be open at a time. Answers support multi-paragraph text
+ * by splitting on double newlines.
+ *
+ * Implements full keyboard navigation following the WAI-ARIA accordion pattern:
+ * - Enter/Space: Toggle accordion item open/closed
+ * - Arrow Down: Move focus to next question (wraps to first)
+ * - Arrow Up: Move focus to previous question (wraps to last)
+ * - Home: Jump to first question
+ * - End: Jump to last question
+ *
+ * Uses proper ARIA attributes (aria-expanded, aria-controls, aria-labelledby) and
+ * semantic HTML for screen reader compatibility. Focus management ensures keyboard
+ * users can efficiently navigate between questions.
+ *
+ * @example
+ * ```tsx
+ * <FaqSection
+ *   config={{
+ *     headline: "Frequently Asked Questions",
+ *     items: [
+ *       {
+ *         question: "What's included in the tour?",
+ *         answer: "All tours include a guided walk...\n\nWe also provide complimentary refreshments."
+ *       },
+ *       {
+ *         question: "Do you accommodate dietary restrictions?",
+ *         answer: "Yes! Please inform us of any dietary needs when booking."
+ *       }
+ *     ]
+ *   }}
+ * />
+ * ```
+ *
+ * @param props.config - FAQ section configuration from tenant branding
+ * @param props.config.headline - Section headline (required)
+ * @param props.config.items - Array of FAQ items to display (required)
+ * @param props.config.items[].question - FAQ question text (required)
+ * @param props.config.items[].answer - FAQ answer text, use \n\n to separate paragraphs (required)
+ *
+ * @see FaqSectionConfigSchema in @macon/contracts for Zod validation
+ * @see https://www.w3.org/WAI/ARIA/apg/patterns/accordion/ - WAI-ARIA accordion pattern
+ */
+export const FaqSection = memo(function FaqSection({ config }: FaqSectionProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -194,4 +225,4 @@ export function FaqSection({ config }: FaqSectionProps) {
       </Container>
     </section>
   );
-}
+});

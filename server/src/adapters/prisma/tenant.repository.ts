@@ -35,6 +35,8 @@ export interface UpdateTenantInput {
   emailVerified?: boolean;
   passwordResetToken?: string | null;
   passwordResetExpires?: Date | null;
+  // Landing page configuration
+  landingPageConfig?: any;
 }
 
 /**
@@ -269,5 +271,81 @@ export class PrismaTenantRepository {
 
     // Return validated data
     return validationResult.data;
+  }
+
+  /**
+   * Get landing page configuration for tenant
+   * Used by tenant admins to view current landing page setup
+   *
+   * @param tenantId - Tenant ID
+   * @returns Landing page config or null if not set
+   */
+  async getLandingPageConfig(tenantId: string): Promise<any | null> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { landingPageConfig: true },
+    });
+
+    return tenant?.landingPageConfig ?? null;
+  }
+
+  /**
+   * Update landing page configuration for tenant
+   * Used by tenant admins to configure their landing page
+   *
+   * @param tenantId - Tenant ID
+   * @param config - Landing page configuration object
+   * @returns Updated landing page config
+   */
+  async updateLandingPageConfig(tenantId: string, config: any): Promise<any> {
+    const tenant = await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { landingPageConfig: config },
+      select: { landingPageConfig: true },
+    });
+
+    return tenant.landingPageConfig;
+  }
+
+  /**
+   * Toggle a specific section in landing page configuration
+   * Partial update - only affects the specified section's enabled state
+   *
+   * @param tenantId - Tenant ID
+   * @param section - Section name to toggle
+   * @param enabled - Whether section should be enabled
+   * @returns Updated landing page config
+   */
+  async toggleLandingPageSection(
+    tenantId: string,
+    section: string,
+    enabled: boolean
+  ): Promise<any> {
+    // Get current config
+    const currentConfig = await this.getLandingPageConfig(tenantId);
+
+    // Initialize config if it doesn't exist
+    const config = currentConfig || {
+      sections: {
+        hero: false,
+        socialProofBar: false,
+        segmentSelector: true,
+        about: false,
+        testimonials: false,
+        accommodation: false,
+        gallery: false,
+        faq: false,
+        finalCta: false,
+      },
+    };
+
+    // Update the specific section
+    if (!config.sections) {
+      config.sections = {};
+    }
+    config.sections[section] = enabled;
+
+    // Save updated config
+    return await this.updateLandingPageConfig(tenantId, config);
   }
 }

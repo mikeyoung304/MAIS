@@ -11,17 +11,18 @@
  */
 
 import { useEffect } from 'react';
-import { Outlet, useParams, Link } from 'react-router-dom';
+import { Outlet, useParams, useLocation, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useTenantBranding } from '../hooks/useTenantBranding';
-import { Loading } from '../ui/Loading';
+import { LandingPageSkeleton } from '../features/storefront/landing';
 import { Container } from '../ui/Container';
 import type { TenantPublicDto } from '@macon/contracts';
 import '@/styles/a11y.css';
 
 export function TenantStorefrontLayout() {
   const { tenantSlug } = useParams<{ tenantSlug: string }>();
+  const location = useLocation();
 
   // Fetch tenant by slug
   const { data: tenant, isLoading, error } = useQuery<TenantPublicDto>({
@@ -49,15 +50,23 @@ export function TenantStorefrontLayout() {
     };
   }, []);
 
+  // Scroll to top on navigation, respecting hash fragments
+  useEffect(() => {
+    if (location.hash) {
+      // Let browser handle hash navigation (e.g., #faq, #experiences)
+      const element = document.getElementById(location.hash.slice(1));
+      element?.scrollIntoView();
+    } else {
+      // Scroll to top with instant behavior (no animation delay)
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [location.pathname, location.hash]);
+
   // Apply tenant branding CSS variables
   useTenantBranding(tenant?.branding);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loading label="Loading storefront" />
-      </div>
-    );
+    return <LandingPageSkeleton />;
   }
 
   if (error || !tenant) {
@@ -98,7 +107,11 @@ export function TenantStorefrontLayout() {
               {tenant.branding?.logoUrl ? (
                 <img
                   // NOTE: Backend validates logo URLs with Zod (.url()).
-                  // CSP headers enforce img-src https: at browser level.
+                  // CSP headers (server/src/app.ts) enforce img-src with:
+                  //   - 'self', data:, blob: for local assets
+                  //   - https: for all HTTPS images (permissive mode)
+                  //   - https://*.supabase.co for Supabase storage
+                  // CSP violations are logged to /v1/csp-violations.
                   // For admin context, see BrandingPreview.tsx which uses
                   // sanitizeImageUrl() for explicit frontend validation.
                   src={tenant.branding.logoUrl}
@@ -115,7 +128,7 @@ export function TenantStorefrontLayout() {
 
       {/* Main content - existing storefront components */}
       <main id="main" tabIndex={-1} className="flex-1">
-        <Outlet />
+        <Outlet context={{ tenant }} />
       </main>
 
       {/* Powered by footer */}

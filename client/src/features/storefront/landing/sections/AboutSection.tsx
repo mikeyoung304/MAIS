@@ -1,11 +1,4 @@
-/**
- * AboutSection Component
- *
- * Two-column layout with image and rich text content.
- * Image position is configurable (left or right).
- * Supports markdown in content.
- */
-
+import { memo } from 'react';
 import { Container } from '@/ui/Container';
 import { sanitizeImageUrl } from '@/lib/sanitize-url';
 
@@ -13,6 +6,7 @@ interface AboutConfig {
   headline: string;
   content: string;
   imageUrl?: string;
+  imageAlt?: string;
   imagePosition?: 'left' | 'right';
 }
 
@@ -20,7 +14,39 @@ interface AboutSectionProps {
   config: AboutConfig;
 }
 
-export function AboutSection({ config }: AboutSectionProps) {
+/**
+ * About section for landing pages
+ *
+ * Displays a two-column layout featuring business information with an optional image.
+ * The image position (left or right) is configurable, and content supports multi-paragraph
+ * text by splitting on double newlines. Gracefully adapts to single-column layout on mobile.
+ *
+ * If no image is provided, the content expands to full width. All images are lazy-loaded
+ * for performance and URLs are sanitized for security.
+ *
+ * @example
+ * ```tsx
+ * <AboutSection
+ *   config={{
+ *     headline: "Our Story",
+ *     content: "Founded in 2010...\n\nToday we serve...",
+ *     imageUrl: "https://example.com/farm.jpg",
+ *     imageAlt: "View of our farm at sunrise",
+ *     imagePosition: "right"
+ *   }}
+ * />
+ * ```
+ *
+ * @param props.config - About section configuration from tenant branding
+ * @param props.config.headline - Section headline (required)
+ * @param props.config.content - Multi-paragraph content text, use \n\n to separate paragraphs (required)
+ * @param props.config.imageUrl - Image URL, sanitized before rendering (optional)
+ * @param props.config.imageAlt - Alt text for the image, defaults to "About our business" (optional)
+ * @param props.config.imagePosition - Position of image: 'left' or 'right', defaults to 'right' (optional)
+ *
+ * @see AboutSectionConfigSchema in @macon/contracts for Zod validation
+ */
+export const AboutSection = memo(function AboutSection({ config }: AboutSectionProps) {
   const imagePosition = config.imagePosition || 'right';
 
   // Sanitize image URL (defense-in-depth)
@@ -42,7 +68,9 @@ export function AboutSection({ config }: AboutSectionProps) {
               <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-[4/3]">
                 <img
                   src={safeImageUrl}
-                  alt={config.headline}
+                  alt={config.imageAlt || 'About our business'}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -69,7 +97,9 @@ export function AboutSection({ config }: AboutSectionProps) {
               <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-[4/3]">
                 <img
                   src={safeImageUrl}
-                  alt={config.headline}
+                  alt={config.imageAlt || 'About our business'}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -79,4 +109,4 @@ export function AboutSection({ config }: AboutSectionProps) {
       </Container>
     </section>
   );
-}
+});

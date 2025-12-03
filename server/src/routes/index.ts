@@ -33,6 +33,7 @@ import { createTenantAdminStripeRoutes } from './tenant-admin-stripe.routes';
 import { createTenantAdminReminderRoutes } from './tenant-admin-reminders.routes';
 import { createTenantAdminCalendarRoutes } from './tenant-admin-calendar.routes';
 import { createTenantAdminDepositRoutes } from './tenant-admin-deposits.routes';
+import { createTenantAdminLandingPageRoutes } from './tenant-admin-landing-page.routes';
 import { createTenantAuthRoutes } from './tenant-auth.routes';
 import { createUnifiedAuthRoutes } from './auth.routes';
 import { createSegmentsRouter } from './segments.routes';
@@ -452,6 +453,12 @@ export function createV1Router(
     const tenantAdminDepositRoutes = createTenantAdminDepositRoutes(tenantRepo);
     app.use('/v1/tenant-admin', tenantAuthMiddleware, tenantAdminDepositRoutes);
     logger.info('✅ Tenant admin deposit settings routes mounted at /v1/tenant-admin/settings/deposits');
+
+    // Register tenant admin landing page routes (for landing page configuration)
+    // Requires tenant admin authentication
+    const tenantAdminLandingPageRoutes = createTenantAdminLandingPageRoutes(tenantRepo);
+    app.use('/v1/tenant-admin/landing-page', tenantAuthMiddleware, tenantAdminLandingPageRoutes);
+    logger.info('✅ Tenant admin landing page routes mounted at /v1/tenant-admin/landing-page');
 
     // Register public scheduling routes (for customer booking widget)
     // Requires tenant context via X-Tenant-Key header

@@ -6,4 +6,5 @@
  */
 
 export { LandingPage } from './LandingPage';
+export { LandingPageSkeleton } from './LandingPageSkeleton';
 export * from './sections';

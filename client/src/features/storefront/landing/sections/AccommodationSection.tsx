@@ -1,10 +1,4 @@
-/**
- * AccommodationSection Component
- *
- * Promotes on-site or partner accommodation (Airbnb, VRBO, etc.).
- * Features image, description, highlights, and external booking link.
- */
-
+import { memo } from 'react';
 import { ExternalLink, Check, Home } from 'lucide-react';
 import { Container } from '@/ui/Container';
 import { sanitizeImageUrl, sanitizeUrl } from '@/lib/sanitize-url';
@@ -13,6 +7,7 @@ interface AccommodationConfig {
   headline: string;
   description: string;
   imageUrl?: string;
+  imageAlt?: string;
   ctaText: string;
   ctaUrl: string;
   highlights: string[];
@@ -22,7 +17,49 @@ interface AccommodationSectionProps {
   config: AccommodationConfig;
 }
 
-export function AccommodationSection({ config }: AccommodationSectionProps) {
+/**
+ * Accommodation section for landing pages
+ *
+ * Promotes on-site or partner accommodation options (such as Airbnb, VRBO, or
+ * owned properties). Features a dark background theme to create visual contrast
+ * and highlight the accommodation offering. Includes description, feature highlights,
+ * and an external booking link that opens in a new tab with proper security attributes.
+ *
+ * The section uses a two-column layout with image on the right and content on the left.
+ * Highlights are displayed in a 2-column grid with checkmark icons for visual emphasis.
+ *
+ * @example
+ * ```tsx
+ * <AccommodationSection
+ *   config={{
+ *     headline: "Stay Onsite",
+ *     description: "Extend your experience with our comfortable farmhouse accommodations...",
+ *     imageUrl: "https://example.com/accommodation.jpg",
+ *     imageAlt: "Cozy farmhouse bedroom interior",
+ *     ctaText: "Book Your Stay",
+ *     ctaUrl: "https://airbnb.com/...",
+ *     highlights: [
+ *       "Private bedroom",
+ *       "Full kitchen",
+ *       "Mountain views",
+ *       "Pet friendly"
+ *     ]
+ *   }}
+ * />
+ * ```
+ *
+ * @param props.config - Accommodation section configuration from tenant branding
+ * @param props.config.headline - Section headline (required)
+ * @param props.config.description - Description of the accommodation offering (required)
+ * @param props.config.imageUrl - Accommodation image URL, sanitized before rendering (optional)
+ * @param props.config.imageAlt - Alt text for the image, defaults to "Accommodation facilities" (optional)
+ * @param props.config.ctaText - Call-to-action button text (required)
+ * @param props.config.ctaUrl - External booking URL, opens in new tab with noopener/noreferrer (required)
+ * @param props.config.highlights - Array of key features or amenities (required)
+ *
+ * @see AccommodationSectionConfigSchema in @macon/contracts for Zod validation
+ */
+export const AccommodationSection = memo(function AccommodationSection({ config }: AccommodationSectionProps) {
   // Sanitize URLs (defense-in-depth)
   const safeImageUrl = sanitizeImageUrl(config?.imageUrl);
   const safeCtaUrl = sanitizeUrl(config?.ctaUrl);
@@ -67,7 +104,7 @@ export function AccommodationSection({ config }: AccommodationSectionProps) {
                 href={safeCtaUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-lg text-lg transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-neutral-900"
+                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-lg text-lg transition-all hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {config?.ctaText}
                 <ExternalLink className="w-5 h-5" />
@@ -81,7 +118,9 @@ export function AccommodationSection({ config }: AccommodationSectionProps) {
               <div className="rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]">
                 <img
                   src={safeImageUrl}
-                  alt={config?.headline || 'Accommodation'}
+                  alt={config.imageAlt || 'Accommodation facilities'}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -93,4 +132,4 @@ export function AccommodationSection({ config }: AccommodationSectionProps) {
       </Container>
     </section>
   );
-}
+});

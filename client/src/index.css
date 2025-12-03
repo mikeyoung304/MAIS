@@ -83,6 +83,15 @@
     opacity: 1;
     transform: none;
   }
+
+  /* Global rule: disable all animations and transitions */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Disable animations in E2E test mode for deterministic behavior */

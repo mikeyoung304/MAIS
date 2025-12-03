@@ -13,6 +13,7 @@ import { Loading } from '@/ui/Loading';
 import { FeatureErrorBoundary } from '@/components/errors';
 import { useSegments } from '@/features/catalog/hooks';
 import { SegmentCard, ChoiceGrid } from '@/features/storefront';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import type { TenantPublicDto, SegmentDto } from '@macon/contracts';
 import { HeroSection } from './sections/HeroSection';
 import { SocialProofBar } from './sections/SocialProofBar';
@@ -22,6 +23,149 @@ import { AccommodationSection } from './sections/AccommodationSection';
 import { GallerySection } from './sections/GallerySection';
 import { FaqSection } from './sections/FaqSection';
 import { FinalCtaSection } from './sections/FinalCtaSection';
+
+/**
+ * Helper function to remove undefined/null values from objects
+ * for clean Schema.org JSON-LD output
+ */
+function cleanSchemaObject<T extends Record<string, unknown>>(obj: T): Partial<T> {
+  return Object.entries(obj).reduce((acc, [key, value]) => {
+    if (value !== undefined && value !== null) {
+      acc[key as keyof T] = value;
+    }
+    return acc;
+  }, {} as Partial<T>);
+}
+
+/**
+ * LocalBusiness Schema.org structured data
+ * Helps search engines understand the business entity
+ */
+function BusinessSchema({ tenant }: { tenant: TenantPublicDto }) {
+  const landingPage = tenant.branding?.landingPage;
+
+  const schema = cleanSchemaObject({
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: tenant.name,
+    url: `https://app.maconaisolutions.com/t/${tenant.slug}`,
+    logo: tenant.branding?.logoUrl,
+    description: landingPage?.about?.description || landingPage?.hero?.subheadline,
+  });
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+/**
+ * FAQPage Schema.org structured data
+ * Enables FAQ rich results in search
+ */
+function FaqSchema({ tenant }: { tenant: TenantPublicDto }) {
+  const faqs = tenant.branding?.landingPage?.faq?.faqs;
+
+  if (!faqs || faqs.length === 0) {
+    return null;
+  }
+
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+/**
+ * Review Schema.org structured data (embedded in LocalBusiness)
+ * Enables review rich results and star ratings in search
+ */
+function ReviewSchema({ tenant }: { tenant: TenantPublicDto }) {
+  const testimonials = tenant.branding?.landingPage?.testimonials?.testimonials;
+
+  if (!testimonials || testimonials.length === 0) {
+    return null;
+  }
+
+  const schema = cleanSchemaObject({
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: tenant.name,
+    review: testimonials.map((t) =>
+      cleanSchemaObject({
+        '@type': 'Review',
+        author: {
+          '@type': 'Person',
+          name: t.name,
+        },
+        reviewBody: t.quote,
+        reviewRating: t.rating ? {
+          '@type': 'Rating',
+          ratingValue: t.rating,
+        } : undefined,
+      })
+    ),
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '5',
+      reviewCount: testimonials.length,
+    },
+  });
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+/**
+ * ImageGallery Schema.org structured data
+ * Enables image gallery rich results
+ */
+function GallerySchema({ tenant }: { tenant: TenantPublicDto }) {
+  const images = tenant.branding?.landingPage?.gallery?.images;
+
+  if (!images || images.length === 0) {
+    return null;
+  }
+
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'ImageGallery',
+    name: tenant.branding?.landingPage?.gallery?.heading || `${tenant.name} Gallery`,
+    image: images.map((img) => ({
+      '@type': 'ImageObject',
+      url: img.imageUrl,
+      caption: img.caption || undefined,
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
 
 interface LandingPageProps {
   tenant: TenantPublicDto;
@@ -92,6 +236,30 @@ function SegmentSelectorSection() {
 function LandingPageContent({ tenant }: LandingPageProps) {
   const landingPage = tenant.branding?.landingPage;
   const sections = landingPage?.sections;
+  const hero = landingPage?.hero;
+  const about = landingPage?.about;
+
+  // Construct SEO metadata from landing page content
+  const pageTitle = hero?.headline
+    ? `${tenant.name} - ${hero.headline}`
+    : tenant.name;
+
+  const pageDescription =
+    hero?.subheadline ||
+    about?.description?.slice(0, 160) ||
+    `Welcome to ${tenant.name}`;
+
+  const pageImage =
+    hero?.backgroundImageUrl ||
+    tenant.branding?.logoUrl ||
+    undefined;
+
+  // Set page metadata for SEO and social sharing
+  usePageMeta({
+    title: pageTitle,
+    description: pageDescription,
+    image: pageImage,
+  });
 
   // If no landing page config or no sections enabled, show just the segment selector
   const hasAnySectionEnabled = sections && Object.values(sections).some((v) => v === true);
@@ -101,11 +269,18 @@ function LandingPageContent({ tenant }: LandingPageProps) {
   }
 
   return (
-    <div className="landing-page">
-      {/* Hero Section */}
-      {sections?.hero && landingPage?.hero && (
-        <HeroSection config={landingPage.hero} />
-      )}
+    <>
+      {/* Schema.org Structured Data for SEO */}
+      <BusinessSchema tenant={tenant} />
+      <FaqSchema tenant={tenant} />
+      <ReviewSchema tenant={tenant} />
+      <GallerySchema tenant={tenant} />
+
+      <div className="landing-page">
+        {/* Hero Section */}
+        {sections?.hero && landingPage?.hero && (
+          <HeroSection config={landingPage.hero} />
+        )}
 
       {/* Social Proof Bar */}
       {sections?.socialProofBar && landingPage?.socialProofBar && (
@@ -144,7 +319,8 @@ function LandingPageContent({ tenant }: LandingPageProps) {
       {sections?.finalCta && landingPage?.finalCta && (
         <FinalCtaSection config={landingPage.finalCta} />
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

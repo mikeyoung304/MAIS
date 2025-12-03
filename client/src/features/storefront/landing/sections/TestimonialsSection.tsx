@@ -1,10 +1,4 @@
-/**
- * TestimonialsSection Component
- *
- * Displays customer testimonials in a card layout with ratings.
- * Responsive grid that adjusts based on number of testimonials.
- */
-
+import { memo } from 'react';
 import { Star, Quote } from 'lucide-react';
 import { Container } from '@/ui/Container';
 import { sanitizeImageUrl } from '@/lib/sanitize-url';
@@ -48,9 +42,9 @@ function TestimonialCard({ testimonial }: { testimonial: TestimonialItem }) {
   const safeImageUrl = sanitizeImageUrl(testimonial.imageUrl);
 
   return (
-    <div className="bg-white rounded-2xl p-6 md:p-8 shadow-lg border border-neutral-100 flex flex-col h-full">
+    <figure className="bg-white rounded-2xl p-6 md:p-8 shadow-lg border border-neutral-100 flex flex-col h-full">
       {/* Quote icon */}
-      <Quote className="w-10 h-10 text-primary/20 mb-4 flex-shrink-0" />
+      <Quote className="w-10 h-10 text-primary/20 mb-4 flex-shrink-0" aria-hidden="true" />
 
       {/* Rating */}
       <div className="mb-4">
@@ -59,15 +53,17 @@ function TestimonialCard({ testimonial }: { testimonial: TestimonialItem }) {
 
       {/* Quote text */}
       <blockquote className="text-neutral-700 text-lg leading-relaxed flex-grow mb-6">
-        "{testimonial?.quote ?? ''}"
+        <p>"{testimonial?.quote ?? ''}"</p>
       </blockquote>
 
       {/* Author info */}
-      <div className="flex items-center gap-4 mt-auto pt-4 border-t border-neutral-100">
+      <figcaption className="flex items-center gap-4 mt-auto pt-4 border-t border-neutral-100">
         {safeImageUrl ? (
           <img
             src={safeImageUrl}
-            alt={testimonial?.author ?? 'Customer'}
+            alt={testimonial.author ? `${testimonial.author}'s photo` : 'Customer photo'}
+            loading="lazy"
+            decoding="async"
             className="w-12 h-12 rounded-full object-cover"
           />
         ) : (
@@ -77,20 +73,67 @@ function TestimonialCard({ testimonial }: { testimonial: TestimonialItem }) {
             </span>
           </div>
         )}
-        <div>
+        <cite className="not-italic">
           <div className="font-semibold text-neutral-900">
             {testimonial?.author ?? 'Anonymous'}
           </div>
           {testimonial?.role && (
             <div className="text-sm text-neutral-500">{testimonial.role}</div>
           )}
-        </div>
-      </div>
-    </div>
+        </cite>
+      </figcaption>
+    </figure>
   );
 }
 
-export function TestimonialsSection({ config }: TestimonialsSectionProps) {
+/**
+ * Testimonials section for landing pages
+ *
+ * Displays customer testimonials in a responsive card grid with star ratings, quotes,
+ * and author information. The grid layout automatically adjusts based on the number
+ * of testimonials (1-column for single testimonial, 2-column for pairs, 3-column for more).
+ *
+ * Each testimonial card includes a 5-star rating display, quoted text, and author details
+ * with an optional photo and role. If no author photo is provided, a fallback avatar with
+ * the author's initial is shown. Uses semantic HTML (figure, blockquote, cite) for
+ * accessibility and proper content structure.
+ *
+ * @example
+ * ```tsx
+ * <TestimonialsSection
+ *   config={{
+ *     headline: "What Our Guests Say",
+ *     items: [
+ *       {
+ *         quote: "An unforgettable experience. The farm tour was amazing!",
+ *         author: "Sarah Johnson",
+ *         role: "Food Blogger",
+ *         imageUrl: "https://example.com/sarah.jpg",
+ *         rating: 5
+ *       },
+ *       {
+ *         quote: "Perfect weekend getaway. Highly recommended!",
+ *         author: "Mike Chen",
+ *         rating: 5
+ *       }
+ *     ]
+ *   }}
+ * />
+ * ```
+ *
+ * @param props.config - Testimonials section configuration from tenant branding
+ * @param props.config.headline - Section headline (required)
+ * @param props.config.items - Array of testimonial items to display (required)
+ * @param props.config.items[].quote - Customer testimonial text (required)
+ * @param props.config.items[].author - Customer name (required)
+ * @param props.config.items[].role - Customer role or title (optional)
+ * @param props.config.items[].imageUrl - Customer photo URL, sanitized before rendering (optional)
+ * @param props.config.items[].rating - Star rating from 1-5 (required)
+ *
+ * @see TestimonialsSectionConfigSchema in @macon/contracts for Zod validation
+ * @see TODO-218 for cite element accessibility implementation
+ */
+export const TestimonialsSection = memo(function TestimonialsSection({ config }: TestimonialsSectionProps) {
   // Defensive coding: ensure items array exists
   const items = config?.items ?? [];
   if (items.length === 0) return null;
@@ -121,4 +164,4 @@ export function TestimonialsSection({ config }: TestimonialsSectionProps) {
       </Container>
     </section>
   );
-}
+});

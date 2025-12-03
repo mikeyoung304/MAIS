@@ -85,6 +85,9 @@ model Tenant {
   depositPercent Decimal? @db.Decimal(5, 2) // null = full payment required
   balanceDueDays Int      @default(30)       // Days before event balance is due
 
+  // Landing Page Configuration
+  landingPageConfig Json? // Stores tenant's landing page configuration (sections, hero, testimonials, etc.)
+
   // Relations
   users            User[] // Tenant admin users
   customers        Customer[] // Tenant-scoped customers

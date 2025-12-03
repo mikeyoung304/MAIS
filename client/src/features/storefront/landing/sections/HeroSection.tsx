@@ -1,10 +1,4 @@
-/**
- * HeroSection Component
- *
- * Full-width hero with background image, headline, subheadline, and CTA.
- * Scrolls to #experiences section on CTA click.
- */
-
+import { memo } from 'react';
 import { ArrowDown } from 'lucide-react';
 import { Container } from '@/ui/Container';
 import { sanitizeBackgroundUrl } from '@/lib/sanitize-url';
@@ -20,11 +14,46 @@ interface HeroSectionProps {
   config: HeroConfig;
 }
 
-export function HeroSection({ config }: HeroSectionProps) {
+/**
+ * Hero section for landing pages
+ *
+ * Displays a full-height hero section with optional background image, headline,
+ * subheadline, and call-to-action button. The CTA button scrolls smoothly to
+ * the experiences section (#experiences) while respecting user motion preferences.
+ *
+ * The background image is decorative and does not convey semantic meaning.
+ * All important information is conveyed through the headline and subheadline text.
+ *
+ * @example
+ * ```tsx
+ * <HeroSection
+ *   config={{
+ *     headline: "Welcome to Mountain View Farm",
+ *     subheadline: "Experience authentic rural beauty and farm-to-table cuisine",
+ *     ctaText: "Explore Experiences",
+ *     backgroundImageUrl: "https://example.com/hero-bg.jpg"
+ *   }}
+ * />
+ * ```
+ *
+ * @param props.config - Hero section configuration from tenant branding
+ * @param props.config.headline - Main hero headline text (required)
+ * @param props.config.subheadline - Supporting text below headline (optional)
+ * @param props.config.ctaText - Call-to-action button text (required)
+ * @param props.config.backgroundImageUrl - Background image URL, sanitized before rendering (optional)
+ *
+ * @see HeroSectionConfigSchema in @macon/contracts for Zod validation
+ * @see TODO-212 for background image accessibility decision
+ */
+export const HeroSection = memo(function HeroSection({ config }: HeroSectionProps) {
   const scrollToExperiences = () => {
     const experiencesSection = document.getElementById('experiences');
     if (experiencesSection) {
-      experiencesSection.scrollIntoView({ behavior: 'smooth' });
+      // Respect user motion preferences
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      experiencesSection.scrollIntoView({
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      });
     }
   };
 
@@ -39,6 +68,18 @@ export function HeroSection({ config }: HeroSectionProps) {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
+      /**
+       * ACCESSIBILITY NOTE: Background image is decorative.
+       * The headline and subheadline convey all meaningful content.
+       * Screen readers will correctly skip the CSS background-image.
+       *
+       * If future requirements need the background to convey semantic meaning,
+       * add `backgroundImageAlt` to HeroSectionConfigSchema and use:
+       * - role="img"
+       * - aria-label={config.backgroundImageAlt}
+       *
+       * @see TODO-212 resolution
+       */
     >
       {/* Overlay for text readability */}
       <div className="absolute inset-0 bg-black/40" />
@@ -57,7 +98,7 @@ export function HeroSection({ config }: HeroSectionProps) {
 
         <button
           onClick={scrollToExperiences}
-          className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-lg text-lg transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black/50"
+          className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-lg text-lg transition-all hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
           {config.ctaText}
           <ArrowDown className="w-5 h-5 animate-bounce" />
@@ -68,4 +109,4 @@ export function HeroSection({ config }: HeroSectionProps) {
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
     </section>
   );
-}
+});
