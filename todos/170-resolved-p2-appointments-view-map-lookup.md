@@ -1,9 +1,10 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: "170"
 tags: [code-review, performance, client-side-joins, frontend]
 dependencies: []
+resolved_date: 2025-12-02
 ---
 
 # Replace N*M Client-Side Joins with Map Lookup in AppointmentsView

@@ -1,9 +1,10 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: "165"
 tags: [code-review, ux, hooks, error-handling]
 dependencies: []
+resolved_date: 2025-12-02
 ---
 
 # Redundant Error Feedback in Management Hooks
