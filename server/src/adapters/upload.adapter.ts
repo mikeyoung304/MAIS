@@ -12,6 +12,7 @@ import crypto from 'crypto';
 import { createRequire } from 'module';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '../lib/core/logger';
+import { TooManyRequestsError } from '../lib/errors';
 import type { StorageProvider, FileSystem, UploadedFile, UploadResult } from '../lib/ports';
 
 // file-type v16 is CommonJS - use createRequire for ESM compatibility in Node 25+
@@ -36,14 +37,12 @@ const MAX_CONCURRENT_UPLOADS = 3;
 
 /**
  * Check if tenant has available upload slots
- * Throws 429 error if concurrency limit exceeded
+ * Throws TooManyRequestsError if concurrency limit exceeded
  */
 export function checkUploadConcurrency(tenantId: string): void {
   const current = uploadSemaphores.get(tenantId) || 0;
   if (current >= MAX_CONCURRENT_UPLOADS) {
-    const error = new Error('Too many concurrent uploads. Please wait and try again.');
-    (error as any).status = 429;
-    throw error;
+    throw new TooManyRequestsError('Too many concurrent uploads. Please wait and try again.');
   }
   uploadSemaphores.set(tenantId, current + 1);
 }
@@ -181,82 +180,85 @@ export class UploadAdapter implements StorageProvider {
     };
   }
 
-  async uploadLogo(file: UploadedFile, tenantId: string): Promise<UploadResult> {
+  /**
+   * Unified upload method for all file categories
+   * @private Internal method - use specific wrappers (uploadLogo, uploadPackagePhoto, uploadSegmentImage)
+   */
+  private async upload(
+    file: UploadedFile,
+    tenantId: string,
+    category: 'logos' | 'packages' | 'segments',
+    options: {
+      maxSizeMB?: number;
+      logContext?: Record<string, unknown>;
+      errorContext?: Record<string, unknown>;
+    } = {}
+  ): Promise<UploadResult> {
     try {
-      await this.validateFile(file);
-      const filename = this.generateFilename(file.originalname, 'logo');
+      // Validate file with category-specific size limit
+      await this.validateFile(file, options.maxSizeMB);
 
+      // Generate category-specific filename (e.g., 'logo-', 'package-', 'segment-')
+      const prefix = category.slice(0, -1); // Remove trailing 's' (logos -> logo)
+      const filename = this.generateFilename(file.originalname, prefix);
+
+      // Upload to Supabase in real mode
       if (this.config.isRealMode) {
-        return this.uploadToSupabase(tenantId, 'logos', filename, file);
+        return this.uploadToSupabase(tenantId, category, filename, file);
       }
 
-      const filepath = path.join(this.config.logoUploadDir, filename);
+      // Local filesystem upload in mock mode
+      const uploadDirMap = {
+        logos: this.config.logoUploadDir,
+        packages: this.config.packagePhotoUploadDir,
+        segments: this.config.segmentImageUploadDir,
+      };
+
+      const filepath = path.join(uploadDirMap[category], filename);
       await this.fileSystem.writeFile(filepath, file.buffer);
 
-      logger.info({ tenantId, filename, size: file.size, mimetype: file.mimetype }, 'Logo uploaded successfully');
+      const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1, -1); // 'logos' -> 'Logo'
+      logger.info(
+        { tenantId, filename, size: file.size, mimetype: file.mimetype, ...options.logContext },
+        `${categoryLabel} uploaded successfully`
+      );
 
       return {
-        url: `${this.config.baseUrl}/uploads/logos/${filename}`,
+        url: `${this.config.baseUrl}/uploads/${category}/${filename}`,
         filename,
         size: file.size,
         mimetype: file.mimetype,
       };
     } catch (error) {
-      logger.error({ error, tenantId }, 'Error uploading logo');
+      const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1, -1);
+      logger.error(
+        { error, tenantId, ...options.errorContext },
+        `Error uploading ${categoryLabel.toLowerCase()}`
+      );
       throw error;
     }
+  }
+
+  async uploadLogo(file: UploadedFile, tenantId: string): Promise<UploadResult> {
+    return this.upload(file, tenantId, 'logos', {
+      maxSizeMB: this.config.maxFileSizeMB,
+    });
   }
 
   async uploadPackagePhoto(file: UploadedFile, packageId: string, tenantId?: string): Promise<UploadResult> {
-    try {
-      await this.validateFile(file, this.config.maxPackagePhotoSizeMB);
-      const filename = this.generateFilename(file.originalname, 'package');
-
-      if (this.config.isRealMode && tenantId) {
-        return this.uploadToSupabase(tenantId, 'packages', filename, file);
-      }
-
-      const filepath = path.join(this.config.packagePhotoUploadDir, filename);
-      await this.fileSystem.writeFile(filepath, file.buffer);
-
-      logger.info({ packageId, filename, size: file.size, mimetype: file.mimetype }, 'Package photo uploaded successfully');
-
-      return {
-        url: `${this.config.baseUrl}/uploads/packages/${filename}`,
-        filename,
-        size: file.size,
-        mimetype: file.mimetype,
-      };
-    } catch (error) {
-      logger.error({ error, packageId }, 'Error uploading package photo');
-      throw error;
-    }
+    // Use tenantId if provided (for real mode), otherwise use packageId as context
+    const effectiveTenantId = tenantId || packageId;
+    return this.upload(file, effectiveTenantId, 'packages', {
+      maxSizeMB: this.config.maxPackagePhotoSizeMB,
+      logContext: { packageId },
+      errorContext: { packageId },
+    });
   }
 
   async uploadSegmentImage(file: UploadedFile, tenantId: string): Promise<UploadResult> {
-    try {
-      await this.validateFile(file, this.config.maxPackagePhotoSizeMB);
-      const filename = this.generateFilename(file.originalname, 'segment');
-
-      if (this.config.isRealMode) {
-        return this.uploadToSupabase(tenantId, 'segments', filename, file);
-      }
-
-      const filepath = path.join(this.config.segmentImageUploadDir, filename);
-      await this.fileSystem.writeFile(filepath, file.buffer);
-
-      logger.info({ tenantId, filename, size: file.size, mimetype: file.mimetype }, 'Segment image uploaded successfully');
-
-      return {
-        url: `${this.config.baseUrl}/uploads/segments/${filename}`,
-        filename,
-        size: file.size,
-        mimetype: file.mimetype,
-      };
-    } catch (error) {
-      logger.error({ error, tenantId }, 'Error uploading segment image');
-      throw error;
-    }
+    return this.upload(file, tenantId, 'segments', {
+      maxSizeMB: this.config.maxPackagePhotoSizeMB,
+    });
   }
 
   async deleteLogo(filename: string): Promise<void> {

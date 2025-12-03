@@ -11,6 +11,7 @@ dotenv.config();
 const ConfigSchema = z.object({
   ADAPTERS_PRESET: z.enum(['mock', 'real']).default('mock'),
   API_PORT: z.coerce.number().int().positive().default(3001),
+  API_BASE_URL: z.string().url().optional().default('http://localhost:5000'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   // CORS allowed origins for production (comma-separated list)
   ALLOWED_ORIGINS: z

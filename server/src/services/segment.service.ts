@@ -5,7 +5,7 @@
 
 import type { Segment, Package, AddOn, PackageAddOn } from '../generated/prisma';
 import { NotFoundError, ValidationError } from '../lib/errors';
-import type { CacheServicePort } from '../lib/ports';
+import type { CacheServicePort, StorageProvider } from '../lib/ports';
 import {
   cachedOperation,
   buildCacheKey,
@@ -13,7 +13,6 @@ import {
   getSegmentInvalidationKeys,
 } from '../lib/cache-helpers';
 import type { PrismaSegmentRepository, CreateSegmentInput, UpdateSegmentInput } from '../adapters/prisma/segment.repository';
-import { uploadService } from './upload.service';
 import { logger } from '../lib/core/logger';
 
 export interface PackageWithAddOns extends Package {
@@ -34,7 +33,8 @@ export interface SegmentWithRelations extends Segment {
 export class SegmentService {
   constructor(
     private readonly repository: PrismaSegmentRepository,
-    private readonly cache?: CacheServicePort
+    private readonly cache?: CacheServicePort,
+    private readonly storageProvider?: StorageProvider
   ) {}
 
   /**
@@ -265,9 +265,9 @@ export class SegmentService {
 
     // Clean up heroImage BEFORE deleting segment from database
     // This prevents orphaned files in storage
-    if (existing.heroImage) {
+    if (existing.heroImage && this.storageProvider) {
       try {
-        await uploadService.deleteSegmentImage(existing.heroImage, tenantId);
+        await this.storageProvider.deleteSegmentImage(existing.heroImage, tenantId);
       } catch (err) {
         // Don't block segment deletion if cleanup fails
         logger.warn({ err, heroImage: existing.heroImage, segmentId: id },

@@ -6,10 +6,9 @@
 
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { baseUrl } from '@/lib/api';
-import { getAuthToken } from '@/lib/auth';
-import type { AppointmentDto, ServiceDto } from '@macon/contracts';
-import type { AppointmentFilters, EnrichedAppointment, Customer } from './types';
+import { api } from '@/lib/api';
+import type { AppointmentDto, ServiceDto, CustomerDto } from '@macon/contracts';
+import type { AppointmentFilters, EnrichedAppointment } from './types';
 import { AppointmentFilters as Filters } from './AppointmentFilters';
 import { AppointmentsList } from './AppointmentsList';
 
@@ -32,91 +31,90 @@ export function AppointmentsView() {
 
   // Fetch appointments from API
   const {
-    data: appointments = [],
+    data: appointmentsResponse,
     isLoading: appointmentsLoading,
     error: appointmentsError,
-  } = useQuery<AppointmentDto[]>({
+  } = useQuery({
     queryKey: ['tenant-admin', 'appointments', filters],
     queryFn: async () => {
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('No authentication token found');
+      // Build query params - only include if not 'all'
+      const query: {
+        status?: 'PENDING' | 'DEPOSIT_PAID' | 'PAID' | 'CONFIRMED' | 'CANCELED' | 'REFUNDED' | 'FULFILLED';
+        serviceId?: string;
+        startDate?: string;
+        endDate?: string;
+      } = {};
+
+      if (filters.status !== 'all') {
+        query.status = filters.status as typeof query.status;
+      }
+      if (filters.serviceId !== 'all') {
+        query.serviceId = filters.serviceId;
+      }
+      if (filters.startDate) {
+        query.startDate = filters.startDate;
+      }
+      if (filters.endDate) {
+        query.endDate = filters.endDate;
       }
 
-      const params = new URLSearchParams();
-      if (filters.status !== 'all') params.append('status', filters.status);
-      if (filters.serviceId !== 'all') params.append('serviceId', filters.serviceId);
-      if (filters.startDate) params.append('startDate', filters.startDate);
-      if (filters.endDate) params.append('endDate', filters.endDate);
-
-      const url = `${baseUrl}/v1/tenant-admin/appointments${params.toString() ? '?' + params.toString() : ''}`;
-
-      const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await api.tenantAdminGetAppointments({
+        query: Object.keys(query).length > 0 ? query : undefined,
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch appointments: ${response.statusText}`);
+      if (response.status !== 200) {
+        throw new Error('Failed to fetch appointments');
       }
 
-      return response.json();
+      return response.body;
     },
   });
+
+  const appointments = appointmentsResponse ?? [];
 
   // Fetch services to display service names
   const {
-    data: services = [],
+    data: servicesResponse,
     isLoading: servicesLoading,
-  } = useQuery<ServiceDto[]>({
+  } = useQuery({
     queryKey: ['tenant-admin', 'services'],
     queryFn: async () => {
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('No authentication token found');
+      const response = await api.tenantAdminGetServices();
+
+      if (response.status !== 200) {
+        throw new Error('Failed to fetch services');
       }
 
-      const response = await fetch(`${baseUrl}/v1/tenant-admin/services`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch services: ${response.statusText}`);
-      }
-
-      return response.json();
+      return response.body;
     },
   });
+
+  const services = servicesResponse ?? [];
 
   // Fetch customers to display customer details
   // Note: This is a workaround since appointments only return customerId
   // In a production app, the API should return enriched data or we should use a join
   const {
-    data: customers = [],
+    data: customersResponse,
     isLoading: customersLoading,
-  } = useQuery<Customer[]>({
+  } = useQuery({
     queryKey: ['tenant-admin', 'customers'],
     queryFn: async () => {
-      const token = getAuthToken();
-      if (!token) {
-        return []; // Return empty array if no token, customers are optional enrichment
-      }
+      const response = await api.tenantAdminGetCustomers();
 
-      // Note: This endpoint might not exist yet, so we'll handle errors gracefully
-      const response = await fetch(`${baseUrl}/v1/tenant-admin/customers`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        // If customers endpoint doesn't exist, just return empty array
+      if (response.status !== 200) {
+        // If customers endpoint fails, return empty array
         // The UI will still work, just without customer details
         return [];
       }
 
-      return response.json();
+      return response.body ?? [];
     },
     // Don't show error toast for customers endpoint since it's optional
     retry: false,
   });
+
+  const customers = customersResponse ?? [];
 
   // Enrich appointments with service and customer data
   const enrichedAppointments: EnrichedAppointment[] = useMemo(() => {

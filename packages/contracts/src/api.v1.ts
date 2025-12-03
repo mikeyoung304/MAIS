@@ -47,6 +47,7 @@ import {
   UpdateAvailabilityRuleDtoSchema,
   TimeSlotDtoSchema,
   AvailableSlotsQuerySchema,
+  CustomerDtoSchema,
   AppointmentDtoSchema,
   CreateAppointmentCheckoutDtoSchema,
   AppointmentCheckoutResponseDtoSchema,
@@ -1390,6 +1391,22 @@ export const Contracts = c.router({
       500: InternalServerErrorSchema,
     },
     summary: 'Get all appointments (time-slot bookings) for tenant with optional filters (requires tenant admin authentication)',
+  },
+
+  /**
+   * Get all customers for authenticated tenant
+   * GET /v1/tenant-admin/customers
+   */
+  tenantAdminGetCustomers: {
+    method: 'GET',
+    path: '/v1/tenant-admin/customers',
+    responses: {
+      200: z.array(CustomerDtoSchema),
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Get all customers for tenant (requires tenant admin authentication)',
   },
 
   // ============================================================================

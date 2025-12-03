@@ -667,6 +667,19 @@ export const AvailableSlotsQuerySchema = z.object({
 
 export type AvailableSlotsQuery = z.infer<typeof AvailableSlotsQuerySchema>;
 
+// Customer DTO
+export const CustomerDtoSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  email: z.string().nullable(),
+  phone: z.string().nullable(),
+  name: z.string(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type CustomerDto = z.infer<typeof CustomerDtoSchema>;
+
 // Appointment DTO (time-slot booking)
 export const AppointmentDtoSchema = z.object({
   id: z.string(),

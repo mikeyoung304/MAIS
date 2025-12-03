@@ -6,7 +6,7 @@ import { InputEnhanced } from "@/components/ui/input-enhanced";
 import { Stepper, type Step } from "@/components/ui/Stepper";
 import { ServiceSelector } from "./ServiceSelector";
 import { TimeSlotPicker } from "./TimeSlotPicker";
-import { baseUrl } from "@/lib/api";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { toUtcMidnight } from "@macon/shared";
 import { User, Mail, Phone, ArrowLeft } from "lucide-react";
@@ -110,37 +110,35 @@ export function AppointmentBookingFlow() {
 
   // Step 5: Submit to Checkout
   const handleCheckout = async () => {
-    if (!selectedService || !selectedSlot) {
+    if (!selectedService || !selectedSlot || !selectedDate) {
       toast.error("Please complete all steps before checkout");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`${baseUrl}/v1/public/appointments/checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Tenant-Key": localStorage.getItem("tenantKey") || "",
-        },
-        body: JSON.stringify({
+      // Format date as YYYY-MM-DD
+      const dateStr = selectedDate.toISOString().split('T')[0];
+
+      const response = await api.createAppointmentCheckout({
+        body: {
           serviceId: selectedService.id,
+          date: dateStr,
           startTime: selectedSlot.startTime.toISOString(),
-          clientName: customerDetails.name.trim(),
-          clientEmail: customerDetails.email.trim(),
-          clientPhone: customerDetails.phone.trim(),
-          notes: customerDetails.notes.trim(),
-        }),
+          endTime: selectedSlot.endTime.toISOString(),
+          customerName: customerDetails.name.trim(),
+          customerEmail: customerDetails.email.trim(),
+          customerPhone: customerDetails.phone.trim() || undefined,
+          notes: customerDetails.notes.trim() || undefined,
+        },
       });
 
-      if (!response.ok) {
+      if (response.status !== 201 || !response.body) {
         throw new Error("Failed to create checkout session");
       }
 
-      const data = await response.json();
-
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
+      if (response.body.checkoutUrl) {
+        window.location.href = response.body.checkoutUrl;
       } else {
         throw new Error("No checkout URL returned");
       }

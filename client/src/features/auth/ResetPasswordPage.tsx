@@ -7,8 +7,7 @@ import { Logo } from "@/components/brand/Logo";
 import { ErrorSummary, type FormError } from "@/components/ui/ErrorSummary";
 import { Lock, ArrowLeft, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { useForm } from "@/hooks/useForm";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+import { api } from "@/lib/api";
 
 /**
  * Reset Password Page
@@ -18,7 +17,6 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
  */
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const token = searchParams.get("token");
 
   const [error, setError] = useState<string | null>(null);
@@ -88,20 +86,15 @@ export function ResetPasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/auth/reset-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await api.resetPassword({
+        body: {
           token,
           newPassword: values.password,
-        }),
+        },
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to reset password");
+      if (response.status !== 200) {
+        throw new Error("Failed to reset password");
       }
 
       // Success

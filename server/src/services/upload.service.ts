@@ -1,10 +1,20 @@
 /**
  * File Upload Service (Backward Compatibility Wrapper)
  *
- * This module re-exports the new UploadAdapter for backward compatibility.
- * All new code should use the adapter pattern via dependency injection.
+ * TODO 065: This singleton pattern breaks the DI pattern.
+ * DO NOT USE THIS MODULE IN NEW CODE.
  *
- * @deprecated Use UploadAdapter with dependency injection instead
+ * Instead, access storageProvider from the DI container:
+ * ```typescript
+ * import { container } from '../di';
+ * const storageProvider = container.storageProvider;
+ * ```
+ *
+ * This module is kept ONLY for backward compatibility with existing routes
+ * that import uploadService directly. It will be removed once all routes
+ * are updated to use dependency injection.
+ *
+ * @deprecated Use container.storageProvider from DI container instead
  */
 
 import path from 'path';
@@ -20,6 +30,7 @@ export { checkUploadConcurrency, releaseUploadConcurrency } from '../adapters/up
 
 /**
  * Create upload adapter configuration from environment
+ * @deprecated Configuration should be done in di.ts
  */
 function createUploadConfig(): UploadAdapterConfig {
   // Use Supabase storage only when:
@@ -61,7 +72,7 @@ function createUploadConfig(): UploadAdapterConfig {
 
 /**
  * Legacy UploadService class for backward compatibility
- * @deprecated Use StorageProvider interface with dependency injection instead
+ * @deprecated Use container.storageProvider (UploadAdapter) with dependency injection instead
  */
 export class UploadService implements StorageProvider {
   private adapter: UploadAdapter;
@@ -109,5 +120,11 @@ export class UploadService implements StorageProvider {
   }
 }
 
-// Singleton instance for backward compatibility
+/**
+ * Singleton instance for backward compatibility
+ * @deprecated Import container.storageProvider from DI instead
+ *
+ * This will be removed once all routes are updated to receive
+ * storageProvider via dependency injection.
+ */
 export const uploadService = new UploadService();

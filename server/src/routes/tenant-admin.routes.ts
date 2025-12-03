@@ -27,6 +27,7 @@ import {
   NotFoundError,
   ValidationError,
   ForbiddenError,
+  TooManyRequestsError,
 } from '../lib/errors';
 import { uploadLimiterIP, uploadLimiterTenant, draftAutosaveLimiter } from '../middleware/rateLimiter';
 
@@ -127,8 +128,8 @@ export class TenantAdminController {
       releaseUploadConcurrency(tenantId);
       logger.error({ error }, 'Error uploading logo');
 
-      // Handle 429 status from concurrency limiter
-      if (error instanceof Error && 'status' in error && (error as { status: number }).status === 429) {
+      // Handle concurrency limit exceeded
+      if (error instanceof TooManyRequestsError) {
         res.status(429).json({ error: error.message });
         return;
       }
@@ -686,8 +687,8 @@ export function createTenantAdminRoutes(
         releaseUploadConcurrency(tenantId);
         logger.error({ error }, 'Error uploading package photo');
 
-        // Handle 429 status from concurrency limiter
-        if (error instanceof Error && 'status' in error && (error as { status: number }).status === 429) {
+        // Handle concurrency limit exceeded
+        if (error instanceof TooManyRequestsError) {
           res.status(429).json({ error: error.message });
           return;
         }
@@ -1063,8 +1064,8 @@ export function createTenantAdminRoutes(
         releaseUploadConcurrency(tenantId);
         logger.error({ error }, 'Error uploading segment image');
 
-        // Handle 429 status from concurrency limiter
-        if (error instanceof Error && 'status' in error && (error as { status: number }).status === 429) {
+        // Handle concurrency limit exceeded
+        if (error instanceof TooManyRequestsError) {
           res.status(429).json({ error: error.message });
           return;
         }

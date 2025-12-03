@@ -22,6 +22,8 @@ import { GoogleCalendarService } from './services/google-calendar.service';
 import { SchedulingAvailabilityService } from './services/scheduling-availability.service';
 import { PackageDraftService } from './services/package-draft.service';
 import { ReminderService } from './services/reminder.service';
+import { UploadAdapter } from './adapters/upload.adapter';
+import { NodeFileSystemAdapter } from './adapters/filesystem.adapter';
 import { PackagesController } from './routes/packages.routes';
 import { AvailabilityController } from './routes/availability.routes';
 import { BookingsController } from './routes/bookings.routes';
@@ -50,7 +52,9 @@ import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { PostmarkMailAdapter } from './adapters/postmark.adapter';
 import { GoogleCalendarAdapter } from './adapters/gcal.adapter';
 import { GoogleCalendarSyncAdapter } from './adapters/google-calendar-sync.adapter';
+import { getSupabaseClient } from './config/database';
 import { logger } from './lib/core/logger';
+import path from 'path';
 
 export interface Container {
   controllers: {
@@ -86,6 +90,7 @@ export interface Container {
     booking?: PrismaBookingRepository;
   };
   mailProvider?: PostmarkMailAdapter; // Export mail provider for password reset emails
+  storageProvider: UploadAdapter; // Export storage provider for file uploads
   cacheAdapter: CacheServicePort; // Export cache adapter for health checks
   prisma?: PrismaClient; // Export Prisma instance for shutdown
   eventEmitter?: InProcessEventEmitter; // Export event emitter for cleanup
@@ -114,6 +119,29 @@ export function buildContainer(config: Config): Container {
 
     // Build mock adapters
     const adapters = buildMockAdapters();
+
+    // Build storage provider (local filesystem for mock mode)
+    const fileSystem = new NodeFileSystemAdapter();
+    const storageProvider = new UploadAdapter(
+      {
+        logoUploadDir: path.join(process.cwd(), 'uploads', 'logos'),
+        packagePhotoUploadDir: path.join(process.cwd(), 'uploads', 'packages'),
+        segmentImageUploadDir: path.join(process.cwd(), 'uploads', 'segments'),
+        maxFileSizeMB: 2,
+        maxPackagePhotoSizeMB: 5,
+        allowedMimeTypes: [
+          'image/jpeg',
+          'image/jpg',
+          'image/png',
+          'image/svg+xml',
+          'image/webp',
+        ],
+        baseUrl: config.API_BASE_URL || 'http://localhost:5000',
+        isRealMode: false,
+        supabaseClient: undefined,
+      },
+      fileSystem
+    );
 
     // Mock PrismaClient for CommissionService (uses in-memory mock data)
     const mockPrisma = new PrismaClient();
@@ -155,9 +183,9 @@ export function buildContainer(config: Config): Container {
     // Create TenantAuthService with mock Prisma tenant repo
     const tenantAuthService = new TenantAuthService(mockTenantRepo, config.JWT_SECRET);
 
-    // Create SegmentService with mock Prisma segment repo
+    // Create SegmentService with mock Prisma segment repo and storage provider
     const segmentRepo = new PrismaSegmentRepository(mockPrisma);
-    const segmentService = new SegmentService(segmentRepo, cacheAdapter);
+    const segmentService = new SegmentService(segmentRepo, cacheAdapter, storageProvider);
 
     // Create TenantOnboardingService with mock Prisma
     const tenantOnboardingService = new TenantOnboardingService(mockPrisma);
@@ -252,6 +280,7 @@ export function buildContainer(config: Config): Container {
       services,
       repositories,
       mailProvider: undefined,
+      storageProvider,
       cacheAdapter,
       prisma: mockPrisma,
       eventEmitter,
@@ -356,6 +385,51 @@ export function buildContainer(config: Config): Container {
     calendarProvider = mockAdapters.calendarProvider;
   }
 
+  // Build storage provider (Supabase for real mode, or local filesystem fallback)
+  const fileSystem = new NodeFileSystemAdapter();
+  let supabaseClient;
+  let isRealMode = false;
+
+  // Use Supabase storage only when:
+  // 1. ADAPTERS_PRESET=real AND SUPABASE_URL is configured, OR
+  // 2. STORAGE_MODE=supabase is explicitly set
+  // This allows integration tests to use real DB with local storage by not setting STORAGE_MODE
+  if (
+    process.env.STORAGE_MODE === 'supabase' ||
+    (config.ADAPTERS_PRESET === 'real' && process.env.SUPABASE_URL && process.env.STORAGE_MODE !== 'local')
+  ) {
+    try {
+      supabaseClient = getSupabaseClient();
+      isRealMode = true;
+      logger.info('📦 Using Supabase storage for file uploads');
+    } catch (error) {
+      logger.warn('⚠️  Supabase not configured; using local filesystem storage');
+    }
+  } else {
+    logger.info('📁 Using local filesystem storage for file uploads');
+  }
+
+  const storageProvider = new UploadAdapter(
+    {
+      logoUploadDir: process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads', 'logos'),
+      packagePhotoUploadDir: path.join(process.cwd(), 'uploads', 'packages'),
+      segmentImageUploadDir: path.join(process.cwd(), 'uploads', 'segments'),
+      maxFileSizeMB: parseInt(process.env.MAX_UPLOAD_SIZE_MB || '2', 10),
+      maxPackagePhotoSizeMB: 5,
+      allowedMimeTypes: [
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/svg+xml',
+        'image/webp',
+      ],
+      baseUrl: config.API_BASE_URL || 'http://localhost:5000',
+      isRealMode,
+      supabaseClient,
+    },
+    fileSystem
+  );
+
   // Create AuditService with real Prisma (Sprint 2.1)
   const auditService = new AuditService({ prisma });
 
@@ -383,8 +457,8 @@ export function buildContainer(config: Config): Container {
   // Create TenantAuthService with real Prisma tenant repo
   const tenantAuthService = new TenantAuthService(tenantRepo, config.JWT_SECRET);
 
-  // Create SegmentService with real Prisma segment repo
-  const segmentService = new SegmentService(segmentRepo, cacheAdapter);
+  // Create SegmentService with real Prisma segment repo and storage provider
+  const segmentService = new SegmentService(segmentRepo, cacheAdapter, storageProvider);
 
   // Create TenantOnboardingService with real Prisma
   const tenantOnboardingService = new TenantOnboardingService(prisma);
@@ -573,6 +647,7 @@ export function buildContainer(config: Config): Container {
     services,
     repositories,
     mailProvider,
+    storageProvider,
     cacheAdapter,
     prisma,
     eventEmitter,

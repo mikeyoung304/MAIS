@@ -7,8 +7,7 @@ import { Logo } from "@/components/brand/Logo";
 import { ErrorSummary, type FormError } from "@/components/ui/ErrorSummary";
 import { Mail, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
 import { useForm } from "@/hooks/useForm";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+import { api } from "@/lib/api";
 
 /**
  * Forgot Password Page
@@ -59,17 +58,12 @@ export function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/auth/forgot-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: values.email }),
+      const response = await api.forgotPassword({
+        body: { email: values.email },
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to send reset email");
+      if (response.status !== 200) {
+        throw new Error("Failed to send reset email");
       }
 
       // Success - show confirmation
