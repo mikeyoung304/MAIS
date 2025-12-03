@@ -3,6 +3,7 @@
  */
 
 import { z } from 'zod';
+import { LandingPageConfigSchema } from './landing-page';
 
 // ============================================================================
 // Error Response Schemas
@@ -766,6 +767,9 @@ export const TenantPublicDtoSchema = z.object({
     backgroundColor: HexColorSchema.optional(),
     fontFamily: z.enum(ALLOWED_FONT_FAMILIES).optional(),
     logoUrl: z.string().url().optional(),
+    // Landing page configuration - composed from landing-page.ts (DRY)
+    // SECURITY: LandingPageConfigSchema uses SafeUrlSchema for XSS prevention
+    landingPage: LandingPageConfigSchema.optional(),
   }).optional(),
 });
 

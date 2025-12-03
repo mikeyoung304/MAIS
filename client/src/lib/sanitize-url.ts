@@ -1,72 +1,86 @@
 /**
  * URL Sanitization Utility
  *
- * Provides frontend defense-in-depth for image URL validation.
+ * Defense-in-depth validation for URLs, matching backend SafeUrlSchema.
  *
  * SECURITY CONTEXT:
- * Backend validates all URLs on write (.url() in Zod schemas).
- * CSP headers enforce img-src https: at the browser level.
- * This utility provides an additional validation layer for explicit control.
- *
- * WHEN TO USE:
- * - Admin interfaces: Always use to validate user-facing content
- * - Public storefronts: Optional; CSP headers + backend validation sufficient
- * - Development: Helpful for catching issues early
+ * - Backend validates all URLs via SafeUrlSchema (only https:/http: allowed)
+ * - CSP headers enforce img-src at the browser level
+ * - This utility provides frontend validation as defense-in-depth
  *
  * WHAT IT PROTECTS AGAINST:
- * - javascript: protocol injection (blocked by CSP)
- * - data:text/html injection (blocked by CSP)
- * - Malformed URLs in display contexts
- * - Tracking pixel injection (rare but possible)
+ * - javascript: protocol injection (XSS)
+ * - data: URI injection (XSS bypass)
+ * - vbscript: and other dangerous protocols
+ * - Malformed URLs that bypassed backend validation
  *
- * WHAT IT DOESN'T NEED TO PROTECT AGAINST:
- * - img src XSS (browsers don't execute JS in img src, only CSP)
- * - HTTPS enforcement (CSP handles this)
- * - Database compromise (backend responsibility)
- *
- * Prevents XSS attacks and tracking pixel injection in user-uploaded image URLs
- * by validating URL protocols and formats.
- *
- * Security Considerations:
- * - Only allows http://, https://, and data:image/ protocols
- * - Permits relative URLs starting with / or ./
- * - Rejects javascript:, data:text/, and other potentially malicious protocols
+ * ALIGNED WITH:
+ * - packages/contracts/src/landing-page.ts SafeUrlSchema
+ * - Only http:// and https:// protocols allowed
+ * - data: URIs are blocked (even data:image/) for consistency with backend
  */
 
+const ALLOWED_PROTOCOLS = ['https:', 'http:'];
+
 /**
- * Sanitizes image URLs to prevent XSS and tracking pixel injection
+ * Sanitizes URLs to prevent XSS via dangerous protocols.
+ * Matches backend SafeUrlSchema validation.
  *
  * @param url - The URL to sanitize
- * @returns The sanitized URL or empty string if invalid
+ * @returns The sanitized URL or undefined if invalid/dangerous
  *
  * @example
- * sanitizeImageUrl('https://example.com/image.jpg') // ✅ Returns URL
- * sanitizeImageUrl('javascript:alert(1)') // ❌ Returns ''
- * sanitizeImageUrl('data:image/png;base64,...') // ✅ Returns URL
- * sanitizeImageUrl('/uploads/photo.jpg') // ✅ Returns URL
+ * sanitizeUrl('https://example.com/page') // ✅ Returns URL
+ * sanitizeUrl('http://example.com/page')  // ✅ Returns URL
+ * sanitizeUrl('javascript:alert(1)')      // ❌ Returns undefined
+ * sanitizeUrl('data:text/html,...')       // ❌ Returns undefined
+ * sanitizeUrl('data:image/png;base64,...') // ❌ Returns undefined (blocked for consistency)
  */
-export const sanitizeImageUrl = (url: string | undefined): string => {
-  if (!url) return '';
+export function sanitizeUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined;
 
   try {
     const parsed = new URL(url);
-    // Only allow http/https protocols for absolute URLs
-    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+    if (ALLOWED_PROTOCOLS.includes(parsed.protocol)) {
       return url;
     }
-    // Allow data URLs for images only (not text/html)
-    if (url.startsWith('data:image/')) {
-      return url;
-    }
-    // Reject other protocols (javascript:, data:text/, etc.)
-    return '';
+    // Block all other protocols including javascript:, data:, vbscript:, etc.
+    console.warn('[security] Blocked dangerous URL protocol:', parsed.protocol, url);
+    return undefined;
   } catch {
-    // URL parsing failed, might be relative URL
-    // Allow relative URLs starting with / or ./
-    if (url.startsWith('/') || url.startsWith('./')) {
-      return url;
-    }
-    // Reject malformed or suspicious URLs
-    return '';
+    // Invalid URL - log and block
+    console.warn('[security] Blocked invalid URL:', url);
+    return undefined;
   }
-};
+}
+
+/**
+ * Sanitizes image URLs with the same security rules as sanitizeUrl.
+ * Use for img src attributes and CSS background-image URLs.
+ *
+ * @param url - The image URL to sanitize
+ * @returns The sanitized URL or undefined if invalid/dangerous
+ *
+ * @example
+ * sanitizeImageUrl('https://cdn.example.com/photo.jpg') // ✅ Returns URL
+ * sanitizeImageUrl('javascript:alert(1)')               // ❌ Returns undefined
+ */
+export function sanitizeImageUrl(url: string | undefined): string | undefined {
+  return sanitizeUrl(url);
+}
+
+/**
+ * Creates a safe CSS background-image value.
+ * Returns undefined if the URL is invalid or dangerous.
+ *
+ * @param url - The background image URL
+ * @returns CSS url() value or undefined
+ *
+ * @example
+ * sanitizeBackgroundUrl('https://example.com/bg.jpg') // ✅ 'url(https://example.com/bg.jpg)'
+ * sanitizeBackgroundUrl('javascript:alert(1)')        // ❌ undefined
+ */
+export function sanitizeBackgroundUrl(url: string | undefined): string | undefined {
+  const sanitized = sanitizeImageUrl(url);
+  return sanitized ? `url(${sanitized})` : undefined;
+}
