@@ -8,7 +8,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
 import { ZodError } from 'zod';
-import { UpdateBrandingDtoSchema, UpdatePackageDraftDtoSchema } from '@macon/contracts';
+import { UpdateBrandingDtoSchema, UpdatePackageDraftDtoSchema, CreateAddOnDtoSchema, UpdateAddOnDtoSchema } from '@macon/contracts';
 import { uploadService, checkUploadConcurrency, releaseUploadConcurrency } from '../services/upload.service';
 import { logger } from '../lib/core/logger';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
@@ -29,7 +29,7 @@ import {
   ForbiddenError,
   TooManyRequestsError,
 } from '../lib/errors';
-import { uploadLimiterIP, uploadLimiterTenant, draftAutosaveLimiter } from '../middleware/rateLimiter';
+import { uploadLimiterIP, uploadLimiterTenant, draftAutosaveLimiter, addonReadLimiter, addonWriteLimiter } from '../middleware/rateLimiter';
 
 // Configure multer for memory storage
 const upload = multer({
@@ -1004,6 +1004,171 @@ export function createTenantAdminRoutes(
           error: 'Validation error',
           details: error.issues,
         });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  // ============================================================================
+  // Add-On Management Endpoints
+  // ============================================================================
+
+  /**
+   * TODO-195 FIX: DTO mapper function to avoid code duplication
+   * Maps AddOn entity to API response format
+   */
+  const mapAddOnToDto = (addOn: { id: string; packageId: string; title: string; description: string | null; priceCents: number; photoUrl: string | null }) => ({
+    id: addOn.id,
+    packageId: addOn.packageId,
+    title: addOn.title,
+    description: addOn.description,
+    priceCents: addOn.priceCents,
+    photoUrl: addOn.photoUrl,
+  });
+
+  /**
+   * TODO-194 FIX: Helper to extract tenantId from authenticated request
+   * Returns null if not authenticated, allowing route to handle 401
+   */
+  const getTenantId = (res: Response): string | null => {
+    const tenantAuth = res.locals.tenantAuth;
+    return tenantAuth?.tenantId ?? null;
+  };
+
+  /**
+   * GET /v1/tenant-admin/addons
+   * List all add-ons for authenticated tenant
+   */
+  router.get('/addons', addonReadLimiter, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      const addOns = await catalogService.getAllAddOns(tenantId);
+      res.json(addOns.map(mapAddOnToDto));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * GET /v1/tenant-admin/addons/:id
+   * Get single add-on by ID (verifies ownership)
+   */
+  router.get('/addons/:id', addonReadLimiter, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      const addOn = await catalogService.getAddOnById(tenantId, req.params.id);
+      if (!addOn) {
+        res.status(404).json({ error: 'Add-on not found' });
+        return;
+      }
+
+      res.json(mapAddOnToDto(addOn));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * POST /v1/tenant-admin/addons
+   * Create new add-on for authenticated tenant
+   */
+  router.post('/addons', addonWriteLimiter, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      const data = CreateAddOnDtoSchema.parse(req.body);
+
+      // SECURITY: Validate package ownership - ensure packageId belongs to tenant
+      const pkg = await catalogService.getPackageById(tenantId, data.packageId);
+      if (!pkg) {
+        res.status(404).json({ error: 'Invalid package: package not found or does not belong to this tenant' });
+        return;
+      }
+
+      const addOn = await catalogService.createAddOn(tenantId, data);
+      res.status(201).json(mapAddOnToDto(addOn));
+    } catch (error) {
+      if (error instanceof ZodError) {
+        res.status(400).json({ error: 'Validation error', details: error.issues });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  /**
+   * PUT /v1/tenant-admin/addons/:id
+   * Update add-on (verifies ownership)
+   */
+  router.put('/addons/:id', addonWriteLimiter, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      const { id } = req.params;
+      const data = UpdateAddOnDtoSchema.parse(req.body);
+
+      // SECURITY: If updating packageId, validate it belongs to tenant
+      if (data.packageId) {
+        const pkg = await catalogService.getPackageById(tenantId, data.packageId);
+        if (!pkg) {
+          res.status(404).json({ error: 'Invalid package: package not found or does not belong to this tenant' });
+          return;
+        }
+      }
+
+      const addOn = await catalogService.updateAddOn(tenantId, id, data);
+      res.json(mapAddOnToDto(addOn));
+    } catch (error) {
+      if (error instanceof ZodError) {
+        res.status(400).json({ error: 'Validation error', details: error.issues });
+        return;
+      }
+      // TODO-196 FIX: Explicit NotFoundError handling
+      if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  /**
+   * DELETE /v1/tenant-admin/addons/:id
+   * Delete add-on (verifies ownership)
+   */
+  router.delete('/addons/:id', addonWriteLimiter, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      await catalogService.deleteAddOn(tenantId, req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      // TODO-196 FIX: Explicit NotFoundError handling
+      if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
         return;
       }
       next(error);

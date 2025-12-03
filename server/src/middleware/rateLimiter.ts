@@ -220,6 +220,46 @@ export const publicSchedulingLimiter = rateLimit({
     }),
 });
 
+/**
+ * TODO-193 FIX: Rate limiter for add-on read operations
+ * 100 requests per minute per tenant - allows frequent catalog browsing
+ */
+export const addonReadLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: isTestEnvironment ? 500 : 100, // 100 reads per minute per tenant
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Key by tenantId for per-tenant limiting
+  keyGenerator: (_req, res) => res.locals.tenantAuth?.tenantId || normalizeIp(_req.ip),
+  skip: (_req, res) => !res.locals.tenantAuth, // Only apply to authenticated requests
+  validate: false,
+  handler: (_req: Request, res: Response) =>
+    res.status(429).json({
+      error: 'too_many_addon_read_requests',
+      message: 'Too many add-on requests. Please try again later.',
+    }),
+});
+
+/**
+ * TODO-193 FIX: Rate limiter for add-on write operations
+ * 20 requests per minute per tenant - prevents rapid creation/modification abuse
+ */
+export const addonWriteLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: isTestEnvironment ? 500 : 20, // 20 writes per minute per tenant
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Key by tenantId for per-tenant limiting
+  keyGenerator: (_req, res) => res.locals.tenantAuth?.tenantId || normalizeIp(_req.ip),
+  skip: (_req, res) => !res.locals.tenantAuth, // Only apply to authenticated requests
+  validate: false,
+  handler: (_req: Request, res: Response) =>
+    res.status(429).json({
+      error: 'too_many_addon_write_requests',
+      message: 'Too many add-on modification requests. Please try again later.',
+    }),
+});
+
 export const skipIfHealth = (req: Request, _res: Response, next: NextFunction) => {
   if (req.path === '/health' || req.path === '/ready') {
     return next();

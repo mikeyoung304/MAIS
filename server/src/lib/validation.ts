@@ -5,11 +5,22 @@
 import { ValidationError } from './errors';
 
 /**
- * Validate price is non-negative
+ * Maximum price in cents: $999,999.99
+ * Aligned with Stripe's maximum charge amount
+ * @see https://stripe.com/docs/currencies#minimum-and-maximum-charge-amounts
+ */
+export const MAX_PRICE_CENTS = 99999999;
+
+/**
+ * Validate price is non-negative and within Stripe limits
+ * TODO-198 FIX: Add upper bound to prevent integer overflow and align with Stripe
  */
 export function validatePrice(priceCents: number, fieldName: string = 'price'): void {
   if (priceCents < 0) {
     throw new ValidationError(`${fieldName} must be non-negative`);
+  }
+  if (priceCents > MAX_PRICE_CENTS) {
+    throw new ValidationError(`${fieldName} exceeds maximum allowed value ($999,999.99)`);
   }
 }
 

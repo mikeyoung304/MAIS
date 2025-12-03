@@ -224,12 +224,19 @@ export const PackageResponseDtoSchema = z.object({
 
 export type PackageResponseDto = z.infer<typeof PackageResponseDtoSchema>;
 
+/**
+ * Maximum price in cents: $999,999.99
+ * Aligned with Stripe's maximum charge amount
+ * TODO-198 FIX: Add upper bound to prevent integer overflow
+ */
+const MAX_PRICE_CENTS = 99999999;
+
 // Admin AddOn CRUD DTOs
 export const CreateAddOnDtoSchema = z.object({
   packageId: z.string().min(1),
   title: z.string().min(1),
   description: z.string().optional(),
-  priceCents: z.number().int().min(0),
+  priceCents: z.number().int().min(0).max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' }),
   photoUrl: z.string().url().optional(),
 });
 
@@ -239,7 +246,7 @@ export const UpdateAddOnDtoSchema = z.object({
   packageId: z.string().min(1).optional(),
   title: z.string().min(1).optional(),
   description: z.string().optional(),
-  priceCents: z.number().int().min(0).optional(),
+  priceCents: z.number().int().min(0).max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' }).optional(),
   photoUrl: z.string().url().optional(),
 });
 

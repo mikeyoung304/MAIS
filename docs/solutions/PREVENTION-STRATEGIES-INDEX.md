@@ -183,6 +183,22 @@ async function ensureLoggedIn(page) {
 }
 ```
 
+#### [CRUD Routes Implementation Checklist](./PREVENTION-CRUD-ROUTE-CHECKLIST.md)
+**Purpose:** Prevent common mistakes when adding/modifying CRUD endpoints
+**Audience:** Engineers implementing Create/Read/Update/Delete routes
+**Length:** ~5,000 words
+**Key Patterns:** API contracts, rate limiting, auth checks, DTO mapping, error handling
+
+**Issues Prevented:**
+- Missing API contracts for endpoints
+- No rate limiting on CRUD operations
+- Duplicated auth checks (24x duplication)
+- Inline DTO mapping repeated 4+ times
+- Missing NotFoundError handling (returns 500 instead of 404)
+- Missing price/numeric field validation
+
+**Quick Reference:** [CRUD-QUICK-REFERENCE.md](./CRUD-QUICK-REFERENCE.md) (print and pin this!)
+
 ---
 
 ### 2.5. Code Review Pattern Guides
@@ -320,7 +336,39 @@ cp server/test/templates/tenant-isolation.test.ts \
 
 ---
 
-### "I'm adding a new API endpoint"
+### "I'm adding a new API endpoint (CRUD)"
+
+**Read:**
+1. [CRUD Routes Quick Reference](./CRUD-QUICK-REFERENCE.md) (5 min)
+2. [Full CRUD Implementation Checklist](./PREVENTION-CRUD-ROUTE-CHECKLIST.md) (20 min)
+
+**Planning (Before Coding):**
+- [ ] API contract defined in `packages/contracts/src/api.v1.ts`
+- [ ] Response DTOs in `packages/contracts/src/dto.ts`
+- [ ] Rate limiter chosen and imported
+- [ ] Validation schema created
+- [ ] Helper functions planned (getTenantId, mapXxxToDto)
+
+**Implementation:**
+- [ ] All queries filter by tenantId
+- [ ] Foreign keys validate ownership
+- [ ] Auth check uses getTenantId() helper (not duplicated)
+- [ ] DTO mapper extracted to function
+- [ ] Error handling: ZodError → 400, NotFoundError → 404, etc.
+- [ ] Numeric fields have min/max bounds
+- [ ] Logging added for mutations
+
+**Testing:**
+- [ ] Happy path: 200/201 response
+- [ ] Validation: 400 on invalid input
+- [ ] Not found: 404 for missing resource
+- [ ] Unauthenticated: 401 when no auth
+- [ ] Rate limit: 429 when limit exceeded
+- [ ] Tenant isolation: 403 for cross-tenant access
+
+---
+
+### "I'm adding a new API endpoint (Non-CRUD)"
 
 **Read:**
 1. [Quick Reference - Multi-Tenant Security](./PREVENTION-QUICK-REFERENCE.md#-multi-tenant-security-critical)

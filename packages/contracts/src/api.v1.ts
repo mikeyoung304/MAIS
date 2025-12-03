@@ -961,6 +961,110 @@ export const Contracts = c.router({
     summary: 'Get segment statistics (requires tenant admin authentication)',
   },
 
+  // ============================================================================
+  // Tenant Admin Add-On CRUD Endpoints
+  // ============================================================================
+
+  /**
+   * Get all add-ons for tenant
+   * GET /v1/tenant-admin/addons
+   */
+  tenantAdminGetAddOns: {
+    method: 'GET',
+    path: '/v1/tenant-admin/addons',
+    responses: {
+      200: z.array(AddOnDtoSchema),
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Get all add-ons for tenant (requires tenant admin authentication)',
+  },
+
+  /**
+   * Get single add-on by ID
+   * GET /v1/tenant-admin/addons/:id
+   */
+  tenantAdminGetAddOnById: {
+    method: 'GET',
+    path: '/v1/tenant-admin/addons/:id',
+    pathParams: z.object({
+      id: z.string(),
+    }),
+    responses: {
+      200: AddOnDtoSchema,
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      404: NotFoundErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Get single add-on by ID (requires tenant admin authentication)',
+  },
+
+  /**
+   * Create a new add-on
+   * POST /v1/tenant-admin/addons
+   */
+  tenantAdminCreateAddOn: {
+    method: 'POST',
+    path: '/v1/tenant-admin/addons',
+    body: CreateAddOnDtoSchema,
+    responses: {
+      201: AddOnDtoSchema,
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      404: NotFoundErrorSchema,
+      422: UnprocessableEntityErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Create a new add-on (requires tenant admin authentication)',
+  },
+
+  /**
+   * Update an add-on
+   * PUT /v1/tenant-admin/addons/:id
+   */
+  tenantAdminUpdateAddOn: {
+    method: 'PUT',
+    path: '/v1/tenant-admin/addons/:id',
+    pathParams: z.object({
+      id: z.string(),
+    }),
+    body: UpdateAddOnDtoSchema,
+    responses: {
+      200: AddOnDtoSchema,
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      404: NotFoundErrorSchema,
+      422: UnprocessableEntityErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Update an add-on (requires tenant admin authentication)',
+  },
+
+  /**
+   * Delete an add-on
+   * DELETE /v1/tenant-admin/addons/:id
+   */
+  tenantAdminDeleteAddOn: {
+    method: 'DELETE',
+    path: '/v1/tenant-admin/addons/:id',
+    pathParams: z.object({
+      id: z.string(),
+    }),
+    body: z.undefined(),
+    responses: {
+      204: z.void(),
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      404: NotFoundErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Delete an add-on (requires tenant admin authentication)',
+  },
+
   // =========================================================================
   // PUBLIC SEGMENT ENDPOINTS (for customer-facing storefront)
   // Requires X-Tenant-Key header for tenant context

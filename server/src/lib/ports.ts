@@ -18,6 +18,7 @@ export interface CatalogRepository {
   getPackageBySlug(tenantId: string, slug: string): Promise<Package | null>;
   getPackageById(tenantId: string, id: string): Promise<Package | null>;
   getPackagesByIds(tenantId: string, ids: string[]): Promise<Package[]>;
+  getAllAddOns(tenantId: string): Promise<AddOn[]>;
   getAddOnsByPackageId(tenantId: string, packageId: string): Promise<AddOn[]>;
   getAddOnById(tenantId: string, id: string): Promise<AddOn | null>;
   createPackage(tenantId: string, data: CreatePackageInput): Promise<Package>;

@@ -18,6 +18,7 @@ import {
   invalidateCacheKeys,
   getCatalogInvalidationKeys,
   getSegmentCatalogInvalidationKeys,
+  getAddOnInvalidationKeys,
 } from '../lib/cache-helpers';
 import { validatePrice, validateRequiredFields } from '../lib/validation';
 import type { AuditService } from './audit.service';
@@ -133,6 +134,48 @@ export class CatalogService {
    */
   async getPackageById(tenantId: string, id: string): Promise<Package | null> {
     return this.repository.getPackageById(tenantId, id);
+  }
+
+  /**
+   * Retrieves all add-ons for a tenant
+   *
+   * MULTI-TENANT: Scoped to tenantId for data isolation
+   * Used for tenant admin add-on management.
+   * Implements application-level caching with 15-minute TTL.
+   *
+   * @param tenantId - Tenant ID for data isolation
+   * @returns Array of all add-ons for the tenant
+   *
+   * @example
+   * ```typescript
+   * const addOns = await catalogService.getAllAddOns('tenant_123');
+   * // Returns: [{ id: 'addon1', title: 'Video Recording', priceCents: 50000, ... }, ...]
+   * ```
+   */
+  async getAllAddOns(tenantId: string): Promise<AddOn[]> {
+    return cachedOperation(
+      this.cache,
+      {
+        prefix: 'catalog',
+        keyParts: [tenantId, 'all-addons'],
+        ttl: 900, // 15 minutes
+      },
+      () => this.repository.getAllAddOns(tenantId)
+    );
+  }
+
+  /**
+   * Retrieves an add-on by ID for a tenant
+   *
+   * MULTI-TENANT: Scoped to tenantId to prevent cross-tenant access
+   * Used for tenant admin add-on management.
+   *
+   * @param tenantId - Tenant ID for data isolation
+   * @param id - Add-on ID
+   * @returns Add-on or null if not found for this tenant
+   */
+  async getAddOnById(tenantId: string, id: string): Promise<AddOn | null> {
+    return this.repository.getAddOnById(tenantId, id);
   }
 
   // Package CRUD operations
@@ -284,9 +327,10 @@ export class CatalogService {
 
     const result = await this.repository.createAddOn(tenantId, data);
 
-    // Targeted cache invalidation - only invalidate affected package
+    // Targeted cache invalidation - only invalidate affected package and all-addons cache
     // Add-on creation doesn't affect all-packages list, just the specific package's add-ons
     await this.invalidatePackageCache(tenantId, pkg.slug);
+    await this.invalidateAddOnsCache(tenantId);
 
     return result;
   }
@@ -326,6 +370,9 @@ export class CatalogService {
       await this.invalidatePackageCache(tenantId, newPackage.slug);
     }
 
+    // Also invalidate all-addons cache
+    await this.invalidateAddOnsCache(tenantId);
+
     return result;
   }
 
@@ -338,12 +385,13 @@ export class CatalogService {
 
     await this.repository.deleteAddOn(tenantId, id);
 
-    // Targeted cache invalidation - only invalidate affected package
+    // Targeted cache invalidation - only invalidate affected package and all-addons cache
     // No need to invalidate all-packages since add-on deletion doesn't affect package list
     const pkg = await this.repository.getPackageById(tenantId, existing.packageId);
     if (pkg) {
       await this.invalidatePackageCache(tenantId, pkg.slug);
     }
+    await this.invalidateAddOnsCache(tenantId);
   }
 
   // ============================================================================
@@ -509,5 +557,17 @@ export class CatalogService {
    */
   private async invalidateSegmentCatalogCache(tenantId: string, segmentId: string): Promise<void> {
     await invalidateCacheKeys(this.cache, getSegmentCatalogInvalidationKeys(tenantId, segmentId));
+  }
+
+  /**
+   * Invalidate all-addons cache entry
+   *
+   * Called when add-ons are created, updated, or deleted
+   *
+   * @param tenantId - Tenant ID
+   * @private
+   */
+  private async invalidateAddOnsCache(tenantId: string): Promise<void> {
+    await invalidateCacheKeys(this.cache, getAddOnInvalidationKeys(tenantId));
   }
 }

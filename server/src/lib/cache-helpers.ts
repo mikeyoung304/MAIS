@@ -177,3 +177,13 @@ export function getSegmentCatalogInvalidationKeys(
     buildCacheKey('catalog', tenantId, 'segment', segmentId, 'addons'),
   ];
 }
+
+/**
+ * Add-on cache invalidation keys
+ *
+ * @param tenantId - Tenant ID
+ * @returns Array of cache keys to invalidate
+ */
+export function getAddOnInvalidationKeys(tenantId: string): string[] {
+  return [buildCacheKey('catalog', tenantId, 'all-addons')];
+}
