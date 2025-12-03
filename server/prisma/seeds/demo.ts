@@ -27,22 +27,30 @@ export async function seedDemo(prisma: PrismaClient): Promise<void> {
     where: { slug: DEMO_SLUG },
   });
 
-  let publicKey: string;
-  let secretKey: string | null = null;
-
-  if (existingTenant) {
-    // Tenant exists - preserve keys
-    publicKey = existingTenant.apiKeyPublic;
-    logger.info('Demo tenant already exists - updating within transaction');
-  } else {
-    // New tenant - generate keys
-    publicKey = `pk_live_${DEMO_SLUG}_${crypto.randomBytes(8).toString('hex')}`;
-    secretKey = `sk_live_${DEMO_SLUG}_${crypto.randomBytes(16).toString('hex')}`;
-    logger.info('Creating new demo tenant with generated keys');
-  }
+  // Variables to capture keys for logging after successful commit
+  let publicKeyForLogging: string;
+  let secretKeyForLogging: string | null = null;
 
   // Wrap all seed operations in a transaction to prevent partial data on failure
+  logger.info({ slug: DEMO_SLUG, operations: 16 }, 'Starting seed transaction');
+  const startTime = Date.now();
+
   await prisma.$transaction(async (tx) => {
+    // Generate or reuse API keys INSIDE transaction
+    let publicKey: string;
+    let secretKey: string | null = null;
+
+    if (existingTenant) {
+      // Tenant exists - preserve keys
+      publicKey = existingTenant.apiKeyPublic;
+      logger.info('Demo tenant already exists - updating within transaction');
+    } else {
+      // New tenant - generate keys inside transaction to avoid waste on rollback
+      publicKey = `pk_live_${DEMO_SLUG}_${crypto.randomBytes(8).toString('hex')}`;
+      secretKey = `sk_live_${DEMO_SLUG}_${crypto.randomBytes(16).toString('hex')}`;
+      logger.info('Creating new demo tenant with generated keys');
+    }
+
     // Create or update tenant using shared utility
     const tenant = await createOrUpdateTenant(tx, {
       slug: DEMO_SLUG,
@@ -57,15 +65,14 @@ export async function seedDemo(prisma: PrismaClient): Promise<void> {
       backgroundColor: '#ffffff',
     });
 
+    // Capture keys for logging after successful commit
+    publicKeyForLogging = publicKey;
+    secretKeyForLogging = secretKey;
+
     if (existingTenant) {
       logger.info(`Demo tenant updated (keys preserved): ${tenant.name}`);
-      logger.info(`Public Key: ${publicKey}`);
-      logger.info('Secret key unchanged - using existing value');
     } else {
       logger.info(`Demo tenant created: ${tenant.name}`);
-      logger.info(`Public Key: ${publicKey}`);
-      logger.warn(`Secret Key: ${secretKey}`);
-      logger.warn('SAVE THESE KEYS - they will not be regenerated on subsequent seeds!');
     }
 
     // Create realistic packages using shared utility
@@ -174,6 +181,21 @@ export async function seedDemo(prisma: PrismaClient): Promise<void> {
 
     logger.info('Demo blackout dates created');
   }, { timeout: 60000 }); // 60 second timeout for large seed operations
+
+  logger.info({
+    slug: DEMO_SLUG,
+    durationMs: Date.now() - startTime
+  }, 'Seed transaction committed successfully');
+
+  // Log keys AFTER successful transaction commit
+  if (existingTenant) {
+    logger.info(`Public Key: ${publicKeyForLogging}`);
+    logger.info('Secret key unchanged - using existing value');
+  } else {
+    logger.info(`Public Key: ${publicKeyForLogging}`);
+    logger.warn(`Secret Key: ${secretKeyForLogging}`);
+    logger.warn('SAVE THESE KEYS - they will not be regenerated on subsequent seeds!');
+  }
 
   logger.info('Demo seed completed successfully (all operations committed)');
 }

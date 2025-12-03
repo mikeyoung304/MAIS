@@ -1,6 +1,8 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { fromCents } from "./api-helpers"
+import { BookingDtoSchema, BookingManagementDtoSchema } from "@macon/contracts"
+import { z } from "zod"
 
 /**
  * Combines class names intelligently:
@@ -36,13 +38,15 @@ export function formatDate(date: Date | string): string {
 
 /**
  * Booking status type from BookingDto schema
+ * Derived from contracts package to stay in sync with backend
  */
-export type BookingStatus = 'PENDING' | 'DEPOSIT_PAID' | 'PAID' | 'CONFIRMED' | 'CANCELED' | 'REFUNDED' | 'FULFILLED';
+export type BookingStatus = z.infer<typeof BookingDtoSchema>['status'];
 
 /**
  * Refund status type from BookingManagementDto schema
+ * Derived from contracts package to stay in sync with backend
  */
-export type RefundStatus = 'NONE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'PARTIAL' | 'FAILED';
+export type RefundStatus = NonNullable<z.infer<typeof BookingManagementDtoSchema>['refundStatus']>;
 
 /**
  * Get badge variant for booking status
@@ -61,6 +65,10 @@ export function getStatusVariant(status: BookingStatus): 'default' | 'secondary'
       return 'secondary';
     case 'PENDING':
       return 'outline';
+    default: {
+      const _exhaustiveCheck: never = status;
+      return 'outline'; // Safe fallback
+    }
   }
 }
 
@@ -81,5 +89,9 @@ export function getRefundStatusText(status?: RefundStatus): string | null {
       return 'Partial refund issued';
     case 'FAILED':
       return 'Refund failed';
+    default: {
+      const _exhaustiveCheck: never = status;
+      return null; // Safe fallback
+    }
   }
 }

@@ -19,6 +19,7 @@ Reference docs are dry, focused on facts, and organized for easy lookup.
 
 | Document | Purpose |
 |----------|---------|
+| [ADVISORY_LOCKS.md](./ADVISORY_LOCKS.md) | PostgreSQL advisory lock IDs registry and usage guidelines |
 | [SCHEDULING-PLATFORM-TECH-REFERENCE-2025.md](./SCHEDULING-PLATFORM-TECH-REFERENCE-2025.md) | Comprehensive scheduling platform technology reference (2025) |
 
 ### API References

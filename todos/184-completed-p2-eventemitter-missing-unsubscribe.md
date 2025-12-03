@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: "184"
 tags: [code-review, architecture, memory-leak]

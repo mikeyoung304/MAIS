@@ -41,6 +41,9 @@ export async function seedPlatform(prisma: PrismaClient): Promise<void> {
   });
 
   // Wrap seed operations in a transaction to prevent partial data on failure
+  logger.info({ type: 'platform', operations: 1 }, 'Starting seed transaction');
+  const startTime = Date.now();
+
   await prisma.$transaction(async (tx) => {
     if (existingAdmin) {
       // User exists - only update role and name, NEVER password
@@ -66,6 +69,11 @@ export async function seedPlatform(prisma: PrismaClient): Promise<void> {
       logger.info(`Platform admin created with new password: ${admin.email}`);
     }
   }, { timeout: 30000 }); // 30 second timeout (simpler operation than demo/e2e)
+
+  logger.info({
+    type: 'platform',
+    durationMs: Date.now() - startTime
+  }, 'Seed transaction committed successfully');
 
   logger.info('Platform seed completed successfully');
 }

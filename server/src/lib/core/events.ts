@@ -187,11 +187,12 @@ export interface EventEmitter {
    * Subscribe to a typed event
    * @param event - Event name (must be a key of AllEventPayloads)
    * @param handler - Handler function that receives the correctly typed payload
+   * @returns Unsubscribe function to remove this specific handler
    */
   subscribe<K extends keyof AllEventPayloads>(
     event: K,
     handler: EventHandler<AllEventPayloads[K]>
-  ): void;
+  ): () => void;
 
   /**
    * Emit a typed event
@@ -215,9 +216,20 @@ export class InProcessEventEmitter implements EventEmitter {
   subscribe<K extends keyof AllEventPayloads>(
     event: K,
     handler: EventHandler<AllEventPayloads[K]>
-  ): void {
+  ): () => void {
     const existing = this.handlers.get(event as string) || [];
     this.handlers.set(event as string, [...existing, handler as EventHandler]);
+
+    // Return unsubscribe function that removes this specific handler
+    return () => {
+      const handlers = this.handlers.get(event as string) || [];
+      const filtered = handlers.filter((h) => h !== handler);
+      if (filtered.length > 0) {
+        this.handlers.set(event as string, filtered);
+      } else {
+        this.handlers.delete(event as string);
+      }
+    };
   }
 
   async emit<K extends keyof AllEventPayloads>(

@@ -1,13 +1,24 @@
 /**
- * Type Safety Verification for EventEmitter
- * This file exists to demonstrate that the EventEmitter enforces type safety.
- * It should NOT be run - it's a compile-time verification only.
+ * EventEmitter Type Safety Examples
  *
- * If any of the commented-out code below is uncommented, TypeScript should
- * produce compilation errors, proving that type safety is working.
+ * This file demonstrates how the EventEmitter enforces type safety at compile time.
+ * It is NOT a test file - it's documentation through code examples.
+ *
+ * Location: docs/examples/event-emitter-type-safety.ts
+ * Related: server/src/lib/core/events.ts
+ *
+ * Purpose:
+ * - Show valid usage patterns for typed event emission and subscription
+ * - Demonstrate compile-time type errors (via commented-out invalid examples)
+ * - Serve as reference for developers working with the event system
+ *
+ * Usage:
+ * 1. Read this file to understand type-safe event patterns
+ * 2. Uncomment any invalid examples to see TypeScript errors
+ * 3. Use valid patterns as templates for new event emissions
  */
 
-import { InProcessEventEmitter, BookingEvents, AppointmentEvents } from '../src/lib/core/events';
+import { InProcessEventEmitter, BookingEvents, AppointmentEvents } from '../../server/src/lib/core/events';
 
 const emitter = new InProcessEventEmitter();
 

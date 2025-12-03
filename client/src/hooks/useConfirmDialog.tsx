@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
 interface ConfirmDialogOptions {
   title: string;
@@ -49,6 +49,14 @@ interface ConfirmDialogState extends ConfirmDialogOptions {
 export function useConfirmDialog() {
   const [dialogState, setDialogState] = useState<ConfirmDialogState | null>(null);
   const resolveRef = useRef<((value: boolean) => void) | null>(null);
+
+  // Cleanup on unmount: resolve pending Promise with false to prevent memory leak
+  useEffect(() => {
+    return () => {
+      resolveRef.current?.(false);
+      resolveRef.current = null;
+    };
+  }, []);
 
   /**
    * Show confirmation dialog and wait for user response

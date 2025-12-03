@@ -90,7 +90,7 @@ The EventEmitter type safety infrastructure was already implemented in `server/s
 1. **Fixed payload type definitions**: Changed `eventDate` from `Date` to `string` (YYYY-MM-DD format) to match actual usage in the codebase
 2. **Simplified event subscriptions**: Removed redundant explicit type annotations in `server/src/di.ts` since the EventEmitter interface already enforces type safety
 3. **Added comprehensive documentation**: Included usage examples, error handling patterns, and type safety demonstrations
-4. **Created type-safety verification file**: Added `server/test/type-safety-verification.ts` with examples of valid and invalid usage
+4. **Created type-safety verification file**: Added `docs/examples/event-emitter-type-safety.ts` with examples of valid and invalid usage
 
 All acceptance criteria have been met. TypeScript now enforces correct payload types at compile time for all event emissions and subscriptions.
 

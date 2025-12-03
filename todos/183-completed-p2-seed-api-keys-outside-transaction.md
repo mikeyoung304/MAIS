@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: "183"
 tags: [code-review, data-integrity, seeds]

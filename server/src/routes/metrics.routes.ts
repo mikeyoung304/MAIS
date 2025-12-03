@@ -40,8 +40,6 @@ export function registerMetricsRoutes(app: Express, deps: MetricsDeps): void {
 
         // Service metadata
         service: 'mais-api',
-        version: process.env.npm_package_version || 'unknown',
-        environment: process.env.NODE_ENV || 'development',
       };
 
       res.status(200).json(metrics);

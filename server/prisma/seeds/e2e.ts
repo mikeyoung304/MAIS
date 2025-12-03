@@ -31,6 +31,9 @@ export async function seedE2E(prisma: PrismaClient): Promise<void> {
   }
 
   // Wrap all seed operations in a transaction to prevent partial data on failure
+  logger.info({ slug: E2E_TENANT_SLUG, operations: 6 }, 'Starting seed transaction');
+  const startTime = Date.now();
+
   await prisma.$transaction(async (tx) => {
     // Create test tenant using shared utility
     const tenant = await createOrUpdateTenant(tx, {
@@ -81,6 +84,11 @@ export async function seedE2E(prisma: PrismaClient): Promise<void> {
 
     logger.info('E2E add-on linked to starter package');
   }, { timeout: 60000 }); // 60 second timeout for large seed operations
+
+  logger.info({
+    slug: E2E_TENANT_SLUG,
+    durationMs: Date.now() - startTime
+  }, 'Seed transaction committed successfully');
 
   logger.info('E2E seed completed successfully (all operations committed)');
 }

@@ -157,6 +157,7 @@ Our documentation is organized into these main directories:
 | [architecture/](./architecture/) | ADRs, system design, patterns | Architectural decisions |
 | [roadmaps/](./roadmaps/) | Feature roadmaps, implementation plans | Product roadmap, widget guide |
 | [multi-tenant/](./multi-tenant/) | Multi-tenant specific documentation | Implementation guide, tenant admin guide |
+| [examples/](./examples/) | Code examples and demonstrations | EventEmitter type safety examples |
 | [phases/](./phases/) | Historical phase completion reports | Phase 1-5 reports |
 | [archive/](./archive/) | Historical and deprecated documentation | Old sprints, superseded guides |
 
