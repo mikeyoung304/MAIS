@@ -14,7 +14,6 @@ export interface TenantBranding {
   backgroundColor?: string;
   fontFamily?: string;
   logo?: string;
-  [key: string]: unknown; // Allow additional properties for future extensibility
 }
 
 /**

@@ -172,8 +172,17 @@ export class TenantAdminController {
       }
 
       // Merge with existing branding (preserve logo URL)
-      const currentBranding = (tenant.branding as Record<string, unknown>) || {};
-      const updatedBranding = {
+      // Type the branding object to include all possible fields including logo
+      interface BrandingData {
+        primaryColor?: string;
+        secondaryColor?: string;
+        accentColor?: string;
+        backgroundColor?: string;
+        fontFamily?: string;
+        logo?: string;
+      }
+      const currentBranding = (tenant.branding as BrandingData) || {};
+      const updatedBranding: BrandingData = {
         ...currentBranding,
         ...validation.data,
       };
@@ -851,7 +860,7 @@ export function createTenantAdminRoutes(
       // Need to fetch full records with IDs
       // Type assertion needed because BlackoutRepository interface doesn't expose prisma
       // but PrismaBlackoutRepository implementation has it
-      const prisma = (blackoutRepo as { prisma: unknown }).prisma as {
+      const prismaClient = (blackoutRepo as unknown as { prisma: unknown }).prisma as {
         blackoutDate: {
           findMany: (args: {
             where: { tenantId: string };
@@ -860,7 +869,7 @@ export function createTenantAdminRoutes(
           }) => Promise<Array<{ id: string; date: Date; reason: string | null }>>;
         };
       };
-      const fullBlackouts = await prisma.blackoutDate.findMany({
+      const fullBlackouts = await prismaClient.blackoutDate.findMany({
         where: { tenantId },
         orderBy: { date: 'asc' },
         select: {

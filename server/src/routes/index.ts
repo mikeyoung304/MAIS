@@ -115,64 +115,64 @@ export function createV1Router(
 
   const s = initServer();
 
-  // Type assertion required: ts-rest v3 has type compatibility issues with Express 4.x
-  // The router implementation is correct at runtime but TypeScript can't infer the exact type
-  // See: https://github.com/ts-rest/ts-rest/issues (Express middleware signature mismatch)
-  type RouterImplementation = ReturnType<typeof s.router>;
-
+  // ts-rest express has type compatibility issues with Express 4.x/5.x
+  // The `any` type for req is required - ts-rest internally handles request typing
+  // Attempting to use `Request` type causes TS2345 errors due to middleware signature mismatch
+  // See: https://github.com/ts-rest/ts-rest/issues
   createExpressEndpoints(Contracts, s.router(Contracts, {
-    getPackages: async ({ req }: { req: Request }) => {
+    getPackages: async ({ req }: { req: any }) => {
       const tenantId = getTenantId(req as TenantRequest);
       const data = await controllers.packages.getPackages(tenantId);
       return { status: 200 as const, body: data };
     },
 
-    getPackageBySlug: async ({ req, params }: { req: Request; params: { slug: string } }) => {
+    getPackageBySlug: async ({ req, params }: { req: any; params: { slug: string } }) => {
       const tenantId = getTenantId(req as TenantRequest);
       const data = await controllers.packages.getPackageBySlug(tenantId, params.slug);
       return { status: 200 as const, body: data };
     },
 
-    getAvailability: async ({ req, query }: { req: Request; query: { date: string } }) => {
+    getAvailability: async ({ req, query }: { req: any; query: { date: string } }) => {
       const tenantId = getTenantId(req as TenantRequest);
       const data = await controllers.availability.getAvailability(tenantId, query.date);
       return { status: 200 as const, body: data };
     },
 
-    getUnavailableDates: async ({ req, query }: { req: Request; query: { startDate: string; endDate: string } }) => {
+    getUnavailableDates: async ({ req, query }: { req: any; query: { startDate: string; endDate: string } }) => {
       const tenantId = getTenantId(req as TenantRequest);
       const data = await controllers.availability.getUnavailableDates(tenantId, query.startDate, query.endDate);
       return { status: 200 as const, body: data };
     },
 
-    createCheckout: async ({ req, body }: { req: Request; body: { packageId: string; eventDate: string; coupleName: string; email: string; addOnIds?: string[] } }) => {
+    createCheckout: async ({ req, body }: { req: any; body: { packageId: string; eventDate: string; coupleName: string; email: string; addOnIds?: string[] } }) => {
       const tenantId = getTenantId(req as TenantRequest);
       const data = await controllers.bookings.createCheckout(tenantId, body);
       return { status: 200 as const, body: data };
     },
 
-    getBookingById: async ({ req, params }: { req: Request; params: { id: string } }) => {
+    getBookingById: async ({ req, params }: { req: any; params: { id: string } }) => {
       const tenantId = getTenantId(req as TenantRequest);
       const data = await controllers.bookings.getBookingById(tenantId, params.id);
       return { status: 200 as const, body: data };
     },
 
-    getTenantBranding: async ({ req }: { req: Request }) => {
+    getTenantBranding: async ({ req }: { req: any }) => {
       const tenantId = getTenantId(req as TenantRequest);
       const data = await controllers.tenant.getBranding(tenantId);
       return { status: 200 as const, body: data };
     },
 
-    stripeWebhook: async ({ req }: { req: Request }) => {
+    stripeWebhook: async ({ req }: { req: any }) => {
       // Extract raw body (Buffer) and Stripe signature header
       const rawBody = req.body ? req.body.toString('utf8') : '';
-      const signature = req.headers['stripe-signature'] || '';
+      const signatureHeader = req.headers['stripe-signature'];
+      const signature = Array.isArray(signatureHeader) ? signatureHeader[0] : (signatureHeader || '');
 
       await controllers.webhooks.handleStripeWebhook(rawBody, signature);
       return { status: 204 as const, body: undefined };
     },
 
-    adminLogin: async ({ req, body }: { req: Request; body: { email: string; password: string } }) => {
+    adminLogin: async ({ req, body }: { req: any; body: { email: string; password: string } }) => {
       const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
       try {
         const data = await controllers.admin.login(body);
@@ -191,7 +191,7 @@ export function createV1Router(
       }
     },
 
-    tenantLogin: async ({ req, body }: { req: Request; body: { email: string; password: string } }) => {
+    tenantLogin: async ({ req, body }: { req: any; body: { email: string; password: string } }) => {
       const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
       try {
         if (!services) {
@@ -297,7 +297,7 @@ export function createV1Router(
       await controllers.adminPackages.deleteAddOn(params.id);
       return { status: 204 as const, body: undefined };
     },
-  }) as RouterImplementation, app, {
+  } as any), app, {
     // Apply middleware based on route path
     globalMiddleware: [
       (req, res, next) => {
@@ -464,8 +464,8 @@ export function createV1Router(
       logger.info('✅ Public scheduling routes mounted at /v1/public');
 
       // Register tenant admin scheduling routes (for service and availability management)
-      // Requires tenant admin authentication
-      if (repositories.availabilityRule) {
+      // Requires tenant admin authentication and all scheduling repositories
+      if (repositories.service && repositories.availabilityRule && repositories.booking) {
         const tenantAdminSchedulingRouter = createTenantAdminSchedulingRoutes(
           repositories.service,
           repositories.availabilityRule,
