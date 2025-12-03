@@ -35,32 +35,37 @@ export async function seedPlatform(prisma: PrismaClient): Promise<void> {
     throw new Error('ADMIN_DEFAULT_PASSWORD must be at least 12 characters');
   }
 
-  // Check if admin user already exists
+  // Check if admin user already exists (outside transaction for read-only check)
   const existingAdmin = await prisma.user.findUnique({
     where: { email: adminEmail }
   });
 
-  if (existingAdmin) {
-    // User exists - only update role and name, NEVER password
-    const admin = await prisma.user.update({
-      where: { email: adminEmail },
-      data: {
-        role: 'PLATFORM_ADMIN',
-        name: adminName
-      }
-    });
-    logger.info(`Platform admin already exists (password NOT updated): ${admin.email}`);
-  } else {
-    // User does not exist - create with password
-    const passwordHash = await bcrypt.hash(adminPassword, BCRYPT_ROUNDS);
-    const admin = await prisma.user.create({
-      data: {
-        email: adminEmail,
-        name: adminName,
-        role: 'PLATFORM_ADMIN',
-        passwordHash
-      }
-    });
-    logger.info(`Platform admin created with new password: ${admin.email}`);
-  }
+  // Wrap seed operations in a transaction to prevent partial data on failure
+  await prisma.$transaction(async (tx) => {
+    if (existingAdmin) {
+      // User exists - only update role and name, NEVER password
+      const admin = await tx.user.update({
+        where: { email: adminEmail },
+        data: {
+          role: 'PLATFORM_ADMIN',
+          name: adminName
+        }
+      });
+      logger.info(`Platform admin already exists (password NOT updated): ${admin.email}`);
+    } else {
+      // User does not exist - create with password
+      const passwordHash = await bcrypt.hash(adminPassword, BCRYPT_ROUNDS);
+      const admin = await tx.user.create({
+        data: {
+          email: adminEmail,
+          name: adminName,
+          role: 'PLATFORM_ADMIN',
+          passwordHash
+        }
+      });
+      logger.info(`Platform admin created with new password: ${admin.email}`);
+    }
+  }, { timeout: 30000 }); // 30 second timeout (simpler operation than demo/e2e)
+
+  logger.info('Platform seed completed successfully');
 }

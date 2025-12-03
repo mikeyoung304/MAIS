@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { baseUrl } from '@/lib/api';
+import type { BookingStatus, RefundStatus } from '@/lib/utils';
 
 /**
  * Booking details with management status
@@ -19,11 +20,11 @@ export interface BookingDetails {
     eventDate: string;
     addOnIds: string[];
     totalCents: number;
-    status: 'PAID' | 'REFUNDED' | 'CANCELED';
+    status: BookingStatus;
     createdAt: string;
     cancelledBy?: 'CUSTOMER' | 'TENANT' | 'ADMIN' | 'SYSTEM';
     cancellationReason?: string;
-    refundStatus?: 'NONE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'PARTIAL' | 'FAILED';
+    refundStatus?: RefundStatus;
     refundAmount?: number;
     refundedAt?: string;
   };

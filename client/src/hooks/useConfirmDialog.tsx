@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 
 interface ConfirmDialogOptions {
   title: string;
@@ -48,6 +48,7 @@ interface ConfirmDialogState extends ConfirmDialogOptions {
  */
 export function useConfirmDialog() {
   const [dialogState, setDialogState] = useState<ConfirmDialogState | null>(null);
+  const resolveRef = useRef<((value: boolean) => void) | null>(null);
 
   /**
    * Show confirmation dialog and wait for user response
@@ -55,12 +56,14 @@ export function useConfirmDialog() {
    */
   const confirm = useCallback((options: ConfirmDialogOptions): Promise<boolean> => {
     return new Promise((resolve) => {
+      resolveRef.current = resolve;
       setDialogState({
         ...options,
         isOpen: true,
         onConfirm: () => {
           setDialogState(null);
-          resolve(true);
+          resolveRef.current?.(true);
+          resolveRef.current = null;
         },
       });
     });
@@ -68,7 +71,9 @@ export function useConfirmDialog() {
 
   const handleOpenChange = useCallback((open: boolean) => {
     if (!open) {
-      // Dialog closed without confirming
+      // Dialog closed without confirming - resolve with false
+      resolveRef.current?.(false);
+      resolveRef.current = null;
       setDialogState(null);
     }
   }, []);

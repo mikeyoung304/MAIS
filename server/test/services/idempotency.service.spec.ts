@@ -22,6 +22,7 @@ describe('IdempotencyService', () => {
         delete: vi.fn(),
         deleteMany: vi.fn(),
       },
+      $queryRaw: vi.fn(),
     };
 
     service = new IdempotencyService(mockPrisma as unknown as PrismaClient);
@@ -330,15 +331,18 @@ describe('IdempotencyService', () => {
       expect(service).toBeDefined();
     });
 
-    it('should run initial cleanup after 5 seconds', async () => {
+    it('should run initial cleanup after 30 seconds', async () => {
       // Arrange
+      mockPrisma.$queryRaw
+        .mockResolvedValueOnce([{ pg_try_advisory_lock: true }]) // Lock acquired
+        .mockResolvedValueOnce(undefined); // Lock released
       mockPrisma.idempotencyKey.deleteMany.mockResolvedValue({ count: 2 });
 
       // Act
       service.startCleanupScheduler();
 
-      // Fast-forward 5 seconds
-      await vi.advanceTimersByTimeAsync(5000);
+      // Fast-forward 30 seconds
+      await vi.advanceTimersByTimeAsync(30000);
 
       // Assert - Initial cleanup should have run
       expect(mockPrisma.idempotencyKey.deleteMany).toHaveBeenCalled();
@@ -358,13 +362,20 @@ describe('IdempotencyService', () => {
 
     it('should run cleanup every 24 hours', async () => {
       // Arrange
+      mockPrisma.$queryRaw
+        .mockResolvedValueOnce([{ pg_try_advisory_lock: true }]) // Lock acquired (initial)
+        .mockResolvedValueOnce(undefined) // Lock released (initial)
+        .mockResolvedValueOnce([{ pg_try_advisory_lock: true }]) // Lock acquired (24h)
+        .mockResolvedValueOnce(undefined) // Lock released (24h)
+        .mockResolvedValueOnce([{ pg_try_advisory_lock: true }]) // Lock acquired (48h)
+        .mockResolvedValueOnce(undefined); // Lock released (48h)
       mockPrisma.idempotencyKey.deleteMany.mockResolvedValue({ count: 1 });
 
       // Act
       service.startCleanupScheduler();
 
-      // Fast-forward 5 seconds (initial cleanup)
-      await vi.advanceTimersByTimeAsync(5000);
+      // Fast-forward 30 seconds (initial cleanup)
+      await vi.advanceTimersByTimeAsync(30000);
       expect(mockPrisma.idempotencyKey.deleteMany).toHaveBeenCalledTimes(1);
 
       // Fast-forward 24 hours
@@ -386,13 +397,13 @@ describe('IdempotencyService', () => {
       vi.useRealTimers();
     });
 
-    it('should stop cleanup scheduler', () => {
+    it('should stop cleanup scheduler', async () => {
       // Arrange
       mockPrisma.idempotencyKey.deleteMany.mockResolvedValue({ count: 0 });
       service.startCleanupScheduler();
 
       // Act
-      service.stopCleanupScheduler();
+      await service.stopCleanupScheduler();
 
       // Assert - No error should be thrown
       expect(service).toBeDefined();
@@ -400,15 +411,18 @@ describe('IdempotencyService', () => {
 
     it('should prevent further cleanup after stopping', async () => {
       // Arrange
+      mockPrisma.$queryRaw
+        .mockResolvedValueOnce([{ pg_try_advisory_lock: true }]) // Lock acquired
+        .mockResolvedValueOnce(undefined); // Lock released
       mockPrisma.idempotencyKey.deleteMany.mockResolvedValue({ count: 1 });
       service.startCleanupScheduler();
 
-      // Fast-forward 5 seconds (initial cleanup)
-      await vi.advanceTimersByTimeAsync(5000);
+      // Fast-forward 30 seconds (initial cleanup)
+      await vi.advanceTimersByTimeAsync(30000);
       expect(mockPrisma.idempotencyKey.deleteMany).toHaveBeenCalledTimes(1);
 
       // Act - Stop scheduler
-      service.stopCleanupScheduler();
+      await service.stopCleanupScheduler();
 
       // Fast-forward 24 hours - should NOT trigger cleanup
       await vi.advanceTimersByTimeAsync(24 * 60 * 60 * 1000);
@@ -417,9 +431,9 @@ describe('IdempotencyService', () => {
       expect(mockPrisma.idempotencyKey.deleteMany).toHaveBeenCalledTimes(1);
     });
 
-    it('should be safe to call stop when not started', () => {
+    it('should be safe to call stop when not started', async () => {
       // Act - Stop without starting
-      service.stopCleanupScheduler();
+      await service.stopCleanupScheduler();
 
       // Assert - No error should be thrown
       expect(service).toBeDefined();

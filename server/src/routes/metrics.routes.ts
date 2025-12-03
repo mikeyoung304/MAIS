@@ -35,12 +35,6 @@ export function registerMetricsRoutes(app: Express, deps: MetricsDeps): void {
         uptime_seconds: uptimeSeconds,
         memory_usage: process.memoryUsage(),
 
-        // Node.js environment
-        node_version: process.version,
-        platform: process.platform,
-        arch: process.arch,
-        pid: process.pid,
-
         // CPU usage
         cpu_usage: process.cpuUsage(),
 

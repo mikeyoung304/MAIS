@@ -283,19 +283,32 @@ function createMockPrisma(options: MockPrismaOptions = {}): PrismaClient {
     ? { id: 'user-existing', email: 'admin@example.com', role: 'PLATFORM_ADMIN' }
     : null;
 
-  return {
-    user: {
-      findUnique: vi.fn().mockResolvedValue(existingUser),
-      create: vi.fn().mockResolvedValue({
-        id: 'user-new',
-        email: 'admin@example.com',
-        role: 'PLATFORM_ADMIN',
-      }),
-      update: vi.fn().mockResolvedValue({
-        id: 'user-existing',
-        email: 'admin@example.com',
-        role: 'PLATFORM_ADMIN',
-      }),
-    },
-  } as unknown as PrismaClient;
+  const mockUser = {
+    findUnique: vi.fn().mockResolvedValue(existingUser),
+    create: vi.fn().mockResolvedValue({
+      id: 'user-new',
+      email: 'admin@example.com',
+      role: 'PLATFORM_ADMIN',
+    }),
+    update: vi.fn().mockResolvedValue({
+      id: 'user-existing',
+      email: 'admin@example.com',
+      role: 'PLATFORM_ADMIN',
+    }),
+  };
+
+  const mockPrisma = {
+    user: mockUser,
+    // Mock $transaction to execute the callback with a transaction client
+    // that proxies to the same mock objects
+    $transaction: vi.fn().mockImplementation(async (callback) => {
+      // Create a transaction client that uses the same mocks
+      const txClient = {
+        user: mockUser,
+      };
+      return callback(txClient);
+    }),
+  };
+
+  return mockPrisma as unknown as PrismaClient;
 }

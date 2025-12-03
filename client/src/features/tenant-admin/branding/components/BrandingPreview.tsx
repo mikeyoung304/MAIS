@@ -1,5 +1,5 @@
 import { Calendar, Check, Eye } from "lucide-react";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { SectionHeader } from "@/components/ui/section-header";
 import { sanitizeImageUrl } from "@/lib/sanitize-url";
 
 interface BrandingPreviewProps {

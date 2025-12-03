@@ -30,54 +30,59 @@ export async function seedE2E(prisma: PrismaClient): Promise<void> {
     );
   }
 
-  // Create test tenant using shared utility
-  const tenant = await createOrUpdateTenant(prisma, {
-    slug: E2E_TENANT_SLUG,
-    name: 'MAIS E2E Test Tenant',
-    commissionPercent: 5.0,
-    apiKeyPublic: E2E_PUBLIC_KEY,
-    apiKeySecret: E2E_SECRET_KEY,
-    primaryColor: '#1a365d',
-    secondaryColor: '#fb923c',
-    accentColor: '#38b2ac',
-    backgroundColor: '#ffffff',
-  });
+  // Wrap all seed operations in a transaction to prevent partial data on failure
+  await prisma.$transaction(async (tx) => {
+    // Create test tenant using shared utility
+    const tenant = await createOrUpdateTenant(tx, {
+      slug: E2E_TENANT_SLUG,
+      name: 'MAIS E2E Test Tenant',
+      commissionPercent: 5.0,
+      apiKeyPublic: E2E_PUBLIC_KEY,
+      apiKeySecret: E2E_SECRET_KEY,
+      primaryColor: '#1a365d',
+      secondaryColor: '#fb923c',
+      accentColor: '#38b2ac',
+      backgroundColor: '#ffffff',
+    });
 
-  logger.info(`E2E test tenant created: ${tenant.name} (${tenant.slug})`);
-  logger.info(`Public Key: ${E2E_PUBLIC_KEY}`);
+    logger.info(`E2E test tenant created: ${tenant.name} (${tenant.slug})`);
+    logger.info(`Public Key: ${E2E_PUBLIC_KEY}`);
 
-  // Create minimal packages for E2E tests using shared utility
-  const [starter, growth] = await createOrUpdatePackages(prisma, tenant.id, [
-    {
-      slug: 'starter',
-      name: 'Starter Package',
-      description: 'Basic package for E2E testing',
-      basePrice: 25000,
-    },
-    {
-      slug: 'growth',
-      name: 'Growth Package',
-      description: 'Growth package for E2E testing',
-      basePrice: 50000,
-    },
-  ]);
+    // Create minimal packages for E2E tests using shared utility
+    const [starter, growth] = await createOrUpdatePackages(tx, tenant.id, [
+      {
+        slug: 'starter',
+        name: 'Starter Package',
+        description: 'Basic package for E2E testing',
+        basePrice: 25000,
+      },
+      {
+        slug: 'growth',
+        name: 'Growth Package',
+        description: 'Growth package for E2E testing',
+        basePrice: 50000,
+      },
+    ]);
 
-  logger.info(`E2E packages created: ${[starter, growth].length}`);
+    logger.info(`E2E packages created: ${[starter, growth].length}`);
 
-  // Create one add-on for testing using shared utility
-  const [addOn] = await createOrUpdateAddOns(prisma, tenant.id, [
-    {
-      slug: 'test-addon',
-      name: 'Test Add-On',
-      description: 'Add-on for E2E testing',
-      price: 5000,
-    },
-  ]);
+    // Create one add-on for testing using shared utility
+    const [addOn] = await createOrUpdateAddOns(tx, tenant.id, [
+      {
+        slug: 'test-addon',
+        name: 'Test Add-On',
+        description: 'Add-on for E2E testing',
+        price: 5000,
+      },
+    ]);
 
-  // Link add-on to starter package using shared utility
-  await linkAddOnsToPackage(prisma, starter.id, [addOn.id]);
+    // Link add-on to starter package using shared utility
+    await linkAddOnsToPackage(tx, starter.id, [addOn.id]);
 
-  logger.info('E2E add-on linked to starter package');
+    logger.info('E2E add-on linked to starter package');
+  }, { timeout: 60000 }); // 60 second timeout for large seed operations
+
+  logger.info('E2E seed completed successfully (all operations committed)');
 }
 
 // Export keys for test files to import

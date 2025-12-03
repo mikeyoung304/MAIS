@@ -5,8 +5,14 @@
  * across E2E and demo seeds.
  */
 
-import { PrismaClient, Tenant, Package, AddOn } from '../../src/generated/prisma';
+import { PrismaClient, Prisma, Tenant, Package, AddOn } from '../../src/generated/prisma';
 import { apiKeyService } from '../../src/lib/api-key.service';
+
+/**
+ * Transaction client type for seed operations
+ * Allows functions to work with both PrismaClient and transaction clients
+ */
+type PrismaOrTransaction = PrismaClient | Omit<PrismaClient, '$transaction' | '$connect' | '$disconnect' | '$on' | '$use'>;
 
 /**
  * Options for creating/updating a tenant
@@ -59,7 +65,7 @@ export interface AddOnSeedOptions {
  * Uses upsert to preserve existing data if tenant exists
  */
 export async function createOrUpdateTenant(
-  prisma: PrismaClient,
+  prisma: PrismaOrTransaction,
   options: TenantSeedOptions
 ): Promise<Tenant> {
   const {
@@ -113,7 +119,7 @@ export async function createOrUpdateTenant(
  * Create or update a package with the provided options
  */
 export async function createOrUpdatePackage(
-  prisma: PrismaClient,
+  prisma: PrismaOrTransaction,
   options: PackageSeedOptions
 ): Promise<Package> {
   const {
@@ -143,7 +149,7 @@ export async function createOrUpdatePackage(
  * Create or update an add-on with the provided options
  */
 export async function createOrUpdateAddOn(
-  prisma: PrismaClient,
+  prisma: PrismaOrTransaction,
   options: AddOnSeedOptions
 ): Promise<AddOn> {
   const { tenantId, slug, name, description, price } = options;
@@ -165,7 +171,7 @@ export async function createOrUpdateAddOn(
  * Link an add-on to a package
  */
 export async function linkAddOnToPackage(
-  prisma: PrismaClient,
+  prisma: PrismaOrTransaction,
   packageId: string,
   addOnId: string
 ): Promise<void> {
@@ -180,7 +186,7 @@ export async function linkAddOnToPackage(
  * Create multiple packages concurrently
  */
 export async function createOrUpdatePackages(
-  prisma: PrismaClient,
+  prisma: PrismaOrTransaction,
   tenantId: string,
   packageOptions: Array<Omit<PackageSeedOptions, 'tenantId'>>
 ): Promise<Package[]> {
@@ -195,7 +201,7 @@ export async function createOrUpdatePackages(
  * Create multiple add-ons concurrently
  */
 export async function createOrUpdateAddOns(
-  prisma: PrismaClient,
+  prisma: PrismaOrTransaction,
   tenantId: string,
   addOnOptions: Array<Omit<AddOnSeedOptions, 'tenantId'>>
 ): Promise<AddOn[]> {
@@ -210,7 +216,7 @@ export async function createOrUpdateAddOns(
  * Link multiple add-ons to a package concurrently
  */
 export async function linkAddOnsToPackage(
-  prisma: PrismaClient,
+  prisma: PrismaOrTransaction,
   packageId: string,
   addOnIds: string[]
 ): Promise<void> {

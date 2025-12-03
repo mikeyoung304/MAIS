@@ -10,7 +10,7 @@
 import { Save, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { SectionHeader } from "@/components/ui/section-header";
 import { ColorInput } from "./ColorInput";
 import { FontSelector } from "./FontSelector";
 import { LogoSection } from "./LogoSection";

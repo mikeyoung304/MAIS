@@ -35,17 +35,31 @@ export function formatDate(date: Date | string): string {
 }
 
 /**
+ * Booking status type from BookingDto schema
+ */
+export type BookingStatus = 'PENDING' | 'DEPOSIT_PAID' | 'PAID' | 'CONFIRMED' | 'CANCELED' | 'REFUNDED' | 'FULFILLED';
+
+/**
+ * Refund status type from BookingManagementDto schema
+ */
+export type RefundStatus = 'NONE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'PARTIAL' | 'FAILED';
+
+/**
  * Get badge variant for booking status
  */
-export function getStatusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+export function getStatusVariant(status: BookingStatus): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status) {
-    case 'PAID':
+    case 'CONFIRMED':
+    case 'FULFILLED':
       return 'default';
+    case 'PAID':
+    case 'DEPOSIT_PAID':
+      return 'secondary';
     case 'CANCELED':
       return 'destructive';
     case 'REFUNDED':
       return 'secondary';
-    default:
+    case 'PENDING':
       return 'outline';
   }
 }
@@ -53,7 +67,9 @@ export function getStatusVariant(status: string): 'default' | 'secondary' | 'des
 /**
  * Get refund status display text
  */
-export function getRefundStatusText(status?: string): string | null {
+export function getRefundStatusText(status?: RefundStatus): string | null {
+  if (!status || status === 'NONE') return null;
+
   switch (status) {
     case 'PENDING':
       return 'Refund pending';
@@ -65,7 +81,5 @@ export function getRefundStatusText(status?: string): string | null {
       return 'Partial refund issued';
     case 'FAILED':
       return 'Refund failed';
-    default:
-      return null;
   }
 }

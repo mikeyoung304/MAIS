@@ -37,7 +37,11 @@ export interface IdempotencyResponse<T = unknown> {
 
 export class IdempotencyService {
   private readonly keyTTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+  private readonly cleanupDelayMs = 30000; // 30 seconds - wait for server initialization
+  private readonly advisoryLockId = 42424242; // Unique lock ID for idempotency cleanup
   private cleanupInterval: NodeJS.Timeout | null = null;
+  private isCleanupRunning = false;
+  private cleanupPromise: Promise<void> | null = null;
 
   constructor(private readonly prisma: PrismaClient) {
     logger.info('IdempotencyService initialized');
@@ -46,7 +50,8 @@ export class IdempotencyService {
   /**
    * Start scheduled cleanup of expired idempotency keys
    *
-   * Runs cleanup every 24 hours and once at startup (after 5 second delay).
+   * Runs cleanup every 24 hours and once at startup (after 30 second delay).
+   * Uses advisory locks to prevent concurrent cleanup across multiple instances.
    * Call this after service initialization to prevent accumulation of expired keys.
    *
    * @example
@@ -64,32 +69,90 @@ export class IdempotencyService {
 
     // Run cleanup every 24 hours (86400000 ms)
     this.cleanupInterval = setInterval(() => {
-      this.cleanupExpired().catch((err) => {
-        logger.error({ err }, 'Failed to cleanup expired idempotency keys');
-      });
+      void this.runCleanupWithLock();
     }, 24 * 60 * 60 * 1000);
 
-    // Also run once at startup after a short delay
+    // Also run once at startup after delay to ensure server is fully initialized
     setTimeout(() => {
-      this.cleanupExpired().catch((err) => {
-        logger.error({ err }, 'Failed initial idempotency key cleanup');
-      });
-    }, 5000);
+      void this.runCleanupWithLock();
+    }, this.cleanupDelayMs);
 
-    logger.info('Idempotency key cleanup scheduler started (runs every 24 hours)');
+    logger.info(
+      { delayMs: this.cleanupDelayMs },
+      'Idempotency key cleanup scheduler started (runs every 24 hours)'
+    );
   }
 
   /**
    * Stop the cleanup scheduler
    *
-   * Call this during application shutdown to prevent memory leaks.
+   * Waits for any in-progress cleanup to complete before stopping.
+   * Call this during application shutdown to prevent memory leaks and ensure graceful cleanup.
    */
-  public stopCleanupScheduler(): void {
+  public async stopCleanupScheduler(): Promise<void> {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
       this.cleanupInterval = null;
-      logger.info('Idempotency key cleanup scheduler stopped');
     }
+
+    // Wait for in-progress cleanup to complete
+    if (this.cleanupPromise) {
+      logger.info('Waiting for in-progress cleanup to complete before stopping...');
+      await this.cleanupPromise;
+    }
+
+    logger.info('Idempotency key cleanup scheduler stopped');
+  }
+
+  /**
+   * Run cleanup with PostgreSQL advisory lock
+   *
+   * Prevents concurrent cleanup execution across multiple server instances.
+   * Skips if cleanup is already running. Uses advisory lock to coordinate
+   * between processes.
+   *
+   * @private
+   */
+  private async runCleanupWithLock(): Promise<void> {
+    // Skip if already running
+    if (this.isCleanupRunning) {
+      logger.debug('Cleanup already in progress, skipping');
+      return;
+    }
+
+    this.isCleanupRunning = true;
+    this.cleanupPromise = (async () => {
+      try {
+        // Try to acquire advisory lock (non-blocking)
+        // Returns true if lock acquired, false if already held by another process
+        const lockResult = await this.prisma.$queryRaw<Array<{ pg_try_advisory_lock: boolean }>>`
+          SELECT pg_try_advisory_lock(${this.advisoryLockId})
+        `;
+
+        const lockAcquired = lockResult[0]?.pg_try_advisory_lock;
+
+        if (!lockAcquired) {
+          logger.info('Another instance is running cleanup, skipping');
+          return;
+        }
+
+        try {
+          // Perform cleanup
+          const count = await this.cleanupExpired();
+          logger.info({ count }, 'Idempotency cleanup completed successfully');
+        } finally {
+          // Always release lock
+          await this.prisma.$queryRaw`SELECT pg_advisory_unlock(${this.advisoryLockId})`;
+        }
+      } catch (error) {
+        logger.error({ err: error }, 'Failed to run idempotency cleanup with lock');
+      } finally {
+        this.isCleanupRunning = false;
+        this.cleanupPromise = null;
+      }
+    })();
+
+    await this.cleanupPromise;
   }
 
   /**

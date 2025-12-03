@@ -1,9 +1,11 @@
 ---
-status: pending
+status: deferred
 priority: p3
 issue_id: "012"
 tags: [documentation, archive, compliance]
 dependencies: ["001", "002", "005", "006"]
+deferred_until: "2026-Q1"
+deferred_reason: "Batch migration of 220+ files requires dedicated documentation cleanup sprint"
 ---
 
 # Fix Archive File Naming Compliance

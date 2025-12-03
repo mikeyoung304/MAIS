@@ -433,7 +433,7 @@ function createMockPrisma(existingTenant?: { id: string; slug: string; name: str
     tenantId: mockTenant.id,
   };
 
-  return {
+  const mockModels = {
     tenant: {
       findUnique: vi.fn().mockResolvedValue(existingTenant || null),
       create: vi.fn().mockResolvedValue(mockTenant),
@@ -452,5 +452,13 @@ function createMockPrisma(existingTenant?: { id: string; slug: string; name: str
     blackoutDate: {
       upsert: vi.fn().mockResolvedValue({ id: 'blackout-1' }),
     },
+  };
+
+  return {
+    ...mockModels,
+    // Mock $transaction to execute the callback with a transaction client
+    $transaction: vi.fn().mockImplementation(async (callback) => {
+      return callback(mockModels);
+    }),
   } as unknown as PrismaClient;
 }

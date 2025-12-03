@@ -266,7 +266,7 @@ function createMockPrisma(): PrismaClient {
     tenantId: mockTenant.id,
   };
 
-  return {
+  const mockModels = {
     tenant: {
       upsert: vi.fn().mockResolvedValue(mockTenant),
     },
@@ -279,5 +279,13 @@ function createMockPrisma(): PrismaClient {
     packageAddOn: {
       upsert: vi.fn().mockResolvedValue({ packageId: mockPackage.id, addOnId: mockAddOn.id }),
     },
+  };
+
+  return {
+    ...mockModels,
+    // Mock $transaction to execute the callback with a transaction client
+    $transaction: vi.fn().mockImplementation(async (callback) => {
+      return callback(mockModels);
+    }),
   } as unknown as PrismaClient;
 }

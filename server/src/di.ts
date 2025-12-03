@@ -254,7 +254,7 @@ export function buildContainer(config: Config): Container {
 
       try {
         // 1. Stop idempotency cleanup scheduler
-        idempotencyService.stopCleanupScheduler();
+        await idempotencyService.stopCleanupScheduler();
         logger.info('Idempotency cleanup scheduler stopped');
 
         // 2. Disconnect Prisma (mock instance)
@@ -491,16 +491,15 @@ export function buildContainer(config: Config): Container {
     eventEmitter
   );
 
+  // ============================================================================
+  // Event Subscriptions - Type-safe event handlers
+  // ============================================================================
+  // Note: Type annotations are not needed on subscribe() calls because the
+  // EventEmitter interface enforces type safety based on the event name.
+  // The payload parameter is automatically typed based on AllEventPayloads.
+
   // Subscribe to BookingPaid events to send confirmation emails
-  eventEmitter.subscribe<{
-    bookingId: string;
-    email: string;
-    coupleName: string;
-    eventDate: string;
-    packageTitle: string;
-    addOnTitles: string[];
-    totalCents: number;
-  }>(BookingEvents.PAID, async (payload) => {
+  eventEmitter.subscribe(BookingEvents.PAID, async (payload) => {
     try {
       await mailProvider.sendBookingConfirm(payload.email, {
         eventDate: payload.eventDate,
@@ -514,16 +513,7 @@ export function buildContainer(config: Config): Container {
   });
 
   // Subscribe to BookingReminderDue events to send reminder emails (Phase 2)
-  eventEmitter.subscribe<{
-    bookingId: string;
-    tenantId: string;
-    email: string;
-    coupleName: string;
-    eventDate: string;
-    packageTitle: string;
-    daysUntilEvent: number;
-    manageUrl: string;
-  }>(BookingEvents.REMINDER_DUE, async (payload) => {
+  eventEmitter.subscribe(BookingEvents.REMINDER_DUE, async (payload) => {
     try {
       await mailProvider.sendBookingReminder(payload.email, {
         coupleName: payload.coupleName,
@@ -539,19 +529,7 @@ export function buildContainer(config: Config): Container {
   });
 
   // Subscribe to AppointmentBooked events to sync with Google Calendar
-  eventEmitter.subscribe<{
-    bookingId: string;
-    tenantId: string;
-    serviceId: string;
-    serviceName: string;
-    clientName: string;
-    clientEmail: string;
-    clientPhone?: string;
-    startTime: string;
-    endTime: string;
-    totalCents: number;
-    notes?: string;
-  }>(AppointmentEvents.BOOKED, async (payload) => {
+  eventEmitter.subscribe(AppointmentEvents.BOOKED, async (payload) => {
     try {
       // Sync appointment to Google Calendar
       const result = await googleCalendarService.createAppointmentEvent(
@@ -626,7 +604,7 @@ export function buildContainer(config: Config): Container {
 
     try {
       // 1. Stop idempotency cleanup scheduler
-      idempotencyService.stopCleanupScheduler();
+      await idempotencyService.stopCleanupScheduler();
       logger.info('Idempotency cleanup scheduler stopped');
 
       // 2. Disconnect Prisma
