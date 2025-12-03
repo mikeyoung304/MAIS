@@ -44,7 +44,7 @@ import {
   UpdateServiceDtoSchema,
   AvailabilityRuleDtoSchema,
   CreateAvailabilityRuleDtoSchema,
-  UpdateAvailabilityRuleDtoSchema,
+  // UpdateAvailabilityRuleDtoSchema - TODO-056: Will be used when update endpoint is added
   TimeSlotDtoSchema,
   AvailableSlotsQuerySchema,
   AppointmentDtoSchema,
