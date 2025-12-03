@@ -34,9 +34,9 @@ export interface AddOn {
   id: string;
   packageId: string;
   title: string;
-  description: string | null;
+  description?: string | null;
   priceCents: number;
-  photoUrl?: string | null;
+  photoUrl?: string;
 }
 
 // ============================================================================

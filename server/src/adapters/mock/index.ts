@@ -137,6 +137,7 @@ function seedData(): void {
     id: 'addon_video',
     packageId: 'pkg_basic',
     title: 'Video Recording',
+    description: 'Professional video recording of your ceremony',
     priceCents: 50000, // $500
     photoUrl: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=400&h=300&fit=crop',
   });
@@ -145,6 +146,7 @@ function seedData(): void {
     id: 'addon_flowers',
     packageId: 'pkg_basic',
     title: 'Floral Arrangement',
+    description: 'Beautiful floral arrangements for your special day',
     priceCents: 15000, // $150
     photoUrl: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=400&h=300&fit=crop',
   });
@@ -153,6 +155,7 @@ function seedData(): void {
     id: 'addon_makeup',
     packageId: 'pkg_micro',
     title: 'Hair & Makeup',
+    description: 'Professional hair and makeup services',
     priceCents: 30000, // $300
     photoUrl: 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=400&h=300&fit=crop',
   });
@@ -161,6 +164,7 @@ function seedData(): void {
     id: 'addon_music',
     packageId: 'pkg_garden',
     title: 'Live Music (Acoustic)',
+    description: 'Live acoustic music performance',
     priceCents: 75000, // $750
     photoUrl: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=300&fit=crop',
   });
@@ -169,6 +173,7 @@ function seedData(): void {
     id: 'addon_cake',
     packageId: 'pkg_garden',
     title: 'Custom Wedding Cake',
+    description: 'Custom designed wedding cake',
     priceCents: 35000, // $350
     photoUrl: 'https://images.unsplash.com/photo-1535254973040-607b474cb50d?w=400&h=300&fit=crop',
   });
@@ -177,6 +182,7 @@ function seedData(): void {
     id: 'addon_album',
     packageId: 'pkg_luxury',
     title: 'Premium Photo Album',
+    description: 'Premium leather-bound photo album',
     priceCents: 45000, // $450
     photoUrl: 'https://images.unsplash.com/photo-1512428813834-c702c7702b78?w=400&h=300&fit=crop',
   });

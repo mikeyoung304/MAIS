@@ -649,6 +649,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
       id: addOn.id,
       packageId: addOn.packages[0]?.packageId || '',
       title: addOn.name,
+      description: null,
       priceCents: addOn.price,
       photoUrl: undefined,
     };

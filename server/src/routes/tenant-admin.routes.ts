@@ -29,6 +29,7 @@ import {
   ForbiddenError,
   TooManyRequestsError,
 } from '../lib/errors';
+import type { AddOn } from '../lib/entities';
 import { uploadLimiterIP, uploadLimiterTenant, draftAutosaveLimiter, addonReadLimiter, addonWriteLimiter } from '../middleware/rateLimiter';
 
 // Configure multer for memory storage
@@ -1018,11 +1019,11 @@ export function createTenantAdminRoutes(
    * TODO-195 FIX: DTO mapper function to avoid code duplication
    * Maps AddOn entity to API response format
    */
-  const mapAddOnToDto = (addOn: { id: string; packageId: string; title: string; description: string | null; priceCents: number; photoUrl: string | null }) => ({
+  const mapAddOnToDto = (addOn: AddOn) => ({
     id: addOn.id,
     packageId: addOn.packageId,
     title: addOn.title,
-    description: addOn.description,
+    description: addOn.description ?? null,
     priceCents: addOn.priceCents,
     photoUrl: addOn.photoUrl,
   });
