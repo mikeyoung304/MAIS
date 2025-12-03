@@ -52,7 +52,10 @@ export function SegmentsList({
           <div className="flex items-center gap-4">
             {/* Drag Handle / Order Indicator */}
             <div className="w-10 h-10 bg-sage/10 rounded-xl flex flex-col items-center justify-center flex-shrink-0">
-              <span className="text-xs font-medium text-sage">{segment.sortOrder}</span>
+              <span className="text-xs font-medium text-sage">
+                <span className="sr-only">Sort order: </span>
+                {segment.sortOrder}
+              </span>
             </div>
 
             {/* Content */}
@@ -65,6 +68,7 @@ export function SegmentsList({
               </div>
               <div className="flex items-center gap-4 mt-1.5 text-sm text-text-muted">
                 <span className="font-mono text-xs bg-surface px-2 py-0.5 rounded border border-sage-light/10">
+                  <span className="sr-only">URL path: </span>
                   /{segment.slug}
                 </span>
                 {segment.heroTitle && (

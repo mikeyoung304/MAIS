@@ -62,7 +62,7 @@ export function TierSelector({
             to={backLink}
             className="inline-flex items-center text-macon-navy hover:text-macon-orange transition-colors mb-8"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
             <span>{backLinkText}</span>
           </Link>
         )}
@@ -82,7 +82,7 @@ export function TierSelector({
         {/* Empty state if no tiers */}
         {configuredTiers.length === 0 && (
           <div className="text-center py-16 bg-neutral-50 rounded-xl border border-neutral-200">
-            <Package className="w-12 h-12 mx-auto text-neutral-300 mb-4" />
+            <Package className="w-12 h-12 mx-auto text-neutral-300 mb-4" aria-hidden="true" />
             <h3 className="text-xl font-semibold text-neutral-900 mb-2">
               Coming Soon
             </h3>

@@ -20,7 +20,6 @@ export function PackagesManager({ packages, onPackagesChange }: PackagesManagerP
     isCreatingPackage,
     editingPackageId,
     isSaving: packageSaving,
-    error: packageError,
     packageForm,
     segments,
     setPackageForm,
@@ -35,7 +34,6 @@ export function PackagesManager({ packages, onPackagesChange }: PackagesManagerP
     isAddingAddOn,
     editingAddOnId,
     isSaving: addOnSaving,
-    error: addOnError,
     addOnForm,
     segments: addOnSegments,
     setAddOnForm,
@@ -83,7 +81,6 @@ export function PackagesManager({ packages, onPackagesChange }: PackagesManagerP
           packageForm={packageForm}
           editingPackageId={editingPackageId}
           isSaving={packageSaving}
-          error={packageError}
           segments={segments}
           onFormChange={setPackageForm}
           onSubmit={handleSavePackage}
@@ -100,7 +97,6 @@ export function PackagesManager({ packages, onPackagesChange }: PackagesManagerP
         editingAddOnId={editingAddOnId}
         addOnForm={addOnForm}
         isSaving={addOnSaving}
-        error={addOnError}
         segments={addOnSegments}
         onAddOnFormChange={setAddOnForm}
         onSubmitAddOn={handleSaveAddOn}

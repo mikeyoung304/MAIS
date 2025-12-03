@@ -13,6 +13,7 @@
 import type { BookingRepository, CatalogRepository } from '../lib/ports';
 import type { Booking, Package } from '../lib/entities';
 import type { EventEmitter } from '../lib/core/events';
+import { BookingEvents } from '../lib/core/events';
 import { logger } from '../lib/core/logger';
 import { generateManageBookingUrl } from '../lib/booking-tokens';
 
@@ -155,7 +156,7 @@ export class ReminderService {
 
     // Emit event for email sending
     // The notification handler will pick this up and send the actual email
-    await this.eventEmitter.emit('BookingReminderDue', {
+    await this.eventEmitter.emit(BookingEvents.REMINDER_DUE, {
       bookingId: booking.id,
       tenantId,
       email: booking.email,

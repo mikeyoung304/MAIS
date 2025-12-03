@@ -36,7 +36,6 @@ export function SegmentsManager() {
     isCreatingSegment,
     editingSegmentId,
     isSaving,
-    error,
     segmentForm,
     setSegmentForm,
     handleCreateSegment,
@@ -70,7 +69,6 @@ export function SegmentsManager() {
           segmentForm={segmentForm}
           editingSegmentId={editingSegmentId}
           isSaving={isSaving}
-          error={error}
           onFormChange={setSegmentForm}
           onSubmit={handleSaveSegment}
           onCancel={handleCancelSegmentForm}

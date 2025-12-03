@@ -91,7 +91,7 @@ export function EditablePackageCard({
           variant="outline"
           className="absolute top-2 right-2 z-10 bg-amber-50 text-amber-700 border-amber-300"
         >
-          <Pencil className="h-3 w-3 mr-1" />
+          <Pencil className="h-3 w-3 mr-1" aria-hidden="true" />
           Unsaved changes
         </Badge>
       )}

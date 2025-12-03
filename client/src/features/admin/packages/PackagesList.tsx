@@ -16,7 +16,6 @@ interface PackagesListProps {
   editingAddOnId: string | null;
   addOnForm: AddOnFormData;
   isSaving: boolean;
-  error: string | null;
   segments?: Array<{ id: string; name: string; active: boolean }>;
   onAddOnFormChange: (form: AddOnFormData) => void;
   onSubmitAddOn: (e: React.FormEvent, packageId: string) => void;
@@ -35,7 +34,6 @@ export function PackagesList({
   editingAddOnId,
   addOnForm,
   isSaving,
-  error,
   segments,
   onAddOnFormChange,
   onSubmitAddOn,
@@ -79,7 +77,6 @@ export function PackagesList({
                     editingAddOnId={editingAddOnId}
                     addOnForm={addOnForm}
                     isSaving={isSaving}
-                    error={error}
                     segments={segments}
                     onFormChange={onAddOnFormChange}
                     onSubmit={(e) => onSubmitAddOn(e, pkg.id)}

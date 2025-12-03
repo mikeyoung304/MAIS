@@ -17,22 +17,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { formatCurrency } from '@/lib/utils';
 
 interface CancelDialogProps {
   totalCents: number;
   isCancelling: boolean;
   onCancel: (reason?: string) => Promise<boolean>;
   disabled?: boolean;
-}
-
-/**
- * Format cents to dollars
- */
-function formatMoney(cents: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(cents / 100);
 }
 
 export function CancelDialog({
@@ -97,7 +88,7 @@ export function CancelDialog({
             <ul className="text-sm text-red-200/80 space-y-1 list-disc list-inside">
               <li>Your booking will be permanently cancelled</li>
               <li>
-                A refund of {formatMoney(totalCents)} will be processed within
+                A refund of {formatCurrency(totalCents)} will be processed within
                 5-10 business days
               </li>
               <li>Your date will be released for other bookings</li>

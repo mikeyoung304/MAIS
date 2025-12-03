@@ -11,13 +11,11 @@ import { HeroFields } from "./HeroFields";
 import { MetaFields } from "./MetaFields";
 import { SettingsFields } from "./SettingsFields";
 import { FormActions } from "./FormActions";
-import { ErrorMessage } from "../../../tenant-admin/branding/components/BrandingForm/ErrorMessage";
 
 interface SegmentFormProps {
   segmentForm: SegmentFormData;
   editingSegmentId: string | null;
   isSaving: boolean;
-  error: string | null;
   onFormChange: (form: SegmentFormData) => void;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
@@ -27,7 +25,6 @@ export function SegmentForm({
   segmentForm,
   editingSegmentId,
   isSaving,
-  error,
   onFormChange,
   onSubmit,
   onCancel,
@@ -37,8 +34,6 @@ export function SegmentForm({
       <h2 className="text-2xl font-semibold mb-4 text-white">
         {editingSegmentId ? "Edit Segment" : "Create Segment"}
       </h2>
-
-      <ErrorMessage error={error} />
 
       <form onSubmit={onSubmit} className="space-y-4">
         <BasicInfoFields

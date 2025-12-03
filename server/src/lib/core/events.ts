@@ -4,6 +4,31 @@
 
 import { logger } from './logger';
 
+// ============================================================================
+// Event Name Constants - Prevents typos in event names
+// ============================================================================
+// All event names are defined as constants to prevent silent delivery failures
+// caused by typos in string literals.
+
+export const BookingEvents = {
+  PAID: 'BookingPaid',
+  RESCHEDULED: 'BookingRescheduled',
+  CANCELLED: 'BookingCancelled',
+  REMINDER_DUE: 'BookingReminderDue',
+  REFUNDED: 'BookingRefunded',
+  BALANCE_PAYMENT_COMPLETED: 'BalancePaymentCompleted',
+} as const;
+
+export const AppointmentEvents = {
+  BOOKED: 'AppointmentBooked',
+} as const;
+
+// Type exports for type-safe event name handling
+export type BookingEventName = typeof BookingEvents[keyof typeof BookingEvents];
+export type AppointmentEventName = typeof AppointmentEvents[keyof typeof AppointmentEvents];
+
+export type EventName = BookingEventName | AppointmentEventName;
+
 export type EventHandler<T = unknown> = (payload: T) => void | Promise<void>;
 
 export interface EventEmitter {

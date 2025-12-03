@@ -15,7 +15,7 @@ export type TierLevel = (typeof TIER_LEVELS)[number];
  * Get tier display name based on tier level
  * budget → Essential, middle → Popular, luxury → Premium
  */
-export function getTierDisplayName(tierLevel: string): string {
+export function getTierDisplayName(tierLevel: TierLevel): string {
   switch (tierLevel) {
     case 'budget':
       return 'Essential';
@@ -23,8 +23,6 @@ export function getTierDisplayName(tierLevel: string): string {
       return 'Popular';
     case 'luxury':
       return 'Premium';
-    default:
-      return tierLevel.charAt(0).toUpperCase() + tierLevel.slice(1);
   }
 }
 

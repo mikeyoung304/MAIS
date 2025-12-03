@@ -10,6 +10,7 @@
 import { Save, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ColorInput } from "./ColorInput";
 import { FontSelector } from "./FontSelector";
 import { LogoSection } from "./LogoSection";
@@ -34,15 +35,11 @@ export function BrandingForm({
   return (
     <TooltipProvider>
       <div className="bg-surface-alt rounded-2xl border border-sage-light/20 p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-sage/10 rounded-xl flex items-center justify-center">
-            <Palette className="w-5 h-5 text-sage" />
-          </div>
-          <div>
-            <h3 className="font-serif text-xl font-bold text-text-primary">Colors & Typography</h3>
-            <p className="text-sm text-text-muted">Define your brand palette</p>
-          </div>
-        </div>
+        <SectionHeader
+          icon={Palette}
+          title="Colors & Typography"
+          description="Define your brand palette"
+        />
 
         <ErrorMessage error={error} />
 
@@ -107,7 +104,7 @@ export function BrandingForm({
               loadingText="Saving..."
               className="w-full bg-sage hover:bg-sage-hover text-white h-11 rounded-full shadow-soft hover:shadow-medium transition-all duration-300"
             >
-              <Save className="w-4 h-4 mr-2" />
+              <Save className="w-4 h-4 mr-2" aria-hidden="true" />
               Save Branding
             </Button>
           </div>

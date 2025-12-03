@@ -44,7 +44,7 @@ export function RulesList({ rules, services, isLoading, onDeleteClick }: RulesLi
     return (
       <Card className="p-6 bg-macon-navy-800 border-white/20">
         <div className="text-center py-8">
-          <Calendar className="w-12 h-12 mx-auto mb-3 text-white/40" />
+          <Calendar className="w-12 h-12 mx-auto mb-3 text-white/40" aria-hidden="true" />
           <p className="text-lg text-white/70">No availability rules set</p>
           <p className="text-sm text-white/50 mt-2">
             Add rules to define when your services are available

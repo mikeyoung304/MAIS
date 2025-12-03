@@ -6,8 +6,13 @@
  */
 
 import { PrismaClient } from '../../src/generated/prisma';
-import { apiKeyService } from '../../src/lib/api-key.service';
 import { logger } from '../../src/lib/core/logger';
+import {
+  createOrUpdateTenant,
+  createOrUpdatePackages,
+  createOrUpdateAddOns,
+  linkAddOnsToPackage,
+} from './utils';
 
 // Fixed keys for E2E tests - NEVER use in production
 // These are intentionally predictable for test automation
@@ -25,85 +30,52 @@ export async function seedE2E(prisma: PrismaClient): Promise<void> {
     );
   }
 
-  // Create test tenant
-  const tenant = await prisma.tenant.upsert({
-    where: { slug: E2E_TENANT_SLUG },
-    update: {
-      apiKeyPublic: E2E_PUBLIC_KEY,
-      primaryColor: '#1a365d',
-      secondaryColor: '#fb923c',
-      accentColor: '#38b2ac',
-      backgroundColor: '#ffffff',
-    },
-    create: {
-      slug: E2E_TENANT_SLUG,
-      name: 'MAIS E2E Test Tenant',
-      commissionPercent: 5.0,
-      apiKeyPublic: E2E_PUBLIC_KEY,
-      apiKeySecret: apiKeyService.hashSecretKey(E2E_SECRET_KEY),
-      stripeAccountId: null,
-      stripeOnboarded: false,
-      isActive: true,
-      primaryColor: '#1a365d',
-      secondaryColor: '#fb923c',
-      accentColor: '#38b2ac',
-      backgroundColor: '#ffffff',
-      branding: { fontFamily: 'Inter, system-ui, sans-serif' },
-    },
+  // Create test tenant using shared utility
+  const tenant = await createOrUpdateTenant(prisma, {
+    slug: E2E_TENANT_SLUG,
+    name: 'MAIS E2E Test Tenant',
+    commissionPercent: 5.0,
+    apiKeyPublic: E2E_PUBLIC_KEY,
+    apiKeySecret: E2E_SECRET_KEY,
+    primaryColor: '#1a365d',
+    secondaryColor: '#fb923c',
+    accentColor: '#38b2ac',
+    backgroundColor: '#ffffff',
   });
 
   logger.info(`E2E test tenant created: ${tenant.name} (${tenant.slug})`);
   logger.info(`Public Key: ${E2E_PUBLIC_KEY}`);
 
-  // Create minimal packages for E2E tests
-  const [starter, growth] = await Promise.all([
-    prisma.package.upsert({
-      where: { tenantId_slug: { slug: 'starter', tenantId: tenant.id } },
-      update: {},
-      create: {
-        slug: 'starter',
-        name: 'Starter Package',
-        description: 'Basic package for E2E testing',
-        basePrice: 25000,
-        photos: JSON.stringify([]),
-        tenantId: tenant.id,
-      },
-    }),
-    prisma.package.upsert({
-      where: { tenantId_slug: { slug: 'growth', tenantId: tenant.id } },
-      update: {},
-      create: {
-        slug: 'growth',
-        name: 'Growth Package',
-        description: 'Growth package for E2E testing',
-        basePrice: 50000,
-        photos: JSON.stringify([]),
-        tenantId: tenant.id,
-      },
-    }),
+  // Create minimal packages for E2E tests using shared utility
+  const [starter, growth] = await createOrUpdatePackages(prisma, tenant.id, [
+    {
+      slug: 'starter',
+      name: 'Starter Package',
+      description: 'Basic package for E2E testing',
+      basePrice: 25000,
+    },
+    {
+      slug: 'growth',
+      name: 'Growth Package',
+      description: 'Growth package for E2E testing',
+      basePrice: 50000,
+    },
   ]);
 
   logger.info(`E2E packages created: ${[starter, growth].length}`);
 
-  // Create one add-on for testing
-  const addOn = await prisma.addOn.upsert({
-    where: { tenantId_slug: { slug: 'test-addon', tenantId: tenant.id } },
-    update: {},
-    create: {
-      tenantId: tenant.id,
+  // Create one add-on for testing using shared utility
+  const [addOn] = await createOrUpdateAddOns(prisma, tenant.id, [
+    {
       slug: 'test-addon',
       name: 'Test Add-On',
       description: 'Add-on for E2E testing',
       price: 5000,
     },
-  });
+  ]);
 
-  // Link add-on to starter package
-  await prisma.packageAddOn.upsert({
-    where: { packageId_addOnId: { packageId: starter.id, addOnId: addOn.id } },
-    update: {},
-    create: { packageId: starter.id, addOnId: addOn.id },
-  });
+  // Link add-on to starter package using shared utility
+  await linkAddOnsToPackage(prisma, starter.id, [addOn.id]);
 
   logger.info('E2E add-on linked to starter package');
 }

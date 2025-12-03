@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: "172"
 tags: [code-review, security, information-disclosure, public-routes]
@@ -98,16 +98,17 @@ Implement Option A immediately as hotfix, then Option C for comprehensive soluti
 
 ## Acceptance Criteria
 
-- [ ] NotFoundError in public routes returns generic message
-- [ ] No tenant IDs exposed in any public error response
-- [ ] Add test to verify generic error messages
-- [ ] TypeScript passes
+- [x] NotFoundError in public routes returns generic message
+- [x] No tenant IDs exposed in any public error response
+- [x] Test updated to verify generic error messages
+- [x] TypeScript passes
 
 ## Work Log
 
 | Date | Action | Notes |
 |------|--------|-------|
 | 2025-12-02 | Created | From security review of commit d9ceb40 |
+| 2025-12-02 | Completed | Implemented hybrid Option A + B: Error handler returns generic message AND service layer logs tenant ID internally |
 
 ## Resources
 

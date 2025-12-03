@@ -1,6 +1,29 @@
 /**
  * URL Sanitization Utility
  *
+ * Provides frontend defense-in-depth for image URL validation.
+ *
+ * SECURITY CONTEXT:
+ * Backend validates all URLs on write (.url() in Zod schemas).
+ * CSP headers enforce img-src https: at the browser level.
+ * This utility provides an additional validation layer for explicit control.
+ *
+ * WHEN TO USE:
+ * - Admin interfaces: Always use to validate user-facing content
+ * - Public storefronts: Optional; CSP headers + backend validation sufficient
+ * - Development: Helpful for catching issues early
+ *
+ * WHAT IT PROTECTS AGAINST:
+ * - javascript: protocol injection (blocked by CSP)
+ * - data:text/html injection (blocked by CSP)
+ * - Malformed URLs in display contexts
+ * - Tracking pixel injection (rare but possible)
+ *
+ * WHAT IT DOESN'T NEED TO PROTECT AGAINST:
+ * - img src XSS (browsers don't execute JS in img src, only CSP)
+ * - HTTPS enforcement (CSP handles this)
+ * - Database compromise (backend responsibility)
+ *
  * Prevents XSS attacks and tracking pixel injection in user-uploaded image URLs
  * by validating URL protocols and formats.
  *

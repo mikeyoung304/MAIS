@@ -66,7 +66,10 @@ export const ChoiceCardBase = memo(function ChoiceCardBase({
     >
       {/* "Most Popular" badge */}
       {highlighted && (
-        <Badge className="absolute top-4 right-4 z-10 bg-macon-orange text-white border-0">
+        <Badge
+          className="absolute top-4 right-4 z-10 bg-macon-orange text-white border-0"
+          aria-label="Most popular option"
+        >
           Most Popular
         </Badge>
       )}
@@ -75,6 +78,11 @@ export const ChoiceCardBase = memo(function ChoiceCardBase({
       <div className="relative aspect-[4/3] overflow-hidden bg-neutral-100">
         {imageUrl ? (
           <img
+            // NOTE: URL validation already handled by:
+            // 1. Backend Zod validation (.url() on create/update)
+            // 2. CSP headers enforcing img-src https:
+            // Frontend sanitizeImageUrl() optional but not required for public storefronts
+            // (admin interfaces use it explicitly; see BrandingPreview.tsx for pattern)
             src={imageUrl}
             alt={imageAlt}
             loading="lazy"
@@ -85,7 +93,11 @@ export const ChoiceCardBase = memo(function ChoiceCardBase({
             }}
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-macon-navy to-macon-teal/80 flex items-center justify-center">
+          <div
+            role="img"
+            aria-label={`${categoryLabel} category`}
+            className="w-full h-full bg-gradient-to-br from-macon-navy to-macon-teal/80 flex items-center justify-center"
+          >
             <span className="text-white/60 text-lg font-medium">
               {categoryLabel}
             </span>

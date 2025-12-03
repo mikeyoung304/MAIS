@@ -260,19 +260,57 @@ export class SchedulingAvailabilityService {
   }
 
   /**
-   * Create a Date object in a specific timezone
+   * Converts wall-clock time in a timezone to a UTC Date object.
    *
-   * This is a simplified timezone handler. For production, consider using a library
-   * like date-fns-tz or Luxon for more robust timezone handling.
+   * For example, calling with (2025, 5, 15, 9, 30, 'America/New_York') returns
+   * the UTC timestamp for "2025-06-15 09:30:00 EDT".
    *
-   * @param year - Year
-   * @param month - Month (0-11)
-   * @param day - Day of month
-   * @param hour - Hour (0-23)
+   * **Implementation Approach:**
+   *
+   * Uses the native Intl.DateTimeFormat API instead of a timezone library (date-fns-tz, Luxon).
+   * This choice avoids additional dependencies while correctly handling common scheduling scenarios:
+   *
+   * - DST transitions: Intl automatically applies DST rules for the specified timezone
+   * - Error resilience: Invalid timezones fall back to UTC with a logged warning
+   * - Bundle size: No additional dependencies needed
+   *
+   * **How It Works:**
+   *
+   * 1. Create a UTC Date from the raw input values
+   * 2. Format that UTC Date in the target timezone using Intl.DateTimeFormat
+   * 3. Compare the formatted (local) time with the original (UTC) time to get offset
+   * 4. Apply the offset to produce the correct UTC representation
+   *
+   * **DST Handling:**
+   *
+   * The Intl API automatically accounts for Daylight Saving Time. On March 9, 2025
+   * in America/New_York (a DST transition date), times are correctly interpreted
+   * whether in EDT or EST without additional logic.
+   *
+   * **Error Handling:**
+   *
+   * Invalid timezones (e.g., 'America/Invalid_City') are caught and logged as warnings.
+   * The method falls back to UTC, preventing crashes while alerting operators to the issue.
+   *
+   * **See Also:**
+   * - TODO-059: Discussion of timezone library alternatives
+   * - MDN Intl.DateTimeFormat: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat
+   *
+   * @param year - Full year (e.g., 2025)
+   * @param month - Month (0-11, like JavaScript Date; January=0)
+   * @param day - Day of month (1-31)
+   * @param hour - Hour (0-23, in the specified timezone)
    * @param minute - Minute (0-59)
-   * @param timezone - IANA timezone string
+   * @param timezone - IANA timezone string (e.g., "America/New_York", "Europe/London", "Asia/Tokyo")
    * @param tenantId - Tenant ID for logging context
-   * @returns Date object in UTC representing the local time in the specified timezone
+   * @returns UTC Date object representing the specified wall-clock time in the timezone
+   *
+   * @example
+   * ```typescript
+   * // Create a Date for "2025-06-15 09:30:00 EDT"
+   * const date = this.createDateInTimezone(2025, 5, 15, 9, 30, 'America/New_York', 'tenant_123');
+   * // Returns: 2025-06-15T13:30:00Z (UTC, 4 hours ahead of EDT)
+   * ```
    *
    * @private
    */
@@ -288,15 +326,14 @@ export class SchedulingAvailabilityService {
     // Create ISO string in the format: YYYY-MM-DDTHH:MM
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
 
-    // Use Intl.DateTimeFormat to handle timezone conversion
-    // This is a workaround until we add a proper timezone library
+    // Use Intl.DateTimeFormat to compute timezone offset.
+    // See JSDoc above for detailed algorithm explanation.
     try {
-      // Parse the date string as if it's in the specified timezone
-      // Then convert to UTC
+      // Create a UTC date from the raw values
       const localDate = new Date(dateStr);
 
-      // Get the timezone offset for the target timezone
-      // We'll use a trick: format the date in the target timezone and parse it back
+      // Get the timezone offset by formatting the UTC date in the target timezone
+      // and comparing wall-clock times to determine the offset
       const formatter = new Intl.DateTimeFormat('en-US', {
         timeZone: timezone,
         year: 'numeric',

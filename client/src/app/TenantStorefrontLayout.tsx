@@ -18,6 +18,7 @@ import { useTenantBranding } from '../hooks/useTenantBranding';
 import { Loading } from '../ui/Loading';
 import { Container } from '../ui/Container';
 import type { TenantPublicDto } from '@macon/contracts';
+import '@/styles/a11y.css';
 
 export function TenantStorefrontLayout() {
   const { tenantSlug } = useParams<{ tenantSlug: string }>();
@@ -80,6 +81,11 @@ export function TenantStorefrontLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
+      {/* Skip link for keyboard navigation */}
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+
       {/* Minimal tenant header */}
       <header className="border-b border-gray-200 bg-white sticky top-0 z-10">
         <Container>
@@ -91,6 +97,10 @@ export function TenantStorefrontLayout() {
             >
               {tenant.branding?.logoUrl ? (
                 <img
+                  // NOTE: Backend validates logo URLs with Zod (.url()).
+                  // CSP headers enforce img-src https: at browser level.
+                  // For admin context, see BrandingPreview.tsx which uses
+                  // sanitizeImageUrl() for explicit frontend validation.
                   src={tenant.branding.logoUrl}
                   alt={tenant.name}
                   className="h-10 w-auto"
@@ -104,7 +114,7 @@ export function TenantStorefrontLayout() {
       </header>
 
       {/* Main content - existing storefront components */}
-      <main className="flex-1">
+      <main id="main" tabIndex={-1} className="flex-1">
         <Outlet />
       </main>
 

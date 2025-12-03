@@ -46,7 +46,6 @@ export interface PackageFormProps {
   packageForm: PackageFormData;
   editingPackageId: string | null;
   isSaving: boolean;
-  error: string | null;
   segments?: Array<{ id: string; name: string; active: boolean }>;
   onFormChange: (form: PackageFormData) => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -59,7 +58,6 @@ export interface AddOnManagerProps {
   editingAddOnId: string | null;
   addOnForm: AddOnFormData;
   isSaving: boolean;
-  error: string | null;
   segments?: Array<{ id: string; name: string; active: boolean }>;
   onFormChange: (form: AddOnFormData) => void;
   onSubmit: (e: React.FormEvent) => void;

@@ -135,6 +135,7 @@ export function EditablePrice({
               "ml-1 h-3 w-3 text-muted-foreground opacity-0 transition-opacity",
               "group-hover:opacity-100 group-focus:opacity-100"
             )}
+            aria-hidden="true"
           />
         )}
       </div>

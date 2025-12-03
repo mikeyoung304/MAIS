@@ -1,4 +1,4 @@
-import { Plus, Edit, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,6 @@ export function AddOnManager({
   editingAddOnId,
   addOnForm,
   isSaving,
-  error,
   segments,
   onFormChange,
   onSubmit,
@@ -31,13 +30,6 @@ export function AddOnManager({
           <h5 className="font-medium text-lg text-white">
             {editingAddOnId ? "Edit Add-on" : "New Add-on"}
           </h5>
-
-          {error && (
-            <div role="alert" className="flex items-center gap-2 p-3 border border-white/20 bg-macon-navy-700 rounded">
-              <AlertCircle className="w-4 h-4 text-white/70" />
-              <span className="text-base text-white/90">{error}</span>
-            </div>
-          )}
 
           <form onSubmit={onSubmit} className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">

@@ -4,6 +4,8 @@
 **Category:** Accessibility
 **Source:** Code Review - Pattern Recognition Specialist Agent
 **Created:** 2025-11-29
+**Status:** Complete
+**Completed:** 2025-12-02
 
 ## Problem
 
@@ -54,13 +56,23 @@ return (
 
 ## Acceptance Criteria
 
-- [ ] Skip link present at start of DOM
-- [ ] Skip link hidden by default, visible on focus
-- [ ] Main content has matching id attribute
-- [ ] Tab order: skip link → header nav → main content
-- [ ] Matches styling of AppShell skip link
+- [x] Skip link present at start of DOM
+- [x] Skip link hidden by default, visible on focus
+- [x] Main content has matching id attribute
+- [x] Tab order: skip link → header nav → main content
+- [x] Matches styling of AppShell skip link
+
+## Implementation Details
+
+Added skip link using the `.skip-link` CSS class from `@/styles/a11y.css`:
+
+1. Imported `a11y.css` stylesheet
+2. Added skip link at the start of the component return
+3. Added `id="main"` and `tabIndex={-1}` to the `<main>` element
+4. Used same pattern as `AppShell.tsx` for consistency
 
 ## Related Files
 
 - `client/src/app/TenantStorefrontLayout.tsx`
 - `client/src/app/AppShell.tsx` (reference implementation)
+- `client/src/styles/a11y.css` (skip-link styling)

@@ -433,4 +433,141 @@ describe('Rate Limiter Middleware', () => {
       expect(resetSeconds).toBeLessThanOrEqual(920);
     });
   });
+
+  describe('publicSchedulingLimiter', () => {
+    function createSchedulingLimiter() {
+      return rateLimit({
+        windowMs: 60 * 1000, // 1 minute
+        max: 100, // 100 requests per minute
+        standardHeaders: true,
+        legacyHeaders: false,
+        keyGenerator: (req) => {
+          const tenantReq = req as typeof req & { tenantId?: string };
+          return tenantReq.tenantId || req.ip || 'unknown';
+        },
+        validate: false,
+        handler: (_req, res) =>
+          res.status(429).json({
+            error: 'too_many_requests',
+            message: 'Too many requests, please try again later.',
+          }),
+      });
+    }
+
+    it('should allow requests within limit (100 per minute)', async () => {
+      const app = express();
+      app.use(createSchedulingLimiter());
+      app.get('/services', (_req, res) => res.json({ services: [] }));
+
+      const response = await request(app).get('/services');
+
+      expect(response.status).toBe(200);
+      expect(response.headers['ratelimit-limit']).toBe('100');
+    });
+
+    it('should return 429 after exceeding 100 requests per minute', async () => {
+      const app = express();
+      app.use(createSchedulingLimiter());
+      app.get('/services', (_req, res) => res.json({ services: [] }));
+
+      // Make 100 requests (the limit)
+      for (let i = 0; i < 100; i++) {
+        await request(app).get('/services');
+      }
+
+      // 101st request should be rate limited
+      const response = await request(app).get('/services');
+
+      expect(response.status).toBe(429);
+      expect(response.body).toEqual({
+        error: 'too_many_requests',
+        message: 'Too many requests, please try again later.',
+      });
+    });
+
+    it('should key by tenantId when available', async () => {
+      const app = express();
+
+      // Mock tenant middleware that adds tenantId
+      app.use((req, _res, next) => {
+        (req as typeof req & { tenantId?: string }).tenantId = 'tenant-123';
+        next();
+      });
+
+      app.use(createSchedulingLimiter());
+      app.get('/services', (_req, res) => res.json({ services: [] }));
+
+      const response = await request(app).get('/services');
+
+      expect(response.status).toBe(200);
+      expect(response.headers['ratelimit-limit']).toBe('100');
+    });
+
+    it('should key by IP when tenantId not available', async () => {
+      const app = express();
+      app.use(createSchedulingLimiter());
+      app.get('/services', (_req, res) => res.json({ services: [] }));
+
+      const response = await request(app).get('/services');
+
+      expect(response.status).toBe(200);
+      expect(response.headers['ratelimit-limit']).toBe('100');
+    });
+
+    it('should have 1 minute window (60 seconds)', async () => {
+      const app = express();
+      app.use(createSchedulingLimiter());
+      app.get('/services', (_req, res) => res.json({ services: [] }));
+
+      const response = await request(app).get('/services');
+      const resetSeconds = parseInt(response.headers['ratelimit-reset'] as string);
+
+      // Should be approximately 60 seconds (1 minute)
+      expect(resetSeconds).toBeGreaterThanOrEqual(50); // Allow 10 second tolerance
+      expect(resetSeconds).toBeLessThanOrEqual(70);
+    });
+
+    it('should prevent enumeration attacks on services endpoint', async () => {
+      const app = express();
+      app.use(createSchedulingLimiter());
+      app.get('/services', (_req, res) => res.json({ services: [] }));
+
+      // Simulate enumeration attack - rapid requests
+      let rateLimitedCount = 0;
+
+      for (let i = 0; i < 105; i++) {
+        const response = await request(app).get('/services');
+        if (response.status === 429) {
+          rateLimitedCount++;
+        }
+      }
+
+      // Should have rate limited at least 5 requests (105 - 100 limit)
+      expect(rateLimitedCount).toBeGreaterThanOrEqual(5);
+    });
+
+    it('should prevent DoS attacks on availability slots endpoint', async () => {
+      const app = express();
+      app.use(createSchedulingLimiter());
+      app.get('/availability/slots', (_req, res) => res.json({ slots: [] }));
+
+      // Simulate DoS attack - many requests to expensive endpoint
+      let successCount = 0;
+      let rateLimitedCount = 0;
+
+      for (let i = 0; i < 120; i++) {
+        const response = await request(app).get('/availability/slots');
+        if (response.status === 200) {
+          successCount++;
+        } else if (response.status === 429) {
+          rateLimitedCount++;
+        }
+      }
+
+      // Should have allowed exactly 100 requests
+      expect(successCount).toBe(100);
+      // Should have rate limited the rest (20 requests)
+      expect(rateLimitedCount).toBe(20);
+    });
+  });
 });

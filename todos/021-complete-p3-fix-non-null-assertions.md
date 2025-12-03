@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: "021"
 tags: [code-review, typescript, type-safety, storefront]
@@ -131,16 +131,17 @@ Implement **Option C** - Use optional chaining for simplicity.
 
 ## Acceptance Criteria
 
-- [ ] No `!` non-null assertions in TierDetail.tsx
-- [ ] TypeScript compilation passes
-- [ ] Navigation works correctly with all tier combinations
-- [ ] No runtime errors when tiers are missing
+- [x] No `!` non-null assertions in TierDetail.tsx
+- [x] TypeScript compilation passes
+- [x] Navigation works correctly with all tier combinations
+- [x] No runtime errors when tiers are missing
 
 ## Work Log
 
 | Date | Action | Notes |
 |------|--------|-------|
 | 2025-11-27 | Created | Found during PR #6 code quality review |
+| 2025-12-02 | Completed | Replaced non-null assertions with optional chaining at lines 167 and 191 |
 
 ## Resources
 

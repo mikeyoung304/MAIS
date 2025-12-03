@@ -274,7 +274,7 @@ export function TenantPackagesManager({
                   className="text-text-muted hover:text-sage hover:bg-sage/10"
                   aria-label={`Edit segment: ${segment.name}`}
                 >
-                  <Pencil className="w-4 h-4" />
+                  <Pencil className="w-4 h-4" aria-hidden="true" />
                 </Button>
                 <Button
                   size="sm"

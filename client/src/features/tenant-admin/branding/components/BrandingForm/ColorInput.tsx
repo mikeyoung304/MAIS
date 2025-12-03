@@ -50,7 +50,7 @@ export function ColorInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          leftIcon={<Palette className="w-5 h-5" />}
+          leftIcon={<Palette className="w-5 h-5" aria-hidden="true" />}
           className="bg-macon-navy-900 border-white/20 text-white placeholder:text-white/50 focus:border-white/30"
           disabled={disabled}
         />

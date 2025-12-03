@@ -39,12 +39,14 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
 
   // Auto-generate slug from name (kebab-case)
   const generateSlug = (name: string): string => {
-    return name
+    const slug = name
       .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
       .trim()
       .replace(/\s+/g, "-") // Replace spaces with hyphens
       .replace(/-+/g, "-"); // Replace multiple hyphens with single hyphen
+
+    return slug || 'untitled';
   };
 
   // Reset form
@@ -92,13 +94,17 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
 
     // Validate required fields
     if (!serviceForm.slug || !serviceForm.name) {
-      setError("Slug and Name are required");
+      toast.error("Missing Required Fields", {
+        description: "Slug and Name are required",
+      });
       return;
     }
 
     // Validate slug format
     if (!isValidSlug(serviceForm.slug)) {
-      setError("Slug must be lowercase with hyphens only (no spaces)");
+      toast.error("Invalid Slug Format", {
+        description: "Slug must be lowercase with hyphens only (no spaces)",
+      });
       return;
     }
 
@@ -109,22 +115,30 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
     const sortOrder = parseInt(serviceForm.sortOrder, 10);
 
     if (isNaN(durationMinutes) || durationMinutes < 5 || durationMinutes > 480) {
-      setError("Duration must be between 5 and 480 minutes");
+      toast.error("Invalid Duration", {
+        description: "Duration must be between 5 and 480 minutes",
+      });
       return;
     }
 
     if (isNaN(bufferMinutes) || bufferMinutes < 0 || bufferMinutes > 120) {
-      setError("Buffer must be between 0 and 120 minutes");
+      toast.error("Invalid Buffer Time", {
+        description: "Buffer must be between 0 and 120 minutes",
+      });
       return;
     }
 
     if (isNaN(priceCents) || priceCents < 0) {
-      setError("Price must be 0 or greater");
+      toast.error("Invalid Price", {
+        description: "Price must be 0 or greater",
+      });
       return;
     }
 
     if (isNaN(sortOrder) || sortOrder < 0) {
-      setError("Sort Order must be a number >= 0");
+      toast.error("Invalid Sort Order", {
+        description: "Sort Order must be a number >= 0",
+      });
       return;
     }
 

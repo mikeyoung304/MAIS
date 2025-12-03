@@ -17,25 +17,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { formatDate } from '@/lib/utils';
 
 interface RescheduleDialogProps {
   currentDate: string;
   isRescheduling: boolean;
   onReschedule: (newDate: string) => Promise<boolean>;
   disabled?: boolean;
-}
-
-/**
- * Format date for display
- */
-function formatDate(dateString: string): string {
-  const date = new Date(dateString + 'T00:00:00');
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
 }
 
 /**

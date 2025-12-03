@@ -3,7 +3,7 @@
  */
 
 import type { Config } from './lib/core/config';
-import { InProcessEventEmitter } from './lib/core/events';
+import { InProcessEventEmitter, BookingEvents, AppointmentEvents } from './lib/core/events';
 import type { CacheServicePort } from './lib/ports';
 import { RedisCacheAdapter } from './adapters/redis/cache.adapter';
 import { InMemoryCacheAdapter } from './adapters/mock/cache.adapter';
@@ -154,6 +154,7 @@ export function buildContainer(config: Config): Container {
 
     // Create IdempotencyService with mock Prisma
     const idempotencyService = new IdempotencyService(mockPrisma);
+    idempotencyService.startCleanupScheduler();
 
     // Build domain services with caching and audit logging
     const catalogService = new CatalogService(adapters.catalogRepo, cacheAdapter, auditService);
@@ -252,19 +253,23 @@ export function buildContainer(config: Config): Container {
       logger.info('Starting DI container cleanup (mock mode)');
 
       try {
-        // 1. Disconnect Prisma (mock instance)
+        // 1. Stop idempotency cleanup scheduler
+        idempotencyService.stopCleanupScheduler();
+        logger.info('Idempotency cleanup scheduler stopped');
+
+        // 2. Disconnect Prisma (mock instance)
         if (mockPrisma) {
           await mockPrisma.$disconnect();
           logger.info('Mock Prisma disconnected');
         }
 
-        // 2. Disconnect cache adapter (in-memory or Redis)
+        // 3. Disconnect cache adapter (in-memory or Redis)
         if (cacheAdapter && 'disconnect' in cacheAdapter) {
           await (cacheAdapter as any).disconnect();
           logger.info('Cache adapter disconnected');
         }
 
-        // 3. Clear event emitter subscriptions to prevent memory leaks
+        // 4. Clear event emitter subscriptions to prevent memory leaks
         eventEmitter.clearAll();
         logger.info('Event emitter subscriptions cleared');
 
@@ -435,6 +440,7 @@ export function buildContainer(config: Config): Container {
 
   // Create IdempotencyService with real Prisma
   const idempotencyService = new IdempotencyService(prisma);
+  idempotencyService.startCleanupScheduler();
 
   // Build domain services with caching and audit logging
   const catalogService = new CatalogService(catalogRepo, cacheAdapter, auditService);
@@ -494,7 +500,7 @@ export function buildContainer(config: Config): Container {
     packageTitle: string;
     addOnTitles: string[];
     totalCents: number;
-  }>('BookingPaid', async (payload) => {
+  }>(BookingEvents.PAID, async (payload) => {
     try {
       await mailProvider.sendBookingConfirm(payload.email, {
         eventDate: payload.eventDate,
@@ -517,7 +523,7 @@ export function buildContainer(config: Config): Container {
     packageTitle: string;
     daysUntilEvent: number;
     manageUrl: string;
-  }>('BookingReminderDue', async (payload) => {
+  }>(BookingEvents.REMINDER_DUE, async (payload) => {
     try {
       await mailProvider.sendBookingReminder(payload.email, {
         coupleName: payload.coupleName,
@@ -545,7 +551,7 @@ export function buildContainer(config: Config): Container {
     endTime: string;
     totalCents: number;
     notes?: string;
-  }>('AppointmentBooked', async (payload) => {
+  }>(AppointmentEvents.BOOKED, async (payload) => {
     try {
       // Sync appointment to Google Calendar
       const result = await googleCalendarService.createAppointmentEvent(
@@ -619,19 +625,23 @@ export function buildContainer(config: Config): Container {
     logger.info('Starting DI container cleanup (real mode)');
 
     try {
-      // 1. Disconnect Prisma
+      // 1. Stop idempotency cleanup scheduler
+      idempotencyService.stopCleanupScheduler();
+      logger.info('Idempotency cleanup scheduler stopped');
+
+      // 2. Disconnect Prisma
       if (prisma) {
         await prisma.$disconnect();
         logger.info('Prisma disconnected');
       }
 
-      // 2. Disconnect cache adapter (Redis or in-memory)
+      // 3. Disconnect cache adapter (Redis or in-memory)
       if (cacheAdapter && 'disconnect' in cacheAdapter) {
         await (cacheAdapter as any).disconnect();
         logger.info('Cache adapter disconnected');
       }
 
-      // 3. Clear event emitter subscriptions to prevent memory leaks
+      // 4. Clear event emitter subscriptions to prevent memory leaks
       eventEmitter.clearAll();
       logger.info('Event emitter subscriptions cleared');
 

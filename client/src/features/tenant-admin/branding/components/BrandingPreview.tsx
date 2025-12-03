@@ -1,4 +1,5 @@
 import { Calendar, Check, Eye } from "lucide-react";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { sanitizeImageUrl } from "@/lib/sanitize-url";
 
 interface BrandingPreviewProps {
@@ -26,15 +27,11 @@ export function BrandingPreview({
 }: BrandingPreviewProps) {
   return (
     <div className="bg-surface-alt rounded-2xl border border-sage-light/20 p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-sage/10 rounded-xl flex items-center justify-center">
-          <Eye className="w-5 h-5 text-sage" />
-        </div>
-        <div>
-          <h3 className="font-serif text-xl font-bold text-text-primary">Live Preview</h3>
-          <p className="text-sm text-text-muted">See how your branding appears</p>
-        </div>
-      </div>
+      <SectionHeader
+        icon={Eye}
+        title="Live Preview"
+        description="See how your branding appears"
+      />
 
       {/* Booking Widget Preview */}
       <div
@@ -105,7 +102,7 @@ export function BrandingPreview({
               className="flex items-center gap-2 px-3 py-2 rounded-lg border text-sm"
               style={{ borderColor: `${primaryColor}30` }}
             >
-              <Calendar className="w-4 h-4" style={{ color: primaryColor }} />
+              <Calendar className="w-4 h-4" style={{ color: primaryColor }} aria-hidden="true" />
               <span className="opacity-50">Choose a date...</span>
             </div>
           </div>
@@ -122,7 +119,7 @@ export function BrandingPreview({
               className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
               style={{ backgroundColor: accentColor }}
             >
-              <Check className="w-3 h-3 text-white" />
+              <Check className="w-3 h-3 text-white" aria-hidden="true" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium" style={{ color: secondaryColor }}>

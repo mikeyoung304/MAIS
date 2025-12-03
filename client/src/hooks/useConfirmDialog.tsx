@@ -63,15 +63,6 @@ export function useConfirmDialog() {
           resolve(true);
         },
       });
-
-      // Store cancel handler separately to avoid closure issues
-      const handleCancel = () => {
-        setDialogState(null);
-        resolve(false);
-      };
-
-      // Attach cancel handler to state
-      (handleCancel as any)._isCancel = true;
     });
   }, []);
 

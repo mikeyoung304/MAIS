@@ -6,69 +6,11 @@
 import { Calendar, Mail, User, Package, DollarSign, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { formatCurrency, formatDate, getStatusVariant, getRefundStatusText } from '@/lib/utils';
 import type { BookingDetails } from './hooks/useBookingManagement';
 
 interface BookingDetailsCardProps {
   bookingDetails: BookingDetails;
-}
-
-/**
- * Format cents to dollars
- */
-function formatMoney(cents: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(cents / 100);
-}
-
-/**
- * Format date string to readable format
- */
-function formatDate(dateString: string): string {
-  const date = new Date(dateString + 'T00:00:00');
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
-
-/**
- * Get status badge variant
- */
-function getStatusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-  switch (status) {
-    case 'PAID':
-      return 'default';
-    case 'CANCELED':
-      return 'destructive';
-    case 'REFUNDED':
-      return 'secondary';
-    default:
-      return 'outline';
-  }
-}
-
-/**
- * Get refund status text
- */
-function getRefundStatusText(status?: string): string | null {
-  switch (status) {
-    case 'PENDING':
-      return 'Refund pending';
-    case 'PROCESSING':
-      return 'Refund processing';
-    case 'COMPLETED':
-      return 'Refund completed';
-    case 'PARTIAL':
-      return 'Partial refund issued';
-    case 'FAILED':
-      return 'Refund failed';
-    default:
-      return null;
-  }
 }
 
 export function BookingDetailsCard({ bookingDetails }: BookingDetailsCardProps) {
@@ -96,7 +38,7 @@ export function BookingDetailsCard({ bookingDetails }: BookingDetailsCardProps) 
             <div>
               <p className="text-sm text-white/60">Event Date</p>
               <p className="text-xl font-semibold text-white">
-                {formatDate(booking.eventDate)}
+                {formatDate(booking.eventDate.toString())}
               </p>
             </div>
           </div>
@@ -150,7 +92,7 @@ export function BookingDetailsCard({ bookingDetails }: BookingDetailsCardProps) 
           <div>
             <p className="text-sm text-white/60">Total Paid</p>
             <p className="text-xl font-semibold text-white">
-              {formatMoney(booking.totalCents)}
+              {formatCurrency(booking.totalCents)}
             </p>
           </div>
         </div>
@@ -162,7 +104,7 @@ export function BookingDetailsCard({ bookingDetails }: BookingDetailsCardProps) 
             <div>
               <p className="text-sm text-white/60">Refund Amount</p>
               <p className="text-lg font-semibold text-green-400">
-                {formatMoney(booking.refundAmount)}
+                {formatCurrency(booking.refundAmount)}
               </p>
             </div>
           </div>

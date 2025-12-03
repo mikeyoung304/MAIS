@@ -98,7 +98,8 @@ export const PackageList = memo(function PackageList({ packages, onEdit, onDelet
                   {pkg.photos.length > 1 && (
                     <span className="absolute bottom-2 left-2 bg-text-primary/80 backdrop-blur-sm text-white text-xs font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
                       <ImageIcon className="w-3 h-3" aria-hidden="true" />
-                      {pkg.photos.length}
+                      <span className="sr-only">{pkg.photos.length} photos available</span>
+                      <span aria-hidden="true">{pkg.photos.length}</span>
                     </span>
                   )}
                 </>

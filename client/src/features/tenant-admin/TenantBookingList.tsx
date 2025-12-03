@@ -297,11 +297,11 @@ export function TenantBookingList({ bookings, isLoading }: TenantBookingListProp
                     </div>
                     <div className="flex items-center gap-4 mt-1.5 text-sm text-text-muted">
                       <span className="flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5" />
+                        <Mail className="w-3.5 h-3.5" aria-hidden="true" />
                         {booking.email}
                       </span>
                       <span className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5" />
+                        <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
                         {monthYear}
                       </span>
                     </div>

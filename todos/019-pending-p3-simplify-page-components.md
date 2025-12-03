@@ -1,8 +1,8 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: "019"
-tags: [code-review, simplification, yagni, storefront]
+tags: [code-review, simplification, yagni, storefront, deferred]
 dependencies: ["016"]
 ---
 
@@ -110,9 +110,35 @@ Extract shared loading/error states to TierSelector, keep thin page wrappers.
 
 ## Recommended Action
 
-**No immediate action required.** Current implementation works and is acceptable.
+**DECISION: Keep separate (Option A)** ✅ No change needed.
 
-Consider **Option B** in a future cleanup sprint if code duplication becomes problematic.
+After detailed analysis, the cost of merging outweighs the benefits:
+
+### Why Merging is Not Worth It:
+
+1. **Conditional Hook Violation**: Merging requires conditional hook calls (`isSegment ? useSegmentWithPackages() : usePackages()`), which violates React best practices and adds cognitive overhead.
+
+2. **Different Error Semantics**: RootTiers needs user-facing error recovery with retry button; SegmentTiers silently redirects. Merging conflates these two error philosophies.
+
+3. **Route Semantic Clarity**: These routes represent fundamentally different concepts:
+   - `/s/:slug` = "filter packages within a specific segment"
+   - `/tiers` = "filter packages without a segment association"
+   Separate components make this distinction explicit and self-documenting.
+
+4. **Context Passing**: Segment routes pass segment metadata (`segmentSlug`, `segmentName`); root routes don't. Conditional prop passing adds complexity.
+
+5. **Minimal Code Savings**: ~50 lines saved (mostly duplicated loading/error skeletons that should arguably be in a shared hook, not component).
+
+6. **Low Maintenance Burden**: Both components are small, tested, and stable. Duplication is acceptable for 75-91 line files.
+
+### What Could Be Done Instead (Lower-Risk):
+
+If code duplication becomes a real issue in the future, consider:
+- **Extract shared loading skeleton** to a utility hook or wrapper component
+- **Extract error UI pattern** to reusable component
+- **Extract tier validation logic** to a custom hook
+
+These are lower-risk refactors that don't require conditional hooks or route consolidation.
 
 ## Technical Details
 
@@ -138,6 +164,7 @@ If implementing:
 | Date | Action | Notes |
 |------|--------|-------|
 | 2025-11-27 | Created | Identified during PR #6 simplicity review |
+| 2025-12-03 | DEFERRED | Detailed analysis shows conditional hooks + route semantic differences justify keeping separate. Document as deferred decision. |
 
 ## Resources
 

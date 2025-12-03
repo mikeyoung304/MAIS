@@ -37,9 +37,59 @@ export interface IdempotencyResponse<T = unknown> {
 
 export class IdempotencyService {
   private readonly keyTTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor(private readonly prisma: PrismaClient) {
     logger.info('IdempotencyService initialized');
+  }
+
+  /**
+   * Start scheduled cleanup of expired idempotency keys
+   *
+   * Runs cleanup every 24 hours and once at startup (after 5 second delay).
+   * Call this after service initialization to prevent accumulation of expired keys.
+   *
+   * @example
+   * ```typescript
+   * const idempotencyService = new IdempotencyService(prisma);
+   * idempotencyService.startCleanupScheduler();
+   * ```
+   */
+  public startCleanupScheduler(): void {
+    // Prevent multiple schedulers
+    if (this.cleanupInterval) {
+      logger.warn('Cleanup scheduler already running');
+      return;
+    }
+
+    // Run cleanup every 24 hours (86400000 ms)
+    this.cleanupInterval = setInterval(() => {
+      this.cleanupExpired().catch((err) => {
+        logger.error({ err }, 'Failed to cleanup expired idempotency keys');
+      });
+    }, 24 * 60 * 60 * 1000);
+
+    // Also run once at startup after a short delay
+    setTimeout(() => {
+      this.cleanupExpired().catch((err) => {
+        logger.error({ err }, 'Failed initial idempotency key cleanup');
+      });
+    }, 5000);
+
+    logger.info('Idempotency key cleanup scheduler started (runs every 24 hours)');
+  }
+
+  /**
+   * Stop the cleanup scheduler
+   *
+   * Call this during application shutdown to prevent memory leaks.
+   */
+  public stopCleanupScheduler(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+      logger.info('Idempotency key cleanup scheduler stopped');
+    }
   }
 
   /**

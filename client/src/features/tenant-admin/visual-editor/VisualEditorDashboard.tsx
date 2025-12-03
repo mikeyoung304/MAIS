@@ -268,7 +268,7 @@ export function VisualEditorDashboard() {
                   </>
                 ) : (
                   <>
-                    <Save className="h-4 w-4 mr-1" />
+                    <Save className="h-4 w-4 mr-1" aria-hidden="true" />
                     Publish All
                   </>
                 )}

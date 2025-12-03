@@ -4,6 +4,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BookingService } from '../src/services/booking.service';
+import { BookingEvents } from '../src/lib/core/events';
 import {
   FakeBookingRepository,
   FakeCatalogRepository,
@@ -137,7 +138,7 @@ describe('BookingService', () => {
 
       // Assert: event emitted
       expect(eventEmitter.emittedEvents).toHaveLength(1);
-      expect(eventEmitter.emittedEvents[0]?.event).toBe('BookingPaid');
+      expect(eventEmitter.emittedEvents[0]?.event).toBe(BookingEvents.PAID);
       expect(eventEmitter.emittedEvents[0]?.payload).toMatchObject({
         bookingId: booking.id,
         email: 'couple@example.com',

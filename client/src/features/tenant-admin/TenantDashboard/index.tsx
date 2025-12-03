@@ -74,7 +74,7 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-sage/10 rounded-xl flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-sage" />
+                    <Sparkles className="w-5 h-5 text-sage" aria-hidden="true" />
                   </div>
                   <h1 className="font-serif text-3xl sm:text-4xl font-bold text-text-primary tracking-tight">
                     Dashboard
@@ -92,7 +92,7 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
                   to="/tenant/editor"
                   className={`group inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-sage-light/20 text-sage border border-sage/30 text-sm font-medium rounded-full ${ANIMATION_TRANSITION.HOVER} shadow-soft hover:shadow-medium`}
                 >
-                  <Pencil className="w-4 h-4" />
+                  <Pencil className="w-4 h-4" aria-hidden="true" />
                   Visual Editor
                 </Link>
                 <Link
@@ -100,7 +100,7 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
                   className={`group inline-flex items-center gap-2 px-5 py-2.5 bg-sage hover:bg-sage-hover text-white text-sm font-medium rounded-full ${ANIMATION_TRANSITION.HOVER} shadow-soft hover:shadow-medium`}
                 >
                   View Storefront
-                  <ArrowUpRight className={`w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${ANIMATION_TRANSITION.TRANSFORM}`} />
+                  <ArrowUpRight className={`w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${ANIMATION_TRANSITION.TRANSFORM}`} aria-hidden="true" />
                 </Link>
               </div>
             </div>

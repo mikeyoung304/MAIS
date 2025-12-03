@@ -1,4 +1,4 @@
-import { Loader2, AlertCircle, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,6 @@ export function PackageForm({
   packageForm,
   editingPackageId,
   isSaving,
-  error,
   segments,
   onFormChange,
   onSubmit,
@@ -52,12 +51,12 @@ export function PackageForm({
     setInitialForm(packageForm);
   }, [editingPackageId]);
 
-  // Reset initial form after successful save (when isSaving goes from true to false with no error)
+  // Reset initial form after successful save (when isSaving goes from true to false)
   useEffect(() => {
-    if (!isSaving && !error) {
+    if (!isSaving) {
       setInitialForm(packageForm);
     }
-  }, [isSaving, error, packageForm]);
+  }, [isSaving, packageForm]);
 
   return (
     <>
@@ -89,13 +88,6 @@ export function PackageForm({
         <h2 className="text-2xl font-semibold mb-4 text-white">
           {editingPackageId ? "Edit Package" : "Create New Package"}
         </h2>
-
-      {error && (
-        <div role="alert" className="flex items-center gap-2 p-4 mb-4 border border-white/20 bg-macon-navy-700 rounded-lg">
-          <AlertCircle className="w-5 h-5 text-white/70" />
-          <span className="text-base text-white/90">{error}</span>
-        </div>
-      )}
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

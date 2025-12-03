@@ -126,12 +126,13 @@ export function handlePublicRouteError(
   }
 
   // Resource not found
+  // P1-172 FIX: Return generic message to prevent tenant ID disclosure
   if (error instanceof NotFoundError) {
     return res.status(404).json({
       status: 'error',
       statusCode: 404,
       error: 'NOT_FOUND',
-      message: error.message,
+      message: 'The requested resource was not found',
     });
   }
 

@@ -13,7 +13,7 @@
 import { useMemo } from 'react';
 import { Container } from '@/ui/Container';
 import { TierSelector, TIER_LEVELS, type TierLevel } from '@/features/storefront';
-import { PackageCardSkeleton } from '@/components/ui/skeleton';
+import { PackageCardSkeleton, Skeleton } from '@/components/ui/skeleton';
 import { FeatureErrorBoundary } from '@/components/errors';
 import { usePackages } from '@/features/catalog/hooks';
 import type { PackageDto } from '@macon/contracts';
@@ -25,13 +25,10 @@ function RootTiersContent() {
   if (isLoading) {
     return (
       <Container className="py-12">
-        {/* Loading header */}
         <div className="text-center mb-12">
-          <div className="h-12 w-2/3 mx-auto bg-neutral-200 rounded-lg animate-pulse mb-4" />
-          <div className="h-6 w-1/2 mx-auto bg-neutral-100 rounded-lg animate-pulse" />
+          <Skeleton className="h-12 w-2/3 mx-auto mb-4" />
+          <Skeleton className="h-6 w-1/2 mx-auto" />
         </div>
-
-        {/* Loading tier cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {[1, 2, 3].map((i) => (
             <PackageCardSkeleton key={i} />

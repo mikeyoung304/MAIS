@@ -196,6 +196,30 @@ export const publicBalancePaymentLimiter = rateLimit({
     }),
 });
 
+/**
+ * TODO-057 FIX: Rate limiter for public scheduling endpoints
+ * 100 requests per minute per tenant/IP - prevents enumeration and DoS attacks
+ * Protects service listing and availability slot queries
+ */
+export const publicSchedulingLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: isTestEnvironment ? 500 : 100, // 100 requests per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Use tenantId if available (via tenant middleware), otherwise IP
+  keyGenerator: (req, res) => {
+    // Type assertion for TenantRequest with tenantId property
+    const tenantReq = req as Request & { tenantId?: string };
+    return tenantReq.tenantId || normalizeIp(req.ip);
+  },
+  validate: false, // Disable validation - we handle IPv6 with normalizeIp()
+  handler: (_req: Request, res: Response) =>
+    res.status(429).json({
+      error: 'too_many_requests',
+      message: 'Too many requests, please try again later.',
+    }),
+});
+
 export const skipIfHealth = (req: Request, _res: Response, next: NextFunction) => {
   if (req.path === '/health' || req.path === '/ready') {
     return next();

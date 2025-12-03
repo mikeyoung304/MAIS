@@ -46,7 +46,7 @@ describe('Demo Seed', () => {
   });
 
   describe('Demo Tenant Creation', () => {
-    it('should create new tenant when it does not exist', async () => {
+    it('should create new tenant when it does not exist (via upsert)', async () => {
       const mockPrisma = createMockPrisma(null); // No existing tenant
 
       await seedDemo(mockPrisma);
@@ -54,10 +54,12 @@ describe('Demo Seed', () => {
       expect(mockPrisma.tenant.findUnique).toHaveBeenCalledWith({
         where: { slug: 'little-bit-farm' },
       });
-      expect(mockPrisma.tenant.create).toHaveBeenCalled();
+      expect(mockPrisma.tenant.upsert).toHaveBeenCalled();
+      const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
+      expect(upsertCall.create).toBeDefined();
     });
 
-    it('should update existing tenant without changing keys', async () => {
+    it('should update existing tenant without changing keys (via upsert)', async () => {
       const existingTenant = {
         id: 'tenant-demo-123',
         slug: 'little-bit-farm',
@@ -72,25 +74,23 @@ describe('Demo Seed', () => {
       expect(mockPrisma.tenant.findUnique).toHaveBeenCalledWith({
         where: { slug: 'little-bit-farm' },
       });
-      expect(mockPrisma.tenant.update).toHaveBeenCalled();
-      expect(mockPrisma.tenant.create).not.toHaveBeenCalled();
-
+      expect(mockPrisma.tenant.upsert).toHaveBeenCalled();
+      const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
       // Verify update does not include API keys
-      const updateCall = mockPrisma.tenant.update.mock.calls[0][0];
-      expect(updateCall.data.apiKeyPublic).toBeUndefined();
-      expect(updateCall.data.apiKeySecret).toBeUndefined();
+      expect(upsertCall.update.apiKeyPublic).toBeUndefined();
+      expect(upsertCall.update.apiKeySecret).toBeUndefined();
     });
 
-    it('should set tenant as active on create', async () => {
+    it('should set tenant as active on create (via upsert)', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedDemo(mockPrisma);
 
-      const createCall = mockPrisma.tenant.create.mock.calls[0][0];
-      expect(createCall.data.isActive).toBe(true);
+      const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
+      expect(upsertCall.create.isActive).toBe(true);
     });
 
-    it('should preserve active status on update', async () => {
+    it('should preserve active status on update (via upsert)', async () => {
       const existingTenant = {
         id: 'tenant-demo-123',
         slug: 'little-bit-farm',
@@ -102,8 +102,8 @@ describe('Demo Seed', () => {
 
       await seedDemo(mockPrisma);
 
-      const updateCall = mockPrisma.tenant.update.mock.calls[0][0];
-      expect(updateCall.data.isActive).toBe(true);
+      const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
+      expect(upsertCall.update.isActive).toBe(true);
     });
 
     it('should set demo email', async () => {
@@ -111,8 +111,8 @@ describe('Demo Seed', () => {
 
       await seedDemo(mockPrisma);
 
-      const createCall = mockPrisma.tenant.create.mock.calls[0][0];
-      expect(createCall.data.email).toBe('demo@example.com');
+      const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
+      expect(upsertCall.create.email).toBe('demo@example.com');
     });
   });
 
@@ -122,9 +122,9 @@ describe('Demo Seed', () => {
 
       await seedDemo(mockPrisma);
 
-      const createCall = mockPrisma.tenant.create.mock.calls[0][0];
+      const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
       // Public key format: pk_live_little-bit-farm_{16 hex chars}
-      expect(createCall.data.apiKeyPublic).toMatch(
+      expect(upsertCall.create.apiKeyPublic).toMatch(
         /^pk_live_little-bit-farm_[0-9a-f]{16}$/
       );
     });
@@ -141,13 +141,13 @@ describe('Demo Seed', () => {
 
       await seedDemo(mockPrisma);
 
-      // Should use update, not create
-      expect(mockPrisma.tenant.update).toHaveBeenCalled();
-      const updateCall = mockPrisma.tenant.update.mock.calls[0][0];
+      // Should use upsert with update (not create)
+      expect(mockPrisma.tenant.upsert).toHaveBeenCalled();
+      const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
 
       // Update should NOT include API keys
-      expect(updateCall.data.apiKeyPublic).toBeUndefined();
-      expect(updateCall.data.apiKeySecret).toBeUndefined();
+      expect(upsertCall.update.apiKeyPublic).toBeUndefined();
+      expect(upsertCall.update.apiKeySecret).toBeUndefined();
     });
 
     it('should hash secret key before storing on first create', async () => {
@@ -311,12 +311,12 @@ describe('Demo Seed', () => {
       expect(mockPrisma.blackoutDate.upsert).toHaveBeenCalled();
     });
 
-    it('should preserve keys on second run (tenant update)', async () => {
+    it('should preserve keys on second run (tenant upsert with update)', async () => {
       const mockPrisma = createMockPrisma(null);
 
-      // First run: creates tenant
+      // First run: creates tenant via upsert
       await seedDemo(mockPrisma);
-      expect(mockPrisma.tenant.create).toHaveBeenCalledOnce();
+      expect(mockPrisma.tenant.upsert).toHaveBeenCalledOnce();
 
       // Second run: updates tenant (keys preserved)
       const existingTenant = {
@@ -329,10 +329,10 @@ describe('Demo Seed', () => {
       const mockPrismaUpdate = createMockPrisma(existingTenant);
       await seedDemo(mockPrismaUpdate);
 
-      expect(mockPrismaUpdate.tenant.update).toHaveBeenCalled();
-      const updateCall = mockPrismaUpdate.tenant.update.mock.calls[0][0];
-      expect(updateCall.data.apiKeyPublic).toBeUndefined();
-      expect(updateCall.data.apiKeySecret).toBeUndefined();
+      expect(mockPrismaUpdate.tenant.upsert).toHaveBeenCalled();
+      const upsertCall = mockPrismaUpdate.tenant.upsert.mock.calls[0][0];
+      expect(upsertCall.update.apiKeyPublic).toBeUndefined();
+      expect(upsertCall.update.apiKeySecret).toBeUndefined();
     });
   });
 
@@ -438,6 +438,7 @@ function createMockPrisma(existingTenant?: { id: string; slug: string; name: str
       findUnique: vi.fn().mockResolvedValue(existingTenant || null),
       create: vi.fn().mockResolvedValue(mockTenant),
       update: vi.fn().mockResolvedValue(mockTenant),
+      upsert: vi.fn().mockResolvedValue(mockTenant),
     },
     package: {
       upsert: vi.fn().mockResolvedValue(mockPackage),

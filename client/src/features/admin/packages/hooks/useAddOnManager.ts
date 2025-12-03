@@ -18,7 +18,6 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
   const [isAddingAddOn, setIsAddingAddOn] = useState<string | null>(null);
   const [editingAddOnId, setEditingAddOnId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [segments, setSegments] = useState<Array<{ id: string; name: string; active: boolean }>>([]);
   const { confirm, dialogState, handleOpenChange } = useConfirmDialog();
 
@@ -52,7 +51,6 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
       photoUrl: "",
       segmentId: "",
     });
-    setError(null);
   };
 
   // Add-on handlers
@@ -75,16 +73,19 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
 
   const handleSaveAddOn = async (e: React.FormEvent, packageId: string) => {
     e.preventDefault();
-    setError(null);
 
     if (!addOnForm.title || !addOnForm.priceCents) {
-      setError("Title and price are required");
+      toast.error("Missing Required Fields", {
+        description: "Title and price are required",
+      });
       return;
     }
 
     const priceCents = parseInt(addOnForm.priceCents, 10);
     if (isNaN(priceCents) || priceCents <= 0) {
-      setError("Price must be a positive number");
+      toast.error("Invalid Price", {
+        description: "Price must be a positive number",
+      });
       return;
     }
 
@@ -200,7 +201,6 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
     isAddingAddOn,
     editingAddOnId,
     isSaving,
-    error,
     addOnForm,
     segments,
 

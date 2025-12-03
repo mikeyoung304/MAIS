@@ -19,6 +19,7 @@ import type { TimeSlotDto } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
 import { NotFoundError } from '../lib/errors';
 import { z } from 'zod';
+import { publicSchedulingLimiter } from '../middleware/rateLimiter';
 
 /**
  * Path params validation schema for slug routes
@@ -41,6 +42,10 @@ export function createPublicSchedulingRoutes(
   availabilityService: SchedulingAvailabilityService
 ): Router {
   const router = Router();
+
+  // Apply rate limiting to all public scheduling endpoints
+  // TODO-057: 100 requests/minute per tenant/IP to prevent enumeration and DoS
+  router.use(publicSchedulingLimiter);
 
   // =========================================================================
   // Services Routes (/v1/public/services)

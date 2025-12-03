@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: "040"
 tags: [code-review, devops, resilience]
@@ -32,12 +32,13 @@ const shutdownTimeout = setTimeout(() => {
 
 ## Acceptance Criteria
 
-- [ ] Timeout configurable via environment variable
-- [ ] Defaults to 60 seconds
-- [ ] Logs pending requests before forced exit
+- [x] Timeout configurable via environment variable
+- [x] Defaults to 60 seconds
+- [x] Logs pending requests before forced exit
 
 ## Work Log
 
 | Date | Action | Notes |
 |------|--------|-------|
 | 2025-11-27 | Created | Found during DevOps review |
+| 2025-12-02 | Completed | Implemented configurable timeout via GRACEFUL_SHUTDOWN_TIMEOUT_MS, increased default to 60s, added enhanced logging |

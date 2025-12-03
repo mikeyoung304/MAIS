@@ -10,6 +10,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { BookingService } from '../../src/services/booking.service';
 import { PrismaBookingRepository } from '../../src/adapters/prisma/booking.repository';
 import { PrismaCatalogRepository } from '../../src/adapters/prisma/catalog.repository';
+import { BookingEvents } from '../../src/lib/core/events';
 import { BookingConflictError, BookingLockTimeoutError } from '../../src/lib/errors';
 import { FakeEventEmitter, FakePaymentProvider } from '../helpers/fakes';
 import type { Booking } from '../../src/lib/entities';
@@ -336,7 +337,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         expect(bookings).toHaveLength(1);
 
         // Verify event was emitted only once
-        expect(eventEmitter.emittedEvents.filter(e => e.event === 'BookingPaid')).toHaveLength(1);
+        expect(eventEmitter.emittedEvents.filter(e => e.event === BookingEvents.PAID)).toHaveLength(1);
       });
     });
 

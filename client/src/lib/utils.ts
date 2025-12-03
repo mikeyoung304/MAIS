@@ -22,13 +22,50 @@ export function formatCurrency(cents: number): string {
 }
 
 /**
- * Format date for display
+ * Format date for display (long format with weekday)
  */
 export function formatDate(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date
+  const d = typeof date === 'string' ? new Date(date + (typeof date === 'string' && !date.includes('T') ? 'T00:00:00' : '')) : date
   return new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   }).format(d)
+}
+
+/**
+ * Get badge variant for booking status
+ */
+export function getStatusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+  switch (status) {
+    case 'PAID':
+      return 'default';
+    case 'CANCELED':
+      return 'destructive';
+    case 'REFUNDED':
+      return 'secondary';
+    default:
+      return 'outline';
+  }
+}
+
+/**
+ * Get refund status display text
+ */
+export function getRefundStatusText(status?: string): string | null {
+  switch (status) {
+    case 'PENDING':
+      return 'Refund pending';
+    case 'PROCESSING':
+      return 'Refund processing';
+    case 'COMPLETED':
+      return 'Refund completed';
+    case 'PARTIAL':
+      return 'Partial refund issued';
+    case 'FAILED':
+      return 'Refund failed';
+    default:
+      return null;
+  }
 }

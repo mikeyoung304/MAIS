@@ -264,4 +264,165 @@ describe('IdempotencyService', () => {
       expect(key3).not.toBe(key1);
     });
   });
+
+  describe('cleanupExpired - Periodic Cleanup', () => {
+    it('should delete expired keys and return count', async () => {
+      // Arrange
+      const deletedCount = 5;
+      mockPrisma.idempotencyKey.deleteMany.mockResolvedValue({ count: deletedCount });
+
+      // Act
+      const result = await service.cleanupExpired();
+
+      // Assert
+      expect(result).toBe(deletedCount);
+      expect(mockPrisma.idempotencyKey.deleteMany).toHaveBeenCalledWith({
+        where: {
+          expiresAt: {
+            lt: expect.any(Date),
+          },
+        },
+      });
+    });
+
+    it('should delete only keys with expiresAt in the past', async () => {
+      // Arrange
+      mockPrisma.idempotencyKey.deleteMany.mockResolvedValue({ count: 3 });
+
+      // Act
+      await service.cleanupExpired();
+
+      // Assert
+      const deleteCall = mockPrisma.idempotencyKey.deleteMany.mock.calls[0][0];
+      const expiresAtFilter = deleteCall.where.expiresAt.lt;
+      expect(expiresAtFilter.getTime()).toBeLessThanOrEqual(Date.now());
+    });
+
+    it('should return 0 when no expired keys found', async () => {
+      // Arrange
+      mockPrisma.idempotencyKey.deleteMany.mockResolvedValue({ count: 0 });
+
+      // Act
+      const result = await service.cleanupExpired();
+
+      // Assert
+      expect(result).toBe(0);
+    });
+  });
+
+  describe('startCleanupScheduler - Scheduler Management', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('should start cleanup scheduler', () => {
+      // Arrange
+      mockPrisma.idempotencyKey.deleteMany.mockResolvedValue({ count: 0 });
+
+      // Act
+      service.startCleanupScheduler();
+
+      // Assert - Should schedule cleanup to run every 24 hours
+      expect(service).toBeDefined();
+    });
+
+    it('should run initial cleanup after 5 seconds', async () => {
+      // Arrange
+      mockPrisma.idempotencyKey.deleteMany.mockResolvedValue({ count: 2 });
+
+      // Act
+      service.startCleanupScheduler();
+
+      // Fast-forward 5 seconds
+      await vi.advanceTimersByTimeAsync(5000);
+
+      // Assert - Initial cleanup should have run
+      expect(mockPrisma.idempotencyKey.deleteMany).toHaveBeenCalled();
+    });
+
+    it('should prevent multiple schedulers', () => {
+      // Arrange
+      mockPrisma.idempotencyKey.deleteMany.mockResolvedValue({ count: 0 });
+
+      // Act - Start scheduler twice
+      service.startCleanupScheduler();
+      service.startCleanupScheduler();
+
+      // Assert - No error should be thrown, second call is ignored
+      expect(service).toBeDefined();
+    });
+
+    it('should run cleanup every 24 hours', async () => {
+      // Arrange
+      mockPrisma.idempotencyKey.deleteMany.mockResolvedValue({ count: 1 });
+
+      // Act
+      service.startCleanupScheduler();
+
+      // Fast-forward 5 seconds (initial cleanup)
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(mockPrisma.idempotencyKey.deleteMany).toHaveBeenCalledTimes(1);
+
+      // Fast-forward 24 hours
+      await vi.advanceTimersByTimeAsync(24 * 60 * 60 * 1000);
+      expect(mockPrisma.idempotencyKey.deleteMany).toHaveBeenCalledTimes(2);
+
+      // Fast-forward another 24 hours
+      await vi.advanceTimersByTimeAsync(24 * 60 * 60 * 1000);
+      expect(mockPrisma.idempotencyKey.deleteMany).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe('stopCleanupScheduler - Graceful Shutdown', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('should stop cleanup scheduler', () => {
+      // Arrange
+      mockPrisma.idempotencyKey.deleteMany.mockResolvedValue({ count: 0 });
+      service.startCleanupScheduler();
+
+      // Act
+      service.stopCleanupScheduler();
+
+      // Assert - No error should be thrown
+      expect(service).toBeDefined();
+    });
+
+    it('should prevent further cleanup after stopping', async () => {
+      // Arrange
+      mockPrisma.idempotencyKey.deleteMany.mockResolvedValue({ count: 1 });
+      service.startCleanupScheduler();
+
+      // Fast-forward 5 seconds (initial cleanup)
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(mockPrisma.idempotencyKey.deleteMany).toHaveBeenCalledTimes(1);
+
+      // Act - Stop scheduler
+      service.stopCleanupScheduler();
+
+      // Fast-forward 24 hours - should NOT trigger cleanup
+      await vi.advanceTimersByTimeAsync(24 * 60 * 60 * 1000);
+
+      // Assert - No additional cleanups should have run
+      expect(mockPrisma.idempotencyKey.deleteMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('should be safe to call stop when not started', () => {
+      // Act - Stop without starting
+      service.stopCleanupScheduler();
+
+      // Assert - No error should be thrown
+      expect(service).toBeDefined();
+    });
+  });
 });

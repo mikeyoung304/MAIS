@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: "039"
 tags: [code-review, database, maintenance]
@@ -29,12 +29,25 @@ setInterval(() => idempotencyService.cleanupExpired(), 24 * 60 * 60 * 1000);
 
 ## Acceptance Criteria
 
-- [ ] Cleanup runs daily
-- [ ] Logs number of deleted keys
-- [ ] No performance impact on regular operations
+- [x] Cleanup runs daily
+- [x] Logs number of deleted keys
+- [x] No performance impact on regular operations
+
+## Implementation
+
+Added `startCleanupScheduler()` and `stopCleanupScheduler()` methods to IdempotencyService:
+- Scheduler runs cleanup every 24 hours
+- Initial cleanup runs 5 seconds after startup
+- Cleanup is properly stopped during application shutdown to prevent memory leaks
+- Both mock and real modes call the scheduler in DI container
+
+Files modified:
+- `server/src/services/idempotency.service.ts` - Added scheduler methods
+- `server/src/di.ts` - Start scheduler after service instantiation, stop during cleanup
 
 ## Work Log
 
 | Date | Action | Notes |
 |------|--------|-------|
 | 2025-11-27 | Created | Found during data integrity review |
+| 2025-12-02 | Completed | Implemented scheduled cleanup with proper lifecycle management |

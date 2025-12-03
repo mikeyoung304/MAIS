@@ -76,6 +76,7 @@ export function MetricsCards({
               className={`w-5 h-5 ${
                 metric.accent === "sage" ? "text-sage" : "text-text-muted"
               }`}
+              aria-hidden="true"
             />
           </div>
 
@@ -95,7 +96,7 @@ export function MetricsCards({
                   {metric.value}
                 </span>
                 {metric.highlight && (
-                  <TrendingUp className="w-4 h-4 text-sage" />
+                  <TrendingUp className="w-4 h-4 text-sage" aria-hidden="true" />
                 )}
               </div>
             )}

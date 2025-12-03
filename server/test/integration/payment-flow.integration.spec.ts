@@ -21,6 +21,7 @@ import { PrismaCatalogRepository } from '../../src/adapters/prisma/catalog.repos
 import { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.repository';
 import { PrismaWebhookRepository } from '../../src/adapters/prisma/webhook.repository';
 import { WebhooksController } from '../../src/routes/webhooks.routes';
+import { BookingEvents } from '../../src/lib/core/events';
 import { FakeEventEmitter } from '../helpers/fakes';
 import { setupCompleteIntegrationTest } from '../helpers/integration-setup';
 import {
@@ -225,7 +226,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
 
       // Verify event was emitted
       expect(eventEmitter.emittedEvents).toHaveLength(1);
-      expect(eventEmitter.emittedEvents[0].event).toBe('BookingPaid');
+      expect(eventEmitter.emittedEvents[0].event).toBe(BookingEvents.PAID);
     });
 
     it('should handle payment failure: webhook with failed status handled', async () => {

@@ -6,6 +6,7 @@ import type { BookingRepository, PaymentProvider, ServiceRepository } from '../l
 import type { Booking, CreateBookingInput } from '../lib/entities';
 import type { CatalogRepository } from '../lib/ports';
 import type { EventEmitter } from '../lib/core/events';
+import { BookingEvents, AppointmentEvents } from '../lib/core/events';
 import {
   NotFoundError,
   BookingAlreadyCancelledError,
@@ -16,6 +17,7 @@ import { CommissionService } from './commission.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import { IdempotencyService } from './idempotency.service';
 import type { SchedulingAvailabilityService } from './scheduling-availability.service';
+import { logger } from '../lib/core/logger';
 
 // ============================================================================
 // Input DTOs for Appointment Scheduling
@@ -115,7 +117,9 @@ export class BookingService {
     // Fetch tenant to get Stripe account ID
     const tenant = await this.tenantRepo.findById(tenantId);
     if (!tenant) {
-      throw new NotFoundError(`Tenant ${tenantId} not found`);
+      // P1-172 FIX: Log tenant ID internally but return generic error message
+      logger.warn({ tenantId }, 'Tenant not found in checkout flow');
+      throw new NotFoundError('The requested resource was not found');
     }
 
     // Generate idempotency key for checkout session
@@ -220,7 +224,9 @@ export class BookingService {
     // Fetch tenant to get Stripe account ID
     const tenant = await this.tenantRepo.findById(tenantId);
     if (!tenant) {
-      throw new NotFoundError(`Tenant ${tenantId} not found`);
+      // P1-172 FIX: Log tenant ID internally but return generic error message
+      logger.warn({ tenantId }, 'Tenant not found in createCheckout');
+      throw new NotFoundError('The requested resource was not found');
     }
 
     // Calculate total with commission
@@ -406,7 +412,7 @@ export class BookingService {
     }
 
     // Emit event for downstream processing (notifications)
-    await this._eventEmitter.emit('BalancePaymentCompleted', {
+    await this._eventEmitter.emit(BookingEvents.BALANCE_PAYMENT_COMPLETED, {
       bookingId: updated.id,
       tenantId,
       email: updated.email,
@@ -624,7 +630,7 @@ export class BookingService {
     });
 
     // Emit BookingPaid event for notifications with enriched data
-    await this._eventEmitter.emit('BookingPaid', {
+    await this._eventEmitter.emit(BookingEvents.PAID, {
       bookingId: created.id,
       email: created.email,
       coupleName: created.coupleName,
@@ -825,7 +831,7 @@ export class BookingService {
     const created = await this.bookingRepo.create(tenantId, booking);
 
     // 4. Emit AppointmentBooked event for notifications
-    await this._eventEmitter.emit('AppointmentBooked', {
+    await this._eventEmitter.emit(AppointmentEvents.BOOKED, {
       bookingId: created.id,
       tenantId,
       serviceId: input.serviceId,
@@ -954,7 +960,7 @@ export class BookingService {
     const updated = await this.bookingRepo.reschedule(tenantId, bookingId, newDate);
 
     // Emit event for downstream processing (calendar sync, notifications)
-    await this._eventEmitter.emit('BookingRescheduled', {
+    await this._eventEmitter.emit(BookingEvents.RESCHEDULED, {
       bookingId: updated.id,
       tenantId,
       email: updated.email,
@@ -1021,7 +1027,7 @@ export class BookingService {
     });
 
     // Emit event for downstream processing (refund, notifications, calendar)
-    await this._eventEmitter.emit('BookingCancelled', {
+    await this._eventEmitter.emit(BookingEvents.CANCELLED, {
       bookingId: cancelled.id,
       tenantId,
       email: cancelled.email,
@@ -1128,7 +1134,7 @@ export class BookingService {
       });
 
       // Emit event for notifications
-      await this._eventEmitter.emit('BookingRefunded', {
+      await this._eventEmitter.emit(BookingEvents.REFUNDED, {
         bookingId: refunded.id,
         tenantId,
         email: refunded.email,

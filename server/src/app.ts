@@ -19,6 +19,7 @@ import { openApiSpec } from './api-docs';
 import { uploadService } from './services/upload.service';
 import { sentryRequestHandler, sentryErrorHandler } from './lib/errors/sentry';
 import { registerHealthRoutes } from './routes/health.routes';
+import { registerMetricsRoutes } from './routes/metrics.routes';
 import { sanitizeInput } from './middleware/sanitize';
 import { cspViolationsRouter } from './routes/csp-violations.routes';
 
@@ -166,6 +167,11 @@ export function createApp(
   registerHealthRoutes(app, {
     prisma: container.prisma,
     config,
+    startTime,
+  });
+
+  // Register metrics endpoint for monitoring systems (Prometheus, Datadog)
+  registerMetricsRoutes(app, {
     startTime,
   });
 

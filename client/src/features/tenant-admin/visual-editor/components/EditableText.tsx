@@ -124,6 +124,7 @@ export function EditableText({
               "text-muted-foreground opacity-0 transition-opacity",
               "group-hover:opacity-100 group-focus:opacity-100"
             )}
+            aria-hidden="true"
           />
         )}
       </div>

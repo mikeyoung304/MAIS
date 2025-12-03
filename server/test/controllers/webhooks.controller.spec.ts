@@ -5,6 +5,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { WebhooksController } from '../../src/routes/webhooks.routes';
+import { BookingEvents } from '../../src/lib/core/events';
 import {
   FakePaymentProvider,
   FakeBookingRepository,
@@ -384,7 +385,7 @@ describe('WebhooksController', () => {
 
       // Assert: Event emitted
       expect(eventEmitter.emittedEvents.length).toBe(1);
-      expect(eventEmitter.emittedEvents[0]?.event).toBe('BookingPaid');
+      expect(eventEmitter.emittedEvents[0]?.event).toBe(BookingEvents.PAID);
       expect(eventEmitter.emittedEvents[0]?.payload).toMatchObject({
         email: 'couple@example.com',
         coupleName: 'John & Jane',

@@ -156,12 +156,12 @@ export function LogoUploadButton({
           </>
         ) : uploadSuccess ? (
           <>
-            <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+            <CheckCircle className="w-4 h-4 mr-2 text-green-500" aria-hidden="true" />
             Logo Uploaded!
           </>
         ) : (
           <>
-            <Upload className="w-4 h-4 mr-2" />
+            <Upload className="w-4 h-4 mr-2" aria-hidden="true" />
             {previewUrl ? "Change Logo" : "Upload Logo"}
           </>
         )}

@@ -18,7 +18,6 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
   const [isCreatingPackage, setIsCreatingPackage] = useState(false);
   const [editingPackageId, setEditingPackageId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [segments, setSegments] = useState<Array<{ id: string; name: string; active: boolean }>>([]);
   const { confirm, dialogState, handleOpenChange } = useConfirmDialog();
 
@@ -61,7 +60,6 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
       photoUrl: "",
       segmentId: "",
     });
-    setError(null);
   };
 
   // Package handlers
@@ -86,21 +84,26 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
 
   const handleSavePackage = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
     if (!packageForm.slug || !packageForm.title || !packageForm.description || !packageForm.priceCents) {
-      setError("All fields except Photo URL are required");
+      toast.error("Missing Required Fields", {
+        description: "All fields except Photo URL are required",
+      });
       return;
     }
 
     if (!isValidSlug(packageForm.slug)) {
-      setError("Slug must be lowercase with hyphens only (no spaces)");
+      toast.error("Invalid Slug Format", {
+        description: "Slug must be lowercase with hyphens only (no spaces)",
+      });
       return;
     }
 
     const priceCents = parseInt(packageForm.priceCents, 10);
     if (isNaN(priceCents) || priceCents <= 0) {
-      setError("Price must be a positive number");
+      toast.error("Invalid Price", {
+        description: "Price must be a positive number",
+      });
       return;
     }
 
@@ -216,7 +219,6 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
     isCreatingPackage,
     editingPackageId,
     isSaving,
-    error,
     packageForm,
     segments,
 

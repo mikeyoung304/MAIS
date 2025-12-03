@@ -18,11 +18,21 @@ export interface ShutdownManager {
   prisma?: PrismaClient;
   cleanup?: () => Promise<void>; // DI container cleanup method
   onShutdown?: () => Promise<void> | void;
-  timeoutMs?: number; // Shutdown timeout in milliseconds (default: 30000)
+  timeoutMs?: number; // Shutdown timeout in milliseconds (default: 60000, configurable via GRACEFUL_SHUTDOWN_TIMEOUT_MS)
 }
 
 /**
  * Registers graceful shutdown handlers for SIGTERM and SIGINT signals
+ *
+ * Timeout is configurable via:
+ * 1. GRACEFUL_SHUTDOWN_TIMEOUT_MS environment variable (recommended)
+ * 2. timeoutMs parameter in ShutdownManager
+ * 3. Default: 60000ms (60 seconds)
+ *
+ * Longer timeouts are recommended for:
+ * - Long-running requests (file uploads, report generation)
+ * - Slow database connections
+ * - Multiple microservices needing coordination
  *
  * @example
  * ```typescript
@@ -37,7 +47,9 @@ export interface ShutdownManager {
  * ```
  */
 export function registerGracefulShutdown(manager: ShutdownManager): void {
-  const { server, prisma, cleanup, onShutdown, timeoutMs = 30000 } = manager;
+  // Priority: 1. Explicit parameter, 2. Environment variable, 3. Default 60s
+  const defaultTimeout = parseInt(process.env.GRACEFUL_SHUTDOWN_TIMEOUT_MS || '60000', 10);
+  const { server, prisma, cleanup, onShutdown, timeoutMs = defaultTimeout } = manager;
 
   let isShuttingDown = false;
 
@@ -50,9 +62,12 @@ export function registerGracefulShutdown(manager: ShutdownManager): void {
     isShuttingDown = true;
     logger.info(`${signal} signal received: starting graceful shutdown (timeout: ${timeoutMs}ms)`);
 
-    // Set shutdown timeout (configurable, default 30 seconds)
+    // Set shutdown timeout (configurable via GRACEFUL_SHUTDOWN_TIMEOUT_MS, default 60 seconds)
     const shutdownTimeout = setTimeout(() => {
-      logger.error(`Graceful shutdown timeout exceeded (${timeoutMs}ms), forcing exit`);
+      logger.warn(
+        { timeout: timeoutMs, env: process.env.GRACEFUL_SHUTDOWN_TIMEOUT_MS },
+        'Graceful shutdown timeout exceeded, forcing exit'
+      );
       process.exit(1);
     }, timeoutMs);
 

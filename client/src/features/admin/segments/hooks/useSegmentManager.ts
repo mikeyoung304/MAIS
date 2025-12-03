@@ -18,7 +18,6 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
   const [isCreatingSegment, setIsCreatingSegment] = useState(false);
   const [editingSegmentId, setEditingSegmentId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { confirm, dialogState, handleOpenChange } = useConfirmDialog();
 
   const [segmentForm, setSegmentForm] = useState<SegmentFormData>({
@@ -63,7 +62,6 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
       sortOrder: "0",
       active: true,
     });
-    setError(null);
   };
 
   // Segment handlers
@@ -92,24 +90,29 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
 
   const handleSaveSegment = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
     // Validate required fields
     if (!segmentForm.slug || !segmentForm.name || !segmentForm.heroTitle) {
-      setError("Slug, Name, and Hero Title are required");
+      toast.error("Missing Required Fields", {
+        description: "Slug, Name, and Hero Title are required",
+      });
       return;
     }
 
     // Validate slug format
     if (!isValidSlug(segmentForm.slug)) {
-      setError("Slug must be lowercase with hyphens only (no spaces)");
+      toast.error("Invalid Slug Format", {
+        description: "Slug must be lowercase with hyphens only (no spaces)",
+      });
       return;
     }
 
     // Validate sortOrder
     const sortOrder = parseInt(segmentForm.sortOrder, 10);
     if (isNaN(sortOrder) || sortOrder < 0) {
-      setError("Sort Order must be a number >= 0");
+      toast.error("Invalid Sort Order", {
+        description: "Sort Order must be a number >= 0",
+      });
       return;
     }
 
@@ -247,7 +250,6 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
     isCreatingSegment,
     editingSegmentId,
     isSaving,
-    error,
     segmentForm,
 
     // Actions

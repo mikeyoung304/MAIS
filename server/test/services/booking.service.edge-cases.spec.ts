@@ -91,6 +91,7 @@ describe('BookingService - Edge Cases', () => {
         })
       ).rejects.toThrow(NotFoundError);
 
+      // P1-172 FIX: Generic error message to prevent tenant ID disclosure
       await expect(
         service.createCheckout('nonexistent_tenant', {
           packageId: 'basic',
@@ -98,7 +99,7 @@ describe('BookingService - Edge Cases', () => {
           email: 'couple@example.com',
           eventDate: '2025-07-01',
         })
-      ).rejects.toThrow(/Tenant.*not found/);
+      ).rejects.toThrow(/The requested resource was not found/);
     });
 
     it('createCheckout - handles package not found', async () => {
