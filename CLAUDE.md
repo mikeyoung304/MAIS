@@ -411,10 +411,20 @@ export class BookingService {
 2. **Cache key collisions:** Include `tenantId` in all cache keys
 3. **Skipping transaction locks:** Use pessimistic locking for booking creation
 4. **Webhook replay attacks:** Check idempotency before processing
-5. **Type safety bypass:** Never use `as any` - fix the types instead
-6. **Missing error handling:** Services should throw domain errors, routes catch and map to HTTP
-7. **Direct Prisma usage in routes:** Always go through services/repositories
-8. **Hardcoded values:** Use config or environment variables
+5. **Removing ts-rest `any` types:** Do NOT remove `{ req: any }` in route handlers - it's a library limitation (see Prevention Strategy section)
+6. **Type safety bypass with `as any`:** Never use `as any` to bypass checks - use type guards or `as unknown as Type` instead
+7. **Missing error handling:** Services should throw domain errors, routes catch and map to HTTP
+8. **Direct Prisma usage in routes:** Always go through services/repositories
+9. **Hardcoded values:** Use config or environment variables
+
+## Prevention Strategies (Read These!)
+
+The following links prevent common mistakes from recurring:
+- **[PREVENTION-TS-REST-ANY-TYPE.md](docs/solutions/PREVENTION-TS-REST-ANY-TYPE.md)** - When `any` is acceptable (library limitations)
+- **[PREVENTION-ANY-TYPES-QUICK-REF.md](docs/solutions/PREVENTION-ANY-TYPES-QUICK-REF.md)** - 30-second decision tree
+- **[CODE-REVIEW-ANY-TYPE-CHECKLIST.md](docs/solutions/CODE-REVIEW-ANY-TYPE-CHECKLIST.md)** - Detailed code review process
+
+**Key insight from Commit 417b8c0:** ts-rest has type compatibility issues with Express 4.x/5.x. The `{ req: any }` in route handlers is REQUIRED and must not be removed. Document library limitations instead of trying to "fix" them.
 
 ## Quick Start Checklist
 
