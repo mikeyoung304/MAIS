@@ -45,7 +45,7 @@ export function createPublicTenantRoutes(tenantRepository: PrismaTenantRepositor
     }
 
     try {
-      // Use repository method with built-in field validation
+      // Use repository method with Zod-validated branding (safeParse with graceful degradation)
       const tenant = await tenantRepository.findBySlugPublic(slug);
 
       if (!tenant) {

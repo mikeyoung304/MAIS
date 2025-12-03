@@ -6,6 +6,7 @@
 import { PrismaClient, Tenant } from '../../generated/prisma';
 import { TenantPublicDtoSchema, ALLOWED_FONT_FAMILIES } from '@macon/contracts';
 import type { TenantPublicDto } from '@macon/contracts';
+import { logger } from '../../lib/core/logger';
 
 export interface CreateTenantInput {
   slug: string;
@@ -213,7 +214,7 @@ export class PrismaTenantRepository {
    * SECURITY: Only returns allowlisted fields:
    * - id, slug, name - Public identifiers
    * - apiKeyPublic - Read-only API key for X-Tenant-Key header
-   * - branding - Visual customization (validated)
+   * - branding - Visual customization (validated with Zod)
    *
    * @param slug - URL-safe tenant identifier
    * @returns TenantPublicDto or null if not found/inactive
@@ -237,59 +238,36 @@ export class PrismaTenantRepository {
       return null;
     }
 
-    // Safely extract and validate branding fields
-    const rawBranding = tenant.branding as Record<string, unknown> | null;
-    let validatedBranding: TenantPublicDto['branding'] = undefined;
-
-    if (rawBranding) {
-      // Validate each branding field before including it
-      const safeBranding: TenantPublicDto['branding'] = {};
-
-      // Validate colors (must be hex format #XXXXXX)
-      const hexColorRegex = /^#[0-9A-Fa-f]{6}$/;
-      if (typeof rawBranding.primaryColor === 'string' && hexColorRegex.test(rawBranding.primaryColor)) {
-        safeBranding.primaryColor = rawBranding.primaryColor;
-      }
-      if (typeof rawBranding.secondaryColor === 'string' && hexColorRegex.test(rawBranding.secondaryColor)) {
-        safeBranding.secondaryColor = rawBranding.secondaryColor;
-      }
-      if (typeof rawBranding.accentColor === 'string' && hexColorRegex.test(rawBranding.accentColor)) {
-        safeBranding.accentColor = rawBranding.accentColor;
-      }
-      if (typeof rawBranding.backgroundColor === 'string' && hexColorRegex.test(rawBranding.backgroundColor)) {
-        safeBranding.backgroundColor = rawBranding.backgroundColor;
-      }
-
-      // Validate fontFamily (must be in allowlist)
-      if (typeof rawBranding.fontFamily === 'string' &&
-          (ALLOWED_FONT_FAMILIES as readonly string[]).includes(rawBranding.fontFamily)) {
-        safeBranding.fontFamily = rawBranding.fontFamily as typeof ALLOWED_FONT_FAMILIES[number];
-      }
-
-      // Validate logoUrl (must be valid URL)
-      // Note: Database stores 'logo', DTO expects 'logoUrl'
-      const logoValue = rawBranding.logo ?? rawBranding.logoUrl;
-      if (typeof logoValue === 'string') {
-        try {
-          new URL(logoValue); // Validate URL format
-          safeBranding.logoUrl = logoValue;
-        } catch {
-          // Invalid URL, skip this field
-        }
-      }
-
-      // Only include branding if we have at least one valid field
-      if (Object.keys(safeBranding).length > 0) {
-        validatedBranding = safeBranding;
-      }
-    }
-
-    return {
+    // Build candidate response object
+    const candidateDto = {
       id: tenant.id,
       slug: tenant.slug,
       name: tenant.name,
       apiKeyPublic: tenant.apiKeyPublic,
-      branding: validatedBranding,
+      branding: tenant.branding,
     };
+
+    // Validate entire response with Zod schema (including branding)
+    const validationResult = TenantPublicDtoSchema.safeParse(candidateDto);
+
+    if (!validationResult.success) {
+      // Log warning if validation fails (for debugging malformed database data)
+      logger.warn(
+        { tenantId: tenant.id, slug: tenant.slug, errorCount: validationResult.error.issues.length },
+        'Invalid tenant data during public lookup'
+      );
+
+      // Return response with branding set to undefined (graceful degradation)
+      return {
+        id: tenant.id,
+        slug: tenant.slug,
+        name: tenant.name,
+        apiKeyPublic: tenant.apiKeyPublic,
+        branding: undefined,
+      };
+    }
+
+    // Return validated data
+    return validationResult.data;
   }
 }

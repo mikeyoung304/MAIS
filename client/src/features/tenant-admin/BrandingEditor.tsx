@@ -1,27 +1,12 @@
-import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { api } from "../../lib/api";
-import { logger } from "../../lib/logger";
-import { useSuccessMessage } from "../../hooks/useSuccessMessage";
 import { SuccessMessage } from "@/components/shared/SuccessMessage";
 import { BrandingForm } from "./branding/components/BrandingForm";
 import { BrandingPreview } from "./branding/components/BrandingPreview";
-
-type BrandingDto = {
-  id: string;
-  tenantId: string;
-  primaryColor: string;
-  secondaryColor: string;
-  accentColor: string;
-  backgroundColor: string;
-  fontFamily: string;
-  logoUrl?: string;
-  createdAt: string;
-  updatedAt: string;
-};
+import { useBrandingManager } from "./branding/hooks/useBrandingManager";
+import type { TenantBrandingDto } from "@macon/contracts";
 
 interface BrandingEditorProps {
-  branding: BrandingDto | null;
+  branding: TenantBrandingDto | null;
   isLoading: boolean;
   onBrandingChange: () => void;
 }
@@ -30,81 +15,11 @@ interface BrandingEditorProps {
  * BrandingEditor Component
  *
  * Main coordinator for tenant branding management.
- * Refactored to use separate form and preview components.
+ * Delegates form state and business logic to useBrandingManager hook.
  */
 
 export function BrandingEditor({ branding, isLoading, onBrandingChange }: BrandingEditorProps) {
-  const [primaryColor, setPrimaryColor] = useState("#1a365d");
-  const [secondaryColor, setSecondaryColor] = useState("#d97706");
-  const [accentColor, setAccentColor] = useState("#0d9488");
-  const [backgroundColor, setBackgroundColor] = useState("#ffffff");
-  const [fontFamily, setFontFamily] = useState("Inter");
-  const [logoUrl, setLogoUrl] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { message: successMessage, showSuccess } = useSuccessMessage();
-
-  // Load branding data when it changes
-  useEffect(() => {
-    if (branding) {
-      setPrimaryColor(branding.primaryColor);
-      setSecondaryColor(branding.secondaryColor);
-      setAccentColor(branding.accentColor);
-      setBackgroundColor(branding.backgroundColor);
-      setFontFamily(branding.fontFamily);
-      setLogoUrl(branding.logoUrl || "");
-    }
-  }, [branding]);
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    // Validate hex colors
-    const hexColorRegex = /^#[0-9A-F]{6}$/i;
-    if (!hexColorRegex.test(primaryColor)) {
-      setError("Primary color must be a valid hex color (e.g., #1a365d)");
-      return;
-    }
-    if (!hexColorRegex.test(secondaryColor)) {
-      setError("Secondary color must be a valid hex color (e.g., #d97706)");
-      return;
-    }
-    if (!hexColorRegex.test(accentColor)) {
-      setError("Accent color must be a valid hex color (e.g., #0d9488)");
-      return;
-    }
-    if (!hexColorRegex.test(backgroundColor)) {
-      setError("Background color must be a valid hex color (e.g., #ffffff)");
-      return;
-    }
-
-    setIsSaving(true);
-
-    try {
-      const result = await api.tenantAdminUpdateBranding({
-        body: {
-          primaryColor,
-          secondaryColor,
-          accentColor,
-          backgroundColor,
-          fontFamily,
-        },
-      });
-
-      if (result.status === 200) {
-        showSuccess("Branding updated successfully");
-        onBrandingChange();
-      } else {
-        setError("Failed to update branding");
-      }
-    } catch (err) {
-      logger.error("Failed to save branding:", { error: err, component: "BrandingEditor" });
-      setError("An error occurred while saving branding");
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const manager = useBrandingManager({ branding, onBrandingChange });
 
   return (
     <div className="space-y-6">
@@ -119,7 +34,7 @@ export function BrandingEditor({ branding, isLoading, onBrandingChange }: Brandi
       </div>
 
       {/* Success Message */}
-      <SuccessMessage message={successMessage} />
+      <SuccessMessage message={manager.successMessage} />
 
       {isLoading ? (
         <div className="bg-surface-alt rounded-2xl border border-sage-light/20 p-12 text-center">
@@ -130,31 +45,21 @@ export function BrandingEditor({ branding, isLoading, onBrandingChange }: Brandi
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Branding Form */}
           <BrandingForm
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            accentColor={accentColor}
-            backgroundColor={backgroundColor}
-            fontFamily={fontFamily}
-            logoUrl={logoUrl}
-            isSaving={isSaving}
-            error={error}
-            onPrimaryColorChange={setPrimaryColor}
-            onSecondaryColorChange={setSecondaryColor}
-            onAccentColorChange={setAccentColor}
-            onBackgroundColorChange={setBackgroundColor}
-            onFontFamilyChange={setFontFamily}
-            onLogoUrlChange={setLogoUrl}
-            onSubmit={handleSave}
+            form={manager.form}
+            isSaving={manager.isSaving}
+            error={manager.error}
+            onFieldChange={manager.updateField}
+            onSubmit={manager.handleSave}
           />
 
           {/* Live Preview */}
           <BrandingPreview
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            accentColor={accentColor}
-            backgroundColor={backgroundColor}
-            fontFamily={fontFamily}
-            logoUrl={logoUrl}
+            primaryColor={manager.form.primaryColor}
+            secondaryColor={manager.form.secondaryColor}
+            accentColor={manager.form.accentColor}
+            backgroundColor={manager.form.backgroundColor}
+            fontFamily={manager.form.fontFamily}
+            logoUrl={manager.form.logoUrl}
           />
         </div>
       )}

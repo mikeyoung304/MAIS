@@ -3,6 +3,8 @@
  *
  * Form for editing branding settings with modular sub-components
  * Design: Matches landing page aesthetic with sage accents
+ *
+ * Refactored to accept form object instead of 11 individual props (TODO 106)
  */
 
 import { Save, Palette } from "lucide-react";
@@ -12,40 +14,21 @@ import { ColorInput } from "./ColorInput";
 import { FontSelector } from "./FontSelector";
 import { LogoSection } from "./LogoSection";
 import { ErrorMessage } from "./ErrorMessage";
+import type { BrandingForm as BrandingFormData } from "../../hooks/useBrandingManager";
 
 interface BrandingFormProps {
-  primaryColor: string;
-  secondaryColor: string;
-  accentColor: string;
-  backgroundColor: string;
-  fontFamily: string;
-  logoUrl: string;
+  form: BrandingFormData;
   isSaving: boolean;
   error: string | null;
-  onPrimaryColorChange: (color: string) => void;
-  onSecondaryColorChange: (color: string) => void;
-  onAccentColorChange: (color: string) => void;
-  onBackgroundColorChange: (color: string) => void;
-  onFontFamilyChange: (font: string) => void;
-  onLogoUrlChange: (url: string) => void;
+  onFieldChange: <K extends keyof BrandingFormData>(field: K, value: BrandingFormData[K]) => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 
 export function BrandingForm({
-  primaryColor,
-  secondaryColor,
-  accentColor,
-  backgroundColor,
-  fontFamily,
-  logoUrl,
+  form,
   isSaving,
   error,
-  onPrimaryColorChange,
-  onSecondaryColorChange,
-  onAccentColorChange,
-  onBackgroundColorChange,
-  onFontFamilyChange,
-  onLogoUrlChange,
+  onFieldChange,
   onSubmit,
 }: BrandingFormProps) {
   return (
@@ -67,53 +50,53 @@ export function BrandingForm({
           <ColorInput
             id="primaryColor"
             label="Primary Color"
-            value={primaryColor}
+            value={form.primaryColor}
             placeholder="#9b87f5"
             helpText="Main brand color used for buttons, links, and primary accents"
             disabled={isSaving}
-            onChange={onPrimaryColorChange}
+            onChange={(value) => onFieldChange('primaryColor', value)}
           />
 
           <ColorInput
             id="secondaryColor"
             label="Secondary Color"
-            value={secondaryColor}
+            value={form.secondaryColor}
             placeholder="#d97706"
             helpText="Supporting color for highlights and secondary actions"
             disabled={isSaving}
-            onChange={onSecondaryColorChange}
+            onChange={(value) => onFieldChange('secondaryColor', value)}
           />
 
           <ColorInput
             id="accentColor"
             label="Accent Color"
-            value={accentColor}
+            value={form.accentColor}
             placeholder="#0d9488"
             helpText="Accent color for success states, highlights, and special elements"
             disabled={isSaving}
-            onChange={onAccentColorChange}
+            onChange={(value) => onFieldChange('accentColor', value)}
           />
 
           <ColorInput
             id="backgroundColor"
             label="Background Color"
-            value={backgroundColor}
+            value={form.backgroundColor}
             placeholder="#ffffff"
             helpText="Main background color used throughout your booking widget"
             disabled={isSaving}
-            onChange={onBackgroundColorChange}
+            onChange={(value) => onFieldChange('backgroundColor', value)}
           />
 
           <FontSelector
-            value={fontFamily}
+            value={form.fontFamily}
             disabled={isSaving}
-            onChange={onFontFamilyChange}
+            onChange={(value) => onFieldChange('fontFamily', value)}
           />
 
           <LogoSection
-            logoUrl={logoUrl}
+            logoUrl={form.logoUrl}
             disabled={isSaving}
-            onLogoUrlChange={onLogoUrlChange}
+            onLogoUrlChange={(value) => onFieldChange('logoUrl', value)}
           />
 
           {/* Save Button */}
