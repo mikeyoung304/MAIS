@@ -264,7 +264,7 @@ export function createTenantAdminCalendarRoutes(
           return;
         }
 
-        const calendarData = await response.json();
+        const calendarData = (await response.json()) as { summary?: string };
 
         logger.info({ tenantId }, 'Google Calendar connection test successful');
 
