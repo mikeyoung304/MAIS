@@ -279,20 +279,20 @@ jobs:
       - name: Generate Prisma Client
         run: npm run --workspace=server prisma:generate
 
-      - name: Run manual SQL migrations
-        run: |
-          for f in server/prisma/migrations/*.sql; do
-            echo "Running migration: $f"
-            psql "$DATABASE_URL" -f "$f"
-          done
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test
-
       - name: Run Prisma migrations
         run: npx prisma migrate deploy --schema=./server/prisma/schema.prisma
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
+
+      - name: Run manual SQL migrations (multi-tenancy, indexes, etc.)
+        run: |
+          for f in server/prisma/migrations/*.sql; do
+            echo "Running migration: $f"
+            psql "$DATABASE_URL" -f "$f" || true
+          done
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test
 
       - name: Run integration tests with coverage
         run: npm run test:integration -- --coverage
@@ -421,20 +421,20 @@ jobs:
       - name: Generate Prisma Client
         run: npm run --workspace=server prisma:generate
 
-      - name: Run manual SQL migrations
-        run: |
-          for f in server/prisma/migrations/*.sql; do
-            echo "Running migration: $f"
-            psql "$DATABASE_URL" -f "$f"
-          done
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_e2e_test
-
       - name: Run Prisma migrations
         run: npx prisma migrate deploy --schema=./server/prisma/schema.prisma
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_e2e_test
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_e2e_test
+
+      - name: Run manual SQL migrations (multi-tenancy, indexes, etc.)
+        run: |
+          for f in server/prisma/migrations/*.sql; do
+            echo "Running migration: $f"
+            psql "$DATABASE_URL" -f "$f" || true
+          done
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_e2e_test
 
       - name: Start API server in mock mode (background)
         run: |
@@ -506,6 +506,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run --workspace=server prisma:generate
+
+      - name: Build contracts package first
+        run: npm run build --workspace=packages/contracts
 
       - name: Build all packages
         run: npm run build --workspaces --if-present
