@@ -92,8 +92,12 @@ while IFS= read -r file; do
         continue
     fi
 
-    # Check ADR format
+    # Check ADR format (exclude templates)
     if [[ "$dir" == *"architecture"* ]] && [[ "$filename" =~ ^ADR- ]]; then
+        # Skip template files
+        if [[ "$filename" == "ADR-TEMPLATE.md" ]]; then
+            continue
+        fi
         if ! [[ "$filename" =~ ^ADR-[0-9]{3}-.+\.md$ ]]; then
             echo -e "${RED}  ERROR:${NC} Invalid ADR format: $filename (should be ADR-###-title.md)"
             ERRORS=$((ERRORS + 1))

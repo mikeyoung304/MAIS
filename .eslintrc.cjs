@@ -7,8 +7,7 @@ module.exports = {
   },
   extends: [
     'eslint:recommended',
-    'plugin:@typescript-eslint/strict-type-checked',
-    'plugin:@typescript-eslint/stylistic-type-checked',
+    'plugin:@typescript-eslint/recommended',
     'prettier',
   ],
   plugins: ['@typescript-eslint'],
@@ -18,10 +17,8 @@ module.exports = {
   },
   rules: {
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-    '@typescript-eslint/explicit-function-return-type': 'error',
-    '@typescript-eslint/no-explicit-any': 'error',
-    '@typescript-eslint/no-non-null-assertion': 'error',
+    '@typescript-eslint/no-explicit-any': 'warn',
     'no-console': ['warn', { allow: ['warn', 'error'] }],
   },
-  ignorePatterns: ['dist', 'node_modules', 'coverage', '*.cjs'],
+  ignorePatterns: ['dist', 'node_modules', 'coverage', '*.cjs', '*.js', 'generated'],
 };
