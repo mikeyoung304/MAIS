@@ -25,7 +25,9 @@ export function createAuthMiddleware(identityService: IdentityService) {
       // Verify Bearer token format
       const parts = authHeader.split(' ');
       if (parts.length !== 2 || parts[0] !== 'Bearer') {
-        throw new UnauthorizedError('Invalid Authorization header format. Expected: Bearer <token>');
+        throw new UnauthorizedError(
+          'Invalid Authorization header format. Expected: Bearer <token>'
+        );
       }
 
       const token = parts[1];
@@ -39,8 +41,13 @@ export function createAuthMiddleware(identityService: IdentityService) {
       // SECURITY: Validate token type - reject tenant tokens on admin routes
       // Tenant tokens have a 'type' field set to 'tenant'
       // Admin tokens have a 'role' field set to 'admin' or 'PLATFORM_ADMIN'
-      if ('type' in payload && typeof payload === 'object' && payload !== null &&
-          'type' in payload && (payload as { type: string }).type === 'tenant') {
+      if (
+        'type' in payload &&
+        typeof payload === 'object' &&
+        payload !== null &&
+        'type' in payload &&
+        (payload as { type: string }).type === 'tenant'
+      ) {
         throw new UnauthorizedError(
           'Invalid token type: tenant tokens are not allowed for admin routes'
         );
@@ -52,9 +59,7 @@ export function createAuthMiddleware(identityService: IdentityService) {
       const isNewFormat = payloadAsUnified.role === 'PLATFORM_ADMIN';
 
       if (!isOldFormat && !isNewFormat) {
-        throw new UnauthorizedError(
-          'Invalid token: admin role required for admin routes'
-        );
+        throw new UnauthorizedError('Invalid token: admin role required for admin routes');
       }
 
       // Attach admin user to res.locals for use in controllers
@@ -64,11 +69,14 @@ export function createAuthMiddleware(identityService: IdentityService) {
       const unifiedPayload = payloadAsUnified;
       if (unifiedPayload.impersonating) {
         res.locals.impersonating = unifiedPayload.impersonating;
-        reqLogger?.info({
-          userId: payload.userId,
-          email: payload.email,
-          impersonatingTenant: unifiedPayload.impersonating.tenantSlug
-        }, 'Admin authenticated with impersonation');
+        reqLogger?.info(
+          {
+            userId: payload.userId,
+            email: payload.email,
+            impersonatingTenant: unifiedPayload.impersonating.tenantSlug,
+          },
+          'Admin authenticated with impersonation'
+        );
       } else {
         reqLogger?.info({ userId: payload.userId, email: payload.email }, 'Admin authenticated');
       }

@@ -113,7 +113,10 @@ export class UnprocessableEntityError extends AppError {
  * Too Many Requests (429) - Rate limit exceeded
  */
 export class TooManyRequestsError extends AppError {
-  constructor(message: string = 'Too many requests', public readonly retryAfter?: number) {
+  constructor(
+    message: string = 'Too many requests',
+    public readonly retryAfter?: number
+  ) {
     super(message, 'TOO_MANY_REQUESTS', 429, true);
     this.name = 'TooManyRequestsError';
   }
@@ -134,7 +137,10 @@ export class TooManyRequestsError extends AppError {
  * Internal Server Error (500) - Generic server error
  */
 export class InternalServerError extends AppError {
-  constructor(message: string = 'Internal server error', public readonly originalError?: Error) {
+  constructor(
+    message: string = 'Internal server error',
+    public readonly originalError?: Error
+  ) {
     super(message, 'INTERNAL_SERVER_ERROR', 500, false);
     this.name = 'InternalServerError';
     if (originalError) {
@@ -157,7 +163,10 @@ export class NotImplementedError extends AppError {
  * Bad Gateway (502) - Invalid response from upstream server
  */
 export class BadGatewayError extends AppError {
-  constructor(message: string = 'Bad gateway', public readonly originalError?: Error) {
+  constructor(
+    message: string = 'Bad gateway',
+    public readonly originalError?: Error
+  ) {
     super(message, 'BAD_GATEWAY', 502, true);
     this.name = 'BadGatewayError';
     if (originalError) {
@@ -170,7 +179,10 @@ export class BadGatewayError extends AppError {
  * Service Unavailable (503) - Service temporarily unavailable
  */
 export class ServiceUnavailableError extends AppError {
-  constructor(message: string = 'Service unavailable', public readonly retryAfter?: number) {
+  constructor(
+    message: string = 'Service unavailable',
+    public readonly retryAfter?: number
+  ) {
     super(message, 'SERVICE_UNAVAILABLE', 503, true);
     this.name = 'ServiceUnavailableError';
   }

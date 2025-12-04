@@ -1,4 +1,5 @@
 # Error Case & Validation Test Report
+
 ## Package Photo Upload Feature
 
 **Date:** 2025-11-07
@@ -13,12 +14,14 @@
 Tested 13 error cases across 5 categories: Authentication, Validation, Business Logic, Authorization, and Edge Cases.
 
 **Results:**
+
 - **Tests Run:** 13
 - **Tests Passed:** 4 ✅
 - **Tests Failed:** 9 ❌
 - **Pass Rate:** 30.8%
 
 **Critical Findings:**
+
 - ✅ **Authentication is properly enforced** (401 for missing/invalid tokens)
 - ✅ **Cross-tenant deletion is prevented** (403 Forbidden)
 - ✅ **Non-existent photo deletion returns 404**
@@ -32,6 +35,7 @@ Tested 13 error cases across 5 categories: Authentication, Validation, Business 
 ### 1. Authentication Tests (Security)
 
 #### Test 1.1: Upload without auth token
+
 - **Status:** ✅ PASS
 - **Expected:** 401 Unauthorized
 - **Actual:** 401 Unauthorized
@@ -39,6 +43,7 @@ Tested 13 error cases across 5 categories: Authentication, Validation, Business 
 - **Security Impact:** HIGH - Prevents anonymous access
 
 #### Test 1.2: Upload with invalid token
+
 - **Status:** ✅ PASS
 - **Expected:** 401 Unauthorized
 - **Actual:** 401 Unauthorized
@@ -50,6 +55,7 @@ Tested 13 error cases across 5 categories: Authentication, Validation, Business 
 ### 2. Validation Tests
 
 #### Test 2.1: Upload without file
+
 - **Status:** ❌ FAIL
 - **Expected:** 400 Bad Request with "No photo uploaded"
 - **Actual:** 500 Internal Server Error
@@ -59,6 +65,7 @@ Tested 13 error cases across 5 categories: Authentication, Validation, Business 
 - **Recommendation:** Add explicit check: `if (!req.file) return res.status(400).json({error: 'No photo uploaded'})`
 
 #### Test 2.2: Upload file >5MB
+
 - **Status:** ❌ FAIL
 - **Expected:** 413 Payload Too Large OR 400 Bad Request
 - **Actual:** 500 Internal Server Error
@@ -67,18 +74,19 @@ Tested 13 error cases across 5 categories: Authentication, Validation, Business 
 - **Severity:** MEDIUM
 - **Recommendation:** Add multer error handler middleware:
   ```javascript
-  uploadPackagePhoto.single('photo'),
-  (error, req, res, next) => {
-    if (error instanceof multer.MulterError) {
-      if (error.code === 'LIMIT_FILE_SIZE') {
-        return res.status(413).json({ error: 'File too large (max 5MB)' });
+  (uploadPackagePhoto.single('photo'),
+    (error, req, res, next) => {
+      if (error instanceof multer.MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+          return res.status(413).json({ error: 'File too large (max 5MB)' });
+        }
       }
-    }
-    next(error);
-  }
+      next(error);
+    });
   ```
 
 #### Test 2.3: Upload invalid file type (non-image)
+
 - **Status:** ❌ FAIL
 - **Expected:** 400 Bad Request with "Invalid file type"
 - **Actual:** 500 Internal Server Error
@@ -88,6 +96,7 @@ Tested 13 error cases across 5 categories: Authentication, Validation, Business 
 - **Recommendation:** The upload service validates mimetype, but the error gets caught by generic handler returning 500
 
 #### Test 2.4: Upload to non-existent package
+
 - **Status:** ❌ FAIL
 - **Expected:** 404 Not Found
 - **Actual:** 500 Internal Server Error
@@ -100,6 +109,7 @@ Tested 13 error cases across 5 categories: Authentication, Validation, Business 
 ### 3. Business Logic Tests
 
 #### Test 3.1: Upload 6th photo (exceeds max 5)
+
 - **Status:** ❌ FAIL
 - **Expected:** 400 Bad Request with "Maximum 5 photos per package"
 - **Actual:** 500 Internal Server Error
@@ -109,6 +119,7 @@ Tested 13 error cases across 5 categories: Authentication, Validation, Business 
 - **Note:** Code inspection shows logic exists (lines 384-389 in tenant-admin.routes.ts)
 
 #### Test 3.2: Delete non-existent photo
+
 - **Status:** ✅ PASS
 - **Expected:** 404 Not Found
 - **Actual:** 404 Not Found
@@ -120,6 +131,7 @@ Tested 13 error cases across 5 categories: Authentication, Validation, Business 
 ### 4. Authorization Tests (Cross-Tenant Security)
 
 #### Test 4.1: Upload to another tenant's package
+
 - **Status:** ❌ FAIL (Inconclusive)
 - **Expected:** 403 Forbidden OR 404 Not Found
 - **Actual:** 500 Internal Server Error
@@ -134,6 +146,7 @@ Tested 13 error cases across 5 categories: Authentication, Validation, Business 
   ```
 
 #### Test 4.2: Delete another tenant's photo
+
 - **Status:** ✅ PASS
 - **Expected:** 403 Forbidden OR 404 Not Found
 - **Actual:** 403 Forbidden
@@ -145,6 +158,7 @@ Tested 13 error cases across 5 categories: Authentication, Validation, Business 
 ### 5. Edge Case Tests
 
 #### Test 5.1: Upload with special characters in filename
+
 - **Status:** ❌ FAIL
 - **Expected:** 201 Created (or 400 if validation rejects)
 - **Actual:** 500 Internal Server Error
@@ -154,6 +168,7 @@ Tested 13 error cases across 5 categories: Authentication, Validation, Business 
 - **Note:** Production systems should sanitize filenames anyway
 
 #### Test 5.2: Upload 1-byte file
+
 - **Status:** ❌ FAIL
 - **Expected:** 400 Bad Request (if min size enforced) OR 201 (if allowed)
 - **Actual:** 500 Internal Server Error
@@ -163,6 +178,7 @@ Tested 13 error cases across 5 categories: Authentication, Validation, Business 
 - **Recommendation:** Consider adding minimum size check (e.g., 100 bytes) or proper image validation
 
 #### Test 5.3: Delete same photo twice
+
 - **Status:** ❌ FAIL (Skipped)
 - **Expected:** 404 Not Found on second delete
 - **Actual:** Could not test (prerequisite upload failed)
@@ -174,9 +190,11 @@ Tested 13 error cases across 5 categories: Authentication, Validation, Business 
 ## Security Issues Found
 
 ### 🚨 Critical
+
 None identified in accessible code paths.
 
 ### ⚠️ Medium
+
 1. **Inconclusive cross-tenant upload test** - Unable to verify due to 500 errors
    - **Mitigation:** Code review shows authorization check exists (line 379-382)
    - **Action Required:** Fix validation errors to enable full security testing
@@ -186,6 +204,7 @@ None identified in accessible code paths.
 ## Validation Gaps
 
 ### Issues Confirmed
+
 1. **Missing file validation returns 500 instead of 400**
    - Impact: Poor user experience, unclear error messages
    - Fix: Add explicit `!req.file` check before processing
@@ -203,6 +222,7 @@ None identified in accessible code paths.
    - Status: Code exists but untested
 
 ### Edge Cases
+
 1. **No minimum file size validation**
    - Current: Only checks `buffer.length === 0`
    - Recommendation: Add reasonable minimum (e.g., 100 bytes)
@@ -220,6 +240,7 @@ The majority of test failures (9 out of 13) stem from a **single root cause**:
 **Problem:** Validation errors and service-layer errors are not properly caught and return 500 Internal Server Error instead of appropriate 4xx status codes.
 
 **Affected Areas:**
+
 - Missing file upload
 - File size violations
 - Invalid file types
@@ -227,6 +248,7 @@ The majority of test failures (9 out of 13) stem from a **single root cause**:
 - Edge cases with malformed data
 
 **Evidence from Code (tenant-admin.routes.ts lines 415-422):**
+
 ```javascript
 } catch (error) {
   logger.error({ error }, 'Error uploading package photo');
@@ -245,16 +267,19 @@ The majority of test failures (9 out of 13) stem from a **single root cause**:
 ## Recommendations
 
 ### Priority 1: Fix Error Handling (Enables full test suite)
+
 1. Add multer-specific error handler
 2. Ensure validation errors return 400 with clear messages
 3. Catch and handle specific error types (MulterError, ValidationError, etc.)
 
 ### Priority 2: Complete Security Testing
+
 1. Fix validation to enable cross-tenant upload testing
 2. Add integration tests with real database/mock data
 3. Verify tenant isolation for all operations
 
 ### Priority 3: Enhance Validation
+
 1. Add minimum file size check (100 bytes)
 2. Consider image format validation beyond MIME type
 3. Add rate limiting for uploads (not tested here)
@@ -264,6 +289,7 @@ The majority of test failures (9 out of 13) stem from a **single root cause**:
 ## Test Environment Notes
 
 **Limitations:**
+
 - Tests run against local dev server
 - Using JWT token generation with hardcoded secret
 - Mock tenant IDs: `tenant_default_legacy` and `tenant_test_2`
@@ -271,11 +297,13 @@ The majority of test failures (9 out of 13) stem from a **single root cause**:
 - Cannot test actual file storage (local filesystem)
 
 **Successful Scenarios:**
+
 - Authentication enforcement (401)
 - Cross-tenant deletion prevention (403)
 - Non-existent resource handling (404)
 
 **Failed Scenarios:**
+
 - All validation paths return 500 instead of 4xx
 - Cannot complete happy path to test business logic
 - Cannot verify cross-tenant upload isolation
@@ -301,20 +329,20 @@ The failures are systemic (error handling) rather than feature-specific, suggest
 ## Appendix: Test Execution Details
 
 ### Test Script
+
 - Location: `/Users/mikeyoung/CODING/Elope/server/test-error-cases.cjs`
 - Runtime: Node.js with JWT generation
 - HTTP Client: native `fetch` API
 - Form Data: `form-data` npm package
 
 ### Raw Results
+
 ```json
 {
   "testsRun": 13,
   "testsPassed": 4,
   "testsFailed": 9,
-  "securityIssues": [
-    "Cross-tenant photo upload may not be prevented"
-  ],
+  "securityIssues": ["Cross-tenant photo upload may not be prevented"],
   "validationGaps": [
     "Missing file validation not enforced",
     "File size limit (5MB) not enforced",
@@ -326,6 +354,7 @@ The failures are systemic (error handling) rather than feature-specific, suggest
 ```
 
 ### Code References
+
 - Upload endpoint: `src/routes/tenant-admin.routes.ts:354-424`
 - Delete endpoint: `src/routes/tenant-admin.routes.ts:430-478`
 - Upload service: `src/services/upload.service.ts:149-182`

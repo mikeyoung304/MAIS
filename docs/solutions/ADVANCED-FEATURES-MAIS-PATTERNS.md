@@ -138,7 +138,11 @@ export interface RefundRepository {
   // First parameter is ALWAYS tenantId
   create(tenantId: string, data: CreateRefundInput): Promise<RefundRequest>;
   findById(tenantId: string, id: string): Promise<RefundRequest | null>;
-  findByBookingAndReason(tenantId: string, bookingId: string, reason: string): Promise<RefundRequest | null>;
+  findByBookingAndReason(
+    tenantId: string,
+    bookingId: string,
+    reason: string
+  ): Promise<RefundRequest | null>;
   findAll(tenantId: string): Promise<RefundRequest[]>;
 }
 ```
@@ -191,7 +195,7 @@ export const RefundReasonSchema = z.enum([
   'customer_request',
   'cancellation',
   'duplicate',
-  'fraudulent'
+  'fraudulent',
 ]);
 
 export const createRefund = {
@@ -310,9 +314,8 @@ export class MockRefundAdapter implements PaymentProvider {
 }
 
 // di.ts
-const paymentProvider = ENV.ADAPTERS_PRESET === 'mock'
-  ? new MockPaymentAdapter()
-  : new StripePaymentAdapter(options);
+const paymentProvider =
+  ENV.ADAPTERS_PRESET === 'mock' ? new MockPaymentAdapter() : new StripePaymentAdapter(options);
 ```
 
 ---
@@ -441,7 +444,11 @@ reminderQueue.process(async (job) => {
 
 // services/reminder.service.ts
 export class ReminderService {
-  async scheduleReminders(tenantId: string, booking: Booking, tenantTimezone: string): Promise<void> {
+  async scheduleReminders(
+    tenantId: string,
+    booking: Booking,
+    tenantTimezone: string
+  ): Promise<void> {
     const eventDateTime = DateTime.fromISO(booking.eventDate).setZone(tenantTimezone);
 
     // Pre-event reminder
@@ -950,6 +957,7 @@ FEATURE_INVOICES_ENABLED=true
 ## Common Issues & Solutions
 
 **Issue: Queue jobs not processing**
+
 ```bash
 # Check Redis connection
 redis-cli ping  # Should return PONG
@@ -959,17 +967,17 @@ redis-cli ping  # Should return PONG
 ```
 
 **Issue: Timezone mismatch in reminders**
+
 ```typescript
 // ❌ WRONG
 const eventDate = new Date('2025-06-15');
 
 // ✅ CORRECT
-const eventDate = DateTime.fromISO('2025-06-15')
-  .setZone(tenantTimezone)
-  .toUTC();
+const eventDate = DateTime.fromISO('2025-06-15').setZone(tenantTimezone).toUTC();
 ```
 
 **Issue: Idempotency key generation**
+
 ```typescript
 // Use stable key (same for retries)
 const key = `refund_${tenantId}_${bookingId}_${reason}`;
@@ -987,4 +995,3 @@ const key = `refund_${tenantId}_${bookingId}_${Date.now()}`; // ❌
 - **Service Examples**: `server/src/services/booking.service.ts`
 - **Adapter Examples**: `server/src/adapters/stripe.adapter.ts`
 - **Full Best Practices**: `ADVANCED-FEATURES-BEST-PRACTICES.md`
-

@@ -1,10 +1,10 @@
 ---
 status: deferred
 priority: p2
-issue_id: "242"
+issue_id: '242'
 tags: [ux, landing-page, concurrency]
-dependencies: ["237", "frontend-landing-page-editor"]
-source: "code-review-pr-14"
+dependencies: ['237', 'frontend-landing-page-editor']
+source: 'code-review-pr-14'
 ---
 
 # TODO-242: Add Concurrent Edit Detection for Landing Page Editor
@@ -20,6 +20,7 @@ source: "code-review-pr-14"
 When a tenant admin has the landing page editor open in multiple tabs or browsers, concurrent edits can silently overwrite each other. The transaction fix (TODO-237) prevents data corruption, but users still won't know their changes were overwritten.
 
 **Why It Matters:**
+
 - User in Tab A makes changes
 - User in Tab B (forgot it was open) makes different changes
 - Tab B saves, overwriting Tab A's work
@@ -105,15 +106,16 @@ useEffect(() => {
 ```
 
 **Rationale:**
+
 - Simple frontend-only solution (no database changes)
 - Handles 90% of cases (user forgot they had tab open)
 - Can add optimistic locking later if real users report issues
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-12-04 | Created | Code review of PR #14 |
+| Date       | Action   | Notes                                      |
+| ---------- | -------- | ------------------------------------------ |
+| 2025-12-04 | Created  | Code review of PR #14                      |
 | 2025-12-04 | Deferred | Frontend landing page editor not yet built |
 
 ## Tags

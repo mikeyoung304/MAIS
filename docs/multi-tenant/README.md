@@ -19,6 +19,7 @@ The MAIS platform has successfully transformed from a single-tenant booking syst
 ## Archived Documentation
 
 Historical planning documents have been archived to `docs/archive/2025-11/planning/`:
+
 - Multi-tenancy Implementation Plan (archived - Phase 1 complete)
 - Multi-tenancy Readiness Report (archived - initial assessment from Nov 2025)
 

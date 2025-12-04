@@ -5,6 +5,7 @@ Complete framework documentation for implementing tenant-scoped routing in React
 ## Overview
 
 This documentation provides comprehensive guidance on implementing multi-tenant routing patterns for a React application using:
+
 - **Frontend:** React 18 + React Router v7 + Vite
 - **API:** Express backend with tenant isolation
 - **Deployment:** Vercel with path-based, subdomain, or custom domain routing
@@ -12,7 +13,9 @@ This documentation provides comprehensive guidance on implementing multi-tenant 
 ## Document Structure
 
 ### 1. [TENANT_SCOPED_ROUTING.md](./TENANT_SCOPED_ROUTING.md) - Core Concepts
+
 The foundation document covering:
+
 - **React Router patterns** for nested routes with tenant params
 - **Tenant Context Provider** pattern for component data sharing
 - **API client configuration** with tenant header injection
@@ -25,7 +28,9 @@ The foundation document covering:
 **Read this first** to understand the overall architecture and patterns.
 
 ### 2. [REACT_ROUTER_V7_PATTERNS.md](./REACT_ROUTER_V7_PATTERNS.md) - Framework-Specific Details
+
 Advanced React Router v7 features:
+
 - **Route Loaders** - Pre-load data before route renders
 - **ErrorElement** - Route-level error boundaries
 - **Lazy Routes** - Code splitting entire route trees
@@ -37,7 +42,9 @@ Advanced React Router v7 features:
 **Read this** if you want to use React Router v7's powerful loader system to eliminate loading states and improve performance.
 
 ### 3. [VERCEL_MULTI_TENANT_DEPLOYMENT.md](./VERCEL_MULTI_TENANT_DEPLOYMENT.md) - Deployment Guide
+
 Complete Vercel deployment strategies:
+
 - **Path-based routing** (`/t/:slug`) - Simplest option
 - **Subdomain routing** (`slug.app.com`) - Professional option
 - **Custom domain routing** (`customer.com`) - White-label option
@@ -52,7 +59,9 @@ Complete Vercel deployment strategies:
 **Read this** when preparing to deploy to Vercel, or if you need subdomain/custom domain support.
 
 ### 4. [IMPLEMENTATION_EXAMPLES.md](./IMPLEMENTATION_EXAMPLES.md) - Code Snippets
+
 Production-ready code you can copy-paste:
+
 - Complete `router.tsx` with tenant routes
 - Route loaders for tenant data
 - `TenantLayout` component
@@ -89,6 +98,7 @@ Production-ready code you can copy-paste:
 ### Implementation Path
 
 **Phase 1: Local Development (2-3 hours)**
+
 1. Read: `TENANT_SCOPED_ROUTING.md` (overview)
 2. Read: `REACT_ROUTER_V7_PATTERNS.md` (implementation details)
 3. Copy code from: `IMPLEMENTATION_EXAMPLES.md`
@@ -96,18 +106,21 @@ Production-ready code you can copy-paste:
 5. Test at: `http://localhost:5173/t/demo-tenant`
 
 **Phase 2: Tenant Infrastructure (2-3 hours)**
+
 1. Add tenant API endpoints (GET `/api/v1/public/tenant-config/:slug`)
 2. Create `TenantContext` + providers
 3. Update API client for tenant context injection
 4. Test tenant data loading
 
 **Phase 3: Branding & Theming (1-2 hours)**
+
 1. Implement `TenantBrandingContext`
 2. Add CSS variables to Tailwind
 3. Apply tenant logos and colors dynamically
 4. Test theme switching between tenants
 
 **Phase 4: Deployment (1-2 hours)**
+
 1. Read: `VERCEL_MULTI_TENANT_DEPLOYMENT.md`
 2. Choose routing strategy
 3. Update `vercel.json` with rewrites
@@ -120,6 +133,7 @@ Production-ready code you can copy-paste:
 ## Key Patterns
 
 ### Router Structure
+
 ```
 /                           → Home page (AppShell)
 /t/:tenantSlug              → Tenant storefront (TenantLayout)
@@ -130,6 +144,7 @@ Production-ready code you can copy-paste:
 ```
 
 ### Data Flow
+
 ```
 TenantLayout
 ├── useLoaderData() → TenantConfig (pre-loaded)
@@ -142,6 +157,7 @@ TenantLayout
 ```
 
 ### API Request Flow
+
 ```
 Component
 ├── useNavigate(routes.tenantHome(slug))
@@ -167,6 +183,7 @@ const key = ['packages'] as const;
 ## TypeScript & Type Safety
 
 All code examples include full TypeScript support:
+
 ```typescript
 // Route params are typed
 const { tenantSlug, segmentSlug } = useParams<{
@@ -219,21 +236,25 @@ A: Minimal - each tenant page has unique URL and can set meta tags via useEffect
 ## Troubleshooting
 
 ### Routes Not Working
+
 - Check `vercel.json` rewrites order (most specific first)
 - Ensure catch-all rewrite goes last: `{ "source": "/(.*)", "destination": "/index.html" }`
 - Verify React Router routes match Vercel rewrites
 
 ### Tenant Config Not Loading
+
 - Check API endpoint: `/api/v1/public/tenant-config/:slug`
 - Verify backend returns 404 for invalid slugs
 - Check loader error boundary is catching errors
 
 ### Data Mixing Between Tenants
+
 - Verify all useQuery/useQueries calls include tenant slug in key
 - Check API client injects X-Tenant-Slug header
 - Clear React Query cache when switching tenants
 
 ### CSS Variables Not Applying
+
 - Check TenantBrandingContext effect is running
 - Verify CSS uses `var(--color-primary)` syntax
 - Check Tailwind config includes `extend.colors`
@@ -258,6 +279,7 @@ A: Minimal - each tenant page has unique URL and can set meta tags via useEffect
 ## Examples
 
 ### Create Tenant Home Page
+
 ```bash
 # 1. Create page file
 touch client/src/pages/tenant/TenantHome.tsx
@@ -285,6 +307,7 @@ function TenantHome() {
 ```
 
 ### Add Tenant Segment Page
+
 ```bash
 # 1. Create loader and page
 touch client/src/loaders/segmentLoader.ts
@@ -306,6 +329,7 @@ function SegmentLanding() {
 ```
 
 ### Deploy with Subdomain Support
+
 ```bash
 # 1. Update vercel.json with subdomain rule (see VERCEL_MULTI_TENANT_DEPLOYMENT.md)
 # 2. Add DNS wildcard: *.app.com → Vercel

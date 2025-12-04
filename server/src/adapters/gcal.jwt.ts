@@ -59,7 +59,9 @@ export async function createGServiceAccountJWT(
 
   if (!tokenResponse.ok) {
     const errorText = await tokenResponse.text().catch(() => '');
-    throw new Error(`Failed to exchange JWT for access token: ${tokenResponse.status} ${errorText}`);
+    throw new Error(
+      `Failed to exchange JWT for access token: ${tokenResponse.status} ${errorText}`
+    );
   }
 
   const tokenData = (await tokenResponse.json()) as { access_token: string };

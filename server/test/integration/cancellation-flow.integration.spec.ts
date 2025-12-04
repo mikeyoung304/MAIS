@@ -204,7 +204,9 @@ describe.sequential('Cancellation & Refund Flow Integration', () => {
       // Verify booking is within no-refund window
       const eventDate = new Date(booking.eventDate);
       const today = new Date();
-      const daysUntilEvent = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      const daysUntilEvent = Math.ceil(
+        (eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+      );
 
       // Assuming 7-day cancellation policy
       const cancellationDeadlineDays = 7;

@@ -7,7 +7,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "./alert-dialog";
+} from './alert-dialog';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -18,7 +18,7 @@ interface ConfirmDialogProps {
   cancelLabel?: string;
   onConfirm: () => void;
   onCancel?: () => void;
-  variant?: "default" | "destructive";
+  variant?: 'default' | 'destructive';
 }
 
 /**
@@ -45,11 +45,11 @@ export function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmLabel = "Continue",
-  cancelLabel = "Cancel",
+  confirmLabel = 'Continue',
+  cancelLabel = 'Cancel',
   onConfirm,
   onCancel,
-  variant = "default",
+  variant = 'default',
 }: ConfirmDialogProps) {
   const handleConfirm = () => {
     onConfirm();
@@ -69,14 +69,12 @@ export function ConfirmDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleCancel}>
-            {cancelLabel}
-          </AlertDialogCancel>
+          <AlertDialogCancel onClick={handleCancel}>{cancelLabel}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
             className={
-              variant === "destructive"
-                ? "bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              variant === 'destructive'
+                ? 'bg-red-600 hover:bg-red-700 focus:ring-red-600'
                 : undefined
             }
           >

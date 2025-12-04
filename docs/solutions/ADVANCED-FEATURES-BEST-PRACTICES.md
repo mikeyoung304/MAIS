@@ -16,6 +16,7 @@ This document synthesizes Node.js ecosystem best practices for 5 critical bookin
 ### Context in MAIS
 
 MAIS already implements JWT for tenant authentication. Action tokens (reschedule, cancel, reset password) are needed for:
+
 - Password reset flows (already implemented)
 - Booking reschedule/cancel actions
 - One-time admin setup links
@@ -25,17 +26,18 @@ MAIS already implements JWT for tenant authentication. Action tokens (reschedule
 
 Use **JWT + single-use tokens** depending on context:
 
-| Token Type | Mechanism | Use Case | Expiration |
-|-----------|-----------|----------|-----------|
-| **JWT** | Stateless, signed | Authentication, tenant sessions | 7 days |
-| **Single-use HMAC** | DB-backed, token hashes | Sensitive actions (password reset, refunds) | 1 hour |
-| **Opaque random** | DB-backed, database lookup | One-time actions requiring audit trail | Configurable |
+| Token Type          | Mechanism                  | Use Case                                    | Expiration   |
+| ------------------- | -------------------------- | ------------------------------------------- | ------------ |
+| **JWT**             | Stateless, signed          | Authentication, tenant sessions             | 7 days       |
+| **Single-use HMAC** | DB-backed, token hashes    | Sensitive actions (password reset, refunds) | 1 hour       |
+| **Opaque random**   | DB-backed, database lookup | One-time actions requiring audit trail      | Configurable |
 
 ### Recommended Implementation Pattern
 
 #### 1.1 Password Reset (Status: IMPLEMENTED)
 
 **Current Pattern in MAIS:**
+
 ```typescript
 // server/src/services/tenant-auth.service.ts
 async forgotPassword(email: string): Promise<void> {
@@ -58,11 +60,13 @@ async forgotPassword(email: string): Promise<void> {
 ```
 
 **Why this works:**
+
 - Hash stored in DB, token sent in email (one-way function)
 - If DB is compromised, tokens are still unusable
 - Tokens are single-use by design (verified then deleted)
 
 **Best practices already in MAIS:**
+
 - ✅ Tokens expire (1 hour)
 - ✅ Hashed in database
 - ✅ Single-use enforcement
@@ -142,12 +146,12 @@ export class BookingActionTokenService {
 
 ### 1.3 Library Recommendations
 
-| Library | Purpose | Notes |
-|---------|---------|-------|
-| `jsonwebtoken` | JWT signing/verification | Already used in MAIS ✅ |
-| `crypto` (Node.js builtin) | HMAC & random token generation | No external dependency needed |
-| `bcryptjs` | Password hashing | Already used in MAIS ✅ |
-| `jose` (optional) | Modern JWT alternative | More secure than jsonwebtoken, consider for future |
+| Library                    | Purpose                        | Notes                                              |
+| -------------------------- | ------------------------------ | -------------------------------------------------- |
+| `jsonwebtoken`             | JWT signing/verification       | Already used in MAIS ✅                            |
+| `crypto` (Node.js builtin) | HMAC & random token generation | No external dependency needed                      |
+| `bcryptjs`                 | Password hashing               | Already used in MAIS ✅                            |
+| `jose` (optional)          | Modern JWT alternative         | More secure than jsonwebtoken, consider for future |
 
 ### 1.4 MAIS-Specific Implementation Checklist
 
@@ -179,8 +183,8 @@ await prisma.bookingActionToken.update({
 // DELETE FROM booking_action_tokens WHERE expiresAt < NOW()
 
 // 5. Never log tokens in error messages
-logger.error({ bookingId }, 'Token verification failed');  // ✅
-logger.error({ bookingId, token }, 'Token verification failed');  // ❌
+logger.error({ bookingId }, 'Token verification failed'); // ✅
+logger.error({ bookingId, token }, 'Token verification failed'); // ❌
 ```
 
 ---
@@ -190,6 +194,7 @@ logger.error({ bookingId, token }, 'Token verification failed');  // ❌
 ### Context in MAIS
 
 Booking reminders are essential for:
+
 - Pre-booking reminders (3 days before)
 - Day-of confirmation reminders
 - Post-booking follow-up reminders
@@ -197,13 +202,13 @@ Booking reminders are essential for:
 
 ### Architectural Comparison
 
-| Approach | Pros | Cons | MAIS Fit |
-|----------|------|------|----------|
-| **node-cron** | Simple, no external service | Not distributed, loses jobs on restart | ❌ Not production-ready |
-| **Bull/BullMQ** | Redis-backed, distributed, retries | Requires Redis | ✅ Production-ready |
-| **Agenda** | MongoDB-backed, distributed | Heavier than Bull | ❌ MAIS uses PostgreSQL |
-| **Node Scheduler** | Lightweight, memory-based | Not fault-tolerant | ❌ Not production |
-| **AWS EventBridge** | Serverless, managed | Vendor lock-in, cost | ⚠️ Possible for SaaS |
+| Approach            | Pros                               | Cons                                   | MAIS Fit                |
+| ------------------- | ---------------------------------- | -------------------------------------- | ----------------------- |
+| **node-cron**       | Simple, no external service        | Not distributed, loses jobs on restart | ❌ Not production-ready |
+| **Bull/BullMQ**     | Redis-backed, distributed, retries | Requires Redis                         | ✅ Production-ready     |
+| **Agenda**          | MongoDB-backed, distributed        | Heavier than Bull                      | ❌ MAIS uses PostgreSQL |
+| **Node Scheduler**  | Lightweight, memory-based          | Not fault-tolerant                     | ❌ Not production       |
+| **AWS EventBridge** | Serverless, managed                | Vendor lock-in, cost                   | ⚠️ Possible for SaaS    |
 
 ### Recommended: Bull + PostgreSQL Adapter
 
@@ -216,6 +221,7 @@ Booking reminders are essential for:
 5. **Mature ecosystem** - 10K+ GitHub stars
 
 **Installation:**
+
 ```bash
 npm install bull redis ioredis
 npm install --save-dev @types/bull
@@ -275,7 +281,10 @@ reminderQueue.process(async (job) => {
 
 // Event listeners for monitoring
 reminderQueue.on('failed', (job, error) => {
-  logger.error({ jobId: job.id, attempts: job.attemptsMade, error }, 'Reminder job failed permanently');
+  logger.error(
+    { jobId: job.id, attempts: job.attemptsMade, error },
+    'Reminder job failed permanently'
+  );
 });
 
 reminderQueue.on('error', (error) => {
@@ -296,10 +305,13 @@ npm install --save-dev @types/luxon
 import { DateTime } from 'luxon';
 
 export class BookingReminderService {
-  async scheduleReminders(tenantId: string, booking: Booking, tenantTimezone: string): Promise<void> {
+  async scheduleReminders(
+    tenantId: string,
+    booking: Booking,
+    tenantTimezone: string
+  ): Promise<void> {
     // Parse booking date in tenant's timezone
-    const eventDateTime = DateTime
-      .fromISO(booking.eventDate)
+    const eventDateTime = DateTime.fromISO(booking.eventDate)
       .setZone(tenantTimezone)
       .startOf('day');
 
@@ -398,12 +410,12 @@ export async function recoveryJob() {
 
 ### 2.5 Library Recommendations
 
-| Library | Purpose | Installation |
-|---------|---------|--------------|
-| `bull` | Job queue | `npm install bull` |
-| `ioredis` | Redis client | `npm install ioredis` (dependency) |
-| `luxon` | Timezone handling | `npm install luxon` |
-| `redis` | Redis server | External (Docker: `docker run -d redis:7`) |
+| Library   | Purpose           | Installation                               |
+| --------- | ----------------- | ------------------------------------------ |
+| `bull`    | Job queue         | `npm install bull`                         |
+| `ioredis` | Redis client      | `npm install ioredis` (dependency)         |
+| `luxon`   | Timezone handling | `npm install luxon`                        |
+| `redis`   | Redis server      | External (Docker: `docker run -d redis:7`) |
 
 ---
 
@@ -412,6 +424,7 @@ export async function recoveryJob() {
 ### Context in MAIS
 
 MAIS currently uses full-payment Checkout Sessions. For deposits:
+
 - Customers pay 50% upfront, 50% before event
 - Flexible payment scheduling
 - Refund tracking for partial payments
@@ -420,12 +433,12 @@ MAIS currently uses full-payment Checkout Sessions. For deposits:
 
 Use **Payment Intent API** (not Checkout Sessions) for split payments:
 
-| Approach | Split Payment Support | Refund Handling | Complexity |
-|----------|------------------------|-----------------|-----------|
-| **Checkout Session** | ❌ No | Basic | Low |
-| **Payment Intent** | ✅ Yes | Granular | Medium |
-| **Subscription API** | ✅ Yes | Automatic | High |
-| **Custom** | ✅ Yes | Manual | Very High |
+| Approach             | Split Payment Support | Refund Handling | Complexity |
+| -------------------- | --------------------- | --------------- | ---------- |
+| **Checkout Session** | ❌ No                 | Basic           | Low        |
+| **Payment Intent**   | ✅ Yes                | Granular        | Medium     |
+| **Subscription API** | ✅ Yes                | Automatic       | High       |
+| **Custom**           | ✅ Yes                | Manual          | Very High  |
 
 ### 3.1 Deposit Payment Flow
 
@@ -459,7 +472,7 @@ export class DepositPaymentService {
   constructor(
     private readonly stripe: Stripe,
     private readonly bookingRepo: BookingRepository,
-    private readonly paymentRepo: PaymentRepository,
+    private readonly paymentRepo: PaymentRepository
   ) {}
 
   /**
@@ -654,9 +667,9 @@ model BookingPaymentStage {
 
 ### 3.3 Library Recommendations
 
-| Library | Purpose | Notes |
-|---------|---------|-------|
-| `stripe` | Payment processing | Already used in MAIS ✅ |
+| Library     | Purpose             | Notes                         |
+| ----------- | ------------------- | ----------------------------- |
+| `stripe`    | Payment processing  | Already used in MAIS ✅       |
 | `stripe-js` | Browser-side Stripe | For frontend payment elements |
 
 ---
@@ -666,6 +679,7 @@ model BookingPaymentStage {
 ### Context in MAIS
 
 Refunds are needed for:
+
 - Cancellations (full refund)
 - Partial refunds (customer requests)
 - Failed bookings
@@ -692,7 +706,7 @@ export class RefundService {
   constructor(
     private readonly stripe: Stripe,
     private readonly bookingRepo: BookingRepository,
-    private readonly paymentRepo: PaymentRepository,
+    private readonly paymentRepo: PaymentRepository
   ) {}
 
   /**
@@ -978,7 +992,10 @@ export class RefundAlreadyRequestedError extends RefundError {
 }
 
 export class RefundFailedError extends RefundError {
-  constructor(message: string, public readonly stripeError?: string) {
+  constructor(
+    message: string,
+    public readonly stripeError?: string
+  ) {
     super(message, 'REFUND_FAILED');
     this.name = 'RefundFailedError';
   }
@@ -1026,6 +1043,7 @@ logger.info(
 ### Context in MAIS
 
 Invoices are needed for:
+
 - Payment confirmations (send to customer)
 - Receipts (customer records)
 - Tax documentation
@@ -1033,19 +1051,20 @@ Invoices are needed for:
 
 ### Architecture Decision: Puppeteer + Handlebars
 
-| Approach | Output Quality | Speed | Setup | MAIS Fit |
-|----------|---|---|---|---|
-| **pdfkit** | Medium (low-level) | Fast | Simple | ❌ Tedious layout |
-| **puppeteer** | High (HTML→PDF) | Slower | Docker | ✅ Best quality |
-| **pdfrw** | Low (manipulation) | Fast | Simple | ❌ No generation |
-| **wkhtmltopdf** | High (HTML→PDF) | Medium | System binary | ❌ Deployment issues |
-| **html-pdf** | Medium | Medium | npm | ⚠️ Outdated |
+| Approach        | Output Quality     | Speed  | Setup         | MAIS Fit             |
+| --------------- | ------------------ | ------ | ------------- | -------------------- |
+| **pdfkit**      | Medium (low-level) | Fast   | Simple        | ❌ Tedious layout    |
+| **puppeteer**   | High (HTML→PDF)    | Slower | Docker        | ✅ Best quality      |
+| **pdfrw**       | Low (manipulation) | Fast   | Simple        | ❌ No generation     |
+| **wkhtmltopdf** | High (HTML→PDF)    | Medium | System binary | ❌ Deployment issues |
+| **html-pdf**    | Medium             | Medium | npm           | ⚠️ Outdated          |
 
 **Recommendation:** Puppeteer for production, pdfkit for simple receipts.
 
 ### 5.1 Puppeteer Invoice Generation
 
 **Installation:**
+
 ```bash
 npm install puppeteer handlebars
 npm install --save-dev @types/node
@@ -1059,7 +1078,7 @@ import Handlebars from 'handlebars';
 export class InvoiceService {
   constructor(
     private readonly bookingRepo: BookingRepository,
-    private readonly tenantRepo: TenantRepository,
+    private readonly tenantRepo: TenantRepository
   ) {}
 
   /**
@@ -1105,8 +1124,8 @@ export class InvoiceService {
           unitPrice: `$${(pkg.priceCents / 100).toFixed(2)}`,
           amount: `$${(pkg.priceCents / 100).toFixed(2)}`,
         },
-        ...booking.addOnIds.map(addOnId => {
-          const addOn = pkg.addOns.find(a => a.id === addOnId);
+        ...booking.addOnIds.map((addOnId) => {
+          const addOn = pkg.addOns.find((a) => a.id === addOnId);
           return {
             description: addOn?.title || 'Add-on',
             quantity: 1,
@@ -1418,16 +1437,19 @@ const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
 ## 6. Implementation Priority & Roadmap
 
 ### Phase 1 (MVP)
+
 - [x] Secure token systems (password reset)
 - [x] Stripe payments (full payment)
 - [ ] Invoice generation (basic PDF)
 
 ### Phase 2 (Post-MVP)
+
 - [ ] Booking action tokens (reschedule/cancel)
 - [ ] Reminder system (Bull queue)
 - [ ] Deposit/partial payments
 
 ### Phase 3 (Advanced)
+
 - [ ] Refund handling (async processing)
 - [ ] Advanced invoice features (tax calculation, branding)
 - [ ] Subscription/recurring payments
@@ -1515,6 +1537,7 @@ try {
 ## 10. Testing Strategy
 
 Each feature requires:
+
 - **Unit tests**: Service methods with mock repositories
 - **Integration tests**: Database-backed tests with test tenant isolation
 - **E2E tests**: Full workflow tests (payment → refund → invoice)
@@ -1562,10 +1585,14 @@ const record = await db.tokenTable.findUnique({ tokenHash: hash });
 await queue.add(data, { delay: 5000, attempts: 3 });
 
 // Process
-queue.process(async (job) => { /* process job */ });
+queue.process(async (job) => {
+  /* process job */
+});
 
 // Monitor
-queue.on('failed', (job, error) => { /* handle failure */ });
+queue.on('failed', (job, error) => {
+  /* handle failure */
+});
 ```
 
 ### Stripe Idempotency

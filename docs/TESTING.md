@@ -42,11 +42,11 @@ We follow the testing pyramid approach with the following distribution:
 
 ### Test Distribution Goals
 
-| Test Type | Target % | Purpose | Speed |
-|-----------|----------|---------|-------|
-| **Unit** | 60% | Verify individual components in isolation | < 10ms per test |
-| **Integration** | 30% | Verify database interactions and data integrity | < 500ms per test |
-| **E2E** | 10% | Verify complete user flows and UI interactions | < 10s per test |
+| Test Type       | Target % | Purpose                                         | Speed            |
+| --------------- | -------- | ----------------------------------------------- | ---------------- |
+| **Unit**        | 60%      | Verify individual components in isolation       | < 10ms per test  |
+| **Integration** | 30%      | Verify database interactions and data integrity | < 500ms per test |
+| **E2E**         | 10%      | Verify complete user flows and UI interactions  | < 10s per test   |
 
 ## Test Types
 
@@ -55,12 +55,14 @@ We follow the testing pyramid approach with the following distribution:
 **Purpose:** Test individual components (services, utilities, controllers) in isolation
 
 **Characteristics:**
+
 - Use fake implementations (no real database, no external services)
 - Fast execution (< 10ms per test)
 - High volume (60% of all tests)
 - Test business logic and edge cases
 
 **Example:**
+
 ```typescript
 describe('BookingService', () => {
   it('calculates total with package and add-ons', async () => {
@@ -70,7 +72,7 @@ describe('BookingService', () => {
 
     const result = await service.createCheckout('test-tenant', {
       packageId: pkg.id,
-      addOnIds: ['addon_1']
+      addOnIds: ['addon_1'],
     });
 
     expect(result.totalCents).toBe(150000);
@@ -79,6 +81,7 @@ describe('BookingService', () => {
 ```
 
 **When to Write:**
+
 - New service methods
 - Business logic functions
 - Validation rules
@@ -90,19 +93,21 @@ describe('BookingService', () => {
 **Purpose:** Test database interactions, transactions, and multi-tenant isolation
 
 **Characteristics:**
+
 - Use real test database
 - Slower execution (< 500ms per test)
 - Medium volume (30% of all tests)
 - Test data integrity and concurrency
 
 **Example:**
+
 ```typescript
 describe('PrismaBookingRepository', () => {
   it('prevents double-booking with database locks', async () => {
     // Uses real PostgreSQL test database
     await Promise.all([
       repository.create('tenant-a', booking1),
-      repository.create('tenant-a', booking2) // Same date
+      repository.create('tenant-a', booking2), // Same date
     ]);
 
     // Verify only one booking was created
@@ -113,6 +118,7 @@ describe('PrismaBookingRepository', () => {
 ```
 
 **When to Write:**
+
 - New repository methods
 - Database schema changes
 - Transaction logic
@@ -125,12 +131,14 @@ describe('PrismaBookingRepository', () => {
 **Purpose:** Test complete user flows through the UI
 
 **Characteristics:**
+
 - Use Playwright for browser automation
 - Slowest execution (< 10s per test)
 - Low volume (10% of all tests)
 - Test critical user journeys
 
 **Example:**
+
 ```typescript
 test('customer can book a package', async ({ page }) => {
   await page.goto('/packages');
@@ -143,6 +151,7 @@ test('customer can book a package', async ({ page }) => {
 ```
 
 **When to Write:**
+
 - New user workflows
 - Critical business flows
 - Multi-step processes
@@ -215,7 +224,7 @@ it('updates only affect the specified tenant', async () => {
 
   // Update package for tenant A
   await repo.updatePackage('tenant-a', packageA.id, {
-    priceCents: 200000
+    priceCents: 200000,
   });
 
   // Verify tenant A's package was updated
@@ -400,13 +409,13 @@ test.beforeEach(async ({ page }) => {
 
 ### Target Coverage
 
-| Metric | Target | Current |
-|--------|--------|---------|
-| **Overall** | 80% | TBD |
-| **Services** | 90% | TBD |
-| **Repositories** | 85% | TBD |
-| **Controllers** | 70% | TBD |
-| **Utilities** | 95% | TBD |
+| Metric           | Target | Current |
+| ---------------- | ------ | ------- |
+| **Overall**      | 80%    | TBD     |
+| **Services**     | 90%    | TBD     |
+| **Repositories** | 85%    | TBD     |
+| **Controllers**  | 70%    | TBD     |
+| **Utilities**    | 95%    | TBD     |
 
 ### Coverage Reports
 
@@ -417,6 +426,7 @@ npm run test:coverage
 ```
 
 View HTML report:
+
 ```bash
 open coverage/index.html
 ```
@@ -432,12 +442,12 @@ open coverage/index.html
 
 ### Target Test Execution Times
 
-| Test Suite | Target Time | Alert Threshold |
-|------------|-------------|-----------------|
-| **Unit Tests** | < 5 seconds | > 10 seconds |
-| **Integration Tests** | < 30 seconds | > 60 seconds |
-| **E2E Tests** | < 2 minutes | > 5 minutes |
-| **Full Suite** | < 3 minutes | > 7 minutes |
+| Test Suite            | Target Time  | Alert Threshold |
+| --------------------- | ------------ | --------------- |
+| **Unit Tests**        | < 5 seconds  | > 10 seconds    |
+| **Integration Tests** | < 30 seconds | > 60 seconds    |
+| **E2E Tests**         | < 2 minutes  | > 5 minutes     |
+| **Full Suite**        | < 3 minutes  | > 7 minutes     |
 
 ### Optimization Strategies
 
@@ -502,12 +512,14 @@ npm run test:e2e -- booking-flow.spec.ts --debug
 ### 1. Forgetting tenantId Parameter
 
 **Problem:**
+
 ```typescript
 // WRONG - Missing tenantId
 await service.createBooking({ ... });
 ```
 
 **Solution:**
+
 ```typescript
 // CORRECT - Always include tenantId as first parameter
 await service.createBooking('test-tenant', { ... });
@@ -516,6 +528,7 @@ await service.createBooking('test-tenant', { ... });
 ### 2. Shared Test State
 
 **Problem:**
+
 ```typescript
 // WRONG - Shared state between tests
 const repo = new FakeBookingRepository();
@@ -525,6 +538,7 @@ it('test 2', () => { /* repo still has data from test 1 */ });
 ```
 
 **Solution:**
+
 ```typescript
 // CORRECT - Fresh state for each test
 let repo: FakeBookingRepository;
@@ -537,23 +551,23 @@ beforeEach(() => {
 ### 3. Missing HTTP Headers in API Tests
 
 **Problem:**
+
 ```typescript
 // WRONG - Missing tenant authentication
 await request(app).get('/v1/packages').expect(200);
 ```
 
 **Solution:**
+
 ```typescript
 // CORRECT - Include X-Tenant-Key header
-await request(app)
-  .get('/v1/packages')
-  .set('X-Tenant-Key', testTenantApiKey)
-  .expect(200);
+await request(app).get('/v1/packages').set('X-Tenant-Key', testTenantApiKey).expect(200);
 ```
 
 ### 4. Not Cleaning Up Integration Tests
 
 **Problem:**
+
 ```typescript
 // WRONG - No cleanup, pollutes database
 it('creates booking', async () => {
@@ -563,6 +577,7 @@ it('creates booking', async () => {
 ```
 
 **Solution:**
+
 ```typescript
 // CORRECT - Clean up after each test
 afterEach(async () => {
@@ -573,6 +588,7 @@ afterEach(async () => {
 ### 5. Testing Implementation Instead of Behavior
 
 **Problem:**
+
 ```typescript
 // WRONG - Testing internal implementation
 it('calls repository.create()', async () => {
@@ -583,6 +599,7 @@ it('calls repository.create()', async () => {
 ```
 
 **Solution:**
+
 ```typescript
 // CORRECT - Testing observable behavior
 it('creates booking and returns checkout URL', async () => {
@@ -664,11 +681,11 @@ it('creates booking and returns checkout URL', async () => {
 
 ### Test Execution Matrix
 
-| Test Type | Framework | Database | Browser | Tenant Isolation | Parallel |
-|-----------|-----------|----------|---------|------------------|----------|
-| Unit | Vitest | Fake | No | Verified | Yes |
-| Integration | Vitest | PostgreSQL | No | Verified | Limited |
-| E2E | Playwright | PostgreSQL | Chromium | Verified | Limited |
+| Test Type   | Framework  | Database   | Browser  | Tenant Isolation | Parallel |
+| ----------- | ---------- | ---------- | -------- | ---------------- | -------- |
+| Unit        | Vitest     | Fake       | No       | Verified         | Yes      |
+| Integration | Vitest     | PostgreSQL | No       | Verified         | Limited  |
+| E2E         | Playwright | PostgreSQL | Chromium | Verified         | Limited  |
 
 ### Test File Locations
 
@@ -693,16 +710,17 @@ it('creates booking and returns checkout URL', async () => {
 
 ### Environment Variables
 
-| Variable | Purpose | Example |
-|----------|---------|---------|
-| `DATABASE_URL` | Development database | `postgresql://user:pass@localhost:5432/elope` |
-| `DATABASE_URL_TEST` | Test database | `postgresql://user:pass@localhost:5432/elope_test` |
-| `NODE_ENV` | Environment | `test` |
-| `CI` | CI/CD indicator | `true` |
+| Variable            | Purpose              | Example                                            |
+| ------------------- | -------------------- | -------------------------------------------------- |
+| `DATABASE_URL`      | Development database | `postgresql://user:pass@localhost:5432/elope`      |
+| `DATABASE_URL_TEST` | Test database        | `postgresql://user:pass@localhost:5432/elope_test` |
+| `NODE_ENV`          | Environment          | `test`                                             |
+| `CI`                | CI/CD indicator      | `true`                                             |
 
 ---
 
 **Document Maintenance:**
+
 - Review quarterly for accuracy
 - Update when testing strategy changes
 - Add examples for new patterns

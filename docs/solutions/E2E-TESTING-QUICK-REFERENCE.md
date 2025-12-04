@@ -5,14 +5,16 @@
 ### Solution: Environment Variable Override
 
 **Rate Limiter Code** (`server/src/middleware/rateLimiter.ts`):
+
 ```typescript
 const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.E2E_TEST === '1';
 export const signupLimiter = rateLimit({
-  max: isTestEnvironment ? 100 : 5,  // ← Higher in test env
+  max: isTestEnvironment ? 100 : 5, // ← Higher in test env
 });
 ```
 
 **Playwright Config** (`e2e/playwright.config.ts`):
+
 ```typescript
 webServer: {
   command: 'E2E_TEST=1 ADAPTERS_PRESET=real ... npm run dev:e2e',
@@ -22,6 +24,7 @@ webServer: {
 ```
 
 **Checklist**:
+
 - [ ] Rate limiter checks `E2E_TEST=1` or `NODE_ENV=test`
 - [ ] Playwright config sets `E2E_TEST=1` in webServer.command
 - [ ] Different limits for test vs production
@@ -35,24 +38,26 @@ webServer: {
 ### Solution: Serial Execution + Comprehensive Coverage
 
 **Test Structure**:
+
 ```typescript
 // Run tests serially - they share state
 test.describe.configure({ mode: 'serial' });
 
 test.describe('Visual Editor', () => {
-  test('1. loads dashboard', async ({ page }) => { });
-  test('2. edits title inline', async ({ page }) => { });
-  test('3. edits price inline', async ({ page }) => { });
-  test('4. edits description', async ({ page }) => { });
-  test('5. auto-saves and persists', async ({ page }) => { });
-  test('6. publishes all drafts', async ({ page }) => { });
-  test('7. discards all drafts', async ({ page }) => { });
-  test('8. shows loading states', async ({ page }) => { });
-  test('9. handles escape key', async ({ page }) => { });
+  test('1. loads dashboard', async ({ page }) => {});
+  test('2. edits title inline', async ({ page }) => {});
+  test('3. edits price inline', async ({ page }) => {});
+  test('4. edits description', async ({ page }) => {});
+  test('5. auto-saves and persists', async ({ page }) => {});
+  test('6. publishes all drafts', async ({ page }) => {});
+  test('7. discards all drafts', async ({ page }) => {});
+  test('8. shows loading states', async ({ page }) => {});
+  test('9. handles escape key', async ({ page }) => {});
 });
 ```
 
 **Why 7-10 Tests**:
+
 - 1 happy path (basic functionality)
 - 2-4 field tests (one per field type)
 - 1 persistence test (reload verification)
@@ -61,6 +66,7 @@ test.describe('Visual Editor', () => {
 - 1+ edge case test (escape, cancel, validation)
 
 **Checklist**:
+
 - [ ] Serial execution for shared state
 - [ ] 7-10 tests minimum per feature
 - [ ] Each test has clear, specific name
@@ -75,6 +81,7 @@ test.describe('Visual Editor', () => {
 ### Solution: Token Caching + Cleanup Helpers
 
 **Token Caching Pattern**:
+
 ```typescript
 let authToken: string | null = null;
 let isSetup = false;
@@ -89,32 +96,27 @@ async function ensureLoggedIn(page: Page): Promise<void> {
     await page.getByRole('button', { name: /Create Account/i }).click();
 
     // Wait for response
-    const response = await page.waitForResponse(
-      r => r.url().includes('/v1/auth/signup'),
-      { timeout: 30000 }
-    );
+    const response = await page.waitForResponse((r) => r.url().includes('/v1/auth/signup'), {
+      timeout: 30000,
+    });
 
     if (response.status() === 429) {
       throw new Error('Rate limited - run tests later');
     }
 
     // Cache token
-    authToken = await page.evaluate(() =>
-      localStorage.getItem('tenantToken')
-    );
+    authToken = await page.evaluate(() => localStorage.getItem('tenantToken'));
     isSetup = true;
   } else if (authToken) {
     // Subsequent tests: restore token
     await page.goto('/');
-    await page.evaluate((token) =>
-      localStorage.setItem('tenantToken', token),
-      authToken
-    );
+    await page.evaluate((token) => localStorage.setItem('tenantToken', token), authToken);
   }
 }
 ```
 
 **Cleanup Pattern**:
+
 ```typescript
 async function discardDraftsIfAny(page: Page): Promise<void> {
   const button = page.getByRole('button', { name: /Discard/i }).first();
@@ -131,13 +133,14 @@ async function discardDraftsIfAny(page: Page): Promise<void> {
 test('some test', async ({ page }) => {
   await ensureLoggedIn(page);
   await goToFeature(page);
-  await discardDraftsIfAny(page);  // ← Reset state first
+  await discardDraftsIfAny(page); // ← Reset state first
 
   // Test logic...
 });
 ```
 
 **Checklist**:
+
 - [ ] Module-level `authToken` and `isSetup` variables
 - [ ] Signup only happens on first `ensureLoggedIn()` call
 - [ ] Subsequent calls restore cached token
@@ -151,6 +154,7 @@ test('some test', async ({ page }) => {
 ## Implementation Checklist
 
 ### Before Writing Tests
+
 - [ ] List all user workflows
 - [ ] Decide: serial execution? (shared state = YES)
 - [ ] Plan auth: shared tenant with token caching
@@ -158,6 +162,7 @@ test('some test', async ({ page }) => {
 - [ ] Check for existing rate limiters on feature endpoints
 
 ### Rate Limiter Setup
+
 - [ ] Find all rate limiters on feature endpoints
 - [ ] Add `E2E_TEST` check to each limiter
 - [ ] Higher limits in test: 100+ vs production: 5
@@ -165,6 +170,7 @@ test('some test', async ({ page }) => {
 - [ ] Verify rate limiter tests cover both environments
 
 ### Test Implementation
+
 - [ ] `test.describe.configure({ mode: 'serial' })`
 - [ ] Create `ensureLoggedIn()` helper
 - [ ] Create cleanup helpers (`discardDraftsIfAny()`, etc.)
@@ -175,6 +181,7 @@ test('some test', async ({ page }) => {
 - [ ] Use `getByRole()` for selectors, not CSS
 
 ### Verification
+
 - [ ] Tests pass locally: `npm run test:e2e`
 - [ ] Tests pass individually: `npm run test:e2e -- file.spec.ts`
 - [ ] No flaky tests (run 3x)
@@ -183,6 +190,7 @@ test('some test', async ({ page }) => {
 - [ ] E2E_TEST env var is working (rate limit not hit)
 
 ### Code Review
+
 - [ ] Check for hardcoded email addresses (use timestamp/random)
 - [ ] Check for arbitrary `waitForTimeout()` (use waitForResponse, waitForLoadState)
 - [ ] Check for CSS selectors (should use getByRole)
@@ -194,16 +202,16 @@ test('some test', async ({ page }) => {
 
 ## Common Mistakes
 
-| Mistake | Fix |
-|---------|-----|
-| "E2E_TEST=1 in test file" | Set in Playwright `webServer.command` |
-| "Each test does signup" | Cache token, reuse across tests |
-| "Tests fail randomly" | Use waitForResponse/waitForLoadState, not sleep |
-| "Email conflicts" | Use `\`test-${Date.now()}-${Math.random()}\`` |
-| "Tests interfere" | Add cleanup at START of each test |
-| "Rate limit 429" | Verify E2E_TEST=1 in Playwright config |
-| "Escape key doesn't work" | Use `input.press('Escape')` not `.blur()` |
-| "Data not persisted" | Add reload test with waitForLoadState |
+| Mistake                     | Fix                                                  |
+| --------------------------- | ---------------------------------------------------- |
+| "E2E_TEST=1 in test file"   | Set in Playwright `webServer.command`                |
+| "Each test does signup"     | Cache token, reuse across tests                      |
+| "Tests fail randomly"       | Use waitForResponse/waitForLoadState, not sleep      |
+| "Email conflicts"           | Use `\`test-${Date.now()}-${Math.random()}\``        |
+| "Tests interfere"           | Add cleanup at START of each test                    |
+| "Rate limit 429"            | Verify E2E_TEST=1 in Playwright config               |
+| "Escape key doesn't work"   | Use `input.press('Escape')` not `.blur()`            |
+| "Data not persisted"        | Add reload test with waitForLoadState                |
 | "Hardcoded selectors break" | Use getByRole, getByLabel, not locator('button.foo') |
 
 ---
@@ -219,7 +227,7 @@ const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.E2E_TES
 
 export const featureLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: isTestEnvironment ? 100 : 5,  // ← Different limits
+  max: isTestEnvironment ? 100 : 5, // ← Different limits
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req, res) =>
@@ -285,10 +293,9 @@ async function ensureLoggedIn(page: Page): Promise<void> {
     await page.fill('#email', testEmail);
     // ... fill form ...
 
-    const response = await page.waitForResponse(
-      r => r.url().includes('/v1/auth/signup'),
-      { timeout: 30000 }
-    );
+    const response = await page.waitForResponse((r) => r.url().includes('/v1/auth/signup'), {
+      timeout: 30000,
+    });
 
     if (response.status() === 429) {
       throw new Error('Rate limited - run later');
@@ -299,10 +306,7 @@ async function ensureLoggedIn(page: Page): Promise<void> {
   } else if (authToken) {
     // Restore token
     await page.goto('/');
-    await page.evaluate((token) =>
-      localStorage.setItem('tenantToken', token),
-      authToken
-    );
+    await page.evaluate((token) => localStorage.setItem('tenantToken', token), authToken);
   }
 }
 
@@ -334,12 +338,14 @@ test.describe('Feature Name', () => {
 ## When to Use Serial vs Parallel
 
 **USE SERIAL** (`test.describe.configure({ mode: 'serial' })`) when:
+
 - ✅ Tests share authentication (same tenant/user)
 - ✅ Tests modify state that other tests depend on
 - ✅ Tests operate on same resource (same package, same booking)
 - ✅ You need to verify stateful workflows (create → edit → publish)
 
 **USE PARALLEL** (default) when:
+
 - ✅ Each test creates its own isolated tenant/account
 - ✅ Tests only read data, never write
 - ✅ Tests are completely independent
@@ -363,14 +369,14 @@ You've done E2E testing RIGHT when:
 
 ## File Locations
 
-| Item | Location |
-|------|----------|
-| Rate Limiters | `server/src/middleware/rateLimiter.ts` |
-| E2E Tests | `e2e/tests/*.spec.ts` |
-| Playwright Config | `e2e/playwright.config.ts` |
-| Auth Routes | `server/src/routes/auth.routes.ts` |
-| Rate Limiter Tests | `server/test/middleware/rateLimiter.spec.ts` |
-| E2E Helpers (proposed) | `e2e/helpers/*.ts` |
+| Item                   | Location                                     |
+| ---------------------- | -------------------------------------------- |
+| Rate Limiters          | `server/src/middleware/rateLimiter.ts`       |
+| E2E Tests              | `e2e/tests/*.spec.ts`                        |
+| Playwright Config      | `e2e/playwright.config.ts`                   |
+| Auth Routes            | `server/src/routes/auth.routes.ts`           |
+| Rate Limiter Tests     | `server/test/middleware/rateLimiter.spec.ts` |
+| E2E Helpers (proposed) | `e2e/helpers/*.ts`                           |
 
 ---
 

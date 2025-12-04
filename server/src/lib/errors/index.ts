@@ -84,12 +84,7 @@ export {
 // Error Handlers
 // ============================================================================
 
-export {
-  handlePrismaError,
-  handleStripeError,
-  handleError,
-  withErrorHandling,
-} from './handlers';
+export { handlePrismaError, handleStripeError, handleError, withErrorHandling } from './handlers';
 
 // ============================================================================
 // API Error Responses

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "214"
+issue_id: '214'
 tags: [accessibility, a11y, animation, motion, landing-page]
 dependencies: []
 ---
@@ -99,7 +99,7 @@ function FaqAccordionItem({ item, isOpen, onToggle }) {
 const scrollToExperiences = () => {
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   document.getElementById('experiences')?.scrollIntoView({
-    behavior: prefersReduced ? 'auto' : 'smooth'
+    behavior: prefersReduced ? 'auto' : 'smooth',
   });
 };
 ```
@@ -161,6 +161,7 @@ module.exports = {
 ### Coverage
 
 All landing page animations now respect user motion preferences:
+
 - ✅ FAQ accordion expand/collapse (global CSS)
 - ✅ Hero scroll-to-experiences (component check)
 - ✅ Final CTA scroll-to-experiences (component check)

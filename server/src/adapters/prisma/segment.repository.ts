@@ -155,9 +155,7 @@ export class PrismaSegmentRepository {
     // Sanitize heroImage URL if present to prevent HTML-encoded entities
     const sanitizedData = {
       ...data,
-      heroImage: data.heroImage !== undefined
-        ? decodeHtmlEntitiesInUrl(data.heroImage)
-        : undefined,
+      heroImage: data.heroImage !== undefined ? decodeHtmlEntitiesInUrl(data.heroImage) : undefined,
     };
 
     return await this.prisma.segment.update({
@@ -196,7 +194,10 @@ export class PrismaSegmentRepository {
    * @param id - Segment ID
    * @returns Segment with packages or null if not found
    */
-  async findByIdWithPackages(tenantId: string, id: string): Promise<
+  async findByIdWithPackages(
+    tenantId: string,
+    id: string
+  ): Promise<
     | (Segment & {
         packages: any[];
       })
@@ -221,7 +222,10 @@ export class PrismaSegmentRepository {
    * @param slug - URL-safe segment identifier
    * @returns Segment with packages and add-ons or null if not found
    */
-  async findBySlugWithRelations(tenantId: string, slug: string): Promise<
+  async findBySlugWithRelations(
+    tenantId: string,
+    slug: string
+  ): Promise<
     | (Segment & {
         packages: any[];
         addOns: any[];
@@ -283,7 +287,10 @@ export class PrismaSegmentRepository {
    * @returns Object with counts
    * @throws Error if segment not found or belongs to different tenant
    */
-  async getStats(tenantId: string, id: string): Promise<{
+  async getStats(
+    tenantId: string,
+    id: string
+  ): Promise<{
     packageCount: number;
     addOnCount: number;
   }> {
@@ -317,11 +324,7 @@ export class PrismaSegmentRepository {
    * @param excludeId - Segment ID to exclude (for updates)
    * @returns True if slug is available
    */
-  async isSlugAvailable(
-    tenantId: string,
-    slug: string,
-    excludeId?: string
-  ): Promise<boolean> {
+  async isSlugAvailable(tenantId: string, slug: string, excludeId?: string): Promise<boolean> {
     const existing = await this.prisma.segment.findUnique({
       where: {
         tenantId_slug: {

@@ -29,12 +29,14 @@ async function main() {
         name: 'Barn Ceremony',
         description: 'Intimate ceremony in our historic barn with string lights and rustic charm',
         basePrice: 150000, // $1,500
-        photos: JSON.stringify([{
-          url: 'https://images.unsplash.com/photo-1519167758481-83f29da8c865',
-          filename: 'barn.jpg',
-          size: 0,
-          order: 0,
-        }]),
+        photos: JSON.stringify([
+          {
+            url: 'https://images.unsplash.com/photo-1519167758481-83f29da8c865',
+            filename: 'barn.jpg',
+            size: 0,
+            order: 0,
+          },
+        ]),
       },
     }),
     prisma.package.create({
@@ -44,12 +46,14 @@ async function main() {
         name: 'Garden Gathering',
         description: 'Outdoor ceremony in our flower garden with seating for up to 50 guests',
         basePrice: 250000, // $2,500
-        photos: JSON.stringify([{
-          url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3',
-          filename: 'garden.jpg',
-          size: 0,
-          order: 0,
-        }]),
+        photos: JSON.stringify([
+          {
+            url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3',
+            filename: 'garden.jpg',
+            size: 0,
+            order: 0,
+          },
+        ]),
       },
     }),
     prisma.package.create({
@@ -57,14 +61,17 @@ async function main() {
         tenantId: littleBitFarm.id,
         slug: 'farmhouse-reception',
         name: 'Farmhouse Reception',
-        description: 'Full day rental with ceremony, cocktail hour, and reception in our restored farmhouse',
+        description:
+          'Full day rental with ceremony, cocktail hour, and reception in our restored farmhouse',
         basePrice: 450000, // $4,500
-        photos: JSON.stringify([{
-          url: 'https://images.unsplash.com/photo-1519741497674-611481863552',
-          filename: 'farmhouse.jpg',
-          size: 0,
-          order: 0,
-        }]),
+        photos: JSON.stringify([
+          {
+            url: 'https://images.unsplash.com/photo-1519741497674-611481863552',
+            filename: 'farmhouse.jpg',
+            size: 0,
+            order: 0,
+          },
+        ]),
       },
     }),
   ]);
@@ -80,14 +87,17 @@ async function main() {
         tenantId: laPetitMariage.id,
         slug: 'petit-elopement',
         name: 'Petit Elopement',
-        description: 'Intimate French-inspired ceremony with champagne toast and professional photography',
+        description:
+          'Intimate French-inspired ceremony with champagne toast and professional photography',
         basePrice: 180000, // $1,800
-        photos: JSON.stringify([{
-          url: 'https://images.unsplash.com/photo-1519741497674-611481863552',
-          filename: 'petit.jpg',
-          size: 0,
-          order: 0,
-        }]),
+        photos: JSON.stringify([
+          {
+            url: 'https://images.unsplash.com/photo-1519741497674-611481863552',
+            filename: 'petit.jpg',
+            size: 0,
+            order: 0,
+          },
+        ]),
       },
     }),
     prisma.package.create({
@@ -95,14 +105,17 @@ async function main() {
         tenantId: laPetitMariage.id,
         slug: 'chateau-ceremony',
         name: 'Château Ceremony',
-        description: 'Elegant ceremony in our French château-style venue with reception for 30 guests',
+        description:
+          'Elegant ceremony in our French château-style venue with reception for 30 guests',
         basePrice: 350000, // $3,500
-        photos: JSON.stringify([{
-          url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc',
-          filename: 'chateau.jpg',
-          size: 0,
-          order: 0,
-        }]),
+        photos: JSON.stringify([
+          {
+            url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc',
+            filename: 'chateau.jpg',
+            size: 0,
+            order: 0,
+          },
+        ]),
       },
     }),
     prisma.package.create({
@@ -110,14 +123,17 @@ async function main() {
         tenantId: laPetitMariage.id,
         slug: 'grand-celebration',
         name: 'Grand Celebration',
-        description: 'Luxury all-inclusive wedding with gourmet catering, photography, videography, and floral design',
+        description:
+          'Luxury all-inclusive wedding with gourmet catering, photography, videography, and floral design',
         basePrice: 650000, // $6,500
-        photos: JSON.stringify([{
-          url: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6',
-          filename: 'grand.jpg',
-          size: 0,
-          order: 0,
-        }]),
+        photos: JSON.stringify([
+          {
+            url: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6',
+            filename: 'grand.jpg',
+            size: 0,
+            order: 0,
+          },
+        ]),
       },
     }),
   ]);

@@ -1,9 +1,9 @@
-import { FormEvent } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { InputEnhanced } from "@/components/ui/input-enhanced";
-import { Mail, Lock } from "lucide-react";
-import { useForm } from "@/hooks/useForm";
+import { FormEvent } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { InputEnhanced } from '@/components/ui/input-enhanced';
+import { Mail, Lock } from 'lucide-react';
+import { useForm } from '@/hooks/useForm';
 
 interface LoginProps {
   onLogin: (email: string, password: string) => void;
@@ -14,8 +14,8 @@ interface LoginProps {
 export function Login({ onLogin, error, isLoading }: LoginProps) {
   // Auto-fill for local development/demo
   const { values, handleChange } = useForm({
-    email: "admin@example.com",
-    password: "TestPassword123!"
+    email: 'admin@example.com',
+    password: 'TestPassword123!',
   });
 
   const handleSubmit = (e: FormEvent) => {
@@ -30,7 +30,10 @@ export function Login({ onLogin, error, isLoading }: LoginProps) {
       </CardHeader>
       <CardContent>
         {error && (
-          <div role="alert" className="mb-6 p-3 bg-macon-navy-700 border border-white/20 text-white/90 rounded text-lg">
+          <div
+            role="alert"
+            className="mb-6 p-3 bg-macon-navy-700 border border-white/20 text-white/90 rounded text-lg"
+          >
             {error}
           </div>
         )}

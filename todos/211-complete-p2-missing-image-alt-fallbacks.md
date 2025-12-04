@@ -1,10 +1,10 @@
 ---
 status: complete
 priority: p2
-issue_id: "211"
+issue_id: '211'
 tags: [accessibility, a11y, images, landing-page]
 dependencies: []
-completed_date: "2025-12-04"
+completed_date: '2025-12-04'
 ---
 
 # TODO-211: Missing Alt Text Fallbacks for Images
@@ -35,9 +35,9 @@ The fix was implemented as part of the landing page section development.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-12-01 | Created | Identified during landing page code review |
+| Date       | Action    | Notes                                      |
+| ---------- | --------- | ------------------------------------------ |
+| 2025-12-01 | Created   | Identified during landing page code review |
 | 2025-12-04 | Completed | Verified all fallbacks already implemented |
 
 ## Tags

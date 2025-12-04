@@ -9,11 +9,7 @@ import { logger } from '../lib/core/logger';
 /**
  * Adds a unique requestId to each request and creates a child logger
  */
-export function requestLogger(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
+export function requestLogger(req: Request, res: Response, next: NextFunction): void {
   const requestId = randomUUID();
   const reqLogger = logger.child({ requestId });
 

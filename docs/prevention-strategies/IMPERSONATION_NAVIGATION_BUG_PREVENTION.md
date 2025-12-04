@@ -11,11 +11,13 @@
 ## Pattern Identified
 
 **When building role-based UI components, developers may:**
+
 1. Check only the stored `user.role` value
 2. Forget to check the impersonation state (`impersonation` or `isImpersonating()`)
 3. Not distinguish between "actual role" (PLATFORM_ADMIN) and "effective role" (TENANT_ADMIN while impersonating)
 
 This pattern can occur in any component that makes decisions based on user role:
+
 - Navigation components
 - Feature toggles
 - Permission-based UI visibility
@@ -40,6 +42,7 @@ This pattern can occur in any component that makes decisions based on user role:
 - [ ] **Tests cover impersonation**: Test suite includes scenarios for impersonation state
 
 **Checklist Item for PR Templates:**
+
 ```markdown
 - [ ] If component checks user role, verified it also handles impersonation state
 - [ ] If component makes authorization decisions, uses "effective role" not raw role
@@ -152,6 +155,7 @@ test.describe('Impersonation Navigation', () => {
 #### Test Cases Checklist
 
 Required test scenarios:
+
 - [ ] Admin impersonating shows tenant navigation only
 - [ ] Admin impersonating cannot access admin routes (ProtectedRoute redirect)
 - [ ] ImpersonationBanner displayed during impersonation
@@ -294,7 +298,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
 **Add to "Impersonation" section:**
 
-```markdown
+````markdown
 ## Impersonation State Management
 
 When a platform admin impersonates a tenant:
@@ -312,8 +316,10 @@ When a platform admin impersonates a tenant:
      }
    }
    ```
+````
 
 2. **Effective Role**: Components must calculate effective role
+
    ```typescript
    const effectiveRole = isImpersonating() ? 'TENANT_ADMIN' : user.role;
    ```
@@ -350,7 +356,8 @@ if (effectiveRole === 'PLATFORM_ADMIN') {
 ```
 
 **See:** `docs/prevention-strategies/IMPERSONATION_NAVIGATION_BUG_PREVENTION.md`
-```
+
+````
 
 #### For Development Guide (DEVELOPING.md)
 
@@ -375,7 +382,7 @@ If impersonation breaks:
 - Check that `isImpersonating()` returns correct boolean
 - Verify token contains `impersonating` field
 - Check that components use `effectiveRole`, not `user.role`
-```
+````
 
 ---
 
@@ -386,18 +393,19 @@ If impersonation breaks:
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/components/navigation/RoleBasedNav.tsx`
 
 **The fix:**
+
 ```typescript
 // Line 28: Get impersonating state from context
 const { user, isImpersonating } = useAuth();
 
 // Line 91-94: Check BOTH role AND impersonation
 const isCurrentlyImpersonating = isImpersonating();
-const navItems = (user.role === "PLATFORM_ADMIN" && !isCurrentlyImpersonating)
-  ? platformAdminNav
-  : tenantAdminNav;
+const navItems =
+  user.role === 'PLATFORM_ADMIN' && !isCurrentlyImpersonating ? platformAdminNav : tenantAdminNav;
 ```
 
 **Why this works:**
+
 - Explicitly calls `isImpersonating()` method
 - Short-circuits to tenant nav when impersonating
 - Clear logical flow: "Show admin nav if admin AND not impersonating"
@@ -407,6 +415,7 @@ const navItems = (user.role === "PLATFORM_ADMIN" && !isCurrentlyImpersonating)
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/components/auth/ProtectedRoute.tsx`
 
 **The pattern:**
+
 ```typescript
 // Line 34: Get impersonation state
 const impersonating = isImpersonating();
@@ -426,6 +435,7 @@ if (!allowedRoles.includes(effectiveRole)) {
 ```
 
 **Why this works:**
+
 - Multi-layer defense: prevents access to admin routes entirely
 - Explicit effective role calculation
 - Routes protected by both role and impersonation state
@@ -435,6 +445,7 @@ if (!allowedRoles.includes(effectiveRole)) {
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/features/admin/Dashboard.tsx`
 
 **The pattern:**
+
 ```typescript
 // Lines 59-76: Check token for impersonation metadata
 useEffect(() => {
@@ -489,6 +500,7 @@ When implementing this pattern in your codebase:
 **The Fix:** Calculate `effectiveRole` that considers both role AND impersonation state.
 
 **Key Pattern:**
+
 ```typescript
 const effectiveRole = isImpersonating() ? 'TENANT_ADMIN' : user.role;
 // Use effectiveRole for all authorization decisions

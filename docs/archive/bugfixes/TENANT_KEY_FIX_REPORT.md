@@ -13,6 +13,7 @@ The `/packages` page was showing "Failed to load packages. Please try again." er
 3. **Client .env:** `pk_live_elope-e2e_0000000000000000` (16 zeros - CORRECT)
 
 The validation happens in `server/src/lib/api-key.service.ts`:
+
 ```typescript
 isValidPublicKeyFormat(apiKey: string): boolean {
   return /^pk_live_[a-z0-9-]+_[a-f0-9]{16}$/.test(apiKey);
@@ -26,11 +27,13 @@ isValidPublicKeyFormat(apiKey: string): boolean {
 **File:** `/Users/mikeyoung/CODING/MAIS/server/prisma/seed.ts`
 
 **Change:** Updated line 32 from:
+
 ```typescript
 const testTenantApiKey = 'pk_live_elope-e2e_000000000000'; // 12 zeros
 ```
 
 To:
+
 ```typescript
 const testTenantApiKey = 'pk_live_elope-e2e_0000000000000000'; // 16 zeros
 ```
@@ -38,11 +41,13 @@ const testTenantApiKey = 'pk_live_elope-e2e_0000000000000000'; // 16 zeros
 ### 2. Reseeded Database
 
 Ran the seed script to update the tenant record with the correct API key:
+
 ```bash
 cd server && npm exec prisma db seed
 ```
 
 **Result:**
+
 ```
 ✅ Created test tenant: Elope E2E Test Tenant (elope-e2e)
    API Key: pk_live_elope-e2e_0000000000000000
@@ -55,6 +60,7 @@ cd server && npm exec prisma db seed
 **File:** `/Users/mikeyoung/CODING/MAIS/client/.env.example`
 
 Created documentation for the expected environment variables:
+
 ```env
 # API Configuration
 VITE_API_URL=http://localhost:3001
@@ -75,6 +81,7 @@ VITE_TENANT_API_KEY=pk_live_elope-e2e_0000000000000000
 ### 1. Database Verification
 
 Query confirmed the tenant has the correct API key:
+
 ```json
 {
   "slug": "elope-e2e",
@@ -87,17 +94,22 @@ Query confirmed the tenant has the correct API key:
 ### 2. API Endpoint Verification
 
 **With Tenant Key (SUCCESS):**
+
 ```bash
 curl -H "X-Tenant-Key: pk_live_elope-e2e_0000000000000000" \
   http://localhost:3001/v1/packages
 ```
+
 **Result:** Returns 6 packages (JSON array)
 
 **Without Tenant Key (EXPECTED ERROR):**
+
 ```bash
 curl http://localhost:3001/v1/packages
 ```
+
 **Result:**
+
 ```json
 {
   "error": "Missing X-Tenant-Key header",
@@ -109,6 +121,7 @@ curl http://localhost:3001/v1/packages
 ### 3. Client Configuration
 
 The client's `.env` file already had the correct tenant key:
+
 ```env
 VITE_API_URL=http://localhost:3001
 VITE_APP_MODE=mock
@@ -117,11 +130,12 @@ VITE_TENANT_API_KEY=pk_live_elope-e2e_0000000000000000
 ```
 
 The key is initialized in `client/src/main.tsx`:
+
 ```typescript
 const tenantApiKey = import.meta.env.VITE_TENANT_API_KEY;
 if (tenantApiKey) {
   api.setTenantKey(tenantApiKey);
-  console.log("[MAIS] Initialized with tenant API key");
+  console.log('[MAIS] Initialized with tenant API key');
 }
 ```
 
@@ -133,9 +147,11 @@ The `/v1/packages` endpoint requires tenant authentication via the `X-Tenant-Key
 
 ```typescript
 // Public API routes require tenant
-if (req.path.startsWith('/v1/packages') ||
-    req.path.startsWith('/v1/bookings') ||
-    req.path.startsWith('/v1/availability')) {
+if (
+  req.path.startsWith('/v1/packages') ||
+  req.path.startsWith('/v1/bookings') ||
+  req.path.startsWith('/v1/availability')
+) {
   tenantMiddleware(req, res, (err) => {
     if (err) return next(err);
     requireTenant(req, res, next);
@@ -144,6 +160,7 @@ if (req.path.startsWith('/v1/packages') ||
 ```
 
 This ensures:
+
 1. ✅ All queries are scoped to a specific tenant
 2. ✅ Data isolation between tenants
 3. ✅ No cross-tenant data leakage
@@ -151,6 +168,7 @@ This ensures:
 ### Current Mode: Real (Database)
 
 The server is running in **REAL mode** (`ADAPTERS_PRESET=real`):
+
 - Uses PostgreSQL database via Prisma
 - Not using in-memory mock adapters
 - All data persisted in the database
@@ -169,11 +187,13 @@ The server is running in **REAL mode** (`ADAPTERS_PRESET=real`):
 ## Tenant Key Format Reference
 
 **Public API Key Format:**
+
 - Pattern: `pk_live_<slug>_<16-hex-chars>`
 - Example: `pk_live_elope-e2e_0000000000000000`
 - Used in: `X-Tenant-Key` header for public API endpoints
 
 **Secret API Key Format:**
+
 - Pattern: `sk_live_<slug>_<32-hex-chars>`
 - Example: `sk_live_elope-e2e_00000000000000000000000000000000`
 - Used for: Server-side tenant authentication (not exposed to client)

@@ -12,15 +12,15 @@ Make all pages look as polished as the landing page. Fix real bugs, remove AI-ge
 
 ## Problem Statement
 
-| Issue | Impact | Fix Time |
-|-------|--------|----------|
-| Color token bugs (text-neutral-900 on navy bg) | **Broken** - unreadable text | 15 min |
-| Rainbow gradient text everywhere | **AI-looking** - unprofessional | 30 min |
-| Admin warnings shown to customers | **UX bug** - confuses customers | 15 min |
-| StripeConnectCard uses light theme | **Inconsistent** - jarring contrast | 10 min |
-| Weak tab active states | **Hard to see** - poor feedback | 10 min |
-| Missing hover states on cards | **Feels static** - no interactivity | 1 hour |
-| Small icons (w-5 vs w-7) | **Minor** - less visual weight | 30 min |
+| Issue                                          | Impact                              | Fix Time |
+| ---------------------------------------------- | ----------------------------------- | -------- |
+| Color token bugs (text-neutral-900 on navy bg) | **Broken** - unreadable text        | 15 min   |
+| Rainbow gradient text everywhere               | **AI-looking** - unprofessional     | 30 min   |
+| Admin warnings shown to customers              | **UX bug** - confuses customers     | 15 min   |
+| StripeConnectCard uses light theme             | **Inconsistent** - jarring contrast | 10 min   |
+| Weak tab active states                         | **Hard to see** - poor feedback     | 10 min   |
+| Missing hover states on cards                  | **Feels static** - no interactivity | 1 hour   |
+| Small icons (w-5 vs w-7)                       | **Minor** - less visual weight      | 30 min   |
 
 **Total actual coding:** ~4-5 hours spread across 3 days with QA
 
@@ -33,6 +33,7 @@ Make all pages look as polished as the landing page. Fix real bugs, remove AI-ge
 **Problem:** `design-tokens.css` and `tailwind.config.js` have different color values
 
 **Files:**
+
 - `client/src/styles/design-tokens.css`
 
 ```css
@@ -87,10 +88,10 @@ Search for `bg-white` and replace with navy theme:
 
 ```typescript
 // BEFORE
-className="bg-white rounded-lg border border-neutral-200 p-6"
+className = 'bg-white rounded-lg border border-neutral-200 p-6';
 
 // AFTER
-className="bg-macon-navy-800 rounded-xl border border-white/20 p-6"
+className = 'bg-macon-navy-800 rounded-xl border border-white/20 p-6';
 
 // Also fix text colors in this file:
 // text-neutral-900 → text-white
@@ -102,13 +103,14 @@ className="bg-macon-navy-800 rounded-xl border border-white/20 p-6"
 ### 1.5 Add Hover States to Dashboard Cards (1 hour)
 
 **Files to update:**
+
 - `client/src/features/tenant-admin/TenantDashboard/index.tsx`
 - `client/src/features/tenant-admin/TenantDashboard/MetricsCards.tsx`
 
 Add to Card components:
 
 ```typescript
-className="... hover:-translate-y-0.5 hover:shadow-elevation-3 transition-all duration-200"
+className = '... hover:-translate-y-0.5 hover:shadow-elevation-3 transition-all duration-200';
 ```
 
 ---
@@ -149,23 +151,26 @@ className="... hover:-translate-y-0.5 hover:shadow-elevation-3 transition-all du
 ### 2.1 Remove Rainbow Gradient Text (30 min)
 
 **Files to search:**
+
 ```bash
 grep -r "bg-gradient-to-r from-macon-navy via-macon-orange" client/src/
 ```
 
 **Likely locations:**
+
 - `client/src/pages/StorefrontHome.tsx`
 - `client/src/features/storefront/TierSelector.tsx`
 - `client/src/pages/PackageCatalog.tsx`
 
 ```typescript
 // BEFORE
-className="text-transparent bg-clip-text bg-gradient-to-r from-macon-navy via-macon-orange to-macon-teal"
+className =
+  'text-transparent bg-clip-text bg-gradient-to-r from-macon-navy via-macon-orange to-macon-teal';
 
 // AFTER
-className="text-neutral-900"
+className = 'text-neutral-900';
 // OR for dark backgrounds:
-className="text-white"
+className = 'text-white';
 ```
 
 ---
@@ -249,13 +254,9 @@ Same pattern: Add icon, simplify copy, remove generic language.
 **File:** `client/src/features/storefront/cardStyles.ts`
 
 Verify hover states are defined:
+
 ```typescript
-base: [
-  '...',
-  'hover:shadow-elevation-3',
-  'hover:-translate-y-1',
-  'transition-all duration-300',
-]
+base: ['...', 'hover:shadow-elevation-3', 'hover:-translate-y-1', 'transition-all duration-300'];
 ```
 
 ---
@@ -267,6 +268,7 @@ base: [
 **File:** `client/src/app/TenantStorefrontLayout.tsx`
 
 Verify CSS variables are used for tenant customization:
+
 ```typescript
 // This should already exist - just verify it works
 style={{
@@ -298,6 +300,7 @@ style={{
 Open each page, take a screenshot, note any issues:
 
 **Critical (must fix):**
+
 - [ ] `/tenant/dashboard` - Dashboard home
 - [ ] `/t/demo` - Storefront home
 - [ ] `/t/demo/tiers` - Tier selection
@@ -306,6 +309,7 @@ Open each page, take a screenshot, note any issues:
 - [ ] `/signup` - Signup page
 
 **High (should fix):**
+
 - [ ] `/tenant/scheduling/services`
 - [ ] `/tenant/scheduling/availability`
 - [ ] `/tenant/scheduling/appointments`
@@ -313,6 +317,7 @@ Open each page, take a screenshot, note any issues:
 - [ ] `/success` - Confirmation page
 
 **Medium (nice to fix):**
+
 - [ ] `/forgot-password`
 - [ ] `/reset-password`
 - [ ] `/contact`
@@ -321,6 +326,7 @@ Open each page, take a screenshot, note any issues:
 ### 3.2 Fix Issues Found in QA (2-3 hours)
 
 Common patterns to look for:
+
 - Text color on wrong background (dark on dark, light on light)
 - Missing hover states on interactive elements
 - Inconsistent border radius (should be rounded-xl or rounded-2xl)
@@ -329,11 +335,13 @@ Common patterns to look for:
 ### 3.3 Mobile Responsive Check (1 hour)
 
 Open DevTools, test at:
+
 - 375px (iPhone SE)
 - 768px (iPad)
 - 1280px (Desktop)
 
 Look for:
+
 - Text overflow/truncation issues
 - Touch targets too small (<44px)
 - Horizontal scroll where there shouldn't be
@@ -342,6 +350,7 @@ Look for:
 ### 3.4 Final Smoke Test (30 min)
 
 Complete these flows end-to-end:
+
 1. **Tenant signup:** `/signup` → `/tenant/dashboard`
 2. **Customer booking:** `/t/demo` → select tier → book appointment
 3. **Password reset:** `/forgot-password` → email → `/reset-password`
@@ -363,25 +372,28 @@ Complete these flows end-to-end:
 ## Files Changed (Summary)
 
 ### Day 1 (Dashboard)
-| File | Changes |
-|------|---------|
-| `design-tokens.css` | Align color values |
-| `MetricsCards.tsx` | Fix text colors |
-| `TabNavigation.tsx` | Fix active state |
-| `StripeConnectCard.tsx` | Fix theme colors |
-| `TenantDashboard/index.tsx` | Add hover states |
+
+| File                        | Changes            |
+| --------------------------- | ------------------ |
+| `design-tokens.css`         | Align color values |
+| `MetricsCards.tsx`          | Fix text colors    |
+| `TabNavigation.tsx`         | Fix active state   |
+| `StripeConnectCard.tsx`     | Fix theme colors   |
+| `TenantDashboard/index.tsx` | Add hover states   |
 
 ### Day 2 (Storefront)
-| File | Changes |
-|------|---------|
-| `StorefrontHome.tsx` | Remove rainbow gradient |
-| `TierSelector.tsx` | Remove gradient, hide warning, improve empty state |
-| `ChoiceCardBase.tsx` | Enhance hover effects |
-| `cardStyles.ts` | Verify hover transitions |
+
+| File                 | Changes                                            |
+| -------------------- | -------------------------------------------------- |
+| `StorefrontHome.tsx` | Remove rainbow gradient                            |
+| `TierSelector.tsx`   | Remove gradient, hide warning, improve empty state |
+| `ChoiceCardBase.tsx` | Enhance hover effects                              |
+| `cardStyles.ts`      | Verify hover transitions                           |
 
 ### Day 3 (QA)
-| File | Changes |
-|------|---------|
+
+| File    | Changes               |
+| ------- | --------------------- |
 | Various | Fixes found during QA |
 
 ---
@@ -390,16 +402,16 @@ Complete these flows end-to-end:
 
 Per reviewer feedback, these are explicitly out of scope:
 
-| Item | Why Deferred |
-|------|--------------|
-| EmptyState component | Only 3 uses - inline is simpler |
-| LoadingSkeleton component | Existing skeletons work fine |
-| Percy visual regression | MVP doesn't need automated visual tests |
-| Storybook stories | No team to consume them yet |
-| Design system docs | `tailwind.config.js` is the source of truth |
-| Entrance animations | Users will find staggered fades annoying |
-| Featured card layouts | YAGNI - no packages marked featured |
-| Accessibility tooling | Lighthouse is sufficient for now |
+| Item                      | Why Deferred                                |
+| ------------------------- | ------------------------------------------- |
+| EmptyState component      | Only 3 uses - inline is simpler             |
+| LoadingSkeleton component | Existing skeletons work fine                |
+| Percy visual regression   | MVP doesn't need automated visual tests     |
+| Storybook stories         | No team to consume them yet                 |
+| Design system docs        | `tailwind.config.js` is the source of truth |
+| Entrance animations       | Users will find staggered fades annoying    |
+| Featured card layouts     | YAGNI - no packages marked featured         |
+| Accessibility tooling     | Lighthouse is sufficient for now            |
 
 **Rule:** If it's not fixing a bug or making something look broken, it waits.
 
@@ -408,6 +420,7 @@ Per reviewer feedback, these are explicitly out of scope:
 ## Success Criteria
 
 ### Must Have (Day 3 EOD)
+
 - [ ] No unreadable text (color contrast issues)
 - [ ] No admin warnings visible to customers
 - [ ] No rainbow gradient text
@@ -416,11 +429,13 @@ Per reviewer feedback, these are explicitly out of scope:
 - [ ] Core flows work on mobile
 
 ### Nice to Have
+
 - [ ] All 23 pages reviewed
 - [ ] Consistent border radius everywhere
 - [ ] Consistent spacing everywhere
 
 ### Explicitly Not Required
+
 - [ ] Lighthouse score improvements
 - [ ] New component abstractions
 - [ ] Visual regression tests
@@ -431,34 +446,38 @@ Per reviewer feedback, these are explicitly out of scope:
 ## Risks
 
 ### Low Risk: Breaking Tenant Branding
+
 **Mitigation:** Don't hardcode colors in storefront. Test with custom-branded tenant if one exists.
 
 ### Low Risk: Hover Animation Performance
+
 **Mitigation:** Only using `transform` and `opacity` (GPU-accelerated). No complex animations.
 
 ---
 
 ## Questions Resolved
 
-| Question | Decision |
-|----------|----------|
-| Animation level? | **Subtle only** - hover/focus states, no entrance animations |
-| New components? | **No** - inline the JSX, extract later if needed |
-| Visual regression tests? | **No** - manual QA for MVP |
-| Storybook? | **No** - defer to post-MVP |
-| Timeline? | **3 days** - fits between sprints |
+| Question                 | Decision                                                     |
+| ------------------------ | ------------------------------------------------------------ |
+| Animation level?         | **Subtle only** - hover/focus states, no entrance animations |
+| New components?          | **No** - inline the JSX, extract later if needed             |
+| Visual regression tests? | **No** - manual QA for MVP                                   |
+| Storybook?               | **No** - defer to post-MVP                                   |
+| Timeline?                | **3 days** - fits between sprints                            |
 
 ---
 
 ## References
 
 ### Files to Change
+
 - `client/src/styles/design-tokens.css`
 - `client/src/features/tenant-admin/TenantDashboard/*.tsx`
 - `client/src/features/storefront/*.tsx`
 - `client/src/pages/StorefrontHome.tsx`
 
 ### Design Reference
+
 - `client/src/pages/Home/index.tsx` - Landing page (the gold standard)
 - `client/tailwind.config.js` - Color/spacing/shadow tokens
 

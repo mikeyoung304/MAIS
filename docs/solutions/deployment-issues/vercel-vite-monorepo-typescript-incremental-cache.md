@@ -1,35 +1,38 @@
 # Vercel Deployment Failure: Vite Monorepo TypeScript Incremental Build Cache
 
 ---
+
 title: "Vercel Deployment Failure: Vite Monorepo TypeScript Incremental Build Cache"
 date: 2025-11-26
 category: deployment-issues
 tags:
-  - vercel
-  - monorepo
-  - typescript
-  - build-errors
-  - vite
-  - npm-workspaces
-  - tsbuildinfo
-  - incremental-build
-components:
-  - vercel.json
-  - packages/contracts
-  - packages/shared
-  - client/vite.config.ts
-  - TypeScript build system
-symptoms:
-  - "Failed to resolve entry for package @macon/contracts"
-  - "EISDIR: illegal operation on a directory, read"
-  - "ENOENT: no such file or directory, open '.../dist/index.js'"
-  - Build succeeds locally but fails on Vercel
-  - Missing dist/ directories after TypeScript compilation
-severity: high
-time_to_resolve: "2-3 hours"
-related:
-  - build-errors/typescript-incremental-compilation
-  - configuration-issues/vite-monorepo-vercel-setup
+
+- vercel
+- monorepo
+- typescript
+- build-errors
+- vite
+- npm-workspaces
+- tsbuildinfo
+- incremental-build
+  components:
+- vercel.json
+- packages/contracts
+- packages/shared
+- client/vite.config.ts
+- TypeScript build system
+  symptoms:
+- "Failed to resolve entry for package @macon/contracts"
+- "EISDIR: illegal operation on a directory, read"
+- "ENOENT: no such file or directory, open '.../dist/index.js'"
+- Build succeeds locally but fails on Vercel
+- Missing dist/ directories after TypeScript compilation
+  severity: high
+  time_to_resolve: "2-3 hours"
+  related:
+- build-errors/typescript-incremental-compilation
+- configuration-issues/vite-monorepo-vercel-setup
+
 ---
 
 ## Problem Summary
@@ -41,18 +44,21 @@ Vercel deployment fails for a Vite + React monorepo with npm workspaces. TypeScr
 Three distinct errors appeared during debugging:
 
 ### 1. Initial Error: Module Resolution Failure
+
 ```
 [commonjs--resolver] Failed to resolve entry for package "@macon/contracts".
 The package may have incorrect main/module/exports specified in its package.json.
 ```
 
 ### 2. Second Error: Directory Read Failure
+
 ```
 [vite:load-fallback] Could not load /vercel/path0/packages/contracts/dist
 (imported by src/lib/api.ts): EISDIR: illegal operation on a directory, read
 ```
 
 ### 3. Final Error: Missing Files
+
 ```
 [vite:load-fallback] Could not load /vercel/path0/packages/contracts/dist/index.js
 (imported by src/lib/api.ts): ENOENT: no such file or directory
@@ -116,10 +122,10 @@ The package may have incorrect main/module/exports specified in its package.json
 export default defineConfig({
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
       // Point to specific .js files, NOT directories
-      "@macon/contracts": path.resolve(__dirname, "../packages/contracts/dist/index.js"),
-      "@macon/shared": path.resolve(__dirname, "../packages/shared/dist/index.js"),
+      '@macon/contracts': path.resolve(__dirname, '../packages/contracts/dist/index.js'),
+      '@macon/shared': path.resolve(__dirname, '../packages/shared/dist/index.js'),
     },
   },
 });
@@ -190,28 +196,29 @@ ls client/dist/index.html
 ### 4. Vercel Build Cache
 
 If experiencing intermittent failures, disable Vercel's build cache:
+
 - Vercel Dashboard → Project → Settings → Build & Development Settings
 - Uncheck "Use Build Cache"
 
 ## Key Files Reference
 
-| File | Purpose |
-|------|---------|
-| `packages/contracts/package.json` | Build script with `--force` |
-| `packages/shared/package.json` | Build script with `--force` |
-| `client/vite.config.ts` | Vite aliases to `.js` files |
-| `vercel.json` | Sequential workspace build command |
+| File                              | Purpose                            |
+| --------------------------------- | ---------------------------------- |
+| `packages/contracts/package.json` | Build script with `--force`        |
+| `packages/shared/package.json`    | Build script with `--force`        |
+| `client/vite.config.ts`           | Vite aliases to `.js` files        |
+| `vercel.json`                     | Sequential workspace build command |
 
 ## Troubleshooting Quick Reference
 
 ### Symptom → Solution
 
-| Symptom | Likely Cause | Solution |
-|---------|--------------|----------|
-| "Cannot resolve @macon/contracts" | Missing `dist/` | Add `--force` to build script |
-| "EISDIR: illegal operation" | Alias points to directory | Change alias to `dist/index.js` |
-| "ENOENT: no such file" | TypeScript skipped compilation | Add `--force` to build script |
-| Works locally, fails on Vercel | Stale `.tsbuildinfo` cache | Add `--force` to build script |
+| Symptom                           | Likely Cause                   | Solution                        |
+| --------------------------------- | ------------------------------ | ------------------------------- |
+| "Cannot resolve @macon/contracts" | Missing `dist/`                | Add `--force` to build script   |
+| "EISDIR: illegal operation"       | Alias points to directory      | Change alias to `dist/index.js` |
+| "ENOENT: no such file"            | TypeScript skipped compilation | Add `--force` to build script   |
+| Works locally, fails on Vercel    | Stale `.tsbuildinfo` cache     | Add `--force` to build script   |
 
 ## Related Documentation
 

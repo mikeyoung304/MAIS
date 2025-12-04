@@ -7,7 +7,7 @@ component: tenant-admin/packages
 symptoms: Package tier organization endpoints accepted segmentId, grouping, and groupingOrder without validation or ownership checks, allowing potential cross-tenant data access
 root_cause: Server-side routes lacked Zod schema validation and segment ownership verification before processing organization updates
 date_solved: 2025-11-27
-related_prs: ["#4", "#5"]
+related_prs: ['#4', '#5']
 ---
 
 # Missing Server-Side Validation and Segment Ownership Checks in Package Organization
@@ -37,6 +37,7 @@ The fix implemented a three-layer defense:
 **File**: `server/src/validation/tenant-admin.schemas.ts`
 
 **Changes**:
+
 ```typescript
 // Added to both createPackageSchema and updatePackageSchema
 segmentId: z.string().min(1).nullable().optional(),
@@ -45,6 +46,7 @@ groupingOrder: z.number().int().min(0).max(1000, 'Display order must be between 
 ```
 
 **Why This Was Necessary**:
+
 - **Type Safety**: Ensures `segmentId` is always a valid non-empty string or null/undefined
 - **Constraint Enforcement**: Limits `grouping` to 100 characters (matching database schema)
 - **Business Logic**: Constrains `groupingOrder` to reasonable values (0-1000), preventing negative values or excessively large numbers
@@ -63,7 +65,7 @@ if (data.segmentId && segmentService) {
     await segmentService.getSegmentById(tenantId, data.segmentId);
   } catch {
     res.status(400).json({
-      error: 'Invalid segment: segment not found or does not belong to this tenant'
+      error: 'Invalid segment: segment not found or does not belong to this tenant',
     });
     return;
   }
@@ -71,6 +73,7 @@ if (data.segmentId && segmentService) {
 ```
 
 **Why This Was Necessary**:
+
 - **Multi-Tenant Isolation**: Prevents malicious actors from assigning segments they don't own
 - **Early Validation**: Fails fast before database mutations occur
 - **Security Best Practice**: Follows the "never trust, always verify" principle
@@ -78,6 +81,7 @@ if (data.segmentId && segmentService) {
 - **Graceful Error Handling**: Returns clear error message without exposing internal details
 
 **Implementation Details**:
+
 - Uses `segmentService.getSegmentById(tenantId, segmentId)` which already enforces tenant filtering
 - If segment doesn't exist or belongs to another tenant, the service throws an error
 - Catches the error and returns `400 Bad Request` with a user-friendly message
@@ -89,6 +93,7 @@ if (data.segmentId && segmentService) {
 **File**: `client/src/features/tenant-admin/packages/PackageForm/OrganizationSection.tsx`
 
 **Changes**:
+
 ```tsx
 // Grouping input
 <Input
@@ -108,6 +113,7 @@ if (data.segmentId && segmentService) {
 ```
 
 **Why This Was Necessary**:
+
 - **User Experience**: Prevents accidental input of invalid values
 - **Browser Validation**: HTML5 attributes provide instant feedback
 - **Not a Security Measure**: These constraints are easily bypassed, so server-side validation (steps 1-2) is critical
@@ -127,6 +133,7 @@ if (data.segmentId && segmentService) {
 **Issue Discovered During Testing**: The GET `/packages` endpoint wasn't returning tier fields.
 
 **Changes**:
+
 ```typescript
 const packagesDto = packages.map((pkg) => ({
   id: pkg.id,
@@ -158,6 +165,7 @@ const packagesDto = packages.map((pkg) => ({
 **Issue Discovered During Testing**: The `createPackage` and `updatePackage` methods weren't saving tier fields to the database.
 
 **Changes to `createPackage`**:
+
 ```typescript
 const pkg = await this.prisma.package.create({
   data: {
@@ -175,6 +183,7 @@ const pkg = await this.prisma.package.create({
 ```
 
 **Changes to `updatePackage`**:
+
 ```typescript
 const pkg = await this.prisma.package.update({
   where: { id, tenantId },
@@ -195,6 +204,7 @@ const pkg = await this.prisma.package.update({
 ## Testing Verification
 
 **Server Tests**: All 773 tests pass, including:
+
 - Existing package creation/update tests continue to work
 - Validation catches invalid `segmentId`, `grouping`, and `groupingOrder` values
 - Ownership validation prevents cross-tenant segment assignment
@@ -202,6 +212,7 @@ const pkg = await this.prisma.package.update({
 **TypeScript Compilation**: Clean compilation with no new errors
 
 **Manual Testing Checklist**:
+
 - Create package with valid segment -> Success
 - Create package with invalid segment ID -> 400 error
 - Create package with segment from another tenant -> 400 error
@@ -216,11 +227,13 @@ const pkg = await this.prisma.package.update({
 ### Checklist for Adding New Fields to Existing APIs
 
 **Before writing any code:**
+
 - [ ] Identify if the new field references another tenant-scoped entity (foreign key)
 - [ ] Check if the field accepts user input or is system-generated
 - [ ] Determine if the field requires validation constraints (min/max, format, etc.)
 
 **Implementation:**
+
 - [ ] Add field to Zod validation schema with appropriate constraints
 - [ ] If field references another entity, add ownership validation in route handler
 - [ ] Add client-side constraints for UX (not security)
@@ -237,7 +250,7 @@ if (data.foreignKeyId && relatedService) {
     await relatedService.getById(tenantId, data.foreignKeyId);
   } catch {
     res.status(400).json({
-      error: 'Invalid reference: entity not found or does not belong to this tenant'
+      error: 'Invalid reference: entity not found or does not belong to this tenant',
     });
     return;
   }
@@ -247,6 +260,7 @@ if (data.foreignKeyId && relatedService) {
 ### Code Review Checklist
 
 When reviewing PRs that add new fields:
+
 - [ ] All foreign key references validate ownership before mutation
 - [ ] Zod schemas include all new fields with proper validation
 - [ ] Error messages don't leak tenant information

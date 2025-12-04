@@ -138,10 +138,7 @@ const InputEnhanced = React.forwardRef<HTMLInputElement, InputEnhancedProps>(
 
           {/* Non-floating Label */}
           {!showFloatingLabel && label && (
-            <label
-              htmlFor={inputId}
-              className="block text-sm font-semibold text-neutral-800 mb-2"
-            >
+            <label htmlFor={inputId} className="block text-sm font-semibold text-neutral-800 mb-2">
               {label}
               {required && <span className="ml-1 text-danger-600">*</span>}
             </label>
@@ -173,7 +170,11 @@ const InputEnhanced = React.forwardRef<HTMLInputElement, InputEnhancedProps>(
         <div className="mt-1.5 flex items-center justify-between gap-2">
           <div className="flex-1">
             {error && errorMessage ? (
-              <span id={errorId} className="text-sm text-danger-600 flex items-center gap-1" role="alert">
+              <span
+                id={errorId}
+                className="text-sm text-danger-600 flex items-center gap-1"
+                role="alert"
+              >
                 {errorMessage}
               </span>
             ) : helperText ? (

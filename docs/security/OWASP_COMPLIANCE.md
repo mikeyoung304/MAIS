@@ -9,6 +9,7 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 **Risk:** Users accessing resources they shouldn't
 
 **MAIS Controls:**
+
 - ✅ Multi-tenant data isolation (tenantId filtering)
 - ✅ JWT-based authentication
 - ✅ Role-based authorization (PLATFORM_ADMIN vs TENANT_ADMIN)
@@ -19,6 +20,7 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 **Test Coverage:** 100% (all repositories have tenant isolation tests)
 
 **Implementation Files:**
+
 - `server/src/middleware/tenant.ts` - Tenant resolution middleware
 - `server/src/middleware/auth.ts` - Platform admin authentication
 - `server/src/middleware/tenant-auth.ts` - Tenant admin authentication
@@ -33,6 +35,7 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 **Risk:** Exposure of sensitive data due to weak crypto
 
 **MAIS Controls:**
+
 - ✅ bcrypt for password hashing (cost: 10)
 - ✅ JWT with HS256 (256-bit secret)
 - ✅ HTTPS/TLS in production
@@ -40,10 +43,12 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 - ✅ No plaintext passwords in database
 
 **Implementation Files:**
+
 - `server/src/services/identity.service.ts` - Password hashing
 - `server/src/services/tenant-auth.service.ts` - JWT token generation
 
 **Gaps:**
+
 - ⚠️ Tenant secret encryption not yet implemented (planned for Phase 3)
 - ⚠️ No automatic secret rotation (manual process)
 
@@ -56,6 +61,7 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 **Risk:** SQL injection, NoSQL injection, command injection
 
 **MAIS Controls:**
+
 - ✅ Prisma ORM with parameterized queries
 - ✅ Zod schema validation on all endpoints
 - ✅ Input sanitization middleware (XSS prevention)
@@ -64,11 +70,13 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 - ✅ URL validation with protocol whitelist
 
 **Implementation Files:**
+
 - `server/src/lib/sanitization.ts` - Input sanitization utilities
 - `server/src/middleware/sanitize.ts` - Sanitization middleware
 - `server/src/adapters/prisma/*` - All database queries use Prisma
 
 **Test Coverage:**
+
 - Unit tests for sanitization functions
 - Integration tests for SQL injection prevention
 
@@ -81,6 +89,7 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 **Risk:** Architecture flaws, missing security controls
 
 **MAIS Controls:**
+
 - ✅ Defense-in-depth (validation + sanitization + db constraints)
 - ✅ Least privilege principle
 - ✅ Fail-secure defaults
@@ -90,6 +99,7 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 - ✅ Webhook idempotency
 
 **Implementation Files:**
+
 - `server/src/services/booking.service.ts` - Transaction locking
 - `server/src/routes/webhooks.routes.ts` - Idempotent webhook handling
 - `server/src/middleware/rateLimiter.ts` - Rate limiting
@@ -103,6 +113,7 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 **Risk:** Default configs, unnecessary features, unpatched systems
 
 **MAIS Controls:**
+
 - ✅ Helmet.js security headers
 - ✅ Custom CSP policy (strict directives)
 - ✅ CORS whitelist
@@ -113,11 +124,13 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 - ✅ security.txt for responsible disclosure
 
 **Implementation Files:**
+
 - `server/src/app.ts` - Security middleware configuration
 - `server/src/routes/csp-violations.routes.ts` - CSP reporting
 - `server/public/.well-known/security.txt` - Security policy
 
 **Gaps:**
+
 - ⚠️ No automated security scanning in CI/CD (planned)
 - ⚠️ No centralized log aggregation (planned for Phase 5)
 
@@ -130,6 +143,7 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 **Risk:** Using components with known vulnerabilities
 
 **MAIS Controls:**
+
 - ✅ Weekly `npm audit`
 - ✅ Dependabot automated updates
 - ✅ Lock file (`package-lock.json`)
@@ -139,6 +153,7 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 **Current Status:** 1 known high severity vulnerability (to be addressed)
 
 **Process:**
+
 - Critical CVEs: Patch within 48 hours
 - High CVEs: Patch within 7 days
 - Medium/Low: Patch within 30 days
@@ -152,6 +167,7 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 **Risk:** Weak authentication, session management issues
 
 **MAIS Controls:**
+
 - ✅ Strong password requirements (enforced client-side)
 - ✅ bcrypt hashing (cost factor: 10)
 - ✅ Rate limiting on login (5 attempts/15 min)
@@ -161,11 +177,13 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 - ✅ Failed login attempt logging
 
 **Implementation Files:**
+
 - `server/src/middleware/rateLimiter.ts` - Login rate limiting
 - `server/src/services/identity.service.ts` - Platform admin auth
 - `server/src/services/tenant-auth.service.ts` - Tenant admin auth
 
 **Gaps:**
+
 - ⚠️ No multi-factor authentication (MFA) - deferred to Phase 4
 - ⚠️ No account lockout after repeated failures
 
@@ -178,6 +196,7 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 **Risk:** Insecure CI/CD, unsigned code, unverified dependencies
 
 **MAIS Controls:**
+
 - ✅ npm lock file integrity
 - ✅ Git commit signing (optional)
 - ✅ Webhook signature verification (Stripe)
@@ -185,10 +204,12 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 - ✅ Database-based webhook deduplication
 
 **Implementation Files:**
+
 - `server/src/routes/webhooks.routes.ts` - Stripe webhook verification
 - `server/src/services/booking.service.ts` - Idempotent booking creation
 
 **Gaps:**
+
 - ⚠️ No Subresource Integrity (SRI) for CDN resources (not applicable - no CDN)
 
 **Status:** ✅ **MITIGATED**
@@ -200,6 +221,7 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 **Risk:** Attacks go undetected
 
 **MAIS Controls:**
+
 - ✅ Structured logging (Pino)
 - ✅ Error tracking (Sentry)
 - ✅ Authentication logs
@@ -208,11 +230,13 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 - ✅ Failed login attempt logging
 
 **Implementation Files:**
+
 - `server/src/lib/core/logger.ts` - Structured logging
 - `server/src/lib/errors/sentry.ts` - Error tracking
 - `server/src/routes/index.ts` - Authentication logging
 
 **Gaps:**
+
 - ⚠️ No centralized log aggregation (planned: Phase 5)
 - ⚠️ No automated alerting (planned: Phase 5)
 - ⚠️ No real-time security monitoring
@@ -226,12 +250,14 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 **Risk:** Server making requests to unintended destinations
 
 **MAIS Controls:**
+
 - ✅ No user-controlled URLs in backend requests
 - ✅ Whitelist for external services (Stripe, Postmark, Google Calendar)
 - ✅ URL validation with protocol check (http/https only)
 - ✅ No arbitrary URL fetching
 
 **Implementation Files:**
+
 - `server/src/lib/sanitization.ts` - URL validation
 - `server/src/adapters/stripe.adapter.ts` - Stripe API (trusted)
 - `server/src/adapters/postmark.adapter.ts` - Postmark API (trusted)
@@ -242,22 +268,23 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 
 ## Summary
 
-| Vulnerability | Status | Priority | Completion |
-|---------------|--------|----------|------------|
-| A01 - Broken Access Control | ✅ Mitigated | N/A | 100% |
-| A02 - Cryptographic Failures | 🟡 Partial | P2 (Phase 3) | 80% |
-| A03 - Injection | ✅ Mitigated | N/A | 100% |
-| A04 - Insecure Design | ✅ Mitigated | N/A | 100% |
-| A05 - Security Misconfiguration | 🟡 Partial | P2 (Phase 5) | 85% |
-| A06 - Vulnerable Components | ✅ Mitigated | N/A | 100% |
-| A07 - Authentication Failures | 🟡 Partial | P3 (Phase 4) | 85% |
-| A08 - Integrity Failures | ✅ Mitigated | N/A | 100% |
-| A09 - Logging Failures | 🟡 Partial | P2 (Phase 5) | 75% |
-| A10 - SSRF | ✅ Mitigated | N/A | 100% |
+| Vulnerability                   | Status       | Priority     | Completion |
+| ------------------------------- | ------------ | ------------ | ---------- |
+| A01 - Broken Access Control     | ✅ Mitigated | N/A          | 100%       |
+| A02 - Cryptographic Failures    | 🟡 Partial   | P2 (Phase 3) | 80%        |
+| A03 - Injection                 | ✅ Mitigated | N/A          | 100%       |
+| A04 - Insecure Design           | ✅ Mitigated | N/A          | 100%       |
+| A05 - Security Misconfiguration | 🟡 Partial   | P2 (Phase 5) | 85%        |
+| A06 - Vulnerable Components     | ✅ Mitigated | N/A          | 100%       |
+| A07 - Authentication Failures   | 🟡 Partial   | P3 (Phase 4) | 85%        |
+| A08 - Integrity Failures        | ✅ Mitigated | N/A          | 100%       |
+| A09 - Logging Failures          | 🟡 Partial   | P2 (Phase 5) | 75%        |
+| A10 - SSRF                      | ✅ Mitigated | N/A          | 100%       |
 
 **Overall OWASP Compliance:** 🟡 **70% (7/10 fully mitigated)**
 
 **Sprint 10 Improvements:**
+
 - ✅ Custom CSP policy implemented
 - ✅ Input sanitization layer added
 - ✅ CSP violation reporting
@@ -271,16 +298,19 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 ## Remediation Plan
 
 ### Phase 3 (Sprint 11) - Cryptographic Improvements
+
 - Implement tenant secret encryption at rest
 - Add automatic secret rotation process
 - Document key management procedures
 
 ### Phase 4 (Sprint 12) - Authentication Hardening
+
 - Implement multi-factor authentication (MFA)
 - Add account lockout after repeated failures
 - Implement password complexity requirements (server-side)
 
 ### Phase 5 (Sprint 13) - Monitoring & Alerting
+
 - Centralized log aggregation (e.g., ELK stack)
 - Automated security alerting
 - Real-time threat detection
@@ -291,6 +321,7 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 ## Testing Recommendations
 
 ### Automated Security Tests
+
 - [x] Input sanitization tests
 - [x] SQL injection prevention tests
 - [x] XSS prevention tests
@@ -299,6 +330,7 @@ This document maps MAIS security controls to the OWASP Top 10 vulnerabilities.
 - [ ] Authentication bypass tests
 
 ### Manual Security Testing
+
 - [ ] Penetration testing (quarterly)
 - [ ] Security audit (annual)
 - [ ] Dependency vulnerability scan (weekly)

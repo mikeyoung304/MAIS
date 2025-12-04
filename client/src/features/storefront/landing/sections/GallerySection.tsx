@@ -86,11 +86,11 @@ export const GallerySection = memo(function GallerySection({ config }: GallerySe
 
   // Filter and sanitize images (defense-in-depth)
   const safeImages = (config?.images ?? [])
-    .map(image => ({
+    .map((image) => ({
       ...image,
       url: sanitizeImageUrl(image.url),
     }))
-    .filter(image => image.url !== undefined);
+    .filter((image) => image.url !== undefined);
 
   // Sanitize Instagram handle to prevent URL injection
   const safeInstagramHandle = sanitizeInstagramHandle(config?.instagramHandle);

@@ -27,14 +27,14 @@ export class EncryptionService {
     if (!masterKey) {
       throw new Error(
         'TENANT_SECRETS_ENCRYPTION_KEY environment variable is required. ' +
-        'Generate with: openssl rand -hex 32'
+          'Generate with: openssl rand -hex 32'
       );
     }
 
     if (masterKey.length !== 64) {
       throw new Error(
         'TENANT_SECRETS_ENCRYPTION_KEY must be 64-character hex string (32 bytes). ' +
-        'Generate with: openssl rand -hex 32'
+          'Generate with: openssl rand -hex 32'
       );
     }
 
@@ -42,7 +42,7 @@ export class EncryptionService {
     if (!/^[0-9a-f]{64}$/i.test(masterKey)) {
       throw new Error(
         'TENANT_SECRETS_ENCRYPTION_KEY must be a valid hex string. ' +
-        'Generate with: openssl rand -hex 32'
+          'Generate with: openssl rand -hex 32'
       );
     }
 
@@ -112,9 +112,7 @@ export class EncryptionService {
    */
   encryptStripeSecret(stripeSecretKey: string): EncryptedData {
     if (!this.isValidStripeSecretKey(stripeSecretKey)) {
-      throw new Error(
-        'Invalid Stripe secret key format. Expected sk_test_* or sk_live_*'
-      );
+      throw new Error('Invalid Stripe secret key format. Expected sk_test_* or sk_live_*');
     }
     return this.encrypt(stripeSecretKey);
   }
@@ -131,9 +129,7 @@ export class EncryptionService {
     const decrypted = this.decrypt(encrypted);
 
     if (!this.isValidStripeSecretKey(decrypted)) {
-      throw new Error(
-        'Decrypted value is not a valid Stripe secret key. Data may be corrupted.'
-      );
+      throw new Error('Decrypted value is not a valid Stripe secret key. Data may be corrupted.');
     }
 
     return decrypted;
@@ -190,10 +186,7 @@ export class EncryptionService {
       const decrypted = this.decrypt(encrypted);
 
       // Constant-time comparison to prevent timing attacks
-      return crypto.timingSafeEqual(
-        Buffer.from(plaintext, 'utf8'),
-        Buffer.from(decrypted, 'utf8')
-      );
+      return crypto.timingSafeEqual(Buffer.from(plaintext, 'utf8'), Buffer.from(decrypted, 'utf8'));
     } catch (error) {
       return false;
     }

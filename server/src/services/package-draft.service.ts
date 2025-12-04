@@ -68,13 +68,18 @@ export class PackageDraftService {
     const result = await this.repository.updateDraft(tenantId, packageId, draft);
 
     // Audit log for draft save
-    logger.info({
-      action: 'package_draft_saved',
-      tenantId,
-      packageId,
-      packageSlug: existing.slug,
-      changedFields: Object.keys(draft).filter(k => draft[k as keyof UpdatePackageDraftInput] !== undefined),
-    }, 'Package draft saved');
+    logger.info(
+      {
+        action: 'package_draft_saved',
+        tenantId,
+        packageId,
+        packageSlug: existing.slug,
+        changedFields: Object.keys(draft).filter(
+          (k) => draft[k as keyof UpdatePackageDraftInput] !== undefined
+        ),
+      },
+      'Package draft saved'
+    );
 
     return result;
   }
@@ -98,19 +103,22 @@ export class PackageDraftService {
 
     // Targeted cache invalidation - only invalidate affected packages
     // Invalidate each published package's cache individually (no thundering herd)
-    const invalidationKeys = packages.map(pkg =>
-      getCatalogInvalidationKeys(tenantId, pkg.slug)[0]
+    const invalidationKeys = packages.map(
+      (pkg) => getCatalogInvalidationKeys(tenantId, pkg.slug)[0]
     );
     await invalidateCacheKeys(this.cache, invalidationKeys);
 
     // Audit log for publish operation
-    logger.info({
-      action: 'package_drafts_published',
-      tenantId,
-      publishedCount: packages.length,
-      packageIds: packages.map(p => p.id),
-      packageSlugs: packages.map(p => p.slug),
-    }, `Published ${packages.length} package draft(s)`);
+    logger.info(
+      {
+        action: 'package_drafts_published',
+        tenantId,
+        publishedCount: packages.length,
+        packageIds: packages.map((p) => p.id),
+        packageSlugs: packages.map((p) => p.slug),
+      },
+      `Published ${packages.length} package draft(s)`
+    );
 
     return {
       published: packages.length,
@@ -128,23 +136,23 @@ export class PackageDraftService {
    * @param packageIds - Optional: specific packages to discard (default: all with drafts)
    * @returns Number of packages that had drafts discarded
    */
-  async discardDrafts(
-    tenantId: string,
-    packageIds?: string[]
-  ): Promise<{ discarded: number }> {
+  async discardDrafts(tenantId: string, packageIds?: string[]): Promise<{ discarded: number }> {
     // Log BEFORE discard to capture what will be lost
     const draftCount = await this.repository.countDrafts(tenantId);
 
     const discarded = await this.repository.discardDrafts(tenantId, packageIds);
 
     // Audit log for discard operation
-    logger.info({
-      action: 'package_drafts_discarded',
-      tenantId,
-      discardedCount: discarded,
-      requestedPackageIds: packageIds ?? 'all',
-      previousDraftCount: draftCount,
-    }, `Discarded ${discarded} package draft(s)`);
+    logger.info(
+      {
+        action: 'package_drafts_discarded',
+        tenantId,
+        discardedCount: discarded,
+        requestedPackageIds: packageIds ?? 'all',
+        previousDraftCount: draftCount,
+      },
+      `Discarded ${discarded} package draft(s)`
+    );
 
     return { discarded };
   }

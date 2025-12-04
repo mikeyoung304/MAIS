@@ -16,9 +16,11 @@ When you add or modify a field in an entity interface, TypeScript and runtime er
 ## What's In This Collection
 
 ### 1. Main Strategy Guide
+
 **File:** [`PREVENTION-ENTITY-TYPE-ERRORS.md`](PREVENTION-ENTITY-TYPE-ERRORS.md)
 
 Comprehensive guide covering:
+
 - Root cause analysis (why entities spread across 5-7 locations)
 - 10 prevention strategies with implementations
 - Affected areas in the MAIS codebase
@@ -29,6 +31,7 @@ Comprehensive guide covering:
 **When to read:** During onboarding, when planning entity changes, during architecture reviews
 
 **Key sections:**
+
 - Strategy 1: Entity Invariant Testing
 - Strategy 2: Typed Object Spread Pattern
 - Strategy 3: Repository Signature Audit
@@ -45,9 +48,11 @@ Comprehensive guide covering:
 ---
 
 ### 2. Quick Reference (30 Seconds)
+
 **File:** [`ENTITY-ERRORS-QUICK-REF.md`](ENTITY-ERRORS-QUICK-REF.md)
 
 Fast decision tree and checklist:
+
 - Modification checklist (copy/paste ready)
 - Finding the 5-7 update locations by entity type
 - Common mistakes and how to catch them
@@ -59,6 +64,7 @@ Fast decision tree and checklist:
 **When to use:** Before implementing entity changes, when debugging type errors
 
 **Key sections:**
+
 - Modification Checklist (Package, Booking, Service)
 - Quick Test section
 - Common Mistakes & Fixes
@@ -69,9 +75,11 @@ Fast decision tree and checklist:
 ---
 
 ### 3. Code Review Checklist
+
 **File:** [`ENTITY-CHANGE-CODE-REVIEW.md`](ENTITY-CHANGE-CODE-REVIEW.md)
 
 Step-by-step code review guide:
+
 - Pre-review checklist
 - 9 detailed review steps (one per location)
 - Specific code examples showing right/wrong patterns
@@ -82,6 +90,7 @@ Step-by-step code review guide:
 **When to use:** Reviewing PRs that modify entities
 
 **Key sections:**
+
 - Step 1-9: Detailed review for each location
 - Approval Decision Tree
 - Common PR Comment Templates
@@ -164,32 +173,32 @@ Every entity change requires updates in these locations:
 
 **Example for Package entity:**
 
-| Location | File | What to Update |
-|----------|------|-----------------|
-| Definition | `entities.ts` | Add field to Package interface |
-| API | `packages.ts` (contracts) | Add field to PackageResponse Zod schema |
-| Input Type | `ports.ts` | Add field to CreatePackageInput/UpdatePackageInput |
-| Mock Data | `mock/index.ts` (seed) | Add field to all package.set() calls |
-| Mock Repo | `mock/index.ts` (method) | Ensure return type includes field |
-| Prisma | `catalog.repository.ts` | Add to toDomainPackage() input type AND return |
-| Routes | `packages.routes.ts` | Add to response DTO if applicable |
+| Location   | File                      | What to Update                                     |
+| ---------- | ------------------------- | -------------------------------------------------- |
+| Definition | `entities.ts`             | Add field to Package interface                     |
+| API        | `packages.ts` (contracts) | Add field to PackageResponse Zod schema            |
+| Input Type | `ports.ts`                | Add field to CreatePackageInput/UpdatePackageInput |
+| Mock Data  | `mock/index.ts` (seed)    | Add field to all package.set() calls               |
+| Mock Repo  | `mock/index.ts` (method)  | Ensure return type includes field                  |
+| Prisma     | `catalog.repository.ts`   | Add to toDomainPackage() input type AND return     |
+| Routes     | `packages.routes.ts`      | Add to response DTO if applicable                  |
 
 ---
 
 ## Prevention Strategies At a Glance
 
-| # | Strategy | Implementation | Effort | Catches |
-|---|----------|-----------------|--------|---------|
-| 1 | Entity Invariant Testing | Unit tests for all creation paths | Medium | Missing mappers, incomplete objects |
-| 2 | Typed Object Spread | Strict types in mappers | Low | Type coercion, unsafe patterns |
-| 3 | Repository Audit | Quarterly consistency review | Low | Signature mismatches |
-| 4 | Build-Time Exhaustiveness | TypeScript satisfies keyword | Low | Missing fields at compile time |
-| 5 | Mock Data Builder | Type-safe test helpers | Medium | Incomplete seed data |
-| 6 | Entity Change Checklist | Pre-commit checklist | Low | Forgotten locations |
-| 7 | CI/CD Enforcement | Automated checks in pipeline | Medium | Build failures, test failures |
-| 8 | Documentation | Pattern reference guide | Low | Developer errors, knowledge gaps |
-| 9 | Prisma-Generated Types | Single source of truth | Low | Mapper divergence from schema |
-| 10 | Architectural Decision | Phase-based optional fields | Low | Semantic confusion |
+| #   | Strategy                  | Implementation                    | Effort | Catches                             |
+| --- | ------------------------- | --------------------------------- | ------ | ----------------------------------- |
+| 1   | Entity Invariant Testing  | Unit tests for all creation paths | Medium | Missing mappers, incomplete objects |
+| 2   | Typed Object Spread       | Strict types in mappers           | Low    | Type coercion, unsafe patterns      |
+| 3   | Repository Audit          | Quarterly consistency review      | Low    | Signature mismatches                |
+| 4   | Build-Time Exhaustiveness | TypeScript satisfies keyword      | Low    | Missing fields at compile time      |
+| 5   | Mock Data Builder         | Type-safe test helpers            | Medium | Incomplete seed data                |
+| 6   | Entity Change Checklist   | Pre-commit checklist              | Low    | Forgotten locations                 |
+| 7   | CI/CD Enforcement         | Automated checks in pipeline      | Medium | Build failures, test failures       |
+| 8   | Documentation             | Pattern reference guide           | Low    | Developer errors, knowledge gaps    |
+| 9   | Prisma-Generated Types    | Single source of truth            | Low    | Mapper divergence from schema       |
+| 10  | Architectural Decision    | Phase-based optional fields       | Low    | Semantic confusion                  |
 
 **Recommended minimum:** Strategies 1, 2, 4, 6 (catches ~95% of errors)
 
@@ -202,16 +211,18 @@ Every entity change requires updates in these locations:
 **Cause:** Mapper return object missing field
 
 **Where to look:**
+
 - File: `catalog.repository.ts`
 - Function: `toDomainPackage()`
 - Line: ~612 (return statement)
 
 **Fix:**
+
 ```typescript
 return {
   id: pkg.id,
   // ... other fields
-  newField: pkg.newField,  // ADD THIS
+  newField: pkg.newField, // ADD THIS
 };
 ```
 
@@ -222,6 +233,7 @@ return {
 **Cause:** Creation path using unsafe type
 
 **Where to look:**
+
 - File: `mock/index.ts` or routes
 - Pattern: `as any`, `any`, incomplete object literal
 
@@ -234,11 +246,13 @@ return {
 **Cause:** Mapper forgot to include field in input type
 
 **Where to look:**
+
 - File: `catalog.repository.ts`
 - Function: `toDomainPackage()` input type
 - Pattern: Missing field in {} parameter type
 
 **Fix:** Add field to input type:
+
 ```typescript
 private toDomainPackage(pkg: {
   // ... other fields
@@ -252,13 +266,13 @@ private toDomainPackage(pkg: {
 
 After implementing prevention strategies, track:
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Build failures from entity changes | 0 per year | Monthly dashboard |
-| Entity-related bugs in production | 0 per quarter | Issue tracker |
-| Code review time (entity PRs) | -50% reduction | Time tracking |
-| Checklist usage rate | 90%+ of PRs | PR review process |
-| Test coverage (entity paths) | 100% | Coverage report |
+| Metric                             | Target         | Measurement       |
+| ---------------------------------- | -------------- | ----------------- |
+| Build failures from entity changes | 0 per year     | Monthly dashboard |
+| Entity-related bugs in production  | 0 per quarter  | Issue tracker     |
+| Code review time (entity PRs)      | -50% reduction | Time tracking     |
+| Checklist usage rate               | 90%+ of PRs    | PR review process |
+| Test coverage (entity paths)       | 100%           | Coverage report   |
 
 ---
 
@@ -320,16 +334,19 @@ npm run build
 ## Implementation Timeline
 
 ### Week 1 (Immediate)
+
 - [ ] Add checklist to CLAUDE.md
 - [ ] Create entity invariant tests
 - [ ] Distribute this documentation to team
 
 ### Week 2-3 (Enforcement)
+
 - [ ] Update CI/CD with entity tests requirement
 - [ ] Begin using checklist in code reviews
 - [ ] Train team on pattern
 
 ### Ongoing
+
 - [ ] Apply to all entity change PRs (target: 100%)
 - [ ] Quarterly audits of repository signatures
 - [ ] Refine based on experience
@@ -376,4 +393,3 @@ December 3, 2025
 **Current Status:** ✅ Complete - Ready for team use
 
 **Next Review:** December 17, 2025 (after first PR applying strategy)
-

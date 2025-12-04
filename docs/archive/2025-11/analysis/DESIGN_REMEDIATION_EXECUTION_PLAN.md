@@ -1,4 +1,5 @@
 # DESIGN REMEDIATION EXECUTION PLAN
+
 ## Multi-Agent Parallel Implementation Strategy
 
 **Created:** November 20, 2025
@@ -15,14 +16,14 @@ This plan organizes the 21 critical and high-priority issues into **6 parallel w
 
 ### Workstream Overview
 
-| Workstream | Focus Area | Agent Type | Issues | Effort | Sprint |
-|------------|-----------|------------|--------|--------|--------|
-| **WS-1** | Accessibility & Color | general-purpose | 7 | 8h | Sprint 7 |
-| **WS-2** | Branding & Assets | general-purpose | 3 | 8h | Sprint 7 |
-| **WS-3** | Navigation & Links | general-purpose | 4 | 15h | Sprint 7 |
-| **WS-4** | Responsive & Mobile | general-purpose | 5 | 20h | Sprint 8 |
-| **WS-5** | UX & Forms | general-purpose | 6 | 30h | Sprint 8-9 |
-| **WS-6** | Catalog & Discovery | general-purpose | 2 | 30h | Sprint 9 |
+| Workstream | Focus Area            | Agent Type      | Issues | Effort | Sprint     |
+| ---------- | --------------------- | --------------- | ------ | ------ | ---------- |
+| **WS-1**   | Accessibility & Color | general-purpose | 7      | 8h     | Sprint 7   |
+| **WS-2**   | Branding & Assets     | general-purpose | 3      | 8h     | Sprint 7   |
+| **WS-3**   | Navigation & Links    | general-purpose | 4      | 15h    | Sprint 7   |
+| **WS-4**   | Responsive & Mobile   | general-purpose | 5      | 20h    | Sprint 8   |
+| **WS-5**   | UX & Forms            | general-purpose | 6      | 30h    | Sprint 8-9 |
+| **WS-6**   | Catalog & Discovery   | general-purpose | 2      | 30h    | Sprint 9   |
 
 **Total:** 21 issues, 111 hours, 6 weeks
 
@@ -37,6 +38,7 @@ This plan organizes the 21 critical and high-priority issues into **6 parallel w
 #### Agent Pool 1: Sprint 7 (Run in Parallel)
 
 **Agent A - Accessibility & Color (WS-1)**
+
 ```
 Effort: 8 hours
 Dependencies: None
@@ -52,6 +54,7 @@ Tasks:
 ```
 
 **Agent B - Branding & Assets (WS-2)**
+
 ```
 Effort: 8 hours
 Dependencies: None
@@ -67,6 +70,7 @@ Tasks:
 ```
 
 **Agent C - Navigation & Links (WS-3)**
+
 ```
 Effort: 15 hours
 Dependencies: None
@@ -93,6 +97,7 @@ Tasks:
 #### Agent Pool 2: Sprint 8 (Run in Parallel)
 
 **Agent D - Responsive & Mobile (WS-4)**
+
 ```
 Effort: 20 hours
 Dependencies: WS-1 (needs color updates)
@@ -108,6 +113,7 @@ Tasks:
 ```
 
 **Agent E - UX & Forms (WS-5)**
+
 ```
 Effort: 30 hours
 Dependencies: WS-3 (needs clean routes)
@@ -134,6 +140,7 @@ Tasks:
 #### Agent Pool 3: Sprint 9 (Single Focus)
 
 **Agent F - Catalog & Discovery (WS-6)**
+
 ```
 Effort: 30 hours
 Dependencies: WS-3 (needs navigation), WS-5 (needs forms)
@@ -165,13 +172,13 @@ Tasks:
 
 #### Issue Breakdown
 
-| Issue | File(s) | Change Required | Effort |
-|-------|---------|-----------------|--------|
-| Color contrast failures | tailwind.config.js | Update orange/teal values | 2h |
-| Replace orange instances | All components | Find/replace with new token | 2h |
-| Replace teal instances | All components | Find/replace with new token | 2h |
-| Add role="alert" | Login.tsx, forms | Add ARIA role | 1h |
-| Contrast testing | All pages | Manual verification | 1h |
+| Issue                    | File(s)            | Change Required             | Effort |
+| ------------------------ | ------------------ | --------------------------- | ------ |
+| Color contrast failures  | tailwind.config.js | Update orange/teal values   | 2h     |
+| Replace orange instances | All components     | Find/replace with new token | 2h     |
+| Replace teal instances   | All components     | Find/replace with new token | 2h     |
+| Add role="alert"         | Login.tsx, forms   | Add ARIA role               | 1h     |
+| Contrast testing         | All pages          | Manual verification         | 1h     |
 
 #### Acceptance Criteria
 
@@ -216,13 +223,13 @@ Deliverables:
 
 #### Issue Breakdown
 
-| Issue | File(s) | Change Required | Effort |
-|-------|---------|-----------------|--------|
-| Logo missing from homepage | AppShell.tsx | Add logo component | 2h |
-| Logo missing from login | Login.tsx | Add logo component | 1h |
-| Logo missing from dashboard | AdminLayout.tsx | Add logo component | 1h |
-| No favicon | index.html, public/ | Generate and link favicon | 2h |
-| Logo not responsive | All logo instances | Add responsive sizing | 2h |
+| Issue                       | File(s)             | Change Required           | Effort |
+| --------------------------- | ------------------- | ------------------------- | ------ |
+| Logo missing from homepage  | AppShell.tsx        | Add logo component        | 2h     |
+| Logo missing from login     | Login.tsx           | Add logo component        | 1h     |
+| Logo missing from dashboard | AdminLayout.tsx     | Add logo component        | 1h     |
+| No favicon                  | index.html, public/ | Generate and link favicon | 2h     |
+| Logo not responsive         | All logo instances  | Add responsive sizing     | 2h     |
 
 #### Acceptance Criteria
 
@@ -269,13 +276,13 @@ Acceptance:
 
 #### Issue Breakdown
 
-| Issue | File(s) | Change Required | Effort |
-|-------|---------|-----------------|--------|
-| Broken /admin/login links | Multiple components | Update to /login | 2h |
-| No "Back to Home" on login | Login.tsx | Add back link | 1h |
-| Homepage CTAs not functional | Homepage.tsx | Link to catalog | 3h |
-| Horizontal scroll <375px | Multiple components | Fix min-width buttons | 3h |
-| No mobile nav menu | AppShell.tsx | Add hamburger menu | 6h |
+| Issue                        | File(s)             | Change Required       | Effort |
+| ---------------------------- | ------------------- | --------------------- | ------ |
+| Broken /admin/login links    | Multiple components | Update to /login      | 2h     |
+| No "Back to Home" on login   | Login.tsx           | Add back link         | 1h     |
+| Homepage CTAs not functional | Homepage.tsx        | Link to catalog       | 3h     |
+| Horizontal scroll <375px     | Multiple components | Fix min-width buttons | 3h     |
+| No mobile nav menu           | AppShell.tsx        | Add hamburger menu    | 6h     |
 
 #### Acceptance Criteria
 
@@ -329,14 +336,14 @@ Deliverables:
 
 #### Issue Breakdown
 
-| Issue | File(s) | Change Required | Effort |
-|-------|---------|-----------------|--------|
-| Small button variant (36px) | Button.tsx | Increase min-height | 3h |
-| Tab touch targets (32px) | Tab components | Increase padding | 2h |
-| Missing sm: breakpoints | All components | Add sm: variants | 6h |
-| No intermediate tablet layouts | Grid/flex components | Add md: 2-column layouts | 6h |
-| Large footer gap on mobile | AppShell.tsx | Reduce gap-16 to gap-8 | 1h |
-| Test suite | Multiple devices | Manual testing | 2h |
+| Issue                          | File(s)              | Change Required          | Effort |
+| ------------------------------ | -------------------- | ------------------------ | ------ |
+| Small button variant (36px)    | Button.tsx           | Increase min-height      | 3h     |
+| Tab touch targets (32px)       | Tab components       | Increase padding         | 2h     |
+| Missing sm: breakpoints        | All components       | Add sm: variants         | 6h     |
+| No intermediate tablet layouts | Grid/flex components | Add md: 2-column layouts | 6h     |
+| Large footer gap on mobile     | AppShell.tsx         | Reduce gap-16 to gap-8   | 1h     |
+| Test suite                     | Multiple devices     | Manual testing           | 2h     |
 
 #### Acceptance Criteria
 
@@ -394,17 +401,17 @@ Deliverables:
 
 #### Issue Breakdown
 
-| Issue | File(s) | Change Required | Effort |
-|-------|---------|-----------------|--------|
-| No form validation summaries | All forms | Add error aggregation | 4h |
-| No delete confirmations | Admin components | Add AlertDialog | 4h |
-| Font family conflicts | index.css, tailwind.config.js | Resolve Playfair vs Inter | 2h |
-| No checkout progress | Checkout.tsx | Add stepper component | 3h |
-| No unsaved changes warning | All forms | Add beforeunload handler | 3h |
-| Tab state not in URL | TenantDashboard.tsx | Add ?tab= query param | 2h |
-| Date picker legend unclear | DatePicker.tsx | Add legend component | 2h |
-| Review step before checkout | BookingFlow.tsx | Add review page | 8h |
-| No contextual help | Multiple components | Add tooltip system | 2h |
+| Issue                        | File(s)                       | Change Required           | Effort |
+| ---------------------------- | ----------------------------- | ------------------------- | ------ |
+| No form validation summaries | All forms                     | Add error aggregation     | 4h     |
+| No delete confirmations      | Admin components              | Add AlertDialog           | 4h     |
+| Font family conflicts        | index.css, tailwind.config.js | Resolve Playfair vs Inter | 2h     |
+| No checkout progress         | Checkout.tsx                  | Add stepper component     | 3h     |
+| No unsaved changes warning   | All forms                     | Add beforeunload handler  | 3h     |
+| Tab state not in URL         | TenantDashboard.tsx           | Add ?tab= query param     | 2h     |
+| Date picker legend unclear   | DatePicker.tsx                | Add legend component      | 2h     |
+| Review step before checkout  | BookingFlow.tsx               | Add review page           | 8h     |
+| No contextual help           | Multiple components           | Add tooltip system        | 2h     |
 
 #### Acceptance Criteria
 
@@ -471,15 +478,15 @@ Deliverables:
 
 #### Issue Breakdown
 
-| Issue | File(s) | Change Required | Effort |
-|-------|---------|-----------------|--------|
-| No package catalog page | New: PackageCatalog.tsx | Create grid view | 12h |
-| Catalog not linked | AppShell.tsx, Homepage.tsx | Add navigation links | 2h |
-| No filtering | PackageCatalog.tsx | Add filter UI | 6h |
-| No search | PackageCatalog.tsx | Add search input | 4h |
-| No sorting | PackageCatalog.tsx | Add sort dropdown | 2h |
-| Empty state | PackageCatalog.tsx | Add empty state UI | 2h |
-| Mobile layout | PackageCatalog.tsx | Add responsive grid | 2h |
+| Issue                   | File(s)                    | Change Required      | Effort |
+| ----------------------- | -------------------------- | -------------------- | ------ |
+| No package catalog page | New: PackageCatalog.tsx    | Create grid view     | 12h    |
+| Catalog not linked      | AppShell.tsx, Homepage.tsx | Add navigation links | 2h     |
+| No filtering            | PackageCatalog.tsx         | Add filter UI        | 6h     |
+| No search               | PackageCatalog.tsx         | Add search input     | 4h     |
+| No sorting              | PackageCatalog.tsx         | Add sort dropdown    | 2h     |
+| Empty state             | PackageCatalog.tsx         | Add empty state UI   | 2h     |
+| Mobile layout           | PackageCatalog.tsx         | Add responsive grid  | 2h     |
 
 #### Acceptance Criteria
 
@@ -583,11 +590,11 @@ graph TD
 
 #### Agent Assignments
 
-| Agent | Workstream | Effort | Can Start | Deliverables |
-|-------|-----------|--------|-----------|--------------|
-| **Agent-A** | WS-1: Accessibility | 8h | Day 1 | WCAG compliance |
-| **Agent-B** | WS-2: Branding | 8h | Day 1 | Logo visible everywhere |
-| **Agent-C** | WS-3: Navigation | 15h | Day 1 | Links fixed, mobile nav |
+| Agent       | Workstream          | Effort | Can Start | Deliverables            |
+| ----------- | ------------------- | ------ | --------- | ----------------------- |
+| **Agent-A** | WS-1: Accessibility | 8h     | Day 1     | WCAG compliance         |
+| **Agent-B** | WS-2: Branding      | 8h     | Day 1     | Logo visible everywhere |
+| **Agent-C** | WS-3: Navigation    | 15h    | Day 1     | Links fixed, mobile nav |
 
 **Total Sprint 7 Effort:** 31 hours (can complete in 1 week with 3 agents)
 
@@ -619,10 +626,10 @@ graph TD
 
 #### Agent Assignments
 
-| Agent | Workstream | Effort | Dependencies | Deliverables |
-|-------|-----------|--------|--------------|--------------|
-| **Agent-D** | WS-4: Responsive | 20h | WS-1 complete | Touch targets, breakpoints |
-| **Agent-E** | WS-5: UX & Forms | 30h | WS-3 complete | Forms, confirmations, progress |
+| Agent       | Workstream       | Effort | Dependencies  | Deliverables                   |
+| ----------- | ---------------- | ------ | ------------- | ------------------------------ |
+| **Agent-D** | WS-4: Responsive | 20h    | WS-1 complete | Touch targets, breakpoints     |
+| **Agent-E** | WS-5: UX & Forms | 30h    | WS-3 complete | Forms, confirmations, progress |
 
 **Total Sprint 8 Effort:** 50 hours (can complete in 2 weeks with 2 agents)
 
@@ -653,9 +660,9 @@ graph TD
 
 #### Agent Assignments
 
-| Agent | Workstream | Effort | Dependencies | Deliverables |
-|-------|-----------|--------|--------------|--------------|
-| **Agent-F** | WS-6: Catalog | 30h | WS-3, WS-5 complete | Package catalog live |
+| Agent       | Workstream    | Effort | Dependencies        | Deliverables         |
+| ----------- | ------------- | ------ | ------------------- | -------------------- |
+| **Agent-F** | WS-6: Catalog | 30h    | WS-3, WS-5 complete | Package catalog live |
 
 **Total Sprint 9 Effort:** 30 hours (can complete in 2 weeks with 1 agent)
 
@@ -692,12 +699,12 @@ graph TD
 
 ### Agent Specialization
 
-| Agent Type | Best For | Workstreams |
-|------------|---------|-------------|
-| `general-purpose` | File editing, component creation, testing | All WS-1 through WS-6 |
-| `Explore` | Codebase navigation, finding patterns | Pre-work (already done) |
-| `statusline-setup` | Not applicable | N/A |
-| `output-style-setup` | Not applicable | N/A |
+| Agent Type           | Best For                                  | Workstreams             |
+| -------------------- | ----------------------------------------- | ----------------------- |
+| `general-purpose`    | File editing, component creation, testing | All WS-1 through WS-6   |
+| `Explore`            | Codebase navigation, finding patterns     | Pre-work (already done) |
+| `statusline-setup`   | Not applicable                            | N/A                     |
+| `output-style-setup` | Not applicable                            | N/A                     |
 
 **Recommendation:** Use `general-purpose` for all 6 workstreams.
 
@@ -707,23 +714,23 @@ graph TD
 
 ### By Sprint
 
-| Sprint | Workstreams | Agents | Sequential Effort | Parallel Effort | Time Saved |
-|--------|-------------|--------|-------------------|-----------------|------------|
-| Sprint 7 | WS-1, WS-2, WS-3 | 3 | 31h (4 weeks) | 15h (2 weeks) | 50% |
-| Sprint 8 | WS-4, WS-5 | 2 | 50h (6 weeks) | 30h (4 weeks) | 33% |
-| Sprint 9 | WS-6 | 1 | 30h (4 weeks) | 30h (4 weeks) | 0% |
-| **TOTAL** | **6** | **6** | **111h (14 weeks)** | **75h (10 weeks)** | **32%** |
+| Sprint    | Workstreams      | Agents | Sequential Effort   | Parallel Effort    | Time Saved |
+| --------- | ---------------- | ------ | ------------------- | ------------------ | ---------- |
+| Sprint 7  | WS-1, WS-2, WS-3 | 3      | 31h (4 weeks)       | 15h (2 weeks)      | 50%        |
+| Sprint 8  | WS-4, WS-5       | 2      | 50h (6 weeks)       | 30h (4 weeks)      | 33%        |
+| Sprint 9  | WS-6             | 1      | 30h (4 weeks)       | 30h (4 weeks)      | 0%         |
+| **TOTAL** | **6**            | **6**  | **111h (14 weeks)** | **75h (10 weeks)** | **32%**    |
 
 **Wall Time Reduction:** 14 weeks → 10 weeks (4 weeks saved)
 
 ### By Priority
 
-| Priority | Issues | Effort | ROI | Completion Sprint |
-|----------|--------|--------|-----|-------------------|
-| P0 (Critical) | 7 | 35h | 🔴 Essential | Sprint 7 |
-| P1 (High) | 14 | 76h | ⭐⭐⭐⭐⭐ | Sprint 8-9 |
-| P2 (Medium) | 18 | 120h | ⭐⭐⭐ | Future |
-| P3 (Low) | 23 | 200h | ⭐⭐ | Future |
+| Priority      | Issues | Effort | ROI          | Completion Sprint |
+| ------------- | ------ | ------ | ------------ | ----------------- |
+| P0 (Critical) | 7      | 35h    | 🔴 Essential | Sprint 7          |
+| P1 (High)     | 14     | 76h    | ⭐⭐⭐⭐⭐   | Sprint 8-9        |
+| P2 (Medium)   | 18     | 120h   | ⭐⭐⭐       | Future            |
+| P3 (Low)      | 23     | 200h   | ⭐⭐         | Future            |
 
 **This Plan Covers:** P0 + P1 = 111 hours (21 issues)
 
@@ -733,13 +740,13 @@ graph TD
 
 ### Potential Blockers
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| Agent conflicts (editing same file) | LOW | MEDIUM | Clear file ownership per workstream |
-| Dependency mismanagement | LOW | HIGH | Strict sprint sequencing enforced |
-| Scope creep | MEDIUM | MEDIUM | Fixed issue list, no additions |
-| Testing bottleneck | MEDIUM | LOW | Automated testing where possible |
-| API contract changes | LOW | HIGH | Verify contracts before WS-6 |
+| Risk                                | Probability | Impact | Mitigation                          |
+| ----------------------------------- | ----------- | ------ | ----------------------------------- |
+| Agent conflicts (editing same file) | LOW         | MEDIUM | Clear file ownership per workstream |
+| Dependency mismanagement            | LOW         | HIGH   | Strict sprint sequencing enforced   |
+| Scope creep                         | MEDIUM      | MEDIUM | Fixed issue list, no additions      |
+| Testing bottleneck                  | MEDIUM      | LOW    | Automated testing where possible    |
+| API contract changes                | LOW         | HIGH   | Verify contracts before WS-6        |
 
 ### Contingency Plans
 
@@ -753,31 +760,31 @@ graph TD
 
 ### Sprint 7 Targets (P0 Complete)
 
-| Metric | Before | Target | Actual |
-|--------|--------|--------|--------|
-| WCAG 2.1 AA Compliance | Partial | 100% | ___ |
-| Logo Visibility | 0% | 100% | ___ |
-| Broken Links | 8 | 0 | ___ |
-| Horizontal Scroll (iPhone SE) | FAIL | PASS | ___ |
-| Mobile Navigation | Missing | Functional | ___ |
+| Metric                        | Before  | Target     | Actual |
+| ----------------------------- | ------- | ---------- | ------ |
+| WCAG 2.1 AA Compliance        | Partial | 100%       | \_\_\_ |
+| Logo Visibility               | 0%      | 100%       | \_\_\_ |
+| Broken Links                  | 8       | 0          | \_\_\_ |
+| Horizontal Scroll (iPhone SE) | FAIL    | PASS       | \_\_\_ |
+| Mobile Navigation             | Missing | Functional | \_\_\_ |
 
 ### Sprint 8 Targets (P1 Partial)
 
-| Metric | Before | Target | Actual |
-|--------|--------|--------|--------|
-| Touch Target Compliance | 85% | 95% | ___ |
-| Forms with Validation Summary | 0% | 100% | ___ |
-| Delete Actions with Confirmation | 0% | 100% | ___ |
-| Font Conflicts | 1 | 0 | ___ |
+| Metric                           | Before | Target | Actual |
+| -------------------------------- | ------ | ------ | ------ |
+| Touch Target Compliance          | 85%    | 95%    | \_\_\_ |
+| Forms with Validation Summary    | 0%     | 100%   | \_\_\_ |
+| Delete Actions with Confirmation | 0%     | 100%   | \_\_\_ |
+| Font Conflicts                   | 1      | 0      | \_\_\_ |
 
 ### Sprint 9 Targets (P0-3 Complete)
 
-| Metric | Before | Target | Actual |
-|--------|--------|--------|--------|
-| Package Discovery Available | No | Yes | ___ |
-| Catalog Linked from Homepage | No | Yes | ___ |
-| Search Functional | No | Yes | ___ |
-| Booking Completion Rate | 30% | 50% | ___ |
+| Metric                       | Before | Target | Actual |
+| ---------------------------- | ------ | ------ | ------ |
+| Package Discovery Available  | No     | Yes    | \_\_\_ |
+| Catalog Linked from Homepage | No     | Yes    | \_\_\_ |
+| Search Functional            | No     | Yes    | \_\_\_ |
+| Booking Completion Rate      | 30%    | 50%    | \_\_\_ |
 
 ---
 
@@ -871,12 +878,12 @@ Task(
 
 ### Investment Required
 
-| Phase | Sequential Time | Parallel Time | Cost @ $150/hr | Savings |
-|-------|----------------|---------------|----------------|---------|
-| Sprint 7 (P0 Critical) | 4 weeks | 2 weeks | $4,650 | $2,325 |
-| Sprint 8 (P1 Partial) | 6 weeks | 4 weeks | $7,500 | $3,750 |
-| Sprint 9 (P0-3) | 4 weeks | 4 weeks | $4,500 | $0 |
-| **TOTAL** | **14 weeks** | **10 weeks** | **$16,650** | **$6,075** |
+| Phase                  | Sequential Time | Parallel Time | Cost @ $150/hr | Savings    |
+| ---------------------- | --------------- | ------------- | -------------- | ---------- |
+| Sprint 7 (P0 Critical) | 4 weeks         | 2 weeks       | $4,650         | $2,325     |
+| Sprint 8 (P1 Partial)  | 6 weeks         | 4 weeks       | $7,500         | $3,750     |
+| Sprint 9 (P0-3)        | 4 weeks         | 4 weeks       | $4,500         | $0         |
+| **TOTAL**              | **14 weeks**    | **10 weeks**  | **$16,650**    | **$6,075** |
 
 **Time Saved:** 4 weeks (32% reduction)
 **Cost Unchanged:** $16,650 (same work, less wall time)
@@ -921,14 +928,14 @@ Task(
 
 ### Appendix A: File Ownership Matrix
 
-| Workstream | Primary Files | Secondary Files | Conflicts |
-|------------|---------------|-----------------|-----------|
-| WS-1 | tailwind.config.js | All component files (color replacements) | LOW |
-| WS-2 | AppShell.tsx, Login.tsx, AdminLayout.tsx | index.html, public/* | NONE |
-| WS-3 | AppShell.tsx, Login.tsx, Homepage.tsx | Multiple nav files | MEDIUM |
-| WS-4 | Button.tsx, All components (breakpoints) | tailwind.config.js | LOW |
-| WS-5 | All forms, TenantDashboard.tsx | New components | LOW |
-| WS-6 | New files (PackageCatalog.tsx) | AppShell.tsx, Homepage.tsx | LOW |
+| Workstream | Primary Files                            | Secondary Files                          | Conflicts |
+| ---------- | ---------------------------------------- | ---------------------------------------- | --------- |
+| WS-1       | tailwind.config.js                       | All component files (color replacements) | LOW       |
+| WS-2       | AppShell.tsx, Login.tsx, AdminLayout.tsx | index.html, public/\*                    | NONE      |
+| WS-3       | AppShell.tsx, Login.tsx, Homepage.tsx    | Multiple nav files                       | MEDIUM    |
+| WS-4       | Button.tsx, All components (breakpoints) | tailwind.config.js                       | LOW       |
+| WS-5       | All forms, TenantDashboard.tsx           | New components                           | LOW       |
+| WS-6       | New files (PackageCatalog.tsx)           | AppShell.tsx, Homepage.tsx               | LOW       |
 
 **Conflict Probability:** LOW (only WS-3 and WS-2 both touch AppShell.tsx)
 
@@ -937,11 +944,13 @@ Task(
 ### Appendix B: Testing Strategy
 
 **Automated Testing:**
+
 - Run `npm run typecheck` after each sprint
 - Run `npm test` for unit/integration tests
 - Run `npm run test:e2e` for E2E validation
 
 **Manual Testing:**
+
 - Accessibility: axe DevTools on all pages
 - Responsiveness: Chrome DevTools device emulation
 - Cross-browser: Safari, Firefox, Chrome
@@ -950,6 +959,7 @@ Task(
 ### Appendix C: Rollback Plan
 
 If critical issues arise:
+
 1. Each workstream has own feature branch
 2. Can rollback individual workstream without affecting others
 3. Main branch protected (all changes via PR)

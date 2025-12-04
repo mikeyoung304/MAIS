@@ -3,6 +3,7 @@
 ## Overview
 
 This document outlines strategies to prevent common CI/CD deployment failures observed in production, specifically:
+
 1. ESLint configuration failures in CI environments
 2. Missing environment variables for Prisma migrations
 3. Environment variable documentation gaps
@@ -15,6 +16,7 @@ This document outlines strategies to prevent common CI/CD deployment failures ob
 **Problem:** Strict TypeScript ESLint rules pass locally but fail in CI pipeline.
 
 **Root Cause:**
+
 - Global ESLint configuration at `/Users/mikeyoung/CODING/MAIS/.eslintrc.cjs` uses:
   ```javascript
   extends: [
@@ -31,11 +33,13 @@ This document outlines strategies to prevent common CI/CD deployment failures ob
 ### Issue 2: Missing DIRECT_URL in Migrations
 
 **Problem:** Prisma migrations fail with:
+
 ```
 Error: Could not find the DIRECT_URL environment variable
 ```
 
 **Root Cause:**
+
 - `prisma/schema.prisma` requires both `DATABASE_URL` and `DIRECT_URL`
 - CI pipeline provides `DATABASE_URL` but not `DIRECT_URL`
 - Migration job in `main-pipeline.yml` (line 266) doesn't set `DIRECT_URL`
@@ -48,6 +52,7 @@ Error: Could not find the DIRECT_URL environment variable
 **Problem:** Required vs optional variables not clearly documented for CI.
 
 **Current State:**
+
 - `.env.example` shows all variables with defaults
 - `server/scripts/doctor.ts` validates env vars but paths are incorrect (references `server/.env.example` at line 133)
 - No matrix of which vars are needed for each CI job
@@ -60,6 +65,7 @@ Error: Could not find the DIRECT_URL environment variable
 #### 1.1 ESLint Configuration Audit
 
 **Action Items:**
+
 1. Verify ESLint configuration includes workspace context
 2. Ensure type generation runs before linting
 3. Add ESLint cache invalidation in CI
@@ -201,44 +207,51 @@ Create `docs/deployment/ENVIRONMENT_VARIABLES.md`:
 
 ## Quick Reference Matrix
 
-| Variable | TIER | Dev | Test | Staging | Prod | Purpose |
-|----------|------|-----|------|---------|------|---------|
-| ADAPTERS_PRESET | 1 | ✓ | ✓ | ✓ | ✓ | Mode selector (mock/real) |
-| JWT_SECRET | 1 | ✓ | ✓ | ✓ | ✓ | JWT signing key |
-| DATABASE_URL | 1 | ✓ | ✓ | ✓ | ✓ | Connection string |
-| DIRECT_URL | 1 | ✗ | ✓ | ✓ | ✓ | Prisma direct connection |
-| STRIPE_SECRET_KEY | 2 | ✗ | ✗ | ✓ | ✓ | Payment processing |
-| POSTMARK_SERVER_TOKEN | 2 | ✗ | ✗ | ✓ | ✓ | Email service |
+| Variable              | TIER | Dev | Test | Staging | Prod | Purpose                   |
+| --------------------- | ---- | --- | ---- | ------- | ---- | ------------------------- |
+| ADAPTERS_PRESET       | 1    | ✓   | ✓    | ✓       | ✓    | Mode selector (mock/real) |
+| JWT_SECRET            | 1    | ✓   | ✓    | ✓       | ✓    | JWT signing key           |
+| DATABASE_URL          | 1    | ✓   | ✓    | ✓       | ✓    | Connection string         |
+| DIRECT_URL            | 1    | ✗   | ✓    | ✓       | ✓    | Prisma direct connection  |
+| STRIPE_SECRET_KEY     | 2    | ✗   | ✗    | ✓       | ✓    | Payment processing        |
+| POSTMARK_SERVER_TOKEN | 2    | ✗   | ✗    | ✓       | ✓    | Email service             |
 
 ## Per-Job Requirements
 
 ### main-pipeline.yml
 
 **lint job:**
+
 - Required: None (uses defaults)
 
 **typecheck job:**
+
 - Required: None (uses defaults)
 
 **unit-tests job:**
+
 - Required: JWT_SECRET, TENANT_SECRETS_ENCRYPTION_KEY
 - Optional: NODE_ENV=test
 
 **integration-tests job:**
+
 - Required: DATABASE_URL, DIRECT_URL, JWT_SECRET, TENANT_SECRETS_ENCRYPTION_KEY
 - Optional: NODE_ENV=test
 
 **e2e-tests job:**
+
 - Required: JWT_SECRET (mock mode)
 - Optional: API_PORT, CORS_ORIGIN
 
 ### deploy-production.yml
 
 **migrate-database-production job:**
+
 - Required: PRODUCTION_DATABASE_URL, PRODUCTION_DIRECT_URL
 - Critical: DIRECT_URL needed for Supabase pooler compatibility
 
 **deploy-api-production job:**
+
 - Required: PRODUCTION_API_URL
 - Secrets: RENDER_PRODUCTION_API_DEPLOY_HOOK
 ```
@@ -281,7 +294,7 @@ if (isCI) {
 
 Create `docs/deployment/GITHUB_SECRETS_SETUP.md`:
 
-```markdown
+````markdown
 # GitHub Actions Secrets Setup
 
 ## Required Secrets
@@ -322,13 +335,15 @@ gh secret list --org myorg --format json | jq '.[]'
 # Should be 64 hex characters
 echo $JWT_SECRET | wc -c  # Should output 65 (64 + newline)
 ```
+````
 
 ## Secret Rotation Schedule
 
 - JWT_SECRET: Every 90 days
 - Database passwords: Every 60 days
 - API keys: On vendor update or team change
-```
+
+````
 
 ### Strategy 3: Pre-Flight Validation
 
@@ -436,7 +451,7 @@ else
     echo -e "\n${COLOR_GREEN}✅ All pre-flight checks passed!${COLOR_RESET}"
     exit 0
 fi
-```
+````
 
 #### 3.2 Husky Pre-Commit Hook
 
@@ -592,6 +607,7 @@ validate-deployment-env:
 ### Best Practice 1: Environment Variable Strategy
 
 **Rule 1: Tier-Based Classification**
+
 ```
 TIER 1: Core (always required, all modes)
 TIER 2: Production-critical (required in prod only)
@@ -599,11 +615,13 @@ TIER 3: Optional (graceful fallbacks available)
 ```
 
 **Rule 2: Doctor Script as Single Source of Truth**
+
 - Keep `server/scripts/doctor.ts` as authoritative reference
 - Doctor runs in pre-commit hooks
 - Doctor validates before any CI job
 
 **Rule 3: Secret Rotation Calendar**
+
 ```
 - Sensitive keys: Every 90 days (JWT_SECRET, encryption keys)
 - Integration keys: Every 180 days (Stripe, Postmark, etc.)
@@ -613,6 +631,7 @@ TIER 3: Optional (graceful fallbacks available)
 ### Best Practice 2: ESLint Configuration
 
 **Rule 1: Type-Checked Linting in CI**
+
 ```bash
 # Always run in CI:
 npm run typecheck  # Before linting (generates types)
@@ -620,11 +639,13 @@ npm run lint       # After type generation
 ```
 
 **Rule 2: Rule Severity Strategy**
+
 - `error`: Security, type safety, multi-tenant isolation
 - `warn`: Code quality, style, performance
 - `off`: Flexible rules in test files
 
 **Rule 3: Monorepo Workspace Isolation**
+
 - Root `.eslintrc.cjs`: Base config
 - Workspace overrides: Feature-specific rules
 - Never mix frontend and backend rules
@@ -632,6 +653,7 @@ npm run lint       # After type generation
 ### Best Practice 3: Prisma Migration Strategy
 
 **Rule 1: Always Set DIRECT_URL**
+
 ```bash
 # WRONG (fails with Supabase pooler):
 DATABASE_URL=pool://...
@@ -644,6 +666,7 @@ npx prisma migrate deploy
 ```
 
 **Rule 2: Migration Validation Before Deploy**
+
 ```bash
 # 1. Validate schema
 npx prisma validate --schema=./prisma/schema.prisma
@@ -656,6 +679,7 @@ DIRECT_URL=<test-db> npx prisma migrate deploy
 ```
 
 **Rule 3: Lock Migrations in Production**
+
 ```bash
 # Production: Use 'deploy' (safe, idempotent)
 npx prisma migrate deploy
@@ -667,6 +691,7 @@ npx prisma migrate dev --name <description>
 ### Best Practice 4: Pre-Deployment Checklist
 
 **Always run before pushing:**
+
 ```bash
 npm run doctor                # Validate environment
 npm run lint                  # Check code quality
@@ -676,6 +701,7 @@ npm run build --workspaces   # Build all packages
 ```
 
 **Always check before CI merge:**
+
 - [ ] All CI checks pass (lint, type, test, build)
 - [ ] No `continue-on-error: true` bypasses
 - [ ] Environment variables documented
@@ -796,33 +822,39 @@ echo "✅ CI workflow validation passed"
 ## Part 5: Implementation Roadmap
 
 ### Phase 1: Documentation (Week 1)
+
 - [ ] Create `docs/deployment/CI_CD_FAILURE_PREVENTION.md` (this file)
 - [ ] Create `docs/deployment/ENVIRONMENT_VARIABLES.md`
 - [ ] Create `docs/deployment/GITHUB_SECRETS_SETUP.md`
 
 ### Phase 2: Script Enhancement (Week 1)
+
 - [ ] Update `server/scripts/doctor.ts` with DIRECT_URL check
 - [ ] Create `scripts/ci-preflight-check.sh`
 - [ ] Add doctor script to husky pre-commit
 
 ### Phase 3: Configuration Fix (Week 1)
+
 - [ ] Create `server/.eslintrc.cjs` workspace override
 - [ ] Create `client/.eslintrc.cjs` workspace override
 - [ ] Update root `.eslintrc.cjs` with tsconfig project references
 
 ### Phase 4: CI Workflow Updates (Week 2)
+
 - [ ] Update `main-pipeline.yml` migration-validation job
 - [ ] Fix `deploy-production.yml` lint job (remove continue-on-error)
 - [ ] Add validate-deployment-env job
 - [ ] Add type generation before lint step
 
 ### Phase 5: Testing (Week 2)
+
 - [ ] Implement `tests/ci/eslint-config.test.sh`
 - [ ] Implement `tests/ci/env-validation.test.sh`
 - [ ] Implement `tests/ci/prisma-migration.test.sh`
 - [ ] Implement `tests/ci/workflow-validation.test.sh`
 
 ### Phase 6: Documentation Updates (Week 2)
+
 - [ ] Update CLAUDE.md with new patterns
 - [ ] Update CONTRIBUTING.md with pre-commit checklist
 - [ ] Create runbook for common CI failures
@@ -830,6 +862,7 @@ echo "✅ CI workflow validation passed"
 ## Quick Reference: Common Fixes
 
 ### Fix: "could not find the DIRECT_URL"
+
 ```bash
 # Add to GitHub Actions workflow:
 env:
@@ -841,6 +874,7 @@ DIRECT_URL=postgresql://...
 ```
 
 ### Fix: "ESLint errors in CI but not locally"
+
 ```bash
 # 1. Generate types first
 npm run typecheck -- --noEmit
@@ -853,6 +887,7 @@ npm run lint
 ```
 
 ### Fix: "Missing environment variable in production"
+
 ```bash
 # 1. Document in ENVIRONMENT_VARIABLES.md
 # 2. Add to GitHub Actions secrets
@@ -861,6 +896,7 @@ npm run lint
 ```
 
 ### Fix: "Prisma migration fails in CI"
+
 ```bash
 # Always set both:
 DATABASE_URL=pool://...

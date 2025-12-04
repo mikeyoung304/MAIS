@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "200"
+issue_id: '200'
 tags: [security, xss, validation, landing-page]
 dependencies: []
 ---
@@ -78,17 +78,20 @@ export function isValidImageUrl(url: string): boolean {
 // packages/contracts/src/validators.ts
 import { z } from 'zod';
 
-export const SafeUrlSchema = z.string().url().refine(
-  (url) => {
-    try {
-      const parsed = new URL(url);
-      return ['https:', 'http:'].includes(parsed.protocol);
-    } catch {
-      return false;
-    }
-  },
-  { message: 'URL must use https or http protocol' }
-);
+export const SafeUrlSchema = z
+  .string()
+  .url()
+  .refine(
+    (url) => {
+      try {
+        const parsed = new URL(url);
+        return ['https:', 'http:'].includes(parsed.protocol);
+      } catch {
+        return false;
+      }
+    },
+    { message: 'URL must use https or http protocol' }
+  );
 
 export const SafeImageUrlSchema = SafeUrlSchema.refine(
   (url) => /\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(url),

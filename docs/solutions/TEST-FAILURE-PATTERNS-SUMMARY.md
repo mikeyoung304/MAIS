@@ -27,23 +27,22 @@ During code review of the MAIS scheduling platform, we identified three recurrin
 **Problem:** Tests running multiple database transactions in parallel cause timeouts and deadlocks.
 
 **Symptoms:**
+
 - Test timeouts in CI
 - Non-deterministic failures
 - "Transaction was deadlocked" errors
 - Works locally, fails in CI
 
 **Root Cause:**
+
 ```typescript
 // ❌ BAD: Parallel execution for correctness test
-await Promise.all([
-  service.create(data1),
-  service.create(data2),
-  service.create(data3),
-]);
+await Promise.all([service.create(data1), service.create(data2), service.create(data3)]);
 // Causes transaction contention!
 ```
 
 **Fix:**
+
 ```typescript
 // ✅ GOOD: Sequential execution
 await service.create(data1);
@@ -52,6 +51,7 @@ await service.create(data3);
 ```
 
 **When to Use Parallel:**
+
 - Stress tests (clearly marked)
 - Load testing (with `Promise.allSettled()`)
 - Independent tenants (no shared data)
@@ -63,12 +63,14 @@ await service.create(data3);
 **Problem:** DI container returns `undefined` for dependencies, causing cleanup failures.
 
 **Symptoms:**
+
 - "Cannot read property of undefined" in `afterAll`
 - Tests pass, cleanup fails
 - Mock mode behaves differently than real mode
 - Hard-to-debug null pointer exceptions
 
 **Root Cause:**
+
 ```typescript
 // ❌ BAD: Mock adapter missing from export
 export function buildMockAdapters() {
@@ -86,6 +88,7 @@ afterAll(async () => {
 ```
 
 **Fix:**
+
 ```typescript
 // ✅ GOOD: Export all mock instances
 export function buildMockAdapters() {
@@ -110,6 +113,7 @@ afterAll(async () => {
 ```
 
 **Prevention:**
+
 - Always export all mock instances
 - Add guards before cleanup (`if (dep)`)
 - Validate container in dev mode
@@ -121,12 +125,14 @@ afterAll(async () => {
 **Problem:** Tests creating many records exceed default 5s timeout.
 
 **Symptoms:**
+
 - Test timeouts on bulk operations
 - Works with small data, fails with large
 - Flaky under system load
 - Different behavior on CI vs local
 
 **Root Cause:**
+
 ```typescript
 // ❌ BAD: No timeout for 50 operations
 it('should create 50 packages', async () => {
@@ -137,6 +143,7 @@ it('should create 50 packages', async () => {
 ```
 
 **Fix:**
+
 ```typescript
 // ✅ GOOD: Explicit timeout
 it('should create 50 packages', async () => {
@@ -156,16 +163,17 @@ it('should create 50 packages', async () => {
 **Timeout Guidelines:**
 
 | Operation Size | Recommended Timeout |
-|----------------|---------------------|
-| 1-10 records   | Default (5s) |
-| 10-20 records  | 10s |
-| 20-50 records  | 15-30s |
-| 50-100 records | 30-60s |
-| 100+ records   | Use batch + 60s |
+| -------------- | ------------------- |
+| 1-10 records   | Default (5s)        |
+| 10-20 records  | 10s                 |
+| 20-50 records  | 15-30s              |
+| 50-100 records | 30-60s              |
+| 100+ records   | Use batch + 60s     |
 
 **Timeout Formula:**
+
 ```typescript
-timeout = 5000 + (recordCount * 200)
+timeout = 5000 + recordCount * 200;
 
 // Examples:
 // 10 records  = 5000 + (10 * 200)  = 7000ms
@@ -278,23 +286,27 @@ Use this checklist when writing integration tests:
 ## Integration Test Checklist
 
 ### Execution Strategy
+
 - [ ] Sequential await for correctness tests
 - [ ] Parallel execution ONLY for stress tests
 - [ ] Stress tests use Promise.allSettled()
 - [ ] Stress tests clearly marked in test name
 
 ### Cleanup Safety
+
 - [ ] Guards before all cleanup operations
 - [ ] Finally blocks for guaranteed cleanup
 - [ ] No assumptions about dependency existence
 
 ### Timeout Configuration
+
 - [ ] Default timeout for < 10 operations
 - [ ] Explicit timeout for 10+ operations
 - [ ] Batch operations for 50+ records
 - [ ] Suite-level timeouts for bulk test suites
 
 ### Mock Completeness
+
 - [ ] All adapters exported from buildMockAdapters()
 - [ ] Mock container shape matches real container
 - [ ] No undefined dependencies in DI container
@@ -305,18 +317,21 @@ Use this checklist when writing integration tests:
 ## Impact Metrics
 
 **Before Prevention Strategies:**
+
 - Test flakiness rate: 15-20%
 - False negatives blocking deploys: 3-5 per week
 - Developer time debugging flaky tests: 4-6 hours/week
 - CI pipeline reruns due to timeouts: 20-30%
 
 **After Prevention Strategies (Expected):**
+
 - Test flakiness rate: < 2%
 - False negatives: < 1 per week
 - Debugging time: < 1 hour/week
 - CI reruns: < 5%
 
 **ROI:**
+
 - Time saved: ~5 hours/week per engineer
 - Faster deployments: 30-40% reduction in blocked PRs
 - Improved confidence: Deterministic test results
@@ -375,6 +390,7 @@ A: Check for: race conditions, shared test data, external service dependencies, 
 
 **Last Updated:** 2025-11-28
 **Related Documents:**
+
 - [TEST-FAILURE-PREVENTION-STRATEGIES.md](./TEST-FAILURE-PREVENTION-STRATEGIES.md) - Full guide
 - [PREVENTION-QUICK-REFERENCE.md](./PREVENTION-QUICK-REFERENCE.md) - Daily reference
 - [COMPREHENSIVE-PREVENTION-STRATEGIES.md](./COMPREHENSIVE-PREVENTION-STRATEGIES.md) - All strategies

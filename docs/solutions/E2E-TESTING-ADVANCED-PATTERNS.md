@@ -26,10 +26,14 @@ As E2E test suites grow, helper code gets duplicated across test files:
 
 ```typescript
 // e2e/tests/visual-editor.spec.ts
-async function ensureLoggedIn(page: Page) { /* ... */ }
+async function ensureLoggedIn(page: Page) {
+  /* ... */
+}
 
 // e2e/tests/tenant-signup.spec.ts
-async function ensureLoggedIn(page: Page) { /* ... */ }
+async function ensureLoggedIn(page: Page) {
+  /* ... */
+}
 
 // ❌ DRY violation - same code in 3+ files
 ```
@@ -37,6 +41,7 @@ async function ensureLoggedIn(page: Page) { /* ... */ }
 ### Solution: Extract to Shared Module
 
 **File**: `e2e/helpers/auth.ts`
+
 ```typescript
 import { Page } from '@playwright/test';
 
@@ -56,10 +61,7 @@ export interface AuthToken {
  * Sign up a new tenant and return auth token + details
  * Handles rate limiting gracefully with clear error messages
  */
-export async function signupTenant(
-  page: Page,
-  options: SignupOptions = {}
-): Promise<AuthToken> {
+export async function signupTenant(page: Page, options: SignupOptions = {}): Promise<AuthToken> {
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(7);
 
@@ -76,23 +78,21 @@ export async function signupTenant(
   await page.fill('#confirmPassword', password);
 
   // Wait for response
-  const response = await page.waitForResponse(
-    r => r.url().includes('/v1/auth/signup'),
-    { timeout: 30000 }
-  );
+  const response = await page.waitForResponse((r) => r.url().includes('/v1/auth/signup'), {
+    timeout: 30000,
+  });
 
   if (response.status() === 429) {
     throw new Error(
       'Rate limited: Too many signups. ' +
-      'Note: Limits reset hourly. ' +
-      'Run E2E tests in a different hour.'
+        'Note: Limits reset hourly. ' +
+        'Run E2E tests in a different hour.'
     );
   }
 
   if (response.status() === 409) {
     throw new Error(
-      `Email already registered: ${email}. ` +
-      'Use unique email or run tests in new hour.'
+      `Email already registered: ${email}. ` + 'Use unique email or run tests in new hour.'
     );
   }
 
@@ -137,14 +137,11 @@ export class AuthTokenCache {
 
   async restoreToken(page: Page, token: AuthToken): Promise<void> {
     await page.goto('/');
-    await page.evaluate(
-      (t: AuthToken) => {
-        localStorage.setItem('tenantToken', t.token);
-        localStorage.setItem('tenantId', t.tenantId);
-        localStorage.setItem('tenantSlug', t.slug);
-      },
-      token
-    );
+    await page.evaluate((t: AuthToken) => {
+      localStorage.setItem('tenantToken', t.token);
+      localStorage.setItem('tenantId', t.tenantId);
+      localStorage.setItem('tenantSlug', t.slug);
+    }, token);
 
     // Wait for auth context to update
     await page.waitForLoadState('networkidle');
@@ -162,6 +159,7 @@ export class AuthTokenCache {
 ```
 
 **Usage in Tests**:
+
 ```typescript
 import { AuthTokenCache } from '../helpers/auth';
 
@@ -182,6 +180,7 @@ test.describe('Feature Suite', () => {
 ```
 
 ### Benefits
+
 - ✅ DRY: Code written once, used everywhere
 - ✅ Maintainability: Update once, fixes all tests
 - ✅ Type Safety: AuthToken interface prevents errors
@@ -204,6 +203,7 @@ Some features require testing interactions between multiple tenants:
 ### Solution: Tenant Factory
 
 **File**: `e2e/helpers/tenant.ts`
+
 ```typescript
 import { Page } from '@playwright/test';
 import { AuthTokenCache } from './auth';
@@ -270,6 +270,7 @@ export class TenantFactory {
 ```
 
 **Multi-Tenant Test Example**:
+
 ```typescript
 import { TenantFactory } from '../helpers/tenant';
 
@@ -300,6 +301,7 @@ test.describe('Multi-Tenant Isolation', () => {
 Multiple signups hit the rate limit faster. Solutions:
 
 1. **Run tests at different hours**:
+
    ```bash
    # Hour 1: Run multi-tenant tests
    npm run test:e2e -- multi-tenant.spec.ts
@@ -309,12 +311,13 @@ Multiple signups hit the rate limit faster. Solutions:
    ```
 
 2. **Increase test limit**:
+
    ```typescript
    // server/src/middleware/rateLimiter.ts
    const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.E2E_TEST === '1';
 
    export const signupLimiter = rateLimit({
-     max: isTestEnvironment ? 200 : 5,  // ← Higher for multi-tenant tests
+     max: isTestEnvironment ? 200 : 5, // ← Higher for multi-tenant tests
    });
    ```
 
@@ -340,6 +343,7 @@ Need to test concurrent access without creating many users:
 ### Solution: Browser Context Isolation
 
 **File**: `e2e/helpers/concurrent.ts`
+
 ```typescript
 import { Page, Browser } from '@playwright/test';
 
@@ -356,24 +360,21 @@ export async function simulateConcurrentUsers(
 
   try {
     // Create isolated contexts for each user
-    const contexts = await Promise.all(
-      Array.from({ length: count }, () => browser.newContext())
-    );
+    const contexts = await Promise.all(Array.from({ length: count }, () => browser.newContext()));
 
-    pages = await Promise.all(contexts.map(ctx => ctx.newPage()));
+    pages = await Promise.all(contexts.map((ctx) => ctx.newPage()));
 
     // Run test function concurrently for each page
-    await Promise.all(
-      pages.map((page, index) => testFn(page, index))
-    );
+    await Promise.all(pages.map((page, index) => testFn(page, index)));
   } finally {
     // Cleanup
-    await Promise.all(pages.map(p => p.close()));
+    await Promise.all(pages.map((p) => p.close()));
   }
 }
 ```
 
 **Concurrent Test Example**:
+
 ```typescript
 import { test, expect, Browser } from '@playwright/test';
 import { simulateConcurrentUsers } from '../helpers/concurrent';
@@ -388,10 +389,7 @@ test('concurrent draft editing prevents race condition', async ({ browser }) => 
   // Simulate 3 concurrent users editing the same package
   await simulateConcurrentUsers(browser, 3, async (page, userIndex) => {
     // Each user logs in as same tenant
-    await page.evaluate(
-      (token) => localStorage.setItem('tenantToken', token),
-      tenant.token
-    );
+    await page.evaluate((token) => localStorage.setItem('tenantToken', token), tenant.token);
 
     // All 3 users navigate to visual editor
     await page.goto('/tenant/visual-editor');
@@ -411,10 +409,7 @@ test('concurrent draft editing prevents race condition', async ({ browser }) => 
 
   // Verify: Only last edit should win (application behavior)
   await singlePage.reload();
-  const title = await singlePage
-    .locator('[aria-label="Package title"]')
-    .first()
-    .inputValue();
+  const title = await singlePage.locator('[aria-label="Package title"]').first().inputValue();
 
   // Should be one of the user edits (depending on last write wins)
   expect(title).toMatch(/User [0-2] Edit/);
@@ -446,6 +441,7 @@ E2E tests should also verify performance characteristics:
 ### Solution: Performance Metrics in Tests
 
 **File**: `e2e/helpers/performance.ts`
+
 ```typescript
 import { Page } from '@playwright/test';
 
@@ -461,10 +457,7 @@ export interface PerformanceMetrics {
  * Measure performance metrics during test
  * Helps catch performance regressions
  */
-export async function measurePerformance(
-  page: Page,
-  name: string
-): Promise<PerformanceMetrics> {
+export async function measurePerformance(page: Page, name: string): Promise<PerformanceMetrics> {
   const metrics = await page.evaluate(() => {
     const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
     const paints = performance.getEntriesByType('paint');
@@ -473,8 +466,8 @@ export async function measurePerformance(
     return {
       navigationTime: navigation?.domContentLoadedEventEnd - navigation?.domContentLoadedEventStart,
       loadTime: navigation?.loadEventEnd - navigation?.loadEventStart,
-      firstPaintTime: paints.find(p => p.name === 'first-paint')?.startTime || 0,
-      contentfulPaintTime: paints.find(p => p.name === 'first-contentful-paint')?.startTime || 0,
+      firstPaintTime: paints.find((p) => p.name === 'first-paint')?.startTime || 0,
+      contentfulPaintTime: paints.find((p) => p.name === 'first-contentful-paint')?.startTime || 0,
       interactiveTime: (largestContentfulPaint[0] as any)?.startTime || 0,
     };
   });
@@ -497,7 +490,7 @@ export function assertPerformance(
 ): void {
   const defaults = {
     navigationTime: 1000, // 1 second
-    loadTime: 2000,       // 2 seconds
+    loadTime: 2000, // 2 seconds
     contentfulPaintTime: 3000, // 3 seconds
     ...threshold,
   };
@@ -517,6 +510,7 @@ export function assertPerformance(
 ```
 
 **Performance Test Example**:
+
 ```typescript
 import { measurePerformance, assertPerformance } from '../helpers/performance';
 
@@ -545,17 +539,19 @@ test('visual editor loads performantly', async ({ page }) => {
 ### Common Causes
 
 1. **Async race conditions**
+
    ```typescript
    // ❌ FLAKY: Assumes data loaded after .click()
    await editButton.click();
    const value = await field.inputValue();
 
    // ✅ FIXED: Wait for API response
-   await page.waitForResponse(r => r.url().includes('/api/edit'));
+   await page.waitForResponse((r) => r.url().includes('/api/edit'));
    const value = await field.inputValue();
    ```
 
 2. **Timing issues in CI**
+
    ```typescript
    // ❌ FLAKY: 5 second timeout too aggressive in CI
    await expect(element).toBeVisible({ timeout: 5000 });
@@ -566,6 +562,7 @@ test('visual editor loads performantly', async ({ page }) => {
    ```
 
 3. **Selector instability**
+
    ```typescript
    // ❌ FLAKY: CSS selector brittle to style changes
    await page.locator('button.btn-blue.btn-lg.btn-primary').click();
@@ -577,6 +574,7 @@ test('visual editor loads performantly', async ({ page }) => {
 ### Debug Strategy
 
 **File**: `e2e/helpers/debug.ts`
+
 ```typescript
 import { Page } from '@playwright/test';
 
@@ -586,17 +584,17 @@ import { Page } from '@playwright/test';
  */
 export async function enableDebug(page: Page): Promise<void> {
   // Capture all console messages
-  page.on('console', msg => {
+  page.on('console', (msg) => {
     console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`);
   });
 
   // Capture all network requests
-  page.on('response', response => {
+  page.on('response', (response) => {
     console.log(`[NETWORK] ${response.status()} ${response.url()}`);
   });
 
   // Capture uncaught exceptions
-  page.on('pageerror', error => {
+  page.on('pageerror', (error) => {
     console.log(`[ERROR] ${error.message}`);
   });
 }
@@ -630,6 +628,7 @@ export async function debugWait(
 ```
 
 **Usage**:
+
 ```typescript
 test('flaky test with debug', async ({ page }) => {
   await enableDebug(page);
@@ -659,6 +658,7 @@ test('flaky test with debug', async ({ page }) => {
 ### Problem
 
 Tests work locally but fail in CI due to:
+
 - Different timing (CI is slower)
 - Different environment variables
 - Server startup delays
@@ -667,6 +667,7 @@ Tests work locally but fail in CI due to:
 ### Solution: CI-Aware Test Configuration
 
 **File**: `e2e/playwright.config.ts`
+
 ```typescript
 import { defineConfig, devices } from '@playwright/test';
 
@@ -694,15 +695,14 @@ export default defineConfig({
   },
 
   // Reporter for CI
-  reporter: process.env.CI
-    ? [['html'], ['junit', { outputFile: 'test-results.xml' }]]
-    : [['html']],
+  reporter: process.env.CI ? [['html'], ['junit', { outputFile: 'test-results.xml' }]] : [['html']],
 });
 ```
 
 ### Environment Variables for CI
 
 **GitHub Actions Example** (`.github/workflows/e2e.yml`):
+
 ```yaml
 name: E2E Tests
 
@@ -766,6 +766,7 @@ const package = {
 ### Solution: Data Factories
 
 **File**: `e2e/fixtures/data-factories.ts`
+
 ```typescript
 import { faker } from '@faker-js/faker';
 
@@ -812,6 +813,7 @@ export function createTenantData(overrides?: Partial<typeof defaultTenant>) {
 ```
 
 **Factory Usage**:
+
 ```typescript
 import { createPackageData, createTenantData } from '../fixtures/data-factories';
 
@@ -854,12 +856,12 @@ test('creates multiple packages', async ({ page }) => {
 
 ### Test Execution Time
 
-| Pattern | Time | Notes |
-|---------|------|-------|
-| Serial 10 tests | ~30s | Safe, shared state |
-| Parallel 10 tests | ~5s | Risky without isolation |
-| With auth token caching | ~30s | 1 signup + 9 tests |
-| Without caching (10 signups) | 60s+ | Rate limit risk |
+| Pattern                      | Time | Notes                   |
+| ---------------------------- | ---- | ----------------------- |
+| Serial 10 tests              | ~30s | Safe, shared state      |
+| Parallel 10 tests            | ~5s  | Risky without isolation |
+| With auth token caching      | ~30s | 1 signup + 9 tests      |
+| Without caching (10 signups) | 60s+ | Rate limit risk         |
 
 ### Memory Usage
 
@@ -877,15 +879,15 @@ test('creates multiple packages', async ({ page }) => {
 
 ## Common Patterns Summary
 
-| Pattern | Use Case | Complexity |
-|---------|----------|------------|
-| **Token Caching** | Avoid repeated signups | Low |
-| **Shared Helpers** | DRY test code | Medium |
-| **Tenant Factory** | Multi-tenant tests | Medium |
-| **Concurrent Users** | Race condition testing | High |
-| **Performance Metrics** | Regression detection | Medium |
-| **Data Factories** | Consistent test data | Medium |
-| **Debug Helpers** | Flaky test diagnosis | Medium |
+| Pattern                 | Use Case               | Complexity |
+| ----------------------- | ---------------------- | ---------- |
+| **Token Caching**       | Avoid repeated signups | Low        |
+| **Shared Helpers**      | DRY test code          | Medium     |
+| **Tenant Factory**      | Multi-tenant tests     | Medium     |
+| **Concurrent Users**    | Race condition testing | High       |
+| **Performance Metrics** | Regression detection   | Medium     |
+| **Data Factories**      | Consistent test data   | Medium     |
+| **Debug Helpers**       | Flaky test diagnosis   | Medium     |
 
 ---
 
@@ -895,4 +897,3 @@ test('creates multiple packages', async ({ page }) => {
 - `E2E-TESTING-QUICK-REFERENCE.md` - Quick lookup guide
 - Playwright Documentation: https://playwright.dev/docs/api/class-test
 - Faker.js Documentation: https://fakerjs.dev/
-

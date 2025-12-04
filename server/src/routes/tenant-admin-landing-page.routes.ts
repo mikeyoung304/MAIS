@@ -29,9 +29,7 @@ import { NotFoundError, ValidationError } from '../lib/errors';
  * @param landingPageService - Landing page service instance
  * @returns Express router with tenant admin landing page endpoints
  */
-export function createTenantAdminLandingPageRoutes(
-  landingPageService: LandingPageService
-): Router {
+export function createTenantAdminLandingPageRoutes(landingPageService: LandingPageService): Router {
   const router = Router();
 
   /**

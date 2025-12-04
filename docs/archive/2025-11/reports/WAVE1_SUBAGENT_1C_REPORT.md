@@ -13,6 +13,7 @@
 This report provides a comprehensive analysis of the Elope server's current test coverage and outlines a detailed plan to achieve 70% coverage. The analysis reveals a codebase with 41,145 lines of production code, approximately 129 existing test cases, but significant gaps in service and repository coverage.
 
 **Key Findings**:
+
 - Current coverage baseline: ~40-42% (from vitest.config.ts thresholds)
 - Major gaps: 5 services with 0% coverage, limited payment/commission testing
 - Test failures blocking coverage report generation: 19 failed tests preventing accurate measurement
@@ -49,7 +50,8 @@ Test Failures:             19 failures (need fixing before coverage runs)
 
 ### 1.3 Test Distribution
 
-**Unit Tests** (test/*.spec.ts):
+**Unit Tests** (test/\*.spec.ts):
+
 - ✓ availability.service.spec.ts (tested)
 - ✓ booking.service.spec.ts (tested, but 2 failures - missing IdempotencyService mock)
 - ✓ catalog.service.spec.ts (tested)
@@ -58,7 +60,8 @@ Test Failures:             19 failures (need fixing before coverage runs)
 - ✓ middleware tests (auth, error-handler)
 - ✓ controllers/webhooks.controller.spec.ts (tested)
 
-**Integration Tests** (test/integration/*.spec.ts):
+**Integration Tests** (test/integration/\*.spec.ts):
+
 - ✓ booking-race-conditions.spec.ts (683 lines, some skipped)
 - ✓ booking-repository.integration.spec.ts (458 lines, 2 failures)
 - ✓ cache-isolation.integration.spec.ts (675 lines)
@@ -67,12 +70,14 @@ Test Failures:             19 failures (need fixing before coverage runs)
 - ✓ webhook-repository.integration.spec.ts (439 lines)
 
 **HTTP Tests**:
+
 - ✓ packages.test.ts (tested, 1 timeout failure)
 - ✓ webhooks.http.spec.ts (tested)
 
 ### 1.4 Files with 0% Coverage
 
 **Services** (5 critical services untested):
+
 ```
 ❌ commission.service.ts         (356 lines) - CRITICAL: Payment commission calculations
 ❌ idempotency.service.ts        (307 lines) - CRITICAL: Duplicate payment prevention
@@ -83,6 +88,7 @@ Test Failures:             19 failures (need fixing before coverage runs)
 ```
 
 **Adapters** (Limited coverage):
+
 ```
 ⚠️ stripe.adapter.ts             (227 lines) - Partial coverage via integration tests
 ⚠️ prisma repositories           (varies)    - Partial coverage via integration tests
@@ -95,12 +101,14 @@ Test Failures:             19 failures (need fixing before coverage runs)
 ```
 
 **Controllers** (Minimal coverage):
+
 ```
 ❌ platform-admin.controller.ts  (unknown)   - Admin operations
 ❌ tenant-admin.controller.ts    (unknown)   - Tenant management
 ```
 
 **Routes** (15 route files, mostly untested):
+
 ```
 ❌ admin.routes.ts
 ❌ admin-packages.routes.ts
@@ -118,6 +126,7 @@ Test Failures:             19 failures (need fixing before coverage runs)
 ### 1.5 Critical Paths Without Tests
 
 **Payment Processing Flow** (HIGH RISK):
+
 ```
 1. Checkout session creation → Stripe API
 2. Payment intent creation
@@ -126,27 +135,33 @@ Test Failures:             19 failures (need fixing before coverage runs)
 5. Commission calculation
 6. Booking confirmation
 ```
+
 **Coverage**: ~50% (booking service tested, but commission/idempotency/payment logic gaps)
 
 **Multi-Tenant Data Isolation** (HIGH RISK):
+
 ```
 1. Tenant identification from API key
 2. Query filtering by tenantId
 3. Cross-tenant data leakage prevention
 4. Commission rate per tenant
 ```
+
 **Coverage**: ~60% (integration tests exist, but no focused isolation tests)
 
 **Race Condition Prevention** (MEDIUM RISK):
+
 ```
 1. Concurrent booking attempts
 2. Duplicate webhook handling
 3. Payment idempotency
 4. Cache invalidation
 ```
+
 **Coverage**: ~70% (good integration test coverage, but some tests skipped/flaky)
 
 **Cancellation & Refund Flow** (MEDIUM RISK):
+
 ```
 1. Booking cancellation validation
 2. Refund amount calculation
@@ -154,6 +169,7 @@ Test Failures:             19 failures (need fixing before coverage runs)
 4. Stripe refund processing
 5. Status updates
 ```
+
 **Coverage**: ~0% (NO TESTS FOUND)
 
 ---
@@ -183,6 +199,7 @@ TOTAL ESTIMATED            ~4,800 lines uncovered
 ### 2.2 Critical Uncovered Logic
 
 **1. Commission Calculation Service** (commission.service.ts):
+
 - `calculateCommission()` - Base commission calculation with rounding
 - `calculateBookingTotal()` - Package + add-ons + commission
 - `calculateRefundCommission()` - Proportional refund calculation
@@ -192,6 +209,7 @@ TOTAL ESTIMATED            ~4,800 lines uncovered
 - Edge cases: Zero commission, minimum commission, maximum commission
 
 **2. Idempotency Service** (idempotency.service.ts):
+
 - `generateKey()` - Deterministic key generation (SHA-256)
 - `checkAndStore()` - Atomic check-and-insert with unique constraint
 - `getStoredResponse()` - Cache hit/miss with expiration check
@@ -203,6 +221,7 @@ TOTAL ESTIMATED            ~4,800 lines uncovered
 - Race condition handling in checkout flow
 
 **3. Stripe Connect Service** (stripe-connect.service.ts):
+
 - `createConnectedAccount()` - Express account creation
 - `getAccountLink()` - Onboarding link generation
 - `getAccountStatus()` - Check onboarding completion
@@ -212,6 +231,7 @@ TOTAL ESTIMATED            ~4,800 lines uncovered
 - Multi-tenant account isolation
 
 **4. Payment Adapter** (stripe.adapter.ts):
+
 - `createConnectCheckoutSession()` - Connect checkout with application fee
 - `refund()` - Full and partial refunds
 - Application fee validation (0.5%-50% range)
@@ -219,6 +239,7 @@ TOTAL ESTIMATED            ~4,800 lines uncovered
 - Error handling for Stripe API failures
 
 **5. Webhook Processing**:
+
 - Duplicate event detection (covered by integration tests)
 - Signature verification (covered)
 - Metadata validation with Zod (covered)
@@ -226,6 +247,7 @@ TOTAL ESTIMATED            ~4,800 lines uncovered
 - Error tracking and retry logic (partially covered)
 
 **6. Booking Service Edge Cases**:
+
 - Tenant not found error handling
 - Package not found error handling
 - Idempotency cache hit scenario
@@ -236,6 +258,7 @@ TOTAL ESTIMATED            ~4,800 lines uncovered
 ### 2.3 Test Failures Blocking Coverage
 
 **Current Failures** (19 total):
+
 1. **BookingService tests** (2 failures):
    - Missing `IdempotencyService` mock in test setup
    - Error: `Cannot read properties of undefined (reading 'generateCheckoutKey')`
@@ -256,18 +279,21 @@ TOTAL ESTIMATED            ~4,800 lines uncovered
 ### 2.4 Risk Assessment of Untested Code
 
 **Critical Risk** (P0 - Must Test):
+
 - Commission calculation errors could cause revenue loss
 - Idempotency failures could lead to double-charging customers
 - Stripe Connect misconfiguration could block tenant payments
 - Webhook duplicate processing could create duplicate bookings
 
 **High Risk** (P1 - Should Test):
+
 - Multi-tenant data leakage in repositories
 - Refund calculation errors
 - Payment adapter error handling
 - Race conditions in high-traffic scenarios
 
 **Medium Risk** (P2 - Nice to Test):
+
 - Route handlers (mostly thin wrappers)
 - Admin controllers (internal tools)
 - Upload service (file handling)
@@ -281,6 +307,7 @@ TOTAL ESTIMATED            ~4,800 lines uncovered
 
 **Total Tests to Add**: 68 tests
 **Categories**:
+
 - Unit Tests: 38 tests
 - Integration Tests: 20 tests
 - Race Condition Tests: 10 tests
@@ -290,6 +317,7 @@ TOTAL ESTIMATED            ~4,800 lines uncovered
 ### 3.2 Phase 1: Critical Path Tests (P0) - 28 Tests
 
 #### 3.2.1 Commission Service Tests (12 tests)
+
 **File**: `test/services/commission.service.spec.ts`
 
 ```typescript
@@ -315,11 +343,13 @@ describe('CommissionService', () => {
 ```
 
 **Dependencies**:
+
 - Mock Prisma client for tenant/add-on queries
 - Test data: Various commission percentages (5%, 12%, 15%, 45%)
 - Edge cases: $0.01 booking, $10,000 booking
 
 #### 3.2.2 Idempotency Service Tests (10 tests)
+
 **File**: `test/services/idempotency.service.spec.ts`
 
 ```typescript
@@ -345,11 +375,13 @@ describe('IdempotencyService', () => {
 ```
 
 **Dependencies**:
+
 - Mock Prisma client with unique constraint error simulation
 - Test database for integration variant
 - Time mocking for expiration testing
 
 #### 3.2.3 Stripe Connect Service Tests (6 tests)
+
 **File**: `test/services/stripe-connect.service.spec.ts`
 
 ```typescript
@@ -369,6 +401,7 @@ describe('StripeConnectService', () => {
 ```
 
 **Dependencies**:
+
 - Mock Stripe API client
 - Mock Prisma for tenant queries
 - Mock EncryptionService for secrets handling
@@ -376,6 +409,7 @@ describe('StripeConnectService', () => {
 ### 3.3 Phase 2: Service & Adapter Tests (P1) - 30 Tests
 
 #### 3.3.1 Payment Adapter Tests (8 tests)
+
 **File**: `test/adapters/stripe.adapter.spec.ts`
 
 ```typescript
@@ -397,11 +431,13 @@ describe('StripePaymentAdapter', () => {
 ```
 
 **Dependencies**:
+
 - Mock Stripe SDK
 - Fixture data: checkout session responses
 - Application fee validation test cases
 
 #### 3.3.2 Booking Service Edge Cases (6 tests)
+
 **File**: `test/services/booking.service.edge-cases.spec.ts`
 
 ```typescript
@@ -421,11 +457,13 @@ describe('BookingService - Edge Cases', () => {
 ```
 
 **Dependencies**:
+
 - Mock IdempotencyService
 - Mock TenantRepository with various onboarding states
 - Mock PaymentProvider for both checkout methods
 
 #### 3.3.3 Repository Adapter Tests (8 tests)
+
 **File**: `test/adapters/prisma/tenant.repository.spec.ts`
 **File**: `test/adapters/prisma/user.repository.spec.ts`
 
@@ -446,10 +484,12 @@ describe('PrismaUserRepository', () => {
 ```
 
 **Dependencies**:
+
 - Test database (integration tests)
 - Tenant and user fixtures
 
 #### 3.3.4 Tenant Auth Service Tests (8 tests)
+
 **File**: `test/services/tenant-auth.service.spec.ts`
 
 ```typescript
@@ -469,6 +509,7 @@ describe('TenantAuthService', () => {
 ```
 
 **Dependencies**:
+
 - Mock API key service
 - Mock tenant repository
 - Cache service mock
@@ -476,6 +517,7 @@ describe('TenantAuthService', () => {
 ### 3.4 Phase 3: Integration & E2E Tests (P1) - 10 Tests
 
 #### 3.4.1 Payment Flow Integration Tests (6 tests)
+
 **File**: `test/integration/payment-flow.integration.spec.ts`
 
 ```typescript
@@ -495,11 +537,13 @@ describe('Payment Flow - End-to-End', () => {
 ```
 
 **Dependencies**:
+
 - Test database with full schema
 - Mock Stripe webhook events
 - Complete service initialization
 
 #### 3.4.2 Cancellation & Refund Flow Tests (5 tests)
+
 **File**: `test/integration/cancellation-flow.integration.spec.ts`
 
 ```typescript
@@ -516,6 +560,7 @@ describe('Cancellation & Refund Flow', () => {
 ```
 
 **Dependencies**:
+
 - Test database with booking fixtures
 - Mock Stripe refund API
 - Commission service integration
@@ -524,6 +569,7 @@ describe('Cancellation & Refund Flow', () => {
 ### 3.5 Phase 4: Race Condition & Stress Tests (P2) - 10 Tests
 
 #### 3.5.1 Advanced Race Condition Tests (10 tests)
+
 **File**: `test/integration/race-conditions-advanced.spec.ts`
 
 ```typescript
@@ -551,6 +597,7 @@ describe('Advanced Race Conditions', () => {
 ```
 
 **Dependencies**:
+
 - Test database with SERIALIZABLE transactions
 - Promise.all() for concurrent execution
 - Lock timeout simulation
@@ -577,6 +624,7 @@ Time Required   0h         8h          20h         25h         25h
 ### 4.2 Path to 70% Coverage
 
 **Phase 1: Critical Path Tests** (P0 Priority)
+
 - **Tests Added**: 28 tests
 - **Coverage Increase**: +15% (40% → 55%)
 - **Focus**: Commission, Idempotency, Stripe Connect
@@ -584,6 +632,7 @@ Time Required   0h         8h          20h         25h         25h
 - **Blocker**: Must fix 19 existing test failures first
 
 **Phase 2: Service & Adapter Tests** (P1 Priority)
+
 - **Tests Added**: 30 tests (cumulative: 58)
 - **Coverage Increase**: +13% (55% → 68%)
 - **Focus**: Payment adapter, booking edge cases, repositories
@@ -591,6 +640,7 @@ Time Required   0h         8h          20h         25h         25h
 - **Prerequisites**: Phase 1 complete, test infrastructure stable
 
 **Phase 3: Integration & Race Conditions** (P1/P2 Priority)
+
 - **Tests Added**: 10 tests (cumulative: 68)
 - **Coverage Increase**: +4% (68% → 72%)
 - **Focus**: E2E payment flow, cancellation/refund, advanced race conditions
@@ -602,12 +652,14 @@ Time Required   0h         8h          20h         25h         25h
 ### 4.3 Validation Strategy
 
 After implementing tests:
+
 1. Run `npm run test:coverage` to verify coverage
 2. Check coverage/index.html for detailed breakdown
 3. Identify any remaining gaps in critical files
 4. Add targeted tests to reach exactly 70%
 
 Expected coverage report sections to review:
+
 - `src/services/` - Should show >80% coverage
 - `src/adapters/` - Should show >70% coverage
 - `src/routes/` - May remain <50% (thin wrappers, lower priority)
@@ -619,6 +671,7 @@ Expected coverage report sections to review:
 ### 5.1 Mock Services Needed
 
 **Stripe SDK Mock**:
+
 ```typescript
 // test/mocks/stripe.mock.ts
 export class MockStripe {
@@ -626,34 +679,35 @@ export class MockStripe {
     sessions: {
       create: vi.fn().mockResolvedValue({
         id: 'cs_test_123',
-        url: 'https://checkout.stripe.test/pay/cs_test_123'
-      })
-    }
+        url: 'https://checkout.stripe.test/pay/cs_test_123',
+      }),
+    },
   };
 
   accounts = {
     create: vi.fn().mockResolvedValue({
       id: 'acct_test_123',
       type: 'express',
-      charges_enabled: false
-    })
+      charges_enabled: false,
+    }),
   };
 
   refunds = {
     create: vi.fn().mockResolvedValue({
       id: 're_test_123',
       amount: 50000,
-      status: 'succeeded'
-    })
+      status: 'succeeded',
+    }),
   };
 
   webhooks = {
-    constructEvent: vi.fn() // Returns mock Stripe.Event
+    constructEvent: vi.fn(), // Returns mock Stripe.Event
   };
 }
 ```
 
 **Prisma Client Mock**:
+
 ```typescript
 // test/mocks/prisma.mock.ts
 export function createMockPrisma() {
@@ -661,39 +715,41 @@ export function createMockPrisma() {
     tenant: {
       findUnique: vi.fn(),
       findMany: vi.fn(),
-      update: vi.fn()
+      update: vi.fn(),
     },
     booking: {
       create: vi.fn(),
       findFirst: vi.fn(),
-      findMany: vi.fn()
+      findMany: vi.fn(),
     },
     addOn: {
-      findMany: vi.fn()
+      findMany: vi.fn(),
     },
     idempotencyKey: {
       create: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
-      delete: vi.fn()
+      delete: vi.fn(),
     },
-    $transaction: vi.fn((callback) => callback(createMockPrisma()))
+    $transaction: vi.fn((callback) => callback(createMockPrisma())),
   };
 }
 ```
 
 **Encryption Service Mock**:
+
 ```typescript
 // test/mocks/encryption.mock.ts
 export const mockEncryptionService = {
   encrypt: vi.fn((data) => `encrypted_${data}`),
-  decrypt: vi.fn((data) => data.replace('encrypted_', ''))
+  decrypt: vi.fn((data) => data.replace('encrypted_', '')),
 };
 ```
 
 ### 5.2 Fixture Data Needed
 
 **Tenants**:
+
 ```typescript
 // test/fixtures/tenants.ts
 export const testTenants = {
@@ -703,7 +759,7 @@ export const testTenants = {
     name: 'Test Vendor LLC',
     commissionPercent: 12.0,
     stripeAccountId: null,
-    stripeOnboarded: false
+    stripeOnboarded: false,
   },
 
   connected: {
@@ -712,7 +768,7 @@ export const testTenants = {
     name: 'Connected Vendor LLC',
     commissionPercent: 15.0,
     stripeAccountId: 'acct_test_connected',
-    stripeOnboarded: true
+    stripeOnboarded: true,
   },
 
   highCommission: {
@@ -721,12 +777,13 @@ export const testTenants = {
     name: 'Premium Vendor',
     commissionPercent: 45.0,
     stripeAccountId: null,
-    stripeOnboarded: false
-  }
+    stripeOnboarded: false,
+  },
 };
 ```
 
 **Packages**:
+
 ```typescript
 // test/fixtures/packages.ts
 export const testPackages = {
@@ -735,7 +792,7 @@ export const testPackages = {
     slug: 'basic-elopement',
     title: 'Basic Elopement',
     priceCents: 50000, // $500
-    description: 'Simple ceremony'
+    description: 'Simple ceremony',
   },
 
   premium: {
@@ -743,12 +800,13 @@ export const testPackages = {
     slug: 'premium-package',
     title: 'Premium Wedding',
     priceCents: 250000, // $2,500
-    description: 'Full service package'
-  }
+    description: 'Full service package',
+  },
 };
 ```
 
 **Add-ons**:
+
 ```typescript
 // test/fixtures/addons.ts
 export const testAddOns = {
@@ -756,19 +814,20 @@ export const testAddOns = {
     id: 'addon_photo_test',
     title: 'Photography Add-on',
     priceCents: 50000, // $500
-    packageId: 'pkg_basic_test'
+    packageId: 'pkg_basic_test',
   },
 
   flowers: {
     id: 'addon_flowers_test',
     title: 'Floral Arrangement',
     priceCents: 15000, // $150
-    packageId: 'pkg_basic_test'
-  }
+    packageId: 'pkg_basic_test',
+  },
 };
 ```
 
 **Stripe Webhook Events**:
+
 ```typescript
 // test/fixtures/stripe-events.ts
 export const stripeEvents = {
@@ -787,10 +846,10 @@ export const stripeEvents = {
           coupleName: 'Jane & John',
           addOnIds: JSON.stringify(['addon_photo_test']),
           commissionAmount: '7200',
-          commissionPercent: '12.0'
-        }
-      }
-    }
+          commissionPercent: '12.0',
+        },
+      },
+    },
   },
 
   paymentFailed: {
@@ -801,15 +860,16 @@ export const stripeEvents = {
         id: 'pi_test_failed',
         status: 'failed',
         last_payment_error: {
-          message: 'Your card was declined'
-        }
-      }
-    }
-  }
+          message: 'Your card was declined',
+        },
+      },
+    },
+  },
 };
 ```
 
 **Bookings**:
+
 ```typescript
 // test/fixtures/bookings.ts
 export const testBookings = {
@@ -824,14 +884,15 @@ export const testBookings = {
     commissionAmount: 7200,
     commissionPercent: 12.0,
     status: 'PAID' as const,
-    createdAt: '2025-01-01T00:00:00Z'
-  }
+    createdAt: '2025-01-01T00:00:00Z',
+  },
 };
 ```
 
 ### 5.3 Test Helper Utilities
 
 **Commission Test Helper**:
+
 ```typescript
 // test/helpers/commission.helper.ts
 export function calculateExpectedCommission(
@@ -840,7 +901,7 @@ export function calculateExpectedCommission(
 ): { amount: number; percent: number } {
   const calculated = Math.ceil(amount * (percent / 100));
   const minFee = Math.ceil(amount * 0.005);
-  const maxFee = Math.ceil(amount * 0.50);
+  const maxFee = Math.ceil(amount * 0.5);
 
   const finalAmount = Math.max(minFee, Math.min(maxFee, calculated));
 
@@ -849,6 +910,7 @@ export function calculateExpectedCommission(
 ```
 
 **Idempotency Test Helper**:
+
 ```typescript
 // test/helpers/idempotency.helper.ts
 export function simulateRaceCondition(
@@ -857,21 +919,26 @@ export function simulateRaceCondition(
   attempts: number
 ): Promise<boolean[]> {
   return Promise.all(
-    Array(attempts).fill(null).map(() =>
-      service.checkAndStore(key)
-    )
+    Array(attempts)
+      .fill(null)
+      .map(() => service.checkAndStore(key))
   );
 }
 ```
 
 **Database Cleanup Helper**:
+
 ```typescript
 // test/helpers/db-cleanup.ts
 export async function cleanupTestData(prisma: PrismaClient, tenantId: string) {
   await prisma.booking.deleteMany({ where: { tenantId } });
   await prisma.addOn.deleteMany({ where: { tenantId } });
   await prisma.package.deleteMany({ where: { tenantId } });
-  await prisma.idempotencyKey.deleteMany({ where: { /* all */ } });
+  await prisma.idempotencyKey.deleteMany({
+    where: {
+      /* all */
+    },
+  });
   await prisma.customer.deleteMany({ where: { tenantId } });
 }
 ```
@@ -885,24 +952,32 @@ export async function cleanupTestData(prisma: PrismaClient, tenantId: string) {
 **CRITICAL**: Must be completed before adding new tests.
 
 **Task 1**: Fix BookingService test failures (2 failures)
+
 - File: `test/booking.service.spec.ts`
 - Issue: Missing `idempotencyService` mock
 - Fix:
+
   ```typescript
   const idempotencyService = {
     generateCheckoutKey: vi.fn().mockReturnValue('checkout_test_key_123'),
     checkAndStore: vi.fn().mockResolvedValue(true),
     getStoredResponse: vi.fn().mockResolvedValue(null),
-    updateResponse: vi.fn().mockResolvedValue(undefined)
+    updateResponse: vi.fn().mockResolvedValue(undefined),
   };
 
   service = new BookingService(
-    bookingRepo, catalogRepo, eventEmitter, paymentProvider,
-    commissionService, tenantRepo, idempotencyService // Add this
+    bookingRepo,
+    catalogRepo,
+    eventEmitter,
+    paymentProvider,
+    commissionService,
+    tenantRepo,
+    idempotencyService // Add this
   );
   ```
 
 **Task 2**: Fix integration test schema errors (16 failures)
+
 - Files: `test/integration/booking-*.spec.ts`
 - Issue: `Customer` model queries failing with "Unknown argument 'tenantId'"
 - Investigation needed: Check if schema migration applied correctly
@@ -912,6 +987,7 @@ export async function cleanupTestData(prisma: PrismaClient, tenantId: string) {
   3. Run pending migrations: `npx prisma migrate dev`
 
 **Task 3**: Fix HTTP test timeout (1 failure)
+
 - File: `test/http/packages.test.ts`
 - Issue: Test timing out after 5000ms
 - Fix: Increase timeout or debug database connection:
@@ -928,17 +1004,20 @@ export async function cleanupTestData(prisma: PrismaClient, tenantId: string) {
 **Priority**: P0 (Must complete before launch)
 
 **Tests to Implement**:
+
 1. CommissionService (12 tests) - 3 hours
 2. IdempotencyService (10 tests) - 3 hours
 3. StripeConnectService (6 tests) - 2 hours
 
 **Success Criteria**:
+
 - All 28 tests passing
 - Coverage increases to ~55%
 - Commission calculations validated for all edge cases
 - Idempotency prevents duplicate charges
 
 **Dependencies**:
+
 - Test failures fixed (pre-requisite)
 - Mock Stripe SDK created
 - Mock Prisma client available
@@ -950,18 +1029,21 @@ export async function cleanupTestData(prisma: PrismaClient, tenantId: string) {
 **Priority**: P1 (Required for 70% coverage)
 
 **Tests to Implement**:
+
 1. Payment Adapter (8 tests) - 3 hours
 2. Booking Service Edge Cases (6 tests) - 2 hours
 3. Repository Adapters (8 tests) - 4 hours
 4. Tenant Auth Service (8 tests) - 3 hours
 
 **Success Criteria**:
+
 - All 30 additional tests passing (58 total)
 - Coverage reaches ~68%
 - Payment flows fully validated
 - Multi-tenant isolation confirmed
 
 **Dependencies**:
+
 - Phase 1 complete
 - Fixture data created
 - Test database stable
@@ -973,16 +1055,19 @@ export async function cleanupTestData(prisma: PrismaClient, tenantId: string) {
 **Priority**: P1/P2 (Polish to exceed 70%)
 
 **Tests to Implement**:
+
 1. Payment Flow Integration (6 tests) - 3 hours
 2. Cancellation & Refund Flow (5 tests) - 2 hours
 
 **Success Criteria**:
+
 - All 10 additional tests passing (68 total)
 - Coverage exceeds 70% target
 - E2E flows validated
 - Refund logic confirmed
 
 **Dependencies**:
+
 - Phase 2 complete
 - Full integration test setup
 - Mock webhook delivery
@@ -1042,6 +1127,7 @@ TARGET COVERAGE: 70%+
 ### 8.1 Risks & Mitigation Strategies
 
 **Risk 1: Test Failures Block Progress**
+
 - **Likelihood**: High (19 failures currently)
 - **Impact**: High (can't measure coverage)
 - **Mitigation**:
@@ -1050,6 +1136,7 @@ TARGET COVERAGE: 70%+
   - Add to CI/CD checks to prevent regression
 
 **Risk 2: Mocking Complexity Slows Development**
+
 - **Likelihood**: Medium
 - **Impact**: Medium (could double time estimates)
 - **Mitigation**:
@@ -1058,6 +1145,7 @@ TARGET COVERAGE: 70%+
   - Use existing fakes (FakeBookingRepository, etc.)
 
 **Risk 3: Integration Tests Are Flaky**
+
 - **Likelihood**: Medium (some tests already skipped)
 - **Impact**: High (unreliable coverage measurement)
 - **Mitigation**:
@@ -1066,6 +1154,7 @@ TARGET COVERAGE: 70%+
   - Skip flaky tests initially, stabilize later
 
 **Risk 4: Coverage Doesn't Reach 70% After All Tests**
+
 - **Likelihood**: Low
 - **Impact**: Medium
 - **Mitigation**:
@@ -1074,6 +1163,7 @@ TARGET COVERAGE: 70%+
   - Identify gaps early and add targeted tests
 
 **Risk 5: Time Estimates Too Optimistic**
+
 - **Likelihood**: Medium
 - **Impact**: Medium (deadline pressure)
 - **Mitigation**:
@@ -1156,6 +1246,7 @@ server/test/
 After implementing tests, the coverage report should show:
 
 **Expected Coverage by Directory**:
+
 ```
 src/services/         →  85-90% (high business logic density)
 src/adapters/prisma/  →  75-80% (integration tests cover most)
@@ -1166,10 +1257,12 @@ src/lib/              →  50-60% (utilities, lower priority)
 ```
 
 **Files That Should Show 100% Coverage**:
+
 - `commission.service.ts` - Pure business logic
 - `idempotency.service.ts` - Critical safety mechanism
 
 **Files That Can Remain <50% Coverage**:
+
 - Route files (thin wrappers around services)
 - Type definition files
 - Configuration files
@@ -1181,6 +1274,7 @@ src/lib/              →  50-60% (utilities, lower priority)
 This test coverage assessment provides a comprehensive roadmap to increase coverage from ~40% to 70%+. The plan prioritizes critical business logic (payment processing, commission calculations, idempotency) while maintaining realistic time estimates.
 
 **Key Takeaways**:
+
 1. **68 new tests** required across 3 phases
 2. **25 hours** of implementation time (excluding test failure fixes)
 3. **+32% coverage increase** projected (40% → 72%)
@@ -1188,6 +1282,7 @@ This test coverage assessment provides a comprehensive roadmap to increase cover
 5. **Phase 1 (P0)** must be completed before launch
 
 **Next Steps**:
+
 1. Review and approve this test plan
 2. Fix 19 existing test failures (4 hours)
 3. Assign Subagent 2C to implement tests in Wave 2
@@ -1195,6 +1290,7 @@ This test coverage assessment provides a comprehensive roadmap to increase cover
 5. Adjust plan if coverage projections don't match reality
 
 **Handoff to Subagent 2C** (Wave 2):
+
 - This report provides complete specifications for 68 tests
 - Mock and fixture requirements are documented
 - Prioritization is clear (P0 → P1 → P2)

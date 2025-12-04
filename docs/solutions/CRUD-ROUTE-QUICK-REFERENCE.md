@@ -23,6 +23,7 @@
 ## Pattern Snippets
 
 ### Rate Limiter
+
 ```typescript
 export const entityReadLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -35,6 +36,7 @@ export const entityReadLimiter = rateLimit({
 ```
 
 ### Tenant Auth Helper
+
 ```typescript
 const getTenantId = (res: Response): string | null => {
   return res.locals.tenantAuth?.tenantId ?? null;
@@ -42,6 +44,7 @@ const getTenantId = (res: Response): string | null => {
 ```
 
 ### DTO Mapper
+
 ```typescript
 const mapEntityToDto = (entity) => ({
   id: entity.id,
@@ -50,6 +53,7 @@ const mapEntityToDto = (entity) => ({
 ```
 
 ### Error Handler
+
 ```typescript
 } catch (error) {
   if (error instanceof ZodError) {
@@ -65,9 +69,10 @@ const mapEntityToDto = (entity) => ({
 ```
 
 ### Numeric Validation
+
 ```typescript
 // In Zod schema
-priceCents: z.number().int().min(0).max(99999999)
+priceCents: z.number().int().min(0).max(99999999);
 
 // In validation.ts
 if (value > MAX_VALUE) throw new ValidationError('Exceeds maximum');
@@ -75,27 +80,27 @@ if (value > MAX_VALUE) throw new ValidationError('Exceeds maximum');
 
 ## Code Review Red Flags
 
-| Red Flag | Fix |
-|----------|-----|
-| Route without rate limiter | Add appropriate limiter |
-| Inline DTO mapping | Extract to function |
-| Missing contract | Define in api.v1.ts |
+| Red Flag                             | Fix                            |
+| ------------------------------------ | ------------------------------ |
+| Route without rate limiter           | Add appropriate limiter        |
+| Inline DTO mapping                   | Extract to function            |
+| Missing contract                     | Define in api.v1.ts            |
 | `catch (error) { next(error) }` only | Add explicit error type checks |
-| Numeric field without `.max()` | Add upper bound |
+| Numeric field without `.max()`       | Add upper bound                |
 
 ## HTTP Status Reference
 
-| Code | When to Use |
-|------|-------------|
-| 200 | GET success, PUT success |
-| 201 | POST success (created) |
-| 204 | DELETE success (no content) |
-| 400 | Validation error (ZodError) |
-| 401 | No tenant authentication |
-| 403 | Not authorized for resource |
-| 404 | Entity not found |
-| 429 | Rate limit exceeded |
-| 500 | Unexpected error |
+| Code | When to Use                 |
+| ---- | --------------------------- |
+| 200  | GET success, PUT success    |
+| 201  | POST success (created)      |
+| 204  | DELETE success (no content) |
+| 400  | Validation error (ZodError) |
+| 401  | No tenant authentication    |
+| 403  | Not authorized for resource |
+| 404  | Entity not found            |
+| 429  | Rate limit exceeded         |
+| 500  | Unexpected error            |
 
 ## Related
 

@@ -97,11 +97,7 @@ export class SchedulingAvailabilityService {
     }
 
     // 2. Get effective availability rules for this service and date
-    const rules = await this.availabilityRuleRepo.getEffectiveRules(
-      tenantId,
-      date,
-      serviceId
-    );
+    const rules = await this.availabilityRuleRepo.getEffectiveRules(tenantId, date, serviceId);
 
     if (rules.length === 0) {
       return []; // No availability rules, no slots available
@@ -161,7 +157,7 @@ export class SchedulingAvailabilityService {
     const dayOfWeek = date.getDay(); // 0=Sunday, 6=Saturday
 
     // Filter rules that apply to this day of week
-    const applicableRules = rules.filter(rule => rule.dayOfWeek === dayOfWeek);
+    const applicableRules = rules.filter((rule) => rule.dayOfWeek === dayOfWeek);
 
     for (const rule of applicableRules) {
       // Parse rule times (in tenant timezone)
@@ -238,18 +234,15 @@ export class SchedulingAvailabilityService {
   ): TimeSlot[] {
     // Filter to only confirmed/pending bookings (exclude canceled)
     const activeBookings = existingBookings.filter(
-      booking => booking.status === 'CONFIRMED' || booking.status === 'PENDING'
+      (booking) => booking.status === 'CONFIRMED' || booking.status === 'PENDING'
     );
 
-    return slots.map(slot => {
+    return slots.map((slot) => {
       // Check if this slot conflicts with any booking
-      const hasConflict = activeBookings.some(booking => {
+      const hasConflict = activeBookings.some((booking) => {
         // Slots conflict if they overlap in time
         // Overlap occurs if: slot.start < booking.end AND slot.end > booking.start
-        return (
-          slot.startTime < booking.endTime &&
-          slot.endTime > booking.startTime
-        );
+        return slot.startTime < booking.endTime && slot.endTime > booking.startTime;
       });
 
       return {
@@ -342,7 +335,7 @@ export class SchedulingAvailabilityService {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
-        hour12: false
+        hour12: false,
       });
 
       // Create a date at the same wall-clock time in UTC
@@ -350,14 +343,15 @@ export class SchedulingAvailabilityService {
 
       // Get the formatted string in the target timezone
       const parts = formatter.formatToParts(utcDate);
-      const tzYear = parseInt(parts.find(p => p.type === 'year')!.value);
-      const tzMonth = parseInt(parts.find(p => p.type === 'month')!.value) - 1;
-      const tzDay = parseInt(parts.find(p => p.type === 'day')!.value);
-      const tzHour = parseInt(parts.find(p => p.type === 'hour')!.value);
-      const tzMinute = parseInt(parts.find(p => p.type === 'minute')!.value);
+      const tzYear = parseInt(parts.find((p) => p.type === 'year')!.value);
+      const tzMonth = parseInt(parts.find((p) => p.type === 'month')!.value) - 1;
+      const tzDay = parseInt(parts.find((p) => p.type === 'day')!.value);
+      const tzHour = parseInt(parts.find((p) => p.type === 'hour')!.value);
+      const tzMinute = parseInt(parts.find((p) => p.type === 'minute')!.value);
 
       // Calculate the offset in milliseconds
-      const offset = utcDate.getTime() - new Date(tzYear, tzMonth, tzDay, tzHour, tzMinute, 0).getTime();
+      const offset =
+        utcDate.getTime() - new Date(tzYear, tzMonth, tzDay, tzHour, tzMinute, 0).getTime();
 
       // Apply the offset to our target date
       return new Date(Date.UTC(year, month, day, hour, minute, 0) - offset);
@@ -391,10 +385,7 @@ export class SchedulingAvailabilityService {
    *
    * @private
    */
-  private async getTimeslotBookings(
-    tenantId: string,
-    date: Date
-  ): Promise<TimeSlotBooking[]> {
+  private async getTimeslotBookings(tenantId: string, date: Date): Promise<TimeSlotBooking[]> {
     // Use the booking repository to fetch real TIMESLOT bookings
     return this.bookingRepo.findTimeslotBookings(tenantId, date);
   }
@@ -434,15 +425,12 @@ export class SchedulingAvailabilityService {
 
     // Filter to active bookings
     const activeBookings = existingBookings.filter(
-      booking => booking.status === 'CONFIRMED' || booking.status === 'PENDING'
+      (booking) => booking.status === 'CONFIRMED' || booking.status === 'PENDING'
     );
 
     // Check for conflicts
-    const hasConflict = activeBookings.some(booking => {
-      return (
-        startTime < booking.endTime &&
-        endTime > booking.startTime
-      );
+    const hasConflict = activeBookings.some((booking) => {
+      return startTime < booking.endTime && endTime > booking.startTime;
     });
 
     return !hasConflict;
@@ -502,20 +490,15 @@ export class SchedulingAvailabilityService {
     // 2. PERFORMANCE: Batch-fetch all data with single queries instead of N queries
     const [allBookings, allAvailabilityRules] = await Promise.all([
       // Fetch all bookings in the entire search window (1 query)
-      this.bookingRepo.findTimeslotBookingsInRange(
-        tenantId,
-        startDate,
-        endDate,
-        serviceId
-      ),
+      this.bookingRepo.findTimeslotBookingsInRange(tenantId, startDate, endDate, serviceId),
       // Fetch all effective availability rules for the service (1 query)
       // These rules are filtered by effectiveFrom/effectiveTo date range
-      this.availabilityRuleRepo.getEffectiveRules(tenantId, endDate, serviceId)
+      this.availabilityRuleRepo.getEffectiveRules(tenantId, endDate, serviceId),
     ]);
 
     // Filter to only active bookings (CONFIRMED/PENDING)
     const activeBookings = allBookings.filter(
-      booking => booking.status === 'CONFIRMED' || booking.status === 'PENDING'
+      (booking) => booking.status === 'CONFIRMED' || booking.status === 'PENDING'
     );
 
     // 3. Group availability rules by day of week for O(1) lookup
@@ -557,7 +540,7 @@ export class SchedulingAvailabilityService {
       const availableSlots = this.filterConflictingSlots(slots, activeBookings);
 
       // Find first available slot
-      const availableSlot = availableSlots.find(slot => slot.available);
+      const availableSlot = availableSlots.find((slot) => slot.available);
       if (availableSlot) {
         return availableSlot;
       }

@@ -12,9 +12,7 @@ import type { CalendarProvider } from '../lib/ports';
 import { logger } from '../lib/core/logger';
 
 export class GoogleCalendarService {
-  constructor(
-    private readonly calendarProvider: CalendarProvider
-  ) {}
+  constructor(private readonly calendarProvider: CalendarProvider) {}
 
   /**
    * Create a calendar event for a new appointment
@@ -152,17 +150,11 @@ export class GoogleCalendarService {
       const result = await this.calendarProvider.deleteEvent(tenantId, googleEventId);
 
       if (result) {
-        logger.info(
-          { tenantId, googleEventId },
-          'Google Calendar event deleted successfully'
-        );
+        logger.info({ tenantId, googleEventId }, 'Google Calendar event deleted successfully');
         return true;
       }
 
-      logger.warn(
-        { tenantId, googleEventId },
-        'Google Calendar event deletion returned false'
-      );
+      logger.warn({ tenantId, googleEventId }, 'Google Calendar event deletion returned false');
       return false;
     } catch (error) {
       logger.error(

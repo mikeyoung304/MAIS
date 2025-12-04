@@ -1,5 +1,5 @@
 ---
-title: "Fix Render Deployment Database Verification: Supabase Client vs Prisma"
+title: 'Fix Render Deployment Database Verification: Supabase Client vs Prisma'
 category: deployment-issues
 tags: [prisma, supabase, database, render, startup, permissions]
 severity: critical
@@ -20,7 +20,7 @@ In `/server/src/config/database.ts`, the `verifyDatabaseConnection()` function u
 
 ```typescript
 const { data, error } = await supabase
-  .from('Tenant')      // ❌ Not exposed via Supabase API
+  .from('Tenant') // ❌ Not exposed via Supabase API
   .select('id')
   .limit(1);
 ```
@@ -34,7 +34,9 @@ The Supabase JS client bypasses Prisma and makes direct REST API calls. The `Ten
 ### Implementation Changes
 
 #### 1. Deprecate Supabase-based verification
+
 `/server/src/config/database.ts`:
+
 ```typescript
 /**
  * @deprecated Use Prisma for database verification instead.
@@ -51,7 +53,9 @@ export async function verifyDatabaseConnection(): Promise<void> {
 ```
 
 #### 2. Create Prisma-based verification
+
 `/server/src/index.ts`:
+
 ```typescript
 /**
  * Verify database connection using Prisma
@@ -71,19 +75,24 @@ async function verifyDatabaseWithPrisma(prisma: PrismaClient): Promise<void> {
     logger.info(`📊 Database contains ${tenantCount} tenant(s)`);
   } catch (error) {
     const err = error as Error & { code?: string };
-    logger.error({
-      errorName: err.name,
-      errorMessage: err.message,
-      errorCode: err.code,
-      errorStack: err.stack,
-    }, '❌ Database connection verification failed');
+    logger.error(
+      {
+        errorName: err.name,
+        errorMessage: err.message,
+        errorCode: err.code,
+        errorStack: err.stack,
+      },
+      '❌ Database connection verification failed'
+    );
     throw error;
   }
 }
 ```
 
 #### 3. Call verification after DI container initialization
+
 `/server/src/index.ts` main() function:
+
 ```typescript
 // Build DI container (creates Prisma client in real mode)
 const container = buildContainer(config);
@@ -98,13 +107,13 @@ if (config.ADAPTERS_PRESET === 'real' && container.prisma) {
 
 ### Key Differences
 
-| Aspect | Supabase Client (Before) | Prisma (After) |
-|--------|--------------------------|-----------------|
-| **Connection Type** | REST API via Supabase | Direct PostgreSQL via connection pool |
-| **Table Exposure** | Requires table in Supabase API settings | Direct access to all tables |
-| **Permission Errors** | Common due to API restrictions | Uses direct DB credentials |
-| **When Available** | Must be initialized early | Available after DI container built |
-| **Performance** | Network request overhead | Direct DB connection |
+| Aspect                | Supabase Client (Before)                | Prisma (After)                        |
+| --------------------- | --------------------------------------- | ------------------------------------- |
+| **Connection Type**   | REST API via Supabase                   | Direct PostgreSQL via connection pool |
+| **Table Exposure**    | Requires table in Supabase API settings | Direct access to all tables           |
+| **Permission Errors** | Common due to API restrictions          | Uses direct DB credentials            |
+| **When Available**    | Must be initialized early               | Available after DI container built    |
+| **Performance**       | Network request overhead                | Direct DB connection                  |
 
 ## Why This Fix Works
 
@@ -159,6 +168,7 @@ DATABASE_URL="postgresql://..." ADAPTERS_PRESET=real npm run dev:api
 ```
 
 If you see the old error:
+
 ```
 ❌ Database connection verification failed
 permission denied for schema public (code: 42501)

@@ -1,10 +1,10 @@
 ---
 status: pending
 priority: p3
-issue_id: "236"
+issue_id: '236'
 tags: [simplification, code-review, landing-page, yagni]
 dependencies: []
-source: "code-review-landing-page-visual-editor"
+source: 'code-review-landing-page-visual-editor'
 ---
 
 # TODO-236: Consider Generic EditableSection Wrapper
@@ -20,6 +20,7 @@ source: "code-review-landing-page-visual-editor"
 The plan creates 7 separate editable section components with similar patterns, creating code duplication. A generic wrapper could reduce boilerplate by 40-50%.
 
 **Why It Matters:**
+
 - 7 component files with similar logic
 - Maintenance burden across multiple files
 - Inconsistent implementations possible
@@ -38,6 +39,7 @@ Create one generic `EditableSection` wrapper:
 ```
 
 **Savings:**
+
 - Eliminate ~6 component files
 - 40-50% reduction in Phase 2 effort
 - 800+ lines of code reduction
@@ -48,8 +50,8 @@ Create one generic `EditableSection` wrapper:
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                      |
+| ---------- | ------- | ------------------------------------------ |
 | 2025-12-04 | Created | Simplicity review - potential optimization |
 
 ## Tags

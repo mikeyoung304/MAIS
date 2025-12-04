@@ -1,7 +1,7 @@
-import { Link } from "react-router-dom";
-import { Container } from "@/ui/Container";
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { Link } from 'react-router-dom';
+import { Container } from '@/ui/Container';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 
 /**
  * FinalCTASection - Final Call to Action
@@ -11,11 +11,7 @@ import { ArrowRight } from "lucide-react";
  */
 export function FinalCTASection() {
   return (
-    <section
-      id="final-cta"
-      aria-labelledby="final-cta-heading"
-      className="py-24 sm:py-32 bg-sage"
-    >
+    <section id="final-cta" aria-labelledby="final-cta-heading" className="py-24 sm:py-32 bg-sage">
       <Container>
         <div className="max-w-4xl mx-auto text-center">
           {/* Headline */}
@@ -28,7 +24,8 @@ export function FinalCTASection() {
 
           {/* Body */}
           <p className="text-xl text-white/90 mb-12 max-w-2xl mx-auto">
-            If you're a service business owner who's serious about growth but done with duct-taped systems, MaconAI can help.
+            If you're a service business owner who's serious about growth but done with duct-taped
+            systems, MaconAI can help.
           </p>
 
           {/* CTA Button */}

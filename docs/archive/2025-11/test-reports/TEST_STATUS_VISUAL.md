@@ -303,15 +303,19 @@
 ## 🔗 Resources
 
 **Read First:**
+
 - `TEST_QUICK_FIX.md` - Do this NOW (15 min)
 
 **Full Details:**
+
 - `TEST_RECOVERY_PLAN.md` - Complete strategy
 
 **Current Docs:**
+
 - `TESTING.md` - Testing procedures (needs update)
 
 **Evidence:**
+
 - `test-results.json` - Smoke test results
 - Unit test output - 121 failures logged
 
@@ -349,7 +353,8 @@ Not lost, just need focused effort! 💪
 
 **Visual Summary Complete**
 
-*For detailed instructions, see:*
+_For detailed instructions, see:_
+
 - **Quick fixes:** `TEST_QUICK_FIX.md`
 - **Full plan:** `TEST_RECOVERY_PLAN.md`
 - **Current docs:** `TESTING.md` (needs update)

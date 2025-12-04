@@ -35,17 +35,13 @@
       "before": "1/2 passed (50%)",
       "after": "2/2 passed (100%)",
       "improvement": "Cross-tenant upload test becomes verifiable",
-      "keyFixes": [
-        "With validation fixes, can properly test cross-tenant isolation"
-      ]
+      "keyFixes": ["With validation fixes, can properly test cross-tenant isolation"]
     },
     "notFound": {
       "before": "1/2 passed (50%)",
       "after": "2/2 passed (100%)",
       "improvement": "Non-existent package properly returns 404",
-      "keyFixes": [
-        "catalogService errors properly categorized and returned as 404"
-      ]
+      "keyFixes": ["catalogService errors properly categorized and returned as 404"]
     },
     "fileSize": {
       "before": "0/2 passed (0%)",

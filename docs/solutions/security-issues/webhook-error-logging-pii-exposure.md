@@ -74,10 +74,7 @@ Separate logging levels: detailed errors for server logs only, sanitized message
 const sessionResult = StripeSessionSchema.safeParse(event.data.object);
 if (!sessionResult.success) {
   // Log FULL details to server logs (temporary, dev-accessible only)
-  logger.error(
-    { errors: sessionResult.error.flatten() },
-    'Invalid session structure from Stripe'
-  );
+  logger.error({ errors: sessionResult.error.flatten() }, 'Invalid session structure from Stripe');
 
   // Store ONLY error type in DB - no sensitive data
   await this.webhookRepo.markFailed(
@@ -92,13 +89,13 @@ if (!sessionResult.success) {
 
 ### Before vs After
 
-| Aspect | Before (Insecure) | After (Secure) |
-|--------|-------------------|----------------|
-| Error Details | Stored in DB with PII | Logged to server only |
-| Database Content | `{"email":"customer@example.com"}` | `validation failed` |
-| Log Content | Less detail | Full validation details |
-| Data Retention | Permanent (liability) | Temporary (log rotation) |
-| Debugging | From DB | From server logs |
+| Aspect           | Before (Insecure)                  | After (Secure)           |
+| ---------------- | ---------------------------------- | ------------------------ |
+| Error Details    | Stored in DB with PII              | Logged to server only    |
+| Database Content | `{"email":"customer@example.com"}` | `validation failed`      |
+| Log Content      | Less detail                        | Full validation details  |
+| Data Retention   | Permanent (liability)              | Temporary (log rotation) |
+| Debugging        | From DB                            | From server logs         |
 
 ## Why This Works
 
@@ -147,11 +144,11 @@ Before storing ANY error in DB, check for PII:
 
 ### 3. Separation of Concerns
 
-| Layer | Content | Retention |
-|-------|---------|-----------|
+| Layer       | Content                     | Retention           |
+| ----------- | --------------------------- | ------------------- |
 | Server logs | Full error details with PII | Ephemeral (rotated) |
-| Database | Abstract error types only | Persistent |
-| Monitoring | Metrics only | Aggregated |
+| Database    | Abstract error types only   | Persistent          |
+| Monitoring  | Metrics only                | Aggregated          |
 
 ### 4. Code Review Checklist
 
@@ -187,14 +184,14 @@ it('should not store customer PII in webhook error messages', async () => {
 
   // Trigger a validation failure with customer data
   const invalidPayload = {
-    metadata: { email: customerEmail, coupleName: customerName }
+    metadata: { email: customerEmail, coupleName: customerName },
   };
 
   await webhookHandler.process(invalidPayload);
 
   // Verify error storage
   const event = await prisma.webhookEvent.findFirst({
-    where: { status: 'FAILED' }
+    where: { status: 'FAILED' },
   });
 
   // Error message should NOT contain PII
@@ -225,12 +222,12 @@ This fix addresses:
 
 ## Timeline
 
-| Date | Action |
-|------|--------|
+| Date       | Action                                              |
+| ---------- | --------------------------------------------------- |
 | 2025-11-28 | Issue identified during multi-agent security review |
-| 2025-11-28 | Fix implemented in webhooks.routes.ts |
-| 2025-11-28 | All 810 tests passing |
-| 2025-11-28 | Documentation created |
+| 2025-11-28 | Fix implemented in webhooks.routes.ts               |
+| 2025-11-28 | All 810 tests passing                               |
+| 2025-11-28 | Documentation created                               |
 
 ## Lessons Learned
 

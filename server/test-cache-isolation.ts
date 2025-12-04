@@ -41,7 +41,7 @@ async function testCacheIsolation() {
     // Request 1: Tenant A fetches packages (cache MISS)
     console.log(`[Tenant A] Fetching packages with key: ${TENANT_A_KEY}`);
     const responseA1 = await axios.get(`${API_URL}/v1/packages`, {
-      headers: { 'X-Tenant-Key': TENANT_A_KEY }
+      headers: { 'X-Tenant-Key': TENANT_A_KEY },
     });
 
     const packagesA1 = responseA1.data as PackageDto[];
@@ -51,15 +51,15 @@ async function testCacheIsolation() {
   - Cache Status: ${cacheStatusA1}
   - Package Count: ${packagesA1.length}
   - First Package: ${packagesA1[0]?.title || 'N/A'}
-  - Package IDs: ${packagesA1.map(p => p.id).join(', ')}\n`);
+  - Package IDs: ${packagesA1.map((p) => p.id).join(', ')}\n`);
 
     // Wait a moment to ensure cache is set
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     // Request 2: Tenant A fetches again (should be cache HIT with SAME data)
     console.log(`[Tenant A] Fetching packages again (should be cache HIT)`);
     const responseA2 = await axios.get(`${API_URL}/v1/packages`, {
-      headers: { 'X-Tenant-Key': TENANT_A_KEY }
+      headers: { 'X-Tenant-Key': TENANT_A_KEY },
     });
 
     const packagesA2 = responseA2.data as PackageDto[];
@@ -69,12 +69,12 @@ async function testCacheIsolation() {
   - Cache Status: ${cacheStatusA2}
   - Package Count: ${packagesA2.length}
   - First Package: ${packagesA2[0]?.title || 'N/A'}
-  - Package IDs: ${packagesA2.map(p => p.id).join(', ')}\n`);
+  - Package IDs: ${packagesA2.map((p) => p.id).join(', ')}\n`);
 
     // Request 3: Tenant B fetches packages (SHOULD be cache MISS with DIFFERENT data)
     console.log(`[Tenant B] Fetching packages with key: ${TENANT_B_KEY}`);
     const responseB = await axios.get(`${API_URL}/v1/packages`, {
-      headers: { 'X-Tenant-Key': TENANT_B_KEY }
+      headers: { 'X-Tenant-Key': TENANT_B_KEY },
     });
 
     const packagesB = responseB.data as PackageDto[];
@@ -84,7 +84,7 @@ async function testCacheIsolation() {
   - Cache Status: ${cacheStatusB}
   - Package Count: ${packagesB.length}
   - First Package: ${packagesB[0]?.title || 'N/A'}
-  - Package IDs: ${packagesB.map(p => p.id).join(', ')}\n`);
+  - Package IDs: ${packagesB.map((p) => p.id).join(', ')}\n`);
 
     // Analysis
     console.log('=== ANALYSIS ===\n');
@@ -97,13 +97,12 @@ async function testCacheIsolation() {
     }
 
     // Check if Tenant B got Tenant A's data (BUG)
-    const tenantBGotTenantAData = packagesB.length > 0 &&
-                                   packagesA1.length > 0 &&
-                                   packagesB[0]?.id === packagesA1[0]?.id;
+    const tenantBGotTenantAData =
+      packagesB.length > 0 && packagesA1.length > 0 && packagesB[0]?.id === packagesA1[0]?.id;
 
     if (tenantBGotTenantAData) {
       console.log('🔥 CRITICAL BUG DETECTED:');
-      console.log('   Tenant B received Tenant A\'s cached data!');
+      console.log("   Tenant B received Tenant A's cached data!");
       console.log('   This is a SECURITY VULNERABILITY - cross-tenant data leakage.\n');
       console.log('   Root Cause: Cache keys do NOT include tenantId');
       console.log('   Cache Key Format: GET:/v1/packages:{} (SAME for all tenants)\n');

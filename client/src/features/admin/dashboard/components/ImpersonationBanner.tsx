@@ -1,7 +1,7 @@
-import { AlertCircle, LogOut } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
+import { AlertCircle, LogOut } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api';
 
 interface ImpersonationBannerProps {
   tenantName: string;
@@ -30,18 +30,18 @@ export function ImpersonationBanner({
         window.location.reload();
       } else {
         if (import.meta.env.DEV) {
-          console.error("Stop impersonation failed:", result.status);
+          console.error('Stop impersonation failed:', result.status);
         }
-        toast.error("Failed to stop impersonation", {
-          description: "Please try again or contact support.",
+        toast.error('Failed to stop impersonation', {
+          description: 'Please try again or contact support.',
         });
       }
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.error("Stop impersonation error:", error);
+        console.error('Stop impersonation error:', error);
       }
-      toast.error("An error occurred while stopping impersonation", {
-        description: "Please try again or contact support.",
+      toast.error('An error occurred while stopping impersonation', {
+        description: 'Please try again or contact support.',
       });
     }
   };
@@ -52,12 +52,10 @@ export function ImpersonationBanner({
         <div className="flex items-center gap-3">
           <AlertCircle className="w-6 h-6 text-yellow-400" />
           <div>
-            <p className="text-yellow-100 font-semibold text-lg">
-              Impersonating Tenant
-            </p>
+            <p className="text-yellow-100 font-semibold text-lg">Impersonating Tenant</p>
             <p className="text-yellow-200 text-sm">
-              You are currently signed in as{" "}
-              <span className="font-semibold">{tenantName}</span> ({tenantSlug})
+              You are currently signed in as <span className="font-semibold">{tenantName}</span> (
+              {tenantSlug})
             </p>
           </div>
         </div>

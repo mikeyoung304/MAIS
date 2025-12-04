@@ -1,10 +1,10 @@
-import { Trash2, Loader2, Calendar } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import type { AvailabilityRuleDto, ServiceDto } from "./types";
-import { DAYS_OF_WEEK, DAY_COLORS } from "./types";
-import { formatTime } from "./utils";
+import { Trash2, Loader2, Calendar } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import type { AvailabilityRuleDto, ServiceDto } from './types';
+import { DAYS_OF_WEEK, DAY_COLORS } from './types';
+import { formatTime } from './utils';
 
 interface RulesListProps {
   rules: AvailabilityRuleDto[];
@@ -64,11 +64,8 @@ export function RulesList({ rules, services, isLoading, onDeleteClick }: RulesLi
             {/* Day Header */}
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold text-white">{day}</h3>
-              <Badge
-                variant="outline"
-                className={`text-xs ${DAY_COLORS[dayIndex]}`}
-              >
-                {dayRules.length} {dayRules.length === 1 ? "rule" : "rules"}
+              <Badge variant="outline" className={`text-xs ${DAY_COLORS[dayIndex]}`}>
+                {dayRules.length} {dayRules.length === 1 ? 'rule' : 'rules'}
               </Badge>
             </div>
 
@@ -94,8 +91,8 @@ export function RulesList({ rules, services, isLoading, onDeleteClick }: RulesLi
                         {/* Service Name */}
                         <div className="text-white/60 text-xs mt-1">
                           {rule.serviceId
-                            ? serviceMap.get(rule.serviceId) || "Unknown Service"
-                            : "All Services"}
+                            ? serviceMap.get(rule.serviceId) || 'Unknown Service'
+                            : 'All Services'}
                         </div>
 
                         {/* Effective Dates */}

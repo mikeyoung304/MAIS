@@ -199,6 +199,7 @@ SELECT id, googleEventId FROM "Booking" WHERE id = 'booking_abc';
 ## Support
 
 Questions? Check:
+
 1. Logs for error messages
 2. Google Cloud Console → API quotas
 3. Calendar sharing permissions

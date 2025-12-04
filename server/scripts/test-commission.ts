@@ -21,7 +21,9 @@ async function testCommission() {
     const result1 = await commissionService.calculateCommission(tenantA.id, 50000);
     console.log(`\nTest 1: Tenant A - $500.00 booking`);
     console.log(`  Expected: $50.00 commission (5000 cents)`);
-    console.log(`  Actual:   $${(result1.amount / 100).toFixed(2)} commission (${result1.amount} cents)`);
+    console.log(
+      `  Actual:   $${(result1.amount / 100).toFixed(2)} commission (${result1.amount} cents)`
+    );
     console.log(`  Rate:     ${result1.percent}%`);
 
     if (result1.amount !== 5000) {
@@ -43,7 +45,9 @@ async function testCommission() {
     const result2 = await commissionService.calculateCommission(tenantB.id, 50000);
     console.log(`\nTest 2: Tenant B - $500.00 booking`);
     console.log(`  Expected: $62.50 commission (6250 cents)`);
-    console.log(`  Actual:   $${(result2.amount / 100).toFixed(2)} commission (${result2.amount} cents)`);
+    console.log(
+      `  Actual:   $${(result2.amount / 100).toFixed(2)} commission (${result2.amount} cents)`
+    );
     console.log(`  Rate:     ${result2.percent}%`);
 
     if (result2.amount !== 6250) {
@@ -65,7 +69,9 @@ async function testCommission() {
     const result3 = await commissionService.calculateCommission(tenantC.id, 50000);
     console.log(`\nTest 3: Tenant C - $500.00 booking`);
     console.log(`  Expected: $75.00 commission (7500 cents)`);
-    console.log(`  Actual:   $${(result3.amount / 100).toFixed(2)} commission (${result3.amount} cents)`);
+    console.log(
+      `  Actual:   $${(result3.amount / 100).toFixed(2)} commission (${result3.amount} cents)`
+    );
     console.log(`  Rate:     ${result3.percent}%`);
 
     if (result3.amount !== 7500) {
@@ -80,13 +86,15 @@ async function testCommission() {
     console.log(`\nTest 4: Full booking calculation (Tenant B)`);
     const breakdown = await commissionService.calculateBookingTotal(
       tenantB.id,
-      50000,  // $500 package
-      []      // No add-ons
+      50000, // $500 package
+      [] // No add-ons
     );
     console.log(`  Package:       $${(breakdown.packagePrice / 100).toFixed(2)}`);
     console.log(`  Add-ons:       $${(breakdown.addOnsTotal / 100).toFixed(2)}`);
     console.log(`  Subtotal:      $${(breakdown.subtotal / 100).toFixed(2)}`);
-    console.log(`  Commission:    $${(breakdown.commissionAmount / 100).toFixed(2)} (${breakdown.commissionPercent}%)`);
+    console.log(
+      `  Commission:    $${(breakdown.commissionAmount / 100).toFixed(2)} (${breakdown.commissionPercent}%)`
+    );
     console.log(`  Tenant Gets:   $${(breakdown.tenantReceives / 100).toFixed(2)}`);
 
     if (breakdown.commissionAmount !== 6250) {

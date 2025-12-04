@@ -24,6 +24,7 @@ This plan migrates MAIS from Docker-based deployment to a cloud-native approach 
 ### 1.1 Supabase Project Configuration
 
 **When you provide credentials**, we'll need:
+
 ```bash
 # Supabase Dashboard → Settings → API
 SUPABASE_URL=https://[project-id].supabase.co
@@ -37,6 +38,7 @@ DIRECT_URL=postgresql://postgres.[project-id]:[password]@aws-0-us-west-1.pooler.
 ```
 
 **Supabase Features We'll Enable:**
+
 - ✅ Connection pooling (automatic via Supavisor)
 - ✅ Row-Level Security (RLS) for tenant isolation
 - ✅ Automatic backups (daily)
@@ -105,10 +107,7 @@ export function getSupabaseAuthClient() {
  */
 export async function verifyDatabaseConnection(): Promise<void> {
   try {
-    const { data, error } = await getSupabaseClient()
-      .from('Tenant')
-      .select('count')
-      .limit(1);
+    const { data, error } = await getSupabaseClient().from('Tenant').select('count').limit(1);
 
     if (error) throw error;
 
@@ -202,7 +201,7 @@ export function validateEnv(): Env {
       'CORS_ORIGIN',
     ];
 
-    const missing = prodRequired.filter(key => !result.data[key as keyof Env]);
+    const missing = prodRequired.filter((key) => !result.data[key as keyof Env]);
 
     if (missing.length > 0) {
       console.error('❌ Production environment missing required variables:');
@@ -218,6 +217,7 @@ export function validateEnv(): Env {
 ### 1.4 Migration Strategy: Remote-First
 
 **Key Difference from Current Approach:**
+
 - Current: Local Prisma schema → Generate migration → Push to DB
 - New: Remote Supabase DB → Pull schema → Generate Prisma client
 
@@ -253,6 +253,7 @@ CREATE INDEX IF NOT EXISTS "CommissionLog_bookingId_idx" ON "CommissionLog"("boo
 ```
 
 **Migration File Naming Convention:**
+
 ```
 supabase/migrations/
 ├── 20251120000000_add_commission_tracking.sql
@@ -261,6 +262,7 @@ supabase/migrations/
 ```
 
 **Idempotent SQL Patterns:**
+
 ```sql
 -- Table creation
 CREATE TABLE IF NOT EXISTS "TableName" (...);
@@ -300,7 +302,7 @@ services:
     runtime: node
     env: node
     region: oregon
-    plan: starter  # $7/month (upgrade to standard for production)
+    plan: starter # $7/month (upgrade to standard for production)
 
     buildCommand: npm install && npm run build --workspace=server
     startCommand: npm run start --workspace=server
@@ -316,7 +318,7 @@ services:
 
       # Database (from Render dashboard)
       - key: DATABASE_URL
-        sync: false  # Set in Render dashboard
+        sync: false # Set in Render dashboard
 
       - key: DIRECT_URL
         sync: false
@@ -369,7 +371,7 @@ services:
       - key: SENTRY_DSN
         sync: false
 
-    autoDeploy: true  # Deploy on git push to main
+    autoDeploy: true # Deploy on git push to main
 ```
 
 ### 2.2 Package.json Scripts
@@ -730,6 +732,7 @@ STRIPE_WEBHOOK_SECRET=
 ### 5.3 Platform Secret Management
 
 **Render Dashboard Setup:**
+
 ```bash
 # 1. Navigate to: Dashboard → mais-api → Environment
 # 2. Add each secret individually:
@@ -741,6 +744,7 @@ STRIPE_WEBHOOK_SECRET=
 ```
 
 **Vercel Dashboard Setup:**
+
 ```bash
 # 1. Navigate to: Project Settings → Environment Variables
 # 2. Add production variables:
@@ -755,6 +759,7 @@ STRIPE_WEBHOOK_SECRET=
 ## Implementation Checklist
 
 ### Prerequisites
+
 - [ ] User provides Supabase credentials
 - [ ] Create Supabase project (or use existing)
 - [ ] Create Render account
@@ -762,6 +767,7 @@ STRIPE_WEBHOOK_SECRET=
 - [ ] Set up GitHub repository access
 
 ### Phase 1: Database Setup
+
 - [ ] Copy credentials to `.env` file
 - [ ] Create `/server/src/config/database.ts`
 - [ ] Create `/server/src/config/env.schema.ts`
@@ -771,6 +777,7 @@ STRIPE_WEBHOOK_SECRET=
 - [ ] Migrate existing Prisma migrations to SQL format
 
 ### Phase 2: Render Backend
+
 - [ ] Create `/render.yaml`
 - [ ] Update package.json scripts
 - [ ] Connect Render to GitHub
@@ -778,6 +785,7 @@ STRIPE_WEBHOOK_SECRET=
 - [ ] Deploy and verify health checks
 
 ### Phase 3: Vercel Frontend
+
 - [ ] Create `/vercel.json`
 - [ ] Update client package.json
 - [ ] Connect Vercel to GitHub
@@ -785,12 +793,14 @@ STRIPE_WEBHOOK_SECRET=
 - [ ] Deploy and verify functionality
 
 ### Phase 4: CI/CD
+
 - [ ] Create migration deployment workflow
 - [ ] Update production deployment workflow
 - [ ] Set GitHub secrets
 - [ ] Test automated deployments
 
 ### Phase 5: Cleanup
+
 - [ ] Remove Docker files (Dockerfile, docker-compose.yml)
 - [ ] Update CLAUDE.md with new deployment instructions
 - [ ] Create DEPLOYMENT.md documentation
@@ -826,6 +836,7 @@ STRIPE_WEBHOOK_SECRET=
 8. Document complete deployment process
 
 **Please provide when ready:**
+
 - SUPABASE_URL
 - SUPABASE_ANON_KEY
 - SUPABASE_SERVICE_KEY

@@ -16,16 +16,17 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 
 ### Main Documents
 
-| Document | Audience | Read Time | Purpose |
-|----------|----------|-----------|---------|
-| [PREVENTION-TODO-182-191-QUICK-REF.md](./PREVENTION-TODO-182-191-QUICK-REF.md) | All engineers | 5 min | **START HERE** - Cheat sheet with code samples |
-| [PREVENTION-TODO-182-191-COMPREHENSIVE.md](./PREVENTION-TODO-182-191-COMPREHENSIVE.md) | Tech leads, reviewers | 30 min | Complete guide with checklist, ESLint, tests |
+| Document                                                                               | Audience              | Read Time | Purpose                                        |
+| -------------------------------------------------------------------------------------- | --------------------- | --------- | ---------------------------------------------- |
+| [PREVENTION-TODO-182-191-QUICK-REF.md](./PREVENTION-TODO-182-191-QUICK-REF.md)         | All engineers         | 5 min     | **START HERE** - Cheat sheet with code samples |
+| [PREVENTION-TODO-182-191-COMPREHENSIVE.md](./PREVENTION-TODO-182-191-COMPREHENSIVE.md) | Tech leads, reviewers | 30 min    | Complete guide with checklist, ESLint, tests   |
 
 ---
 
 ## The 10 Categories
 
 ### 1. Information Disclosure Prevention (182)
+
 **Don't expose version/environment in public endpoints**
 
 - Quick Ref: [Section 1](./PREVENTION-TODO-182-191-QUICK-REF.md#1-information-disclosure-182)
@@ -37,6 +38,7 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 ---
 
 ### 2. Transaction Atomicity (183)
+
 **Generate resources inside transactions, not before**
 
 - Quick Ref: [Section 2](./PREVENTION-TODO-182-191-QUICK-REF.md#2-transaction-atomicity-183)
@@ -48,6 +50,7 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 ---
 
 ### 3. Memory Leak - Event Systems (184)
+
 **subscribe() must return unsubscribe function**
 
 - Quick Ref: [Section 3](./PREVENTION-TODO-182-191-QUICK-REF.md#3-memory-leak---event-systems-184)
@@ -59,6 +62,7 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 ---
 
 ### 4. Type DRY Principle (185)
+
 **Derive types from Zod schemas, never duplicate**
 
 - Quick Ref: [Section 4](./PREVENTION-TODO-182-191-QUICK-REF.md#4-type-dry-principle-185)
@@ -70,6 +74,7 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 ---
 
 ### 5. Exhaustiveness Checking (186)
+
 **Default case must assign to never type**
 
 - Quick Ref: [Section 5](./PREVENTION-TODO-182-191-QUICK-REF.md#5-exhaustiveness-checking-186)
@@ -81,6 +86,7 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 ---
 
 ### 6. Documentation Requirements (187)
+
 **Register all advisory lock IDs and magic numbers**
 
 - Quick Ref: [Section 6](./PREVENTION-TODO-182-191-QUICK-REF.md#6-documentation-requirements-187)
@@ -92,6 +98,7 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 ---
 
 ### 7. React Hook Cleanup (188)
+
 **useRef with Promise/function needs cleanup effect**
 
 - Quick Ref: [Section 7](./PREVENTION-TODO-182-191-QUICK-REF.md#7-react-hook-cleanup-188)
@@ -103,6 +110,7 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 ---
 
 ### 8. Test Coverage - Infrastructure (189)
+
 **Core/lib/adapters code needs dedicated unit tests**
 
 - Quick Ref: [Section 8](./PREVENTION-TODO-182-191-QUICK-REF.md#8-test-coverage---infrastructure-189)
@@ -114,6 +122,7 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 ---
 
 ### 9. Observability - Transaction Logging (190)
+
 **Log transaction start and completion with duration**
 
 - Quick Ref: [Section 9](./PREVENTION-TODO-182-191-QUICK-REF.md#9-observability---transaction-logging-190)
@@ -125,6 +134,7 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 ---
 
 ### 10. File Organization (191)
+
 **File location must match file purpose**
 
 - Quick Ref: [Section 10](./PREVENTION-TODO-182-191-QUICK-REF.md#10-file-organization-191)
@@ -138,23 +148,27 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 ## By Use Case
 
 ### "I'm doing a code review"
+
 1. Open [QUICK-REF.md](./PREVENTION-TODO-182-191-QUICK-REF.md)
 2. Copy the code review checklist at the end
 3. Check each category against the PR
 
 ### "I found a violation in my code"
+
 1. Find your issue in the table above
 2. Open Quick Ref section for that category
 3. Copy the ✅ pattern and fix it
 4. Grep command shows similar issues in codebase
 
 ### "I'm adding a new feature"
+
 1. Which category does it relate to?
 2. Read Quick Ref + Full Guide sections
 3. Add tests from "Test Patterns"
 4. Update code review checklist
 
 ### "I'm writing tests"
+
 1. Open Full Guide for your category
 2. Copy test pattern from "Test Patterns" section
 3. Adapt to your code
@@ -176,6 +190,7 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 ## Metrics
 
 All 10 categories resolved in commit **14374f7**:
+
 - Date: 2025-12-03
 - Files changed: 7
 - Tests added/updated: Yes

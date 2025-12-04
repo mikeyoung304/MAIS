@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "016"
+issue_id: '016'
 tags: [code-review, refactoring, dry, storefront]
 dependencies: []
 ---
@@ -33,6 +33,7 @@ PR #6 introduces several utility functions that are duplicated across multiple f
 4. **`truncate()`** - Generic utility in TierCard.tsx (lines 49-52)
 
 ### Impact
+
 - ~40 lines of duplicated code
 - Inconsistent naming (`TIER_LEVELS` vs `VALID_TIERS`)
 - Increased bundle size (~500 bytes gzipped)
@@ -40,20 +41,25 @@ PR #6 introduces several utility functions that are duplicated across multiple f
 ## Proposed Solutions
 
 ### Option A: Create Shared Utils Module (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 Create `/client/src/features/storefront/utils.ts`:
 
 ```typescript
 export const TIER_LEVELS = ['budget', 'middle', 'luxury'] as const;
-export type TierLevel = typeof TIER_LEVELS[number];
+export type TierLevel = (typeof TIER_LEVELS)[number];
 
 export function getTierDisplayName(tierLevel: string): string {
   switch (tierLevel) {
-    case 'budget': return 'Essential';
-    case 'middle': return 'Popular';
-    case 'luxury': return 'Premium';
-    default: return tierLevel.charAt(0).toUpperCase() + tierLevel.slice(1);
+    case 'budget':
+      return 'Essential';
+    case 'middle':
+      return 'Popular';
+    case 'luxury':
+      return 'Premium';
+    default:
+      return tierLevel.charAt(0).toUpperCase() + tierLevel.slice(1);
   }
 }
 
@@ -74,24 +80,29 @@ export function extractTiers(packages: PackageDto[]): Record<TierLevel, PackageD
 ```
 
 **Pros:**
+
 - Single source of truth
 - Reduces bundle size
 - Easier to test utilities in isolation
 - Consistent exports from feature module
 
 **Cons:**
+
 - Requires updating 6 files to import from new location
 
 ### Option B: Move to Global Utils
+
 **Effort:** Small | **Risk:** Low
 
 Move `truncate()` to `client/src/lib/utils.ts`, keep tier-specific utilities in storefront feature.
 
 **Pros:**
+
 - `truncate()` could be reused elsewhere
 - Separation of generic vs domain-specific utilities
 
 **Cons:**
+
 - Two locations to check for utilities
 
 ## Recommended Action
@@ -101,9 +112,11 @@ Implement **Option A** - Create `client/src/features/storefront/utils.ts` and ex
 ## Technical Details
 
 **Files to Create:**
+
 - `client/src/features/storefront/utils.ts`
 
 **Files to Update:**
+
 - `client/src/features/storefront/TierCard.tsx` - Import from utils
 - `client/src/features/storefront/TierDetail.tsx` - Import from utils
 - `client/src/features/storefront/TierSelector.tsx` - Import from utils
@@ -122,8 +135,8 @@ Implement **Option A** - Create `client/src/features/storefront/utils.ts` and ex
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                          |
+| ---------- | ------- | ------------------------------ |
 | 2025-11-27 | Created | Found during PR #6 code review |
 
 ## Resources

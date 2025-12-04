@@ -16,8 +16,8 @@ symptoms:
   - Email addresses with uppercase letters fail authentication
   - Demo credentials in login form don't work
 error_messages:
-  - "Invalid credentials. Please check your email and password."
-  - "401 Unauthorized"
+  - 'Invalid credentials. Please check your email and password.'
+  - '401 Unauthorized'
 tags:
   - authentication
   - login
@@ -43,18 +43,22 @@ Users reported receiving "Invalid credentials" error when attempting to log in w
 ## Root Causes Identified
 
 ### 1. Password Hash Mismatch (Admin Login)
+
 The admin user's `passwordHash` in the database didn't match what the seed script would generate for `@Nupples8`. The seed script was last run with a different password.
 
 **Evidence:**
+
 ```javascript
 const isValid = await bcrypt.compare('@Nupples8', user.passwordHash);
 console.log('Password valid:', isValid); // false
 ```
 
 ### 2. Case-Sensitive Email Lookup (Tenant Login)
+
 Tenant emails were stored with mixed case (e.g., `Adele502@gmail.com`) but the repository's `findByEmail()` performed case-sensitive lookups. When the frontend or API normalized input to lowercase, no match was found.
 
 **Evidence:**
+
 ```javascript
 // Database has: Adele502@gmail.com
 // Query uses:   adele502@gmail.com
@@ -62,20 +66,24 @@ Tenant emails were stored with mixed case (e.g., `Adele502@gmail.com`) but the r
 ```
 
 ### 3. Misleading Demo Credentials (UX Issue)
+
 The login form (`Login.tsx`) was pre-filled with `admin@macon.com` / `admin123` which don't exist in the system, causing confusion when users tried to log in.
 
 ## Solution
 
 ### Fix 1: Re-seed Database
+
 ```bash
 cd server
 npm exec prisma db seed
 ```
+
 This regenerated the correct bcrypt hash for `@Nupples8`.
 
 ### Fix 2: Normalize Emails to Lowercase
 
 **tenant.repository.ts** (line 88-93):
+
 ```typescript
 async findByEmail(email: string): Promise<Tenant | null> {
   // Normalize email to lowercase for case-insensitive lookup
@@ -86,6 +94,7 @@ async findByEmail(email: string): Promise<Tenant | null> {
 ```
 
 **tenant-auth.service.ts** (line 26-28):
+
 ```typescript
 async login(email: string, password: string): Promise<{ token: string }> {
   // Find tenant by email (normalized to lowercase)
@@ -95,13 +104,14 @@ async login(email: string, password: string): Promise<{ token: string }> {
 ```
 
 **Database cleanup** - Normalize existing emails:
+
 ```javascript
 const tenants = await prisma.tenant.findMany({ where: { email: { not: null } } });
 for (const t of tenants) {
   if (t.email && t.email !== t.email.toLowerCase()) {
     await prisma.tenant.update({
       where: { id: t.id },
-      data: { email: t.email.toLowerCase() }
+      data: { email: t.email.toLowerCase() },
     });
   }
 }
@@ -110,17 +120,19 @@ for (const t of tenants) {
 ### Fix 3: Update Demo Credentials
 
 **client/src/pages/Login.tsx** (line 24-28):
+
 ```typescript
 // Auto-fill for local development - use actual seeded admin credentials
 const { values, handleChange } = useForm({
-  email: "mike@maconheadshots.com",
-  password: "@Nupples8"
+  email: 'mike@maconheadshots.com',
+  password: '@Nupples8',
 });
 ```
 
 ## Verification
 
 ### Admin Login
+
 ```bash
 curl -s -X POST http://localhost:3001/v1/auth/login \
   -H "Content-Type: application/json" \
@@ -130,6 +142,7 @@ curl -s -X POST http://localhost:3001/v1/auth/login \
 ```
 
 ### Tenant Login
+
 ```bash
 curl -s -X POST http://localhost:3001/v1/auth/login \
   -H "Content-Type: application/json" \
@@ -141,17 +154,21 @@ curl -s -X POST http://localhost:3001/v1/auth/login \
 ## Prevention Strategies
 
 ### 1. Email Normalization Pattern
+
 **Always normalize emails at multiple layers (defense in depth):**
+
 - Repository layer: Lowercase before database queries
 - Service layer: Lowercase before passing to repository
 - Storage: Store all emails in lowercase
 
 ### 2. Credential Synchronization
+
 - Keep demo/dev credentials in sync with seed data
 - Consider using environment variables for dev credentials
 - Document expected credentials in DEVELOPING.md
 
 ### 3. Test Cases to Add
+
 ```typescript
 describe('Email Case Sensitivity', () => {
   it('should login with lowercase email', async () => {
@@ -169,6 +186,7 @@ describe('Email Case Sensitivity', () => {
 ```
 
 ### 4. Pre-Deployment Checklist
+
 - [ ] Run `npm exec prisma db seed` after schema changes
 - [ ] Verify demo credentials match seeded data
 - [ ] Check for case-sensitive email lookups in new authentication code

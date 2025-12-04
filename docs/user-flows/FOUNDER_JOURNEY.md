@@ -18,14 +18,14 @@ The **FOUNDER/PLATFORM ADMIN** is the highest-level user role in the MAIS platfo
 
 ### Key Differentiators from Other Roles
 
-| Feature | Platform Admin | Tenant Admin | Customer |
-|---------|---------------|--------------|----------|
-| Multi-tenant visibility | ✅ All tenants | ❌ Own tenant only | ❌ None |
-| Tenant creation | ✅ Yes | ❌ No | ❌ No |
-| Stripe Connect setup | ✅ For all tenants | ❌ Own setup only | ❌ None |
-| Platform statistics | ✅ System-wide | ❌ Own metrics | ❌ None |
-| CLI access | ✅ Required | ⚠️ Optional | ❌ None |
-| Database migrations | ✅ Required | ❌ No access | ❌ No access |
+| Feature                 | Platform Admin     | Tenant Admin       | Customer     |
+| ----------------------- | ------------------ | ------------------ | ------------ |
+| Multi-tenant visibility | ✅ All tenants     | ❌ Own tenant only | ❌ None      |
+| Tenant creation         | ✅ Yes             | ❌ No              | ❌ No        |
+| Stripe Connect setup    | ✅ For all tenants | ❌ Own setup only  | ❌ None      |
+| Platform statistics     | ✅ System-wide     | ❌ Own metrics     | ❌ None      |
+| CLI access              | ✅ Required        | ⚠️ Optional        | ❌ None      |
+| Database migrations     | ✅ Required        | ❌ No access       | ❌ No access |
 
 ---
 
@@ -53,12 +53,14 @@ npm run doctor
 ```
 
 **Technical Implementation:**
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/server/scripts/doctor.ts` (lines 1-100+)
 - **Config Service:** `/Users/mikeyoung/CODING/MAIS/server/src/lib/core/config.ts`
 - **Validation:** Zod schemas validate 15+ environment variables
 - **Output:** Health check report with missing/invalid variables
 
 **Required Environment Variables:**
+
 ```bash
 # Core Configuration
 JWT_SECRET=<generate-with-openssl-rand-hex-32>
@@ -76,6 +78,7 @@ GOOGLE_CALENDAR_ID=<calendar-id>
 ```
 
 **Success Criteria:**
+
 - ✅ `npm run doctor` shows all required variables set
 - ✅ Database connection successful
 - ✅ No missing secrets warnings
@@ -100,6 +103,7 @@ npm exec prisma db seed
 ```
 
 **Technical Implementation:**
+
 - **Migrations:** `/Users/mikeyoung/CODING/MAIS/server/prisma/migrations/`
 - **Schema:** `/Users/mikeyoung/CODING/MAIS/server/prisma/schema.prisma`
 - **Seed Script:** `/Users/mikeyoung/CODING/MAIS/server/prisma/seed.ts` (lines 1-209)
@@ -126,12 +130,14 @@ npm exec prisma db seed
    - Location: Lines 70-205 in seed.ts
 
 **Database Schema Highlights:**
+
 - **User Model** (lines 15-34): Platform admin + tenant admin authentication
 - **Tenant Model** (lines 36-92): Multi-tenant isolation, API keys, Stripe Connect
 - **Booking Model** (lines 247-289): Unique constraint `@@unique([tenantId, date])` prevents double-booking
 - **WebhookEvent Model** (lines 348-375): Idempotency with composite unique key `[tenantId, eventId]`
 
 **Success Criteria:**
+
 - ✅ Database tables created (15+ models)
 - ✅ Platform admin user exists in `User` table
 - ✅ Test tenant exists in `Tenant` table
@@ -146,6 +152,7 @@ npm exec prisma db seed
 **Login Endpoint:** `POST /v1/auth/login` (Unified Authentication)
 
 **Request:**
+
 ```bash
 curl -X POST http://localhost:3001/v1/auth/login \
   -H "Content-Type: application/json" \
@@ -156,6 +163,7 @@ curl -X POST http://localhost:3001/v1/auth/login \
 ```
 
 **Response:**
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -166,12 +174,14 @@ curl -X POST http://localhost:3001/v1/auth/login \
 ```
 
 **Technical Implementation:**
+
 - **Route:** `/Users/mikeyoung/CODING/MAIS/server/src/routes/auth.routes.ts` (lines 166-204)
 - **Controller:** `UnifiedAuthController.login()` (lines 53-92)
 - **Service:** `/Users/mikeyoung/CODING/MAIS/server/src/services/identity.service.ts` (lines 16-38)
 - **Middleware:** `/Users/mikeyoung/CODING/MAIS/server/src/middleware/auth.ts` (lines 14-67)
 
 **Authentication Flow:**
+
 1. Request hits unified login endpoint (line 166 in auth.routes.ts)
 2. Controller tries tenant login first (lines 58-72)
 3. Falls back to platform admin login (lines 78-88)
@@ -180,22 +190,25 @@ curl -X POST http://localhost:3001/v1/auth/login \
 6. Token valid for 7 days (line 35)
 
 **JWT Token Payload:**
+
 ```typescript
 {
-  userId: string;      // Platform admin user ID
-  email: string;       // admin@elope.com
-  role: 'admin';       // Grants platform-wide access
-  iat: number;         // Issued at timestamp
-  exp: number;         // Expires in 7 days
+  userId: string; // Platform admin user ID
+  email: string; // admin@elope.com
+  role: 'admin'; // Grants platform-wide access
+  iat: number; // Issued at timestamp
+  exp: number; // Expires in 7 days
 }
 ```
 
 **Rate Limiting:**
+
 - **Endpoint Protection:** `loginLimiter` middleware (5 attempts per 15 minutes per IP)
 - **Implementation:** `/Users/mikeyoung/CODING/MAIS/server/src/middleware/rateLimiter.ts`
 - **Security:** Prevents brute-force attacks on authentication
 
 **Success Criteria:**
+
 - ✅ 200 response with JWT token
 - ✅ Token includes `role: "PLATFORM_ADMIN"`
 - ✅ Token validates on protected endpoints
@@ -221,6 +234,7 @@ npm run create-tenant -- --slug=luxuryevents --name="Luxury Events" --commission
 ```
 
 **Technical Implementation:**
+
 - **Script:** `/Users/mikeyoung/CODING/MAIS/server/scripts/create-tenant.ts` (lines 1-206)
 - **Repository:** `/Users/mikeyoung/CODING/MAIS/server/src/adapters/prisma/tenant.repository.ts`
 - **API Key Service:** `/Users/mikeyoung/CODING/MAIS/server/src/lib/api-key.service.ts`
@@ -247,6 +261,7 @@ npm run create-tenant -- --slug=luxuryevents --name="Luxury Events" --commission
    - Set `isActive: true` by default
 
 **Output Example:**
+
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 TENANT INFORMATION
@@ -282,12 +297,14 @@ Secret Key:
 ```
 
 **Security Notes:**
+
 - ⚠️ **Secret key shown ONLY ONCE** - cannot be retrieved later
 - ✅ Public key safe for embedded widgets (read-only access)
 - ✅ Secret key required for admin operations (write access)
 - ✅ All keys scoped per tenant (no cross-tenant access)
 
 **Success Criteria:**
+
 - ✅ Tenant created in database
 - ✅ API keys generated and displayed
 - ✅ Founder has saved secret key securely
@@ -311,6 +328,7 @@ npm run create-tenant-with-stripe -- \
 ```
 
 **Technical Implementation:**
+
 - **Script:** `/Users/mikeyoung/CODING/MAIS/server/scripts/create-tenant-with-stripe.ts` (lines 1-365)
 - **Service:** `/Users/mikeyoung/CODING/MAIS/server/src/services/stripe-connect.service.ts`
 
@@ -331,6 +349,7 @@ npm run create-tenant-with-stripe -- \
    - Return/refresh URLs configurable
 
 **Output Example:**
+
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💳 STRIPE CONNECT
@@ -357,12 +376,14 @@ Onboarding URL (expires in 1 hour):
 ```
 
 **Stripe Connect Setup:**
+
 - **Account Type:** Express (Stripe-hosted onboarding)
 - **Revenue Model:** Application fees (platform takes commission)
 - **Payment Flow:** Customer → Tenant Stripe Account → Platform Fee → Tenant Payout
 - **Capabilities:** `card_payments`, `transfers` (automatic)
 
 **Success Criteria:**
+
 - ✅ Tenant created with API keys
 - ✅ Stripe Connect account linked
 - ✅ Onboarding URL generated
@@ -378,6 +399,7 @@ Onboarding URL (expires in 1 hour):
 **Authentication:** Required (Bearer token with `PLATFORM_ADMIN` role)
 
 **Request:**
+
 ```bash
 curl -X POST http://localhost:3001/v1/admin/tenants \
   -H "Authorization: Bearer eyJhbGc..." \
@@ -390,16 +412,19 @@ curl -X POST http://localhost:3001/v1/admin/tenants \
 ```
 
 **Technical Implementation:**
+
 - **Route:** `/Users/mikeyoung/CODING/MAIS/server/src/routes/admin/tenants.routes.ts` (lines 89-136)
 - **Middleware:** Auth middleware validates JWT (lines 284)
 - **Repository:** PrismaTenantRepository (line 28)
 
 **Validation Rules:**
+
 - `slug`: Required, 3-50 chars, lowercase, alphanumeric + hyphens
 - `name`: Required, display name
 - `commission`: Optional, 0-100 (default 10.0)
 
 **Response:**
+
 ```json
 {
   "tenant": {
@@ -418,6 +443,7 @@ curl -X POST http://localhost:3001/v1/admin/tenants \
 **⚠️ CRITICAL:** `secretKey` is returned ONLY in this response. It is never stored in plaintext and cannot be retrieved later.
 
 **Success Criteria:**
+
 - ✅ 201 Created response
 - ✅ Tenant object with API keys
 - ✅ Secret key saved by founder
@@ -434,16 +460,19 @@ curl -X POST http://localhost:3001/v1/admin/tenants \
 **Endpoint:** `GET /v1/admin/stats` (API)
 
 **Technical Implementation:**
+
 - **Controller:** `/Users/mikeyoung/CODING/MAIS/server/src/controllers/platform-admin.controller.ts` (lines 54-135)
 - **Frontend:** `/Users/mikeyoung/CODING/MAIS/client/src/pages/admin/PlatformAdminDashboard.tsx` (lines 1-367)
 
 **API Request:**
+
 ```bash
 curl http://localhost:3001/v1/admin/stats \
   -H "Authorization: Bearer eyJhbGc..."
 ```
 
 **Response:**
+
 ```json
 {
   "totalTenants": 15,
@@ -462,6 +491,7 @@ curl http://localhost:3001/v1/admin/stats \
 ```
 
 **Dashboard UI Metrics:**
+
 1. **Total Tenants** (line 177-186): Building2 icon, shows active count
 2. **Business Segments** (lines 188-197): Layers icon, shows active segments
 3. **Total Bookings** (lines 199-208): Calendar icon, all tenants
@@ -469,12 +499,14 @@ curl http://localhost:3001/v1/admin/stats \
 5. **Platform Commission** (lines 223-234): DollarSign icon, earnings (cents)
 
 **Tenant Management Table:**
+
 - **Location:** Lines 239-362 in PlatformAdminDashboard.tsx
 - **Features:** Search, filter, view details, create new tenant
 - **Columns:** Name, Slug, Email, Packages, Bookings, Commission, Status, Actions
 - **Actions:** View Details → Navigate to `/admin/tenants/:id`
 
 **Success Criteria:**
+
 - ✅ System-wide metrics visible
 - ✅ All tenants listed with stats
 - ✅ Search/filter functionality works
@@ -485,22 +517,26 @@ curl http://localhost:3001/v1/admin/stats \
 #### Step 3.2: Manage Tenant Lifecycle
 
 **View All Tenants:**
+
 ```bash
 GET /v1/admin/tenants
 Authorization: Bearer <platform-admin-token>
 ```
 
 **Technical Implementation:**
+
 - **Route:** `/Users/mikeyoung/CODING/MAIS/server/src/routes/admin/tenants.routes.ts` (lines 27-74)
 - **Returns:** Array of tenants with stats (packages, bookings, add-ons count)
 
 **Get Tenant Details:**
+
 ```bash
 GET /v1/admin/tenants/:id
 Authorization: Bearer <platform-admin-token>
 ```
 
 **Response:**
+
 ```json
 {
   "tenant": {
@@ -526,6 +562,7 @@ Authorization: Bearer <platform-admin-token>
 ```
 
 **Update Tenant:**
+
 ```bash
 PUT /v1/admin/tenants/:id
 Authorization: Bearer <platform-admin-token>
@@ -541,11 +578,13 @@ Content-Type: application/json
 ```
 
 **Technical Implementation:**
+
 - **Route:** Lines 200-234 in tenants.routes.ts
 - **Validation:** Commission must be 0-100
 - **Updatable Fields:** `name`, `commissionPercent`, `branding`, `isActive`
 
 **Deactivate Tenant (Soft Delete):**
+
 ```bash
 DELETE /v1/admin/tenants/:id
 Authorization: Bearer <platform-admin-token>
@@ -556,6 +595,7 @@ Authorization: Bearer <platform-admin-token>
 **⚠️ Note:** This is a soft delete - sets `isActive: false`, does NOT delete data.
 
 **Success Criteria:**
+
 - ✅ Can list all tenants
 - ✅ Can view tenant details with full stats
 - ✅ Can update tenant settings
@@ -568,6 +608,7 @@ Authorization: Bearer <platform-admin-token>
 **Goal:** Set up payment processing for tenants
 
 **Create Stripe Connect Account:**
+
 ```bash
 POST /v1/admin/tenants/:tenantId/stripe/connect
 Authorization: Bearer <platform-admin-token>
@@ -580,11 +621,13 @@ Content-Type: application/json
 ```
 
 **Technical Implementation:**
+
 - **Route:** `/Users/mikeyoung/CODING/MAIS/server/src/routes/admin/stripe.routes.ts` (lines 55-95)
 - **Service:** StripeConnectService.createConnectedAccount()
 - **Validation:** Tenant must exist, no existing Stripe account
 
 **Response:**
+
 ```json
 {
   "accountId": "acct_1234567890",
@@ -595,6 +638,7 @@ Content-Type: application/json
 ```
 
 **Generate Onboarding Link:**
+
 ```bash
 POST /v1/admin/tenants/:tenantId/stripe/onboarding
 Authorization: Bearer <platform-admin-token>
@@ -607,6 +651,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "url": "https://connect.stripe.com/setup/e/acct_xxx/yyy",
@@ -617,12 +662,14 @@ Content-Type: application/json
 **⚠️ Link expires in 1 hour** - generate new link if expired
 
 **Check Account Status:**
+
 ```bash
 GET /v1/admin/tenants/:tenantId/stripe/status
 Authorization: Bearer <platform-admin-token>
 ```
 
 **Response:**
+
 ```json
 {
   "accountId": "acct_1234567890",
@@ -638,12 +685,14 @@ Authorization: Bearer <platform-admin-token>
 ```
 
 **Stripe Onboarding States:**
+
 1. **Not Started:** `stripeAccountId: null` in database
 2. **Account Created:** `stripeAccountId` set, `stripeOnboarded: false`
 3. **Onboarding In Progress:** Tenant filling out Stripe forms
 4. **Onboarding Complete:** `stripeOnboarded: true`, `chargesEnabled: true`
 
 **Success Criteria:**
+
 - ✅ Stripe account created for tenant
 - ✅ Onboarding link generated
 - ✅ Tenant completes onboarding
@@ -654,12 +703,14 @@ Authorization: Bearer <platform-admin-token>
 #### Step 3.4: Monitor System Health
 
 **Health Check Endpoint:**
+
 ```bash
 GET /health
 # No authentication required
 ```
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -675,21 +726,25 @@ GET /health
 ```
 
 **Technical Implementation:**
+
 - **Route:** `/Users/mikeyoung/CODING/MAIS/server/src/routes/health.routes.ts`
 - **Checks:** Database connection, external service connectivity
 - **Usage:** Monitoring tools, load balancers, uptime tracking
 
 **Environment Health Check:**
+
 ```bash
 npm run doctor
 ```
 
 **Output:**
+
 - ✅ Required environment variables
 - ⚠️ Optional variables with fallbacks
 - ❌ Missing critical configuration
 
 **Database Status:**
+
 ```bash
 cd server
 npm exec prisma studio
@@ -697,6 +752,7 @@ npm exec prisma studio
 ```
 
 **Monitoring Checklist:**
+
 - [ ] Health endpoint returns 200 OK
 - [ ] Database connection stable
 - [ ] Stripe API accessible
@@ -705,6 +761,7 @@ npm exec prisma studio
 - [ ] All tenants' Stripe accounts operational
 
 **Success Criteria:**
+
 - ✅ Health endpoint accessible
 - ✅ All services reporting healthy
 - ✅ No critical errors in logs
@@ -718,6 +775,7 @@ npm exec prisma studio
 #### Step 4.1: Schema Migrations
 
 **Create New Migration:**
+
 ```bash
 cd server
 
@@ -729,10 +787,12 @@ npm exec prisma migrate dev --name add_tenant_phone_field
 ```
 
 **Technical Implementation:**
+
 - **Schema:** `/Users/mikeyoung/CODING/MAIS/server/prisma/schema.prisma` (lines 1-429)
 - **Migrations:** `/Users/mikeyoung/CODING/MAIS/server/prisma/migrations/`
 
 **Migration Workflow:**
+
 1. Edit `schema.prisma` (e.g., add new field)
 2. Run `prisma migrate dev --name <descriptive-name>`
 3. Prisma generates SQL migration file
@@ -740,11 +800,13 @@ npm exec prisma migrate dev --name add_tenant_phone_field
 5. Prisma regenerates client types
 
 **Check Migration Status:**
+
 ```bash
 npm exec prisma migrate status
 ```
 
 **Output Example:**
+
 ```
 Status
 3 migrations found in prisma/migrations
@@ -753,18 +815,21 @@ Database schema is up to date!
 ```
 
 **Apply Migrations (Production):**
+
 ```bash
 npm exec prisma migrate deploy
 # Non-interactive, safe for CI/CD
 ```
 
 **⚠️ Critical Safeguards:**
+
 - Never edit migration files manually
 - Always test migrations in development first
 - Use `prisma migrate deploy` in production (not `dev`)
 - Backup database before major schema changes
 
 **Success Criteria:**
+
 - ✅ Migration file generated
 - ✅ Database schema updated
 - ✅ Prisma Client regenerated
@@ -775,17 +840,20 @@ npm exec prisma migrate deploy
 #### Step 4.2: Database Seeding
 
 **Re-seed Database:**
+
 ```bash
 cd server
 npm exec prisma db seed
 ```
 
 **Use Cases:**
+
 - Resetting development environment
 - Creating test data for E2E tests
 - Adding sample tenants for demos
 
 **What Gets Seeded:**
+
 - Platform admin user (admin@elope.com)
 - Test tenant (elope-e2e)
 - Sample packages (Classic, Garden, Luxury)
@@ -795,6 +863,7 @@ npm exec prisma db seed
 **⚠️ Warning:** Seeding is idempotent (uses `upsert`), but **DO NOT run in production** with customer data.
 
 **Success Criteria:**
+
 - ✅ Seed script completes without errors
 - ✅ Platform admin user exists
 - ✅ Test tenant exists with sample data
@@ -804,6 +873,7 @@ npm exec prisma db seed
 #### Step 4.3: Database Backup & Restore
 
 **Backup Database (PostgreSQL):**
+
 ```bash
 # Export full database
 pg_dump $DATABASE_URL > backup_$(date +%Y%m%d).sql
@@ -813,17 +883,20 @@ pg_dump $DATABASE_URL -t tenants -t bookings > critical_tables.sql
 ```
 
 **Restore Database:**
+
 ```bash
 psql $DATABASE_URL < backup_20250121.sql
 ```
 
 **Automated Backups (Production):**
+
 - Use managed database service (Supabase, AWS RDS)
 - Configure automatic daily backups
 - Retain backups for 30 days minimum
 - Test restore procedure quarterly
 
 **Success Criteria:**
+
 - ✅ Backup file created successfully
 - ✅ Backup file size reasonable (indicates data captured)
 - ✅ Restore tested in non-production environment
@@ -837,12 +910,14 @@ psql $DATABASE_URL < backup_20250121.sql
 #### Step 5.1: Secret Rotation
 
 **When to Rotate Secrets:**
+
 - Scheduled rotation (quarterly recommended)
 - Security incident or breach
 - Employee/contractor offboarding
 - Suspected key compromise
 
 **Rotate JWT Secret:**
+
 ```bash
 # Generate new secret
 openssl rand -hex 32
@@ -860,6 +935,7 @@ npm run dev:api
 **⚠️ Impact:** All logged-in users (platform admins + tenant admins) will be logged out.
 
 **Rotate Tenant API Keys:**
+
 ```bash
 cd server
 
@@ -871,10 +947,12 @@ npm run rotate-tenant-keys -- --tenantId=clx123...
 ```
 
 **Technical Implementation:**
+
 - **Guide:** `/Users/mikeyoung/CODING/MAIS/docs/security/SECRET_ROTATION_GUIDE.md`
 - **Service:** API Key Service with key generation logic
 
 **Success Criteria:**
+
 - ✅ New secret generated securely
 - ✅ Application restarted with new secret
 - ✅ Old tokens rejected
@@ -895,6 +973,7 @@ npm run rotate-tenant-keys -- --tenantId=clx123...
 **Common Incidents:**
 
 **Double-Booking Detected:**
+
 ```bash
 # Check database for conflicts
 psql $DATABASE_URL -c "
@@ -910,6 +989,7 @@ psql $DATABASE_URL -c "
 ```
 
 **Stripe Webhook Failure:**
+
 ```bash
 # Check webhook events table
 psql $DATABASE_URL -c "
@@ -926,6 +1006,7 @@ curl -X POST http://localhost:3001/v1/dev/simulate-checkout-completed \
 ```
 
 **Success Criteria:**
+
 - ✅ Incident contained within 1 hour
 - ✅ Root cause identified
 - ✅ Remediation applied
@@ -936,6 +1017,7 @@ curl -X POST http://localhost:3001/v1/dev/simulate-checkout-completed \
 #### Step 5.3: Performance Optimization
 
 **Enable Redis Caching:**
+
 ```bash
 # Add to .env
 REDIS_URL=redis://localhost:6379
@@ -945,11 +1027,13 @@ npm run dev:api
 ```
 
 **Cache Performance Metrics:**
+
 - Hit response time: ~5ms (97.5% faster than database)
 - Database load reduction: 70%
 - Cache hit rate target: >80%
 
 **Database Query Optimization:**
+
 ```bash
 # Check slow queries (PostgreSQL)
 psql $DATABASE_URL -c "
@@ -961,12 +1045,14 @@ psql $DATABASE_URL -c "
 ```
 
 **Existing Performance Indexes:**
+
 - **Tenant isolation:** `[tenantId]` on all multi-tenant tables
 - **Date queries:** `[tenantId, date]` on Booking, BlackoutDate
 - **Status filtering:** `[tenantId, status]` on Booking
 - **Recent records:** `[tenantId, createdAt]` on Customer, WebhookEvent
 
 **Success Criteria:**
+
 - ✅ Cache enabled and working
 - ✅ Response times improved
 - ✅ Database CPU usage reduced
@@ -989,11 +1075,13 @@ psql $DATABASE_URL -c "
 7. **Route Access:** Route handler receives validated admin user in `res.locals.admin`
 
 **Files:**
+
 - Auth Routes: `/Users/mikeyoung/CODING/MAIS/server/src/routes/auth.routes.ts` (lines 166-204)
 - Identity Service: `/Users/mikeyoung/CODING/MAIS/server/src/services/identity.service.ts` (lines 16-49)
 - Auth Middleware: `/Users/mikeyoung/CODING/MAIS/server/src/middleware/auth.ts` (lines 14-67)
 
 **Security Features:**
+
 - Bcrypt password hashing (12 rounds, OWASP recommendation)
 - JWT with explicit algorithm (HS256 only, prevents confusion attacks)
 - Rate limiting (5 attempts per 15 minutes per IP)
@@ -1007,32 +1095,37 @@ psql $DATABASE_URL -c "
 **Critical Rule:** ALL database queries MUST filter by `tenantId` to prevent data leakage.
 
 **Tenant Resolution Flow:**
+
 1. Client sends `X-Tenant-Key` header (format: `pk_live_{slug}_{random}`)
 2. Tenant middleware validates key and resolves tenant
 3. Middleware injects `tenantId` into `req.tenantId`
 4. All subsequent queries use `req.tenantId` for filtering
 
 **Files:**
+
 - Tenant Middleware: `/Users/mikeyoung/CODING/MAIS/server/src/middleware/tenant.ts`
 - Repository Interfaces: `/Users/mikeyoung/CODING/MAIS/server/src/lib/ports.ts`
 
 **Example (Safe Query):**
+
 ```typescript
 // ✅ CORRECT - Tenant-scoped
 const packages = await prisma.package.findMany({
-  where: { tenantId, active: true }
+  where: { tenantId, active: true },
 });
 ```
 
 **Example (Vulnerable Query):**
+
 ```typescript
 // ❌ WRONG - Returns data from all tenants
 const packages = await prisma.package.findMany({
-  where: { active: true }
+  where: { active: true },
 });
 ```
 
 **Platform Admin Exception:**
+
 - Platform admins can query across all tenants
 - Must explicitly opt-in (no `tenantId` filter)
 - Used only for platform-wide statistics and tenant management
@@ -1056,6 +1149,7 @@ const packages = await prisma.package.findMany({
    - Required for admin operations
 
 **Key Generation:**
+
 ```typescript
 // File: /server/src/lib/api-key.service.ts
 generateKeyPair(slug: string) {
@@ -1071,11 +1165,13 @@ generateKeyPair(slug: string) {
 ```
 
 **Key Storage:**
+
 - Public keys: Stored in plaintext (Tenant.apiKeyPublic)
 - Secret keys: Hashed with bcrypt (Tenant.apiKeySecret)
 - Secret keys shown ONCE at creation (cannot retrieve later)
 
 **Key Rotation:**
+
 - Generate new key pair via CLI or API
 - Update tenant record with new keys
 - Notify tenant immediately
@@ -1086,11 +1182,13 @@ generateKeyPair(slug: string) {
 ### Revenue Model & Commission Calculation
 
 **Platform Revenue Model:**
+
 - Commission-based: 10-15% of each booking
 - Calculated server-side (cannot be manipulated by client)
 - Rounded UP to nearest cent (protects platform revenue)
 
 **Commission Calculation:**
+
 ```typescript
 // File: /server/src/services/commission.service.ts
 calculateCommission(totalPrice: number, tenantId: string): number {
@@ -1103,12 +1201,14 @@ calculateCommission(totalPrice: number, tenantId: string): number {
 ```
 
 **Example:**
+
 - Booking total: $2,500 ($250,000 cents)
 - Commission rate: 10%
 - Platform commission: $250 ($25,000 cents)
 - Tenant payout: $2,250 ($225,000 cents)
 
 **Stripe Connect Integration:**
+
 - Customer pays full amount ($2,500)
 - Stripe routes to tenant's Stripe account
 - Platform takes commission via application fee ($250)
@@ -1119,11 +1219,13 @@ calculateCommission(totalPrice: number, tenantId: string): number {
 ### Database Schema Key Points
 
 **User Model (lines 15-34):**
+
 - Supports both PLATFORM_ADMIN and TENANT_ADMIN roles
 - `tenantId` field links tenant admins to their tenant
 - Platform admins have `tenantId: null`
 
 **Tenant Model (lines 36-92):**
+
 - Stores API keys (public plaintext, secret hashed)
 - Stores Stripe Connect account ID
 - Stores commission percentage per tenant
@@ -1131,11 +1233,13 @@ calculateCommission(totalPrice: number, tenantId: string): number {
 - Stores encrypted secrets (Stripe keys, etc.)
 
 **Booking Model (lines 247-289):**
+
 - Unique constraint: `@@unique([tenantId, date])` prevents double-booking
 - Stores commission snapshot at booking time
 - Linked to Stripe PaymentIntent ID
 
 **WebhookEvent Model (lines 348-375):**
+
 - Composite unique key: `[tenantId, eventId]` prevents cross-tenant hijacking
 - Tracks processing status (PENDING, PROCESSED, FAILED, DUPLICATE)
 - Stores raw payload for debugging
@@ -1224,21 +1328,24 @@ calculateCommission(totalPrice: number, tenantId: string): number {
 ## Common Pitfalls & Solutions
 
 ### Pitfall 1: Forgetting Tenant Scoping
+
 **Problem:** Query returns data from all tenants (security vulnerability)
 
 **Example:**
+
 ```typescript
 // ❌ WRONG - No tenantId filter
 const bookings = await prisma.booking.findMany({
-  where: { status: 'CONFIRMED' }
+  where: { status: 'CONFIRMED' },
 });
 ```
 
 **Solution:**
+
 ```typescript
 // ✅ CORRECT - Always filter by tenantId
 const bookings = await prisma.booking.findMany({
-  where: { tenantId, status: 'CONFIRMED' }
+  where: { tenantId, status: 'CONFIRMED' },
 });
 ```
 
@@ -1247,27 +1354,30 @@ const bookings = await prisma.booking.findMany({
 ---
 
 ### Pitfall 2: Exposing Secret API Keys
+
 **Problem:** Secret key leaked to client-side code or logs
 
 **Example:**
+
 ```typescript
 // ❌ WRONG - Sending secret key to client
 res.json({
   tenant: {
     apiKeyPublic: tenant.apiKeyPublic,
-    apiKeySecret: tenant.apiKeySecret // ❌ NEVER!
-  }
+    apiKeySecret: tenant.apiKeySecret, // ❌ NEVER!
+  },
 });
 ```
 
 **Solution:**
+
 ```typescript
 // ✅ CORRECT - Never return secret keys
 res.json({
   tenant: {
-    apiKeyPublic: tenant.apiKeyPublic
+    apiKeyPublic: tenant.apiKeyPublic,
     // Secret key omitted
-  }
+  },
 });
 ```
 
@@ -1276,9 +1386,11 @@ res.json({
 ---
 
 ### Pitfall 3: Skipping Transaction Locks
+
 **Problem:** Double-booking despite unique constraint (race condition)
 
 **Example:**
+
 ```typescript
 // ❌ WRONG - Check and insert separately (race condition)
 const existing = await prisma.booking.findFirst({
@@ -1290,6 +1402,7 @@ await prisma.booking.create({ data: { tenantId, date, ... } });
 ```
 
 **Solution:**
+
 ```typescript
 // ✅ CORRECT - Use transaction with pessimistic lock
 await prisma.$transaction(async (tx) => {
@@ -1309,9 +1422,11 @@ await prisma.$transaction(async (tx) => {
 ---
 
 ### Pitfall 4: Forgetting to Regenerate Prisma Client
+
 **Problem:** Schema changed but TypeScript types outdated
 
 **Example:**
+
 ```bash
 # Schema updated with new field
 # BUT forgot to regenerate client
@@ -1321,6 +1436,7 @@ npm run dev:api
 ```
 
 **Solution:**
+
 ```bash
 # Always regenerate after schema changes
 npm exec prisma generate
@@ -1490,12 +1606,14 @@ GET /health                        # System health (no auth)
 ### Support & Troubleshooting
 
 **Common Issues:**
+
 - Port conflicts: Check `lsof -i :3001`, kill process if needed
 - Database connection errors: Verify DATABASE_URL, check PostgreSQL running
 - Prisma Client out of sync: Run `npm exec prisma generate`
 - Migration conflicts: Check `prisma migrate status`, resolve manually
 
 **Getting Help:**
+
 - API Documentation: Swagger UI at `/api/docs`
 - Codebase Guide: `CLAUDE.md` in repository root
 - Project Architecture: `ARCHITECTURE.md`

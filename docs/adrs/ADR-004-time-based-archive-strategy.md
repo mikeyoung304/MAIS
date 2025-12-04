@@ -25,6 +25,7 @@ docs/archive/oct-22-analysis/
 ```
 
 **Problem**: `oct-22` ambiguously means:
+
 - October 22nd, 2023?
 - October 22nd, 2022?
 - October, year '22 (2022)?
@@ -33,6 +34,7 @@ docs/archive/oct-22-analysis/
 **Actual meaning**: October 2025 (3-year misdating!)
 
 **Impact**:
+
 - Historical research fails (looking for "2025 work" misses oct-22-analysis/)
 - Compliance risk (audit trails mislabeled by 3 years)
 - Developer confusion ("Why is 2025 work in oct-22 directory?")
@@ -57,6 +59,7 @@ docs/archive/
 **3. No Archival Rules or Triggers**
 
 Questions with no clear answers:
+
 - When should documentation be archived? (30 days? 90 days? never?)
 - What triggers archival? (project completion? sprint end? arbitrary decision?)
 - Who is responsible for archiving? (document author? sprint lead? nobody?)
@@ -67,16 +70,19 @@ Questions with no clear answers:
 ### Real-World Consequences
 
 **Incident 1: Lost Audit Trail (October 2025)**
+
 - Compliance team requested "all architecture decisions from 2025"
 - Missed ADRs in oct-22-analysis/ (assumed it was 2022 data)
 - Had to manually grep entire project to rebuild timeline
 
 **Incident 2: Duplicate Investigation (November 2025)**
+
 - Developer investigated catalog bug for 4 hours
 - Complete analysis already existed in cache-investigation/ (no date, not discovered)
 - Wasted 4 hours redoing work because archive wasn't discoverable
 
 **Incident 3: Sprint Retrospective Failure (November 2025)**
+
 - Sprint 6 retrospective needed Sprint 4-5 context
 - Sprint 4-5 docs scattered across root/, docs/sprints/, .claude/, docs/archive/sprints/
 - Took 45 minutes to assemble complete picture (should take 5 minutes)
@@ -106,6 +112,7 @@ docs/archive/
 ```
 
 **Benefits**:
+
 - **Chronological clarity**: 2025-10 unambiguously means October 2025
 - **Automatic sorting**: File system sorts YYYY-MM naturally
 - **Historical research**: "Show me all Q4 2025 work" = ls docs/archive/2025-{10,11,12}
@@ -123,6 +130,7 @@ docs/archive/
 ### Archive Structure: docs/archive/YYYY-MM/category/
 
 **Top-Level Structure**:
+
 ```
 docs/archive/
 ├── 2025-10/                    # October 2025
@@ -146,6 +154,7 @@ docs/archive/
 ```
 
 **Date Format**: `YYYY-MM/` (ISO 8601 year-month)
+
 - `2025-10/` = October 2025
 - `2025-11/` = November 2025
 - `2026-01/` = January 2026
@@ -180,6 +189,7 @@ All archived files must follow ADR-002 naming standard:
 **Format**: `YYYY-MM-DD-kebab-case-description.md`
 
 **Examples**:
+
 ```
 docs/archive/2025-11/sprints/
 ├── 2025-11-01-sprint-4-handoff.md
@@ -200,34 +210,38 @@ docs/archive/2025-11/incidents/
 ```
 
 **Date Meaning**:
+
 - Use completion date (not start date) for consistency
-- Sprint 4 completes Nov 1 → 2025-11-01-sprint-4-*
+- Sprint 4 completes Nov 1 → 2025-11-01-sprint-4-\*
 - Investigation finishes Oct 22 → 2025-10-22-investigation-name.md
 - Incident occurs Nov 15 → 2025-11-15-incident-description.md
 
 ### Archival Triggers and Rules
 
-| Content Type | Archive Trigger | Archive Location | Archive Timing |
-|--------------|----------------|------------------|----------------|
-| Sprint docs | Sprint completion + 90 days | archive/YYYY-MM/sprints/ | Quarterly review |
-| Investigations | Investigation complete | archive/YYYY-MM/investigations/ | Immediately after completion |
-| Incident reports | Postmortem complete | archive/YYYY-MM/incidents/ | Within 1 week of resolution |
-| Status reports | Reporting period ends | archive/YYYY-MM/reports/ | Monthly |
-| Technical decisions | Decision implemented | archive/YYYY-MM/decisions/ | Immediately after implementation |
+| Content Type        | Archive Trigger             | Archive Location                | Archive Timing                   |
+| ------------------- | --------------------------- | ------------------------------- | -------------------------------- |
+| Sprint docs         | Sprint completion + 90 days | archive/YYYY-MM/sprints/        | Quarterly review                 |
+| Investigations      | Investigation complete      | archive/YYYY-MM/investigations/ | Immediately after completion     |
+| Incident reports    | Postmortem complete         | archive/YYYY-MM/incidents/      | Within 1 week of resolution      |
+| Status reports      | Reporting period ends       | archive/YYYY-MM/reports/        | Monthly                          |
+| Technical decisions | Decision implemented        | archive/YYYY-MM/decisions/      | Immediately after implementation |
 
 **Special Cases**:
 
 **Never Archive**:
+
 - ADRs (Architecture Decision Records) - these are permanent reference
 - Tutorials, How-To Guides, Reference docs - stable content (Diátaxis framework)
 - Active project documentation - only archive when project/phase completes
 
 **Immediate Archive** (don't wait):
+
 - Security incident postmortems (per ADR-005 security requirements)
 - Compliance-related reports (legal/audit requirements)
 - Completed investigations (declutter active workspace)
 
 **Quarterly Archive** (during documentation health audit):
+
 - Sprint documentation (90 days after completion per ADR-003)
 - Old status reports (>30 days old)
 - Superseded technical decisions
@@ -250,6 +264,7 @@ ARCHIVE_PATH="docs/archive/${YEAR_MONTH}/${CATEGORY}/${COMPLETION_DATE}-${FILENA
 ```
 
 **Benefits**:
+
 - Scripts can construct paths without human input
 - No ambiguity in path selection
 - Consistent for all document types
@@ -262,6 +277,7 @@ ARCHIVE_PATH="docs/archive/${YEAR_MONTH}/${CATEGORY}/${COMPLETION_DATE}-${FILENA
 ### Why ISO 8601 YYYY-MM Format?
 
 **ISO 8601 is international standard** for date representation:
+
 - Unambiguous: 2025-11 always means November 2025
 - Sortable: Lexicographic sort = chronological sort
 - Machine-readable: All systems recognize YYYY-MM-DD format
@@ -269,13 +285,13 @@ ARCHIVE_PATH="docs/archive/${YEAR_MONTH}/${CATEGORY}/${COMPLETION_DATE}-${FILENA
 
 **Comparison to Alternatives**:
 
-| Format | Example | Ambiguity | Sortable | Compliance |
-|--------|---------|-----------|----------|------------|
-| ISO 8601 | 2025-11 | ✅ None | ✅ Yes | ✅ Yes |
-| Month-YY | oct-22 | ❌ 3 interpretations | ❌ No | ❌ No |
-| Spelled out | october-2025 | ✅ Clear | ❌ Sorts after november | ❌ Non-standard |
-| MM-YYYY | 11-2025 | ⚠️ US vs EU confusion | ❌ No | ⚠️ Non-standard |
-| YYYYMMDD | 20251112 | ✅ Clear | ✅ Yes | ❌ Not readable |
+| Format      | Example      | Ambiguity             | Sortable                | Compliance      |
+| ----------- | ------------ | --------------------- | ----------------------- | --------------- |
+| ISO 8601    | 2025-11      | ✅ None               | ✅ Yes                  | ✅ Yes          |
+| Month-YY    | oct-22       | ❌ 3 interpretations  | ❌ No                   | ❌ No           |
+| Spelled out | october-2025 | ✅ Clear              | ❌ Sorts after november | ❌ Non-standard |
+| MM-YYYY     | 11-2025      | ⚠️ US vs EU confusion | ❌ No                   | ⚠️ Non-standard |
+| YYYYMMDD    | 20251112     | ✅ Clear              | ✅ Yes                  | ❌ Not readable |
 
 **Verdict**: ISO 8601 YYYY-MM balances clarity, sortability, and compliance.
 
@@ -284,35 +300,42 @@ ARCHIVE_PATH="docs/archive/${YEAR_MONTH}/${CATEGORY}/${COMPLETION_DATE}-${FILENA
 **Month is optimal granularity for documentation archives**:
 
 **Too Coarse (Year-Level)**:
+
 ```
 ❌ docs/archive/2025/
    └── (100+ files in one directory = unmanageable)
 ```
+
 - 12 months of documents in one directory
 - Slow to browse (100+ files)
 - Can't answer "show me Q4 work" without grepping
 
 **Too Fine (Day-Level)**:
+
 ```
 ❌ docs/archive/2025-11-12/
    └── (365 directories per year = excessive)
 ```
+
 - Most days have 0-2 archived documents
 - Excessive directory creation overhead
 - Difficult to browse by time period
 
 **Just Right (Month-Level)**:
+
 ```
 ✅ docs/archive/2025-11/
    ├── sprints/
    ├── investigations/
    └── reports/
 ```
+
 - 10-30 files per month per category (manageable)
 - Natural time period for retrospectives (monthly, quarterly)
 - Aligns with business cycles (monthly reports, quarterly reviews)
 
 **Data Supporting Month-Level**:
+
 - Analysis of rebuild 6.0: Average 15 files per category per month
 - Too few for day-level (0.5 files/day), too many for year-level (180 files/year)
 - Business cycles operate on month/quarter (not day/year)
@@ -322,6 +345,7 @@ ARCHIVE_PATH="docs/archive/${YEAR_MONTH}/${CATEGORY}/${COMPLETION_DATE}-${FILENA
 **Category subdirectories prevent mixing unrelated content**:
 
 **Without Categories** (flat by month):
+
 ```
 ❌ docs/archive/2025-11/
    ├── 2025-11-01-sprint-4-retrospective.md
@@ -330,11 +354,13 @@ ARCHIVE_PATH="docs/archive/${YEAR_MONTH}/${CATEGORY}/${COMPLETION_DATE}-${FILENA
    ├── 2025-11-12-cache-investigation.md
    └── (30+ mixed files)
 ```
+
 - Can't filter by type (show me all incidents)
 - 30+ files in flat list = hard to scan
 - Mixed content types reduce clarity
 
 **With Categories** (organized by type):
+
 ```
 ✅ docs/archive/2025-11/
    ├── sprints/
@@ -345,11 +371,13 @@ ARCHIVE_PATH="docs/archive/${YEAR_MONTH}/${CATEGORY}/${COMPLETION_DATE}-${FILENA
    └── investigations/
        └── 2025-11-12-cache-investigation.md
 ```
+
 - Filter by type: ls docs/archive/2025-11/incidents/
 - Organized by purpose (sprints, incidents, investigations)
 - Easy to scan (5-10 files per category)
 
 **Category Benefits**:
+
 - Type-based filtering (show all incidents across all months)
 - Parallel structure across months (every month has same categories)
 - Supports different retention policies (keep incidents 7 years, sprints 2 years)
@@ -359,6 +387,7 @@ ARCHIVE_PATH="docs/archive/${YEAR_MONTH}/${CATEGORY}/${COMPLETION_DATE}-${FILENA
 **Completion date provides consistent archival point**:
 
 **Problem with Start Date**:
+
 ```
 Sprint 6 starts Nov 1, 2025
 Sprint 6 runs 4 weeks
@@ -379,6 +408,7 @@ Archive by completion: docs/archive/2025-12/sprints/ (different)
 **Completion date advantage**: Work archived when truly complete (clear).
 
 **Edge Case Handling**:
+
 - Long-running projects: Archive by phase completion, not overall project completion
 - Cancelled projects: Archive by cancellation date
 - Abandoned work: Archive after 90 days of inactivity
@@ -406,11 +436,13 @@ docs/archive/
 ```
 
 **Pros**:
+
 - Content grouped by topic (all sprints together)
 - Easy to find all work on specific topic
 - Familiar structure (many projects use this)
 
 **Cons**:
+
 - ❌ No chronological organization (can't answer "show me Q4 2025 work")
 - ❌ Doesn't solve oct-22 ambiguity (still no dates in structure)
 - ❌ Historical research requires checking multiple topic directories
@@ -436,11 +468,13 @@ docs/archive/
 ```
 
 **Pros**:
+
 - Simpler structure (fewer directories)
 - Works well for multi-year projects
 - Clear year boundaries
 
 **Cons**:
+
 - ❌ Poor granularity (12 months in one directory)
 - ❌ Can't answer "show me Q4 work" without grepping files
 - ❌ Large directories (100+ files per category per year)
@@ -465,11 +499,13 @@ docs/archive/
 ```
 
 **Pros**:
+
 - Aligns with business quarterly reviews
 - Fewer directories than month-level
 - Natural for quarterly retrospectives
 
 **Cons**:
+
 - ❌ Quarter boundaries arbitrary (Q1 ends March 31, but sprint might end April 2)
 - ❌ 3 months of documents in one directory (30-50 files)
 - ❌ Can't answer "show me November work" without checking Q4
@@ -495,11 +531,13 @@ docs/archive/
 ```
 
 **Pros**:
+
 - Simpler structure (fewer directories)
 - All month's work in one place
 - Easy to browse by month
 
 **Cons**:
+
 - ❌ Can't filter by type (show me all incidents)
 - ❌ 30+ files per month in flat list (hard to scan)
 - ❌ Mixed content types reduce clarity
@@ -512,11 +550,13 @@ docs/archive/
 **Description**: Continue current practice, let developers archive intuitively
 
 **Pros**:
+
 - No implementation cost (already happening)
 - No migration needed
 - Maximum flexibility
 
 **Cons**:
+
 - ❌ Already failed (oct-22-analysis/ contains 2025 files = 3-year misdating)
 - ❌ 7+ different archive structures (no consistency)
 - ❌ Historical research impossible (can't find 2025 work systematically)
@@ -545,29 +585,34 @@ docs/archive/
 ### Negative Consequences
 
 ⚠️ **Migration effort**: Existing archives need reorganization
+
 - **Scope**: oct-22-analysis/, cache-investigation/, phase-3/, etc.
 - **Mitigation**: Migration script automates file movement
 - **Mitigation**: Priority-based migration (P0 oct-22 first, P2 others later)
 - **Effort**: ~4 hours to migrate existing archives
 
 ⚠️ **More directories**: Month-level granularity creates 12 directories per year
+
 - **Counterpoint**: 12 directories far more manageable than 100+ files in one directory
 - **Counterpoint**: Standard practice (rebuild 6.0, most time-based archives)
 - **Mitigation**: Directories created on-demand (only create 2025-11 when needed)
 
 ⚠️ **Archive discipline required**: Must determine completion date and category
+
 - **Risk**: Developers archive with wrong date or category
 - **Mitigation**: Archive script prompts for date and category
 - **Mitigation**: Code review validates archive location
 - **Mitigation**: Quarterly audit catches misfiled archives
 
 ⚠️ **Link breakage**: Moving files to dated archives breaks existing links
+
 - **Risk**: Internal documentation links break during migration
 - **Mitigation**: Track all link updates in LINK_UPDATES_NEEDED.md
 - **Mitigation**: Create redirect/notice in old location
 - **Mitigation**: Use relative paths where possible
 
 ⚠️ **Year rollover complexity**: January 2026 archives in new year directory
+
 - **Risk**: Confusion about where December 2025 vs January 2026 archives go
 - **Mitigation**: Clear rules (use completion month, even if spans year boundary)
 - **Mitigation**: Document year rollover explicitly in archive README
@@ -588,12 +633,14 @@ docs/archive/
 **Tasks**:
 
 1. **Create current and upcoming month directories**:
+
 ```bash
 mkdir -p docs/archive/2025-11/{sprints,investigations,decisions,incidents,reports}
 mkdir -p docs/archive/2025-12/{sprints,investigations,decisions,incidents,reports}
 ```
 
 2. **Create archive README template**:
+
 ```bash
 # docs/archive/YYYY-MM/README.md template
 cat > docs/archive/ARCHIVE_README_TEMPLATE.md << 'EOF'
@@ -655,7 +702,7 @@ echo "   → $ARCHIVE_DIR/$NEW_NAME"
 
 4. **Update docs/INDEX.md** with archive section:
 
-```markdown
+````markdown
 ## Archive
 
 Historical documentation organized by completion date (ISO 8601).
@@ -663,6 +710,7 @@ Historical documentation organized by completion date (ISO 8601).
 **Structure**: `docs/archive/YYYY-MM/category/YYYY-MM-DD-description.md`
 
 **Categories**:
+
 - `sprints/`: Completed sprint documentation
 - `investigations/`: Technical deep-dives and bug analysis
 - `decisions/`: Superseded or context-specific decisions
@@ -670,6 +718,7 @@ Historical documentation organized by completion date (ISO 8601).
 - `reports/`: Status reports and summaries
 
 **Finding Archived Content**:
+
 ```bash
 # All work from November 2025
 ls docs/archive/2025-11/
@@ -680,7 +729,9 @@ ls docs/archive/2025-{10,11,12}/sprints/*retrospective*
 # All incidents from 2025
 find docs/archive/2025-*/incidents/ -type f
 ```
-```
+````
+
+````
 
 **Success Criteria**:
 - [x] ADR-004 written and accepted
@@ -703,7 +754,7 @@ find docs/archive/2025-*/incidents/ -type f
 
 # Repeat for all 10 files in oct-22-analysis/
 # Result: docs/archive/2025-10/investigations/2025-10-*
-```
+````
 
 **P1 - Undated Archives (Week 1)**:
 
@@ -759,18 +810,21 @@ find docs/archive/2025-* -type f | wc -l  # Count migrated files
 **Validation Checklist**:
 
 1. **Verify all files have ISO 8601 dates**:
+
 ```bash
 # Should return 0 files
 find docs/archive/ -type f -not -name "2025-*" -not -name "README.md"
 ```
 
 2. **Verify all directories follow YYYY-MM pattern**:
+
 ```bash
 # Should only show YYYY-MM directories
 ls -d docs/archive/*/ | grep -v "2025-[0-9][0-9]"
 ```
 
 3. **Verify all categories exist**:
+
 ```bash
 # Check each month has standard categories
 for month in docs/archive/2025-*/; do
@@ -782,6 +836,7 @@ done
 ```
 
 4. **Verify file naming convention**:
+
 ```bash
 # All archived files should match YYYY-MM-DD-kebab-case.md
 find docs/archive/2025-* -type f -name "*.md" | \
@@ -841,18 +896,21 @@ fi
 
 Add to `docs/DOCUMENTATION_QUICK_REFERENCE.md`:
 
-```markdown
+````markdown
 ## Archive Quick Reference
 
 **Archiving a document?**
+
 ```bash
 ./scripts/archive-document.sh <file> <completion-date> <category>
 
 # Example
 ./scripts/archive-document.sh SPRINT_6_PLAN.md 2025-11-12 sprints
 ```
+````
 
 **Finding archived content?**
+
 ```bash
 # All work from November 2025
 ls docs/archive/2025-11/
@@ -865,12 +923,14 @@ find docs/archive/ -name "*cache-investigation*"
 ```
 
 **Categories**:
+
 - `sprints/` - Sprint retrospectives, plans, reports
 - `investigations/` - Technical deep-dives, bug analysis
 - `decisions/` - Superseded technical decisions
 - `incidents/` - Postmortems, outage reports
 - `reports/` - Status reports, test summaries
-```
+
+````
 
 **2. Update PR Review Checklist**:
 
@@ -882,9 +942,10 @@ find docs/archive/ -name "*cache-investigation*"
 - [ ] Archives in correct category (sprints, investigations, etc.)
 - [ ] Completion date matches actual completion (not start date)
 - [ ] Links updated if files moved to archive
-```
+````
 
 **3. Team Briefing** (15 minutes):
+
 - Explain the problem: oct-22-analysis/ misdating, inconsistent structure
 - Present the solution: ISO 8601 YYYY-MM format, 5 categories
 - Demo archive script: Show how to archive a document
@@ -938,6 +999,7 @@ find docs/archive/ -type f -name "*.md" -mtime -30 | head -10
 ```
 
 **3. Calendar Reminder**:
+
 - Set recurring quarterly reminder: "Run documentation archive audit"
 - First reminder: February 2026 (end of Q4 2025)
 
@@ -945,21 +1007,22 @@ find docs/archive/ -type f -name "*.md" -mtime -30 | head -10
 
 ## Risks and Mitigation
 
-| Risk | Impact | Likelihood | Mitigation Strategy |
-|------|--------|------------|---------------------|
-| Misdated archives during migration | Medium | Medium | Review git history, validate dates with team |
-| Developers forget archive script | Low | High | Add to PR checklist, train in team meeting |
-| Wrong category selection | Low | Medium | Document category definitions, code review validation |
-| Link breakage during migration | Medium | High | Track in LINK_UPDATES_NEEDED.md, create redirects |
-| Year rollover confusion (2025→2026) | Low | Medium | Document explicitly, show examples (2025-12 vs 2026-01) |
-| Lost files during migration | High | Low | Test migration script, verify file counts, keep git history |
-| Compliance audit failure (mislabeled dates) | High | Low | ISO 8601 standard, quarterly audit validation |
+| Risk                                        | Impact | Likelihood | Mitigation Strategy                                         |
+| ------------------------------------------- | ------ | ---------- | ----------------------------------------------------------- |
+| Misdated archives during migration          | Medium | Medium     | Review git history, validate dates with team                |
+| Developers forget archive script            | Low    | High       | Add to PR checklist, train in team meeting                  |
+| Wrong category selection                    | Low    | Medium     | Document category definitions, code review validation       |
+| Link breakage during migration              | Medium | High       | Track in LINK_UPDATES_NEEDED.md, create redirects           |
+| Year rollover confusion (2025→2026)         | Low    | Medium     | Document explicitly, show examples (2025-12 vs 2026-01)     |
+| Lost files during migration                 | High   | Low        | Test migration script, verify file counts, keep git history |
+| Compliance audit failure (mislabeled dates) | High   | Low        | ISO 8601 standard, quarterly audit validation               |
 
 ---
 
 ## Compliance and Standards
 
 **Does this decision affect:**
+
 - [ ] Security requirements - No direct impact (but see ADR-005 for security archiving)
 - [x] Privacy/compliance (GDPR, etc.) - Yes (audit trail organization)
 - [ ] Performance SLAs - No
@@ -968,6 +1031,7 @@ find docs/archive/ -type f -name "*.md" -mtime -30 | head -10
 - [ ] Testing requirements - No direct impact
 
 **How are these addressed?**
+
 - **Privacy/Compliance**: ISO 8601 dates provide audit-ready chronological records
 - **Architecture**: Time-based archiving is foundational pattern for historical data
 - **Documentation Standards**: Aligns with ADR-002 (naming) and ADR-003 (sprint lifecycle)
@@ -979,18 +1043,21 @@ find docs/archive/ -type f -name "*.md" -mtime -30 | head -10
 ### Success Metrics
 
 **Immediate (Week 1)**:
+
 - [x] ADR-004 written and accepted
 - [ ] Archive structure created (2025-11, 2025-12)
 - [ ] oct-22-analysis/ migrated to 2025-10/investigations/
 - [ ] Migration script tested on 5+ files
 
 **Short-term (Month 1)**:
+
 - [ ] 100% of existing archives migrated to ISO 8601 structure
 - [ ] Zero undated directories in docs/archive/
 - [ ] All archived files have YYYY-MM-DD prefix
 - [ ] Validation script passes (zero errors)
 
 **Long-term (Quarter 1)**:
+
 - [ ] 100% of new archives use ISO 8601 format
 - [ ] Zero date ambiguity (no oct-22 style naming)
 - [ ] Historical research queries successful (show me Q4 2025 work)
@@ -999,6 +1066,7 @@ find docs/archive/ -type f -name "*.md" -mtime -30 | head -10
 ### Test Scenarios
 
 **Scenario 1: Archive Completed Sprint**
+
 ```bash
 Action: Archive Sprint 6 documentation (completed Nov 12, 2025)
 Command: ./scripts/archive-document.sh \
@@ -1008,6 +1076,7 @@ Verify: File moved, properly named, in correct category
 ```
 
 **Scenario 2: Historical Research Query**
+
 ```bash
 Action: Find all Q4 2025 sprint retrospectives
 Command: ls docs/archive/2025-{10,11,12}/sprints/*retrospective*
@@ -1016,6 +1085,7 @@ Verify: Results include Sprint 4, 5, 6 retrospectives
 ```
 
 **Scenario 3: Incident Postmortem Archive**
+
 ```bash
 Action: Archive Nov 15 database incident postmortem
 Command: ./scripts/archive-document.sh \
@@ -1025,6 +1095,7 @@ Verify: File archived same day incident resolved
 ```
 
 **Scenario 4: Validation Script**
+
 ```bash
 Action: Run archive validation after migration
 Command: ./scripts/validate-archives.sh
@@ -1047,12 +1118,14 @@ Verify: No undated directories, no files without date prefix
 ## Follow-up
 
 **Open Questions**:
+
 - [ ] How to handle multi-month projects? (Answer: Archive by completion month, add note if spans multiple months)
 - [ ] What if completion date uncertain? (Answer: Use best estimate, document uncertainty in README)
 - [ ] Should we version archived content? (Answer: No, use git history for versioning)
 - [ ] How long to retain archives? (Answer: Indefinite for now, review retention policy in 2026)
 
 **Next Actions**:
+
 - [ ] Create archive directory structure (2025-11, 2025-12)
 - [ ] Write and test archive migration script
 - [ ] Migrate oct-22-analysis/ to 2025-10/investigations/ (P0)
@@ -1091,11 +1164,13 @@ A: Use project timezone (local time where team operates). ISO 8601 supports time
 ## Lessons Learned (To Be Updated Quarterly)
 
 ### From oct-22-analysis/ Misdating
+
 1. **Ambiguous dates create 3-year errors**: oct-22 interpreted as 2022, actually 2025
 2. **Impact propagates**: AI agents, developers, compliance all affected by misdating
 3. **ISO 8601 prevents ambiguity**: 2025-10 has single interpretation
 
 ### From Rebuild 6.0 Success
+
 1. **Month-level granularity optimal**: 15-20 files per category per month (manageable)
 2. **Category subdirectories essential**: Type-based filtering frequently used
 3. **Completion date consistency**: Archiving by completion date prevents overlap confusion
@@ -1105,12 +1180,14 @@ A: Use project timezone (local time where team operates). ISO 8601 supports time
 ## Approval
 
 This ADR addresses critical chronological inconsistencies identified through:
+
 - **Quantitative analysis**: oct-22-analysis/ contains 2025 files (3-year misdating)
 - **Compliance risk**: Audit trails mislabeled, historical research fails
 - **Developer feedback**: "Can't find 2025 work systematically" (reported by 2+ developers)
 - **AI agent confusion**: Claude Code temporal reasoning broken by ambiguous dates
 
 **Decision validated through**:
+
 - **ISO 8601 standard**: International standard for date representation (unambiguous)
 - **Rebuild 6.0 success**: 18+ months of ISO 8601 archives with zero temporal confusion
 - **Industry practice**: Time-series data universally organized chronologically
@@ -1120,4 +1197,5 @@ This ADR addresses critical chronological inconsistencies identified through:
 ---
 
 **Revision History**:
+
 - 2025-11-12: Initial version (v1.0) - Establishes ISO 8601 time-based archive strategy

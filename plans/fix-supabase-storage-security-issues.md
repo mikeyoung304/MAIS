@@ -50,6 +50,7 @@ Keep the existing `UploadService` singleton pattern. Add security hardening with
 **Solution:** Use `file-type` package to detect actual file content via magic bytes.
 
 **Steps:**
+
 - [ ] Install `file-type` package: `npm install file-type --workspace=server`
 - [ ] Update `validateFile()` to be async and call `fileTypeFromBuffer()`
 - [ ] Compare detected MIME type against declared MIME type
@@ -96,6 +97,7 @@ private async validateFile(file: UploadedFile, maxSizeMB?: number): Promise<void
 ```
 
 **Update all upload methods to await validation:**
+
 ```typescript
 async uploadLogo(file: UploadedFile, tenantId: string): Promise<UploadResult> {
   await this.validateFile(file, 2); // Now async
@@ -104,6 +106,7 @@ async uploadLogo(file: UploadedFile, tenantId: string): Promise<UploadResult> {
 ```
 
 **Tests to add:** `server/test/services/upload.service.test.ts`
+
 - [ ] PHP file with fake `image/jpeg` header is rejected
 - [ ] Valid JPEG with correct header is accepted
 - [ ] PNG file with fake `image/jpeg` header is rejected
@@ -121,6 +124,7 @@ async uploadLogo(file: UploadedFile, tenantId: string): Promise<UploadResult> {
 **Steps:**
 
 **2a. Supabase Dashboard Configuration:**
+
 - [ ] Go to Supabase Dashboard → Storage → `images` bucket
 - [ ] Change bucket from "Public" to "Private"
 - [ ] Note: RLS policies are optional since we use service role key (application-level enforcement)
@@ -182,10 +186,7 @@ import { PrismaClient } from '@prisma/client';
 import { createClient } from '@supabase/supabase-js';
 
 const prisma = new PrismaClient();
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 
@@ -249,6 +250,7 @@ migrateToSignedUrls()
 ```
 
 **Run migration:**
+
 ```bash
 # After changing bucket to private
 cd server
@@ -357,6 +359,7 @@ async deleteSegment(tenantId: string, id: string): Promise<void> {
 ```
 
 **Tests to add:**
+
 - [ ] Deleting segment with heroImage removes file from storage
 - [ ] Deleting segment without heroImage succeeds
 - [ ] Cross-tenant deletion attempt is blocked and logged
@@ -374,12 +377,15 @@ async deleteSegment(tenantId: string, id: string): Promise<void> {
 
 ```typescript
 // BEFORE (example)
-const handleDrop = useCallback((e: React.DragEvent) => {
-  e.preventDefault();
-  setIsDragging(false);
-  const file = e.dataTransfer.files[0];
-  if (file) handleFileSelect(file);
-}, [handleFileSelect]);
+const handleDrop = useCallback(
+  (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelect(file);
+  },
+  [handleFileSelect]
+);
 
 // AFTER
 function handleDrop(e: React.DragEvent) {
@@ -391,6 +397,7 @@ function handleDrop(e: React.DragEvent) {
 ```
 
 **Steps:**
+
 - [ ] Remove all `useCallback` imports and wrappers
 - [ ] Convert to regular function declarations
 - [ ] Remove dependency arrays
@@ -401,6 +408,7 @@ function handleDrop(e: React.DragEvent) {
 ## Acceptance Criteria
 
 ### Security Requirements (Must Pass)
+
 - [ ] PHP file with `Content-Type: image/jpeg` is rejected
 - [ ] PNG file with `Content-Type: image/jpeg` header is rejected
 - [ ] Valid JPEG with correct header is accepted
@@ -410,11 +418,13 @@ function handleDrop(e: React.DragEvent) {
 - [ ] Cross-tenant file deletion attempt is blocked and logged
 
 ### Functional Requirements
+
 - [ ] All existing upload functionality works unchanged
 - [ ] Migration script successfully converts existing URLs
 - [ ] Frontend drag/drop and click upload still work
 
 ### Quality Gates
+
 - [ ] All 771+ existing server tests pass
 - [ ] New security tests for MIME spoofing (minimum 5 test cases)
 - [ ] E2E test for upload → delete → verify cleanup flow
@@ -435,12 +445,12 @@ function handleDrop(e: React.DragEvent) {
 
 ## Risk Analysis
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Breaking existing image URLs | HIGH | MEDIUM | Run migration script BEFORE changing bucket to private |
-| False positive MIME rejection | LOW | LOW | `file-type` is mature; test thoroughly with real images |
-| Migration script partial failure | MEDIUM | MEDIUM | Script logs failures; can re-run for failed items |
-| Cleanup failure blocking deletion | LOW | LOW | Cleanup is wrapped in try/catch, failures logged only |
+| Risk                              | Likelihood | Impact | Mitigation                                              |
+| --------------------------------- | ---------- | ------ | ------------------------------------------------------- |
+| Breaking existing image URLs      | HIGH       | MEDIUM | Run migration script BEFORE changing bucket to private  |
+| False positive MIME rejection     | LOW        | LOW    | `file-type` is mature; test thoroughly with real images |
+| Migration script partial failure  | MEDIUM     | MEDIUM | Script logs failures; can re-run for failed items       |
+| Cleanup failure blocking deletion | LOW        | LOW    | Cleanup is wrapped in try/catch, failures logged only   |
 
 ---
 
@@ -448,40 +458,42 @@ function handleDrop(e: React.DragEvent) {
 
 The following items were considered but deferred based on code review feedback:
 
-| Item | Reason for Deferral | When to Revisit |
-|------|---------------------|-----------------|
-| StorageProvider DI interface | YAGNI - no second storage provider exists | When/if S3 or R2 support is needed |
-| Code deduplication (CATEGORY_CONFIG) | Current duplication is minor and readable | When adding 4th upload type |
-| Tenant-scoped rate limiting | IP-based limiting is sufficient for MVP | Post-launch if abuse patterns emerge |
-| Memory concurrency limiter | Theoretical problem at current scale | If memory issues appear in monitoring |
-| Signed URL refresh endpoint | 1-year expiry is sufficient | If shorter expiry is needed later |
+| Item                                 | Reason for Deferral                       | When to Revisit                       |
+| ------------------------------------ | ----------------------------------------- | ------------------------------------- |
+| StorageProvider DI interface         | YAGNI - no second storage provider exists | When/if S3 or R2 support is needed    |
+| Code deduplication (CATEGORY_CONFIG) | Current duplication is minor and readable | When adding 4th upload type           |
+| Tenant-scoped rate limiting          | IP-based limiting is sufficient for MVP   | Post-launch if abuse patterns emerge  |
+| Memory concurrency limiter           | Theoretical problem at current scale      | If memory issues appear in monitoring |
+| Signed URL refresh endpoint          | 1-year expiry is sufficient               | If shorter expiry is needed later     |
 
 ---
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
-| `server/src/services/upload.service.ts` | Add magic byte validation, signed URLs, deleteSegmentImage() |
-| `server/src/services/segment.service.ts` | Add cleanup call in deleteSegment() |
-| `server/test/services/upload.service.test.ts` | Add MIME spoofing security tests |
-| `server/scripts/migrate-to-signed-urls.ts` | New migration script |
-| `client/src/components/ImageUploadField.tsx` | Remove useCallback wrappers |
+| File                                          | Changes                                                      |
+| --------------------------------------------- | ------------------------------------------------------------ |
+| `server/src/services/upload.service.ts`       | Add magic byte validation, signed URLs, deleteSegmentImage() |
+| `server/src/services/segment.service.ts`      | Add cleanup call in deleteSegment()                          |
+| `server/test/services/upload.service.test.ts` | Add MIME spoofing security tests                             |
+| `server/scripts/migrate-to-signed-urls.ts`    | New migration script                                         |
+| `client/src/components/ImageUploadField.tsx`  | Remove useCallback wrappers                                  |
 
 ---
 
 ## References
 
 ### Internal
+
 - Todo files: `todos/062-064-*.md` (P1 issue details)
 - Code review: `docs/solutions/code-review-patterns/supabase-storage-upload-review.md`
 - Upload service: `server/src/services/upload.service.ts`
 
 ### External
+
 - [file-type npm package](https://www.npmjs.com/package/file-type)
 - [Supabase Storage Signed URLs](https://supabase.com/docs/guides/storage/serving/downloads)
 - [OWASP File Upload Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html)
 
 ---
 
-*Simplified plan based on code review feedback. Original 8-task plan reduced to 4 essential tasks.*
+_Simplified plan based on code review feedback. Original 8-task plan reduced to 4 essential tasks._

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "040"
+issue_id: '040'
 tags: [code-review, devops, resilience]
 dependencies: []
 ---
@@ -21,7 +21,7 @@ dependencies: []
 ```typescript
 const shutdownTimeout = setTimeout(() => {
   process.exit(1);
-}, 30000);  // 30 seconds only
+}, 30000); // 30 seconds only
 ```
 
 ## Proposed Solutions
@@ -38,7 +38,7 @@ const shutdownTimeout = setTimeout(() => {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-27 | Created | Found during DevOps review |
+| Date       | Action    | Notes                                                                                                               |
+| ---------- | --------- | ------------------------------------------------------------------------------------------------------------------- |
+| 2025-11-27 | Created   | Found during DevOps review                                                                                          |
 | 2025-12-02 | Completed | Implemented configurable timeout via GRACEFUL_SHUTDOWN_TIMEOUT_MS, increased default to 60s, added enhanced logging |

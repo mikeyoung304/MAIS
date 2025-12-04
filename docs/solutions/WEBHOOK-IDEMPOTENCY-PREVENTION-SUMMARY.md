@@ -22,6 +22,7 @@ status: active
 ## The Three Core Strategies
 
 ### 1. Design Pattern: Atomic Record-and-Check
+
 Use database unique constraints as the source of truth for deduplication.
 
 ```typescript
@@ -40,12 +41,14 @@ await db.create({ data: { eventId } }); // Both can reach here!
 ```
 
 **Why it works:**
+
 - No application-level check creates no race window
 - Database constraint is atomic (enforced at SQL level)
 - All concurrency serialized through database
 - Automatic for all concurrent requests
 
 ### 2. Interface Design: Return Success/Failure Explicitly
+
 Handlers must clearly communicate: new record, duplicate, or error.
 
 ```typescript
@@ -66,6 +69,7 @@ await processWebhook(); // New → process
 ```
 
 ### 3. Test Strategy: Concurrent Operations Testing
+
 Test with actual concurrent requests, not sequential.
 
 ```typescript
@@ -77,7 +81,7 @@ it('prevents duplicates', async () => {
   ]);
 
   // Both should complete
-  expect(results.every(r => r.status === 'fulfilled')).toBe(true);
+  expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
 
   // But exactly 1 record created
   const records = await db.find({ eventId });
@@ -97,7 +101,9 @@ it('prevents duplicates', async () => {
 ## Documentation Provided
 
 ### 1. WEBHOOK-IDEMPOTENCY-PREVENTION-STRATEGIES.md (30 min read)
+
 **Complete prevention strategies with:**
+
 - 10 major sections covering design to deployment
 - Copy-paste implementation patterns (3 real patterns)
 - Full code examples with explanations
@@ -109,7 +115,9 @@ it('prevents duplicates', async () => {
 **Best for:** Implementers, architects, deep understanding
 
 ### 2. WEBHOOK-IDEMPOTENCY-QUICK-REFERENCE.md (5 min read)
+
 **One-page cheat sheet with:**
+
 - Problem and solution visual
 - ✅ Correct patterns (searchable)
 - ❌ Wrong patterns (searchable)
@@ -121,7 +129,9 @@ it('prevents duplicates', async () => {
 **Best for:** Quick lookup, desk reference, teaching
 
 ### 3. WEBHOOK-IDEMPOTENCY-CODE-REVIEW-CHECKLIST.md (20 min read)
+
 **6-phase code review checklist with:**
+
 - Phase 1: Design Review (schema, error handling, tenantId)
 - Phase 2: Implementation Review (atomic ops, return values)
 - Phase 3: Testing Review (concurrent, integrity, stress tests)
@@ -135,7 +145,9 @@ it('prevents duplicates', async () => {
 **Best for:** Code reviewers, quality assurance, team standardization
 
 ### 4. WEBHOOK-IDEMPOTENCY-PREVENTION-INDEX.md (10 min read)
+
 **Navigation guide with:**
+
 - Quick decision tree (find right document in 10 seconds)
 - Role-based reading paths (engineer, reviewer, lead, onboarding)
 - Problem-based navigation (debugging, implementing, reviewing)
@@ -150,6 +162,7 @@ it('prevents duplicates', async () => {
 ## Core Principles
 
 ### 1. Atomic Database Constraints
+
 ```prisma
 model WebhookEvent {
   tenantId String
@@ -164,6 +177,7 @@ model WebhookEvent {
 ✅ Composite key includes tenantId (tenant isolation)
 
 ### 2. Specific Error Handling
+
 ```typescript
 try {
   await db.create(data);
@@ -184,6 +198,7 @@ try {
 ✅ No silent failures
 
 ### 3. Tenant-Scoped Uniqueness
+
 ```typescript
 // Same event ID, different tenants = different records (no collision)
 const isDupe = await isDuplicate(tenantId, eventId);
@@ -197,12 +212,10 @@ const isDupe = await isDuplicate(tenantId, eventId);
 ✅ No "unknown" bucket of lost events
 
 ### 4. Concurrent Testing
+
 ```typescript
 // Concurrent, not sequential
-const results = await Promise.allSettled([
-  handler(eventId),
-  handler(eventId),
-]);
+const results = await Promise.allSettled([handler(eventId), handler(eventId)]);
 
 // Verify exactly 1 record
 expect(records).toHaveLength(1);
@@ -217,7 +230,9 @@ expect(records).toHaveLength(1);
 ## Implementation Patterns
 
 ### Pattern A: Webhook Event Deduplication
+
 For: Stripe webhooks arriving twice (network retry)
+
 ```typescript
 // Check global uniqueness BEFORE tenant extraction
 const isGlobalDupe = await webhookRepo.isDuplicate('_global', eventId);
@@ -237,7 +252,9 @@ return 200;
 ```
 
 ### Pattern B: Idempotency Key Caching
+
 For: Same API request called twice (client retry)
+
 ```typescript
 // Generate deterministic key (same inputs = same key)
 const key = generateIdempotencyKey(tenantId, packageId, email, date);
@@ -263,13 +280,15 @@ return result;
 ```
 
 ### Pattern C: Double-Booking Prevention
+
 For: Two webhooks for same date arriving concurrently
+
 ```typescript
 // Transaction prevents double-booking
 const booking = await prisma.$transaction(async (tx) => {
   // Lock the row
   const existing = await tx.booking.findFirst({
-    where: { tenantId, date: input.date }
+    where: { tenantId, date: input.date },
   });
   if (existing) throw new BookingConflictError();
 
@@ -286,6 +305,7 @@ const booking = await prisma.$transaction(async (tx) => {
 ## Code Review Essentials
 
 ### Red Flags (Stop and Require Changes)
+
 ```typescript
 🚩 "Check if exists, then create" → RACE CONDITION
 🚩 No unique constraint in database → RACE CONDITION
@@ -296,6 +316,7 @@ const booking = await prisma.$transaction(async (tx) => {
 ```
 
 ### Approval Checklist
+
 - ✅ Unique constraint exists (composite with tenantId)
 - ✅ Code handles P2002 error specifically
 - ✅ Concurrent test passes (2+ simultaneous)
@@ -311,37 +332,33 @@ const booking = await prisma.$transaction(async (tx) => {
 ## Testing Strategy
 
 ### Test 1: Basic Concurrent (5 min)
+
 ```typescript
 it('prevents duplicate webhooks', async () => {
-  const results = await Promise.allSettled([
-    handler(eventId),
-    handler(eventId),
-  ]);
+  const results = await Promise.allSettled([handler(eventId), handler(eventId)]);
 
-  expect(results.every(r => r.status === 'fulfilled')).toBe(true);
+  expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
   expect(await db.find({ eventId })).toHaveLength(1);
 });
 ```
 
 ### Test 2: High Concurrency (10 min)
+
 ```typescript
 it('handles 10 concurrent requests', async () => {
-  const requests = Array.from({ length: 10 }, () =>
-    handler(eventId)
-  );
+  const requests = Array.from({ length: 10 }, () => handler(eventId));
 
   const results = await Promise.allSettled(requests);
-  expect(results.every(r => r.status === 'fulfilled')).toBe(true);
+  expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
   expect(await db.find({ eventId })).toHaveLength(1);
 });
 ```
 
 ### Test 3: Stress (15 min)
+
 ```typescript
 it('handles 50 burst requests', async () => {
-  const requests = Array.from({ length: 50 }, () =>
-    handler(eventId)
-  );
+  const requests = Array.from({ length: 50 }, () => handler(eventId));
 
   await Promise.allSettled(requests);
   expect(await db.find({ eventId })).toHaveLength(1);
@@ -350,6 +367,7 @@ it('handles 50 burst requests', async () => {
 ```
 
 ### Test 4: Tenant Isolation (10 min)
+
 ```typescript
 it('isolates by tenant', async () => {
   // Same event ID, different tenants
@@ -359,7 +377,7 @@ it('isolates by tenant', async () => {
   ]);
 
   // Both should succeed
-  expect(results.every(r => r.status === 'fulfilled')).toBe(true);
+  expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
 
   // But 2 records (different tenants, same event ID)
   expect(await db.find({ eventId })).toHaveLength(2);
@@ -371,6 +389,7 @@ it('isolates by tenant', async () => {
 ## Monitoring & Observability
 
 ### Metrics to Track
+
 ```typescript
 metrics.counter('webhook.duplicate_count', { event_type, tenant_id });
 metrics.counter('webhook.race_conditions_prevented');
@@ -379,6 +398,7 @@ metrics.gauge('webhook.success_rate', successCount / totalCount);
 ```
 
 ### Log Patterns
+
 ```
 INFO: Duplicate webhook detected { eventId, tenantId }
 INFO: Webhook processed successfully { eventId, tenantId }
@@ -386,6 +406,7 @@ ERROR: Webhook processing failed { eventId, tenantId, error }
 ```
 
 ### Alerts
+
 - Alert if `webhook.failed_count` spikes (>> expected)
 - Alert if `webhook.processing_time_ms` > 2000ms
 - Monitor dashboard for duplicate rate (should be > 0)
@@ -394,28 +415,30 @@ ERROR: Webhook processing failed { eventId, tenantId, error }
 
 ## Common Mistakes & How to Fix
 
-| Mistake | Problem | Fix |
-|---------|---------|-----|
-| Check then create | Race condition window | Use database constraint |
-| No unique constraint | Duplicates in database | Add @@unique in schema |
-| Generic catch | Can't handle errors properly | Check error.code === 'P2002' |
-| Sequential tests | Race condition hidden | Use Promise.allSettled |
-| tenantId = "unknown" | Cross-tenant collisions | Fail fast if missing |
-| Don't count records | Data corruption hidden | Verify records.length === 1 |
-| Separate operations | Can get interrupted | Use transaction or constraint |
-| No logging | Can't debug issues | Log with tenantId context |
-| No monitoring | Silent failures | Configure metrics |
+| Mistake              | Problem                      | Fix                           |
+| -------------------- | ---------------------------- | ----------------------------- |
+| Check then create    | Race condition window        | Use database constraint       |
+| No unique constraint | Duplicates in database       | Add @@unique in schema        |
+| Generic catch        | Can't handle errors properly | Check error.code === 'P2002'  |
+| Sequential tests     | Race condition hidden        | Use Promise.allSettled        |
+| tenantId = "unknown" | Cross-tenant collisions      | Fail fast if missing          |
+| Don't count records  | Data corruption hidden       | Verify records.length === 1   |
+| Separate operations  | Can get interrupted          | Use transaction or constraint |
+| No logging           | Can't debug issues           | Log with tenantId context     |
+| No monitoring        | Silent failures              | Configure metrics             |
 
 ---
 
 ## Implementation Checklist
 
 ### Before Writing Code
+
 - [ ] Read QUICK REFERENCE (5 min)
 - [ ] Choose pattern (A, B, or C)
 - [ ] Design database schema with unique constraint
 
 ### While Writing Code
+
 - [ ] Create operation is atomic (one db call)
 - [ ] Catch P2002 error specifically
 - [ ] tenantId never defaults
@@ -423,6 +446,7 @@ ERROR: Webhook processing failed { eventId, tenantId, error }
 - [ ] Logging includes tenantId
 
 ### Before Testing
+
 - [ ] Concurrent test (Promise.allSettled)
 - [ ] High-concurrency test (10+)
 - [ ] Stress test (50+)
@@ -430,24 +454,28 @@ ERROR: Webhook processing failed { eventId, tenantId, error }
 - [ ] Verify exactly 1 record in each test
 
 ### Before Code Review
+
 - [ ] Self-review with CODE REVIEW CHECKLIST
 - [ ] All tests pass
 - [ ] Monitoring configured
 - [ ] Rollback plan documented
 
 ### During Code Review
+
 - [ ] Reviewer uses CODE REVIEW CHECKLIST
 - [ ] All 6 phases checked
 - [ ] Approval criteria met
 - [ ] No red flags remain
 
 ### Before Deployment
+
 - [ ] Database migration created & tested
 - [ ] Migration applied before code deploy
 - [ ] Monitoring verified in staging
 - [ ] Rollback plan documented
 
 ### After Deployment
+
 - [ ] Monitor webhook_duplicate_count (should be > 0)
 - [ ] Monitor error logs (should be minimal)
 - [ ] Check processing latency (should be stable)
@@ -490,18 +518,18 @@ docs/solutions/
 
 **I need to...**
 
-| Goal | Document | Section |
-|------|----------|---------|
-| Implement a webhook handler | STRATEGIES | Pattern A |
-| Implement idempotent caching | STRATEGIES | Pattern B |
-| Review webhook code | CHECKLIST | All phases |
-| Test for race conditions | STRATEGIES | Section 3 |
-| Find a pattern quickly | QUICK REFERENCE | (search for ✅) |
-| Debug a race condition | STRATEGIES | Section 7 |
-| Migrate existing code | STRATEGIES | Section 8 |
-| Set up monitoring | STRATEGIES | Section 6 |
-| Onboard a new engineer | QUICK REFERENCE + STRATEGIES intro |
-| Understand the architecture | STRATEGIES | Section 1 |
+| Goal                         | Document                           | Section         |
+| ---------------------------- | ---------------------------------- | --------------- |
+| Implement a webhook handler  | STRATEGIES                         | Pattern A       |
+| Implement idempotent caching | STRATEGIES                         | Pattern B       |
+| Review webhook code          | CHECKLIST                          | All phases      |
+| Test for race conditions     | STRATEGIES                         | Section 3       |
+| Find a pattern quickly       | QUICK REFERENCE                    | (search for ✅) |
+| Debug a race condition       | STRATEGIES                         | Section 7       |
+| Migrate existing code        | STRATEGIES                         | Section 8       |
+| Set up monitoring            | STRATEGIES                         | Section 6       |
+| Onboard a new engineer       | QUICK REFERENCE + STRATEGIES intro |
+| Understand the architecture  | STRATEGIES                         | Section 1       |
 
 ---
 
@@ -510,6 +538,7 @@ docs/solutions/
 > **Don't check then create. Let the database enforce uniqueness.**
 >
 > This one principle prevents all race conditions automatically:
+>
 > - No check-then-create window
 > - Atomic constraint enforced at SQL level
 > - Works for unlimited concurrent requests

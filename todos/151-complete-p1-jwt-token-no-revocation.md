@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "151"
+issue_id: '151'
 tags: [code-review, security, mvp-gaps, jwt]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 JWT booking tokens are stateless and cannot be revoked when a booking is cancelled. A customer can use an old manage booking link to attempt actions on a cancelled booking.
 
 **Why This Matters:**
+
 - Data integrity risk (reschedule cancelled booking)
 - Customer confusion
 - Security vulnerability if links shared/leaked
@@ -24,15 +25,20 @@ JWT booking tokens are stateless and cannot be revoked when a booking is cancell
 **Location:** `server/src/lib/booking-tokens.ts` (entire file)
 
 **Evidence:**
+
 ```typescript
 // JWTs are stateless - cannot be revoked
-export function validateBookingToken(token: string, expectedAction?: BookingTokenAction): TokenValidationResult {
+export function validateBookingToken(
+  token: string,
+  expectedAction?: BookingTokenAction
+): TokenValidationResult {
   // Only checks signature and expiration
   // Does NOT check if booking is still active
 }
 ```
 
 **Attack Scenario:**
+
 1. Customer receives booking confirmation email with "Manage Booking" link
 2. Customer calls venue and cancels over phone
 3. Tenant admin marks booking as CANCELED
@@ -41,6 +47,7 @@ export function validateBookingToken(token: string, expectedAction?: BookingToke
 ## Proposed Solutions
 
 ### Option A: Check Booking Status in Routes (Recommended - MVP)
+
 **Pros:** Simple, immediate fix
 **Cons:** Extra DB query per request
 **Effort:** Small (2-3 hours)
@@ -55,6 +62,7 @@ if (booking.status === 'CANCELED') {
 ```
 
 ### Option B: Token Revocation List
+
 **Pros:** Most secure, no extra DB query
 **Cons:** Requires Redis/cache infrastructure
 **Effort:** Medium (4-6 hours)
@@ -63,6 +71,7 @@ if (booking.status === 'CANCELED') {
 Add revoked tokens to cache: `revoked:${bookingId}` with TTL = token expiry.
 
 ### Option C: Short-Lived Tokens with Refresh
+
 **Pros:** Limits attack window
 **Cons:** UX impact (links expire quickly)
 **Effort:** High
@@ -75,6 +84,7 @@ Add revoked tokens to cache: `revoked:${bookingId}` with TTL = token expiry.
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/routes/public-booking-management.routes.ts`
 - `server/src/routes/public-balance-payment.routes.ts`
 
@@ -89,8 +99,8 @@ Add revoked tokens to cache: `revoked:${bookingId}` with TTL = token expiry.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                     |
+| ---------- | ------- | ------------------------- |
 | 2025-12-02 | Created | From MVP gaps code review |
 
 ## Resources

@@ -1,9 +1,9 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { App } from "./App";
-import { api } from "./lib/api";
-import { initSentry } from "./lib/sentry";
-import "./index.css";
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { App } from './App';
+import { api } from './lib/api';
+import { initSentry } from './lib/sentry';
+import './index.css';
 
 // Initialize Sentry error tracking (optional - gracefully degrades if no DSN)
 initSentry();
@@ -14,12 +14,12 @@ initSentry();
 const tenantApiKey = import.meta.env.VITE_TENANT_API_KEY;
 if (tenantApiKey) {
   api.setTenantKey(tenantApiKey);
-  console.log("[MAIS] Initialized with tenant API key");
+  console.log('[MAIS] Initialized with tenant API key');
 }
 
-const rootElement = document.getElementById("root");
+const rootElement = document.getElementById('root');
 if (!rootElement) {
-  throw new Error("Root element not found");
+  throw new Error('Root element not found');
 }
 
 createRoot(rootElement).render(

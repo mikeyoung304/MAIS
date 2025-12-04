@@ -237,19 +237,19 @@ Events flow UP through callbacks ↑
 
 ## Responsibility Matrix
 
-| Concern | Before (411 lines) | After (83 lines + hooks) |
-|---------|-------------------|--------------------------|
-| **Package State** | ❌ In main file | ✅ usePackageManager hook |
-| **Add-on State** | ❌ In main file | ✅ useAddOnManager hook |
-| **Success State** | ❌ In main file | ✅ useSuccessMessage hook |
-| **Package CRUD** | ❌ In main file | ✅ usePackageManager hook |
-| **Add-on CRUD** | ❌ In main file | ✅ useAddOnManager hook |
-| **Validation** | ❌ In main file | ✅ In respective hooks |
-| **API Calls** | ❌ In main file | ✅ In respective hooks |
-| **Success UI** | ❌ In main file | ✅ SuccessMessage component |
-| **Create Button** | ❌ In main file | ✅ CreatePackageButton component |
-| **List Display** | ❌ In main file | ✅ PackagesList component |
-| **Orchestration** | ❌ Mixed with logic | ✅ Clean main component |
+| Concern           | Before (411 lines)  | After (83 lines + hooks)         |
+| ----------------- | ------------------- | -------------------------------- |
+| **Package State** | ❌ In main file     | ✅ usePackageManager hook        |
+| **Add-on State**  | ❌ In main file     | ✅ useAddOnManager hook          |
+| **Success State** | ❌ In main file     | ✅ useSuccessMessage hook        |
+| **Package CRUD**  | ❌ In main file     | ✅ usePackageManager hook        |
+| **Add-on CRUD**   | ❌ In main file     | ✅ useAddOnManager hook          |
+| **Validation**    | ❌ In main file     | ✅ In respective hooks           |
+| **API Calls**     | ❌ In main file     | ✅ In respective hooks           |
+| **Success UI**    | ❌ In main file     | ✅ SuccessMessage component      |
+| **Create Button** | ❌ In main file     | ✅ CreatePackageButton component |
+| **List Display**  | ❌ In main file     | ✅ PackagesList component        |
+| **Orchestration** | ❌ Mixed with logic | ✅ Clean main component          |
 
 ## File Size Comparison
 

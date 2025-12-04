@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "086"
+issue_id: '086'
 tags: [todo]
 dependencies: []
 ---
@@ -18,6 +18,7 @@ dependencies: []
 The `fontFamily` field in `TenantPublicDtoSchema` is `z.string().optional()` without any validation. This value is directly applied to `document.documentElement.style.setProperty('--font-family', fontFamily)` in `TenantStorefrontLayout.tsx`.
 
 A malicious tenant admin could set fontFamily to something like:
+
 ```
 "Arial; } body { display: none; } .malicious {"
 ```
@@ -54,6 +55,7 @@ branding: z.object({
 ```
 
 2. Or use a strict regex if custom fonts needed:
+
 ```typescript
 fontFamily: z.string()
   .regex(/^[a-zA-Z\s-]+$/)

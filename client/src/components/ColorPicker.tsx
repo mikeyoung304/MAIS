@@ -33,7 +33,12 @@ function normalizeHex(color: string): string {
   return `#${normalized}`.toUpperCase();
 }
 
-export function ColorPicker({ label, value = '#d97706', onChange, className = '' }: ColorPickerProps) {
+export function ColorPicker({
+  label,
+  value = '#d97706',
+  onChange,
+  className = '',
+}: ColorPickerProps) {
   const [color, setColor] = useState(value);
   const [inputValue, setInputValue] = useState(value);
   const [isPickerOpen, setIsPickerOpen] = useState(false);

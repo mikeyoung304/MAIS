@@ -6,11 +6,11 @@ Two bugs in the visual editor have already been fixed. This plan documents shipp
 
 ## Status Summary
 
-| Bug | Priority | Status |
-|-----|----------|--------|
-| Draft Field Deletion Loss (`??` operator) | P1 | **FIXED** in `catalog.repository.ts:506-511` |
-| Type Assertion `as any` | P1 | **FIXED** in `EditableText.tsx:47-48` |
-| Race condition in publishAll | P2 | **WONTFIX** - theoretical, UI already locks |
+| Bug                                       | Priority | Status                                       |
+| ----------------------------------------- | -------- | -------------------------------------------- |
+| Draft Field Deletion Loss (`??` operator) | P1       | **FIXED** in `catalog.repository.ts:506-511` |
+| Type Assertion `as any`                   | P1       | **FIXED** in `EditableText.tsx:47-48`        |
+| Race condition in publishAll              | P2       | **WONTFIX** - theoretical, UI already locks  |
 
 ## What Was Fixed
 
@@ -19,6 +19,7 @@ Two bugs in the visual editor have already been fixed. This plan documents shipp
 **Problem:** Using `??` operator prevented intentional field clearing (empty strings fell back to original).
 
 **Solution (already applied):**
+
 ```typescript
 // catalog.repository.ts:506-511
 name: pkg.draftTitle !== null ? pkg.draftTitle : pkg.name,
@@ -31,6 +32,7 @@ basePrice: pkg.draftPriceCents !== null ? pkg.draftPriceCents : pkg.basePrice,
 **Problem:** Using `ref: inputRef as any` to bypass TypeScript.
 
 **Solution (already applied):**
+
 ```typescript
 // EditableText.tsx:47-48
 const inputRef = useRef<HTMLInputElement>(null);
@@ -40,6 +42,7 @@ const textareaRef = useRef<HTMLTextAreaElement>(null);
 ### Why We're Skipping the Race Condition Fix
 
 Per DHH-style review:
+
 - The UI already locks with `setIsPublishing(true)`
 - Race window is ~16ms (1 React frame)
 - No evidence this has ever occurred in production
@@ -106,7 +109,9 @@ test.describe('Visual Editor', () => {
 
     // Reload and verify draft persisted
     await page.reload();
-    await expect(page.locator('[aria-label="Package title"]').first()).toHaveValue('Auto-save test');
+    await expect(page.locator('[aria-label="Package title"]').first()).toHaveValue(
+      'Auto-save test'
+    );
   });
 
   test('publishes all drafts', async ({ page }) => {
@@ -175,6 +180,7 @@ test.describe('Visual Editor', () => {
 ## Implementation Steps
 
 1. **Verify existing fixes** (5 min)
+
    ```bash
    npm run typecheck
    npm test
@@ -185,6 +191,7 @@ test.describe('Visual Editor', () => {
    - Add test helpers if needed
 
 3. **Run E2E tests** (5 min)
+
    ```bash
    npm run test:e2e -- e2e/tests/visual-editor.spec.ts
    ```

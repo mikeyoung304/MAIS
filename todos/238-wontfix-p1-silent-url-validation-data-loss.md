@@ -1,13 +1,13 @@
 ---
 status: wontfix
 priority: p1
-issue_id: "238"
+issue_id: '238'
 tags: [api-design, data-integrity, landing-page, validation]
 dependencies: []
-source: "code-review-pr-14"
-resolved_at: "2025-12-04"
-resolved_by: "claude-code"
-resolution: "already-addressed"
+source: 'code-review-pr-14'
+resolved_at: '2025-12-04'
+resolved_by: 'claude-code'
+resolution: 'already-addressed'
 ---
 
 # TODO-238: Replace Silent URL Validation Failure with Error
@@ -23,6 +23,7 @@ resolution: "already-addressed"
 **This issue was already addressed in the initial implementation.** The code review finding was based on incorrect analysis.
 
 The current implementation at `tenant.repository.ts:441-447` already:
+
 1. Uses `safeParse` to avoid throwing directly
 2. Checks `!result.success` to detect validation failures
 3. Logs a warning with the path and truncated URL
@@ -46,6 +47,7 @@ There is **no silent failure** - invalid URLs are rejected with a clear error me
 The `validateImageUrls` method in `tenant.repository.ts` catches validation errors and silently replaces invalid URLs with empty strings. This violates the principle of fail-fast and causes silent data loss that users won't notice until viewing their live page.
 
 **Why It Matters:**
+
 - User uploads malicious URL → saved as '' → user sees broken image with no explanation
 - Debugging nightmare: "Why is my image missing?"
 - API should reject invalid data, not silently transform it
@@ -53,6 +55,7 @@ The `validateImageUrls` method in `tenant.repository.ts` catches validation erro
 ## Original Findings (Incorrect)
 
 **Evidence:**
+
 ```typescript
 // tenant.repository.ts:708-712 - THIS CODE DOES NOT EXIST
 try {
@@ -63,6 +66,7 @@ try {
 ```
 
 **Better Pattern (from route handler):**
+
 ```typescript
 // Route handler throws ZodError with details
 if (error instanceof ZodError) {
@@ -126,9 +130,9 @@ if (!validation.valid) {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-12-04 | Created | Code review of PR #14 |
+| Date       | Action    | Notes                                                                                                                                       |
+| ---------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-12-04 | Created   | Code review of PR #14                                                                                                                       |
 | 2025-12-04 | Won't Fix | Investigation revealed the code already throws ValidationError. The finding was based on incorrect analysis of a non-existent code pattern. |
 
 ## Tags

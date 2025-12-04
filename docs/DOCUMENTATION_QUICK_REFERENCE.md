@@ -6,18 +6,18 @@
 
 ## Where Does My Document Go?
 
-| Document Type | Location | Example |
-|---------------|----------|---------|
+| Document Type          | Location                    | Example                         |
+| ---------------------- | --------------------------- | ------------------------------- |
 | Sprint report/progress | `/docs/sprints/sprint-{N}/` | `SPRINT_6_COMPLETION_REPORT.md` |
-| Deployment guide | `/docs/operations/` | `deployment-guide.md` |
-| API documentation | `/docs/api/` | `api-integration-guide.md` |
-| Security procedure | `/docs/security/` | `SECRET_ROTATION_GUIDE.md` |
-| Setup/config guide | `/docs/setup/` | `ENVIRONMENT.md` |
-| Architecture decision | `/docs/architecture/` | `ADR-001-framework.md` |
-| Feature roadmap | `/docs/roadmaps/` | `widget-implementation-plan.md` |
-| Multi-tenant doc | `/docs/multi-tenant/` | `tenant-admin-guide.md` |
-| Phase report | `/docs/phases/` | `PHASE_4_COMPLETION_REPORT.md` |
-| Old/superseded doc | `/docs/archive/{category}/` | `archive/sprints/sprint-1-3/` |
+| Deployment guide       | `/docs/operations/`         | `deployment-guide.md`           |
+| API documentation      | `/docs/api/`                | `api-integration-guide.md`      |
+| Security procedure     | `/docs/security/`           | `SECRET_ROTATION_GUIDE.md`      |
+| Setup/config guide     | `/docs/setup/`              | `ENVIRONMENT.md`                |
+| Architecture decision  | `/docs/architecture/`       | `ADR-001-framework.md`          |
+| Feature roadmap        | `/docs/roadmaps/`           | `widget-implementation-plan.md` |
+| Multi-tenant doc       | `/docs/multi-tenant/`       | `tenant-admin-guide.md`         |
+| Phase report           | `/docs/phases/`             | `PHASE_4_COMPLETION_REPORT.md`  |
+| Old/superseded doc     | `/docs/archive/{category}/` | `archive/sprints/sprint-1-3/`   |
 
 **Still not sure?** Use the [decision tree](./DOCUMENTATION_STANDARDS.md#quick-decision-trees) in the standards doc.
 
@@ -26,6 +26,7 @@
 ## What Do I Name My File?
 
 ### Pattern 1: UPPERCASE_UNDERSCORE
+
 **Use for:** Reports, audits, summaries, completion documents
 
 ```
@@ -35,6 +36,7 @@ TEST_STABILIZATION_SUMMARY.md
 ```
 
 ### Pattern 2: kebab-case
+
 **Use for:** Guides, tutorials, how-to documents
 
 ```
@@ -44,6 +46,7 @@ local-testing-guide.md
 ```
 
 ### Pattern 3: YYYY-MM-DD-description
+
 **Use for:** Time-specific reports, incident logs
 
 ```
@@ -52,6 +55,7 @@ local-testing-guide.md
 ```
 
 ### Pattern 4: ADR-###-title
+
 **Use for:** Architectural Decision Records ONLY
 
 ```
@@ -100,25 +104,30 @@ Before committing documentation, check:
 ## Common Scenarios
 
 ### "I'm writing a Sprint progress report"
+
 - **Name:** `SPRINT_{N}_PROGRESS_REPORT.md`
 - **Location:** `/docs/sprints/sprint-{N}/`
 
 ### "I wrote a new deployment procedure"
+
 - **Name:** `{service}-deployment-guide.md`
 - **Location:** `/docs/operations/`
 
 ### "We had a security incident"
+
 - **Name:** `YYYY-MM-DD-{incident-type}-incident.md`
 - **Location:** `/docs/security/incidents/`
 - **Archive after:** 180 days
 
 ### "We made an architecture decision"
+
 - **Name:** `ADR-{NNN}-{decision-title}.md`
 - **Location:** `/docs/architecture/`
 - **Template:** Copy `ADR-TEMPLATE.md`
 - **Never archive**
 
 ### "I finished a one-time analysis"
+
 - **Name:** `{SUBJECT}_ANALYSIS.md`
 - **Location:** `/docs/sprints/sprint-{current}/` during sprint
 - **Archive:** Move to `/docs/archive/{category}/{YYYY-MM}/` after 90 days
@@ -127,14 +136,15 @@ Before committing documentation, check:
 
 ## When to Archive
 
-| Document Type | Archive After | New Location |
-|---------------|---------------|--------------|
-| Sprint docs | 90 days after completion | `/docs/archive/sprints/sprint-{N}/` |
-| Incident logs | 180 days after resolution | `/docs/archive/security/incidents/{YYYY-MM}/` |
-| Analysis reports | After completion + 90 days | `/docs/archive/{category}/{YYYY-MM}/` |
-| Superseded guides | Immediately when replaced | `/docs/archive/{original-category}/` |
+| Document Type     | Archive After              | New Location                                  |
+| ----------------- | -------------------------- | --------------------------------------------- |
+| Sprint docs       | 90 days after completion   | `/docs/archive/sprints/sprint-{N}/`           |
+| Incident logs     | 180 days after resolution  | `/docs/archive/security/incidents/{YYYY-MM}/` |
+| Analysis reports  | After completion + 90 days | `/docs/archive/{category}/{YYYY-MM}/`         |
+| Superseded guides | Immediately when replaced  | `/docs/archive/{original-category}/`          |
 
 **Never archive:**
+
 - ADRs (they're historical by nature)
 - Core guides (ARCHITECTURE.md, SECURITY.md, RUNBOOK.md)
 - Active procedures (deployment guides, incident response)

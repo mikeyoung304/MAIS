@@ -1,6 +1,6 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import type { TenantFormData, TenantFormErrors } from "./types";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import type { TenantFormData, TenantFormErrors } from './types';
 
 interface ConfigurationFieldsProps {
   formData: TenantFormData;
@@ -34,9 +34,7 @@ export function ConfigurationFields({
           <option value="15">15%</option>
           <option value="20">20%</option>
         </select>
-        {errors.commissionRate && (
-          <p className="text-red-400 text-sm">{errors.commissionRate}</p>
-        )}
+        {errors.commissionRate && <p className="text-red-400 text-sm">{errors.commissionRate}</p>}
       </div>
 
       {/* Stripe Account ID */}
@@ -52,9 +50,7 @@ export function ConfigurationFields({
           placeholder="acct_1234567890"
           disabled={isSubmitting}
         />
-        <p className="text-white/60 text-sm">
-          Leave empty to set up later
-        </p>
+        <p className="text-white/60 text-sm">Leave empty to set up later</p>
       </div>
 
       {/* Active Status */}
@@ -63,9 +59,7 @@ export function ConfigurationFields({
           <Label htmlFor="isActive" className="text-white/90">
             Active Status
           </Label>
-          <p className="text-sm text-white/60">
-            Active tenants can accept bookings
-          </p>
+          <p className="text-sm text-white/60">Active tenants can accept bookings</p>
         </div>
         <label className="relative inline-flex items-center cursor-pointer">
           <input

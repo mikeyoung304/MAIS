@@ -21,12 +21,14 @@ This guide demonstrates how to use the audit log system to rollback changes and 
 ### When to Rollback vs. Forward Fix
 
 **Rollback Scenarios:**
+
 - Accidental branding change (wrong color uploaded)
 - Pricing error (wrong price entered)
 - Package deletion mistake
 - Blackout date error
 
 **Forward Fix Scenarios:**
+
 - Intentional changes that need adjustment
 - Data corruption requiring investigation
 - Changes spanning multiple entities
@@ -56,6 +58,7 @@ ORDER BY "createdAt" DESC;
 ```
 
 **Example Output:**
+
 ```
 | id      | operation | email           | beforeSnapshot      | afterSnapshot       | createdAt           |
 |---------|-----------|-----------------|---------------------|---------------------|---------------------|
@@ -401,6 +404,7 @@ Customer-facing impact?
 ## Support Contacts
 
 For rollback assistance:
+
 - **Development Team:** Consult audit log queries
 - **Platform Admin:** Execute manual SQL rollbacks
 - **Tenant Admin:** Cannot rollback (contact support)

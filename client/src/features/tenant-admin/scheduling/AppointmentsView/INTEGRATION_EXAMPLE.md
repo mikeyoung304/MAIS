@@ -235,6 +235,7 @@ export function TenantAppointmentsPage() {
 ## Testing the Integration
 
 1. Start the development server:
+
    ```bash
    npm run dev:client
    ```
@@ -256,17 +257,20 @@ export function TenantAppointmentsPage() {
 ## Troubleshooting
 
 ### No appointments showing
+
 - Check that you have TIMESLOT bookings (not DATE bookings)
 - Verify the tenant admin is logged in with a valid JWT
 - Check browser console for API errors
 - Verify the `/v1/tenant-admin/appointments` endpoint is working
 
 ### Customer/Service names not showing
+
 - The component gracefully handles missing customer endpoint
 - Service names require the `/v1/tenant-admin/services` endpoint
 - Customer details require the `/v1/tenant-admin/customers` endpoint (optional)
 
 ### Authentication errors
+
 - Ensure `tenantToken` is stored in localStorage
 - Check that JWT token is not expired
 - Verify tenant admin middleware is applied to routes

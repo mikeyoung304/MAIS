@@ -56,7 +56,7 @@ test.describe('Tenant Signup Flow', () => {
 
     // Wait for signup API request to complete
     await page.waitForResponse(
-      response => response.url().includes('/v1/auth/signup') && response.status() === 201,
+      (response) => response.url().includes('/v1/auth/signup') && response.status() === 201,
       { timeout: 10000 }
     );
 
@@ -222,7 +222,7 @@ test.describe('Tenant Signup Flow', () => {
 
     // Wait for successful signup
     await page.waitForResponse(
-      response => response.url().includes('/v1/auth/signup') && response.status() === 201,
+      (response) => response.url().includes('/v1/auth/signup') && response.status() === 201,
       { timeout: 10000 }
     );
 
@@ -242,14 +242,14 @@ test.describe('Tenant Signup Flow', () => {
 
     // Wait for conflict response
     await page.waitForResponse(
-      response => response.url().includes('/v1/auth/signup') && response.status() === 409,
+      (response) => response.url().includes('/v1/auth/signup') && response.status() === 409,
       { timeout: 10000 }
     );
 
     // Step 4: Verify error message appears
-    await expect(
-      page.getByText(/account with this email already exists/i)
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/account with this email already exists/i)).toBeVisible({
+      timeout: 5000,
+    });
 
     // Verify we're still on signup page (not redirected)
     await expect(page).toHaveURL('/signup');

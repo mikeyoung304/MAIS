@@ -35,6 +35,7 @@
    - Effort breakdown by task
 
 **Optional Context** (only if needed):
+
 - `.claude/DOCUMENTATION_SYSTEM_STRATEGIC_AUDIT.md` - Why the migration was critical
 - `docs/DOCUMENTATION_STANDARDS.md` - Governance framework
 - `docs/adrs/ADR-001-adopt-diataxis-framework.md` - Diátaxis decision rationale
@@ -60,6 +61,7 @@
    - Eliminated all non-compliant directories
 
 **Results**:
+
 - ✅ 95% documentation health score
 - ✅ 98.9% link success rate
 - ✅ 0 security exposures
@@ -69,6 +71,7 @@
 ### What's Left to Do
 
 **Phase 4: Core User Docs** (37 hours estimated - NOT STARTED)
+
 - Create Diátaxis quadrant directories (tutorials/, how-to/, reference/, explanation/)
 - Write 5 tutorials
 - Write 8 how-to guides
@@ -77,6 +80,7 @@
 - Migrate 21 high-value existing docs
 
 **Phase 5: Cleanup & Validation** (11.5 hours estimated - NOT STARTED)
+
 - Fix file naming for 84% of archived files
 - Final link validation
 - Complete deduplication
@@ -89,18 +93,21 @@
 ### Step 1: Understand the Options
 
 **Option A: Continue to Phase 4** (Diátaxis Quadrants)
+
 - **Effort**: 37 hours (could scope to 10-20h minimum)
 - **Value**: Improved onboarding, clear content categories
 - **Risk**: Significant time investment, content creation required
 - **When**: If team wants polished, beginner-friendly documentation
 
 **Option B: Pause and Stabilize** ⭐ RECOMMENDED
+
 - **Effort**: 0 hours (pause point)
 - **Value**: Time to assess if Phase 4 adds value
 - **Risk**: None (current state is production-ready)
 - **When**: Team needs to review before committing 37 hours
 
 **Option C: Quick Wins Only**
+
 - **Effort**: 1-2 hours
 - **Value**: Polish without major investment
 - **Risk**: None
@@ -138,6 +145,7 @@
 **Your Task**: Execute Phase 4 of migration plan
 
 **Steps**:
+
 1. Read full Phase 4 section in `.claude/DOCUMENTATION_MIGRATION_PLAN.md`
 2. Create directory structure:
    ```bash
@@ -158,6 +166,7 @@
 **Your Task**: Prepare for future decision, maintain current state
 
 **Steps**:
+
 1. Create ADR-006 documenting the pause decision
 2. Set up quarterly documentation audit reminder (track drift)
 3. Monitor for any issues with current structure
@@ -173,6 +182,7 @@
 **Your Task**: Polish current state with minimal effort
 
 **Steps**:
+
 1. Create archive README files (explain organization)
    - `docs/archive/2025-11/README.md`
    - `docs/archive/2025-10/README.md`
@@ -211,6 +221,7 @@ START: Documentation migration Phases 2-3 complete
 ## 📋 What NOT to Do
 
 **DO NOT**:
+
 - ❌ Start Phase 4 without team decision
 - ❌ Make large structural changes to archive/ (it's stable)
 - ❌ Delete or move framework files in `.claude/`
@@ -218,6 +229,7 @@ START: Documentation migration Phases 2-3 complete
 - ❌ Assume team wants Phase 4 (ask first!)
 
 **DO**:
+
 - ✅ Ask user what the team decided
 - ✅ Read the completion summary first
 - ✅ Clarify priorities before committing time
@@ -231,6 +243,7 @@ START: Documentation migration Phases 2-3 complete
 ### How to Know You're Done
 
 **If Option A (Phase 4)**:
+
 - [ ] Diátaxis directories created
 - [ ] At least 5 docs migrated to new structure
 - [ ] Team validates value before continuing
@@ -239,12 +252,14 @@ START: Documentation migration Phases 2-3 complete
 - [ ] Links validated
 
 **If Option B (Pause)**:
+
 - [ ] Team decision documented in ADR-006
 - [ ] Quarterly audit schedule created
 - [ ] Current state validated as stable
 - [ ] Handoff document created for Q1 2026
 
 **If Option C (Quick Wins)**:
+
 - [ ] Archive README files created
 - [ ] 3-5 high-traffic docs updated
 - [ ] Edge-case links fixed
@@ -255,21 +270,25 @@ START: Documentation migration Phases 2-3 complete
 ## 📁 Key Files You'll Need
 
 ### For Any Option:
+
 - `.claude/PHASE_2_3_COMPLETION_SUMMARY.md` - Team review summary
 - `docs/INDEX.md` - Main navigation (may need updates)
 - `docs/DOCUMENTATION_STANDARDS.md` - Governance rules
 - `scripts/validate-docs.sh` - Validation automation
 
 ### If Option A (Phase 4):
+
 - `.claude/DOCUMENTATION_MIGRATION_PLAN.md` - Full migration plan (Phase 4 section)
 - `docs/adrs/ADR-001-adopt-diataxis-framework.md` - Framework rationale
 - `docs/DIATAXIS_IMPLEMENTATION_GUIDE.md` - Implementation guide
 
 ### If Option B (Pause):
+
 - `docs/adrs/ADR-TEMPLATE.md` - Template for ADR-006
 - `.claude/DOCUMENTATION_GOVERNANCE_IMPLEMENTATION.md` - Governance process
 
 ### If Option C (Quick Wins):
+
 - `docs/archive/README.md` - Archive index (needs expansion)
 - Current high-traffic docs to update
 
@@ -278,6 +297,7 @@ START: Documentation migration Phases 2-3 complete
 ## ⚡ Quick Commands Reference
 
 ### Check current state:
+
 ```bash
 # Verify archive structure
 find docs/archive -maxdepth 1 -type d | sort
@@ -293,6 +313,7 @@ git status --short
 ```
 
 ### If executing Phase 4:
+
 ```bash
 # Create Diátaxis directories
 mkdir -p docs/tutorials docs/how-to docs/reference docs/explanation
@@ -302,6 +323,7 @@ touch docs/tutorials/README.md docs/how-to/README.md docs/reference/README.md do
 ```
 
 ### If creating archive READMEs (Option C):
+
 ```bash
 # Create month-level README files
 touch docs/archive/2025-11/README.md
@@ -316,13 +338,16 @@ touch docs/archive/2025-01/README.md
 **When you start:**
 
 1. **Ask the user** (first message):
+
    > "I see that documentation migration Phases 2-3 are complete with a 95% health score.
    >
    > Before proceeding, I need to know:
+   >
    > 1. Has the team reviewed `.claude/PHASE_2_3_COMPLETION_SUMMARY.md`?
    > 2. What did you decide about Phase 4 (Diátaxis quadrants)?
    >
    > Options:
+   >
    > - **A**: Proceed with Phase 4 (37 hours - create tutorials, how-to guides)
    > - **B**: Pause and stabilize (current state is production-ready)
    > - **C**: Quick wins only (1-2 hours of polish)
@@ -341,11 +366,13 @@ touch docs/archive/2025-01/README.md
 ## 📊 Context You Inherit
 
 **Git State**:
+
 - Branch: `main` (clean, no uncommitted changes)
 - Recent commits: f86252c (Phase 2), f650a6b (Phase 3), bf113fc (summary)
 - All changes pushed to remote
 
 **Documentation State**:
+
 - Health: 95%
 - Structure: ISO 8601 compliant (100%)
 - Links: 98.9% success rate
@@ -353,11 +380,13 @@ touch docs/archive/2025-01/README.md
 - Governance: 5 ADRs established
 
 **Team State**:
+
 - Needs to decide on Phase 4
 - No urgency (system is stable)
 - Summary document prepared for review
 
 **Next Milestone**:
+
 - Team review meeting (not yet scheduled)
 - Phase 4 decision (pending)
 - Quarterly audit (set up if pausing)
@@ -367,6 +396,7 @@ touch docs/archive/2025-01/README.md
 ## 🤝 Handoff Complete
 
 You now have everything you need to:
+
 1. ✅ Understand what was done (Phases 2-3)
 2. ✅ Know what's next (Phase 4 decision)
 3. ✅ Execute any chosen option (A, B, or C)
@@ -381,6 +411,7 @@ You now have everything you need to:
 **Status**: Ready for team decision
 
 **Questions?** Everything is documented:
+
 - `.claude/PHASE_2_3_COMPLETION_SUMMARY.md` - Team review (START HERE)
 - `.claude/DOCUMENTATION_MIGRATION_PLAN.md` - Full migration plan
 - `docs/DOCUMENTATION_STANDARDS.md` - Governance framework

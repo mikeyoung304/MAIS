@@ -39,7 +39,14 @@ export function AppointmentsView() {
     queryFn: async () => {
       // Build query params - only include if not 'all'
       const query: {
-        status?: 'PENDING' | 'DEPOSIT_PAID' | 'PAID' | 'CONFIRMED' | 'CANCELED' | 'REFUNDED' | 'FULFILLED';
+        status?:
+          | 'PENDING'
+          | 'DEPOSIT_PAID'
+          | 'PAID'
+          | 'CONFIRMED'
+          | 'CANCELED'
+          | 'REFUNDED'
+          | 'FULFILLED';
         serviceId?: string;
         startDate?: string;
         endDate?: string;
@@ -73,10 +80,7 @@ export function AppointmentsView() {
   const appointments = appointmentsResponse ?? [];
 
   // Fetch services to display service names
-  const {
-    data: servicesResponse,
-    isLoading: servicesLoading,
-  } = useQuery({
+  const { data: servicesResponse, isLoading: servicesLoading } = useQuery({
     queryKey: ['tenant-admin', 'services'],
     queryFn: async () => {
       const response = await api.tenantAdminGetServices();
@@ -94,10 +98,7 @@ export function AppointmentsView() {
   // Fetch customers to display customer details
   // Note: This is a workaround since appointments only return customerId
   // In a production app, the API should return enriched data or we should use a join
-  const {
-    data: customersResponse,
-    isLoading: customersLoading,
-  } = useQuery({
+  const { data: customersResponse, isLoading: customersLoading } = useQuery({
     queryKey: ['tenant-admin', 'customers'],
     queryFn: async () => {
       const response = await api.tenantAdminGetCustomers();
@@ -117,15 +118,9 @@ export function AppointmentsView() {
   const customers = customersResponse ?? [];
 
   // Build Maps for O(1) lookups instead of O(N*M*K) array searches
-  const serviceMap = useMemo(
-    () => new Map(services.map((s) => [s.id, s])),
-    [services]
-  );
+  const serviceMap = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
 
-  const customerMap = useMemo(
-    () => new Map(customers.map((c) => [c.id, c])),
-    [customers]
-  );
+  const customerMap = useMemo(() => new Map(customers.map((c) => [c.id, c])), [customers]);
 
   // Enrich appointments with service and customer data
   // O(N+M+K) instead of O(N*M*K) - build maps once, then constant-time lookups
@@ -159,9 +154,7 @@ export function AppointmentsView() {
     return (
       <div className="space-y-6">
         <div className="bg-red-900/20 border border-red-500 rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-red-300 mb-2">
-            Error Loading Appointments
-          </h2>
+          <h2 className="text-xl font-semibold text-red-300 mb-2">Error Loading Appointments</h2>
           <p className="text-red-200">
             {appointmentsError instanceof Error
               ? appointmentsError.message

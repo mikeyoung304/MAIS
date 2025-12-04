@@ -1,9 +1,9 @@
-import { Loader2 } from "lucide-react";
-import { SuccessMessage } from "@/components/shared/SuccessMessage";
-import { BrandingForm } from "./branding/components/BrandingForm";
-import { BrandingPreview } from "./branding/components/BrandingPreview";
-import { useBrandingManager } from "./branding/hooks/useBrandingManager";
-import type { TenantBrandingDto } from "@macon/contracts";
+import { Loader2 } from 'lucide-react';
+import { SuccessMessage } from '@/components/shared/SuccessMessage';
+import { BrandingForm } from './branding/components/BrandingForm';
+import { BrandingPreview } from './branding/components/BrandingPreview';
+import { useBrandingManager } from './branding/hooks/useBrandingManager';
+import type { TenantBrandingDto } from '@macon/contracts';
 
 interface BrandingEditorProps {
   branding: TenantBrandingDto | null;

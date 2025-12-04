@@ -54,23 +54,23 @@ Request with X-Tenant-Key Header
 
 ## Critical Constraints
 
-| Model | Constraint | Purpose |
-|-------|-----------|---------|
-| **Tenant** | `slug` unique | URL identifier |
-| **Tenant** | `apiKeyPublic` unique | Widget authentication |
-| **Package** | `(tenantId, slug)` unique | Prevent cross-tenant slug collision |
-| **AddOn** | `(tenantId, slug)` unique | Prevent cross-tenant slug collision |
-| **Booking** | `(tenantId, date)` unique | **One booking per date per tenant** |
-| **BlackoutDate** | `(tenantId, date)` unique | No duplicate blackout dates |
+| Model            | Constraint                | Purpose                             |
+| ---------------- | ------------------------- | ----------------------------------- |
+| **Tenant**       | `slug` unique             | URL identifier                      |
+| **Tenant**       | `apiKeyPublic` unique     | Widget authentication               |
+| **Package**      | `(tenantId, slug)` unique | Prevent cross-tenant slug collision |
+| **AddOn**        | `(tenantId, slug)` unique | Prevent cross-tenant slug collision |
+| **Booking**      | `(tenantId, date)` unique | **One booking per date per tenant** |
+| **BlackoutDate** | `(tenantId, date)` unique | No duplicate blackout dates         |
 
 ## Performance Indexes
 
-| Model | Indexes |
-|-------|---------|
-| **Tenant** | slug, apiKeyPublic, isActive |
-| **Package** | (tenantId, active), tenantId |
-| **Booking** | (tenantId, status), (tenantId, date), (tenantId, status, date), tenantId, customerId, stripePaymentIntentId, createdAt |
-| **WebhookEvent** | (tenantId, status), (tenantId, createdAt), tenantId, eventId, status, (status, createdAt) |
+| Model            | Indexes                                                                                                                |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Tenant**       | slug, apiKeyPublic, isActive                                                                                           |
+| **Package**      | (tenantId, active), tenantId                                                                                           |
+| **Booking**      | (tenantId, status), (tenantId, date), (tenantId, status, date), tenantId, customerId, stripePaymentIntentId, createdAt |
+| **WebhookEvent** | (tenantId, status), (tenantId, createdAt), tenantId, eventId, status, (status, createdAt)                              |
 
 ## Double-Booking Prevention (3 Layers)
 
@@ -220,14 +220,14 @@ Request to GET /api/v1/packages with wrong API key
 
 ## Configuration Files
 
-| File | Purpose |
-|------|---------|
-| `server/prisma/schema.prisma` | Prisma schema with all models |
-| `server/src/lib/entities.ts` | Domain entity interfaces |
-| `server/src/lib/ports.ts` | Repository & provider contracts |
-| `server/src/adapters/prisma/*.ts` | Repository implementations |
-| `server/src/middleware/tenant.ts` | Tenant resolution & extraction |
-| `server/prisma/migrations/03_add_multi_tenancy.sql` | Migration to multi-tenant |
+| File                                                | Purpose                         |
+| --------------------------------------------------- | ------------------------------- |
+| `server/prisma/schema.prisma`                       | Prisma schema with all models   |
+| `server/src/lib/entities.ts`                        | Domain entity interfaces        |
+| `server/src/lib/ports.ts`                           | Repository & provider contracts |
+| `server/src/adapters/prisma/*.ts`                   | Repository implementations      |
+| `server/src/middleware/tenant.ts`                   | Tenant resolution & extraction  |
+| `server/prisma/migrations/03_add_multi_tenancy.sql` | Migration to multi-tenant       |
 
 ## Key Takeaways
 

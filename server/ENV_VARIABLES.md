@@ -19,10 +19,12 @@ ADAPTERS_PRESET=mock
 ```
 
 **Values:**
+
 - `mock` - Development mode with in-memory storage (no external dependencies)
 - `real` - Production mode with PostgreSQL, Stripe, email, calendar
 
 **When to use:**
+
 - Development: `mock` (fastest setup)
 - Testing: `real` (integration tests)
 - Production: `real` (live system)
@@ -38,6 +40,7 @@ CORS_ORIGIN=http://localhost:3000
 **CORS_ORIGIN** - Allowed origin for CORS (frontend URL)
 
 **Production example:**
+
 ```bash
 API_PORT=3001
 CORS_ORIGIN=https://yourdomain.com
@@ -52,12 +55,14 @@ JWT_SECRET=change-me
 **JWT_SECRET** - Secret key for signing JWT tokens
 
 **Security:**
+
 - MUST be at least 32 characters in production
 - Use a cryptographically random string
 - Never commit to version control
 - Rotate periodically
 
 **Generate secure secret:**
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
@@ -75,16 +80,19 @@ DATABASE_URL=postgresql://user:pass@host:5432/db?sslmode=require
 **Format:** `postgresql://[user]:[password]@[host]:[port]/[database]?sslmode=require`
 
 **Example (local):**
+
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/elope_dev?sslmode=disable
 ```
 
 **Example (production - Supabase):**
+
 ```bash
 DATABASE_URL=postgresql://postgres.xxxxx:password@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require
 ```
 
 **Security:**
+
 - Always use SSL in production (`sslmode=require`)
 - Use connection pooling for better performance
 - Rotate passwords regularly
@@ -103,23 +111,27 @@ STRIPE_PUBLISHABLE_KEY=pk_test_xxx
 **STRIPE_PUBLISHABLE_KEY** - Client-side API key (optional, for reference)
 
 **Get your keys:**
+
 1. Go to https://dashboard.stripe.com/apikeys
 2. Test mode: Use keys starting with `sk_test_` and `pk_test_`
 3. Live mode: Use keys starting with `sk_live_` and `pk_live_`
 
 **Security:**
+
 - NEVER commit secret keys to version control
 - NEVER expose secret keys to client-side code
 - Use test keys for development
 - Use live keys only in production
 
 **Test mode example:**
+
 ```bash
 STRIPE_SECRET_KEY=sk_test_51ABC123...
 STRIPE_PUBLISHABLE_KEY=pk_test_51ABC123...
 ```
 
 **Production example:**
+
 ```bash
 STRIPE_SECRET_KEY=sk_live_51ABC123...
 STRIPE_PUBLISHABLE_KEY=pk_live_51ABC123...
@@ -136,6 +148,7 @@ STRIPE_WEBHOOK_SECRET=whsec_xxx
 **Get your webhook secret:**
 
 **Option 1: Stripe CLI (Development)**
+
 ```bash
 # Install Stripe CLI
 brew install stripe/stripe-cli/stripe
@@ -150,6 +163,7 @@ stripe listen --forward-to localhost:3001/api/webhooks/stripe
 ```
 
 **Option 2: Stripe Dashboard (Production)**
+
 1. Go to https://dashboard.stripe.com/webhooks
 2. Click "Add endpoint"
 3. URL: `https://yourdomain.com/api/webhooks/stripe`
@@ -157,6 +171,7 @@ stripe listen --forward-to localhost:3001/api/webhooks/stripe
 5. Copy the "Signing secret"
 
 **Important:**
+
 - Test and production have different webhook secrets
 - Webhook signature verification is REQUIRED for security
 - Never skip webhook verification in production
@@ -172,6 +187,7 @@ STRIPE_CANCEL_URL=http://localhost:3000
 **STRIPE_CANCEL_URL** - Redirect URL if user cancels payment
 
 **Production example:**
+
 ```bash
 STRIPE_SUCCESS_URL=https://yourdomain.com/booking-confirmed
 STRIPE_CANCEL_URL=https://yourdomain.com/booking
@@ -179,6 +195,7 @@ STRIPE_CANCEL_URL=https://yourdomain.com/booking
 
 **Session ID parameter:**
 The success URL will receive a `session_id` query parameter:
+
 ```
 https://yourdomain.com/success?session_id=cs_test_xxx
 ```
@@ -198,12 +215,14 @@ POSTMARK_FROM_EMAIL=bookings@example.com
 **POSTMARK_FROM_EMAIL** - Sender email address (must be verified in Postmark)
 
 **Get Postmark token:**
+
 1. Sign up at https://postmarkapp.com
 2. Create a server
 3. Copy the "Server API Token"
 4. Verify your sender signature/domain
 
 **Example:**
+
 ```bash
 POSTMARK_SERVER_TOKEN=abc123-def456-ghi789
 POSTMARK_FROM_EMAIL=noreply@yourdomain.com
@@ -211,6 +230,7 @@ POSTMARK_FROM_EMAIL=noreply@yourdomain.com
 
 **Fallback behavior:**
 If `POSTMARK_SERVER_TOKEN` is empty, emails will be written to:
+
 ```
 /tmp/emails/email-{timestamp}.json
 ```
@@ -230,24 +250,28 @@ GOOGLE_SERVICE_ACCOUNT_JSON_BASE64=
 **Setup instructions:**
 
 **Step 1: Create Service Account**
+
 1. Go to https://console.cloud.google.com/iam-admin/serviceaccounts
 2. Create project (if needed)
 3. Create service account
 4. Download JSON key file
 
 **Step 2: Encode JSON**
+
 ```bash
 # Base64 encode the JSON file
 cat service-account.json | base64
 ```
 
 **Step 3: Share Calendar**
+
 1. Open Google Calendar
 2. Settings → Calendar settings
 3. Share with the service account email
 4. Grant "Make changes to events" permission
 
 **Example:**
+
 ```bash
 GOOGLE_CALENDAR_ID=you@gmail.com
 GOOGLE_SERVICE_ACCOUNT_JSON_BASE64=ewogICJ0eXBlIjog...
@@ -267,16 +291,19 @@ ADMIN_DEFAULT_PASSWORD=ChangeThisToAStrongPassword123!
 **ADMIN_DEFAULT_PASSWORD** - Default password for admin user (created during seed)
 
 **Requirements:**
+
 - Minimum 12 characters
 - Must include uppercase, lowercase, numbers, special characters
 
 **Security:**
+
 - ALWAYS change this before deploying
 - Use a password manager to generate
 - Rotate regularly
 - Never use common passwords
 
 **Generate strong password:**
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(16).toString('base64'))"
 ```
@@ -378,18 +405,23 @@ Before deploying to production, verify:
 ## Troubleshooting
 
 ### "STRIPE_SECRET_KEY not found"
+
 **Solution:** Add `STRIPE_SECRET_KEY=sk_test_...` to your `.env` file
 
 ### "Webhook signature verification failed"
+
 **Solution:** Update `STRIPE_WEBHOOK_SECRET` with value from `stripe listen` or Stripe Dashboard
 
 ### "Database connection failed"
+
 **Solution:** Verify `DATABASE_URL` is correct and database is running
 
 ### "CORS error"
+
 **Solution:** Update `CORS_ORIGIN` to match your frontend URL
 
 ### "JWT token invalid"
+
 **Solution:** Ensure `JWT_SECRET` is the same across all server instances
 
 ## Next Steps

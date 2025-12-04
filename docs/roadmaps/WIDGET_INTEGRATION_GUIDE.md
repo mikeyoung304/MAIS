@@ -33,6 +33,7 @@ pk_live_yourcompany_abc123xyz789
 ```
 
 **Important:**
+
 - Use `pk_live_*` keys for production
 - Use `pk_test_*` keys for testing (if available)
 - Never share your secret key (`sk_live_*`)
@@ -46,10 +47,10 @@ Add this code snippet to your website where you want the booking widget to appea
 <div id="mais-booking-widget"></div>
 
 <script>
-  (function(){
+  (function () {
     window.MaisConfig = {
       apiKey: 'pk_live_yourcompany_abc123xyz789',
-      container: '#mais-booking-widget'
+      container: '#mais-booking-widget',
     };
     var s = document.createElement('script');
     s.src = 'https://widget.mais.com/sdk/mais-sdk.js';
@@ -60,6 +61,7 @@ Add this code snippet to your website where you want the booking widget to appea
 ```
 
 **For local development:**
+
 ```javascript
 s.src = 'http://localhost:5173/widget-loader.js';
 ```
@@ -94,7 +96,7 @@ window.MaisConfig = {
   mode: 'embedded',
 
   // OPTIONAL: Theme override ('light' or 'dark', default: auto-detect)
-  theme: 'light'
+  theme: 'light',
 };
 ```
 
@@ -116,7 +118,7 @@ window.MaisConfig = {
   prefill: {
     name: 'John Smith',
     email: 'john@example.com',
-    guestCount: 25
+    guestCount: 25,
   },
 
   // Custom CSS class for the widget container
@@ -126,13 +128,13 @@ window.MaisConfig = {
   locale: 'en-US',
 
   // Event callbacks (see Event Handling section)
-  onBookingComplete: function(booking) {
+  onBookingComplete: function (booking) {
     console.log('Booking completed!', booking);
   },
 
-  onError: function(error) {
+  onError: function (error) {
     console.error('Widget error:', error);
-  }
+  },
 };
 ```
 
@@ -147,8 +149,8 @@ Alternatively, you can configure the widget using HTML data attributes:
   data-mode="embedded"
   data-theme="light"
   data-default-package="intimate-ceremony"
-  data-default-date="2025-06-15">
-</div>
+  data-default-date="2025-06-15"
+></div>
 
 <script src="https://widget.mais.com/sdk/mais-sdk.js" async></script>
 ```
@@ -166,16 +168,18 @@ The widget renders inline within your page content.
 ```javascript
 window.MaisConfig = {
   apiKey: 'pk_live_yourcompany_abc123xyz789',
-  mode: 'embedded'
+  mode: 'embedded',
 };
 ```
 
 **Best for:**
+
 - Dedicated booking pages
 - Full-width sections
 - Step-by-step booking flows
 
 **Example:**
+
 ```html
 <section class="booking-section">
   <h2>Book Your Wedding Date</h2>
@@ -191,16 +195,18 @@ The widget opens in a modal overlay when triggered by a button click.
 window.MaisConfig = {
   apiKey: 'pk_live_yourcompany_abc123xyz789',
   mode: 'modal',
-  trigger: '#book-now-button' // Button that opens the modal
+  trigger: '#book-now-button', // Button that opens the modal
 };
 ```
 
 **Best for:**
+
 - Homepage call-to-action buttons
 - Navigation menu links
 - Floating booking buttons
 
 **Example:**
+
 ```html
 <button id="book-now-button">Book Your Date</button>
 
@@ -208,13 +214,14 @@ window.MaisConfig = {
   window.MaisConfig = {
     apiKey: 'pk_live_yourcompany_abc123xyz789',
     mode: 'modal',
-    trigger: '#book-now-button'
+    trigger: '#book-now-button',
   };
 </script>
 <script src="https://widget.mais.com/sdk/mais-sdk.js" async></script>
 ```
 
 **Programmatic Control:**
+
 ```javascript
 // Open modal programmatically
 if (window.Mais) {
@@ -242,6 +249,7 @@ The widget automatically inherits branding settings from your MAIS admin dashboa
 - **Border Radius** - Rounded vs. sharp corners
 
 **To customize branding:**
+
 1. Login to MAIS admin dashboard
 2. Navigate to **Settings** → **Branding**
 3. Update colors, logo, fonts
@@ -261,7 +269,7 @@ For additional styling, you can target the widget with custom CSS:
 }
 
 /* Custom button styling (use your brand colors) */
-.mais-widget-container button[type="submit"] {
+.mais-widget-container button[type='submit'] {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
@@ -279,14 +287,14 @@ For additional styling, you can target the widget with custom CSS:
 
 **CSS Class Reference:**
 
-| Class | Description |
-|-------|-------------|
-| `.mais-widget-container` | Main widget wrapper |
-| `.mais-package-card` | Individual package card |
-| `.mais-date-picker` | Date selection calendar |
-| `.mais-addon-item` | Add-on selection item |
-| `.mais-summary-panel` | Booking summary sidebar |
-| `.mais-checkout-button` | Primary checkout button |
+| Class                    | Description             |
+| ------------------------ | ----------------------- |
+| `.mais-widget-container` | Main widget wrapper     |
+| `.mais-package-card`     | Individual package card |
+| `.mais-date-picker`      | Date selection calendar |
+| `.mais-addon-item`       | Add-on selection item   |
+| `.mais-summary-panel`    | Booking summary sidebar |
+| `.mais-checkout-button`  | Primary checkout button |
 
 ### Dark Mode Support
 
@@ -296,19 +304,19 @@ The widget automatically detects and adapts to dark mode:
 // Force light mode
 window.MaisConfig = {
   apiKey: 'pk_live_yourcompany_abc123xyz789',
-  theme: 'light'
+  theme: 'light',
 };
 
 // Force dark mode
 window.MaisConfig = {
   apiKey: 'pk_live_yourcompany_abc123xyz789',
-  theme: 'dark'
+  theme: 'dark',
 };
 
 // Auto-detect (default)
 window.MaisConfig = {
   apiKey: 'pk_live_yourcompany_abc123xyz789',
-  theme: 'auto'
+  theme: 'auto',
 };
 ```
 
@@ -327,7 +335,7 @@ Fired when a customer begins the booking process.
 ```javascript
 window.MaisConfig = {
   apiKey: 'pk_live_yourcompany_abc123xyz789',
-  onBookingStarted: function(data) {
+  onBookingStarted: function (data) {
     console.log('Booking started:', data);
     // data = { packageId, packageName, eventDate }
 
@@ -336,17 +344,20 @@ window.MaisConfig = {
       gtag('event', 'begin_checkout', {
         currency: 'USD',
         value: data.packagePrice / 100,
-        items: [{
-          item_id: data.packageId,
-          item_name: data.packageName
-        }]
+        items: [
+          {
+            item_id: data.packageId,
+            item_name: data.packageName,
+          },
+        ],
       });
     }
-  }
+  },
 };
 ```
 
 **Event Data:**
+
 ```javascript
 {
   packageId: "pkg_abc123",
@@ -363,7 +374,7 @@ Fired when a booking is successfully completed and payment is confirmed.
 ```javascript
 window.MaisConfig = {
   apiKey: 'pk_live_yourcompany_abc123xyz789',
-  onBookingComplete: function(booking) {
+  onBookingComplete: function (booking) {
     console.log('Booking completed!', booking);
 
     // Example: Send to Google Analytics
@@ -372,22 +383,25 @@ window.MaisConfig = {
         transaction_id: booking.bookingId,
         value: booking.totalPrice / 100,
         currency: 'USD',
-        items: [{
-          item_id: booking.packageId,
-          item_name: booking.packageName,
-          quantity: 1,
-          price: booking.totalPrice / 100
-        }]
+        items: [
+          {
+            item_id: booking.packageId,
+            item_name: booking.packageName,
+            quantity: 1,
+            price: booking.totalPrice / 100,
+          },
+        ],
       });
     }
 
     // Example: Redirect to thank you page
     window.location.href = '/thank-you?booking=' + booking.bookingId;
-  }
+  },
 };
 ```
 
 **Event Data:**
+
 ```javascript
 {
   bookingId: "booking_xyz789",
@@ -410,18 +424,19 @@ Fired when an error occurs during the booking process.
 ```javascript
 window.MaisConfig = {
   apiKey: 'pk_live_yourcompany_abc123xyz789',
-  onError: function(error) {
+  onError: function (error) {
     console.error('Booking error:', error);
 
     // Example: Show custom error message
     if (error.code === 'DATE_UNAVAILABLE') {
       alert('Sorry, that date is no longer available. Please choose another date.');
     }
-  }
+  },
 };
 ```
 
 **Error Codes:**
+
 - `DATE_UNAVAILABLE` - Selected date is already booked
 - `PAYMENT_FAILED` - Payment processing failed
 - `INVALID_DATA` - Form validation error
@@ -435,12 +450,12 @@ Fired when the widget finishes loading and is ready for interaction.
 ```javascript
 window.MaisConfig = {
   apiKey: 'pk_live_yourcompany_abc123xyz789',
-  onWidgetLoaded: function() {
+  onWidgetLoaded: function () {
     console.log('Widget loaded successfully');
 
     // Example: Hide custom loading spinner
     document.getElementById('custom-loader').style.display = 'none';
-  }
+  },
 };
 ```
 
@@ -449,7 +464,7 @@ window.MaisConfig = {
 You can also listen to all widget events using a global listener:
 
 ```javascript
-window.addEventListener('message', function(event) {
+window.addEventListener('message', function (event) {
   // Verify origin for security
   if (event.origin !== 'https://widget.mais.com') return;
 
@@ -484,79 +499,79 @@ window.addEventListener('message', function(event) {
 ```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Book Your Wedding - Bella Weddings</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
-      background: #f9fafb;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Book Your Wedding - Bella Weddings</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: #f9fafb;
+      }
 
-    .header {
-      text-align: center;
-      margin-bottom: 3rem;
-    }
+      .header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
 
-    .header h1 {
-      font-size: 2.5rem;
-      color: #111827;
-      margin-bottom: 0.5rem;
-    }
+      .header h1 {
+        font-size: 2.5rem;
+        color: #111827;
+        margin-bottom: 0.5rem;
+      }
 
-    .header p {
-      font-size: 1.125rem;
-      color: #6b7280;
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>Book Your Perfect Day</h1>
-    <p>Select your package, choose your date, and let's make it official!</p>
-  </div>
+      .header p {
+        font-size: 1.125rem;
+        color: #6b7280;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>Book Your Perfect Day</h1>
+      <p>Select your package, choose your date, and let's make it official!</p>
+    </div>
 
-  <!-- Widget Container -->
-  <div id="mais-booking-widget"></div>
+    <!-- Widget Container -->
+    <div id="mais-booking-widget"></div>
 
-  <!-- Widget Configuration & Loader -->
-  <script>
-    (function(){
-      window.MaisConfig = {
-        apiKey: 'pk_live_bellaweddings_abc123xyz789',
-        container: '#mais-booking-widget',
-        mode: 'embedded',
+    <!-- Widget Configuration & Loader -->
+    <script>
+      (function () {
+        window.MaisConfig = {
+          apiKey: 'pk_live_bellaweddings_abc123xyz789',
+          container: '#mais-booking-widget',
+          mode: 'embedded',
 
-        // Track bookings with Google Analytics
-        onBookingComplete: function(booking) {
-          console.log('Booking completed:', booking);
+          // Track bookings with Google Analytics
+          onBookingComplete: function (booking) {
+            console.log('Booking completed:', booking);
 
-          if (window.gtag) {
-            gtag('event', 'purchase', {
-              transaction_id: booking.bookingId,
-              value: booking.totalPrice / 100,
-              currency: 'USD'
-            });
-          }
+            if (window.gtag) {
+              gtag('event', 'purchase', {
+                transaction_id: booking.bookingId,
+                value: booking.totalPrice / 100,
+                currency: 'USD',
+              });
+            }
 
-          // Redirect to thank you page
-          setTimeout(() => {
-            window.location.href = '/thank-you.html';
-          }, 2000);
-        }
-      };
+            // Redirect to thank you page
+            setTimeout(() => {
+              window.location.href = '/thank-you.html';
+            }, 2000);
+          },
+        };
 
-      var script = document.createElement('script');
-      script.src = 'https://widget.mais.com/sdk/mais-sdk.js';
-      script.async = true;
-      document.head.appendChild(script);
-    })();
-  </script>
-</body>
+        var script = document.createElement('script');
+        script.src = 'https://widget.mais.com/sdk/mais-sdk.js';
+        script.async = true;
+        document.head.appendChild(script);
+      })();
+    </script>
+  </body>
 </html>
 ```
 
@@ -567,93 +582,93 @@ window.addEventListener('message', function(event) {
 ```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bella Weddings - Intimate Elopements</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      margin: 0;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bella Weddings - Intimate Elopements</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        margin: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
 
-    .hero {
-      text-align: center;
-      padding: 2rem;
-    }
+      .hero {
+        text-align: center;
+        padding: 2rem;
+      }
 
-    .hero h1 {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      font-weight: 700;
-    }
+      .hero h1 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        font-weight: 700;
+      }
 
-    .hero p {
-      font-size: 1.25rem;
-      margin-bottom: 2rem;
-      opacity: 0.9;
-    }
+      .hero p {
+        font-size: 1.25rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+      }
 
-    .cta-button {
-      background: white;
-      color: #667eea;
-      border: none;
-      padding: 1rem 3rem;
-      font-size: 1.125rem;
-      font-weight: 600;
-      border-radius: 50px;
-      cursor: pointer;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
+      .cta-button {
+        background: white;
+        color: #667eea;
+        border: none;
+        padding: 1rem 3rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+        border-radius: 50px;
+        cursor: pointer;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+      }
 
-    .cta-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-    }
-  </style>
-</head>
-<body>
-  <div class="hero">
-    <h1>Say "I Do" Your Way</h1>
-    <p>Beautiful, intimate elopements in stunning locations</p>
-    <button id="book-now-button" class="cta-button">
-      Book Your Date
-    </button>
-  </div>
+      .cta-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <h1>Say "I Do" Your Way</h1>
+      <p>Beautiful, intimate elopements in stunning locations</p>
+      <button id="book-now-button" class="cta-button">Book Your Date</button>
+    </div>
 
-  <!-- Widget Configuration & Loader -->
-  <script>
-    (function(){
-      window.MaisConfig = {
-        apiKey: 'pk_live_bellaweddings_abc123xyz789',
-        mode: 'modal',
-        trigger: '#book-now-button',
+    <!-- Widget Configuration & Loader -->
+    <script>
+      (function () {
+        window.MaisConfig = {
+          apiKey: 'pk_live_bellaweddings_abc123xyz789',
+          mode: 'modal',
+          trigger: '#book-now-button',
 
-        onBookingComplete: function(booking) {
-          // Close modal and redirect
-          window.Mais.close();
-          window.location.href = '/confirmation?booking=' + booking.bookingId;
-        },
+          onBookingComplete: function (booking) {
+            // Close modal and redirect
+            window.Mais.close();
+            window.location.href = '/confirmation?booking=' + booking.bookingId;
+          },
 
-        onError: function(error) {
-          alert('Oops! ' + error.message);
-        }
-      };
+          onError: function (error) {
+            alert('Oops! ' + error.message);
+          },
+        };
 
-      var script = document.createElement('script');
-      script.src = 'https://widget.mais.com/sdk/mais-sdk.js';
-      script.async = true;
-      document.head.appendChild(script);
-    })();
-  </script>
-</body>
+        var script = document.createElement('script');
+        script.src = 'https://widget.mais.com/sdk/mais-sdk.js';
+        script.async = true;
+        document.head.appendChild(script);
+      })();
+    </script>
+  </body>
 </html>
 ```
 
@@ -664,55 +679,55 @@ window.addEventListener('message', function(event) {
 ```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Special Offer - Book Your June Wedding</title>
-</head>
-<body>
-  <div id="mais-booking-widget"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Special Offer - Book Your June Wedding</title>
+  </head>
+  <body>
+    <div id="mais-booking-widget"></div>
 
-  <script>
-    // Extract URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
+    <script>
+      // Extract URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
 
-    (function(){
-      window.MaisConfig = {
-        apiKey: 'pk_live_bellaweddings_abc123xyz789',
-        container: '#mais-booking-widget',
+      (function () {
+        window.MaisConfig = {
+          apiKey: 'pk_live_bellaweddings_abc123xyz789',
+          container: '#mais-booking-widget',
 
-        // Pre-select package from URL
-        defaultPackage: urlParams.get('package') || 'intimate-ceremony',
+          // Pre-select package from URL
+          defaultPackage: urlParams.get('package') || 'intimate-ceremony',
 
-        // Pre-select date from URL
-        defaultDate: urlParams.get('date') || '2025-06-15',
+          // Pre-select date from URL
+          defaultDate: urlParams.get('date') || '2025-06-15',
 
-        // Prefill customer info if available
-        prefill: {
-          email: urlParams.get('email') || '',
-          name: urlParams.get('name') || ''
-        },
+          // Prefill customer info if available
+          prefill: {
+            email: urlParams.get('email') || '',
+            name: urlParams.get('name') || '',
+          },
 
-        onBookingComplete: function(booking) {
-          // Track campaign conversion
-          if (window.gtag) {
-            gtag('event', 'conversion', {
-              send_to: 'AW-123456789/ABC123',
-              value: booking.totalPrice / 100,
-              currency: 'USD',
-              transaction_id: booking.bookingId
-            });
-          }
-        }
-      };
+          onBookingComplete: function (booking) {
+            // Track campaign conversion
+            if (window.gtag) {
+              gtag('event', 'conversion', {
+                send_to: 'AW-123456789/ABC123',
+                value: booking.totalPrice / 100,
+                currency: 'USD',
+                transaction_id: booking.bookingId,
+              });
+            }
+          },
+        };
 
-      var script = document.createElement('script');
-      script.src = 'https://widget.mais.com/sdk/mais-sdk.js';
-      script.async = true;
-      document.head.appendChild(script);
-    })();
-  </script>
-</body>
+        var script = document.createElement('script');
+        script.src = 'https://widget.mais.com/sdk/mais-sdk.js';
+        script.async = true;
+        document.head.appendChild(script);
+      })();
+    </script>
+  </body>
 </html>
 ```
 
@@ -727,22 +742,25 @@ window.addEventListener('message', function(event) {
 **Solutions:**
 
 1. **Check API key format:**
+
    ```javascript
    // Correct format
-   apiKey: 'pk_live_yourcompany_abc123xyz789'
+   apiKey: 'pk_live_yourcompany_abc123xyz789';
 
    // Common mistakes
-   apiKey: 'sk_live_...'  // Wrong! Don't use secret key
-   apiKey: 'pk_test_...'  // Test key won't work in production
+   apiKey: 'sk_live_...'; // Wrong! Don't use secret key
+   apiKey: 'pk_test_...'; // Test key won't work in production
    ```
 
 2. **Check container exists:**
+
    ```javascript
    // Ensure container is in DOM before script runs
    console.log(document.querySelector('#mais-booking-widget')); // Should not be null
    ```
 
 3. **Check browser console for errors:**
+
    ```javascript
    // Press F12 to open DevTools → Console tab
    // Look for errors like:
@@ -764,6 +782,7 @@ window.addEventListener('message', function(event) {
 **Solutions:**
 
 1. **Ensure container has no fixed height:**
+
    ```css
    /* BAD */
    #mais-booking-widget {
@@ -782,7 +801,7 @@ window.addEventListener('message', function(event) {
    /* Ensure no parent container restricts height */
    .parent-container {
      overflow: hidden; /* Can cause issues */
-     height: 500px;    /* Can cause issues */
+     height: 500px; /* Can cause issues */
    }
    ```
 
@@ -817,12 +836,13 @@ window.addEventListener('message', function(event) {
    - Test mode: Use test card `4242 4242 4242 4242`
 
 2. **Verify test vs. live mode:**
+
    ```javascript
    // Development/testing
-   apiKey: 'pk_test_yourcompany_...'  // Uses Stripe test mode
+   apiKey: 'pk_test_yourcompany_...'; // Uses Stripe test mode
 
    // Production
-   apiKey: 'pk_live_yourcompany_...'  // Uses Stripe live mode
+   apiKey: 'pk_live_yourcompany_...'; // Uses Stripe live mode
    ```
 
 ### Date Not Available
@@ -849,6 +869,7 @@ window.addEventListener('message', function(event) {
 **Solutions:**
 
 1. **Use async loading:**
+
    ```javascript
    // GOOD - Non-blocking
    script.async = true;
@@ -858,6 +879,7 @@ window.addEventListener('message', function(event) {
    ```
 
 2. **Optimize images:**
+
    ```
    - Compress package photos
    - Use WebP format
@@ -884,6 +906,7 @@ window.addEventListener('message', function(event) {
    - Include both `www` and non-`www` versions
 
 2. **Ensure correct domain format:**
+
    ```
    CORRECT:
    - example.com
@@ -903,10 +926,10 @@ window.addEventListener('message', function(event) {
 
 ```javascript
 // CORRECT - Public key is safe to embed in HTML
-apiKey: 'pk_live_yourcompany_abc123xyz789'
+apiKey: 'pk_live_yourcompany_abc123xyz789';
 
 // WRONG - Never embed secret key in client-side code!
-apiKey: 'sk_live_yourcompany_...'  // NEVER DO THIS!
+apiKey: 'sk_live_yourcompany_...'; // NEVER DO THIS!
 ```
 
 ### 2. Restrict Allowed Domains
@@ -959,9 +982,9 @@ app.post('/api/verify-booking', async (req, res) => {
   // Verify booking with MAIS API using your secret key
   const response = await fetch(`https://api.mais.com/v1/bookings/${bookingId}`, {
     headers: {
-      'Authorization': `Bearer ${process.env.MAIS_SECRET_KEY}`,
-      'X-Tenant-Key': 'pk_live_yourcompany_abc123xyz789'
-    }
+      Authorization: `Bearer ${process.env.MAIS_SECRET_KEY}`,
+      'X-Tenant-Key': 'pk_live_yourcompany_abc123xyz789',
+    },
   });
 
   const booking = await response.json();
@@ -1001,7 +1024,7 @@ After the widget loads, a global `window.Mais` object is available for programma
 Opens the booking widget (modal mode only).
 
 ```javascript
-document.getElementById('custom-button').addEventListener('click', function() {
+document.getElementById('custom-button').addEventListener('click', function () {
   window.Mais.open();
 });
 ```
@@ -1082,6 +1105,7 @@ console.log(bookingData);
 ### Feedback
 
 We're constantly improving the widget! Share your feedback:
+
 - **Feature Requests:** feature-requests@mais.com
 - **Bug Reports:** bugs@mais.com
 

@@ -10,11 +10,13 @@
 The MAIS application uses **two distinct theme zones** to optimize user experience:
 
 ### 🌞 **Light Theme** - Customer-Facing Pages
+
 - **Purpose**: Welcoming, clean, professional browsing and booking experience
 - **Colors**: White backgrounds, neutral grays, Macon brand colors for accents
 - **Target Users**: Couples browsing packages, booking services, viewing confirmations
 
 ### 🌙 **Dark Theme** - Admin-Facing Pages
+
 - **Purpose**: Focused, productive work environment for business operations
 - **Colors**: Navy backgrounds (Macon Navy #1a365d), reduced eye strain for long sessions
 - **Target Users**: Platform administrators, tenant administrators managing operations
@@ -25,15 +27,15 @@ The MAIS application uses **two distinct theme zones** to optimize user experien
 
 These pages should use **light backgrounds** (white, gray-50, neutral-50):
 
-| Page | File Path | Status | Priority |
-|------|-----------|--------|----------|
-| Homepage | `/pages/Home.tsx` | ✅ CORRECT | - |
-| Package Catalog | `/features/catalog/CatalogGrid.tsx` | ❌ DARK | HIGH |
-| Package Details | `/features/catalog/PackagePage.tsx` | ❌ DARK | HIGH |
-| Date Picker | `/features/booking/DatePicker.tsx` | ❌ DARK | HIGH |
-| Add-On Selection | `/features/booking/AddOnList.tsx` | ❌ DARK | HIGH |
-| Success Page | `/pages/success/Success.tsx` | ❌ DARK | MEDIUM |
-| Success Content | `/pages/success/SuccessContent.tsx` | ❌ DARK | MEDIUM |
+| Page             | File Path                           | Status     | Priority |
+| ---------------- | ----------------------------------- | ---------- | -------- |
+| Homepage         | `/pages/Home.tsx`                   | ✅ CORRECT | -        |
+| Package Catalog  | `/features/catalog/CatalogGrid.tsx` | ❌ DARK    | HIGH     |
+| Package Details  | `/features/catalog/PackagePage.tsx` | ❌ DARK    | HIGH     |
+| Date Picker      | `/features/booking/DatePicker.tsx`  | ❌ DARK    | HIGH     |
+| Add-On Selection | `/features/booking/AddOnList.tsx`   | ❌ DARK    | HIGH     |
+| Success Page     | `/pages/success/Success.tsx`        | ❌ DARK    | MEDIUM   |
+| Success Content  | `/pages/success/SuccessContent.tsx` | ❌ DARK    | MEDIUM   |
 
 ### Light Theme Color Palette
 
@@ -67,16 +69,16 @@ text-macon-navy (headings, emphasis)
 
 These pages should use **dark backgrounds** (navy-800, navy-900):
 
-| Page | File Path | Status |
-|------|-----------|--------|
-| Login | `/pages/Login.tsx` | ✅ CORRECT |
-| Platform Admin Dashboard | `/pages/admin/PlatformAdminDashboard.tsx` | ✅ CORRECT |
-| Platform Admin Components | `/features/admin/Dashboard.tsx` | ✅ CORRECT |
-| Platform Package Manager | `/features/admin/PackagesManager.tsx` | ✅ CORRECT |
-| Tenant Dashboard | `/pages/tenant/TenantAdminDashboard.tsx` | ✅ CORRECT |
-| Tenant Components | `/features/tenant-admin/TenantDashboard.tsx` | ✅ CORRECT |
-| Tenant Package Manager | `/features/tenant-admin/TenantPackagesManager.tsx` | ✅ CORRECT |
-| Branding Editor | `/features/tenant-admin/BrandingEditor.tsx` | ✅ CORRECT |
+| Page                      | File Path                                          | Status     |
+| ------------------------- | -------------------------------------------------- | ---------- |
+| Login                     | `/pages/Login.tsx`                                 | ✅ CORRECT |
+| Platform Admin Dashboard  | `/pages/admin/PlatformAdminDashboard.tsx`          | ✅ CORRECT |
+| Platform Admin Components | `/features/admin/Dashboard.tsx`                    | ✅ CORRECT |
+| Platform Package Manager  | `/features/admin/PackagesManager.tsx`              | ✅ CORRECT |
+| Tenant Dashboard          | `/pages/tenant/TenantAdminDashboard.tsx`           | ✅ CORRECT |
+| Tenant Components         | `/features/tenant-admin/TenantDashboard.tsx`       | ✅ CORRECT |
+| Tenant Package Manager    | `/features/tenant-admin/TenantPackagesManager.tsx` | ✅ CORRECT |
+| Branding Editor           | `/features/tenant-admin/BrandingEditor.tsx`        | ✅ CORRECT |
 
 ### Dark Theme Color Palette
 
@@ -110,12 +112,14 @@ bg-macon-teal (secondary actions)
 ### HIGH PRIORITY (Booking Flow)
 
 **Files to Convert:**
+
 1. `/features/catalog/CatalogGrid.tsx`
 2. `/features/catalog/PackagePage.tsx`
 3. `/features/booking/DatePicker.tsx`
 4. `/features/booking/AddOnList.tsx`
 
 **Key Changes:**
+
 - Replace `bg-macon-navy-800` → `bg-white`
 - Replace `bg-macon-navy-900` → `bg-gray-50`
 - Replace `text-macon-navy-50` → `text-gray-900`
@@ -125,6 +129,7 @@ bg-macon-teal (secondary actions)
 ### MEDIUM PRIORITY (Success Pages)
 
 **Files to Convert:**
+
 1. `/pages/success/Success.tsx`
 2. `/pages/success/SuccessContent.tsx`
 
@@ -135,6 +140,7 @@ bg-macon-teal (secondary actions)
 ## Design Principles
 
 ### Light Theme Guidelines
+
 - Use ample white space and generous padding
 - Cards should have subtle shadows (`shadow-elevation-1` or `shadow-elevation-2`)
 - Brand colors (orange, teal) for accents and CTAs only
@@ -142,6 +148,7 @@ bg-macon-teal (secondary actions)
 - Borders should be subtle (gray-200, gray-300)
 
 ### Dark Theme Guidelines
+
 - Maintain navy background hierarchy (900 > 800 > 700)
 - Text should be light but not pure white (navy-50, navy-100)
 - Cards should have border definition rather than shadows

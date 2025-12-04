@@ -60,7 +60,7 @@ export function createApp(
           scriptSrc: [
             "'self'",
             "'unsafe-inline'", // TODO: Replace with nonce in Phase 3 if needed
-            "https://js.stripe.com",
+            'https://js.stripe.com',
           ],
           styleSrc: [
             "'self'",
@@ -68,30 +68,27 @@ export function createApp(
           ],
           imgSrc: [
             "'self'",
-            "data:",
-            "https:", // Allow HTTPS images (package photos, logos, landing page images)
-            "blob:",
-            "https://*.supabase.co", // Supabase storage for tenant uploads
+            'data:',
+            'https:', // Allow HTTPS images (package photos, logos, landing page images)
+            'blob:',
+            'https://*.supabase.co', // Supabase storage for tenant uploads
           ],
           connectSrc: [
             "'self'",
-            "https://api.stripe.com",
-            "https://uploads.stripe.com",
-            "https://*.supabase.co", // Supabase storage API for uploads
+            'https://api.stripe.com',
+            'https://uploads.stripe.com',
+            'https://*.supabase.co', // Supabase storage API for uploads
           ],
-          frameSrc: [
-            "https://js.stripe.com",
-            "https://hooks.stripe.com",
-          ],
-          fontSrc: ["'self'", "data:"],
+          frameSrc: ['https://js.stripe.com', 'https://hooks.stripe.com'],
+          fontSrc: ["'self'", 'data:'],
           objectSrc: ["'none'"],
           mediaSrc: ["'self'"],
           manifestSrc: ["'self'"],
-          workerSrc: ["'self'", "blob:"],
+          workerSrc: ["'self'", 'blob:'],
           formAction: ["'self'"],
           frameAncestors: ["'none'"], // Prevent clickjacking
           baseUri: ["'self'"],
-          reportUri: "/v1/csp-violations", // CSP violation reporting
+          reportUri: '/v1/csp-violations', // CSP violation reporting
         },
       },
       hsts: {
@@ -100,7 +97,7 @@ export function createApp(
         preload: true,
       },
       referrerPolicy: {
-        policy: "strict-origin-when-cross-origin",
+        policy: 'strict-origin-when-cross-origin',
       },
     })
   );
@@ -156,11 +153,7 @@ export function createApp(
   // Body parsing
   // IMPORTANT: Stripe webhook needs raw body for signature verification
   // Apply raw body parser to webhook endpoint BEFORE json() middleware
-  app.use(
-    '/v1/webhooks/stripe',
-    express.raw({ type: 'application/json' }),
-    requestLogger
-  );
+  app.use('/v1/webhooks/stripe', express.raw({ type: 'application/json' }), requestLogger);
 
   // Apply JSON parsing to all other routes
   app.use(express.json());
@@ -236,17 +229,25 @@ export function createApp(
   );
 
   // Mount v1 router (container passed as parameter now)
-  createV1Router(container.controllers, container.services.identity, app, {
-    catalog: container.services.catalog,
-    booking: container.services.booking,
-    tenantAuth: container.services.tenantAuth,
-    segment: container.services.segment,
-    stripeConnect: container.services.stripeConnect,
-    schedulingAvailability: container.services.schedulingAvailability,
-    packageDraft: container.services.packageDraft,
-    tenantOnboarding: container.services.tenantOnboarding,
-    reminder: container.services.reminder,
-  }, container.mailProvider, container.prisma, container.repositories);
+  createV1Router(
+    container.controllers,
+    container.services.identity,
+    app,
+    {
+      catalog: container.services.catalog,
+      booking: container.services.booking,
+      tenantAuth: container.services.tenantAuth,
+      segment: container.services.segment,
+      stripeConnect: container.services.stripeConnect,
+      schedulingAvailability: container.services.schedulingAvailability,
+      packageDraft: container.services.packageDraft,
+      tenantOnboarding: container.services.tenantOnboarding,
+      reminder: container.services.reminder,
+    },
+    container.mailProvider,
+    container.prisma,
+    container.repositories
+  );
 
   // Mount dev routes (mock mode only)
   if (config.ADAPTERS_PRESET === 'mock' && container.controllers.dev) {

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "159"
+issue_id: '159'
 tags: [code-review, quality, mvp-gaps, typescript]
 dependencies: []
 resolved_at: 2025-12-02
@@ -15,6 +15,7 @@ resolution: already-fixed
 Multiple unsafe type assertions scattered throughout BookingService for deposit/refund fields that should be in the Booking interface.
 
 **Why This Matters:**
+
 - Type safety bypassed
 - Fields may not exist at runtime
 - Maintenance burden
@@ -26,6 +27,7 @@ Multiple unsafe type assertions scattered throughout BookingService for deposit/
 **Location:** `server/src/services/booking.service.ts:257-261, 1129-1130`
 
 **Evidence:**
+
 ```typescript
 const extendedBooking = booking as Booking & {
   depositPaidAmount?: number;
@@ -43,6 +45,7 @@ const extendedBooking = booking as Booking & { refundStatus?: string };
 Upon investigation on 2025-12-02, this issue was already resolved:
 
 ### 1. Booking Entity Updated ✅
+
 All deposit/refund fields are already properly defined in the Booking interface (`server/src/lib/entities.ts` lines 78-90):
 
 ```typescript
@@ -64,22 +67,28 @@ export interface Booking {
 ```
 
 ### 2. Type Assertions Removed ✅
+
 No unsafe type assertions (`as Booking &`, `extendedBooking`) found in:
+
 - `server/src/services/booking.service.ts`
 - Any other service files
 
 ### 3. Repository Mapper Updated ✅
+
 The `PrismaBookingRepository.toDomainBooking()` method properly handles all fields:
+
 - Refund fields: lines 1035-1047
 - Deposit fields: lines 1057-1069
 
 ### 4. Type Check Passes ✅
+
 ```bash
 $ npm run typecheck
 ✓ No TypeScript errors
 ```
 
 ### 5. Tests Pass ✅
+
 - 905 tests passing
 - No failures related to booking type assertions
 - Some pre-existing test failures in cache-isolation and webhook tests (unrelated to this issue)

@@ -5,7 +5,7 @@
 ```typescript
 {
   primaryColor?: string    // Hex: #RRGGBB or #RGB
-  secondaryColor?: string  // Hex: #RRGGBB or #RGB  
+  secondaryColor?: string  // Hex: #RRGGBB or #RGB
   fontFamily?: string      // CSS font name (Inter, Playfair Display, etc)
   logo?: string            // Full URL
 }
@@ -13,11 +13,11 @@
 
 ## API Endpoints
 
-| Endpoint | Method | Auth | Purpose |
-|----------|--------|------|---------|
-| `/v1/tenant/branding` | GET | None | Public widget branding fetch |
-| `/v1/tenant/admin/branding` | GET | JWT | Get tenant's current branding |
-| `/v1/tenant/admin/branding` | PUT | JWT | Update tenant's branding |
+| Endpoint                    | Method | Auth | Purpose                       |
+| --------------------------- | ------ | ---- | ----------------------------- |
+| `/v1/tenant/branding`       | GET    | None | Public widget branding fetch  |
+| `/v1/tenant/admin/branding` | GET    | JWT  | Get tenant's current branding |
+| `/v1/tenant/admin/branding` | PUT    | JWT  | Update tenant's branding      |
 
 ## Validation Rules
 
@@ -79,20 +79,24 @@ await api.tenantUpdateBranding({
 ## Extension Ideas
 
 ### Color Expansion
+
 - `linkColor`, `errorColor`, `successColor`, `warningColor`
 - `backgroundColor`, `textColor` presets
 
 ### Typography
+
 - `headingFont`, `bodyFont` (separate from generic `fontFamily`)
 - `fontSize`, `lineHeight` scales
 - `letterSpacing` presets
 
 ### Layout
+
 - `widgetLayout` (grid vs list vs carousel)
 - `showLogo`, `showPrices`, `showDescription` toggles
 - `borderRadius`, `spacing` scales
 
 ### Advanced
+
 - Custom CSS rules (with sanitization)
 - Multiple color schemes (light/dark mode)
 - Template selection
@@ -124,4 +128,3 @@ client/src/features/tenant-admin/BrandingEditor.tsx  # UI Component
 - No N+1 problems (single record load)
 - JSON field changes don't trigger schema migrations
 - Suitable for 1000s of tenants
-

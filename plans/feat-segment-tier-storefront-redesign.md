@@ -10,6 +10,7 @@ Transform the current package-browsing storefront into a guided sales funnel wit
 ## Problem Statement
 
 The current storefront shows packages in a catalog-style grid, which:
+
 - Requires customers to browse and compare many options
 - Lacks clear pricing psychology (good/better/best)
 - Doesn't guide customers through a decision funnel
@@ -83,6 +84,7 @@ The current storefront shows packages in a catalog-style grid, which:
 ### Key Insight: Use Existing Fields
 
 The Package model ALREADY has the fields we need:
+
 - `segmentId` - Links package to a segment (nullable for root tiers)
 - `grouping` - String field, use as tier level: "budget" | "middle" | "luxury"
 - `groupingOrder` - Integer for display order: 0, 1, 2
@@ -91,14 +93,14 @@ The Package model ALREADY has the fields we need:
 
 ### Convention Over Configuration
 
-| Field | Value | Purpose |
-|-------|-------|---------|
-| `grouping` | "budget" | Budget tier |
-| `grouping` | "middle" | Middle tier |
-| `grouping` | "luxury" | Luxury tier |
-| `groupingOrder` | 0 | First position (Budget) |
-| `groupingOrder` | 1 | Second position (Middle) |
-| `groupingOrder` | 2 | Third position (Luxury) |
+| Field           | Value    | Purpose                  |
+| --------------- | -------- | ------------------------ |
+| `grouping`      | "budget" | Budget tier              |
+| `grouping`      | "middle" | Middle tier              |
+| `grouping`      | "luxury" | Luxury tier              |
+| `groupingOrder` | 0        | First position (Budget)  |
+| `groupingOrder` | 1        | Second position (Middle) |
+| `groupingOrder` | 2        | Third position (Luxury)  |
 
 ### API Changes
 
@@ -124,12 +126,12 @@ Add soft validation in the admin flow:
 // In package service - warn (don't block) if tier config incomplete
 function validateTierConfig(tenantId: string, segmentId: string | null): TierStatus {
   const packages = await getPackagesBySegment(tenantId, segmentId);
-  const tiers = packages.filter(p => ['budget', 'middle', 'luxury'].includes(p.grouping));
+  const tiers = packages.filter((p) => ['budget', 'middle', 'luxury'].includes(p.grouping));
 
   return {
     complete: tiers.length === 3,
-    configured: tiers.map(t => t.grouping),
-    missing: ['budget', 'middle', 'luxury'].filter(t => !tiers.find(p => p.grouping === t))
+    configured: tiers.map((t) => t.grouping),
+    missing: ['budget', 'middle', 'luxury'].filter((t) => !tiers.find((p) => p.grouping === t)),
   };
 }
 ```
@@ -138,13 +140,13 @@ function validateTierConfig(tenantId: string, segmentId: string | null): TierSta
 
 #### New Pages (Customer-Facing)
 
-| Route | Component | Purpose |
-|-------|-----------|---------|
-| `/` | `StorefrontHome` | Smart routing: segments or tiers |
-| `/s/:slug` | `SegmentTiers` | Show 3 tier cards for segment |
-| `/s/:slug/:tier` | `TierDetail` | Zoomed tier view with nav |
-| `/tiers` | `RootTiers` | 3 tier cards (no segments) |
-| `/tiers/:tier` | `TierDetail` | Zoomed tier view (no segments) |
+| Route            | Component        | Purpose                          |
+| ---------------- | ---------------- | -------------------------------- |
+| `/`              | `StorefrontHome` | Smart routing: segments or tiers |
+| `/s/:slug`       | `SegmentTiers`   | Show 3 tier cards for segment    |
+| `/s/:slug/:tier` | `TierDetail`     | Zoomed tier view with nav        |
+| `/tiers`         | `RootTiers`      | 3 tier cards (no segments)       |
+| `/tiers/:tier`   | `TierDetail`     | Zoomed tier view (no segments)   |
 
 #### Components to Create
 
@@ -159,6 +161,7 @@ client/src/features/storefront/
 #### Admin Changes (Minimal)
 
 Update existing PackageForm to:
+
 1. Show dropdown for `grouping`: "budget" | "middle" | "luxury" | (custom)
 2. Auto-set `groupingOrder` based on tier selection
 3. Show warning badge if segment doesn't have all 3 tiers
@@ -166,6 +169,7 @@ Update existing PackageForm to:
 ### Implementation Tasks
 
 #### Day 1: Frontend Storefront
+
 - [ ] Create `StorefrontHome.tsx` - checks segments, routes appropriately
 - [ ] Create `TierSelector.tsx` - displays 3 cards filtered by grouping
 - [ ] Create `TierCard.tsx` - card with photo, name, price, description preview
@@ -173,6 +177,7 @@ Update existing PackageForm to:
 - [ ] Add routes to `router.tsx`
 
 #### Day 2: Admin Polish + Testing
+
 - [ ] Update `OrganizationSection.tsx` - tier dropdown instead of free text
 - [ ] Add tier status indicator to segment list
 - [ ] E2E tests for storefront flow
@@ -206,14 +211,14 @@ Update existing PackageForm to:
 
 ### Frontend Only (No Backend Changes)
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `client/src/pages/StorefrontHome.tsx` | Create | Smart routing page |
-| `client/src/features/storefront/TierSelector.tsx` | Create | 3 tier cards |
-| `client/src/features/storefront/TierCard.tsx` | Create | Individual tier card |
-| `client/src/features/storefront/TierDetail.tsx` | Create | Zoomed tier view |
-| `client/src/features/tenant-admin/packages/PackageForm/OrganizationSection.tsx` | Modify | Tier dropdown |
-| `client/src/router.tsx` | Modify | Add new routes |
+| File                                                                            | Action | Purpose              |
+| ------------------------------------------------------------------------------- | ------ | -------------------- |
+| `client/src/pages/StorefrontHome.tsx`                                           | Create | Smart routing page   |
+| `client/src/features/storefront/TierSelector.tsx`                               | Create | 3 tier cards         |
+| `client/src/features/storefront/TierCard.tsx`                                   | Create | Individual tier card |
+| `client/src/features/storefront/TierDetail.tsx`                                 | Create | Zoomed tier view     |
+| `client/src/features/tenant-admin/packages/PackageForm/OrganizationSection.tsx` | Modify | Tier dropdown        |
+| `client/src/router.tsx`                                                         | Modify | Add new routes       |
 
 ## ERD Diagram (No Changes)
 
@@ -269,23 +274,25 @@ Three independent reviewers all recommended:
 
 ### Trade-offs Accepted
 
-| Trade-off | Mitigation |
-|-----------|------------|
-| No DB constraint for "exactly 3 tiers" | Soft validation + admin warning |
-| Free-text `grouping` field | Dropdown UI constrains input |
-| Grouping values are convention | Document clearly, validate in UI |
+| Trade-off                              | Mitigation                       |
+| -------------------------------------- | -------------------------------- |
+| No DB constraint for "exactly 3 tiers" | Soft validation + admin warning  |
+| Free-text `grouping` field             | Dropdown UI constrains input     |
+| Grouping values are convention         | Document clearly, validate in UI |
 
 ## Future Considerations
 
 ### Add-ons (Post-MVP)
 
 Can be added later by:
+
 1. Creating add-on selection step between tier detail and checkout
 2. Linking add-ons to packages via existing `PackageAddOn` join table
 
 ### Tier Templates (Future)
 
 Pre-configured tier templates for common industries:
+
 - Photography: Mini Session / Standard / Premium
 - Consulting: Starter / Professional / Enterprise
 - Events: Basic / Enhanced / Luxury

@@ -10,7 +10,9 @@
 ## Executive Summary
 
 ### Current State
+
 The MAIS platform currently uses TailwindCSS's default type system without a cohesive typographic hierarchy. While functional, the implementation suffers from:
+
 - Inconsistent font weight application (mixing 400, 500, 600, 700)
 - Poor visual hierarchy in forms and dashboards
 - Suboptimal line heights for readability
@@ -18,6 +20,7 @@ The MAIS platform currently uses TailwindCSS's default type system without a coh
 - Uppercase overuse reducing scannability
 
 ### Critical Issues Identified
+
 1. **Weak visual hierarchy** - Headings don't command attention (Login page H1 at 2xl/1.5rem)
 2. **Form label confusion** - Labels blend into input fields (both use 400 weight)
 3. **Dashboard metric labels** - ALL CAPS reduces readability in data-heavy views
@@ -27,7 +30,9 @@ The MAIS platform currently uses TailwindCSS's default type system without a coh
 7. **Reading comfort** - Line heights too tight for body text (1.5 vs recommended 1.625-1.7)
 
 ### Recommended Approach
+
 Implement an **Apple SF Pro-inspired type system** with:
+
 - **1.25x scale ratio** for predictable size progression
 - **Consistent weight palette**: 400 (regular), 500 (medium), 600 (semibold), 700 (bold)
 - **4px base grid** for spacing consistency
@@ -35,6 +40,7 @@ Implement an **Apple SF Pro-inspired type system** with:
 - **Component-specific patterns** for forms, dashboards, and marketing pages
 
 ### Impact
+
 - **Improved readability**: 15-20% reduction in cognitive load
 - **Faster scanning**: Clear hierarchy guides user attention
 - **Professional polish**: Consistent spacing creates premium feel
@@ -47,35 +53,35 @@ Implement an **Apple SF Pro-inspired type system** with:
 
 ### Font Sizes in Use (TailwindCSS Defaults)
 
-| Class | Size | Observed Usage | Issues |
-|-------|------|----------------|--------|
-| `text-xs` | 0.75rem (12px) | Helper text, badges | Too small for primary content |
-| `text-sm` | 0.875rem (14px) | Form labels, table text | Overused - reduces hierarchy |
-| `text-base` | 1rem (16px) | Body text, buttons | Good baseline |
-| `text-lg` | 1.125rem (18px) | Subheadings | Rarely used - hierarchy gap |
-| `text-xl` | 1.25rem (20px) | Card headings | Underutilized |
-| `text-2xl` | 1.5rem (24px) | Login H1, section headings | Too small for H1 |
-| `text-3xl` | 1.875rem (30px) | Homepage hero | Inconsistent application |
-| `text-4xl` | 2.25rem (36px) | Rare | Missing from hierarchy |
-| `text-5xl` | 3rem (48px) | Not observed | Could improve hero sections |
+| Class       | Size            | Observed Usage             | Issues                        |
+| ----------- | --------------- | -------------------------- | ----------------------------- |
+| `text-xs`   | 0.75rem (12px)  | Helper text, badges        | Too small for primary content |
+| `text-sm`   | 0.875rem (14px) | Form labels, table text    | Overused - reduces hierarchy  |
+| `text-base` | 1rem (16px)     | Body text, buttons         | Good baseline                 |
+| `text-lg`   | 1.125rem (18px) | Subheadings                | Rarely used - hierarchy gap   |
+| `text-xl`   | 1.25rem (20px)  | Card headings              | Underutilized                 |
+| `text-2xl`  | 1.5rem (24px)   | Login H1, section headings | Too small for H1              |
+| `text-3xl`  | 1.875rem (30px) | Homepage hero              | Inconsistent application      |
+| `text-4xl`  | 2.25rem (36px)  | Rare                       | Missing from hierarchy        |
+| `text-5xl`  | 3rem (48px)     | Not observed               | Could improve hero sections   |
 
 ### Font Weights in Use
 
-| Weight | Class | Current Usage | Issues |
-|--------|-------|---------------|--------|
-| 400 | `font-normal` | Body text, labels, inputs | Overused - labels need distinction |
-| 500 | `font-medium` | Buttons, nav items | Inconsistent - sometimes skipped |
-| 600 | `font-semibold` | Some headings | Good for emphasis |
-| 700 | `font-bold` | Strong headings | Underutilized |
+| Weight | Class           | Current Usage             | Issues                             |
+| ------ | --------------- | ------------------------- | ---------------------------------- |
+| 400    | `font-normal`   | Body text, labels, inputs | Overused - labels need distinction |
+| 500    | `font-medium`   | Buttons, nav items        | Inconsistent - sometimes skipped   |
+| 600    | `font-semibold` | Some headings             | Good for emphasis                  |
+| 700    | `font-bold`     | Strong headings           | Underutilized                      |
 
 ### Line Heights in Use
 
-| Class | Value | Current Usage | Issues |
-|-------|-------|---------------|--------|
-| `leading-tight` | 1.25 | Headings | Good for large text |
-| `leading-normal` | 1.5 | Body text | Too tight for readability |
-| `leading-relaxed` | 1.625 | Rarely used | Should be default for body |
-| `leading-loose` | 2 | Marketing copy | Too loose for UI text |
+| Class             | Value | Current Usage  | Issues                     |
+| ----------------- | ----- | -------------- | -------------------------- |
+| `leading-tight`   | 1.25  | Headings       | Good for large text        |
+| `leading-normal`  | 1.5   | Body text      | Too tight for readability  |
+| `leading-relaxed` | 1.625 | Rarely used    | Should be default for body |
+| `leading-loose`   | 2     | Marketing copy | Too loose for UI text      |
 
 ---
 
@@ -86,6 +92,7 @@ Implement an **Apple SF Pro-inspired type system** with:
 **Issue:** Login page H1 uses `text-2xl` (24px), which is barely larger than body text.
 
 **Visual Impact:**
+
 ```
 Current:
   H1: 24px / 1.5rem (weak, blends in)
@@ -102,6 +109,7 @@ Recommended:
 ```
 
 **Code Example (Login.tsx):**
+
 ```tsx
 // ❌ Current (weak)
 <h1 className="text-2xl font-semibold text-gray-900">
@@ -119,6 +127,7 @@ Recommended:
 **Issue:** Labels use `text-sm font-normal`, making them visually equal to placeholder text.
 
 **Current Pattern:**
+
 ```tsx
 // Label and input both use similar weights
 <label className="text-sm font-normal text-gray-700">Email</label>
@@ -126,18 +135,21 @@ Recommended:
 ```
 
 **Visual Confusion:**
+
 - Label: 14px, weight 400
 - Input text: 16px, weight 400
 - Placeholder: 16px, weight 400, gray-400
 - Result: Labels don't stand out, user must search for field names
 
 **Recommended Pattern:**
+
 ```tsx
 <label className="text-sm font-medium text-gray-900">Email</label>
 <input className="text-base font-normal text-gray-900" placeholder="you@example.com" />
 ```
 
 **Impact:**
+
 - Label: 14px, weight **500**, gray-900 (stronger contrast)
 - Input: 16px, weight 400, gray-900
 - Clear parent-child relationship
@@ -147,6 +159,7 @@ Recommended:
 **Issue:** Admin dashboard uses `text-xs uppercase` for metric labels, reducing scannability.
 
 **Current Implementation:**
+
 ```tsx
 <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">
   TOTAL REVENUE
@@ -157,11 +170,13 @@ Recommended:
 ```
 
 **Problems:**
+
 - ALL CAPS text is 13-20% slower to read (research: Nielsen Norman Group)
 - `text-xs` (12px) is at the edge of readability
 - Uppercase + small size = accessibility concern
 
 **Recommended:**
+
 ```tsx
 <div className="text-sm font-medium text-gray-600">
   Total Revenue
@@ -172,6 +187,7 @@ Recommended:
 ```
 
 **Benefits:**
+
 - Sentence case improves reading speed
 - Larger label (14px) improves legibility
 - `tabular-nums` aligns numbers in columns
@@ -182,27 +198,31 @@ Recommended:
 **Issue:** Hero text exceeds optimal line length, reducing readability.
 
 **Current:**
+
 ```tsx
 <p className="text-lg text-gray-600 max-w-4xl">
-  Partner with Macon AI Solutions to grow your business through proven strategies,
-  AI-powered insights, and done-for-you marketing automation. We succeed when you succeed.
+  Partner with Macon AI Solutions to grow your business through proven strategies, AI-powered
+  insights, and done-for-you marketing automation. We succeed when you succeed.
 </p>
 ```
 
 **Problem:**
+
 - `max-w-4xl` = 56rem = 896px
 - At 18px font size: ~85-90 characters per line
 - Optimal: 60-70 characters (450-560px)
 
 **Recommended:**
+
 ```tsx
 <p className="text-lg md:text-xl text-gray-600 max-w-2xl leading-relaxed">
-  Partner with Macon AI Solutions to grow your business through proven strategies,
-  AI-powered insights, and done-for-you marketing automation.
+  Partner with Macon AI Solutions to grow your business through proven strategies, AI-powered
+  insights, and done-for-you marketing automation.
 </p>
 ```
 
 **Changes:**
+
 - `max-w-2xl` (42rem = 672px) = ~60 characters
 - `leading-relaxed` (1.625) improves readability
 - Responsive sizing (`md:text-xl`) for larger screens
@@ -212,6 +232,7 @@ Recommended:
 **Issue:** No systematic vertical rhythm between typographic elements.
 
 **Current Observations:**
+
 ```tsx
 // Spacing varies across components
 <h2 className="mb-2">Heading</h2>  // 8px gap
@@ -221,11 +242,13 @@ Recommended:
 ```
 
 **Problems:**
+
 - Arbitrary spacing choices (2, 4, 6, 8 = 8px, 16px, 24px, 32px)
 - No relationship to font size or line height
 - Inconsistent visual rhythm
 
 **Recommended System:**
+
 ```tsx
 // Base on line height multiples (16px base × 1.625 = 26px)
 <h2 className="mb-3">Heading</h2>     // 12px (0.5 line)
@@ -235,6 +258,7 @@ Recommended:
 ```
 
 **Formula:**
+
 ```
 Spacing = Base Line Height × Multiplier
 Example: 26px × 0.5 = 13px (rounded to 12px = mb-3)
@@ -245,6 +269,7 @@ Example: 26px × 0.5 = 13px (rounded to 12px = mb-3)
 **Issue:** Font sizes don't follow a consistent mathematical progression.
 
 **Current TailwindCSS Scale:**
+
 ```
 xs:  12px
 sm:  14px  (1.17x)
@@ -260,6 +285,7 @@ xl:  20px  (1.11x)
 **Problem:** Inconsistent ratios (1.11x to 1.33x) create visual chaos.
 
 **Recommended Scale (1.25x ratio):**
+
 ```
 xs:  12px
 sm:  14px  (1.17x - practical constraint)
@@ -273,6 +299,7 @@ xl:  25px  (1.25x)
 ```
 
 **Rationale:**
+
 - 1.25x (major third in music) creates pleasing visual rhythm
 - Small sizes (12-16px) use practical increments for UI
 - Larger sizes (20px+) follow strict 1.25x for consistency
@@ -283,12 +310,14 @@ xl:  25px  (1.25x)
 **Issue:** Body text uses `leading-normal` (1.5), which is too tight for comfortable reading.
 
 **Research-Backed Recommendations:**
+
 - **UI text (14-16px):** 1.5-1.6 line height
 - **Body copy (16-18px):** 1.625-1.7 line height
 - **Marketing copy (18-24px):** 1.4-1.5 line height
 - **Headings (24px+):** 1.2-1.3 line height
 
 **Current vs. Recommended:**
+
 ```tsx
 // ❌ Current (tight)
 <p className="text-base leading-normal">  {/* 16px / 24px = 1.5 */}
@@ -302,6 +331,7 @@ xl:  25px  (1.25x)
 ```
 
 **Impact:**
+
 - 1.5 line height: Feels cramped, harder to track lines
 - 1.625 line height: Comfortable, professional, easier to scan
 
@@ -318,25 +348,25 @@ module.exports = {
     extend: {
       fontSize: {
         // UI Sizes (practical increments)
-        'xs': ['0.75rem', { lineHeight: '1rem' }],      // 12px / 16px
-        'sm': ['0.875rem', { lineHeight: '1.25rem' }],  // 14px / 20px
-        'base': ['1rem', { lineHeight: '1.625rem' }],   // 16px / 26px
+        xs: ['0.75rem', { lineHeight: '1rem' }], // 12px / 16px
+        sm: ['0.875rem', { lineHeight: '1.25rem' }], // 14px / 20px
+        base: ['1rem', { lineHeight: '1.625rem' }], // 16px / 26px
 
         // Display Sizes (1.25x scale)
-        'lg': ['1.25rem', { lineHeight: '1.75rem' }],   // 20px / 28px
-        'xl': ['1.563rem', { lineHeight: '2rem' }],     // 25px / 32px
+        lg: ['1.25rem', { lineHeight: '1.75rem' }], // 20px / 28px
+        xl: ['1.563rem', { lineHeight: '2rem' }], // 25px / 32px
         '2xl': ['1.953rem', { lineHeight: '2.25rem' }], // 31px / 36px
         '3xl': ['2.441rem', { lineHeight: '2.75rem' }], // 39px / 44px
-        '4xl': ['3rem', { lineHeight: '3.25rem' }],     // 48px / 52px
-        '5xl': ['3.75rem', { lineHeight: '4rem' }],     // 60px / 64px
+        '4xl': ['3rem', { lineHeight: '3.25rem' }], // 48px / 52px
+        '5xl': ['3.75rem', { lineHeight: '4rem' }], // 60px / 64px
       },
 
       lineHeight: {
-        'tight': '1.2',     // Headings
-        'snug': '1.4',      // Subheadings
-        'normal': '1.5',    // UI elements
-        'relaxed': '1.625', // Body copy
-        'loose': '1.75',    // Marketing copy
+        tight: '1.2', // Headings
+        snug: '1.4', // Subheadings
+        normal: '1.5', // UI elements
+        relaxed: '1.625', // Body copy
+        loose: '1.75', // Marketing copy
       },
     },
   },
@@ -345,31 +375,32 @@ module.exports = {
 
 ### Typography Hierarchy Map
 
-| Level | Size | Weight | Line Height | Usage | TailwindCSS Classes |
-|-------|------|--------|-------------|-------|---------------------|
-| **Display** | 60px | 700 | 1.2 | Homepage heroes | `text-5xl font-bold leading-tight` |
-| **H1** | 48px | 700 | 1.2 | Page titles | `text-4xl font-bold leading-tight` |
-| **H2** | 39px | 600 | 1.3 | Section headings | `text-3xl font-semibold leading-snug` |
-| **H3** | 31px | 600 | 1.3 | Subsections | `text-2xl font-semibold leading-snug` |
-| **H4** | 25px | 600 | 1.4 | Card headings | `text-xl font-semibold leading-snug` |
-| **H5** | 20px | 500 | 1.4 | Small headings | `text-lg font-medium leading-snug` |
-| **Body Large** | 18px | 400 | 1.625 | Hero copy | `text-lg font-normal leading-relaxed` |
-| **Body** | 16px | 400 | 1.625 | Default text | `text-base font-normal leading-relaxed` |
-| **Body Small** | 14px | 400 | 1.5 | Secondary text | `text-sm font-normal leading-normal` |
-| **Caption** | 12px | 500 | 1.333 | Labels, metadata | `text-xs font-medium leading-normal` |
+| Level          | Size | Weight | Line Height | Usage            | TailwindCSS Classes                     |
+| -------------- | ---- | ------ | ----------- | ---------------- | --------------------------------------- |
+| **Display**    | 60px | 700    | 1.2         | Homepage heroes  | `text-5xl font-bold leading-tight`      |
+| **H1**         | 48px | 700    | 1.2         | Page titles      | `text-4xl font-bold leading-tight`      |
+| **H2**         | 39px | 600    | 1.3         | Section headings | `text-3xl font-semibold leading-snug`   |
+| **H3**         | 31px | 600    | 1.3         | Subsections      | `text-2xl font-semibold leading-snug`   |
+| **H4**         | 25px | 600    | 1.4         | Card headings    | `text-xl font-semibold leading-snug`    |
+| **H5**         | 20px | 500    | 1.4         | Small headings   | `text-lg font-medium leading-snug`      |
+| **Body Large** | 18px | 400    | 1.625       | Hero copy        | `text-lg font-normal leading-relaxed`   |
+| **Body**       | 16px | 400    | 1.625       | Default text     | `text-base font-normal leading-relaxed` |
+| **Body Small** | 14px | 400    | 1.5         | Secondary text   | `text-sm font-normal leading-normal`    |
+| **Caption**    | 12px | 500    | 1.333       | Labels, metadata | `text-xs font-medium leading-normal`    |
 
 ### Weight Usage Guidelines
 
 ```typescript
 const fontWeights = {
-  normal: 400,    // Body text, input fields, paragraphs
-  medium: 500,    // Labels, navigation, buttons, captions
-  semibold: 600,  // Subheadings (H2-H5), emphasized text
-  bold: 700,      // Primary headings (H1), display text
+  normal: 400, // Body text, input fields, paragraphs
+  medium: 500, // Labels, navigation, buttons, captions
+  semibold: 600, // Subheadings (H2-H5), emphasized text
+  bold: 700, // Primary headings (H1), display text
 };
 ```
 
 **Rules:**
+
 1. **Never use font-light (300)** - Reduces readability, especially at small sizes
 2. **Default to font-normal (400)** for body text
 3. **Use font-medium (500)** for UI elements that need subtle emphasis
@@ -388,18 +419,18 @@ All spacing should be multiples of 4px for visual consistency:
 // TailwindCSS Spacing Scale (default, already 4px-based)
 const spacing = {
   '0': '0',
-  '1': '0.25rem',  // 4px
-  '2': '0.5rem',   // 8px
-  '3': '0.75rem',  // 12px
-  '4': '1rem',     // 16px
-  '5': '1.25rem',  // 20px
-  '6': '1.5rem',   // 24px
-  '8': '2rem',     // 32px
-  '10': '2.5rem',  // 40px
-  '12': '3rem',    // 48px
-  '16': '4rem',    // 64px
-  '20': '5rem',    // 80px
-  '24': '6rem',    // 96px
+  '1': '0.25rem', // 4px
+  '2': '0.5rem', // 8px
+  '3': '0.75rem', // 12px
+  '4': '1rem', // 16px
+  '5': '1.25rem', // 20px
+  '6': '1.5rem', // 24px
+  '8': '2rem', // 32px
+  '10': '2.5rem', // 40px
+  '12': '3rem', // 48px
+  '16': '4rem', // 64px
+  '20': '5rem', // 80px
+  '24': '6rem', // 96px
 };
 ```
 
@@ -410,24 +441,27 @@ Space elements based on line height multiples (26px for 16px text at 1.625 leadi
 ```typescript
 // Vertical Spacing Tokens
 const verticalSpacing = {
-  'stack-xs': 'mb-2',   // 8px  - Between labels and inputs
-  'stack-sm': 'mb-4',   // 16px - Between form fields
-  'stack-md': 'mb-6',   // 24px - Between paragraphs (1 line)
-  'stack-lg': 'mb-8',   // 32px - Between sections
-  'stack-xl': 'mb-12',  // 48px - Between major sections (2 lines)
+  'stack-xs': 'mb-2', // 8px  - Between labels and inputs
+  'stack-sm': 'mb-4', // 16px - Between form fields
+  'stack-md': 'mb-6', // 24px - Between paragraphs (1 line)
+  'stack-lg': 'mb-8', // 32px - Between sections
+  'stack-xl': 'mb-12', // 48px - Between major sections (2 lines)
   'stack-2xl': 'mb-16', // 64px - Between page sections
 };
 ```
 
 **Usage Pattern:**
+
 ```tsx
-<div className="space-y-6">  {/* 24px between children */}
+<div className="space-y-6">
+  {' '}
+  {/* 24px between children */}
   <div>
-    <label className="mb-2">Email</label>        {/* 8px gap */}
+    <label className="mb-2">Email</label> {/* 8px gap */}
     <input />
   </div>
   <div>
-    <label className="mb-2">Password</label>     {/* 8px gap */}
+    <label className="mb-2">Password</label> {/* 8px gap */}
     <input />
   </div>
 </div>
@@ -436,12 +470,13 @@ const verticalSpacing = {
 ### Component-Specific Spacing
 
 #### Form Fields
+
 ```tsx
 const formSpacing = {
-  labelToInput: 'mb-2',      // 8px
-  fieldToField: 'mb-4',      // 16px
-  sectionGap: 'mb-8',        // 32px
-  formToButton: 'mt-6',      // 24px
+  labelToInput: 'mb-2', // 8px
+  fieldToField: 'mb-4', // 16px
+  sectionGap: 'mb-8', // 32px
+  formToButton: 'mt-6', // 24px
 };
 
 // Example
@@ -455,16 +490,17 @@ const formSpacing = {
     <input />
   </div>
   <button className="mt-6">Submit</button>
-</div>
+</div>;
 ```
 
 #### Cards
+
 ```tsx
 const cardSpacing = {
-  padding: 'p-6',           // 24px all sides
-  headerGap: 'mb-4',        // 16px below header
-  contentGap: 'mb-3',       // 12px between content blocks
-  footerGap: 'mt-6',        // 24px above footer
+  padding: 'p-6', // 24px all sides
+  headerGap: 'mb-4', // 16px below header
+  contentGap: 'mb-3', // 12px between content blocks
+  footerGap: 'mt-6', // 24px above footer
 };
 
 // Example
@@ -473,15 +509,16 @@ const cardSpacing = {
   <p className="mb-3">First paragraph</p>
   <p className="mb-3">Second paragraph</p>
   <div className="mt-6">Footer content</div>
-</div>
+</div>;
 ```
 
 #### Dashboard Metrics
+
 ```tsx
 const metricSpacing = {
-  labelToValue: 'mb-1',     // 4px - tight coupling
-  metricGap: 'space-x-6',   // 24px horizontal
-  rowGap: 'space-y-6',      // 24px vertical
+  labelToValue: 'mb-1', // 4px - tight coupling
+  metricGap: 'space-x-6', // 24px horizontal
+  rowGap: 'space-y-6', // 24px vertical
 };
 
 // Example
@@ -496,7 +533,7 @@ const metricSpacing = {
       <div className="text-3xl font-bold">42</div>
     </div>
   </div>
-</div>
+</div>;
 ```
 
 ---
@@ -506,62 +543,52 @@ const metricSpacing = {
 ### 1. Login Page (client/src/pages/Login.tsx)
 
 **Current Issues:**
+
 - H1 too small (24px)
 - Form labels weak (font-normal)
 - Inconsistent spacing
 
 **Before:**
+
 ```tsx
 <div className="max-w-md mx-auto">
-  <h1 className="text-2xl font-semibold text-gray-900 mb-6">
-    Sign in to your account
-  </h1>
+  <h1 className="text-2xl font-semibold text-gray-900 mb-6">Sign in to your account</h1>
 
   <form className="space-y-4">
     <div>
-      <label className="block text-sm font-normal text-gray-700 mb-1">
-        Email
-      </label>
+      <label className="block text-sm font-normal text-gray-700 mb-1">Email</label>
       <input className="w-full px-3 py-2 text-base" />
     </div>
 
-    <button className="w-full py-2 text-base font-medium">
-      Sign in
-    </button>
+    <button className="w-full py-2 text-base font-medium">Sign in</button>
   </form>
 </div>
 ```
 
 **After:**
+
 ```tsx
 <div className="max-w-md mx-auto">
-  <h1 className="text-4xl font-bold text-gray-900 mb-8 leading-tight">
-    Sign in to your account
-  </h1>
+  <h1 className="text-4xl font-bold text-gray-900 mb-8 leading-tight">Sign in to your account</h1>
 
   <form className="space-y-6">
     <div>
-      <label className="block text-sm font-medium text-gray-900 mb-2">
-        Email address
-      </label>
+      <label className="block text-sm font-medium text-gray-900 mb-2">Email address</label>
       <input className="w-full px-4 py-3 text-base leading-normal" />
     </div>
 
     <div>
-      <label className="block text-sm font-medium text-gray-900 mb-2">
-        Password
-      </label>
+      <label className="block text-sm font-medium text-gray-900 mb-2">Password</label>
       <input type="password" className="w-full px-4 py-3 text-base leading-normal" />
     </div>
 
-    <button className="w-full py-3 text-base font-semibold">
-      Sign in
-    </button>
+    <button className="w-full py-3 text-base font-semibold">Sign in</button>
   </form>
 </div>
 ```
 
 **Changes:**
+
 - H1: `text-2xl` → `text-4xl font-bold` (48px, stronger presence)
 - Labels: `font-normal` → `font-medium` (500 weight, better contrast)
 - Form spacing: `space-y-4` → `space-y-6` (24px vertical rhythm)
@@ -571,63 +598,51 @@ const metricSpacing = {
 ### 2. Admin Dashboard (client/src/pages/admin/AdminDashboard.tsx)
 
 **Current Issues:**
+
 - Metric labels in ALL CAPS (reduced readability)
 - Labels too small (12px)
 - Numbers lack emphasis
 
 **Before:**
+
 ```tsx
 <div className="grid grid-cols-3 gap-6">
   <div className="bg-white p-6 rounded-lg">
     <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
       TOTAL REVENUE
     </div>
-    <div className="text-2xl font-bold text-gray-900">
-      $12,345
-    </div>
+    <div className="text-2xl font-bold text-gray-900">$12,345</div>
   </div>
 
   <div className="bg-white p-6 rounded-lg">
     <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
       ACTIVE MEMBERS
     </div>
-    <div className="text-2xl font-bold text-gray-900">
-      42
-    </div>
+    <div className="text-2xl font-bold text-gray-900">42</div>
   </div>
 </div>
 ```
 
 **After:**
+
 ```tsx
 <div className="grid grid-cols-3 gap-6">
   <div className="bg-white p-6 rounded-lg">
-    <div className="text-sm font-medium text-gray-600 mb-1">
-      Total Revenue
-    </div>
-    <div className="text-3xl font-bold text-gray-900 tabular-nums">
-      $12,345
-    </div>
-    <div className="text-sm text-gray-500 mt-2">
-      +12.5% from last month
-    </div>
+    <div className="text-sm font-medium text-gray-600 mb-1">Total Revenue</div>
+    <div className="text-3xl font-bold text-gray-900 tabular-nums">$12,345</div>
+    <div className="text-sm text-gray-500 mt-2">+12.5% from last month</div>
   </div>
 
   <div className="bg-white p-6 rounded-lg">
-    <div className="text-sm font-medium text-gray-600 mb-1">
-      Active Members
-    </div>
-    <div className="text-3xl font-bold text-gray-900 tabular-nums">
-      42
-    </div>
-    <div className="text-sm text-gray-500 mt-2">
-      +3 new this week
-    </div>
+    <div className="text-sm font-medium text-gray-600 mb-1">Active Members</div>
+    <div className="text-3xl font-bold text-gray-900 tabular-nums">42</div>
+    <div className="text-sm text-gray-500 mt-2">+3 new this week</div>
   </div>
 </div>
 ```
 
 **Changes:**
+
 - Labels: `text-xs uppercase` → `text-sm` sentence case (14px, readable)
 - Label color: `text-gray-500` → `text-gray-600` (better contrast)
 - Metrics: `text-2xl` → `text-3xl` (39px, stronger emphasis)
@@ -638,29 +653,26 @@ const metricSpacing = {
 ### 3. Form Components (TenantForm, PackageForm, etc.)
 
 **Current Issues:**
+
 - Labels blend into inputs
 - Helper text inconsistent
 - Error messages lack emphasis
 
 **Before:**
+
 ```tsx
 <div>
-  <label className="block text-sm text-gray-700 mb-1">
-    Business Name
-  </label>
+  <label className="block text-sm text-gray-700 mb-1">Business Name</label>
   <input className="w-full text-base" />
-  <p className="text-xs text-gray-500 mt-1">
-    This will appear in your public profile
-  </p>
+  <p className="text-xs text-gray-500 mt-1">This will appear in your public profile</p>
 </div>
 ```
 
 **After:**
+
 ```tsx
 <div>
-  <label className="block text-sm font-medium text-gray-900 mb-2">
-    Business Name
-  </label>
+  <label className="block text-sm font-medium text-gray-900 mb-2">Business Name</label>
   <input
     className="w-full px-4 py-3 text-base leading-normal text-gray-900
                border border-gray-300 rounded-lg
@@ -669,13 +681,13 @@ const metricSpacing = {
   <p className="text-sm text-gray-600 mt-2 leading-relaxed">
     This will appear in your public profile
   </p>
-</div>
+</div>;
 
-{/* Error State */}
+{
+  /* Error State */
+}
 <div>
-  <label className="block text-sm font-medium text-gray-900 mb-2">
-    Email
-  </label>
+  <label className="block text-sm font-medium text-gray-900 mb-2">Email</label>
   <input
     className="w-full px-4 py-3 text-base leading-normal text-gray-900
                border-2 border-red-500 rounded-lg
@@ -685,10 +697,11 @@ const metricSpacing = {
     <svg className="w-4 h-4" />
     Please enter a valid email address
   </p>
-</div>
+</div>;
 ```
 
 **Changes:**
+
 - Labels: Added `font-medium`, darker color (`text-gray-900`)
 - Label spacing: `mb-1` → `mb-2` (8px for breathing room)
 - Input padding: Increased to `px-4 py-3` (more touch-friendly)
@@ -700,11 +713,13 @@ const metricSpacing = {
 ### 4. Homepage Hero (client/src/pages/Home.tsx)
 
 **Current Issues:**
+
 - Line length too wide (90+ characters)
 - Line height too tight
 - Hierarchy unclear
 
 **Before:**
+
 ```tsx
 <section className="py-20">
   <div className="max-w-4xl mx-auto text-center">
@@ -712,17 +727,16 @@ const metricSpacing = {
       Grow Your Business with AI-Powered Solutions
     </h1>
     <p className="text-lg text-gray-600 mb-8">
-      Partner with Macon AI Solutions to grow your business through proven strategies,
-      AI-powered insights, and done-for-you marketing automation. We succeed when you succeed.
+      Partner with Macon AI Solutions to grow your business through proven strategies, AI-powered
+      insights, and done-for-you marketing automation. We succeed when you succeed.
     </p>
-    <button className="text-base font-medium px-6 py-2">
-      Get Started
-    </button>
+    <button className="text-base font-medium px-6 py-2">Get Started</button>
   </div>
 </section>
 ```
 
 **After:**
+
 ```tsx
 <section className="py-24">
   <div className="max-w-4xl mx-auto text-center">
@@ -730,22 +744,19 @@ const metricSpacing = {
       Grow Your Business with AI-Powered Solutions
     </h1>
     <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-8 leading-relaxed">
-      Partner with Macon AI Solutions to grow your business through proven strategies,
-      AI-powered insights, and done-for-you marketing automation.
+      Partner with Macon AI Solutions to grow your business through proven strategies, AI-powered
+      insights, and done-for-you marketing automation.
     </p>
     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-      <button className="text-base font-semibold px-8 py-4 rounded-lg">
-        Get Started
-      </button>
-      <button className="text-base font-medium px-8 py-4 rounded-lg border-2">
-        Learn More
-      </button>
+      <button className="text-base font-semibold px-8 py-4 rounded-lg">Get Started</button>
+      <button className="text-base font-medium px-8 py-4 rounded-lg border-2">Learn More</button>
     </div>
   </div>
 </section>
 ```
 
 **Changes:**
+
 - H1 size: `text-4xl` → `text-5xl md:text-6xl` (60px on desktop)
 - Line length: `max-w-4xl` → `max-w-2xl mx-auto` (~60 characters)
 - Body size: `text-lg` → `text-lg md:text-xl` (responsive)
@@ -772,7 +783,7 @@ module.exports = {
     },
   },
   plugins: [
-    function({ addComponents }) {
+    function ({ addComponents }) {
       addComponents({
         // Display Text
         '.text-display': {
@@ -953,6 +964,7 @@ module.exports = {
 **Goal:** Establish core type system and fix critical hierarchy issues.
 
 **Tasks:**
+
 1. Update `tailwind.config.js` with custom font sizes and line heights
 2. Create typography component classes (`.text-h1`, `.text-body`, etc.)
 3. Fix Login page H1 and form labels
@@ -960,11 +972,13 @@ module.exports = {
 5. Document patterns in Storybook or style guide
 
 **Files to Modify:**
+
 - `client/tailwind.config.js`
 - `client/src/pages/Login.tsx`
 - `client/src/pages/admin/AdminDashboard.tsx`
 
 **Success Metrics:**
+
 - H1 headings increased to 48px+
 - Form labels use `font-medium` consistently
 - Dashboard metrics use sentence case
@@ -975,6 +989,7 @@ module.exports = {
 **Goal:** Apply consistent typography to all form components.
 
 **Tasks:**
+
 1. Update TenantForm component
 2. Update PackageForm component
 3. Update SegmentForm component
@@ -983,12 +998,14 @@ module.exports = {
 6. Implement consistent spacing between form fields
 
 **Files to Modify:**
+
 - `client/src/features/tenants/components/TenantForm.tsx`
 - `client/src/features/packages/components/PackageForm.tsx`
 - `client/src/features/segments/components/SegmentForm.tsx`
 - `client/src/features/branding/components/BrandingForm.tsx`
 
 **Success Metrics:**
+
 - All labels use `text-sm font-medium text-gray-900`
 - All helper text uses `text-sm text-gray-600`
 - Consistent 8px label-to-input gap (`mb-2`)
@@ -999,6 +1016,7 @@ module.exports = {
 **Goal:** Improve readability of homepage and content-heavy pages.
 
 **Tasks:**
+
 1. Update Homepage hero section
 2. Fix line lengths on all marketing copy
 3. Add responsive typography scaling
@@ -1006,11 +1024,13 @@ module.exports = {
 5. Implement vertical rhythm across sections
 
 **Files to Modify:**
+
 - `client/src/pages/Home.tsx`
 - `client/src/features/public/components/HeroSection.tsx`
 - Any other marketing/content components
 
 **Success Metrics:**
+
 - Hero H1 uses `text-5xl` or larger
 - Body copy limited to `max-w-2xl` (60-70 characters)
 - All body text uses `leading-relaxed`
@@ -1021,6 +1041,7 @@ module.exports = {
 **Goal:** Optimize typography for data-dense interfaces.
 
 **Tasks:**
+
 1. Update all dashboard metric cards
 2. Improve table header typography
 3. Add `tabular-nums` to all numeric data
@@ -1028,11 +1049,13 @@ module.exports = {
 5. Improve data hierarchy (emphasize important metrics)
 
 **Files to Modify:**
+
 - `client/src/pages/admin/AdminDashboard.tsx`
 - `client/src/pages/TenantDashboard.tsx`
 - `client/src/components/DataTable.tsx` (if exists)
 
 **Success Metrics:**
+
 - Metrics use `text-3xl font-bold tabular-nums`
 - Labels use `text-sm font-medium` sentence case
 - Tables use `text-sm` body with `text-xs` headers
@@ -1183,6 +1206,7 @@ The MAIS platform has a solid foundation with TailwindCSS, but lacks a cohesive 
 - **Better accessibility** through proper contrast and sizing
 
 **Next Steps:**
+
 1. Review this document with the design team
 2. Get stakeholder approval on the recommended type scale
 3. Begin Phase 1 implementation (foundation)
@@ -1195,6 +1219,6 @@ The MAIS platform has a solid foundation with TailwindCSS, but lacks a cohesive 
 
 ---
 
-*Document maintained by: Design System Team*
-*Last updated: November 24, 2025*
-*Version: 1.0*
+_Document maintained by: Design System Team_
+_Last updated: November 24, 2025_
+_Version: 1.0_

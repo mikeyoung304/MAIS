@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { toast } from "sonner";
-import { api } from "@/lib/api";
-import { packagePhotoApi } from "@/lib/package-photo-api";
-import { useSuccessMessage } from "@/hooks/useSuccessMessage";
-import { useConfirmDialog } from "@/hooks/useConfirmDialog";
-import type { PackageDto } from "@macon/contracts";
-import type { PackagePhoto } from "@/features/photos";
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
+import { packagePhotoApi } from '@/lib/package-photo-api';
+import { useSuccessMessage } from '@/hooks/useSuccessMessage';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import type { PackageDto } from '@macon/contracts';
+import type { PackagePhoto } from '@/features/photos';
 
 export function usePackageManager(onPackagesChange: () => void) {
   const [isCreating, setIsCreating] = useState(false);
@@ -30,10 +30,10 @@ export function usePackageManager(onPackagesChange: () => void) {
       setPackagePhotos(packageWithPhotos.photos || []);
     } catch (err) {
       if (import.meta.env.DEV) {
-        console.error("Failed to load package photos:", err);
+        console.error('Failed to load package photos:', err);
       }
-      toast.error("Failed to load package photos", {
-        description: "Photos may not be displayed. Please try again.",
+      toast.error('Failed to load package photos', {
+        description: 'Photos may not be displayed. Please try again.',
       });
       setPackagePhotos([]);
     }
@@ -43,11 +43,11 @@ export function usePackageManager(onPackagesChange: () => void) {
 
   const handleDelete = async (packageId: string) => {
     const confirmed = await confirm({
-      title: "Delete Package",
-      description: "Are you sure you want to delete this package?",
-      confirmLabel: "Delete",
-      cancelLabel: "Cancel",
-      variant: "destructive",
+      title: 'Delete Package',
+      description: 'Are you sure you want to delete this package?',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      variant: 'destructive',
     });
 
     if (!confirmed) {
@@ -61,19 +61,19 @@ export function usePackageManager(onPackagesChange: () => void) {
       });
 
       if (result.status === 204) {
-        showSuccess("Package deleted successfully");
+        showSuccess('Package deleted successfully');
         onPackagesChange();
       } else {
-        toast.error("Failed to delete package", {
-          description: "Please try again or contact support.",
+        toast.error('Failed to delete package', {
+          description: 'Please try again or contact support.',
         });
       }
     } catch (err) {
       if (import.meta.env.DEV) {
-        console.error("Failed to delete package:", err);
+        console.error('Failed to delete package:', err);
       }
-      toast.error("An error occurred while deleting the package", {
-        description: "Please try again or contact support.",
+      toast.error('An error occurred while deleting the package', {
+        description: 'Please try again or contact support.',
       });
     }
   };

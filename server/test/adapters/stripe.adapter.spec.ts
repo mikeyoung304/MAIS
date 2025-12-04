@@ -127,10 +127,9 @@ describe('StripePaymentAdapter', () => {
       });
 
       // Assert - verify idempotency key is passed in options
-      expect(mockStripe.checkout.sessions.create).toHaveBeenCalledWith(
-        expect.any(Object),
-        { idempotencyKey: 'idem_checkout_unique_123' }
-      );
+      expect(mockStripe.checkout.sessions.create).toHaveBeenCalledWith(expect.any(Object), {
+        idempotencyKey: 'idem_checkout_unique_123',
+      });
     });
   });
 

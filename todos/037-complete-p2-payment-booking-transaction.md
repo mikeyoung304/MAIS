@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "037"
+issue_id: '037'
 tags: [code-review, data-integrity, transactions]
 dependencies: []
 ---
@@ -21,10 +21,12 @@ Webhook handler creates booking and Payment records in separate Prisma calls. If
 **Location:** `server/src/routes/webhooks.routes.ts:233` and `server/src/services/booking.service.ts:316`
 
 Webhook handler calls `bookingService.onPaymentCompleted()` which:
+
 1. Creates booking record
 2. Creates payment record (separate query)
 
 If step 2 fails:
+
 - Booking exists without corresponding Payment
 - Cannot match Stripe charges to bookings
 - Financial reports incorrect
@@ -32,6 +34,7 @@ If step 2 fails:
 ## Proposed Solutions
 
 ### Option A: Wrap in Explicit Transaction (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 ```typescript
@@ -62,6 +65,6 @@ async onPaymentCompleted(tenantId: string, input: {...}): Promise<Booking> {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                              |
+| ---------- | ------- | ---------------------------------- |
 | 2025-11-27 | Created | Found during data integrity review |

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "131"
+issue_id: '131'
 tags: [code-review, visual-editor, data-integrity, critical]
 dependencies: []
 ---
@@ -17,9 +17,11 @@ The visual editor's publish operation uses null-coalescing (`??`) which prevents
 ## Findings
 
 ### Discovery Source
+
 Data Integrity Review Agent - Code Review
 
 ### Evidence
+
 Location: `server/src/adapters/prisma/catalog.repository.ts` lines 502-506
 
 ```typescript
@@ -31,6 +33,7 @@ photos: pkg.draftPhotos ?? pkg.photos,
 ```
 
 ### Scenario
+
 1. Live data: `name = "Original Package"`, `description = "Some text"`
 2. User clears description in visual editor: `draftDescription = ""`
 3. On publish: `description: "" ?? "Some text"` → Result: `"Some text"` (fallback applies)
@@ -39,6 +42,7 @@ photos: pkg.draftPhotos ?? pkg.photos,
 ## Proposed Solutions
 
 ### Option 1: Use Explicit "Edited" Tracking (Recommended)
+
 Add boolean flags to track which fields were explicitly edited.
 
 ```typescript
@@ -58,6 +62,7 @@ description: pkg.draftDescriptionEdited ? pkg.draftDescription : pkg.description
 **Risk**: Low
 
 ### Option 2: Check for Undefined vs Null/Empty
+
 Distinguish between undefined (not provided) and null/empty (explicitly cleared).
 
 ```typescript
@@ -71,6 +76,7 @@ name: pkg.draftTitle !== undefined ? (pkg.draftTitle || null) : pkg.name,
 **Risk**: Medium (subtle bugs possible)
 
 ### Option 3: Store Complete Draft Snapshot
+
 Store the entire package state as a single JSON draft blob.
 
 ```typescript
@@ -83,23 +89,28 @@ draftSnapshot: Json?  // Complete package state when editing
 **Risk**: Medium
 
 ## Recommended Action
+
 <!-- Filled during triage -->
 
 ## Technical Details
 
 ### Affected Files
+
 - `server/src/adapters/prisma/catalog.repository.ts` (publishDrafts method)
 - `server/prisma/schema.prisma` (if adding tracking fields)
 - `packages/contracts/src/dto.ts` (update DTOs if schema changes)
 
 ### Affected Components
+
 - Package draft publishing
 - Visual editor save/publish flow
 
 ### Database Changes Required
+
 Option 1: Add 4 boolean tracking fields to Package model
 
 ## Acceptance Criteria
+
 - [ ] User can clear a package title and have it publish as empty/null
 - [ ] User can clear a description and have it remain cleared after publish
 - [ ] User can remove all photos and have empty array after publish
@@ -108,10 +119,11 @@ Option 1: Add 4 boolean tracking fields to Package model
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                       |
+| ---------- | ------- | ------------------------------------------- |
 | 2025-12-01 | Created | Identified during visual editor code review |
 
 ## Resources
+
 - PR: feat(visual-editor) commit 0327dee
 - Related: Visual Editor implementation

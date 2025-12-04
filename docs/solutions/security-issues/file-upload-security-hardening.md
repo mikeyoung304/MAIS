@@ -1,16 +1,16 @@
 ---
-title: "File Upload Security Hardening: MIME Spoofing, Cross-Tenant Leaks, and Orphaned Files"
+title: 'File Upload Security Hardening: MIME Spoofing, Cross-Tenant Leaks, and Orphaned Files'
 slug: file-upload-security-hardening
 category: security-issues
 severity: critical
 component: upload-service
 symptoms:
-  - "MIME type validation bypass allowing PHP shells disguised as images"
-  - "Public Supabase bucket URLs expose cross-tenant image access"
-  - "Segment deletion orphans files indefinitely with no cleanup mechanism"
-  - "Attackers can enumerate tenant IDs to access competitor data"
-  - "Storage costs grow unbounded with no reclamation mechanism"
-root_cause: "Three independent security gaps in file upload implementation: (1) client-provided MIME types trusted without magic byte verification, (2) public bucket configuration allowing URL-based enumeration attacks, (3) missing cleanup logic when database records are deleted"
+  - 'MIME type validation bypass allowing PHP shells disguised as images'
+  - 'Public Supabase bucket URLs expose cross-tenant image access'
+  - 'Segment deletion orphans files indefinitely with no cleanup mechanism'
+  - 'Attackers can enumerate tenant IDs to access competitor data'
+  - 'Storage costs grow unbounded with no reclamation mechanism'
+root_cause: 'Three independent security gaps in file upload implementation: (1) client-provided MIME types trusted without magic byte verification, (2) public bucket configuration allowing URL-based enumeration attacks, (3) missing cleanup logic when database records are deleted'
 solution_type: implementation
 date_solved: 2025-11-29
 files_changed:
@@ -177,6 +177,7 @@ private async uploadToSupabase(
 ```
 
 **URL Format Change:**
+
 ```
 # Before (public, enumerable)
 https://xxx.supabase.co/storage/v1/object/public/images/tenant-abc/segments/photo.jpg
@@ -188,6 +189,7 @@ https://xxx.supabase.co/storage/v1/object/sign/images/tenant-abc/segments/photo.
 ### Layer 3: Orphaned File Cleanup
 
 **Files:**
+
 - `server/src/services/upload.service.ts:432-470` (delete method)
 - `server/src/services/segment.service.ts:259-285` (integration)
 
@@ -267,10 +269,11 @@ Added `STORAGE_MODE` for test isolation:
 
 ```typescript
 // Determine storage mode
-this.isRealMode = process.env.STORAGE_MODE === 'supabase' ||
+this.isRealMode =
+  process.env.STORAGE_MODE === 'supabase' ||
   (process.env.ADAPTERS_PRESET === 'real' &&
-   !!process.env.SUPABASE_URL &&
-   process.env.STORAGE_MODE !== 'local');
+    !!process.env.SUPABASE_URL &&
+    process.env.STORAGE_MODE !== 'local');
 ```
 
 ```typescript
@@ -295,15 +298,15 @@ Test Files  47 passed (47)
 
 ### Security Tests Added
 
-| Test Case | Result |
-|-----------|--------|
-| PHP file with fake image/jpeg header | Rejected |
-| Plain text file with fake image/png header | Rejected |
-| PNG file claiming to be JPEG | Rejected |
-| JPEG file claiming to be PNG | Rejected |
-| Valid JPEG with correct Content-Type | Accepted |
-| Cross-tenant deletion attempt | Blocked |
-| Cleanup on segment deletion | Successful |
+| Test Case                                  | Result     |
+| ------------------------------------------ | ---------- |
+| PHP file with fake image/jpeg header       | Rejected   |
+| Plain text file with fake image/png header | Rejected   |
+| PNG file claiming to be JPEG               | Rejected   |
+| JPEG file claiming to be PNG               | Rejected   |
+| Valid JPEG with correct Content-Type       | Accepted   |
+| Cross-tenant deletion attempt              | Blocked    |
+| Cleanup on segment deletion                | Successful |
 
 ---
 
@@ -320,12 +323,12 @@ Test Files  47 passed (47)
 
 ### Red Flags to Watch For
 
-| Pattern | Risk | Fix |
-|---------|------|-----|
-| `file.mimetype` without `detectFileType()` | MIME spoofing | Add magic byte validation |
-| `getPublicUrl()` in multi-tenant app | Data leak | Use `createSignedUrl()` |
-| Delete entity without file cleanup | Orphaned files | Add cleanup before delete |
-| Storage path without `tenantId/` prefix | Cross-tenant access | Prefix with tenant ID |
+| Pattern                                    | Risk                | Fix                       |
+| ------------------------------------------ | ------------------- | ------------------------- |
+| `file.mimetype` without `detectFileType()` | MIME spoofing       | Add magic byte validation |
+| `getPublicUrl()` in multi-tenant app       | Data leak           | Use `createSignedUrl()`   |
+| Delete entity without file cleanup         | Orphaned files      | Add cleanup before delete |
+| Storage path without `tenantId/` prefix    | Cross-tenant access | Prefix with tenant ID     |
 
 ---
 

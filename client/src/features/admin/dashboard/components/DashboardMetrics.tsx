@@ -1,6 +1,6 @@
-import { Calendar, DollarSign, Package, XCircle } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
+import { Calendar, DollarSign, Package, XCircle } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { formatCurrency } from '@/lib/utils';
 
 interface DashboardMetricsProps {
   totalBookings: number;
@@ -39,9 +39,7 @@ export function DashboardMetrics({
           </div>
           <div className="text-base text-white/90">Total Revenue</div>
         </div>
-        <div className="text-4xl font-bold text-white/60">
-          {formatCurrency(totalRevenue)}
-        </div>
+        <div className="text-4xl font-bold text-white/60">{formatCurrency(totalRevenue)}</div>
       </Card>
 
       <Card className="p-6 bg-macon-navy-800 border-white/20">

@@ -15,6 +15,7 @@
 ## Current Setup Analysis
 
 ### Directory Structure ✅ GOOD
+
 ```
 /Users/mikeyoung/CODING/
 ├── Elope/              (Wedding booking platform)
@@ -42,11 +43,13 @@ When I ran: `ps aux | grep -E "(npm|vitest|node.*test)"`
 This searches **system-wide** for ANY process matching those patterns. It's like asking "show me ALL test processes on this computer" - not just Elope's.
 
 **What was found**:
+
 ```bash
 node /Users/mikeyoung/CODING/rebuild-6.0/node_modules/.bin/playwright test...
 ```
 
 **Why this appeared**:
+
 - You had rebuild-6.0's playwright tests running in a different terminal/Claude session
 - The grep pattern matched it because it's a node process running tests
 - This is **NOT a problem** - it's just visibility into what's running
@@ -58,6 +61,7 @@ node /Users/mikeyoung/CODING/rebuild-6.0/node_modules/.bin/playwright test...
 ## Database Isolation ✅ EXCELLENT
 
 ### Elope Configuration
+
 ```bash
 # Production/Dev (server/.env)
 DATABASE_URL="postgresql://postgres:%40Orangegoat11@db.gpyvdknhmevcfdbgtqir.supabase.co:5432/postgres"
@@ -69,6 +73,7 @@ DATABASE_URL_TEST=[separate test database]
 **Supabase Project ID**: `gpyvdknhmevcfdbgtqir`
 
 ### rebuild-6.0 Configuration
+
 ```bash
 # Production/Dev (.env)
 DATABASE_URL=postgresql://postgres.xiwfhcikfdoshxwbtjxt:...@aws-0-us-east-2.pooler.supabase.com:5432/postgres
@@ -77,6 +82,7 @@ DATABASE_URL=postgresql://postgres.xiwfhcikfdoshxwbtjxt:...@aws-0-us-east-2.pool
 **Supabase Project ID**: `xiwfhcikfdoshxwbtjxt`
 
 ### Analysis
+
 - ✅ **Completely different databases**
 - ✅ **Different Supabase projects**
 - ✅ **No overlap possible**
@@ -99,6 +105,7 @@ Each `npm` or `node` process is isolated by:
 5. **Memory**: Separate memory space per process
 
 ### Example
+
 ```
 Terminal 1 (Elope):
   Working Dir: /Users/mikeyoung/CODING/Elope/server
@@ -122,16 +129,19 @@ Terminal 2 (rebuild-6.0):
 **Risk**: If both projects try to use the same port
 
 **Check**:
+
 ```bash
 # Current status
 No dev servers detected on ports 3000, 3001, 5173, 5174
 ```
 
 **Elope Ports** (likely):
+
 - Backend: 3000 (tsx watch)
 - Frontend: 5173 (vite default)
 
 **rebuild-6.0 Ports** (likely):
+
 - Backend: Different port (uses concurrently)
 - Frontend: Different port
 
@@ -147,6 +157,7 @@ No dev servers detected on ports 3000, 3001, 5173, 5174
 **Risk**: Committing to wrong repo
 
 **Current State**:
+
 ```bash
 pwd
 # /Users/mikeyoung/coding/elope  (lowercase)
@@ -159,6 +170,7 @@ ls /Users/mikeyoung/CODING/
 **Issue**: There's case inconsistency in your paths. macOS is case-insensitive by default, so this works, but it's confusing.
 
 **Recommendation**: Always use consistent casing:
+
 ```bash
 cd /Users/mikeyoung/CODING/Elope  # Consistent capital E
 ```
@@ -168,6 +180,7 @@ cd /Users/mikeyoung/CODING/Elope  # Consistent capital E
 **Risk**: Claude doesn't know which project you're working on unless you tell it
 
 **Best Practice**:
+
 - Start each Claude session by saying "Working on [project name]"
 - Include project name in handoff summaries
 - Check working directory at start of session
@@ -177,6 +190,7 @@ cd /Users/mikeyoung/CODING/Elope  # Consistent capital E
 ## Current Setup Rating: A- (Excellent with Minor Improvements)
 
 ### What's Working ✅
+
 1. ✅ Separate project directories
 2. ✅ Separate databases (different Supabase projects)
 3. ✅ Separate test databases
@@ -189,17 +203,20 @@ cd /Users/mikeyoung/CODING/Elope  # Consistent capital E
 #### 1. Add Project Identifier to Terminal Prompt
 
 **Current**:
+
 ```bash
 ~ %  # Generic prompt
 ```
 
 **Recommended**:
+
 ```bash
 [elope] ~/CODING/Elope $
 [resto] ~/CODING/rebuild-6.0 $
 ```
 
 **How to implement** (add to ~/.zshrc):
+
 ```bash
 # Function to detect project and set prompt
 function project_prompt() {
@@ -220,6 +237,7 @@ PS1='$(project_prompt)%~ %# '
 **Current**: Multiple terminal windows (can get confusing)
 
 **Recommended**: tmux with named sessions
+
 ```bash
 # Start Elope session
 tmux new -s elope
@@ -237,6 +255,7 @@ tmux attach -t resto
 #### 3. Create Project-Specific Aliases
 
 Add to ~/.zshrc:
+
 ```bash
 # Project shortcuts
 alias cde='cd /Users/mikeyoung/CODING/Elope'
@@ -256,6 +275,7 @@ alias resto-dev='cd /Users/mikeyoung/CODING/rebuild-6.0 && npm run dev'
 **What it does**: Automatically loads/unloads environment variables when you cd into project
 
 **Setup**:
+
 ```bash
 # Install
 brew install direnv
@@ -284,12 +304,14 @@ Now `PROJECT_NAME` will automatically change when you cd between projects!
 If using VS Code:
 
 **File > Add Folder to Workspace**
+
 - Add Elope
 - Add rebuild-6.0
 
 **Save as**: `my-projects.code-workspace`
 
 Benefits:
+
 - See both projects in one window
 - Separate terminal per project
 - Clear visual separation
@@ -299,9 +321,11 @@ Benefits:
 ## Common Pitfalls (How to Avoid)
 
 ### Pitfall 1: Running Tests in Wrong Project
+
 **Symptom**: "Why are my Elope tests finding rebuild-6.0 files?"
 
 **Prevention**:
+
 ```bash
 # Always check working directory first
 pwd
@@ -311,9 +335,11 @@ ls package.json | xargs cat | grep '"name"'
 ```
 
 ### Pitfall 2: Committing to Wrong Repo
+
 **Symptom**: "Why is my Elope commit in rebuild-6.0?"
 
 **Prevention**:
+
 ```bash
 # Check git remote before committing
 git remote -v
@@ -323,9 +349,11 @@ git config --get remote.origin.url
 ```
 
 ### Pitfall 3: Using Wrong Database
+
 **Symptom**: "Why am I seeing restaurant data in wedding booking app?"
 
 **Prevention**:
+
 ```bash
 # Verify DATABASE_URL before running
 echo $DATABASE_URL
@@ -335,9 +363,11 @@ cat .env | grep DATABASE_URL
 ```
 
 ### Pitfall 4: Port Conflicts
+
 **Symptom**: "EADDRINUSE: address already in use :::3000"
 
 **Prevention**:
+
 ```bash
 # Check what's using a port before starting
 lsof -i :3000
@@ -353,6 +383,7 @@ kill -9 <PID>
 ### What Happened
 
 I ran this command:
+
 ```bash
 ps aux | grep -E "(npm|vitest|node.*test)" | grep -v grep
 ```
@@ -364,6 +395,7 @@ ps aux | grep -E "(npm|vitest|node.*test)" | grep -v grep
 3. **`grep -v grep`** - Exclude the grep process itself
 
 ### Result
+
 ```
 mikeyoung  26808  node ...rebuild-6.0/node_modules/.bin/playwright...
 ```
@@ -394,6 +426,7 @@ ps aux | grep -E "rebuild-6.0.*test"  # Only rebuild-6.0 tests
 ## Best Practices Summary
 
 ### ✅ Already Doing Right
+
 1. Separate project directories
 2. Separate databases
 3. Separate terminal sessions
@@ -401,6 +434,7 @@ ps aux | grep -E "rebuild-6.0.*test"  # Only rebuild-6.0 tests
 5. Git repos properly isolated
 
 ### 🔧 Recommended Improvements
+
 1. Add project name to terminal prompt
 2. Use tmux for session management
 3. Create project-specific aliases
@@ -408,6 +442,7 @@ ps aux | grep -E "rebuild-6.0.*test"  # Only rebuild-6.0 tests
 5. Be consistent with directory casing (Elope vs elope)
 
 ### ⚠️ Things to Watch
+
 1. Always verify `pwd` before running commands
 2. Check `git remote -v` before committing
 3. Verify port availability before starting dev servers
@@ -421,6 +456,7 @@ ps aux | grep -E "rebuild-6.0.*test"  # Only rebuild-6.0 tests
 **Your setup is fundamentally sound.** The rebuild-6.0 processes appearing in system-wide searches is expected behavior - it just shows both projects can run simultaneously without interfering.
 
 **Key Insight**: Node.js processes are isolated by working directory and environment variables. As long as you:
+
 - Start processes from correct directory
 - Use correct .env files
 - Don't have port conflicts

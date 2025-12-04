@@ -210,10 +210,7 @@ export class StripeConnectService {
    * @param restrictedKey - Stripe restricted key (sk_test_* or sk_live_*)
    * @throws Error if encryption fails or tenant not found
    */
-  async storeRestrictedKey(
-    tenantId: string,
-    restrictedKey: string
-  ): Promise<void> {
+  async storeRestrictedKey(tenantId: string, restrictedKey: string): Promise<void> {
     // Validate tenant exists
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },

@@ -15,6 +15,7 @@ The application has **duplicate caching at two levels**, and the HTTP-level cach
 The application implements caching at TWO levels:
 
 #### Layer 1: Application-Level Cache (CORRECT - Tenant-Isolated)
+
 - **File:** `/src/lib/cache.ts` (CacheService)
 - **Usage:** `catalog.service.ts`, `availability.service.ts`
 - **Key Format:** `catalog:${tenantId}:all-packages` ✅
@@ -22,6 +23,7 @@ The application implements caching at TWO levels:
 - **TTL:** 900 seconds (15 minutes)
 
 #### Layer 2: HTTP-Level Cache (VULNERABLE - Not Tenant-Isolated)
+
 - **File:** `/src/middleware/cache.ts` (cacheMiddleware)
 - **Usage:** Applied globally to `/v1/packages` and `/v1/availability`
 - **Key Format:** `GET:/v1/packages:{}` ❌
@@ -79,9 +81,9 @@ Request 2: Tenant B (X-Tenant-Key: pk_live_tenant_bob)
 const key = keyGenerator(req);
 
 // Lines 40-45: Default key generator ignores tenantId
-((req: Request) => {
+(req: Request) => {
   return `${req.method}:${req.path}:${JSON.stringify(req.query)}`;
-})
+};
 ```
 
 ### 2. Application Setup
@@ -104,8 +106,8 @@ globalMiddleware: [
     if (req.path.startsWith('/v1/packages')) {
       tenantMiddleware(req, res, next); // Too late - HTTP cache already checked!
     }
-  }
-]
+  },
+];
 ```
 
 ### 3. Middleware Execution Order
@@ -130,18 +132,21 @@ The critical issue is **middleware execution order**:
 ### Severity: CRITICAL
 
 **Affected Endpoints:**
+
 - `GET /v1/packages` (all packages)
 - `GET /v1/packages/:slug` (package details)
 - `GET /v1/availability?date=YYYY-MM-DD` (availability check)
 - `GET /v1/availability/unavailable?startDate=...&endDate=...` (date ranges)
 
 **Data Exposure:**
+
 - Package catalogs (titles, descriptions, pricing)
 - Add-ons and pricing
 - Availability calendars
 - Blackout dates
 
 **Business Impact:**
+
 - Tenant A's customers see Tenant B's packages and pricing
 - Booking widget shows wrong packages
 - Pricing information leaked between competitors
@@ -160,6 +165,7 @@ npx ts-node test-cache-isolation.ts
 ```
 
 **Expected output:**
+
 ```
 🔥 CRITICAL BUG DETECTED:
    Tenant B received Tenant A's cached data!
@@ -175,6 +181,7 @@ npx ts-node test-cache-isolation.ts
 ### Option 1: Remove HTTP-Level Caching (RECOMMENDED)
 
 **Rationale:**
+
 - Application-level cache already includes tenantId
 - Duplicate caching adds complexity without benefit
 - Simpler architecture = fewer security bugs
@@ -188,17 +195,20 @@ app.use('/v1/availability', cacheMiddleware({ ttl: 120 }));
 ```
 
 **Pros:**
+
 - Eliminates vulnerability completely
 - Reduces code complexity
 - Application-level cache is already sufficient
 - No middleware ordering issues
 
 **Cons:**
+
 - None (application cache already handles caching correctly)
 
 ### Option 2: Fix HTTP Cache to Include TenantId
 
 **Rationale:**
+
 - Keep HTTP caching but fix the key generator
 - Requires extracting tenantId from header
 
@@ -206,21 +216,26 @@ app.use('/v1/availability', cacheMiddleware({ ttl: 120 }));
 
 ```typescript
 // src/app.ts - Update cache middleware configuration
-app.use('/v1/packages', cacheMiddleware({
-  ttl: 300,
-  keyGenerator: (req: Request) => {
-    // Extract tenant key from header
-    const tenantKey = req.headers['x-tenant-key'] || 'unknown';
-    return `${req.method}:${req.path}:${JSON.stringify(req.query)}:${tenantKey}`;
-  }
-}));
+app.use(
+  '/v1/packages',
+  cacheMiddleware({
+    ttl: 300,
+    keyGenerator: (req: Request) => {
+      // Extract tenant key from header
+      const tenantKey = req.headers['x-tenant-key'] || 'unknown';
+      return `${req.method}:${req.path}:${JSON.stringify(req.query)}:${tenantKey}`;
+    },
+  })
+);
 ```
 
 **Pros:**
+
 - Keeps HTTP-level caching
 - Fixes the security issue
 
 **Cons:**
+
 - Duplicate caching still exists (two layers)
 - More complex cache invalidation
 - Tenant middleware runs anyway (HTTP cache doesn't save much)
@@ -229,6 +244,7 @@ app.use('/v1/packages', cacheMiddleware({
 ### Option 3: Hybrid Approach
 
 **Rationale:**
+
 - Remove HTTP cache for tenant-specific routes
 - Keep HTTP cache for truly public routes (health, docs)
 
@@ -249,22 +265,26 @@ app.use('/v1/public-catalog', cacheMiddleware({ ttl: 600 }));
 ### Recommended: Option 1 (Remove HTTP Cache)
 
 **Step 1: Remove HTTP Cache Middleware**
+
 ```typescript
 // src/app.ts
 // REMOVE lines 81-86:
-- app.use('/v1/packages', cacheMiddleware({ ttl: 300 }));
-- app.use('/v1/availability', cacheMiddleware({ ttl: 120 }));
+-app.use('/v1/packages', cacheMiddleware({ ttl: 300 }));
+-app.use('/v1/availability', cacheMiddleware({ ttl: 120 }));
 ```
 
 **Step 2: Verify Application Cache Still Works**
+
 - Application cache in `catalog.service.ts` already has correct tenant isolation
 - No changes needed to service layer
 
 **Step 3: Update Tests**
+
 - Remove any tests expecting `X-Cache: HIT` header
 - Update cache testing to use application cache stats
 
 **Step 4: Deploy and Monitor**
+
 - Deploy to staging
 - Run `test-cache-isolation.ts` to verify fix
 - Monitor cache hit rates from application cache
@@ -275,12 +295,15 @@ app.use('/v1/public-catalog', cacheMiddleware({ ttl: 600 }));
 After implementing the fix:
 
 1. **Run Test Script:**
+
    ```bash
    npx ts-node test-cache-isolation.ts
    ```
+
    Expected: ✅ Cache isolation working correctly
 
 2. **Manual Testing:**
+
    ```bash
    # Request as Tenant A
    curl -H "X-Tenant-Key: pk_live_tenant_alice" http://localhost:3000/v1/packages
@@ -306,6 +329,7 @@ Checked for HTTP cache headers that could cause browser caching:
 **Status:** NOT FOUND - No cache-control headers are being set.
 
 The application does NOT set any of these headers:
+
 - `Cache-Control`
 - `ETag`
 - `Last-Modified`
@@ -319,10 +343,10 @@ Both cache layers provide statistics:
 
 ```typescript
 // Application-level cache (src/lib/cache.ts)
-cacheService.getStats() // Returns hits, misses, hitRate
+cacheService.getStats(); // Returns hits, misses, hitRate
 
 // HTTP-level cache (src/middleware/cache.ts)
-getCacheStats() // Returns cache statistics
+getCacheStats(); // Returns cache statistics
 ```
 
 After removing HTTP cache, use application cache stats for monitoring.
@@ -338,12 +362,15 @@ The application has a **critical security vulnerability** where HTTP-level cachi
 ## References
 
 **Vulnerable Files:**
+
 - `/src/middleware/cache.ts` - HTTP cache without tenant isolation
 - `/src/app.ts` - Global cache middleware application
 
 **Secure Files:**
+
 - `/src/lib/cache.ts` - Application cache (tenant-isolated)
 - `/src/services/catalog.service.ts` - Correct cache key usage
 
 **Test Files:**
+
 - `/test-cache-isolation.ts` - Proof of concept test

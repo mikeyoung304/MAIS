@@ -26,9 +26,7 @@
   },
   "stripeConnectSessionPayload": {
     "mode": "payment",
-    "payment_method_types": [
-      "card"
-    ],
+    "payment_method_types": ["card"],
     "customer_email": "couple@example.com",
     "line_items": [
       {

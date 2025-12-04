@@ -15,7 +15,7 @@ interface LogContext {
   [key: string]: unknown;
 }
 
-type LogLevel = "debug" | "info" | "warn" | "error";
+type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 const isDev = import.meta.env.DEV;
 
@@ -26,7 +26,7 @@ const formatError = (error: unknown): string => {
   if (error instanceof Error) {
     return `${error.name}: ${error.message}`;
   }
-  if (typeof error === "string") {
+  if (typeof error === 'string') {
     return error;
   }
   return JSON.stringify(error);
@@ -46,9 +46,12 @@ const log = (level: LogLevel, message: string, context?: LogContext): void => {
 
   // In development, log to console
   if (isDev) {
-    const consoleMethod = level === "error" ? "error" : level === "warn" ? "warn" : "log";
+    const consoleMethod = level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log';
     if (formattedContext) {
-      console[consoleMethod](`[${timestamp}] [${level.toUpperCase()}] ${message}`, formattedContext);
+      console[consoleMethod](
+        `[${timestamp}] [${level.toUpperCase()}] ${message}`,
+        formattedContext
+      );
     } else {
       console[consoleMethod](`[${timestamp}] [${level.toUpperCase()}] ${message}`);
     }
@@ -67,20 +70,20 @@ const log = (level: LogLevel, message: string, context?: LogContext): void => {
 export const logger = {
   debug: (message: string, context?: LogContext): void => {
     if (isDev) {
-      log("debug", message, context);
+      log('debug', message, context);
     }
   },
 
   info: (message: string, context?: LogContext): void => {
-    log("info", message, context);
+    log('info', message, context);
   },
 
   warn: (message: string, context?: LogContext): void => {
-    log("warn", message, context);
+    log('warn', message, context);
   },
 
   error: (message: string, context?: LogContext): void => {
-    log("error", message, context);
+    log('error', message, context);
   },
 };
 

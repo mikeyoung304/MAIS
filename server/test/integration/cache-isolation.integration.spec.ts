@@ -279,7 +279,10 @@ describe.sequential('Cache Tenant Isolation - Integration Tests', () => {
       });
 
       // Tenant B should get cache miss (cache was invalidated)
-      const updatedB = await catalogService.getPackageBySlug(tenantB_id, 'deluxe-invalidation-test');
+      const updatedB = await catalogService.getPackageBySlug(
+        tenantB_id,
+        'deluxe-invalidation-test'
+      );
       expect(updatedB.title).toBe('Deluxe - Updated');
 
       // Tenant A should get cache hit (cache was NOT affected)
@@ -317,7 +320,10 @@ describe.sequential('Cache Tenant Isolation - Integration Tests', () => {
 
       // Both calls should result in cache misses (both caches invalidated)
       const allPackages = await catalogService.getAllPackages(tenantA_id);
-      const specificPackage = await catalogService.getPackageBySlug(tenantA_id, 'ultimate-cache-test');
+      const specificPackage = await catalogService.getPackageBySlug(
+        tenantA_id,
+        'ultimate-cache-test'
+      );
 
       // Verify updates were applied
       expect(allPackages[0].priceCents).toBe(550000);
@@ -413,8 +419,14 @@ describe.sequential('Cache Tenant Isolation - Integration Tests', () => {
     it('should handle concurrent reads from multiple tenants without leakage', async () => {
       // RE-ENABLED (Sprint 6 - Phase 4 Batch 1): Was Phase 2 cascading failure, testing with stable infrastructure
       // Create unique packages for each tenant sequentially to avoid race conditions
-      const pkgA = ctx.factories.package.create({ title: 'Concurrent Package A', priceCents: 100000 });
-      const pkgB = ctx.factories.package.create({ title: 'Concurrent Package B', priceCents: 200000 });
+      const pkgA = ctx.factories.package.create({
+        title: 'Concurrent Package A',
+        priceCents: 100000,
+      });
+      const pkgB = ctx.factories.package.create({
+        title: 'Concurrent Package B',
+        priceCents: 200000,
+      });
 
       const createdA = await repository.createPackage(tenantA_id, pkgA);
       const createdB = await repository.createPackage(tenantB_id, pkgB);

@@ -3,6 +3,7 @@
 ## Problem
 
 Scheduling platform changes (commit `862a324`) modified Prisma schema without generating a migration. The database is missing:
+
 - `BookingType` enum
 - New Booking columns: `bookingType`, `serviceId`, `clientTimezone`, `googleEventId`, `cancelledAt`
 - `Service` table
@@ -14,16 +15,19 @@ Scheduling platform changes (commit `862a324`) modified Prisma schema without ge
 ## Root Cause Analysis
 
 **This codebase uses hybrid migrations:**
+
 - Manual SQL files (00-06) applied directly via psql/Supabase (NOT tracked by Prisma)
 - Prisma-generated migrations (timestamped directories)
 
 Prisma's `_prisma_migrations` table only tracks 2 migrations:
+
 - `20251016140827_initial_schema`
 - `20251023152454_add_password_hash`
 
 But the database has all multi-tenancy features from manual SQL files. This is **expected behavior** for this project's migration workflow.
 
 **Database State:**
+
 - 34 tenants (includes real data like "Plate" at mike@platemacon.com)
 - 0 bookings (safe to change constraints)
 - Service/AvailabilityRule tables do NOT exist
@@ -65,6 +69,7 @@ The correct approach is to continue the established pattern: create manual SQL m
 ## Prevention
 
 Document that this project uses **hybrid migrations**:
+
 1. Complex migrations → manual SQL files (00-XX) applied via psql
 2. Simple schema changes → `prisma migrate dev` (timestamped directories)
 

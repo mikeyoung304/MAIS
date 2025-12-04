@@ -102,9 +102,7 @@ describe('Rate Limiter Middleware', () => {
       // Using Promise.all with batches is much faster than sequential requests
       const batchSize = 50;
       for (let batch = 0; batch < 6; batch++) {
-        const requests = Array.from({ length: batchSize }, () =>
-          request(app).get('/test')
-        );
+        const requests = Array.from({ length: batchSize }, () => request(app).get('/test'));
         await Promise.all(requests);
       }
 
@@ -222,9 +220,7 @@ describe('Rate Limiter Middleware', () => {
 
       // Make 5 failed login attempts
       for (let i = 0; i < 5; i++) {
-        await request(app)
-          .post('/login')
-          .send({ email: 'test@example.com', password: 'wrong' });
+        await request(app).post('/login').send({ email: 'test@example.com', password: 'wrong' });
       }
 
       // 6th attempt should be rate limited
@@ -272,9 +268,7 @@ describe('Rate Limiter Middleware', () => {
       const passwords = ['pass1', 'pass2', 'pass3', 'pass4', 'pass5'];
 
       for (const password of passwords) {
-        await request(app)
-          .post('/login')
-          .send({ email: 'test@example.com', password });
+        await request(app).post('/login').send({ email: 'test@example.com', password });
       }
 
       // All subsequent attempts should be blocked (even with correct password)

@@ -25,6 +25,7 @@
 This document maps the complete customer journey for booking a service through the MAIS platform. The journey encompasses **discovery, catalog browsing, package selection, date picking, add-on customization, checkout, payment, and confirmation** - all while maintaining strict multi-tenant data isolation.
 
 **Key Features:**
+
 - Tenant-scoped catalog discovery via segments
 - Real-time availability checking with batch optimization
 - Stripe Checkout integration with Stripe Connect
@@ -42,12 +43,14 @@ This document maps the complete customer journey for booking a service through t
 ### Primary User: Service Seeker
 
 **Who they are:**
+
 - Individuals or couples seeking to book services (weddings, wellness retreats, events)
 - Typically accessing from mobile devices (60%+) or desktop browsers
 - May be browsing multiple options simultaneously
 - Price-conscious but value quality and convenience
 
 **User Goals:**
+
 1. **Discover** available service packages quickly
 2. **Compare** options within a business segment
 3. **Select** a date that works for their schedule
@@ -56,6 +59,7 @@ This document maps the complete customer journey for booking a service through t
 6. **Receive confirmation** with all booking details
 
 **Technical Context:**
+
 - No account creation required (guest checkout)
 - Minimal form fields (name, email only)
 - Mobile-first UI with touch-optimized interactions
@@ -68,11 +72,13 @@ This document maps the complete customer journey for booking a service through t
 ### Stage 1: Discovery
 
 **Entry Points:**
+
 1. **Homepage** → Browse Packages CTA
 2. **Segment Landing Page** → Direct segment URL (e.g., `/segment/wellness-retreat/packages`)
 3. **Widget Embedding** → Third-party website with embedded booking widget
 
 **User Actions:**
+
 - Customer arrives at the MAIS platform or tenant's custom domain
 - Views homepage hero section with value proposition
 - Browses segment cards (if multi-segment tenant)
@@ -86,12 +92,14 @@ Client Request → Tenant Resolution → Segment Service → Catalog Service →
 **Code References:**
 
 **Frontend:**
+
 - **Entry:** `/Users/mikeyoung/CODING/MAIS/client/src/pages/Home.tsx` (lines 1-476)
   - Hero section with CTAs (lines 14-63)
   - Segment navigation cards (rendered if tenant has segments)
   - "Browse Packages" primary CTA (line 34)
 
 **Backend:**
+
 - **Segments API:** `/Users/mikeyoung/CODING/MAIS/server/src/routes/segments.routes.ts`
   - `GET /v1/segments` - List all active segments (lines 33-58)
   - `GET /v1/segments/:slug` - Get segment metadata (lines 72-101)
@@ -111,7 +119,16 @@ const headers = { 'X-Tenant-Key': 'pk_live_bella-weddings_abc123' };
 // server/src/middleware/tenant.ts (lines 55-155)
 const tenant = await prisma.tenant.findUnique({
   where: { apiKeyPublic: apiKey },
-  select: { id, slug, name, commissionPercent, branding, stripeAccountId, stripeOnboarded, isActive }
+  select: {
+    id,
+    slug,
+    name,
+    commissionPercent,
+    branding,
+    stripeAccountId,
+    stripeOnboarded,
+    isActive,
+  },
 });
 
 // 3. Tenant injected into request
@@ -120,6 +137,7 @@ req.tenantId = tenant.id;
 ```
 
 **Data Isolation:**
+
 - All segment queries scoped by `tenantId`
 - Cache keys include `tenantId` to prevent cross-tenant leakage
 - API key validation ensures only active tenants can serve requests
@@ -129,12 +147,14 @@ req.tenantId = tenant.id;
 ### Stage 2: Browse Catalog
 
 **User Actions:**
+
 - Views list of available packages within a segment
 - Compares package prices, descriptions, and photos
 - Filters by grouping (e.g., "Solo", "Couple", "Group")
 - Clicks "Select" on preferred package
 
 **UI Components:**
+
 - **Package Cards** with:
   - Hero image (first photo from gallery)
   - Package name and description
@@ -151,15 +171,18 @@ Package Catalog Page → API Request → Catalog Service → Cache Check → Dat
 **Code References:**
 
 **Frontend:**
+
 - **Package Catalog:** `/Users/mikeyoung/CODING/MAIS/client/src/pages/PackageCatalog.tsx`
   - Grid layout with responsive columns
   - Package cards with hover effects
   - Mobile-optimized touch targets (Sprint 8)
 
 **Backend:**
+
 - **Catalog Service:** `/Users/mikeyoung/CODING/MAIS/server/src/services/catalog.service.ts`
 
   **Get All Packages (lines 56-74):**
+
   ```typescript
   async getAllPackages(tenantId: string): Promise<PackageWithAddOns[]> {
     // CRITICAL: Cache key includes tenantId to prevent cross-tenant data leaks
@@ -175,6 +198,7 @@ Package Catalog Page → API Request → Catalog Service → Cache Check → Dat
   ```
 
   **Get Packages by Segment (lines 351-368):**
+
   ```typescript
   async getPackagesBySegment(tenantId: string, segmentId: string): Promise<Package[]> {
     const cacheKey = `catalog:${tenantId}:segment:${segmentId}:packages`;
@@ -188,7 +212,9 @@ Package Catalog Page → API Request → Catalog Service → Cache Check → Dat
   ```
 
 **Database Schema:**
+
 - **Package Model:** `/Users/mikeyoung/CODING/MAIS/server/prisma/schema.prisma` (lines 172-209)
+
   ```prisma
   model Package {
     id          String  @id @default(cuid())
@@ -208,6 +234,7 @@ Package Catalog Page → API Request → Catalog Service → Cache Check → Dat
   ```
 
 **Performance Optimization:**
+
 - **N+1 Query Prevention:** Single query fetches packages WITH add-ons (91% query reduction)
 - **Cache Strategy:** 15-minute TTL with tenant-scoped keys
 - **Invalidation:** Cache cleared on package/add-on updates via service methods
@@ -217,6 +244,7 @@ Package Catalog Page → API Request → Catalog Service → Cache Check → Dat
 ### Stage 3: Package Selection
 
 **User Actions:**
+
 - Navigates to package detail page (`/package/:slug`)
 - Reviews full package details:
   - Photo gallery (up to 5 photos)
@@ -233,13 +261,15 @@ Package Page → API Request → Catalog Service → Package Repository → Pack
 **Code References:**
 
 **Frontend:**
+
 - **Package Detail Page:** `/Users/mikeyoung/CODING/MAIS/client/src/features/catalog/PackagePage.tsx` (lines 1-258)
 
   **Component Structure (lines 19-257):**
+
   ```typescript
   export function PackagePage() {
     const { slug } = useParams<{ slug: string }>();
-    const { data: pkg } = usePackage(slug || ""); // React Query hook
+    const { data: pkg } = usePackage(slug || ''); // React Query hook
 
     // State management
     const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -270,7 +300,9 @@ Package Page → API Request → Catalog Service → Package Repository → Pack
   - Auto-advances based on completion
 
 **Backend:**
+
 - **Get Package by Slug:** `/Users/mikeyoung/CODING/MAIS/server/src/services/catalog.service.ts` (lines 96-118)
+
   ```typescript
   async getPackageBySlug(tenantId: string, slug: string): Promise<PackageWithAddOns> {
     const cacheKey = `catalog:${tenantId}:package:${slug}`;
@@ -289,6 +321,7 @@ Package Page → API Request → Catalog Service → Package Repository → Pack
   ```
 
 **Data Models:**
+
 - **PackageDto (TypeScript):**
   ```typescript
   interface PackageDto {
@@ -307,12 +340,14 @@ Package Page → API Request → Catalog Service → Package Repository → Pack
 ### Stage 4: Date Selection
 
 **User Actions:**
+
 - Views interactive calendar (DayPicker component)
 - Pre-loaded unavailable dates are greyed out
 - Selects available date from calendar
 - Real-time validation on selection
 
 **UI Features:**
+
 - **Batch Loading:** 60-day range pre-fetched (1 API call vs 60)
 - **Visual Indicators:**
   - Available (white background)
@@ -329,9 +364,11 @@ Date Selection → Batch Fetch Unavailable → Cache Response → Click Handler 
 **Code References:**
 
 **Frontend:**
+
 - **DatePicker Component:** `/Users/mikeyoung/CODING/MAIS/client/src/features/booking/DatePicker.tsx` (lines 1-161)
 
   **Batch Fetch Strategy (lines 34-48):**
+
   ```typescript
   // Calculate date range (60 days from today)
   const { startDate, endDate } = useMemo(() => getDateRange(), []);
@@ -351,18 +388,17 @@ Date Selection → Batch Fetch Unavailable → Cache Response → Click Handler 
   ```
 
   **Real-time Validation (lines 71-112):**
+
   ```typescript
   const handleDateSelect = async (date: Date | undefined) => {
     if (!date) return onSelect(undefined);
 
     // 1. Check local unavailable list first (fast)
     const dateStr = toUtcMidnight(date);
-    const isUnavailable = unavailableDates.some(d =>
-      toUtcMidnight(d) === dateStr
-    );
+    const isUnavailable = unavailableDates.some((d) => toUtcMidnight(d) === dateStr);
 
     if (isUnavailable) {
-      toast.error("Date Unavailable", {
+      toast.error('Date Unavailable', {
         description: `Sorry, ${dateStr} is not available.`,
       });
       return onSelect(undefined);
@@ -374,8 +410,8 @@ Date Selection → Batch Fetch Unavailable → Cache Response → Click Handler 
       if (response?.status === 200 && response.body.available) {
         onSelect(date);
       } else {
-        setLocalUnavailable(prev => [...prev, date]); // Update local state
-        toast.error("Date Unavailable");
+        setLocalUnavailable((prev) => [...prev, date]); // Update local state
+        toast.error('Date Unavailable');
         onSelect(undefined);
       }
     } catch (error) {
@@ -385,9 +421,11 @@ Date Selection → Batch Fetch Unavailable → Cache Response → Click Handler 
   ```
 
 **Backend:**
+
 - **Availability Service:** `/Users/mikeyoung/CODING/MAIS/server/src/services/availability.service.ts`
 
   **Check Single Date (lines 43-63):**
+
   ```typescript
   async checkAvailability(tenantId: string, date: string): Promise<AvailabilityCheck> {
     // 1. Check blackout dates (tenant-scoped)
@@ -407,6 +445,7 @@ Date Selection → Batch Fetch Unavailable → Cache Response → Click Handler 
   ```
 
   **Batch Fetch Unavailable Dates (lines 88-92):**
+
   ```typescript
   async getUnavailableDates(tenantId: string, startDate: Date, endDate: Date): Promise<string[]> {
     // Single DB query - tenant-scoped
@@ -416,11 +455,13 @@ Date Selection → Batch Fetch Unavailable → Cache Response → Click Handler 
   ```
 
 **Performance Impact:**
+
 - **Before Optimization:** 60 API calls per calendar view (one per date)
 - **After Optimization:** 1 API call per calendar view (batch fetch)
 - **Result:** 98% reduction in API requests, 60% faster load time
 
 **Database Query:**
+
 - **Booking Model:** Queries use composite index `[tenantId, date]` for fast lookups
 - **Query Pattern:**
   ```sql
@@ -435,6 +476,7 @@ Date Selection → Batch Fetch Unavailable → Cache Response → Click Handler 
 ### Stage 5: Add-Ons & Customer Details
 
 **User Actions:**
+
 - Reviews available add-ons for selected package
 - Toggles add-ons on/off (checkbox interaction)
 - Enters customer details:
@@ -445,12 +487,14 @@ Date Selection → Batch Fetch Unavailable → Cache Response → Click Handler 
 **UI Components:**
 
 **Add-On List:**
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/features/booking/AddOnList.tsx` (lines 1-86)
   - Animated checkbox selection with rotation effect
   - Price highlights on selection (orange accent)
   - Mobile-optimized touch targets (Sprint 8)
 
 **Total Box:**
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/features/booking/TotalBox.tsx` (lines 1-105)
   - **Line Items:**
     - Package base price
@@ -470,7 +514,9 @@ Add-On Toggle → State Update → Total Recalculation → UI Update (Animated)
 **Code References:**
 
 **Frontend:**
+
 - **Add-On Selection (PackagePage.tsx lines 117-127):**
+
   ```typescript
   const toggleAddOn = (addOnId: string) => {
     setSelectedAddOns((prev) => {
@@ -493,7 +539,7 @@ Add-On Toggle → State Update → Total Recalculation → UI Update (Animated)
     selectedAddOnIds: Set<string>
   ): number {
     return useMemo(() => {
-      const selectedAddOns = addOns.filter(a => selectedAddOnIds.has(a.id));
+      const selectedAddOns = addOns.filter((a) => selectedAddOnIds.has(a.id));
       const addOnsTotal = selectedAddOns.reduce((sum, a) => sum + a.priceCents, 0);
       return packagePrice + addOnsTotal;
     }, [packagePrice, addOns, selectedAddOnIds]);
@@ -501,7 +547,9 @@ Add-On Toggle → State Update → Total Recalculation → UI Update (Animated)
   ```
 
 **Backend:**
+
 - **Commission Calculation:** `/Users/mikeyoung/CODING/MAIS/server/src/services/commission.service.ts` (lines 169-222)
+
   ```typescript
   async calculateBookingTotal(
     tenantId: string,
@@ -538,7 +586,9 @@ Add-On Toggle → State Update → Total Recalculation → UI Update (Animated)
   ```
 
 **Data Models:**
+
 - **AddOn Model:** `/Users/mikeyoung/CODING/MAIS/server/prisma/schema.prisma` (lines 211-234)
+
   ```prisma
   model AddOn {
     id          String  @id @default(cuid())
@@ -557,6 +607,7 @@ Add-On Toggle → State Update → Total Recalculation → UI Update (Animated)
   ```
 
 **Security:**
+
 - Add-on IDs validated server-side (prevent tampering)
 - Prices fetched from database (never trusted from client)
 - Tenant isolation ensures cross-tenant add-on access blocked
@@ -566,6 +617,7 @@ Add-On Toggle → State Update → Total Recalculation → UI Update (Animated)
 ### Stage 6: Checkout
 
 **User Actions:**
+
 - Reviews final order summary
 - Clicks "Proceed to Checkout" button
 - Redirected to Stripe Checkout (secure payment page)
@@ -579,7 +631,9 @@ Checkout Click → API Request → Booking Service → Commission Calc → Strip
 **Code References:**
 
 **Frontend:**
+
 - **Checkout Handler (PackagePage.tsx lines 70-115):**
+
   ```typescript
   const handleCheckout = async () => {
     if (!selectedDate || !packageData || !coupleName.trim() || !email.trim()) return;
@@ -625,6 +679,7 @@ Checkout Click → API Request → Booking Service → Commission Calc → Strip
   ```
 
 **Backend:**
+
 - **Booking Service - Create Checkout:** `/Users/mikeyoung/CODING/MAIS/server/src/services/booking.service.ts` (lines 57-152)
 
   ```typescript
@@ -706,9 +761,11 @@ Checkout Click → API Request → Booking Service → Commission Calc → Strip
   ```
 
 **Stripe Integration:**
+
 - **Payment Adapter:** `/Users/mikeyoung/CODING/MAIS/server/src/adapters/stripe.adapter.ts` (lines 88-150)
 
   **Stripe Connect Checkout Session:**
+
   ```typescript
   async createConnectCheckoutSession(input: {
     amountCents: number;
@@ -763,6 +820,7 @@ Checkout Click → API Request → Booking Service → Commission Calc → Strip
   ```
 
 **Idempotency Protection:**
+
 - **Purpose:** Prevent duplicate checkout sessions if user clicks "Checkout" multiple times
 - **Key Generation:** Hash of (tenantId + email + packageId + eventDate + timestamp)
 - **Storage:** IdempotencyKey table with 24-hour expiration
@@ -773,6 +831,7 @@ Checkout Click → API Request → Booking Service → Commission Calc → Strip
 ### Stage 7: Payment (Stripe Checkout)
 
 **User Actions:**
+
 - Enters credit card details on Stripe-hosted page
 - Reviews order summary (displayed by Stripe)
 - Submits payment
@@ -787,12 +846,14 @@ Stripe Checkout → Customer Enters Card → Payment Processing → Success/Fail
 ```
 
 **Stripe Features Used:**
+
 - **Checkout Sessions:** Pre-built hosted payment page
 - **Stripe Connect:** Direct charges with application fees
 - **Payment Intents:** Automatic payment method validation
 - **SCA Support:** Built-in 3D Secure for European cards
 
 **Security:**
+
 - **PCI Compliance:** MAIS never handles card data (Stripe does)
 - **Webhook Validation:** Cryptographic signature verification
 - **Idempotent Processing:** Duplicate webhook events ignored
@@ -800,11 +861,13 @@ Stripe Checkout → Customer Enters Card → Payment Processing → Success/Fail
 **Code References:**
 
 **Stripe Configuration:**
+
 - API Version: `2025-10-29.clover`
 - Payment Methods: Card only (can extend to ACH, Apple Pay, Google Pay)
 - Currency: USD (can extend to multi-currency)
 
 **Success URL:**
+
 - Format: `https://yoursite.com/success?session_id={CHECKOUT_SESSION_ID}`
 - Stripe replaces `{CHECKOUT_SESSION_ID}` with actual session ID
 - Client uses session ID to poll for booking confirmation
@@ -824,9 +887,11 @@ Stripe → POST /v1/webhooks/stripe → Signature Verification → Idempotency C
 **Code References:**
 
 **Backend:**
+
 - **Webhooks Controller:** `/Users/mikeyoung/CODING/MAIS/server/src/routes/webhooks.routes.ts` (lines 113-273)
 
   **Webhook Handler (lines 113-273):**
+
   ```typescript
   async handleStripeWebhook(rawBody: string, signature: string): Promise<void> {
     // 1. Verify webhook signature (prevent spoofing)
@@ -928,6 +993,7 @@ Stripe → POST /v1/webhooks/stripe → Signature Verification → Idempotency C
   ```
 
 **Booking Creation:**
+
 - **Booking Service - onPaymentCompleted:** `/Users/mikeyoung/CODING/MAIS/server/src/services/booking.service.ts` (lines 273-328)
 
   ```typescript
@@ -989,6 +1055,7 @@ Stripe → POST /v1/webhooks/stripe → Signature Verification → Idempotency C
   ```
 
 **Database Constraints:**
+
 - **Unique Constraint:** `@@unique([tenantId, date])` on Booking model
   - Prevents double-booking at database level
   - PostgreSQL enforces atomically
@@ -997,6 +1064,7 @@ Stripe → POST /v1/webhooks/stripe → Signature Verification → Idempotency C
   - Prevents race conditions between concurrent requests
 
 **Idempotency Protection:**
+
 - **Webhook Level:** Event ID stored in WebhookEvent table
   - Composite unique: `@@unique([tenantId, eventId])`
   - Duplicate events return early (before processing)
@@ -1017,6 +1085,7 @@ BookingPaid Event → Event Subscriber → Email Provider → Postmark API → C
 **Code References:**
 
 **Backend:**
+
 - **Event Subscription:** `/Users/mikeyoung/CODING/MAIS/server/src/di.ts` (lines 277-297)
 
   ```typescript
@@ -1037,22 +1106,28 @@ BookingPaid Event → Event Subscriber → Email Provider → Postmark API → C
         totalCents: payload.totalCents,
         addOnTitles: payload.addOnTitles,
       });
-      logger.info({ bookingId: payload.bookingId, email: payload.email },
-                  'Booking confirmation email sent');
+      logger.info(
+        { bookingId: payload.bookingId, email: payload.email },
+        'Booking confirmation email sent'
+      );
     } catch (err) {
-      logger.error({ err, bookingId: payload.bookingId },
-                    'Failed to send booking confirmation email');
+      logger.error(
+        { err, bookingId: payload.bookingId },
+        'Failed to send booking confirmation email'
+      );
     }
   });
   ```
 
 **Email Provider:**
+
 - **Postmark Adapter:** `/Users/mikeyoung/CODING/MAIS/server/src/adapters/postmark.adapter.ts`
   - Sends HTML email using Postmark API
   - Includes booking details (date, package, total)
   - Fallback: File-sink mode writes to `tmp/emails/` if no API token
 
 **Email Content:**
+
 - **Subject:** "Booking Confirmed - [Package Name]"
 - **Body:**
   - Personalized greeting (couple names)
@@ -1064,6 +1139,7 @@ BookingPaid Event → Event Subscriber → Email Provider → Postmark API → C
   - Calendar attachment (optional)
 
 **Async Processing:**
+
 - Email sending is non-blocking (event-driven)
 - If email fails, booking is still created (critical path isolated)
 - Errors logged for manual follow-up
@@ -1073,6 +1149,7 @@ BookingPaid Event → Event Subscriber → Email Provider → Postmark API → C
 ### Stage 10: Success Page & Confirmation
 
 **User Actions:**
+
 - Redirected to success page: `/success?session_id={CHECKOUT_SESSION_ID}`
 - Views booking confirmation details
 - Downloads receipt or calendar invite (future)
@@ -1087,6 +1164,7 @@ Success Page Load → Extract Session ID → Poll Booking Status → Display Con
 **Code References:**
 
 **Frontend:**
+
 - **Success Page:** `/Users/mikeyoung/CODING/MAIS/client/src/pages/success/Success.tsx` (lines 1-89)
 
   ```typescript
@@ -1145,16 +1223,19 @@ Success Page Load → Extract Session ID → Poll Booking Status → Display Con
   ```
 
 **Booking Confirmation Hook:**
+
 - **useBookingConfirmation:** Polls API every 2 seconds until booking found
 - **Max Retries:** 10 attempts (20 seconds total)
 - **Fallback:** If webhook delayed, shows "Processing..." state
 
 **UI States:**
+
 1. **Loading:** Spinner + "Processing your booking..."
 2. **Success:** Green check + booking details
 3. **Error:** Red alert + contact support message
 
 **Booking Details Displayed:**
+
 - Booking ID (reference number)
 - Customer names
 - Event date
@@ -1171,29 +1252,29 @@ Success Page Load → Extract Session ID → Poll Booking Status → Display Con
 
 **Public Endpoints (X-Tenant-Key required):**
 
-| Method | Endpoint | Description | Tenant-Scoped |
-|--------|----------|-------------|---------------|
-| GET | `/v1/segments` | List active segments | ✓ |
-| GET | `/v1/segments/:slug` | Get segment metadata | ✓ |
-| GET | `/v1/segments/:slug/packages` | Get segment with packages | ✓ |
-| GET | `/v1/packages` | List packages | ✓ |
-| GET | `/v1/packages/:slug` | Get package details | ✓ |
-| GET | `/v1/availability` | Check date availability (single) | ✓ |
-| GET | `/v1/availability/range` | Batch fetch unavailable dates | ✓ |
-| POST | `/v1/bookings/checkout` | Create Stripe checkout session | ✓ |
+| Method | Endpoint                      | Description                      | Tenant-Scoped |
+| ------ | ----------------------------- | -------------------------------- | ------------- |
+| GET    | `/v1/segments`                | List active segments             | ✓             |
+| GET    | `/v1/segments/:slug`          | Get segment metadata             | ✓             |
+| GET    | `/v1/segments/:slug/packages` | Get segment with packages        | ✓             |
+| GET    | `/v1/packages`                | List packages                    | ✓             |
+| GET    | `/v1/packages/:slug`          | Get package details              | ✓             |
+| GET    | `/v1/availability`            | Check date availability (single) | ✓             |
+| GET    | `/v1/availability/range`      | Batch fetch unavailable dates    | ✓             |
+| POST   | `/v1/bookings/checkout`       | Create Stripe checkout session   | ✓             |
 
 **Webhook Endpoints (Stripe signature required):**
 
-| Method | Endpoint | Description | Tenant-Scoped |
-|--------|----------|-------------|---------------|
-| POST | `/v1/webhooks/stripe` | Process payment webhooks | ✓ |
+| Method | Endpoint              | Description              | Tenant-Scoped |
+| ------ | --------------------- | ------------------------ | ------------- |
+| POST   | `/v1/webhooks/stripe` | Process payment webhooks | ✓             |
 
 **Admin Endpoints (JWT required):**
 
-| Method | Endpoint | Description | Tenant-Scoped |
-|--------|----------|-------------|---------------|
-| GET | `/v1/tenant/bookings` | List tenant bookings | ✓ |
-| GET | `/v1/tenant/bookings/:id` | Get booking details | ✓ |
+| Method | Endpoint                  | Description          | Tenant-Scoped |
+| ------ | ------------------------- | -------------------- | ------------- |
+| GET    | `/v1/tenant/bookings`     | List tenant bookings | ✓             |
+| GET    | `/v1/tenant/bookings/:id` | Get booking details  | ✓             |
 
 ---
 
@@ -1433,21 +1514,25 @@ const cacheKey = 'catalog:packages'; // ❌ Never do this!
 ### Data Isolation Guarantees
 
 **Database Level:**
+
 - All models have `tenantId` column
 - Composite unique constraints: `@@unique([tenantId, slug])`
 - Indexes: `@@index([tenantId, active])`
 
 **Application Level:**
+
 - Repository methods enforce `tenantId` parameter
 - Service layer passes `tenantId` to all repository calls
 - TypeScript compiler prevents accidental omission
 
 **Cache Level:**
+
 - Cache keys include `tenantId`
 - Format: `{service}:{tenantId}:{resource}:{id}`
 - Example: `catalog:tenant_abc:package:intimate-ceremony`
 
 **API Level:**
+
 - Middleware validates API key before route handler
 - Invalid key = 401 Unauthorized (request never reaches service)
 - Inactive tenant = 403 Forbidden (explicit block)
@@ -1474,6 +1559,7 @@ const cacheKey = 'catalog:packages'; // ❌ Never do this!
 **Solution:** Three-layer defense (ADR-001):
 
 **Layer 1: Database Constraint**
+
 ```prisma
 model Booking {
   tenantId String
@@ -1484,6 +1570,7 @@ model Booking {
 ```
 
 **Layer 2: Pessimistic Locking**
+
 ```typescript
 await prisma.$transaction(async (tx) => {
   // Lock the date row (blocks concurrent transactions)
@@ -1505,11 +1592,13 @@ await prisma.$transaction(async (tx) => {
 ```
 
 **Layer 3: Graceful Error Handling**
+
 ```typescript
 try {
   await bookingRepo.create(tenantId, booking);
 } catch (error) {
-  if (error.code === 'P2002') { // Prisma unique constraint violation
+  if (error.code === 'P2002') {
+    // Prisma unique constraint violation
     throw new BookingConflictError(date);
   }
   throw error;
@@ -1517,6 +1606,7 @@ try {
 ```
 
 **Result:**
+
 - First request acquires lock, creates booking
 - Second request waits for lock, sees existing booking, throws error
 - Customer sees "Date unavailable" toast notification
@@ -1531,6 +1621,7 @@ try {
 **Solution:** Idempotent webhook processing.
 
 **Idempotency Check:**
+
 ```typescript
 // Check if webhook already processed
 const isDupe = await this.webhookRepo.isDuplicate(tenantId, event.id);
@@ -1541,6 +1632,7 @@ if (isDupe) {
 ```
 
 **Webhook Recording:**
+
 ```typescript
 // Record webhook BEFORE processing
 await this.webhookRepo.recordWebhook({
@@ -1552,6 +1644,7 @@ await this.webhookRepo.recordWebhook({
 ```
 
 **Database Schema:**
+
 ```prisma
 model WebhookEvent {
   id        String @id @default(uuid())
@@ -1565,6 +1658,7 @@ model WebhookEvent {
 ```
 
 **Result:**
+
 - First webhook: Recorded + processed
 - Retry webhook: Detected as duplicate, returns 200 OK immediately
 - No duplicate bookings created
@@ -1579,11 +1673,13 @@ model WebhookEvent {
 **Solution:** Session expiration handling.
 
 **Stripe Configuration:**
+
 - Session expires after 24 hours
 - Success URL includes `session_id` query parameter
 - Client polls for booking with timeout
 
 **Success Page Logic:**
+
 ```typescript
 const useBookingConfirmation = ({ bookingId }: { bookingId: string | null }) => {
   const [retries, setRetries] = useState(0);
@@ -1598,12 +1694,12 @@ const useBookingConfirmation = ({ bookingId }: { bookingId: string | null }) => 
       }
 
       // Poll API
-      fetchBooking(bookingId).then(data => {
+      fetchBooking(bookingId).then((data) => {
         if (data) {
           setBookingDetails(data);
           clearInterval(interval);
         } else {
-          setRetries(r => r + 1);
+          setRetries((r) => r + 1);
         }
       });
     }, 2000); // Every 2 seconds
@@ -1614,6 +1710,7 @@ const useBookingConfirmation = ({ bookingId }: { bookingId: string | null }) => 
 ```
 
 **Result:**
+
 - Webhook usually processes within 2-5 seconds
 - Success page shows spinner while waiting
 - After 20 seconds: Shows "Contact support" message
@@ -1628,25 +1725,27 @@ const useBookingConfirmation = ({ bookingId }: { bookingId: string | null }) => 
 **Solution:** Server-side validation.
 
 **Validation Logic:**
+
 ```typescript
 // Fetch add-ons (tenant-scoped, active only)
 const addOns = await this.prisma.addOn.findMany({
   where: {
-    tenantId,              // CRITICAL: Prevent cross-tenant access
-    id: { in: addOnIds },  // Requested IDs
-    active: true,          // Only active add-ons
+    tenantId, // CRITICAL: Prevent cross-tenant access
+    id: { in: addOnIds }, // Requested IDs
+    active: true, // Only active add-ons
   },
 });
 
 // Validate all add-ons found
 if (addOns.length !== addOnIds.length) {
-  const foundIds = addOns.map(a => a.id);
-  const missingIds = addOnIds.filter(id => !foundIds.includes(id));
+  const foundIds = addOns.map((a) => a.id);
+  const missingIds = addOnIds.filter((id) => !foundIds.includes(id));
   throw new Error(`Invalid add-ons: ${missingIds.join(', ')}`);
 }
 ```
 
 **Result:**
+
 - Invalid IDs: Request rejected with 400 Bad Request
 - Cross-tenant IDs: Filtered out by `tenantId` clause
 - Inactive add-ons: Excluded from query
@@ -1661,6 +1760,7 @@ if (addOns.length !== addOnIds.length) {
 **Solution:** Fallback to standard Stripe checkout.
 
 **Checkout Logic:**
+
 ```typescript
 if (tenant.stripeAccountId && tenant.stripeOnboarded) {
   // Stripe Connect checkout (payment → tenant account)
@@ -1681,6 +1781,7 @@ if (tenant.stripeAccountId && tenant.stripeOnboarded) {
 ```
 
 **Result:**
+
 - Connect onboarded: Payment → tenant account, platform takes fee
 - Not onboarded: Payment → platform account (manual payout)
 - No checkout failure due to onboarding status
@@ -1694,6 +1795,7 @@ if (tenant.stripeAccountId && tenant.stripeOnboarded) {
 **Solution:** Async event-driven with error logging.
 
 **Email Subscription:**
+
 ```typescript
 eventEmitter.subscribe('BookingPaid', async (payload) => {
   try {
@@ -1707,11 +1809,13 @@ eventEmitter.subscribe('BookingPaid', async (payload) => {
 ```
 
 **Fallback (Dev Mode):**
+
 - Postmark adapter checks for API token
 - If missing: Writes email to `tmp/emails/{timestamp}.json`
 - Developer can inspect email content locally
 
 **Result:**
+
 - Booking still created (critical path isolated)
 - Email failure logged for manual retry
 - Customer can be contacted manually via booking record
@@ -1726,6 +1830,7 @@ eventEmitter.subscribe('BookingPaid', async (payload) => {
 **Solution:** Idempotent checkout session creation.
 
 **Idempotency Key Generation:**
+
 ```typescript
 const idempotencyKey = this.idempotencyService.generateCheckoutKey(
   tenantId,
@@ -1737,6 +1842,7 @@ const idempotencyKey = this.idempotencyService.generateCheckoutKey(
 ```
 
 **Cache Check:**
+
 ```typescript
 // Check for cached response
 const cachedResponse = await this.idempotencyService.getStoredResponse(idempotencyKey);
@@ -1746,6 +1852,7 @@ if (cachedResponse) {
 ```
 
 **Store Response:**
+
 ```typescript
 // Cache response after Stripe call
 await this.idempotencyService.updateResponse(idempotencyKey, {
@@ -1755,6 +1862,7 @@ await this.idempotencyService.updateResponse(idempotencyKey, {
 ```
 
 **Result:**
+
 - First click: Creates new Stripe session
 - Subsequent clicks: Returns cached session URL
 - No duplicate sessions created
@@ -1771,11 +1879,13 @@ await this.idempotencyService.updateResponse(idempotencyKey, {
 ### Key Mobile Optimizations
 
 **1. Touch-Optimized Targets**
+
 - Minimum touch target: 44x44px (Apple HIG, Android Material Design)
 - Button padding: `px-8 py-4` (TailwindCSS utility classes)
 - Increased spacing between interactive elements
 
 **2. Responsive Layouts**
+
 - **Breakpoints:**
   - `sm:` 640px (mobile landscape)
   - `md:` 768px (tablet)
@@ -1783,11 +1893,13 @@ await this.idempotencyService.updateResponse(idempotencyKey, {
   - `xl:` 1280px (wide desktop)
 
 **3. Mobile-First CSS**
+
 - Base styles target mobile (min-width: 320px)
 - Desktop enhancements via media queries
 - Flexbox/Grid for fluid layouts
 
 **4. Performance**
+
 - Lazy loading images (`loading="lazy"`)
 - Optimized bundle size (code splitting)
 - Preconnect to Stripe CDN
@@ -1795,6 +1907,7 @@ await this.idempotencyService.updateResponse(idempotencyKey, {
 ### Component Examples
 
 **DatePicker (Mobile):**
+
 ```tsx
 <DayPicker
   mode="single"
@@ -1807,12 +1920,13 @@ await this.idempotencyService.updateResponse(idempotencyKey, {
 ```
 
 **Add-On Cards (Mobile):**
+
 ```tsx
 <Card
   className={cn(
-    "cursor-pointer transition-all duration-300",
-    "hover:scale-[1.02] active:scale-[0.98]", // Touch feedback
-    isSelected && "border-macon-orange shadow-elevation-2 bg-orange-50 scale-[1.01]"
+    'cursor-pointer transition-all duration-300',
+    'hover:scale-[1.02] active:scale-[0.98]', // Touch feedback
+    isSelected && 'border-macon-orange shadow-elevation-2 bg-orange-50 scale-[1.01]'
   )}
   onClick={() => onToggle(addOn.id)}
 >
@@ -1835,13 +1949,14 @@ await this.idempotencyService.updateResponse(idempotencyKey, {
 ```
 
 **Progress Steps (Mobile):**
+
 ```tsx
 <ProgressSteps
   steps={[
-    { label: "Package", description: "Choose your package" },
-    { label: "Date", description: "Select ceremony date" },
-    { label: "Extras", description: "Add-ons & details" },
-    { label: "Checkout", description: "Complete booking" }
+    { label: 'Package', description: 'Choose your package' },
+    { label: 'Date', description: 'Select ceremony date' },
+    { label: 'Extras', description: 'Add-ons & details' },
+    { label: 'Checkout', description: 'Complete booking' },
   ]}
   currentStep={currentStep}
   // Mobile: Horizontal scroll with snap points
@@ -1867,11 +1982,13 @@ await this.idempotencyService.updateResponse(idempotencyKey, {
 ### 1. Query Optimization
 
 **N+1 Query Prevention:**
+
 - **Problem:** Fetching packages, then add-ons for each package (1 + N queries)
 - **Solution:** Single query with `include` (Prisma)
 - **Result:** 91% query reduction
 
 **Before:**
+
 ```typescript
 const packages = await prisma.package.findMany({ where: { tenantId } }); // 1 query
 for (const pkg of packages) {
@@ -1880,6 +1997,7 @@ for (const pkg of packages) {
 ```
 
 **After:**
+
 ```typescript
 const packages = await prisma.package.findMany({
   where: { tenantId },
@@ -1892,22 +2010,22 @@ const packages = await prisma.package.findMany({
 ### 2. Cache Strategy
 
 **Application-Level Caching:**
+
 - **Cache Service:** In-memory LRU cache (mock mode) or Redis (real mode)
 - **TTL:** 15 minutes (900 seconds)
 - **Invalidation:** On package/add-on updates
 
 **Cache Keys:**
+
 ```typescript
 // Catalog
-`catalog:${tenantId}:all-packages`
-`catalog:${tenantId}:package:${slug}`
-`catalog:${tenantId}:segment:${segmentId}:packages`
-
+`catalog:${tenantId}:all-packages``catalog:${tenantId}:package:${slug}``catalog:${tenantId}:segment:${segmentId}:packages`
 // Availability
-`availability:${tenantId}:dateRange:${startDate}:${endDate}`
+`availability:${tenantId}:dateRange:${startDate}:${endDate}`;
 ```
 
 **Performance Impact:**
+
 - **Cache Hit:** < 1ms response time
 - **Cache Miss:** 50-100ms (database query)
 - **Cache Hit Rate:** 85%+ (typical)
@@ -1917,11 +2035,13 @@ const packages = await prisma.package.findMany({
 ### 3. Batch Operations
 
 **Unavailable Dates Fetching:**
+
 - **Before:** 60 API calls per calendar view
 - **After:** 1 API call (batch fetch 60-day range)
 - **Result:** 98% reduction in API requests
 
 **Database Query:**
+
 ```sql
 SELECT date FROM "Booking"
 WHERE "tenantId" = $1
@@ -1930,6 +2050,7 @@ WHERE "tenantId" = $1
 ```
 
 **Response Size:**
+
 - Typical: 5-10 unavailable dates
 - Max: 60 dates (fully booked)
 - Transfer: < 1KB gzipped
@@ -1939,17 +2060,19 @@ WHERE "tenantId" = $1
 ### 4. React Query Optimization
 
 **Stale-While-Revalidate Pattern:**
+
 ```typescript
 const { data: packages } = useQuery({
   queryKey: queryKeys.catalog.packages(tenantId),
   queryFn: () => api.getPackages(),
-  staleTime: 5 * 60 * 1000,    // 5 minutes
-  gcTime: 10 * 60 * 1000,      // 10 minutes (cache retention)
+  staleTime: 5 * 60 * 1000, // 5 minutes
+  gcTime: 10 * 60 * 1000, // 10 minutes (cache retention)
   refetchOnWindowFocus: false, // Prevent refetch on tab switch
 });
 ```
 
 **Benefits:**
+
 - Instant page transitions (cached data)
 - Background revalidation (fresh data)
 - Reduced API load (fewer requests)
@@ -1959,6 +2082,7 @@ const { data: packages } = useQuery({
 ### 5. Code Splitting
 
 **Lazy Loading:**
+
 ```typescript
 const PackagePage = lazy(() => import('./features/catalog/PackagePage'));
 const Success = lazy(() => import('./pages/success/Success'));
@@ -1971,6 +2095,7 @@ const Success = lazy(() => import('./pages/success/Success'));
 ```
 
 **Bundle Analysis:**
+
 - **Main bundle:** 150KB (gzipped)
 - **Lazy chunks:** 30-50KB each
 - **Initial load:** < 200KB (fast TTI)
@@ -1980,12 +2105,14 @@ const Success = lazy(() => import('./pages/success/Success'));
 ### 6. Image Optimization
 
 **Package Photos:**
+
 - **Format:** WebP (fallback to JPEG)
 - **Compression:** Quality 80
 - **Lazy Loading:** `loading="lazy"` attribute
 - **Responsive:** `srcset` for different screen sizes
 
 **Example:**
+
 ```tsx
 <img
   src={pkg.photoUrl}
@@ -2010,6 +2137,7 @@ const Success = lazy(() => import('./pages/success/Success'));
 **Scope:** Services, utilities, pure functions
 
 **Example: Commission Calculation**
+
 ```typescript
 describe('CommissionService', () => {
   it('should calculate commission with rounding up', async () => {
@@ -2033,6 +2161,7 @@ describe('CommissionService', () => {
 **Scope:** API endpoints, database interactions
 
 **Example: Booking Flow**
+
 ```typescript
 describe('POST /v1/bookings/checkout', () => {
   it('should create Stripe checkout session with commission', async () => {
@@ -2076,6 +2205,7 @@ describe('POST /v1/bookings/checkout', () => {
 **Scope:** Complete user journeys
 
 **Example: Booking Flow**
+
 ```typescript
 test('customer can complete booking flow', async ({ page }) => {
   // 1. Navigate to package page
@@ -2110,6 +2240,7 @@ test('customer can complete booking flow', async ({ page }) => {
 ### 4. Manual Testing Checklist
 
 **Desktop (Chrome/Firefox/Safari):**
+
 - [ ] Browse packages
 - [ ] Select date from calendar
 - [ ] Add/remove add-ons
@@ -2120,6 +2251,7 @@ test('customer can complete booking flow', async ({ page }) => {
 - [ ] View success page
 
 **Mobile (iOS Safari/Android Chrome):**
+
 - [ ] Touch targets responsive
 - [ ] Calendar picker usable
 - [ ] Forms accessible via keyboard
@@ -2127,6 +2259,7 @@ test('customer can complete booking flow', async ({ page }) => {
 - [ ] Stripe checkout mobile-optimized
 
 **Edge Cases:**
+
 - [ ] Expired Stripe session
 - [ ] Double-booking attempt
 - [ ] Invalid add-on IDs
@@ -2140,6 +2273,7 @@ test('customer can complete booking flow', async ({ page }) => {
 ### Key File Locations
 
 **Backend:**
+
 - Tenant Middleware: `/Users/mikeyoung/CODING/MAIS/server/src/middleware/tenant.ts`
 - Booking Service: `/Users/mikeyoung/CODING/MAIS/server/src/services/booking.service.ts`
 - Catalog Service: `/Users/mikeyoung/CODING/MAIS/server/src/services/catalog.service.ts`
@@ -2152,6 +2286,7 @@ test('customer can complete booking flow', async ({ page }) => {
 - Database Schema: `/Users/mikeyoung/CODING/MAIS/server/prisma/schema.prisma`
 
 **Frontend:**
+
 - Home Page: `/Users/mikeyoung/CODING/MAIS/client/src/pages/Home.tsx`
 - Package Page: `/Users/mikeyoung/CODING/MAIS/client/src/features/catalog/PackagePage.tsx`
 - Date Picker: `/Users/mikeyoung/CODING/MAIS/client/src/features/booking/DatePicker.tsx`

@@ -1,9 +1,9 @@
-import { Edit, Trash2, Loader2, Layers } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { MobileActionDropdown } from "@/components/shared/MobileActionDropdown";
-import { StatusBadge } from "@/components/shared/StatusBadge";
-import { EmptyState } from "@/components/shared/EmptyState";
-import type { SegmentDto } from "@macon/contracts";
+import { Edit, Trash2, Loader2, Layers } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MobileActionDropdown } from '@/components/shared/MobileActionDropdown';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { EmptyState } from '@/components/shared/EmptyState';
+import type { SegmentDto } from '@macon/contracts';
 
 interface SegmentsListProps {
   segments: SegmentDto[];
@@ -16,12 +16,7 @@ interface SegmentsListProps {
  * SegmentsList Component
  * Design: Matches landing page aesthetic with sage accents
  */
-export function SegmentsList({
-  segments,
-  onEdit,
-  onDelete,
-  isLoading = false,
-}: SegmentsListProps) {
+export function SegmentsList({ segments, onEdit, onDelete, isLoading = false }: SegmentsListProps) {
   if (isLoading) {
     return (
       <div className="bg-surface-alt rounded-2xl border border-sage-light/20 p-12 text-center">
@@ -61,15 +56,12 @@ export function SegmentsList({
             {/* Content */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 flex-wrap">
-                <h3 className="font-serif text-lg font-bold text-text-primary">
-                  {segment.name}
-                </h3>
-                <StatusBadge status={segment.active ? "Active" : "Inactive"} />
+                <h3 className="font-serif text-lg font-bold text-text-primary">{segment.name}</h3>
+                <StatusBadge status={segment.active ? 'Active' : 'Inactive'} />
               </div>
               <div className="flex items-center gap-4 mt-1.5 text-sm text-text-muted">
                 <span className="font-mono text-xs bg-surface px-2 py-0.5 rounded border border-sage-light/10">
-                  <span className="sr-only">URL path: </span>
-                  /{segment.slug}
+                  <span className="sr-only">URL path: </span>/{segment.slug}
                 </span>
                 {segment.heroTitle && (
                   <span className="truncate max-w-[200px]">{segment.heroTitle}</span>
@@ -105,15 +97,15 @@ export function SegmentsList({
               <MobileActionDropdown
                 actions={[
                   {
-                    label: "Edit",
+                    label: 'Edit',
                     icon: Edit,
                     onClick: () => onEdit(segment),
                   },
                   {
-                    label: "Delete",
+                    label: 'Delete',
                     icon: Trash2,
                     onClick: () => onDelete(segment.id),
-                    variant: "danger",
+                    variant: 'danger',
                   },
                 ]}
               />

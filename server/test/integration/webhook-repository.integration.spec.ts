@@ -101,7 +101,7 @@ describe.sequential('PrismaWebhookRepository - Integration Tests', () => {
       ]);
 
       // All should return true (duplicate)
-      expect(checks.every(c => c === true)).toBe(true);
+      expect(checks.every((c) => c === true)).toBe(true);
 
       // Verify final state
       const event = await ctx.prisma.webhookEvent.findUnique({
@@ -149,14 +149,14 @@ describe.sequential('PrismaWebhookRepository - Integration Tests', () => {
       ]);
 
       // At least one should succeed (the first one)
-      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const successCount = results.filter((r) => r.status === 'fulfilled').length;
       expect(successCount).toBeGreaterThanOrEqual(1);
 
       // Should only have one record in database
       const events = await ctx.prisma.webhookEvent.findMany({
         where: {
           tenantId: testTenantId,
-          eventId: 'evt_race_condition'
+          eventId: 'evt_race_condition',
         },
       });
 
@@ -168,7 +168,8 @@ describe.sequential('PrismaWebhookRepository - Integration Tests', () => {
   describe('Status Transitions', () => {
     it('should mark webhook as PROCESSED', async () => {
       // RE-ENABLED (Sprint 6 - Phase 3 Batch 4): Was redundant test, but testing with stable infrastructure (may pass now)
-      await repository.recordWebhook({ tenantId: testTenantId, 
+      await repository.recordWebhook({
+        tenantId: testTenantId,
         eventId: 'evt_process_456',
         eventType: 'checkout.session.completed',
         rawPayload: JSON.stringify({ data: 'process' }),
@@ -187,7 +188,8 @@ describe.sequential('PrismaWebhookRepository - Integration Tests', () => {
     it('should mark webhook as FAILED with error message', async () => {
       // RE-ENABLED (Sprint 6 - Phase 3 Batch 2): Was Phase 1 flaky (2/3 pass rate), testing with stable infrastructure
 
-      await repository.recordWebhook({ tenantId: testTenantId,
+      await repository.recordWebhook({
+        tenantId: testTenantId,
         eventId: 'evt_fail_999',
         eventType: 'checkout.session.completed',
         rawPayload: JSON.stringify({ data: 'fail' }),
@@ -208,7 +210,8 @@ describe.sequential('PrismaWebhookRepository - Integration Tests', () => {
     it('should increment attempts on failure', async () => {
       // RE-ENABLED (Sprint 6 - Phase 3 Batch 2): Was Phase 1 flaky (2/3 pass rate), testing with stable infrastructure
 
-      await repository.recordWebhook({ tenantId: testTenantId,
+      await repository.recordWebhook({
+        tenantId: testTenantId,
         eventId: 'evt_retry_test',
         eventType: 'checkout.session.completed',
         rawPayload: JSON.stringify({ data: 'retry' }),
@@ -245,7 +248,8 @@ describe.sequential('PrismaWebhookRepository - Integration Tests', () => {
     it('should transition from PENDING to PROCESSED', async () => {
       const eventId = 'evt_transition_pending_processed';
 
-      await repository.recordWebhook({ tenantId: testTenantId, 
+      await repository.recordWebhook({
+        tenantId: testTenantId,
         eventId,
         eventType: 'checkout.session.completed',
         rawPayload: JSON.stringify({ data: 'transition' }),
@@ -272,7 +276,8 @@ describe.sequential('PrismaWebhookRepository - Integration Tests', () => {
     it('should transition from PENDING to FAILED', async () => {
       const eventId = 'evt_transition_pending_failed';
 
-      await repository.recordWebhook({ tenantId: testTenantId, 
+      await repository.recordWebhook({
+        tenantId: testTenantId,
         eventId,
         eventType: 'checkout.session.completed',
         rawPayload: JSON.stringify({ data: 'transition' }),
@@ -316,7 +321,8 @@ describe.sequential('PrismaWebhookRepository - Integration Tests', () => {
         type: 'checkout.session.completed',
       };
 
-      await repository.recordWebhook({ tenantId: testTenantId, 
+      await repository.recordWebhook({
+        tenantId: testTenantId,
         eventId: 'evt_complex',
         eventType: 'checkout.session.completed',
         rawPayload: JSON.stringify(complexPayload),
@@ -345,7 +351,8 @@ describe.sequential('PrismaWebhookRepository - Integration Tests', () => {
       ];
 
       for (const eventType of eventTypes) {
-        await repository.recordWebhook({ tenantId: testTenantId,
+        await repository.recordWebhook({
+          tenantId: testTenantId,
           eventId: `evt_${eventType}`,
           eventType,
           rawPayload: JSON.stringify({ type: eventType }),
@@ -353,11 +360,11 @@ describe.sequential('PrismaWebhookRepository - Integration Tests', () => {
       }
 
       const events = await ctx.prisma.webhookEvent.findMany({
-        where: { tenantId: testTenantId }
+        where: { tenantId: testTenantId },
       });
       expect(events.length).toBe(4);
 
-      const types = events.map(e => e.eventType).sort();
+      const types = events.map((e) => e.eventType).sort();
       expect(types).toEqual(eventTypes.sort());
     });
 
@@ -365,7 +372,8 @@ describe.sequential('PrismaWebhookRepository - Integration Tests', () => {
       // RE-ENABLED (Sprint 6 - Phase 3 Batch 3): Was Phase 2 data persistence issue, testing with stable infrastructure
       const eventId = 'evt_timestamp_test';
 
-      await repository.recordWebhook({ tenantId: testTenantId, 
+      await repository.recordWebhook({
+        tenantId: testTenantId,
         eventId,
         eventType: 'checkout.session.completed',
         rawPayload: JSON.stringify({ data: 'timestamp' }),
@@ -379,7 +387,7 @@ describe.sequential('PrismaWebhookRepository - Integration Tests', () => {
       expect(initial?.processedAt).toBeNull();
 
       // Wait a bit before marking processed
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       await repository.markProcessed(testTenantId, eventId);
 
@@ -398,7 +406,8 @@ describe.sequential('PrismaWebhookRepository - Integration Tests', () => {
     it('should handle empty payload', async () => {
       // RE-ENABLED (Sprint 6 - Phase 3 Batch 2): Was Phase 1 flaky (2/3 pass rate), testing with stable infrastructure
 
-      await repository.recordWebhook({ tenantId: testTenantId,
+      await repository.recordWebhook({
+        tenantId: testTenantId,
         eventId: 'evt_empty_payload',
         eventType: 'test.event',
         rawPayload: '',
@@ -416,7 +425,8 @@ describe.sequential('PrismaWebhookRepository - Integration Tests', () => {
       const eventId = 'evt_long_error';
       const longError = 'Error: ' + 'x'.repeat(1000);
 
-      await repository.recordWebhook({ tenantId: testTenantId,
+      await repository.recordWebhook({
+        tenantId: testTenantId,
         eventId,
         eventType: 'test.event',
         rawPayload: JSON.stringify({ data: 'test' }),
@@ -434,7 +444,8 @@ describe.sequential('PrismaWebhookRepository - Integration Tests', () => {
     it('should handle special characters in event IDs', async () => {
       const specialEventId = 'evt_test_special-chars_123.456';
 
-      await repository.recordWebhook({ tenantId: testTenantId, 
+      await repository.recordWebhook({
+        tenantId: testTenantId,
         eventId: specialEventId,
         eventType: 'test.event',
         rawPayload: JSON.stringify({ data: 'special' }),

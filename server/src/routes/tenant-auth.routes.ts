@@ -43,7 +43,11 @@ export class TenantAuthController {
    * @param email - Tenant email from JWT token
    * @returns Tenant information
    */
-  async getCurrentTenant(tenantId: string, slug: string, email: string): Promise<{
+  async getCurrentTenant(
+    tenantId: string,
+    slug: string,
+    email: string
+  ): Promise<{
     tenantId: string;
     slug: string;
     email: string;
@@ -80,14 +84,17 @@ export function createTenantAuthRoutes(tenantAuthService: TenantAuthService): Ro
       res.status(200).json(result);
     } catch (error) {
       // Log failed login attempts
-      logger.warn({
-        event: 'tenant_login_failed',
-        endpoint: '/v1/tenant-auth/login',
-        email: req.body.email,
-        ipAddress,
-        timestamp: new Date().toISOString(),
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }, 'Failed tenant login attempt');
+      logger.warn(
+        {
+          event: 'tenant_login_failed',
+          endpoint: '/v1/tenant-auth/login',
+          email: req.body.email,
+          ipAddress,
+          timestamp: new Date().toISOString(),
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+        'Failed tenant login attempt'
+      );
       next(error);
     }
   });
@@ -97,26 +104,30 @@ export function createTenantAuthRoutes(tenantAuthService: TenantAuthService): Ro
    * Get current tenant info (requires authentication)
    * Protected by tenantAuthMiddleware which validates JWT and sets res.locals.tenantAuth
    */
-  router.get('/me', tenantAuthMiddleware, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantAuth = (res.locals as any).tenantAuth;
+  router.get(
+    '/me',
+    tenantAuthMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantAuth = (res.locals as any).tenantAuth;
 
-      // Middleware guarantees tenantAuth exists, but check for safety
-      if (!tenantAuth) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
+        // Middleware guarantees tenantAuth exists, but check for safety
+        if (!tenantAuth) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
+
+        const result = await controller.getCurrentTenant(
+          tenantAuth.tenantId,
+          tenantAuth.slug,
+          tenantAuth.email
+        );
+        res.status(200).json(result);
+      } catch (error) {
+        next(error);
       }
-
-      const result = await controller.getCurrentTenant(
-        tenantAuth.tenantId,
-        tenantAuth.slug,
-        tenantAuth.email
-      );
-      res.status(200).json(result);
-    } catch (error) {
-      next(error);
     }
-  });
+  );
 
   return router;
 }

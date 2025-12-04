@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Container } from "@/ui/Container";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Check } from "lucide-react";
+import { useState } from 'react';
+import { Container } from '@/ui/Container';
+import { Button } from '@/components/ui/button';
+import { ArrowRight, Check } from 'lucide-react';
 
 /**
  * WaitlistCTASection - Final conversion moment
@@ -9,7 +9,7 @@ import { ArrowRight, Check } from "lucide-react";
  * Generous spacing, emotional headline, clean form.
  */
 export function WaitlistCTASection() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 

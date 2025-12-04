@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "144"
+issue_id: '144'
 tags: [code-review, security, mvp-gaps, balance-payment]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 Balance payment tokens can be replayed indefinitely to create multiple Stripe checkout sessions for the same booking. Once a customer completes payment, the token is not invalidated, allowing attackers to create additional checkout sessions.
 
 **Why This Matters:**
+
 - Security vulnerability allowing duplicate payments
 - Financial risk from multiple charges for same balance
 - Customer trust impact if overcharged
@@ -24,6 +25,7 @@ Balance payment tokens can be replayed indefinitely to create multiple Stripe ch
 **Location:** `server/src/routes/public-balance-payment.routes.ts:32-56`
 
 **Evidence:**
+
 ```typescript
 async createBalancePaymentCheckout(token: string): Promise<{
   checkoutUrl: string;
@@ -48,6 +50,7 @@ async createBalancePaymentCheckout(token: string): Promise<{
 ```
 
 **Attack Scenario:**
+
 1. Customer receives balance payment link with token
 2. Customer uses token to create checkout session #1
 3. Customer completes payment
@@ -58,6 +61,7 @@ async createBalancePaymentCheckout(token: string): Promise<{
 ## Proposed Solutions
 
 ### Option A: Check Balance Status Before Checkout (Recommended)
+
 **Pros:** Simple, immediate fix
 **Cons:** None significant
 **Effort:** Small (1-2 hours)
@@ -72,6 +76,7 @@ if (booking.balancePaidAt || booking.balancePaidAmount) {
 ```
 
 ### Option B: One-Time Token Usage
+
 **Pros:** Most secure, prevents all replay attacks
 **Cons:** Requires token usage tracking
 **Effort:** Medium (4-6 hours)
@@ -86,6 +91,7 @@ Add token usage tracking in Redis/database to ensure single use.
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/routes/public-balance-payment.routes.ts`
 - `server/src/services/booking.service.ts`
 
@@ -100,8 +106,8 @@ Add token usage tracking in Redis/database to ensure single use.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                     |
+| ---------- | ------- | ------------------------- |
 | 2025-12-02 | Created | From MVP gaps code review |
 
 ## Resources

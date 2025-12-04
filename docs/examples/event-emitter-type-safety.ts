@@ -18,7 +18,11 @@
  * 3. Use valid patterns as templates for new event emissions
  */
 
-import { InProcessEventEmitter, BookingEvents, AppointmentEvents } from '../../server/src/lib/core/events';
+import {
+  InProcessEventEmitter,
+  BookingEvents,
+  AppointmentEvents,
+} from '../../server/src/lib/core/events';
 
 const emitter = new InProcessEventEmitter();
 

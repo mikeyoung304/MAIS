@@ -2,7 +2,7 @@
  * React Query client configuration with optimized caching strategy
  */
 
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from '@tanstack/react-query';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,25 +21,25 @@ export const queryClient = new QueryClient({
 export const queryKeys = {
   // Catalog queries (rarely change, longer stale time)
   packages: {
-    all: ["packages"] as const,
-    bySlug: (slug: string) => ["packages", slug] as const,
+    all: ['packages'] as const,
+    bySlug: (slug: string) => ['packages', slug] as const,
   },
   // Bookings queries (frequently updated, shorter stale time)
   bookings: {
-    all: ["bookings"] as const,
-    byId: (id: string) => ["bookings", id] as const,
+    all: ['bookings'] as const,
+    byId: (id: string) => ['bookings', id] as const,
   },
   // Admin queries (frequently updated, shorter stale time)
   admin: {
-    bookings: ["admin", "bookings"] as const,
-    blackouts: ["admin", "blackouts"] as const,
-    packages: ["admin", "packages"] as const,
+    bookings: ['admin', 'bookings'] as const,
+    blackouts: ['admin', 'blackouts'] as const,
+    packages: ['admin', 'packages'] as const,
   },
   // Availability queries (dynamic, batch fetch)
   availability: {
     dateRange: (startDate: string, endDate: string) =>
-      ["availability", "range", startDate, endDate] as const,
-    singleDate: (date: string) => ["availability", "date", date] as const,
+      ['availability', 'range', startDate, endDate] as const,
+    singleDate: (date: string) => ['availability', 'date', date] as const,
   },
 } as const;
 

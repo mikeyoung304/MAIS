@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "054"
+issue_id: '054'
 tags: [code-review, scheduling, logging, standards]
 dependencies: []
 ---
@@ -27,14 +27,17 @@ Several scheduling components use `console.error()` instead of the structured lo
 ### CLAUDE.md Standard
 
 From CLAUDE.md:
+
 > **Logging:** Use `logger`, never `console.log`
 
 ## Proposed Solutions
 
 ### Option A: Replace with Logger (Recommended)
+
 **Effort:** Small | **Risk:** None
 
 For server-side code, use structured logger:
+
 ```typescript
 import { logger } from '@lib/core/logger';
 
@@ -47,6 +50,7 @@ For client-side, use error boundary or error reporting service.
 ## Technical Details
 
 **Files to Update:**
+
 - All locations listed above
 
 ## Acceptance Criteria
@@ -57,7 +61,7 @@ For client-side, use error boundary or error reporting service.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-27 | Created | Found during Code Quality review |
+| Date       | Action   | Notes                                                                                                  |
+| ---------- | -------- | ------------------------------------------------------------------------------------------------------ |
+| 2025-11-27 | Created  | Found during Code Quality review                                                                       |
 | 2025-12-02 | Resolved | Replaced all console.error with logger.error; added proper context (component, error, serviceId, etc.) |

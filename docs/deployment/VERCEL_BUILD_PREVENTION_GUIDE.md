@@ -15,6 +15,7 @@ This guide documents prevention strategies for the critical Vercel/Vite monorepo
 **Root Cause:** TypeScript's `.tsbuildinfo` cache files caused `tsc -b` to skip compilation on Vercel, breaking Vite's package resolution.
 
 **Impact Prevention Strategies:**
+
 1. Force compilation in CI/CD with `--force` flag
 2. Use explicit file paths in Vite aliases (not directories)
 3. Implement pre-deployment verification
@@ -51,6 +52,7 @@ This guide documents prevention strategies for the critical Vercel/Vite monorepo
 ```
 
 **Why This Works:**
+
 - `--force` rebuilds all projects regardless of cache state
 - Guarantees `dist/` folders exist with fresh compilation
 - Prevents stale `.tsbuildinfo` from causing false cache hits
@@ -68,6 +70,7 @@ This guide documents prevention strategies for the critical Vercel/Vite monorepo
 ```
 
 **What Happens:**
+
 1. Vercel caches `packages/*/tsconfig.tsbuildinfo` between builds
 2. TypeScript sees cached `.tsbuildinfo` and thinks compilation is up-to-date
 3. Skips compilation, no `dist/` folder created
@@ -93,8 +96,8 @@ If you need to avoid `--force` for performance reasons (rare), use these alterna
 ```json
 {
   "scripts": {
-    "build": "tsc -b --force",           // CI/CD
-    "build:dev": "tsc -b",                // Local development (fast)
+    "build": "tsc -b --force", // CI/CD
+    "build:dev": "tsc -b", // Local development (fast)
     "typecheck": "tsc -b --noEmit"
   }
 }
@@ -123,22 +126,23 @@ If you need to avoid `--force` for performance reasons (rare), use these alterna
 
 ```typescript
 // client/vite.config.ts
-import { defineConfig } from "vite";
-import path from "path";
+import { defineConfig } from 'vite';
+import path from 'path';
 
 export default defineConfig({
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
       // ✅ Point to specific index.js files
-      "@macon/contracts": path.resolve(__dirname, "../packages/contracts/dist/index.js"),
-      "@macon/shared": path.resolve(__dirname, "../packages/shared/dist/index.js"),
+      '@macon/contracts': path.resolve(__dirname, '../packages/contracts/dist/index.js'),
+      '@macon/shared': path.resolve(__dirname, '../packages/shared/dist/index.js'),
     },
   },
 });
 ```
 
 **Why This Works:**
+
 - Vite resolves directly to compiled JavaScript (no module resolution ambiguity)
 - Fails fast if `dist/index.js` doesn't exist (clear error)
 - ESM modules require `.js` extension for explicit imports
@@ -157,6 +161,7 @@ export default defineConfig({
 ```
 
 **What Happens:**
+
 1. Vite tries to resolve directory → checks `package.json` `main` → ambiguous
 2. If `dist/` doesn't exist, error is delayed until import time
 3. Module format mismatches (CommonJS vs ESM) can cause silent failures
@@ -184,6 +189,7 @@ While Vite aliases point to `.js` files, `package.json` should still define prop
 ```
 
 **Key Points:**
+
 - `"type": "module"` declares ESM package
 - `exports` field provides explicit entry points
 - `types` ensures TypeScript finds `.d.ts` files
@@ -198,7 +204,7 @@ While Vite aliases point to `.js` files, `package.json` should still define prop
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "composite": true  // Enables TypeScript project references
+    "composite": true // Enables TypeScript project references
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
@@ -206,6 +212,7 @@ While Vite aliases point to `.js` files, `package.json` should still define prop
 ```
 
 **Composite Projects:**
+
 - `"composite": true` enables `.tsbuildinfo` generation
 - Required for `tsc -b` (build mode)
 - Enables incremental compilation for faster local dev
@@ -235,6 +242,7 @@ ls -la client/dist/index.html
 ```
 
 **Expected Output:**
+
 ```
 packages/contracts/dist/index.js    (exists)
 packages/shared/dist/index.js       (exists)
@@ -242,6 +250,7 @@ client/dist/index.html              (exists)
 ```
 
 **If any file is missing:**
+
 1. Check package build script has `--force` flag
 2. Verify `tsconfig.json` has correct `outDir`
 3. Check for TypeScript compilation errors
@@ -251,21 +260,25 @@ client/dist/index.html              (exists)
 Before every Vercel deployment:
 
 - [ ] **Build scripts use `--force` flag**
+
   ```bash
   grep -r '"build":.*--force' packages/*/package.json
   ```
 
 - [ ] **Vite aliases point to `.js` files**
+
   ```bash
   grep 'alias:' client/vite.config.ts | grep '\.js'
   ```
 
 - [ ] **Local clean build succeeds**
+
   ```bash
   rm -rf packages/*/dist client/dist && npm run build
   ```
 
 - [ ] **All dist folders exist**
+
   ```bash
   [ -f packages/contracts/dist/index.js ] && echo "✅ contracts"
   [ -f packages/shared/dist/index.js ] && echo "✅ shared"
@@ -317,12 +330,14 @@ echo "✅ All builds verified successfully!"
 ```
 
 **Usage:**
+
 ```bash
 chmod +x scripts/verify-build.sh
 ./scripts/verify-build.sh
 ```
 
 **Add to package.json:**
+
 ```json
 {
   "scripts": {
@@ -338,11 +353,13 @@ chmod +x scripts/verify-build.sh
 ### 4.1 Build Cache Behavior
 
 **How Vercel Caching Works:**
+
 1. Vercel caches `node_modules/` between builds (controlled by `package-lock.json` hash)
 2. Vercel does NOT cache `dist/` folders by default
 3. Vercel MAY cache `.tsbuildinfo` files if not in `.gitignore`
 
 **Current .gitignore (Correct):**
+
 ```gitignore
 # Build outputs
 dist
@@ -358,6 +375,7 @@ build
 ### 4.2 When to Disable Vercel Build Cache
 
 **Disable cache if:**
+
 - Experiencing intermittent build failures
 - Deploying after major dependency updates
 - Debugging monorepo build issues
@@ -365,10 +383,12 @@ build
 **How to Disable:**
 
 #### Option 1: Via Vercel Dashboard
+
 1. Go to Project Settings → Build & Development Settings
 2. Disable "Use Build Cache"
 
 #### Option 2: Via `vercel.json`
+
 ```json
 {
   "builds": [
@@ -376,7 +396,7 @@ build
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "cache": false  // ⚠️ Increases build time
+        "cache": false // ⚠️ Increases build time
       }
     }
   ]
@@ -428,29 +448,33 @@ build
 ```json
 // ❌ WRONG - Uses npm install, incorrect output directory
 {
-  "installCommand": "npm install",          // Non-deterministic
-  "buildCommand": "npm run build",          // Ambiguous
-  "outputDirectory": "dist"                 // Incorrect path
+  "installCommand": "npm install", // Non-deterministic
+  "buildCommand": "npm run build", // Ambiguous
+  "outputDirectory": "dist" // Incorrect path
 }
 ```
 
 ### 4.4 Build Command Optimization
 
 **Current (Sequential Build):**
+
 ```bash
 npm run build --workspace=@macon/contracts && npm run build --workspace=@macon/shared && npm run build --workspace=@macon/web
 ```
 
 **Alternative (Parallel Build):**
+
 ```bash
 npm run build --workspaces --if-present
 ```
 
 **Pros of Parallel:**
+
 - Faster builds if packages are independent
 - Simpler command
 
 **Cons of Parallel:**
+
 - No dependency ordering guarantee
 - Can fail if `@macon/web` builds before `@macon/contracts`
 
@@ -471,6 +495,7 @@ Vercel requires environment variables to be set in the dashboard or `vercel.json
 ```
 
 **Best Practice:** Set secrets via Vercel Dashboard
+
 1. Project Settings → Environment Variables
 2. Add `VITE_*` prefixed variables for client-side access
 3. Never commit secrets to `vercel.json`
@@ -484,29 +509,36 @@ Vercel requires environment variables to be set in the dashboard or `vercel.json
 **Diagnosis Steps:**
 
 1. **Verify dist folder exists:**
+
    ```bash
    ls -la packages/contracts/dist/index.js
    ```
+
    - If missing: Build script didn't run or failed
    - Check Vercel build logs for compilation errors
 
 2. **Check Vite alias configuration:**
+
    ```bash
    grep '@macon/contracts' client/vite.config.ts
    ```
+
    - Should point to `../packages/contracts/dist/index.js`
    - NOT to directory: `../packages/contracts/dist`
 
 3. **Verify build script has `--force`:**
+
    ```bash
    grep '"build"' packages/contracts/package.json
    ```
+
    - Should include: `"build": "tsc -b --force"`
 
 4. **Check for TypeScript errors:**
    ```bash
    npm run typecheck
    ```
+
    - Fix any errors before deploying
 
 ### Symptom: "Build succeeds locally, fails on Vercel"
@@ -514,6 +546,7 @@ Vercel requires environment variables to be set in the dashboard or `vercel.json
 **Diagnosis Steps:**
 
 1. **Simulate clean build:**
+
    ```bash
    rm -rf packages/*/dist client/dist node_modules package-lock.json
    npm ci --workspaces --include-workspace-root
@@ -523,6 +556,7 @@ Vercel requires environment variables to be set in the dashboard or `vercel.json
    ```
 
 2. **Check Node.js version mismatch:**
+
    ```json
    // package.json
    "engines": {
@@ -531,9 +565,11 @@ Vercel requires environment variables to be set in the dashboard or `vercel.json
    ```
 
 3. **Verify workspace configuration:**
+
    ```bash
    npm ls --workspaces
    ```
+
    - Should list: `@macon/contracts`, `@macon/shared`, `@macon/web`
 
 4. **Check Vercel build logs:**
@@ -545,19 +581,21 @@ Vercel requires environment variables to be set in the dashboard or `vercel.json
 **Diagnosis Steps:**
 
 1. **Verify package.json `type` field:**
+
    ```json
    // packages/contracts/package.json
    {
-     "type": "module"  // Must be ESM
+     "type": "module" // Must be ESM
    }
    ```
 
 2. **Check TypeScript module config:**
+
    ```json
    // tsconfig.base.json
    {
      "compilerOptions": {
-       "module": "ESNext",          // Must be ESNext for Vite
+       "module": "ESNext", // Must be ESNext for Vite
        "moduleResolution": "Bundler" // Vite-compatible
      }
    }
@@ -605,8 +643,8 @@ Vercel requires environment variables to be set in the dashboard or `vercel.json
 ```json
 {
   "scripts": {
-    "build": "tsc -b --force",              // CI/CD
-    "build:dev": "tsc -b",                   // Local dev (fast)
+    "build": "tsc -b --force", // CI/CD
+    "build:dev": "tsc -b", // Local dev (fast)
     "typecheck": "tsc -b --noEmit",
     "clean": "rm -rf dist tsconfig.tsbuildinfo"
   }
@@ -648,9 +686,9 @@ Vercel requires environment variables to be set in the dashboard or `vercel.json
 
 ## 9. Version History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | 2025-11-26 | Platform Engineering | Initial guide based on Vercel build failure analysis |
+| Version | Date       | Author               | Changes                                              |
+| ------- | ---------- | -------------------- | ---------------------------------------------------- |
+| 1.0     | 2025-11-26 | Platform Engineering | Initial guide based on Vercel build failure analysis |
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "143"
+issue_id: '143'
 tags: [code-review, visual-editor, security, audit]
 dependencies: []
 ---
@@ -17,9 +17,11 @@ The PackageDraftService has no audit trail logging for draft saves, publishes, a
 ## Findings
 
 ### Discovery Source
+
 Security Review Agent - Code Review
 
 ### Evidence
+
 Location: `server/src/services/package-draft.service.ts`
 
 ```typescript
@@ -46,6 +48,7 @@ async discardDrafts(tenantId: string, packageIds?: string[]): Promise<{ discarde
 ## Proposed Solutions
 
 ### Option 1: Add Logger Calls (Recommended)
+
 Add structured logging similar to other admin operations.
 
 ```typescript
@@ -86,6 +89,7 @@ async discardDrafts(tenantId: string, packageIds?: string[]) {
 **Risk**: Low
 
 ### Option 2: Use ConfigChangeLog Table
+
 Store audit records in the existing ConfigChangeLog table.
 
 **Pros**: Queryable, persistent, matches existing pattern
@@ -94,17 +98,21 @@ Store audit records in the existing ConfigChangeLog table.
 **Risk**: Low
 
 ## Recommended Action
+
 <!-- Filled during triage -->
 
 ## Technical Details
 
 ### Affected Files
+
 - `server/src/services/package-draft.service.ts`
 
 ### Database Changes Required
+
 None for Option 1
 
 ## Acceptance Criteria
+
 - [ ] Draft saves are logged with tenantId, packageId, and changed fields
 - [ ] Publish operations are logged with count of affected packages
 - [ ] Discard operations log what was discarded before deletion
@@ -112,9 +120,10 @@ None for Option 1
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                       |
+| ---------- | ------- | ------------------------------------------- |
 | 2025-12-01 | Created | Identified during visual editor code review |
 
 ## Resources
+
 - PR: feat(visual-editor) commit 0327dee

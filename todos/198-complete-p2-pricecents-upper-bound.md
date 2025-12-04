@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "198"
+issue_id: '198'
 tags: [code-review, security, validation]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The `priceCents` field validates non-negative values but lacks an upper bound. This could allow integer overflow attacks or unreasonable prices.
 
 ### Why It Matters
+
 - Integer overflow attacks (prices > 2^31 - 1)
 - Business logic bugs (prices in quadrillions)
 - Currency conversion issues (exceeds Stripe's maximum charge of $999,999.99)
@@ -22,6 +23,7 @@ The `priceCents` field validates non-negative values but lacks an upper bound. T
 **Source:** Security Review
 
 **Evidence:**
+
 ```typescript
 // dto.ts:232 - Only min validation
 priceCents: z.number().int().min(0),
@@ -35,12 +37,14 @@ export function validatePrice(priceCents: number, fieldName: string = 'price'): 
 ```
 
 **Location:**
+
 - `packages/contracts/src/dto.ts:232`
 - `server/src/lib/validation.ts:10`
 
 ## Proposed Solutions
 
 ### Option A: Add Upper Bound Validation (Recommended)
+
 **Pros:** Prevents overflow, aligns with Stripe limits
 **Cons:** Could reject legitimate ultra-luxury items
 **Effort:** Small (5 minutes)
@@ -68,6 +72,7 @@ Option A - Add Stripe-aligned upper bound.
 ## Technical Details
 
 **Affected Files:**
+
 - `packages/contracts/src/dto.ts`
 - `server/src/lib/validation.ts`
 
@@ -82,8 +87,8 @@ Option A - Add Stripe-aligned upper bound.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                      |
+| ---------- | ------------------------ | ---------------------------------------------- |
 | 2025-12-03 | Created from code review | Always validate upper bounds on numeric inputs |
 
 ## Resources

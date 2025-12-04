@@ -2,7 +2,13 @@
   "testsRun": 8,
   "testsPassed": 8,
   "testsFailed": 0,
-  "filesCreated": ["package-1762544046360-5c797d74927ec5d6.png","package-1762544046469-c5eefaa977e5176b.png","package-1762544046528-e3187243fd25ae52.png","package-1762544046585-9240ed895cbcd675.png","package-1762544046643-c6600a1032c082de.png"],
+  "filesCreated": [
+    "package-1762544046360-5c797d74927ec5d6.png",
+    "package-1762544046469-c5eefaa977e5176b.png",
+    "package-1762544046528-e3187243fd25ae52.png",
+    "package-1762544046585-9240ed895cbcd675.png",
+    "package-1762544046643-c6600a1032c082de.png"
+  ],
   "filesDeleted": ["package-1762544046360-5c797d74927ec5d6.png"],
   "summary": "All happy path tests passed successfully!"
 }

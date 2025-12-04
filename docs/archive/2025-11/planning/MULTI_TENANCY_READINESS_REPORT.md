@@ -1,4 +1,5 @@
 # ELOPE MULTI-TENANCY READINESS REPORT
+
 **Comprehensive Architectural Assessment**
 
 **Report Date:** November 6, 2025
@@ -28,6 +29,7 @@ The application has **excellent foundational architecture** but **zero tenant is
 ### Key Findings
 
 ✅ **STRENGTHS:**
+
 - Clean layered architecture (routes → services → repositories)
 - Strong type safety (TypeScript + Zod validation)
 - Repository pattern enables easy tenant scoping
@@ -35,6 +37,7 @@ The application has **excellent foundational architecture** but **zero tenant is
 - Comprehensive documentation
 
 ❌ **CRITICAL GAPS:**
+
 - No `Tenant` model or tenant isolation in database
 - All unique constraints are global (blocks multi-tenant bookings)
 - No tenant context in authentication/authorization
@@ -60,11 +63,13 @@ Routes (HTTP) → Services (Business Logic) → Adapters (Infrastructure) → Da
 **Multi-Tenancy Compatibility:** ✅ **GOOD**
 
 The layered architecture naturally supports tenant scoping:
+
 - **Route Layer:** Extract tenant from request (subdomain/header)
 - **Service Layer:** Pass tenant context to repositories
 - **Repository Layer:** Filter all queries by tenantId
 
 **Required Changes:**
+
 - Add tenant resolution middleware
 - Refactor DI container to per-request scoping
 - Update all service methods to accept tenantId
@@ -88,6 +93,7 @@ model Booking {
 ```
 
 **Required Change:**
+
 ```prisma
 model Booking {
   tenantId String
@@ -100,6 +106,7 @@ model Booking {
 **Recommended Pattern:** **Row-Level Isolation (Single Database)**
 
 **Rationale:**
+
 - **Simplest to implement** (single database, single connection pool)
 - **Cost-effective** (one Supabase instance for 100+ tenants)
 - **Optimal for scale** (10-1000 tenants)
@@ -108,6 +115,7 @@ model Booking {
 **Schema Changes Required:**
 
 1. **Add Tenant Model:**
+
 ```prisma
 model Tenant {
   id              String   @id @default(cuid())
@@ -143,22 +151,23 @@ model Tenant {
 
 **Scope of Changes:**
 
-| Layer | Files Affected | Lines Changed | Complexity |
-|-------|----------------|---------------|------------|
-| Database Schema | 1 file | ~50 lines | Medium |
-| DTOs/Contracts | 2 files | ~30 lines | Low |
-| Repositories | 6 files | ~150 lines | Medium |
-| Services | 4 files | ~120 lines | Medium-High |
-| Middleware | 3 files (2 new) | ~100 lines | Medium |
-| Controllers | 7 files | ~80 lines | Low |
-| DI Container | 1 file | ~60 lines | High |
-| Tests | 15+ files | ~200 lines | Medium |
+| Layer           | Files Affected  | Lines Changed | Complexity  |
+| --------------- | --------------- | ------------- | ----------- |
+| Database Schema | 1 file          | ~50 lines     | Medium      |
+| DTOs/Contracts  | 2 files         | ~30 lines     | Low         |
+| Repositories    | 6 files         | ~150 lines    | Medium      |
+| Services        | 4 files         | ~120 lines    | Medium-High |
+| Middleware      | 3 files (2 new) | ~100 lines    | Medium      |
+| Controllers     | 7 files         | ~80 lines     | Low         |
+| DI Container    | 1 file          | ~60 lines     | High        |
+| Tests           | 15+ files       | ~200 lines    | Medium      |
 
 **Total Estimate:** ~790 lines changed across 35+ files
 
 **Critical Pattern Changes:**
 
 **1. Tenant Resolution Middleware**
+
 ```typescript
 // Extract tenant from subdomain: acme.elope.com → "acme"
 export function tenantResolverMiddleware() {
@@ -177,6 +186,7 @@ export function tenantResolverMiddleware() {
 ```
 
 **2. Tenant-Scoped Repositories**
+
 ```typescript
 // Before: Global query
 async findAll(): Promise<Booking[]> {
@@ -192,6 +202,7 @@ async findAll(tenantId: string): Promise<Booking[]> {
 ```
 
 **3. Authentication Changes**
+
 ```typescript
 // Current JWT payload
 { userId, email, role: 'admin' }
@@ -201,6 +212,7 @@ async findAll(tenantId: string): Promise<Booking[]> {
 ```
 
 **API Routing Strategy:** **Subdomain-based** (recommended)
+
 - Customer-facing: `acme.elope.com`
 - Admin panel: `acme.elope.com/admin`
 - Custom domains: `weddings.acme.com` (future)
@@ -223,6 +235,7 @@ async findAll(tenantId: string): Promise<Booking[]> {
 **Customization Requirements:**
 
 Each tenant needs configurable:
+
 - **Visual:** Logo, colors (primary/secondary/accent), fonts
 - **Content:** Hero headline, features (4 cards), testimonials (3 items), stats (3 metrics)
 - **Business:** Contact email/phone, custom domain
@@ -233,6 +246,7 @@ Each tenant needs configurable:
 **Implementation:**
 
 1. **Fetch tenant config on mount:**
+
 ```typescript
 // GET /v1/tenants/:slug/config
 {
@@ -245,12 +259,14 @@ Each tenant needs configurable:
 ```
 
 2. **Inject CSS variables:**
+
 ```typescript
 document.documentElement.style.setProperty('--color-primary', tenant.primaryColor);
 document.documentElement.style.setProperty('--font-heading', tenant.headingFont);
 ```
 
 3. **Update Tailwind to use variables:**
+
 ```javascript
 // tailwind.config.js
 colors: {
@@ -262,23 +278,27 @@ colors: {
 **Component Refactoring:**
 
 **Before:**
+
 ```typescript
 <h1>Your Perfect Day, Simplified</h1>  // ❌ Hardcoded
 ```
 
 **After:**
+
 ```typescript
 const tenant = useTenant();
 <h1>{tenant.heroHeadline}</h1>  // ✅ Dynamic
 ```
 
 **New Components Needed:**
+
 - `TenantProvider` - Context provider for tenant config
 - `TenantNotFound` - Error page for invalid subdomains
 - `TenantLogo` - Dynamic logo component
 - `DynamicHero`, `DynamicFooter` - Refactored sections
 
 **Performance Impact:** +1 API call on initial load (tenant config)
+
 - **Mitigation:** Inline tenant config in HTML via SSR/edge workers
 
 **Implementation Effort:** 3-4 weeks
@@ -310,6 +330,7 @@ const tenant = useTenant();
 **Required Security Controls:**
 
 **Layer 1: Database Row-Level Security (RLS)**
+
 ```sql
 ALTER TABLE "Booking" ENABLE ROW LEVEL SECURITY;
 
@@ -318,6 +339,7 @@ CREATE POLICY tenant_isolation ON "Booking"
 ```
 
 **Layer 2: Application Middleware**
+
 ```typescript
 // Validate tenant ownership on every request
 export function validateTenantAccess(req, res, next) {
@@ -332,6 +354,7 @@ export function validateTenantAccess(req, res, next) {
 ```
 
 **Layer 3: Repository Enforcement**
+
 ```typescript
 // Base class forces tenant filtering
 abstract class TenantScopedRepository {
@@ -344,6 +367,7 @@ abstract class TenantScopedRepository {
 ```
 
 **Layer 4: Automated Testing**
+
 ```typescript
 // Security test: Prevent cross-tenant access
 it('should block Tenant A from accessing Tenant B data', async () => {
@@ -352,23 +376,21 @@ it('should block Tenant A from accessing Tenant B data', async () => {
   const bookingB = await createBooking({ tenantId: tenantB.id });
 
   const tokenA = await loginAsTenant(tenantA.id);
-  const response = await api
-    .get(`/bookings/${bookingB.id}`)
-    .auth(tokenA);
+  const response = await api.get(`/bookings/${bookingB.id}`).auth(tokenA);
 
-  expect(response.status).toBe(403);  // ✅ Blocked
+  expect(response.status).toBe(403); // ✅ Blocked
 });
 ```
 
 **Threat Model (Multi-Tenant):**
 
-| Threat | Severity | Mitigation |
-|--------|----------|------------|
-| Data leakage (missing tenantId filter) | **CRITICAL** | Middleware + RLS + tests |
-| Tenant ID manipulation | **HIGH** | Extract from JWT, never trust params |
-| Subdomain takeover | **MEDIUM** | Wildcard DNS + monitoring |
-| Payment fraud (wrong Stripe account) | **HIGH** | Per-tenant Stripe Connect |
-| Cross-tenant CSRF | **LOW** | JWT immune to CSRF |
+| Threat                                 | Severity     | Mitigation                           |
+| -------------------------------------- | ------------ | ------------------------------------ |
+| Data leakage (missing tenantId filter) | **CRITICAL** | Middleware + RLS + tests             |
+| Tenant ID manipulation                 | **HIGH**     | Extract from JWT, never trust params |
+| Subdomain takeover                     | **MEDIUM**   | Wildcard DNS + monitoring            |
+| Payment fraud (wrong Stripe account)   | **HIGH**     | Per-tenant Stripe Connect            |
+| Cross-tenant CSRF                      | **LOW**      | JWT immune to CSRF                   |
 
 **Compliance Considerations:**
 
@@ -385,12 +407,14 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### Phase 1: Foundation (Weeks 1-2)
 
 **Database Migration:**
+
 - Create `Tenant` table
 - Add `tenantId` columns (nullable initially)
 - Create default tenant for existing data
 - Backfill tenantId for all records
 
 **Deliverables:**
+
 - Prisma migration scripts
 - Data validation queries
 - Rollback procedures
@@ -403,16 +427,19 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### Phase 2: Backend Tenant Awareness (Weeks 3-4)
 
 **Repository Layer:**
+
 - Create `TenantScopedRepository` base class
 - Refactor all repositories to require tenantId
 - Update all queries to filter by tenant
 
 **Service Layer:**
+
 - Update service constructors to accept tenant context
 - Add tenant validation to all operations
 - Update slug uniqueness to be tenant-scoped
 
 **Deliverables:**
+
 - Refactored repositories (6 files)
 - Refactored services (4 files)
 - Unit tests for tenant isolation
@@ -425,16 +452,19 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### Phase 3: API & Middleware (Weeks 5-6)
 
 **Request Pipeline:**
+
 - Implement `tenantResolverMiddleware`
 - Extend `authMiddleware` with tenant validation
 - Refactor DI container to factory pattern
 
 **API Contracts:**
+
 - Add tenant endpoints (`GET /v1/tenants/:slug/config`)
 - Extend DTOs with optional tenantId
 - Update API documentation
 
 **Deliverables:**
+
 - Middleware (3 files)
 - Updated contracts (2 files)
 - Integration tests
@@ -447,16 +477,19 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### Phase 4: Frontend Multi-Tenancy (Weeks 7-8)
 
 **Theme System:**
+
 - Build `TenantProvider` context
 - Implement tenant resolution from hostname
 - Apply CSS variables on mount
 
 **Component Refactoring:**
+
 - Replace hardcoded branding in AppShell, Home
 - Add dynamic logo, hero, footer components
 - Update routing for tenant context
 
 **Deliverables:**
+
 - Tenant context provider
 - Refactored components (10+ files)
 - E2E tests with multiple tenants
@@ -469,16 +502,19 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### Phase 5: Stripe Connect & Payments (Weeks 9-10)
 
 **Payment Isolation:**
+
 - Integrate Stripe Connect (Standard Accounts)
 - Add per-tenant Stripe account management
 - Update webhook routing and validation
 
 **Tenant Provisioning:**
+
 - Build tenant onboarding flow
 - Add Stripe account linking
 - Implement webhook routing by tenant
 
 **Deliverables:**
+
 - Stripe Connect integration
 - Tenant admin UI for payment setup
 - Payment isolation tests
@@ -491,16 +527,19 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### Phase 6: Admin Theme Editor (Weeks 11-12)
 
 **Self-Service Customization:**
+
 - Build theme editor UI
 - Add color picker, logo upload, font selector
 - Implement live preview
 
 **Content Management:**
+
 - Add editors for hero, features, testimonials
 - Image upload (logo, hero background)
 - Save/publish workflow
 
 **Deliverables:**
+
 - Theme editor UI
 - Image upload to S3/R2
 - Preview mode
@@ -513,21 +552,25 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### Phase 7: Testing & Hardening (Week 13)
 
 **Security Validation:**
+
 - Penetration testing (cross-tenant access attempts)
 - SQL injection testing (tenant context)
 - Rate limiting per tenant
 
 **Performance Testing:**
+
 - Load test with 100 simulated tenants
 - Query performance with composite indexes
 - Cache hit rates for tenant configs
 
 **Compliance Validation:**
+
 - GDPR data export/deletion workflows
 - Audit log verification
 - Tenant isolation verification
 
 **Deliverables:**
+
 - Security audit report
 - Performance benchmarks
 - Compliance checklist
@@ -537,16 +580,19 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### Phase 8: Deployment & Monitoring (Week 14)
 
 **Production Rollout:**
+
 - Blue-green deployment with feature flag
 - Gradual tenant migration to multi-tenant schema
 - Monitoring dashboards (per-tenant metrics)
 
 **Documentation:**
+
 - Tenant onboarding guide
 - API documentation updates
 - Security best practices
 
 **Deliverables:**
+
 - Production deployment
 - Monitoring setup
 - Updated documentation
@@ -555,16 +601,16 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 
 ## EFFORT SUMMARY
 
-| Phase | Duration | Complexity | Risk |
-|-------|----------|------------|------|
-| 1. Foundation | 2 weeks | Medium | Medium |
-| 2. Backend | 2 weeks | Medium-High | Medium |
-| 3. API & Auth | 2 weeks | High | High |
-| 4. Frontend | 2 weeks | Medium | Medium |
-| 5. Payments | 2 weeks | High | High |
-| 6. Admin UI | 2 weeks | Medium | Low |
-| 7. Testing | 1 week | High | High |
-| 8. Deployment | 1 week | Medium | Medium |
+| Phase         | Duration | Complexity  | Risk   |
+| ------------- | -------- | ----------- | ------ |
+| 1. Foundation | 2 weeks  | Medium      | Medium |
+| 2. Backend    | 2 weeks  | Medium-High | Medium |
+| 3. API & Auth | 2 weeks  | High        | High   |
+| 4. Frontend   | 2 weeks  | Medium      | Medium |
+| 5. Payments   | 2 weeks  | High        | High   |
+| 6. Admin UI   | 2 weeks  | Medium      | Low    |
+| 7. Testing    | 1 week   | High        | High   |
+| 8. Deployment | 1 week   | Medium      | Medium |
 
 **TOTAL: 14 weeks (3.5 months)**
 
@@ -579,6 +625,7 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### Decision 1: Tenant Identification Strategy
 
 **Options:**
+
 - ✅ **Subdomain** (acme.elope.com) - RECOMMENDED
 - ❌ Path prefix (/acme/packages)
 - ❌ Header-based (X-Tenant-ID)
@@ -592,6 +639,7 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### Decision 2: Database Isolation Model
 
 **Options:**
+
 - ✅ **Row-level isolation** (tenantId column) - RECOMMENDED
 - ❌ Schema-per-tenant (PostgreSQL schemas)
 - ❌ Database-per-tenant (separate databases)
@@ -605,6 +653,7 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### Decision 3: User-Tenant Relationship
 
 **Options:**
+
 - ✅ **One user per tenant** (simple) - RECOMMENDED
 - ❌ Multiple tenants per user (complex)
 
@@ -617,6 +666,7 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### Decision 4: Existing Data Handling
 
 **Options:**
+
 - ✅ **Create "default" tenant** - RECOMMENDED
 - ❌ Migrate to first real tenant
 - ❌ Archive and start fresh
@@ -630,6 +680,7 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### Decision 5: Payment Model
 
 **Options:**
+
 - ✅ **Stripe Connect (Standard)** - RECOMMENDED
 - ❌ Single Stripe account with metadata
 - ❌ Stripe Connect (Custom)
@@ -704,30 +755,33 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 
 ### High-Risk Areas
 
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|------------|------------|
-| Data leakage (missing tenantId) | **CRITICAL** | MEDIUM | Multi-layer validation + RLS |
-| Unique constraint violations | **CRITICAL** | LOW | Careful migration testing |
-| Payment routing errors | **HIGH** | MEDIUM | Stripe test mode + extensive testing |
-| JWT secret rotation | **HIGH** | LOW | Phased rollout, old token grace period |
-| Performance degradation | MEDIUM | MEDIUM | Load testing, proper indexing |
-| Migration downtime | MEDIUM | MEDIUM | Blue-green deployment |
+| Risk                            | Impact       | Likelihood | Mitigation                             |
+| ------------------------------- | ------------ | ---------- | -------------------------------------- |
+| Data leakage (missing tenantId) | **CRITICAL** | MEDIUM     | Multi-layer validation + RLS           |
+| Unique constraint violations    | **CRITICAL** | LOW        | Careful migration testing              |
+| Payment routing errors          | **HIGH**     | MEDIUM     | Stripe test mode + extensive testing   |
+| JWT secret rotation             | **HIGH**     | LOW        | Phased rollout, old token grace period |
+| Performance degradation         | MEDIUM       | MEDIUM     | Load testing, proper indexing          |
+| Migration downtime              | MEDIUM       | MEDIUM     | Blue-green deployment                  |
 
 ### Mitigation Strategies
 
 **Data Leakage Prevention:**
+
 - Implement 4-layer defense (middleware → service → repository → RLS)
 - Automated security tests in CI/CD
 - Regular penetration testing
 - Audit all database queries for tenantId filtering
 
 **Payment Security:**
+
 - Extensive testing in Stripe test mode
 - Webhook signature validation per tenant
 - Separate Stripe accounts (no shared credentials)
 - Manual verification for first 10 tenant onboardings
 
 **Migration Safety:**
+
 - Full database backup before migration
 - Test migration on staging with production data clone
 - Phased rollout with feature flags
@@ -766,6 +820,7 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### 1. Proceed with Phased Approach
 
 **DO NOT attempt big-bang migration.** The architecture is solid but the scope is large. A phased approach with feature flags allows:
+
 - Testing in production with limited exposure
 - Rollback capability at each stage
 - Learning from early tenants
@@ -774,6 +829,7 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### 2. Prioritize Security from Day 1
 
 **DO NOT retrofit security later.** Multi-tenancy security must be baked into the architecture:
+
 - RLS policies in initial migration
 - Tenant context validation in all queries
 - Automated security testing in CI/CD
@@ -784,6 +840,7 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 **Target State:** Tenant admin can fully configure their site without developer intervention.
 
 **Required:**
+
 - Intuitive theme editor
 - Live preview of changes
 - Stripe Connect onboarding flow
@@ -792,6 +849,7 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### 4. Monitor Per-Tenant Performance
 
 **Prevent "noisy neighbor" problem:**
+
 - Per-tenant rate limiting
 - Per-tenant database query monitoring
 - Alerts for tenants exceeding resource quotas
@@ -802,6 +860,7 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 **Target Capacity:** 1,000 tenants within 2 years
 
 **Required:**
+
 - Horizontal scaling (database sharding strategy)
 - Caching strategy (Redis per-tenant namespaces)
 - CDN for tenant assets (logos, images)
@@ -816,11 +875,13 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 **Pattern:** Deploy separate instance per tenant (e.g., acme.elope.com is entire separate deployment)
 
 **Pros:**
+
 - Complete isolation (zero cross-tenant risk)
 - Custom scaling per tenant
 - Tenant can choose cloud provider/region
 
 **Cons:**
+
 - Operational nightmare (manage N deployments)
 - Cost prohibitive ($50-100/month per tenant minimum)
 - No shared improvements (must deploy to all tenants)
@@ -835,11 +896,13 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 **Pattern:** Sell codebase to each venue as standalone product
 
 **Pros:**
+
 - No architectural changes needed
 - Maximum tenant customization
 - One-time revenue vs. recurring
 
 **Cons:**
+
 - No recurring SaaS revenue
 - Can't push updates to all customers
 - Each customer needs hosting/maintenance
@@ -854,11 +917,13 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 **Pattern:** One shared catalog, tenants just configure pricing/availability
 
 **Pros:**
+
 - Minimal changes (add vendor field to Package)
 - Shared package templates
 - Network effects (customers discover multiple venues)
 
 **Cons:**
+
 - Not "unique landing page" per requirement
 - Weak branding differentiation
 - Competitive concerns (venues see each other's pricing)
@@ -879,6 +944,7 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ✅ **Competitive Advantage:** Most wedding booking tools are single-tenant
 
 ⚠️ **Requires Commitment:**
+
 - 4 months development time
 - $100K+ development cost (assuming 2 devs @ $150K salary)
 - Ongoing security maintenance
@@ -887,12 +953,14 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 ### When to Start?
 
 **Option A: Now** (if)
+
 - Committed to SaaS model
 - Budget for 4 months development
 - Have 5-10 beta tenants lined up
 - Runway to go 4 months without new revenue
 
 **Option B: Later** (if)
+
 - Still validating market fit
 - Want to acquire 10+ customers first
 - Budget constraints
@@ -901,6 +969,7 @@ it('should block Tenant A from accessing Tenant B data', async () => {
 **Recommendation:** **Validate demand first, then invest in multi-tenancy.**
 
 Suggested approach:
+
 1. **Month 1-2:** Manually onboard 5 wedding venues on separate single-tenant deployments
 2. **Month 3:** If all 5 are paying customers, commit to multi-tenancy
 3. **Month 4-7:** Execute multi-tenancy migration (4 months)
@@ -943,6 +1012,7 @@ This de-risks the investment by proving demand before architectural commitment.
 ### Appendix A: File Change Inventory
 
 **High-Priority (Breaking Changes):**
+
 - `/server/prisma/schema.prisma` - Add Tenant model, tenantId columns
 - `/server/src/di.ts` - Refactor to factory pattern
 - `/server/src/middleware/tenant.ts` - NEW: Tenant resolution
@@ -952,11 +1022,13 @@ This de-risks the investment by proving demand before architectural commitment.
 - `/client/src/lib/api.ts` - Tenant header injection
 
 **Medium-Priority:**
+
 - `/server/src/adapters/prisma/*.ts` - Tenant-scoped queries (6 files)
 - `/packages/contracts/src/api.v1.ts` - Tenant endpoints
 - `/client/src/features/**/*.tsx` - Tenant context usage (10+ files)
 
 **Low-Priority (Admin-Only):**
+
 - `/client/src/features/admin/**/*.tsx` - Tenant-scoped admin (7 files)
 
 ### Appendix B: Database Migration Scripts
@@ -974,12 +1046,14 @@ See security assessment section above
 ### Appendix E: Cost-Benefit Analysis
 
 **Investment:**
+
 - 4 months dev time (2 developers): ~$100K
 - Infrastructure (Supabase scale-up): +$50/month
 - Stripe Connect fees: 0.25% per transaction
 - Ongoing maintenance: ~10 hrs/month
 
 **Return:**
+
 - Tenant 1-10: $99/month = $990/month
 - Tenant 11-50: $99/month = $4,950/month
 - Tenant 51-100: $99/month = $9,900/month
@@ -997,6 +1071,7 @@ See security assessment section above
 The Elope application is **technically capable of becoming multi-tenant** with 4 months of focused development effort. The architecture is solid, the team is competent (evidenced by clean codebase), and the market opportunity exists.
 
 **However, success depends on:**
+
 1. **Business commitment** to SaaS model
 2. **Validated demand** from 10+ potential tenants
 3. **Security-first implementation** (no shortcuts)

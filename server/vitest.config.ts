@@ -46,10 +46,10 @@ export default defineConfig(({ mode }) => {
         // Current: 42.35% lines, 77.45% branches, 36.94% functions
         // Target:  80% lines, 75% branches, 80% functions, 80% statements
         thresholds: {
-          lines: 40,        // Current: 42.35%, Target: 80%
-          branches: 75,     // Current: 77.45%, Target: 75% ✓
-          functions: 35,    // Current: 36.94%, Target: 80%
-          statements: 40,   // Current: 42.35%, Target: 80%
+          lines: 40, // Current: 42.35%, Target: 80%
+          branches: 75, // Current: 77.45%, Target: 75% ✓
+          functions: 35, // Current: 36.94%, Target: 80%
+          statements: 40, // Current: 42.35%, Target: 80%
         },
 
         // Additional V8 options

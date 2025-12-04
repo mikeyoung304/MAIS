@@ -11,10 +11,10 @@ import { logger } from '../../lib/core/logger';
 import { toISODate } from '../lib/date-utils';
 
 // Transaction configuration for booking creation
-const BOOKING_TRANSACTION_TIMEOUT_MS = 5000;  // 5 seconds
+const BOOKING_TRANSACTION_TIMEOUT_MS = 5000; // 5 seconds
 const BOOKING_ISOLATION_LEVEL = 'ReadCommitted' as const;
-const MAX_TRANSACTION_RETRIES = 3;  // Retry up to 3 times on deadlock
-const RETRY_DELAY_MS = 100;  // Base delay between retries
+const MAX_TRANSACTION_RETRIES = 3; // Retry up to 3 times on deadlock
+const RETRY_DELAY_MS = 100; // Base delay between retries
 
 /**
  * Generate deterministic lock ID from tenantId + date for PostgreSQL advisory locks
@@ -68,10 +68,7 @@ export class PrismaBookingRepository implements BookingRepository {
    * Helper: Retry transaction on serialization failures (deadlocks/write conflicts)
    * Implements exponential backoff for concurrent transaction conflicts
    */
-  private async retryTransaction<T>(
-    operation: () => Promise<T>,
-    context: string
-  ): Promise<T> {
+  private async retryTransaction<T>(operation: () => Promise<T>, context: string): Promise<T> {
     let lastError: any;
 
     for (let attempt = 1; attempt <= MAX_TRANSACTION_RETRIES; attempt++) {
@@ -84,8 +81,8 @@ export class PrismaBookingRepository implements BookingRepository {
         const isRetryable =
           error instanceof PrismaClientKnownRequestError &&
           (error.code === 'P2034' || // Transaction conflict
-           error.message.includes('write conflict') ||
-           error.message.includes('deadlock'));
+            error.message.includes('write conflict') ||
+            error.message.includes('deadlock'));
 
         // If not retryable or last attempt, throw immediately
         if (!isRetryable || attempt === MAX_TRANSACTION_RETRIES) {
@@ -94,15 +91,18 @@ export class PrismaBookingRepository implements BookingRepository {
 
         // Exponential backoff: 100ms, 200ms, 400ms
         const delay = RETRY_DELAY_MS * Math.pow(2, attempt - 1);
-        logger.warn({
-          context,
-          attempt,
-          maxRetries: MAX_TRANSACTION_RETRIES,
-          delayMs: delay,
-          error: error.message
-        }, 'Transaction conflict, retrying...');
+        logger.warn(
+          {
+            context,
+            attempt,
+            maxRetries: MAX_TRANSACTION_RETRIES,
+            delayMs: delay,
+            error: error.message,
+          },
+          'Transaction conflict, retrying...'
+        );
 
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
 
@@ -177,122 +177,125 @@ export class PrismaBookingRepository implements BookingRepository {
   ): Promise<Booking> {
     return this.retryTransaction(async () => {
       try {
-        return await this.prisma.$transaction(async (tx) => {
-        // Acquire advisory lock for this specific tenant+date combination
-        // Lock is automatically released when transaction ends
-        const lockId = hashTenantDate(tenantId, booking.eventDate);
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
+        return await this.prisma.$transaction(
+          async (tx) => {
+            // Acquire advisory lock for this specific tenant+date combination
+            // Lock is automatically released when transaction ends
+            const lockId = hashTenantDate(tenantId, booking.eventDate);
+            await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-        // Check if date is already booked for this tenant
-        const existing = await tx.booking.findFirst({
-          where: { tenantId, date: new Date(booking.eventDate) }
-        });
+            // Check if date is already booked for this tenant
+            const existing = await tx.booking.findFirst({
+              where: { tenantId, date: new Date(booking.eventDate) },
+            });
 
-        if (existing) {
-          throw new BookingConflictError(booking.eventDate);
-        }
+            if (existing) {
+              throw new BookingConflictError(booking.eventDate);
+            }
 
-        // Create or find the customer (tenant-scoped)
-        // Normalize email to lowercase for case-insensitive matching
-        const normalizedEmail = booking.email.toLowerCase().trim();
-        const customer = await tx.customer.upsert({
-          where: {
-            tenantId_email: {
-              tenantId,
-              email: normalizedEmail,
-            },
-          },
-          update: {
-            name: booking.coupleName,
-            phone: booking.phone,
-          },
-          create: {
-            tenantId,
-            email: normalizedEmail,
-            name: booking.coupleName,
-            phone: booking.phone,
-          },
-        });
-
-        // Fetch actual add-on prices for accurate financial records
-        const addOnPrices = new Map<string, number>();
-        if (booking.addOnIds.length > 0) {
-          const addOns = await tx.addOn.findMany({
-            where: {
-              tenantId,
-              id: { in: booking.addOnIds },
-            },
-            select: { id: true, price: true },
-          });
-          addOns.forEach(a => addOnPrices.set(a.id, a.price));
-        }
-
-        // Create booking with tenant isolation
-        const created = await tx.booking.create({
-          data: {
-            id: booking.id,
-            tenantId,
-            customerId: customer.id,
-            packageId: booking.packageId,
-            date: new Date(booking.eventDate),
-            totalPrice: booking.totalCents,
-            status: this.mapToPrismaStatus(booking.status),
-            commissionAmount: booking.commissionAmount ?? 0,
-            commissionPercent: booking.commissionPercent ?? 0,
-            // Reminder fields
-            reminderDueDate: booking.reminderDueDate ? new Date(booking.reminderDueDate) : null,
-            // Cancellation and refund fields (optional on create)
-            cancelledBy: booking.cancelledBy ?? null,
-            cancellationReason: booking.cancellationReason ?? null,
-            refundStatus: booking.refundStatus ?? undefined,
-            refundAmount: booking.refundAmount ?? null,
-            refundedAt: booking.refundedAt ? new Date(booking.refundedAt) : null,
-            stripeRefundId: booking.stripeRefundId ?? null,
-            // Deposit fields (optional on create)
-            depositPaidAmount: booking.depositPaidAmount ?? null,
-            balanceDueDate: booking.balanceDueDate ? new Date(booking.balanceDueDate) : null,
-            balancePaidAmount: booking.balancePaidAmount ?? null,
-            balancePaidAt: booking.balancePaidAt ? new Date(booking.balancePaidAt) : null,
-            addOns: {
-              create: booking.addOnIds.map((addOnId) => ({
-                addOnId,
-                quantity: 1,
-                unitPrice: addOnPrices.get(addOnId) || 0,
-              })),
-            },
-          },
-          include: {
-            customer: true,
-            addOns: {
-              select: {
-                addOnId: true,
+            // Create or find the customer (tenant-scoped)
+            // Normalize email to lowercase for case-insensitive matching
+            const normalizedEmail = booking.email.toLowerCase().trim();
+            const customer = await tx.customer.upsert({
+              where: {
+                tenantId_email: {
+                  tenantId,
+                  email: normalizedEmail,
+                },
               },
-            },
+              update: {
+                name: booking.coupleName,
+                phone: booking.phone,
+              },
+              create: {
+                tenantId,
+                email: normalizedEmail,
+                name: booking.coupleName,
+                phone: booking.phone,
+              },
+            });
+
+            // Fetch actual add-on prices for accurate financial records
+            const addOnPrices = new Map<string, number>();
+            if (booking.addOnIds.length > 0) {
+              const addOns = await tx.addOn.findMany({
+                where: {
+                  tenantId,
+                  id: { in: booking.addOnIds },
+                },
+                select: { id: true, price: true },
+              });
+              addOns.forEach((a) => addOnPrices.set(a.id, a.price));
+            }
+
+            // Create booking with tenant isolation
+            const created = await tx.booking.create({
+              data: {
+                id: booking.id,
+                tenantId,
+                customerId: customer.id,
+                packageId: booking.packageId,
+                date: new Date(booking.eventDate),
+                totalPrice: booking.totalCents,
+                status: this.mapToPrismaStatus(booking.status),
+                commissionAmount: booking.commissionAmount ?? 0,
+                commissionPercent: booking.commissionPercent ?? 0,
+                // Reminder fields
+                reminderDueDate: booking.reminderDueDate ? new Date(booking.reminderDueDate) : null,
+                // Cancellation and refund fields (optional on create)
+                cancelledBy: booking.cancelledBy ?? null,
+                cancellationReason: booking.cancellationReason ?? null,
+                refundStatus: booking.refundStatus ?? undefined,
+                refundAmount: booking.refundAmount ?? null,
+                refundedAt: booking.refundedAt ? new Date(booking.refundedAt) : null,
+                stripeRefundId: booking.stripeRefundId ?? null,
+                // Deposit fields (optional on create)
+                depositPaidAmount: booking.depositPaidAmount ?? null,
+                balanceDueDate: booking.balanceDueDate ? new Date(booking.balanceDueDate) : null,
+                balancePaidAmount: booking.balancePaidAmount ?? null,
+                balancePaidAt: booking.balancePaidAt ? new Date(booking.balancePaidAt) : null,
+                addOns: {
+                  create: booking.addOnIds.map((addOnId) => ({
+                    addOnId,
+                    quantity: 1,
+                    unitPrice: addOnPrices.get(addOnId) || 0,
+                  })),
+                },
+              },
+              include: {
+                customer: true,
+                addOns: {
+                  select: {
+                    addOnId: true,
+                  },
+                },
+              },
+            });
+
+            // P2 #037 FIX: Create Payment record atomically with Booking
+            // This ensures financial reconciliation integrity - if booking succeeds
+            // but payment record creation fails, the entire transaction rolls back
+            if (paymentData) {
+              await tx.payment.create({
+                data: {
+                  tenantId,
+                  bookingId: created.id,
+                  amount: paymentData.amount,
+                  currency: 'USD',
+                  status: 'CAPTURED', // Payment already completed via Stripe
+                  processor: paymentData.processor,
+                  processorId: paymentData.processorId,
+                },
+              });
+            }
+
+            return this.toDomainBooking(created);
           },
-        });
-
-        // P2 #037 FIX: Create Payment record atomically with Booking
-        // This ensures financial reconciliation integrity - if booking succeeds
-        // but payment record creation fails, the entire transaction rolls back
-        if (paymentData) {
-          await tx.payment.create({
-            data: {
-              tenantId,
-              bookingId: created.id,
-              amount: paymentData.amount,
-              currency: 'USD',
-              status: 'CAPTURED', // Payment already completed via Stripe
-              processor: paymentData.processor,
-              processorId: paymentData.processorId,
-            },
-          });
-        }
-
-        return this.toDomainBooking(created);
-      }, {
-        timeout: BOOKING_TRANSACTION_TIMEOUT_MS,
-        isolationLevel: this.isolationLevel as any,
-      });
+          {
+            timeout: BOOKING_TRANSACTION_TIMEOUT_MS,
+            isolationLevel: this.isolationLevel as any,
+          }
+        );
       } catch (error) {
         // Handle unique constraint violation on eventDate
         if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -433,7 +436,7 @@ export class PrismaBookingRepository implements BookingRepository {
       },
     });
 
-    return bookings.map(b => b.date);
+    return bookings.map((b) => b.date);
   }
 
   /**
@@ -451,7 +454,11 @@ export class PrismaBookingRepository implements BookingRepository {
    * await repository.updateGoogleEventId('tenant_123', 'booking_abc', 'google_event_xyz');
    * ```
    */
-  async updateGoogleEventId(tenantId: string, bookingId: string, googleEventId: string): Promise<void> {
+  async updateGoogleEventId(
+    tenantId: string,
+    bookingId: string,
+    googleEventId: string
+  ): Promise<void> {
     await this.prisma.booking.updateMany({
       where: {
         tenantId,
@@ -525,11 +532,15 @@ export class PrismaBookingRepository implements BookingRepository {
 
     // Map to TimeslotBooking type (filter out nulls and type-narrow)
     return bookings
-      .filter((b): b is typeof b & {
-        serviceId: string;
-        startTime: Date;
-        endTime: Date;
-      } => b.serviceId !== null && b.startTime !== null && b.endTime !== null)
+      .filter(
+        (
+          b
+        ): b is typeof b & {
+          serviceId: string;
+          startTime: Date;
+          endTime: Date;
+        } => b.serviceId !== null && b.startTime !== null && b.endTime !== null
+      )
       .map((b) => ({
         id: b.id,
         tenantId: b.tenantId,
@@ -605,11 +616,15 @@ export class PrismaBookingRepository implements BookingRepository {
 
     // Map to TimeslotBooking type (filter out nulls and type-narrow)
     return bookings
-      .filter((b): b is typeof b & {
-        serviceId: string;
-        startTime: Date;
-        endTime: Date;
-      } => b.serviceId !== null && b.startTime !== null && b.endTime !== null)
+      .filter(
+        (
+          b
+        ): b is typeof b & {
+          serviceId: string;
+          startTime: Date;
+          endTime: Date;
+        } => b.serviceId !== null && b.startTime !== null && b.endTime !== null
+      )
       .map((b) => ({
         id: b.id,
         tenantId: b.tenantId,
@@ -721,10 +736,7 @@ export class PrismaBookingRepository implements BookingRepository {
           },
         },
       },
-      orderBy: [
-        { startTime: 'asc' },
-        { createdAt: 'desc' },
-      ],
+      orderBy: [{ startTime: 'asc' }, { createdAt: 'desc' }],
       take: limit,
       skip: offset,
     });
@@ -862,77 +874,83 @@ export class PrismaBookingRepository implements BookingRepository {
    */
   async reschedule(tenantId: string, bookingId: string, newDate: string): Promise<Booking> {
     return this.retryTransaction(async () => {
-      return await this.prisma.$transaction(async (tx) => {
-        // Acquire advisory lock for the new date
-        const lockId = hashTenantDate(tenantId, newDate);
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
+      return await this.prisma.$transaction(
+        async (tx) => {
+          // Acquire advisory lock for the new date
+          const lockId = hashTenantDate(tenantId, newDate);
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-        // Verify booking exists and belongs to tenant
-        const booking = await tx.booking.findFirst({
-          where: { id: bookingId, tenantId },
-        });
+          // Verify booking exists and belongs to tenant
+          const booking = await tx.booking.findFirst({
+            where: { id: bookingId, tenantId },
+          });
 
-        if (!booking) {
-          throw new Error(`Booking ${bookingId} not found`);
-        }
+          if (!booking) {
+            throw new Error(`Booking ${bookingId} not found`);
+          }
 
-        if (booking.status === 'CANCELED') {
-          throw new Error(`Booking ${bookingId} is already cancelled`);
-        }
+          if (booking.status === 'CANCELED') {
+            throw new Error(`Booking ${bookingId} is already cancelled`);
+          }
 
-        // Check if new date is available
-        const existing = await tx.booking.findFirst({
-          where: {
-            tenantId,
-            date: new Date(newDate),
-            status: { notIn: ['CANCELED'] },
-            id: { not: bookingId }, // Exclude current booking
-          },
-        });
+          // Check if new date is available
+          const existing = await tx.booking.findFirst({
+            where: {
+              tenantId,
+              date: new Date(newDate),
+              status: { notIn: ['CANCELED'] },
+              id: { not: bookingId }, // Exclude current booking
+            },
+          });
 
-        if (existing) {
-          throw new BookingConflictError(newDate);
-        }
+          if (existing) {
+            throw new BookingConflictError(newDate);
+          }
 
-        // TODO-154 FIX: Calculate new reminder due date (7 days before new event date)
-        // Only set if the event is more than 7 days away
-        const eventDate = new Date(newDate + 'T00:00:00Z');
-        const now = new Date();
-        const daysUntilEvent = Math.floor((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        const newReminderDueDate = daysUntilEvent > 7
-          ? new Date(eventDate.getTime() - 7 * 24 * 60 * 60 * 1000)
-          : null;
+          // TODO-154 FIX: Calculate new reminder due date (7 days before new event date)
+          // Only set if the event is more than 7 days away
+          const eventDate = new Date(newDate + 'T00:00:00Z');
+          const now = new Date();
+          const daysUntilEvent = Math.floor(
+            (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+          );
+          const newReminderDueDate =
+            daysUntilEvent > 7 ? new Date(eventDate.getTime() - 7 * 24 * 60 * 60 * 1000) : null;
 
-        // Update booking date and reminder fields
-        const updated = await tx.booking.update({
-          where: { id: bookingId },
-          data: {
-            date: new Date(newDate),
-            // TODO-154 FIX: Update reminder due date and reset sent flag
-            reminderDueDate: newReminderDueDate,
-            reminderSentAt: null, // Reset so new reminder will be sent
-          },
-          include: {
-            customer: true,
-            addOns: {
-              select: {
-                addOnId: true,
+          // Update booking date and reminder fields
+          const updated = await tx.booking.update({
+            where: { id: bookingId },
+            data: {
+              date: new Date(newDate),
+              // TODO-154 FIX: Update reminder due date and reset sent flag
+              reminderDueDate: newReminderDueDate,
+              reminderSentAt: null, // Reset so new reminder will be sent
+            },
+            include: {
+              customer: true,
+              addOns: {
+                select: {
+                  addOnId: true,
+                },
               },
             },
-          },
-        });
+          });
 
-        return this.toDomainBooking(updated);
-      }, {
-        timeout: BOOKING_TRANSACTION_TIMEOUT_MS,
-        isolationLevel: this.isolationLevel as any,
-      });
+          return this.toDomainBooking(updated);
+        },
+        {
+          timeout: BOOKING_TRANSACTION_TIMEOUT_MS,
+          isolationLevel: this.isolationLevel as any,
+        }
+      );
     }, `reschedule-booking-${tenantId}-${bookingId}-${newDate}`);
   }
 
   // Mappers
   // P1-149 FIX: Updated to include all BookingStatus values
-  private mapToPrismaStatus(status: string): 'PENDING' | 'DEPOSIT_PAID' | 'PAID' | 'CONFIRMED' | 'CANCELED' | 'REFUNDED' | 'FULFILLED' {
+  private mapToPrismaStatus(
+    status: string
+  ): 'PENDING' | 'DEPOSIT_PAID' | 'PAID' | 'CONFIRMED' | 'CANCELED' | 'REFUNDED' | 'FULFILLED' {
     switch (status) {
       case 'PENDING':
         return 'PENDING';
@@ -1124,52 +1142,55 @@ export class PrismaBookingRepository implements BookingRepository {
     balanceAmountCents: number
   ): Promise<Booking | null> {
     return this.retryTransaction(async () => {
-      return await this.prisma.$transaction(async (tx) => {
-        // Acquire advisory lock for this specific booking's balance payment
-        const lockId = hashTenantBooking(tenantId, bookingId);
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
+      return await this.prisma.$transaction(
+        async (tx) => {
+          // Acquire advisory lock for this specific booking's balance payment
+          const lockId = hashTenantBooking(tenantId, bookingId);
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-        // Check current booking state within the lock
-        const booking = await tx.booking.findUnique({
-          where: { id: bookingId },
-          include: {
-            customer: true,
-            addOns: { select: { addOnId: true } },
-          },
-        });
+          // Check current booking state within the lock
+          const booking = await tx.booking.findUnique({
+            where: { id: bookingId },
+            include: {
+              customer: true,
+              addOns: { select: { addOnId: true } },
+            },
+          });
 
-        if (!booking) {
-          throw new NotFoundError(`Booking ${bookingId} not found`);
+          if (!booking) {
+            throw new NotFoundError(`Booking ${bookingId} not found`);
+          }
+
+          if (booking.tenantId !== tenantId) {
+            throw new NotFoundError(`Booking ${bookingId} not found for tenant`);
+          }
+
+          // Idempotent: If balance already paid, return null (not an error)
+          if (booking.balancePaidAt) {
+            return null;
+          }
+
+          // Update booking with balance paid and mark as PAID
+          const updated = await tx.booking.update({
+            where: { id: bookingId },
+            data: {
+              balancePaidAmount: balanceAmountCents,
+              balancePaidAt: new Date(),
+              status: 'PAID',
+            },
+            include: {
+              customer: true,
+              addOns: { select: { addOnId: true } },
+            },
+          });
+
+          return this.toDomainBooking(updated);
+        },
+        {
+          timeout: BOOKING_TRANSACTION_TIMEOUT_MS,
+          isolationLevel: this.isolationLevel as any,
         }
-
-        if (booking.tenantId !== tenantId) {
-          throw new NotFoundError(`Booking ${bookingId} not found for tenant`);
-        }
-
-        // Idempotent: If balance already paid, return null (not an error)
-        if (booking.balancePaidAt) {
-          return null;
-        }
-
-        // Update booking with balance paid and mark as PAID
-        const updated = await tx.booking.update({
-          where: { id: bookingId },
-          data: {
-            balancePaidAmount: balanceAmountCents,
-            balancePaidAt: new Date(),
-            status: 'PAID',
-          },
-          include: {
-            customer: true,
-            addOns: { select: { addOnId: true } },
-          },
-        });
-
-        return this.toDomainBooking(updated);
-      }, {
-        timeout: BOOKING_TRANSACTION_TIMEOUT_MS,
-        isolationLevel: this.isolationLevel as any,
-      });
+      );
     }, `complete-balance-payment-${tenantId}-${bookingId}`);
   }
 }

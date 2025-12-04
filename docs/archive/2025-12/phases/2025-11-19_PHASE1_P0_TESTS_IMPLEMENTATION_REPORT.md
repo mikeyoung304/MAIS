@@ -12,12 +12,12 @@ Successfully implemented **28 critical path tests** across 3 core service module
 
 ### Tests Implemented
 
-| Service | Tests | File | Status |
-|---------|-------|------|--------|
-| **CommissionService** | 12 | `server/test/services/commission.service.spec.ts` | ✅ Complete |
-| **IdempotencyService** | 10 | `server/test/services/idempotency.service.spec.ts` | ✅ Complete |
-| **StripeConnectService** | 6 | `server/test/services/stripe-connect.service.spec.ts` | ✅ Complete |
-| **TOTAL** | **28** | 3 files | ✅ **100%** |
+| Service                  | Tests  | File                                                  | Status      |
+| ------------------------ | ------ | ----------------------------------------------------- | ----------- |
+| **CommissionService**    | 12     | `server/test/services/commission.service.spec.ts`     | ✅ Complete |
+| **IdempotencyService**   | 10     | `server/test/services/idempotency.service.spec.ts`    | ✅ Complete |
+| **StripeConnectService** | 6      | `server/test/services/stripe-connect.service.spec.ts` | ✅ Complete |
+| **TOTAL**                | **28** | 3 files                                               | ✅ **100%** |
 
 ---
 
@@ -30,6 +30,7 @@ Successfully implemented **28 critical path tests** across 3 core service module
 #### Test Coverage:
 
 **Basic Calculation (6 tests)**
+
 - ✅ `calculateCommission - standard rate (12%)`
   - Tests basic commission calculation with 12% rate
   - Verifies $500 booking → $60 commission
@@ -55,6 +56,7 @@ Successfully implemented **28 critical path tests** across 3 core service module
   - Validates proper error message
 
 **Booking Total Calculation (4 tests)**
+
 - ✅ `calculateBookingTotal - package only (no add-ons)`
   - Tests booking with base package only
   - Validates commission calculation on package price
@@ -72,6 +74,7 @@ Successfully implemented **28 critical path tests** across 3 core service module
   - Prevents booking with inactive add-ons
 
 **Refund Commission (2 tests)**
+
 - ✅ `calculateRefundCommission - full refund (100%)`
   - Tests full refund commission reversal
   - Validates $60 commission fully reversed
@@ -89,6 +92,7 @@ Successfully implemented **28 critical path tests** across 3 core service module
 #### Test Coverage:
 
 **Key Generation (3 tests)**
+
 - ✅ `generateKey - creates deterministic SHA-256 hash`
   - Tests hash format: `prefix_[32-char-hex]`
   - Validates key structure
@@ -102,6 +106,7 @@ Successfully implemented **28 critical path tests** across 3 core service module
   - Validates collision prevention
 
 **Check and Store (3 tests)**
+
 - ✅ `checkAndStore - stores new key successfully`
   - Tests first-time key storage
   - Validates Prisma create call with TTL
@@ -115,6 +120,7 @@ Successfully implemented **28 critical path tests** across 3 core service module
   - Simulates two simultaneous requests for same key
 
 **Response Caching (3 tests)**
+
 - ✅ `getStoredResponse - returns cached response`
   - Tests response retrieval
   - Validates JSON parsing
@@ -128,6 +134,7 @@ Successfully implemented **28 critical path tests** across 3 core service module
   - Validates Prisma update call
 
 **Specialized Keys (1 test)**
+
 - ✅ `generateCheckoutKey - includes timestamp rounding`
   - Tests 10-second window for retries
   - Validates timestamps within window produce same key
@@ -141,6 +148,7 @@ Successfully implemented **28 critical path tests** across 3 core service module
 #### Test Coverage:
 
 **Account Creation (3 tests)**
+
 - ✅ `createConnectedAccount - creates Express account`
   - Tests Stripe Express account creation
   - Validates account type, capabilities, business profile
@@ -154,6 +162,7 @@ Successfully implemented **28 critical path tests** across 3 core service module
   - Validates tenant lookup
 
 **Account Links (2 tests)**
+
 - ✅ `createOnboardingLink - generates onboarding link`
   - Tests Stripe AccountLink creation
   - Validates refresh/return URL configuration
@@ -163,6 +172,7 @@ Successfully implemented **28 critical path tests** across 3 core service module
   - Validates `charges_enabled` check
 
 **Account Management (1 test)**
+
 - ✅ `deleteConnectedAccount - cleans up Stripe account`
   - Tests account deletion
   - Validates database cleanup (account ID, onboarding status, secrets)
@@ -176,6 +186,7 @@ Successfully implemented **28 critical path tests** across 3 core service module
 All tests use **Vitest mocks** following established patterns:
 
 1. **Prisma Client Mocking**
+
    ```typescript
    mockPrisma = {
      tenant: {
@@ -195,6 +206,7 @@ All tests use **Vitest mocks** following established patterns:
    ```
 
 2. **Stripe SDK Mocking**
+
    ```typescript
    mockStripe = {
      accounts: {
@@ -244,11 +256,13 @@ it('should calculate commission with standard rate (12%)', async () => {
 ## Files Created
 
 ### New Test Files
+
 1. `/Users/mikeyoung/CODING/Elope/server/test/services/commission.service.spec.ts` (7.7 KB)
 2. `/Users/mikeyoung/CODING/Elope/server/test/services/idempotency.service.spec.ts` (7.5 KB)
 3. `/Users/mikeyoung/CODING/Elope/server/test/services/stripe-connect.service.spec.ts` (7.3 KB)
 
 ### Directory Structure
+
 ```
 server/test/services/
 ├── commission.service.spec.ts       (12 tests) ✅
@@ -261,6 +275,7 @@ server/test/services/
 ## Edge Cases Covered
 
 ### CommissionService
+
 - ✅ Rounding edge case ($99.99 × 10.5%)
 - ✅ Stripe minimum enforcement (0.5%)
 - ✅ Stripe maximum enforcement (50%)
@@ -269,12 +284,14 @@ server/test/services/
 - ✅ Partial vs. full refund calculations
 
 ### IdempotencyService
+
 - ✅ Concurrent request race conditions
 - ✅ Expired key cleanup
 - ✅ Timestamp rounding (10-second windows)
 - ✅ Prisma P2002 unique constraint errors
 
 ### StripeConnectService
+
 - ✅ Duplicate account prevention
 - ✅ Missing tenant handling
 - ✅ Onboarding status tracking
@@ -358,6 +375,7 @@ Total: 28 tests | 28 passed | 0 failed
 **DO NOT RUN TESTS YET** due to system memory constraints (as per instructions).
 
 When ready to run:
+
 1. Run tests in isolation: `npm test -- test/services/commission.service.spec.ts`
 2. Verify all 12 tests pass
 3. Repeat for other services
@@ -405,6 +423,7 @@ Add to `.github/workflows/test.yml`:
 ### ✅ None
 
 All tests were implemented successfully with:
+
 - No service implementation changes required
 - No missing dependencies
 - No unclear requirements

@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { FormSkeleton } from "@/components/ui/skeleton";
-import { ChevronLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { FormSkeleton } from '@/components/ui/skeleton';
+import { ChevronLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export function LoadingState() {
   const navigate = useNavigate();
@@ -13,7 +13,7 @@ export function LoadingState() {
         <div className="mb-8">
           <Button
             variant="ghost"
-            onClick={() => navigate("/admin/dashboard")}
+            onClick={() => navigate('/admin/dashboard')}
             className="mb-4 text-white/70 hover:text-white/90"
           >
             <ChevronLeft className="h-4 w-4 mr-2" />

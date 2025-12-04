@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "163"
+issue_id: '163'
 tags: [code-review, quality, mvp-gaps, typescript]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 Event names are hardcoded strings throughout the codebase. Typos cause silent event delivery failures.
 
 **Why This Matters:**
+
 - No compile-time safety
 - Typos cause silent failures
 - Hard to refactor

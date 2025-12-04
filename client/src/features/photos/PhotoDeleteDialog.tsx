@@ -1,14 +1,14 @@
-import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
-} from "@/components/ui/dialog";
-import type { PackagePhoto } from "./hooks/usePhotoUpload";
+  DialogTitle,
+} from '@/components/ui/dialog';
+import type { PackagePhoto } from './hooks/usePhotoUpload';
 
 interface PhotoDeleteDialogProps {
   photo: PackagePhoto | null;
@@ -26,7 +26,7 @@ export function PhotoDeleteDialog({
   photo,
   isDeleting,
   onConfirm,
-  onCancel
+  onCancel,
 }: PhotoDeleteDialogProps) {
   return (
     <Dialog open={!!photo} onOpenChange={(open) => !open && onCancel()}>
@@ -45,9 +45,7 @@ export function PhotoDeleteDialog({
               alt="Photo to delete"
               className="w-full h-48 object-cover rounded border border-white/20"
             />
-            <p className="text-sm text-white/70 mt-2 truncate">
-              {photo.filename}
-            </p>
+            <p className="text-sm text-white/70 mt-2 truncate">{photo.filename}</p>
           </div>
         )}
 
@@ -60,11 +58,7 @@ export function PhotoDeleteDialog({
           >
             Cancel
           </Button>
-          <Button
-            onClick={onConfirm}
-            disabled={isDeleting}
-            className="bg-red-600 hover:bg-red-700"
-          >
+          <Button onClick={onConfirm} disabled={isDeleting} className="bg-red-600 hover:bg-red-700">
             {isDeleting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

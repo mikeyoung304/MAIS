@@ -1,5 +1,5 @@
 ---
-title: "Visual Editor P3 Fixes: AlertDialog, useMemo, and Audit Logging Patterns"
+title: 'Visual Editor P3 Fixes: AlertDialog, useMemo, and Audit Logging Patterns'
 date: 2025-12-02
 category: code-review-patterns
 severity: medium
@@ -40,6 +40,7 @@ This document captures three P3 fixes made to the visual editor feature during c
 ### Problem
 
 Using `window.confirm()` is an anti-pattern because:
+
 - Blocks JavaScript execution
 - Cannot be styled to match application design
 - Poor accessibility (no ARIA labels, focus trap, or keyboard navigation)
@@ -121,6 +122,7 @@ const handleConfirmDiscard = useCallback(async () => {
 ### Problem
 
 Recalculating derived values on every render:
+
 - Wastes CPU cycles
 - Creates new object references
 - Can trigger unnecessary child re-renders
@@ -128,6 +130,7 @@ Recalculating derived values on every render:
 ### Detection
 
 Look for derived values calculated directly in component body:
+
 ```typescript
 // Potential useMemo candidate
 const effectiveValue = props.draft ?? props.live;
@@ -140,7 +143,7 @@ const hasChanges = props.draft !== null && props.draft !== props.live;
 function EditablePackageCard({ package: pkg }) {
   // ❌ Recalculated on EVERY render
   const effectiveTitle = pkg.draftTitle ?? pkg.title;
-  const effectiveDescription = pkg.draftDescription ?? pkg.description ?? "";
+  const effectiveDescription = pkg.draftDescription ?? pkg.description ?? '';
   const effectivePriceCents = pkg.draftPriceCents ?? pkg.priceCents;
   const effectivePhotos = pkg.draftPhotos ?? pkg.photos ?? [];
 
@@ -155,41 +158,54 @@ function EditablePackageCard({ package: pkg }) {
 ```typescript
 function EditablePackageCard({ package: pkg }) {
   // ✅ Memoized - only recalculates when dependencies change
-  const effectiveValues = useMemo(() => ({
-    title: pkg.draftTitle ?? pkg.title,
-    description: pkg.draftDescription ?? pkg.description ?? "",
-    priceCents: pkg.draftPriceCents ?? pkg.priceCents,
-    photos: pkg.draftPhotos ?? pkg.photos ?? [],
-  }), [
-    pkg.draftTitle, pkg.title,
-    pkg.draftDescription, pkg.description,
-    pkg.draftPriceCents, pkg.priceCents,
-    pkg.draftPhotos, pkg.photos
-  ]);
+  const effectiveValues = useMemo(
+    () => ({
+      title: pkg.draftTitle ?? pkg.title,
+      description: pkg.draftDescription ?? pkg.description ?? '',
+      priceCents: pkg.draftPriceCents ?? pkg.priceCents,
+      photos: pkg.draftPhotos ?? pkg.photos ?? [],
+    }),
+    [
+      pkg.draftTitle,
+      pkg.title,
+      pkg.draftDescription,
+      pkg.description,
+      pkg.draftPriceCents,
+      pkg.priceCents,
+      pkg.draftPhotos,
+      pkg.photos,
+    ]
+  );
 
-  const draftFlags = useMemo(() => ({
-    hasTitle: pkg.draftTitle !== null && pkg.draftTitle !== pkg.title,
-    hasDescription: pkg.draftDescription !== null,
-    hasPrice: pkg.draftPriceCents !== null,
-    hasPhotos: pkg.draftPhotos !== null,
-  }), [
-    pkg.draftTitle, pkg.title,
-    pkg.draftDescription, pkg.description,
-    pkg.draftPriceCents, pkg.priceCents,
-    pkg.draftPhotos
-  ]);
+  const draftFlags = useMemo(
+    () => ({
+      hasTitle: pkg.draftTitle !== null && pkg.draftTitle !== pkg.title,
+      hasDescription: pkg.draftDescription !== null,
+      hasPrice: pkg.draftPriceCents !== null,
+      hasPhotos: pkg.draftPhotos !== null,
+    }),
+    [
+      pkg.draftTitle,
+      pkg.title,
+      pkg.draftDescription,
+      pkg.description,
+      pkg.draftPriceCents,
+      pkg.priceCents,
+      pkg.draftPhotos,
+    ]
+  );
 }
 ```
 
 ### When to Use useMemo
 
-| Scenario | Use useMemo? |
-|----------|--------------|
-| Filtering/mapping arrays | ✅ Yes |
-| Objects passed as props | ✅ Yes |
-| Expensive calculations | ✅ Yes |
-| Simple primitives | ❌ No |
-| Single property access | ❌ No |
+| Scenario                 | Use useMemo? |
+| ------------------------ | ------------ |
+| Filtering/mapping arrays | ✅ Yes       |
+| Objects passed as props  | ✅ Yes       |
+| Expensive calculations   | ✅ Yes       |
+| Simple primitives        | ❌ No        |
+| Single property access   | ❌ No        |
 
 ---
 
@@ -198,6 +214,7 @@ function EditablePackageCard({ package: pkg }) {
 ### Problem
 
 Without structured logging:
+
 - Cannot debug user-reported issues
 - No audit trail for compliance
 - Cannot track what changed when
@@ -263,20 +280,21 @@ async discardDrafts(tenantId: string, packageIds?: string[]) {
 
 ### Key Fields for Audit Logs
 
-| Field | Purpose |
-|-------|---------|
-| `action` | Searchable action type (e.g., `package_draft_saved`) |
-| `tenantId` | Multi-tenant isolation |
-| `resourceId` | Primary identifier |
-| `resourceSlug` | Human-readable identifier |
-| `changedFields` | What was modified |
-| `count` | Number of affected items |
+| Field           | Purpose                                              |
+| --------------- | ---------------------------------------------------- |
+| `action`        | Searchable action type (e.g., `package_draft_saved`) |
+| `tenantId`      | Multi-tenant isolation                               |
+| `resourceId`    | Primary identifier                                   |
+| `resourceSlug`  | Human-readable identifier                            |
+| `changedFields` | What was modified                                    |
+| `count`         | Number of affected items                             |
 
 ---
 
 ## Code Review Checklist
 
 ### React UI Patterns
+
 - [ ] No `window.confirm/alert/prompt` - use AlertDialog
 - [ ] Derived values wrapped in `useMemo()` when:
   - Passed as props to child components
@@ -285,6 +303,7 @@ async discardDrafts(tenantId: string, packageIds?: string[]) {
 - [ ] Event handlers wrapped in `useCallback()`
 
 ### Backend Logging Patterns
+
 - [ ] All mutations have `logger.info()` calls
 - [ ] Logs include: action, tenantId, resourceId, changedFields
 - [ ] Log BEFORE destructive operations to capture state

@@ -76,9 +76,7 @@ export const FinalCtaSection = memo(function FinalCtaSection({ config }: FinalCt
 
           {/* Subheadline */}
           {config.subheadline && (
-            <p className="text-xl text-white/90 mb-10">
-              {config.subheadline}
-            </p>
+            <p className="text-xl text-white/90 mb-10">{config.subheadline}</p>
           )}
 
           {/* CTA Button */}

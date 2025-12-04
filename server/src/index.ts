@@ -21,19 +21,24 @@ async function verifyDatabaseWithPrisma(prisma: PrismaClient): Promise<void> {
     logger.info('🔍 Verifying database connection via Prisma...');
 
     // Simple query to verify connection - use raw query for fastest execution
-    const result = await prisma.$queryRaw<{ count: bigint }[]>`SELECT COUNT(*) as count FROM "Tenant" LIMIT 1`;
+    const result = await prisma.$queryRaw<
+      { count: bigint }[]
+    >`SELECT COUNT(*) as count FROM "Tenant" LIMIT 1`;
     const tenantCount = Number(result[0]?.count ?? 0);
 
     logger.info('✅ Database connection verified successfully');
     logger.info(`📊 Database contains ${tenantCount} tenant(s)`);
   } catch (error) {
     const err = error as Error & { code?: string };
-    logger.error({
-      errorName: err.name,
-      errorMessage: err.message,
-      errorCode: err.code,
-      errorStack: err.stack,
-    }, '❌ Database connection verification failed');
+    logger.error(
+      {
+        errorName: err.name,
+        errorMessage: err.message,
+        errorCode: err.code,
+        errorStack: err.stack,
+      },
+      '❌ Database connection verification failed'
+    );
     throw error;
   }
 }

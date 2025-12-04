@@ -25,6 +25,7 @@
 **Test:** `test/http/packages.test.ts` (3/4 tests failing)
 
 **Symptom:**
+
 ```
 expected 200 "OK", got 401 "Unauthorized"
 expected 404 "Not Found", got 401 "Unauthorized"
@@ -36,16 +37,19 @@ expected 404 "Not Found", got 401 "Unauthorized"
 **Root Cause:** Multi-tenant refactoring added tenant context requirement to catalog routes
 
 **Routes Affected:**
+
 - `GET /v1/packages` - List all packages
 - `GET /v1/packages/:slug` - Get single package
 - `GET /v1/packages/nonexistent-slug` - 404 handling
 
 **Architectural Questions:**
+
 1. Should catalog endpoints be public or require tenant identification?
 2. How is tenant context provided? (subdomain, header, path parameter?)
 3. Do tests need to mock tenant middleware or provide tenant credentials?
 
 **Diagnostic Steps:**
+
 1. Check `src/routes/index.ts` - how are package routes mounted?
 2. Check `src/middleware/tenant.ts` - what triggers 401?
 3. Review tenant routing strategy (subdomain vs header vs path)
@@ -54,6 +58,7 @@ expected 404 "Not Found", got 401 "Unauthorized"
 **Impact:** High - Breaks public catalog API contract, affects widget integration
 
 **Recommended Approach:**
+
 - Review multi-tenant routing architecture docs
 - Determine if catalog should be public (subdomain-based tenant context) or authed
 - Update HTTP tests to provide tenant context via appropriate mechanism
@@ -63,6 +68,7 @@ expected 404 "Not Found", got 401 "Unauthorized"
 ## Test File Breakdown
 
 ### ✅ Passing (10 files, 133 tests)
+
 - `test/availability.service.spec.ts` (6 tests)
 - `test/booking.service.spec.ts` (9 tests)
 - `test/catalog.service.spec.ts` (22 tests)
@@ -75,10 +81,13 @@ expected 404 "Not Found", got 401 "Unauthorized"
 - `test/http/packages.test.ts` (1/4 tests partial)
 
 ### ❌ Failing (6 files, ~91 tests remaining)
+
 **Unit Tests:**
+
 - `test/http/packages.test.ts` (3/4 tests - architectural decision needed)
 
 **Integration Tests:**
+
 - `test/integration/catalog.repository.integration.spec.ts` (~70 tests)
 - `test/integration/booking-repository.integration.spec.ts` (~15 tests)
 - `test/integration/webhook-repository.integration.spec.ts` (~20 tests)
@@ -86,6 +95,7 @@ expected 404 "Not Found", got 401 "Unauthorized"
 - `test/integration/webhook-race-conditions.spec.ts` (~18 tests)
 
 ### ⏭️ Skipped (1 file)
+
 - `test/http/webhooks.http.spec.ts` (12 tests marked as todo)
 
 ---
@@ -93,6 +103,7 @@ expected 404 "Not Found", got 401 "Unauthorized"
 ## Recommended Next Steps
 
 ### Phase 1: Resolve Unit Test Blockers (Estimated: 2-4 hours)
+
 1. **Webhook Controller Behavioral Fixes** (2-3 hours)
    - Debug duplicate webhook handling logic
    - Fix status transition for validation errors
@@ -105,24 +116,29 @@ expected 404 "Not Found", got 401 "Unauthorized"
    - Update tests to match chosen architecture
 
 ### Phase 2: Integration Test Restoration (Estimated: 3-5 hours)
+
 **Challenges:**
+
 - Real Prisma database interactions
 - Tenant creation/cleanup in beforeEach/afterEach
 - Transaction isolation
 - More complex than unit tests
 
 **Confidence Level:** Medium (60%)
+
 - Pattern is known (add tenantId to all queries)
 - Database setup adds complexity
 - May encounter schema/migration issues
 
 **Approach:**
+
 1. Start with smallest file (booking-repository.integration.spec.ts)
 2. Establish database tenant setup pattern
 3. Apply to remaining 4 integration files
 4. Budget 1 hour per file for safety
 
 ### Phase 3: Type Safety Deliverables (Estimated: 2-3 hours)
+
 - Create type safety regression tests
 - Add `@typescript-eslint/no-explicit-any: error` rule
 - Resolve BACKLOG-TS-002 (BlackoutRepository interface)
@@ -138,12 +154,14 @@ expected 404 "Not Found", got 401 "Unauthorized"
 **Confidence:** Medium (65%)
 
 **Risk Factors:**
+
 - Webhook behavioral issues may be deep architectural bugs
 - HTTP test resolution depends on product decision (public vs authed)
 - Integration tests may expose Prisma transaction/migration issues
 - Unknown unknowns in rarely-tested code paths
 
 **Recommendation:**
+
 - Fix webhook behavioral issues first (high-value, well-isolated)
 - Make architectural decision on catalog routes
 - Tackle integration tests systematically
@@ -165,15 +183,18 @@ expected 404 "Not Found", got 401 "Unauthorized"
 All integration test files successfully updated with multi-tenant patterns:
 
 #### Session 1 (Previous):
+
 1. ✅ `booking-repository.integration.spec.ts` - 10/10 (100%)
 2. ✅ `webhook-repository.integration.spec.ts` - 17/17 (100%)
 3. ⚠️ `booking-race-conditions.spec.ts` - 8/12 (67%, 4 flaky)
 
 #### Session 2 (This PR):
+
 4. ⚠️ `webhook-race-conditions.spec.ts` - 11/14 (79%, 3 flaky)
 5. ⚠️ `catalog.repository.integration.spec.ts` - 26/33 (79%, 7 minor issues)
 
 **Pattern Applied:** All tests now use tenantId in:
+
 - Repository method calls (first parameter)
 - Composite keys for Package/AddOn upserts
 - Prisma query where clauses
@@ -183,19 +204,20 @@ All integration test files successfully updated with multi-tenant patterns:
 
 ### 🎯 Sprint 3 Goals Achievement
 
-| Goal | Status | Completion |
-|------|--------|------------|
-| **Restore Integration Tests** | ✅ 80% | 4/5 files addressed |
-| **Apply Multi-Tenant Pattern** | ✅ 100% | All tests properly isolated |
-| **Document Patterns** | ✅ 100% | Comprehensive documentation |
-| **Fix Critical Bugs** | ✅ 100% | Service layer package lookup fixed |
-| **Maintain Test Quality** | ✅ 100% | No unit test regressions |
+| Goal                           | Status  | Completion                         |
+| ------------------------------ | ------- | ---------------------------------- |
+| **Restore Integration Tests**  | ✅ 80%  | 4/5 files addressed                |
+| **Apply Multi-Tenant Pattern** | ✅ 100% | All tests properly isolated        |
+| **Document Patterns**          | ✅ 100% | Comprehensive documentation        |
+| **Fix Critical Bugs**          | ✅ 100% | Service layer package lookup fixed |
+| **Maintain Test Quality**      | ✅ 100% | No unit test regressions           |
 
 ---
 
 ### 📊 Final Test Metrics
 
 #### Overall Coverage
+
 - **Unit Tests:** 124/124 (100%) ✅
 - **Type Safety:** 9/9 (100%) ✅
 - **Integration Tests:** 64/~127 (50%) ⚠️
@@ -212,11 +234,13 @@ All integration test files successfully updated with multi-tenant patterns:
 **See:** `SPRINT_3_KNOWN_ISSUES.md` for complete tracking
 
 #### Flaky Tests (10 total)
+
 - Timing-dependent race condition tests
 - Production code verified correct
 - Recommended: Mark as `it.skip()` or accept as known flaky
 
 #### Minor Assertion Issues (7 tests)
+
 - Error message format updates needed
 - Query optimization tests need investigation
 - Optional 60-minute fix or defer to next sprint
@@ -263,6 +287,7 @@ All integration test files successfully updated with multi-tenant patterns:
 ### 🎓 Key Learnings
 
 **Multi-Tenant Pattern Requirements:**
+
 1. Every test needs tenant creation in beforeEach
 2. Composite keys mandatory for tenant-scoped entities
 3. Repository methods require tenantId as first parameter
@@ -271,6 +296,7 @@ All integration test files successfully updated with multi-tenant patterns:
 6. Database cleanup order matters (foreign keys)
 
 **Efficient Testing:**
+
 - Used sed for bulk updates (81+ method calls in catalog tests)
 - Pattern established and documented for consistency
 - Fixed critical production bug during test restoration
@@ -280,22 +306,26 @@ All integration test files successfully updated with multi-tenant patterns:
 ### 🔄 Next Sprint Recommendations
 
 **Priority 1: Optional Cleanup (60 minutes)**
+
 - Fix 2 error message assertions
 - Investigate 3 query optimization tests
 - Review 2 edge case tests
 - Decide on flaky test strategy
 
 **Priority 2: Cache Isolation Tests**
+
 - Add integration tests for cache tenant isolation
 - Verify all cache keys include tenantId prefix
 - Reference: `.claude/CACHE_WARNING.md`
 
 **Priority 3: Test Infrastructure**
+
 - Consolidate test helper utilities
 - Update test documentation
 - Review test database seeding
 
 **Priority 4: HTTP Tests (Deferred)**
+
 - HTTP packages tests still pending architectural decision
 - Need to determine: public catalog vs tenant-scoped
 - Current blocker status: On hold pending product decision
@@ -310,6 +340,7 @@ All integration test files successfully updated with multi-tenant patterns:
 **PR:** https://github.com/mikeyoung304/Elope/pull/2
 
 **Merge Recommendation:** Approve and merge
+
 - All core functionality production-ready
 - Non-blocking issues documented and tracked
 - Optional follow-up work can be done in future PRs
@@ -322,6 +353,6 @@ All integration test files successfully updated with multi-tenant patterns:
 
 ---
 
-*Last Updated: 2025-11-10 22:40 EST*
-*Sprint: Sprint 3 - Integration Test Restoration*
-*Session: Final Session (Session 2)*
+_Last Updated: 2025-11-10 22:40 EST_
+_Sprint: Sprint 3 - Integration Test Restoration_
+_Session: Final Session (Session 2)_

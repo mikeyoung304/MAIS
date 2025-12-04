@@ -16,25 +16,26 @@ This plan synthesizes findings from comprehensive SaaS market research to chart 
 
 The SaaS research identifies a structural transformation in SMB technology:
 
-| Crisis | Opportunity |
-|--------|-------------|
-| "Tool fatigue" - SMBs average 87 SaaS tools per department | Unified intelligence platforms that consolidate fragmented stacks |
+| Crisis                                                           | Opportunity                                                         |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------- |
+| "Tool fatigue" - SMBs average 87 SaaS tools per department       | Unified intelligence platforms that consolidate fragmented stacks   |
 | Competitor GetBreezy only solves "Front Office" (intake/booking) | "Back Office" automation - execution, analysis, vendor coordination |
-| Generative AI plateau (systems that create content) | Agentic AI breakthrough (systems that execute workflows) |
+| Generative AI plateau (systems that create content)              | Agentic AI breakthrough (systems that execute workflows)            |
 
 **Market Size:**
+
 - TAM: $3.6B (80k event businesses x $45k avg software spend)
 - SAM: $900M (15k boutique planners x $60k software spend)
 - SOM (3-year): $27M (1,500 customers x $18k ARPU)
 
 ### 1.2 Competitive Analysis: GetBreezy's Structural Weaknesses
 
-| GetBreezy Strength | GetBreezy Weakness | MAIS Opportunity |
-|-------------------|-------------------|------------------|
-| Accessible pricing ($50-150/mo) | Generalist "wide and shallow" approach | Vertical depth with industry-specific AI |
-| Modern UX, easy setup | AI is reactive (chatbot), not proactive | Agentic workflows that execute tasks |
-| Strong Front Office (intake) | Zero Back Office (execution) | "Last Mile" automation |
-| Bundled "unlimited everything" | Can't capture value from power users | Usage-based pricing for AI features |
+| GetBreezy Strength              | GetBreezy Weakness                      | MAIS Opportunity                         |
+| ------------------------------- | --------------------------------------- | ---------------------------------------- |
+| Accessible pricing ($50-150/mo) | Generalist "wide and shallow" approach  | Vertical depth with industry-specific AI |
+| Modern UX, easy setup           | AI is reactive (chatbot), not proactive | Agentic workflows that execute tasks     |
+| Strong Front Office (intake)    | Zero Back Office (execution)            | "Last Mile" automation                   |
+| Bundled "unlimited everything"  | Can't capture value from power users    | Usage-based pricing for AI features      |
 
 ### 1.3 The Agentic AI Shift
 
@@ -57,13 +58,13 @@ Human does the work         vs    AI does the work (with approval)
 
 ### 2.1 Current MAIS vs. Research Vision
 
-| Dimension | Current MAIS | Research Recommendation | Gap |
-|-----------|--------------|-------------------------|-----|
-| Target Market | Horizontal (any service business) | Vertical-specific (coaching, events, agencies) | **Major** |
-| Value Proposition | "Business growth club" + booking | "Last mile automation" + workflow execution | **Major** |
-| AI Capability | None (manual processes) | Agentic AI (autonomous execution) | **Critical** |
-| Revenue Model | Revenue-sharing (10-15% commission) | 3-tier SaaS + usage-based AI | **Moderate** |
-| Go-to-Market | Direct B2C (club members) | B2B2C white-label | **Major** |
+| Dimension         | Current MAIS                        | Research Recommendation                        | Gap          |
+| ----------------- | ----------------------------------- | ---------------------------------------------- | ------------ |
+| Target Market     | Horizontal (any service business)   | Vertical-specific (coaching, events, agencies) | **Major**    |
+| Value Proposition | "Business growth club" + booking    | "Last mile automation" + workflow execution    | **Major**    |
+| AI Capability     | None (manual processes)             | Agentic AI (autonomous execution)              | **Critical** |
+| Revenue Model     | Revenue-sharing (10-15% commission) | 3-tier SaaS + usage-based AI                   | **Moderate** |
+| Go-to-Market      | Direct B2C (club members)           | B2B2C white-label                              | **Major**    |
 
 **Overall Strategic Alignment: 32%**
 
@@ -82,14 +83,14 @@ The technical analysis revealed MAIS is better positioned than expected:
 
 ### 2.3 Critical Technical Gaps
 
-| Gap | Impact | Build Effort |
-|-----|--------|--------------|
-| Multi-LLM Router | Core infrastructure for AI features | High (2 weeks) |
-| Agentic Workflow Engine | Stateful agents with memory | High (3 weeks) |
-| Agent Proposal Storage | Audit trail for AI actions | Medium (1 week) |
-| Human-in-the-Loop UI | Coach/admin approval workflow | Medium (2 weeks) |
-| Sentiment Analysis | Client health scoring | Medium (1 week) |
-| Embedded Narrative Analytics | Self-explaining dashboards | Medium (2 weeks) |
+| Gap                          | Impact                              | Build Effort     |
+| ---------------------------- | ----------------------------------- | ---------------- |
+| Multi-LLM Router             | Core infrastructure for AI features | High (2 weeks)   |
+| Agentic Workflow Engine      | Stateful agents with memory         | High (3 weeks)   |
+| Agent Proposal Storage       | Audit trail for AI actions          | Medium (1 week)  |
+| Human-in-the-Loop UI         | Coach/admin approval workflow       | Medium (2 weeks) |
+| Sentiment Analysis           | Client health scoring               | Medium (1 week)  |
+| Embedded Narrative Analytics | Self-explaining dashboards          | Medium (2 weeks) |
 
 ---
 
@@ -99,15 +100,16 @@ The technical analysis revealed MAIS is better positioned than expected:
 
 **Why Event Planning over Coaching or Agencies:**
 
-| Factor | Coaching | Event Planning | Agencies |
-|--------|----------|----------------|----------|
-| Architecture Fit | Moderate (40%) | **Excellent (95%)** | Poor (20%) |
+| Factor                  | Coaching             | Event Planning                        | Agencies                |
+| ----------------------- | -------------------- | ------------------------------------- | ----------------------- |
+| Architecture Fit        | Moderate (40%)       | **Excellent (95%)**                   | Poor (20%)              |
 | Current Feature Mapping | Discovery calls only | Booking, packages, add-ons, blackouts | Would need project mgmt |
-| Commission Model Fit | Unusual | **Industry standard 10-15%** | Unusual |
-| Agentic Opportunity | Accountability bots | **Vendor negotiation, timeline gen** | Performance monitoring |
-| TAM/SAM | $150k businesses | **80k businesses, $900M SAM** | $200k but poor fit |
+| Commission Model Fit    | Unusual              | **Industry standard 10-15%**          | Unusual                 |
+| Agentic Opportunity     | Accountability bots  | **Vendor negotiation, timeline gen**  | Performance monitoring  |
+| TAM/SAM                 | $150k businesses     | **80k businesses, $900M SAM**         | $200k but poor fit      |
 
 **Rationale:**
+
 1. MAIS's booking model (1 date = 1 event) maps perfectly
 2. Add-ons model (venue, catering, flowers) already exists
 3. Segment model ready for: Weddings, Corporate, Non-Profit
@@ -119,13 +121,14 @@ The technical analysis revealed MAIS is better positioned than expected:
 **From:** Revenue-sharing only (10-15% commission)
 **To:** Hybrid SaaS + commission + AI usage fees
 
-| Tier | Price | Commission | AI Features | Target |
-|------|-------|------------|-------------|--------|
-| **Tier 1: Essential** | FREE or $49/mo | 0% | Reactive chatbot, FAQ answering | Lead capture, data magnet |
-| **Tier 2: Growth** | $149/mo | 5% | Proactive reminders, client portal, reporting | 80% of customers |
-| **Tier 3: Premier** | $499/mo | 3% | Agentic workflows, vendor negotiation, AI proposals | Power users |
+| Tier                  | Price          | Commission | AI Features                                         | Target                    |
+| --------------------- | -------------- | ---------- | --------------------------------------------------- | ------------------------- |
+| **Tier 1: Essential** | FREE or $49/mo | 0%         | Reactive chatbot, FAQ answering                     | Lead capture, data magnet |
+| **Tier 2: Growth**    | $149/mo        | 5%         | Proactive reminders, client portal, reporting       | 80% of customers          |
+| **Tier 3: Premier**   | $499/mo        | 3%         | Agentic workflows, vendor negotiation, AI proposals | Power users               |
 
 **Psychology:**
+
 - Tier 1 is the "Trojan Horse" - capture data flow, upsell based on pain points
 - Tier 2 is the "rational choice" - core value, ~1.6x Tier 1
 - Tier 3 is the "price anchor" - signals premium, drives Tier 2 adoption
@@ -185,24 +188,28 @@ Q3-Q4 2025: Agentic AI Build
 **Goal:** Validate event planning vertical with 10 pilot customers
 
 **Week 1-4: Messaging & Positioning**
+
 - [ ] Update homepage: "MAIS: The Last Mile Event Coordinator"
 - [ ] Remove "business growth club for any entrepreneur" language
 - [ ] Add event-specific hero images (weddings, corporate, fundraisers)
 - [ ] Create 3 segment landing pages (Wedding, Corporate, Non-Profit)
 
 **Week 5-8: Customer Development**
+
 - [ ] Recruit 10 event planners (Little Bit Farm + 9 referrals)
 - [ ] Offer founding member pricing: Tier 2 at $99/mo (33% discount)
 - [ ] Conduct 5 customer interviews per week
 - [ ] Document pain points and feature requests
 
 **Week 9-12: Feature Activation**
+
 - [ ] Enable Segment model with 3 event types
 - [ ] Build segment-specific landing pages
 - [ ] Configure package grouping: "Micro", "Standard", "Luxury" per event type
 - [ ] Test booking flow for event-specific workflows
 
 **Success Metrics:**
+
 - 10 pilot sign-ups
 - 80% activation rate (create first package)
 - 3 completed bookings across pilots
@@ -213,6 +220,7 @@ Q3-Q4 2025: Agentic AI Build
 **Goal:** Launch 3-tier pricing, acquire 100 customers, build AI infrastructure
 
 **Pricing Rollout:**
+
 - [ ] Tier 1: FREE (up to 3 bookings/mo, 1 event type)
 - [ ] Tier 2: $149/mo + 5% commission (unlimited, all segments)
 - [ ] Tier 3: WAITLIST (pre-sell at $499/mo target)
@@ -252,12 +260,14 @@ Week 9-12: Testing & Polish
 ```
 
 **Go-to-Market:**
+
 - [ ] Partner with 1 event industry association (ILEA, WIPA, or NACE)
 - [ ] Sponsor 1 industry conference ($5k booth)
 - [ ] Content: "Replace 7 Tools with MAIS" comparison guide
 - [ ] LinkedIn ads targeting event planners ($2k/mo)
 
 **Success Metrics:**
+
 - 100 total customers (60 Tier 1, 40 Tier 2)
 - $6k MRR
 - 15% Tier 1 → Tier 2 conversion
@@ -268,6 +278,7 @@ Week 9-12: Testing & Polish
 **Goal:** Ship Tier 3 agentic features, upsell 20% of Tier 2 base
 
 **Workflow 1: Vendor Proposal Agent (Weeks 1-8)**
+
 ```
 Input: Event details (date, guest count, preferences)
 Process: AI generates RFP, sends to 5+ vendors, collects responses
@@ -282,6 +293,7 @@ User Action: Review, select finalists, approve communications
 - [ ] Side-by-side comparison UI
 
 **Workflow 2: Timeline Generation (Weeks 9-14)**
+
 ```
 Input: Event type (wedding, corporate, non-profit)
 Output: Industry-standard timeline (6-month, 3-month, 1-week, day-of)
@@ -294,6 +306,7 @@ Features: Milestones, vendor coordination dates, reminders
 - [ ] Calendar integration (existing Google Calendar adapter)
 
 **Workflow 3: Post-Event Automation (Weeks 15-20)**
+
 ```
 Trigger: Booking status → "Fulfilled"
 Actions: Thank-you email, review request, referral incentive
@@ -305,11 +318,13 @@ Actions: Thank-you email, review request, referral incentive
 - [ ] Referral tracking
 
 **Beta Testing (Weeks 21-24):**
+
 - [ ] Invite 20 Tier 2 customers to Tier 3 beta (50% discount: $249/mo)
 - [ ] Bi-weekly customer interviews
 - [ ] Iterate based on usage data
 
 **Success Metrics:**
+
 - 20 Tier 3 beta customers
 - 3,000 automated vendor proposals sent
 - 25% Tier 2 → Tier 3 upgrade rate
@@ -320,22 +335,26 @@ Actions: Thank-you email, review request, referral incentive
 **Goal:** Scale to 1,500 customers, pilot B2B2C channel
 
 **Direct Sales Scale:**
+
 - [ ] Hire 2 SDRs for outbound
 - [ ] Launch referral program (give $50, get $50)
 - [ ] SEO content: 50 event planning guides
 
 **B2B2C Pilot:**
+
 - [ ] Partner with 1 large event association (ILEA - 14k members)
 - [ ] White-label MAIS as "ILEA Pro Platform"
 - [ ] Revenue split: 70% MAIS, 30% association
 - [ ] Test with 100 association members
 
 **Product Maturity:**
+
 - [ ] API for custom integrations
 - [ ] Mobile app for day-of coordination
 - [ ] Advanced client-facing reporting
 
 **Success Metrics:**
+
 - 1,500 total customers
 - $400k ARR
 - 100 white-label pilot users
@@ -514,35 +533,38 @@ FEATURE_SENTIMENT_ANALYSIS=false
 
 ### 6.1 Strategic Risks
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| "Boiling the ocean" - trying all verticals | High | Catastrophic | Declare event planning as ONLY vertical for 12 months |
-| Losing existing revenue-sharing customers | Medium | Moderate | Grandfather at current rates, upsell Tier 3 |
-| Building AI before product-market fit | High | High | Validate Tier 1/2 first, pre-sell Tier 3 |
-| GetBreezy copies execution features | Low-Medium | High | Build data moat with vendor integrations |
+| Risk                                       | Likelihood | Impact       | Mitigation                                            |
+| ------------------------------------------ | ---------- | ------------ | ----------------------------------------------------- |
+| "Boiling the ocean" - trying all verticals | High       | Catastrophic | Declare event planning as ONLY vertical for 12 months |
+| Losing existing revenue-sharing customers  | Medium     | Moderate     | Grandfather at current rates, upsell Tier 3           |
+| Building AI before product-market fit      | High       | High         | Validate Tier 1/2 first, pre-sell Tier 3              |
+| GetBreezy copies execution features        | Low-Medium | High         | Build data moat with vendor integrations              |
 
 ### 6.2 Technical Risks
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| LLM hallucination (bad proposals) | Medium | High | Human approval required for all agent actions |
-| Token cost explosion | Low | Medium | Use Haiku model, implement prompt caching |
-| Tenant data leakage via LLM | Medium | Critical | Never send raw PII; sanitize all inputs |
-| Rate limiting (Claude API) | Low | High | Queue-based processing with backoff |
+| Risk                              | Likelihood | Impact   | Mitigation                                    |
+| --------------------------------- | ---------- | -------- | --------------------------------------------- |
+| LLM hallucination (bad proposals) | Medium     | High     | Human approval required for all agent actions |
+| Token cost explosion              | Low        | Medium   | Use Haiku model, implement prompt caching     |
+| Tenant data leakage via LLM       | Medium     | Critical | Never send raw PII; sanitize all inputs       |
+| Rate limiting (Claude API)        | Low        | High     | Queue-based processing with backoff           |
 
 ### 6.3 Go/No-Go Decision Points
 
 **After Phase 1 (Week 12):**
+
 - If <5 pilot customers: Consider different vertical
 - If activation rate <60%: Revisit feature set
 - If NPS <20: Major UX issues to address
 
 **After Phase 2 (Week 24):**
+
 - If <50 customers: Messaging/positioning not resonating
 - If Tier 1→2 conversion <10%: Tier 2 value prop unclear
 - If churn >10%: Product-market fit issues
 
 **After Phase 3 (Week 48):**
+
 - If Tier 3 adoption <15%: Agentic features not compelling
 - If vendor automation usage <50%: Wrong feature bet
 - If MRR <$30k: Reconsider pricing or vertical
@@ -553,32 +575,32 @@ FEATURE_SENTIMENT_ANALYSIS=false
 
 ### Business Metrics
 
-| Metric | Phase 1 | Phase 2 | Phase 3 | Phase 4 |
-|--------|---------|---------|---------|---------|
-| Total Customers | 10 | 100 | 300 | 1,500 |
-| MRR | $1k | $6k | $60k | $33k/mo |
-| ARR | - | $72k | $720k | $400k |
-| Tier 3 Adoption | - | Waitlist | 20% | 30% |
-| Monthly Churn | <5% | <5% | <5% | <5% |
+| Metric          | Phase 1 | Phase 2  | Phase 3 | Phase 4 |
+| --------------- | ------- | -------- | ------- | ------- |
+| Total Customers | 10      | 100      | 300     | 1,500   |
+| MRR             | $1k     | $6k      | $60k    | $33k/mo |
+| ARR             | -       | $72k     | $720k   | $400k   |
+| Tier 3 Adoption | -       | Waitlist | 20%     | 30%     |
+| Monthly Churn   | <5%     | <5%      | <5%     | <5%     |
 
 ### Product Metrics
 
-| Metric | Target |
-|--------|--------|
-| Agent conversation completion rate | >80% |
-| Human approval rate of AI suggestions | >85% |
-| Time saved per event (vendor coordination) | 15+ hours |
-| Vendor proposals sent via automation | 3,000+ (Phase 3) |
-| Sentiment prediction accuracy | >75% |
+| Metric                                     | Target           |
+| ------------------------------------------ | ---------------- |
+| Agent conversation completion rate         | >80%             |
+| Human approval rate of AI suggestions      | >85%             |
+| Time saved per event (vendor coordination) | 15+ hours        |
+| Vendor proposals sent via automation       | 3,000+ (Phase 3) |
+| Sentiment prediction accuracy              | >75%             |
 
 ### Technical Metrics
 
-| Metric | Target |
-|--------|--------|
-| LLM cost per conversation | <$0.05 |
-| P95 agent response latency | <2 seconds |
-| Test coverage (new agent code) | >80% |
-| Error rate | <1% |
+| Metric                         | Target     |
+| ------------------------------ | ---------- |
+| LLM cost per conversation      | <$0.05     |
+| P95 agent response latency     | <2 seconds |
+| Test coverage (new agent code) | >80%       |
+| Error rate                     | <1%        |
 
 ---
 
@@ -613,27 +635,27 @@ FEATURE_SENTIMENT_ANALYSIS=false
 
 ## Appendix A: File Reference Map
 
-| Feature | Files to Create/Modify |
-|---------|----------------------|
-| Agent Framework | `server/src/services/agent.service.ts`, `server/src/adapters/prisma/agent.repository.ts`, `server/src/routes/agent.routes.ts`, `packages/contracts/src/agent.v1.ts` |
-| LLM Integration | `server/src/adapters/llm/claude.adapter.ts`, `server/src/adapters/llm/router.adapter.ts`, `server/src/lib/ports.ts` (add interfaces) |
-| Vendor Automation | `server/src/services/vendor.service.ts`, `server/src/adapters/prisma/vendor.repository.ts`, `packages/contracts/src/vendor.v1.ts` |
-| Frontend Chat | `client/src/features/agent/AgentChat/index.tsx`, `client/src/features/agent/hooks/useAgentChat.ts` |
-| Pricing Page | `client/src/pages/Pricing/index.tsx`, `client/src/pages/Pricing/TierComparison.tsx` |
-| Segment Landing | `client/src/pages/Segments/[slug].tsx` |
+| Feature           | Files to Create/Modify                                                                                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Agent Framework   | `server/src/services/agent.service.ts`, `server/src/adapters/prisma/agent.repository.ts`, `server/src/routes/agent.routes.ts`, `packages/contracts/src/agent.v1.ts` |
+| LLM Integration   | `server/src/adapters/llm/claude.adapter.ts`, `server/src/adapters/llm/router.adapter.ts`, `server/src/lib/ports.ts` (add interfaces)                                |
+| Vendor Automation | `server/src/services/vendor.service.ts`, `server/src/adapters/prisma/vendor.repository.ts`, `packages/contracts/src/vendor.v1.ts`                                   |
+| Frontend Chat     | `client/src/features/agent/AgentChat/index.tsx`, `client/src/features/agent/hooks/useAgentChat.ts`                                                                  |
+| Pricing Page      | `client/src/pages/Pricing/index.tsx`, `client/src/pages/Pricing/TierComparison.tsx`                                                                                 |
+| Segment Landing   | `client/src/pages/Segments/[slug].tsx`                                                                                                                              |
 
 ## Appendix B: Competitive Positioning Matrix
 
-| Feature | MAIS (Post-Pivot) | GetBreezy | HoneyBook | Aisle Planner |
-|---------|-------------------|-----------|-----------|---------------|
-| Event Booking | Yes | Yes | Yes | Yes |
-| Vendor Coordination | **AI-Automated** | No | Manual | Manual |
-| Timeline Generation | **AI-Generated** | No | Templates | Templates |
-| Client Portal | Yes | Yes | Yes | Yes |
-| Revenue Sharing | Yes (5%) | No | No | No |
-| Agentic Workflows | **Yes (Tier 3)** | No | No | No |
-| Vertical Depth | **Event-Specific** | Generalist | Creative-focused | Wedding-focused |
-| Price | $49-499/mo | $50-150/mo | $39-79/mo | $39-99/mo |
+| Feature             | MAIS (Post-Pivot)  | GetBreezy  | HoneyBook        | Aisle Planner   |
+| ------------------- | ------------------ | ---------- | ---------------- | --------------- |
+| Event Booking       | Yes                | Yes        | Yes              | Yes             |
+| Vendor Coordination | **AI-Automated**   | No         | Manual           | Manual          |
+| Timeline Generation | **AI-Generated**   | No         | Templates        | Templates       |
+| Client Portal       | Yes                | Yes        | Yes              | Yes             |
+| Revenue Sharing     | Yes (5%)           | No         | No               | No              |
+| Agentic Workflows   | **Yes (Tier 3)**   | No         | No               | No              |
+| Vertical Depth      | **Event-Specific** | Generalist | Creative-focused | Wedding-focused |
+| Price               | $49-499/mo         | $50-150/mo | $39-79/mo        | $39-99/mo       |
 
 ---
 
@@ -642,6 +664,7 @@ FEATURE_SENTIMENT_ANALYSIS=false
 MAIS is uniquely positioned to capitalize on the "Agentic AI" shift in SMB software. The platform's existing multi-tenant architecture, adapter pattern, and segment model provide 90% of the foundation needed. The strategic gap is **positioning and focus**, not technology.
 
 **The path forward:**
+
 1. **Focus ruthlessly** on Boutique Event Planning for 12 months
 2. **Implement 3-tier pricing** to capture full value spectrum
 3. **Build agentic workflows** that execute, not just chat
@@ -651,5 +674,5 @@ The $900M SAM in event planning, combined with MAIS's architectural advantages, 
 
 ---
 
-*Plan created: November 25, 2025*
-*Status: Ready for Review*
+_Plan created: November 25, 2025_
+_Status: Ready for Review_

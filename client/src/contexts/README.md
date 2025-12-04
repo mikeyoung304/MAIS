@@ -105,20 +105,20 @@ if (isTenantAdmin()) {
 
 ## API Overview
 
-| Property/Method      | Description                        |
-| -------------------- | ---------------------------------- |
-| `user`               | Current user object                |
-| `role`               | Current user role                  |
-| `tenantId`           | Tenant ID (tenant admins only)     |
-| `token`              | JWT token                          |
-| `isAuthenticated`    | True if user is logged in          |
-| `isLoading`          | True during initial auth check     |
-| `login()`            | Login method                       |
-| `logout()`           | Logout method                      |
-| `isPlatformAdmin()`  | Check if platform admin            |
-| `isTenantAdmin()`    | Check if tenant admin              |
-| `hasRole()`          | Check specific role                |
-| `refreshAuth()`      | Manually refresh auth state        |
+| Property/Method     | Description                    |
+| ------------------- | ------------------------------ |
+| `user`              | Current user object            |
+| `role`              | Current user role              |
+| `tenantId`          | Tenant ID (tenant admins only) |
+| `token`             | JWT token                      |
+| `isAuthenticated`   | True if user is logged in      |
+| `isLoading`         | True during initial auth check |
+| `login()`           | Login method                   |
+| `logout()`          | Logout method                  |
+| `isPlatformAdmin()` | Check if platform admin        |
+| `isTenantAdmin()`   | Check if tenant admin          |
+| `hasRole()`         | Check specific role            |
+| `refreshAuth()`     | Manually refresh auth state    |
 
 ## Architecture
 

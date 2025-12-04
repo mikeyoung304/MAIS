@@ -1,10 +1,10 @@
 ---
 status: complete
 priority: p3
-issue_id: "244"
+issue_id: '244'
 tags: [api-design, landing-page, consistency]
 dependencies: []
-source: "code-review-pr-14"
+source: 'code-review-pr-14'
 ---
 
 # TODO-244: Standardize API Response Shapes
@@ -68,9 +68,9 @@ This follows REST best practices where mutations can return minimal acknowledgme
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-12-04 | Created | Code review of PR #14 |
+| Date       | Action   | Notes                                  |
+| ---------- | -------- | -------------------------------------- |
+| 2025-12-04 | Created  | Code review of PR #14                  |
 | 2025-12-04 | Resolved | Documented intentional design in JSDoc |
 
 ## Tags

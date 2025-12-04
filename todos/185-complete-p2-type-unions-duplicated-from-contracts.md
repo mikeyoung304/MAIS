@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "185"
+issue_id: '185'
 tags: [code-review, type-safety, DRY]
 dependencies: []
 ---
@@ -11,6 +11,7 @@ dependencies: []
 ## Problem Statement
 
 `BookingStatus` and `RefundStatus` type unions in `client/src/lib/utils.ts` are **manually duplicated** from the contract Zod schemas. If contract enums change, frontend types become stale, causing:
+
 1. Type mismatches between client and server
 2. Silent failures if status values don't match
 3. Maintenance burden to keep in sync
@@ -20,23 +21,41 @@ dependencies: []
 **Location:** `client/src/lib/utils.ts:40-45`
 
 **Current (duplicated):**
+
 ```typescript
 // client/src/lib/utils.ts
-export type BookingStatus = 'PENDING' | 'DEPOSIT_PAID' | 'PAID' | 'CONFIRMED' | 'CANCELED' | 'REFUNDED' | 'FULFILLED';
+export type BookingStatus =
+  | 'PENDING'
+  | 'DEPOSIT_PAID'
+  | 'PAID'
+  | 'CONFIRMED'
+  | 'CANCELED'
+  | 'REFUNDED'
+  | 'FULFILLED';
 export type RefundStatus = 'NONE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'PARTIAL' | 'FAILED';
 
 // packages/contracts/src/dto.ts (source of truth)
-status: z.enum(['PENDING', 'DEPOSIT_PAID', 'PAID', 'CONFIRMED', 'CANCELED', 'REFUNDED', 'FULFILLED'])
-refundStatus: z.enum(['NONE', 'PENDING', 'PROCESSING', 'COMPLETED', 'PARTIAL', 'FAILED'])
+status: z.enum([
+  'PENDING',
+  'DEPOSIT_PAID',
+  'PAID',
+  'CONFIRMED',
+  'CANCELED',
+  'REFUNDED',
+  'FULFILLED',
+]);
+refundStatus: z.enum(['NONE', 'PENDING', 'PROCESSING', 'COMPLETED', 'PARTIAL', 'FAILED']);
 ```
 
 **Risk Assessment:**
+
 - Impact: Medium (type drift between client and server)
 - Likelihood: Medium (types will drift if contracts change)
 
 ## Proposed Solutions
 
 ### Solution 1: Extract types from Zod schemas (Recommended)
+
 - Use `z.infer<typeof Schema>` to derive types
 - Single source of truth in contracts
 - **Pros:** Auto-sync with contract changes
@@ -45,6 +64,7 @@ refundStatus: z.enum(['NONE', 'PENDING', 'PROCESSING', 'COMPLETED', 'PARTIAL', '
 - **Risk:** Low
 
 ### Solution 2: Export types from contracts package
+
 - Add explicit type exports to `@macon/contracts`
 - Import in client utils
 - **Pros:** Cleaner separation
@@ -59,10 +79,12 @@ Implement **Solution 1** for quick fix, consider **Solution 2** for cleaner arch
 ## Technical Details
 
 **Affected Files:**
+
 - `client/src/lib/utils.ts`
 - Potentially `packages/contracts/src/index.ts` (for Solution 2)
 
 **Proposed Change (Solution 1):**
+
 ```typescript
 import { BookingDtoSchema, BookingManagementDtoSchema } from '@macon/contracts';
 import { z } from 'zod';
@@ -81,8 +103,8 @@ export type RefundStatus = NonNullable<z.infer<typeof BookingManagementDtoSchema
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                      |
+| ---------- | ------- | ------------------------------------------ |
 | 2025-12-03 | Created | Found during code review of commit 45024e6 |
 
 ## Resources

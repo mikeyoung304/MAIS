@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "021"
+issue_id: '021'
 tags: [code-review, typescript, type-safety, storefront]
 dependencies: []
 ---
@@ -17,23 +17,33 @@ The `TierDetail` component uses `!` non-null assertion operators to bypass TypeS
 ## Findings
 
 ### Non-Null Assertions Found
+
 **File:** `client/src/features/storefront/TierDetail.tsx`
 
 **Line 195:**
+
 ```typescript
-{formatCurrency(navigation.prev.pkg!.priceCents)}
+{
+  formatCurrency(navigation.prev.pkg!.priceCents);
+}
 ```
 
 **Line 219:**
+
 ```typescript
-{formatCurrency(navigation.next.pkg!.priceCents)}
+{
+  formatCurrency(navigation.next.pkg!.priceCents);
+}
 ```
 
 ### Context
+
 These are inside conditional blocks that check `navigation.prev` and `navigation.next`, but TypeScript doesn't understand the conditional narrowing on nested properties.
 
 ### Why This Happens
+
 The `navigation` object has this shape:
+
 ```typescript
 const navigation = {
   prev: prevTier ? { tierLevel: prevTier, pkg: tiers[prevTier] } : null,
@@ -46,6 +56,7 @@ When we check `navigation.prev`, TypeScript doesn't narrow `pkg` automatically.
 ## Proposed Solutions
 
 ### Option A: Destructure for Narrowing (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 ```typescript
@@ -56,6 +67,7 @@ When we check `navigation.prev`, TypeScript doesn't narrow `pkg` automatically.
 ```
 
 Or cleaner:
+
 ```typescript
 {navigation.prev?.pkg && (
   <div>{formatCurrency(navigation.prev.pkg.priceCents)}</div>
@@ -63,14 +75,17 @@ Or cleaner:
 ```
 
 **Pros:**
+
 - Removes unsafe assertions
 - TypeScript properly narrows types
 - No runtime risk
 
 **Cons:**
+
 - Slightly more verbose
 
 ### Option B: Refine Type Definition
+
 **Effort:** Medium | **Risk:** Low
 
 Create a discriminated union type for navigation:
@@ -88,14 +103,17 @@ const navigation = useMemo(() => ({
 ```
 
 **Pros:**
+
 - Better type definition
 - Assertions move to definition time
 
 **Cons:**
+
 - Still has one assertion
 - More complex type
 
 ### Option C: Add Runtime Guards
+
 **Effort:** Small | **Risk:** Low
 
 ```typescript
@@ -105,10 +123,12 @@ const navigation = useMemo(() => ({
 ```
 
 **Pros:**
+
 - Simple change
 - Optional chaining is safer
 
 **Cons:**
+
 - Doesn't fix the underlying type issue
 
 ## Recommended Action
@@ -118,15 +138,21 @@ Implement **Option C** - Use optional chaining for simplicity.
 ## Technical Details
 
 **File to Update:**
+
 - `client/src/features/storefront/TierDetail.tsx` (lines 195, 219)
 
 **Change:**
+
 ```typescript
 // Before
-{formatCurrency(navigation.prev.pkg!.priceCents)}
+{
+  formatCurrency(navigation.prev.pkg!.priceCents);
+}
 
 // After
-{navigation.prev?.pkg && formatCurrency(navigation.prev.pkg.priceCents)}
+{
+  navigation.prev?.pkg && formatCurrency(navigation.prev.pkg.priceCents);
+}
 ```
 
 ## Acceptance Criteria
@@ -138,9 +164,9 @@ Implement **Option C** - Use optional chaining for simplicity.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-27 | Created | Found during PR #6 code quality review |
+| Date       | Action    | Notes                                                                    |
+| ---------- | --------- | ------------------------------------------------------------------------ |
+| 2025-11-27 | Created   | Found during PR #6 code quality review                                   |
 | 2025-12-02 | Completed | Replaced non-null assertions with optional chaining at lines 167 and 191 |
 
 ## Resources

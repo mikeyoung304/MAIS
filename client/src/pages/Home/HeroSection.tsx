@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Check } from "lucide-react";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { ArrowRight, Check } from 'lucide-react';
 
 /**
  * HeroSection - Apple-quality hero
@@ -9,7 +9,7 @@ import { ArrowRight, Check } from "lucide-react";
  * Generous typography, subtle ambient animation.
  */
 export function HeroSection() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -43,7 +43,7 @@ export function HeroSection() {
         {/* Overline */}
         <p
           className="text-sage text-sm font-medium tracking-[0.2em] uppercase mb-8 animate-fade-slide-up"
-          style={{ animationDelay: "0.1s" }}
+          style={{ animationDelay: '0.1s' }}
         >
           From Idea to Booking
         </p>
@@ -52,7 +52,7 @@ export function HeroSection() {
         <h1
           id="hero-heading"
           className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-text-primary leading-[1.05] tracking-tight mb-8 animate-fade-slide-up"
-          style={{ animationDelay: "0.2s" }}
+          style={{ animationDelay: '0.2s' }}
         >
           Launch tomorrow.
         </h1>
@@ -60,18 +60,17 @@ export function HeroSection() {
         {/* Subheadline */}
         <p
           className="text-xl md:text-2xl lg:text-3xl text-text-muted font-light mb-16 leading-relaxed max-w-2xl mx-auto animate-fade-slide-up"
-          style={{ animationDelay: "0.4s" }}
+          style={{ animationDelay: '0.4s' }}
         >
-          Professional website.<br />
-          Seamless booking and payments.<br />
+          Professional website.
+          <br />
+          Seamless booking and payments.
+          <br />
           One subscription.
         </p>
 
         {/* Email Form */}
-        <div
-          className="animate-fade-slide-up"
-          style={{ animationDelay: "0.6s" }}
-        >
+        <div className="animate-fade-slide-up" style={{ animationDelay: '0.6s' }}>
           {!submitted ? (
             <form
               onSubmit={handleSubmit}
@@ -125,7 +124,7 @@ export function HeroSection() {
         {/* Trust line */}
         <p
           className="text-sm text-text-muted/60 mt-6 animate-fade-slide-up"
-          style={{ animationDelay: "0.7s" }}
+          style={{ animationDelay: '0.7s' }}
         >
           Empowering small business owners and startups to launch and grow.
         </p>

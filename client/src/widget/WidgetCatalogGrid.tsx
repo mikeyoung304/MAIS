@@ -1,7 +1,7 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { usePackages } from "../features/catalog/hooks";
-import type { PackageDto } from "@macon/contracts";
-import { formatCurrency } from "@/lib/utils";
+import { Card, CardContent } from '@/components/ui/card';
+import { usePackages } from '../features/catalog/hooks';
+import type { PackageDto } from '@macon/contracts';
+import { formatCurrency } from '@/lib/utils';
 
 interface Props {
   onPackageClick: (slug: string) => void;
@@ -19,11 +19,7 @@ export function WidgetCatalogGrid({ onPackageClick }: Props) {
   const { data: packages, isLoading, error } = usePackages();
 
   if (isLoading) {
-    return (
-      <div className="text-center py-12 text-white/90 text-xl">
-        Loading packages...
-      </div>
-    );
+    return <div className="text-center py-12 text-white/90 text-xl">Loading packages...</div>;
   }
 
   if (error) {
@@ -35,11 +31,7 @@ export function WidgetCatalogGrid({ onPackageClick }: Props) {
   }
 
   if (!packages || packages.length === 0) {
-    return (
-      <div className="text-center py-12 text-white/90 text-xl">
-        No packages available
-      </div>
-    );
+    return <div className="text-center py-12 text-white/90 text-xl">No packages available</div>;
   }
 
   return (
@@ -70,9 +62,7 @@ export function WidgetCatalogGrid({ onPackageClick }: Props) {
               </div>
             )}
             <CardContent className="p-6">
-              <h3 className="font-heading text-3xl font-semibold mb-3 text-white">
-                {pkg.title}
-              </h3>
+              <h3 className="font-heading text-3xl font-semibold mb-3 text-white">{pkg.title}</h3>
               <p className="text-white/90 mb-4 line-clamp-2 text-lg leading-relaxed">
                 {pkg.description}
               </p>

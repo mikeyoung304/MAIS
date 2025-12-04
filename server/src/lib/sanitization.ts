@@ -45,7 +45,7 @@ export function sanitizeEmail(input: string): string {
   // Normalize email but preserve dots (gmail_remove_dots: false)
   const normalized = validator.normalizeEmail(trimmed, {
     gmail_remove_dots: false,
-    all_lowercase: true
+    all_lowercase: true,
   });
 
   if (!normalized) {
@@ -78,10 +78,7 @@ export function sanitizePhone(input: string): string {
  * Recursively sanitize an object
  * Applies appropriate sanitization based on field names and types
  */
-export function sanitizeObject(
-  obj: any,
-  options: { allowHtml?: string[] } = {}
-): any {
+export function sanitizeObject(obj: any, options: { allowHtml?: string[] } = {}): any {
   if (obj === null || obj === undefined) {
     return obj;
   }
@@ -92,7 +89,7 @@ export function sanitizeObject(
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => sanitizeObject(item, options));
+    return obj.map((item) => sanitizeObject(item, options));
   }
 
   if (typeof obj === 'object') {

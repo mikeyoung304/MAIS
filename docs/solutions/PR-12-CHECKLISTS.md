@@ -19,6 +19,7 @@ Use this before pushing your code to catch issues locally.
 ## React Hooks & Accessibility Pre-commit Checklist
 
 ### 1. React Hooks Quality
+
 - [ ] All callbacks passed to child components wrapped in `useCallback`
   - Search: `rg 'const handle\w+ = ' --type tsx`
   - Verify: All have `useCallback` wrapper
@@ -36,6 +37,7 @@ Use this before pushing your code to catch issues locally.
   - Fix: `npm run lint -- --fix` if available
 
 ### 2. Keyboard Accessibility (WCAG 2.4.7)
+
 - [ ] Tab through component with keyboard only
   - Every interactive element shows focus ring
   - Focus order is logical
@@ -55,6 +57,7 @@ Use this before pushing your code to catch issues locally.
   - Minimum: 3:1 contrast ratio
 
 ### 3. Visual State Indicators (WCAG 1.3.1)
+
 - [ ] All collapsible sections have state indicator icons
   - Search: `rg '<details' client/src --type tsx -A 3`
   - Verify: Contains `ChevronRight`, `ChevronDown`, or similar icon
@@ -73,6 +76,7 @@ Use this before pushing your code to catch issues locally.
   - Mobile-friendly on smaller screens
 
 ### 4. Event Handling
+
 - [ ] Button clicks inside nested interactive elements work correctly
   - Test: Click button inside accordion → button action only
   - Test: Click accordion header → accordion toggles
@@ -87,6 +91,7 @@ Use this before pushing your code to catch issues locally.
   - Review any matches in nested interactive contexts
 
 ### 5. Testing
+
 - [ ] Component renders without errors
   - Run: `npm run dev:client` and load page
   - Check: Console has no errors (red text)
@@ -106,6 +111,7 @@ Use this before pushing your code to catch issues locally.
   - Verify: Layout doesn't break, focus ring visible, icon size appropriate
 
 ### 6. Code Quality
+
 - [ ] TypeScript passes
   - Run: `npm run typecheck`
   - No type errors allowed
@@ -123,6 +129,7 @@ Use this before pushing your code to catch issues locally.
   - Watch: No unnecessary re-renders of child components
 
 ### 7. Final Checks
+
 - [ ] Commit message mentions PR #12 issues if applicable
 - [ ] Changes are minimal and focused
 - [ ] No debug code or commented-out console.logs
@@ -137,7 +144,7 @@ Use this before pushing your code to catch issues locally.
 
 Use this when reviewing PRs to catch issues before merge.
 
-```markdown
+````markdown
 ## React Hooks & Accessibility Code Review Checklist
 
 ### Phase 1: Quick Scan (5 minutes)
@@ -151,7 +158,7 @@ Use this when reviewing PRs to catch issues before merge.
 - [ ] Search for `useEffect` in changed files
   - Run: `git diff HEAD~ | grep 'useEffect'`
   - For each one, verify dependency array is present
-  - No `useEffect(() => { ... }, )`  without array
+  - No `useEffect(() => { ... }, )` without array
 
 - [ ] Search for focus indicators
   - Run: `git diff HEAD~ | grep 'focus'`
@@ -177,6 +184,7 @@ Use this when reviewing PRs to catch issues before merge.
 ❌ useCallback(async () => { ... }, []);  // Maybe missing deps?
 ❌ useCallback(..., [oneFunc]);  // But uses two functions?
 ```
+````
 
 **Check #2: useEffect Dependencies**
 
@@ -245,11 +253,13 @@ Use this when reviewing PRs to catch issues before merge.
 ### Phase 3: Testing Review (10 minutes)
 
 **Automated Tests:**
+
 - [ ] All tests pass: `npm test`
 - [ ] No new ESLint errors: `npm run lint`
 - [ ] TypeScript checks: `npm run typecheck`
 
 **Manual Testing (Have them provide evidence):**
+
 - [ ] Keyboard navigation test results
   - Can navigate entire component with Tab key
   - Focus is always visible
@@ -261,6 +271,7 @@ Use this when reviewing PRs to catch issues before merge.
   - WAVE browser extension shows no errors
 
 **Functional Testing:**
+
 - [ ] All buttons/forms work correctly
 - [ ] Accordion open/close works
 - [ ] State persists correctly
@@ -272,34 +283,40 @@ Use this when reviewing PRs to catch issues before merge.
 ## Final Assessment
 
 **Hooks Quality:**
+
 - [ ] All callbacks wrapped in useCallback
 - [ ] All dependencies complete (no ESLint warnings)
 - [ ] No missing useEffect dependencies
 
 **Accessibility (WCAG):**
+
 - [ ] Focus indicators on all interactive elements
 - [ ] Focus indicators meet contrast requirements
 - [ ] State indicators on collapsibles
 - [ ] No event propagation issues
 
 **Testing:**
+
 - [ ] Unit/integration tests added
 - [ ] Keyboard navigation tested
 - [ ] No console errors
 - [ ] No performance regressions
 
 **Code Quality:**
+
 - [ ] TypeScript passes
 - [ ] ESLint passes
 - [ ] Code formatted
 - [ ] Comments where needed
 
 **Decision:**
+
 - [ ] Approve & merge
 - [ ] Request changes (specify below)
 - [ ] Request review from accessibility specialist
 
 **If requesting changes:**
+
 - [ ] Issue #1: [specific feedback]
 - [ ] Issue #2: [specific feedback]
 ```
@@ -311,7 +328,8 @@ Use this when reviewing PRs to catch issues before merge.
 Copy-paste these when you find issues:
 
 ### Issue: Missing useCallback
-```markdown
+
+````markdown
 **Issue:** Callback not wrapped in useCallback
 
 **Problem:** The `handleEdit` callback is passed to a child component but
@@ -319,6 +337,7 @@ isn't wrapped in useCallback. This creates a new function reference on every
 render, defeating memoization.
 
 **Fix:**
+
 ```typescript
 // BEFORE
 const handleEdit = async (pkg) => { ... };
@@ -326,9 +345,11 @@ const handleEdit = async (pkg) => { ... };
 // AFTER
 const handleEdit = useCallback(async (pkg) => { ... }, [deps]);
 ```
+````
 
 **ESLint should catch this.** Run: `npm run lint`
-```
+
+````
 
 ### Issue: Missing useEffect Dependency
 ```markdown
@@ -342,16 +363,18 @@ This causes ESLint errors and risks stale closures.
 2. Then add to useEffect dependency array: `[loadData]`
 
 **Related:** #120 in PR #12
-```
+````
 
 ### Issue: No Focus Indicator
-```markdown
+
+````markdown
 **Issue:** No keyboard focus indicator
 
 **Problem:** This interactive element has no visible focus ring when using Tab key.
 This violates WCAG 2.4.7 (Focus Visible) and excludes keyboard users.
 
 **Fix:** Add focus classes to element:
+
 ```typescript
 // ADD these classes:
 focus:outline-none
@@ -359,11 +382,13 @@ focus-visible:ring-2
 focus-visible:ring-sage
 focus-visible:ring-offset-2
 ```
+````
 
 **Test:** Tab to this element, you should see a colored ring.
 
 **Related:** #122 in PR #12
-```
+
+````
 
 ### Issue: No State Indicator
 ```markdown
@@ -385,10 +410,11 @@ import { ChevronRight } from 'lucide-react';
     Section Title
   </summary>
 </details>
-```
+````
 
 **Related:** #123 in PR #12
-```
+
+````
 
 ### Issue: Event Propagation Problem
 ```markdown
@@ -406,12 +432,13 @@ the button action AND accordion toggle to occur. Expected: button action only.
     <Button onClick={handleDelete}>Delete</Button>
   </div>
 </summary>
-```
+````
 
 **Test:** Click button → should trigger button action only, not toggle accordion.
 
 **Related:** #124 in PR #12
-```
+
+````
 
 ---
 
@@ -439,9 +466,10 @@ Add to `.eslintrc.cjs` or `client/.eslintrc.json`:
     "jsx-a11y/no-interactive-element-to-static-element": "warn"
   }
 }
-```
+````
 
 Then run:
+
 ```bash
 npm run lint -- --fix
 ```
@@ -453,6 +481,7 @@ npm run lint -- --fix
 ### For Busy Reviewers (Quick Path - 5 mins)
 
 1. **Run the check script:**
+
    ```bash
    npm run lint
    npm run typecheck
@@ -518,12 +547,14 @@ Add to `.github/pull_request_template.md`:
 ## React Hooks & Accessibility
 
 ### Code Quality
+
 - [ ] All callbacks wrapped in `useCallback`
 - [ ] All `useEffect` dependencies complete
 - [ ] ESLint passes: `npm run lint`
 - [ ] TypeScript passes: `npm run typecheck`
 
 ### WCAG Accessibility (Level AA)
+
 - [ ] Focus indicators visible on all interactive elements
 - [ ] State indicators on collapsible sections
 - [ ] No event propagation issues
@@ -531,6 +562,7 @@ Add to `.github/pull_request_template.md`:
 - [ ] Tested in multiple browsers
 
 ### Testing
+
 - [ ] Unit/integration tests added
 - [ ] Manual keyboard navigation test completed
 - [ ] No console errors
@@ -540,31 +572,34 @@ Add to `.github/pull_request_template.md`:
 
 ## Quick Reference Table
 
-| Issue | Check | Fix | ESLint |
-|-------|-------|-----|--------|
-| Missing useCallback | `rg 'const \w+ = ' \| rg -v useCallback` | Wrap in `useCallback()` | react-hooks/rules |
-| Missing useEffect dep | `grep 'useEffect' -A 5` | Add to dependency array | react-hooks/exhaustive-deps |
-| No focus indicator | Tab through component | Add `focus-visible:ring-*` | jsx-a11y/focus |
-| No state indicator | Visual inspection | Add rotating icon | Manual + testing |
-| Event propagation | Click buttons in accordion | Add `stopPropagation()` | jsx-a11y/click-events |
+| Issue                 | Check                                    | Fix                        | ESLint                      |
+| --------------------- | ---------------------------------------- | -------------------------- | --------------------------- |
+| Missing useCallback   | `rg 'const \w+ = ' \| rg -v useCallback` | Wrap in `useCallback()`    | react-hooks/rules           |
+| Missing useEffect dep | `grep 'useEffect' -A 5`                  | Add to dependency array    | react-hooks/exhaustive-deps |
+| No focus indicator    | Tab through component                    | Add `focus-visible:ring-*` | jsx-a11y/focus              |
+| No state indicator    | Visual inspection                        | Add rotating icon          | Manual + testing            |
+| Event propagation     | Click buttons in accordion               | Add `stopPropagation()`    | jsx-a11y/click-events       |
 
 ---
 
 ## Resources for Reviewers
 
 ### Documentation
+
 - [React Hooks: useCallback](https://react.dev/reference/react/useCallback)
 - [React Hooks: useEffect](https://react.dev/reference/react/useEffect)
 - [WCAG 2.4.7: Focus Visible](https://www.w3.org/WAI/WCAG21/Understanding/focus-visible.html)
 - [WCAG 1.3.1: Info and Relationships](https://www.w3.org/WAI/WCAG21/Understanding/info-and-relationships.html)
 
 ### Tools
+
 - [Contrast Checker](https://webaim.org/resources/contrastchecker/)
 - [WAVE Browser Extension](https://wave.webaim.org/extension/)
 - [Lighthouse (Chrome DevTools)](https://developers.google.com/web/tools/lighthouse)
 - [axe DevTools](https://www.deque.com/axe/devtools/)
 
 ### Testing
+
 - [Screen Reader Testing](https://www.nvaccess.org/) (NVDA - free)
 - [Keyboard Navigation Testing](https://www.w3.org/WAI/test-evaluate/test-eval.php)
 
@@ -573,18 +608,21 @@ Add to `.github/pull_request_template.md`:
 ## Approval Criteria
 
 **Minimum to Approve:**
+
 - ✅ ESLint passes
 - ✅ TypeScript passes
 - ✅ All tests pass
 - ✅ Developer confirms keyboard testing completed
 
 **Ideal to Approve:**
+
 - ✅ All above plus:
 - ✅ Code follows all patterns from PR #12 fixes
 - ✅ Accessibility specialist has reviewed
 - ✅ Browser testing completed (Chrome, Firefox, Safari)
 
 **Block Merge:**
+
 - ❌ ESLint errors
 - ❌ TypeScript errors
 - ❌ Test failures
@@ -596,5 +634,6 @@ Add to `.github/pull_request_template.md`:
 **Last Updated:** 2025-12-01
 
 **Related:**
+
 - [Full Prevention Guide](./PR-12-REACT-HOOKS-ACCESSIBILITY-PREVENTION.md)
 - [Quick Reference](./PR-12-QUICK-REFERENCE.md)

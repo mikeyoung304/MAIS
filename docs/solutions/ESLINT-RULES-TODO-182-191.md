@@ -64,12 +64,13 @@ module.exports = {
         type: 'problem',
         docs: {
           description: 'Prevent exposing version/environment in public endpoints',
-          category: 'Security'
+          category: 'Security',
         },
         messages: {
-          publicExposure: 'Version/environment exposure in public endpoint. Use authenticated endpoint instead.',
-          recommendedFix: 'Remove from response or move to admin endpoint'
-        }
+          publicExposure:
+            'Version/environment exposure in public endpoint. Use authenticated endpoint instead.',
+          recommendedFix: 'Remove from response or move to admin endpoint',
+        },
       },
       create(context) {
         const bannedPatterns = [
@@ -77,7 +78,7 @@ module.exports = {
           'NODE_ENV',
           'process.version',
           'process.arch',
-          'process.pid'
+          'process.pid',
         ];
 
         return {
@@ -85,20 +86,20 @@ module.exports = {
             const text = context.getSourceCode().getText(node);
             const isPublicRoute = !context.filename.includes('admin');
 
-            if (isPublicRoute && bannedPatterns.some(p => text.includes(p))) {
+            if (isPublicRoute && bannedPatterns.some((p) => text.includes(p))) {
               context.report({
                 node,
                 messageId: 'publicExposure',
                 fix(fixer) {
                   return fixer.remove(node);
-                }
+                },
               });
             }
-          }
+          },
         };
-      }
-    }
-  }
+      },
+    },
+  },
 };
 ```
 
@@ -133,8 +134,8 @@ module.exports = {
         type: 'problem',
         docs: {
           description: 'Ensure resource generation happens inside transactions',
-          category: 'Data Integrity'
-        }
+          category: 'Data Integrity',
+        },
       },
       create(context) {
         const functionCalls = {};
@@ -152,15 +153,15 @@ module.exports = {
               if (!inTransaction) {
                 context.report({
                   node,
-                  message: `Resource generation (${name}) should happen inside transaction, not before`
+                  message: `Resource generation (${name}) should happen inside transaction, not before`,
                 });
               }
             }
-          }
+          },
         };
-      }
-    }
-  }
+      },
+    },
+  },
 };
 ```
 
@@ -191,8 +192,8 @@ module.exports = {
         type: 'problem',
         docs: {
           description: 'Event subscriptions must be able to unsubscribe',
-          category: 'Memory Management'
-        }
+          category: 'Memory Management',
+        },
       },
       create(context) {
         return {
@@ -206,15 +207,15 @@ module.exports = {
               if (!parent.id && parent.type !== 'VariableDeclarator') {
                 context.report({
                   node,
-                  message: 'Subscribe return value should be stored for later unsubscribe'
+                  message: 'Subscribe return value should be stored for later unsubscribe',
                 });
               }
             }
-          }
+          },
         };
-      }
-    }
-  }
+      },
+    },
+  },
 };
 ```
 
@@ -245,8 +246,8 @@ module.exports = {
         type: 'suggestion',
         docs: {
           description: 'Derive types from Zod schemas using z.infer',
-          category: 'Type Safety'
-        }
+          category: 'Type Safety',
+        },
       },
       create(context) {
         return {
@@ -260,17 +261,15 @@ module.exports = {
                 node,
                 message: `Type "${name}" looks like it should be derived from Zod schema with z.infer<typeof Schema>`,
                 fix(fixer) {
-                  return fixer.replaceText(node,
-                    `type ${name} = z.infer<typeof ${name}Schema>;`
-                  );
-                }
+                  return fixer.replaceText(node, `type ${name} = z.infer<typeof ${name}Schema>;`);
+                },
               });
             }
-          }
+          },
         };
-      }
-    }
-  }
+      },
+    },
+  },
 };
 ```
 
@@ -301,8 +300,8 @@ module.exports = {
         type: 'problem',
         docs: {
           description: 'Switch on union types must have exhaustiveness check',
-          category: 'Type Safety'
-        }
+          category: 'Type Safety',
+        },
       },
       create(context) {
         return {
@@ -311,32 +310,33 @@ module.exports = {
 
             // Check if discriminant is a union type (variable)
             if (discriminant.type === 'Identifier') {
-              const hasDefault = node.cases.some(c => c.test === null);
+              const hasDefault = node.cases.some((c) => c.test === null);
 
               if (!hasDefault) {
                 context.report({
                   node,
-                  message: 'Switch on union type must have default case with exhaustiveness check: const _: never = value;'
+                  message:
+                    'Switch on union type must have default case with exhaustiveness check: const _: never = value;',
                 });
               }
 
               // Check if default case has never type assignment
-              const defaultCase = node.cases.find(c => c.test === null);
+              const defaultCase = node.cases.find((c) => c.test === null);
               if (defaultCase) {
                 const caseText = context.getSourceCode().getText(defaultCase);
                 if (!caseText.includes(': never')) {
                   context.report({
                     node: defaultCase,
-                    message: 'Default case must assign to never type for exhaustiveness check'
+                    message: 'Default case must assign to never type for exhaustiveness check',
                   });
                 }
               }
             }
-          }
+          },
         };
-      }
-    }
-  }
+      },
+    },
+  },
 };
 ```
 
@@ -365,8 +365,8 @@ module.exports = {
         type: 'suggestion',
         docs: {
           description: 'All advisory lock IDs must be documented in ADVISORY_LOCKS.md',
-          category: 'Documentation'
-        }
+          category: 'Documentation',
+        },
       },
       create(context) {
         const fs = require('fs');
@@ -388,17 +388,17 @@ module.exports = {
                   if (!registry.includes(lockId)) {
                     context.report({
                       node,
-                      message: `Advisory lock ID ${lockId} must be documented in docs/reference/ADVISORY_LOCKS.md`
+                      message: `Advisory lock ID ${lockId} must be documented in docs/reference/ADVISORY_LOCKS.md`,
                     });
                   }
                 }
               }
             }
-          }
+          },
         };
-      }
-    }
-  }
+      },
+    },
+  },
 };
 ```
 
@@ -429,8 +429,8 @@ module.exports = {
         type: 'problem',
         docs: {
           description: 'useRef with Promise/function must have cleanup effect',
-          category: 'React'
-        }
+          category: 'React',
+        },
       },
       create(context) {
         const refVariables = new Set();
@@ -463,14 +463,14 @@ module.exports = {
             if (refVariables.size > 0 && !hasCleanupEffect) {
               context.report({
                 node,
-                message: 'useRef with Promise/function must have useEffect cleanup'
+                message: 'useRef with Promise/function must have useEffect cleanup',
               });
             }
-          }
+          },
         };
-      }
-    }
-  }
+      },
+    },
+  },
 };
 ```
 
@@ -501,8 +501,8 @@ module.exports = {
         type: 'suggestion',
         docs: {
           description: 'Infrastructure code should have unit tests',
-          category: 'Testing'
-        }
+          category: 'Testing',
+        },
       },
       create(context) {
         const fs = require('fs');
@@ -513,7 +513,11 @@ module.exports = {
             const filename = context.filename;
 
             // Check if this is infrastructure code
-            if (filename.includes('/src/lib/core/') || filename.includes('/src/lib/') || filename.includes('adapter.ts')) {
+            if (
+              filename.includes('/src/lib/core/') ||
+              filename.includes('/src/lib/') ||
+              filename.includes('adapter.ts')
+            ) {
               const baseDir = process.cwd();
               const relativePath = path.relative(baseDir, filename);
               const testPath = relativePath.replace('/src/', '/test/').replace('.ts', '.test.ts');
@@ -521,15 +525,15 @@ module.exports = {
               if (!fs.existsSync(path.join(baseDir, testPath))) {
                 context.report({
                   node,
-                  message: `Infrastructure code should have dedicated unit tests. Expected: ${testPath}`
+                  message: `Infrastructure code should have dedicated unit tests. Expected: ${testPath}`,
                 });
               }
             }
-          }
+          },
         };
-      }
-    }
-  }
+      },
+    },
+  },
 };
 ```
 
@@ -561,8 +565,8 @@ module.exports = {
         type: 'suggestion',
         docs: {
           description: 'Database transactions should log start and end',
-          category: 'Observability'
-        }
+          category: 'Observability',
+        },
       },
       create(context) {
         let inTransaction = false;
@@ -580,7 +584,7 @@ module.exports = {
             }
 
             if (callee === 'info' || callee === 'warn') {
-              const args = node.arguments[0]?.properties?.map(p => p.key?.name).join(',');
+              const args = node.arguments[0]?.properties?.map((p) => p.key?.name).join(',');
               if (args?.includes('durationMs') || args?.includes('operations')) {
                 if (inTransaction) hasStartLog = true;
               }
@@ -594,15 +598,15 @@ module.exports = {
               if (!hasStartLog || !hasEndLog) {
                 context.report({
                   node,
-                  message: 'Transactions should log start (operations count) and end (durationMs)'
+                  message: 'Transactions should log start (operations count) and end (durationMs)',
                 });
               }
             }
-          }
+          },
         };
-      }
-    }
-  }
+      },
+    },
+  },
 };
 ```
 
@@ -635,8 +639,8 @@ module.exports = {
         type: 'suggestion',
         docs: {
           description: 'Files should be in correct directory based on purpose',
-          category: 'Organization'
-        }
+          category: 'Organization',
+        },
       },
       create(context) {
         const filename = context.filename;
@@ -650,26 +654,26 @@ module.exports = {
         if (isTest && !filename.includes('/test/')) {
           context.report({
             node: sourceCode.ast,
-            message: 'Test files should be in test/ directory'
+            message: 'Test files should be in test/ directory',
           });
         }
 
         if (isExample && !filename.includes('/examples/')) {
           context.report({
             node: sourceCode.ast,
-            message: 'Example code should be in docs/examples/ directory'
+            message: 'Example code should be in docs/examples/ directory',
           });
         }
 
         if (isDoc && filename.includes('/test/')) {
           context.report({
             node: sourceCode.ast,
-            message: 'Documentation should be in docs/ directory, not test/'
+            message: 'Documentation should be in docs/ directory, not test/',
           });
         }
-      }
-    }
-  }
+      },
+    },
+  },
 };
 ```
 

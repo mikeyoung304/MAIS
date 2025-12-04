@@ -16,11 +16,13 @@ Build `/packages` catalog page to enable package discovery - the final P0 critic
 ## 📦 Deliverables
 
 ### New Components (3)
+
 1. `client/src/pages/PackageCatalog.tsx` - Main catalog page
 2. `client/src/features/catalog/PackageCard.tsx` - Package card component
 3. `client/src/features/catalog/CatalogFilters.tsx` - Search/filter/sort UI
 
 ### Modified Files (3)
+
 1. `client/src/App.tsx` - Add `/packages` route
 2. `client/src/components/AppShell.tsx` - Add navigation link
 3. `client/src/pages/Homepage.tsx` - Link CTAs to catalog
@@ -30,6 +32,7 @@ Build `/packages` catalog page to enable package discovery - the final P0 critic
 ## ✅ Success Criteria
 
 **Must Have:**
+
 - [ ] `/packages` route works
 - [ ] Package grid displays all active packages
 - [ ] Package cards link to detail pages
@@ -40,6 +43,7 @@ Build `/packages` catalog page to enable package discovery - the final P0 critic
 - [ ] Navigation links from homepage + header
 
 **Quality:**
+
 - [ ] TypeScript: 0 errors
 - [ ] Test pass rate: ≥99.6%
 - [ ] WCAG AA compliance maintained
@@ -49,12 +53,12 @@ Build `/packages` catalog page to enable package discovery - the final P0 critic
 
 ## 📊 Expected Impact
 
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| Package Discovery | NO | YES | NEW ✅ |
-| Booking Completion | 30% | 50%+ | +67% |
-| Primary Journey | 0% | 100% | COMPLETE 🎉 |
-| Platform Maturity | 9.2/10 | 9.5/10 | +0.3 |
+| Metric             | Before | After  | Change      |
+| ------------------ | ------ | ------ | ----------- |
+| Package Discovery  | NO     | YES    | NEW ✅      |
+| Booking Completion | 30%    | 50%+   | +67%        |
+| Primary Journey    | 0%     | 100%   | COMPLETE 🎉 |
+| Platform Maturity  | 9.2/10 | 9.5/10 | +0.3        |
 
 ---
 
@@ -95,11 +99,13 @@ git commit -m "feat(catalog): Sprint 9 - Package Catalog & Discovery"
 ## 📋 Task Checklist
 
 ### Week 1: Core Components
+
 - [ ] Day 1-2: Create PackageCatalog.tsx (6h)
 - [ ] Day 2-3: Create PackageCard.tsx (4h)
 - [ ] Day 3-4: Create CatalogFilters.tsx (8h)
 
 ### Week 2: Integration & Testing
+
 - [ ] Day 1: Add routes + navigation (3h)
 - [ ] Day 2: Implement search/filter/sort (6h)
 - [ ] Day 3: Testing + documentation (3h)
@@ -109,13 +115,17 @@ git commit -m "feat(catalog): Sprint 9 - Package Catalog & Discovery"
 ## 🎨 Key Design Patterns
 
 ### Responsive Grid
+
 ```tsx
 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-  {packages.map(pkg => <PackageCard key={pkg.id} package={pkg} />)}
+  {packages.map((pkg) => (
+    <PackageCard key={pkg.id} package={pkg} />
+  ))}
 </div>
 ```
 
 ### Package Card
+
 ```tsx
 <Card className="hover:shadow-lg transition-shadow">
   <img src={pkg.photoUrl} alt={pkg.name} loading="lazy" />
@@ -127,6 +137,7 @@ git commit -m "feat(catalog): Sprint 9 - Package Catalog & Discovery"
 ```
 
 ### Search with Debounce
+
 ```tsx
 const [localSearch, setLocalSearch] = useState('');
 
@@ -169,6 +180,7 @@ const { data: packages } = useQuery({
 ## 📖 Full Documentation
 
 See `SPRINT_9_EXECUTION_PROMPT.md` for:
+
 - Detailed task breakdown (10 tasks)
 - Complete component code examples
 - Testing strategy

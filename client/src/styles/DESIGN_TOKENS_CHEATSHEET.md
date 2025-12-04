@@ -151,6 +151,7 @@ Quick reference for the most commonly used design tokens in the MAIS platform.
 ## Common Component Patterns
 
 ### Primary Button
+
 ```css
 .btn-primary {
   background: var(--interactive-primary-default);
@@ -164,6 +165,7 @@ Quick reference for the most commonly used design tokens in the MAIS platform.
 ```
 
 ### Card
+
 ```css
 .card {
   background: var(--surface-elevated);
@@ -174,6 +176,7 @@ Quick reference for the most commonly used design tokens in the MAIS platform.
 ```
 
 ### Input Field
+
 ```css
 .input {
   background: var(--surface-primary);
@@ -191,6 +194,7 @@ Quick reference for the most commonly used design tokens in the MAIS platform.
 ```
 
 ### Success Badge
+
 ```css
 .badge-success {
   background: var(--semantic-success-50);

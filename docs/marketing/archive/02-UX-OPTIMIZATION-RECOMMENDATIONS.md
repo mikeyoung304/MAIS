@@ -11,6 +11,7 @@
 The MAIS platform has a clean, professional design with good technical foundations. However, several UX patterns are preventing optimal conversion. This document outlines specific, actionable improvements prioritized by impact.
 
 **Overall UX Score: 6.5/10**
+
 - Visual Design: 7.5/10
 - Conversion Design: 5.5/10
 - Information Architecture: 7/10
@@ -28,6 +29,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 **Impact:** Visitors who don't immediately self-identify leave without understanding their problem.
 
 **Recommendation:**
+
 ```
 [Hero Section]
     ↓
@@ -39,6 +41,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 ```
 
 **Design Specification:**
+
 - Dark background with subtle texture
 - Large, empathetic headline
 - 3-4 pain points as cards or list items
@@ -46,6 +49,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 - Transitions to "There's a better way..." leading to features
 
 **Example Layout:**
+
 ```
 ┌─────────────────────────────────────────────────┐
 │  "Sound Familiar?"                              │
@@ -69,6 +73,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 **Issue:** "Browse Packages" is passive and doesn't communicate value or next step.
 
 **Current State:**
+
 - Primary CTA: "Browse Packages" (appears 3x)
 - Secondary CTA: "How It Works"
 - No differentiation in messaging
@@ -77,14 +82,15 @@ The MAIS platform has a clean, professional design with good technical foundatio
 
 **Recommendation:**
 
-| Location | Current | Recommended | Reason |
-|----------|---------|-------------|--------|
-| Hero Primary | "Browse Packages" | "Start My Free Audit" | Action-oriented, implies value |
-| Hero Secondary | "How It Works" | "See How It Works" | Clearer action |
-| How It Works | "Browse Our Packages" | "Choose Your Plan" | Stage-appropriate |
-| Final CTA | "Browse Our Packages" | "Get Started Free" | Final conversion push |
+| Location       | Current               | Recommended           | Reason                         |
+| -------------- | --------------------- | --------------------- | ------------------------------ |
+| Hero Primary   | "Browse Packages"     | "Start My Free Audit" | Action-oriented, implies value |
+| Hero Secondary | "How It Works"        | "See How It Works"    | Clearer action                 |
+| How It Works   | "Browse Our Packages" | "Choose Your Plan"    | Stage-appropriate              |
+| Final CTA      | "Browse Our Packages" | "Get Started Free"    | Final conversion push          |
 
 **Add Transitional CTA:**
+
 - Position: Below Target Audience section
 - Copy: "Not ready yet? Download our free guide"
 - Asset: Lead magnet PDF
@@ -99,11 +105,13 @@ The MAIS platform has a clean, professional design with good technical foundatio
 **Recommendation:** Add micro social proof to hero section.
 
 **Options:**
+
 1. **Trust bar** below hero CTAs: "Trusted by 50+ businesses | $2M+ managed | 4.9★ rating"
 2. **Single testimonial snippet** in hero: "Best business decision I made this year" — Casey M.
 3. **Logo cloud** if recognizable brands are customers
 
 **Design:**
+
 ```
 [Hero Headline]
 [Hero Subheadline]
@@ -126,6 +134,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 **Recommendation:**
 
 **Option A: Pricing Section on Homepage**
+
 ```
 ┌─────────────────────────────────────────────────┐
 │  "Simple, Aligned Pricing"                      │
@@ -150,6 +159,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 ```
 
 **Option B: Pricing Explainer CTA**
+
 - Add "See Pricing" link in navigation
 - Links to dedicated pricing page with calculator
 - Shows example: "If we help you generate $10,000/month, your cost is $1,200"
@@ -161,6 +171,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 **Issue:** Footer is purely navigational. Missed opportunity for lead capture.
 
 **Current Footer Structure:**
+
 ```
 [Logo] [Description]
 [Company Links] [Support Links]
@@ -168,6 +179,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 ```
 
 **Recommended Footer Structure:**
+
 ```
 [Logo] [Description]
 [Newsletter Signup: "Get growth tips weekly"]  ← ADD
@@ -185,6 +197,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 **Issue:** Text-only testimonials lack credibility markers.
 
 **Current:**
+
 ```
 ┌──────────────────────────────┐
 │  "Quote text here..."        │
@@ -196,6 +209,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 ```
 
 **Recommended:**
+
 ```
 ┌──────────────────────────────┐
 │  "                           │
@@ -212,6 +226,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 ```
 
 **Enhancements:**
+
 1. Add avatar placeholders (or real photos)
 2. Add location for authenticity
 3. Add specific metric/outcome badge
@@ -245,6 +260,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 ```
 
 **Design Elements:**
+
 - Connected timeline dots
 - Step numbers in circles
 - Brief bullet points under each step
@@ -264,6 +280,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 4. **"Includes" checklist** visible on card hover
 
 **Card Enhancement:**
+
 ```
 ┌────────────────────────────┐
 │  ⭐ MOST POPULAR           │  ← Badge
@@ -290,6 +307,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 **Issue:** Mobile menu has navigation links but no conversion CTA.
 
 **Current Mobile Menu:**
+
 - Home
 - Browse Packages
 - Log In
@@ -297,6 +315,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 - Contact Support
 
 **Recommended Mobile Menu:**
+
 ```
 ┌────────────────────────────┐
 │  [Close X]                 │
@@ -324,6 +343,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 **Current:** Steps 1-4 with text labels.
 
 **Recommended:**
+
 ```
 ┌─────────────────────────────────────────────────┐
 │                                                 │
@@ -337,6 +357,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 ```
 
 **Enhancements:**
+
 - Visual progress bar below steps
 - Checkmarks for completed steps
 - Active step highlighted
@@ -359,6 +380,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 ```
 
 **Behavior:**
+
 - CTA appears in header after scrolling past hero
 - Changes color on dark sections for visibility
 - Links to primary conversion action
@@ -370,6 +392,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 **Trigger:** Mouse moves toward browser close/back button.
 
 **Content:**
+
 ```
 ┌─────────────────────────────────────────────────┐
 │  [X]                                            │
@@ -394,6 +417,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 **Purpose:** Address objections before conversion.
 
 **Suggested FAQs:**
+
 1. "How does the revenue-sharing model work?"
 2. "What if I already have a website?"
 3. "How long until I see results?"
@@ -411,6 +435,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 **Recommendation:** Make empty states actionable and on-brand.
 
 **Example - No Bookings:**
+
 ```
 ┌─────────────────────────────────────────────────┐
 │        ┌──────────────────┐                     │
@@ -436,14 +461,14 @@ The MAIS platform has a clean, professional design with good technical foundatio
 
 **Recommended Additions:**
 
-| Element | Interaction | Purpose |
-|---------|-------------|---------|
-| CTA buttons | Subtle scale on hover (1.02x) | Encourage clicking |
-| Feature cards | Lift shadow on hover | Show interactivity |
-| Testimonials | Auto-rotate every 5s | Keep content fresh |
-| Stats | Count-up animation on scroll | Add engagement |
-| Form submission | Success animation | Positive reinforcement |
-| Progress steps | Slide transition | Show progression |
+| Element         | Interaction                   | Purpose                |
+| --------------- | ----------------------------- | ---------------------- |
+| CTA buttons     | Subtle scale on hover (1.02x) | Encourage clicking     |
+| Feature cards   | Lift shadow on hover          | Show interactivity     |
+| Testimonials    | Auto-rotate every 5s          | Keep content fresh     |
+| Stats           | Count-up animation on scroll  | Add engagement         |
+| Form submission | Success animation             | Positive reinforcement |
+| Progress steps  | Slide transition              | Show progression       |
 
 ---
 
@@ -454,6 +479,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 **Issue:** Orange on dark backgrounds may have contrast issues.
 
 **Recommendation:**
+
 - Audit all color combinations with WCAG AA checker
 - Ensure all text meets 4.5:1 contrast ratio
 - Test with colorblind simulation tools
@@ -461,6 +487,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 ### 17. Form Accessibility
 
 **Improvements Needed:**
+
 - Add visible focus states (not just color change)
 - Include `aria-describedby` for helper text
 - Add error announcements for screen readers
@@ -471,6 +498,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 **Current:** Skip link exists (good)
 
 **Improvements:**
+
 - Add visible focus indicators on all interactive elements
 - Ensure logical tab order through booking flow
 - Add `aria-current` for active steps
@@ -482,6 +510,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 ### 19. Image Optimization
 
 **Recommendation:**
+
 - Use WebP format with JPEG fallback
 - Implement lazy loading for below-fold images
 - Add width/height attributes to prevent layout shift
@@ -490,6 +519,7 @@ The MAIS platform has a clean, professional design with good technical foundatio
 ### 20. Above-the-Fold Optimization
 
 **Recommendation:**
+
 - Inline critical CSS for hero section
 - Preload hero background image/video
 - Defer non-critical JavaScript
@@ -500,24 +530,28 @@ The MAIS platform has a clean, professional design with good technical foundatio
 ## Implementation Roadmap
 
 ### Phase 1: Quick Wins (Week 1)
+
 - [ ] Update CTA copy throughout site
 - [ ] Add trust bar to hero section
 - [ ] Enhance footer with newsletter signup
 - [ ] Fix any critical accessibility issues
 
 ### Phase 2: Content Additions (Week 2-3)
+
 - [ ] Design and implement Problem section
 - [ ] Add pricing transparency section
 - [ ] Enhance testimonials with photos/metrics
 - [ ] Add FAQ section
 
 ### Phase 3: UX Enhancements (Week 4-6)
+
 - [ ] Implement exit-intent modal
 - [ ] Add micro-interactions
 - [ ] Enhance booking flow progress indicator
 - [ ] Improve empty states
 
 ### Phase 4: Optimization (Ongoing)
+
 - [ ] A/B test CTA variations
 - [ ] Performance optimization
 - [ ] Accessibility audit and fixes
@@ -527,13 +561,13 @@ The MAIS platform has a clean, professional design with good technical foundatio
 
 ## Success Metrics
 
-| Metric | Current | Target | Timeframe |
-|--------|---------|--------|-----------|
-| Bounce Rate | Unknown | <50% | 30 days |
-| Avg. Session Duration | Unknown | >2 min | 30 days |
-| Package Page Views | Unknown | +25% | 60 days |
-| Booking Completion Rate | Unknown | >15% | 90 days |
-| Mobile Conversion | Unknown | Match desktop | 60 days |
+| Metric                  | Current | Target        | Timeframe |
+| ----------------------- | ------- | ------------- | --------- |
+| Bounce Rate             | Unknown | <50%          | 30 days   |
+| Avg. Session Duration   | Unknown | >2 min        | 30 days   |
+| Package Page Views      | Unknown | +25%          | 60 days   |
+| Booking Completion Rate | Unknown | >15%          | 90 days   |
+| Mobile Conversion       | Unknown | Match desktop | 60 days   |
 
 ---
 
@@ -547,4 +581,4 @@ The MAIS platform has a clean, professional design with good technical foundatio
 
 ---
 
-*This document should be reviewed quarterly and updated based on user feedback and conversion data.*
+_This document should be reviewed quarterly and updated based on user feedback and conversion data._

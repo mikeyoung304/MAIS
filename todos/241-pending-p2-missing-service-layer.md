@@ -1,10 +1,10 @@
 ---
 status: complete
 priority: p2
-issue_id: "241"
+issue_id: '241'
 tags: [architecture, landing-page, layering]
 dependencies: []
-source: "code-review-pr-14"
+source: 'code-review-pr-14'
 ---
 
 # TODO-241: Consider Adding Service Layer for Landing Page Operations
@@ -24,6 +24,7 @@ routes/ → services/ → adapters/repositories/
 ```
 
 **Why It Matters:**
+
 - Inconsistent with existing patterns (booking, catalog, scheduling all have services)
 - Business logic (sanitization, validation) lives in routes instead of services
 - Harder to unit test business logic in isolation
@@ -31,6 +32,7 @@ routes/ → services/ → adapters/repositories/
 ## Findings
 
 **Current Pattern:**
+
 ```typescript
 // tenant-admin-landing-page.routes.ts
 router.put('/draft', async (req, res, next) => {
@@ -42,6 +44,7 @@ router.put('/draft', async (req, res, next) => {
 ```
 
 **Standard Pattern (other routes):**
+
 ```typescript
 // packages.routes.ts
 router.post('/', async (req, res, next) => {
@@ -87,6 +90,7 @@ Accept that landing page routes are thin and the "business logic" is minimal (ju
 Created `server/src/services/landing-page.service.ts` following the same pattern as `PackageDraftService`:
 
 **Files Changed:**
+
 1. `server/src/services/landing-page.service.ts` - New service with:
    - `getDraft()`, `saveDraft()`, `publish()`, `discardDraft()` - draft operations
    - `getConfig()`, `updateConfig()`, `toggleSection()` - legacy operations
@@ -108,9 +112,9 @@ Created `server/src/services/landing-page.service.ts` following the same pattern
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-12-04 | Created | Code review of PR #14 |
+| Date       | Action   | Notes                                                  |
+| ---------- | -------- | ------------------------------------------------------ |
+| 2025-12-04 | Created  | Code review of PR #14                                  |
 | 2025-12-04 | Resolved | Added LandingPageService for architectural consistency |
 
 ## Tags

@@ -1,5 +1,5 @@
-import { AlertCircle, X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { AlertCircle, X } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
 export interface FormError {
   field: string;
@@ -35,7 +35,7 @@ interface ErrorSummaryProps {
  * />
  * ```
  */
-export function ErrorSummary({ errors, onDismiss, className = "" }: ErrorSummaryProps) {
+export function ErrorSummary({ errors, onDismiss, className = '' }: ErrorSummaryProps) {
   const summaryRef = useRef<HTMLDivElement>(null);
 
   // Auto-focus error summary when errors appear (accessibility)
@@ -55,7 +55,7 @@ export function ErrorSummary({ errors, onDismiss, className = "" }: ErrorSummary
   const handleErrorClick = (field: string) => {
     const element = document.getElementById(field);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
       element.focus();
     }
   };
@@ -74,7 +74,7 @@ export function ErrorSummary({ errors, onDismiss, className = "" }: ErrorSummary
         <div className="flex-1">
           <h2 className="text-lg font-semibold text-danger-900 mb-2">
             {errors.length === 1
-              ? "There is 1 error with your submission"
+              ? 'There is 1 error with your submission'
               : `There are ${errors.length} errors with your submission`}
           </h2>
           <ul className="space-y-2">

@@ -23,6 +23,7 @@ While we have a database-level unique constraint on `Booking.date` (our primary 
 We have chosen **pessimistic locking** using PostgreSQL's `SELECT FOR UPDATE` within database transactions.
 
 **Implementation:**
+
 ```typescript
 // Wrap availability check and booking creation in a transaction
 await prisma.$transaction(async (tx) => {
@@ -45,6 +46,7 @@ await prisma.$transaction(async (tx) => {
 ## Consequences
 
 **Positive:**
+
 - **Reliability:** First request acquires lock, second request waits, avoiding race conditions
 - **Simplicity:** No version fields or retry logic needed at application level
 - **Database-enforced:** Leverages PostgreSQL's proven locking mechanism
@@ -52,11 +54,13 @@ await prisma.$transaction(async (tx) => {
 - **No additional infrastructure:** No Redis or distributed lock manager required
 
 **Negative:**
+
 - **Performance:** Second request blocks until first transaction completes (acceptable for wedding bookings - low volume)
 - **Transaction length:** Holds lock for duration of booking creation (mitigated by fast database operations)
 - **Deadlock potential:** If transactions acquire locks in different orders (mitigated by always locking dates in consistent order)
 
 **Risks:**
+
 - Long-running transactions could cause lock timeouts (mitigated by keeping transactions fast)
 - Database connection pool exhaustion under high load (mitigated by proper pool sizing)
 
@@ -67,6 +71,7 @@ await prisma.$transaction(async (tx) => {
 **Approach:** Add `version` field to Booking, increment on update, check version before commit.
 
 **Why Rejected:**
+
 - **Retry complexity:** Application must retry failed bookings, complicating webhook logic
 - **Customer experience:** Failed bookings require re-payment or complex recovery
 - **Race condition still possible:** Both requests could pass version check simultaneously
@@ -77,6 +82,7 @@ await prisma.$transaction(async (tx) => {
 **Approach:** Acquire Redis lock on date before availability check, release after booking creation.
 
 **Why Rejected:**
+
 - **Additional infrastructure:** Requires Redis deployment and maintenance
 - **Network dependency:** Redis unavailability blocks all bookings
 - **Complexity:** More moving parts, more failure modes
@@ -88,6 +94,7 @@ await prisma.$transaction(async (tx) => {
 **Approach:** Rely solely on database unique constraint, handle P2002 error in webhook handler.
 
 **Why Rejected:**
+
 - **Poor customer experience:** Second customer pays, then gets error message
 - **Refund complexity:** Must automatically refund second customer's payment
 - **Trust issues:** Customers charged for failed booking damages reputation
@@ -98,6 +105,7 @@ await prisma.$transaction(async (tx) => {
 **Approach:** Use in-memory mutex/semaphore to serialize booking requests by date.
 
 **Why Rejected:**
+
 - **Single-instance only:** Doesn't work with horizontal scaling (multiple API instances)
 - **Lost locks on restart:** Lock state lost on server restart
 - **No persistence:** Lock isn't durable across deployments
@@ -106,17 +114,20 @@ await prisma.$transaction(async (tx) => {
 ## Implementation Details
 
 **Files Modified:**
+
 - `server/src/services/availability.service.ts` - Added transaction parameter to `isDateAvailable()`
 - `server/src/services/booking.service.ts` - Wrapped booking creation in `prisma.$transaction()`
 - `server/src/adapters/prisma/booking.repository.ts` - Added transaction support to `create()`
 
 **Testing:**
+
 - Added concurrent booking test simulating race condition
 - Verified first request succeeds, second request waits then fails gracefully
 - Confirmed unique constraint still acts as safety net
 
 **Rollback Plan:**
 If pessimistic locking causes performance issues, we can:
+
 1. Revert to unique constraint only
 2. Add optimistic locking with retry logic
 3. Consider Redis distributed lock for high-traffic scenarios
@@ -124,6 +135,7 @@ If pessimistic locking causes performance issues, we can:
 ## Why This Was Superseded
 
 This approach encountered P2034 deadlock errors in production-like concurrency scenarios:
+
 - Used `SERIALIZABLE` isolation level with `SELECT FOR UPDATE NOWAIT`
 - Attempted to lock non-existent rows (new booking dates)
 - Created predicate locks that conflicted even for different dates

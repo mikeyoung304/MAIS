@@ -1,8 +1,8 @@
-import { useEffect } from "react";
-import { Calendar, Mail, Users, Package, Plus, CheckCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
-import type { BookingDto, PackageDto } from "@macon/contracts";
+import { useEffect } from 'react';
+import { Calendar, Mail, Users, Package, Plus, CheckCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { formatCurrency } from '@/lib/utils';
+import type { BookingDto, PackageDto } from '@macon/contracts';
 
 interface BookingConfirmationProps {
   booking: BookingDto;
@@ -13,18 +13,15 @@ interface BookingConfirmationProps {
  * BookingConfirmation - Displays detailed booking information after successful payment
  * Includes confirmation message, booking details, package info, and add-ons
  */
-export function BookingConfirmation({
-  booking,
-  packageData,
-}: BookingConfirmationProps) {
+export function BookingConfirmation({ booking, packageData }: BookingConfirmationProps) {
   // Helper to format date with proper timezone handling
   const formatEventDate = (dateStr: string) => {
-    const date = new Date(dateStr + "T00:00:00");
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+    const date = new Date(dateStr + 'T00:00:00');
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
   };
 
@@ -34,7 +31,8 @@ export function BookingConfirmation({
     const createConfetti = () => {
       const confettiCount = 50;
       const confettiContainer = document.createElement('div');
-      confettiContainer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;overflow:hidden';
+      confettiContainer.style.cssText =
+        'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;overflow:hidden';
       document.body.appendChild(confettiContainer);
 
       const emojis = ['🎉', '✨', '💍', '💐', '🎊', '💕', '🥂'];
@@ -77,15 +75,10 @@ export function BookingConfirmation({
         <div className="flex items-start gap-3">
           <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 animate-in zoom-in-50 duration-700" />
           <div>
-            <p className="text-lg font-medium text-white mb-1">
-              Payment Received!
-            </p>
+            <p className="text-lg font-medium text-white mb-1">Payment Received!</p>
             <p className="text-base text-white/90">
-              Thank you for your booking. We'll send you a confirmation email
-              shortly at{" "}
-              <span className="font-medium text-white">
-                {booking.email}
-              </span>
+              Thank you for your booking. We'll send you a confirmation email shortly at{' '}
+              <span className="font-medium text-white">{booking.email}</span>
             </p>
           </div>
         </div>
@@ -94,15 +87,11 @@ export function BookingConfirmation({
       {/* Booking Information */}
       <div className="space-y-6">
         <div>
-          <h2 className="font-heading text-2xl font-semibold mb-4 text-white">
-            Booking Details
-          </h2>
+          <h2 className="font-heading text-2xl font-semibold mb-4 text-white">Booking Details</h2>
           <div className="space-y-4">
             {/* Confirmation Number */}
             <div className="flex items-start justify-between gap-4 pb-4 border-b border-white/20">
-              <span className="text-base text-white/90">
-                Confirmation Number
-              </span>
+              <span className="text-base text-white/90">Confirmation Number</span>
               <span className="text-base font-mono font-medium text-white text-right">
                 {booking.id}
               </span>
@@ -125,9 +114,7 @@ export function BookingConfirmation({
                 <Mail className="w-5 h-5" />
                 <span>Email</span>
               </div>
-              <span className="text-base text-white text-right">
-                {booking.email}
-              </span>
+              <span className="text-base text-white text-right">{booking.email}</span>
             </div>
 
             {/* Event Date */}
@@ -161,9 +148,7 @@ export function BookingConfirmation({
                 </div>
                 <div className="flex flex-col gap-1.5 text-right">
                   {booking.addOnIds.map((addOnId) => {
-                    const addOn = packageData?.addOns.find(
-                      (a) => a.id === addOnId
-                    );
+                    const addOn = packageData?.addOns.find((a) => a.id === addOnId);
                     return (
                       <span key={addOnId} className="text-base text-white">
                         {addOn ? addOn.title : addOnId}
@@ -187,9 +172,7 @@ export function BookingConfirmation({
 
             {/* Total */}
             <div className="flex items-center justify-between gap-4 pt-4 border-t border-white/20">
-              <span className="font-medium text-white text-xl">
-                Total Paid
-              </span>
+              <span className="font-medium text-white text-xl">Total Paid</span>
               <span className="text-3xl font-heading font-semibold text-white">
                 {formatCurrency(booking.totalCents)}
               </span>

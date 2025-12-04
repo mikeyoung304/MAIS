@@ -9,6 +9,7 @@
 ## PHASE 1 — Preflight ✓
 
 **Environment Snapshot:**
+
 - Node: v24.2.0 ✓
 - pnpm: 8.15.0 ✓
 - Git SHA: de50d8964e103ac3503e41c1586ef071a91c8ac6
@@ -17,11 +18,13 @@
 - Git Status: clean
 
 **Security Tools:**
+
 - eslint: v8.57.1 ✓
 - knip: 5.65.0 ✓
 - ts-prune: available (version check N/A)
 
 **Approvals:**
+
 - INSTALL_DEPS: yes
 - MODIFY_FILES: yes
 - RUN_MIGRATIONS: yes
@@ -31,7 +34,8 @@
 - RUN_SECURITY_SCANS: yes
 
 **Database:**
-- DATABASE_URL: postgresql://postgres:***@db.gpyvdknhmevcfdbgtqir.supabase.co:5432/postgres (Supabase)
+
+- DATABASE_URL: postgresql://postgres:\*\*\*@db.gpyvdknhmevcfdbgtqir.supabase.co:5432/postgres (Supabase)
 
 ✅ Preflight complete. Proceeding to Phase 2.
 
@@ -40,6 +44,7 @@
 ## PHASE 2 — Database Baseline (Prisma) ✓
 
 **Actions:**
+
 - Updated schema.prisma with complete P0/P1 models:
   - User, Customer, Venue
   - Package, AddOn, PackageAddOn (many-to-many)
@@ -65,6 +70,7 @@
 ## PHASE 3 — API Rate Limiting ✓
 
 **Actions:**
+
 - Installed express-rate-limit@8.1.0
 - Created rateLimiter.ts middleware with:
   - `publicLimiter`: 300 req/15min for general routes
@@ -72,7 +78,7 @@
   - `skipIfHealth`: Exempt /health and /ready from rate limiting
 - Wired into app.ts:
   - Global rate limiting (with health endpoint exemption)
-  - Stricter rate limiting on /v1/admin/* routes
+  - Stricter rate limiting on /v1/admin/\* routes
 
 **Status:** ✅ Rate limiting active
 
@@ -81,6 +87,7 @@
 ## PHASE 4 — Webhook Atomicity + Input Validation ✓
 
 **Actions:**
+
 - Created webhook-handler.service.ts with atomic transaction support:
   - Zod schema for webhook payload validation
   - `prisma.$transaction()` for atomic payment + booking updates
@@ -98,6 +105,7 @@
 ## PHASE 5 — Performance: N+1 Fix in Catalog ✓
 
 **Actions:**
+
 - Created catalog-optimized.service.ts with:
   - `listPackagesWithAddOns()`: Single query using Prisma include
   - Eliminates N+1: 1 query instead of 1 + N queries
@@ -112,6 +120,7 @@
 ## PHASE 6 — Frontend: Code Splitting + A11y ✓
 
 **Actions:**
+
 - Created a11y.css with:
   - Skip link styles for keyboard navigation
   - Focus visible styles
@@ -133,6 +142,7 @@
 ## PHASE 7 — HTTP Contract Tests ✓
 
 **Actions:**
+
 - Installed supertest@7.1.4 and @types/supertest@6.0.3
 - Created test/http/packages.test.ts with:
   - GET /v1/packages tests (contract shape validation)
@@ -150,12 +160,14 @@
 ## PHASE 8 — Security Scans ✓
 
 **Actions:**
+
 - Ran knip scan: identified 5 unused files, 3 unused deps, 3 unused devDeps, 13 unused exports
 - Notable: P0/P1 new files flagged as unused (expected - not yet wired into request flow)
 - ESLint encountered parser config issues (requires tsconfig path fix)
 - Created STATIC_REPORT.md with findings and recommendations
 
 **Key Findings:**
+
 - New P0/P1 services present but not yet integrated (webhook-handler, catalog-optimized)
 - Recommend follow-up integration work
 - Some dependencies may be removable
@@ -167,6 +179,7 @@
 ## PHASE 9 — Build, Commit, Push, PR ✓
 
 **Actions:**
+
 - Typecheck passed: `pnpm -w run typecheck` ✓
 - Committed all changes: commit `da8043a`
   - 18 files changed, 1046 insertions(+), 264 deletions(-)
@@ -190,16 +203,19 @@ No hard failures encountered. All acceptance criteria met or documented as follo
 ## PHASE 11 — Final Synthesis ✓
 
 **Actions:**
+
 - Created SUMMARY.md: Executive summary with metrics, acceptance criteria, follow-up work
 - Updated LOG.md: Complete audit trail of all 11 phases
-- Verified all deliverables present in docs/_overnight/
+- Verified all deliverables present in docs/\_overnight/
 
 **Key Artifacts:**
+
 - ✅ LOG.md: Detailed phase-by-phase execution log
 - ✅ SUMMARY.md: Executive summary for stakeholders
 - ✅ STATIC_REPORT.md: Static analysis findings and recommendations
 
 **Final Metrics:**
+
 - 18 files changed (+1046/-264 lines)
 - 11 phases completed successfully
 - PR #1 opened: https://github.com/mikeyoung304/Elope/pull/1
@@ -212,6 +228,7 @@ No hard failures encountered. All acceptance criteria met or documented as follo
 ## 🎉 P0/P1 IMPLEMENTATION COMPLETE
 
 **Summary:**
+
 - Database: Prisma schema + migrations applied ✓
 - Security: Rate limiting active ✓
 - Webhooks: Atomic with validation ✓
@@ -222,4 +239,3 @@ No hard failures encountered. All acceptance criteria met or documented as follo
 - PR: #1 opened and ready for review ✓
 
 **Next Steps:** Review PR, approve, and merge to main. Follow-up integration work tracked in PR description.
-

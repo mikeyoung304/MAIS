@@ -9,11 +9,13 @@
 ## Context
 
 During MVP development, we initially hardcoded Stripe API calls directly in the booking service. This created tight coupling between business logic and payment vendor, making it difficult to:
+
 - Test booking logic without real Stripe credentials
 - Switch payment providers (e.g., migrate to PayPal, Square)
 - Mock payment flows in development mode
 
 We needed a way to:
+
 1. Keep booking service vendor-agnostic
 2. Enable mock payment flows for development
 3. Make payment integration testable
@@ -24,6 +26,7 @@ We needed a way to:
 We have implemented a **PaymentProvider interface** following the ports-and-adapters (hexagonal) architecture pattern.
 
 **Interface Definition:**
+
 ```typescript
 // server/src/lib/ports.ts
 export interface PaymentProvider {
@@ -40,6 +43,7 @@ export interface PaymentProvider {
 ```
 
 **Real Implementation:**
+
 ```typescript
 // server/src/adapters/stripe.adapter.ts
 export class StripePaymentAdapter implements PaymentProvider {
@@ -75,6 +79,7 @@ export class StripePaymentAdapter implements PaymentProvider {
 ```
 
 **Mock Implementation:**
+
 ```typescript
 // server/src/adapters/mock/payment.mock.ts
 export class MockPaymentProvider implements PaymentProvider {
@@ -93,23 +98,26 @@ export class MockPaymentProvider implements PaymentProvider {
 ```
 
 **Dependency Injection:**
+
 ```typescript
 // server/src/di.ts
-const paymentProvider = config.mode === 'real'
-  ? new StripePaymentAdapter(stripeClient, config)
-  : new MockPaymentProvider();
+const paymentProvider =
+  config.mode === 'real'
+    ? new StripePaymentAdapter(stripeClient, config)
+    : new MockPaymentProvider();
 
 const bookingService = new BookingService(
   bookingRepo,
   catalogRepo,
   eventEmitter,
-  paymentProvider  // ← Injected here
+  paymentProvider // ← Injected here
 );
 ```
 
 ## Consequences
 
 **Positive:**
+
 - **Testability:** Booking service can be tested without real Stripe credentials
 - **Development speed:** Mock mode allows full booking flow without external API calls
 - **Flexibility:** Can swap Stripe for another provider by implementing interface
@@ -117,11 +125,13 @@ const bookingService = new BookingService(
 - **Type safety:** TypeScript ensures all implementations match interface
 
 **Negative:**
+
 - **Abstraction overhead:** One extra layer of indirection
 - **Interface changes:** If Stripe adds features, must update interface + all implementations
 - **Mock divergence:** Mock implementation may drift from real Stripe behavior
 
 **Maintenance:**
+
 - Must keep mock implementation in sync with real Stripe behavior
 - Must update interface if payment requirements change
 
@@ -132,6 +142,7 @@ const bookingService = new BookingService(
 **Approach:** Import and use Stripe SDK directly in booking service.
 
 **Why Rejected:**
+
 - Tight coupling to Stripe (vendor lock-in)
 - Difficult to test (requires mocking Stripe SDK)
 - No mock mode (requires real API keys for development)
@@ -142,6 +153,7 @@ const bookingService = new BookingService(
 **Approach:** Use strategy pattern with `StripePaymentStrategy`, `PayPalPaymentStrategy`, etc.
 
 **Why Rejected:**
+
 - Overengineered for current needs (only using Stripe)
 - Strategy pattern better for runtime switching, not DI-time switching
 - Interface + DI achieves same goal with less complexity
@@ -151,6 +163,7 @@ const bookingService = new BookingService(
 **Approach:** Use feature flags to switch between payment providers at runtime.
 
 **Why Rejected:**
+
 - Unnecessary complexity (no plans for multiple providers)
 - Runtime switching adds risk (could switch mid-transaction)
 - DI-time switching (via `config.mode`) is simpler and safer
@@ -158,32 +171,38 @@ const bookingService = new BookingService(
 ## Implementation Details
 
 **Files Created:**
+
 - `server/src/lib/ports.ts` - PaymentProvider interface
 - `server/src/adapters/stripe.adapter.ts` - Real implementation
 - `server/src/adapters/mock/payment.mock.ts` - Mock implementation
 
 **Files Modified:**
+
 - `server/src/services/booking.service.ts` - Added paymentProvider parameter
 - `server/src/di.ts` - Wired paymentProvider into BookingService
 
 **Testing:**
+
 - Added tests for StripePaymentAdapter (signature verification)
 - Added tests for MockPaymentProvider (always succeeds)
 - Added tests for BookingService (mock payment flow)
 
 **Documentation:**
+
 - ARCHITECTURE.md updated with PaymentProvider explanation
 - DEVELOPING.md updated with mock mode setup
 
 ## Future Enhancements
 
 **Potential Improvements:**
+
 - Add `refundPayment()` method to interface (currently optional)
 - Add `getPaymentStatus()` method for payment reconciliation
 - Add `listPayments()` method for admin dashboard
 - Support partial refunds (currently all-or-nothing)
 
 **Migration Path (If Switching Providers):**
+
 1. Implement new provider class (e.g., `PayPalPaymentAdapter`)
 2. Ensure it implements `PaymentProvider` interface
 3. Update DI config to use new provider

@@ -25,6 +25,7 @@ Found **152 instances** of "Elope" or "elope" across 71 markdown documentation f
 These appear in document titles and primary headings - highest priority.
 
 **File:** `/Users/mikeyoung/CODING/MAIS/README.md`
+
 - **Line 91:** "Starting Sprint 2 (January 2025), Elope is evolving into..."
 - **Context:** ...Starting Sprint 2 (January 2025), Elope is evolving into an **agent-powered, config-driven platform**...
 - **Recommendation:** CHANGE to "MAIS is evolving into..."
@@ -33,6 +34,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/DECISIONS.md`
+
 - **Line 3:** "This document contains all major architectural decisions made during the development of the Elope wedding booking platform."
 - **Context:** This document contains all major architectural decisions made during the development of the Elope wedding booking platform...
 - **Recommendation:** CHANGE to "MAIS wedding booking platform" or "MAIS platform"
@@ -41,6 +43,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/CODEBASE_EXPLORATION_COMPLETE.md`
+
 - **Line 1:** "# Elope Codebase - Comprehensive Architecture Exploration"
 - **Context:** # Elope Codebase - Comprehensive Architecture Exploration
 - **Recommendation:** CHANGE to "# MAIS Codebase - Comprehensive Architecture Exploration"
@@ -59,6 +62,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/ARCHITECTURE.md`
+
 - **Line 5:** "Elope is a **modular monolith**: one API process with clear service boundaries..."
 - **Context:** Elope is a **modular monolith**: one API process with clear service boundaries, a thin HTTP layer...
 - **Recommendation:** CHANGE to "MAIS is a **modular monolith**..."
@@ -72,6 +76,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/CONTRIBUTING.md`
+
 - **Line 1:** "# Contributing to Elope"
 - **Context:** # Contributing to Elope This guide will help you get started with development...
 - **Recommendation:** CHANGE to "# Contributing to MAIS"
@@ -120,6 +125,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/START_HERE.md`
+
 - **Line 1:** "# 📍 START HERE - Elope Platform Documentation Index"
 - **Context:** # 📍 START HERE - Elope Platform Documentation Index
 - **Recommendation:** CHANGE to "# 📍 START HERE - MAIS Platform Documentation Index"
@@ -128,6 +134,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/ARCHITECTURE_DIAGRAM.md`
+
 - **Line 18:** "elope/" (directory path)
 - **Context:** elope/ ├── server/
 - **Recommendation:** CHANGE to "mais/"
@@ -136,6 +143,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/CODEBASE_EXPLORATION_COMPLETE.md` (continued)
+
 - **Line 23:** "Elope/" (structural reference)
 - **Context:** Elope/ ├── server/ ├── client/
 - **Recommendation:** CHANGE to "MAIS/"
@@ -161,13 +169,14 @@ These appear in document titles and primary headings - highest priority.
 ### Major Documentation References
 
 **File:** `/Users/mikeyoung/CODING/MAIS/EXPLORATION_SUMMARY.md`
+
 - **Line 1:** "# Elope Codebase Exploration - Executive Summary"
 - **Context:** # Elope Codebase Exploration - Executive Summary
 - **Recommendation:** CHANGE to "# MAIS Codebase Exploration - Executive Summary"
 - **Reason:** Document title
 
 - **Line 3:** "## What is Elope?"
-- **Context:** ## What is Elope? Elope is a **production-ready multi-tenant...
+- **Context:** ## What is Elope? Elope is a \*\*production-ready multi-tenant...
 - **Recommendation:** CHANGE to "## What is MAIS?"
 - **Reason:** Section heading
 
@@ -179,6 +188,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/ARCHITECTURE_COMPLETENESS_AUDIT.md`
+
 - **Line 1:** "The Elope platform is a **production-ready, multi-tenant SaaS wedding booking system**"
 - **Context:** The Elope platform is a **production-ready, multi-tenant SaaS wedding booking system** with...
 - **Recommendation:** CHANGE to "The MAIS platform..."
@@ -187,6 +197,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/UI_UX_IMPROVEMENT_PLAN.md`
+
 - **Line 1:** "# Elope UI/UX Comprehensive Improvement Plan"
 - **Context:** # Elope UI/UX Comprehensive Improvement Plan
 - **Recommendation:** CHANGE to "# MAIS UI/UX Comprehensive Improvement Plan"
@@ -210,6 +221,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/UI_UX_EXECUTION_BRIEF.md`
+
 - **Line 1:** "# Elope UI/UX Improvement - Execution Brief"
 - **Context:** # Elope UI/UX Improvement - Execution Brief
 - **Recommendation:** CHANGE to "# MAIS UI/UX Improvement - Execution Brief"
@@ -228,6 +240,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/DESIGN_SYSTEM_IMPLEMENTATION.md`
+
 - **Line 1:** "# Elope Design System - Apple-Quality Implementation"
 - **Context:** # Elope Design System - Apple-Quality Implementation
 - **Recommendation:** CHANGE to "# MAIS Design System - Apple-Quality Implementation"
@@ -251,6 +264,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/COMPREHENSIVE_CODEBASE_ANALYSIS.md`
+
 - **Line 1:** "# Elope Codebase - Comprehensive Architecture Analysis"
 - **Context:** # Elope Codebase - Comprehensive Architecture Analysis
 - **Recommendation:** CHANGE to "# MAIS Codebase - Comprehensive Architecture Analysis"
@@ -296,6 +310,7 @@ These appear in document titles and primary headings - highest priority.
 ### Package/Namespace References (NPM Packages)
 
 **File:** `/Users/mikeyoung/CODING/MAIS/REFACTOR_SUCCESS_PAGE.md`
+
 - **Lines:** Multiple references to `@elope/contracts`
 - **Context:** Import statements and documentation referencing the contracts package
 - **Recommendation:** CHANGE all `@elope/contracts` to `@mais/contracts`
@@ -304,6 +319,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/TYPESCRIPT_AUDIT_PHASE_1_2.md`
+
 - **Line 40:** "- `PackageDto` from @elope/contracts"
 - **Context:** Package imports and type references
 - **Recommendation:** CHANGE to `@mais/contracts`
@@ -327,6 +343,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/REFACTOR_SUMMARY.md`
+
 - **Line 184:** "- Imports from `@elope/contracts`"
 - **Context:** Dependency documentation
 - **Recommendation:** CHANGE to `@mais/contracts`
@@ -335,6 +352,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/REFACTOR_VISUAL.md`
+
 - **Line 335:** "- @elope/contracts (for DTOs)"
 - **Context:** Dependency reference
 - **Recommendation:** CHANGE to "@mais/contracts"
@@ -345,6 +363,7 @@ These appear in document titles and primary headings - highest priority.
 ### Client/Component Documentation
 
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/lib/PACKAGE_PHOTO_API_README.md`
+
 - **Line 1:** "This implementation provides a complete API service layer for handling package photo uploads in the Elope wedding booking platform."
 - **Context:** Introduction
 - **Recommendation:** CHANGE to "...in the MAIS wedding booking platform."
@@ -358,6 +377,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/components/PackagePhotoUploader.md`
+
 - **Line:** "Production-ready React component for uploading and managing package photos in the Elope wedding booking platform."
 - **Context:** Component description
 - **Recommendation:** CHANGE to "...in the MAIS wedding booking platform."
@@ -371,6 +391,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/styles/DESIGN_TOKENS_GUIDE.md`
+
 - **Line 1:** "# Elope Design System - Design Tokens Guide"
 - **Context:** Document title
 - **Recommendation:** CHANGE to "# MAIS Design System - Design Tokens Guide"
@@ -389,6 +410,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/styles/DESIGN_TOKENS_CHEATSHEET.md`
+
 - **Line:** "Quick reference for the most commonly used design tokens in the Elope platform."
 - **Context:** Introduction
 - **Recommendation:** CHANGE to "...in the MAIS platform."
@@ -397,6 +419,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/styles/theme-zones.md`
+
 - **Line 1:** "# Elope Theme Zones Documentation"
 - **Context:** Document title
 - **Recommendation:** CHANGE to "# MAIS Theme Zones Documentation"
@@ -410,6 +433,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/contexts/README.md`
+
 - **Line:** "This directory contains the unified authentication context for the Elope application"
 - **Context:** Directory description
 - **Recommendation:** CHANGE to "...for the MAIS application"
@@ -418,6 +442,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/contexts/AUTH_CONTEXT_USAGE.md`
+
 - **Line:** "Complete guide for using the unified AuthContext with role-based access control in the Elope application."
 - **Context:** Guide introduction
 - **Recommendation:** CHANGE to "...in the MAIS application."
@@ -426,6 +451,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/contexts/AUTH_QUICK_REFERENCE.md`
+
 - **Line:** "Quick reference guide for common authentication patterns in the Elope application."
 - **Context:** Introduction
 - **Recommendation:** CHANGE to "...in the MAIS application."
@@ -434,6 +460,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/client/WIDGET_README.md`
+
 - **Line 1:** "# Elope Widget Implementation (Phase 2)"
 - **Context:** Document title
 - **Recommendation:** CHANGE to "# MAIS Widget Implementation (Phase 2)"
@@ -477,6 +504,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/client/ROLE_BASED_ARCHITECTURE.md`
+
 - **Line:** "...for the Elope wedding booking platform."
 - **Context:** Platform reference
 - **Recommendation:** CHANGE to "...for the MAIS wedding booking platform."
@@ -487,6 +515,7 @@ These appear in document titles and primary headings - highest priority.
 ### Operational/Setup Documentation
 
 **File:** `/Users/mikeyoung/CODING/MAIS/DEVELOPING.md`
+
 - **Line 62:** "createdb elope_dev"
 - **Context:** Database setup command
 - **Recommendation:** CHANGE to "createdb mais_dev"
@@ -505,6 +534,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/IMPLEMENTATION_SUMMARY.md`
+
 - **Line 4:** "...for the Elope wedding booking platform."
 - **Context:** Project description
 - **Recommendation:** CHANGE to "...for the MAIS wedding booking platform."
@@ -513,6 +543,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/QUICK_REFERENCE.md`
+
 - **Line 1:** "# Elope Platform - Quick Reference Guide"
 - **Context:** Document title
 - **Recommendation:** CHANGE to "# MAIS Platform - Quick Reference Guide"
@@ -528,6 +559,7 @@ These appear in document titles and primary headings - highest priority.
 ### Database and Configuration
 
 **File:** `/Users/mikeyoung/CODING/MAIS/CHANGELOG.md`
+
 - **Line 585-587:** References to "elope" in GitHub URLs
 - **Context:** Version comparison links
 - **Recommendation:** CHANGE to appropriate repository URLs for MAIS
@@ -536,6 +568,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/SERVER_IMPLEMENTATION_CHECKLIST.md`
+
 - **Line 53:** "email: 'admin@elope.com'"
 - **Context:** Sample data
 - **Recommendation:** CHANGE to "admin@mais.com" or similar
@@ -544,6 +577,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/udo.md`
+
 - **Line:** "DATABASE_URL=postgresql://user:pass@prod-server:5432/elope_prod"
 - **Context:** Environment variable example
 - **Recommendation:** CHANGE to "mais_prod"
@@ -554,6 +588,7 @@ These appear in document titles and primary headings - highest priority.
 ### Architecture and System Documents
 
 **File:** `/Users/mikeyoung/CODING/MAIS/LAUNCH_ACTION_PLAN.md`
+
 - **Line 12:** "Your Elope multi-tenant platform..."
 - **Context:** Opening assessment
 - **Recommendation:** CHANGE to "Your MAIS multi-tenant platform..."
@@ -567,6 +602,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/CODE_HEALTH_ASSESSMENT.md`
+
 - **Line 12:** "The Elope codebase is a well-structured monorepo..."
 - **Context:** Assessment opening
 - **Recommendation:** CHANGE to "The MAIS codebase is..."
@@ -580,6 +616,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/PRODUCTION_LAUNCH_READINESS_DETAILED.md`
+
 - **Line 11:** "Elope's multi-tenant architecture..."
 - **Context:** Opening statement
 - **Recommendation:** CHANGE to "MAIS's multi-tenant architecture..."
@@ -587,12 +624,13 @@ These appear in document titles and primary headings - highest priority.
 
 - **Line 1098:** "Elope's **core multi-tenant architecture is production-ready**..."
 - **Context:** Conclusion section
-- **Recommendation:** CHANGE to "MAIS's **core multi-tenant architecture..."
+- **Recommendation:** CHANGE to "MAIS's \*\*core multi-tenant architecture..."
 - **Reason:** Platform name
 
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/QUICK_START_GUIDE.md`
+
 - **Line 1:** "# ⚡ QUICK START GUIDE - Elope Platform Launch"
 - **Context:** Document title
 - **Recommendation:** CHANGE to "# ⚡ QUICK START GUIDE - MAIS Platform Launch"
@@ -601,14 +639,16 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/LAUNCH_READINESS_EXECUTIVE_SUMMARY.md`
+
 - **Line 11:** "✅ **Elope's multi-tenant architecture is production-ready**..."
 - **Context:** Key finding
-- **Recommendation:** CHANGE to "✅ **MAIS's multi-tenant architecture..."
+- **Recommendation:** CHANGE to "✅ \*\*MAIS's multi-tenant architecture..."
 - **Reason:** Platform name
 
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/WAVE1_SUBAGENT_1A_REPORT.md`
+
 - **Line 13:** "...across the Elope codebase."
 - **Context:** Report scope
 - **Recommendation:** CHANGE to "...across the MAIS codebase."
@@ -619,6 +659,7 @@ These appear in document titles and primary headings - highest priority.
 ### CLI/Commands and Hidden Docs
 
 **File:** `/Users/mikeyoung/CODING/MAIS/.claude/commands/d.md`
+
 - **Line:** "Start the Elope development environment:"
 - **Context:** Command description
 - **Recommendation:** CHANGE to "Start the MAIS development environment:"
@@ -632,6 +673,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/.claude/commands/test.md`
+
 - **Line 1:** "Run the comprehensive Elope test suite."
 - **Context:** Command title
 - **Recommendation:** CHANGE to "Run the comprehensive MAIS test suite."
@@ -640,6 +682,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/.claude/PROJECT.md`
+
 - **Line 1:** "# Elope - Multi-Tenant Wedding Booking Platform"
 - **Context:** Project title
 - **Recommendation:** CHANGE to "# MAIS - Multi-Tenant Property Management Platform"
@@ -650,6 +693,7 @@ These appear in document titles and primary headings - highest priority.
 ### .claude/ Hidden Documentation
 
 **File:** `/Users/mikeyoung/CODING/MAIS/.claude/DOCUMENTATION_SYSTEM_STRATEGIC_AUDIT.md`
+
 - **Multiple references** to "Elope" as the project name in comparisons
 - **Recommendation:** CHANGE all references to "MAIS" in this analysis document
 - **Reason:** Project name consistency
@@ -657,6 +701,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/.claude/MULTI_TENANT_READINESS_ASSESSMENT.md`
+
 - **Line 11:** "The Elope codebase has **excellent multi-tenant foundation**..."
 - **Context:** Assessment opening
 - **Recommendation:** CHANGE to "The MAIS codebase has..."
@@ -667,9 +712,9 @@ These appear in document titles and primary headings - highest priority.
 - **Recommendation:** CHANGE to "mais.com" or appropriate domain
 - **Reason:** Domain reference
 
-- **Lines 224-231:** Architecture diagram showing "*.elope.com"
+- **Lines 224-231:** Architecture diagram showing "\*.elope.com"
 - **Context:** DNS configuration example
-- **Recommendation:** CHANGE to "*.mais.com"
+- **Recommendation:** CHANGE to "\*.mais.com"
 - **Reason:** Domain reference
 
 - **Line 438:** "The Elope platform has a **solid multi-tenant foundation**..."
@@ -680,6 +725,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/.claude/TEST_FIX_PLAN.md`
+
 - **Line 12:** "You're working on the Elope Wedding Platform."
 - **Context:** Context setting
 - **Recommendation:** CHANGE to "You're working on the MAIS Platform."
@@ -693,6 +739,7 @@ These appear in document titles and primary headings - highest priority.
 ---
 
 **File:** `/Users/mikeyoung/CODING/MAIS/.claude/E2E_TEST_INVESTIGATION.md`
+
 - **Lines:** Multiple references to "elope" in test tenant names and API keys
 - **Context:** Test configuration
 - **Recommendation:** CHANGE to "mais" in test identifiers
@@ -709,24 +756,28 @@ These references are to "elopement" or "elopements" - the wedding industry term 
 ### Elopement Package References
 
 **File:** `/Users/mikeyoung/CODING/MAIS/README.md`
+
 - **Line:** "Seasonal Promotions: \"It's January - should we feature winter elopement packages?\""
 - **Context:** Agent capability example
 - **Recommendation:** KEEP
 - **Reason:** "elopement packages" refers to wedding elopement services, correct industry terminology
 
 **File:** `/Users/mikeyoung/CODING/MAIS/WAVE1_SUBAGENT_1C_REPORT.md`
+
 - **Lines:** "slug: 'basic-elopement'" and "title: 'Basic Elopement'"
 - **Context:** Wedding package examples
 - **Recommendation:** KEEP
 - **Reason:** "Elopement" is correct wedding industry terminology for intimate ceremonies
 
 **File:** `/Users/mikeyoung/CODING/MAIS/CODEBASE_EXPLORATION_COMPLETE.md`
+
 - **Line:** "multi-tenant wedding/elopement booking platform"
 - **Context:** Platform description
 - **Recommendation:** KEEP
 - **Reason:** Correct wedding industry term
 
 **File:** `/Users/mikeyoung/CODING/MAIS/playwright-report/` (multiple files)
+
 - **References:** "elopements" in customer testimonials and content
 - **Context:** Website copy about wedding services
 - **Recommendation:** KEEP
@@ -741,12 +792,14 @@ These are file paths containing "/Elope/" that will be updated by system-level d
 **Note:** These 21 references will be automatically corrected when the directory is renamed from `/Users/mikeyoung/CODING/Elope/` to `/Users/mikeyoung/CODING/MAIS/` at the filesystem level.
 
 Examples:
+
 - `/Users/mikeyoung/CODING/Elope/client/src/...`
 - `/Users/mikeyoung/CODING/Elope/server/src/...`
 - `/Users/mikeyoung/CODING/Elope/UI_UX_IMPROVEMENT_PLAN.md`
 - `/Users/mikeyoung/CODING/Elope/.playwright-mcp/...`
 
 These are found in:
+
 - REFACTOR_SUCCESS_PAGE.md
 - TYPESCRIPT_AUDIT_PHASE_1_2.md
 - PHASE1_P0_TESTS_IMPLEMENTATION_REPORT.md
@@ -767,12 +820,14 @@ These need coordinated updates with actual package.json file changes:
 **New namespace:** `@mais/*` or `@macon/*` (to be determined)
 
 Affected packages:
+
 - `@elope/contracts` → `@mais/contracts`
 - `@elope/shared` → `@mais/shared`
 - `@elope/web` → `@mais/web`
 - `@elope/api` → `@mais/api`
 
 Files containing package references:
+
 - COMPREHENSIVE_CODEBASE_ANALYSIS.md
 - TYPESCRIPT_AUDIT_PHASE_1_2.md
 - REFACTOR_SUCCESS_PAGE.md
@@ -784,29 +839,34 @@ Files containing package references:
 ## SECTION 5: IMPLEMENTATION PRIORITY
 
 ### Priority 1: Critical (Do First - 2 hours)
+
 1. README.md - Line 91 - "Elope is evolving" → "MAIS is evolving"
 2. CONTRIBUTING.md - All platform name references and database names
 3. START_HERE.md - Document title
 4. All major document titles in root directory
 
 ### Priority 2: High (Do Next - 4 hours)
+
 1. Architecture documents (ARCHITECTURE.md, DECISIONS.md)
-2. Design system documentation (DESIGN_TOKENS_*.md, theme-zones.md)
-3. Client documentation (all client/src/**/*.md)
+2. Design system documentation (DESIGN*TOKENS*\*.md, theme-zones.md)
+3. Client documentation (all client/src/\*_/_.md)
 4. Design and UI documents
 
 ### Priority 3: Medium (Do After - 3 hours)
+
 1. Archive/hidden .claude/ documentation
 2. Command documentation in .claude/commands/
 3. Analysis and report documents
 4. Historical/phase documentation
 
 ### Priority 4: Low (Maintenance - 1 hour)
+
 1. File path references (will update automatically)
 2. Example emails and test data
 3. Historical changelogs
 
 ### Priority 5: Coordinated (With Build System)
+
 1. NPM package namespace updates (requires package.json changes)
 2. Database name changes (requires .env updates)
 3. Domain/CDN references (requires infrastructure decisions)
@@ -818,31 +878,37 @@ Files containing package references:
 For automated find-and-replace operations:
 
 ### Pattern 1: Platform Name at Word Boundary
+
 **Find:** `\bElope\b`
 **Replace:** `MAIS`
 **Confidence:** HIGH
 
-### Pattern 2: Lowercase Project References  
+### Pattern 2: Lowercase Project References
+
 **Find:** `\belope\b` (but NOT "elopement")
 **Replace:** `mais`
 **Confidence:** MEDIUM - needs context verification
 
 ### Pattern 3: Database Names
+
 **Find:** `elope_([a-z_]+)`
 **Replace:** `mais_$1`
 **Confidence:** HIGH
 
 ### Pattern 4: NPM Namespaces
+
 **Find:** `@elope/`
 **Replace:** `@mais/`
 **Confidence:** HIGH
 
 ### Pattern 5: CSS Classes
+
 **Find:** `\.elope-`
 **Replace:** `.mais-`
 **Confidence:** HIGH
 
 ### Pattern 6: HTML IDs
+
 **Find:** `id=["']elope-`
 **Replace:** `id="mais-`
 **Confidence:** HIGH
@@ -851,13 +917,13 @@ For automated find-and-replace operations:
 
 ## SUMMARY STATISTICS
 
-| Category | Count | Action |
-|----------|-------|--------|
-| **Platform Names (Elope)** | 89 | CHANGE |
-| **Wedding Terms (elopement)** | 42 | KEEP |
-| **File Paths (/Elope/)** | 21 | Auto-update |
-| **NPM Packages (@elope/)** | 8 | Coordinate |
-| **TOTAL** | 160 | - |
+| Category                      | Count | Action      |
+| ----------------------------- | ----- | ----------- |
+| **Platform Names (Elope)**    | 89    | CHANGE      |
+| **Wedding Terms (elopement)** | 42    | KEEP        |
+| **File Paths (/Elope/)**      | 21    | Auto-update |
+| **NPM Packages (@elope/)**    | 8     | Coordinate  |
+| **TOTAL**                     | 160   | -           |
 
 ---
 

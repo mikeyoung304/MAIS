@@ -48,7 +48,9 @@ export class GoogleCalendarAdapter implements CalendarProvider {
    * @param tenantId - Tenant ID to get config for
    * @returns Calendar config or null if not found
    */
-  async getConfigForTenant(tenantId: string): Promise<{ calendarId: string; serviceAccountJsonBase64: string } | null> {
+  async getConfigForTenant(
+    tenantId: string
+  ): Promise<{ calendarId: string; serviceAccountJsonBase64: string } | null> {
     // Try to get tenant-specific config from secrets
     if (this.tenantRepo) {
       try {
@@ -60,22 +62,33 @@ export class GoogleCalendarAdapter implements CalendarProvider {
           if (secrets.calendar?.ciphertext && secrets.calendar?.iv && secrets.calendar?.authTag) {
             try {
               // Decrypt the calendar config
-              const decrypted = encryptionService.decryptObject<TenantCalendarConfig>(secrets.calendar);
+              const decrypted = encryptionService.decryptObject<TenantCalendarConfig>(
+                secrets.calendar
+              );
 
               // Convert serviceAccountJson to base64 for compatibility
-              const serviceAccountJsonBase64 = Buffer.from(decrypted.serviceAccountJson, 'utf8').toString('base64');
+              const serviceAccountJsonBase64 = Buffer.from(
+                decrypted.serviceAccountJson,
+                'utf8'
+              ).toString('base64');
 
               return {
                 calendarId: decrypted.calendarId,
                 serviceAccountJsonBase64,
               };
             } catch (error) {
-              logger.warn({ tenantId, error }, 'Failed to decrypt tenant calendar config, falling back to global');
+              logger.warn(
+                { tenantId, error },
+                'Failed to decrypt tenant calendar config, falling back to global'
+              );
             }
           }
         }
       } catch (error) {
-        logger.warn({ tenantId, error }, 'Failed to load tenant calendar config, falling back to global');
+        logger.warn(
+          { tenantId, error },
+          'Failed to load tenant calendar config, falling back to global'
+        );
       }
     }
 
@@ -115,7 +128,10 @@ export class GoogleCalendarAdapter implements CalendarProvider {
     // Check if credentials are missing
     if (!calendarConfig) {
       if (!cached) {
-        logger.warn({ tenantId }, 'Google Calendar credentials missing; treating date as available');
+        logger.warn(
+          { tenantId },
+          'Google Calendar credentials missing; treating date as available'
+        );
       }
       const result = { available: true, timestamp: Date.now() };
       this.cache.set(cacheKey, result);

@@ -12,6 +12,7 @@ Build a comprehensive scheduling platform within MAIS that provides Acuity Sched
 ## Problem Statement / Motivation
 
 ### Current State
+
 - MAIS has date-only booking for wedding packages (`date: DateTime @db.Date`)
 - Google Calendar adapter exists but is read-only (availability check only)
 - Stripe Connect integrated for payments but no deposit/refund flow
@@ -19,12 +20,14 @@ Build a comprehensive scheduling platform within MAIS that provides Acuity Sched
 - No QuickBooks-style revenue tracking or reporting
 
 ### Why This Matters
+
 - **Market Opportunity:** Global appointment scheduling market valued at $14.33B in 2024, projected to reach $42.15B by 2034
 - **User Demand:** 70%+ of customers prefer online booking
 - **Platform Differentiation:** Full scheduling + payments + analytics in one platform vs. using Acuity/Calendly + separate payment processor
 - **Tenant Value:** All-in-one solution reduces tool sprawl and integration headaches
 
 ### Success Metrics
+
 - Tenants actively using scheduling features (target: 50% of new tenants within 3 months)
 - Booking success rate >95%
 - Zero double-booking incidents
@@ -37,15 +40,17 @@ Build a comprehensive scheduling platform within MAIS that provides Acuity Sched
 ### Industry Analysis (2025)
 
 #### Competitor Landscape
-| Platform | Strengths | Weaknesses | Pricing |
-|----------|-----------|------------|---------|
-| **Acuity Scheduling** | Feature-rich, multi-calendar, intake forms | Expensive for growing businesses | $20-$69/mo |
-| **Calendly** | Gold standard UX, 100+ integrations | Limited customization | $10-$20/mo |
-| **Cal.com** | Open source, self-hostable, API-first | Requires technical expertise | Free-$15/mo |
-| **Square Appointments** | All-in-one POS + scheduling | Locked into Square ecosystem | Free-$69/mo |
-| **SimplyBook.me** | À la carte features, compliance | Complex pricing | $8-$50/mo |
+
+| Platform                | Strengths                                  | Weaknesses                       | Pricing     |
+| ----------------------- | ------------------------------------------ | -------------------------------- | ----------- |
+| **Acuity Scheduling**   | Feature-rich, multi-calendar, intake forms | Expensive for growing businesses | $20-$69/mo  |
+| **Calendly**            | Gold standard UX, 100+ integrations        | Limited customization            | $10-$20/mo  |
+| **Cal.com**             | Open source, self-hostable, API-first      | Requires technical expertise     | Free-$15/mo |
+| **Square Appointments** | All-in-one POS + scheduling                | Locked into Square ecosystem     | Free-$69/mo |
+| **SimplyBook.me**       | À la carte features, compliance            | Complex pricing                  | $8-$50/mo   |
 
 #### Key Features from Market Leaders
+
 1. **Multi-provider calendars** - Staff-specific availability
 2. **Service duration + buffer times** - Prevent back-to-back booking issues
 3. **Time slot-based booking** - Not just date selection
@@ -57,17 +62,21 @@ Build a comprehensive scheduling platform within MAIS that provides Acuity Sched
 ### Technical Best Practices (2025)
 
 #### Calendar & Time Management
+
 - **Store all times in UTC**, convert on frontend using IANA timezone database
 - **Hybrid calendar sync**: Webhooks for real-time + 15-minute polling fallback
 - **Google Calendar API**: OAuth 2.0 mandatory (March 2025), watch notifications for real-time updates
 
 #### Double-Booking Prevention
+
 Three-layer defense (industry standard):
+
 1. **Application-level check** - Fast path availability query
 2. **Pessimistic locking** - `SELECT FOR UPDATE` in transaction
 3. **Database constraint** - Unique index on `[tenantId, providerId, startTime]`
 
 #### Payment Patterns
+
 - **Stripe recommendations**: Full upfront OR partial deposit with card vaulting
 - **No-show protection**: Store payment method, charge only if no-show
 - **Cancellation fees**: Time-based graduated structure (>48hr = full refund, 24-48hr = 50%, <24hr = 0%)
@@ -75,17 +84,20 @@ Three-layer defense (industry standard):
 ### Existing MAIS Architecture
 
 #### Current Booking System (`server/src/services/booking.service.ts:1-332`)
+
 - `createCheckout()` - Stripe checkout session creation
 - `onPaymentCompleted()` - Webhook handler for confirmed bookings
 - Three-layer double-booking prevention already implemented for dates
 
 #### Calendar Integration (`server/src/adapters/gcal.adapter.ts:1-112`)
+
 - Read-only FreeBusy API integration
 - 60-second cache for availability checks
 - Service account authentication
 - **Gap**: No write capabilities (event creation/deletion)
 
 #### Multi-Tenant Patterns (`server/src/middleware/tenant.ts:1-256`)
+
 - All queries scoped by `tenantId`
 - API key validation (`pk_live_{slug}_{random}`)
 - Encrypted tenant secrets storage
@@ -533,10 +545,7 @@ class AvailabilityService {
 
 ```typescript
 class AppointmentService {
-  async createAppointment(
-    tenantId: string,
-    data: CreateAppointmentDto
-  ): Promise<Appointment> {
+  async createAppointment(tenantId: string, data: CreateAppointmentDto): Promise<Appointment> {
     return await prisma.$transaction(async (tx) => {
       // 1. Acquire pessimistic lock
       await tx.$executeRaw`
@@ -553,8 +562,8 @@ class AppointmentService {
           tenantId,
           providerId: data.providerId,
           startTimeUtc: data.startTimeUtc,
-          status: { not: 'CANCELLED' }
-        }
+          status: { not: 'CANCELLED' },
+        },
       });
       if (conflict) throw new BookingConflictError();
 
@@ -593,7 +602,7 @@ class CalendarSyncService {
       start: { dateTime: appointment.startTimeUtc.toISOString() },
       end: { dateTime: appointment.endTimeUtc.toISOString() },
       description: `Booking ID: ${appointment.id}\nPhone: ${appointment.clientPhone}`,
-      extendedProperties: { private: { maisAppointmentId: appointment.id } }
+      extendedProperties: { private: { maisAppointmentId: appointment.id } },
     };
 
     const googleEventId = await this.googleCalendar.events.insert(event);
@@ -742,6 +751,7 @@ export const googleCalendarWebhook = {
 ### Phase 0: Foundation (Week 1-2)
 
 #### Deliverables
+
 - [ ] Schema design finalized and reviewed
 - [ ] Prisma migration created and tested on staging
 - [ ] Mock adapters for calendar sync (`server/src/adapters/mock/calendar-sync.mock.ts`)
@@ -749,6 +759,7 @@ export const googleCalendarWebhook = {
 - [ ] ADR for timezone handling (`docs/decisions/ADR-XXX-timezone-strategy.md`)
 
 #### Files to Create/Modify
+
 ```
 server/prisma/schema.prisma                    # Add new models
 server/src/lib/ports.ts                        # Add scheduling interfaces
@@ -760,6 +771,7 @@ docs/decisions/ADR-XXX-timezone-strategy.md    # Architecture decision
 ```
 
 #### Success Criteria
+
 - Migration applies cleanly to staging database
 - Mock adapters pass interface tests
 - Contracts compile without TypeScript errors
@@ -769,6 +781,7 @@ docs/decisions/ADR-XXX-timezone-strategy.md    # Architecture decision
 ### Phase 1: MVP - Single Provider Scheduling (Week 3-5)
 
 #### Scope
+
 - Service CRUD (tenant admin)
 - Availability rules (recurring weekly schedule)
 - Time slot generation algorithm
@@ -778,6 +791,7 @@ docs/decisions/ADR-XXX-timezone-strategy.md    # Architecture decision
 - Google Calendar one-way sync (MAIS → Google only)
 
 #### Explicitly Excluded
+
 - Multi-provider/staff management
 - Google Calendar two-way sync
 - Automated refunds
@@ -786,6 +800,7 @@ docs/decisions/ADR-XXX-timezone-strategy.md    # Architecture decision
 - SMS reminders
 
 #### Deliverables
+
 - [ ] `AvailabilityService` with slot generation (`server/src/services/scheduling/availability.service.ts`)
 - [ ] `AppointmentService` with double-booking prevention (`server/src/services/scheduling/appointment.service.ts`)
 - [ ] `CalendarSyncService` for MAIS → Google (`server/src/services/scheduling/calendar-sync.service.ts`)
@@ -796,6 +811,7 @@ docs/decisions/ADR-XXX-timezone-strategy.md    # Architecture decision
 - [ ] Postmark email templates (booking confirmation)
 
 #### Files to Create/Modify
+
 ```
 # Services
 server/src/services/scheduling/availability.service.ts
@@ -831,6 +847,7 @@ e2e/tests/booking-timeslots.spec.ts
 ```
 
 #### Success Criteria
+
 - 3 pilot tenants onboarded
 - 50+ bookings without double-booking incidents
 - Booking success rate >95%
@@ -841,6 +858,7 @@ e2e/tests/booking-timeslots.spec.ts
 ### Phase 2: Enhanced Features (Week 6-8)
 
 #### Scope
+
 - Multi-provider support (staff management)
 - Google Calendar two-way sync (webhook + polling)
 - Automated refunds based on cancellation policy
@@ -850,6 +868,7 @@ e2e/tests/booking-timeslots.spec.ts
 - Manual appointment creation by admin
 
 #### Deliverables
+
 - [ ] Provider management UI and API
 - [ ] Google Calendar webhook endpoint (`/v1/webhooks/google-calendar`)
 - [ ] Polling fallback job (BullMQ or cron)
@@ -859,6 +878,7 @@ e2e/tests/booking-timeslots.spec.ts
 - [ ] Admin dashboard with calendar view
 
 #### Files to Create/Modify
+
 ```
 # Services (extended)
 server/src/services/scheduling/provider.service.ts
@@ -884,6 +904,7 @@ client/src/features/tenant-admin/CalendarView.tsx
 ### Phase 3: Reporting & Sales Tracking (Week 9-10)
 
 #### Scope
+
 - Revenue dashboard (daily/weekly/monthly)
 - Service performance report
 - Provider utilization report
@@ -893,12 +914,14 @@ client/src/features/tenant-admin/CalendarView.tsx
 - Payment receipts
 
 #### Deliverables
+
 - [ ] `ReportingService` with aggregation queries
 - [ ] Report dashboard UI
 - [ ] Export functionality
 - [ ] Invoice PDF generation (React-PDF or similar)
 
 #### Files to Create/Modify
+
 ```
 server/src/services/reporting/revenue.service.ts
 server/src/services/reporting/utilization.service.ts
@@ -931,11 +954,13 @@ client/src/features/tenant-admin/ClientHistory.tsx
 ### Service Management
 
 **AC-SM-1: Create Service**
+
 - Given: Tenant admin is authenticated
 - When: Creates service with name, duration, buffer, price, timezone
 - Then: Service saved with `tenantId`, appears in service list, validation errors for missing fields
 
 **AC-SM-2: Service Availability**
+
 - Given: Service exists
 - When: Tenant sets Mon-Fri 9am-5pm, Sat 10am-2pm
 - Then: Rules stored in tenant timezone, booking slots generated within windows, last slot respects duration+buffer
@@ -943,21 +968,25 @@ client/src/features/tenant-admin/ClientHistory.tsx
 ### Booking Flow
 
 **AC-BF-1: View Available Slots**
+
 - Given: Client visits booking page for service on specific date
 - When: Availability loaded
 - Then: Only slots within rules shown, existing bookings blocked, calendar conflicts blocked, client timezone applied
 
 **AC-BF-2: Create Booking**
+
 - Given: Client selects time slot and completes form
 - When: Payment processed
 - Then: Lock acquired, Stripe charge created, booking record created, calendar event created, confirmation email sent
 
 **AC-BF-3: Double-Booking Prevention**
+
 - Given: Two clients attempt to book same slot simultaneously
 - When: Both submit booking
 - Then: First succeeds, second receives 409 Conflict with clear message
 
 **AC-BF-4: Cancel Booking**
+
 - Given: Booking exists, client cancels with sufficient notice
 - When: Cancellation processed
 - Then: Policy evaluated, refund issued if applicable, status updated, calendar event deleted, email sent
@@ -965,11 +994,13 @@ client/src/features/tenant-admin/ClientHistory.tsx
 ### Calendar Sync
 
 **AC-CS-1: MAIS → Google**
+
 - Given: Booking created in MAIS
 - When: Calendar sync runs
 - Then: Google Calendar event created within 5 seconds, title/description formatted correctly
 
 **AC-CS-2: Google → MAIS (Phase 2)**
+
 - Given: Tenant creates event in Google Calendar
 - When: Webhook received
 - Then: Busy slot created, availability blocked, idempotent processing
@@ -979,18 +1010,21 @@ client/src/features/tenant-admin/ClientHistory.tsx
 ## Non-Functional Requirements
 
 ### Performance
+
 - Availability calculation: <500ms for 30-day window
 - Booking creation: <2s including payment
 - Calendar sync: <5s for event creation
 - Report generation: <3s for 1000 bookings
 
 ### Security
+
 - All queries scoped by `tenantId`
 - Google OAuth tokens encrypted at rest
 - Rate limiting on public endpoints (100 req/min/tenant)
 - Cancellation tokens hashed (not reversible)
 
 ### Reliability
+
 - Zero double-bookings (pessimistic locking + unique constraint)
 - Calendar sync: Webhook primary, 15-min polling fallback
 - Stripe webhook idempotency via database
@@ -1000,20 +1034,22 @@ client/src/features/tenant-admin/ClientHistory.tsx
 ## Dependencies & Risks
 
 ### External Dependencies
-| Dependency | Risk Level | Mitigation |
-|------------|------------|------------|
-| Google Calendar API | Medium | OAuth consent approval can take 1-3 weeks. Start submission early. |
-| Stripe Connect | Low | Already integrated. Need refund API implementation. |
-| Postmark | Low | Already integrated. Need new templates. |
-| Twilio (SMS) | Low | Optional for Phase 2. Graceful fallback to email-only. |
+
+| Dependency          | Risk Level | Mitigation                                                         |
+| ------------------- | ---------- | ------------------------------------------------------------------ |
+| Google Calendar API | Medium     | OAuth consent approval can take 1-3 weeks. Start submission early. |
+| Stripe Connect      | Low        | Already integrated. Need refund API implementation.                |
+| Postmark            | Low        | Already integrated. Need new templates.                            |
+| Twilio (SMS)        | Low        | Optional for Phase 2. Graceful fallback to email-only.             |
 
 ### Technical Risks
-| Risk | Impact | Probability | Mitigation |
-|------|--------|-------------|------------|
-| Database migration breaks existing bookings | Critical | Medium | Keep `Booking` table separate from `Appointment`. Gradual migration. |
-| Double-booking under load | High | Medium | Load test pessimistic locking. Add monitoring alerts. |
-| Timezone conversion bugs | High | High | Use `luxon` library. Extensive timezone test suite. |
-| Google webhook reliability | Medium | High | "Webhooks not 100% reliable" per Google docs. Always implement polling fallback. |
+
+| Risk                                        | Impact   | Probability | Mitigation                                                                       |
+| ------------------------------------------- | -------- | ----------- | -------------------------------------------------------------------------------- |
+| Database migration breaks existing bookings | Critical | Medium      | Keep `Booking` table separate from `Appointment`. Gradual migration.             |
+| Double-booking under load                   | High     | Medium      | Load test pessimistic locking. Add monitoring alerts.                            |
+| Timezone conversion bugs                    | High     | High        | Use `luxon` library. Extensive timezone test suite.                              |
+| Google webhook reliability                  | Medium   | High        | "Webhooks not 100% reliable" per Google docs. Always implement polling fallback. |
 
 ---
 
@@ -1044,20 +1080,24 @@ client/src/features/tenant-admin/ClientHistory.tsx
 ## Test Plan
 
 ### Unit Tests (Mock Adapters)
+
 - `availability.service.test.ts` - Slot generation edge cases
 - `appointment.service.test.ts` - Booking, cancellation, refund calculation
 - `timezone-utils.test.ts` - UTC conversion, DST handling
 
 ### Integration Tests (Real DB, Mock External)
+
 - `double-booking.test.ts` - 10 concurrent booking attempts
 - `calendar-sync.test.ts` - Webhook deduplication, sync token handling
 
 ### E2E Tests (Playwright)
+
 - `booking-flow.spec.ts` - Full booking journey
 - `cancellation-flow.spec.ts` - Cancel with refund verification
 - `admin-services.spec.ts` - Service CRUD operations
 
 ### Load Tests (Artillery)
+
 - Target: 100 concurrent bookings/minute
 - Monitor: Deadlock rate, p95 latency, error rate
 
@@ -1066,6 +1106,7 @@ client/src/features/tenant-admin/ClientHistory.tsx
 ## References
 
 ### Internal
+
 - `server/src/services/booking.service.ts:57-154` - Existing checkout flow pattern
 - `server/src/adapters/prisma/booking.repository.ts:144-150` - Advisory lock pattern
 - `server/src/adapters/gcal.adapter.ts:33-110` - Existing Google Calendar read
@@ -1073,6 +1114,7 @@ client/src/features/tenant-admin/ClientHistory.tsx
 - `DECISIONS.md:ADR-001` - Double-booking prevention rationale
 
 ### External
+
 - [Acuity Scheduling Developer Hub](https://developers.acuityscheduling.com/)
 - [Cal.com GitHub](https://github.com/calcom/cal.com) - Open source reference
 - [Google Calendar API Push Notifications](https://developers.google.com/workspace/calendar/api/guides/push)

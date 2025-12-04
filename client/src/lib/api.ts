@@ -3,8 +3,8 @@
  * Bound to @macon/contracts for type-safe API calls
  */
 
-import { initClient } from "@ts-rest/core";
-import { Contracts } from "@macon/contracts";
+import { initClient } from '@ts-rest/core';
+import { Contracts } from '@macon/contracts';
 
 /**
  * Normalized API base URL
@@ -18,15 +18,15 @@ import { Contracts } from "@macon/contracts";
  * ```
  */
 // Normalize base URL (remove trailing slashes)
-const raw = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
-export const baseUrl = raw.replace(/\/+$/, "");
+const raw = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
+export const baseUrl = raw.replace(/\/+$/, '');
 
 /**
  * Global tenant API key for multi-tenant widget mode
  * Set via api.setTenantKey() when widget loads
  * Also restored from localStorage for impersonation persistence across page loads
  */
-let tenantApiKey: string | null = localStorage.getItem("impersonationTenantKey");
+let tenantApiKey: string | null = localStorage.getItem('impersonationTenantKey');
 
 /**
  * Global tenant JWT token for tenant admin dashboard
@@ -125,44 +125,44 @@ export const api = initClient(Contracts, {
 
     // Inject auth token for admin routes
     // ts-rest v3.x provides full URL in path, so check if it contains the route pattern
-    if (path.includes("/v1/admin") || path.includes("/api/v1/admin")) {
-      const token = localStorage.getItem("adminToken");
+    if (path.includes('/v1/admin') || path.includes('/api/v1/admin')) {
+      const token = localStorage.getItem('adminToken');
       if (token) {
-        requestHeaders["Authorization"] = `Bearer ${token}`;
+        requestHeaders['Authorization'] = `Bearer ${token}`;
       }
     }
 
     // Inject auth token for tenant-admin routes
     // During impersonation, use adminToken (which contains impersonation context)
     // Otherwise use tenantToken for normal tenant admin access
-    if (path.includes("/v1/tenant-admin")) {
+    if (path.includes('/v1/tenant-admin')) {
       // Check if we're impersonating (impersonationTenantKey is set)
-      const isImpersonating = localStorage.getItem("impersonationTenantKey");
+      const isImpersonating = localStorage.getItem('impersonationTenantKey');
       if (isImpersonating) {
         // Use admin token with impersonation context
-        const token = localStorage.getItem("adminToken");
+        const token = localStorage.getItem('adminToken');
         if (token) {
-          requestHeaders["Authorization"] = `Bearer ${token}`;
+          requestHeaders['Authorization'] = `Bearer ${token}`;
         }
       } else {
         // Normal tenant admin - use tenant token
-        const token = tenantToken || localStorage.getItem("tenantToken");
+        const token = tenantToken || localStorage.getItem('tenantToken');
         if (token) {
-          requestHeaders["Authorization"] = `Bearer ${token}`;
+          requestHeaders['Authorization'] = `Bearer ${token}`;
         }
       }
     }
     // Inject auth token for other tenant routes (not tenant-admin)
-    else if (path.includes("/v1/tenant") && !path.includes("/v1/tenant-admin")) {
-      const token = tenantToken || localStorage.getItem("tenantToken");
+    else if (path.includes('/v1/tenant') && !path.includes('/v1/tenant-admin')) {
+      const token = tenantToken || localStorage.getItem('tenantToken');
       if (token) {
-        requestHeaders["Authorization"] = `Bearer ${token}`;
+        requestHeaders['Authorization'] = `Bearer ${token}`;
       }
     }
 
     // Inject tenant key for multi-tenant mode (widget)
     if (tenantApiKey) {
-      requestHeaders["X-Tenant-Key"] = tenantApiKey;
+      requestHeaders['X-Tenant-Key'] = tenantApiKey;
     }
 
     // ts-rest v3.x already serializes the body and sets Content-Type
@@ -197,9 +197,9 @@ api.setTenantKey = (key: string | null) => {
 api.setTenantToken = (token: string | null) => {
   tenantToken = token;
   if (token) {
-    localStorage.setItem("tenantToken", token);
+    localStorage.setItem('tenantToken', token);
   } else {
-    localStorage.removeItem("tenantToken");
+    localStorage.removeItem('tenantToken');
   }
 };
 
@@ -208,19 +208,19 @@ api.setTenantToken = (token: string | null) => {
  */
 api.logoutTenant = () => {
   tenantToken = null;
-  localStorage.removeItem("tenantToken");
+  localStorage.removeItem('tenantToken');
 };
 
 /**
  * Get list of all tenants (platform admin only)
  */
 api.adminGetTenants = async () => {
-  const token = localStorage.getItem("adminToken");
+  const token = localStorage.getItem('adminToken');
   const response = await fetch(`${baseUrl}/api/v1/admin/tenants`, {
-    method: "GET",
+    method: 'GET',
     headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
   });
 
@@ -234,12 +234,12 @@ api.adminGetTenants = async () => {
  * Start impersonating a tenant (platform admin only)
  */
 api.adminImpersonate = async (tenantId: string) => {
-  const token = localStorage.getItem("adminToken");
+  const token = localStorage.getItem('adminToken');
   const response = await fetch(`${baseUrl}/v1/auth/impersonate`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({ tenantId }),
   });
@@ -248,12 +248,12 @@ api.adminImpersonate = async (tenantId: string) => {
 
   // Update admin token to impersonation token
   if (response.status === 200 && body?.token) {
-    localStorage.setItem("adminToken", body.token);
+    localStorage.setItem('adminToken', body.token);
 
     // Set tenant API key for public routes to work during impersonation
     if (body.apiKeyPublic) {
       tenantApiKey = body.apiKeyPublic;
-      localStorage.setItem("impersonationTenantKey", body.apiKeyPublic);
+      localStorage.setItem('impersonationTenantKey', body.apiKeyPublic);
     }
   }
 
@@ -267,12 +267,12 @@ api.adminImpersonate = async (tenantId: string) => {
  * Stop impersonating and return to normal admin token
  */
 api.adminStopImpersonation = async () => {
-  const token = localStorage.getItem("adminToken");
+  const token = localStorage.getItem('adminToken');
   const response = await fetch(`${baseUrl}/v1/auth/stop-impersonation`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
   });
 
@@ -280,12 +280,12 @@ api.adminStopImpersonation = async () => {
 
   // Update admin token back to normal token
   if (response.status === 200 && body?.token) {
-    localStorage.setItem("adminToken", body.token);
+    localStorage.setItem('adminToken', body.token);
   }
 
   // Clear impersonation tenant key
   tenantApiKey = null;
-  localStorage.removeItem("impersonationTenantKey");
+  localStorage.removeItem('impersonationTenantKey');
 
   return {
     status: response.status,

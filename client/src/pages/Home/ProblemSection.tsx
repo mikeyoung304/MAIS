@@ -1,4 +1,4 @@
-import { Container } from "@/ui/Container";
+import { Container } from '@/ui/Container';
 
 /**
  * ProblemSection - Hero's journey: empowerment over struggle

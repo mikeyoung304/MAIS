@@ -15,6 +15,7 @@
 **We are at the edge of "test hell" but NOT lost.** Here's why:
 
 **Good News (What's Working):**
+
 - ✅ 63 unit tests passing (35% pass rate)
 - ✅ Test infrastructure exists and is runnable
 - ✅ `/v1/dev/reset` endpoint exists for E2E cleanup
@@ -24,6 +25,7 @@
 - ✅ Documentation exists (TESTING.md)
 
 **Bad News (What's Broken):**
+
 - ❌ 121 unit tests failing (65% failure rate)
 - ❌ **CRITICAL**: Playwright config references wrong paths (`apps/web` instead of `client`)
 - ❌ **CRITICAL**: GitHub Actions references wrong paths (`apps/api` instead of `server`)
@@ -32,6 +34,7 @@
 - ❌ Test service signatures don't match implementation (tenantId parameter added)
 
 **Verdict:** We have the foundation, but recent refactoring broke the tests. This is **recoverable** with focused effort. We're NOT lost because:
+
 1. The infrastructure is sound (tests run, just fail)
 2. Root causes are identifiable (signature mismatches, config paths)
 3. The fixes are mechanical, not architectural
@@ -43,25 +46,25 @@
 
 ### Where We Are (Current State)
 
-| Category | Status | Details |
-|----------|--------|---------|
-| **Unit Tests** | 🔴 35% passing | 63/184 tests pass, 121 fail |
-| **E2E Tests** | 🔴 Never run | Config points to non-existent directories |
-| **CI/CD Pipeline** | 🔴 Broken | Workflow uses wrong workspace paths |
-| **Test Documentation** | 🟡 Outdated | TESTING.md doesn't reflect current failures |
-| **Mock Infrastructure** | 🟢 Working | API mock mode and dev endpoints functional |
-| **Test Coverage** | ⚫ Unknown | No coverage reporting configured |
+| Category                | Status         | Details                                     |
+| ----------------------- | -------------- | ------------------------------------------- |
+| **Unit Tests**          | 🔴 35% passing | 63/184 tests pass, 121 fail                 |
+| **E2E Tests**           | 🔴 Never run   | Config points to non-existent directories   |
+| **CI/CD Pipeline**      | 🔴 Broken      | Workflow uses wrong workspace paths         |
+| **Test Documentation**  | 🟡 Outdated    | TESTING.md doesn't reflect current failures |
+| **Mock Infrastructure** | 🟢 Working     | API mock mode and dev endpoints functional  |
+| **Test Coverage**       | ⚫ Unknown     | No coverage reporting configured            |
 
 ### Where We Should Be (Target State)
 
-| Category | Target | Success Criteria |
-|----------|--------|------------------|
-| **Unit Tests** | 🟢 95%+ passing | <5% flaky/skipped tests |
-| **E2E Tests** | 🟢 All passing | 9 scenarios running in CI/CD |
-| **CI/CD Pipeline** | 🟢 Automated | Tests run on every PR, block merge on failure |
-| **Test Documentation** | 🟢 Current | Reflects actual test status and procedures |
-| **Mock Infrastructure** | 🟢 Enhanced | Pre-test validation script |
-| **Test Coverage** | 🟢 Tracked | >80% coverage on critical paths |
+| Category                | Target          | Success Criteria                              |
+| ----------------------- | --------------- | --------------------------------------------- |
+| **Unit Tests**          | 🟢 95%+ passing | <5% flaky/skipped tests                       |
+| **E2E Tests**           | 🟢 All passing  | 9 scenarios running in CI/CD                  |
+| **CI/CD Pipeline**      | 🟢 Automated    | Tests run on every PR, block merge on failure |
+| **Test Documentation**  | 🟢 Current      | Reflects actual test status and procedures    |
+| **Mock Infrastructure** | 🟢 Enhanced     | Pre-test validation script                    |
+| **Test Coverage**       | 🟢 Tracked      | >80% coverage on critical paths               |
 
 ---
 
@@ -114,11 +117,11 @@ webServer: {
 ```yaml
 # WRONG (Line 47):
 - name: Run API unit tests
-  run: pnpm -C apps/api run test  # ❌ Wrong path!
+  run: pnpm -C apps/api run test # ❌ Wrong path!
 
 # SHOULD BE:
 - name: Run API unit tests
-  run: pnpm -C server run test  # ✅ Correct path
+  run: pnpm -C server run test # ✅ Correct path
 ```
 
 **Impact:** CI/CD workflows fail, no automated testing happens on PRs.
@@ -144,18 +147,19 @@ const result = await service.getPackageBySlug('tenant_test', 'basic');
 const checkout = await service.createCheckout({
   packageId: 'pkg_1',
   date: '2025-07-01',
-  addOnIds: []
+  addOnIds: [],
 });
 
 // ✅ SHOULD BE:
 const checkout = await service.createCheckout('tenant_test', {
   packageId: 'pkg_1',
   date: '2025-07-01',
-  addOnIds: []
+  addOnIds: [],
 });
 ```
 
 **Affected Test Files:**
+
 - `server/test/catalog.service.spec.ts` (22 failures)
 - `server/test/booking.service.spec.ts` (8 failures)
 - `server/test/availability.service.spec.ts` (5 failures)
@@ -169,6 +173,7 @@ const checkout = await service.createCheckout('tenant_test', {
 **File:** `/Users/mikeyoung/CODING/Elope/TESTING.md`
 
 **Claims:**
+
 - "Unit Tests (44 passing)" → **FALSE** (Only 63 passing, 121 failing)
 - "E2E Tests (9 scenarios)" → **UNKNOWN** (Can't verify, tests don't run)
 - "CI-ready with automatic retries" → **FALSE** (CI config broken)
@@ -181,19 +186,19 @@ const checkout = await service.createCheckout('tenant_test', {
 
 ### Tier 1 (Critical - Nothing works without these)
 
-| # | Blocker | Impact | ETA |
-|---|---------|--------|-----|
-| B1 | Playwright config wrong paths | E2E tests can't start | 5 min |
-| B2 | GitHub Actions wrong workspace paths | CI/CD completely broken | 10 min |
-| B3 | Unit test signature mismatches | 65% of tests fail | 2-3 hours |
+| #   | Blocker                              | Impact                  | ETA       |
+| --- | ------------------------------------ | ----------------------- | --------- |
+| B1  | Playwright config wrong paths        | E2E tests can't start   | 5 min     |
+| B2  | GitHub Actions wrong workspace paths | CI/CD completely broken | 10 min    |
+| B3  | Unit test signature mismatches       | 65% of tests fail       | 2-3 hours |
 
 ### Tier 2 (High - Tests flaky/unreliable)
 
-| # | Blocker | Impact | ETA |
-|---|---------|--------|-----|
-| B4 | No pre-test validation | Tests fail silently with bad state | 30 min |
-| B5 | No test coverage reporting | Can't track progress | 15 min |
-| B6 | TESTING.md outdated | Developers use wrong commands | 30 min |
+| #   | Blocker                    | Impact                             | ETA    |
+| --- | -------------------------- | ---------------------------------- | ------ |
+| B4  | No pre-test validation     | Tests fail silently with bad state | 30 min |
+| B5  | No test coverage reporting | Can't track progress               | 15 min |
+| B6  | TESTING.md outdated        | Developers use wrong commands      | 30 min |
 
 ---
 
@@ -216,11 +221,13 @@ const checkout = await service.createCheckout('tenant_test', {
 ```
 
 **Success Criteria:**
+
 - ✅ `npm run test:e2e` starts without errors
 - ✅ Web server starts on port 3000
 - ✅ Tests can navigate to http://localhost:3000
 
 **Test:**
+
 ```bash
 npm run test:e2e -- --headed
 # Should see browser open to home page
@@ -255,11 +262,13 @@ npm run test:e2e -- --headed
 ```
 
 **Success Criteria:**
+
 - ✅ CI workflow runs without "directory not found" errors
 - ✅ API server starts in CI environment
 - ✅ Unit tests execute in CI
 
 **Test:**
+
 ```bash
 # Locally simulate CI:
 pnpm -C server run test
@@ -295,21 +304,24 @@ pnpm -C server run test
    - Update fake repository methods to accept `tenantId`
 
 **Pattern:**
+
 ```typescript
 // Before:
-await service.methodName(arg1, arg2)
+await service.methodName(arg1, arg2);
 
 // After:
-await service.methodName('tenant_test', arg1, arg2)
+await service.methodName('tenant_test', arg1, arg2);
 ```
 
 **Success Criteria:**
+
 - ✅ All catalog service tests pass (22 tests)
 - ✅ All booking service tests pass (8 tests)
 - ✅ All availability service tests pass (5 tests)
 - ✅ Total passing tests: >150/184 (>80%)
 
 **Test:**
+
 ```bash
 npm run --workspace=server test
 # Target: <10 failures
@@ -365,11 +377,13 @@ echo "✅ Test environment validated"
 ```
 
 **Success Criteria:**
+
 - ✅ Script detects missing directories
 - ✅ Script warns about port conflicts
 - ✅ Script checks for required tools (pnpm, node)
 
 **Integration:**
+
 ```json
 // package.json
 {
@@ -396,35 +410,46 @@ echo "✅ Test environment validated"
 ## Current Status (as of 2025-11-08)
 
 ### Unit Tests
+
 - **Status:** 🟡 Partially Passing
 - **Passing:** 63/184 tests (35%)
 - **Failing:** 121 tests (signature mismatches from multi-tenant refactor)
 - **Action Required:** See TEST_RECOVERY_PLAN.md for fixes
 
 ### E2E Tests
+
 - **Status:** 🔴 Not Running
 - **Issue:** Playwright config references wrong directory (apps/web → client)
 - **Fix:** Update `e2e/playwright.config.ts` line 72
 - **Expected Scenarios:** 9 (after fix)
 
 ### Known Issues
+
 1. Multi-tenant refactoring added `tenantId` parameter - tests need updating
 2. Playwright config has wrong workspace paths
 3. GitHub Actions workflows reference non-existent `apps/` directory
 
 ### Quick Fixes
+
 \`\`\`bash
+
 # Fix Playwright config:
+
 # Edit e2e/playwright.config.ts line 72:
+
 # Change: cwd: './apps/web'
-# To:     cwd: './client'
+
+# To: cwd: './client'
 
 # Fix unit tests:
+
 # See TEST_RECOVERY_PLAN.md Section "Fix 1.3"
+
 \`\`\`
 ```
 
 **Success Criteria:**
+
 - ✅ Documentation reflects actual test status
 - ✅ Known issues clearly documented
 - ✅ Quick fix instructions provided
@@ -447,7 +472,7 @@ echo "✅ Test environment validated"
     "coverage:ci": "vitest run --coverage --reporter=json --reporter=json-summary"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^3.2.4"  // Already installed
+    "@vitest/coverage-v8": "^3.2.4" // Already installed
   }
 }
 ```
@@ -468,6 +493,7 @@ echo "✅ Test environment validated"
 ```
 
 **Success Criteria:**
+
 - ✅ Coverage report generated locally
 - ✅ Coverage HTML report viewable in browser
 - ✅ CI uploads coverage to Codecov (or similar)
@@ -500,17 +526,13 @@ npx lint-staged
 
 ```json
 {
-  "server/src/**/*.ts": [
-    "eslint --fix",
-    "vitest related --run"
-  ],
-  "client/src/**/*.{ts,tsx}": [
-    "eslint --fix"
-  ]
+  "server/src/**/*.ts": ["eslint --fix", "vitest related --run"],
+  "client/src/**/*.{ts,tsx}": ["eslint --fix"]
 }
 ```
 
 **Success Criteria:**
+
 - ✅ Tests run automatically before commit
 - ✅ Only affected tests run (performance)
 - ✅ Commits blocked if tests fail
@@ -553,13 +575,13 @@ jobs:
 
 ```yaml
 # GitHub Settings → Branches → Branch protection rules
-Required status checks:
-  ✅ test (CI workflow)
+Required status checks: ✅ test (CI workflow)
   ✅ typecheck
   ✅ lint (if added)
 ```
 
 **Success Criteria:**
+
 - ✅ PRs can't merge with failing tests
 - ✅ Test results shown in PR status checks
 - ✅ Clear error messages for failures
@@ -590,6 +612,7 @@ test('visual regression - package page', async ({ page }) => {
 ```
 
 **Success Criteria:**
+
 - ✅ Visual snapshots captured on each E2E run
 - ✅ Percy detects visual regressions in PRs
 - ✅ Team can approve/reject visual changes
@@ -599,24 +622,28 @@ test('visual regression - package page', async ({ page }) => {
 ## 💡 Long-Term Testing Strategy
 
 ### Phase 1: Stabilization (This Week)
+
 - ✅ Fix critical blockers (Tier 1)
 - ✅ Get unit tests to >80% passing
 - ✅ Get E2E tests running in CI/CD
 - ✅ Update documentation
 
 ### Phase 2: Automation (Next Sprint)
+
 - ✅ Pre-commit hooks enforcing tests
 - ✅ PR merge gates requiring passing tests
 - ✅ Coverage reporting integrated
 - ✅ Slack notifications for CI failures
 
 ### Phase 3: Enhancement (Month 2)
+
 - ✅ Visual regression testing
 - ✅ Performance benchmarking tests
 - ✅ Load testing for booking endpoint
 - ✅ Security testing (OWASP ZAP integration)
 
 ### Phase 4: Observability (Month 3)
+
 - ✅ Test flakiness tracking
 - ✅ Test execution time dashboards
 - ✅ Automatic test retry logic
@@ -629,24 +656,28 @@ test('visual regression - package page', async ({ page }) => {
 We will declare testing healthy when:
 
 ### Unit Tests
+
 - ✅ >95% passing (allows <5% for known flaky/skipped tests)
 - ✅ <2 second average test execution time
 - ✅ >80% code coverage on critical paths
 - ✅ Zero tests skipped/disabled for >1 week
 
 ### E2E Tests
+
 - ✅ All 9 scenarios passing in CI/CD
 - ✅ <5 minute total execution time
 - ✅ Zero flaky tests (3 consecutive passes required)
 - ✅ Visual regression testing integrated
 
 ### Infrastructure
+
 - ✅ CI/CD runs on every PR without manual intervention
 - ✅ PRs blocked from merge if tests fail
 - ✅ Test results visible in PR comments
 - ✅ Coverage reports automatically generated
 
 ### Developer Experience
+
 - ✅ Clear error messages when tests fail
 - ✅ Documentation matches reality
 - ✅ New developers can run tests in <5 minutes
@@ -658,13 +689,13 @@ We will declare testing healthy when:
 
 ### Week 1 Milestones
 
-| Day | Goal | Success Metric |
-|-----|------|----------------|
-| **Day 1** | Fix E2E config paths | `npm run test:e2e` runs without errors |
-| **Day 1** | Fix GitHub Actions paths | CI workflows execute without path errors |
-| **Day 2-3** | Fix unit test signatures | >150/184 tests passing (>80%) |
-| **Day 4** | Update documentation | TESTING.md reflects current state |
-| **Day 5** | Add test coverage | Coverage report generated in CI |
+| Day         | Goal                     | Success Metric                           |
+| ----------- | ------------------------ | ---------------------------------------- |
+| **Day 1**   | Fix E2E config paths     | `npm run test:e2e` runs without errors   |
+| **Day 1**   | Fix GitHub Actions paths | CI workflows execute without path errors |
+| **Day 2-3** | Fix unit test signatures | >150/184 tests passing (>80%)            |
+| **Day 4**   | Update documentation     | TESTING.md reflects current state        |
+| **Day 5**   | Add test coverage        | Coverage report generated in CI          |
 
 ### Success Dashboard
 
@@ -691,10 +722,11 @@ If tests are blocking critical production fixes:
 # Add this temporarily to unblock deploys:
 - name: Run unit tests
   run: pnpm -C server run test
-  continue-on-error: true  # ⚠️ TEMPORARY - Remove after fixes!
+  continue-on-error: true # ⚠️ TEMPORARY - Remove after fixes!
 ```
 
 ### Post-Hotfix Checklist
+
 1. ✅ Create GitHub issue for test fix
 2. ✅ Add `# FIXME` comment in bypassed test
 3. ✅ Schedule fix for next sprint
@@ -706,12 +738,12 @@ If tests are blocking critical production fixes:
 
 ### Who to Contact
 
-| Issue Type | Contact | Response Time |
-|------------|---------|---------------|
-| CI/CD broken | DevOps/Platform team | 2 hours |
-| Test writing help | Tech Lead | 1 day |
-| Playwright issues | Frontend team | 1 day |
-| Unit test patterns | Backend team | 1 day |
+| Issue Type         | Contact              | Response Time |
+| ------------------ | -------------------- | ------------- |
+| CI/CD broken       | DevOps/Platform team | 2 hours       |
+| Test writing help  | Tech Lead            | 1 day         |
+| Playwright issues  | Frontend team        | 1 day         |
+| Unit test patterns | Backend team         | 1 day         |
 
 ### Escalation Path
 
@@ -725,12 +757,14 @@ If tests are blocking critical production fixes:
 ## ✅ Action Items Summary
 
 ### Immediate (Today)
+
 - [ ] Fix `e2e/playwright.config.ts` line 72 (`apps/web` → `client`)
 - [ ] Fix `.github/workflows/e2e.yml` line 52 (`apps/api` → `server`)
 - [ ] Fix `.github/workflows/ci.yml` line 47 (`apps/api` → `server`)
 - [ ] Test E2E config fix: `npm run test:e2e:headed`
 
 ### This Week
+
 - [ ] Update all unit test signatures with `tenantId` parameter
 - [ ] Verify >80% unit tests passing
 - [ ] Update TESTING.md with current status
@@ -738,6 +772,7 @@ If tests are blocking critical production fixes:
 - [ ] Configure test coverage reporting
 
 ### Next Sprint
+
 - [ ] Add pre-commit test hooks
 - [ ] Configure PR merge gates
 - [ ] Set up visual regression testing
@@ -748,16 +783,19 @@ If tests are blocking critical production fixes:
 ## 📈 Metrics to Track
 
 ### Daily
+
 - Unit test pass rate (target: >80% by end of week)
 - E2E test execution success (target: 100% by Day 1)
 - CI/CD pipeline success rate (target: 100% by Day 1)
 
 ### Weekly
+
 - Test coverage percentage (target: >80% in 2 weeks)
 - Average test execution time (target: <30s unit, <5min E2E)
 - Number of flaky tests (target: 0 in 2 weeks)
 
 ### Monthly
+
 - Test writing velocity (tests added per PR)
 - Bug catch rate (bugs caught by tests vs production)
 - Developer satisfaction (survey: "Can you trust the tests?")
@@ -767,18 +805,21 @@ If tests are blocking critical production fixes:
 ## 🎓 Lessons Learned
 
 ### What Went Wrong
+
 1. **Multi-tenant refactoring** added parameters without updating tests
 2. **Directory restructure** (apps/ → client/server) broke config files
 3. **No CI enforcement** allowed broken tests to accumulate
 4. **Lint campaign** likely changed signatures without test updates
 
 ### How to Prevent
+
 1. ✅ Run tests before committing refactors
 2. ✅ Update CI configs when moving directories
 3. ✅ Enforce tests in CI from day 1
 4. ✅ Pair lint fixes with test signature updates
 
 ### Team Recommendations
+
 1. **Code review checklist:** "Did you run tests?"
 2. **Refactoring rule:** Update tests FIRST, then implementation
 3. **CI/CD rule:** Never merge if CI is failing
@@ -791,6 +832,7 @@ If tests are blocking critical production fixes:
 ### Test File Inventory
 
 **Unit Tests:** (server/test/)
+
 - ✅ `booking-concurrency.spec.ts` (14/14 passing)
 - ❌ `availability.service.spec.ts` (2/7 passing)
 - ❌ `booking.service.spec.ts` (4/12 passing)
@@ -799,6 +841,7 @@ If tests are blocking critical production fixes:
 - ✅ Other integration tests (mostly passing)
 
 **E2E Tests:** (e2e/tests/)
+
 - ⚫ `admin-flow.spec.ts` (5 scenarios - not running)
 - ⚫ `booking-flow.spec.ts` (2 scenarios - not running)
 - ⚫ `booking-mock.spec.ts` (2 scenarios - not running)
@@ -806,19 +849,23 @@ If tests are blocking critical production fixes:
 ### Configuration Files
 
 **Playwright:**
+
 - `e2e/playwright.config.ts` - ❌ NEEDS FIX (line 72)
 
 **CI/CD:**
+
 - `.github/workflows/ci.yml` - ❌ NEEDS FIX (line 47)
 - `.github/workflows/e2e.yml` - ❌ NEEDS FIX (line 52)
 
 **Documentation:**
+
 - `TESTING.md` - 🟡 NEEDS UPDATE
 - `TEST_RECOVERY_PLAN.md` - ✅ THIS DOCUMENT
 
 ### Environment Variables
 
 **Required for E2E:**
+
 ```bash
 VITE_API_URL=http://localhost:3001
 VITE_APP_MODE=mock
@@ -827,6 +874,7 @@ ADAPTERS_PRESET=mock
 ```
 
 **Required for Unit:**
+
 ```bash
 NODE_ENV=test
 # No other vars needed (uses mock adapters)
@@ -836,6 +884,6 @@ NODE_ENV=test
 
 **End of Test Recovery Plan**
 
-*Next Review Date: 2025-11-15*
-*Owner: Engineering Team*
-*Reviewers: Tech Lead, QA Lead*
+_Next Review Date: 2025-11-15_
+_Owner: Engineering Team_
+_Reviewers: Tech Lead, QA Lead_

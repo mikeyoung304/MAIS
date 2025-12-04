@@ -20,14 +20,14 @@ const keyGenerator =
 
 ### Example Keys Generated
 
-| Tenant | Request | Generated Cache Key | Unique? |
-|--------|---------|---------------------|---------|
-| Tenant A | `GET /v1/packages` | `GET:/v1/packages:{}` | ❌ NO |
-| Tenant B | `GET /v1/packages` | `GET:/v1/packages:{}` | ❌ NO |
-| Tenant A | `GET /v1/packages/intimate` | `GET:/v1/packages/intimate:{}` | ❌ NO |
-| Tenant B | `GET /v1/packages/intimate` | `GET:/v1/packages/intimate:{}` | ❌ NO |
-| Tenant A | `GET /v1/availability?date=2025-12-25` | `GET:/v1/availability:{"date":"2025-12-25"}` | ❌ NO |
-| Tenant B | `GET /v1/availability?date=2025-12-25` | `GET:/v1/availability:{"date":"2025-12-25"}` | ❌ NO |
+| Tenant   | Request                                | Generated Cache Key                          | Unique? |
+| -------- | -------------------------------------- | -------------------------------------------- | ------- |
+| Tenant A | `GET /v1/packages`                     | `GET:/v1/packages:{}`                        | ❌ NO   |
+| Tenant B | `GET /v1/packages`                     | `GET:/v1/packages:{}`                        | ❌ NO   |
+| Tenant A | `GET /v1/packages/intimate`            | `GET:/v1/packages/intimate:{}`               | ❌ NO   |
+| Tenant B | `GET /v1/packages/intimate`            | `GET:/v1/packages/intimate:{}`               | ❌ NO   |
+| Tenant A | `GET /v1/availability?date=2025-12-25` | `GET:/v1/availability:{"date":"2025-12-25"}` | ❌ NO   |
+| Tenant B | `GET /v1/availability?date=2025-12-25` | `GET:/v1/availability:{"date":"2025-12-25"}` | ❌ NO   |
 
 **Result:** All tenants share the same cache keys! 🔥
 
@@ -49,15 +49,15 @@ app.use(requestLogger);
 
 // Step 4: Routes are mounted
 createV1Router(controllers, identityService, app);
-  // Inside createV1Router:
-  // Step 5: Tenant middleware runs (too late!)
-  globalMiddleware: [
-    (req, res, next) => {
-      if (req.path.startsWith('/v1/packages')) {
-        tenantMiddleware(req, res, next); // Sets req.tenantId
-      }
+// Inside createV1Router:
+// Step 5: Tenant middleware runs (too late!)
+globalMiddleware: [
+  (req, res, next) => {
+    if (req.path.startsWith('/v1/packages')) {
+      tenantMiddleware(req, res, next); // Sets req.tenantId
     }
-  ]
+  },
+];
 ```
 
 When HTTP cache middleware runs, `req.tenantId` doesn't exist yet!
@@ -108,12 +108,12 @@ const cacheKey = `catalog:${tenantId}:package:${slug}`;
 
 ### Example Keys Generated
 
-| Tenant | Request | Generated Cache Key | Unique? |
-|--------|---------|---------------------|---------|
-| Tenant A (ID: `abc123`) | `GET /v1/packages` | `catalog:abc123:all-packages` | ✅ YES |
-| Tenant B (ID: `xyz789`) | `GET /v1/packages` | `catalog:xyz789:all-packages` | ✅ YES |
-| Tenant A (ID: `abc123`) | `GET /v1/packages/intimate` | `catalog:abc123:package:intimate` | ✅ YES |
-| Tenant B (ID: `xyz789`) | `GET /v1/packages/intimate` | `catalog:xyz789:package:intimate` | ✅ YES |
+| Tenant                  | Request                     | Generated Cache Key               | Unique? |
+| ----------------------- | --------------------------- | --------------------------------- | ------- |
+| Tenant A (ID: `abc123`) | `GET /v1/packages`          | `catalog:abc123:all-packages`     | ✅ YES  |
+| Tenant B (ID: `xyz789`) | `GET /v1/packages`          | `catalog:xyz789:all-packages`     | ✅ YES  |
+| Tenant A (ID: `abc123`) | `GET /v1/packages/intimate` | `catalog:abc123:package:intimate` | ✅ YES  |
+| Tenant B (ID: `xyz789`) | `GET /v1/packages/intimate` | `catalog:xyz789:package:intimate` | ✅ YES  |
 
 **Result:** Each tenant gets unique cache keys! ✅
 

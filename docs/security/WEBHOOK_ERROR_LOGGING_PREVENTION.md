@@ -19,6 +19,7 @@
 **Strategy:** Never log raw validation errors to persistent storage. Always classify errors into safe, abstract types first.
 
 **Pattern:**
+
 ```typescript
 // Log full details to server logs (ephemeral, for debugging)
 logger.error({ errors: result.error.flatten() }, 'Validation failed');
@@ -28,11 +29,13 @@ await webhookRepo.markFailed(tenantId, eventId, 'Invalid metadata - validation f
 ```
 
 **Why This Works:**
+
 - Server logs are ephemeral and typically rotated/purged
 - Database records persist indefinitely and are more likely to be accessed by humans
 - Error types (not details) are sufficient for retry logic and monitoring
 
 **When to Apply:**
+
 - All webhook/API event processing
 - External API responses
 - User input validation errors
@@ -45,6 +48,7 @@ await webhookRepo.markFailed(tenantId, eventId, 'Invalid metadata - validation f
 **Strategy:** Before storing ANY error message in the database, audit it for PII/sensitive data.
 
 **Checklist:**
+
 - [ ] Does the error message contain email addresses?
 - [ ] Does it contain personal names?
 - [ ] Does it contain addresses, phone numbers, or IDs?
@@ -53,6 +57,7 @@ await webhookRepo.markFailed(tenantId, eventId, 'Invalid metadata - validation f
 - [ ] Could it expose internal system details?
 
 **Pattern:**
+
 ```typescript
 // Anti-pattern: DON'T do this
 await webhookRepo.markFailed(tenantId, eventId, error.message); // ❌ Might contain PII
@@ -64,6 +69,7 @@ await webhookRepo.markFailed(tenantId, eventId, safeErrorType); // ✅
 
 **Implementation:**
 Create a utility function:
+
 ```typescript
 export function extractErrorType(error: unknown): string {
   if (error instanceof ZodError) {
@@ -88,6 +94,7 @@ export function extractErrorType(error: unknown): string {
 **Strategy:** Create explicit contracts for what error information is safe to store in each context.
 
 **Pattern:**
+
 ```typescript
 // Define what's safe to store in database
 interface SafeWebhookError {
@@ -110,6 +117,7 @@ async markFailed(tenantId: string, eventId: string, errorType: SafeWebhookError[
 ```
 
 **Benefits:**
+
 - TypeScript compiler prevents accidental PII storage
 - Clear intent: this error type is safe for DB
 - Extends to all services with sensitive data
@@ -121,16 +129,20 @@ async markFailed(tenantId: string, eventId: string, errorType: SafeWebhookError[
 **Strategy:** Separate logging by destination: ephemeral (detailed, debugging) vs persistent (safe, audit).
 
 **Pattern:**
+
 ```typescript
 try {
   const result = ZodSchema.safeParse(data);
   if (!result.success) {
     // LAYER 1: Server logs (ephemeral, detailed, admin-only)
-    logger.error({
-      errors: result.error.flatten(), // Full details for debugging
-      context: 'webhook_validation',
-      eventId: event.id
-    }, 'Webhook validation failed');
+    logger.error(
+      {
+        errors: result.error.flatten(), // Full details for debugging
+        context: 'webhook_validation',
+        eventId: event.id,
+      },
+      'Webhook validation failed'
+    );
 
     // LAYER 2: Database (persistent, safe, limited detail)
     await webhookRepo.markFailed(
@@ -153,6 +165,7 @@ try {
 ```
 
 **Why This Works:**
+
 - Debugging capability (layer 1) preserved for developers
 - Audit trail (layer 2) remains secure and compliant
 - Metrics (layer 3) track patterns without exposing data
@@ -203,6 +216,7 @@ grep -rn "\.flatten()" server/src --include="*.ts"
 ```
 
 **Red flags:**
+
 ```
 logger.error({ errors: sessionResult.error.flatten() }, ...);  // ✅ OK (logs only)
 await repo.markFailed(tenantId, id, result.error.flatten());    // ❌ BAD (DB storage)
@@ -217,6 +231,7 @@ grep -rn "lastError\|errorMessage\|errorDetails" server/src --include="*.ts" -A 
 ```
 
 **Red flags:**
+
 ```
 markFailed(tenantId, id, error.message)           // ❌ Might contain PII
 markFailed(tenantId, id, JSON.stringify(error))   // ❌ Definitely contains PII
@@ -224,6 +239,7 @@ update({ lastError: error.toString() })           // ❌ Contains stack trace + 
 ```
 
 **Good patterns:**
+
 ```
 markFailed(tenantId, id, 'Validation failed')     // ✅ Abstract type
 markFailed(tenantId, id, 'Payment processing failed')  // ✅ Generic type
@@ -237,6 +253,7 @@ grep -rn "safeParse\|parse(" server/src --include="*.ts" -A 5 -B 2
 ```
 
 **Red flags:**
+
 ```typescript
 const result = schema.safeParse(data);
 if (!result.success) {
@@ -245,6 +262,7 @@ if (!result.success) {
 ```
 
 **Good patterns:**
+
 ```typescript
 const result = schema.safeParse(data);
 if (!result.success) {
@@ -270,7 +288,13 @@ Add this test to `server/test/security/webhook-pii-leak.security.spec.ts`:
 ```typescript
 import { describe, it, expect } from 'vitest';
 import { WebhooksController } from '../../src/routes/webhooks.routes';
-import { FakeWebhookRepository, FakePaymentProvider, FakeBookingRepository, FakeCatalogRepository, FakeEventEmitter } from '../helpers/fakes';
+import {
+  FakeWebhookRepository,
+  FakePaymentProvider,
+  FakeBookingRepository,
+  FakeCatalogRepository,
+  FakeEventEmitter,
+} from '../helpers/fakes';
 import { BookingService } from '../../src/services/booking.service';
 import type Stripe from 'stripe';
 
@@ -286,10 +310,21 @@ describe('Security: Webhook Error Logging - PII Leak Prevention', () => {
     const bookingRepo = new FakeBookingRepository();
     const catalogRepo = new FakeCatalogRepository();
     const eventEmitter = new FakeEventEmitter();
-    const commissionService = { calculateCommission: () => ({ platformFeeCents: 500, vendorPayoutCents: 99500 }) };
-    const tenantRepo = { findById: async () => ({ id: 'test-tenant', stripeAccountId: 'acct_test' }) };
+    const commissionService = {
+      calculateCommission: () => ({ platformFeeCents: 500, vendorPayoutCents: 99500 }),
+    };
+    const tenantRepo = {
+      findById: async () => ({ id: 'test-tenant', stripeAccountId: 'acct_test' }),
+    };
 
-    bookingService = new BookingService(bookingRepo, catalogRepo, eventEmitter, paymentProvider, commissionService, tenantRepo);
+    bookingService = new BookingService(
+      bookingRepo,
+      catalogRepo,
+      eventEmitter,
+      paymentProvider,
+      commissionService,
+      tenantRepo
+    );
     controller = new WebhooksController(paymentProvider, bookingService, webhookRepo);
   });
 
@@ -467,6 +502,7 @@ describe('Security: Webhook Error Logging - PII Leak Prevention', () => {
 ```
 
 Run the test:
+
 ```bash
 npm test -- test/security/webhook-pii-leak.security.spec.ts
 ```

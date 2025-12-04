@@ -116,11 +116,14 @@ test.describe('Booking Management', () => {
 
       // Wait for API call to complete
       await page.waitForResponse(
-        (response) => response.url().includes('/v1/public/bookings/reschedule') && response.status() === 200
+        (response) =>
+          response.url().includes('/v1/public/bookings/reschedule') && response.status() === 200
       );
 
       // Verify dialog closed and new date is shown
-      await expect(page.getByRole('heading', { name: /Reschedule Your Booking/i })).not.toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: /Reschedule Your Booking/i })
+      ).not.toBeVisible();
 
       // The page should update with the new date
       const newDateFormatted = new Date(newDate + 'T00:00:00').toLocaleDateString('en-US', {
@@ -198,7 +201,8 @@ test.describe('Booking Management', () => {
 
       // Wait for API call to complete
       await page.waitForResponse(
-        (response) => response.url().includes('/v1/public/bookings/cancel') && response.status() === 200
+        (response) =>
+          response.url().includes('/v1/public/bookings/cancel') && response.status() === 200
       );
 
       // Verify success state
@@ -278,9 +282,12 @@ test.describe('Booking Management', () => {
       const { url, token } = await createResponse.json();
 
       // Cancel via API
-      const cancelResponse = await request.post(`${API_BASE}/v1/public/bookings/cancel?token=${token}`, {
-        data: { reason: 'API cancel' },
-      });
+      const cancelResponse = await request.post(
+        `${API_BASE}/v1/public/bookings/cancel?token=${token}`,
+        {
+          data: { reason: 'API cancel' },
+        }
+      );
       expect(cancelResponse.ok()).toBeTruthy();
 
       // Now visit the page

@@ -36,8 +36,8 @@ export function ManageBookingPage() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Invalid Link</AlertTitle>
             <AlertDescription>
-              No access token was provided. Please use the link from your booking
-              confirmation email to manage your booking.
+              No access token was provided. Please use the link from your booking confirmation email
+              to manage your booking.
             </AlertDescription>
           </Alert>
         </div>
@@ -135,9 +135,7 @@ export function ManageBookingPage() {
                 {booking.refundStatus === 'PROCESSING' && (
                   <> Your refund is currently being processed.</>
                 )}
-                {booking.refundStatus === 'COMPLETED' && (
-                  <> Your refund has been completed.</>
-                )}
+                {booking.refundStatus === 'COMPLETED' && <> Your refund has been completed.</>}
               </AlertDescription>
             </Alert>
           )}
@@ -148,8 +146,8 @@ export function ManageBookingPage() {
               <CheckCircle className="h-4 w-4 text-green-400" />
               <AlertTitle className="text-green-300">Refund Complete</AlertTitle>
               <AlertDescription className="text-green-200/80">
-                Your booking has been refunded. The funds should appear in your account within
-                5-10 business days.
+                Your booking has been refunded. The funds should appear in your account within 5-10
+                business days.
               </AlertDescription>
             </Alert>
           )}
@@ -185,8 +183,8 @@ export function ManageBookingPage() {
               <AlertCircle className="h-4 w-4 text-white/60" />
               <AlertTitle className="text-white">No Changes Available</AlertTitle>
               <AlertDescription className="text-white/60">
-                This booking can no longer be modified. If you need assistance, please
-                contact support.
+                This booking can no longer be modified. If you need assistance, please contact
+                support.
               </AlertDescription>
             </Alert>
           )}
@@ -195,8 +193,8 @@ export function ManageBookingPage() {
           <div className="bg-macon-navy-800 rounded-lg p-6 border border-white/10">
             <h3 className="text-lg font-medium text-white mb-2">Need Help?</h3>
             <p className="text-white/60 text-sm">
-              If you have questions about your booking or need assistance, please contact
-              our support team. We're here to help make your event perfect.
+              If you have questions about your booking or need assistance, please contact our
+              support team. We're here to help make your event perfect.
             </p>
           </div>
         </div>
@@ -205,9 +203,7 @@ export function ManageBookingPage() {
       {/* Footer */}
       <footer className="bg-macon-navy-800 border-t border-white/10 mt-12">
         <div className="max-w-3xl mx-auto px-4 py-6">
-          <p className="text-center text-white/40 text-sm">
-            Powered by Macon AI Solutions
-          </p>
+          <p className="text-center text-white/40 text-sm">Powered by Macon AI Solutions</p>
         </div>
       </footer>
     </div>

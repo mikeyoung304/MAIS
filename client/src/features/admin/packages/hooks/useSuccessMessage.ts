@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from 'react';
 
 export function useSuccessMessage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);

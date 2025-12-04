@@ -14,6 +14,7 @@ Fixed a critical security vulnerability in the Segment repository where 5 method
 ## Vulnerability Details
 
 ### Affected Methods
+
 1. `findById(id)` - Missing tenant isolation
 2. `update(id, data)` - Missing ownership verification
 3. `delete(id)` - Missing ownership verification
@@ -21,13 +22,16 @@ Fixed a critical security vulnerability in the Segment repository where 5 method
 5. `getStats(id)` - Missing tenant isolation
 
 ### Attack Vector
+
 An authenticated tenant could potentially:
+
 - View segments belonging to other tenants by guessing/enumerating IDs
 - Modify or delete segments belonging to other tenants
 - Access statistics for segments not owned by them
 - Bypass multi-tenant data isolation
 
 ### Root Cause
+
 Repository methods used `findUnique({ where: { id } })` without tenant scoping, violating the MAIS multi-tenant security pattern that requires all repository methods to accept `tenantId` as the first parameter.
 
 ## Fix Implementation
@@ -35,6 +39,7 @@ Repository methods used `findUnique({ where: { id } })` without tenant scoping, 
 ### 1. Repository Layer (`src/adapters/prisma/segment.repository.ts`)
 
 **Before (Vulnerable):**
+
 ```typescript
 async findById(id: string): Promise<Segment | null> {
   return await this.prisma.segment.findUnique({
@@ -44,6 +49,7 @@ async findById(id: string): Promise<Segment | null> {
 ```
 
 **After (Secure):**
+
 ```typescript
 async findById(tenantId: string, id: string): Promise<Segment | null> {
   return await this.prisma.segment.findFirst({
@@ -53,6 +59,7 @@ async findById(tenantId: string, id: string): Promise<Segment | null> {
 ```
 
 **Key Changes:**
+
 - Added `tenantId` as first parameter to all 5 methods
 - Changed `findUnique` to `findFirst` with compound `{ id, tenantId }` filter
 - Added ownership verification before mutations
@@ -61,6 +68,7 @@ async findById(tenantId: string, id: string): Promise<Segment | null> {
 ### 2. Service Layer (`src/services/segment.service.ts`)
 
 **Updates:**
+
 - All service methods now pass `tenantId` to repository
 - Cache keys updated to include `tenantId` prefix: `segments:${tenantId}:id:${id}`
 - Error messages improved: "Segment not found or access denied"
@@ -68,6 +76,7 @@ async findById(tenantId: string, id: string): Promise<Segment | null> {
 ### 3. Route Layer (`src/routes/tenant-admin-segments.routes.ts`)
 
 **Updates:**
+
 - All route handlers updated to pass `tenantId` from `res.locals.tenantAuth`
 - Removed redundant manual ownership checks (now handled in service)
 - Consistent error handling for NotFoundError
@@ -75,6 +84,7 @@ async findById(tenantId: string, id: string): Promise<Segment | null> {
 ## Test Coverage
 
 ### New Security Tests Added
+
 Added 4 comprehensive cross-tenant security tests in `segment-repository.integration.spec.ts`:
 
 1. **Cross-tenant access prevention via findById**
@@ -92,6 +102,7 @@ Added 4 comprehensive cross-tenant security tests in `segment-repository.integra
    - Verifies Tenant B cannot access Tenant A's segment statistics
 
 ### Test Results
+
 ```
 ✅ All 39 segment tests PASS (100% pass rate)
   - 20 segment repository tests (including 4 new security tests)
@@ -102,6 +113,7 @@ Added 4 comprehensive cross-tenant security tests in `segment-repository.integra
 ## Security Impact Assessment
 
 ### Before Fix (Risk Level: CRITICAL)
+
 - ❌ Cross-tenant data access possible
 - ❌ Unauthorized segment viewing
 - ❌ Unauthorized segment modification
@@ -109,6 +121,7 @@ Added 4 comprehensive cross-tenant security tests in `segment-repository.integra
 - ❌ Cache poisoning between tenants
 
 ### After Fix (Risk Level: NONE)
+
 - ✅ Complete tenant isolation enforced
 - ✅ Cross-tenant access attempts return null/throw NotFoundError
 - ✅ Cache keys properly scoped by tenantId
@@ -120,6 +133,7 @@ Added 4 comprehensive cross-tenant security tests in `segment-repository.integra
 To verify the fix is working:
 
 1. **Run segment integration tests:**
+
    ```bash
    npm test -- test/integration/segment
    ```
@@ -136,11 +150,13 @@ To verify the fix is working:
 ## Related Security Patterns
 
 This fix aligns with MAIS multi-tenant security patterns documented in:
+
 - `.claude/PATTERNS.md` - Repository Pattern (§ Multi-Tenant Data Isolation)
 - `CLAUDE.md` - Multi-Tenant Architecture section
 - `docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md`
 
 **Pattern Enforced:**
+
 ```typescript
 // All repository methods MUST follow this signature:
 async methodName(tenantId: string, ...otherParams): Promise<T>

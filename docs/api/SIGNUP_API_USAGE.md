@@ -1,27 +1,29 @@
 # Signup API Usage Guide
 
 ## Overview
+
 The signup API endpoint has been successfully added to the frontend API client. This allows users to register new tenant accounts with email, password, and business name.
 
 ## Backend Endpoint
+
 - **URL**: `POST /v1/auth/signup`
 - **Request Body**:
   ```typescript
   {
-    email: string;        // Valid email address
-    password: string;     // Min 8 characters
+    email: string; // Valid email address
+    password: string; // Min 8 characters
     businessName: string; // Min 2, max 100 characters
   }
   ```
 - **Success Response** (201):
   ```typescript
   {
-    token: string;        // JWT token for authentication
-    tenantId: string;     // Unique tenant ID
-    slug: string;         // URL-friendly tenant identifier
-    email: string;        // User email
+    token: string; // JWT token for authentication
+    tenantId: string; // Unique tenant ID
+    slug: string; // URL-friendly tenant identifier
+    email: string; // User email
     apiKeyPublic: string; // Public API key (pk_live_*)
-    secretKey: string;    // Secret key (shown once, never stored in plaintext)
+    secretKey: string; // Secret key (shown once, never stored in plaintext)
   }
   ```
 - **Error Responses**:
@@ -85,25 +87,14 @@ For more control, you can call the API client directly:
 ```typescript
 import { api } from '@/lib/api';
 
-async function signupTenant(
-  email: string,
-  password: string,
-  businessName: string
-) {
+async function signupTenant(email: string, password: string, businessName: string) {
   const result = await api.tenantSignup({
     body: { email, password, businessName },
   });
 
   if (result.status === 201) {
     // Success!
-    const {
-      token,
-      tenantId,
-      slug,
-      email: userEmail,
-      apiKeyPublic,
-      secretKey,
-    } = result.body;
+    const { token, tenantId, slug, email: userEmail, apiKeyPublic, secretKey } = result.body;
 
     // Store token and update app state
     localStorage.setItem('tenantToken', token);
@@ -129,11 +120,7 @@ import { signupTenant } from '@/contexts/AuthContext/services';
 
 async function registerNewTenant() {
   try {
-    const result = await signupTenant(
-      'user@example.com',
-      'securepassword123',
-      'My Business Name'
-    );
+    const result = await signupTenant('user@example.com', 'securepassword123', 'My Business Name');
 
     // User is authenticated, token is stored
     console.log('Signup successful:', result);
@@ -148,18 +135,20 @@ async function registerNewTenant() {
 ## Type Definitions
 
 ### SignupResponse
+
 ```typescript
 interface SignupResponse {
-  token: string;        // JWT token
-  tenantId: string;     // Unique tenant ID
-  slug: string;         // URL-friendly identifier
-  email: string;        // User email
+  token: string; // JWT token
+  tenantId: string; // Unique tenant ID
+  slug: string; // URL-friendly identifier
+  email: string; // User email
   apiKeyPublic: string; // Public API key
-  secretKey: string;    // Secret key (one-time display)
+  secretKey: string; // Secret key (one-time display)
 }
 ```
 
 ### SignupCredentials
+
 ```typescript
 interface SignupCredentials {
   email: string;
@@ -187,6 +176,7 @@ try {
 ## Authentication Flow
 
 After successful signup:
+
 1. JWT token is automatically stored in localStorage
 2. Token is set in the API client for subsequent requests
 3. AuthContext updates with user data (if using `useAuth`)
@@ -202,6 +192,7 @@ After successful signup:
 ## Files Modified
 
 ### Frontend Files
+
 1. **`client/src/types/auth.ts`**
    - Added `SignupResponse` interface
    - Added `SignupCredentials` interface
@@ -221,6 +212,7 @@ After successful signup:
    - Exports `SignupCredentials` type
 
 ### Backend Files (Already Existed)
+
 - **Contract**: `packages/contracts/src/api.v1.ts` (line 186-198)
 - **DTO**: `packages/contracts/src/dto.ts` (line 152-170)
 - **Route**: `server/src/routes/auth.routes.ts`
@@ -234,11 +226,7 @@ import { signupTenant } from '@/contexts/AuthContext/services';
 
 describe('Tenant Signup', () => {
   it('should successfully register a new tenant', async () => {
-    const result = await signupTenant(
-      'test@example.com',
-      'password123',
-      'Test Business'
-    );
+    const result = await signupTenant('test@example.com', 'password123', 'Test Business');
 
     expect(result.token).toBeDefined();
     expect(result.tenantId).toBeDefined();
@@ -248,9 +236,9 @@ describe('Tenant Signup', () => {
   });
 
   it('should throw error for existing email', async () => {
-    await expect(
-      signupTenant('existing@example.com', 'password123', 'Test')
-    ).rejects.toThrow('An account with this email already exists');
+    await expect(signupTenant('existing@example.com', 'password123', 'Test')).rejects.toThrow(
+      'An account with this email already exists'
+    );
   });
 });
 ```
@@ -258,6 +246,7 @@ describe('Tenant Signup', () => {
 ## Next Steps
 
 To use the signup functionality in your app:
+
 1. Create a signup form component
 2. Use the `useAuth` hook to access the `signup` function
 3. Handle success (redirect to dashboard, show API keys)

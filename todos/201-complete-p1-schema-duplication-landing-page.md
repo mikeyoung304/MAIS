@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "201"
+issue_id: '201'
 tags: [architecture, contracts, dry-violation, landing-page]
 dependencies: []
 ---
@@ -17,6 +17,7 @@ dependencies: []
 ## Description
 
 The landing page configuration schemas are defined twice:
+
 1. In `packages/contracts/src/landing-page.ts` (the proper location)
 2. Inline in `packages/contracts/src/dto.ts` within TenantPublicDtoSchema.branding.landingPage
 

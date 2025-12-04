@@ -16,16 +16,21 @@ const tier1Schema = z.object({
   API_PORT: z.coerce.number().optional(), // Alias for PORT
 
   // Database (Supabase)
-  DATABASE_URL: z.string().refine(
-    (url) => url.startsWith('postgresql://') || url.startsWith('postgres://'),
-    'DATABASE_URL must be a valid PostgreSQL connection string'
-  ),
+  DATABASE_URL: z
+    .string()
+    .refine(
+      (url) => url.startsWith('postgresql://') || url.startsWith('postgres://'),
+      'DATABASE_URL must be a valid PostgreSQL connection string'
+    ),
   DIRECT_URL: z.preprocess(
     (val) => (val === '' ? undefined : val),
-    z.string().refine(
-      (url) => url.startsWith('postgresql://') || url.startsWith('postgres://'),
-      'DIRECT_URL must be a valid PostgreSQL connection string'
-    ).optional()
+    z
+      .string()
+      .refine(
+        (url) => url.startsWith('postgresql://') || url.startsWith('postgres://'),
+        'DIRECT_URL must be a valid PostgreSQL connection string'
+      )
+      .optional()
   ),
 
   // Supabase
@@ -36,7 +41,9 @@ const tier1Schema = z.object({
 
   // Security
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
-  TENANT_SECRETS_ENCRYPTION_KEY: z.string().min(32, 'TENANT_SECRETS_ENCRYPTION_KEY must be at least 32 characters'),
+  TENANT_SECRETS_ENCRYPTION_KEY: z
+    .string()
+    .min(32, 'TENANT_SECRETS_ENCRYPTION_KEY must be at least 32 characters'),
 
   // Adapters Preset
   ADAPTERS_PRESET: z.enum(['mock', 'real']).default('real'),
@@ -132,7 +139,7 @@ export function validateEnv(): Env {
       'CORS_ORIGIN',
     ] as const;
 
-    const missing = prodRequired.filter(key => !env[key]);
+    const missing = prodRequired.filter((key) => !env[key]);
 
     if (missing.length > 0) {
       logger.error({ missing }, 'Production environment missing required variables');

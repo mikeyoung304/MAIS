@@ -1,5 +1,5 @@
 ---
-title: "ESM/CJS Module Compatibility - Code Review Checklist"
+title: 'ESM/CJS Module Compatibility - Code Review Checklist'
 slug: esm-cjs-code-review-checklist
 category: prevention
 tags: [code-review, modules, esm, cjs, import-patterns, pr-checklist]
@@ -23,12 +23,14 @@ Use this checklist during code reviews to catch module compatibility issues befo
 For each new import statement in the PR, classify it:
 
 #### Is it a direct import?
+
 ```typescript
 import { something } from 'package';
 import DefaultExport from 'package';
 ```
 
 **Review questions:**
+
 - [ ] Package is confirmed ESM-native (has `"type": "module"` in package.json)
 - [ ] TypeScript compilation passes with no "Cannot find module" errors
 - [ ] Package is not on the "CJS-only" list (check MODULE_COMPATIBILITY.md)
@@ -39,6 +41,7 @@ import DefaultExport from 'package';
 ---
 
 #### Is it a createRequire import?
+
 ```typescript
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
@@ -46,6 +49,7 @@ const pkg = require('package-name');
 ```
 
 **Review questions:**
+
 - [ ] Package is confirmed CJS-only (no `"type": "module"`)
 - [ ] Type assertion is present: `as typeof import('package')`
 - [ ] Comment explains WHY createRequire is needed
@@ -56,6 +60,7 @@ const pkg = require('package-name');
 **Risk:** Medium (requires careful type casting)
 
 **Example comment:**
+
 ```typescript
 // file-type v16 is CommonJS-only
 // See: https://github.com/sindresorhus/file-type/releases/tag/v16.5.0
@@ -67,12 +72,14 @@ const fileType = require('file-type') as typeof import('file-type');
 ---
 
 #### Is it a dynamic import?
+
 ```typescript
 const pkg = await import('package-name');
 const result = pkg.functionName();
 ```
 
 **Review questions:**
+
 - [ ] Import is in an async context (function, method)
 - [ ] Error handling is present (try/catch or .catch())
 - [ ] Performance impact is acceptable (lazy loading is intentional)
@@ -82,6 +89,7 @@ const result = pkg.functionName();
 **Risk:** Medium (async patterns need careful handling)
 
 **Example:**
+
 ```typescript
 // ✅ GOOD: Dynamic import with error handling
 async function processFile(buffer: Buffer) {
@@ -121,6 +129,7 @@ npm view package-name main
 ```
 
 **Review checklist:**
+
 - [ ] Package exists in `package.json` (either `dependencies` or `devDependencies`)
 - [ ] Version is reasonable (not a pre-release like `0.0.1-beta.1`)
 - [ ] Version constraint allows updates (use `^` for minor, `~` for patch)
@@ -129,6 +138,7 @@ npm view package-name main
 - [ ] Package is not in both dependencies and devDependencies
 
 **Red flags:**
+
 - ❌ Package version starts with `0.0.` (very new, untested)
 - ❌ Package has no recent commits (6+ months old)
 - ❌ Package appears in both `dependencies` and `devDependencies`
@@ -140,6 +150,7 @@ npm view package-name main
 ### Checklist Item 3: Type Safety
 
 **For direct imports:**
+
 ```typescript
 // ✅ GOOD: Types imported from package
 import { FileTypeResult } from 'file-type';
@@ -154,6 +165,7 @@ const result = require('package'); // No type information
 ```
 
 **Review questions:**
+
 - [ ] All imports use specific named exports (not `*`)
 - [ ] No `as any` type assertions
 - [ ] Types are imported separately when needed: `import type { T }`
@@ -163,6 +175,7 @@ const result = require('package'); // No type information
 ---
 
 **For createRequire imports:**
+
 ```typescript
 // ✅ GOOD: Type assertion present
 const pkg = require('package') as typeof import('package');
@@ -181,6 +194,7 @@ const pkg = require('package') as any;
 ```
 
 **Review questions:**
+
 - [ ] Type assertion is present (`as typeof import(...)` or explicit interface)
 - [ ] Type is accurate (matches actual package exports)
 - [ ] No `as any` assertions
@@ -193,6 +207,7 @@ const pkg = require('package') as any;
 Every non-obvious import needs a comment explaining why.
 
 **Direct imports (usually no comment needed):**
+
 ```typescript
 // No comment needed - it's obvious
 import { stripe } from 'stripe';
@@ -200,6 +215,7 @@ import { PrismaClient } from '@prisma/client';
 ```
 
 **createRequire imports (comment REQUIRED):**
+
 ```typescript
 // ✅ GOOD: Clear explanation
 // file-type v16 is CommonJS-only (ESM version v17+ available)
@@ -213,6 +229,7 @@ const fileType = require('file-type');
 ```
 
 **Comment template:**
+
 ```typescript
 // [PACKAGE] [VERSION] is [ESM|CJS|DUAL]-only
 // See: [GITHUB ISSUE/DISCUSSION URL or PACKAGE.JSON field]
@@ -222,6 +239,7 @@ const pkg = require('package') as typeof import('package');
 ```
 
 **Review questions:**
+
 - [ ] All CJS imports have comments
 - [ ] Comments explain why the pattern is necessary
 - [ ] Comments include package repo link or issue reference
@@ -235,6 +253,7 @@ const pkg = require('package') as typeof import('package');
 **Principle:** Import packages in one place, re-export if needed elsewhere.
 
 **Good pattern:**
+
 ```typescript
 // ✅ server/src/adapters/file-type.adapter.ts (centralized)
 import { createRequire } from 'module';
@@ -255,6 +274,7 @@ async function validateFile(buffer: Buffer) {
 ```
 
 **Bad pattern:**
+
 ```typescript
 // ❌ Duplicated in multiple files
 // services/upload.service.ts
@@ -271,6 +291,7 @@ const fileType = require('file-type');
 ```
 
 **Review questions:**
+
 - [ ] createRequire is used only once (not duplicated in multiple files)
 - [ ] If multiple files need the package, is it re-exported from central location?
 - [ ] Adapter pattern is used if needed (see ARCHITECTURE.md)
@@ -284,6 +305,7 @@ const fileType = require('file-type');
 When new imports are added, verify tests cover the new code:
 
 **Review questions:**
+
 - [ ] Unit tests exist for functions using new package
 - [ ] Tests pass: `npm test` returns 100% pass rate
 - [ ] Tests cover both success and error paths
@@ -291,10 +313,11 @@ When new imports are added, verify tests cover the new code:
 - [ ] Test coverage has not decreased
 
 **Example test for file-type:**
+
 ```typescript
 // ✅ GOOD: Tests the actual file-type usage
 test('should detect JPEG from buffer', async () => {
-  const jpegBuffer = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]);
+  const jpegBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
   const service = new UploadService(mockRepo);
 
   const result = await service.validateFile({
@@ -312,11 +335,13 @@ test('should reject invalid file type', async () => {
   const invalidBuffer = Buffer.from([0x00, 0x00]);
   const service = new UploadService(mockRepo);
 
-  await expect(service.validateFile({
-    buffer: invalidBuffer,
-    mimetype: 'image/jpeg',
-    // ...
-  })).rejects.toThrow('File validation failed');
+  await expect(
+    service.validateFile({
+      buffer: invalidBuffer,
+      mimetype: 'image/jpeg',
+      // ...
+    })
+  ).rejects.toThrow('File validation failed');
 });
 ```
 
@@ -327,6 +352,7 @@ test('should reject invalid file type', async () => {
 If package interacts with other systems, verify integration tests:
 
 **Review questions:**
+
 - [ ] Integration tests exist for new code
 - [ ] Tests pass: `npm run test:integration`
 - [ ] Database interactions are tested (if applicable)
@@ -334,6 +360,7 @@ If package interacts with other systems, verify integration tests:
 - [ ] Tests use proper cleanup/setup
 
 **Example:**
+
 ```typescript
 // ✅ GOOD: Integration test with database
 test('should store file after validation', async () => {
@@ -347,7 +374,7 @@ test('should store file after validation', async () => {
 
   // Verify database was updated
   const storedFile = await db.segment.findUnique({
-    where: { id: uploadedFile.segmentId }
+    where: { id: uploadedFile.segmentId },
   });
   expect(storedFile.imageUrl).toBeDefined();
 });
@@ -360,6 +387,7 @@ test('should store file after validation', async () => {
 For user-facing features, verify E2E tests:
 
 **Review questions:**
+
 - [ ] E2E tests exist for features using new package
 - [ ] Tests pass: `npm run test:e2e`
 - [ ] Tests use real tsx runtime (not mocked)
@@ -367,6 +395,7 @@ For user-facing features, verify E2E tests:
 - [ ] Tests work in both development and production
 
 **Example:**
+
 ```typescript
 // ✅ GOOD: E2E test of actual user flow
 test('user should be able to upload image', async () => {
@@ -379,7 +408,7 @@ test('user should be able to upload image', async () => {
 
   // Image should be in database
   const segment = await db.segment.findFirst({
-    where: { tenantId }
+    where: { tenantId },
   });
   expect(segment.imageUrl).toBeDefined();
 });
@@ -397,11 +426,13 @@ npm run typecheck
 ```
 
 **Should see:**
+
 - ✅ 0 TypeScript errors
 - ✅ No "Cannot find module" messages
 - ✅ No "Cannot assign type" messages
 
 **Review output:**
+
 ```bash
 # ✅ GOOD
 $ npm run typecheck
@@ -420,6 +451,7 @@ src/services/upload.service.ts:10:5 - error TS2322: Type 'any' is not assignable
 Verify the PR works in actual runtime:
 
 **Before approving:**
+
 ```bash
 # 1. Development mode
 npm run dev:api
@@ -442,6 +474,7 @@ npm start
 ```
 
 **Review questions:**
+
 - [ ] Development mode starts: `npm run dev:api`
 - [ ] No "Cannot find module" at runtime
 - [ ] Feature using new package works correctly
@@ -464,6 +497,7 @@ npm install --no-save  # Ensure package.json is valid
 ```
 
 **Review checklist:**
+
 - [ ] New dependency is in `dependencies`, not `devDependencies` (unless it's dev-only)
 - [ ] Version is reasonable and pinned
 - [ ] No duplicate dependencies
@@ -479,17 +513,19 @@ npm install --no-save  # Ensure package.json is valid
 For packages with both ESM and CJS exports:
 
 **Review questions:**
+
 - [ ] Only ONE import pattern is used in entire codebase
 - [ ] No mixing of `import` and `require` for same package
 - [ ] No duplicate module instances (run test if uncertain)
 
 **Test for dual package hazard:**
+
 ```typescript
 // Add this test to verify no duplicate instances
 test('file-type should not be loaded twice', async () => {
   // This ensures we're not importing both ESM and CJS versions
   const service = new UploadService(repo);
-  const buffer = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]);
+  const buffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
 
   // Should work without state mismatches
   const result = await service.validateFile({
@@ -509,12 +545,14 @@ test('file-type should not be loaded twice', async () => {
 For CJS-only packages, verify no better alternative exists:
 
 **Review questions:**
+
 - [ ] Is there a newer ESM version of this package?
 - [ ] Did author indicate ESM support is coming?
 - [ ] Is there a maintained ESM alternative?
 - [ ] Would upgrading package version fix the issue?
 
 **Example decision:**
+
 ```typescript
 // file-type situation:
 // - v16: CJS-only (we use createRequire)
@@ -530,6 +568,7 @@ For CJS-only packages, verify no better alternative exists:
 ```
 
 **Review comment template:**
+
 ```
 Package: file-type@16.5.4
 Status: CJS-only, ESM alternative exists (v17+)
@@ -544,12 +583,14 @@ Future: Plan to upgrade to v17+ when stable
 ### Issue: "Cannot find module 'xyz'"
 
 **Signs in PR:**
+
 ```typescript
 // ❌ RED FLAG: Direct import of CJS package
 import { something } from 'cjs-only-package';
 ```
 
 **What to do:**
+
 1. Ask author to check package.json for `"type": "module"`
 2. If CJS-only, request createRequire wrapper
 3. Verify TypeScript compilation passes
@@ -559,6 +600,7 @@ import { something } from 'cjs-only-package';
 ### Issue: "Type 'never' is not assignable to type 'T'"
 
 **Signs in PR:**
+
 ```typescript
 // ❌ RED FLAG: No type assertion
 const pkg = require('package');
@@ -566,6 +608,7 @@ const result: ExpectedType = pkg.method(); // Type error!
 ```
 
 **What to do:**
+
 1. Ask author to add type assertion: `as typeof import('package')`
 2. Or provide explicit interface: `as { method: (...) => ... }`
 3. Verify TypeScript strict mode passes
@@ -575,11 +618,13 @@ const result: ExpectedType = pkg.method(); // Type error!
 ### Issue: Module loaded twice (duplicate instances)
 
 **Signs in PR:**
+
 - State is not shared between modules
 - Singleton pattern breaks
 - Configuration not applied globally
 
 **What to do:**
+
 ```typescript
 // Test to check
 test('singleton pattern works', () => {
@@ -650,7 +695,7 @@ Approved!
 
 ### Requesting changes for CJS import without comment:
 
-```
+````
 This uses createRequire for a CJS package, which is good.
 However, could you add a comment explaining why?
 
@@ -661,9 +706,10 @@ Something like:
 // v17+ is ESM - consider upgrading in future
 const require = createRequire(import.meta.url);
 const fileType = require('file-type') as typeof import('file-type');
-```
+````
 
 This helps future developers understand the pattern.
+
 ```
 
 ---
@@ -671,6 +717,7 @@ This helps future developers understand the pattern.
 ### Requesting changes for type safety:
 
 ```
+
 I see the createRequire import here, but it's missing the type assertion:
 
 ```typescript
@@ -682,6 +729,7 @@ const fileType = require('file-type') as typeof import('file-type');
 ```
 
 This provides IntelliSense and catches type errors at compile time.
+
 ```
 
 ---
@@ -705,3 +753,4 @@ Before approving:
 **Last Updated:** 2025-11-29
 **Used by:** Code reviewers on every PR
 **Priority:** Critical
+```

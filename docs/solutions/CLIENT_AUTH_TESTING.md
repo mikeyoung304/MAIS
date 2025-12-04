@@ -173,9 +173,7 @@ describe('authenticatedFetch', () => {
     it('throws error if no token available', async () => {
       localStorage.clear(); // No tokens
 
-      await expect(
-        authenticatedFetch('/api/test')
-      ).rejects.toThrow('Authentication required');
+      await expect(authenticatedFetch('/api/test')).rejects.toThrow('Authentication required');
     });
 
     it('does not make fetch request without token', async () => {
@@ -209,7 +207,7 @@ describe('authenticatedFetch', () => {
         expect.objectContaining({
           method: undefined, // GET is default
           headers: expect.objectContaining({
-            'Authorization': 'Bearer test_token_123',
+            Authorization: 'Bearer test_token_123',
           }),
         })
       );
@@ -282,7 +280,7 @@ describe('authenticatedFetch', () => {
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
-            'Authorization': 'Bearer token_123',
+            Authorization: 'Bearer token_123',
             'Content-Type': 'application/json',
           }),
           body: JSON.stringify({
@@ -320,7 +318,7 @@ describe('authenticatedFetch', () => {
           method: 'POST',
           body: formData,
           headers: expect.objectContaining({
-            'Authorization': 'Bearer token_123',
+            Authorization: 'Bearer token_123',
             // Content-Type NOT set by us - browser will add it
           }),
         })
@@ -347,7 +345,7 @@ describe('authenticatedFetch', () => {
         expect.anything(),
         expect.objectContaining({
           headers: expect.objectContaining({
-            'Authorization': 'Bearer admin_token_impersonating',
+            Authorization: 'Bearer admin_token_impersonating',
           }),
         })
       );
@@ -359,13 +357,9 @@ describe('authenticatedFetch', () => {
     it('handles network errors', async () => {
       localStorage.setItem('tenantToken', 'token_123');
 
-      (global.fetch as any).mockRejectedValueOnce(
-        new TypeError('Failed to fetch')
-      );
+      (global.fetch as any).mockRejectedValueOnce(new TypeError('Failed to fetch'));
 
-      await expect(
-        authenticatedFetch('/api/test')
-      ).rejects.toThrow('Failed to fetch');
+      await expect(authenticatedFetch('/api/test')).rejects.toThrow('Failed to fetch');
     });
 
     it('handles 401 Unauthorized response', async () => {
@@ -420,7 +414,7 @@ describe('authenticatedFetch', () => {
         expect.anything(),
         expect.objectContaining({
           headers: expect.objectContaining({
-            'Authorization': 'Bearer token_123',
+            Authorization: 'Bearer token_123',
             'X-Custom-Header': 'custom-value',
             'Content-Type': 'application/json',
           }),
@@ -441,7 +435,7 @@ describe('authenticatedFetch', () => {
       // But we handle it gracefully by letting user override if needed
       await authenticatedFetch('/api/test', {
         headers: {
-          'Authorization': 'Bearer custom_override_token',
+          Authorization: 'Bearer custom_override_token',
         },
       });
 
@@ -533,20 +527,74 @@ test.describe('Client-side authentication during impersonation', () => {
 
     // Create a test file (1x1 PNG)
     const pngBuffer = Buffer.from([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, // PNG signature
-      0x00, 0x00, 0x00, 0x0d, // IHDR chunk size
-      0x49, 0x48, 0x44, 0x52, // IHDR chunk type
-      0x00, 0x00, 0x00, 0x01, // Width: 1
-      0x00, 0x00, 0x00, 0x01, // Height: 1
-      0x08, 0x02, 0x00, 0x00, 0x00, // Bit depth, color type
-      0x90, 0x77, 0x53, 0xde, // CRC
-      0x00, 0x00, 0x00, 0x0c, // IDAT chunk size
-      0x49, 0x44, 0x41, 0x54, // IDAT chunk type
-      0x08, 0xd7, 0x63, 0xf8, 0x0f, 0x00, 0x00, 0x01,
-      0x01, 0x00, 0x05, 0x37, 0x1f, 0xf1, 0x01, // Data
-      0x00, 0x00, 0x00, 0x00, // IEND chunk size
-      0x49, 0x45, 0x4e, 0x44, // IEND chunk type
-      0xae, 0x42, 0x60, 0x82, // CRC
+      0x89,
+      0x50,
+      0x4e,
+      0x47,
+      0x0d,
+      0x0a,
+      0x1a,
+      0x0a, // PNG signature
+      0x00,
+      0x00,
+      0x00,
+      0x0d, // IHDR chunk size
+      0x49,
+      0x48,
+      0x44,
+      0x52, // IHDR chunk type
+      0x00,
+      0x00,
+      0x00,
+      0x01, // Width: 1
+      0x00,
+      0x00,
+      0x00,
+      0x01, // Height: 1
+      0x08,
+      0x02,
+      0x00,
+      0x00,
+      0x00, // Bit depth, color type
+      0x90,
+      0x77,
+      0x53,
+      0xde, // CRC
+      0x00,
+      0x00,
+      0x00,
+      0x0c, // IDAT chunk size
+      0x49,
+      0x44,
+      0x41,
+      0x54, // IDAT chunk type
+      0x08,
+      0xd7,
+      0x63,
+      0xf8,
+      0x0f,
+      0x00,
+      0x00,
+      0x01,
+      0x01,
+      0x00,
+      0x05,
+      0x37,
+      0x1f,
+      0xf1,
+      0x01, // Data
+      0x00,
+      0x00,
+      0x00,
+      0x00, // IEND chunk size
+      0x49,
+      0x45,
+      0x4e,
+      0x44, // IEND chunk type
+      0xae,
+      0x42,
+      0x60,
+      0x82, // CRC
     ]);
 
     const testFile = new File([pngBuffer], 'test-photo.png', { type: 'image/png' });
@@ -568,17 +616,13 @@ test.describe('Client-side authentication during impersonation', () => {
     expect(authHeader).toMatch(/^Bearer /);
 
     const tokenInRequest = authHeader.replace('Bearer ', '');
-    const adminTokenStored = await page.evaluate(() =>
-      localStorage.getItem('adminToken')
-    );
+    const adminTokenStored = await page.evaluate(() => localStorage.getItem('adminToken'));
 
     // Verify it uses the admin token (with impersonation context)
     expect(tokenInRequest).toBe(adminTokenStored);
 
     // Verify it does NOT use an old tenant token
-    const oldTenantToken = await page.evaluate(() =>
-      localStorage.getItem('tenantToken')
-    );
+    const oldTenantToken = await page.evaluate(() => localStorage.getItem('tenantToken'));
     if (oldTenantToken) {
       expect(tokenInRequest).not.toBe(oldTenantToken);
     }
@@ -603,9 +647,7 @@ test.describe('Client-side authentication during impersonation', () => {
     expect(authStateAfter.impersonationTenantKey).toBeNull(); // Impersonation cleared
   });
 
-  test('uses admin token during impersonation, not old tenant token', async ({
-    page,
-  }) => {
+  test('uses admin token during impersonation, not old tenant token', async ({ page }) => {
     // Simulate scenario where both tokens exist
     await page.evaluate(() => {
       // Simulate a previous tenant login
@@ -701,15 +743,11 @@ test.describe('Client-side authentication during impersonation', () => {
 
     // Create a minimal PNG (logo)
     const pngBuffer = Buffer.from([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-      0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
-      0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-      0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53,
-      0xde, 0x00, 0x00, 0x00, 0x0c, 0x49, 0x44, 0x41,
-      0x54, 0x08, 0xd7, 0x63, 0xf8, 0x0f, 0x00, 0x00,
-      0x01, 0x01, 0x00, 0x05, 0x37, 0x1f, 0xf1, 0x01,
-      0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44,
-      0xae, 0x42, 0x60, 0x82,
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+      0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x02, 0x00, 0x00, 0x00, 0x90,
+      0x77, 0x53, 0xde, 0x00, 0x00, 0x00, 0x0c, 0x49, 0x44, 0x41, 0x54, 0x08, 0xd7, 0x63, 0xf8,
+      0x0f, 0x00, 0x00, 0x01, 0x01, 0x00, 0x05, 0x37, 0x1f, 0xf1, 0x01, 0x00, 0x00, 0x00, 0x00,
+      0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
     ]);
 
     const logoFile = new File([pngBuffer], 'logo.png', { type: 'image/png' });
@@ -718,8 +756,7 @@ test.describe('Client-side authentication during impersonation', () => {
     // Verify upload request
     const uploadResponse = await page.waitForResponse(
       (response) =>
-        response.url().includes('/v1/tenant-admin/logo') &&
-        response.request().method() === 'POST'
+        response.url().includes('/v1/tenant-admin/logo') && response.request().method() === 'POST'
     );
 
     expect(uploadResponse.status()).toBe(200);
@@ -772,7 +809,7 @@ describe('packagePhotoApi with auth handling', () => {
         expect.stringContaining('/v1/tenant-admin/packages/pkg_123/photos'),
         expect.objectContaining({
           headers: expect.objectContaining({
-            'Authorization': 'Bearer tenant_token_normal_op',
+            Authorization: 'Bearer tenant_token_normal_op',
           }),
         })
       );
@@ -801,7 +838,7 @@ describe('packagePhotoApi with auth handling', () => {
         expect.anything(),
         expect.objectContaining({
           headers: expect.objectContaining({
-            'Authorization': 'Bearer admin_token_impersonating_tenant',
+            Authorization: 'Bearer admin_token_impersonating_tenant',
           }),
         })
       );
@@ -834,7 +871,7 @@ describe('packagePhotoApi with auth handling', () => {
         expect.stringContaining('/v1/tenant-admin/packages/pkg_123/photos/photo-123.jpg'),
         expect.objectContaining({
           headers: expect.objectContaining({
-            'Authorization': 'Bearer admin_impersonation_token',
+            Authorization: 'Bearer admin_impersonation_token',
           }),
         })
       );
@@ -865,13 +902,13 @@ npm test -- client/src/lib/auth.test.ts
 
 ## Test Coverage Goals
 
-| Component | Coverage | Status |
-|-----------|----------|--------|
-| `getAuthToken()` | 100% | All paths tested |
-| `authenticatedFetch()` | 100% | All paths tested |
-| Impersonation flow | E2E | End-to-end verified |
-| Token selection | Unit | All scenarios covered |
-| Error handling | Unit | Auth failures covered |
+| Component              | Coverage | Status                |
+| ---------------------- | -------- | --------------------- |
+| `getAuthToken()`       | 100%     | All paths tested      |
+| `authenticatedFetch()` | 100%     | All paths tested      |
+| Impersonation flow     | E2E      | End-to-end verified   |
+| Token selection        | Unit     | All scenarios covered |
+| Error handling         | Unit     | Auth failures covered |
 
 ---
 

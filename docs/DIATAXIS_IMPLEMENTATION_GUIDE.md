@@ -41,6 +41,7 @@ Diátaxis addresses what to write (content), how to write it (style), and how to
 **Purpose:** Take a beginner by the hand and guide them through their first successful experience.
 
 **Characteristics:**
+
 - Step-by-step lessons with guaranteed outcomes
 - Designed for complete beginners
 - Focus on building confidence through early success
@@ -49,17 +50,20 @@ Diátaxis addresses what to write (content), how to write it (style), and how to
 - Should be completable in 15-30 minutes
 
 **Style:**
+
 - Imperative mood: "Run this command", "Click this button"
 - Present tense, active voice
 - Minimal branching or conditionals
 - Include expected output at each step
 
 **When to write a tutorial:**
+
 - New users need onboarding
 - New feature requires hands-on introduction
 - Complex workflow needs guided walkthrough
 
 **MAIS Examples (proposed):**
+
 - "Your First MAIS Tenant" (setup → first booking)
 - "Widget Integration in 10 Minutes"
 - "Creating Your First Custom Package"
@@ -71,6 +75,7 @@ Diátaxis addresses what to write (content), how to write it (style), and how to
 **Purpose:** Show experienced users how to solve a specific real-world problem.
 
 **Characteristics:**
+
 - Recipes for accomplishing specific tasks
 - Assume user knows the basics
 - Focus on practical solutions, not comprehensive coverage
@@ -79,17 +84,20 @@ Diátaxis addresses what to write (content), how to write it (style), and how to
 - Usually 5-15 minutes to complete
 
 **Style:**
+
 - Imperative mood: "To rotate secrets, do X"
 - Focus on the goal, not the journey
 - Include variations and edge cases
 - Provide troubleshooting tips
 
 **When to write a how-to:**
+
 - Users repeatedly ask "How do I...?"
 - Specific problem needs documented solution
 - Common workflow needs optimization guidance
 
 **MAIS Examples (existing, to migrate):**
+
 - `operations/DEPLOYMENT_GUIDE.md` → "How to Deploy to Production"
 - `security/SECRET_ROTATION_GUIDE.md` → "How to Rotate Secrets"
 - `setup/LOCAL_TESTING_GUIDE.md` → "How to Test Locally"
@@ -101,6 +109,7 @@ Diátaxis addresses what to write (content), how to write it (style), and how to
 **Purpose:** Provide complete, accurate, structured information that users consult while working.
 
 **Characteristics:**
+
 - Comprehensive coverage of APIs, configurations, commands
 - Factual, precise, technical descriptions
 - Organized for lookup, not reading cover-to-cover
@@ -109,18 +118,21 @@ Diátaxis addresses what to write (content), how to write it (style), and how to
 - Usually generated from code where applicable
 
 **Style:**
+
 - Declarative, factual tone
 - Consistent structure across entries
 - Clear parameter types, defaults, examples
 - Cross-references to related items
 
 **When to write reference:**
+
 - API endpoints need documentation
 - Configuration options need specification
 - Commands/CLI need parameter reference
 - Data models need field definitions
 
 **MAIS Examples (existing, to migrate):**
+
 - `api/` directory → Reference section
 - `setup/ENVIRONMENT.md` → "Environment Variables Reference"
 - `packages/contracts/` schemas → "API Contracts Reference"
@@ -133,6 +145,7 @@ Diátaxis addresses what to write (content), how to write it (style), and how to
 **Purpose:** Clarify and illuminate concepts, design decisions, and "why" questions.
 
 **Characteristics:**
+
 - Discusses alternatives and tradeoffs
 - Explains why things are designed the way they are
 - Provides context and background
@@ -141,18 +154,21 @@ Diátaxis addresses what to write (content), how to write it (style), and how to
 - No step-by-step instructions (those belong in Tutorials/How-To)
 
 **Style:**
+
 - Conversational, educational tone
 - Present alternatives and reasoning
 - Use diagrams to illustrate concepts
 - Tell the story behind decisions
 
 **When to write explanation:**
+
 - Architecture needs conceptual overview
 - Design decisions need justification (ADRs)
 - Complex system interactions need clarification
 - Users need mental models to work effectively
 
 **MAIS Examples (existing, to migrate):**
+
 - `ARCHITECTURE.md` → "System Architecture Explained"
 - `DECISIONS.md` → "Architecture Decision Records"
 - `multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md` → "Understanding Multi-Tenancy"
@@ -276,18 +292,22 @@ Understand concepts / decisions           → EXPLANATION
 ### Step 2: Apply the "Main Verb" Test
 
 **Tutorials use:** "Build", "Create", "Make" (constructive verbs)
+
 - ✓ "Build Your First Widget Integration"
 - ✗ "Widget Integration Reference" (that's Reference)
 
 **How-To Guides use:** "How to...", "Solve", "Fix", "Deploy"
+
 - ✓ "How to Debug Failed Webhooks"
 - ✗ "Webhook System Architecture" (that's Explanation)
 
 **Reference uses:** "Reference", "Specification", "API"
+
 - ✓ "Environment Variables Reference"
 - ✗ "How to Configure Environment Variables" (that's How-To)
 
 **Explanation uses:** "Understanding", "Architecture", "Concept"
+
 - ✓ "Understanding Multi-Tenant Isolation"
 - ✗ "Multi-Tenant Setup Tutorial" (that's Tutorial)
 
@@ -296,6 +316,7 @@ Understand concepts / decisions           → EXPLANATION
 After determining the quadrant, use domain-specific subdirectories:
 
 **Primary domains:**
+
 - `deployment/` - Deployment, releases, rollbacks
 - `operations/` - Monitoring, incidents, troubleshooting
 - `security/` - Auth, secrets, auditing
@@ -305,6 +326,7 @@ After determining the quadrant, use domain-specific subdirectories:
 - `api/` - API usage, contracts, clients
 
 **Example: "Secret Rotation"**
+
 1. User intent: Accomplish specific task → **How-To**
 2. Main verb: "How to rotate secrets" → Confirms How-To
 3. Domain: Security → `how-to/security/`
@@ -313,21 +335,25 @@ After determining the quadrant, use domain-specific subdirectories:
 ### Step 4: Edge Cases
 
 **"Where does README.md go?"**
+
 - Root `README.md` → Stays at project root (onboarding entry point)
 - `docs/INDEX.md` → Documentation hub (stays in docs/)
 - Quadrant READMEs → Overview of that section
 
 **"Where do phase/sprint reports go?"**
+
 - Current sprints → `docs/sprints/sprint-N/` (temporary, for active work)
 - Completed phases → `docs/archive/phases/` (historical record)
 - Lessons learned → Extract to `explanation/context/`
 
 **"Where does TESTING.md go?"**
+
 - Strategy and philosophy → `explanation/testing-strategy.md`
 - "How to run tests" → `how-to/development/run-tests-locally.md`
 - Test API reference → `reference/testing/api.md`
 
 **"Where do operational runbooks go?"**
+
 - Incident response → `how-to/operations/handle-production-incident.md`
 - Monitoring setup → `how-to/operations/setup-monitoring.md`
 - Why we monitor X → `explanation/operations/monitoring-philosophy.md`
@@ -409,11 +435,13 @@ Here's how MAIS's existing 9-category structure maps to Diátaxis:
 ### Phase 1: Establish Structure (Week 1)
 
 **Goals:**
+
 - Create new directory structure
 - Write quadrant README.md files
 - Update INDEX.md with new navigation
 
 **Tasks:**
+
 1. Create four quadrant directories with READMEs
 2. Create `contributing/` directory
 3. Document decision rules in each quadrant README
@@ -424,11 +452,13 @@ Here's how MAIS's existing 9-category structure maps to Diátaxis:
 ### Phase 2: Migrate High-Value Docs (Week 2)
 
 **Goals:**
+
 - Move most-accessed documents first
 - Establish migration patterns
 - Validate structure works
 
 **Priority documents (by usage):**
+
 1. `README.md` → Update to reference new structure
 2. `DEVELOPING.md` → `contributing/development-workflow.md`
 3. `ARCHITECTURE.md` → `explanation/architecture/overview.md`
@@ -438,6 +468,7 @@ Here's how MAIS's existing 9-category structure maps to Diátaxis:
 7. `api/` directory → `reference/api/` + `tutorials/api/`
 
 **Process:**
+
 1. Copy file to new location (don't delete yet)
 2. Add redirect note in old location
 3. Update all internal links
@@ -447,11 +478,13 @@ Here's how MAIS's existing 9-category structure maps to Diátaxis:
 ### Phase 3: Bulk Migration (Week 3)
 
 **Goals:**
+
 - Migrate remaining documents
 - Maintain old locations with redirects
 - Update all cross-references
 
 **Strategy:**
+
 - Use `find` and `grep` to identify all `.md` files
 - Create migration spreadsheet: Old Path → New Path → Quadrant
 - Write script to update internal links
@@ -476,12 +509,14 @@ This redirect will be removed on: [Date + 1 month]
 ### Phase 4: Cleanup & Optimization (Week 4)
 
 **Goals:**
+
 - Remove redirects
 - Delete old files
 - Consolidate duplicates
 - Write missing docs
 
 **Tasks:**
+
 1. Remove redirect notes (old files deleted)
 2. Identify gaps in documentation coverage
 3. Write missing quadrant READMEs
@@ -490,6 +525,7 @@ This redirect will be removed on: [Date + 1 month]
 6. Final link validation
 
 **Validation:**
+
 ```bash
 # Check for broken links
 npm run docs:lint
@@ -501,11 +537,13 @@ find docs/ -name "*.md" | wc -l  # Should match known count
 ### Phase 5: Continuous Improvement (Ongoing)
 
 **Goals:**
+
 - Maintain framework discipline
 - Prevent drift
 - Gather user feedback
 
 **Practices:**
+
 1. **PR Template:** Checklist for doc classification
 2. **Monthly Audit:** Review new docs for correct placement
 3. **User Feedback:** Add feedback links to each doc
@@ -521,6 +559,7 @@ find docs/ -name "*.md" | wc -l  # Should match known count
 **Current location:** `docs/security/SECRET_ROTATION_GUIDE.md`
 
 **Analysis:**
+
 - User intent: Accomplish specific task (rotate secrets)
 - Main verb: "How to rotate secrets" → How-To
 - Domain: Security
@@ -529,6 +568,7 @@ find docs/ -name "*.md" | wc -l  # Should match known count
 **New location:** `docs/how-to/security/rotate-secrets.md`
 
 **Frontmatter to add:**
+
 ```yaml
 ---
 title: How to Rotate Secrets
@@ -547,6 +587,7 @@ last_updated: 2025-11-12
 **Current location:** Root `/ARCHITECTURE.md`
 
 **Analysis:**
+
 - User intent: Understand system design
 - Main verb: "Understanding architecture" → Explanation
 - Domain: Architecture
@@ -555,12 +596,14 @@ last_updated: 2025-11-12
 **New location:** `docs/explanation/architecture/overview.md`
 
 **Recommendation:** Split into multiple docs:
+
 - `explanation/architecture/overview.md` - High-level concepts
 - `explanation/architecture/config-driven-platform.md` - 2025 transformation
 - `explanation/architecture/multi-tenant-design.md` - Multi-tenant specifics
 - `explanation/architecture/diagrams/` - Visual diagrams
 
 **Frontmatter:**
+
 ```yaml
 ---
 title: System Architecture Overview
@@ -581,6 +624,7 @@ last_updated: 2025-11-12
 **Current location:** `docs/setup/LOCAL_TESTING_GUIDE.md`
 
 **Analysis:**
+
 - User intent: Accomplish specific task (test locally)
 - Main verb: "How to test locally" → How-To
 - Domain: Development
@@ -589,11 +633,13 @@ last_updated: 2025-11-12
 **New location:** `docs/how-to/development/test-locally.md`
 
 **Related docs to create:**
+
 - `tutorials/getting-started/01-setup-first-tenant.md` (for beginners)
 - `reference/testing/test-api.md` (for test utilities)
 - `explanation/testing-strategy.md` (for philosophy)
 
 **Frontmatter:**
+
 ```yaml
 ---
 title: How to Test MAIS Locally
@@ -614,6 +660,7 @@ last_updated: 2025-11-12
 **Current location:** `docs/roadmaps/WIDGET_INTEGRATION_GUIDE.md`
 
 **Analysis:**
+
 - User intent: **Split - both learning AND reference**
 - Content: Mixes step-by-step tutorial with API reference
 - Domain: Widget
@@ -621,18 +668,21 @@ last_updated: 2025-11-12
 **Recommendation:** Split into two docs:
 
 **Part 1: Tutorial**
+
 - **New location:** `docs/tutorials/widget/integration-quickstart.md`
 - **Content:** "Build your first widget integration in 10 minutes"
 - **Audience:** First-time integrators
 - **Style:** Step-by-step with sample code
 
 **Part 2: Reference**
+
 - **New location:** `docs/reference/widget/embed-api.md`
 - **Content:** Complete API reference for widget embedding
 - **Audience:** Experienced developers needing details
 - **Style:** Comprehensive parameter listing
 
 **Frontmatter (Tutorial):**
+
 ```yaml
 ---
 title: Widget Integration Quickstart
@@ -646,6 +696,7 @@ last_updated: 2025-11-12
 ```
 
 **Frontmatter (Reference):**
+
 ```yaml
 ---
 title: Widget Embed API Reference
@@ -666,6 +717,7 @@ last_updated: 2025-11-12
 ### Tutorials: Style Guide
 
 **DO:**
+
 - Start with "In this tutorial, you will..."
 - Number every step clearly (1, 2, 3...)
 - Include exact commands/code to copy-paste
@@ -674,6 +726,7 @@ last_updated: 2025-11-12
 - End with "What's Next?" section
 
 **DON'T:**
+
 - Explain why things work (save for Explanation)
 - Offer multiple paths (one golden path only)
 - Assume prior knowledge
@@ -681,13 +734,16 @@ last_updated: 2025-11-12
 - Use production examples (always use safe test data)
 
 **Template:**
-```markdown
+
+````markdown
 # [Tutorial Title]
 
 ## What You'll Build
+
 [One sentence: what will exist at the end]
 
 ## Prerequisites
+
 - [ ] Node.js 18+ installed
 - [ ] Git installed
 - [ ] 15 minutes of time
@@ -695,29 +751,37 @@ last_updated: 2025-11-12
 ## Steps
 
 ### Step 1: [Action Verb]
+
 [Instruction]
 
 Run this command:
+
 ```bash
 [exact command]
 ```
+````
 
 You should see:
+
 ```
 [expected output]
 ```
 
 ### Step 2: [Next Action]
+
 [Continue...]
 
 ## What You Learned
+
 - [Key takeaway 1]
 - [Key takeaway 2]
 
 ## What's Next
+
 - [Link to related how-to]
 - [Link to reference docs]
-```
+
+````
 
 ---
 
@@ -767,13 +831,14 @@ You should see:
 ## Related Guides
 - [Link to related how-to]
 - [Link to reference docs]
-```
+````
 
 ---
 
 ### Reference: Style Guide
 
 **DO:**
+
 - Organize alphabetically or by hierarchy
 - Use consistent formatting for all entries
 - Include type information, defaults, examples
@@ -782,16 +847,19 @@ You should see:
 - Provide search-friendly headings
 
 **DON'T:**
+
 - Include opinions or recommendations
 - Write in imperative mood
 - Tell stories or provide context
 - Mix reference with how-to instructions
 
 **Template:**
-```markdown
+
+````markdown
 # [API/Configuration Name] Reference
 
 ## Overview
+
 [One sentence: what this reference covers]
 
 ## [Entry 1 Name]
@@ -802,17 +870,21 @@ You should see:
 **Description:** [Factual description]
 
 **Example:**
+
 ```typescript
 [code example]
 ```
+````
 
 **See also:** [Related entry]
 
 ---
 
 ## [Entry 2 Name]
+
 [Repeat structure]
-```
+
+````
 
 ---
 
@@ -863,7 +935,7 @@ You should see:
 ## Related Concepts
 - [Link to related explanation]
 - [Link to ADR]
-```
+````
 
 ---
 
@@ -872,12 +944,14 @@ You should see:
 ### Documentation Ownership
 
 **Quadrant Owners:**
+
 - **Tutorials:** Developer Relations / Onboarding Team
 - **How-To Guides:** Engineering + Operations (domain experts)
 - **Reference:** Engineering (auto-generated where possible)
 - **Explanation:** Architecture Team
 
 **Review Process:**
+
 1. Author drafts in correct quadrant
 2. Quadrant owner reviews for style/placement
 3. Domain expert reviews for accuracy
@@ -886,12 +960,14 @@ You should see:
 ### Quality Metrics
 
 **Per Quadrant:**
+
 - **Tutorials:** Completion rate, user feedback scores
 - **How-To:** Task success rate, time to completion
 - **Reference:** Search effectiveness, API call success
 - **Explanation:** User comprehension surveys
 
 **Overall:**
+
 - Documentation coverage (% of features documented)
 - Link health (% of internal links valid)
 - Freshness (% updated in last 6 months)
@@ -900,6 +976,7 @@ You should see:
 ### Preventing Drift
 
 **Rules to Enforce:**
+
 1. **No orphan docs:** Every `.md` must be linked from INDEX.md or quadrant README
 2. **Frontmatter required:** All docs must have quadrant classification
 3. **Annual audit:** Review all docs for correct placement
@@ -907,6 +984,7 @@ You should see:
 5. **Automated linting:** CI checks for broken links, missing frontmatter
 
 **CI Integration:**
+
 ```yaml
 # .github/workflows/docs-lint.yml
 name: Documentation Lint
@@ -938,6 +1016,7 @@ We'll know Diátaxis implementation succeeded when:
 6. **Increased contribution** - External contributors can add docs confidently
 
 **Measure:**
+
 - Time to find documentation (user surveys)
 - Number of doc clarification questions in Slack
 - PR velocity for documentation changes
@@ -970,15 +1049,18 @@ We'll know Diátaxis implementation succeeded when:
 ## Resources
 
 **Official Diátaxis:**
+
 - Website: https://diataxis.fr/
 - GitHub: https://github.com/evildmp/diataxis-documentation-framework
 
 **MAIS-Specific:**
+
 - This guide: `docs/DIATAXIS_IMPLEMENTATION_GUIDE.md`
 - Documentation index: `docs/INDEX.md`
 - Contributing guide: `contributing/documentation-guide.md` (to be created)
 
 **Examples in the Wild:**
+
 - Django: https://docs.djangoproject.com/
 - Gatsby: https://www.gatsbyjs.com/docs/
 - Python: https://docs.python.org/ (adopting Diátaxis)

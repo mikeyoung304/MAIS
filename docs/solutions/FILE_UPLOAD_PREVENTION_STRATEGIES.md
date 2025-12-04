@@ -14,11 +14,11 @@ This document provides actionable prevention strategies based on three critical 
 
 ### The Three Vulnerabilities
 
-| Vulnerability | Risk | Prevention |
-|---------------|------|-----------|
-| **MIME Type Spoofing** | Arbitrary code execution via malicious file uploads | Magic byte validation (not Content-Type header) |
+| Vulnerability              | Risk                                                  | Prevention                                       |
+| -------------------------- | ----------------------------------------------------- | ------------------------------------------------ |
+| **MIME Type Spoofing**     | Arbitrary code execution via malicious file uploads   | Magic byte validation (not Content-Type header)  |
 | **Cross-Tenant Data Leak** | One tenant accessing another's files via guessed URLs | Private buckets + signed URLs + tenantId in path |
-| **Orphaned Files** | Storage quota exhaustion from unreferenced files | Automatic cleanup on entity deletion |
+| **Orphaned Files**         | Storage quota exhaustion from unreferenced files      | Automatic cleanup on entity deletion             |
 
 ---
 
@@ -41,6 +41,7 @@ if (file.mimetype !== 'image/jpeg') {
 ### Prevention Rules
 
 **Rule 1: Never Trust Content-Type Header Alone**
+
 ```typescript
 ❌ WRONG - Only checks header
 if (ALLOWED_TYPES.includes(file.mimetype)) {
@@ -55,29 +56,36 @@ if (!ALLOWED_TYPES.includes(detected.mime)) {
 ```
 
 **Rule 2: Validate Against Detected Type**
+
 ```typescript
 // Double-check: declared type must match detected type
 const normalizedDeclared = file.mimetype === 'image/jpg' ? 'image/jpeg' : file.mimetype;
 const normalizedDetected = detected.mime === 'image/jpg' ? 'image/jpeg' : detected.mime;
 
 if (normalizedDetected !== normalizedDeclared) {
-  logger.warn({ declared: file.mimetype, detected: detected.mime },
-    'SECURITY: MIME type mismatch detected - possible spoofing');
+  logger.warn(
+    { declared: file.mimetype, detected: detected.mime },
+    'SECURITY: MIME type mismatch detected - possible spoofing'
+  );
   throw new Error('File validation failed');
 }
 ```
 
 **Rule 3: Special Handling for Formats Without Magic Bytes**
+
 ```typescript
 // SVG is plain XML text, no standard magic bytes
 if (file.mimetype === 'image/svg+xml') {
   const content = file.buffer.toString('utf8', 0, 500).trim();
-  const isSvg = content.startsWith('<?xml') ||
-                content.startsWith('<svg') ||
-                content.toLowerCase().includes('<svg');
+  const isSvg =
+    content.startsWith('<?xml') ||
+    content.startsWith('<svg') ||
+    content.toLowerCase().includes('<svg');
   if (!isSvg) {
-    logger.warn({ filename: file.originalname },
-      'SECURITY: File claimed to be SVG but does not contain valid SVG content');
+    logger.warn(
+      { filename: file.originalname },
+      'SECURITY: File claimed to be SVG but does not contain valid SVG content'
+    );
     throw new Error('File validation failed');
   }
   return; // SVG is valid
@@ -94,9 +102,9 @@ describe('MIME Type Spoofing Prevention', () => {
       buffer: Buffer.from('<?php system($_GET["cmd"]); ?>'),
     });
 
-    await expect(
-      uploadService.uploadLogo(phpFile, 'tenant_123')
-    ).rejects.toThrow('Unable to verify file type');
+    await expect(uploadService.uploadLogo(phpFile, 'tenant_123')).rejects.toThrow(
+      'Unable to verify file type'
+    );
   });
 
   it('should reject PNG claiming to be JPEG', async () => {
@@ -105,9 +113,9 @@ describe('MIME Type Spoofing Prevention', () => {
       buffer: PNG_MAGIC, // Real PNG header
     });
 
-    await expect(
-      uploadService.uploadLogo(mismatchedFile, 'tenant_123')
-    ).rejects.toThrow('File validation failed');
+    await expect(uploadService.uploadLogo(mismatchedFile, 'tenant_123')).rejects.toThrow(
+      'File validation failed'
+    );
   });
 
   it('should reject SVG claiming to contain images but with PHP content', async () => {
@@ -116,9 +124,9 @@ describe('MIME Type Spoofing Prevention', () => {
       buffer: Buffer.from('<?php phpinfo(); ?>'),
     });
 
-    await expect(
-      uploadService.uploadLogo(maliciousSvg, 'tenant_123')
-    ).rejects.toThrow('File validation failed');
+    await expect(uploadService.uploadLogo(maliciousSvg, 'tenant_123')).rejects.toThrow(
+      'File validation failed'
+    );
   });
 
   it('should accept valid JPEG with correct magic bytes', async () => {
@@ -163,6 +171,7 @@ const url = `https://xxx.supabase.co/storage/v1/object/public/images/logos/logo-
 ### Prevention Rules
 
 **Rule 1: Use Private Bucket**
+
 ```typescript
 // Supabase bucket configuration
 ✅ CORRECT
@@ -178,6 +187,7 @@ const url = `https://xxx.supabase.co/storage/v1/object/public/images/logos/logo-
 ```
 
 **Rule 2: Include TenantId in Storage Path**
+
 ```typescript
 ❌ WRONG - No tenant isolation
 const storagePath = `logos/${filename}`;
@@ -192,6 +202,7 @@ const storagePath = `${tenantId}/logos/${filename}`;
 ```
 
 **Rule 3: Generate Signed URLs for Private Bucket**
+
 ```typescript
 // When serving files, generate signed URL with expiry
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
@@ -207,6 +218,7 @@ return signedUrlData.signedUrl; // URL with token, expires in 1 year
 ```
 
 **Rule 4: Verify Tenant Ownership Before Deletion**
+
 ```typescript
 async deleteSegmentImage(url: string, tenantId: string): Promise<void> {
   if (!url) return;
@@ -231,7 +243,8 @@ async deleteSegmentImage(url: string, tenantId: string): Promise<void> {
 describe('Cross-Tenant Isolation', () => {
   it('should block deletion of files from other tenants', async () => {
     // File belongs to tenant-abc
-    const url = 'https://xxx.supabase.co/storage/v1/object/sign/images/tenant-abc/segments/photo.jpg?token=...';
+    const url =
+      'https://xxx.supabase.co/storage/v1/object/sign/images/tenant-abc/segments/photo.jpg?token=...';
 
     // Tenant-xyz tries to delete it
     await uploadService.deleteSegmentImage(url, 'tenant-xyz');
@@ -241,25 +254,26 @@ describe('Cross-Tenant Isolation', () => {
   });
 
   it('should allow deletion of files from same tenant', async () => {
-    const url = 'https://xxx.supabase.co/storage/v1/object/sign/images/tenant-abc/segments/photo.jpg?token=...';
+    const url =
+      'https://xxx.supabase.co/storage/v1/object/sign/images/tenant-abc/segments/photo.jpg?token=...';
 
     await uploadService.deleteSegmentImage(url, 'tenant-abc');
 
     // Should call Supabase delete
-    expect(supabaseDeleteMock).toHaveBeenCalledWith([
-      expect.stringMatching(/^tenant-abc\//)
-    ]);
+    expect(supabaseDeleteMock).toHaveBeenCalledWith([expect.stringMatching(/^tenant-abc\//)]);
   });
 
   it('should parse signed URLs correctly', async () => {
-    const signedUrl = 'https://xxx.supabase.co/storage/v1/object/sign/images/tenant-abc/segments/photo.jpg?token=abc123&expires=1234567890';
+    const signedUrl =
+      'https://xxx.supabase.co/storage/v1/object/sign/images/tenant-abc/segments/photo.jpg?token=abc123&expires=1234567890';
 
     const path = uploadService.extractStoragePathFromUrl(signedUrl);
     expect(path).toBe('tenant-abc/segments/photo.jpg');
   });
 
   it('should parse public URLs correctly', async () => {
-    const publicUrl = 'https://xxx.supabase.co/storage/v1/object/public/images/tenant-abc/segments/photo.jpg';
+    const publicUrl =
+      'https://xxx.supabase.co/storage/v1/object/public/images/tenant-abc/segments/photo.jpg';
 
     const path = uploadService.extractStoragePathFromUrl(publicUrl);
     expect(path).toBe('tenant-abc/segments/photo.jpg');
@@ -297,6 +311,7 @@ await db.package.delete({ where: { id: packageId } });
 ### Prevention Rules
 
 **Rule 1: Cleanup Before Entity Deletion**
+
 ```typescript
 ✅ CORRECT - Delete file first, then entity
 async deletePackage(tenantId: string, packageId: string): Promise<void> {
@@ -318,6 +333,7 @@ async deletePackage(tenantId: string, packageId: string): Promise<void> {
 ```
 
 **Rule 2: Handle Cleanup Failures Gracefully**
+
 ```typescript
 // Cleanup failures should NOT block entity deletion
 async deleteSegmentImage(url: string, tenantId: string): Promise<void> {
@@ -335,6 +351,7 @@ async deleteSegmentImage(url: string, tenantId: string): Promise<void> {
 ```
 
 **Rule 3: Lazy Cleanup for Discovered Orphans**
+
 ```typescript
 // Periodic job to find and delete orphaned files
 async cleanupOrphanedFiles(tenantId: string): Promise<number> {
@@ -383,7 +400,7 @@ describe('Orphaned File Cleanup', () => {
     // Update package with photo
     await db.package.update({
       where: { id: pkg.id },
-      data: { photoUrl: uploadResult.url, photoFilename: uploadResult.filename }
+      data: { photoUrl: uploadResult.url, photoFilename: uploadResult.filename },
     });
 
     // Delete package
@@ -400,14 +417,10 @@ describe('Orphaned File Cleanup', () => {
     const pkg = await createTestPackage(tenantId);
 
     // Mock cleanup failure
-    uploadService.deletePackagePhotoMock.mockRejectedValueOnce(
-      new Error('Supabase unavailable')
-    );
+    uploadService.deletePackagePhotoMock.mockRejectedValueOnce(new Error('Supabase unavailable'));
 
     // Package deletion should succeed
-    await expect(
-      packageService.deletePackage(tenantId, pkg.id)
-    ).resolves.toBeUndefined();
+    await expect(packageService.deletePackage(tenantId, pkg.id)).resolves.toBeUndefined();
 
     // Package should be deleted despite cleanup failure
     const deleted = await db.package.findUnique({ where: { id: pkg.id } });
@@ -418,11 +431,7 @@ describe('Orphaned File Cleanup', () => {
     const { tenantId } = await createTestTenant();
 
     // Simulate orphaned file in storage
-    await uploadService.uploadPackagePhoto(
-      createMockFile(),
-      'package_orphaned',
-      tenantId
-    );
+    await uploadService.uploadPackagePhoto(createMockFile(), 'package_orphaned', tenantId);
 
     // Don't create corresponding package (orphaned)
 
@@ -450,6 +459,7 @@ describe('Orphaned File Cleanup', () => {
 ## Code Review Checklist
 
 ### File Validation Section
+
 - [ ] Does validation check file content (magic bytes), not just Content-Type?
 - [ ] Are all allowed MIME types documented?
 - [ ] Is there special handling for SVG (text-based format)?
@@ -457,6 +467,7 @@ describe('Orphaned File Cleanup', () => {
 - [ ] Are rejected files NOT written to disk/storage?
 
 ### Multi-Tenant Section
+
 - [ ] Does storage path include `${tenantId}` prefix?
 - [ ] Is Supabase bucket private (not public)?
 - [ ] Are signed URLs generated for file access?
@@ -464,6 +475,7 @@ describe('Orphaned File Cleanup', () => {
 - [ ] Are cross-tenant access attempts logged?
 
 ### Cleanup Section
+
 - [ ] Does entity deletion trigger file cleanup?
 - [ ] Is cleanup wrapped in try-catch?
 - [ ] Is cleanup failure logged without throwing?
@@ -471,12 +483,14 @@ describe('Orphaned File Cleanup', () => {
 - [ ] Are cleanup operations scoped by tenant?
 
 ### Error Handling Section
+
 - [ ] Do errors avoid leaking file paths?
 - [ ] Are validation errors specific enough for users?
 - [ ] Are SECURITY events always logged?
 - [ ] Is tenant context included in logs?
 
 ### Testing Section
+
 - [ ] Are MIME spoofing tests present?
 - [ ] Are cross-tenant deletion tests present?
 - [ ] Are cleanup tests present?
@@ -487,16 +501,16 @@ describe('Orphaned File Cleanup', () => {
 
 ## Red Flags (Things That Should Never Happen)
 
-| Red Flag | Reason | Fix |
-|----------|--------|-----|
-| File accepted with only `file.mimetype` check | MIME header can be spoofed | Add magic byte validation |
-| Storage path like `logos/${filename}` | Cross-tenant file access possible | Change to `${tenantId}/logos/${filename}` |
-| Public Supabase bucket | Anyone can guess file paths | Make bucket private |
-| Delete without ownership check | Cross-tenant deletion possible | Verify `storagePath.startsWith(tenantId)` |
-| No cleanup on entity deletion | Storage quota exhaustion | Add cleanup before delete |
-| Cleanup failure blocks deletion | Data stuck in database | Wrap cleanup in try-catch |
-| Error message shows file path | Information disclosure | Use generic error message |
-| SVG files uploaded without validation | XSS via SVG scripts | Validate SVG is actual SVG content |
+| Red Flag                                      | Reason                            | Fix                                       |
+| --------------------------------------------- | --------------------------------- | ----------------------------------------- |
+| File accepted with only `file.mimetype` check | MIME header can be spoofed        | Add magic byte validation                 |
+| Storage path like `logos/${filename}`         | Cross-tenant file access possible | Change to `${tenantId}/logos/${filename}` |
+| Public Supabase bucket                        | Anyone can guess file paths       | Make bucket private                       |
+| Delete without ownership check                | Cross-tenant deletion possible    | Verify `storagePath.startsWith(tenantId)` |
+| No cleanup on entity deletion                 | Storage quota exhaustion          | Add cleanup before delete                 |
+| Cleanup failure blocks deletion               | Data stuck in database            | Wrap cleanup in try-catch                 |
+| Error message shows file path                 | Information disclosure            | Use generic error message                 |
+| SVG files uploaded without validation         | XSS via SVG scripts               | Validate SVG is actual SVG content        |
 
 ---
 
@@ -519,6 +533,7 @@ curl -X POST http://localhost:3001/v1/packages/upload-photo \
 ```
 
 **Test Expectation:**
+
 - File rejected during validation
 - Not written to disk/storage
 - Error logged with SECURITY tag
@@ -544,6 +559,7 @@ curl -X DELETE http://localhost:3001/v1/tenant-admin/delete-file \
 ```
 
 **Test Expectation:**
+
 - Deletion blocked
 - No Supabase deletion request
 - Error logged with SECURITY tag
@@ -563,6 +579,7 @@ await packageService.deletePackage('tenant_a', 'pkg_123');
 ```
 
 **Test Expectation:**
+
 - File deleted from storage
 - No orphaned files remain
 
@@ -571,6 +588,7 @@ await packageService.deletePackage('tenant_a', 'pkg_123');
 ## Environment Configuration
 
 ### Development (Mock Mode)
+
 ```bash
 ADAPTERS_PRESET=mock
 # Files saved to: ./uploads/{logos,packages,segments}/
@@ -579,6 +597,7 @@ ADAPTERS_PRESET=mock
 ```
 
 ### Testing with Real Storage
+
 ```bash
 ADAPTERS_PRESET=real
 STORAGE_MODE=supabase
@@ -588,6 +607,7 @@ SUPABASE_SERVICE_KEY=eyJhbG...
 ```
 
 ### Production
+
 ```bash
 ADAPTERS_PRESET=real
 STORAGE_MODE=supabase
@@ -681,6 +701,7 @@ AND timestamp > now() - interval '24 hours';
 ## Common Implementation Mistakes
 
 ### Mistake 1: Singleton Upload Service
+
 ```typescript
 ❌ WRONG
 import { uploadService } from './services';
@@ -704,6 +725,7 @@ class PackageService {
 ```
 
 ### Mistake 2: No Tenant Scoping in Path
+
 ```typescript
 ❌ WRONG
 const path = `logos/${filename}`;
@@ -713,6 +735,7 @@ const path = `${tenantId}/logos/${filename}`;
 ```
 
 ### Mistake 3: Not Handling SVG Specially
+
 ```typescript
 ❌ WRONG
 // Magic byte detection fails for SVG (text format)
@@ -729,6 +752,7 @@ if (file.mimetype === 'image/svg+xml') {
 ```
 
 ### Mistake 4: Cleanup Blocks Deletion
+
 ```typescript
 ❌ WRONG
 async deletePackage() {

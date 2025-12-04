@@ -1,15 +1,19 @@
 # Login Request Fix - Debugging Report
 
 ## Problem Summary
+
 Browser login requests were failing with **400 Bad Request**, while curl requests with identical payloads returned **200 OK**. This indicated a frontend/routing issue rather than a backend authentication problem.
 
 ## Root Cause
+
 **Missing route handler in ts-rest router**
 
 The `tenantLogin` endpoint was defined in the contracts (`/packages/contracts/src/api.v1.ts:119-129`) but the corresponding handler was **missing** in the server router (`/server/src/routes/index.ts`).
 
 ### Evidence
+
 1. **Contract defined**: Lines 119-129 in `/packages/contracts/src/api.v1.ts`
+
    ```typescript
    tenantLogin: {
      method: 'POST',
@@ -28,6 +32,7 @@ The `tenantLogin` endpoint was defined in the contracts (`/packages/contracts/sr
 ## Fix Applied
 
 ### 1. Added `tenantLogin` handler to router
+
 **File**: `/Users/mikeyoung/CODING/Elope/server/src/routes/index.ts`
 **Lines**: 139-156
 
@@ -53,11 +58,15 @@ tenantLogin: async ({ req, body }: { req: any; body: { email: string; password: 
 ```
 
 ### 2. Added rate limiting to tenant login endpoint
+
 **File**: `/Users/mikeyoung/CODING/Elope/server/src/routes/index.ts`
 **Line**: 216
 
 ```typescript
-if ((req.path === '/v1/admin/login' || req.path === '/v1/tenant-auth/login') && req.method === 'POST') {
+if (
+  (req.path === '/v1/admin/login' || req.path === '/v1/tenant-auth/login') &&
+  req.method === 'POST'
+) {
   return loginLimiter(req, res, next);
 }
 ```
@@ -65,6 +74,7 @@ if ((req.path === '/v1/admin/login' || req.path === '/v1/tenant-auth/login') && 
 ## Verification
 
 ### Before Fix
+
 ```bash
 $ curl -X POST http://localhost:3001/v1/tenant-auth/login \
   -H "Content-Type: application/json" \
@@ -74,6 +84,7 @@ $ curl -X POST http://localhost:3001/v1/tenant-auth/login \
 ```
 
 ### After Fix
+
 ```bash
 $ curl -X POST http://localhost:3001/v1/tenant-auth/login \
   -H "Content-Type: application/json" \
@@ -84,6 +95,7 @@ $ curl -X POST http://localhost:3001/v1/tenant-auth/login \
 ```
 
 ### Server Logs (After Fix)
+
 ```
 [01:44:51] INFO: Request started
   requestId: "a71ec871-f982-4e40-b3be-e17401b2a7e9"
@@ -106,15 +118,18 @@ $ curl -X POST http://localhost:3001/v1/tenant-auth/login \
 The frontend code was already correctly implemented:
 
 ### API Client (`/client/src/lib/api.ts`)
+
 - ✅ Correctly configured ts-rest client
 - ✅ Proper Content-Type headers (`application/json`)
 - ✅ Correct JSON serialization (`JSON.stringify(body)`)
 
 ### Auth Context (`/client/src/contexts/AuthContext.tsx`)
+
 - ✅ Calls `api.tenantLogin()` for tenant authentication (line 160)
 - ✅ Properly handles request body: `{ body: { email, password } }`
 
 ### Login Page (`/client/src/pages/Login.tsx`)
+
 - ✅ Correctly calls `login()` with role parameter
 - ✅ Proper error handling and user feedback
 
@@ -127,6 +142,7 @@ The frontend code was already correctly implemented:
 ### Status: ✅ FIXED
 
 The tenant login endpoint now:
+
 1. Correctly routes requests to the handler
 2. Processes request bodies properly
 3. Returns appropriate HTTP status codes (401 for invalid credentials)
@@ -134,6 +150,7 @@ The tenant login endpoint now:
 5. Logs failed login attempts for security monitoring
 
 ### Test Results
+
 - ✅ Admin login: 200 OK
 - ✅ Tenant login endpoint: 401 Unauthorized (expected - no tenant users in mock data)
 - ✅ Rate limiting: Applied to both login endpoints

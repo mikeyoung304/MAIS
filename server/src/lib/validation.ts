@@ -31,9 +31,7 @@ export function validateSlug(slug: string): void {
   const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
   if (!slugRegex.test(slug)) {
-    throw new ValidationError(
-      'Slug must be lowercase alphanumeric with hyphens only'
-    );
+    throw new ValidationError('Slug must be lowercase alphanumeric with hyphens only');
   }
 }
 
@@ -63,15 +61,13 @@ export function validateRequiredFields<T extends Record<string, any>>(
   requiredFields: (keyof T)[],
   entityName: string = 'Entity'
 ): void {
-  const missing = requiredFields.filter(field => {
+  const missing = requiredFields.filter((field) => {
     const value = data[field];
     return value === undefined || value === null || value === '';
   });
 
   if (missing.length > 0) {
-    throw new ValidationError(
-      `${entityName}: Missing required fields: ${missing.join(', ')}`
-    );
+    throw new ValidationError(`${entityName}: Missing required fields: ${missing.join(', ')}`);
   }
 }
 

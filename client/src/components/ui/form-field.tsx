@@ -1,7 +1,7 @@
-import { Label } from "./label";
-import { Input } from "./input";
-import { Textarea } from "./textarea";
-import type { ReactNode } from "react";
+import { Label } from './label';
+import { Input } from './input';
+import { Textarea } from './textarea';
+import type { ReactNode } from 'react';
 
 interface BaseFormFieldProps {
   id: string;
@@ -16,7 +16,7 @@ interface BaseFormFieldProps {
 }
 
 interface InputFormFieldProps extends BaseFormFieldProps {
-  type?: "text" | "email" | "number" | "url" | "password";
+  type?: 'text' | 'email' | 'number' | 'url' | 'password';
   placeholder?: string;
 }
 
@@ -26,8 +26,8 @@ interface TextareaFormFieldProps extends BaseFormFieldProps {
 }
 
 type FormFieldProps =
-  | (InputFormFieldProps & { variant?: "input" })
-  | (TextareaFormFieldProps & { variant: "textarea" });
+  | (InputFormFieldProps & { variant?: 'input' })
+  | (TextareaFormFieldProps & { variant: 'textarea' });
 
 /**
  * Reusable form field component with label, input/textarea, and helper text
@@ -56,8 +56,8 @@ export function FormField(props: FormFieldProps) {
     required = false,
     helperText,
     error,
-    className = "",
-    variant = "input",
+    className = '',
+    variant = 'input',
   } = props;
 
   return (
@@ -67,7 +67,7 @@ export function FormField(props: FormFieldProps) {
         {required && <span className="text-destructive ml-1">*</span>}
       </Label>
 
-      {variant === "textarea" ? (
+      {variant === 'textarea' ? (
         <Textarea
           id={id}
           value={value}
@@ -81,7 +81,7 @@ export function FormField(props: FormFieldProps) {
       ) : (
         <Input
           id={id}
-          type={(props as InputFormFieldProps).type || "text"}
+          type={(props as InputFormFieldProps).type || 'text'}
           value={value}
           onChange={onChange}
           disabled={disabled}
@@ -91,13 +91,9 @@ export function FormField(props: FormFieldProps) {
         />
       )}
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
-      {helperText && !error && (
-        <p className="text-base text-white/70">{helperText}</p>
-      )}
+      {helperText && !error && <p className="text-base text-white/70">{helperText}</p>}
     </div>
   );
 }

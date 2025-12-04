@@ -24,14 +24,14 @@ This plan transforms the MAIS application into **MAIS** - a multi-tenant embedda
 
 ### Phased Rollout (6 Months)
 
-| Phase | Duration | Milestone |
-|-------|----------|-----------|
-| **Phase 1: Foundation** | Weeks 1-4 | Database schema, tenant model, basic API isolation |
-| **Phase 2: Widget Core** | Weeks 5-8 | SDK loader, iframe widget, postMessage communication |
-| **Phase 3: Payments** | Weeks 9-12 | Stripe Connect, variable commission engine |
-| **Phase 4: Admin Tools** | Weeks 13-16 | Tenant provisioning UI, secrets management |
-| **Phase 5: Production** | Weeks 17-20 | Security hardening, testing, first 2 tenants live |
-| **Phase 6: Scale** | Weeks 21-24 | Performance optimization, scale to 10 tenants |
+| Phase                    | Duration    | Milestone                                            |
+| ------------------------ | ----------- | ---------------------------------------------------- |
+| **Phase 1: Foundation**  | Weeks 1-4   | Database schema, tenant model, basic API isolation   |
+| **Phase 2: Widget Core** | Weeks 5-8   | SDK loader, iframe widget, postMessage communication |
+| **Phase 3: Payments**    | Weeks 9-12  | Stripe Connect, variable commission engine           |
+| **Phase 4: Admin Tools** | Weeks 13-16 | Tenant provisioning UI, secrets management           |
+| **Phase 5: Production**  | Weeks 17-20 | Security hardening, testing, first 2 tenants live    |
+| **Phase 6: Scale**       | Weeks 21-24 | Performance optimization, scale to 10 tenants        |
 
 ---
 
@@ -320,7 +320,7 @@ export class EncryptionService {
     if (!masterKey || masterKey.length !== 64) {
       throw new Error(
         'TENANT_SECRETS_ENCRYPTION_KEY must be 64-character hex string. ' +
-        'Generate with: openssl rand -hex 32'
+          'Generate with: openssl rand -hex 32'
       );
     }
     this.key = Buffer.from(masterKey, 'hex');
@@ -476,10 +476,7 @@ export class ApiKeyService {
    */
   verifySecretKey(secretKey: string, hash: string): boolean {
     const inputHash = this.hashSecretKey(secretKey);
-    return crypto.timingSafeEqual(
-      Buffer.from(inputHash, 'hex'),
-      Buffer.from(hash, 'hex')
-    );
+    return crypto.timingSafeEqual(Buffer.from(inputHash, 'hex'), Buffer.from(hash, 'hex'));
   }
 }
 
@@ -535,7 +532,7 @@ export async function resolveTenant(
   if (!apiKey) {
     res.status(401).json({
       error: 'Missing X-Tenant-Key header',
-      code: 'TENANT_KEY_REQUIRED'
+      code: 'TENANT_KEY_REQUIRED',
     });
     return;
   }
@@ -544,7 +541,7 @@ export async function resolveTenant(
   if (!apiKeyService.isValidFormat(apiKey)) {
     res.status(401).json({
       error: 'Invalid API key format',
-      code: 'INVALID_TENANT_KEY'
+      code: 'INVALID_TENANT_KEY',
     });
     return;
   }
@@ -568,7 +565,7 @@ export async function resolveTenant(
     if (!tenant) {
       res.status(401).json({
         error: 'Invalid API key',
-        code: 'TENANT_NOT_FOUND'
+        code: 'TENANT_NOT_FOUND',
       });
       return;
     }
@@ -577,7 +574,7 @@ export async function resolveTenant(
     if (!tenant.isActive) {
       res.status(403).json({
         error: 'Tenant account is inactive',
-        code: 'TENANT_INACTIVE'
+        code: 'TENANT_INACTIVE',
       });
       return;
     }
@@ -598,7 +595,7 @@ export async function resolveTenant(
     console.error('[Tenant Middleware] Error:', error);
     res.status(500).json({
       error: 'Failed to resolve tenant',
-      code: 'TENANT_RESOLUTION_ERROR'
+      code: 'TENANT_RESOLUTION_ERROR',
     });
   }
 }
@@ -607,15 +604,11 @@ export async function resolveTenant(
  * Middleware: Require tenant context (use after resolveTenant)
  * Returns 401 if tenant not resolved
  */
-export function requireTenant(
-  req: TenantRequest,
-  res: Response,
-  next: NextFunction
-): void {
+export function requireTenant(req: TenantRequest, res: Response, next: NextFunction): void {
   if (!req.tenant || !req.tenantId) {
     res.status(401).json({
       error: 'Tenant context required',
-      code: 'TENANT_REQUIRED'
+      code: 'TENANT_REQUIRED',
     });
     return;
   }
@@ -676,10 +669,7 @@ export class CatalogService {
    *
    * TENANT ISOLATION: Composite query (tenantId + slug)
    */
-  async getPackageBySlug(
-    tenantId: string,
-    slug: string
-  ): Promise<PackageDTO | null> {
+  async getPackageBySlug(tenantId: string, slug: string): Promise<PackageDTO | null> {
     const cacheKey = `package:${tenantId}:${slug}`;
     const cached = cache.get<PackageDTO>(cacheKey);
     if (cached) return cached;
@@ -713,17 +703,14 @@ export class CatalogService {
    *
    * TENANT ISOLATION: Query filtered by tenantId AND packageId
    */
-  async getAddOnsForPackage(
-    tenantId: string,
-    packageId: string
-  ): Promise<AddOnDTO[]> {
+  async getAddOnsForPackage(tenantId: string, packageId: string): Promise<AddOnDTO[]> {
     const cacheKey = `addons:${tenantId}:${packageId}`;
     const cached = cache.get<AddOnDTO[]>(cacheKey);
     if (cached) return cached;
 
     const addOns = await prisma.addOn.findMany({
       where: {
-        tenantId,     // CRITICAL: Tenant isolation
+        tenantId, // CRITICAL: Tenant isolation
         packageId,
         isActive: true,
       },
@@ -746,7 +733,7 @@ export class CatalogService {
    */
   invalidateTenantCache(tenantId: string): void {
     const keys = cache.keys();
-    keys.forEach(key => {
+    keys.forEach((key) => {
       if (key.includes(tenantId)) {
         cache.del(key);
       }
@@ -840,10 +827,7 @@ router.get('/packages/:slug', async (req: TenantRequest, res) => {
 router.get('/packages/:packageId/addons', async (req: TenantRequest, res) => {
   try {
     const { packageId } = req.params;
-    const addOns = await catalogService.getAddOnsForPackage(
-      req.tenantId!,
-      packageId
-    );
+    const addOns = await catalogService.getAddOnsForPackage(req.tenantId!, packageId);
 
     res.json({ addOns });
   } catch (error) {
@@ -877,42 +861,44 @@ const app = express();
  * 3. Tenant websites (validated against database)
  * 4. Localhost (development only)
  */
-app.use(cors({
-  origin: async (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) {
-      return callback(null, true);
-    }
+app.use(
+  cors({
+    origin: async (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) {
+        return callback(null, true);
+      }
 
-    // Always allow admin dashboard and widget CDN
-    const alwaysAllowed = [
-      'https://mais.com',
-      'https://www.mais.com',
-      'https://admin.mais.com',
-      'https://widget.mais.com',
-    ];
+      // Always allow admin dashboard and widget CDN
+      const alwaysAllowed = [
+        'https://mais.com',
+        'https://www.mais.com',
+        'https://admin.mais.com',
+        'https://widget.mais.com',
+      ];
 
-    if (process.env.NODE_ENV === 'development') {
-      alwaysAllowed.push('http://localhost:3000', 'http://localhost:5173');
-    }
+      if (process.env.NODE_ENV === 'development') {
+        alwaysAllowed.push('http://localhost:3000', 'http://localhost:5173');
+      }
 
-    if (alwaysAllowed.includes(origin)) {
-      return callback(null, true);
-    }
+      if (alwaysAllowed.includes(origin)) {
+        return callback(null, true);
+      }
 
-    // Check if origin is a registered tenant domain
-    // TODO: Add 'allowedDomains' field to Tenant model (Phase 4)
-    // For now, allow all HTTPS origins in production
-    if (origin.startsWith('https://')) {
-      return callback(null, true);
-    }
+      // Check if origin is a registered tenant domain
+      // TODO: Add 'allowedDomains' field to Tenant model (Phase 4)
+      // For now, allow all HTTPS origins in production
+      if (origin.startsWith('https://')) {
+        return callback(null, true);
+      }
 
-    // Reject origin
-    callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-  exposedHeaders: ['X-Tenant-Key'],
-}));
+      // Reject origin
+      callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+    exposedHeaders: ['X-Tenant-Key'],
+  })
+);
 
 // Parse JSON bodies
 app.use(express.json());
@@ -996,18 +982,13 @@ export class CommissionService {
     const commissionPercent = Number(tenant.commissionPercent);
 
     // Calculate commission (always round UP)
-    const commissionCents = Math.ceil(
-      bookingTotal * (commissionPercent / 100)
-    );
+    const commissionCents = Math.ceil(bookingTotal * (commissionPercent / 100));
 
     // Validate Stripe Connect limits (0.5% - 50%)
     const minCommission = Math.ceil(bookingTotal * 0.005); // 0.5%
-    const maxCommission = Math.floor(bookingTotal * 0.50);  // 50%
+    const maxCommission = Math.floor(bookingTotal * 0.5); // 50%
 
-    const finalCommission = Math.max(
-      minCommission,
-      Math.min(maxCommission, commissionCents)
-    );
+    const finalCommission = Math.max(minCommission, Math.min(maxCommission, commissionCents));
 
     return {
       amount: finalCommission,
@@ -1042,8 +1023,8 @@ export class CommissionService {
 
       // Validate all add-ons found
       if (addOns.length !== addOnIds.length) {
-        const foundIds = addOns.map(a => a.id);
-        const missingIds = addOnIds.filter(id => !foundIds.includes(id));
+        const foundIds = addOns.map((a) => a.id);
+        const missingIds = addOnIds.filter((id) => !foundIds.includes(id));
         throw new Error(`Invalid add-ons: ${missingIds.join(', ')}`);
       }
 
@@ -1083,12 +1064,12 @@ export class CommissionService {
 }
 
 export interface BookingCalculation {
-  packagePrice: number;      // In cents
-  addOnsTotal: number;        // In cents
-  subtotal: number;           // In cents
-  commissionAmount: number;   // In cents (platform fee)
-  commissionPercent: number;  // As decimal (e.g., 12.0)
-  tenantReceives: number;     // In cents (after commission)
+  packagePrice: number; // In cents
+  addOnsTotal: number; // In cents
+  subtotal: number; // In cents
+  commissionAmount: number; // In cents (platform fee)
+  commissionPercent: number; // As decimal (e.g., 12.0)
+  tenantReceives: number; // In cents (after commission)
 }
 
 export const commissionService = new CommissionService();
@@ -1112,10 +1093,7 @@ export class BookingService {
    * CRITICAL: Uses SERIALIZABLE transaction + FOR UPDATE NOWAIT
    * to prevent double-booking race conditions
    */
-  async createBooking(
-    tenantId: string,
-    data: CreateBookingDTO
-  ): Promise<BookingDTO> {
+  async createBooking(tenantId: string, data: CreateBookingDTO): Promise<BookingDTO> {
     return await prisma.$transaction(
       async (tx) => {
         // Step 1: Validate package exists and is active
@@ -1249,7 +1227,7 @@ export const bookingService = new BookingService();
  * 4. Applies tenant branding
  */
 
-(function() {
+(function () {
   'use strict';
 
   // Get current script tag for configuration
@@ -1429,7 +1407,7 @@ export const bookingService = new BookingService();
 
     emit(event, data) {
       const handlers = this.messageHandlers[event] || [];
-      handlers.forEach(handler => handler(data));
+      handlers.forEach((handler) => handler(data));
     }
 
     /**
@@ -1471,7 +1449,6 @@ export const bookingService = new BookingService();
 
   // Expose global API
   window.MAISWidget = widget;
-
 })();
 ```
 
@@ -1724,9 +1701,10 @@ export class WidgetMessenger {
     if (!window.parent) return;
 
     // ✅ SECURE: Explicit target origin (never '*' in production)
-    const targetOrigin = this.parentOrigin === '*'
-      ? '*'  // Only for development
-      : this.parentOrigin;
+    const targetOrigin =
+      this.parentOrigin === '*'
+        ? '*' // Only for development
+        : this.parentOrigin;
 
     window.parent.postMessage(
       {
@@ -1802,11 +1780,11 @@ export class WidgetMessenger {
  * Sent to widget for dynamic theming
  */
 export interface TenantBrandingDTO {
-  primaryColor: string;      // Hex color (e.g., '#7C3AED')
+  primaryColor: string; // Hex color (e.g., '#7C3AED')
   secondaryColor?: string;
-  logo?: string;             // URL to logo image
-  fontFamily?: string;       // CSS font-family
-  customCss?: string;        // Advanced: Custom CSS overrides
+  logo?: string; // URL to logo image
+  fontFamily?: string; // CSS font-family
+  customCss?: string; // Advanced: Custom CSS overrides
 }
 ```
 
@@ -1858,112 +1836,115 @@ app.use('/api/v1/tenant', tenantRoutes);
 ```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MAIS Widget Test Page</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 40px 20px;
-      background: #f9fafb;
-    }
-    h1 {
-      color: #111827;
-      margin-bottom: 8px;
-    }
-    p {
-      color: #6b7280;
-      margin-bottom: 32px;
-    }
-    .widget-container {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      overflow: hidden;
-    }
-    .console {
-      margin-top: 32px;
-      padding: 16px;
-      background: #1f2937;
-      color: #10b981;
-      font-family: 'Courier New', monospace;
-      font-size: 14px;
-      border-radius: 8px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    .console-entry {
-      margin: 4px 0;
-    }
-  </style>
-</head>
-<body>
-  <h1>MAIS Widget Integration Test</h1>
-  <p>Testing embeddable widget for tenant: <strong>Bella Weddings</strong></p>
-
-  <!-- Widget Container -->
-  <div class="widget-container">
-    <div id="mais-widget"></div>
-  </div>
-
-  <!-- Console Log -->
-  <div class="console" id="console">
-    <div class="console-entry">[Test Page] Loading MAIS SDK...</div>
-  </div>
-
-  <!-- MAIS SDK -->
-  <script
-    src="http://localhost:5173/sdk/mais-sdk.js"
-    data-tenant="bellaweddings"
-    data-api-key="pk_live_bellaweddings_test123456">
-  </script>
-
-  <!-- Event Listeners -->
-  <script>
-    const consoleEl = document.getElementById('console');
-
-    function log(message, data) {
-      const entry = document.createElement('div');
-      entry.className = 'console-entry';
-      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-      if (data) {
-        entry.textContent += ': ' + JSON.stringify(data);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MAIS Widget Test Page</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        background: #f9fafb;
       }
-      consoleEl.appendChild(entry);
-      consoleEl.scrollTop = consoleEl.scrollHeight;
-    }
-
-    // Wait for widget to load
-    setTimeout(() => {
-      if (window.MAISWidget) {
-        log('Widget API available');
-
-        // Listen for events
-        window.MAISWidget.on('ready', () => {
-          log('✓ Widget loaded successfully');
-        });
-
-        window.MAISWidget.on('bookingCreated', (data) => {
-          log('✓ Booking created', { bookingId: data.bookingId });
-        });
-
-        window.MAISWidget.on('bookingCompleted', (data) => {
-          log('✓ Booking completed', { bookingId: data.bookingId });
-          alert('Booking completed! ID: ' + data.bookingId);
-        });
-
-        window.MAISWidget.on('error', (data) => {
-          log('✗ Error', { error: data.error, code: data.code });
-        });
-      } else {
-        log('✗ Widget API not available');
+      h1 {
+        color: #111827;
+        margin-bottom: 8px;
       }
-    }, 1000);
-  </script>
-</body>
+      p {
+        color: #6b7280;
+        margin-bottom: 32px;
+      }
+      .widget-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+      .console {
+        margin-top: 32px;
+        padding: 16px;
+        background: #1f2937;
+        color: #10b981;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        border-radius: 8px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .console-entry {
+        margin: 4px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>MAIS Widget Integration Test</h1>
+    <p>Testing embeddable widget for tenant: <strong>Bella Weddings</strong></p>
+
+    <!-- Widget Container -->
+    <div class="widget-container">
+      <div id="mais-widget"></div>
+    </div>
+
+    <!-- Console Log -->
+    <div class="console" id="console">
+      <div class="console-entry">[Test Page] Loading MAIS SDK...</div>
+    </div>
+
+    <!-- MAIS SDK -->
+    <script
+      src="http://localhost:5173/sdk/mais-sdk.js"
+      data-tenant="bellaweddings"
+      data-api-key="pk_live_bellaweddings_test123456"
+    ></script>
+
+    <!-- Event Listeners -->
+    <script>
+      const consoleEl = document.getElementById('console');
+
+      function log(message, data) {
+        const entry = document.createElement('div');
+        entry.className = 'console-entry';
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        if (data) {
+          entry.textContent += ': ' + JSON.stringify(data);
+        }
+        consoleEl.appendChild(entry);
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+      }
+
+      // Wait for widget to load
+      setTimeout(() => {
+        if (window.MAISWidget) {
+          log('Widget API available');
+
+          // Listen for events
+          window.MAISWidget.on('ready', () => {
+            log('✓ Widget loaded successfully');
+          });
+
+          window.MAISWidget.on('bookingCreated', (data) => {
+            log('✓ Booking created', { bookingId: data.bookingId });
+          });
+
+          window.MAISWidget.on('bookingCompleted', (data) => {
+            log('✓ Booking completed', { bookingId: data.bookingId });
+            alert('Booking completed! ID: ' + data.bookingId);
+          });
+
+          window.MAISWidget.on('error', (data) => {
+            log('✗ Error', { error: data.error, code: data.code });
+          });
+        } else {
+          log('✗ Widget API not available');
+        }
+      }, 1000);
+    </script>
+  </body>
 </html>
 ```
 
@@ -2117,10 +2098,7 @@ export class StripeConnectService {
    * SECURITY: Restricted keys are stored encrypted in database
    * Used for creating payment intents on tenant's behalf
    */
-  async storeRestrictedKey(
-    tenantId: string,
-    restrictedKey: string
-  ): Promise<void> {
+  async storeRestrictedKey(tenantId: string, restrictedKey: string): Promise<void> {
     const encrypted = encryptionService.encryptStripeSecret(restrictedKey);
 
     await prisma.tenant.update({
@@ -2276,10 +2254,7 @@ export class BookingService {
    * Refund booking
    * Automatically reverses application fee
    */
-  async refundBooking(
-    bookingId: string,
-    reason: string = 'requested_by_customer'
-  ): Promise<void> {
+  async refundBooking(bookingId: string, reason: string = 'requested_by_customer'): Promise<void> {
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       select: {
@@ -2475,11 +2450,7 @@ async function main() {
   console.log('  API Key:', tenant.apiKeyPublic);
 
   // Create Stripe Connect account
-  const stripeAccountId = await stripeConnectService.createConnectedAccount(
-    tenant.id,
-    email,
-    name
-  );
+  const stripeAccountId = await stripeConnectService.createConnectedAccount(tenant.id, email, name);
 
   console.log('✓ Created Stripe account:', stripeAccountId);
 
@@ -2533,11 +2504,7 @@ export interface AdminRequest extends Request {
  * SECURITY: Admin JWT includes 'role: admin' claim
  * Only platform administrators can access these routes
  */
-export function requireAdmin(
-  req: AdminRequest,
-  res: Response,
-  next: NextFunction
-): void {
+export function requireAdmin(req: AdminRequest, res: Response, next: NextFunction): void {
   const token = req.headers.authorization?.replace('Bearer ', '');
 
   if (!token) {
@@ -2755,7 +2722,8 @@ router.get('/:id/stats', async (req: AdminRequest, res) => {
         revenue: {
           totalBookings: revenueStats._sum.totalPrice || 0,
           platformCommission: revenueStats._sum.commissionAmount || 0,
-          tenantReceived: (revenueStats._sum.totalPrice || 0) - (revenueStats._sum.commissionAmount || 0),
+          tenantReceived:
+            (revenueStats._sum.totalPrice || 0) - (revenueStats._sum.commissionAmount || 0),
         },
       },
     });
@@ -2929,7 +2897,7 @@ export function TenantList() {
 
 ### Weeks 15-16: Admin Tools (Commission Editor, Branding Manager)
 
-*(Content truncated for space - full implementation follows same patterns)*
+_(Content truncated for space - full implementation follows same patterns)_
 
 ---
 
@@ -2989,10 +2957,11 @@ For each new tenant:
 4. **Widget integration**
    - Provide tenant with SDK snippet:
      ```html
-     <script src="https://widget.mais.com/sdk/mais-sdk.js"
-             data-tenant="TENANT_SLUG"
-             data-api-key="pk_live_TENANT_xxx">
-     </script>
+     <script
+       src="https://widget.mais.com/sdk/mais-sdk.js"
+       data-tenant="TENANT_SLUG"
+       data-api-key="pk_live_TENANT_xxx"
+     ></script>
      <div id="mais-widget"></div>
      ```
    - Test on tenant's staging site
@@ -3110,12 +3079,14 @@ services:
 ## Success Metrics
 
 ### Phase 1-3 (Weeks 1-12)
+
 - [ ] Database migrated with tenant isolation
 - [ ] 2 test tenants created with Stripe Connect
 - [ ] Widget SDK functional on test pages
 - [ ] Commission calculation tested (10 bookings)
 
 ### Phase 4-6 (Weeks 13-24)
+
 - [ ] Admin dashboard deployed
 - [ ] 10 tenants onboarded and live
 - [ ] 100+ bookings processed
@@ -3127,14 +3098,14 @@ services:
 
 ## Risk Mitigation
 
-| Risk | Mitigation |
-|------|------------|
-| **Stripe Connect onboarding friction** | Provide step-by-step guide, support email |
-| **Widget incompatibility with tenant sites** | Extensive browser testing, CSP documentation |
-| **Commission calculation errors** | Comprehensive unit tests, manual review first 20 bookings |
-| **Cross-tenant data leak** | Automated tests for tenant isolation, code review |
-| **Payment processing failures** | Stripe webhook retry logic, monitoring alerts |
-| **Performance degradation at scale** | Database indexes, caching, load testing at 50 tenants |
+| Risk                                         | Mitigation                                                |
+| -------------------------------------------- | --------------------------------------------------------- |
+| **Stripe Connect onboarding friction**       | Provide step-by-step guide, support email                 |
+| **Widget incompatibility with tenant sites** | Extensive browser testing, CSP documentation              |
+| **Commission calculation errors**            | Comprehensive unit tests, manual review first 20 bookings |
+| **Cross-tenant data leak**                   | Automated tests for tenant isolation, code review         |
+| **Payment processing failures**              | Stripe webhook retry logic, monitoring alerts             |
+| **Performance degradation at scale**         | Database indexes, caching, load testing at 50 tenants     |
 
 ---
 

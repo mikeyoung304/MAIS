@@ -5,12 +5,14 @@ This checklist guides the server-side implementation needed to complete the role
 ## Phase 1: Database Migration
 
 ### 1.1 Run Prisma Migration
+
 ```bash
 cd server
 npx prisma migrate dev --name add_user_roles_and_tenant_link
 ```
 
 **Expected changes**:
+
 - [ ] UserRole enum includes PLATFORM_ADMIN and TENANT_ADMIN
 - [ ] User table includes tenantId column (nullable)
 - [ ] User table includes tenant foreign key
@@ -18,27 +20,32 @@ npx prisma migrate dev --name add_user_roles_and_tenant_link
 - [ ] Index created on User.tenantId
 
 ### 1.2 Generate Prisma Client
+
 ```bash
 npx prisma generate
 ```
 
 **Verify**:
+
 - [ ] Generated types include new UserRole values
 - [ ] User type includes tenantId and tenant relation
 - [ ] Tenant type includes users array
 
 ### 1.3 Create Initial Users
+
 ```bash
 npx prisma studio
 # Or create a seed script
 ```
 
 **Create**:
+
 - [ ] At least one PLATFORM_ADMIN user
 - [ ] At least one TENANT_ADMIN user with tenantId set
 - [ ] Test credentials documented
 
 **Example seed script**:
+
 ```typescript
 // server/prisma/seed.ts
 import { PrismaClient } from '@prisma/client';
@@ -53,8 +60,8 @@ async function main() {
       email: 'admin@elope.com',
       passwordHash: await bcrypt.hash('admin123', 10),
       name: 'Platform Admin',
-      role: 'PLATFORM_ADMIN'
-    }
+      role: 'PLATFORM_ADMIN',
+    },
   });
 
   // Create tenant admin
@@ -66,8 +73,8 @@ async function main() {
         passwordHash: await bcrypt.hash('tenant123', 10),
         name: `${tenant.name} Admin`,
         role: 'TENANT_ADMIN',
-        tenantId: tenant.id
-      }
+        tenantId: tenant.id,
+      },
     });
   }
 }
@@ -78,6 +85,7 @@ main();
 ## Phase 2: Authentication Updates
 
 ### 2.1 Update Token Payload Interface
+
 **File**: `server/src/lib/ports.ts` (or similar)
 
 ```typescript
@@ -85,16 +93,18 @@ export interface TokenPayload {
   userId: string;
   email: string;
   role: 'USER' | 'ADMIN' | 'PLATFORM_ADMIN' | 'TENANT_ADMIN';
-  tenantId?: string;  // Only present for TENANT_ADMIN
+  tenantId?: string; // Only present for TENANT_ADMIN
 }
 ```
 
 **Tasks**:
+
 - [ ] Update TokenPayload type definition
 - [ ] Update JWT signing to include role and tenantId
 - [ ] Update JWT verification to extract all fields
 
 ### 2.2 Create Unified Login Endpoint
+
 **File**: `server/src/routes/auth.routes.ts`
 
 ```typescript
@@ -107,7 +117,7 @@ const authContract = c.router({
     path: '/v1/auth/login',
     body: z.object({
       email: z.string().email(),
-      password: z.string()
+      password: z.string(),
     }),
     responses: {
       200: z.object({
@@ -119,16 +129,17 @@ const authContract = c.router({
           role: z.enum(['PLATFORM_ADMIN', 'TENANT_ADMIN']),
           tenantId: z.string().optional(),
           tenantName: z.string().optional(),
-          tenantSlug: z.string().optional()
-        })
+          tenantSlug: z.string().optional(),
+        }),
       }),
-      401: z.object({ message: z.string() })
-    }
-  }
+      401: z.object({ message: z.string() }),
+    },
+  },
 });
 ```
 
 **Implementation**:
+
 ```typescript
 async unifiedLogin(req, res) {
   const { email, password } = req.body;
@@ -183,6 +194,7 @@ async unifiedLogin(req, res) {
 ```
 
 **Tasks**:
+
 - [ ] Add unifiedLogin to contracts
 - [ ] Implement login handler
 - [ ] Include tenant relation in query
@@ -195,6 +207,7 @@ async unifiedLogin(req, res) {
 ## Phase 3: Authorization Middleware
 
 ### 3.1 Create Role-Based Middleware
+
 **File**: `server/src/middleware/authorization.ts`
 
 ```typescript
@@ -214,7 +227,7 @@ export function requireRole(allowedRoles: UserRole[]) {
     if (!allowedRoles.includes(user.role as UserRole)) {
       return res.status(403).json({
         message: 'Forbidden',
-        requiredRole: allowedRoles
+        requiredRole: allowedRoles,
       });
     }
 
@@ -248,6 +261,7 @@ export function requireTenantAdmin(req: Request, res: Response, next: NextFuncti
 ```
 
 **Tasks**:
+
 - [ ] Create authorization middleware file
 - [ ] Implement requireRole function
 - [ ] Implement requirePlatformAdmin helper
@@ -256,9 +270,11 @@ export function requireTenantAdmin(req: Request, res: Response, next: NextFuncti
 - [ ] Test role enforcement
 
 ### 3.2 Update Auth Middleware
+
 **File**: `server/src/middleware/auth.ts`
 
 Update to extract all token fields:
+
 ```typescript
 const payload: TokenPayload = identityService.verifyToken(token);
 
@@ -266,11 +282,12 @@ res.locals.user = {
   userId: payload.userId,
   email: payload.email,
   role: payload.role,
-  tenantId: payload.tenantId  // Include for TENANT_ADMIN
+  tenantId: payload.tenantId, // Include for TENANT_ADMIN
 };
 ```
 
 **Tasks**:
+
 - [ ] Update to extract role from token
 - [ ] Update to extract tenantId from token
 - [ ] Store in res.locals.user
@@ -279,6 +296,7 @@ res.locals.user = {
 ## Phase 4: Platform Admin Endpoints
 
 ### 4.1 Get All Tenants
+
 **Endpoint**: `GET /v1/platform/tenants`
 
 ```typescript
@@ -302,12 +320,14 @@ async getAllTenants(req, res) {
 ```
 
 **Tasks**:
+
 - [ ] Create route with requirePlatformAdmin middleware
 - [ ] Include package and booking counts
 - [ ] Return all tenant fields
 - [ ] Test response format
 
 ### 4.2 Get System Statistics
+
 **Endpoint**: `GET /v1/platform/stats`
 
 ```typescript
@@ -340,12 +360,14 @@ async getSystemStats(req, res) {
 ```
 
 **Tasks**:
+
 - [ ] Create route with requirePlatformAdmin
 - [ ] Calculate system metrics
 - [ ] Return in correct format
 - [ ] Test performance with large datasets
 
 ### 4.3 Create Tenant
+
 **Endpoint**: `POST /v1/platform/tenants`
 
 ```typescript
@@ -372,6 +394,7 @@ async createTenant(req, res) {
 ```
 
 **Tasks**:
+
 - [ ] Create route with requirePlatformAdmin
 - [ ] Validate input data
 - [ ] Generate API keys
@@ -380,6 +403,7 @@ async createTenant(req, res) {
 - [ ] Test creation flow
 
 ### 4.4 Update Tenant
+
 **Endpoint**: `PUT /v1/platform/tenants/:id`
 
 ```typescript
@@ -397,6 +421,7 @@ async updateTenant(req, res) {
 ```
 
 **Tasks**:
+
 - [ ] Create route with requirePlatformAdmin
 - [ ] Validate tenant exists
 - [ ] Validate update fields
@@ -406,6 +431,7 @@ async updateTenant(req, res) {
 ## Phase 5: Tenant Admin Endpoints
 
 ### 5.1 Add Tenant Scoping Middleware
+
 **File**: `server/src/middleware/tenant-scope.ts`
 
 ```typescript
@@ -422,11 +448,13 @@ export function tenantScopeMiddleware(req: Request, res: Response, next: NextFun
 ```
 
 **Tasks**:
+
 - [ ] Create tenant scope middleware
 - [ ] Add to tenant routes
 - [ ] Inject tenantId into res.locals
 
 ### 5.2 Get Tenant Info
+
 **Endpoint**: `GET /v1/tenant/info`
 
 ```typescript
@@ -446,15 +474,18 @@ async getTenantInfo(req, res) {
 ```
 
 **Tasks**:
+
 - [ ] Create route with requireTenantAdmin
 - [ ] Use tenantId from JWT
 - [ ] Return tenant info
 - [ ] Test response format
 
 ### 5.3 Update Existing Tenant Endpoints
+
 **Files**: All files in `server/src/routes/tenant-*.ts`
 
 For each endpoint, ensure it:
+
 ```typescript
 // Before (old system)
 const packages = await prisma.package.findMany();
@@ -462,11 +493,12 @@ const packages = await prisma.package.findMany();
 // After (tenant-scoped)
 const tenantId = res.locals.tenantId;
 const packages = await prisma.package.findMany({
-  where: { tenantId }
+  where: { tenantId },
 });
 ```
 
 **Endpoints to update**:
+
 - [ ] GET /v1/tenant/packages - Filter by tenantId
 - [ ] POST /v1/tenant/packages - Include tenantId
 - [ ] PUT /v1/tenant/packages/:id - Verify tenantId
@@ -479,13 +511,14 @@ const packages = await prisma.package.findMany({
 - [ ] PUT /v1/tenant/branding - Include tenantId
 
 **Security checks for updates/deletes**:
+
 ```typescript
 // Verify ownership before update/delete
 const package = await prisma.package.findFirst({
   where: {
     id: packageId,
-    tenantId: res.locals.tenantId
-  }
+    tenantId: res.locals.tenantId,
+  },
 });
 
 if (!package) {
@@ -498,6 +531,7 @@ if (!package) {
 ## Phase 6: Update Contracts
 
 ### 6.1 Add Platform Admin Contracts
+
 **File**: `packages/contracts/src/api.v1.ts`
 
 ```typescript
@@ -506,27 +540,29 @@ export const platformAdminContract = c.router({
     method: 'GET',
     path: '/v1/platform/tenants',
     responses: {
-      200: z.array(TenantWithStatsSchema)
-    }
+      200: z.array(TenantWithStatsSchema),
+    },
   },
   getSystemStats: {
     method: 'GET',
     path: '/v1/platform/stats',
     responses: {
-      200: SystemStatsSchema
-    }
+      200: SystemStatsSchema,
+    },
   },
   // ... other endpoints
 });
 ```
 
 **Tasks**:
+
 - [ ] Add platform admin routes to contract
 - [ ] Create DTOs for responses
 - [ ] Build contracts package
 - [ ] Update client types
 
 ### 6.2 Add DTOs
+
 **File**: `packages/contracts/src/dto.ts`
 
 ```typescript
@@ -535,7 +571,7 @@ export const SystemStatsSchema = z.object({
   activeTenants: z.number(),
   totalBookings: z.number(),
   totalRevenue: z.number(),
-  platformCommission: z.number()
+  platformCommission: z.number(),
 });
 
 export const TenantWithStatsSchema = z.object({
@@ -549,12 +585,13 @@ export const TenantWithStatsSchema = z.object({
   createdAt: z.string(),
   _count: z.object({
     packages: z.number(),
-    bookings: z.number()
-  })
+    bookings: z.number(),
+  }),
 });
 ```
 
 **Tasks**:
+
 - [ ] Create all necessary DTOs
 - [ ] Export types
 - [ ] Rebuild contracts
@@ -563,6 +600,7 @@ export const TenantWithStatsSchema = z.object({
 ## Phase 7: Testing
 
 ### 7.1 Unit Tests
+
 ```typescript
 describe('Authorization Middleware', () => {
   it('allows PLATFORM_ADMIN to access platform routes', async () => {
@@ -580,6 +618,7 @@ describe('Authorization Middleware', () => {
 ```
 
 **Tasks**:
+
 - [ ] Test unified login endpoint
 - [ ] Test role-based middleware
 - [ ] Test platform admin endpoints
@@ -587,6 +626,7 @@ describe('Authorization Middleware', () => {
 - [ ] Test unauthorized access attempts
 
 ### 7.2 Integration Tests
+
 ```typescript
 describe('Role-based access control', () => {
   let platformAdminToken: string;
@@ -622,13 +662,14 @@ describe('Role-based access control', () => {
 
     expect(response.status).toBe(200);
     // All packages should belong to same tenant
-    const tenantIds = new Set(response.body.map(p => p.tenantId));
+    const tenantIds = new Set(response.body.map((p) => p.tenantId));
     expect(tenantIds.size).toBe(1);
   });
 });
 ```
 
 **Tasks**:
+
 - [ ] Test complete auth flow
 - [ ] Test cross-tenant isolation
 - [ ] Test role permissions
@@ -638,6 +679,7 @@ describe('Role-based access control', () => {
 ## Phase 8: Deployment
 
 ### 8.1 Environment Variables
+
 ```bash
 # .env
 DATABASE_URL="postgresql://..."
@@ -646,18 +688,21 @@ JWT_EXPIRES_IN="7d"
 ```
 
 **Tasks**:
+
 - [ ] Document all environment variables
 - [ ] Update .env.example
 - [ ] Set production JWT secret
 - [ ] Configure token expiration
 
 ### 8.2 Database Migration
+
 ```bash
 # Production migration
 DATABASE_URL="production-url" npx prisma migrate deploy
 ```
 
 **Tasks**:
+
 - [ ] Backup production database
 - [ ] Run migration on staging
 - [ ] Verify migration success
@@ -665,7 +710,9 @@ DATABASE_URL="production-url" npx prisma migrate deploy
 - [ ] Verify no data loss
 
 ### 8.3 Deploy Server
+
 **Tasks**:
+
 - [ ] Build server code
 - [ ] Build contracts package
 - [ ] Deploy to staging
@@ -676,6 +723,7 @@ DATABASE_URL="production-url" npx prisma migrate deploy
 ## Verification Checklist
 
 ### Authentication
+
 - [ ] Can login as PLATFORM_ADMIN
 - [ ] Can login as TENANT_ADMIN
 - [ ] Cannot login with wrong credentials
@@ -683,6 +731,7 @@ DATABASE_URL="production-url" npx prisma migrate deploy
 - [ ] Token expires appropriately
 
 ### Authorization
+
 - [ ] PLATFORM_ADMIN can access `/v1/platform/*`
 - [ ] TENANT_ADMIN cannot access `/v1/platform/*`
 - [ ] TENANT_ADMIN can access `/v1/tenant/*`
@@ -690,6 +739,7 @@ DATABASE_URL="production-url" npx prisma migrate deploy
 - [ ] Unauthorized access returns 403
 
 ### Tenant Isolation
+
 - [ ] TENANT_ADMIN A cannot see TENANT_ADMIN B's packages
 - [ ] TENANT_ADMIN A cannot see TENANT_ADMIN B's bookings
 - [ ] TENANT_ADMIN A cannot update TENANT_ADMIN B's data
@@ -697,6 +747,7 @@ DATABASE_URL="production-url" npx prisma migrate deploy
 - [ ] No cross-tenant data leaks
 
 ### Platform Admin Features
+
 - [ ] Can view all tenants
 - [ ] Can see system statistics
 - [ ] Can create new tenants
@@ -704,6 +755,7 @@ DATABASE_URL="production-url" npx prisma migrate deploy
 - [ ] Tenant list includes counts
 
 ### Performance
+
 - [ ] Login response < 500ms
 - [ ] Platform dashboard loads < 2s
 - [ ] Tenant dashboard loads < 2s
@@ -715,6 +767,7 @@ DATABASE_URL="production-url" npx prisma migrate deploy
 If issues occur:
 
 1. **Revert Server Deployment**
+
    ```bash
    # Revert to previous version
    git revert HEAD
@@ -722,6 +775,7 @@ If issues occur:
    ```
 
 2. **Revert Database Migration**
+
    ```bash
    # Only if necessary
    npx prisma migrate reset
@@ -757,6 +811,7 @@ The server-side implementation is complete when:
 ## Support
 
 Questions? Check:
+
 1. This checklist
 2. ROLE_BASED_ARCHITECTURE.md
 3. ROLE_QUICK_REFERENCE.md

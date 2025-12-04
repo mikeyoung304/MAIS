@@ -2,25 +2,28 @@
 
 ## User Roles Summary
 
-| Role | Dashboard | Access Level | Key Features |
-|------|-----------|--------------|--------------|
-| **PLATFORM_ADMIN** | `/admin/dashboard` | System-wide | Manage all tenants, system stats, platform config |
-| **TENANT_ADMIN** | `/tenant/dashboard` | Single tenant | Packages, bookings, branding, blackouts |
+| Role               | Dashboard           | Access Level  | Key Features                                      |
+| ------------------ | ------------------- | ------------- | ------------------------------------------------- |
+| **PLATFORM_ADMIN** | `/admin/dashboard`  | System-wide   | Manage all tenants, system stats, platform config |
+| **TENANT_ADMIN**   | `/tenant/dashboard` | Single tenant | Packages, bookings, branding, blackouts           |
 
 ## Routes
 
 ### Public Routes
+
 - `/` - Home (package catalog)
 - `/login` - Unified login for both roles
 - `/package/:slug` - Package details
 - `/success` - Booking success
 
 ### Protected Routes - Platform Admin Only
+
 - `/admin/dashboard` - Platform admin dashboard
 - `/admin/tenants` - Tenant management
 - `/admin/settings` - System settings
 
 ### Protected Routes - Tenant Admin Only
+
 - `/tenant/dashboard` - Tenant dashboard
 - `/tenant/packages` - Package management
 - `/tenant/bookings` - Booking list
@@ -29,6 +32,7 @@
 - `/tenant/settings` - Tenant settings
 
 ### Legacy Redirects
+
 - `/admin/login` → `/login`
 - `/tenant/login` → `/login`
 - `/admin` → `/admin/dashboard`
@@ -36,30 +40,33 @@
 ## Components
 
 ### Authentication
+
 ```tsx
 // AuthContext Hook
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from '@/contexts/AuthContext';
 
 const { user, login, logout, hasRole } = useAuth();
 
 // Check role
-if (hasRole("PLATFORM_ADMIN")) {
+if (hasRole('PLATFORM_ADMIN')) {
   // Platform admin features
 }
 
 // Logout
-<button onClick={logout}>Logout</button>
+<button onClick={logout}>Logout</button>;
 ```
 
 ### Route Protection
+
 ```tsx
 // In router.tsx
-<ProtectedSuspenseWrapper allowedRoles={["PLATFORM_ADMIN"]}>
+<ProtectedSuspenseWrapper allowedRoles={['PLATFORM_ADMIN']}>
   <PlatformAdminDashboard />
 </ProtectedSuspenseWrapper>
 ```
 
 ### Navigation
+
 ```tsx
 // Role-based navigation
 import { RoleBasedNav } from "@/components/navigation/RoleBasedNav";
@@ -74,6 +81,7 @@ import { RoleBasedNav } from "@/components/navigation/RoleBasedNav";
 ## Database Schema
 
 ### User Model
+
 ```prisma
 model User {
   id           String   @id @default(cuid())
@@ -94,6 +102,7 @@ enum UserRole {
 ## API Endpoints (To Implement)
 
 ### Authentication
+
 ```typescript
 POST /v1/auth/login
 {
@@ -114,6 +123,7 @@ POST /v1/auth/login
 ```
 
 ### Platform Admin Endpoints
+
 ```typescript
 GET  /v1/platform/tenants      // List all tenants
 GET  /v1/platform/stats        // System statistics
@@ -122,28 +132,29 @@ PUT  /v1/platform/tenants/:id  // Update tenant
 ```
 
 ### Tenant Admin Endpoints
+
 ```typescript
-GET  /v1/tenant/info           // Current tenant info
-GET  /v1/tenant/packages       // Tenant's packages
-GET  /v1/tenant/bookings       // Tenant's bookings
-GET  /v1/tenant/blackouts      // Tenant's blackouts
-GET  /v1/tenant/branding       // Tenant's branding
+GET / v1 / tenant / info; // Current tenant info
+GET / v1 / tenant / packages; // Tenant's packages
+GET / v1 / tenant / bookings; // Tenant's bookings
+GET / v1 / tenant / blackouts; // Tenant's blackouts
+GET / v1 / tenant / branding; // Tenant's branding
 ```
 
 ## Access Control Matrix
 
-| Feature | PLATFORM_ADMIN | TENANT_ADMIN |
-|---------|---------------|--------------|
-| View all tenants | ✅ | ❌ |
-| Create tenants | ✅ | ❌ |
-| System statistics | ✅ | ❌ |
-| Platform settings | ✅ | ❌ |
-| Manage packages | ❌ | ✅ (own only) |
-| View bookings | ❌ | ✅ (own only) |
-| Manage blackouts | ❌ | ✅ (own only) |
-| Customize branding | ❌ | ✅ (own only) |
-| Tenant settings | ❌ | ✅ (own only) |
-| Upload photos | ❌ | ✅ (own only) |
+| Feature            | PLATFORM_ADMIN | TENANT_ADMIN  |
+| ------------------ | -------------- | ------------- |
+| View all tenants   | ✅             | ❌            |
+| Create tenants     | ✅             | ❌            |
+| System statistics  | ✅             | ❌            |
+| Platform settings  | ✅             | ❌            |
+| Manage packages    | ❌             | ✅ (own only) |
+| View bookings      | ❌             | ✅ (own only) |
+| Manage blackouts   | ❌             | ✅ (own only) |
+| Customize branding | ❌             | ✅ (own only) |
+| Tenant settings    | ❌             | ✅ (own only) |
+| Upload photos      | ❌             | ✅ (own only) |
 
 ## File Locations
 
@@ -172,6 +183,7 @@ server/
 ## Common Tasks
 
 ### Create a Protected Page
+
 ```tsx
 // 1. Create page component
 export function MyProtectedPage() {
@@ -191,22 +203,24 @@ export function MyProtectedPage() {
 ```
 
 ### Add Navigation Item
+
 ```tsx
 // In RoleBasedNav.tsx
 const platformAdminNav: NavItem[] = [
   // ... existing items
   {
-    label: "My Page",
-    path: "/admin/my-page",
+    label: 'My Page',
+    path: '/admin/my-page',
     icon: <Star className="w-5 h-5" />,
-    description: "My custom page"
-  }
+    description: 'My custom page',
+  },
 ];
 ```
 
 ### Check User Role in Component
+
 ```tsx
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from '@/contexts/AuthContext';
 
 function MyComponent() {
   const { user, hasRole } = useAuth();
@@ -215,12 +229,8 @@ function MyComponent() {
 
   return (
     <div>
-      {hasRole("PLATFORM_ADMIN") && (
-        <button>Platform Admin Only</button>
-      )}
-      {hasRole("TENANT_ADMIN") && (
-        <p>Tenant: {user.tenantName}</p>
-      )}
+      {hasRole('PLATFORM_ADMIN') && <button>Platform Admin Only</button>}
+      {hasRole('TENANT_ADMIN') && <p>Tenant: {user.tenantName}</p>}
     </div>
   );
 }
@@ -229,12 +239,14 @@ function MyComponent() {
 ## Tenant Isolation
 
 ### How It Works
+
 1. **TENANT_ADMIN login** stores `tenantId` in user object
 2. **API calls** include tenantId in JWT token
 3. **Server middleware** filters all queries by tenantId
 4. **Database constraints** enforce tenant boundaries
 
 ### Example API Call (Tenant-Scoped)
+
 ```typescript
 // Client sends request with JWT
 const result = await api.tenantGetPackages();
@@ -248,12 +260,14 @@ const result = await api.tenantGetPackages();
 ## Migration Notes
 
 ### From Old System
+
 - Old `/admin/login` and `/tenant/login` redirect to `/login`
 - Old tokens (`adminToken`, `tenantToken`) cleared on new login
 - Existing components reused (TenantPackagesManager, etc.)
 - Database migration required for new UserRole values
 
 ### Next Steps for Server
+
 1. Add unified login endpoint
 2. Update JWT to include role and tenantId
 3. Create platform admin endpoints
@@ -281,16 +295,19 @@ npm run dev
 ## Troubleshooting
 
 ### User redirected to wrong dashboard
+
 - Check JWT token role field
 - Verify ProtectedRoute allowedRoles
 - Check AuthContext user.role value
 
 ### Cannot access protected route
+
 - Verify token is stored in localStorage.authToken
 - Check ProtectedRoute wrapping in router
 - Ensure AuthProvider wraps app
 
 ### Tenant seeing other tenants' data
+
 - Check API middleware tenantId filtering
 - Verify JWT includes correct tenantId
 - Ensure database queries include WHERE tenantId

@@ -3,10 +3,13 @@
 Generated: November 7, 2025
 
 ## Overview
+
 This plan reorganizes 74+ root-level documentation files into a structured docs/ directory. The goal is to reduce root clutter while maintaining accessibility and preserving all documentation links.
 
 ## Files Staying in Root (8 core files)
+
 These files remain at root level as they are frequently accessed entry points:
+
 - [ ] README.md (main project README)
 - [ ] DEVELOPING.md (developer workflow)
 - [ ] CONTRIBUTING.md (contribution guidelines)
@@ -19,14 +22,18 @@ These files remain at root level as they are frequently accessed entry points:
 ## Files to Move
 
 ### To docs/setup/ (5 files)
+
 Setup and getting started documentation:
+
 - [ ] ENVIRONMENT.md → docs/setup/ENVIRONMENT.md
 - [ ] SUPABASE.md → docs/setup/SUPABASE.md
 - [ ] SUPABASE_INTEGRATION_COMPLETE.md → docs/setup/SUPABASE_INTEGRATION_COMPLETE.md
 - [ ] LOCAL_TESTING_GUIDE.md → docs/setup/LOCAL_TESTING_GUIDE.md
 
 ### To docs/security/ (6 files)
+
 Security documentation and procedures:
+
 - [ ] SECURITY.md → docs/security/SECURITY.md
 - [ ] SECRET_ROTATION_GUIDE.md → docs/security/SECRET_ROTATION_GUIDE.md
 - [ ] SECRETS_ROTATION.md → docs/security/SECRETS_ROTATION.md (consolidate with above)
@@ -36,7 +43,9 @@ Security documentation and procedures:
 - [ ] SECRETS.md → docs/security/SECRETS.md
 
 ### To docs/operations/ (6 files)
+
 Operational procedures and deployment:
+
 - [ ] RUNBOOK.md → docs/operations/RUNBOOK.md
 - [ ] INCIDENT_RESPONSE.md → docs/operations/INCIDENT_RESPONSE.md
 - [ ] PRODUCTION_DEPLOYMENT_GUIDE.md → docs/operations/PRODUCTION_DEPLOYMENT_GUIDE.md
@@ -46,18 +55,24 @@ Operational procedures and deployment:
 - [ ] SERVER_IMPLEMENTATION_CHECKLIST.md → docs/operations/SERVER_IMPLEMENTATION_CHECKLIST.md
 
 ### To docs/architecture/ (3 files)
+
 Architecture documentation:
+
 - [ ] ARCHITECTURE_DIAGRAM.md → docs/architecture/ARCHITECTURE_DIAGRAM.md
 - [ ] AUDIT_ARCHITECTURE.md → docs/archive/oct-22-analysis/AUDIT_ARCHITECTURE.md
 
 ### To docs/api/ (3 files)
+
 API documentation:
+
 - [ ] API_DOCS_QUICKSTART.md → docs/api/API_DOCS_QUICKSTART.md
 - [ ] API_DOCUMENTATION_COMPLETION_REPORT.md → docs/api/API_DOCUMENTATION_COMPLETION_REPORT.md
 - [ ] ERRORS.md → docs/api/ERRORS.md
 
 ### To docs/multi-tenant/ (6 files)
+
 Multi-tenant implementation:
+
 - [ ] MULTI_TENANT_ROADMAP.md → docs/multi-tenant/MULTI_TENANT_ROADMAP.md
 - [ ] MULTI_TENANT_IMPLEMENTATION_GUIDE.md → docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md
 - [ ] MULTI_TENANT_QUICK_START.md → docs/multi-tenant/MULTI_TENANT_QUICK_START.md
@@ -66,7 +81,9 @@ Multi-tenant implementation:
 - [ ] MULTI_TENANCY_READINESS_REPORT.md → docs/multi-tenant/MULTI_TENANCY_READINESS_REPORT.md
 
 ### To docs/phases/ (15 files - archive)
+
 Phase completion reports (historical):
+
 - [ ] PHASE_1_COMPLETION_REPORT.md → docs/phases/PHASE_1_COMPLETION_REPORT.md
 - [ ] PHASE_2_ASSESSMENT.md → docs/phases/PHASE_2_ASSESSMENT.md
 - [ ] PHASE_2_BRANDING_API_IMPLEMENTATION.md → docs/phases/PHASE_2_BRANDING_API_IMPLEMENTATION.md
@@ -83,7 +100,9 @@ Phase completion reports (historical):
 - [ ] PHASE_5_EXECUTION_PLAN.md → docs/phases/PHASE_5_EXECUTION_PLAN.md
 
 ### To docs/roadmaps/ (7 files)
+
 Product roadmaps and planning:
+
 - [ ] ROADMAP.md → docs/roadmaps/ROADMAP.md
 - [ ] IMPROVEMENT-ROADMAP-OPTIMIZED.md → docs/roadmaps/IMPROVEMENT-ROADMAP-OPTIMIZED.md
 - [ ] IMPROVEMENT-ROADMAP.md → docs/roadmaps/IMPROVEMENT-ROADMAP.md
@@ -93,7 +112,9 @@ Product roadmaps and planning:
 - [ ] SDK_IMPLEMENTATION_REPORT.md → docs/roadmaps/SDK_IMPLEMENTATION_REPORT.md
 
 ### To docs/archive/ (23+ files)
+
 Outdated documentation and old audits:
+
 - [ ] AUDIT_CODE_QUALITY.md → docs/archive/oct-22-analysis/AUDIT_CODE_QUALITY.md
 - [ ] AUDIT_DOCUMENTATION.md → docs/archive/oct-22-analysis/AUDIT_DOCUMENTATION.md
 - [ ] AUDIT_DOCUMENTATION_COMPREHENSIVE.md → docs/archive/oct-22-analysis/AUDIT_DOCUMENTATION_COMPREHENSIVE.md
@@ -117,12 +138,15 @@ Outdated documentation and old audits:
 - [ ] PROMPTS.md → docs/archive/PROMPTS.md
 
 ### Special Cases (Keep Root or Move Later)
+
 Files to evaluate separately:
+
 - [ ] PROMPTS.md - May be useful for AI development workflows (archive for now)
 
 ## Link Updates Required
 
 ### Critical Files with Many Links to Update
+
 Files that reference moved documents (priority order):
 
 1. **README.md** (22+ links)
@@ -171,7 +195,9 @@ Files that reference moved documents (priority order):
    - ./IMMEDIATE_SECURITY_ACTIONS.md → ../security/IMMEDIATE_SECURITY_ACTIONS.md
 
 ### Within docs/ Directory
+
 Navigation README files already created with correct relative paths:
+
 - docs/README.md
 - docs/setup/README.md
 - docs/security/README.md
@@ -186,20 +212,22 @@ Navigation README files already created with correct relative paths:
 ## Execution Plan
 
 ### Phase 1: Preparation (Complete)
+
 - [x] Create docs/ subdirectories
 - [x] Create navigation README.md files in each subdirectory
 - [x] Verify directory structure
 
 ### Phase 2: Move Files & Update Links (Next Step)
+
 Execute in this order to minimize broken links:
 
 1. **Move Archive Files First** (lowest impact)
-   - Move all AUDIT_* files to docs/archive/oct-22-analysis/
-   - Move all AGENT_* reports to docs/archive/
+   - Move all AUDIT\_\* files to docs/archive/oct-22-analysis/
+   - Move all AGENT\_\* reports to docs/archive/
    - Move work-log.md, MIGRATION_LOG.md, etc.
 
 2. **Move Phase Reports** (referenced by few files)
-   - Move all PHASE_* files to docs/phases/
+   - Move all PHASE\_\* files to docs/phases/
 
 3. **Move Specialized Documentation**
    - Multi-tenant files → docs/multi-tenant/
@@ -221,24 +249,29 @@ Execute in this order to minimize broken links:
    - ARCHITECTURE.md (2 links)
 
 ### Phase 3: Verification
+
 1. Run link checker to find broken links
 2. Test all documentation navigation paths
 3. Verify all README.md files render correctly
 4. Update any missed references
 
 ## Estimated Time
+
 - **Total Migration Time:** 60-90 minutes
 - **File Moves:** 30 minutes
 - **Link Updates:** 30-45 minutes
 - **Verification:** 15 minutes
 
 ## Rollback Plan
+
 If issues arise:
+
 1. All files are version controlled in git
 2. Can revert with: `git checkout HEAD -- docs/ *.md`
 3. Or selectively restore specific files
 
 ## Success Criteria
+
 - [ ] All files successfully moved to target directories
 - [ ] All links in root files updated and working
 - [ ] No broken links in moved documentation
@@ -247,6 +280,7 @@ If issues arise:
 - [ ] Git commit preserves file history
 
 ## Notes
+
 - Use `git mv` to preserve file history
 - Test each batch of moves before proceeding
 - Keep this migration plan for future reference

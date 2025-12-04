@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "180"
+issue_id: '180'
 tags: [todo]
 dependencies: []
 ---
@@ -24,21 +24,31 @@ The extracted utility functions `getStatusVariant()` and `getRefundStatusText()`
 ## Current Implementation
 
 ```typescript
-export function getStatusVariant(status: string): 'default' | 'success' | 'destructive' | 'secondary' {
+export function getStatusVariant(
+  status: string
+): 'default' | 'success' | 'destructive' | 'secondary' {
   switch (status) {
-    case 'confirmed': return 'success';
-    case 'cancelled': return 'destructive';
-    case 'pending': return 'secondary';
-    default: return 'default';
+    case 'confirmed':
+      return 'success';
+    case 'cancelled':
+      return 'destructive';
+    case 'pending':
+      return 'secondary';
+    default:
+      return 'default';
   }
 }
 
 export function getRefundStatusText(status: string): string {
   switch (status) {
-    case 'pending': return 'Refund Pending';
-    case 'succeeded': return 'Refunded';
-    case 'failed': return 'Refund Failed';
-    default: return status;
+    case 'pending':
+      return 'Refund Pending';
+    case 'succeeded':
+      return 'Refunded';
+    case 'failed':
+      return 'Refund Failed';
+    default:
+      return status;
   }
 }
 ```
@@ -53,7 +63,9 @@ import type { BookingStatus, RefundStatus } from '@macon/contracts';
 type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
 type RefundStatus = 'pending' | 'succeeded' | 'failed' | 'requires_action';
 
-export function getStatusVariant(status: BookingStatus): 'default' | 'success' | 'destructive' | 'secondary' {
+export function getStatusVariant(
+  status: BookingStatus
+): 'default' | 'success' | 'destructive' | 'secondary' {
   switch (status) {
     case 'confirmed':
     case 'completed':
@@ -72,10 +84,14 @@ export function getStatusVariant(status: BookingStatus): 'default' | 'success' |
 
 export function getRefundStatusText(status: RefundStatus): string {
   switch (status) {
-    case 'pending': return 'Refund Pending';
-    case 'succeeded': return 'Refunded';
-    case 'failed': return 'Refund Failed';
-    case 'requires_action': return 'Action Required';
+    case 'pending':
+      return 'Refund Pending';
+    case 'succeeded':
+      return 'Refunded';
+    case 'failed':
+      return 'Refund Failed';
+    case 'requires_action':
+      return 'Action Required';
     default:
       const _exhaustive: never = status;
       return status;

@@ -37,6 +37,7 @@
 ## Quick Stats
 
 **Total Remaining:** 426 problems (408 errors, 18 warnings)
+
 - **Critical Errors:** 140 (type safety issues that could cause runtime errors)
 - **Quality Errors:** 268 (code quality and style issues)
 - **Auto-fixable:** 4 errors (use `npm run lint -- --fix`)
@@ -57,25 +58,28 @@ client/src/features/tenant-admin/TenantBookingList.tsx
 ```
 
 **What to do:**
+
 1. Open the file
 2. Look for multiple lines with `import { getErrorMessage } from '@elope/shared';`
 3. Keep only ONE at the top of the file
 4. Delete all the others scattered throughout the imports
 
 **Before:**
+
 ```typescript
 import { useState, useCallback } from 'react';
 import { getErrorMessage } from '@elope/shared';
 import { Plus, Trash2 } from 'lucide-react';
-import { getErrorMessage } from '@elope/shared';  // ❌ Delete this
+import { getErrorMessage } from '@elope/shared'; // ❌ Delete this
 import { Card } from '@/components/ui/card';
-import { getErrorMessage } from '@elope/shared';  // ❌ Delete this
+import { getErrorMessage } from '@elope/shared'; // ❌ Delete this
 ```
 
 **After:**
+
 ```typescript
 import { useState, useCallback } from 'react';
-import { getErrorMessage } from '@elope/shared';  // ✅ Keep only one
+import { getErrorMessage } from '@elope/shared'; // ✅ Keep only one
 import { Plus, Trash2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 ```
@@ -101,12 +105,15 @@ You should now see **413 problems** instead of 426. You just fixed 13 errors in 
 ## Current Status by Severity
 
 ### 🔴 Critical - Type Safety Issues (140 errors)
+
 These could cause runtime errors and should be fixed first.
 
 ### 🟡 Quality - Code Quality Issues (268 errors)
+
 These are style/quality improvements that won't cause runtime errors.
 
 ### 🔵 Warnings (18 warnings)
+
 Console statements that are acceptable in development.
 
 ---
@@ -115,27 +122,27 @@ Console statements that are acceptable in development.
 
 ### By Error Type
 
-| Error Type | Count | Severity | Auto-fix? |
-|------------|-------|----------|-----------|
-| `no-unsafe-member-access` | 58 | Critical | No |
-| `no-unsafe-assignment` | 39 | Critical | No |
-| `no-unsafe-call` | 27 | Critical | No |
-| `no-unsafe-argument` | 10 | Critical | No |
-| `no-explicit-any` | 6 | Critical | No |
+| Error Type                | Count | Severity | Auto-fix? |
+| ------------------------- | ----- | -------- | --------- |
+| `no-unsafe-member-access` | 58    | Critical | No        |
+| `no-unsafe-assignment`    | 39    | Critical | No        |
+| `no-unsafe-call`          | 27    | Critical | No        |
+| `no-unsafe-argument`      | 10    | Critical | No        |
+| `no-explicit-any`         | 6     | Critical | No        |
 
 **Total Critical:** 140 errors
 
 ### Top Files with Critical Errors
 
-| File | Errors | Primary Issues |
-|------|--------|----------------|
-| `/server/src/adapters/mock/index.ts` | 44 | unsafe-member-access, require-await |
-| `/client/src/contexts/AuthContext.tsx` | 9 | unsafe-member-access, unsafe-call |
-| `/client/src/features/admin/Dashboard.tsx` | 14 | unsafe-member-access, unsafe-call |
-| `/client/src/features/admin/PackagesManager.tsx` | 15 | unsafe-member-access, unsafe-call |
-| `/client/src/features/booking/DatePicker.tsx` | 13 | unsafe-member-access, unsafe-call |
-| `/server/src/routes/tenant-auth.routes.ts` | 17 | unsafe-member-access, no-explicit-any |
-| `/server/src/middleware/tenant-auth.ts` | 11 | unsafe-member-access, no-explicit-any |
+| File                                             | Errors | Primary Issues                        |
+| ------------------------------------------------ | ------ | ------------------------------------- |
+| `/server/src/adapters/mock/index.ts`             | 44     | unsafe-member-access, require-await   |
+| `/client/src/contexts/AuthContext.tsx`           | 9      | unsafe-member-access, unsafe-call     |
+| `/client/src/features/admin/Dashboard.tsx`       | 14     | unsafe-member-access, unsafe-call     |
+| `/client/src/features/admin/PackagesManager.tsx` | 15     | unsafe-member-access, unsafe-call     |
+| `/client/src/features/booking/DatePicker.tsx`    | 13     | unsafe-member-access, unsafe-call     |
+| `/server/src/routes/tenant-auth.routes.ts`       | 17     | unsafe-member-access, no-explicit-any |
+| `/server/src/middleware/tenant-auth.ts`          | 11     | unsafe-member-access, no-explicit-any |
 
 ---
 
@@ -143,16 +150,16 @@ Console statements that are acceptable in development.
 
 ### By Priority
 
-| Priority | Error Type | Count | Impact |
-|----------|------------|-------|--------|
-| P1 | `require-await` | 38 | Performance - unnecessary async |
-| P2 | `explicit-function-return-type` | 35 | Type clarity |
-| P3 | `no-unused-vars` | 31 | Dead code |
-| P4 | `restrict-template-expressions` | 29 | Type safety in templates |
-| P5 | `no-unnecessary-condition` | 25 | Logic clarity |
-| P6 | `prefer-nullish-coalescing` | 76 | Style preference |
-| P7 | `no-non-null-assertion` | 9 | Type safety |
-| P8 | Other | 25 | Various |
+| Priority | Error Type                      | Count | Impact                          |
+| -------- | ------------------------------- | ----- | ------------------------------- |
+| P1       | `require-await`                 | 38    | Performance - unnecessary async |
+| P2       | `explicit-function-return-type` | 35    | Type clarity                    |
+| P3       | `no-unused-vars`                | 31    | Dead code                       |
+| P4       | `restrict-template-expressions` | 29    | Type safety in templates        |
+| P5       | `no-unnecessary-condition`      | 25    | Logic clarity                   |
+| P6       | `prefer-nullish-coalescing`     | 76    | Style preference                |
+| P7       | `no-non-null-assertion`         | 9     | Type safety                     |
+| P8       | Other                           | 25    | Various                         |
 
 ---
 
@@ -398,10 +405,10 @@ if (import.meta.env.MODE === 'development') {
 
 ```typescript
 // ❌ BEFORE
-const user = users.find(u => u.id === id)!;
+const user = users.find((u) => u.id === id)!;
 
 // ✅ AFTER
-const user = users.find(u => u.id === id);
+const user = users.find((u) => u.id === id);
 if (!user) {
   throw new Error(`User ${id} not found`);
 }
@@ -503,7 +510,7 @@ const items: string[] = [];
 
 ```typescript
 // ❌ BEFORE
-const handler = () => doSomething();  // where doSomething returns void
+const handler = () => doSomething(); // where doSomething returns void
 
 // ✅ AFTER
 const handler = () => {
@@ -542,6 +549,7 @@ import { Button } from '@/components/ui/button';
 ### Issue: Files Not in tsconfig
 
 Some script files are linted but not in tsconfig:
+
 - `server/prisma/seed.ts`
 - `server/scripts/*.ts`
 
@@ -571,6 +579,7 @@ client/src/features/tenant-admin/TenantBookingList.tsx
 44 errors - mostly `require-await` and type safety issues.
 
 **Approach:**
+
 1. Remove `async` from functions that don't use `await`
 2. Add proper type guards for unknown data access
 3. Add return types to all functions
@@ -594,6 +603,7 @@ getPackageBySlug(slug: string): Package | undefined {
 14 errors - error handling and type safety.
 
 **Approach:**
+
 1. Replace direct error property access with `getErrorMessage()`
 2. Add type guards for error status checks
 3. Remove unused `hasStatusCode` import
@@ -624,6 +634,7 @@ catch (error) {
 22 errors - similar error handling patterns.
 
 **Approach:**
+
 1. Replace error property access with helper functions
 2. Fix duplicate condition checks
 3. Remove unused imports
@@ -633,6 +644,7 @@ catch (error) {
 20 errors - error handling and nullish coalescing.
 
 **Approach:**
+
 1. Fix error handling in all catch blocks
 2. Replace `||` with `??` for default values
 3. Add explicit function return types
@@ -642,6 +654,7 @@ catch (error) {
 17 errors - `any` types and unsafe access.
 
 **Approach:**
+
 1. Define proper interface for tenant auth
 2. Replace `any` with typed interfaces
 3. Add type guards for metadata access
@@ -669,23 +682,23 @@ setUserId(tenantAuth.tenantId);
 
 ### Priority 2: Medium Impact Files (Fix Second)
 
-| File | Errors | Time | Main Issues |
-|------|--------|------|-------------|
-| `client/src/pages/Success.tsx` | 24 | 20 min | require-await, unsafe access |
-| `client/src/lib/package-photo-api.test.example.ts` | 24 | 15 min | Missing return types, console |
-| `client/src/features/booking/DatePicker.tsx` | 13 | 15 min | Error handling |
-| `client/src/features/catalog/PackagePage.tsx` | 11 | 15 min | Nullish coalescing, conditions |
-| `client/src/widget/WidgetApp.tsx` | 18 | 20 min | Error handling |
+| File                                               | Errors | Time   | Main Issues                    |
+| -------------------------------------------------- | ------ | ------ | ------------------------------ |
+| `client/src/pages/Success.tsx`                     | 24     | 20 min | require-await, unsafe access   |
+| `client/src/lib/package-photo-api.test.example.ts` | 24     | 15 min | Missing return types, console  |
+| `client/src/features/booking/DatePicker.tsx`       | 13     | 15 min | Error handling                 |
+| `client/src/features/catalog/PackagePage.tsx`      | 11     | 15 min | Nullish coalescing, conditions |
+| `client/src/widget/WidgetApp.tsx`                  | 18     | 20 min | Error handling                 |
 
 ### Priority 3: Low Impact Files (Fix Last)
 
-| File | Errors | Time | Main Issues |
-|------|--------|------|-------------|
-| `client/src/lib/api.ts` | 10 | 15 min | Nullish coalescing |
-| `client/src/lib/auth.ts` | 7 | 10 min | Template expressions |
-| `client/src/hooks/usePackagePhotos.ts` | 7 | 10 min | Nullish coalescing |
-| `client/src/hooks/useApi.ts` | 3 | 5 min | require-await |
-| Various small files | 1-5 each | 5-10 min | Mixed issues |
+| File                                   | Errors   | Time     | Main Issues          |
+| -------------------------------------- | -------- | -------- | -------------------- |
+| `client/src/lib/api.ts`                | 10       | 15 min   | Nullish coalescing   |
+| `client/src/lib/auth.ts`               | 7        | 10 min   | Template expressions |
+| `client/src/hooks/usePackagePhotos.ts` | 7        | 10 min   | Nullish coalescing   |
+| `client/src/hooks/useApi.ts`           | 3        | 5 min    | require-await        |
+| Various small files                    | 1-5 each | 5-10 min | Mixed issues         |
 
 ---
 
@@ -754,16 +767,19 @@ npm run lint 2>&1 | grep "explicit-function-return-type" | cut -d: -f1 | sort -u
 ### After Each Fix
 
 1. **Run TypeScript Compiler**
+
    ```bash
    npm run typecheck
    ```
 
 2. **Run Linter**
+
    ```bash
    npm run lint
    ```
 
 3. **Run Related Tests**
+
    ```bash
    # If fixing client code
    npm run test:client
@@ -775,11 +791,13 @@ npm run lint 2>&1 | grep "explicit-function-return-type" | cut -d: -f1 | sort -u
 ### Before Committing
 
 1. **Full Test Suite**
+
    ```bash
    npm test
    ```
 
 2. **Build Check**
+
    ```bash
    npm run build
    ```
@@ -792,6 +810,7 @@ npm run lint 2>&1 | grep "explicit-function-return-type" | cut -d: -f1 | sort -u
 ### Regression Prevention
 
 1. **Create a branch**
+
    ```bash
    git checkout -b fix/lint-errors
    ```
@@ -812,19 +831,20 @@ npm run lint 2>&1 | grep "explicit-function-return-type" | cut -d: -f1 | sort -u
 
 ### By Priority
 
-| Priority | Errors | Estimated Time | Files |
-|----------|--------|----------------|-------|
-| **Critical Path** | | | |
-| P0: Parsing errors | 9 | 5 min | 3 files |
-| P1: High-impact files | 140 | 2-3 hours | 7 files |
-| **Quality Improvements** | | | |
-| P2: Medium-impact files | 90 | 1.5-2 hours | 10 files |
-| P3: Low-impact files | 187 | 1-2 hours | 50+ files |
-| **Total** | **426** | **5-7 hours** | **71 files** |
+| Priority                 | Errors  | Estimated Time | Files        |
+| ------------------------ | ------- | -------------- | ------------ |
+| **Critical Path**        |         |                |              |
+| P0: Parsing errors       | 9       | 5 min          | 3 files      |
+| P1: High-impact files    | 140     | 2-3 hours      | 7 files      |
+| **Quality Improvements** |         |                |              |
+| P2: Medium-impact files  | 90      | 1.5-2 hours    | 10 files     |
+| P3: Low-impact files     | 187     | 1-2 hours      | 50+ files    |
+| **Total**                | **426** | **5-7 hours**  | **71 files** |
 
 ### Recommended Schedule
 
 #### Day 1: Critical Errors (3 hours)
+
 - [ ] Fix 3 parsing errors (5 min)
 - [ ] Fix mock adapter (30 min)
 - [ ] Fix AuthContext (20 min)
@@ -834,6 +854,7 @@ npm run lint 2>&1 | grep "explicit-function-return-type" | cut -d: -f1 | sort -u
 - [ ] Test everything (1 hour)
 
 #### Day 2: Quality Improvements (4 hours)
+
 - [ ] Fix remaining error handling (1 hour)
 - [ ] Replace `||` with `??` (1 hour)
 - [ ] Add missing return types (1 hour)
@@ -872,7 +893,7 @@ try {
 ```typescript
 function isHttpError(error: unknown): error is {
   status: number;
-  body: { error: string; message?: string }
+  body: { error: string; message?: string };
 } {
   return (
     typeof error === 'object' &&
@@ -901,11 +922,13 @@ Is the left side a string/object/array?
 
 ```markdown
 ## P0: Parsing Errors (5 min)
+
 - [ ] BlackoutsManager.tsx - Remove duplicate imports
 - [ ] BrandingEditor.tsx - Remove duplicate imports
 - [ ] TenantBookingList.tsx - Remove duplicate imports
 
 ## P1: Critical Files (3 hours)
+
 - [ ] server/src/adapters/mock/index.ts (44 errors)
 - [ ] client/src/contexts/AuthContext.tsx (14 errors)
 - [ ] client/src/features/admin/Dashboard.tsx (22 errors)
@@ -913,6 +936,7 @@ Is the left side a string/object/array?
 - [ ] server/src/routes/tenant-auth.routes.ts (17 errors)
 
 ## P2: Medium Impact (2 hours)
+
 - [ ] client/src/pages/Success.tsx (24 errors)
 - [ ] client/src/features/booking/DatePicker.tsx (13 errors)
 - [ ] ... (continue for other files)
@@ -923,18 +947,21 @@ Is the left side a string/object/array?
 ## Success Criteria
 
 ### Phase 1: Critical (Target: < 50 errors)
+
 - ✅ All parsing errors fixed
 - ✅ All `no-explicit-any` fixed
 - ✅ All error handling using type guards
 - ✅ All tests passing
 
 ### Phase 2: Quality (Target: < 10 errors)
+
 - ✅ All `require-await` fixed
 - ✅ All `no-unused-vars` fixed
 - ✅ All missing return types added
 - ✅ Most `prefer-nullish-coalescing` fixed
 
 ### Phase 3: Polish (Target: 0 errors)
+
 - ✅ All template expressions properly typed
 - ✅ All unnecessary conditions removed
 - ✅ All warnings addressed
@@ -963,19 +990,19 @@ If you get stuck on a specific error:
 
 This table shows the optimal order to fix errors for maximum impact with minimum effort:
 
-| Order | Task | Errors Fixed | Time | Difficulty | Impact |
-|-------|------|--------------|------|------------|--------|
-| 1 | Fix parsing errors (duplicate imports) | 9 | 5 min | Easy | High |
-| 2 | Run `--fix` for auto-fixable errors | 4 | 1 min | Easy | Low |
-| 3 | Fix `server/src/adapters/mock/index.ts` | 44 | 30 min | Medium | High |
-| 4 | Create error helper functions | 0 | 15 min | Medium | High |
-| 5 | Fix all error handling (12 files) | 80+ | 2 hours | Medium | High |
-| 6 | Remove `require-await` (38 instances) | 38 | 45 min | Easy | Medium |
-| 7 | Add missing return types (35 instances) | 35 | 1 hour | Easy | Medium |
-| 8 | Remove unused variables (31 instances) | 31 | 30 min | Easy | Low |
-| 9 | Replace `\|\|` with `??` (76 instances) | 76 | 1 hour | Easy | Low |
-| 10 | Fix template expressions (29 instances) | 29 | 30 min | Easy | Low |
-| 11 | Fix remaining edge cases | 80 | 1 hour | Hard | Medium |
+| Order | Task                                    | Errors Fixed | Time    | Difficulty | Impact |
+| ----- | --------------------------------------- | ------------ | ------- | ---------- | ------ |
+| 1     | Fix parsing errors (duplicate imports)  | 9            | 5 min   | Easy       | High   |
+| 2     | Run `--fix` for auto-fixable errors     | 4            | 1 min   | Easy       | Low    |
+| 3     | Fix `server/src/adapters/mock/index.ts` | 44           | 30 min  | Medium     | High   |
+| 4     | Create error helper functions           | 0            | 15 min  | Medium     | High   |
+| 5     | Fix all error handling (12 files)       | 80+          | 2 hours | Medium     | High   |
+| 6     | Remove `require-await` (38 instances)   | 38           | 45 min  | Easy       | Medium |
+| 7     | Add missing return types (35 instances) | 35           | 1 hour  | Easy       | Medium |
+| 8     | Remove unused variables (31 instances)  | 31           | 30 min  | Easy       | Low    |
+| 9     | Replace `\|\|` with `??` (76 instances) | 76           | 1 hour  | Easy       | Low    |
+| 10    | Fix template expressions (29 instances) | 29           | 30 min  | Easy       | Low    |
+| 11    | Fix remaining edge cases                | 80           | 1 hour  | Hard       | Medium |
 
 **Total:** 426 errors → 5-7 hours
 
@@ -989,6 +1016,7 @@ Copy this checklist to track your progress:
 ## Lint Error Fix Progress
 
 ### Phase 1: Quick Wins (30 min)
+
 - [ ] Fix 3 files with duplicate imports (5 min)
 - [ ] Run `npm run lint -- --fix` (1 min)
 - [ ] Create `isHttpError()` helper function (10 min)
@@ -996,6 +1024,7 @@ Copy this checklist to track your progress:
 - [ ] Commit: "fix: remove duplicate imports and add error helpers"
 
 ### Phase 2: Critical Errors (3 hours)
+
 - [ ] Fix server/src/adapters/mock/index.ts (30 min)
 - [ ] Fix client/src/contexts/AuthContext.tsx (20 min)
 - [ ] Fix client/src/features/admin/Dashboard.tsx (25 min)
@@ -1007,6 +1036,7 @@ Copy this checklist to track your progress:
 - [ ] Commit: "fix: improve type safety in error handling and auth"
 
 ### Phase 3: Quality Improvements (2 hours)
+
 - [ ] Remove all `require-await` (45 min)
 - [ ] Add all missing return types (1 hour)
 - [ ] Remove all unused variables (30 min)
@@ -1014,6 +1044,7 @@ Copy this checklist to track your progress:
 - [ ] Commit: "refactor: remove unnecessary async and add return types"
 
 ### Phase 4: Style Improvements (2 hours)
+
 - [ ] Replace `||` with `??` (1 hour)
 - [ ] Fix template expressions (30 min)
 - [ ] Fix unnecessary conditions (20 min)
@@ -1022,6 +1053,7 @@ Copy this checklist to track your progress:
 - [ ] Commit: "style: use nullish coalescing and fix template expressions"
 
 ### Final Verification
+
 - [ ] Run `npm run lint` - should show 0 errors
 - [ ] Run `npm run typecheck` - should pass
 - [ ] Run `npm test` - should pass
@@ -1034,29 +1066,29 @@ Copy this checklist to track your progress:
 
 ## Appendix: Complete Error Type Reference
 
-| Error Code | Count | Severity | Auto-fix? | Pattern Section |
-|------------|-------|----------|-----------|-----------------|
-| `prefer-nullish-coalescing` | 76 | Low | Partial | [#9](#9-prefer-nullish-coalescing-76-errors) |
-| `no-unsafe-member-access` | 58 | High | No | [#1](#1-no-unsafe-member-access-58-errors) |
-| `no-unsafe-assignment` | 39 | High | No | [#2](#no-unsafe-assignment-39-errors) |
-| `require-await` | 38 | Medium | No | [#6](#6-require-await-38-errors) |
-| `explicit-function-return-type` | 35 | Medium | No | [#7](#7-explicit-function-return-type-35-errors) |
-| `no-unused-vars` | 31 | Medium | Partial | [#8](#8-no-unused-vars-31-errors) |
-| `restrict-template-expressions` | 29 | Medium | No | [#10](#10-restrict-template-expressions-29-errors) |
-| `no-unsafe-call` | 27 | High | No | [#3](#3-no-unsafe-call-27-errors) |
-| `no-unnecessary-condition` | 25 | Low | No | [#11](#11-no-unnecessary-condition-25-errors) |
-| `no-unsafe-argument` | 10 | High | No | [#4](#4-no-unsafe-argument-10-errors) |
-| `no-non-null-assertion` | 9 | Medium | No | [#12](#12-no-non-null-assertion-9-errors) |
-| `no-explicit-any` | 6 | High | No | [#5](#5-no-explicit-any-6-errors) |
-| `await-thenable` | 4 | Medium | No | [#13](#13-await-thenable-4-errors) |
-| `no-misused-promises` | 3 | Medium | No | [#14](#14-no-misused-promises-3-errors) |
-| `no-unnecessary-type-assertion` | 3 | Low | No | [#15](#15-no-unnecessary-type-assertion-3-errors) |
-| `unbound-method` | 2 | Medium | No | [#16](#16-unbound-method-2-errors) |
-| `prefer-optional-chain` | 1 | Low | Yes | [#17](#17-prefer-optional-chain-1-error) |
-| `no-var-requires` | 1 | Medium | No | [#18](#18-no-var-requires-1-error) |
-| `array-type` | 1 | Low | Yes | [#19](#19-array-type-1-error) |
-| `no-confusing-void-expression` | 1 | Low | No | [#20](#20-no-confusing-void-expression-1-error) |
-| `no-console` (warnings) | 18 | Info | No | N/A |
+| Error Code                      | Count | Severity | Auto-fix? | Pattern Section                                    |
+| ------------------------------- | ----- | -------- | --------- | -------------------------------------------------- |
+| `prefer-nullish-coalescing`     | 76    | Low      | Partial   | [#9](#9-prefer-nullish-coalescing-76-errors)       |
+| `no-unsafe-member-access`       | 58    | High     | No        | [#1](#1-no-unsafe-member-access-58-errors)         |
+| `no-unsafe-assignment`          | 39    | High     | No        | [#2](#no-unsafe-assignment-39-errors)              |
+| `require-await`                 | 38    | Medium   | No        | [#6](#6-require-await-38-errors)                   |
+| `explicit-function-return-type` | 35    | Medium   | No        | [#7](#7-explicit-function-return-type-35-errors)   |
+| `no-unused-vars`                | 31    | Medium   | Partial   | [#8](#8-no-unused-vars-31-errors)                  |
+| `restrict-template-expressions` | 29    | Medium   | No        | [#10](#10-restrict-template-expressions-29-errors) |
+| `no-unsafe-call`                | 27    | High     | No        | [#3](#3-no-unsafe-call-27-errors)                  |
+| `no-unnecessary-condition`      | 25    | Low      | No        | [#11](#11-no-unnecessary-condition-25-errors)      |
+| `no-unsafe-argument`            | 10    | High     | No        | [#4](#4-no-unsafe-argument-10-errors)              |
+| `no-non-null-assertion`         | 9     | Medium   | No        | [#12](#12-no-non-null-assertion-9-errors)          |
+| `no-explicit-any`               | 6     | High     | No        | [#5](#5-no-explicit-any-6-errors)                  |
+| `await-thenable`                | 4     | Medium   | No        | [#13](#13-await-thenable-4-errors)                 |
+| `no-misused-promises`           | 3     | Medium   | No        | [#14](#14-no-misused-promises-3-errors)            |
+| `no-unnecessary-type-assertion` | 3     | Low      | No        | [#15](#15-no-unnecessary-type-assertion-3-errors)  |
+| `unbound-method`                | 2     | Medium   | No        | [#16](#16-unbound-method-2-errors)                 |
+| `prefer-optional-chain`         | 1     | Low      | Yes       | [#17](#17-prefer-optional-chain-1-error)           |
+| `no-var-requires`               | 1     | Medium   | No        | [#18](#18-no-var-requires-1-error)                 |
+| `array-type`                    | 1     | Low      | Yes       | [#19](#19-array-type-1-error)                      |
+| `no-confusing-void-expression`  | 1     | Low      | No        | [#20](#20-no-confusing-void-expression-1-error)    |
+| `no-console` (warnings)         | 18    | Info     | No        | N/A                                                |
 
 **Total:** 426 problems
 

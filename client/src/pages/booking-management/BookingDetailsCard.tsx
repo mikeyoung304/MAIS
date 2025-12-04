@@ -22,13 +22,9 @@ export function BookingDetailsCard({ bookingDetails }: BookingDetailsCardProps) 
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl text-white">Booking Details</CardTitle>
-          <Badge variant={getStatusVariant(booking.status)}>
-            {booking.status}
-          </Badge>
+          <Badge variant={getStatusVariant(booking.status)}>{booking.status}</Badge>
         </div>
-        {refundStatusText && (
-          <p className="text-sm text-yellow-400">{refundStatusText}</p>
-        )}
+        {refundStatusText && <p className="text-sm text-yellow-400">{refundStatusText}</p>}
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Event Date - Highlighted */}
@@ -91,9 +87,7 @@ export function BookingDetailsCard({ bookingDetails }: BookingDetailsCardProps) 
           <DollarSign className="w-5 h-5 text-white/60" />
           <div>
             <p className="text-sm text-white/60">Total Paid</p>
-            <p className="text-xl font-semibold text-white">
-              {formatCurrency(booking.totalCents)}
-            </p>
+            <p className="text-xl font-semibold text-white">{formatCurrency(booking.totalCents)}</p>
           </div>
         </div>
 

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "094"
+issue_id: '094'
 tags: [todo]
 dependencies: []
 ---
@@ -44,14 +44,32 @@ Use Zod to validate branding data at runtime:
 ```typescript
 import { z } from 'zod';
 
-const BrandingSchema = z.object({
-  primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  accentColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  backgroundColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  fontFamily: z.string().max(50).regex(/^[a-zA-Z\s-]+$/).optional(),
-  logo: z.string().url().optional(),
-}).nullable();
+const BrandingSchema = z
+  .object({
+    primaryColor: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/)
+      .optional(),
+    secondaryColor: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/)
+      .optional(),
+    accentColor: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/)
+      .optional(),
+    backgroundColor: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/)
+      .optional(),
+    fontFamily: z
+      .string()
+      .max(50)
+      .regex(/^[a-zA-Z\s-]+$/)
+      .optional(),
+    logo: z.string().url().optional(),
+  })
+  .nullable();
 
 // In route handler:
 const brandingResult = BrandingSchema.safeParse(tenant.branding);
@@ -63,14 +81,16 @@ return res.status(200).json({
   slug: tenant.slug,
   name: tenant.name,
   apiKeyPublic: tenant.apiKeyPublic,
-  branding: branding ? {
-    primaryColor: branding.primaryColor,
-    secondaryColor: branding.secondaryColor,
-    accentColor: branding.accentColor,
-    backgroundColor: branding.backgroundColor,
-    fontFamily: branding.fontFamily,
-    logoUrl: branding.logo,
-  } : undefined,
+  branding: branding
+    ? {
+        primaryColor: branding.primaryColor,
+        secondaryColor: branding.secondaryColor,
+        accentColor: branding.accentColor,
+        backgroundColor: branding.backgroundColor,
+        fontFamily: branding.fontFamily,
+        logoUrl: branding.logo,
+      }
+    : undefined,
 });
 ```
 

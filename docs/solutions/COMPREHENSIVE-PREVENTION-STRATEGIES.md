@@ -14,6 +14,7 @@ This document provides actionable prevention strategies derived from the P1 crit
 ## Executive Summary
 
 **Key Issues Identified:**
+
 1. Customer email not normalized - causes duplicate records
 2. Webhook idempotency race with `tenantId="unknown"`
 3. Password reset UI missing (backend exists)
@@ -23,6 +24,7 @@ This document provides actionable prevention strategies derived from the P1 crit
 7. Database verification disabled at startup
 
 **Patterns Observed:**
+
 - Code added without considering multi-tenant implications
 - Features partially implemented (backend without frontend)
 - Performance optimization deferred
@@ -31,6 +33,7 @@ This document provides actionable prevention strategies derived from the P1 crit
 - Security validation skipped
 
 **Impact:**
+
 - Production incidents waiting to happen
 - User experience degradation
 - Security vulnerabilities
@@ -48,6 +51,7 @@ Add to `.github/PULL_REQUEST_TEMPLATE.md`:
 ## Multi-Tenant Security Review
 
 **For ANY database query or API endpoint:**
+
 - [ ] All queries filter by `tenantId` (no cross-tenant data leakage)
 - [ ] Foreign key references validate ownership before mutation
 - [ ] Cache keys include `tenantId` (format: `resource:${tenantId}:key`)
@@ -55,18 +59,21 @@ Add to `.github/PULL_REQUEST_TEMPLATE.md`:
 - [ ] Both CREATE and UPDATE endpoints validate ownership
 
 **For ANY user input (email, phone, name):**
+
 - [ ] Input normalized before storage (email.toLowerCase().trim())
 - [ ] Input normalized before queries (case-insensitive lookups)
 - [ ] Unique constraints work with normalized values
 - [ ] Test cases cover case variations (UPPER, lower, MiXeD)
 
 **For ANY webhook or async operation:**
+
 - [ ] Idempotency check uses tenant-scoped unique key
 - [ ] Early tenant extraction (before validation failures)
 - [ ] TenantId never defaults to "unknown" or magic strings
 - [ ] Race conditions tested with concurrent requests
 
 **For ANY new database query:**
+
 - [ ] Uses repository pattern (not direct Prisma calls in routes)
 - [ ] Includes indexes for tenant-scoped queries
 - [ ] N+1 patterns identified and resolved
@@ -79,6 +86,7 @@ Add to `.github/PULL_REQUEST_TEMPLATE.md`:
 ## Feature Completeness Review
 
 **For ANY new feature:**
+
 - [ ] Backend routes implemented
 - [ ] Frontend UI implemented
 - [ ] API contracts defined in `packages/contracts`
@@ -88,6 +96,7 @@ Add to `.github/PULL_REQUEST_TEMPLATE.md`:
 - [ ] Feature flag added (if needed for gradual rollout)
 
 **Documentation:**
+
 - [ ] CLAUDE.md updated with new patterns
 - [ ] ARCHITECTURE.md updated if design changes
 - [ ] Migration guide created if breaking changes
@@ -100,6 +109,7 @@ Add to `.github/PULL_REQUEST_TEMPLATE.md`:
 ## Database Performance Review
 
 **For ANY new query:**
+
 - [ ] Indexes exist for WHERE clauses
 - [ ] Compound indexes for multi-column filters
 - [ ] N+1 patterns prevented (use includes/select)
@@ -108,6 +118,7 @@ Add to `.github/PULL_REQUEST_TEMPLATE.md`:
 - [ ] Connection pooling respected (no new PrismaClient)
 
 **Query Patterns to Avoid:**
+
 - [ ] No `findMany()` without limit
 - [ ] No nested loops over database queries
 - [ ] No synchronous queries in async loops
@@ -127,9 +138,12 @@ Update `server/.eslintrc.json`:
     "@typescript-eslint/no-explicit-any": "error",
 
     // NEW: Prevent console.log in production code
-    "no-console": ["error", {
-      "allow": ["warn", "error"]
-    }],
+    "no-console": [
+      "error",
+      {
+        "allow": ["warn", "error"]
+      }
+    ],
 
     // NEW: Prevent multiple PrismaClient instances
     "no-restricted-syntax": [
@@ -201,7 +215,8 @@ module.exports = {
         if (!firstParam || firstParam.name !== 'tenantId') {
           context.report({
             node,
-            message: 'Repository methods must accept tenantId as first parameter for multi-tenant isolation',
+            message:
+              'Repository methods must accept tenantId as first parameter for multi-tenant isolation',
           });
         }
       },
@@ -288,9 +303,9 @@ describe('InputNormalizationTests', () => {
   it('should prevent duplicate accounts with different cases', async () => {
     await service.signup('user@example.com', 'pass1', 'Business1');
 
-    await expect(
-      service.signup('USER@EXAMPLE.COM', 'pass2', 'Business2')
-    ).rejects.toThrow('already registered');
+    await expect(service.signup('USER@EXAMPLE.COM', 'pass2', 'Business2')).rejects.toThrow(
+      'already registered'
+    );
   });
 });
 ```
@@ -472,14 +487,14 @@ echo "✅ All pattern validations passed!"
 Add to `.github/workflows/main-pipeline.yml`:
 
 ```yaml
-  # Add after pattern-validation job
-  security-patterns:
-    name: Security Pattern Validation
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Validate patterns
-        run: ./.github/scripts/validate-patterns.sh
+# Add after pattern-validation job
+security-patterns:
+  name: Security Pattern Validation
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - name: Validate patterns
+      run: ./.github/scripts/validate-patterns.sh
 ```
 
 ### 5.2 Test Coverage Gates
@@ -487,56 +502,56 @@ Add to `.github/workflows/main-pipeline.yml`:
 Update `.github/workflows/main-pipeline.yml`:
 
 ```yaml
-  unit-tests:
-    # ... existing steps
+unit-tests:
+  # ... existing steps
 
-    - name: Enforce coverage thresholds
-      run: |
-        COVERAGE=$(npm run test:coverage --silent | grep "All files" | awk '{print $10}' | sed 's/%//')
+  - name: Enforce coverage thresholds
+    run: |
+      COVERAGE=$(npm run test:coverage --silent | grep "All files" | awk '{print $10}' | sed 's/%//')
 
-        if (( $(echo "$COVERAGE < 70" | bc -l) )); then
-          echo "❌ Test coverage is $COVERAGE% (required: 70%)"
-          exit 1
-        fi
+      if (( $(echo "$COVERAGE < 70" | bc -l) )); then
+        echo "❌ Test coverage is $COVERAGE% (required: 70%)"
+        exit 1
+      fi
 
-        echo "✅ Test coverage is $COVERAGE%"
+      echo "✅ Test coverage is $COVERAGE%"
 
-    - name: Enforce critical path coverage
-      run: |
-        # Check webhook handler has 100% coverage
-        WEBHOOK_COVERAGE=$(npm run test:coverage --silent | grep "webhooks.routes.ts" | awk '{print $10}' | sed 's/%//')
+  - name: Enforce critical path coverage
+    run: |
+      # Check webhook handler has 100% coverage
+      WEBHOOK_COVERAGE=$(npm run test:coverage --silent | grep "webhooks.routes.ts" | awk '{print $10}' | sed 's/%//')
 
-        if (( $(echo "$WEBHOOK_COVERAGE < 100" | bc -l) )); then
-          echo "❌ Webhook handler coverage is $WEBHOOK_COVERAGE% (required: 100%)"
-          exit 1
-        fi
+      if (( $(echo "$WEBHOOK_COVERAGE < 100" | bc -l) )); then
+        echo "❌ Webhook handler coverage is $WEBHOOK_COVERAGE% (required: 100%)"
+        exit 1
+      fi
 ```
 
 ### 5.3 Database Migration Validation
 
 ```yaml
-  migration-validation:
-    # ... existing steps
+migration-validation:
+  # ... existing steps
 
-    - name: Check for missing indexes
-      run: |
-        cd server
+  - name: Check for missing indexes
+    run: |
+      cd server
 
-        # Extract all WHERE clauses from code
-        WHERE_COLUMNS=$(grep -rh "where.*tenantId" src --include="*.ts" | \
-          sed 's/.*where.*{\s*//g' | \
-          sed 's/\s*}.*//' | \
-          sort -u)
+      # Extract all WHERE clauses from code
+      WHERE_COLUMNS=$(grep -rh "where.*tenantId" src --include="*.ts" | \
+        sed 's/.*where.*{\s*//g' | \
+        sed 's/\s*}.*//' | \
+        sort -u)
 
-        # Check if indexes exist for those columns
-        MISSING_INDEXES=$(node scripts/check-indexes.js "$WHERE_COLUMNS")
+      # Check if indexes exist for those columns
+      MISSING_INDEXES=$(node scripts/check-indexes.js "$WHERE_COLUMNS")
 
-        if [ -n "$MISSING_INDEXES" ]; then
-          echo "❌ Missing indexes for WHERE clauses:"
-          echo "$MISSING_INDEXES"
-          echo "Add indexes to prisma/schema.prisma"
-          exit 1
-        fi
+      if [ -n "$MISSING_INDEXES" ]; then
+        echo "❌ Missing indexes for WHERE clauses:"
+        echo "$MISSING_INDEXES"
+        echo "Add indexes to prisma/schema.prisma"
+        exit 1
+      fi
 ```
 
 ---
@@ -594,7 +609,7 @@ const _repoCheck: {
 
 Update `server/src/lib/ports.ts`:
 
-```typescript
+````typescript
 /**
  * CRITICAL: All repository methods MUST:
  * 1. Accept tenantId as first parameter (for multi-tenant isolation)
@@ -620,7 +635,7 @@ export interface CatalogRepository {
   getPackageById(tenantId: string, id: string): Promise<Package | null>;
   // ... rest of interface
 }
-```
+````
 
 ### 6.3 Input Normalization Middleware
 
@@ -633,11 +648,7 @@ Create `server/src/middleware/normalize-input.ts`:
  * Automatically normalizes common input fields to prevent case-sensitivity issues.
  * Applied globally to all routes.
  */
-export function normalizeInputMiddleware(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
+export function normalizeInputMiddleware(req: Request, res: Response, next: NextFunction): void {
   // Normalize email fields
   if (req.body?.email) {
     req.body.email = req.body.email.toLowerCase().trim();
@@ -669,10 +680,11 @@ app.use(normalizeInputMiddleware); // ← Add this
 
 Add to `docs/ONBOARDING.md`:
 
-```markdown
+````markdown
 ## Security & Architecture Training
 
 Before your first PR, you MUST:
+
 - [ ] Read CLAUDE.md (project-specific patterns)
 - [ ] Read docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md
 - [ ] Review 3 recent PRs to understand code review standards
@@ -689,22 +701,25 @@ app.get('/api/packages', async (req, res) => {
   res.json(packages);
 });
 ```
+````
 
 **Answer:** Missing `tenantId` filter. This returns packages from ALL tenants (security vulnerability).
 
 **Correct:**
+
 ```typescript
 app.get('/api/packages', tenantMiddleware, async (req, res) => {
   const tenantId = req.tenantId; // From middleware
   const packages = await prisma.package.findMany({
-    where: { tenantId } // ← CRITICAL
+    where: { tenantId }, // ← CRITICAL
   });
   res.json(packages);
 });
 ```
 
 [Add 5-10 more questions covering common patterns]
-```
+
+````
 
 ### 7.2 Weekly Code Review Sessions
 
@@ -741,7 +756,7 @@ Template for `docs/incidents/YYYY-MM-DD-incident-name.md`:
 - [ ] Update documentation
 - [ ] Add CI/CD validation
 - [ ] Schedule training session
-```
+````
 
 ---
 
@@ -797,18 +812,19 @@ Template for `docs/incidents/YYYY-MM-DD-incident-name.md`:
 
 ### Metrics to Track
 
-| Metric | Current | Target | Timeline |
-|--------|---------|--------|----------|
-| P1 issues per sprint | 7 | 0 | 2 months |
-| Security vulnerabilities | 3 | 0 | 1 month |
-| Test coverage | 85% | 90% | 2 months |
-| Feature completeness (backend + frontend) | 60% | 100% | 1 month |
-| PrismaClient instances | 5+ | 1 | 1 week |
-| Console.log usage | 12+ | 0 | 1 week |
+| Metric                                    | Current | Target | Timeline |
+| ----------------------------------------- | ------- | ------ | -------- |
+| P1 issues per sprint                      | 7       | 0      | 2 months |
+| Security vulnerabilities                  | 3       | 0      | 1 month  |
+| Test coverage                             | 85%     | 90%    | 2 months |
+| Feature completeness (backend + frontend) | 60%     | 100%   | 1 month  |
+| PrismaClient instances                    | 5+      | 1      | 1 week   |
+| Console.log usage                         | 12+     | 0      | 1 week   |
 
 ### Monthly Review
 
 At the end of each month:
+
 1. Review all P1 issues from that month
 2. Identify common patterns
 3. Update prevention strategies

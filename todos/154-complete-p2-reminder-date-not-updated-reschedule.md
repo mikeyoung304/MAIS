@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "154"
+issue_id: '154'
 tags: [code-review, data-integrity, mvp-gaps, reminders]
 dependencies: []
 resolved_at: 2025-12-02
@@ -14,6 +14,7 @@ resolved_at: 2025-12-02
 When a booking is rescheduled, the `reminderDueDate` is not updated. Reminders will be sent based on the old event date.
 
 **Why This Matters:**
+
 - Customers receive reminders for wrong dates
 - Missed reminders if rescheduled to sooner date
 - Customer confusion
@@ -25,6 +26,7 @@ When a booking is rescheduled, the `reminderDueDate` is not updated. Reminders w
 **Location:** `server/src/services/booking.service.ts:983-1018`
 
 **Evidence:**
+
 ```typescript
 async rescheduleBooking(
   tenantId: string,
@@ -41,6 +43,7 @@ async rescheduleBooking(
 ## Proposed Solutions
 
 ### Option A: Recalculate Reminder Date (Recommended)
+
 **Pros:** Correct reminder timing
 **Cons:** Additional update
 **Effort:** Small (1-2 hours)
@@ -60,6 +63,7 @@ const updated = await this.bookingRepo.update(tenantId, bookingId, {
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/services/booking.service.ts`
 
 ## Acceptance Criteria
@@ -85,6 +89,7 @@ const updated = await this.bookingRepo.update(tenantId, bookingId, {
    - Ensures mock mode has same behavior as production
 
 **Implementation Details:**
+
 ```typescript
 // Calculate new reminder due date (7 days before new event date)
 const eventDate = new Date(newDate + 'T00:00:00Z');
@@ -103,6 +108,7 @@ data: {
 ```
 
 **Testing:**
+
 - TypeScript compilation: ✅ PASSING
 - Existing tests: ✅ 912 passing (1 unrelated flaky test)
 - Manual verification: Code review confirms fix is implemented correctly in both repositories

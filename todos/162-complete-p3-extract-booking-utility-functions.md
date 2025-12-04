@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "162"
+issue_id: '162'
 tags: [code-review, quality, mvp-gaps, refactoring]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 BookingDetailsCard.tsx has 4 inline utility functions that could be reusable.
 
 **Why This Matters:**
+
 - 55 lines in component file
 - Not reusable in other booking components
 - Code organization
@@ -22,6 +23,7 @@ BookingDetailsCard.tsx has 4 inline utility functions that could be reusable.
 **Location:** `client/src/pages/booking-management/BookingDetailsCard.tsx:18-72`
 
 **Inline utilities:**
+
 - `formatMoney()` (lines 18-23)
 - `formatDate()` (lines 28-36)
 - `getStatusVariant()` (lines 41-52)

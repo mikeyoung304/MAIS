@@ -26,6 +26,7 @@ Phase 3 focuses on **responsive design** and **accessibility compliance**. We'll
 ### Week 7: Responsive Overhaul
 
 #### Task 7.1: Mobile Metric Cards (1 day)
+
 **Priority:** High
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 8 hours
@@ -36,12 +37,14 @@ Make metric card grids stack properly on mobile and tablet.
 **Implementation Details:**
 
 **Current Problem:**
+
 ```tsx
 // 5-column grid breaks on mobile
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
 ```
 
 **Solution:**
+
 ```tsx
 // Responsive grid: 1 col mobile, 2 col tablet, 4 col desktop
 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -56,6 +59,7 @@ Make metric card grids stack properly on mobile and tablet.
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Mobile (320px-640px): 1 column
 - [ ] Tablet (641px-1024px): 2 columns
 - [ ] Desktop (1025px+): 3-5 columns (depending on count)
@@ -63,6 +67,7 @@ Make metric card grids stack properly on mobile and tablet.
 - [ ] Gap spacing consistent at all breakpoints
 
 **Testing Checklist:**
+
 - [ ] Responsive test: 320px, 375px, 768px, 1024px, 1440px, 1920px
 - [ ] Visual test: no card overflow or cramping
 - [ ] Mobile device test: iPhone SE, iPhone 14, iPad
@@ -73,6 +78,7 @@ Make metric card grids stack properly on mobile and tablet.
 ---
 
 #### Task 7.2: Responsive Navigation (Mobile Hamburger Menu) (1.5 days)
+
 **Priority:** Critical
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 12 hours
@@ -182,6 +188,7 @@ export function AdminNav({ role }: AdminNavProps) {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Hamburger menu icon visible on mobile (<768px)
 - [ ] Menu slides in from right side
 - [ ] Menu closes on navigation
@@ -191,6 +198,7 @@ export function AdminNav({ role }: AdminNavProps) {
 - [ ] Desktop navigation hidden on mobile, mobile hidden on desktop
 
 **Testing Checklist:**
+
 - [ ] Mobile test: menu opens and closes
 - [ ] Keyboard test: Tab, Escape, Enter work
 - [ ] Accessibility test: screen reader announces menu state
@@ -202,6 +210,7 @@ export function AdminNav({ role }: AdminNavProps) {
 ---
 
 #### Task 7.3: Responsive Tables (Card View) (Already in Phase 1) (0.5 days)
+
 **Priority:** High
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 4 hours (enhancements)
@@ -212,6 +221,7 @@ Enhance the ResponsiveTable component created in Phase 1.
 **Implementation Details:**
 
 **Enhancements:**
+
 1. Add swipe gestures for card navigation
 2. Improve card layout density
 3. Add "Show more" expansion for long content
@@ -224,12 +234,8 @@ Enhance the ResponsiveTable component created in Phase 1.
   <CardContent className="p-4">
     {/* Primary info (always visible) */}
     <div className="mb-3">
-      <h3 className="text-heading-4 text-on-surface mb-1">
-        {columns[0].accessor(item)}
-      </h3>
-      <p className="text-body-small text-on-surface-variant">
-        {columns[1].accessor(item)}
-      </p>
+      <h3 className="text-heading-4 text-on-surface mb-1">{columns[0].accessor(item)}</h3>
+      <p className="text-body-small text-on-surface-variant">{columns[1].accessor(item)}</p>
     </div>
 
     {/* Collapsible details */}
@@ -238,32 +244,33 @@ Enhance the ResponsiveTable component created in Phase 1.
         Show details
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-3 space-y-2">
-        {columns.slice(2).filter((col) => !col.mobileHidden).map((col, idx) => (
-          <div key={idx} className="flex justify-between py-1">
-            <span className="text-sm text-on-surface-variant">{col.header}</span>
-            <span className="text-sm text-on-surface">{col.accessor(item)}</span>
-          </div>
-        ))}
+        {columns
+          .slice(2)
+          .filter((col) => !col.mobileHidden)
+          .map((col, idx) => (
+            <div key={idx} className="flex justify-between py-1">
+              <span className="text-sm text-on-surface-variant">{col.header}</span>
+              <span className="text-sm text-on-surface">{col.accessor(item)}</span>
+            </div>
+          ))}
       </CollapsibleContent>
     </Collapsible>
 
     {/* Actions */}
-    {actions && (
-      <div className="mt-3 pt-3 border-t border-outline flex gap-2">
-        {actions(item)}
-      </div>
-    )}
+    {actions && <div className="mt-3 pt-3 border-t border-outline flex gap-2">{actions(item)}</div>}
   </CardContent>
 </Card>
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Card view shows primary info prominently
 - [ ] "Show details" expands to reveal all fields
 - [ ] Actions (edit, delete) easily accessible
 - [ ] Card spacing optimized for mobile (not too cramped)
 
 **Testing Checklist:**
+
 - [ ] Mobile test: card view is easy to read and interact with
 - [ ] Touch test: buttons are >44px touch targets
 
@@ -273,6 +280,7 @@ Enhance the ResponsiveTable component created in Phase 1.
 ---
 
 #### Task 7.4: Responsive Forms (1 day)
+
 **Priority:** Medium
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 8 hours
@@ -285,6 +293,7 @@ Ensure all forms are usable on mobile with proper input sizes and spacing.
 **Form Layout Pattern:**
 
 **Before:**
+
 ```tsx
 <form className="grid grid-cols-2 gap-4">
   <Input label="First Name" />
@@ -293,6 +302,7 @@ Ensure all forms are usable on mobile with proper input sizes and spacing.
 ```
 
 **After:**
+
 ```tsx
 <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
   <InputEnhanced label="First Name" />
@@ -301,6 +311,7 @@ Ensure all forms are usable on mobile with proper input sizes and spacing.
 ```
 
 **Mobile Form Best Practices:**
+
 1. Single column on mobile (320px-640px)
 2. Input height: min-h-14 (56px - easy to tap)
 3. Label spacing: mb-2 (8px)
@@ -308,11 +319,13 @@ Ensure all forms are usable on mobile with proper input sizes and spacing.
 5. Form spacing: space-y-6 (24px between fields)
 
 **Files to Update:**
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/features/admin/tenants/TenantForm.tsx`
 - `/Users/mikeyoung/CODING/MAIS/client/src/features/admin/packages/PackageForm.tsx`
 - `/Users/mikeyoung/CODING/MAIS/client/src/pages/Login.tsx`
 
 **Acceptance Criteria:**
+
 - [ ] All forms single column on mobile
 - [ ] Input fields easy to tap (min 44px height)
 - [ ] Labels clearly associated with inputs
@@ -320,6 +333,7 @@ Ensure all forms are usable on mobile with proper input sizes and spacing.
 - [ ] Form fits viewport without horizontal scroll
 
 **Testing Checklist:**
+
 - [ ] Mobile test: forms usable on iPhone SE (320px)
 - [ ] Touch test: inputs easy to focus
 - [ ] Keyboard test: virtual keyboard doesn't obscure inputs
@@ -332,6 +346,7 @@ Ensure all forms are usable on mobile with proper input sizes and spacing.
 ### Week 8: Accessibility Improvements
 
 #### Task 8.1: Color Contrast Audit & Fixes (1.5 days)
+
 **Priority:** Critical
 **Assigned To:** Frontend Developer + Accessibility Specialist
 **Estimated Effort:** 12 hours
@@ -342,6 +357,7 @@ Audit all text/background color combinations and fix WCAG AA failures.
 **Implementation Details:**
 
 **Audit Process:**
+
 1. Use automated tool (axe DevTools, Lighthouse)
 2. Manually check all color combinations
 3. Test with contrast checker (WebAIM Contrast Checker)
@@ -349,18 +365,18 @@ Audit all text/background color combinations and fix WCAG AA failures.
 
 **Common Failures & Fixes:**
 
-| Element | Current | Contrast | Fix | New Contrast |
-|---------|---------|----------|-----|--------------|
-| Metric labels | `text-macon-navy-300` on `bg-macon-navy-800` | 2.8:1 ❌ | `text-macon-navy-200` | 4.6:1 ✅ |
-| Table text | `text-macon-navy-200` on `bg-macon-navy-900` | 3.1:1 ❌ | `text-macon-navy-100` | 5.2:1 ✅ |
-| Orange button text | `text-white` on `bg-macon-orange` | 3.2:1 ⚠️ | Darken orange or use navy text | 4.5:1 ✅ |
+| Element            | Current                                      | Contrast | Fix                            | New Contrast |
+| ------------------ | -------------------------------------------- | -------- | ------------------------------ | ------------ |
+| Metric labels      | `text-macon-navy-300` on `bg-macon-navy-800` | 2.8:1 ❌ | `text-macon-navy-200`          | 4.6:1 ✅     |
+| Table text         | `text-macon-navy-200` on `bg-macon-navy-900` | 3.1:1 ❌ | `text-macon-navy-100`          | 5.2:1 ✅     |
+| Orange button text | `text-white` on `bg-macon-orange`            | 3.2:1 ⚠️ | Darken orange or use navy text | 4.5:1 ✅     |
 
 **Semantic Token Updates:**
 
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/styles/tokens.css`
 
 ```css
-[data-theme="dark"] {
+[data-theme='dark'] {
   /* Increase contrast for text */
   --color-on-surface: 241 242 246; /* Navy 50 - lighter */
   --color-on-surface-variant: 199 202 215; /* Navy 200 - lighter */
@@ -369,6 +385,7 @@ Audit all text/background color combinations and fix WCAG AA failures.
 ```
 
 **Acceptance Criteria:**
+
 - [ ] All text has ≥4.5:1 contrast (normal text)
 - [ ] All large text (≥18px or ≥14px bold) has ≥3:1 contrast
 - [ ] UI components (buttons, borders) have ≥3:1 contrast
@@ -376,6 +393,7 @@ Audit all text/background color combinations and fix WCAG AA failures.
 - [ ] Manual review confirms readability
 
 **Testing Checklist:**
+
 - [ ] Automated: axe DevTools shows 0 contrast errors
 - [ ] Automated: Lighthouse accessibility score >95
 - [ ] Manual: WebAIM Contrast Checker for all combinations
@@ -387,6 +405,7 @@ Audit all text/background color combinations and fix WCAG AA failures.
 ---
 
 #### Task 8.2: Keyboard Navigation Enhancements (1.5 days)
+
 **Priority:** High
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 12 hours
@@ -517,6 +536,7 @@ function isInputFocused() {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] All interactive elements reachable via Tab
 - [ ] Focus ring visible on all focusable elements
 - [ ] Skip to content link appears on first Tab
@@ -526,6 +546,7 @@ function isInputFocused() {
 - [ ] Logical tab order (top-to-bottom, left-to-right)
 
 **Testing Checklist:**
+
 - [ ] Keyboard test: navigate entire app without mouse
 - [ ] Tab order test: follows visual hierarchy
 - [ ] Focus test: focus ring visible at all times
@@ -537,6 +558,7 @@ function isInputFocused() {
 ---
 
 #### Task 8.3: ARIA Attributes & Screen Reader Support (1.5 days)
+
 **Priority:** High
 **Assigned To:** Frontend Developer + Accessibility Specialist
 **Estimated Effort:** 12 hours
@@ -647,10 +669,7 @@ Add comprehensive ARIA attributes for screen reader users.
 
 ```tsx
 <Dialog open={isOpen} onOpenChange={setIsOpen}>
-  <DialogContent
-    aria-labelledby="dialog-title"
-    aria-describedby="dialog-description"
-  >
+  <DialogContent aria-labelledby="dialog-title" aria-describedby="dialog-description">
     <DialogHeader>
       <DialogTitle id="dialog-title">Confirm Deletion</DialogTitle>
       <DialogDescription id="dialog-description">
@@ -663,6 +682,7 @@ Add comprehensive ARIA attributes for screen reader users.
 ```
 
 **Acceptance Criteria:**
+
 - [ ] All landmarks present (header, main, footer, nav)
 - [ ] All forms have proper labels and error associations
 - [ ] All icon buttons have aria-label
@@ -671,6 +691,7 @@ Add comprehensive ARIA attributes for screen reader users.
 - [ ] All status updates announced by screen reader
 
 **Testing Checklist:**
+
 - [ ] Screen reader test (VoiceOver, NVDA): all content announced
 - [ ] Automated: axe DevTools shows 0 ARIA errors
 - [ ] Automated: Lighthouse accessibility score >95
@@ -683,6 +704,7 @@ Add comprehensive ARIA attributes for screen reader users.
 ### Week 9: Theme Toggle & Performance
 
 #### Task 9.1: Implement Light/Dark Theme Toggle (2 days)
+
 **Priority:** Medium
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 16 hours
@@ -720,7 +742,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const root = document.documentElement;
 
     if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
       setResolvedTheme(systemTheme);
       root.setAttribute('data-theme', systemTheme);
     } else {
@@ -818,6 +842,7 @@ export function ThemeToggle() {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Theme toggle visible in admin navigation
 - [ ] Light theme uses white backgrounds, dark text
 - [ ] Dark theme uses navy backgrounds, light text
@@ -827,6 +852,7 @@ export function ThemeToggle() {
 - [ ] All components adapt to theme
 
 **Testing Checklist:**
+
 - [ ] Functional test: toggle between light/dark/system
 - [ ] Persistence test: theme persists on refresh
 - [ ] System test: follows OS dark mode setting
@@ -838,6 +864,7 @@ export function ThemeToggle() {
 ---
 
 #### Task 9.2: Performance Optimization (1.5 days)
+
 **Priority:** Medium
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 12 hours
@@ -941,6 +968,7 @@ npm run analyze
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Initial bundle size <500KB (gzipped)
 - [ ] Route chunks <200KB each
 - [ ] Time to Interactive <3s on 3G
@@ -949,6 +977,7 @@ npm run analyze
 - [ ] Images lazy loaded below fold
 
 **Testing Checklist:**
+
 - [ ] Performance test: Lighthouse audit
 - [ ] Bundle test: bundle size analysis
 - [ ] Network test: 3G throttling test
@@ -994,17 +1023,20 @@ npm run analyze
 ## Testing Strategy for Phase 3
 
 ### Accessibility Testing
+
 - Automated: axe DevTools, Lighthouse
 - Manual: keyboard navigation test
 - Screen reader: VoiceOver (macOS/iOS), NVDA (Windows)
 - User testing: test with users with disabilities
 
 ### Responsive Testing
+
 - Device lab: iPhone SE, iPhone 14, iPad, Android phones/tablets
 - Browser DevTools: responsive mode at key breakpoints
 - Real devices: borrow or rent devices for testing
 
 ### Performance Testing
+
 - Lighthouse CI: automated performance audits
 - WebPageTest: 3G throttling tests
 - Bundle analysis: monitor bundle size over time
@@ -1013,20 +1045,21 @@ npm run analyze
 
 ## Success Metrics (Phase 3)
 
-| Metric | Before Phase 3 | After Phase 3 | Target |
-|--------|----------------|---------------|--------|
-| WCAG AA Compliance | ~60% | 95%+ | 95%+ |
-| Lighthouse Accessibility Score | 75 | 98 | 95+ |
-| Mobile Admin Usability | 20% | 90% | 90% |
-| Keyboard Navigation | 40% | 100% | 100% |
-| Lighthouse Performance Score | 75 | 92 | 90+ |
-| Mobile Users (Admin) | 5% | 40% | 30%+ |
+| Metric                         | Before Phase 3 | After Phase 3 | Target |
+| ------------------------------ | -------------- | ------------- | ------ |
+| WCAG AA Compliance             | ~60%           | 95%+          | 95%+   |
+| Lighthouse Accessibility Score | 75             | 98            | 95+    |
+| Mobile Admin Usability         | 20%            | 90%           | 90%    |
+| Keyboard Navigation            | 40%            | 100%          | 100%   |
+| Lighthouse Performance Score   | 75             | 92            | 90+    |
+| Mobile Users (Admin)           | 5%             | 40%           | 30%+   |
 
 ---
 
 ## Next Steps
 
 After completing Phase 3:
+
 1. ✅ Deploy all Phase 3 changes to production
 2. 📊 Measure success metrics (1 week monitoring)
 3. 🐛 Bug fixing period (2-3 days)

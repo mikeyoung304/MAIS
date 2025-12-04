@@ -2,11 +2,11 @@
 
 ## Three-Layer Defense Summary
 
-| Layer | Threat | Solution | Key File |
-|-------|--------|----------|----------|
-| **1** | PHP/exe upload disguised as image | Magic byte detection + MIME verification | `upload.service.ts:validateFile()` |
-| **2** | Cross-tenant image enumeration | Signed URLs (tokens) + private bucket | `upload.service.ts:uploadToSupabase()` |
-| **3** | Orphaned files after deletion | Automatic cleanup with tenant validation | `upload.service.ts:deleteSegmentImage()` + `segment.service.ts:deleteSegment()` |
+| Layer | Threat                            | Solution                                 | Key File                                                                        |
+| ----- | --------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------- |
+| **1** | PHP/exe upload disguised as image | Magic byte detection + MIME verification | `upload.service.ts:validateFile()`                                              |
+| **2** | Cross-tenant image enumeration    | Signed URLs (tokens) + private bucket    | `upload.service.ts:uploadToSupabase()`                                          |
+| **3** | Orphaned files after deletion     | Automatic cleanup with tenant validation | `upload.service.ts:deleteSegmentImage()` + `segment.service.ts:deleteSegment()` |
 
 ---
 
@@ -45,10 +45,10 @@ private async validateFile(file: UploadedFile, maxSizeMB?: number): Promise<void
 // In Supabase mode: create private bucket + signed URL
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 const { data: signedUrlData } = await supabase.storage
-  .from('images')  // ✅ Private bucket
+  .from('images') // ✅ Private bucket
   .createSignedUrl(storagePath, ONE_YEAR_SECONDS);
 
-return { url: signedUrlData.signedUrl };  // ✅ Includes token
+return { url: signedUrlData.signedUrl }; // ✅ Includes token
 ```
 
 ### Delete with Tenant Validation (Layer 3)
@@ -148,6 +148,7 @@ npm run --workspace=server build
 ### "Supabase storage file not found"
 
 Likely causes:
+
 1. Bucket is public instead of private → reconfigure
 2. File path doesn't match stored path → verify `tenantId/folder/filename` format
 3. Signed URL expired → regenerate with longer TTL
@@ -155,6 +156,7 @@ Likely causes:
 ### "Cross-tenant deletion blocked"
 
 Expected behavior - security feature working correctly. Check:
+
 1. Is tenantId correct in request?
 2. Does image belong to different tenant?
 3. Log should show which tenantId was blocked
@@ -163,11 +165,11 @@ Expected behavior - security feature working correctly. Check:
 
 ## Files to Review
 
-| File | Purpose | Lines |
-|------|---------|-------|
-| `server/src/services/upload.service.ts` | All three layers implemented | 1-496 |
-| `server/src/services/segment.service.ts` | Cleanup integration | 259-285 |
-| `server/test/services/upload.service.test.ts` | 841 passing tests | 749-970 |
+| File                                          | Purpose                      | Lines   |
+| --------------------------------------------- | ---------------------------- | ------- |
+| `server/src/services/upload.service.ts`       | All three layers implemented | 1-496   |
+| `server/src/services/segment.service.ts`      | Cleanup integration          | 259-285 |
+| `server/test/services/upload.service.test.ts` | 841 passing tests            | 749-970 |
 
 ---
 
@@ -193,6 +195,7 @@ Expected behavior - security feature working correctly. Check:
 ## Compliance
 
 Addresses:
+
 - OWASP: Unrestricted File Upload (A4:2021)
 - CWE-434: Unrestricted Upload of File with Dangerous Type
 - Multi-tenant data isolation requirements

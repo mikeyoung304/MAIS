@@ -3,11 +3,7 @@
  */
 
 import type { PrismaClient } from '../../generated/prisma';
-import type {
-  ServiceRepository,
-  CreateServiceInput,
-  UpdateServiceInput,
-} from '../lib/ports';
+import type { ServiceRepository, CreateServiceInput, UpdateServiceInput } from '../lib/ports';
 import type { Service } from '../lib/entities';
 import { DomainError } from '../lib/errors';
 import { logger } from '../lib/core/logger';
@@ -21,10 +17,7 @@ export class PrismaServiceRepository implements ServiceRepository {
         tenantId,
         ...(includeInactive ? {} : { active: true }),
       },
-      orderBy: [
-        { sortOrder: 'asc' },
-        { createdAt: 'asc' },
-      ],
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
     return services.map(this.toDomainService);
@@ -36,10 +29,7 @@ export class PrismaServiceRepository implements ServiceRepository {
         tenantId,
         active: true,
       },
-      orderBy: [
-        { sortOrder: 'asc' },
-        { createdAt: 'asc' },
-      ],
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
     return services.map(this.toDomainService);
@@ -69,10 +59,13 @@ export class PrismaServiceRepository implements ServiceRepository {
     });
 
     if (existing) {
-      logger.warn({
-        tenantId,
-        slug: data.slug,
-      }, 'Service creation failed - duplicate slug');
+      logger.warn(
+        {
+          tenantId,
+          slug: data.slug,
+        },
+        'Service creation failed - duplicate slug'
+      );
       throw new DomainError('DUPLICATE_SLUG', `Service with slug '${data.slug}' already exists`);
     }
 
@@ -97,11 +90,14 @@ export class PrismaServiceRepository implements ServiceRepository {
         },
       });
 
-      logger.info({
-        tenantId,
-        serviceId: service.id,
-        slug: service.slug,
-      }, 'Service created');
+      logger.info(
+        {
+          tenantId,
+          serviceId: service.id,
+          slug: service.slug,
+        },
+        'Service created'
+      );
 
       return this.toDomainService(service);
     } catch (error) {
@@ -130,11 +126,14 @@ export class PrismaServiceRepository implements ServiceRepository {
       });
 
       if (duplicateSlug) {
-        logger.warn({
-          tenantId,
-          id,
-          slug: data.slug,
-        }, 'Service update failed - duplicate slug');
+        logger.warn(
+          {
+            tenantId,
+            id,
+            slug: data.slug,
+          },
+          'Service update failed - duplicate slug'
+        );
         throw new DomainError('DUPLICATE_SLUG', `Service with slug '${data.slug}' already exists`);
       }
     }
@@ -156,11 +155,14 @@ export class PrismaServiceRepository implements ServiceRepository {
         },
       });
 
-      logger.info({
-        tenantId,
-        serviceId: service.id,
-        updatedFields: Object.keys(data),
-      }, 'Service updated');
+      logger.info(
+        {
+          tenantId,
+          serviceId: service.id,
+          updatedFields: Object.keys(data),
+        },
+        'Service updated'
+      );
 
       return this.toDomainService(service);
     } catch (error) {

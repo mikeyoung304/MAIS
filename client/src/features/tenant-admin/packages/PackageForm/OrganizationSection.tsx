@@ -1,19 +1,19 @@
-import { Label } from "@/components/ui/label";
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import type { PackageFormData } from "../hooks/usePackageForm";
-import type { SegmentDto } from "@macon/contracts";
+} from '@/components/ui/select';
+import type { PackageFormData } from '../hooks/usePackageForm';
+import type { SegmentDto } from '@macon/contracts';
 
 /** Tier levels for the 3-tier pricing model */
 const TIER_OPTIONS = [
-  { value: "budget", label: "Budget (Essential)", order: 0 },
-  { value: "middle", label: "Middle (Popular)", order: 1 },
-  { value: "luxury", label: "Luxury (Premium)", order: 2 },
+  { value: 'budget', label: 'Budget (Essential)', order: 0 },
+  { value: 'middle', label: 'Middle (Popular)', order: 1 },
+  { value: 'luxury', label: 'Luxury (Premium)', order: 2 },
 ] as const;
 
 interface OrganizationSectionProps {
@@ -48,14 +48,14 @@ export function OrganizationSection({
    * Handle tier selection - also sets the groupingOrder automatically
    */
   const handleTierChange = (value: string) => {
-    if (value === "none") {
-      setForm({ ...form, grouping: "", groupingOrder: "" });
+    if (value === 'none') {
+      setForm({ ...form, grouping: '', groupingOrder: '' });
     } else {
-      const tier = TIER_OPTIONS.find(t => t.value === value);
+      const tier = TIER_OPTIONS.find((t) => t.value === value);
       setForm({
         ...form,
         grouping: value,
-        groupingOrder: tier ? String(tier.order) : "",
+        groupingOrder: tier ? String(tier.order) : '',
       });
     }
   };
@@ -70,19 +70,21 @@ export function OrganizationSection({
           Customer Segment {requireSegment && <span className="text-red-400">*</span>}
         </Label>
         <Select
-          value={form.segmentId || "none"}
-          onValueChange={(value) =>
-            setForm({ ...form, segmentId: value === "none" ? "" : value })
-          }
+          value={form.segmentId || 'none'}
+          onValueChange={(value) => setForm({ ...form, segmentId: value === 'none' ? '' : value })}
           disabled={isSaving || isLoadingSegments}
         >
           <SelectTrigger
             id="segmentId"
             className={`bg-macon-navy-900 border-white/20 text-white h-12 ${
-              requireSegment && !form.segmentId ? "border-red-400/50" : ""
+              requireSegment && !form.segmentId ? 'border-red-400/50' : ''
             }`}
           >
-            <SelectValue placeholder={requireSegment ? "Select a segment (required)" : "Select a segment (optional)"} />
+            <SelectValue
+              placeholder={
+                requireSegment ? 'Select a segment (required)' : 'Select a segment (optional)'
+              }
+            />
           </SelectTrigger>
           <SelectContent>
             {!requireSegment && <SelectItem value="none">None (Root level)</SelectItem>}
@@ -95,8 +97,8 @@ export function OrganizationSection({
         </Select>
         <p className="text-sm text-white/50">
           {requireSegment
-            ? "Package must be assigned to a segment"
-            : "Which customer type is this package for?"}
+            ? 'Package must be assigned to a segment'
+            : 'Which customer type is this package for?'}
         </p>
       </div>
 
@@ -106,7 +108,7 @@ export function OrganizationSection({
           Pricing Tier
         </Label>
         <Select
-          value={form.grouping || "none"}
+          value={form.grouping || 'none'}
           onValueChange={handleTierChange}
           disabled={isSaving}
         >
@@ -131,13 +133,16 @@ export function OrganizationSection({
       </div>
 
       {/* Tier Info Banner */}
-      {form.grouping && TIER_OPTIONS.some(t => t.value === form.grouping) && (
+      {form.grouping && TIER_OPTIONS.some((t) => t.value === form.grouping) && (
         <div className="p-3 bg-macon-orange/10 border border-macon-orange/20 rounded-lg">
           <p className="text-sm text-white/80">
-            <span className="font-medium text-macon-orange">Tip:</span>{" "}
-            {form.grouping === "budget" && "Budget tier should be your most affordable option - the entry point for price-conscious customers."}
-            {form.grouping === "middle" && "Middle tier is highlighted as 'Most Popular' - this should be your best value for most customers."}
-            {form.grouping === "luxury" && "Luxury tier should be your premium offering - maximum features and personalization."}
+            <span className="font-medium text-macon-orange">Tip:</span>{' '}
+            {form.grouping === 'budget' &&
+              'Budget tier should be your most affordable option - the entry point for price-conscious customers.'}
+            {form.grouping === 'middle' &&
+              "Middle tier is highlighted as 'Most Popular' - this should be your best value for most customers."}
+            {form.grouping === 'luxury' &&
+              'Luxury tier should be your premium offering - maximum features and personalization.'}
           </p>
         </div>
       )}

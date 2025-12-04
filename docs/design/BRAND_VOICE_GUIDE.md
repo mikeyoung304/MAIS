@@ -135,14 +135,14 @@ Loading: [spinner only, no text]
 
 ## Words to Use
 
-| Use | Instead of |
-|-----|------------|
-| book | schedule, reserve |
-| clients | customers, users |
-| craft | work, job, services |
+| Use                    | Instead of                      |
+| ---------------------- | ------------------------------- |
+| book                   | schedule, reserve               |
+| clients                | customers, users                |
+| craft                  | work, job, services             |
 | creative professionals | small businesses, entrepreneurs |
-| platform | software, tool, solution |
-| instantly | automatically, seamlessly |
+| platform               | software, tool, solution        |
+| instantly              | automatically, seamlessly       |
 
 ## Words to Avoid
 
@@ -177,19 +177,19 @@ Loading: [spinner only, no text]
 
 ```tsx
 // Backgrounds (in order of usage)
-bg-white          // Primary
-bg-neutral-50     // Alternating sections
-bg-sage           // CTA sections only
+bg - white; // Primary
+bg - neutral - 50; // Alternating sections
+bg - sage; // CTA sections only
 
 // Text
-text-text-primary  // Headlines, important text
-text-text-muted    // Body copy
-text-sage          // Accents, links
-text-white         // On dark backgrounds
+text - text - primary; // Headlines, important text
+text - text - muted; // Body copy
+text - sage; // Accents, links
+text - white; // On dark backgrounds
 
 // Accents
-bg-sage/10         // Subtle backgrounds
-ring-sage/20       // Focus states
+bg - sage / 10; // Subtle backgrounds
+ring - sage / 20; // Focus states
 ```
 
 ### Typography Scale
@@ -266,9 +266,7 @@ transition-all duration-200
     </div>
 
     {/* Content */}
-    <div className="max-w-5xl mx-auto">
-      {/* Cards, features, etc. */}
-    </div>
+    <div className="max-w-5xl mx-auto">{/* Cards, features, etc. */}</div>
   </Container>
 </section>
 ```
@@ -276,8 +274,10 @@ transition-all duration-200
 ### Card Pattern
 
 ```tsx
-<div className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100
-                transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+<div
+  className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100
+                transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+>
   {/* Content */}
 </div>
 ```
@@ -317,8 +317,10 @@ transition-all duration-200
 
 ```tsx
 // Use sparingly - one or two per section max
-<div className="absolute top-1/4 right-[15%] w-96 h-96 bg-sage/8 rounded-full blur-3xl"
-     style={{ animation: 'pulse 6s ease-in-out infinite' }} />
+<div
+  className="absolute top-1/4 right-[15%] w-96 h-96 bg-sage/8 rounded-full blur-3xl"
+  style={{ animation: 'pulse 6s ease-in-out infinite' }}
+/>
 ```
 
 ---
@@ -363,6 +365,7 @@ transition-all duration-200
 Before shipping any new page or component:
 
 ### Copy
+
 - [ ] Headlines are 3-6 words with periods
 - [ ] No hype words (revolutionary, amazing, etc.)
 - [ ] No qualifiers (really, very, just)
@@ -371,6 +374,7 @@ Before shipping any new page or component:
 - [ ] Active voice throughout
 
 ### Design
+
 - [ ] Section spacing is py-32 md:py-40 minimum
 - [ ] Max-width constraints applied to all content
 - [ ] Sage used as accent only (not primary background except CTA)
@@ -380,6 +384,7 @@ Before shipping any new page or component:
 - [ ] No more than 2 ambient blur elements per section
 
 ### Accessibility
+
 - [ ] All sections have aria-labelledby
 - [ ] Form inputs have aria-label
 - [ ] Focus states are visible (ring-4)
@@ -390,35 +395,43 @@ Before shipping any new page or component:
 ## Examples from Current Landing Page
 
 ### Hero Headline
+
 ```
 Book more clients.
 Build your business.
 ```
-*Why it works: Transformation promise, parallel structure, periods for confidence*
+
+_Why it works: Transformation promise, parallel structure, periods for confidence_
 
 ### Problem Section
+
 ```
 You're a photographer, not a bookkeeper.
 
 But somewhere between the Instagram DM and the final gallery delivery,
 you became both.
 ```
-*Why it works: Identity statement, specific details (Instagram DM, gallery delivery), empathy without dwelling*
+
+_Why it works: Identity statement, specific details (Instagram DM, gallery delivery), empathy without dwelling_
 
 ### Solution Section
+
 ```
 One link. Complete booking system.
 
 Your clients choose a package, pick a date, and pay—all in one flow.
 You get a text when someone books. That's it.
 ```
-*Why it works: Clear value prop, client benefit, outcome focus, confidence ("That's it.")*
+
+_Why it works: Clear value prop, client benefit, outcome focus, confidence ("That's it.")_
 
 ### CTA
+
 ```
 Ready to get back to your craft?
 ```
-*Why it works: Question format creates momentum, echoes their core desire*
+
+_Why it works: Question format creates momentum, echoes their core desire_
 
 ---
 
@@ -429,4 +442,4 @@ Ready to get back to your craft?
 3. **When in doubt, remove** - Apple's mantra applies here
 4. **Show, don't tell** - if you have to explain quality, you've lost
 
-*Last updated: December 2025*
+_Last updated: December 2025_

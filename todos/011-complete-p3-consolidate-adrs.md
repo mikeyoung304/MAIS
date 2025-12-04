@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "011"
+issue_id: '011'
 tags: [documentation, cleanup, architecture]
 dependencies: []
 ---
@@ -11,6 +11,7 @@ dependencies: []
 ## Problem Statement
 
 The project has two separate ADR (Architecture Decision Record) locations with different numbering schemes and formats:
+
 1. `/DECISIONS/` (root) - 2 ADRs, minimal format (300 bytes each)
 2. `/docs/adrs/` - 4+ ADRs, comprehensive format (5,000+ bytes each)
 
@@ -40,6 +41,7 @@ This creates confusion about where ADRs should be documented.
 ## Current State
 
 **docs/adrs/ contents (verified 2025-12-03):**
+
 - ADR-001: Adopt Diataxis Framework (documentation)
 - ADR-002: Documentation Naming Standards (documentation)
 - ADR-003: Sprint Documentation Lifecycle (documentation)
@@ -55,6 +57,7 @@ This creates confusion about where ADRs should be documented.
 - ADR-013: PostgreSQL Advisory Locks (active, technical)
 
 **Root DECISIONS.md:**
+
 - Serves as comprehensive index
 - Contains quick reference by category
 - Decision process documentation
@@ -63,15 +66,16 @@ This creates confusion about where ADRs should be documented.
 
 ## Work Log
 
-| Date | Status | Action |
-|------|--------|--------|
-| 2025-11-24 | Created | Two ADR locations identified |
+| Date       | Status      | Action                                    |
+| ---------- | ----------- | ----------------------------------------- |
+| 2025-11-24 | Created     | Two ADR locations identified              |
 | 2025-12-02 | In Progress | Consolidated ADRs from multiple locations |
-| 2025-12-03 | Complete | Verified consolidation, documented status |
+| 2025-12-03 | Complete    | Verified consolidation, documented status |
 
 ## Follow-Up Work
 
 The following ADRs remain as potential future work (marked as "Solution 3" in original TODO):
+
 - ADR-014: Multi-Tenant Data Isolation Strategy
 - ADR-015: Dependency Injection Container Pattern
 - ADR-016: ts-rest Contract-First API Design
@@ -82,6 +86,7 @@ These were not required for this consolidation task but should be considered for
 ## Notes
 
 The consolidation approach chosen (Solution 1) was optimal for the current state:
+
 - Low effort implementation
 - Clear single source of truth
 - Comprehensive ADR index

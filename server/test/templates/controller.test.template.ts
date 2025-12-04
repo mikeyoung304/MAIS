@@ -433,9 +433,7 @@ describe('GET /v1/[resource]', () => {
      */
     it('returns 401 when API key is missing', async () => {
       // Act & Assert
-      const res = await request(app)
-        .get('/v1/[resource]')
-        .expect(401);
+      const res = await request(app).get('/v1/[resource]').expect(401);
 
       expect(res.body).toHaveProperty('error');
       expect(res.body.error).toContain('authentication');
@@ -462,10 +460,7 @@ describe('GET /v1/[resource]', () => {
       const inactiveTenantKey = 'pk_test_inactive';
 
       // Act & Assert
-      await request(app)
-        .get('/v1/[resource]')
-        .set('X-Tenant-Key', inactiveTenantKey)
-        .expect(403);
+      await request(app).get('/v1/[resource]').set('X-Tenant-Key', inactiveTenantKey).expect(403);
     });
   });
 
@@ -496,7 +491,7 @@ describe('GET /v1/[resource]', () => {
     /**
      * Multi-tenancy: Cannot access other tenant's resources
      */
-    it('returns 404 when accessing another tenant\'s resource', async () => {
+    it("returns 404 when accessing another tenant's resource", async () => {
       // TODO: Create resource for different tenant
       const otherTenantResourceId = 'resource_other_tenant';
 
@@ -529,10 +524,7 @@ describe('GET /v1/[resource]', () => {
      */
     it('returns 405 for unsupported HTTP method', async () => {
       // Act & Assert: Try to PATCH list endpoint (if not supported)
-      await request(app)
-        .patch('/v1/[resource]')
-        .set('X-Tenant-Key', testTenantApiKey)
-        .expect(405);
+      await request(app).patch('/v1/[resource]').set('X-Tenant-Key', testTenantApiKey).expect(405);
     });
 
     /**

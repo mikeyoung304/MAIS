@@ -351,7 +351,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Error Handling & Validation** - 19/19 tests passed (100%)
   - File size limits (5MB max)
-  - File type validation (image/* only)
+  - File type validation (image/\* only)
   - Photo count limits (5 max per package)
   - Missing field detection
   - Edge case handling
@@ -512,6 +512,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Automatic cleanup prevents test pollution
 
 ### Added
+
 - Webhook event deduplication and tracking with PostgreSQL persistence
 - Race condition prevention for concurrent bookings using SERIALIZABLE transactions
 - Webhook secret rotation mechanism for security compliance
@@ -530,6 +531,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Postmark email notifications with file-sink fallback for development
 
 ### Changed
+
 - **Documentation Structure**: Reorganized 70+ documentation files into structured `/docs` directory
   - Created 9 category subdirectories (setup, api, operations, security, architecture, multi-tenant, phases, roadmaps, archive)
   - Added navigation README files in each category for improved discoverability
@@ -546,6 +548,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced webhook processing with Zod validation instead of raw JSON.parse()
 
 ### Fixed
+
 - Memory leaks in React admin components (missing setTimeout cleanup)
 - Race condition in concurrent booking attempts via pessimistic locking
 - Missing database indexes causing slow queries on high-traffic tables
@@ -556,6 +559,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Duplicate booking detection edge cases
 
 ### Security
+
 - Implemented webhook signature verification with Stripe
 - Added secret rotation support for webhook endpoints
 - Enabled raw body parsing for webhook security validation
@@ -565,6 +569,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2024-XX-XX
 
 ### Added
+
 - Initial MVP release
 - Wedding booking system with customizable packages
 - Add-ons selection for enhanced packages

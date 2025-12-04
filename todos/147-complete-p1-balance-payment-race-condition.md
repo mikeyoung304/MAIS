@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "147"
+issue_id: '147'
 tags: [code-review, data-integrity, mvp-gaps, balance-payment]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The `onBalancePaymentCompleted` method has no transaction protection. Concurrent balance payment webhooks can result in double balance payments being recorded.
 
 **Why This Matters:**
+
 - Customer charged twice for same balance
 - Financial discrepancy in records
 - Reconciliation nightmare with Stripe
@@ -24,6 +25,7 @@ The `onBalancePaymentCompleted` method has no transaction protection. Concurrent
 **Location:** `server/src/services/booking.service.ts:389-418`
 
 **Evidence:**
+
 ```typescript
 async onBalancePaymentCompleted(
   tenantId: string,
@@ -47,6 +49,7 @@ async onBalancePaymentCompleted(
 ```
 
 **Race Condition Scenario:**
+
 ```
 Time  |  Request A                    |  Request B
 ------|-------------------------------|---------------------------
@@ -60,6 +63,7 @@ T5    |  RESULT: Double payment!      |
 ## Proposed Solutions
 
 ### Option A: Transaction with Advisory Lock (Recommended)
+
 **Pros:** Proven pattern in codebase, prevents race
 **Cons:** Slightly more complex
 **Effort:** Medium (3-4 hours)
@@ -81,6 +85,7 @@ await this.prisma.$transaction(async (tx) => {
 ```
 
 ### Option B: Unique Constraint
+
 **Pros:** Database-level protection
 **Cons:** Error handling required
 **Effort:** Small
@@ -97,6 +102,7 @@ await this.prisma.$transaction(async (tx) => {
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/services/booking.service.ts`
 
 **Components:** Balance payment completion
@@ -110,8 +116,8 @@ await this.prisma.$transaction(async (tx) => {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                     |
+| ---------- | ------- | ------------------------- |
 | 2025-12-02 | Created | From MVP gaps code review |
 
 ## Resources

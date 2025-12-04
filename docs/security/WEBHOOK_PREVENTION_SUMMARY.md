@@ -13,9 +13,11 @@ This security package contains comprehensive prevention strategies for **P0 Secu
 ## Documents Included
 
 ### 1. WEBHOOK_ERROR_LOGGING_PREVENTION.md (Full Reference)
+
 **Purpose:** Complete prevention guide with detailed patterns and implementation examples
 
 **Contains:**
+
 - Issue summary and impact analysis
 - 4 comprehensive prevention strategies with code examples
 - Code review checklist (20+ items)
@@ -27,6 +29,7 @@ This security package contains comprehensive prevention strategies for **P0 Secu
 **Audience:** Developers, reviewers, architects
 
 **Use Cases:**
+
 - Implementing new webhook handlers
 - Code reviews of error handling logic
 - Training new team members
@@ -35,9 +38,11 @@ This security package contains comprehensive prevention strategies for **P0 Secu
 ---
 
 ### 2. WEBHOOK_ERROR_PREVENTION_CHECKLIST.md (Quick Reference)
+
 **Purpose:** Print-and-pin quick reference for daily development
 
 **Contains:**
+
 - Golden rule: never store raw validation errors in DB
 - Error storage rules matrix
 - Code patterns to check (3 common patterns)
@@ -52,6 +57,7 @@ This security package contains comprehensive prevention strategies for **P0 Secu
 **Format:** Print-friendly, terse, actionable
 
 **Use Cases:**
+
 - Pre-commit verification
 - Code review walkthrough
 - Team onboarding
@@ -60,9 +66,11 @@ This security package contains comprehensive prevention strategies for **P0 Secu
 ---
 
 ### 3. WEBHOOK_ERROR_PREVENTION_FINDINGS.md (Current Implementation Review)
+
 **Purpose:** Document the issue, the fix, and lessons learned
 
 **Contains:**
+
 - Issue overview and root cause analysis
 - Before/after code snippets
 - Impact analysis (data at risk, affected tenants)
@@ -77,6 +85,7 @@ This security package contains comprehensive prevention strategies for **P0 Secu
 **Format:** Executive summary + technical detail
 
 **Use Cases:**
+
 - Security incident documentation
 - Post-mortem analysis
 - Compliance reporting
@@ -85,9 +94,11 @@ This security package contains comprehensive prevention strategies for **P0 Secu
 ---
 
 ### 4. webhook-pii-leak-detection.security.spec.ts (Automated Tests)
+
 **Purpose:** Security test suite to detect PII leakage automatically
 
 **Contains:**
+
 - 11 comprehensive security tests
 - Email PII leak detection (2 tests)
 - Customer name leak detection (2 tests)
@@ -99,6 +110,7 @@ This security package contains comprehensive prevention strategies for **P0 Secu
 **Test Results:** ALL PASSING (11/11)
 
 **Critical Tests:**
+
 ```
 ✓ Email PII prevention
 ✓ Name PII prevention
@@ -110,6 +122,7 @@ This security package contains comprehensive prevention strategies for **P0 Secu
 ```
 
 **Run Tests:**
+
 ```bash
 npm test -- test/security/webhook-pii-leak-detection.security.spec.ts --workspace=server
 ```
@@ -119,12 +132,14 @@ npm test -- test/security/webhook-pii-leak-detection.security.spec.ts --workspac
 ## How to Use This Package
 
 ### For Code Reviews
+
 1. Print `WEBHOOK_ERROR_PREVENTION_CHECKLIST.md`
 2. Use during webhook code review
 3. Run detection commands (copy-paste from checklist)
 4. Verify test suite passes
 
 ### For New Webhook Handlers
+
 1. Read prevention strategies in FULL guide
 2. Follow code patterns shown
 3. Implement tests similar to security test suite
@@ -132,12 +147,14 @@ npm test -- test/security/webhook-pii-leak-detection.security.spec.ts --workspac
 5. Merge and celebrate
 
 ### For Compliance/Audit
+
 1. Review `WEBHOOK_ERROR_PREVENTION_FINDINGS.md`
 2. Run PII leak detection tests
 3. Run detection commands across codebase
 4. Document findings in compliance report
 
 ### For Team Training
+
 1. Share `WEBHOOK_ERROR_PREVENTION_CHECKLIST.md` (print)
 2. Walkthrough with full guide
 3. Review test suite to show examples
@@ -148,6 +165,7 @@ npm test -- test/security/webhook-pii-leak-detection.security.spec.ts --workspac
 ## Prevention Strategies at a Glance
 
 ### Strategy 1: Error Type Classification
+
 Never store raw error details. Always classify errors into safe, abstract types.
 
 ```typescript
@@ -160,9 +178,11 @@ await repo.markFailed(tenantId, id, 'Validation failed');
 ```
 
 ### Strategy 2: Data Sensitivity Audit
+
 Before storing ANY error in DB, audit for PII (email, names, addresses, payment info, API keys, secrets).
 
 ### Strategy 3: Error Schema Contracts
+
 Use TypeScript to compile-time enforce safe error types.
 
 ```typescript
@@ -172,6 +192,7 @@ async markFailed(tenantId: string, eventId: string, error: SafeWebhookError): Pr
 ```
 
 ### Strategy 4: Separation of Concerns
+
 - Server logs (ephemeral): Full details OK
 - Database (persistent): Only abstract types
 - Monitoring (aggregated): No request data
@@ -182,6 +203,7 @@ async markFailed(tenantId: string, eventId: string, error: SafeWebhookError): Pr
 ## Quick Start Checklist
 
 ### Before Next Release
+
 - [ ] Read this summary
 - [ ] Review WEBHOOK_ERROR_LOGGING_PREVENTION.md
 - [ ] Print WEBHOOK_ERROR_PREVENTION_CHECKLIST.md
@@ -190,12 +212,14 @@ async markFailed(tenantId: string, eventId: string, error: SafeWebhookError): Pr
 - [ ] Run security tests: `npm test -- test/security/webhook-pii-leak*`
 
 ### For Each Code Review
+
 - [ ] Check error handling section with checklist
 - [ ] Run detection commands on changed files
 - [ ] Verify error types are abstract (not field-specific)
 - [ ] Confirm no `.flatten()` or `.message` to DB
 
 ### For New Webhook Handlers
+
 - [ ] Copy security test pattern
 - [ ] Add PII leak detection tests
 - [ ] Follow code patterns in full guide
@@ -206,13 +230,16 @@ async markFailed(tenantId: string, eventId: string, error: SafeWebhookError): Pr
 ## Key Files Referenced
 
 **Implementation (Fixed):**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/routes/webhooks.routes.ts` (lines 183-189, 197-204)
 - `/Users/mikeyoung/CODING/MAIS/server/src/adapters/prisma/webhook.repository.ts` (lines 190-206)
 
 **Schema:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/prisma/schema.prisma` (WebhookEvent.lastError, line 461)
 
 **Tests:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/test/security/webhook-pii-leak-detection.security.spec.ts`
 - `/Users/mikeyoung/CODING/MAIS/server/test/controllers/webhooks.controller.spec.ts`
 - `/Users/mikeyoung/CODING/MAIS/server/test/integration/webhook-repository.integration.spec.ts`
@@ -222,21 +249,23 @@ async markFailed(tenantId: string, eventId: string, error: SafeWebhookError): Pr
 ## Critical Rules
 
 ### NEVER:
+
 ```typescript
-error.flatten()                           // Exposes all validation details
-error.message                             // May contain request data
-JSON.stringify(error)                     // Exposes full error object
-result.error.issues                       // Zod issue array with details
-throw new Error(error.flatten())          // Propagates sensitive details
+error.flatten(); // Exposes all validation details
+error.message; // May contain request data
+JSON.stringify(error); // Exposes full error object
+result.error.issues; // Zod issue array with details
+throw new Error(error.flatten()); // Propagates sensitive details
 ```
 
 ### ALWAYS:
+
 ```typescript
-logger.error({ errors: result.error.flatten() }, 'Validation failed')  // Logs only
-await repo.markFailed(tenantId, id, 'Validation failed')              // Type only
+logger.error({ errors: result.error.flatten() }, 'Validation failed'); // Logs only
+await repo.markFailed(tenantId, id, 'Validation failed'); // Type only
 // Classify error into abstract type before storage
-const errorType = classifyError(error);                                // Safe type
-await repo.store(id, errorType);                                       // Persist type
+const errorType = classifyError(error); // Safe type
+await repo.store(id, errorType); // Persist type
 ```
 
 ---
@@ -244,21 +273,25 @@ await repo.store(id, errorType);                                       // Persis
 ## Detection Commands (Copy-Paste Ready)
 
 ### Find Zod flatten() usage:
+
 ```bash
 grep -rn "\.flatten()" server/src --include="*.ts"
 ```
 
 ### Find error message storage:
+
 ```bash
 grep -rn "markFailed\|lastError\|errorMessage" server/src --include="*.ts" -A 2
 ```
 
 ### Find validation error handling:
+
 ```bash
 grep -rn "safeParse\|parse(" server/src --include="*.ts" -A 5 | grep -E "update|create"
 ```
 
 ### Find error serialization:
+
 ```bash
 grep -rn "JSON.stringify.*error\|toString().*error" server/src --include="*.ts"
 ```
@@ -268,16 +301,19 @@ grep -rn "JSON.stringify.*error\|toString().*error" server/src --include="*.ts"
 ## Testing Strategy
 
 ### Unit Tests
+
 - Verify error messages don't expose field names
 - Verify abstract error types are used
 - Verify Zod errors are handled safely
 
 ### Integration Tests
+
 - Send invalid requests → verify abstract error stored
 - Send valid requests → verify no errors exposed
 - Verify email/names never in error column
 
 ### Security Tests
+
 ```bash
 npm test -- test/security/webhook-pii-leak-detection.security.spec.ts --workspace=server
 # Result: 11/11 PASSING
@@ -288,6 +324,7 @@ npm test -- test/security/webhook-pii-leak-detection.security.spec.ts --workspac
 ## Compliance & Audit
 
 This prevention strategy addresses:
+
 - **GDPR:** Data protection (PII handling)
 - **CCPA:** Customer privacy rights
 - **SOC 2:** Data security and access controls
@@ -320,6 +357,7 @@ This prevention strategy addresses:
 ## Support & Questions
 
 For questions or clarifications:
+
 1. Check `WEBHOOK_ERROR_PREVENTION_CHECKLIST.md` first
 2. Review full guide: `WEBHOOK_ERROR_LOGGING_PREVENTION.md`
 3. Check test examples in security test suite
@@ -332,4 +370,3 @@ For questions or clarifications:
 Last Updated: 2025-11-28
 Priority: P0 - Security Critical
 Status: Complete and Tested
-

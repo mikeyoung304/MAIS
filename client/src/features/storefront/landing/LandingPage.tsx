@@ -116,10 +116,12 @@ function ReviewSchema({ tenant }: { tenant: TenantPublicDto }) {
           name: t.name,
         },
         reviewBody: t.quote,
-        reviewRating: t.rating ? {
-          '@type': 'Rating',
-          ratingValue: t.rating,
-        } : undefined,
+        reviewRating: t.rating
+          ? {
+              '@type': 'Rating',
+              ratingValue: t.rating,
+            }
+          : undefined,
       })
     ),
     aggregateRating: {
@@ -183,12 +185,8 @@ function SegmentSelectorSection() {
       <Container className="py-12">
         <div className="text-center py-16 bg-neutral-50 rounded-xl border border-neutral-200">
           <AlertTriangle className="w-12 h-12 mx-auto text-neutral-300 mb-4" />
-          <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-            Something went wrong
-          </h3>
-          <p className="text-neutral-600">
-            Refresh to try again.
-          </p>
+          <h3 className="text-xl font-semibold text-neutral-900 mb-2">Something went wrong</h3>
+          <p className="text-neutral-600">Refresh to try again.</p>
         </div>
       </Container>
     );
@@ -219,7 +217,6 @@ function SegmentSelectorSection() {
             <SegmentCard key={segment.id} segment={segment} />
           ))}
         </ChoiceGrid>
-
       </Container>
     </section>
   );
@@ -232,19 +229,12 @@ function LandingPageContent({ tenant }: LandingPageProps) {
   const about = landingPage?.about;
 
   // Construct SEO metadata from landing page content
-  const pageTitle = hero?.headline
-    ? `${tenant.name} - ${hero.headline}`
-    : tenant.name;
+  const pageTitle = hero?.headline ? `${tenant.name} - ${hero.headline}` : tenant.name;
 
   const pageDescription =
-    hero?.subheadline ||
-    about?.description?.slice(0, 160) ||
-    `Welcome to ${tenant.name}`;
+    hero?.subheadline || about?.description?.slice(0, 160) || `Welcome to ${tenant.name}`;
 
-  const pageImage =
-    hero?.backgroundImageUrl ||
-    tenant.branding?.logoUrl ||
-    undefined;
+  const pageImage = hero?.backgroundImageUrl || tenant.branding?.logoUrl || undefined;
 
   // Set page metadata for SEO and social sharing
   usePageMeta({
@@ -270,47 +260,41 @@ function LandingPageContent({ tenant }: LandingPageProps) {
 
       <div className="landing-page">
         {/* Hero Section */}
-        {sections?.hero && landingPage?.hero && (
-          <HeroSection config={landingPage.hero} />
+        {sections?.hero && landingPage?.hero && <HeroSection config={landingPage.hero} />}
+
+        {/* Social Proof Bar */}
+        {sections?.socialProofBar && landingPage?.socialProofBar && (
+          <SocialProofBar config={landingPage.socialProofBar} />
         )}
 
-      {/* Social Proof Bar */}
-      {sections?.socialProofBar && landingPage?.socialProofBar && (
-        <SocialProofBar config={landingPage.socialProofBar} />
-      )}
+        {/* Segment Selector */}
+        {sections?.segmentSelector && <SegmentSelectorSection />}
 
-      {/* Segment Selector */}
-      {sections?.segmentSelector && <SegmentSelectorSection />}
+        {/* About Section */}
+        {sections?.about && landingPage?.about && <AboutSection config={landingPage.about} />}
 
-      {/* About Section */}
-      {sections?.about && landingPage?.about && (
-        <AboutSection config={landingPage.about} />
-      )}
+        {/* Testimonials Section */}
+        {sections?.testimonials && landingPage?.testimonials && (
+          <TestimonialsSection config={landingPage.testimonials} />
+        )}
 
-      {/* Testimonials Section */}
-      {sections?.testimonials && landingPage?.testimonials && (
-        <TestimonialsSection config={landingPage.testimonials} />
-      )}
+        {/* Accommodation Section */}
+        {sections?.accommodation && landingPage?.accommodation && (
+          <AccommodationSection config={landingPage.accommodation} />
+        )}
 
-      {/* Accommodation Section */}
-      {sections?.accommodation && landingPage?.accommodation && (
-        <AccommodationSection config={landingPage.accommodation} />
-      )}
+        {/* Gallery Section */}
+        {sections?.gallery && landingPage?.gallery && (
+          <GallerySection config={landingPage.gallery} />
+        )}
 
-      {/* Gallery Section */}
-      {sections?.gallery && landingPage?.gallery && (
-        <GallerySection config={landingPage.gallery} />
-      )}
+        {/* FAQ Section */}
+        {sections?.faq && landingPage?.faq && <FaqSection config={landingPage.faq} />}
 
-      {/* FAQ Section */}
-      {sections?.faq && landingPage?.faq && (
-        <FaqSection config={landingPage.faq} />
-      )}
-
-      {/* Final CTA Section */}
-      {sections?.finalCta && landingPage?.finalCta && (
-        <FinalCtaSection config={landingPage.finalCta} />
-      )}
+        {/* Final CTA Section */}
+        {sections?.finalCta && landingPage?.finalCta && (
+          <FinalCtaSection config={landingPage.finalCta} />
+        )}
       </div>
     </>
   );

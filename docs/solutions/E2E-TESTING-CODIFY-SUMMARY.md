@@ -16,6 +16,7 @@ This codify effort documents prevention strategies for three critical problems e
 3. **Test isolation and auth management issues** across multiple tests
 
 The solution prevents these issues through:
+
 - Environment-based rate limiter override (E2E_TEST env var)
 - Serial test execution with comprehensive coverage (7-10 tests minimum)
 - Auth token caching pattern with state cleanup helpers
@@ -31,20 +32,23 @@ The solution prevents these issues through:
 **Root Cause**: Rate limiters configured for production (5 signups/hour) applied equally to E2E tests
 
 **Solution**:
+
 - Add `E2E_TEST` environment variable check in rate limiter
 - Set `E2E_TEST=1` in Playwright webServer config
 - Use higher test limits (100 vs 5)
 
 **Implementation** (`server/src/middleware/rateLimiter.ts`):
+
 ```typescript
 const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.E2E_TEST === '1';
 
 export const signupLimiter = rateLimit({
-  max: isTestEnvironment ? 100 : 5,  // ← Environment-based override
+  max: isTestEnvironment ? 100 : 5, // ← Environment-based override
 });
 ```
 
 **Configuration** (`e2e/playwright.config.ts`):
+
 ```typescript
 webServer: {
   command: 'E2E_TEST=1 ADAPTERS_PRESET=real npm run dev:e2e',
@@ -61,28 +65,31 @@ webServer: {
 **Root Cause**: No clear pattern for E2E test suite design (how many tests? what to test?)
 
 **Solution**:
+
 - Create 7-10 tests per feature minimum
 - Use serial execution for shared state
 - Cover happy path, field validation, persistence, bulk operations, loading states, edge cases
 
 **Implementation** (`e2e/tests/visual-editor.spec.ts`):
+
 ```typescript
 test.describe.configure({ mode: 'serial' });
 
 test.describe('Visual Editor', () => {
-  test('1. loads dashboard', async ({ page }) => { });
-  test('2. edits title inline', async ({ page }) => { });
-  test('3. edits price inline', async ({ page }) => { });
-  test('4. edits description', async ({ page }) => { });
-  test('5. auto-saves and persists', async ({ page }) => { });
-  test('6. publishes all drafts', async ({ page }) => { });
-  test('7. discards all drafts', async ({ page }) => { });
-  test('8. shows loading states', async ({ page }) => { });
-  test('9. handles escape key', async ({ page }) => { });
+  test('1. loads dashboard', async ({ page }) => {});
+  test('2. edits title inline', async ({ page }) => {});
+  test('3. edits price inline', async ({ page }) => {});
+  test('4. edits description', async ({ page }) => {});
+  test('5. auto-saves and persists', async ({ page }) => {});
+  test('6. publishes all drafts', async ({ page }) => {});
+  test('7. discards all drafts', async ({ page }) => {});
+  test('8. shows loading states', async ({ page }) => {});
+  test('9. handles escape key', async ({ page }) => {});
 });
 ```
 
 **Test Coverage Pattern**:
+
 - 1 test: Happy path (basic functionality)
 - 2-4 tests: Field-specific testing (text, number, multiline)
 - 1 test: Data persistence (reload verification)
@@ -99,11 +106,13 @@ test.describe('Visual Editor', () => {
 **Root Cause**: Each test doing independent signup (rate limited) vs tests sharing state without cleanup
 
 **Solution**:
+
 - Cache auth token on first signup, reuse across tests
 - Implement cleanup helpers to reset state at START of each test
 - Use unique email addresses (timestamp + random) to avoid conflicts
 
 **Token Caching** (`e2e/tests/visual-editor.spec.ts`):
+
 ```typescript
 let authToken: string | null = null;
 let isSetup = false;
@@ -133,12 +142,13 @@ async function ensureLoggedIn(page: Page): Promise<void> {
 ```
 
 **State Cleanup** (`e2e/tests/visual-editor.spec.ts`):
+
 ```typescript
 async function discardDraftsIfAny(page: Page): Promise<void> {
   const discardButton = page.getByRole('button', { name: /Discard/i }).first();
   const isVisible = await discardButton.isVisible().catch(() => false);
 
-  if (isVisible && await discardButton.isEnabled().catch(() => false)) {
+  if (isVisible && (await discardButton.isEnabled().catch(() => false))) {
     await discardButton.click();
     const confirmButton = page.getByRole('button', { name: /Discard All/i });
     if (await confirmButton.isVisible().catch(() => false)) {
@@ -151,7 +161,7 @@ async function discardDraftsIfAny(page: Page): Promise<void> {
 test('some test', async ({ page }) => {
   await ensureLoggedIn(page);
   await goToVisualEditor(page);
-  await discardDraftsIfAny(page);  // ← Reset state first
+  await discardDraftsIfAny(page); // ← Reset state first
   // Test assertions...
 });
 ```
@@ -163,9 +173,11 @@ test('some test', async ({ page }) => {
 Four comprehensive documents created in `/Users/mikeyoung/CODING/MAIS/docs/solutions/`:
 
 ### 1. E2E-TESTING-QUICK-REFERENCE.md (11 KB)
+
 **Purpose**: One-page cheat sheet, print and pin to desk
 
 **Contents**:
+
 - 3 problems + 1-line solutions
 - Copy-paste code templates
 - Implementation checklist
@@ -180,9 +192,11 @@ Four comprehensive documents created in `/Users/mikeyoung/CODING/MAIS/docs/solut
 ---
 
 ### 2. E2E-TESTING-PREVENTION-STRATEGIES.md (27 KB)
+
 **Purpose**: Complete prevention strategy documentation
 
 **Contents**:
+
 - Executive summary
 - Problem 1: Rate limiting (3 prevention strategies)
 - Problem 2: Missing coverage (3 prevention strategies)
@@ -199,9 +213,11 @@ Four comprehensive documents created in `/Users/mikeyoung/CODING/MAIS/docs/solut
 ---
 
 ### 3. E2E-TESTING-ADVANCED-PATTERNS.md (22 KB)
+
 **Purpose**: Reference documentation for complex scenarios
 
 **Contents**:
+
 - Shared helpers module design
 - Multi-tenant testing patterns
 - Concurrent user simulation
@@ -215,9 +231,11 @@ Four comprehensive documents created in `/Users/mikeyoung/CODING/MAIS/docs/solut
 ---
 
 ### 4. E2E-TESTING-INDEX.md (13 KB)
+
 **Purpose**: Central navigation hub
 
 **Contents**:
+
 - Quick navigation matrix (by audience)
 - Documentation map (visual structure)
 - Problem → Solution mapping
@@ -235,21 +253,26 @@ Four comprehensive documents created in `/Users/mikeyoung/CODING/MAIS/docs/solut
 ## Key Patterns Documented
 
 ### Pattern 1: Environment Variable Override
+
 ```typescript
 const isTestEnvironment = process.env.E2E_TEST === '1';
 const limiter = rateLimit({ max: isTestEnvironment ? 100 : 5 });
 ```
+
 **When to use**: Any rate-limited endpoint that E2E tests call
 **Time to implement**: 2 minutes
 
 ### Pattern 2: Serial Test Execution
+
 ```typescript
 test.describe.configure({ mode: 'serial' });
 ```
+
 **When to use**: Tests share state or modify application state
 **Time to implement**: 1 minute (configuration only)
 
 ### Pattern 3: Auth Token Caching
+
 ```typescript
 let authToken = null;
 if (!isSetup) {
@@ -259,10 +282,12 @@ if (!isSetup) {
   await restoreTokenToLocalStorage(authToken);
 }
 ```
+
 **When to use**: Multiple E2E tests need same authentication
 **Time to implement**: 15 minutes (including error handling)
 
 ### Pattern 4: State Cleanup Helpers
+
 ```typescript
 async function cleanupState(page) {
   // Reset application to clean state
@@ -271,6 +296,7 @@ async function cleanupState(page) {
 await ensureLoggedIn(page);
 await cleanupState(page);
 ```
+
 **When to use**: Tests modify application state
 **Time to implement**: 10 minutes
 
@@ -281,16 +307,19 @@ await cleanupState(page);
 ### Adoption Timeline
 
 **Immediate** (within 1 sprint):
+
 - Apply to all new E2E test suites
 - Review all existing E2E tests for pattern compliance
 - Create shared helpers module
 
 **Short-term** (within 2 sprints):
+
 - Refactor existing test code to use shared helpers
 - Extract common patterns into reusable components
 - Document team conventions
 
 **Long-term** (ongoing):
+
 - Build test data factory system
 - Implement performance testing automation
 - Extend to multi-tenant testing scenarios
@@ -305,12 +334,14 @@ await cleanupState(page);
 ### Risk Mitigation
 
 **Before** (problems):
+
 - ❌ E2E tests blocked by rate limiting
 - ❌ Missing test coverage creates regressions
 - ❌ Tests interfere with each other (flaky)
 - ❌ Test code duplicated across files
 
 **After** (solutions):
+
 - ✅ E2E tests run without rate limiting blocks
 - ✅ Features have comprehensive test coverage
 - ✅ Tests are isolated and reliable
@@ -321,15 +352,18 @@ await cleanupState(page);
 ## Files Referenced
 
 ### Test Files (Examples)
+
 - `/Users/mikeyoung/CODING/MAIS/e2e/tests/visual-editor.spec.ts` - 9 tests, serial, token caching
 - `/Users/mikeyoung/CODING/MAIS/e2e/tests/tenant-signup.spec.ts` - 12 tests, independent
 - `/Users/mikeyoung/CODING/MAIS/e2e/tests/password-reset.spec.ts` - 9 tests, email flow
 
 ### Configuration Files
+
 - `/Users/mikeyoung/CODING/MAIS/e2e/playwright.config.ts` - E2E_TEST=1 in webServer.command
 - `/Users/mikeyoung/CODING/MAIS/server/src/middleware/rateLimiter.ts` - E2E_TEST env var check
 
 ### Test Infrastructure
+
 - `/Users/mikeyoung/CODING/MAIS/server/test/middleware/rateLimiter.spec.ts` - 27 rate limiter tests
 - `/Users/mikeyoung/CODING/MAIS/server/src/routes/auth.routes.ts` - signupLimiter usage
 
@@ -340,21 +374,25 @@ await cleanupState(page);
 Documentation is successful when:
 
 ✅ **Completeness**
+
 - All 3 problems have 3+ prevention strategies each
 - Code examples for each pattern
 - Checklist for implementation
 
 ✅ **Clarity**
+
 - Patterns explained from first principles
 - Anti-patterns documented (what NOT to do)
 - Common mistakes with solutions
 
 ✅ **Actionability**
+
 - Copy-paste code templates available
 - Implementation checklists provided
 - Clear file locations documented
 
 ✅ **Adoption**
+
 - Team uses documentation for new E2E tests
 - Shared helpers module created and used
 - Zero new E2E tests without proper rate limiter handling
@@ -404,18 +442,21 @@ Documentation is successful when:
 ## Next Steps
 
 ### Immediate Actions
+
 1. Commit these documentation files
 2. Share links in team Slack channel
 3. Review existing E2E tests against checklist
 4. Schedule team sync on patterns
 
 ### Short-term Actions
+
 1. Create shared helpers module (`e2e/helpers/auth.ts`, etc.)
 2. Refactor existing tests to use helpers
 3. Add E2E_TEST env var to any missing rate limiters
 4. Document team conventions
 
 ### Long-term Actions
+
 1. Build test data factory system
 2. Implement performance regression testing
 3. Create multi-tenant testing guide
@@ -426,31 +467,37 @@ Documentation is successful when:
 ## Metrics & Tracking
 
 ### Code Coverage
+
 - **Target**: 70% E2E coverage for features
 - **Baseline**: 0% (no visual editor E2E tests)
 - **Achievement**: 9 tests = 7/7 workflows covered
 
 ### Test Reliability
+
 - **Target**: 99.9% pass rate (flaky < 1/1000)
 - **Baseline**: Unknown (pre-implementation)
 - **Measurement**: Monitor CI/CD pass rates
 
 ### Developer Efficiency
+
 - **Target**: New E2E tests in <1 hour
 - **Baseline**: >2 hours (unclear patterns)
 - **Measurement**: Time from PR open to merge
 
 ### Documentation Quality
+
 - **Target**: 100% feature E2E coverage documented
 - **Baseline**: 0%
-- **Measurement**: All files reference E2E-TESTING-*.md
+- **Measurement**: All files reference E2E-TESTING-\*.md
 
 ---
 
 ## Document Maintenance
 
 ### Version Control
+
 All documents committed to git in `/docs/solutions/`:
+
 - E2E-TESTING-QUICK-REFERENCE.md
 - E2E-TESTING-PREVENTION-STRATEGIES.md
 - E2E-TESTING-ADVANCED-PATTERNS.md
@@ -458,11 +505,13 @@ All documents committed to git in `/docs/solutions/`:
 - E2E-TESTING-CODIFY-SUMMARY.md (this file)
 
 ### Review Schedule
+
 - Quarterly review for completeness
 - Update when new patterns discovered
 - Track implementation feedback
 
 ### Feedback Loop
+
 - Team members suggest improvements
 - Document unclear sections
 - Add patterns from code reviews
@@ -472,16 +521,19 @@ All documents committed to git in `/docs/solutions/`:
 ## References
 
 ### Related Documentation
+
 - `TESTING-PREVENTION-STRATEGIES.md` - General testing strategies
 - `TEST-FAILURE-PREVENTION-STRATEGIES.md` - Test isolation deep dive
 - `SCHEMA-DRIFT-PREVENTION.md` - Database stability
 
 ### External Resources
+
 - [Playwright Test Documentation](https://playwright.dev/docs/test-intro)
 - [Playwright Configuration](https://playwright.dev/docs/test-configuration)
 - [Express Rate Limit](https://github.com/nfriedly/express-rate-limit)
 
 ### Code Examples
+
 - Visual Editor E2E Tests: `e2e/tests/visual-editor.spec.ts`
 - Rate Limiter: `server/src/middleware/rateLimiter.ts`
 - Playwright Config: `e2e/playwright.config.ts`

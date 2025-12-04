@@ -11,11 +11,7 @@ import { captureException } from '../lib/errors/sentry';
 /**
  * 404 Not Found handler
  */
-export function notFoundHandler(
-  req: Request,
-  res: Response,
-  _next: NextFunction
-): void {
+export function notFoundHandler(req: Request, res: Response, _next: NextFunction): void {
   const requestId = res.locals.requestId;
 
   res.status(404).json({
@@ -31,12 +27,7 @@ export function notFoundHandler(
  * Centralized error handler that maps domain errors to HTTP status codes
  * Integrates with Sentry for non-operational errors
  */
-export function errorHandler(
-  err: Error,
-  req: Request,
-  res: Response,
-  _next: NextFunction
-): void {
+export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction): void {
   const reqLogger = res.locals.logger || logger;
   const requestId = res.locals.requestId;
 

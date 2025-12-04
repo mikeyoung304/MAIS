@@ -4,10 +4,10 @@
 
 ### Services Running
 
-| Service | URL | Status | Mode |
-|---------|-----|--------|------|
+| Service        | URL                   | Status     | Mode            |
+| -------------- | --------------------- | ---------- | --------------- |
 | **Web Client** | http://localhost:3000 | ✅ Running | Vite Dev Server |
-| **API Server** | http://localhost:3001 | ✅ Running | Mock Adapters |
+| **API Server** | http://localhost:3001 | ✅ Running | Mock Adapters   |
 
 ### Quick Links
 
@@ -24,6 +24,7 @@
 ### 1. Browse Packages (Public - No Auth)
 
 **Steps:**
+
 1. Open http://localhost:3000 in your browser
 2. You should see 6 elopement packages:
    - Basic MAISment ($999)
@@ -44,6 +45,7 @@
 **Current Mode:** Mock (No real Stripe charges)
 
 **Steps:**
+
 1. Select a package (e.g., "Basic MAISment")
 2. Choose a date (avoid 2025-12-25 - it's a blackout date)
 3. Add optional add-ons (Video Recording, Floral Arrangement)
@@ -57,6 +59,7 @@
 8. Booking is created instantly (no real payment)
 
 **Expected Result:**
+
 - Booking ID returned
 - Success confirmation shown
 - Booking appears in admin dashboard
@@ -66,10 +69,12 @@
 ### 3. Admin Access
 
 **Admin Credentials (Mock Mode):**
+
 - Email: `admin@elope.com`
 - Password: `admin123`
 
 **Steps:**
+
 1. Navigate to http://localhost:3000/admin (or admin login page)
 2. Login with credentials above
 3. View dashboard with:
@@ -78,6 +83,7 @@
    - Blackout date management
 
 **Admin Features to Test:**
+
 - ✅ View all bookings
 - ✅ Filter bookings by date/status
 - ✅ Create new package
@@ -91,6 +97,7 @@
 ### 4. Date Availability Check
 
 **Test Date Availability:**
+
 ```bash
 # Available date (should return {"available": true})
 curl http://localhost:3001/v1/availability/2026-06-15
@@ -103,6 +110,7 @@ curl http://localhost:3001/v1/availability/2025-06-15
 ```
 
 **Expected Results:**
+
 - Future dates: Available (unless blackout)
 - Christmas Day (2025-12-25): Blocked (Holiday)
 - Booked dates: Unavailable with conflict message
@@ -114,6 +122,7 @@ curl http://localhost:3001/v1/availability/2025-06-15
 **Current: MOCK MODE** (No external services required)
 
 **To Switch to Real Mode:**
+
 1. Stop servers (see "Managing Services" below)
 2. Edit `server/.env`:
    ```bash
@@ -126,6 +135,7 @@ curl http://localhost:3001/v1/availability/2025-06-15
    - Real webhook processing
 
 **Mock Mode Features:**
+
 - ✅ No Stripe account needed
 - ✅ No real payments
 - ✅ Instant booking creation
@@ -137,16 +147,19 @@ curl http://localhost:3001/v1/availability/2025-06-15
 ## API Testing with curl
 
 ### Get All Packages
+
 ```bash
 curl http://localhost:3001/v1/packages | python3 -m json.tool
 ```
 
 ### Check Availability
+
 ```bash
 curl http://localhost:3001/v1/availability/2025-12-25
 ```
 
 ### Admin Login
+
 ```bash
 curl -X POST http://localhost:3001/v1/admin/login \
   -H "Content-Type: application/json" \
@@ -157,6 +170,7 @@ curl -X POST http://localhost:3001/v1/admin/login \
 ```
 
 ### Get Admin Bookings (requires JWT token)
+
 ```bash
 TOKEN="<jwt-token-from-login>"
 
@@ -169,6 +183,7 @@ curl http://localhost:3001/v1/admin/bookings \
 ## Managing Services
 
 ### Check Status
+
 ```bash
 # Check if servers are running
 lsof -ti:3001  # API server
@@ -180,6 +195,7 @@ tail -f /tmp/elope-client.log
 ```
 
 ### Stop Services
+
 ```bash
 # Stop API server
 lsof -ti:3001 | xargs kill -9
@@ -192,6 +208,7 @@ lsof -ti:3001,3000 | xargs kill -9
 ```
 
 ### Restart Services
+
 ```bash
 # From project root
 cd /Users/mikeyoung/CODING/MAIS
@@ -211,10 +228,12 @@ pnpm run dev  # If available
 ## Mock Data Reference
 
 ### Default Admin User
+
 - Email: `admin@elope.com`
 - Password: `admin123`
 
 ### Seeded Packages (6 total)
+
 1. **pkg_basic** - Basic MAISment ($999)
 2. **pkg_micro** - Micro Ceremony ($2,499)
 3. **pkg_garden** - Garden Romance ($4,499)
@@ -223,6 +242,7 @@ pnpm run dev  # If available
 6. **pkg_courthouse** - Courthouse Chic ($799)
 
 ### Seeded Add-ons (6 total)
+
 - **addon_video** - Video Recording ($500) - for pkg_basic
 - **addon_flowers** - Floral Arrangement ($150) - for pkg_basic
 - **addon_makeup** - Hair & Makeup ($300) - for pkg_micro
@@ -231,6 +251,7 @@ pnpm run dev  # If available
 - **addon_album** - Photo Album ($450) - for pkg_luxury
 
 ### Blackout Dates
+
 - **2025-12-25** - Christmas Day (Holiday)
 
 ---
@@ -238,6 +259,7 @@ pnpm run dev  # If available
 ## Common Issues & Solutions
 
 ### Issue: Port Already in Use
+
 ```bash
 # Error: "EADDRINUSE: address already in use :::3001"
 lsof -ti:3001 | xargs kill -9
@@ -245,6 +267,7 @@ lsof -ti:3000 | xargs kill -9
 ```
 
 ### Issue: Cannot Connect to API
+
 ```bash
 # Check if API is running
 curl http://localhost:3001/v1/packages
@@ -254,11 +277,13 @@ tail -20 /tmp/elope-server.log
 ```
 
 ### Issue: Packages Not Loading on Frontend
+
 1. Check browser console for errors (F12)
 2. Verify API is running: `curl http://localhost:3001/v1/packages`
 3. Check CORS settings in `server/.env`: `CORS_ORIGIN=http://localhost:3000`
 
 ### Issue: Mock Data Reset
+
 Mock data resets when server restarts. This is expected behavior for development.
 
 ---
@@ -266,6 +291,7 @@ Mock data resets when server restarts. This is expected behavior for development
 ## Testing Checklist
 
 ### Basic Functionality
+
 - [ ] Homepage loads
 - [ ] All 6 packages display correctly
 - [ ] Package details page works
@@ -278,6 +304,7 @@ Mock data resets when server restarts. This is expected behavior for development
 - [ ] Can create/edit packages in admin
 
 ### Edge Cases
+
 - [ ] Try booking same date twice (should fail on second attempt)
 - [ ] Try booking blackout date (should be blocked)
 - [ ] Test with no add-ons selected
@@ -286,6 +313,7 @@ Mock data resets when server restarts. This is expected behavior for development
 - [ ] Verify pricing calculations are correct
 
 ### Performance
+
 - [ ] Page loads quickly (<2s)
 - [ ] API responds quickly (<500ms)
 - [ ] Images load properly
@@ -298,12 +326,14 @@ Mock data resets when server restarts. This is expected behavior for development
 To test with actual Stripe payments and database:
 
 1. **Switch to Real Mode:**
+
    ```bash
    # Edit server/.env
    ADAPTERS_PRESET=real
    ```
 
 2. **Start Stripe Webhook Listener:**
+
    ```bash
    stripe listen --forward-to http://localhost:3001/v1/webhooks/stripe
    ```
@@ -324,18 +354,21 @@ To test with actual Stripe payments and database:
 ## Developer Notes
 
 ### Test Coverage
+
 - 129 passing tests (0 failures)
 - Unit tests: 103
 - Integration tests: 27
 - Test command: `npm test` (from server directory)
 
 ### Code Quality
+
 - TypeScript strict mode enabled
 - ESLint configured
 - Prettier for formatting
 - No console errors in production build
 
 ### Architecture
+
 - **Frontend:** React + TypeScript + Vite
 - **Backend:** Express + TypeScript + Prisma
 - **Mode:** Mock (in-memory) / Real (PostgreSQL + Stripe)
@@ -346,16 +379,19 @@ To test with actual Stripe payments and database:
 ## Support
 
 **Logs Location:**
+
 - API Server: `/tmp/elope-server.log`
 - Web Client: `/tmp/elope-client.log`
 
 **Need Help?**
+
 - Check logs for errors
 - Verify both services are running
 - Confirm ports 3000 and 3001 are not blocked
 - Review `.env` configuration in server directory
 
 **Documentation:**
+
 - `REMEDIATION_COMPLETE.md` - Recent fixes and improvements
 - `DEPLOYMENT_INSTRUCTIONS.md` - Production deployment guide
 - `MASTER_AUDIT_REPORT.md` - Security and quality audit results
@@ -367,6 +403,7 @@ To test with actual Stripe payments and database:
 Your MAIS application is now running locally and ready for testing.
 
 **Access Points:**
+
 - 🌐 Web: http://localhost:3000
 - 🔌 API: http://localhost:3001
 

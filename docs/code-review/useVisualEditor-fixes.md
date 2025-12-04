@@ -16,13 +16,18 @@
 **Lines:** 225
 
 ### Current Code:
+
 ```typescript
-const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
-  // ... implementation ...
-}, [packages, flushPendingChanges]);  // ← PROBLEM: packages causes callback recreation
+const updateDraft = useCallback(
+  (packageId: string, update: DraftUpdate) => {
+    // ... implementation ...
+  },
+  [packages, flushPendingChanges]
+); // ← PROBLEM: packages causes callback recreation
 ```
 
 ### Problem:
+
 - Every keystroke updates state
 - State update triggers re-render with new `packages` value
 - New `packages` value recreates callback
@@ -30,25 +35,32 @@ const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
 - Each keystroke re-renders all child components
 
 ### Fixed Code:
+
 ```typescript
-const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
-  // ... implementation (unchanged) ...
-}, [flushPendingChanges]);  // ← FIX: Remove packages dependency
+const updateDraft = useCallback(
+  (packageId: string, update: DraftUpdate) => {
+    // ... implementation (unchanged) ...
+  },
+  [flushPendingChanges]
+); // ← FIX: Remove packages dependency
 ```
 
 ### Why this works:
+
 - Original state is captured via refs, not closure
 - Callback remains stable across renders
 - Child components don't re-render on keystroke
 - Eliminates stale closure vulnerability
 
 ### Verification:
+
 ```bash
 # After fix, callback should be same reference after edit
 npm run test:e2e -- --grep "callback stability"
 ```
 
 **Diff:**
+
 ```diff
   const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
     // ... 41 lines of implementation ...
@@ -64,6 +76,7 @@ npm run test:e2e -- --grep "callback stability"
 **Lines:** 231-242
 
 ### Current Code:
+
 ```typescript
 const publishAll = useCallback(async () => {
   if (draftCount === 0) {  // ← Checked BEFORE async operation
@@ -83,12 +96,14 @@ const publishAll = useCallback(async () => {
 ```
 
 ### Problem:
+
 - `draftCount` checked before async flush completes
 - User can edit during ~100-500ms flush window
 - New edits not included in subsequent publish call
 - Silent data loss or inconsistent state
 
 ### Fixed Code:
+
 ```typescript
 const publishAll = useCallback(async () => {
   // Remove early exit check - draftCount may change
@@ -106,7 +121,7 @@ const publishAll = useCallback(async () => {
     // Re-check after flush (user may have edited during flush)
     const currentDraftCount = packages.filter((pkg) => pkg.hasDraft).length;
     if (currentDraftCount === 0) {
-      toast.info("No changes to publish");
+      toast.info('No changes to publish');
       return;
     }
 
@@ -117,27 +132,29 @@ const publishAll = useCallback(async () => {
     });
 
     if (status !== 200 || !body) {
-      const errorMessage = (body as { error?: string })?.error || "Failed to publish changes";
+      const errorMessage = (body as { error?: string })?.error || 'Failed to publish changes';
       throw new Error(errorMessage);
     }
 
-    toast.success(`Published ${body.published} package${body.published !== 1 ? "s" : ""}`);
+    toast.success(`Published ${body.published} package${body.published !== 1 ? 's' : ''}`);
     await loadPackages();
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to publish changes";
-    toast.error("Failed to publish changes", { description: message });
+    const message = err instanceof Error ? err.message : 'Failed to publish changes';
+    toast.error('Failed to publish changes', { description: message });
   } finally {
     setIsPublishing(false);
   }
-}, [packages, loadPackages, flushPendingChanges]);  // ← Now needs packages in deps
+}, [packages, loadPackages, flushPendingChanges]); // ← Now needs packages in deps
 ```
 
 ### Why this works:
+
 - Rechecks draft count after async flush completes
 - Captures updates made during the flush window
 - Uses current packages state, not stale closure value
 
 **Diff:**
+
 ```diff
   const publishAll = useCallback(async () => {
 -   if (draftCount === 0) {
@@ -199,28 +216,29 @@ const publishAll = useCallback(async () => {
 **Lines:** 77-78
 
 ### Current Code:
+
 ```typescript
 // Calculate draft count
 const draftCount = packages.filter((pkg) => pkg.hasDraft).length;
 ```
 
 ### Problem:
+
 - Recalculated on every render
 - Not stable for use in useCallback dependencies
 - Should be memoized for consistency
 
 ### Fixed Code:
+
 ```typescript
-import { useMemo } from "react";
+import { useMemo } from 'react';
 
 // Calculate draft count (memoized to prevent unnecessary recalculation)
-const draftCount = useMemo(
-  () => packages.filter((pkg) => pkg.hasDraft).length,
-  [packages]
-);
+const draftCount = useMemo(() => packages.filter((pkg) => pkg.hasDraft).length, [packages]);
 ```
 
 ### Why this works:
+
 - Only recalculated when packages array changes
 - Provides stable reference for callbacks
 - Slight performance improvement
@@ -246,16 +264,19 @@ const draftCount = useMemo(
 ## Expected Results After Fixes
 
 ### Performance:
+
 - Fewer re-renders per keystroke (6+ → 1-2)
 - Smoother typing experience
 - Lower CPU usage
 
 ### Correctness:
+
 - No stale closures in updateDraft
 - No lost edits during publish
 - Consistent draftCount values
 
 ### Testing:
+
 All existing tests should still pass. Add new test:
 
 ```typescript
@@ -284,11 +305,11 @@ describe('useVisualEditor - Race Conditions', () => {
 
 ## Risk Assessment
 
-| Fix | Risk | Mitigation |
-|-----|------|-----------|
-| Remove packages from deps | Low | Change is isolated, well-tested pattern |
-| Add race condition check | Low | Only adds defensive check, no behavior change |
-| Memoize draftCount | Very Low | Standard React optimization |
+| Fix                       | Risk     | Mitigation                                    |
+| ------------------------- | -------- | --------------------------------------------- |
+| Remove packages from deps | Low      | Change is isolated, well-tested pattern       |
+| Add race condition check  | Low      | Only adds defensive check, no behavior change |
+| Memoize draftCount        | Very Low | Standard React optimization                   |
 
 ---
 
@@ -307,6 +328,7 @@ npm test
 ## Monitoring
 
 After deployment, watch for:
+
 - Increased error logs from flushPendingChanges
 - User reports of lost edits
 - Performance metrics (should improve)
@@ -314,8 +336,8 @@ After deployment, watch for:
 
 ```typescript
 // Already in place:
-logger.error("Failed to save draft", {
-  component: "useVisualEditor",
+logger.error('Failed to save draft', {
+  component: 'useVisualEditor',
   packageId,
   error: err,
 });

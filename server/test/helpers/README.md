@@ -69,10 +69,12 @@ describe.sequential('My Integration Test', () => {
 Complete integration test setup with database, multi-tenant, cache, and factories.
 
 **Parameters:**
+
 - `fileSlug` (string): Unique identifier for this test file (e.g., 'cache-isolation', 'booking-race')
 - `options.cacheTTL` (number, optional): Cache TTL in seconds (default: 60)
 
 **Returns:** Object with:
+
 - `prisma`: PrismaClient instance
 - `tenants`: Multi-tenant setup (tenantA, tenantB, cleanup functions)
 - `cache`: Cache test utilities
@@ -80,6 +82,7 @@ Complete integration test setup with database, multi-tenant, cache, and factorie
 - `factories`: Test data factories (package, addOn)
 
 **Example:**
+
 ```typescript
 const ctx = setupCompleteIntegrationTest('my-test', { cacheTTL: 60 });
 ```
@@ -91,10 +94,12 @@ const ctx = setupCompleteIntegrationTest('my-test', { cacheTTL: 60 });
 Basic database setup for tests that don't need multi-tenant or cache utilities.
 
 **Returns:** Object with:
+
 - `prisma`: PrismaClient instance configured for test database
 - `cleanup`: Disconnect function
 
 **Example:**
+
 ```typescript
 const { prisma, cleanup } = setupIntegrationTest();
 
@@ -114,16 +119,19 @@ afterEach(async () => {
 Create isolated multi-tenant test setup with Tenant A and Tenant B.
 
 **Parameters:**
+
 - `prisma`: PrismaClient instance
 - `fileSlug`: Unique identifier for this test file
 
 **Returns:** Object with:
+
 - `tenantA`: Tenant A utilities (id, data, create, cleanup)
 - `tenantB`: Tenant B utilities (id, data, create, cleanup)
 - `cleanupTenants`: Clean up both tenants' data
 - `getTenantIds`: Get array of tenant IDs
 
 **Example:**
+
 ```typescript
 const { tenantA, tenantB, cleanupTenants } = createMultiTenantSetup(prisma, 'my-test');
 
@@ -138,6 +146,7 @@ beforeEach(async () => {
 ```
 
 **Key Features:**
+
 - File-specific tenant slugs prevent cross-file conflicts
 - Respects foreign key constraints during cleanup
 - Tenant data accessible via `.data` property
@@ -150,9 +159,11 @@ beforeEach(async () => {
 Cache testing utilities for validating cache isolation.
 
 **Parameters:**
+
 - `ttlSeconds` (number, optional): Cache TTL in seconds (default: 60)
 
 **Returns:** Object with:
+
 - `cache`: CacheService instance
 - `resetStats`: Reset cache statistics
 - `flush`: Flush all cache entries
@@ -160,6 +171,7 @@ Cache testing utilities for validating cache isolation.
 - `verifyCacheKey`: Verify cache key follows tenant isolation pattern
 
 **Example:**
+
 ```typescript
 const { cache, resetStats, verifyCacheKey } = createCacheTestUtils();
 
@@ -180,10 +192,12 @@ it('should have tenant-scoped cache key', () => {
 Factory for creating test packages with unique slugs.
 
 **Methods:**
+
 - `create(overrides)`: Create single package input
 - `createMany(count, baseOverrides)`: Create multiple package inputs
 
 **Example:**
+
 ```typescript
 const factory = new PackageFactory();
 
@@ -208,10 +222,12 @@ Factory automatically generates unique slugs using counter + timestamp: `test-pa
 Factory for creating test add-ons with unique slugs.
 
 **Methods:**
+
 - `create(overrides)`: Create single add-on input
 - `createMany(count, baseOverrides)`: Create multiple add-on inputs
 
 **Example:**
+
 ```typescript
 const factory = new AddOnFactory();
 
@@ -233,11 +249,13 @@ for (const addOn of addOns) {
 Run multiple async operations concurrently and return results.
 
 **Parameters:**
+
 - `operations`: Array of async functions
 
 **Returns:** Promise with array of results
 
 **Example:**
+
 ```typescript
 const [packagesA, packagesB] = await runConcurrent([
   () => service.getPackages(tenantA_id),
@@ -252,12 +270,14 @@ const [packagesA, packagesB] = await runConcurrent([
 Assert that cache key follows tenant isolation pattern. Throws error if invalid.
 
 **Parameters:**
+
 - `key`: Cache key to validate
 - `tenantId`: Expected tenant ID
 
 **Throws:** Error if cache key doesn't start with `${tenantId}:`
 
 **Example:**
+
 ```typescript
 assertTenantScopedCacheKey('tenant-123:packages', 'tenant-123'); // ✅ Pass
 assertTenantScopedCacheKey('packages', 'tenant-123'); // ❌ Throws error
@@ -270,11 +290,13 @@ assertTenantScopedCacheKey('packages', 'tenant-123'); // ❌ Throws error
 Wait for specified duration (useful for timing-sensitive tests).
 
 **Parameters:**
+
 - `ms`: Milliseconds to wait
 
 **Returns:** Promise that resolves after duration
 
 **Example:**
+
 ```typescript
 await wait(100); // Wait 100ms for cache TTL
 ```
@@ -456,6 +478,7 @@ describe.sequential('My Integration Test', () => {
 ```
 
 **Benefits:**
+
 - 70% less boilerplate code
 - Automatic unique slugs (prevents test conflicts)
 - File-specific tenant isolation
@@ -551,6 +574,7 @@ it('should invalidate only specific tenant cache', async () => {
 ### Database Connection Pool Exhaustion 🔴 **CRITICAL**
 
 **Symptom:**
+
 ```
 PrismaClientInitializationError:
 Invalid `prisma.tenant.findMany()` invocation
@@ -559,6 +583,7 @@ FATAL: remaining connection slots are reserved for roles with the SUPERUSER attr
 ```
 
 **Impact:**
+
 - Tests that were passing suddenly fail
 - Tests run slower or timeout
 - Intermittent, unpredictable failures
@@ -580,15 +605,18 @@ DATABASE_URL_TEST="postgresql://user:pass@host:5432/db?connection_limit=10&pool_
 ```
 
 **Parameter Explanations:**
+
 - `connection_limit=10`: Maximum connections per Prisma Client instance (default is unlimited)
 - `pool_timeout=20`: Seconds to wait for available connection before timeout (default is 10)
 
 **Why These Values:**
+
 - `connection_limit=10`: Low enough to prevent exhaustion with 6+ test files, high enough for concurrent operations within tests
 - `pool_timeout=20`: Longer timeout accounts for sequential test execution and cleanup operations
 
 **Validation:**
 After updating `.env.test`, re-run tests to confirm:
+
 ```bash
 npm run test:integration
 
@@ -598,17 +626,20 @@ npm run test:integration
 ```
 
 **Prevention:**
+
 1. Always use `setupCompleteIntegrationTest()` which properly manages connections
 2. Always call `await ctx.cleanup()` in `afterEach` hooks
 3. Use `.sequential()` for test suites to avoid parallel connection creation
 4. Monitor connection usage during test development
 
 **Real Example (Sprint 5):**
+
 - **Before connection limit**: booking-repository tests regressed from 10/11 passing to 5/11 passing
 - **After connection limit**: Expected to return to 10/11 passing
 - **Overall impact**: 17 tests regressed due to this issue alone
 
 **See Also:**
+
 - `.env.test` - Connection pool configuration with detailed comments
 - `.claude/SPRINT_5_SESSION_REPORT.md` § Critical Blocker - Full investigation details
 
@@ -641,6 +672,7 @@ If tests fail with "duplicate slug" errors, ensure:
 3. Use `.sequential()` for tests with shared state
 
 **Example:**
+
 ```typescript
 // ✅ Good: Unique file slug prevents conflicts
 const ctx = setupCompleteIntegrationTest('booking-repository');
@@ -660,6 +692,7 @@ If cache tests show cross-tenant leakage:
 3. Check cache invalidation includes tenantId
 
 **Example:**
+
 ```typescript
 // ✅ Tenant-isolated cache key
 const key = `${tenantId}:packages:all`;
@@ -680,6 +713,7 @@ Common causes:
 4. **Database state** - CI database may have leftover data from previous runs
 
 **Fix:**
+
 - Ensure `.env.test` has connection pool limits configured
 - Use `describe.sequential()` for timing-sensitive tests
 - Ensure `beforeEach` properly cleans up test data
@@ -703,6 +737,7 @@ When adding new test utilities:
 ## Support
 
 For questions or issues with test helpers:
+
 - Check existing integration tests for examples
 - Review `.claude/CACHE_WARNING.md` for cache security patterns
 - Consult Sprint 4 documentation: `SPRINT_4_SESSION_1_COMPLETE.md`

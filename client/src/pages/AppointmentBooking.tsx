@@ -5,7 +5,7 @@
  * Uses the AppointmentBookingFlow component.
  */
 
-import { AppointmentBookingFlow } from "@/features/scheduling/AppointmentBookingFlow";
+import { AppointmentBookingFlow } from '@/features/scheduling/AppointmentBookingFlow';
 
 export function AppointmentBookingPage() {
   return (

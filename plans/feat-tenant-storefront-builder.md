@@ -14,6 +14,7 @@ Add tier/segment organization to the tenant package form so tenants can organize
 The backend supports package tiers (`grouping`, `groupingOrder`, `segmentId`) but the tenant dashboard doesn't expose these fields. Tenants cannot organize their packages into tiers like "Solo", "Couple", "Group".
 
 **Current State:**
+
 - Backend: Complete (schema has all fields)
 - Frontend: PackageForm only has title, description, price, active toggle
 - Gap: 3 fields missing from form + storefront doesn't group by tier
@@ -28,12 +29,12 @@ Add tier/segment fields to the existing `PackageForm` as a single new section.
 
 **Files to Modify:**
 
-| File | Changes |
-|------|---------|
-| `packages/contracts/src/dto.ts` | Add `segmentId`, `grouping`, `groupingOrder` to `UpdatePackageDtoSchema` |
-| `client/src/features/tenant-admin/packages/hooks/usePackageForm.ts` | Extend form state with new fields |
-| `client/src/features/tenant-admin/packages/PackageForm/index.tsx` | Add new section |
-| NEW: `client/src/features/tenant-admin/packages/PackageForm/OrganizationSection.tsx` | Single section with all 3 fields |
+| File                                                                                 | Changes                                                                  |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| `packages/contracts/src/dto.ts`                                                      | Add `segmentId`, `grouping`, `groupingOrder` to `UpdatePackageDtoSchema` |
+| `client/src/features/tenant-admin/packages/hooks/usePackageForm.ts`                  | Extend form state with new fields                                        |
+| `client/src/features/tenant-admin/packages/PackageForm/index.tsx`                    | Add new section                                                          |
+| NEW: `client/src/features/tenant-admin/packages/PackageForm/OrganizationSection.tsx` | Single section with all 3 fields                                         |
 
 **New Section Component:**
 
@@ -47,7 +48,13 @@ interface OrganizationSectionProps {
   isSaving: boolean;
 }
 
-export function OrganizationSection({ form, setForm, segments, isLoadingSegments, isSaving }: OrganizationSectionProps) {
+export function OrganizationSection({
+  form,
+  setForm,
+  segments,
+  isLoadingSegments,
+  isSaving,
+}: OrganizationSectionProps) {
   return (
     <>
       {/* Segment Dropdown */}
@@ -64,7 +71,9 @@ export function OrganizationSection({ form, setForm, segments, isLoadingSegments
           <SelectContent>
             <SelectItem value="">None</SelectItem>
             {segments.map((seg) => (
-              <SelectItem key={seg.id} value={seg.id}>{seg.name}</SelectItem>
+              <SelectItem key={seg.id} value={seg.id}>
+                {seg.name}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -97,9 +106,7 @@ export function OrganizationSection({ form, setForm, segments, isLoadingSegments
           min="0"
           disabled={isSaving}
         />
-        <p className="text-sm text-white/70">
-          Lower numbers appear first within the tier
-        </p>
+        <p className="text-sm text-white/70">Lower numbers appear first within the tier</p>
       </div>
     </>
   );
@@ -119,9 +126,9 @@ export interface PackageFormData {
   isActive: boolean;
 
   // NEW (3 fields)
-  segmentId: string;      // Empty string = no segment
-  grouping: string;       // Free-form tier label
-  groupingOrder: string;  // Number as string for input
+  segmentId: string; // Empty string = no segment
+  grouping: string; // Free-form tier label
+  groupingOrder: string; // Number as string for input
 }
 ```
 
@@ -131,8 +138,8 @@ Update the public storefront to group packages by tier.
 
 **Files to Modify:**
 
-| File | Changes |
-|------|---------|
+| File                                  | Changes                        |
+| ------------------------------------- | ------------------------------ |
 | `client/src/pages/PackageCatalog.tsx` | Add grouping logic (~15 lines) |
 
 **Grouping Logic:**
@@ -209,6 +216,7 @@ Also update `CreatePackageDtoSchema` with the same fields.
 ## Acceptance Criteria
 
 ### Functional
+
 - [ ] Package form shows segment dropdown (populated from `tenantAdminGetSegments`)
 - [ ] Package form shows grouping text field with helpful placeholder
 - [ ] Package form shows grouping order number input
@@ -218,6 +226,7 @@ Also update `CreatePackageDtoSchema` with the same fields.
 - [ ] Packages without grouping appear in "Featured" section
 
 ### Technical
+
 - [ ] `UpdatePackageDtoSchema` includes new fields
 - [ ] `CreatePackageDtoSchema` includes new fields
 - [ ] Form validates gracefully (tier fields are optional)
@@ -225,6 +234,7 @@ Also update `CreatePackageDtoSchema` with the same fields.
 - [ ] Mobile-responsive (tested at 375px width)
 
 ### Testing
+
 - [ ] Unit test: Form state includes new fields
 - [ ] Unit test: Grouping logic handles null values
 - [ ] Integration test: Package update with tier fields
@@ -248,12 +258,14 @@ If tenants request these features, they can be added in future sprints.
 ## Files Summary
 
 **Modified (4 files):**
+
 - `packages/contracts/src/dto.ts` - Add tier fields to DTOs
 - `client/src/features/tenant-admin/packages/hooks/usePackageForm.ts` - Extend form state
 - `client/src/features/tenant-admin/packages/PackageForm/index.tsx` - Add OrganizationSection
 - `client/src/pages/PackageCatalog.tsx` - Add tier grouping display
 
 **Created (1 file):**
+
 - `client/src/features/tenant-admin/packages/PackageForm/OrganizationSection.tsx` - New section component
 
 **Total: 5 files, ~150 lines of new code**
@@ -263,6 +275,7 @@ If tenants request these features, they can be added in future sprints.
 ## Implementation Checklist
 
 ### Day 1: Contract + Hook
+
 - [ ] Update `UpdatePackageDtoSchema` with tier fields
 - [ ] Update `CreatePackageDtoSchema` with tier fields
 - [ ] Run `npm run typecheck` in contracts package
@@ -271,6 +284,7 @@ If tenants request these features, they can be added in future sprints.
 - [ ] Update `submitForm()` to send tier fields in API request
 
 ### Day 2: Form UI
+
 - [ ] Create `OrganizationSection.tsx` component
 - [ ] Fetch segments using `api.tenantAdminGetSegments()` in parent
 - [ ] Add OrganizationSection to PackageForm between Pricing and Actions
@@ -278,12 +292,14 @@ If tenants request these features, they can be added in future sprints.
 - [ ] Test form locally - edit existing package and add tier data
 
 ### Day 3: Storefront Display
+
 - [ ] Add `useMemo` grouping logic to `PackageCatalog.tsx`
 - [ ] Add tier section headers to storefront rendering
 - [ ] Handle "Featured" fallback for packages without grouping
 - [ ] Test with multiple packages in different tiers
 
 ### Days 4-5: Polish & Ship
+
 - [ ] Test on mobile viewport (375px)
 - [ ] Test with edge cases (empty tiers, single package, many packages)
 - [ ] Run full test suite
@@ -296,6 +312,7 @@ If tenants request these features, they can be added in future sprints.
 ## References
 
 ### Internal Files
+
 - Form hook: `client/src/features/tenant-admin/packages/hooks/usePackageForm.ts`
 - Form component: `client/src/features/tenant-admin/packages/PackageForm/index.tsx`
 - Existing sections: `BasicInfoSection.tsx`, `PricingSection.tsx`
@@ -304,6 +321,7 @@ If tenants request these features, they can be added in future sprints.
 - Storefront: `client/src/pages/PackageCatalog.tsx`
 
 ### Existing Patterns to Follow
+
 - Section component pattern: `BasicInfoSection.tsx` (102 lines)
 - Select dropdown: `BrandingForm/FontSelector.tsx`
 - API fetching in forms: `useAddOnManager.ts` (for segment fetching pattern)

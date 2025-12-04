@@ -1,8 +1,8 @@
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 interface MaconLogoProps {
-  variant?: "full" | "icon" | "horizontal" | "transparent";
-  size?: "sm" | "md" | "lg" | "xl";
+  variant?: 'full' | 'icon' | 'horizontal' | 'transparent';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
 
@@ -14,14 +14,14 @@ const sizeMap = {
 };
 
 export const MaconLogo: React.FC<MaconLogoProps> = ({
-  variant = "full",
-  size = "md",
+  variant = 'full',
+  size = 'md',
   className,
 }) => {
   const dimensions = sizeMap[size];
 
   // Use transparent logo for transparent variant
-  const logoSrc = variant === "transparent" ? "/transparent.png" : "/macon-logo.png";
+  const logoSrc = variant === 'transparent' ? '/transparent.png' : '/macon-logo.png';
 
   return (
     <img
@@ -29,7 +29,7 @@ export const MaconLogo: React.FC<MaconLogoProps> = ({
       alt="MACON AI SOLUTIONS"
       width={dimensions.width}
       height={dimensions.height}
-      className={cn("object-contain", className)}
+      className={cn('object-contain', className)}
     />
   );
 };

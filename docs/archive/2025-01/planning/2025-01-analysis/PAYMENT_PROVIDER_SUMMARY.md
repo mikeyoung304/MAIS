@@ -3,13 +3,15 @@
 ## Coupling Level: MODERATE (6/10)
 
 ### The Good ✓
+
 - **PaymentProvider interface** is clean and provider-agnostic
-- **Commission calculation** is completely provider-independent  
+- **Commission calculation** is completely provider-independent
 - **DI pattern** makes swapping providers theoretically easy
 - **Multi-tenant routing** supports different provider modes per tenant
 - **Mock adapter** demonstrates proper interface implementation
 
 ### The Bad ✗
+
 - **Stripe.Event type** hardcoded in PaymentProvider interface
 - **Webhook schema** tightly coupled to Stripe's event structure
 - **StripeConnectService** has no abstract interface
@@ -23,25 +25,27 @@
 **Refactoring: 300-500 lines**
 
 ### Quick Wins (Do First)
+
 1. Create `PaymentEvent` interface (removes Stripe.Event dependency)
-2. Add `PAYMENT_PROVIDER` config variable  
+2. Add `PAYMENT_PROVIDER` config variable
 3. Extract Stripe limits to adapter validation
 
 ### Must Do Before Multiple Providers
+
 1. Abstract `PaymentProviderService` for onboarding
 2. Event normalizer pattern for webhook events
 3. Update Tenant model for generic provider config
 
 ## Critical Files
 
-| File | Coupling | Refactor Needed |
-|------|----------|-----------------|
-| server/src/adapters/stripe.adapter.ts | 5/10 | Low |
-| server/src/lib/ports.ts | 4/10 | Medium |
-| server/src/routes/webhooks.routes.ts | 8/10 | High |
-| server/src/services/stripe-connect.service.ts | 9/10 | High |
-| server/src/services/commission.service.ts | 1/10 | None |
-| server/src/di.ts | 3/10 | Low |
+| File                                          | Coupling | Refactor Needed |
+| --------------------------------------------- | -------- | --------------- |
+| server/src/adapters/stripe.adapter.ts         | 5/10     | Low             |
+| server/src/lib/ports.ts                       | 4/10     | Medium          |
+| server/src/routes/webhooks.routes.ts          | 8/10     | High            |
+| server/src/services/stripe-connect.service.ts | 9/10     | High            |
+| server/src/services/commission.service.ts     | 1/10     | None            |
+| server/src/di.ts                              | 3/10     | Low             |
 
 ## Specific Hardcodings to Remove
 
@@ -82,12 +86,14 @@ Provider → PaymentEvent → EventNormalizer → WebhooksController → Booking
 ## Data Model Changes Needed
 
 ### Current Tenant Schema
+
 ```typescript
 tenant.stripeAccountId?: string;
 tenant.stripeOnboarded?: boolean;
 ```
 
 ### Target Schema
+
 ```typescript
 tenant.paymentConfig: {
   provider: 'stripe' | 'paypal' | 'square';
@@ -102,6 +108,7 @@ tenant.paymentConfig: {
 ## Test Coverage Gaps
 
 Missing tests for:
+
 - [ ] Multiple payment provider scenarios
 - [ ] Event normalization layer
 - [ ] Provider-agnostic commission calculations
@@ -111,15 +118,18 @@ Missing tests for:
 ## Recommendations Priority
 
 ### High (Do Now)
+
 1. Create PaymentEvent interface
 2. Add PAYMENT_PROVIDER config
 
 ### Medium (Before Adding Providers)
+
 1. Abstract PaymentProviderService
 2. Event normalizer pattern
 3. Remove Stripe type dependencies
 
 ### Low (Future Enhancement)
+
 1. Provider factory pattern
 2. Feature detection
 3. Runtime provider switching

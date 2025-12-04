@@ -19,9 +19,7 @@ import type { ReminderService } from '../services/reminder.service';
  *
  * @param reminderService - ReminderService from DI container
  */
-export function createTenantAdminReminderRoutes(
-  reminderService: ReminderService
-): Router {
+export function createTenantAdminReminderRoutes(reminderService: ReminderService): Router {
   const router = Router();
 
   /**
@@ -91,10 +89,7 @@ export function createTenantAdminReminderRoutes(
         return;
       }
 
-      logger.info(
-        { tenantId, limit },
-        'Processing reminders triggered by tenant admin'
-      );
+      logger.info({ tenantId, limit }, 'Processing reminders triggered by tenant admin');
 
       // Process overdue reminders (non-blocking)
       const result = await reminderService.processOverdueReminders(tenantId, limit);

@@ -16,6 +16,7 @@ Print this and pin it at your desk! Quick checklist for React component reviews.
 ### Is This a New Component?
 
 - [ ] **Search first:** Does a similar component exist?
+
   ```bash
   ls client/src/features/*/  # Browse existing components
   grep -rn "Component.*Props" client/src/  # Check prop interfaces
@@ -30,6 +31,7 @@ Print this and pin it at your desk! Quick checklist for React component reviews.
   grep -n "Essential\|Popular\|Premium" component.tsx
   grep -n "\b150\b\|\b300\b" component.tsx
   ```
+
   - YES → Move to utils.ts
   - NO → Continue
 
@@ -45,6 +47,7 @@ Print this and pin it at your desk! Quick checklist for React component reviews.
   - No side effects (except image loading)
 
 - [ ] **Props interface:** Are all props explicit?
+
   ```typescript
   // ✅ GOOD
   interface ChoiceCardBaseProps {
@@ -70,6 +73,7 @@ Print this and pin it at your desk! Quick checklist for React component reviews.
   - Used in list rendering → YES, needs memo
 
 - [ ] **Props are stable?** Will wrapper re-render unnecessarily?
+
   ```typescript
   // ❌ BAD: New object every render
   <Card config={{ size: 'large' }} />
@@ -80,6 +84,7 @@ Print this and pin it at your desk! Quick checklist for React component reviews.
   ```
 
 - [ ] **No expensive calculations in render?**
+
   ```typescript
   // ❌ BAD
   export function Card({ data }) {
@@ -141,16 +146,16 @@ Print this and pin it at your desk! Quick checklist for React component reviews.
 
 ## Red Flags (Stop & Investigate)
 
-| Flag | Action |
-|------|--------|
-| Same function name in 2+ files | Move to utils.ts |
-| Component >100 lines | Break into smaller pieces |
-| Component has 15+ props | Too many responsibilities |
-| Hardcoded string appears 2+ times | Move to constants |
-| No memo on wrapper receiving objects | Add React.memo |
-| Custom logic in wrapper (>20 lines) | Extract to base component |
-| ImageUrl could be null but no fallback | Add placeholder/gradient |
-| Component deeply nested 5+ levels | Consider breaking up |
+| Flag                                   | Action                    |
+| -------------------------------------- | ------------------------- |
+| Same function name in 2+ files         | Move to utils.ts          |
+| Component >100 lines                   | Break into smaller pieces |
+| Component has 15+ props                | Too many responsibilities |
+| Hardcoded string appears 2+ times      | Move to constants         |
+| No memo on wrapper receiving objects   | Add React.memo            |
+| Custom logic in wrapper (>20 lines)    | Extract to base component |
+| ImageUrl could be null but no fallback | Add placeholder/gradient  |
+| Component deeply nested 5+ levels      | Consider breaking up      |
 
 ---
 
@@ -159,6 +164,7 @@ Print this and pin it at your desk! Quick checklist for React component reviews.
 ### Example 1: Duplication
 
 **BEFORE (Two Files, Duplication):**
+
 ```typescript
 // File A: SegmentCard.tsx (40 lines)
 export function SegmentCard({ segment }) {
@@ -186,6 +192,7 @@ export function TierCard({ tier }) {
 ```
 
 **AFTER (Extracted, No Duplication):**
+
 ```typescript
 // File A: ChoiceCardBase.tsx (90 lines - Single source of truth)
 export const ChoiceCardBase = memo(function ChoiceCardBase({
@@ -235,6 +242,7 @@ export const TierCard = memo(function TierCard({ tier }) {
 ### Example 2: Magic Constants
 
 **BEFORE (Scattered):**
+
 ```typescript
 // File 1: TierCard.tsx
 <span>{tierLevel === 'middle' ? 'Popular' : tierLevel}</span>
@@ -254,6 +262,7 @@ const truncated = description.substring(0, 150) + '...';
 ```
 
 **AFTER (Centralized):**
+
 ```typescript
 // utils.ts - Single source of truth
 export const CARD_DESCRIPTION_MAX_LENGTH = 150;
@@ -283,6 +292,7 @@ import { getTierDisplayName, truncateText, CARD_DESCRIPTION_MAX_LENGTH } from '.
 ## Test Examples
 
 ### Verify Memo Works
+
 ```typescript
 test('SegmentCard memoizes correctly', () => {
   const segment = { id: '1', name: 'Test' };
@@ -302,6 +312,7 @@ test('SegmentCard memoizes correctly', () => {
 ```
 
 ### Verify Constants Centralized
+
 ```typescript
 test('getTierDisplayName uses centralized mapping', () => {
   expect(getTierDisplayName('budget')).toBe('Essential');
@@ -322,11 +333,29 @@ test('truncateText respects CARD_DESCRIPTION_MAX_LENGTH', () => {
 ## Common Mistakes
 
 ### ❌ Mistake 1: Too Many Props in Base
+
 ```typescript
 export function Card({
-  title, description, image, badge, price, cta, href,
-  variant, size, color, border, shadow, onClick, onHover,
-  disabled, loading, error, warning, success, ...otherProps
+  title,
+  description,
+  image,
+  badge,
+  price,
+  cta,
+  href,
+  variant,
+  size,
+  color,
+  border,
+  shadow,
+  onClick,
+  onHover,
+  disabled,
+  loading,
+  error,
+  warning,
+  success,
+  ...otherProps
 }) {
   // 200 lines of conditional rendering
 }
@@ -335,6 +364,7 @@ export function Card({
 ```
 
 ### ❌ Mistake 2: No Memo on Frequently Rendered
+
 ```typescript
 export function SegmentCard({ segment }) {
   // Gets re-rendered when parent changes, even if segment unchanged
@@ -348,6 +378,7 @@ export const SegmentCard = memo(function SegmentCard({ segment }) {
 ```
 
 ### ❌ Mistake 3: Hardcoded Values
+
 ```typescript
 // Don't do this in TierCard AND TierSelector
 const maxChars = 150;
@@ -358,6 +389,7 @@ import { CARD_DESCRIPTION_MAX_LENGTH, getTierDisplayName } from './utils';
 ```
 
 ### ❌ Mistake 4: Too Much Logic in Wrapper
+
 ```typescript
 export function SegmentCard({ segment }) {
   // ❌ These should be in base component
@@ -421,6 +453,7 @@ Approve component PR when:
 ## Terminal Commands
 
 ### Find Problems
+
 ```bash
 # Find duplicate function names
 grep -rn "function getTierDisplayName" client/src/features/
@@ -439,6 +472,7 @@ grep -rn "\.slice(0, [0-9])" client/src/
 ```
 
 ### Quick Stats
+
 ```bash
 # Component count per feature
 find client/src/features -name "*.tsx" | wc -l

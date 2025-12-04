@@ -26,6 +26,7 @@ Phase 4 focuses on **polish** and **advanced features** that elevate the MAIS pl
 ### Week 10: Data Visualization
 
 #### Task 10.1: Add Charting Library (0.5 days)
+
 **Priority:** Medium
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 4 hours
@@ -86,16 +87,33 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, CustomTooltip, chartColors };
+export {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  CustomTooltip,
+  chartColors,
+};
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Recharts installed and configured
 - [ ] Custom theme colors defined
 - [ ] Custom tooltip component created
 - [ ] Responsive container wrapper ready
 
 **Testing Checklist:**
+
 - [ ] Unit test: chart renders with sample data
 - [ ] Visual test: chart uses brand colors
 
@@ -105,6 +123,7 @@ export { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Cartesia
 ---
 
 #### Task 10.2: Create Dashboard Charts (2 days)
+
 **Priority:** Medium
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 16 hours
@@ -119,7 +138,17 @@ Add trend charts to Platform Admin and Tenant Admin dashboards.
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/features/admin/dashboard/components/RevenueChart.tsx`
 
 ```tsx
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, CustomTooltip, chartColors } from '@/components/ui/chart';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  CustomTooltip,
+  chartColors,
+} from '@/components/ui/chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface RevenueChartProps {
@@ -149,8 +178,22 @@ export function RevenueChart({ data }: RevenueChartProps) {
             <XAxis dataKey="month" stroke="currentColor" className="text-on-surface-variant" />
             <YAxis stroke="currentColor" className="text-on-surface-variant" />
             <Tooltip content={<CustomTooltip />} />
-            <Area type="monotone" dataKey="revenue" stroke={chartColors.secondary} fillOpacity={1} fill="url(#colorRevenue)" name="Revenue" />
-            <Area type="monotone" dataKey="commission" stroke={chartColors.accent} fillOpacity={1} fill="url(#colorCommission)" name="Commission" />
+            <Area
+              type="monotone"
+              dataKey="revenue"
+              stroke={chartColors.secondary}
+              fillOpacity={1}
+              fill="url(#colorRevenue)"
+              name="Revenue"
+            />
+            <Area
+              type="monotone"
+              dataKey="commission"
+              stroke={chartColors.accent}
+              fillOpacity={1}
+              fill="url(#colorCommission)"
+              name="Commission"
+            />
           </AreaChart>
         </ResponsiveContainer>
       </CardContent>
@@ -164,7 +207,17 @@ export function RevenueChart({ data }: RevenueChartProps) {
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/features/tenant-admin/dashboard/components/BookingsChart.tsx`
 
 ```tsx
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, CustomTooltip, chartColors } from '@/components/ui/chart';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  CustomTooltip,
+  chartColors,
+} from '@/components/ui/chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface BookingsChartProps {
@@ -206,6 +259,7 @@ export function BookingsChart({ data }: BookingsChartProps) {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Revenue chart shows area chart with gradients
 - [ ] Bookings chart shows stacked bar chart
 - [ ] Charts are responsive (mobile, tablet, desktop)
@@ -214,6 +268,7 @@ export function BookingsChart({ data }: BookingsChartProps) {
 - [ ] Loading state shows skeleton
 
 **Testing Checklist:**
+
 - [ ] Visual test: charts render correctly
 - [ ] Responsive test: charts adapt to viewport
 - [ ] Interaction test: tooltips show on hover
@@ -227,6 +282,7 @@ export function BookingsChart({ data }: BookingsChartProps) {
 ### Week 11: Advanced Table Features
 
 #### Task 11.1: Add Pagination Component (1 day)
+
 **Priority:** High
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 8 hours
@@ -351,6 +407,7 @@ function getPageNumber(index: number, currentPage: number, totalPages: number): 
 ```
 
 **Usage:**
+
 ```tsx
 const [currentPage, setCurrentPage] = useState(1);
 const [pageSize, setPageSize] = useState(25);
@@ -369,6 +426,7 @@ const paginatedData = data.slice((currentPage - 1) * pageSize, currentPage * pag
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Shows current page range (e.g., "Showing 1-25 of 100")
 - [ ] Page size selector (25, 50, 100)
 - [ ] First/Previous/Next/Last buttons
@@ -377,6 +435,7 @@ const paginatedData = data.slice((currentPage - 1) * pageSize, currentPage * pag
 - [ ] Accessible (aria-labels, keyboard navigation)
 
 **Testing Checklist:**
+
 - [ ] Unit test: pagination calculates correctly
 - [ ] Interaction test: page changes work
 - [ ] Accessibility test: keyboard navigation works
@@ -387,6 +446,7 @@ const paginatedData = data.slice((currentPage - 1) * pageSize, currentPage * pag
 ---
 
 #### Task 11.2: Add Sorting & Filtering (1.5 days)
+
 **Priority:** Medium
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 12 hours
@@ -457,7 +517,12 @@ interface FilterDropdownProps {
   onSelectionChange: (values: string[]) => void;
 }
 
-export function FilterDropdown({ label, options, selectedValues, onSelectionChange }: FilterDropdownProps) {
+export function FilterDropdown({
+  label,
+  options,
+  selectedValues,
+  onSelectionChange,
+}: FilterDropdownProps) {
   const handleToggle = (value: string) => {
     if (selectedValues.includes(value)) {
       onSelectionChange(selectedValues.filter((v) => v !== value));
@@ -521,9 +586,7 @@ const filteredAndSortedData = useMemo(() => {
     result = [...result].sort((a, b) => {
       const aValue = a[sortConfig.key];
       const bValue = b[sortConfig.key];
-      return sortConfig.direction === 'asc'
-        ? aValue > bValue ? 1 : -1
-        : aValue < bValue ? 1 : -1;
+      return sortConfig.direction === 'asc' ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
     });
   }
 
@@ -549,10 +612,11 @@ const filteredAndSortedData = useMemo(() => {
       />
     </TableHead>
   </TableRow>
-</TableHeader>
+</TableHeader>;
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Column headers are sortable (click to toggle asc/desc)
 - [ ] Sort indicator shows current sort direction
 - [ ] Filter dropdowns show selected count
@@ -561,6 +625,7 @@ const filteredAndSortedData = useMemo(() => {
 - [ ] URL params preserve filter/sort state (optional)
 
 **Testing Checklist:**
+
 - [ ] Unit test: sorting logic correct
 - [ ] Unit test: filtering logic correct
 - [ ] Integration test: sorting + filtering together
@@ -574,6 +639,7 @@ const filteredAndSortedData = useMemo(() => {
 ### Week 12: User Education & Analytics
 
 #### Task 12.1: Create Onboarding Flow (1.5 days)
+
 **Priority:** Medium
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 12 hours
@@ -676,12 +742,14 @@ export function OnboardingTour({ tourId }: OnboardingTourProps) {
 ```
 
 **Usage:**
+
 ```tsx
 // In PlatformAdminDashboard.tsx
 <OnboardingTour tourId="platform-admin" />
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Tour launches automatically for first-time users
 - [ ] Tour highlights key features
 - [ ] Tour can be skipped
@@ -689,6 +757,7 @@ export function OnboardingTour({ tourId }: OnboardingTourProps) {
 - [ ] Tour can be restarted from help menu
 
 **Testing Checklist:**
+
 - [ ] E2E test: tour launches on first visit
 - [ ] E2E test: tour doesn't launch on subsequent visits
 - [ ] Interaction test: skip button works
@@ -699,6 +768,7 @@ export function OnboardingTour({ tourId }: OnboardingTourProps) {
 ---
 
 #### Task 12.2: Add Contextual Help (1 day)
+
 **Priority:** Low
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 8 hours
@@ -745,12 +815,14 @@ export function HelpTooltip({ content }: { content: string }) {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Tooltips appear on hover
 - [ ] Tooltips are keyboard accessible (focus)
 - [ ] Tooltips have clear, helpful content
 - [ ] Tooltips used for complex features
 
 **Testing Checklist:**
+
 - [ ] Interaction test: tooltips show on hover and focus
 - [ ] Accessibility test: screen reader announces tooltip
 
@@ -760,6 +832,7 @@ export function HelpTooltip({ content }: { content: string }) {
 ---
 
 #### Task 12.3: Add Analytics Tracking (1 day)
+
 **Priority:** Medium
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 8 hours
@@ -823,6 +896,7 @@ export const analyticsEvents = {
 ```
 
 **Usage:**
+
 ```tsx
 import { analyticsEvents } from '@/lib/analytics';
 
@@ -833,6 +907,7 @@ function handleCreateTenant() {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Analytics library integrated
 - [ ] Key events tracked (login, create, edit, delete)
 - [ ] Page views tracked
@@ -840,6 +915,7 @@ function handleCreateTenant() {
 - [ ] Respects user consent (if required)
 
 **Testing Checklist:**
+
 - [ ] Unit test: analytics events fire correctly
 - [ ] Manual test: verify events in analytics dashboard
 
@@ -849,6 +925,7 @@ function handleCreateTenant() {
 ---
 
 #### Task 12.4: Add Micro-Interactions (1 day)
+
 **Priority:** Low
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 8 hours
@@ -892,14 +969,16 @@ export function SuccessAnimation({ message }: { message: string }) {
 
 ```tsx
 // In Button component, enhance loading state
-{isLoading && (
-  <motion.div
-    animate={{ rotate: 360 }}
-    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-  >
-    <Loader2 className="w-4 h-4" />
-  </motion.div>
-)}
+{
+  isLoading && (
+    <motion.div
+      animate={{ rotate: 360 }}
+      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+    >
+      <Loader2 className="w-4 h-4" />
+    </motion.div>
+  );
+}
 ```
 
 **3. Card Hover Effects:**
@@ -922,10 +1001,11 @@ import { motion } from 'framer-motion';
   className="text-4xl font-bold text-on-surface"
 >
   {value}
-</motion.p>
+</motion.p>;
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Success animations show after form submission
 - [ ] Buttons have subtle hover scale effect
 - [ ] Cards lift on hover
@@ -933,6 +1013,7 @@ import { motion } from 'framer-motion';
 - [ ] Animations respect `prefers-reduced-motion`
 
 **Testing Checklist:**
+
 - [ ] Visual test: animations are smooth
 - [ ] Accessibility test: animations can be disabled
 - [ ] Performance test: animations don't cause jank
@@ -979,18 +1060,21 @@ import { motion } from 'framer-motion';
 ## Testing Strategy for Phase 4
 
 ### Integration Testing
+
 - Test charts with real data from API
 - Test pagination with large datasets (100+ items)
 - Test sorting and filtering together
 - Test onboarding tour flow end-to-end
 
 ### User Acceptance Testing
+
 - Get feedback from real Platform Admins
 - Get feedback from real Tenant Admins
 - Test onboarding with new users
 - Measure task completion time
 
 ### Performance Testing
+
 - Test chart rendering performance (large datasets)
 - Test table performance with 1000+ rows
 - Ensure animations don't cause jank (60fps)
@@ -999,25 +1083,27 @@ import { motion } from 'framer-motion';
 
 ## Success Metrics (Phase 4)
 
-| Metric | Before Phase 4 | After Phase 4 | Target |
-|--------|----------------|---------------|--------|
-| Time to first action (new user) | 5 min | 1 min | <2 min |
-| Onboarding completion rate | 0% | 70% | 70% |
-| Data insights clarity | 3/10 | 9/10 | 8/10 |
-| User delight score (NPS) | Baseline TBD | +20 points | +15 points |
-| Support tickets (feature discovery) | 15/month | 3/month | <5/month |
+| Metric                              | Before Phase 4 | After Phase 4 | Target     |
+| ----------------------------------- | -------------- | ------------- | ---------- |
+| Time to first action (new user)     | 5 min          | 1 min         | <2 min     |
+| Onboarding completion rate          | 0%             | 70%           | 70%        |
+| Data insights clarity               | 3/10           | 9/10          | 8/10       |
+| User delight score (NPS)            | Baseline TBD   | +20 points    | +15 points |
+| Support tickets (feature discovery) | 15/month       | 3/month       | <5/month   |
 
 ---
 
 ## Post-Phase 4 Activities
 
 ### Week 13: Stabilization
+
 - Bug fixing period
 - Performance optimization
 - User feedback incorporation
 - Documentation finalization
 
 ### Week 14: Final Review
+
 - Comprehensive testing
 - Stakeholder demo
 - Launch planning
@@ -1028,6 +1114,7 @@ import { motion } from 'framer-motion';
 ## Next Steps
 
 After completing Phase 4:
+
 1. ✅ Deploy all Phase 4 changes to production
 2. 📊 Comprehensive metrics review (all phases)
 3. 🎉 Team celebration

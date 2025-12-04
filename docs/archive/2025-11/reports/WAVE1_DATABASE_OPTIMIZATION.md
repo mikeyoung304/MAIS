@@ -15,14 +15,17 @@ This optimization adds **16 performance indexes** to improve database query perf
 ## What Changed
 
 ### 1. Schema File (`server/prisma/schema.prisma`)
+
 - Added 16 index definitions to improve query performance
 - All changes are additive (no breaking changes)
 
 ### 2. Repository Files (`server/src/adapters/prisma/catalog.repository.ts`)
+
 - Optimized validation queries to use `select` for minimal data transfer
 - Added inline comments explaining performance improvements
 
 ### 3. Migration File (`server/prisma/migrations/05_add_additional_performance_indexes.sql`)
+
 - New SQL migration with 16 index creation statements
 - Uses `CREATE INDEX IF NOT EXISTS` for idempotency
 
@@ -31,12 +34,14 @@ This optimization adds **16 performance indexes** to improve database query perf
 ## How to Apply to Production
 
 ### Step 1: Review the Changes
+
 ```bash
 # View the migration SQL
 cat server/prisma/migrations/05_add_additional_performance_indexes.sql
 ```
 
 ### Step 2: Apply to Production Database
+
 ```bash
 # Connect and apply migration
 psql $DATABASE_URL < server/prisma/migrations/05_add_additional_performance_indexes.sql
@@ -47,6 +52,7 @@ npx prisma migrate deploy
 ```
 
 ### Step 3: Verify Indexes Were Created
+
 ```sql
 -- Check new indexes
 SELECT schemaname, tablename, indexname
@@ -57,6 +63,7 @@ ORDER BY tablename, indexname;
 ```
 
 ### Step 4: Monitor Performance
+
 ```sql
 -- Check index usage after 24 hours
 SELECT schemaname, tablename, indexname, idx_scan, idx_tup_read
@@ -71,6 +78,7 @@ LIMIT 20;
 ## Indexes Added (16 total)
 
 ### Foreign Key Indexes (10)
+
 Critical for join performance - PostgreSQL doesn't auto-index foreign keys:
 
 1. `PackageAddOn_packageId_idx` - Package ← AddOn lookups
@@ -82,6 +90,7 @@ Critical for join performance - PostgreSQL doesn't auto-index foreign keys:
 7. `Booking_venueId_idx` - Booking → Venue joins
 
 ### Lookup Indexes (3)
+
 Fast single-column lookups:
 
 8. `Customer_email_idx` - Customer lookups by email
@@ -89,6 +98,7 @@ Fast single-column lookups:
 10. `Payment_status_idx` - Payment status filtering
 
 ### Composite Indexes (3)
+
 Multi-column queries:
 
 11. `Booking_tenantId_confirmedAt_idx` - Revenue/reporting queries
@@ -100,18 +110,19 @@ Multi-column queries:
 
 ## Performance Impact
 
-| Query Type | Performance Gain | Scalability Impact |
-|------------|------------------|-------------------|
-| Package slug lookup | **95% faster** | Critical for widget loads |
-| Booking + Package join | **80% faster** | Scales to 100K+ bookings |
-| Payment status filter | **87% faster** | Admin dashboard performance |
-| Junction table lookups | **70-90% faster** | AddOn associations |
+| Query Type             | Performance Gain  | Scalability Impact          |
+| ---------------------- | ----------------- | --------------------------- |
+| Package slug lookup    | **95% faster**    | Critical for widget loads   |
+| Booking + Package join | **80% faster**    | Scales to 100K+ bookings    |
+| Payment status filter  | **87% faster**    | Admin dashboard performance |
+| Junction table lookups | **70-90% faster** | AddOn associations          |
 
 ---
 
 ## Query Optimizations (8 methods)
 
 ### catalog.repository.ts
+
 - `createPackage()` - Added `select: { id: true }` for validation
 - `updatePackage()` - Added `select: { id: true, slug: true }` for validation
 - `deletePackage()` - Added `select: { id: true }` for validation
@@ -128,19 +139,21 @@ Multi-column queries:
 ### Example 1: Widget Package Load
 
 **Before**:
+
 ```typescript
 // No index on Package.slug
 const pkg = await prisma.package.findUnique({
-  where: { tenantId_slug: { tenantId, slug } }
+  where: { tenantId_slug: { tenantId, slug } },
 });
 // Execution: 45ms (table scan)
 ```
 
 **After**:
+
 ```typescript
 // With composite unique index
 const pkg = await prisma.package.findUnique({
-  where: { tenantId_slug: { tenantId, slug } }
+  where: { tenantId_slug: { tenantId, slug } },
 });
 // Execution: 2ms (index scan) - 95% faster
 ```
@@ -148,19 +161,21 @@ const pkg = await prisma.package.findUnique({
 ### Example 2: Booking List with Packages
 
 **Before**:
+
 ```typescript
 // No index on Booking.packageId
 const bookings = await prisma.booking.findMany({
-  include: { package: true }
+  include: { package: true },
 });
 // Execution: 85ms (hash join, no index)
 ```
 
 **After**:
+
 ```typescript
 // With index on Booking.packageId
 const bookings = await prisma.booking.findMany({
-  include: { package: true }
+  include: { package: true },
 });
 // Execution: 17ms (indexed join) - 80% faster
 ```
@@ -196,6 +211,7 @@ DROP INDEX IF EXISTS "ConfigChangeLog_entityType_entityId_idx";
 ## Monitoring Queries
 
 ### Check Index Hit Rate
+
 ```sql
 SELECT
   schemaname,
@@ -211,6 +227,7 @@ LIMIT 20;
 ```
 
 ### Find Unused Indexes (After 1 Week)
+
 ```sql
 SELECT
   schemaname,
@@ -225,6 +242,7 @@ ORDER BY tablename, indexname;
 ```
 
 ### Check Table Sizes
+
 ```sql
 SELECT
   schemaname,
@@ -240,18 +258,23 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ## FAQ
 
 ### Q: Will this slow down INSERT/UPDATE operations?
+
 **A**: Minimal impact (<5%). Indexes add slight overhead on writes but provide 30-90% faster reads.
 
 ### Q: How much disk space will indexes use?
+
 **A**: ~10-20% of table size. For small tables (<100K rows), negligible. For large tables, indexes are essential.
 
 ### Q: Can I apply this incrementally?
+
 **A**: Yes. Each `CREATE INDEX IF NOT EXISTS` statement is independent. You can apply them one at a time.
 
 ### Q: What if I already have some of these indexes?
+
 **A**: The migration uses `IF NOT EXISTS`, so duplicate indexes are skipped safely.
 
 ### Q: When should I apply this?
+
 **A**: **Before production launch** or during low-traffic window. Index creation is online but can take 1-5 minutes on large tables.
 
 ---
@@ -271,6 +294,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ## Support
 
 For questions or issues:
+
 1. Review full report: `WAVE1_SUBAGENT_1B_REPORT.md`
 2. Check migration SQL: `server/prisma/migrations/05_add_additional_performance_indexes.sql`
 3. Verify schema changes: `server/prisma/schema.prisma`

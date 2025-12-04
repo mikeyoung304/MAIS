@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "026"
+issue_id: '026'
 tags: [code-review, performance, database, n-plus-1]
 dependencies: []
 ---
@@ -47,12 +47,14 @@ const globalAddOns = await this.prisma.addOn.findMany({
 **Location:** `server/src/services/catalog.service.ts:96-113`
 
 `getPackageBySlug()` also makes TWO separate queries:
+
 1. `getPackageBySlug()` - fetch package
 2. `getAddOnsByPackageId()` - fetch add-ons
 
 ## Proposed Solutions
 
 ### Option A: Merge Queries with OR Condition (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 Fetch both segment-specific and global add-ons in single query:
@@ -80,30 +82,35 @@ const allAddOns = await this.prisma.addOn.findMany({
     active: true,
     OR: [
       { segmentId: segment.id },
-      { segmentId: null },  // Global
+      { segmentId: null }, // Global
     ],
   },
 });
 ```
 
 **Pros:**
+
 - 50% reduction in queries
 - Simple change
 - No schema modification
 
 **Cons:**
+
 - Slightly more complex WHERE clause
 
 ### Option B: Include Global Add-ons in Initial Query
+
 **Effort:** Medium | **Risk:** Low
 
 Use Prisma's raw query to fetch everything in one round-trip.
 
 **Pros:**
+
 - Single query
 - Optimal performance
 
 **Cons:**
+
 - More complex implementation
 - Harder to maintain
 
@@ -114,10 +121,12 @@ Implement **Option A** for quick win, then optimize further if needed.
 ## Technical Details
 
 **Files to Update:**
+
 - `server/src/adapters/prisma/segment.repository.ts:232-238`
 - `server/src/services/catalog.service.ts:96-113`
 
 **Expected Improvement:**
+
 - 50% reduction in database queries on segment landing pages
 - ~50ms faster response time (1 fewer DB round-trip)
 
@@ -131,8 +140,8 @@ Implement **Option A** for quick win, then optimize further if needed.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                  |
+| ---------- | ------- | -------------------------------------- |
 | 2025-11-27 | Created | Found during comprehensive code review |
 
 ## Resources

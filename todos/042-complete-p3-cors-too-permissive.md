@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "042"
+issue_id: '042'
 tags: [code-review, security, cors]
 dependencies: []
 ---
@@ -20,13 +20,14 @@ Production allows ANY HTTPS origin for widget embedding, which is overly permiss
 
 ```typescript
 if (process.env.NODE_ENV === 'production' && origin.startsWith('https://')) {
-  callback(null, true);  // Allows ANY HTTPS origin
+  callback(null, true); // Allows ANY HTTPS origin
 }
 ```
 
 ## Proposed Solutions
 
 Change to whitelist-only:
+
 ```typescript
 const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS || '').split(',');
 if (ALLOWED_ORIGINS.includes(origin)) {
@@ -72,7 +73,7 @@ cors({
     }
   },
   // ... other CORS options
-})
+});
 ```
 
 **Configuration:** `server/src/lib/core/config.ts:16-23`
@@ -108,7 +109,7 @@ The current implementation is actually **more secure** than the TODO proposal:
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-27 | Created | Found during DevOps review |
+| Date       | Action   | Notes                                  |
+| ---------- | -------- | -------------------------------------- |
+| 2025-11-27 | Created  | Found during DevOps review             |
 | 2025-12-02 | Verified | Already implemented - marking complete |

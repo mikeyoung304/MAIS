@@ -453,14 +453,13 @@ Each custom domain needs:
 
 ## Summary Table
 
-| Aspect | Path-Based | Subdomain | Custom |
-|--------|-----------|-----------|--------|
-| **URL Example** | `app.com/t/acme` | `acme.app.com` | `acme.com` |
-| **Setup Time** | 1 hour | 2 hours | 3+ hours |
-| **DNS Changes** | None | Wildcard record | Per-domain |
-| **SSL/TLS** | Single cert | Single cert | Per-domain |
-| **White-Label** | Medium | High | Full |
-| **Scalability** | Excellent | Excellent | Good |
-| **Complexity** | Low | Medium | High |
-| **Best For** | MVP | Growth | Enterprise |
-
+| Aspect          | Path-Based       | Subdomain       | Custom     |
+| --------------- | ---------------- | --------------- | ---------- |
+| **URL Example** | `app.com/t/acme` | `acme.app.com`  | `acme.com` |
+| **Setup Time**  | 1 hour           | 2 hours         | 3+ hours   |
+| **DNS Changes** | None             | Wildcard record | Per-domain |
+| **SSL/TLS**     | Single cert      | Single cert     | Per-domain |
+| **White-Label** | Medium           | High            | Full       |
+| **Scalability** | Excellent        | Excellent       | Good       |
+| **Complexity**  | Low              | Medium          | High       |
+| **Best For**    | MVP              | Growth          | Enterprise |

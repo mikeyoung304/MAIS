@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "002"
+issue_id: '002'
 tags: [documentation, archive, sprints]
 dependencies: []
 ---
@@ -15,6 +15,7 @@ Several Sprint 10-related documents remain in the project root that document com
 ## Findings
 
 **Root-level files to archive:**
+
 1. `SPRINT_10_ACTION_PLAN.md` - Planning document for completed sprint
 2. `SPRINT_10_PHASE_3_HANDOFF.md` - Handoff doc (states 56% complete, now 100%)
 3. `SPRINT_10_PHASE_3_PROGRESS.md` - Final progress report (100% complete)
@@ -22,6 +23,7 @@ Several Sprint 10-related documents remain in the project root that document com
 5. `START_HERE.md` - Launch planning doc with broken references
 
 **Evidence of staleness:**
+
 - SPRINT_10_PHASE_3_HANDOFF.md claims "56% complete" but work is 100% done
 - START_HERE.md references non-existent files (QUICK_START_GUIDE.md, AUTOMATION_STATUS.md)
 - TENANT_KEY_FIX_REPORT.md is a one-time fix, not ongoing reference
@@ -29,6 +31,7 @@ Several Sprint 10-related documents remain in the project root that document com
 ## Proposed Solutions
 
 ### Solution 1: Archive All 5 Files (Recommended)
+
 - Move to `docs/archive/sprints/` and `docs/archive/bugfixes/`
 - Effort: Small (20 min)
 - Risk: Low
@@ -36,6 +39,7 @@ Several Sprint 10-related documents remain in the project root that document com
 - Cons: None
 
 ### Solution 2: Delete START_HERE.md, Archive Others
+
 - Delete START_HERE.md (broken references, obsolete)
 - Archive the 4 sprint-related files
 - Effort: Small (20 min)
@@ -50,6 +54,7 @@ Solution 1 - Archive all 5 files for historical reference.
 ## Technical Details
 
 **Files to move:**
+
 ```
 SPRINT_10_ACTION_PLAN.md → docs/archive/sprints/
 SPRINT_10_PHASE_3_HANDOFF.md → docs/archive/sprints/
@@ -59,6 +64,7 @@ START_HERE.md → docs/archive/planning/
 ```
 
 **Commands:**
+
 ```bash
 mkdir -p docs/archive/sprints docs/archive/bugfixes docs/archive/planning
 git mv SPRINT_10_ACTION_PLAN.md docs/archive/sprints/
@@ -76,8 +82,8 @@ git mv START_HERE.md docs/archive/planning/
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                  |
+| ---------- | ------- | -------------------------------------- |
 | 2025-11-24 | Created | Identified during documentation review |
 
 ## Resources

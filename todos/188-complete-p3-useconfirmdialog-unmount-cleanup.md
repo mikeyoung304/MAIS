@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "188"
+issue_id: '188'
 tags: [code-review, react, memory-leak]
 dependencies: []
 ---
@@ -17,6 +17,7 @@ The `useConfirmDialog` hook stores a Promise resolve function in a ref, but does
 **Location:** `client/src/hooks/useConfirmDialog.tsx`
 
 **Current Code:**
+
 ```typescript
 const resolveRef = useRef<((value: boolean) => void) | null>(null);
 
@@ -24,12 +25,14 @@ const resolveRef = useRef<((value: boolean) => void) | null>(null);
 ```
 
 **Risk Assessment:**
+
 - Impact: Low (minor memory leak, unlikely scenario)
 - Likelihood: Very Low (component usually stays mounted)
 
 ## Proposed Solutions
 
 ### Solution 1: Add useEffect cleanup (Recommended)
+
 - Add cleanup effect to resolve Promise on unmount
 - Standard React pattern
 - **Pros:** Prevents memory leak, clean pattern
@@ -44,9 +47,11 @@ Implement **Solution 1** for completeness.
 ## Technical Details
 
 **Affected Files:**
+
 - `client/src/hooks/useConfirmDialog.tsx`
 
 **Proposed Change:**
+
 ```typescript
 export function useConfirmDialog() {
   const [dialogState, setDialogState] = useState<ConfirmDialogState | null>(null);
@@ -73,8 +78,8 @@ export function useConfirmDialog() {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                      |
+| ---------- | ------- | ------------------------------------------ |
 | 2025-12-03 | Created | Found during code review of commit 45024e6 |
 
 ## Resources

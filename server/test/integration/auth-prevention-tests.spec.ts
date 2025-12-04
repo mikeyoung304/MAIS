@@ -53,12 +53,10 @@ describe('Issue 1: Password Hash Synchronization', () => {
       // The seed script should create a platform admin with known credentials
       const adminEmail = 'mike@maconheadshots.com';
 
-      const response = await request(app)
-        .post('/v1/auth/login')
-        .send({
-          email: adminEmail,
-          password: '@Nupples8',
-        });
+      const response = await request(app).post('/v1/auth/login').send({
+        email: adminEmail,
+        password: '@Nupples8',
+      });
 
       // Should either succeed (200) or not found (401), but not error
       expect([200, 401]).toContain(response.status);
@@ -73,12 +71,10 @@ describe('Issue 1: Password Hash Synchronization', () => {
       const testTenantEmail = 'test@mais-e2e.com';
       const testTenantPassword = 'TestPassword123!';
 
-      const response = await request(app)
-        .post('/v1/auth/login')
-        .send({
-          email: testTenantEmail,
-          password: testTenantPassword,
-        });
+      const response = await request(app).post('/v1/auth/login').send({
+        email: testTenantEmail,
+        password: testTenantPassword,
+      });
 
       // Should either succeed (200) or not found (401), but not error
       expect([200, 401]).toContain(response.status);
@@ -471,12 +467,10 @@ describe('Issue 3: Demo/Dev Credentials Sync', () => {
       const testTenantPassword = 'TestPassword123!';
 
       // Try to login - should succeed if seeded
-      const response = await request(app)
-        .post('/v1/auth/login')
-        .send({
-          email: testTenantEmail,
-          password: testTenantPassword,
-        });
+      const response = await request(app).post('/v1/auth/login').send({
+        email: testTenantEmail,
+        password: testTenantPassword,
+      });
 
       // Should either succeed (200) or not found (401) if not seeded
       expect([200, 401]).toContain(response.status);
@@ -549,7 +543,6 @@ describe('Issue 3: Demo/Dev Credentials Sync', () => {
       expect(response.body.error).toBeDefined();
     });
   });
-
 
   describe('Credential Format Validation', () => {
     it('should enforce minimum password length', async () => {

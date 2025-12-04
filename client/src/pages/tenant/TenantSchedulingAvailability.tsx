@@ -4,7 +4,7 @@
  * Page for tenant admins to manage their availability rules.
  */
 
-import { AvailabilityRulesManager } from "@/features/tenant-admin/scheduling/AvailabilityRulesManager";
+import { AvailabilityRulesManager } from '@/features/tenant-admin/scheduling/AvailabilityRulesManager';
 
 export function TenantSchedulingAvailabilityPage() {
   return (

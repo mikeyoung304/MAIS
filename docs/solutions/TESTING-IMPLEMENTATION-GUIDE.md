@@ -48,6 +48,7 @@ echo "✅ Seed function validation passed"
 ```
 
 Make it executable:
+
 ```bash
 chmod +x .husky/seed-validation
 ```
@@ -92,6 +93,7 @@ echo "✅ E2E coverage check passed"
 ```
 
 Make it executable:
+
 ```bash
 chmod +x .husky/e2e-coverage-check
 ```
@@ -138,138 +140,138 @@ echo "✅ All pre-commit checks passed!"
 
 Add this job to `.github/workflows/main-pipeline.yml` before the `e2e-tests` job:
 
-```yaml
-  # Job X: Seed Function Tests
-  seed-tests:
-    name: Seed Function Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+````yaml
+# Job X: Seed Function Tests
+seed-tests:
+  name: Seed Function Tests
+  runs-on: ubuntu-latest
+  timeout-minutes: 10
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: mais_seed_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+  services:
+    postgres:
+      image: postgres:16
+      env:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: mais_seed_test
+      ports:
+        - 5432:5432
+      options: >-
+        --health-cmd pg_isready
+        --health-interval 10s
+        --health-timeout 5s
+        --health-retries 5
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+    - name: Install dependencies
+      run: npm ci
 
-      - name: Generate Prisma Client
-        run: npm run --workspace=server prisma:generate
+    - name: Generate Prisma Client
+      run: npm run --workspace=server prisma:generate
 
-      - name: Run database migrations
-        run: npx prisma migrate deploy --schema=./server/prisma/schema.prisma
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_seed_test
+    - name: Run database migrations
+      run: npx prisma migrate deploy --schema=./server/prisma/schema.prisma
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_seed_test
 
-      - name: Run seed function unit tests
-        run: npm test -- server/test/seeds/ --reporter=verbose
-        env:
-          NODE_ENV: test
+    - name: Run seed function unit tests
+      run: npm test -- server/test/seeds/ --reporter=verbose
+      env:
+        NODE_ENV: test
 
-      - name: Test seed idempotency
-        run: |
-          echo "Testing production seed idempotency..."
-          npm run --workspace=server db:seed:production
-          echo "✅ First run succeeded"
+    - name: Test seed idempotency
+      run: |
+        echo "Testing production seed idempotency..."
+        npm run --workspace=server db:seed:production
+        echo "✅ First run succeeded"
 
-          echo "Testing second run (idempotency)..."
-          npm run --workspace=server db:seed:production
-          echo "✅ Second run succeeded (idempotent)"
+        echo "Testing second run (idempotency)..."
+        npm run --workspace=server db:seed:production
+        echo "✅ Second run succeeded (idempotent)"
 
-          echo "Testing e2e seed idempotency..."
-          npm run --workspace=server db:seed:e2e
-          npm run --workspace=server db:seed:e2e
-          echo "✅ E2E seed is idempotent"
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_seed_test
-          ADMIN_EMAIL: ci@example.com
-          ADMIN_DEFAULT_PASSWORD: ci-password-12345
-          NODE_ENV: test
+        echo "Testing e2e seed idempotency..."
+        npm run --workspace=server db:seed:e2e
+        npm run --workspace=server db:seed:e2e
+        echo "✅ E2E seed is idempotent"
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_seed_test
+        ADMIN_EMAIL: ci@example.com
+        ADMIN_DEFAULT_PASSWORD: ci-password-12345
+        NODE_ENV: test
 
-      - name: Comment PR on failure
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '❌ **Seed function tests failed**\n\nPlease verify seed functions:\n```bash\nnpm test -- server/test/seeds/\n```\n\nAlso verify idempotency:\n```bash\nnpm run db:seed:production\nnpm run db:seed:production\n```'
-            })
-```
+    - name: Comment PR on failure
+      if: failure() && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '❌ **Seed function tests failed**\n\nPlease verify seed functions:\n```bash\nnpm test -- server/test/seeds/\n```\n\nAlso verify idempotency:\n```bash\nnpm run db:seed:production\nnpm run db:seed:production\n```'
+          })
+````
 
 ### Step 2.2: Update Pipeline Complete Job
 
 Find the `pipeline-complete` job and update the `needs` field:
 
 ```yaml
-  pipeline-complete:
-    name: Pipeline Complete
-    runs-on: ubuntu-latest
-    needs: [
+pipeline-complete:
+  name: Pipeline Complete
+  runs-on: ubuntu-latest
+  needs: [
       docs-validation,
       pattern-validation,
       lint,
       typecheck,
       unit-tests,
       integration-tests,
-      seed-tests,  # ADD THIS LINE
+      seed-tests, # ADD THIS LINE
       e2e-tests,
-      build
+      build,
     ]
-    if: always()
+  if: always()
 
-    steps:
-      - name: Check all jobs status
-        run: |
-          # Required checks
-          if [ "${{ needs.docs-validation.result }}" != "success" ] || \
-             [ "${{ needs.pattern-validation.result }}" != "success" ] || \
-             [ "${{ needs.lint.result }}" != "success" ] || \
-             [ "${{ needs.typecheck.result }}" != "success" ] || \
-             [ "${{ needs.unit-tests.result }}" != "success" ] || \
-             [ "${{ needs.integration-tests.result }}" != "success" ] || \
-             [ "${{ needs.seed-tests.result }}" != "success" ] || \
-             [ "${{ needs.e2e-tests.result }}" != "success" ] || \
-             [ "${{ needs.build.result }}" != "success" ]; then
-            echo "❌ One or more required checks failed"
-            exit 1
-          else
-            echo "✅ All pipeline checks passed!"
-          fi
+  steps:
+    - name: Check all jobs status
+      run: |
+        # Required checks
+        if [ "${{ needs.docs-validation.result }}" != "success" ] || \
+           [ "${{ needs.pattern-validation.result }}" != "success" ] || \
+           [ "${{ needs.lint.result }}" != "success" ] || \
+           [ "${{ needs.typecheck.result }}" != "success" ] || \
+           [ "${{ needs.unit-tests.result }}" != "success" ] || \
+           [ "${{ needs.integration-tests.result }}" != "success" ] || \
+           [ "${{ needs.seed-tests.result }}" != "success" ] || \
+           [ "${{ needs.e2e-tests.result }}" != "success" ] || \
+           [ "${{ needs.build.result }}" != "success" ]; then
+          echo "❌ One or more required checks failed"
+          exit 1
+        else
+          echo "✅ All pipeline checks passed!"
+        fi
 
-      - name: Comment PR with success
-        if: success() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '✅ **All pipeline checks passed!**\n\n- Documentation: Passed\n- Multi-tenant patterns: Passed\n- Code quality: Passed\n- Type checking: Passed\n- Unit tests: Passed\n- Integration tests: Passed\n- **Seed tests: Passed** (NEW)\n- E2E tests: Passed\n- Build validation: Passed\n\nReady for review!'
-            })
+    - name: Comment PR with success
+      if: success() && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '✅ **All pipeline checks passed!**\n\n- Documentation: Passed\n- Multi-tenant patterns: Passed\n- Code quality: Passed\n- Type checking: Passed\n- Unit tests: Passed\n- Integration tests: Passed\n- **Seed tests: Passed** (NEW)\n- E2E tests: Passed\n- Build validation: Passed\n\nReady for review!'
+          })
 ```
 
 ## Part 3: Code Review Template
@@ -309,6 +311,7 @@ Brief description of changes
 ## Checklist
 
 ### Seed Function Changes
+
 - [ ] If modifying `server/prisma/seeds/`, test file exists (`server/test/seeds/`)
 - [ ] Idempotency verified (running seed twice doesn't create duplicates)
 - [ ] Environment variable guards tested
@@ -316,6 +319,7 @@ Brief description of changes
 - [ ] Used `upsert` instead of `create` for idempotency
 
 ### UI/Route Changes
+
 - [ ] If modifying critical UI (`client/src/features/storefront/`, etc.), E2E test exists
 - [ ] E2E test covers happy path
 - [ ] E2E test covers error states
@@ -323,12 +327,14 @@ Brief description of changes
 - [ ] Multi-tenant scoping verified (if applicable)
 
 ### Service Changes
+
 - [ ] Unit tests added/updated (with mocked dependencies)
 - [ ] Integration tests added/updated (with real database)
 - [ ] Error paths tested (domain errors thrown correctly)
 - [ ] Multi-tenant queries scoped by `tenantId`
 
 ### Security Review
+
 - [ ] No hardcoded secrets or API keys
 - [ ] Multi-tenant data isolation verified
 - [ ] Rate limiting still effective
@@ -345,6 +351,7 @@ Closes #[issue-number]
 ---
 
 **Note:** All pipeline checks must pass before merge:
+
 - ✅ Documentation standards
 - ✅ Multi-tenant security patterns
 - ✅ Linting & formatting
@@ -397,13 +404,14 @@ When reviewing changes to `server/prisma/seeds/`:
    - [ ] No sensitive information leaked in error messages
 
 ### Test Expectations
-
 ```
+
 ✅ Environment Variable Validation
 ✅ Idempotency (multiple runs)
 ✅ Data Creation (correct values)
 ✅ Error Handling (constraint violations)
 ✅ Security Guards (password hashing, key generation)
+
 ```
 
 ## Storefront / UI Feature Changes
@@ -439,11 +447,13 @@ When reviewing `client/src/features/storefront/`, `client/src/pages/`, or simila
 ### Test Expectations
 
 ```
+
 ✅ Navigation (routing, deep linking)
 ✅ Data Display (loading, success, error, empty states)
 ✅ User Interaction (forms, buttons, dialogs)
 ✅ Responsive Layout (mobile, tablet, desktop)
 ✅ Error Handling (network errors, invalid data)
+
 ```
 
 ## Service Layer Changes
@@ -482,11 +492,13 @@ When reviewing `server/src/services/`:
 ### Test Expectations
 
 ```
+
 ✅ Unit Tests (mocked dependencies)
 ✅ Integration Tests (real database)
 ✅ Multi-Tenant Scoping (tenantId in all queries)
 ✅ Error Paths (domain errors)
 ✅ Async Safety (no race conditions)
+
 ```
 
 ## General Guidance
@@ -594,7 +606,7 @@ export async function seedMyFeature(prisma: PrismaClient) {
     if (!process.env[envVar]) {
       throw new Error(
         `${envVar} environment variable is required for seedMyFeature. ` +
-        `Generate a secure value with: openssl rand -hex 32`
+          `Generate a secure value with: openssl rand -hex 32`
       );
     }
   }
@@ -665,17 +677,13 @@ describe('My Feature Seed', () => {
     it('should throw when MY_FEATURE_EMAIL is missing', async () => {
       const mockPrisma = createMockPrisma();
 
-      await expect(seedMyFeature(mockPrisma))
-        .rejects
-        .toThrow('MY_FEATURE_EMAIL.*required');
+      await expect(seedMyFeature(mockPrisma)).rejects.toThrow('MY_FEATURE_EMAIL.*required');
     });
 
     it('should include helpful error message', async () => {
       const mockPrisma = createMockPrisma();
 
-      await expect(seedMyFeature(mockPrisma))
-        .rejects
-        .toThrow(/openssl rand/i);
+      await expect(seedMyFeature(mockPrisma)).rejects.toThrow(/openssl rand/i);
     });
   });
 
@@ -769,7 +777,7 @@ test.describe('My Feature', () => {
   test.describe('Error States', () => {
     test('should show error on network failure', async ({ page }) => {
       // Simulate network error
-      await page.route('**/api/my-feature', route => route.abort());
+      await page.route('**/api/my-feature', (route) => route.abort());
 
       await page.goto('/my-feature');
 

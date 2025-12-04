@@ -13,6 +13,7 @@
 Successfully completed comprehensive TypeScript type safety audit and remediation across the Elope codebase. Eliminated **9 critical `any` types** in production code (services, adapters, API clients, and business logic), with strict mode already enabled in both client and server tsconfig files.
 
 ### Key Achievements
+
 - ✅ 0 TypeScript compilation errors
 - ✅ 9 critical `any` types eliminated in production code
 - ✅ Strict mode already enabled (server & client)
@@ -26,6 +27,7 @@ Successfully completed comprehensive TypeScript type safety audit and remediatio
 ### Total `any` Types Found
 
 **Priority Production Files** (Fixed): 9 instances
+
 - `server/src/routes/webhooks.routes.ts`: 1 instance
 - `client/src/lib/api.ts`: 3 instances
 - `server/src/lib/ports.ts`: 1 instance
@@ -33,12 +35,14 @@ Successfully completed comprehensive TypeScript type safety audit and remediatio
 - `server/src/services/stripe-connect.service.ts`: 2 instances
 
 **Additional Files Fixed**: 4 instances
+
 - `server/src/adapters/prisma/catalog.repository.ts`: 1 instance
 - `server/src/middleware/auth.ts`: 1 instance
 - `client/src/lib/package-photo-api.ts`: 1 instance
 - `client/src/hooks/useForm.ts`: 1 instance
 
 **Remaining `any` Types** (Acceptable): ~160 instances
+
 - Generated Prisma types (44 instances) - Cannot modify
 - Test files (27 instances) - Per mission constraints
 - Express middleware integration (13 instances) - Framework limitation with ts-rest
@@ -73,12 +77,14 @@ Successfully completed comprehensive TypeScript type safety audit and remediatio
 ### File: `server/src/routes/webhooks.routes.ts` (1 fix)
 
 **Before**:
+
 ```typescript
 const tempSession = event.data.object as any;
 tenantId = tempSession?.metadata?.tenantId || 'unknown';
 ```
 
 **After**:
+
 ```typescript
 const tempSession = event.data.object as Stripe.Checkout.Session;
 tenantId = tempSession?.metadata?.tenantId || 'unknown';
@@ -91,6 +97,7 @@ tenantId = tempSession?.metadata?.tenantId || 'unknown';
 ### File: `client/src/lib/api.ts` (3 fixes)
 
 **Before**:
+
 ```typescript
 export const api = initClient(Contracts, { ... });
 
@@ -100,6 +107,7 @@ export const api = initClient(Contracts, { ... });
 ```
 
 **After**:
+
 ```typescript
 interface ExtendedApiClient extends ReturnType<typeof initClient> {
   setTenantKey: (key: string | null) => void;
@@ -121,6 +129,7 @@ api.logoutTenant = () => { ... };
 ### File: `server/src/lib/ports.ts` (1 fix)
 
 **Before**:
+
 ```typescript
 export interface UpdatePackageInput {
   photos?: any; // Photo gallery JSON array
@@ -128,6 +137,7 @@ export interface UpdatePackageInput {
 ```
 
 **After**:
+
 ```typescript
 export interface PackagePhoto {
   url: string;
@@ -149,6 +159,7 @@ export interface UpdatePackageInput {
 **Fix 1 - Generic Response Type**:
 
 **Before**:
+
 ```typescript
 export interface IdempotencyResponse {
   data: any;
@@ -157,6 +168,7 @@ export interface IdempotencyResponse {
 ```
 
 **After**:
+
 ```typescript
 export interface IdempotencyResponse<T = unknown> {
   data: T;
@@ -167,6 +179,7 @@ export interface IdempotencyResponse<T = unknown> {
 **Fix 2 - Error Handling**:
 
 **Before**:
+
 ```typescript
 } catch (error: any) {
   if (error.code === 'P2002' && error.meta?.target?.includes('key')) {
@@ -176,6 +189,7 @@ export interface IdempotencyResponse<T = unknown> {
 ```
 
 **After**:
+
 ```typescript
 } catch (error) {
   if (
@@ -202,12 +216,14 @@ export interface IdempotencyResponse<T = unknown> {
 ### File: `server/src/services/stripe-connect.service.ts` (2 fixes)
 
 **Before**:
+
 ```typescript
 const existingSecrets = (tenant.secrets as any) || {};
 const secrets = tenant.secrets as any;
 ```
 
 **After**:
+
 ```typescript
 import type { TenantSecrets, PrismaJson } from '../types/prisma-json';
 
@@ -222,6 +238,7 @@ const secrets = tenant.secrets as PrismaJson<TenantSecrets>;
 ### File: `server/src/adapters/prisma/catalog.repository.ts` (1 fix)
 
 **Before**:
+
 ```typescript
 private toDomainPackage(pkg: {
   photos?: any;
@@ -231,6 +248,7 @@ private toDomainPackage(pkg: {
 ```
 
 **After**:
+
 ```typescript
 import type { PackagePhoto, PrismaJson } from '../types/prisma-json';
 
@@ -246,6 +264,7 @@ private toDomainPackage(pkg: {
 ### File: `server/src/middleware/auth.ts` (1 fix)
 
 **Before**:
+
 ```typescript
 if ('type' in payload && (payload as any).type === 'tenant') {
   throw new UnauthorizedError('Invalid token type');
@@ -253,9 +272,15 @@ if ('type' in payload && (payload as any).type === 'tenant') {
 ```
 
 **After**:
+
 ```typescript
-if ('type' in payload && typeof payload === 'object' && payload !== null &&
-    'type' in payload && (payload as { type: string }).type === 'tenant') {
+if (
+  'type' in payload &&
+  typeof payload === 'object' &&
+  payload !== null &&
+  'type' in payload &&
+  (payload as { type: string }).type === 'tenant'
+) {
   throw new UnauthorizedError('Invalid token type');
 }
 ```
@@ -265,6 +290,7 @@ if ('type' in payload && typeof payload === 'object' && payload !== null &&
 ### File: `client/src/lib/package-photo-api.ts` (1 fix)
 
 **Before**:
+
 ```typescript
 interface ErrorResponse {
   details?: any;
@@ -272,6 +298,7 @@ interface ErrorResponse {
 ```
 
 **After**:
+
 ```typescript
 interface ErrorResponse {
   details?: unknown;
@@ -283,6 +310,7 @@ interface ErrorResponse {
 ### File: `client/src/hooks/useForm.ts` (1 fix)
 
 **Before**:
+
 ```typescript
 export function useForm<T extends Record<string, any>>(
   initialValues: T
@@ -292,6 +320,7 @@ export function useForm<T extends Record<string, any>>(
 ```
 
 **After**:
+
 ```typescript
 export function useForm<T extends Record<string, unknown>>(
   initialValues: T
@@ -305,10 +334,11 @@ export function useForm<T extends Record<string, unknown>>(
 ## 3. TypeScript Strict Mode Verification
 
 ### Server (`server/tsconfig.json`)
+
 ```json
 {
   "compilerOptions": {
-    "strict": true,  // ✅ Already enabled
+    "strict": true, // ✅ Already enabled
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true
   }
@@ -316,14 +346,15 @@ export function useForm<T extends Record<string, unknown>>(
 ```
 
 ### Client (`client/tsconfig.json`)
+
 ```json
 {
   "compilerOptions": {
-    "strict": true,  // ✅ Already enabled
+    "strict": true, // ✅ Already enabled
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true  // ✅ Extra strict
+    "noUncheckedIndexedAccess": true // ✅ Extra strict
   }
 }
 ```
@@ -335,6 +366,7 @@ export function useForm<T extends Record<string, unknown>>(
 ## 4. Validation Results
 
 ### TypeScript Compilation
+
 ```bash
 $ npm run typecheck
 > tsc --noEmit
@@ -343,27 +375,30 @@ $ npm run typecheck
 ```
 
 ### ESLint
+
 ESLint configuration has pre-existing issues with parserOptions (unrelated to this work). TypeScript compilation succeeded, which is the authoritative check for type safety.
 
 ### Before/After Comparison
 
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| Critical `any` types | 9 | 0 | -100% |
-| TypeScript errors | 0 | 0 | ✅ |
-| Strict mode enabled | ✅ | ✅ | No change |
-| Production code type safety | ~85% | ~95% | +10% |
+| Metric                      | Before | After | Change    |
+| --------------------------- | ------ | ----- | --------- |
+| Critical `any` types        | 9      | 0     | -100%     |
+| TypeScript errors           | 0      | 0     | ✅        |
+| Strict mode enabled         | ✅     | ✅    | No change |
+| Production code type safety | ~85%   | ~95%  | +10%      |
 
 ---
 
 ## 5. Types Added/Created
 
 ### New Interfaces
+
 1. `ExtendedApiClient` - Type-safe API client extensions
 2. `PackagePhoto` - Photo gallery structure
 3. `IdempotencyResponse<T>` - Generic idempotency wrapper
 
 ### Reused Existing Types
+
 1. `TenantSecrets` - Encrypted tenant secrets
 2. `PrismaJson<T>` - Prisma JSON field wrapper
 3. `Stripe.Checkout.Session` - Official Stripe types
@@ -376,30 +411,36 @@ ESLint configuration has pre-existing issues with parserOptions (unrelated to th
 ### Acceptable `any` Types (Not Fixed)
 
 #### 1. Generated Prisma Types (44 instances)
+
 **Location**: `server/src/generated/prisma/**/*.d.ts`
 **Why**: Generated by Prisma CLI, cannot be modified
 **Impact**: None - properly typed at usage sites
 **Recommendation**: No action needed
 
 #### 2. Test Files (27 instances)
+
 **Location**: `server/src/**/*.test.ts`, `server/src/**/*.spec.ts`
 **Why**: Per mission constraints, test files excluded
 **Impact**: Low - test code isolated from production
 **Recommendation**: Fix in separate test-focused sprint
 
 #### 3. Express Middleware Integration (13 instances)
+
 **Location**: `server/src/routes/index.ts`
 **Why**: ts-rest integration with Express lacks full type inference
 **Code Example**:
+
 ```typescript
 getPackages: async ({ req }: { req: any }) => {
   // ts-rest doesn't infer Express Request type here
-}
+};
 ```
+
 **Impact**: Low - parameters validated by ts-rest contract layer
 **Recommendation**: Upgrade ts-rest when better Express typing available
 
 #### 4. Type Definition Files (1 instance)
+
 **Location**: `server/src/types/express.d.ts`
 **Code**: `logger?: any;`
 **Why**: Declaration file for Express global augmentation
@@ -411,17 +452,20 @@ getPackages: async ({ req }: { req: any }) => {
 ## 7. Metrics & Statistics
 
 ### Files Modified
+
 - **Total files changed**: 9 files
 - **Lines changed**: ~50 lines
 - **Breaking changes**: 0 (backward compatible)
 
 ### Type Safety Improvements
+
 - **Critical any types eliminated**: 9 (100%)
 - **Client-side any types**: 0 remaining
 - **Service layer any types**: 0 remaining
 - **Adapter layer any types**: 0 remaining
 
 ### Code Quality
+
 - **Type inference improvement**: From partial to full in fixed files
 - **Autocomplete improvement**: All fixed locations now have full IDE support
 - **Runtime error prevention**: Type-safe Prisma error handling added
@@ -431,21 +475,25 @@ getPackages: async ({ req }: { req: any }) => {
 ## 8. Architectural Improvements
 
 ### 1. Stripe Type Safety
+
 - Now using official `Stripe.Checkout.Session` and `Stripe.Event` types
 - Full autocomplete for Stripe webhook data structures
 - Compile-time validation of metadata access patterns
 
 ### 2. Prisma JSON Type System
+
 - Leveraged existing `TenantSecrets` and `PackagePhoto` interfaces
 - Consistent use of `PrismaJson<T>` wrapper type
 - Type-safe encrypted data handling
 
 ### 3. API Client Extension Pattern
+
 - Established pattern for extending ts-rest clients with type safety
 - `ExtendedApiClient` interface serves as template for future extensions
 - No more unsafe `as any` casts needed for client methods
 
 ### 4. Generic Type Patterns
+
 - `IdempotencyResponse<T>` enables type-safe caching of any Stripe operation
 - Form hook generics properly constrain field types
 - Improved developer experience with inference
@@ -477,18 +525,22 @@ While TypeScript compilation succeeded, consider these validation steps:
 ## 10. Recommendations for Future Work
 
 ### Priority 1: Express Route Handler Types
+
 **Issue**: 13 `any` types in `server/src/routes/index.ts`
 **Solution**: Wait for ts-rest v4 with improved Express typing, or create custom middleware wrapper
 
 ### Priority 2: Test File Type Safety
+
 **Issue**: 27 `any` types across test files
 **Solution**: Dedicated sprint to improve test type safety with proper mocking types
 
 ### Priority 3: Form Validation Type System
+
 **Issue**: Current form hooks use loose type constraints
 **Solution**: Implement Zod-based form validation with generated types
 
 ### Priority 4: Logger Type Definition
+
 **Issue**: `logger?: any` in Express type declaration
 **Solution**: Define proper Winston/Pino logger interface
 
@@ -497,18 +549,21 @@ While TypeScript compilation succeeded, consider these validation steps:
 ## 11. Impact Analysis
 
 ### Developer Experience
+
 - ✅ Full autocomplete for Stripe webhook data
 - ✅ Type-safe API client extensions
 - ✅ Proper error handling with type narrowing
 - ✅ No more "implicit any" warnings in IDE
 
 ### Runtime Safety
+
 - ✅ Eliminated potential `undefined` access in webhook handler
 - ✅ Type-safe Prisma error code checking
 - ✅ Validated photo gallery structure
 - ✅ Proper encrypted secrets handling
 
 ### Maintenance
+
 - ✅ Self-documenting code with explicit types
 - ✅ Easier refactoring with compile-time checks
 - ✅ Reduced cognitive load for code reviewers
@@ -521,6 +576,7 @@ While TypeScript compilation succeeded, consider these validation steps:
 **Mission Status**: ✅ COMPLETE
 
 Successfully eliminated all critical `any` types from production code while maintaining:
+
 - ✅ Zero TypeScript compilation errors
 - ✅ Full backward compatibility
 - ✅ Strict mode compliance (already enabled)
@@ -528,6 +584,7 @@ Successfully eliminated all critical `any` types from production code while main
 - ✅ Enhanced type safety throughout the application
 
 The remaining `any` types are either:
+
 1. Generated code (Prisma) - cannot modify
 2. Test files - excluded per mission scope
 3. Framework limitations (ts-rest/Express integration) - acceptable trade-off

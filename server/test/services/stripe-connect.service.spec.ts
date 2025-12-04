@@ -86,11 +86,7 @@ describe('StripeConnectService', () => {
       });
 
       // Act
-      const accountId = await service.createConnectedAccount(
-        tenantId,
-        email,
-        businessName
-      );
+      const accountId = await service.createConnectedAccount(tenantId, email, businessName);
 
       // Assert
       expect(accountId).toBe('acct_test123');
@@ -147,11 +143,7 @@ describe('StripeConnectService', () => {
 
       // Act & Assert
       await expect(
-        service.createConnectedAccount(
-          'nonexistent',
-          'owner@test.com',
-          'Test Business'
-        )
+        service.createConnectedAccount('nonexistent', 'owner@test.com', 'Test Business')
       ).rejects.toThrow('Tenant not found: nonexistent');
     });
   });

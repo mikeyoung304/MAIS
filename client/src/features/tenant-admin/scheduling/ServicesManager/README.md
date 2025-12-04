@@ -5,6 +5,7 @@ A comprehensive service management component for tenant admins in the MAIS sched
 ## Overview
 
 The `ServicesManager` allows tenant administrators to:
+
 - View all their scheduling services in a table
 - Create new services with auto-generated slugs
 - Edit existing services
@@ -30,7 +31,7 @@ ServicesManager/
 ## Usage
 
 ```tsx
-import { ServicesManager } from "@/features/tenant-admin/scheduling/ServicesManager";
+import { ServicesManager } from '@/features/tenant-admin/scheduling/ServicesManager';
 
 function SchedulingPage() {
   return (
@@ -56,7 +57,9 @@ All endpoints require tenant admin authentication via JWT token.
 ## Features
 
 ### Auto-Slug Generation
+
 When creating a new service, the slug is automatically generated from the name:
+
 - Converts to lowercase
 - Replaces spaces with hyphens
 - Removes special characters
@@ -65,6 +68,7 @@ When creating a new service, the slug is automatically generated from the name:
 Example: "Strategy Session" → "strategy-session"
 
 ### Validation
+
 - **Name**: Required, max 100 characters
 - **Slug**: Required, lowercase alphanumeric + hyphens only, max 100 characters
 - **Duration**: Required, 5-480 minutes (5 min to 8 hours)
@@ -73,20 +77,25 @@ Example: "Strategy Session" → "strategy-session"
 - **Sort Order**: Optional, 0 or greater
 
 ### Active/Inactive Toggle
+
 Click the status badge to quickly toggle a service's active status without editing.
 
 ### Delete Confirmation
+
 All deletes require confirmation via AlertDialog to prevent accidental deletions.
 
 ### Success Messages
+
 All successful operations display a 3-second success message banner.
 
 ## Component Props
 
 ### ServicesManager
+
 No props required - fully self-contained.
 
 ### ServicesList
+
 ```typescript
 interface ServicesListProps {
   services: ServiceDto[];
@@ -98,6 +107,7 @@ interface ServicesListProps {
 ```
 
 ### ServiceForm
+
 ```typescript
 interface ServiceFormProps {
   serviceForm: ServiceFormData;
@@ -125,6 +135,7 @@ interface ServiceFormProps {
 ## State Management
 
 The component uses the custom `useServicesManager` hook which handles:
+
 - Service CRUD operations
 - Form state management
 - Delete confirmation dialog state
@@ -135,6 +146,7 @@ The component uses the custom `useServicesManager` hook which handles:
 ## Styling
 
 Uses the MAIS design system:
+
 - `macon-navy` color palette for backgrounds
 - `macon-orange` for primary actions
 - `white/opacity` for text and borders
@@ -144,6 +156,7 @@ Uses the MAIS design system:
 ## Error Handling
 
 Errors are handled at multiple levels:
+
 1. **Validation errors**: Displayed inline in the form
 2. **API errors**: Displayed via toast notifications (sonner)
 3. **Network errors**: Logged to console and shown via toast

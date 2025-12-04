@@ -17,21 +17,25 @@ Automated diagnostic tests have been successfully created and executed to identi
 ## Test Results
 
 ### ✅ Test 1: Proper Pattern (Browser → Context → Page)
+
 **Status:** PASS (97ms)
 **Result:** Exactly 1 page created with explicit context
 **Finding:** ✅ Perfect! This is the recommended pattern.
 
 ### ✅ Test 2: Implicit Context (Browser → Page directly)
+
 **Status:** PASS (90ms)
 **Result:** 1 page in 1 context
 **Finding:** ✅ Implicit context creation works correctly for simple cases.
 
 ### ❌ Test 3: Multiple Contexts Without Cleanup (Anti-pattern)
+
 **Status:** FAIL (216ms) - **EXPECTED FAILURE**
 **Result:** 5 contexts created 5 pages (memory leak!)
 **Finding:** ⚠️ This is the **anti-pattern** that causes your issue. Demonstrates what happens when MCP doesn't clean up contexts between requests.
 
 **Visual representation:**
+
 ```
 Request 1: Browser → Context #1 → Page #1 (about:blank)
 Request 2: Browser → Context #2 → Page #2 (about:blank)  ← Not cleaned up!
@@ -43,11 +47,13 @@ Result: 5 contexts, 5 pages, dozens of about:blank tabs
 ```
 
 ### ✅ Test 4: Context Reuse with Proper Cleanup
+
 **Status:** PASS (232ms)
 **Result:** 1 context with 1 page maintained across 5 operations
 **Finding:** ✅ Proper cleanup pattern prevents page accumulation.
 
 **Visual representation:**
+
 ```
 Request 1: Browser → Context #1 → Page #1
            Close Context #1 ✓
@@ -60,16 +66,18 @@ Result: Always 1 context, 1 page (previous ones cleaned up)
 ```
 
 ### ✅ Test 5: MCP Singleton Pattern
+
 **Status:** PASS (398ms)
 **Result:** 1 context with 1 page across 10 requests
 **Finding:** ✅ Singleton pattern with proper cleanup is ideal for MCP servers.
 
 **Code pattern tested:**
+
 ```typescript
 class MCPBrowserManager {
   async navigate(url) {
     if (this.context) {
-      await this.context.close();  // ← Key: Close before creating new
+      await this.context.close(); // ← Key: Close before creating new
     }
     this.context = await this.browser.newContext();
     return context.newPage();
@@ -78,21 +86,25 @@ class MCPBrowserManager {
 ```
 
 ### ✅ Test 6: Browser Pool Pattern
+
 **Status:** PASS (216ms)
 **Result:** Pool limited to 3 contexts with 3 pages (max enforced)
 **Finding:** ✅ Browser pooling with max limits prevents unbounded growth.
 
 ### ✅ Test 7: Memory Leak Detection
+
 **Status:** PASS (771ms)
 **Result:** Only 5.84 MB growth over 20 operations
 **Finding:** ✅ No significant memory leak with proper cleanup.
 
 ### ✅ Test 8: Navigation Speed Comparison
+
 **Status:** PASS (485ms)
 **Result:** Context reuse is **2.0x faster** than new browser
 **Finding:** ✅ Performance benefit of context reuse confirmed.
 
 **Benchmark:**
+
 ```
 Context reuse:  ~240ms for 3 operations
 New browser:    ~485ms for 3 operations
@@ -108,10 +120,11 @@ The test suite confirms the root cause identified in `PLAYWRIGHT_BLANK_PAGES_DIA
 ### Primary Issue: Lack of Context Cleanup
 
 **Problem Code Pattern:**
+
 ```typescript
 // ❌ BAD: MCP server creates contexts without cleanup
 async function handleNavigate(url) {
-  const context = await browser.newContext();  // New context every time
+  const context = await browser.newContext(); // New context every time
   const page = await context.newPage();
   await page.goto(url);
   // Context never closed → accumulates over time
@@ -123,11 +136,12 @@ async function handleNavigate(url) {
 ### Solution: Explicit Cleanup
 
 **Fixed Code Pattern:**
+
 ```typescript
 // ✅ GOOD: Close old context before creating new one
 async function handleNavigate(url) {
   if (this.context) {
-    await this.context.close();  // ← Critical: cleanup first!
+    await this.context.close(); // ← Critical: cleanup first!
   }
   this.context = await this.browser.newContext();
   const page = await this.context.newPage();
@@ -144,6 +158,7 @@ async function handleNavigate(url) {
 ### Context Reuse Benefits
 
 From Test 8 results:
+
 - **2.0x faster** than launching new browsers
 - **Lower memory footprint** (5.84 MB vs. hundreds of MB)
 - **Better resource utilization** (one browser process vs. many)
@@ -151,6 +166,7 @@ From Test 8 results:
 ### Anti-pattern Costs
 
 Without cleanup (Test 3):
+
 - **Linear memory growth**: ~100 MB per 10 operations
 - **Browser slowdown**: More contexts = slower operations
 - **User confusion**: Dozens of blank tabs visible
@@ -248,6 +264,7 @@ Pass rate: 87.5% (7/8 passed)
 ### package.json Integration
 
 Added script:
+
 ```json
 {
   "scripts": {
@@ -271,6 +288,7 @@ Added script:
 ### Warning Signs
 
 If you see:
+
 - ❌ Test 4 fails → Context cleanup not working
 - ❌ Test 5 fails → MCP pattern broken
 - ❌ Test 7 fails → Memory leak present

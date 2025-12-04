@@ -22,17 +22,17 @@ The platform now supports variable commission rates with automatic platform fee 
 
 ## Objectives Met
 
-| Objective | Status | Evidence |
-|-----------|--------|----------|
+| Objective                             | Status      | Evidence                            |
+| ------------------------------------- | ----------- | ----------------------------------- |
 | Stripe Connect service implementation | ✅ Complete | StripeConnectService with 8 methods |
-| Tenant onboarding flow | ✅ Complete | Account creation + onboarding links |
-| Payment intent with application fees | ✅ Complete | Connect checkout implementation |
-| Commission integration | ✅ Complete | Uses existing CommissionService |
-| Admin API endpoints | ✅ Complete | 3 endpoints + CLI tool |
-| Secret key encryption | ✅ Complete | AES-256-GCM encryption |
-| Webhook processing | ✅ Complete | Payment confirmation handling |
-| Testing infrastructure | ✅ Complete | 2 test scripts + guides |
-| Comprehensive documentation | ✅ Complete | 5 docs files (~56KB) |
+| Tenant onboarding flow                | ✅ Complete | Account creation + onboarding links |
+| Payment intent with application fees  | ✅ Complete | Connect checkout implementation     |
+| Commission integration                | ✅ Complete | Uses existing CommissionService     |
+| Admin API endpoints                   | ✅ Complete | 3 endpoints + CLI tool              |
+| Secret key encryption                 | ✅ Complete | AES-256-GCM encryption              |
+| Webhook processing                    | ✅ Complete | Payment confirmation handling       |
+| Testing infrastructure                | ✅ Complete | 2 test scripts + guides             |
+| Comprehensive documentation           | ✅ Complete | 5 docs files (~56KB)                |
 
 ---
 
@@ -43,6 +43,7 @@ The platform now supports variable commission rates with automatic platform fee 
 **File**: `server/src/services/stripe-connect.service.ts` (10KB, 360+ lines)
 
 **Methods Implemented**:
+
 - ✅ `createConnectedAccount(tenantId, email, businessName, country)` - Create Express account
 - ✅ `createOnboardingLink(tenantId, refreshUrl, returnUrl)` - Generate 24-hour onboarding URL
 - ✅ `checkOnboardingStatus(tenantId)` - Verify completion and update database
@@ -53,6 +54,7 @@ The platform now supports variable commission rates with automatic platform fee 
 - ✅ `deleteConnectedAccount(tenantId)` - Remove Stripe account (irreversible)
 
 **Key Features**:
+
 - Uses existing `EncryptionService` (AES-256-GCM)
 - Comprehensive error handling and logging
 - Database updates with transaction safety
@@ -64,12 +66,14 @@ The platform now supports variable commission rates with automatic platform fee 
 ### 2. Payment Integration with Application Fees ✅
 
 **Files Modified**:
+
 - `server/src/lib/ports.ts` - Added `createConnectCheckoutSession()` to PaymentProvider
 - `server/src/adapters/stripe.adapter.ts` - Implemented Connect checkout
 - `server/src/services/booking.service.ts` - Integrated commission calculation
 - `server/src/di.ts` - Wired dependencies
 
 **Payment Flow**:
+
 ```typescript
 1. Fetch tenant → Get stripeAccountId and commissionPercent
 2. Calculate commission → CommissionService (rounding UP)
@@ -88,6 +92,7 @@ The platform now supports variable commission rates with automatic platform fee 
 ```
 
 **Automatic Routing**:
+
 - If tenant has `stripeAccountId` AND `stripeOnboarded === true` → Connect checkout
 - Otherwise → Standard platform checkout (backwards compatible)
 
@@ -107,6 +112,7 @@ The platform now supports variable commission rates with automatic platform fee 
 **Security**: All endpoints require admin authentication
 
 **DTOs Created** (`packages/contracts/src/dto.ts`):
+
 - `StripeConnectDto` - Account information
 - `StripeOnboardingLinkDto` - Onboarding URL
 - `StripeAccountStatusDto` - Status check response
@@ -118,6 +124,7 @@ The platform now supports variable commission rates with automatic platform fee 
 **File**: `server/scripts/create-tenant-with-stripe.ts`
 
 **Usage**:
+
 ```bash
 pnpm create-tenant-with-stripe \
   --slug=bellaweddings \
@@ -128,6 +135,7 @@ pnpm create-tenant-with-stripe \
 ```
 
 **Output**:
+
 - ✅ Tenant ID and details
 - ✅ API keys (public and secret - secret shown once)
 - ✅ Stripe account ID
@@ -143,6 +151,7 @@ pnpm create-tenant-with-stripe \
 **Implementation**: Uses existing `EncryptionService`
 
 **Storage Format** (in `tenant.secrets` JSON field):
+
 ```json
 {
   "stripe": {
@@ -154,6 +163,7 @@ pnpm create-tenant-with-stripe \
 ```
 
 **Security**:
+
 - ✅ AES-256-GCM authenticated encryption
 - ✅ Unique IV per encryption
 - ✅ Auth tag prevents tampering
@@ -167,9 +177,11 @@ pnpm create-tenant-with-stripe \
 ### Test Scripts Created
 
 #### 1. **test-stripe-connect.ts** (13KB)
+
 **Purpose**: End-to-end Stripe Connect integration test
 
 **Tests**:
+
 - ✅ Create test tenant with 12% commission
 - ✅ Create Stripe Connected Account
 - ✅ Test commission calculation
@@ -180,9 +192,11 @@ pnpm create-tenant-with-stripe \
 **Run**: `npm run test:stripe-connect`
 
 #### 2. **test-commission.ts** (4.8KB)
+
 **Purpose**: Verify commission calculation accuracy
 
 **Tests**:
+
 - ✅ 10%, 12.5%, 15% commission rates
 - ✅ Rounding strategy (ceiling)
 - ✅ Booking with add-ons
@@ -195,6 +209,7 @@ pnpm create-tenant-with-stripe \
 ## Documentation Created (5 files, ~56KB)
 
 ### 1. **STRIPE_CONNECT_TESTING_GUIDE.md** (11KB)
+
 - Complete guide for testing Stripe Connect
 - 6 detailed testing scenarios
 - Test cards reference
@@ -203,6 +218,7 @@ pnpm create-tenant-with-stripe \
 - Production deployment checklist
 
 ### 2. **ENV_VARIABLES.md** (9.7KB)
+
 - All environment variables documented
 - Stripe configuration (detailed)
 - Database, email, calendar config
@@ -211,6 +227,7 @@ pnpm create-tenant-with-stripe \
 - Troubleshooting guide
 
 ### 3. **PHASE_3_COMPLETION_CHECKLIST.md** (12KB)
+
 - Features implemented verification
 - Testing completed checklist
 - Security review checklist
@@ -220,6 +237,7 @@ pnpm create-tenant-with-stripe \
 - Team sign-off template
 
 ### 4. **PHASE_3_TEST_OUTPUT.md** (12KB)
+
 - Expected output from test scripts
 - Performance benchmarks
 - Error scenario examples
@@ -227,6 +245,7 @@ pnpm create-tenant-with-stripe \
 - Manual testing checklist
 
 ### 5. **PHASE_3_README.md** (11KB)
+
 - Quick reference guide
 - Architecture overview
 - Commission flow diagram
@@ -236,6 +255,7 @@ pnpm create-tenant-with-stripe \
 - Troubleshooting
 
 **Additional Docs**:
+
 - `STRIPE_CONNECT_QUICK_START.md` (5.2KB)
 - `STRIPE_CONNECT_USAGE_EXAMPLES.md` (15KB)
 - `STRIPE_CONNECT_ADMIN_API.md` (comprehensive)
@@ -247,42 +267,30 @@ pnpm create-tenant-with-stripe \
 ### Created (11 files)
 
 **Backend Services**:
+
 1. `server/src/services/stripe-connect.service.ts` - Main service (10KB)
 
-**Admin API**:
-2. `server/src/routes/admin/stripe.routes.ts` - Admin endpoints
+**Admin API**: 2. `server/src/routes/admin/stripe.routes.ts` - Admin endpoints
 
-**CLI Tools**:
-3. `server/scripts/create-tenant-with-stripe.ts` - Automated setup
-4. `server/scripts/test-stripe-connect.ts` - Integration tests
+**CLI Tools**: 3. `server/scripts/create-tenant-with-stripe.ts` - Automated setup 4. `server/scripts/test-stripe-connect.ts` - Integration tests
 
-**Documentation**:
-5. `server/STRIPE_CONNECT_TESTING_GUIDE.md`
-6. `server/ENV_VARIABLES.md`
-7. `server/PHASE_3_COMPLETION_CHECKLIST.md`
-8. `server/PHASE_3_TEST_OUTPUT.md`
-9. `server/PHASE_3_README.md`
-10. `server/STRIPE_CONNECT_QUICK_START.md`
-11. `server/STRIPE_CONNECT_USAGE_EXAMPLES.md`
+**Documentation**: 5. `server/STRIPE_CONNECT_TESTING_GUIDE.md` 6. `server/ENV_VARIABLES.md` 7. `server/PHASE_3_COMPLETION_CHECKLIST.md` 8. `server/PHASE_3_TEST_OUTPUT.md` 9. `server/PHASE_3_README.md` 10. `server/STRIPE_CONNECT_QUICK_START.md` 11. `server/STRIPE_CONNECT_USAGE_EXAMPLES.md`
 
 ### Modified (7 files)
 
 **Backend**:
+
 1. `server/src/lib/ports.ts` - Added Connect checkout interface
 2. `server/src/adapters/stripe.adapter.ts` - Implemented Connect checkout
 3. `server/src/services/booking.service.ts` - Integrated commission
 4. `server/src/di.ts` - Registered StripeConnectService
 5. `server/src/routes/index.ts` - Wired Stripe admin routes
 
-**Contracts**:
-6. `packages/contracts/src/dto.ts` - Added Stripe Connect DTOs
+**Contracts**: 6. `packages/contracts/src/dto.ts` - Added Stripe Connect DTOs
 
-**Mock**:
-7. `server/src/adapters/mock/index.ts` - Mock Connect checkout
+**Mock**: 7. `server/src/adapters/mock/index.ts` - Mock Connect checkout
 
-**Config**:
-8. `server/package.json` - Added test scripts
-9. `server/.env.example` - Enhanced Stripe docs
+**Config**: 8. `server/package.json` - Added test scripts 9. `server/.env.example` - Enhanced Stripe docs
 
 ---
 
@@ -308,16 +316,19 @@ Rounding: Math.ceil() - Always favors platform
 ```
 
 **Stripe Session Payload**:
+
 ```json
 {
   "mode": "payment",
-  "line_items": [{
-    "price_data": {
-      "currency": "usd",
-      "unit_amount": 150000
-    },
-    "quantity": 1
-  }],
+  "line_items": [
+    {
+      "price_data": {
+        "currency": "usd",
+        "unit_amount": 150000
+      },
+      "quantity": 1
+    }
+  ],
   "payment_intent_data": {
     "application_fee_amount": 18000,
     "transfer_data": {
@@ -334,18 +345,22 @@ Rounding: Math.ceil() - Always favors platform
 Phase 3 completed in **1 session** using **4 parallel specialized agents**:
 
 ### Agent 1: Stripe Connect Service
+
 **Duration**: ~20 minutes
 **Deliverables**: Service implementation, DI integration, documentation
 
 ### Agent 2: Payment Integration
+
 **Duration**: ~15 minutes
 **Deliverables**: Connect checkout, booking service updates
 
 ### Agent 3: Admin API
+
 **Duration**: ~15 minutes
 **Deliverables**: Admin endpoints, CLI tool, contracts
 
 ### Agent 4: Testing & Docs
+
 **Duration**: ~15 minutes
 **Deliverables**: Test scripts, comprehensive documentation
 
@@ -358,6 +373,7 @@ Phase 3 completed in **1 session** using **4 parallel specialized agents**:
 ## Security Enhancements
 
 ### Implemented ✅
+
 - **Secret Key Encryption**: AES-256-GCM for Stripe keys
 - **Platform Fee Enforcement**: Commission calculated server-side only
 - **Admin Authentication**: All Stripe endpoints require admin JWT
@@ -367,6 +383,7 @@ Phase 3 completed in **1 session** using **4 parallel specialized agents**:
 - **Error Sanitization**: No sensitive data in error messages
 
 ### Stripe Connect Security
+
 - **Express Accounts**: Stripe handles KYC/AML
 - **Platform Control**: Platform controls customer experience
 - **Payment Isolation**: Tenants can't access other tenant payments
@@ -377,6 +394,7 @@ Phase 3 completed in **1 session** using **4 parallel specialized agents**:
 ## Performance Metrics
 
 ### Service Performance
+
 - **Tenant creation**: ~200ms
 - **Stripe account creation**: ~500ms (Stripe API call)
 - **Onboarding link generation**: ~300ms
@@ -384,6 +402,7 @@ Phase 3 completed in **1 session** using **4 parallel specialized agents**:
 - **Payment intent creation**: ~400ms
 
 ### Database Performance
+
 - **Tenant lookup**: ~4ms (indexed on stripeAccountId)
 - **Secret key encryption**: ~2ms
 - **Secret key decryption**: ~2ms
@@ -402,6 +421,7 @@ Phase 3 completed in **1 session** using **4 parallel specialized agents**:
 - Automatic routing based on `stripeOnboarded` status
 
 **Migration Path**:
+
 1. Existing tenants keep using platform checkout
 2. New tenants onboard to Stripe Connect
 3. Existing tenants can upgrade via admin UI (Phase 4)
@@ -411,15 +431,18 @@ Phase 3 completed in **1 session** using **4 parallel specialized agents**:
 ## Known Issues & Limitations
 
 ### Non-Issues ✅
+
 1. **Pre-existing TypeScript errors** in `packages/contracts` - Not related to Phase 3
 2. **Widget checkout flow** - Pending (will use existing BookingService)
 
 ### Limitations (By Design)
+
 1. **Stripe Express Only**: Platform model requires Express accounts
 2. **24-hour onboarding links**: Stripe limitation (can regenerate)
 3. **Commission limits**: 0.5% - 50% (Stripe Connect requirement)
 
 ### Future Enhancements
+
 1. **Webhook automation** - Auto-update tenant status on `account.updated`
 2. **Refund automation** - Automatically handle commission on refunds
 3. **Payout schedules** - Configure tenant payout timing
@@ -430,6 +453,7 @@ Phase 3 completed in **1 session** using **4 parallel specialized agents**:
 ## Testing Results
 
 ### Commission Calculation ✅
+
 ```bash
 $ npm run test:commission
 
@@ -452,6 +476,7 @@ Test 3: 15% commission on $2,000.00
 ```
 
 ### Stripe Connect Integration ✅
+
 ```bash
 $ npm run test:stripe-connect
 
@@ -471,6 +496,7 @@ $ npm run test:stripe-connect
 ```
 
 ### Manual Testing ✅
+
 - [x] Create tenant with Stripe account
 - [x] Generate onboarding link
 - [x] Complete onboarding (test mode)
@@ -485,30 +511,35 @@ $ npm run test:stripe-connect
 ## Production Deployment Checklist
 
 ### Environment Setup
+
 - [ ] Set `STRIPE_SECRET_KEY` to live key (`sk_live_...`)
 - [ ] Verify `STRIPE_WEBHOOK_SECRET` configured
 - [ ] Ensure `TENANT_SECRETS_ENCRYPTION_KEY` set and backed up
 - [ ] Configure HTTPS URLs for onboarding return/refresh
 
 ### Testing
+
 - [ ] Test onboarding flow end-to-end
 - [ ] Verify commission calculations with real amounts
 - [ ] Test webhook processing
 - [ ] Verify encryption/decryption works
 
 ### Monitoring
+
 - [ ] Set up alerts for Stripe API errors
 - [ ] Monitor commission calculation errors
 - [ ] Track onboarding completion rates
 - [ ] Monitor payment success rates
 
 ### Security
+
 - [ ] Review admin authentication
 - [ ] Verify tenant isolation
 - [ ] Test webhook signature verification
 - [ ] Document key rotation procedures
 
 ### Documentation
+
 - [ ] Update API documentation
 - [ ] Create tenant onboarding guide
 - [ ] Document troubleshooting steps
@@ -519,30 +550,36 @@ $ npm run test:stripe-connect
 ## Phase Comparison
 
 ### Phase 1: Multi-Tenant Foundation
+
 - Database schema, tenant isolation, API keys
 - **Duration**: Weeks 1-4 (completed)
 - **Status**: ✅ Production-ready
 
 ### Phase 2: Widget Core
+
 - SDK loader, React widget, branding API
 - **Duration**: Weeks 5-8 (completed)
 - **Status**: ✅ Production-ready
 
 ### Phase 3: Stripe Connect & Payments
+
 - Payment processing, commission automation
 - **Duration**: Weeks 9-12 (completed in 1 session!)
 - **Status**: ✅ Production-ready
 
 ### Phase 4: Admin Tools (Next)
+
 - Tenant provisioning UI, branding editor
 - **Duration**: Weeks 13-16
 - **Status**: ⏭️ Ready to start
 
 ### Phase 5: Production
+
 - Security hardening, first 2 tenants live
 - **Duration**: Weeks 17-20
 
 ### Phase 6: Scale
+
 - Performance optimization, scale to 10+ tenants
 - **Duration**: Weeks 21-24
 
@@ -553,6 +590,7 @@ $ npm run test:stripe-connect
 Per the original plan, Phase 4 focuses on admin tooling:
 
 ### Tenant Provisioning UI
+
 1. **Tenant creation wizard**
    - Business information
    - Commission rate selection
@@ -575,6 +613,7 @@ Per the original plan, Phase 4 focuses on admin tooling:
    - Live preview
 
 ### Dashboard Enhancements
+
 1. **Commission tracking**
    - Total earnings per tenant
    - Commission history
@@ -596,16 +635,17 @@ Per the original plan, Phase 4 focuses on admin tooling:
 
 ### Phase 3 Goals ✅
 
-| Metric | Target | Actual | Status |
-|--------|--------|--------|--------|
-| Stripe Connect service | Complete | 8 methods | ✅ Exceeded |
-| Commission integration | Working | 100% accurate | ✅ Perfect |
-| Admin endpoints | 3 | 3 + CLI tool | ✅ Exceeded |
-| Documentation | Complete | 56KB, 5 files | ✅ Exceeded |
-| Test coverage | Basic | 2 scripts + manual | ✅ Complete |
-| Security review | Pass | All checks passed | ✅ Pass |
+| Metric                 | Target   | Actual             | Status      |
+| ---------------------- | -------- | ------------------ | ----------- |
+| Stripe Connect service | Complete | 8 methods          | ✅ Exceeded |
+| Commission integration | Working  | 100% accurate      | ✅ Perfect  |
+| Admin endpoints        | 3        | 3 + CLI tool       | ✅ Exceeded |
+| Documentation          | Complete | 56KB, 5 files      | ✅ Exceeded |
+| Test coverage          | Basic    | 2 scripts + manual | ✅ Complete |
+| Security review        | Pass     | All checks passed  | ✅ Pass     |
 
 ### Code Quality ✅
+
 - **TypeScript**: Fully typed, no any types
 - **Error handling**: Comprehensive try-catch blocks
 - **Logging**: Detailed logs for debugging
@@ -613,6 +653,7 @@ Per the original plan, Phase 4 focuses on admin tooling:
 - **Testing**: Automated + manual tests
 
 ### Performance ✅
+
 - **Commission calc**: <5ms
 - **Stripe API calls**: ~400ms (external dependency)
 - **Database queries**: ~4ms (indexed)
@@ -623,6 +664,7 @@ Per the original plan, Phase 4 focuses on admin tooling:
 ## Lessons Learned
 
 ### What Worked Well ✅
+
 1. **Parallel agent execution** - 69% faster than sequential
 2. **Existing services** - CommissionService and EncryptionService reused perfectly
 3. **Stripe Connect pattern** - Express accounts simplified onboarding
@@ -630,12 +672,14 @@ Per the original plan, Phase 4 focuses on admin tooling:
 5. **CLI automation** - Single command tenant setup
 
 ### Challenges Overcome ✅
+
 1. **DI container wiring** - Fixed BookingService constructor signature
 2. **Backwards compatibility** - Automatic routing prevents breaking changes
 3. **Secret key storage** - Encryption service worked flawlessly
 4. **Testing infrastructure** - Created comprehensive test suite
 
 ### Future Improvements 💡
+
 1. **Webhook automation** - Auto-update tenant status
 2. **Batch onboarding** - CLI tool for multiple tenants
 3. **Commission analytics** - Real-time earnings dashboard
@@ -647,20 +691,24 @@ Per the original plan, Phase 4 focuses on admin tooling:
 ## Code Quality Metrics
 
 ### Files Created: 11
+
 - Backend: 4 (service, routes, scripts)
 - Documentation: 7 (guides, references)
 
 ### Files Modified: 9
+
 - Backend: 5 (ports, adapter, service, DI, routes)
 - Contracts: 1 (DTOs)
 - Mock: 1 (mock provider)
 - Config: 2 (package.json, .env.example)
 
 ### Lines of Code Written: ~1,800
+
 - Backend: ~600
 - Documentation: ~1,200
 
 ### Documentation Coverage: 100%
+
 - All services documented
 - All endpoints documented
 - All environment variables documented
@@ -682,6 +730,7 @@ Phase 3 is **complete and production-ready**. The MAIS platform now has full Str
 - ✅ Backwards compatibility maintained
 
 The platform can now:
+
 1. Create Stripe Express accounts for tenants
 2. Onboard tenants to accept payments
 3. Process payments with automatic commission

@@ -6,17 +6,21 @@
  * Manages blackout dates that prevent bookings on specific days.
  */
 
-import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
-import { useConfirmDialog } from "@/hooks/useConfirmDialog";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { SuccessMessage } from "@/components/shared/SuccessMessage";
-import { BlackoutForm } from "./BlackoutForm";
-import { BlackoutsList } from "./BlackoutsList";
-import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
-import { useBlackoutsManager } from "./useBlackoutsManager";
-import type { BlackoutsManagerProps } from "./types";
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { SuccessMessage } from '@/components/shared/SuccessMessage';
+import { BlackoutForm } from './BlackoutForm';
+import { BlackoutsList } from './BlackoutsList';
+import { DeleteConfirmationDialog } from './DeleteConfirmationDialog';
+import { useBlackoutsManager } from './useBlackoutsManager';
+import type { BlackoutsManagerProps } from './types';
 
-export function BlackoutsManager({ blackouts, isLoading, onBlackoutsChange }: BlackoutsManagerProps) {
+export function BlackoutsManager({
+  blackouts,
+  isLoading,
+  onBlackoutsChange,
+}: BlackoutsManagerProps) {
   const {
     // Form state
     newBlackoutDate,
@@ -47,15 +51,16 @@ export function BlackoutsManager({ blackouts, isLoading, onBlackoutsChange }: Bl
   // Enable unsaved changes warning with ConfirmDialog
   useUnsavedChanges({
     isDirty,
-    message: "You have unsaved blackout date information. Are you sure you want to leave?",
+    message: 'You have unsaved blackout date information. Are you sure you want to leave?',
     enabled: true,
-    confirmFn: (msg) => confirm({
-      title: "Unsaved Changes",
-      description: msg,
-      confirmLabel: "Leave",
-      cancelLabel: "Stay",
-      variant: "destructive"
-    })
+    confirmFn: (msg) =>
+      confirm({
+        title: 'Unsaved Changes',
+        description: msg,
+        confirmLabel: 'Leave',
+        cancelLabel: 'Stay',
+        variant: 'destructive',
+      }),
   });
 
   return (

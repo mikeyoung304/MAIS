@@ -119,11 +119,14 @@ export class TenantOnboardingService {
 
       const packages = await Promise.all(packagePromises);
 
-      logger.info({
-        tenantId,
-        segmentId: segment.id,
-        packagesCreated: packages.length,
-      }, 'Created default segment and packages for new tenant');
+      logger.info(
+        {
+          tenantId,
+          segmentId: segment.id,
+          packagesCreated: packages.length,
+        },
+        'Created default segment and packages for new tenant'
+      );
 
       return { segment, packages };
     });

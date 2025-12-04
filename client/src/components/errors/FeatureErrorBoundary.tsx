@@ -48,9 +48,7 @@ function FeatureErrorFallback({
         </svg>
 
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-danger-800 mb-1">
-            {featureName} Error
-          </h3>
+          <h3 className="text-lg font-semibold text-danger-800 mb-1">{featureName} Error</h3>
 
           <p className="text-sm text-danger-700 mb-3">
             Something went wrong while loading this feature. Please try again.

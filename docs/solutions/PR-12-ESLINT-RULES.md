@@ -30,13 +30,13 @@ module.exports = {
     'plugin:@typescript-eslint/stylistic-type-checked',
     'prettier',
     // ADD THESE:
-    'plugin:react-hooks/recommended',  // For React projects with hooks
-    'plugin:jsx-a11y/recommended'       // For accessibility
+    'plugin:react-hooks/recommended', // For React projects with hooks
+    'plugin:jsx-a11y/recommended', // For accessibility
   ],
   plugins: [
     // ... existing plugins
     'react-hooks',
-    'jsx-a11y'
+    'jsx-a11y',
   ],
   rules: {
     // ... existing rules
@@ -49,7 +49,7 @@ module.exports = {
     'jsx-a11y/click-events-have-key-events': 'warn',
     'jsx-a11y/no-static-element-interactions': 'warn',
     'jsx-a11y/no-interactive-element-to-static-element': 'warn',
-  }
+  },
 };
 ```
 
@@ -63,10 +63,7 @@ module.exports = {
     "plugin:jsx-a11y/recommended",
     "prettier"
   ],
-  "plugins": [
-    "react-hooks",
-    "jsx-a11y"
-  ],
+  "plugins": ["react-hooks", "jsx-a11y"],
   "rules": {
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "error",
@@ -97,15 +94,17 @@ These rules prevent missing `useCallback` and incomplete `useEffect` dependencie
 **What it does:** Enforces that hooks are only called at top level and in correct order.
 
 **Prevents:**
+
 - Calling hooks inside conditionals
 - Calling hooks inside loops
 - Calling hooks inside try/catch blocks
 
 **Example:**
+
 ```typescript
 // ❌ ESLint ERROR
 if (condition) {
-  const [state, setState] = useState();  // Error: hooks must be at top level
+  const [state, setState] = useState(); // Error: hooks must be at top level
 }
 
 // ✅ CORRECT
@@ -116,6 +115,7 @@ if (condition) {
 ```
 
 **Configuration:**
+
 ```json
 {
   "rules": {
@@ -131,12 +131,14 @@ if (condition) {
 **What it does:** Ensures all dependencies used in hooks are included in dependency arrays.
 
 **Prevents:**
+
 - Missing `useCallback` dependencies
 - Missing `useEffect` dependencies
 - Stale closures
 - Race conditions
 
 **Example - Issue #1 (Missing useCallback):**
+
 ```typescript
 // ❌ ESLint WARNING (with useCallback enabled)
 const handleEdit = (pkg) => {
@@ -147,23 +149,25 @@ const handleEdit = (pkg) => {
 // ✅ CORRECT
 const handleEdit = useCallback((pkg) => {
   // ... function body
-}, []);  // useCallback wrapper
+}, []); // useCallback wrapper
 ```
 
 **Example - Issue #2 (Missing useEffect Dependencies):**
+
 ```typescript
 // ❌ ESLint ERROR
 useEffect(() => {
-  loadData();  // This function is used
-}, []);  // But not in dependencies!
+  loadData(); // This function is used
+}, []); // But not in dependencies!
 
 // ✅ CORRECT
 useEffect(() => {
   loadData();
-}, [loadData]);  // Function included in dependencies
+}, [loadData]); // Function included in dependencies
 ```
 
 **Configuration:**
+
 ```json
 {
   "rules": {
@@ -173,6 +177,7 @@ useEffect(() => {
 ```
 
 **When ESLint suggests to disable this rule, DO NOT listen:**
+
 ```typescript
 // ❌ DON'T DO THIS
 useEffect(() => {
@@ -200,11 +205,13 @@ These rules detect missing keyboard focus indicators.
 **What it does:** Ensures interactive elements have focus support attributes.
 
 **Prevents:**
+
 - Interactive elements without focusability
 - `<div onClick>` without tabindex
 - Elements that can't be reached with keyboard
 
 **Example:**
+
 ```typescript
 // ⚠️ ESLint WARNING
 <button className="custom-btn">Click me</button>  // Fine, <button> is native interactive
@@ -219,6 +226,7 @@ These rules detect missing keyboard focus indicators.
 ```
 
 **Configuration:**
+
 ```json
 {
   "rules": {
@@ -236,11 +244,13 @@ These rules detect missing keyboard focus indicators.
 **What it does:** Ensures elements with click handlers also handle keyboard events.
 
 **Prevents:**
+
 - Click-only handlers on non-interactive elements
 - Keyboard users being unable to use functionality
 - Violates WCAG 2.1.1 (Keyboard)
 
 **Example:**
+
 ```typescript
 // ❌ ESLint WARNING
 <div onClick={handleDelete}>Delete</div>  // Only mouse can use this
@@ -260,6 +270,7 @@ These rules detect missing keyboard focus indicators.
 ```
 
 **Configuration:**
+
 ```json
 {
   "rules": {
@@ -275,11 +286,13 @@ These rules detect missing keyboard focus indicators.
 **What it does:** Prevents static elements from handling interactive events.
 
 **Prevents:**
+
 - `<div>` or `<span>` with onClick
 - Missing keyboard support
 - Violates WAI-ARIA best practices
 
 **Example:**
+
 ```typescript
 // ❌ ESLint WARNING
 <span onClick={handleClick}>Link</span>  // Static element, not interactive
@@ -305,6 +318,7 @@ These rules detect missing keyboard focus indicators.
 ```
 
 **Configuration:**
+
 ```json
 {
   "rules": {
@@ -322,12 +336,14 @@ These rules detect missing keyboard focus indicators.
 **What it does:** Prevents nesting interactive elements inside static elements.
 
 **Prevents:**
+
 - Button inside button
 - Link inside button
 - Multiple interactive elements nested
 - Confusing focus and keyboard behavior
 
 **Example - Issue #5 (Event Propagation):**
+
 ```typescript
 // ❌ ESLint WARNING
 <summary>
@@ -343,6 +359,7 @@ These rules detect missing keyboard focus indicators.
 ```
 
 **Configuration:**
+
 ```json
 {
   "rules": {
@@ -365,26 +382,26 @@ module.exports = {
     ecmaVersion: 2022,
     sourceType: 'module',
     ecmaFeatures: {
-      jsx: true  // Important for React rules
-    }
+      jsx: true, // Important for React rules
+    },
   },
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/strict-type-checked',
     'plugin:@typescript-eslint/stylistic-type-checked',
-    'plugin:react-hooks/recommended',  // NEW: React hooks
-    'plugin:jsx-a11y/recommended',      // NEW: Accessibility
+    'plugin:react-hooks/recommended', // NEW: React hooks
+    'plugin:jsx-a11y/recommended', // NEW: Accessibility
     'prettier',
   ],
   plugins: [
     '@typescript-eslint',
-    'react-hooks',  // NEW
-    'jsx-a11y'      // NEW
+    'react-hooks', // NEW
+    'jsx-a11y', // NEW
   ],
   env: {
     node: true,
     es2022: true,
-    browser: true  // Add browser env for React/JSX
+    browser: true, // Add browser env for React/JSX
   },
   rules: {
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
@@ -428,11 +445,7 @@ module.exports = {
     "plugin:jsx-a11y/recommended",
     "prettier"
   ],
-  "plugins": [
-    "@typescript-eslint",
-    "react-hooks",
-    "jsx-a11y"
-  ],
+  "plugins": ["@typescript-eslint", "react-hooks", "jsx-a11y"],
   "env": {
     "browser": true,
     "es2022": true,
@@ -522,13 +535,13 @@ npm run lint -- --format json > eslint-report.json
 // ❌ ERROR
 function MyComponent() {
   if (condition) {
-    const [state, setState] = useState();  // ❌ Inside if
+    const [state, setState] = useState(); // ❌ Inside if
   }
 }
 
 // ✅ FIX
 function MyComponent() {
-  const [state, setState] = useState();  // ✅ Top level
+  const [state, setState] = useState(); // ✅ Top level
   if (condition) {
     // Use state here
   }
@@ -545,7 +558,7 @@ function MyComponent() {
 // ❌ ERROR
 useEffect(() => {
   loadData();
-}, []);  // loadData missing!
+}, []); // loadData missing!
 
 // ✅ FIX - Step 1: Wrap in useCallback
 const loadData = useCallback(async () => {
@@ -663,6 +676,7 @@ useEffect(() => { ... }, []);
 ```
 
 **⚠️ AVOID SUPPRESSING:**
+
 - `react-hooks/exhaustive-deps` - This is a safety mechanism
 - `react-hooks/rules-of-hooks` - This prevents bugs
 - `jsx-a11y/*` - These ensure accessibility
@@ -728,6 +742,7 @@ Error: Failed to load plugin 'react-hooks'
 ```
 
 **Fix:**
+
 ```bash
 npm install --save-dev eslint-plugin-react-hooks
 npm install --save-dev eslint-plugin-jsx-a11y
@@ -738,11 +753,13 @@ npm install --save-dev eslint-plugin-jsx-a11y
 ### Rule Doesn't Work
 
 **Check 1:** Is plugin installed?
+
 ```bash
 npm list eslint-plugin-react-hooks
 ```
 
 **Check 2:** Is plugin in extends?
+
 ```json
 {
   "extends": ["plugin:react-hooks/recommended"]
@@ -750,6 +767,7 @@ npm list eslint-plugin-react-hooks
 ```
 
 **Check 3:** Is rule enabled?
+
 ```json
 {
   "rules": {
@@ -769,7 +787,7 @@ Start with `warn`, then move to `error`:
 ```json
 {
   "rules": {
-    "react-hooks/exhaustive-deps": "warn",  // Start here
+    "react-hooks/exhaustive-deps": "warn", // Start here
     "jsx-a11y/interactive-supports-focus": "warn"
   }
 }
@@ -780,7 +798,7 @@ After team fixes warnings:
 ```json
 {
   "rules": {
-    "react-hooks/exhaustive-deps": "error",  // Now strict
+    "react-hooks/exhaustive-deps": "error", // Now strict
     "jsx-a11y/interactive-supports-focus": "error"
   }
 }
@@ -791,11 +809,13 @@ After team fixes warnings:
 ## Resources
 
 ### Official Documentation
+
 - [eslint-plugin-react-hooks](https://github.com/facebook/react/tree/main/packages/eslint-plugin-react-hooks)
 - [eslint-plugin-jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y)
 - [ESLint Configuration](https://eslint.org/docs/latest/use/configure/)
 
 ### WCAG Standards
+
 - [WCAG 2.4.7: Focus Visible](https://www.w3.org/WAI/WCAG21/Understanding/focus-visible.html)
 - [WCAG 2.1.1: Keyboard](https://www.w3.org/WAI/WCAG21/Understanding/keyboard.html)
 - [WCAG 1.3.1: Info and Relationships](https://www.w3.org/WAI/WCAG21/Understanding/info-and-relationships.html)
@@ -805,6 +825,7 @@ After team fixes warnings:
 **Last Updated:** 2025-12-01
 
 **Related:**
+
 - [Full Prevention Guide](./PR-12-REACT-HOOKS-ACCESSIBILITY-PREVENTION.md)
 - [Quick Reference](./PR-12-QUICK-REFERENCE.md)
 - [Code Review Checklists](./PR-12-CHECKLISTS.md)

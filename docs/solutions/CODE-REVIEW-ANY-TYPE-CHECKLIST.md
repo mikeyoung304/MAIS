@@ -17,12 +17,14 @@ Use this checklist when reviewing pull requests that touch TypeScript types.
 
 ```typescript
 // Look for these patterns in diff
-- any                    // Removed
-+ Request | Response     // Added
-+ MyType               // Type added where was `any`
+(-any + // Removed
+  Request) |
+  (Response + // Added
+    MyType); // Type added where was `any`
 ```
 
 **Questions to ask:**
+
 - [ ] Are there removals of `any` types?
 - [ ] What files contain these changes?
 - [ ] Are any in `routes/` or importing `@ts-rest`?
@@ -34,6 +36,7 @@ Use this checklist when reviewing pull requests that touch TypeScript types.
 ### Is it in a ts-rest Route Handler?
 
 **Check:** File path and imports
+
 ```typescript
 // These patterns indicate ts-rest
 import { createExpressEndpoints } from '@ts-rest/express';
@@ -42,6 +45,7 @@ async ({ req }: { req: any })  // ← THIS is ts-rest signature
 ```
 
 **If YES:**
+
 - [ ] REJECT the change
 - [ ] Comment: "This is a ts-rest/Express type compatibility issue. See PREVENTION-TS-REST-ANY-TYPE.md"
 - [ ] Point to: `docs/solutions/PREVENTION-TS-REST-ANY-TYPE.md`
@@ -51,6 +55,7 @@ async ({ req }: { req: any })  // ← THIS is ts-rest signature
 ### Is it a Third-Party Library Consumer?
 
 **Check:** Does the value come from external library?
+
 ```typescript
 // Examples of library consumers
 const result = stripe.webhook.constructEvent(req, ...);  // ← Stripe library
@@ -59,10 +64,12 @@ const response = await fetch(url);                        // ← Fetch API
 ```
 
 **If YES - Library has types:**
+
 - [ ] APPROVE with suggestion: "Use the library's type instead"
 - [ ] Example: `import { WebhookEvent } from 'stripe'`
 
 **If YES - Library has no types:**
+
 - [ ] Check for TODO or explanation comment
 - [ ] APPROVE if documented
 - [ ] REQUEST CHANGES if not documented
@@ -72,6 +79,7 @@ const response = await fetch(url);                        // ← Fetch API
 ### Is it Validated by Schema?
 
 **Check:** Is `any` replaced by schema-validated type?
+
 ```typescript
 // GOOD: Removing `any` and using validated type
 - const data: any = req.body;
@@ -80,6 +88,7 @@ const response = await fetch(url);                        // ← Fetch API
 ```
 
 **If YES - Replacing with validated type:**
+
 - [ ] APPROVE
 - [ ] Verify schema is imported correctly
 - [ ] Check Zod parse() is called before using data
@@ -89,6 +98,7 @@ const response = await fetch(url);                        // ← Fetch API
 ### Is it Inferrable by TypeScript?
 
 **Check:** Can TypeScript infer the type automatically?
+
 ```typescript
 // GOOD: TS can infer
 - const packages: any = await service.getPackages();
@@ -101,6 +111,7 @@ const response = await fetch(url);                        // ← Fetch API
 ```
 
 **If YES:**
+
 - [ ] APPROVE
 - [ ] Optional: Suggest explicit type if unclear
 
@@ -109,6 +120,7 @@ const response = await fetch(url);                        // ← Fetch API
 ### Is it a TODO Marked for Future Work?
 
 **Check:** Is there a comment explaining the `any`?
+
 ```typescript
 /**
  * TODO #456: Type this after payment service refactoring
@@ -118,11 +130,13 @@ const paymentData: any = await stripeService.create(data);
 ```
 
 **If YES - TODO present and tracked:**
+
 - [ ] APPROVE
 - [ ] Verify it's in your TODO tracking system
 - [ ] Estimate when it can be resolved
 
 **If YES - TODO present but no tracking:**
+
 - [ ] REQUEST CHANGES
 - [ ] Ask author to create issue/TODO
 - [ ] Comment: "Please create a tracked TODO for this"
@@ -161,11 +175,13 @@ For changes that PASS the above checks:
 ### Comment Requirements
 
 For approved `any` types:
+
 - [ ] Reason explained in comment
 - [ ] Reference to library issue (if applicable)
 - [ ] Link to documentation (if applicable)
 
 **Required pattern:**
+
 ```typescript
 // Reason for `any`
 // Reference: [GitHub issue / docs / TODO #XXX]
@@ -176,6 +192,7 @@ const value: any = unsafeSource;
 ### Special Cases
 
 #### ts-rest Handlers
+
 ```typescript
 // ts-rest v3 has type compatibility issues with Express 4.x/5.x
 // DO NOT replace with `Request` type - causes TS2345 build errors
@@ -185,6 +202,7 @@ createExpressEndpoints(Contracts, s.router(Contracts, {
 ```
 
 #### External Libraries
+
 ```typescript
 // Stripe SDK lacks proper webhook event types
 // Schema-validated with WebhookEventSchema before use
@@ -193,6 +211,7 @@ async function handleWebhook(event: any): Promise<void> {
 ```
 
 #### Gradual Migrations
+
 ```typescript
 /**
  * TODO #789: Type properly after dependency update
@@ -221,17 +240,17 @@ const data: any = await legacyService.getData();
 
 Use this to quickly decide on type changes:
 
-| Scenario | Decision | Action |
-|----------|----------|--------|
-| ts-rest route `req: any` removal | ❌ REJECT | Point to PREVENTION doc |
-| Library has types, author missed them | ✅ APPROVE with suggestion | Use library type |
-| Library no types, schema validates | ✅ APPROVE | Use validated type |
-| No validation, no types, no TODO | ❌ REJECT | Request explanation |
-| TODO tracked, resolution in progress | ✅ APPROVE | Accept temporary `any` |
-| TS can infer type | ✅ APPROVE | Suggest removing explicit type |
-| Type is inferred correctly | ✅ APPROVE | Good removal of `any` |
-| Validation with Zod/superstruct | ✅ APPROVE | Proper schema typing |
-| Using `as any` to bypass check | ❌ REJECT | Request type guard instead |
+| Scenario                              | Decision                   | Action                         |
+| ------------------------------------- | -------------------------- | ------------------------------ |
+| ts-rest route `req: any` removal      | ❌ REJECT                  | Point to PREVENTION doc        |
+| Library has types, author missed them | ✅ APPROVE with suggestion | Use library type               |
+| Library no types, schema validates    | ✅ APPROVE                 | Use validated type             |
+| No validation, no types, no TODO      | ❌ REJECT                  | Request explanation            |
+| TODO tracked, resolution in progress  | ✅ APPROVE                 | Accept temporary `any`         |
+| TS can infer type                     | ✅ APPROVE                 | Suggest removing explicit type |
+| Type is inferred correctly            | ✅ APPROVE                 | Good removal of `any`          |
+| Validation with Zod/superstruct       | ✅ APPROVE                 | Proper schema typing           |
+| Using `as any` to bypass check        | ❌ REJECT                  | Request type guard instead     |
 
 ---
 
@@ -245,8 +264,10 @@ which has known type compatibility issues with Express 4.x/5.x.
 
 Removing it will cause a TS2345 build error:
 ```
+
 TS2345: Argument of type '{ req: Request }' is not assignable
 to parameter of type '{ req: unknown }'
+
 ```
 
 Instead:
@@ -272,6 +293,7 @@ The inferred type will be exactly the same as what you specified.
 
 ```markdown
 This `any` needs documentation. Please add a comment explaining:
+
 1. Why `any` is used here
 2. If it's temporary (TODO for when it can be fixed)
 3. Any mitigation (validation, schema checks, etc.)
@@ -281,7 +303,7 @@ See `docs/solutions/PREVENTION-TS-REST-ANY-TYPE.md` for examples.
 
 ### For Missing Schema Validation
 
-```markdown
+````markdown
 This `any` value should be validated before use. Consider adding
 a Zod schema to ensure type safety:
 
@@ -289,9 +311,11 @@ a Zod schema to ensure type safety:
 const validated = mySchema.parse(data);
 // Now `validated` is properly typed and safe to use
 ```
+````
 
 Then you can replace the `any` with the schema's inferred type.
-```
+
+````
 
 ---
 
@@ -306,7 +330,7 @@ Then you can replace the `any` with the schema's inferred type.
 2. **Check git history** - Did this `any` have a reason before?
    ```bash
    git log -p -S "the_any_value" -- filename.ts | head -50
-   ```
+````
 
 3. **Check imports** - Does it use external library?
    - YES → Verify type exists in library
@@ -316,6 +340,7 @@ Then you can replace the `any` with the schema's inferred type.
    ```bash
    npm run typecheck
    ```
+
    - Errors? → May be library incompatibility, REJECT
    - Success? → Likely safe, APPROVE with verification
 
@@ -344,7 +369,7 @@ Then you can replace the `any` with the schema's inferred type.
 ## References in MAIS Docs
 
 Link reviewers to these docs in comments:
+
 - `docs/solutions/PREVENTION-TS-REST-ANY-TYPE.md` - Full guide
 - `docs/solutions/PREVENTION-ANY-TYPES-QUICK-REF.md` - Quick reference
 - `docs/solutions/CODE-REVIEW-ANY-TYPE-CHECKLIST.md` - This file
-

@@ -59,11 +59,7 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
       tenantRepo
     );
 
-    webhooksController = new WebhooksController(
-      paymentProvider,
-      bookingService,
-      webhookRepo
-    );
+    webhooksController = new WebhooksController(paymentProvider, bookingService, webhookRepo);
 
     // Create test package using catalog repository
     const pkg = ctx.factories.package.create({ title: 'Test Package Webhook', priceCents: 250000 });
@@ -167,7 +163,7 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
       const results = await Promise.allSettled(requests);
 
       // Assert: All should complete without throwing
-      const fulfilled = results.filter(r => r.status === 'fulfilled');
+      const fulfilled = results.filter((r) => r.status === 'fulfilled');
       expect(fulfilled.length).toBeGreaterThan(0);
 
       // Verify only one booking was created
@@ -242,7 +238,7 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
       ]);
 
       // All should return true
-      expect(checks.every(c => c === true)).toBe(true);
+      expect(checks.every((c) => c === true)).toBe(true);
 
       // Verify status is DUPLICATE
       const event = await ctx.prisma.webhookEvent.findUnique({
@@ -279,8 +275,8 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
       ]);
 
       // Assert: One should succeed, one should fail
-      const succeeded = results.filter(r => r.status === 'fulfilled');
-      const failed = results.filter(r => r.status === 'rejected');
+      const succeeded = results.filter((r) => r.status === 'fulfilled');
+      const failed = results.filter((r) => r.status === 'rejected');
 
       expect(succeeded).toHaveLength(1);
       expect(failed).toHaveLength(1);
@@ -303,7 +299,7 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
       expect(webhookEvents).toHaveLength(2);
 
       // One should be PROCESSED, one should be FAILED
-      const statuses = webhookEvents.map(e => e.status).sort();
+      const statuses = webhookEvents.map((e) => e.status).sort();
       expect(statuses).toContain('PROCESSED');
       expect(statuses).toContain('FAILED');
     });
@@ -402,10 +398,10 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
       // Simulate Stripe retry: Process webhook 3 times with delays
       await webhooksController.handleStripeWebhook(rawBody, signature);
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await webhooksController.handleStripeWebhook(rawBody, signature);
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await webhooksController.handleStripeWebhook(rawBody, signature);
 
       // Verify only one booking created
@@ -439,7 +435,7 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
       });
 
       // Mock verifyWebhook to return the correct event based on the raw body
-      const eventMap = new Map(events.map(e => [e.stripeEvent.id, e.stripeEvent]));
+      const eventMap = new Map(events.map((e) => [e.stripeEvent.id, e.stripeEvent]));
       paymentProvider.verifyWebhook = async (rawBody: string) => {
         const parsed = JSON.parse(rawBody);
         return eventMap.get(parsed.id) || parsed;
@@ -457,7 +453,7 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
         where: {
           tenantId: testTenantId,
           date: {
-            in: dates.map(d => new Date(d)),
+            in: dates.map((d) => new Date(d)),
           },
         },
       });
@@ -534,9 +530,7 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
       paymentProvider.verifyWebhook = async () => stripeEvent;
 
       // Process webhook (should fail due to date conflict)
-      await expect(
-        webhooksController.handleStripeWebhook(rawBody, signature)
-      ).rejects.toThrow();
+      await expect(webhooksController.handleStripeWebhook(rawBody, signature)).rejects.toThrow();
 
       // Verify status is FAILED
       const event = await ctx.prisma.webhookEvent.findUnique({
@@ -616,9 +610,7 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
       paymentProvider.verifyWebhook = async () => stripeEvent;
 
       // Should fail
-      await expect(
-        webhooksController.handleStripeWebhook(rawBody, signature)
-      ).rejects.toThrow();
+      await expect(webhooksController.handleStripeWebhook(rawBody, signature)).rejects.toThrow();
 
       // Verify webhook was recorded as FAILED
       const event = await ctx.prisma.webhookEvent.findUnique({

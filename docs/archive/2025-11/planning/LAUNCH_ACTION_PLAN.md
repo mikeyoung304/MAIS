@@ -18,11 +18,14 @@ Your Elope multi-tenant platform has **solid foundations** (75% complete) but re
 ## TOP 5 LAUNCH PRIORITIES
 
 ### 🔴 Priority 1: DATA CORRUPTION FIXES (2 days)
+
 **BLOCKS**: All tenant operations
 **RISK**: Customer data leaking between tenants
 
 #### Issue 1.1: Customer & Venue Missing TenantId
+
 **File**: `server/prisma/schema.prisma:84-92, 94-105`
+
 ```sql
 -- CURRENT (BROKEN):
 model Customer {
@@ -38,12 +41,15 @@ model Customer {
 ```
 
 **Steps**:
+
 1. Add migration: `npx prisma migrate dev --name add-tenant-isolation`
 2. Update all Customer queries to include tenantId
 3. Test with: `npm run test:integration -- customer`
 
 #### Issue 1.2: Webhook Event Global Collision
+
 **File**: `server/prisma/schema.prisma:257`
+
 ```prisma
 -- CURRENT:
 eventId String @unique  -- Global = wrong tenant gets event
@@ -55,15 +61,18 @@ eventId String @unique  -- Global = wrong tenant gets event
 ---
 
 ### 🔴 Priority 2: RACE CONDITION FIXES (3 days)
+
 **BLOCKS**: Payment processing
 **RISK**: Double-booking dates, duplicate charges
 
 #### Issue 2.1: Double-Booking Via Concurrent Checkouts
+
 **File**: `server/src/services/booking.service.ts:55-112`
 
 **Problem**: No lock between availability check and Stripe session creation
 
 **Fix**:
+
 ```typescript
 // booking.service.ts - Add pessimistic lock
 async createCheckout(tenantId: string, input: CreateBookingInput) {
@@ -84,15 +93,18 @@ async createCheckout(tenantId: string, input: CreateBookingInput) {
 ```
 
 **Test**:
+
 ```bash
 # Run concurrent booking test
 npm run test:e2e -- --grep "concurrent bookings"
 ```
 
 #### Issue 2.2: Stripe Idempotency Missing
+
 **File**: `server/src/adapters/stripe.adapter.ts:37`
 
 **Fix**:
+
 ```typescript
 // Add idempotency key to prevent duplicate charges
 async createCheckoutSession(input) {
@@ -107,13 +119,16 @@ async createCheckoutSession(input) {
 ---
 
 ### 🔴 Priority 3: LEGAL COMPLIANCE (4 days)
+
 **BLOCKS**: Operating legally
 **RISK**: GDPR fines, legal liability
 
 #### Issue 3.1: No Terms of Service
+
 **Required**: User must accept terms before booking
 
 **Implementation**:
+
 ```typescript
 // 1. Add to schema
 model Customer {
@@ -131,11 +146,13 @@ if (!customer.termsAcceptedAt) {
 ```
 
 #### Issue 3.2: GDPR Compliance Missing
+
 - No privacy policy display
 - No data export capability
 - No deletion workflow
 
 **Files to create**:
+
 - `client/src/components/PrivacyPolicy.tsx`
 - `server/src/services/gdpr.service.ts`
 - `server/src/routes/gdpr.routes.ts`
@@ -143,22 +160,27 @@ if (!customer.termsAcceptedAt) {
 ---
 
 ### 🔴 Priority 4: CUSTOMER FEATURES (7 days)
+
 **BLOCKS**: Professional operation
 **RISK**: Poor user experience, no repeat customers
 
 #### Issue 4.1: No Booking Confirmation Emails
+
 **Current**: Customer gets no email after booking
 
 **Fix Path**:
+
 1. Install email service: `npm install @sendgrid/mail`
 2. Create templates: `server/src/templates/booking-confirmation.hbs`
 3. Add to webhook handler: `await emailService.sendConfirmation(booking)`
 4. Test with: `npm run test:email`
 
 #### Issue 4.2: No Customer Portal
+
 **Current**: Customers can't view/cancel bookings
 
 **Create**:
+
 - `client/src/features/customer-portal/MyBookings.tsx`
 - `client/src/features/customer-portal/CancelBooking.tsx`
 - `server/src/routes/customer.routes.ts`
@@ -166,10 +188,12 @@ if (!customer.termsAcceptedAt) {
 ---
 
 ### 🔴 Priority 5: CODE HEALTH FIXES (2 days)
+
 **BLOCKS**: Stability
 **RISK**: Production crashes, security vulnerabilities
 
 #### Issue 5.1: Test Coverage Too Low (51%)
+
 **Target**: 70% minimum
 
 ```bash
@@ -182,6 +206,7 @@ npm run test:coverage
 ```
 
 #### Issue 5.2: Security Vulnerability
+
 ```bash
 # Fix js-yaml vulnerability
 npm audit fix --force
@@ -191,7 +216,9 @@ npm install js-yaml@4.1.0
 ```
 
 #### Issue 5.3: TypeScript 'any' Types (116 instances)
+
 **Files with most issues**:
+
 - `server/src/routes/webhooks.routes.ts` (23 any)
 - `client/src/lib/api.ts` (18 any)
 
@@ -200,6 +227,7 @@ npm install js-yaml@4.1.0
 ## TESTING CHECKLIST
 
 ### Before Each Code Change
+
 ```bash
 # 1. Run unit tests
 npm run test
@@ -212,6 +240,7 @@ npm run lint
 ```
 
 ### After Fixing Each Priority
+
 ```bash
 # 1. Full test suite
 npm run test:all
@@ -225,6 +254,7 @@ npm run test:all
 ```
 
 ### Before Launch
+
 ```bash
 # 1. Load test
 npm run test:load
@@ -241,24 +271,28 @@ npm run test:e2e
 ## WEEK-BY-WEEK ROADMAP
 
 ### Week 1 (Nov 14-21): Critical Fixes
+
 - [ ] Day 1-2: Fix Customer/Venue tenantId
 - [ ] Day 3-4: Fix race conditions
 - [ ] Day 5: Fix security vulnerabilities
 - [ ] Weekend: Test everything
 
 ### Week 2 (Nov 22-28): Compliance
+
 - [ ] Day 1-2: Terms of Service
 - [ ] Day 3-4: GDPR compliance
 - [ ] Day 5: Privacy policy
 - [ ] Weekend: Legal review
 
 ### Week 3 (Nov 29-Dec 6): Customer Features
+
 - [ ] Day 1-2: Email confirmations
 - [ ] Day 3-4: Customer portal
 - [ ] Day 5: Cancellation flow
 - [ ] Weekend: User testing
 
 ### Week 4 (Dec 7-14): Polish & Launch
+
 - [ ] Day 1: Increase test coverage to 70%
 - [ ] Day 2: Fix remaining TypeScript issues
 - [ ] Day 3: Performance optimization
@@ -270,6 +304,7 @@ npm run test:e2e
 ## HOW TO VALIDATE FIXES
 
 ### Validate Tenant Isolation
+
 ```sql
 -- Connect to database
 psql $DATABASE_URL
@@ -282,24 +317,26 @@ SELECT * FROM "Customer" WHERE "tenantId" = 'test-tenant';
 ```
 
 ### Validate Race Conditions
+
 ```javascript
 // test/race-conditions.test.ts
 it('prevents double booking', async () => {
   const date = '2025-06-15';
 
   // Attempt 10 concurrent bookings
-  const promises = Array(10).fill(0).map(() =>
-    bookingService.createCheckout(tenantId, { eventDate: date })
-  );
+  const promises = Array(10)
+    .fill(0)
+    .map(() => bookingService.createCheckout(tenantId, { eventDate: date }));
 
   const results = await Promise.allSettled(promises);
-  const successful = results.filter(r => r.status === 'fulfilled');
+  const successful = results.filter((r) => r.status === 'fulfilled');
 
   expect(successful).toHaveLength(1); // Only 1 should succeed
 });
 ```
 
 ### Validate Stripe Idempotency
+
 ```bash
 # Check Stripe dashboard for duplicate charges
 # Run same checkout twice with network interruption:
@@ -318,6 +355,7 @@ kill %1 && curl -X POST localhost:3001/v1/checkout ...
 ## REFACTORING PRIORITIES (Post-Launch)
 
 ### God Components to Split
+
 1. **PackagePhotoUploader.tsx** (462 lines → 4 components)
 2. **TenantPackagesManager.tsx** (425 lines → 3 components)
 3. **Dashboard.tsx** (343 lines → tab-based routing)
@@ -346,6 +384,7 @@ Sentry.init({ dsn: process.env.SENTRY_DSN });
 ## LAUNCH DAY CHECKLIST
 
 ### Morning of Launch
+
 - [ ] Backup database: `pg_dump $DATABASE_URL > backup.sql`
 - [ ] Set Stripe to live mode
 - [ ] Enable Sentry monitoring
@@ -353,12 +392,14 @@ Sentry.init({ dsn: process.env.SENTRY_DSN });
 - [ ] Test one real booking end-to-end
 
 ### During Launch
+
 - [ ] Monitor error logs: `npm run logs:tail`
 - [ ] Watch Stripe dashboard
 - [ ] Check database connections: `SELECT count(*) FROM pg_stat_activity`
 - [ ] Monitor memory: `npm run monitor:memory`
 
 ### Post-Launch
+
 - [ ] Send confirmation email to stakeholders
 - [ ] Schedule daily standup for first week
 - [ ] Plan first feature release

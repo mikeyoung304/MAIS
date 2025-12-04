@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "108"
+issue_id: '108'
 tags: [code-review, performance, react, ui-redesign]
 dependencies: []
 ---
@@ -39,6 +39,7 @@ Several list components (MetricsCards, BlackoutsList, SegmentsList, TabNavigatio
 ## Proposed Solutions
 
 ### Solution 1: Add React.memo to All List Components (Recommended)
+
 **Pros:** Immediate performance improvement
 **Cons:** Minimal
 **Effort:** Small (1 hour for all)
@@ -68,6 +69,6 @@ export const BlackoutsList = React.memo(function BlackoutsList({ ... }) {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                     |
+| ---------- | ------------------------ | ----------------------------- |
 | 2025-11-30 | Created from code review | Performance issues identified |

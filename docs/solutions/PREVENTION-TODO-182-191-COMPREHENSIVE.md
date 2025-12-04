@@ -30,6 +30,7 @@ This document provides comprehensive prevention strategies for 10 critical categ
 ## 1. Information Disclosure Prevention (182)
 
 **Issue:** Public endpoints exposing version/environment information aids reconnaissance by revealing:
+
 - Application version (identifies known vulnerabilities)
 - Environment type (development vs production)
 - System information (Node.js version, architecture, PID)
@@ -130,6 +131,7 @@ describe('GET /metrics', () => {
 ## 2. Transaction Atomicity (183)
 
 **Issue:** Resources (API keys, tokens) generated outside transactions but used inside. If transaction fails after generation:
+
 - Resources are wasted
 - Sensitive data logged but not persisted
 - Re-running seeds creates duplicates
@@ -188,7 +190,7 @@ describe('Seed Transaction Atomicity', () => {
 
     // Verify all resources created
     const tenant = await prisma.tenant.findUnique({
-      where: { slug: DEMO_SLUG }
+      where: { slug: DEMO_SLUG },
     });
 
     expect(tenant?.apiKeyPublic).toBeDefined();
@@ -196,7 +198,7 @@ describe('Seed Transaction Atomicity', () => {
 
     // No orphaned keys in logs
     const logs = await fetchServerLogs({ pattern: 'Secret Key:', duration });
-    const keyLogs = logs.filter(l => tenant?.apiKeySecret && l.includes(tenant.apiKeySecret));
+    const keyLogs = logs.filter((l) => tenant?.apiKeySecret && l.includes(tenant.apiKeySecret));
     expect(keyLogs.length).toBe(1); // Logged exactly once
   });
 
@@ -284,13 +286,17 @@ describe('EventEmitter Unsubscribe', () => {
     const unsubscribe = emitter.subscribe('booking:paid', handler);
     expect(typeof unsubscribe).toBe('function');
 
-    await emitter.emit('booking:paid', { /* payload */ });
+    await emitter.emit('booking:paid', {
+      /* payload */
+    });
     expect(handler).toHaveBeenCalledTimes(1);
 
     // Unsubscribe
     unsubscribe();
 
-    await emitter.emit('booking:paid', { /* payload */ });
+    await emitter.emit('booking:paid', {
+      /* payload */
+    });
     expect(handler).toHaveBeenCalledTimes(1); // Still 1, not called again
   });
 
@@ -313,7 +319,9 @@ describe('EventEmitter Unsubscribe', () => {
 
     unsub1(); // Remove only handler1
 
-    await emitter.emit('event', { /* payload */ });
+    await emitter.emit('event', {
+      /* payload */
+    });
     expect(handler1).not.toHaveBeenCalled();
     expect(handler2).toHaveBeenCalledTimes(1);
   });
@@ -329,7 +337,7 @@ describe('EventEmitter Unsubscribe', () => {
     }
 
     // Unsubscribe all
-    unsubscribers.forEach(unsub => unsub());
+    unsubscribers.forEach((unsub) => unsub());
 
     // Verify no handlers remain
     expect(emitter['handlers'].get('event')).toHaveLength(0);
@@ -419,14 +427,14 @@ import { BookingStatus, RefundStatus } from '@/lib/utils';
 
 describe('Status Type Synchronization', () => {
   it('should derive BookingStatus from contract schema', () => {
-    const contractStatus = z.infer<typeof BookingDtoSchema>['status'];
+    const contractStatus = z.infer < typeof BookingDtoSchema > ['status'];
 
     // Compile-time check (TypeScript)
     const _: BookingStatus extends typeof contractStatus ? true : false = true;
   });
 
   it('BookingStatus should include all contract values', () => {
-    const contractValues = z.infer<typeof BookingDtoSchema>['status'];
+    const contractValues = z.infer < typeof BookingDtoSchema > ['status'];
     const utilityValues: BookingStatus[] = [
       'PENDING',
       'DEPOSIT_PAID',
@@ -434,11 +442,11 @@ describe('Status Type Synchronization', () => {
       'CONFIRMED',
       'CANCELED',
       'REFUNDED',
-      'FULFILLED'
+      'FULFILLED',
     ];
 
     // Each contract value should be representable
-    contractValues.forEach(value => {
+    contractValues.forEach((value) => {
       expect(utilityValues).toContain(value);
     });
   });
@@ -462,10 +470,10 @@ describe('UI Status Handling', () => {
       'CONFIRMED',
       'CANCELED',
       'REFUNDED',
-      'FULFILLED'
+      'FULFILLED',
     ];
 
-    contractStatuses.forEach(status => {
+    contractStatuses.forEach((status) => {
       const variant = getStatusVariant(status);
       expect(['default', 'secondary', 'destructive', 'outline']).toContain(variant);
     });
@@ -660,7 +668,7 @@ describe('Advisory Lock Registry', () => {
     // Find all lock IDs in code
     const lockIds = [42424242]; // Add dynamically
 
-    lockIds.forEach(id => {
+    lockIds.forEach((id) => {
       expect(registryContent).toContain(id.toString());
     });
   });
@@ -671,7 +679,7 @@ describe('Advisory Lock Registry', () => {
     const idPattern = /^\|\s*(\d+)\s*\|/;
     const ids = new Set<number>();
 
-    lines.forEach(line => {
+    lines.forEach((line) => {
       const match = line.match(idPattern);
       if (match) {
         const id = parseInt(match[1]);
@@ -703,10 +711,10 @@ describe('Advisory Lock Registry', () => {
 ```markdown
 # PostgreSQL Advisory Locks Registry
 
-| Lock ID | Component | Purpose | Scope | Notes |
-|---------|-----------|---------|-------|-------|
-| 42424242 | IdempotencyService | Cleanup scheduling | Global | Used for scheduler coordination |
-| FNV-1a | BookingRepository | Race prevention | Per booking | Hash of tenantId:date |
+| Lock ID  | Component          | Purpose            | Scope       | Notes                           |
+| -------- | ------------------ | ------------------ | ----------- | ------------------------------- |
+| 42424242 | IdempotencyService | Cleanup scheduling | Global      | Used for scheduler coordination |
+| FNV-1a   | BookingRepository  | Race prevention    | Per booking | Hash of tenantId:date           |
 ```
 
 ---
@@ -766,7 +774,7 @@ describe('useConfirmDialog Cleanup', () => {
 
     const confirmPromise = result.current.confirm({
       title: 'Test',
-      description: 'Test'
+      description: 'Test',
     });
 
     // Unmount while promise pending
@@ -775,9 +783,7 @@ describe('useConfirmDialog Cleanup', () => {
     // Promise should resolve with false (cleanup default)
     const resolved = await Promise.race([
       confirmPromise,
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout')), 100)
-      )
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 100)),
     ]);
 
     expect(resolved).toBe(false);
@@ -791,7 +797,7 @@ describe('useConfirmDialog Cleanup', () => {
 
       result.current.confirm({
         title: 'Test',
-        description: 'Test'
+        description: 'Test',
       });
 
       unmount();
@@ -817,7 +823,7 @@ describe('useConfirmDialog Cleanup', () => {
 
     const promise = result.current.confirm({
       title: 'Confirm?',
-      description: 'Really?'
+      description: 'Really?',
     });
 
     unmount();
@@ -929,7 +935,9 @@ describe('InProcessEventEmitter - Unit Tests', () => {
       emitter.subscribe(BookingEvents.PAID, () => order.push(2));
       emitter.subscribe(BookingEvents.PAID, () => order.push(3));
 
-      await emitter.emit(BookingEvents.PAID, { /* payload */ });
+      await emitter.emit(BookingEvents.PAID, {
+        /* payload */
+      });
 
       expect(order).toEqual([1, 2, 3]);
     });
@@ -944,7 +952,9 @@ describe('InProcessEventEmitter - Unit Tests', () => {
       emitter.subscribe(BookingEvents.PAID, successHandler);
 
       // Should not throw despite handler error
-      await emitter.emit(BookingEvents.PAID, { /* payload */ });
+      await emitter.emit(BookingEvents.PAID, {
+        /* payload */
+      });
 
       expect(successHandler).toHaveBeenCalled();
       expect(errorHandler).toHaveBeenCalled();
@@ -957,7 +967,9 @@ describe('InProcessEventEmitter - Unit Tests', () => {
       emitter.subscribe(BookingEvents.PAID, handler);
 
       await expect(
-        emitter.emit(BookingEvents.PAID, { /* payload */ })
+        emitter.emit(BookingEvents.PAID, {
+          /* payload */
+        })
       ).rejects.toThrow(); // Or resolves if error isolated
 
       // Verify error logged
@@ -975,8 +987,12 @@ describe('InProcessEventEmitter - Unit Tests', () => {
 
       emitter.clearAll();
 
-      await emitter.emit(BookingEvents.PAID, { /* payload */ });
-      await emitter.emit(BookingEvents.CREATED, { /* payload */ });
+      await emitter.emit(BookingEvents.PAID, {
+        /* payload */
+      });
+      await emitter.emit(BookingEvents.CREATED, {
+        /* payload */
+      });
 
       expect(handler1).not.toHaveBeenCalled();
       expect(handler2).not.toHaveBeenCalled();
@@ -992,7 +1008,7 @@ describe('InProcessEventEmitter - Unit Tests', () => {
         // ...
       ];
 
-      validEvents.forEach(event => {
+      validEvents.forEach((event) => {
         expect(() => {
           emitter.subscribe(event, vi.fn());
         }).not.toThrow();
@@ -1074,7 +1090,7 @@ describe('Seed Transaction Logging', () => {
 
     await runDemoSeed();
 
-    const startLog = logs.find(l => l.includes('Starting seed transaction'));
+    const startLog = logs.find((l) => l.includes('Starting seed transaction'));
     expect(startLog).toBeDefined();
     expect(startLog).toMatch(/slug:.*demo/i);
     expect(startLog).toMatch(/operations:\s*\d+/i);
@@ -1085,7 +1101,7 @@ describe('Seed Transaction Logging', () => {
 
     await runDemoSeed();
 
-    const endLog = logs.find(l => l.includes('committed successfully'));
+    const endLog = logs.find((l) => l.includes('committed successfully'));
     expect(endLog).toBeDefined();
     expect(endLog).toMatch(/durationMs:\s*\d+/i);
   });
@@ -1109,13 +1125,11 @@ describe('Seed Transaction Logging', () => {
     const logs = captureLogOutput();
 
     // Mock transaction failure
-    prisma.$transaction = vi.fn().mockRejectedValueOnce(
-      new Error('Unique constraint violation')
-    );
+    prisma.$transaction = vi.fn().mockRejectedValueOnce(new Error('Unique constraint violation'));
 
     await expect(runDemoSeed()).rejects.toThrow();
 
-    const errorLog = logs.find(l => l.includes('error') || l.includes('failed'));
+    const errorLog = logs.find((l) => l.includes('error') || l.includes('failed'));
     expect(errorLog).toBeDefined();
     expect(errorLog).toContain('slug');
     expect(errorLog).not.toContain('password');
@@ -1147,14 +1161,20 @@ describe('Seed Transaction Logging', () => {
 logger.info({ slug: DEMO_SLUG, operations: 16 }, 'Starting seed transaction');
 const startTime = Date.now();
 
-await prisma.$transaction(async (tx) => {
-  // ... seed operations
-}, { timeout: 60000 });
+await prisma.$transaction(
+  async (tx) => {
+    // ... seed operations
+  },
+  { timeout: 60000 }
+);
 
-logger.info({
-  slug: DEMO_SLUG,
-  durationMs: Date.now() - startTime
-}, 'Seed transaction committed successfully');
+logger.info(
+  {
+    slug: DEMO_SLUG,
+    durationMs: Date.now() - startTime,
+  },
+  'Seed transaction committed successfully'
+);
 ```
 
 ---
@@ -1220,7 +1240,7 @@ describe('File Organization Rules', () => {
   it('should not have documentation in test/ directory', () => {
     const testFiles = glob.sync('server/test/**/*.ts');
 
-    testFiles.forEach(file => {
+    testFiles.forEach((file) => {
       const content = readFileSync(file, 'utf8');
 
       // Test files should have actual test code
@@ -1245,7 +1265,7 @@ describe('File Organization Rules', () => {
   it('should have documentation files in docs/', () => {
     const docFiles = glob.sync('docs/**/*.md');
 
-    docFiles.forEach(file => {
+    docFiles.forEach((file) => {
       const content = readFileSync(file, 'utf8');
 
       // Should have frontmatter
@@ -1254,11 +1274,7 @@ describe('File Organization Rules', () => {
   });
 
   it('should have no broken references after file moves', () => {
-    const references = grep('type-safety-verification', [
-      'server/',
-      'docs/',
-      '*.md'
-    ]);
+    const references = grep('type-safety-verification', ['server/', 'docs/', '*.md']);
 
     // Old location should not be referenced
     expect(references).not.toContain('server/test/type-safety-verification.ts');
@@ -1342,18 +1358,18 @@ packages/
 
 ## Quick Reference: Which Category?
 
-| Issue | Category | Checklist | ESLint | Test |
-|-------|----------|-----------|--------|------|
-| Exposed version/env | Info Disclosure (182) | ✓ | ✓ | ✓ |
-| Resource generation outside TX | Transaction Atomicity (183) | ✓ | ✓ | ✓ |
-| Event handler memory leak | Memory Leak (184) | ✓ | ✓ | ✓ |
-| Duplicated types from schema | Type DRY (185) | ✓ | ✓ | ✓ |
-| Switch missing cases | Exhaustiveness (186) | ✓ | ✓ | ✓ |
-| Undocumented IDs | Documentation (187) | ✓ | ✓ | ✓ |
-| Ref without cleanup | Hook Cleanup (188) | ✓ | ✓ | ✓ |
-| Missing infrastructure tests | Test Coverage (189) | ✓ | ✓ | ✓ |
-| No transaction logging | Observability (190) | ✓ | ✓ | ✓ |
-| Docs in test/ directory | File Organization (191) | ✓ | ✓ | ✓ |
+| Issue                          | Category                    | Checklist | ESLint | Test |
+| ------------------------------ | --------------------------- | --------- | ------ | ---- |
+| Exposed version/env            | Info Disclosure (182)       | ✓         | ✓      | ✓    |
+| Resource generation outside TX | Transaction Atomicity (183) | ✓         | ✓      | ✓    |
+| Event handler memory leak      | Memory Leak (184)           | ✓         | ✓      | ✓    |
+| Duplicated types from schema   | Type DRY (185)              | ✓         | ✓      | ✓    |
+| Switch missing cases           | Exhaustiveness (186)        | ✓         | ✓      | ✓    |
+| Undocumented IDs               | Documentation (187)         | ✓         | ✓      | ✓    |
+| Ref without cleanup            | Hook Cleanup (188)          | ✓         | ✓      | ✓    |
+| Missing infrastructure tests   | Test Coverage (189)         | ✓         | ✓      | ✓    |
+| No transaction logging         | Observability (190)         | ✓         | ✓      | ✓    |
+| Docs in test/ directory        | File Organization (191)     | ✓         | ✓      | ✓    |
 
 ---
 

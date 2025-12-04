@@ -52,15 +52,16 @@
 ```
 
 **React Query Configuration** (`client/src/lib/queryClient.ts:6-20`):
+
 ```typescript
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,         // 5 minutes
-      gcTime: 15 * 60 * 1000,           // 15 minutes (formerly cacheTime)
-      refetchOnWindowFocus: true,       // ✅ Auto-refetch on tab focus
-      refetchOnReconnect: true,         // ✅ Auto-refetch on reconnect
-      retry: 1,                         // Retry failed requests once
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 15 * 60 * 1000, // 15 minutes (formerly cacheTime)
+      refetchOnWindowFocus: true, // ✅ Auto-refetch on tab focus
+      refetchOnReconnect: true, // ✅ Auto-refetch on reconnect
+      retry: 1, // Retry failed requests once
     },
   },
 });
@@ -69,6 +70,7 @@ export const queryClient = new QueryClient({
 **Branding State Flow:**
 
 **Step 1: Initial Load** (`client/src/widget/WidgetApp.tsx:50-62`)
+
 ```typescript
 const { data: branding, isLoading: brandingLoading } = useQuery<TenantBrandingDto>({
   queryKey: ['tenant', 'branding', config.tenant],
@@ -84,6 +86,7 @@ const { data: branding, isLoading: brandingLoading } = useQuery<TenantBrandingDt
 ```
 
 **Step 2: Apply Branding** (`client/src/widget/WidgetApp.tsx:64-96`)
+
 ```typescript
 useEffect(() => {
   if (branding) {
@@ -98,7 +101,7 @@ useEffect(() => {
     }
     if (branding.fontFamily) {
       root.style.setProperty('--font-family', branding.fontFamily);
-      loadGoogleFont(branding.fontFamily);  // Dynamic font loading
+      loadGoogleFont(branding.fontFamily); // Dynamic font loading
     }
 
     // Inject custom CSS
@@ -117,18 +120,20 @@ useEffect(() => {
       };
     }
   }
-}, [branding]);  // ← Re-runs when branding changes
+}, [branding]); // ← Re-runs when branding changes
 ```
 
 **Real-Time Config Changes:**
 
 **Current Behavior:**
+
 1. Admin updates branding via `PUT /v1/tenant/admin/branding`
 2. Server updates database immediately
 3. Widget React Query cache is stale for 5 minutes
 4. **User must refresh page** to see changes
 
 **Why No Hot-Reload:**
+
 - React Query uses `staleTime: 5 * 60 * 1000` (5 minutes)
 - Widget doesn't poll for changes
 - No WebSocket or Server-Sent Events (SSE)
@@ -137,13 +142,14 @@ useEffect(() => {
 **How to Implement Hot-Reload:**
 
 **Option 1: Reduce Stale Time (Quick Fix)**
+
 ```typescript
 // In widget-main.tsx or WidgetApp.tsx
 const { data: branding } = useQuery<TenantBrandingDto>({
   queryKey: ['tenant', 'branding', config.tenant],
   queryFn: () => api.tenant.branding.get(),
-  staleTime: 30 * 1000,        // ← 30 seconds instead of 5 minutes
-  refetchInterval: 30 * 1000,  // ← Poll every 30 seconds
+  staleTime: 30 * 1000, // ← 30 seconds instead of 5 minutes
+  refetchInterval: 30 * 1000, // ← Poll every 30 seconds
 });
 ```
 
@@ -151,10 +157,11 @@ const { data: branding } = useQuery<TenantBrandingDto>({
 **Cons:** Unnecessary API calls, 30-second delay
 
 **Option 2: postMessage from Parent (Better)**
+
 ```typescript
 // Parent site notifies widget of branding changes
 window.MAISWidget.updateBranding({
-  primaryColor: '#FF0000'
+  primaryColor: '#FF0000',
 });
 
 // Widget listens for postMessage
@@ -170,6 +177,7 @@ window.addEventListener('message', (event) => {
 **Cons:** Parent must know when branding changes
 
 **Option 3: WebSocket Connection (Best)**
+
 ```typescript
 // Backend sends real-time updates
 const socket = new WebSocket(`wss://api.elope.com/tenant/${tenantId}/live`);
@@ -190,6 +198,7 @@ socket.onmessage = (event) => {
 **React Context Usage:**
 
 **AuthContext** (`client/src/contexts/AuthContext.tsx:36-150`)
+
 ```typescript
 interface AuthContextValue {
   token: string | null;
@@ -251,12 +260,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 ```
 
 **Global Stores:** ❌ None
+
 - No Redux
 - No Zustand
 - No MobX
 - State is entirely React Query + Context
 
 **Subscriptions:** ❌ None
+
 - No WebSocket subscriptions
 - No Server-Sent Events
 - No polling (except React Query's optional refetchInterval)
@@ -264,6 +275,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 **Config Change Scenarios:**
 
 **Scenario 1: Admin Changes Widget Color**
+
 ```
 1. Admin: PUT /v1/tenant/admin/branding { primaryColor: '#FF0000' }
 2. Server: Updates Tenant.branding immediately
@@ -275,6 +287,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 **Current Latency:** 0-5 minutes (depends on when user next focuses window)
 
 **Scenario 2: Admin Creates New Package**
+
 ```
 1. Admin: POST /v1/tenant/admin/packages { ... }
 2. Server: Creates package immediately
@@ -287,15 +300,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 **Hot-Reload Assessment:**
 
-| Feature | Current Support | Latency | Notes |
-|---------|----------------|---------|-------|
-| Branding changes | ⚠️ Manual refresh | 0-5 min | React Query cache |
-| Package changes | ⚠️ Manual refresh | 0-5 min | React Query cache |
-| Add-on changes | ⚠️ Manual refresh | 0-5 min | React Query cache |
-| Layout changes | ❌ Not supported | N/A | Hard-coded components |
-| Theme preset switch | ❌ Not supported | N/A | No templates exist |
+| Feature             | Current Support   | Latency | Notes                 |
+| ------------------- | ----------------- | ------- | --------------------- |
+| Branding changes    | ⚠️ Manual refresh | 0-5 min | React Query cache     |
+| Package changes     | ⚠️ Manual refresh | 0-5 min | React Query cache     |
+| Add-on changes      | ⚠️ Manual refresh | 0-5 min | React Query cache     |
+| Layout changes      | ❌ Not supported  | N/A     | Hard-coded components |
+| Theme preset switch | ❌ Not supported  | N/A     | No templates exist    |
 
 **Recommendations:**
+
 1. **Quick Fix (1 hour):** Reduce staleTime to 30 seconds for widget queries
 2. **Better (4 hours):** Add postMessage API for parent to trigger cache invalidation
 3. **Best (2-3 days):** Implement WebSocket connection for real-time updates
@@ -312,6 +326,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 **Current Theme Capabilities:**
 
 **1. Manual Color Selection** (`client/src/components/ColorPicker.tsx:1-89`)
+
 ```typescript
 // Basic color input with validation
 export const ColorPicker = ({ value, onChange, label }: Props) => {
@@ -356,6 +371,7 @@ export const ColorPicker = ({ value, onChange, label }: Props) => {
 ```
 
 **Features:**
+
 - ✅ Browser native color picker
 - ✅ Hex validation
 - ✅ Manual text input
@@ -364,6 +380,7 @@ export const ColorPicker = ({ value, onChange, label }: Props) => {
 - ❌ No contrast checking (except basic WCAG notes in BrandingEditor)
 
 **2. Manual Font Selection** (`client/src/components/FontSelector.tsx:1-92`)
+
 ```typescript
 const SUPPORTED_FONTS = [
   'Inter',
@@ -399,6 +416,7 @@ export const FontSelector = ({ value, onChange }: Props) => {
 ```
 
 **Features:**
+
 - ✅ 8 curated wedding fonts
 - ✅ Live preview in dropdown
 - ✅ Dynamic Google Font loading
@@ -407,6 +425,7 @@ export const FontSelector = ({ value, onChange }: Props) => {
 - ❌ No upload custom fonts
 
 **3. Preset Colors** (`client/src/features/tenant-admin/BrandingEditor.tsx:25-42`)
+
 ```typescript
 const COLOR_PRESETS = [
   { name: 'Elegant Purple', primary: '#7C3AED', secondary: '#DDD6FE' },
@@ -428,6 +447,7 @@ const applyPreset = (preset: ColorPreset) => {
 ```
 
 **Features:**
+
 - ✅ 6 curated wedding color schemes
 - ✅ One-click application
 - ❌ No palette generation from base color
@@ -436,6 +456,7 @@ const applyPreset = (preset: ColorPreset) => {
 **External Source Parsing:**
 
 **CSS Parsing:** ❌ Not Implemented
+
 ```typescript
 // Doesn't exist, but would look like:
 function parseCssColors(cssText: string): string[] {
@@ -445,6 +466,7 @@ function parseCssColors(cssText: string): string[] {
 ```
 
 **Screenshot Color Extraction:** ❌ Not Implemented
+
 ```typescript
 // Doesn't exist, but would look like:
 async function extractColorsFromImage(imageUrl: string): Promise<string[]> {
@@ -452,11 +474,12 @@ async function extractColorsFromImage(imageUrl: string): Promise<string[]> {
     method: 'POST',
     body: JSON.stringify({ imageUrl }),
   });
-  return response.json();  // Returns palette
+  return response.json(); // Returns palette
 }
 ```
 
 **Design Token Import:** ❌ Not Implemented
+
 ```typescript
 // Doesn't exist, but would look like:
 interface DesignTokens {
@@ -483,6 +506,7 @@ function importDesignTokens(tokens: DesignTokens): TenantBrandingDto {
 **Image Processing:**
 
 **Logo Upload** (`server/src/services/upload.service.ts:1-150`)
+
 ```typescript
 class UploadService {
   async uploadFile(
@@ -509,6 +533,7 @@ class UploadService {
 ```
 
 **Features:**
+
 - ✅ File upload (logo)
 - ✅ File type validation
 - ✅ Size validation (5MB max)
@@ -519,6 +544,7 @@ class UploadService {
 **Theme Template System:**
 
 ❌ **Not Implemented** - No database-backed templates
+
 ```prisma
 // Doesn't exist, but would look like:
 model ThemeTemplate {
@@ -538,6 +564,7 @@ model ThemeTemplate {
 **Where to Insert AI Capabilities:**
 
 **1. Backend API Route** (Create new file: `server/src/routes/theme-generation.routes.ts`)
+
 ```typescript
 router.post('/v1/tenant/admin/branding/generate', async (req, res) => {
   const { sourceType, sourceData } = req.body;
@@ -551,6 +578,7 @@ router.post('/v1/tenant/admin/branding/generate', async (req, res) => {
 ```
 
 **2. Theme Generation Service** (Create new file: `server/src/services/theme-generation.service.ts`)
+
 ```typescript
 class ThemeGenerationService {
   async generateFromColor(baseColor: string): Promise<TenantBrandingDto> {
@@ -614,6 +642,7 @@ class ThemeGenerationService {
 ```
 
 **3. Frontend Component** (Create new file: `client/src/features/tenant-admin/AIThemeGenerator.tsx`)
+
 ```typescript
 export const AIThemeGenerator = ({ onGenerate }: Props) => {
   const [mode, setMode] = useState<'color' | 'image' | 'description'>('color');
@@ -670,12 +699,13 @@ export const AIThemeGenerator = ({ onGenerate }: Props) => {
 ```
 
 **4. Color Utilities** (Create new directory: `server/src/lib/color-utils/`)
+
 ```typescript
 // color-theory.ts
 export function generateComplementary(hex: string): string {
   const rgb = hexToRgb(hex);
   const hsl = rgbToHsl(rgb);
-  hsl.h = (hsl.h + 180) % 360;  // Complementary = opposite on color wheel
+  hsl.h = (hsl.h + 180) % 360; // Complementary = opposite on color wheel
   return hslToHex(hsl);
 }
 
@@ -707,15 +737,16 @@ export function calculateContrast(color1: string, color2: string): number {
 }
 
 export function meetsWCAG_AA(contrast: number): boolean {
-  return contrast >= 4.5;  // WCAG AA standard
+  return contrast >= 4.5; // WCAG AA standard
 }
 
 export function meetsWCAG_AAA(contrast: number): boolean {
-  return contrast >= 7.0;  // WCAG AAA standard
+  return contrast >= 7.0; // WCAG AAA standard
 }
 ```
 
 **Dependencies to Install:**
+
 ```bash
 npm install --save sharp vibrant
 npm install --save-dev @types/sharp
@@ -727,27 +758,32 @@ npm install color-thief-node
 **Implementation Timeline:**
 
 **Phase 1: Foundation (4 hours)**
+
 - Install sharp, Vibrant.js
 - Create color utility functions
 - Add color theory algorithms (complementary, analogous, triadic)
 
 **Phase 2: Image Processing (6 hours)**
+
 - Implement color extraction from uploaded images
 - Add palette generation from logo
 - Create API endpoint for color extraction
 
 **Phase 3: API Routes (4 hours)**
+
 - Add POST /v1/tenant/admin/branding/generate
 - Add validation for generation requests
 - Add rate limiting (expensive operations)
 
 **Phase 4: Frontend Component (8 hours)**
+
 - Build AIThemeGenerator React component
 - Add UI for color/image/description input
 - Add preview of generated themes
 - Add "Apply Theme" button
 
 **Phase 5: Enhancements (8-12 hours)**
+
 - Add font pairing recommendations
 - Add template system (database-backed)
 - Add export/import for themes
@@ -756,6 +792,7 @@ npm install color-thief-node
 **Total Effort:** 30-34 hours (1 week for one developer)
 
 **Recommendations:**
+
 1. **Phase 1:** Start with color theory utilities (quick win)
 2. **Phase 2:** Add image color extraction (high impact)
 3. **Phase 3:** Integrate LLM for description-based generation
@@ -773,6 +810,7 @@ npm install color-thief-node
 **Current State:**
 
 ❌ **No AuditLog Table:**
+
 ```prisma
 // Doesn't exist in schema.prisma
 model AuditLog {
@@ -794,6 +832,7 @@ model AuditLog {
 ```
 
 ❌ **No Logging Service:**
+
 ```typescript
 // Doesn't exist
 class AuditLogService {
@@ -819,6 +858,7 @@ class AuditLogService {
 ```
 
 ❌ **No Middleware:**
+
 ```typescript
 // Doesn't exist
 export const auditMiddleware = (action: string) => {
@@ -859,16 +899,17 @@ export const auditMiddleware = (action: string) => {
 
 **Compliance Requirements:**
 
-| Regulation | Requirement | Status |
-|------------|-------------|--------|
-| GDPR | Log all data access/changes | ❌ FAIL |
-| HIPAA | Audit trail for PHI access | ❌ FAIL |
-| PCI-DSS | Track all payment data access | ❌ FAIL |
-| SOC 2 | Comprehensive audit logging | ❌ FAIL |
+| Regulation | Requirement                   | Status  |
+| ---------- | ----------------------------- | ------- |
+| GDPR       | Log all data access/changes   | ❌ FAIL |
+| HIPAA      | Audit trail for PHI access    | ❌ FAIL |
+| PCI-DSS    | Track all payment data access | ❌ FAIL |
+| SOC 2      | Comprehensive audit logging   | ❌ FAIL |
 
 **Where Logging Should Happen:**
 
 **1. Branding Changes:**
+
 ```typescript
 // server/src/controllers/tenant-admin.controller.ts:99-130
 async updateBranding(req: AuthenticatedRequest, res: Response) {
@@ -901,6 +942,7 @@ async updateBranding(req: AuthenticatedRequest, res: Response) {
 ```
 
 **2. Package Changes:**
+
 ```typescript
 // server/src/controllers/tenant-admin.controller.ts
 async createPackage(req: AuthenticatedRequest, res: Response) {
@@ -968,6 +1010,7 @@ async deletePackage(req: AuthenticatedRequest, res: Response) {
 ```
 
 **3. Booking Status Changes:**
+
 ```typescript
 async updateBookingStatus(req: AuthenticatedRequest, res: Response) {
   const { tenantId, userId } = req.user!;
@@ -995,6 +1038,7 @@ async updateBookingStatus(req: AuthenticatedRequest, res: Response) {
 **Implementation Plan:**
 
 **Phase 1: Database Schema (1 hour)**
+
 ```prisma
 // Add to schema.prisma
 model AuditLog {
@@ -1023,6 +1067,7 @@ $ npx prisma migrate dev --name add_audit_logging
 ```
 
 **Phase 2: Audit Log Service (2 hours)**
+
 ```typescript
 // server/src/services/audit-log.service.ts
 export class AuditLogService {
@@ -1081,10 +1126,7 @@ export class AuditLogService {
     return { logs, total };
   }
 
-  async getResourceHistory(
-    tenantId: string,
-    resource: string
-  ): Promise<AuditLog[]> {
+  async getResourceHistory(tenantId: string, resource: string): Promise<AuditLog[]> {
     return this.prisma.auditLog.findMany({
       where: { tenantId, resource },
       orderBy: { timestamp: 'desc' },
@@ -1094,6 +1136,7 @@ export class AuditLogService {
 ```
 
 **Phase 3: Middleware (1 hour)**
+
 ```typescript
 // server/src/middleware/audit.ts
 export const auditAction = (action: string, resourceFn: (req: Request) => string) => {
@@ -1142,13 +1185,14 @@ router.put(
   '/v1/tenant/admin/branding',
   requireAuth,
   requireTenantAdmin,
-  auditAction('branding.update', () => 'branding'),  // ← Middleware
+  auditAction('branding.update', () => 'branding'), // ← Middleware
   validateBody(TenantBrandingDtoSchema),
   tenantAdminController.updateBranding
 );
 ```
 
 **Phase 4: API Endpoints (2 hours)**
+
 ```typescript
 // server/src/routes/audit-log.routes.ts
 router.get(
@@ -1199,6 +1243,7 @@ router.get(
 ```
 
 **Phase 5: Frontend UI (4 hours)**
+
 ```typescript
 // client/src/features/tenant-admin/AuditLogViewer.tsx
 export const AuditLogViewer = () => {
@@ -1244,6 +1289,7 @@ export const AuditLogViewer = () => {
 **Total Effort:** 8-10 hours (1-2 days for one developer)
 
 **Recommendations:**
+
 1. **URGENT:** Implement audit logging before production (compliance requirement)
 2. Add audit log viewer to tenant admin dashboard
 3. Add export/download capability for compliance audits

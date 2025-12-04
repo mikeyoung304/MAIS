@@ -1,8 +1,8 @@
-import { Check } from "lucide-react";
+import { Check } from 'lucide-react';
 
 export interface Step {
   label: string;
-  status: "complete" | "current" | "upcoming";
+  status: 'complete' | 'current' | 'upcoming';
 }
 
 interface StepperProps {
@@ -35,21 +35,21 @@ interface StepperProps {
  * <Stepper steps={steps} currentStep={1} />
  * ```
  */
-export function Stepper({ steps, currentStep, className = "" }: StepperProps) {
+export function Stepper({ steps, currentStep, className = '' }: StepperProps) {
   return (
     <nav aria-label="Progress" className={className}>
       <ol className="flex items-center justify-between">
         {steps.map((step, index) => {
-          const isComplete = step.status === "complete";
-          const isCurrent = step.status === "current";
-          const isUpcoming = step.status === "upcoming";
+          const isComplete = step.status === 'complete';
+          const isCurrent = step.status === 'current';
+          const isUpcoming = step.status === 'upcoming';
           const isLast = index === steps.length - 1;
 
           return (
             <li
               key={step.label}
               className="flex-1 flex items-center"
-              aria-current={isCurrent ? "step" : undefined}
+              aria-current={isCurrent ? 'step' : undefined}
             >
               <div className="flex items-center w-full">
                 {/* Step Circle */}
@@ -59,10 +59,10 @@ export function Stepper({ steps, currentStep, className = "" }: StepperProps) {
                       flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors
                       ${
                         isComplete
-                          ? "bg-success-600 border-success-600"
+                          ? 'bg-success-600 border-success-600'
                           : isCurrent
-                          ? "bg-primary border-primary"
-                          : "bg-neutral-100 border-neutral-300"
+                            ? 'bg-primary border-primary'
+                            : 'bg-neutral-100 border-neutral-300'
                       }
                     `}
                   >
@@ -72,7 +72,7 @@ export function Stepper({ steps, currentStep, className = "" }: StepperProps) {
                       <span
                         className={`
                           text-base font-semibold
-                          ${isCurrent ? "text-white" : "text-neutral-500"}
+                          ${isCurrent ? 'text-white' : 'text-neutral-500'}
                         `}
                       >
                         {index + 1}
@@ -86,10 +86,10 @@ export function Stepper({ steps, currentStep, className = "" }: StepperProps) {
                       absolute top-12 left-1/2 -translate-x-1/2 text-sm font-medium whitespace-nowrap
                       ${
                         isComplete
-                          ? "text-success-700"
+                          ? 'text-success-700'
                           : isCurrent
-                          ? "text-primary"
-                          : "text-neutral-500"
+                            ? 'text-primary'
+                            : 'text-neutral-500'
                       }
                     `}
                   >
@@ -98,9 +98,9 @@ export function Stepper({ steps, currentStep, className = "" }: StepperProps) {
 
                   {/* Screen reader status */}
                   <span className="sr-only">
-                    {isComplete && "Completed: "}
-                    {isCurrent && "Current step: "}
-                    {isUpcoming && "Upcoming: "}
+                    {isComplete && 'Completed: '}
+                    {isCurrent && 'Current step: '}
+                    {isUpcoming && 'Upcoming: '}
                     {step.label}
                   </span>
                 </div>
@@ -110,7 +110,7 @@ export function Stepper({ steps, currentStep, className = "" }: StepperProps) {
                   <div
                     className={`
                       flex-1 h-0.5 mx-2 transition-colors
-                      ${isComplete ? "bg-success-600" : "bg-neutral-300"}
+                      ${isComplete ? 'bg-success-600' : 'bg-neutral-300'}
                     `}
                     aria-hidden="true"
                   />

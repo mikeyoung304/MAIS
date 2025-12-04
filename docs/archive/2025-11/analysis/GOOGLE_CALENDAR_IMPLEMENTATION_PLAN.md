@@ -8,6 +8,7 @@
 ## 📊 Current State (60% Complete)
 
 ### ✅ Already Implemented (READ-ONLY Operations)
+
 - Google Calendar availability checking via freeBusy API
 - Service account JWT authentication (RS256)
 - 60-second caching for performance
@@ -16,6 +17,7 @@
 - Full TypeScript type safety
 
 **Files Working:**
+
 ```
 ✅ server/src/adapters/gcal.adapter.ts (112 lines)
 ✅ server/src/adapters/gcal.jwt.ts (86 lines)
@@ -24,6 +26,7 @@
 ```
 
 ### ❌ Not Implemented (WRITE Operations)
+
 - Calendar event creation on booking confirmation
 - Calendar event deletion on booking cancellation/refund
 - Event updates when booking modified
@@ -36,15 +39,19 @@
 ## 🎯 Implementation Phases
 
 ### Phase 1: Event Creation (Core Feature) - **8 hours**
+
 Create calendar events when bookings are confirmed via Stripe webhooks.
 
 ### Phase 2: Event Deletion (Refund Support) - **4 hours**
+
 Remove calendar events when bookings are refunded or cancelled.
 
 ### Phase 3: Event Updates (Enhancement) - **6 hours**
+
 Update calendar events when booking details change.
 
 ### Phase 4: Testing & Polish - **4 hours**
+
 Comprehensive testing, error handling, monitoring.
 
 **Total Estimate: 22 hours (3 days)**
@@ -54,9 +61,11 @@ Comprehensive testing, error handling, monitoring.
 ## 📋 PHASE 1: Event Creation (Priority 1)
 
 ### Goal
+
 Automatically create Google Calendar events when customers complete bookings.
 
 ### Prerequisites
+
 ```bash
 # Verify these environment variables are set:
 GOOGLE_CALENDAR_ID=your-calendar@gmail.com
@@ -71,22 +80,21 @@ npm run doctor  # Should show "✅ Google Calendar configured"
 **File**: `server/src/adapters/gcal.jwt.ts`
 
 **Current (line 59-60):**
+
 ```typescript
-const scopes = [
-  'https://www.googleapis.com/auth/calendar.readonly',
-];
+const scopes = ['https://www.googleapis.com/auth/calendar.readonly'];
 ```
 
 **Change to:**
+
 ```typescript
-const scopes = [
-  'https://www.googleapis.com/auth/calendar.events',
-];
+const scopes = ['https://www.googleapis.com/auth/calendar.events'];
 ```
 
 **Why**: `calendar.events` allows read/write access (includes readonly permissions).
 
 **Google Cloud Console Action Required:**
+
 1. Go to https://console.cloud.google.com/iam-admin/serviceaccounts
 2. Find your service account
 3. No changes needed - service account permissions are set at calendar share level
@@ -178,6 +186,7 @@ async createEvent(event: {
 ```
 
 **Key Design Decisions:**
+
 - All-day events (weddings are typically full-day)
 - Email reminders at 7 days, 3 days, 1 day before
 - Returns event ID for future reference (deletion/updates)
@@ -190,6 +199,7 @@ async createEvent(event: {
 **File**: `server/src/lib/ports.ts`
 
 **Current (lines 85-87):**
+
 ```typescript
 export interface CalendarProvider {
   isDateAvailable(date: string): Promise<boolean>;
@@ -197,6 +207,7 @@ export interface CalendarProvider {
 ```
 
 **Change to:**
+
 ```typescript
 export interface CalendarProvider {
   isDateAvailable(date: string): Promise<boolean>;
@@ -283,10 +294,12 @@ try {
       ``,
       `Booking ID: ${booking.id}`,
       `Confirmed: ${new Date().toISOString()}`,
-    ].filter(Boolean).join('\n'),
+    ]
+      .filter(Boolean)
+      .join('\n'),
     location: '', // Could add from tenant settings later
     start: booking.eventDate, // YYYY-MM-DD format
-    end: booking.eventDate,   // Same day (all-day event)
+    end: booking.eventDate, // Same day (all-day event)
     attendees: [booking.email], // Couple's email
   });
 
@@ -298,20 +311,27 @@ try {
     },
   });
 
-  logger.info({
-    bookingId: booking.id,
-    calendarEventId
-  }, 'Calendar event created for booking');
+  logger.info(
+    {
+      bookingId: booking.id,
+      calendarEventId,
+    },
+    'Calendar event created for booking'
+  );
 } catch (error) {
   // Don't fail booking if calendar creation fails
-  logger.error({
-    error,
-    bookingId: booking.id
-  }, 'Failed to create calendar event (non-fatal)');
+  logger.error(
+    {
+      error,
+      bookingId: booking.id,
+    },
+    'Failed to create calendar event (non-fatal)'
+  );
 }
 ```
 
 **Why**:
+
 - Calendar creation is non-fatal (booking still succeeds even if calendar fails)
 - Stores event ID in booking metadata for future deletion
 - Includes all relevant booking details in event description
@@ -370,7 +390,7 @@ const bookingService = new BookingService(
   paymentProvider,
   commissionService,
   eventEmitter,
-  tenantRepo,
+  tenantRepo
 );
 ```
 
@@ -386,7 +406,7 @@ const bookingService = new BookingService(
   commissionService,
   eventEmitter,
   tenantRepo,
-  calendarProvider, // ADD THIS (already instantiated earlier)
+  calendarProvider // ADD THIS (already instantiated earlier)
 );
 ```
 
@@ -502,6 +522,7 @@ npm run dev:all
 **4. Error Scenario Tests**
 
 Test these failure modes:
+
 - ❌ Invalid credentials → Should log error but not fail booking
 - ❌ Network timeout → Should log error but not fail booking
 - ❌ Invalid date format → Should log error but not fail booking
@@ -527,6 +548,7 @@ Test these failure modes:
 ```
 
 **Deliverables:**
+
 - ✅ Calendar events auto-created on booking confirmation
 - ✅ Event ID stored in booking metadata
 - ✅ Non-fatal failure mode (booking succeeds even if calendar fails)
@@ -537,6 +559,7 @@ Test these failure modes:
 ## 📋 PHASE 2: Event Deletion (Priority 2)
 
 ### Goal
+
 Delete calendar events when bookings are refunded or cancelled.
 
 ### Step 2.1: Add Event Deletion Method (1 hour)
@@ -636,21 +659,30 @@ try {
   if (calendarEventId) {
     await this.calendarProvider.deleteEvent(calendarEventId);
 
-    logger.info({
-      bookingId: booking.id,
-      calendarEventId
-    }, 'Calendar event deleted for refunded booking');
+    logger.info(
+      {
+        bookingId: booking.id,
+        calendarEventId,
+      },
+      'Calendar event deleted for refunded booking'
+    );
   } else {
-    logger.warn({
-      bookingId: booking.id
-    }, 'No calendar event ID found for refunded booking');
+    logger.warn(
+      {
+        bookingId: booking.id,
+      },
+      'No calendar event ID found for refunded booking'
+    );
   }
 } catch (error) {
   // Don't fail refund if calendar deletion fails
-  logger.error({
-    error,
-    bookingId: booking.id
-  }, 'Failed to delete calendar event (non-fatal)');
+  logger.error(
+    {
+      error,
+      bookingId: booking.id,
+    },
+    'Failed to delete calendar event (non-fatal)'
+  );
 }
 ```
 
@@ -703,6 +735,7 @@ it('should handle 404 gracefully when event already deleted', async () => {
 ```
 
 **Deliverables:**
+
 - ✅ Calendar events auto-deleted on booking refund
 - ✅ Graceful handling of already-deleted events
 - ✅ Non-fatal failure mode
@@ -712,6 +745,7 @@ it('should handle 404 gracefully when event already deleted', async () => {
 ## 📋 PHASE 3: Event Updates (Priority 3)
 
 ### Goal
+
 Update calendar events when booking details change (date reschedule, package change).
 
 ### Step 3.1: Add Event Update Method (2 hours)
@@ -883,7 +917,7 @@ describe('Google Calendar Integration (E2E)', () => {
 
     // Delete
     await calendarAdapter.deleteEvent(eventId);
-    createdEventIds = createdEventIds.filter(id => id !== eventId);
+    createdEventIds = createdEventIds.filter((id) => id !== eventId);
   });
 
   it('should handle booking lifecycle', async () => {
@@ -913,12 +947,15 @@ export const CALENDAR_EVENTS = {
 **Usage in adapter:**
 
 ```typescript
-logger.info({
-  event: CALENDAR_EVENTS.EVENT_CREATED,
-  eventId,
-  bookingId,
-  summary,
-}, 'Calendar event created');
+logger.info(
+  {
+    event: CALENDAR_EVENTS.EVENT_CREATED,
+    eventId,
+    bookingId,
+    summary,
+  },
+  'Calendar event created'
+);
 ```
 
 ---
@@ -997,6 +1034,7 @@ git push production main --force
 **Cause**: Calendar not shared with service account.
 
 **Fix**:
+
 1. Open Google Calendar
 2. Settings → Share calendar
 3. Add service account email (from service-account.json)
@@ -1009,6 +1047,7 @@ git push production main --force
 **Cause**: Corrupted or incorrect service account JSON.
 
 **Fix**:
+
 ```bash
 # Re-encode service account JSON
 cat service-account.json | base64 | tr -d '\n'
@@ -1024,10 +1063,12 @@ GOOGLE_SERVICE_ACCOUNT_JSON_BASE64=<new-base64>
 **Cause**: Using wrong calendar ID.
 
 **Fix**:
+
 1. Get calendar ID from Google Calendar settings
 2. Usually your Gmail address: `you@gmail.com`
 3. Or custom calendar ID: `abc123@group.calendar.google.com`
 4. Update `.env`:
+
 ```bash
 GOOGLE_CALENDAR_ID=correct-calendar@gmail.com
 ```
@@ -1039,6 +1080,7 @@ GOOGLE_CALENDAR_ID=correct-calendar@gmail.com
 **Cause**: Too many API calls.
 
 **Fix**:
+
 - Current cache: 60 seconds for availability checks
 - Consider increasing to 5 minutes
 - Implement retry with exponential backoff
@@ -1063,20 +1105,24 @@ Track these KPIs after implementation:
 ## 🎯 Future Enhancements (Phase 5+)
 
 ### Per-Tenant Calendars
+
 - Store `googleCalendarId` in Tenant model
 - Each wedding vendor gets their own calendar
 - Requires database migration
 
 ### OAuth2 User Flow
+
 - Allow couples to sync to their personal calendars
 - Requires OAuth2 consent screen setup
 - Token storage and refresh
 
 ### Multi-Calendar Support
+
 - Support multiple calendars per tenant
 - Example: Different calendars for different package types
 
 ### Advanced Features
+
 - Recurring events (for multi-day weddings)
 - Time zone support beyond UTC
 - Buffer time between bookings
@@ -1087,11 +1133,13 @@ Track these KPIs after implementation:
 ## 📝 Resources
 
 ### Google Calendar API Documentation
+
 - Events API: https://developers.google.com/calendar/api/v3/reference/events
 - Service Accounts: https://developers.google.com/identity/protocols/oauth2/service-account
 - Error Codes: https://developers.google.com/calendar/api/guides/errors
 
 ### Internal Documentation
+
 - `server/ENV_VARIABLES.md` (lines 218-258) - Setup guide
 - `server/src/adapters/gcal.adapter.ts` - Current implementation
 - `server/test/availability.service.spec.ts` - Test examples
@@ -1116,6 +1164,7 @@ Track these KPIs after implementation:
 **Estimated Total Time**: 22 hours (3 days)
 
 **Priority Order**:
+
 1. Phase 1 (Event Creation) - **MUST HAVE**
 2. Phase 2 (Event Deletion) - **SHOULD HAVE**
 3. Phase 3 (Event Updates) - **NICE TO HAVE**
@@ -1126,6 +1175,7 @@ Track these KPIs after implementation:
 ## 🎉 Success!
 
 Once all phases are complete, your platform will:
+
 - ✅ Automatically create calendar events when bookings are confirmed
 - ✅ Automatically delete calendar events when bookings are refunded
 - ✅ Keep customer calendars in sync with booking status
@@ -1133,10 +1183,11 @@ Once all phases are complete, your platform will:
 - ✅ Improve customer experience with automatic reminders
 
 **Next Steps After Completion:**
+
 1. Monitor production for 1 week
 2. Gather customer feedback
 3. Plan Phase 5 enhancements based on usage patterns
 
 ---
 
-*End of Implementation Plan*
+_End of Implementation Plan_

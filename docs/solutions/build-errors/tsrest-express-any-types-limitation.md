@@ -66,6 +66,7 @@ async ({ req }: { req: Request }) => { ... }
 ```
 
 TypeScript couldn't reconcile the type differences between:
+
 - ts-rest's expected `RouterImplementation` type
 - Express's `Request` type from `@types/express`
 
@@ -97,6 +98,7 @@ createExpressEndpoints(Contracts, s.router(Contracts, {
 ```
 
 **Why this is correct:**
+
 - Respects library constraints (ts-rest v3 type system limitations)
 - Maintains type safety through `TenantRequest` casting after the boundary
 - Minimizes `any` surface area (only at framework boundary)
@@ -114,7 +116,7 @@ interface BrandingData {
   accentColor?: string;
   backgroundColor?: string;
   fontFamily?: string;
-  logo?: string;  // Uploaded separately, not in UpdateBrandingDtoSchema
+  logo?: string; // Uploaded separately, not in UpdateBrandingDtoSchema
 }
 
 const currentBranding = (tenant.branding as BrandingData) || {};
@@ -130,10 +132,10 @@ const updatedBranding: BrandingData = {
 
 ```typescript
 // Before (TS2352 error)
-const prisma = (blackoutRepo as { prisma: unknown }).prisma
+const prisma = (blackoutRepo as { prisma: unknown }).prisma;
 
 // After (correct pattern)
-const prismaClient = (blackoutRepo as unknown as { prisma: unknown }).prisma
+const prismaClient = (blackoutRepo as unknown as { prisma: unknown }).prisma;
 ```
 
 ### Fix 4: Handle Header Array Type
@@ -143,9 +145,7 @@ const prismaClient = (blackoutRepo as unknown as { prisma: unknown }).prisma
 ```typescript
 // stripe-signature can be string | string[]
 const signatureHeader = req.headers['stripe-signature'];
-const signature = Array.isArray(signatureHeader)
-  ? signatureHeader[0]
-  : (signatureHeader || '');
+const signature = Array.isArray(signatureHeader) ? signatureHeader[0] : signatureHeader || '';
 ```
 
 ### Fix 5: Add Repository Null Checks
@@ -213,13 +213,13 @@ npm run --workspace=@macon/api build
 
 ### 4. Pattern Recognition: When `any` is Acceptable
 
-| Situation | `any` Acceptable? | Alternative |
-|-----------|-------------------|-------------|
-| ts-rest route handlers | ✅ Yes (required) | None - library limitation |
-| Prisma JSON fields | ❌ No | Create typed interface |
-| Third-party callback | ⚠️ Maybe | Check library docs first |
-| Unknown API response | ❌ No | Use `unknown` + type guard |
-| Test mocks | ⚠️ Maybe | Prefer typed mocks |
+| Situation              | `any` Acceptable? | Alternative                |
+| ---------------------- | ----------------- | -------------------------- |
+| ts-rest route handlers | ✅ Yes (required) | None - library limitation  |
+| Prisma JSON fields     | ❌ No             | Create typed interface     |
+| Third-party callback   | ⚠️ Maybe          | Check library docs first   |
+| Unknown API response   | ❌ No             | Use `unknown` + type guard |
+| Test mocks             | ⚠️ Maybe          | Prefer typed mocks         |
 
 ## Related Documentation
 
@@ -233,10 +233,10 @@ npm run --workspace=@macon/api build
 
 ## Timeline
 
-| Time | Event |
-|------|-------|
-| 2025-12-02 21:10 | Commit b05f9ec pushed (TODO 035 resolution) |
-| 2025-12-02 21:15 | Render build failed |
+| Time             | Event                                                |
+| ---------------- | ---------------------------------------------------- |
+| 2025-12-02 21:10 | Commit b05f9ec pushed (TODO 035 resolution)          |
+| 2025-12-02 21:15 | Render build failed                                  |
 | 2025-12-02 21:17 | Root cause identified (ts-rest type incompatibility) |
-| 2025-12-02 21:22 | Commit 417b8c0 pushed (fix) |
-| 2025-12-02 21:23 | Render build succeeded |
+| 2025-12-02 21:22 | Commit 417b8c0 pushed (fix)                          |
+| 2025-12-02 21:23 | Render build succeeded                               |

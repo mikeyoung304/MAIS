@@ -1,10 +1,10 @@
 ---
 status: pending
 priority: p2
-issue_id: "235"
+issue_id: '235'
 tags: [security, api, code-review, landing-page, images]
-dependencies: ["227"]
-source: "code-review-landing-page-visual-editor"
+dependencies: ['227']
+source: 'code-review-landing-page-visual-editor'
 ---
 
 # TODO-235: Define Image Upload Endpoints with Tenant Isolation
@@ -20,6 +20,7 @@ source: "code-review-landing-page-visual-editor"
 The plan references image uploads for Hero, About, and Gallery sections but doesn't define backend endpoints. Without explicit endpoint definitions, implementation could miss tenant isolation checks.
 
 **Why It Matters:**
+
 - Unclear tenant isolation for image storage
 - Potential cross-tenant image access
 - No defined schema for upload responses
@@ -27,6 +28,7 @@ The plan references image uploads for Hero, About, and Gallery sections but does
 ## Findings
 
 **Evidence:**
+
 - Plan (lines 142, 219): References `EditableImage` and photo upload
 - Plan (line 589): "Photo upload API (existing - reuse from package photos)"
 - No draft contract defined for image endpoints (lines 506-545)
@@ -35,6 +37,7 @@ The plan references image uploads for Hero, About, and Gallery sections but does
 ## Proposed Solutions
 
 ### Option A: Add Dedicated Endpoints (Recommended)
+
 Create landing-page-specific image upload endpoints with tenant scoping.
 
 **Pros:** Clear tenant isolation, type-safe contracts
@@ -60,6 +63,7 @@ uploadHeroImage: {
 ```
 
 ### Option B: Reuse Package Upload with Different Path
+
 Extend existing upload adapter for landing page context.
 
 **Pros:** Code reuse
@@ -80,8 +84,8 @@ Extend existing upload adapter for landing page context.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                              |
+| ---------- | ------- | -------------------------------------------------- |
 | 2025-12-04 | Created | Security review of landing page visual editor plan |
 
 ## Tags

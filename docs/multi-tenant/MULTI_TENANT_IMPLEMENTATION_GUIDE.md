@@ -16,14 +16,14 @@ This guide documents the multi-tenant architecture implementation for the MAIS p
 
 ### Key Architecture Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| **Embedding Strategy** | Hybrid (JavaScript SDK + iframe) | Best security + compatibility |
-| **Tenant Identification** | API keys (`pk_live_*`) | Client-safe, industry standard |
-| **Data Isolation** | Row-level with `tenantId` | Optimal for 50-tenant scale |
-| **Commission Model** | Server-side calculation | Stripe Connect limitation |
-| **Deployment** | Render (backend) + Vercel (widget) | Persistent server + CDN |
-| **Secrets Management** | Database-encrypted | Scales beyond env vars |
+| Decision                  | Choice                             | Rationale                      |
+| ------------------------- | ---------------------------------- | ------------------------------ |
+| **Embedding Strategy**    | Hybrid (JavaScript SDK + iframe)   | Best security + compatibility  |
+| **Tenant Identification** | API keys (`pk_live_*`)             | Client-safe, industry standard |
+| **Data Isolation**        | Row-level with `tenantId`          | Optimal for 50-tenant scale    |
+| **Commission Model**      | Server-side calculation            | Stripe Connect limitation      |
+| **Deployment**            | Render (backend) + Vercel (widget) | Persistent server + CDN        |
+| **Secrets Management**    | Database-encrypted                 | Scales beyond env vars         |
 
 ---
 
@@ -34,6 +34,7 @@ This guide documents the multi-tenant architecture implementation for the MAIS p
 **Critical Achievement**: Discovered and fixed P0 security vulnerability (HTTP cache cross-tenant data leakage)
 
 #### 1. Database Schema (`server/prisma/schema.prisma`) ✅
+
 - [x] Tenant model with API keys, commission rates, Stripe Connect, encrypted secrets
 - [x] Multi-tenant fields added to: Package, AddOn, Booking, BlackoutDate, WebhookEvent
 - [x] Composite unique constraints: `[tenantId, slug]`, `[tenantId, date]`
@@ -42,21 +43,24 @@ This guide documents the multi-tenant architecture implementation for the MAIS p
 - [x] **Migration applied successfully** (zero data loss)
 
 #### 2. Core Services ✅
-| Service | File | Status |
-|---------|------|--------|
-| **Encryption** | `src/lib/encryption.service.ts` | ✅ Complete |
-| **API Keys** | `src/lib/api-key.service.ts` | ✅ Complete |
-| **Tenant Middleware** | `src/middleware/tenant.ts` | ✅ Complete + logging |
-| **Commission** | `src/services/commission.service.ts` | ✅ Complete + tested |
-| **Tenant Repository** | `src/adapters/prisma/tenant.repository.ts` | ✅ Complete |
+
+| Service               | File                                       | Status                |
+| --------------------- | ------------------------------------------ | --------------------- |
+| **Encryption**        | `src/lib/encryption.service.ts`            | ✅ Complete           |
+| **API Keys**          | `src/lib/api-key.service.ts`               | ✅ Complete           |
+| **Tenant Middleware** | `src/middleware/tenant.ts`                 | ✅ Complete + logging |
+| **Commission**        | `src/services/commission.service.ts`       | ✅ Complete + tested  |
+| **Tenant Repository** | `src/adapters/prisma/tenant.repository.ts` | ✅ Complete           |
 
 #### 3. Service Layer Updates ✅
+
 - [x] Catalog service: Tenant-aware with proper cache scoping
 - [x] Booking service: Commission integration with Stripe metadata
 - [x] Availability service: Tenant-scoped availability checks
 - [x] All repositories updated with tenantId parameter
 
 #### 4. API Routes ✅
+
 - [x] Tenant middleware applied via ts-rest globalMiddleware
 - [x] All public routes require X-Tenant-Key header
 - [x] Catalog routes: `/v1/packages` tenant-scoped
@@ -65,6 +69,7 @@ This guide documents the multi-tenant architecture implementation for the MAIS p
 - [x] Admin routes: `/v1/admin/tenants` for tenant management
 
 #### 5. Testing & Validation ✅
+
 - [x] 3 test tenants created with distinct data
 - [x] Tenant isolation verified (no cross-tenant data leakage)
 - [x] Commission calculation tested (10%, 12.5%, 15%)
@@ -72,6 +77,7 @@ This guide documents the multi-tenant architecture implementation for the MAIS p
 - [x] Authentication enforced (401 for invalid keys)
 
 #### 6. Critical Security Fix ✅
+
 - [x] **Removed HTTP cache middleware** from `app.ts` (lines 18, 81-86)
 - [x] **Root cause**: Cache keys lacked tenantId, causing all tenants to share cached data
 - [x] **Impact**: Without fix, Tenant A's data would be visible to Tenant B
@@ -79,20 +85,21 @@ This guide documents the multi-tenant architecture implementation for the MAIS p
 - [x] **Verified**: Each tenant now sees only their own data
 
 #### 7. Tools & Scripts ✅
+
 - [x] `server/scripts/create-tenant.ts` - CLI tenant provisioning
 - [x] `server/scripts/test-commission.ts` - Commission calculation tests
 - [x] `server/scripts/test-api-simple.sh` - Tenant isolation verification
 
 ### 📊 Phase 1 Metrics
 
-| Metric | Target | Actual | Status |
-|--------|--------|--------|--------|
-| Files Modified | 20+ | 23 | ✅ |
-| Files Created | 3+ | 5 | ✅ |
-| Test Tenants | 2 | 3 | ✅ |
-| Data Loss | 0% | 0% | ✅ |
-| Security Issues | 0 | 0 (1 found + fixed) | ✅ |
-| Performance Impact | <5% | <2% | ✅ |
+| Metric             | Target | Actual              | Status |
+| ------------------ | ------ | ------------------- | ------ |
+| Files Modified     | 20+    | 23                  | ✅     |
+| Files Created      | 3+     | 5                   | ✅     |
+| Test Tenants       | 2      | 3                   | ✅     |
+| Data Loss          | 0%     | 0%                  | ✅     |
+| Security Issues    | 0      | 0 (1 found + fixed) | ✅     |
+| Performance Impact | <5%    | <2%                 | ✅     |
 
 ### 📋 Ready for Phase 2
 
@@ -137,6 +144,7 @@ echo "TENANT_SECRETS_ENCRYPTION_KEY=<your_64_char_hex_key>" >> .env
 **Goal:** Database isolation, tenant resolution, commission calculation
 
 **Deliverables:**
+
 - [x] Tenant model in database
 - [x] API key generation/validation
 - [x] Encryption service for secrets
@@ -147,6 +155,7 @@ echo "TENANT_SECRETS_ENCRYPTION_KEY=<your_64_char_hex_key>" >> .env
 - [x] Comprehensive testing with 3 tenants
 
 **Validation:** ✅ PASSED
+
 ```bash
 # Created 3 test tenants
 pnpm --filter @elope/api exec tsx scripts/create-tenant.ts
@@ -168,6 +177,7 @@ pnpm --filter @elope/api exec tsx scripts/create-tenant.ts
 **Key Files to Create:**
 
 #### 1. SDK Loader (`client/public/mais-sdk.js`)
+
 ```javascript
 // Lightweight (<3KB) vanilla JS loader
 // Creates iframe, handles postMessage, auto-resize
@@ -175,6 +185,7 @@ pnpm --filter @elope/api exec tsx scripts/create-tenant.ts
 ```
 
 #### 2. Widget Application (`client/src/widget/`)
+
 ```
 widget/
 ├── WidgetApp.tsx        # Main widget component
@@ -183,16 +194,19 @@ widget/
 ```
 
 **Tenant Integration:**
+
 ```html
 <!-- Tenant embeds on their website -->
-<script src="https://widget.mais.com/sdk/mais-sdk.js"
-        data-tenant="bellaweddings"
-        data-api-key="pk_live_bellaweddings_xxx">
-</script>
+<script
+  src="https://widget.mais.com/sdk/mais-sdk.js"
+  data-tenant="bellaweddings"
+  data-api-key="pk_live_bellaweddings_xxx"
+></script>
 <div id="mais-widget"></div>
 ```
 
 **Deliverables:**
+
 - [ ] SDK loader with iframe creation
 - [ ] Widget React app with branding API
 - [ ] postMessage security (origin validation)
@@ -206,6 +220,7 @@ widget/
 **Goal:** Variable commission payments via Stripe Connect
 
 **Stripe Connect Flow:**
+
 1. Admin creates tenant → Generate Stripe Express account
 2. Tenant completes onboarding (KYC, banking)
 3. Booking created → Calculate commission server-side
@@ -215,16 +230,18 @@ widget/
 **Key Services to Create:**
 
 #### 1. Stripe Connect Service (`src/services/stripe-connect.service.ts`)
+
 ```typescript
 class StripeConnectService {
-  async createConnectedAccount(tenantId, email, businessName)
-  async createOnboardingLink(tenantId, refreshUrl, returnUrl)
-  async checkOnboardingStatus(tenantId)
-  async storeRestrictedKey(tenantId, restrictedKey)
+  async createConnectedAccount(tenantId, email, businessName);
+  async createOnboardingLink(tenantId, refreshUrl, returnUrl);
+  async checkOnboardingStatus(tenantId);
+  async storeRestrictedKey(tenantId, restrictedKey);
 }
 ```
 
 #### 2. Update Booking Service
+
 ```typescript
 async createPaymentIntent(tenantId, bookingId) {
   const booking = await prisma.booking.findUnique({ ... });
@@ -243,6 +260,7 @@ async createPaymentIntent(tenantId, bookingId) {
 ```
 
 **Deliverables:**
+
 - [ ] Stripe Connect account creation
 - [ ] Onboarding link generation
 - [ ] Payment intent with commission
@@ -258,6 +276,7 @@ async createPaymentIntent(tenantId, bookingId) {
 **Admin Dashboard Features:**
 
 #### 1. Tenant Management
+
 ```
 GET    /api/v1/admin/tenants           # List all tenants
 POST   /api/v1/admin/tenants           # Create new tenant
@@ -266,6 +285,7 @@ GET    /api/v1/admin/tenants/:id/stats # Revenue, bookings
 ```
 
 #### 2. Tenant Onboarding Workflow
+
 ```
 1. Admin creates tenant (name, slug, email, commission %)
 2. System generates API keys (public + secret)
@@ -277,6 +297,7 @@ GET    /api/v1/admin/tenants/:id/stats # Revenue, bookings
 ```
 
 **Deliverables:**
+
 - [ ] Admin authentication middleware
 - [ ] Tenant CRUD API routes
 - [ ] Commission rate editor
@@ -291,6 +312,7 @@ GET    /api/v1/admin/tenants/:id/stats # Revenue, bookings
 **Goal:** Security, performance, monitoring
 
 **Security Checklist:**
+
 - [ ] CSP headers: `frame-ancestors` whitelist
 - [ ] postMessage origin validation (never `'*'`)
 - [ ] CORS configured for known tenant domains
@@ -302,6 +324,7 @@ GET    /api/v1/admin/tenants/:id/stats # Revenue, bookings
 - [ ] HTTPS enforced (Render/Vercel)
 
 **Performance Optimization:**
+
 - [ ] PostgreSQL indexes verified
 - [ ] Cache hit rate monitoring
 - [ ] Stripe API request deduplication
@@ -309,6 +332,7 @@ GET    /api/v1/admin/tenants/:id/stats # Revenue, bookings
 - [ ] Widget SDK CDN caching (Vercel Edge)
 
 **Monitoring:**
+
 - [ ] Sentry error tracking
 - [ ] Stripe Dashboard alerts
 - [ ] Database query performance
@@ -324,6 +348,7 @@ GET    /api/v1/admin/tenants/:id/stats # Revenue, bookings
 **Tenant Onboarding Checklist:**
 
 For each tenant:
+
 1. [ ] Admin creates tenant in dashboard
 2. [ ] Tenant completes Stripe Connect onboarding
 3. [ ] Tenant creates 3-5 packages
@@ -340,11 +365,13 @@ For each tenant:
 ### 1. Tenant-Scoped Database Queries
 
 **❌ WRONG - No tenant isolation:**
+
 ```typescript
 const packages = await prisma.package.findMany({ where: { active: true } });
 ```
 
 **✅ CORRECT - Tenant isolated:**
+
 ```typescript
 const packages = await prisma.package.findMany({
   where: { tenantId, active: true },
@@ -354,11 +381,13 @@ const packages = await prisma.package.findMany({
 ### 2. Cache Keys Must Include Tenant ID
 
 **❌ WRONG - Cache leak:**
+
 ```typescript
 const cacheKey = 'catalog:all-packages';
 ```
 
 **✅ CORRECT - Tenant-scoped cache:**
+
 ```typescript
 const cacheKey = `catalog:${tenantId}:all-packages`;
 ```
@@ -366,12 +395,14 @@ const cacheKey = `catalog:${tenantId}:all-packages`;
 ### 3. Commission Calculation
 
 **❌ WRONG - Client-side calculation:**
+
 ```typescript
 // Never trust client for commission amount
 const commission = req.body.commission; // ❌ Unsafe!
 ```
 
 **✅ CORRECT - Server-side calculation:**
+
 ```typescript
 const commission = await commissionService.calculateCommission(tenantId, totalPrice);
 await stripe.paymentIntents.create({
@@ -383,6 +414,7 @@ await stripe.paymentIntents.create({
 ### 4. API Routes with Tenant Middleware
 
 **❌ WRONG - No tenant resolution:**
+
 ```typescript
 router.get('/packages', async (req, res) => {
   const packages = await catalogService.getAllPackages(); // ❌ No tenantId
@@ -390,6 +422,7 @@ router.get('/packages', async (req, res) => {
 ```
 
 **✅ CORRECT - Tenant middleware:**
+
 ```typescript
 router.use(resolveTenant(prisma));
 router.use(requireTenant);
@@ -440,6 +473,7 @@ NODE_ENV="production"
 ### Unit Tests
 
 Test commission calculation:
+
 ```typescript
 describe('CommissionService', () => {
   it('calculates commission correctly', async () => {
@@ -457,19 +491,16 @@ describe('CommissionService', () => {
 ### Integration Tests
 
 Test tenant isolation:
+
 ```typescript
 describe('Catalog API', () => {
   it('isolates packages by tenant', async () => {
     const tenant1Key = 'pk_live_tenant1_xxx';
     const tenant2Key = 'pk_live_tenant2_xxx';
 
-    const res1 = await request(app)
-      .get('/api/v1/catalog/packages')
-      .set('X-Tenant-Key', tenant1Key);
+    const res1 = await request(app).get('/api/v1/catalog/packages').set('X-Tenant-Key', tenant1Key);
 
-    const res2 = await request(app)
-      .get('/api/v1/catalog/packages')
-      .set('X-Tenant-Key', tenant2Key);
+    const res2 = await request(app).get('/api/v1/catalog/packages').set('X-Tenant-Key', tenant2Key);
 
     expect(res1.body.packages).not.toEqual(res2.body.packages);
   });
@@ -479,6 +510,7 @@ describe('Catalog API', () => {
 ### End-to-End Tests
 
 Test complete booking flow:
+
 ```typescript
 describe('Booking Flow', () => {
   it('completes booking with commission', async () => {
@@ -546,18 +578,22 @@ services:
 ## Troubleshooting
 
 ### Issue: "Tenant not found"
+
 **Cause:** Invalid or missing X-Tenant-Key header
 **Fix:** Ensure header format: `X-Tenant-Key: pk_live_tenant_xxx`
 
 ### Issue: Cross-tenant data leak
+
 **Cause:** Missing tenantId in query
 **Fix:** Audit all Prisma queries for `where: { tenantId }`
 
 ### Issue: Commission not charged
+
 **Cause:** application_fee_amount not set in PaymentIntent
 **Fix:** Verify `commissionService.calculateCommission()` is called
 
 ### Issue: Stripe Connect onboarding fails
+
 **Cause:** Incomplete business information
 **Fix:** Ensure email, business name, country are provided
 
@@ -566,6 +602,7 @@ services:
 ## Success Metrics
 
 ### Phase 1 (Weeks 1-4) ✅ **COMPLETE**
+
 - [x] Database migrated with zero data loss
 - [x] 3 test tenants created
 - [x] Tenant isolation verified (no cross-tenant data leakage)
@@ -574,11 +611,13 @@ services:
 - [x] TypeScript compilation successful (pre-existing errors non-blocking)
 
 ### Phase 2-3 (Weeks 5-12) 🎯 **NEXT**
+
 - [ ] Widget SDK functional on test pages
 - [ ] 10+ test bookings with commission
 - [ ] Widget branding customization
 
 ### Phase 4-6 (Weeks 13-24)
+
 - [ ] Admin dashboard deployed
 - [ ] 10 real tenants onboarded
 - [ ] 100+ confirmed bookings
@@ -593,6 +632,7 @@ services:
 ### ✅ Phase 1 Complete - Ready for Phase 2
 
 **Phase 1 Status:**
+
 - All deliverables completed
 - Critical security fix applied
 - 3 test tenants verified
@@ -602,6 +642,7 @@ services:
 **Start Phase 2: Embeddable Widget SDK**
 
 1. **Create widget loader package:**
+
    ```bash
    mkdir -p client/packages/widget-loader
    cd client/packages/widget-loader

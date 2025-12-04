@@ -18,7 +18,7 @@ priority: P0
 ```typescript
 // ✅ ALWAYS filter by tenantId
 const packages = await prisma.package.findMany({
-  where: { tenantId }  // ← NEVER forget this!
+  where: { tenantId }, // ← NEVER forget this!
 });
 
 // ❌ NEVER query without tenantId
@@ -34,7 +34,7 @@ if (data.segmentId) {
 
 // ❌ NEVER trust user-provided IDs
 await prisma.package.create({
-  data: { segmentId: data.segmentId } // ← No validation!
+  data: { segmentId: data.segmentId }, // ← No validation!
 });
 ```
 
@@ -56,7 +56,7 @@ const email = inputEmail.toLowerCase().trim();
 
 // ❌ NEVER use raw email input
 const tenant = await prisma.tenant.findUnique({
-  where: { email: inputEmail } // ← Case-sensitive!
+  where: { email: inputEmail }, // ← Case-sensitive!
 });
 ```
 
@@ -66,7 +66,7 @@ const testCases = [
   'user@example.com',
   'USER@EXAMPLE.COM',
   'User@Example.Com',
-  '  user@example.com  '
+  '  user@example.com  ',
 ];
 ```
 
@@ -86,14 +86,15 @@ const prisma = new PrismaClient(); // ← Creates 20 connections
 // ✅ Prevent N+1 queries
 const packages = await prisma.package.findMany({
   where: { tenantId },
-  include: { addOns: true } // ← Single query
+  include: { addOns: true }, // ← Single query
 });
 
 // ❌ N+1 query pattern
 const packages = await prisma.package.findMany({ where: { tenantId } });
 for (const pkg of packages) {
-  pkg.addOns = await prisma.addOn.findMany({ // ← N queries!
-    where: { packageId: pkg.id }
+  pkg.addOns = await prisma.addOn.findMany({
+    // ← N queries!
+    where: { packageId: pkg.id },
   });
 }
 ```
@@ -137,10 +138,13 @@ if (!window.confirm('Delete?')) return; // ← ESLint will block this
 
 ```typescript
 // ✅ Memoize derived values
-const effectiveValues = useMemo(() => ({
-  title: draft.title ?? live.title,
-  price: draft.price ?? live.price,
-}), [draft.title, live.title, draft.price, live.price]);
+const effectiveValues = useMemo(
+  () => ({
+    title: draft.title ?? live.title,
+    price: draft.price ?? live.price,
+  }),
+  [draft.title, live.title, draft.price, live.price]
+);
 
 // ❌ Recalculated on every render
 const effectiveTitle = draft.title ?? live.title;
@@ -180,47 +184,55 @@ Copy-paste this into your PR description:
 
 ```markdown
 ## Multi-Tenant Security
+
 - [ ] All queries filter by tenantId
 - [ ] Foreign keys validate ownership
 - [ ] Cache keys include tenantId
 - [ ] Error messages don't leak tenant info
 
 ## Input Handling
+
 - [ ] Emails normalized to lowercase
 - [ ] Test cases cover case variations
 - [ ] Whitespace trimmed from input
 
 ## Database Performance
+
 - [ ] No N+1 query patterns
 - [ ] Indexes exist for WHERE clauses
 - [ ] No new PrismaClient() instantiated
 - [ ] Pagination for unbounded queries
 
 ## React UI & Performance
+
 - [ ] No window.confirm/alert/prompt (use AlertDialog)
 - [ ] Derived values wrapped in useMemo()
 - [ ] Event handlers wrapped in useCallback()
 - [ ] WCAG focus indicators (focus-visible:ring-2)
 
 ## Backend Logging
+
 - [ ] All mutations have logger.info() calls
 - [ ] Logs include action, tenantId, resourceId, changedFields
 - [ ] No console.log usage
 - [ ] Appropriate log level (info/warn/error)
 
 ## Feature Completeness
+
 - [ ] Backend routes implemented
 - [ ] Frontend UI implemented
 - [ ] Tests cover happy + error paths
 - [ ] Documentation updated
 
 ## Testing - Correctness
+
 - [ ] Tenant isolation tested
 - [ ] Input normalization tested
 - [ ] Idempotency tested (webhooks)
 - [ ] Performance tested (N+1 check)
 
 ## Testing - Reliability (CRITICAL)
+
 - [ ] Tests use sequential await (not Promise.all for correctness)
 - [ ] Bulk operations have explicit timeouts (>10 records = 15-30s)
 - [ ] Cleanup code has guards (if (container.prisma))
@@ -252,7 +264,7 @@ it('should not return data from other tenants', async () => {
 
 ```typescript
 const cases = ['user@example.com', 'USER@EXAMPLE.COM', '  User@Example.Com  '];
-cases.forEach(email => {
+cases.forEach((email) => {
   it(`should normalize "${email}"`, async () => {
     const result = await service.login(email, 'password');
     expect(result).toBeDefined();
@@ -433,24 +445,28 @@ If any return results, fix before committing!
 ## 🎯 Quick Decision Trees
 
 ### Should I create a new PrismaClient?
+
 ```
 Are you in di.ts? → YES → OK
                   → NO  → Use dependency injection
 ```
 
 ### Should I filter by tenantId?
+
 ```
 Does query touch tenant-scoped data? → YES → ALWAYS filter
                                      → NO  → Only platform admin tables
 ```
 
 ### Should I normalize this email?
+
 ```
 Is it user input? → YES → ALWAYS normalize
                   → NO  → Already normalized in DB
 ```
 
 ### Should I implement frontend UI?
+
 ```
 Did I add backend route? → YES → MUST add frontend
                          → NO  → Backend first
@@ -468,7 +484,7 @@ const packages = await prisma.package.findMany();
 
 // After
 const packages = await prisma.package.findMany({
-  where: { tenantId }
+  where: { tenantId },
 });
 ```
 
@@ -498,7 +514,7 @@ for (const pkg of packages) {
 // After
 const packages = await prisma.package.findMany({
   where: { tenantId },
-  include: { addOns: true }
+  include: { addOns: true },
 });
 ```
 

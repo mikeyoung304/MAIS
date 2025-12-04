@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { toast } from "sonner";
-import { api } from "@/lib/api";
-import { logger } from "@/lib/logger";
-import type { ServiceDto, CreateServiceDto, UpdateServiceDto } from "@macon/contracts";
-import type { ServiceFormData } from "./types";
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
+import { logger } from '@/lib/logger';
+import type { ServiceDto, CreateServiceDto, UpdateServiceDto } from '@macon/contracts';
+import type { ServiceFormData } from './types';
 
 interface UseServicesManagerProps {
   showSuccess: (message: string) => void;
@@ -21,14 +21,14 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
   const [serviceToDelete, setServiceToDelete] = useState<ServiceDto | null>(null);
 
   const [serviceForm, setServiceForm] = useState<ServiceFormData>({
-    slug: "",
-    name: "",
-    description: "",
-    durationMinutes: "60",
-    bufferMinutes: "0",
-    priceCents: "0",
-    timezone: "America/New_York",
-    sortOrder: "0",
+    slug: '',
+    name: '',
+    description: '',
+    durationMinutes: '60',
+    bufferMinutes: '0',
+    priceCents: '0',
+    timezone: 'America/New_York',
+    sortOrder: '0',
     active: true,
   });
 
@@ -41,10 +41,10 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
   const generateSlug = (name: string): string => {
     const slug = name
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
       .trim()
-      .replace(/\s+/g, "-") // Replace spaces with hyphens
-      .replace(/-+/g, "-"); // Replace multiple hyphens with single hyphen
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-'); // Replace multiple hyphens with single hyphen
 
     return slug || 'untitled';
   };
@@ -52,14 +52,14 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
   // Reset form
   const resetServiceForm = () => {
     setServiceForm({
-      slug: "",
-      name: "",
-      description: "",
-      durationMinutes: "60",
-      bufferMinutes: "0",
-      priceCents: "0",
-      timezone: "America/New_York",
-      sortOrder: "0",
+      slug: '',
+      name: '',
+      description: '',
+      durationMinutes: '60',
+      bufferMinutes: '0',
+      priceCents: '0',
+      timezone: 'America/New_York',
+      sortOrder: '0',
       active: true,
     });
     setError(null);
@@ -76,7 +76,7 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
     setServiceForm({
       slug: service.slug,
       name: service.name,
-      description: service.description || "",
+      description: service.description || '',
       durationMinutes: service.durationMinutes.toString(),
       bufferMinutes: service.bufferMinutes.toString(),
       priceCents: service.priceCents.toString(),
@@ -94,16 +94,16 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
 
     // Validate required fields
     if (!serviceForm.slug || !serviceForm.name) {
-      toast.error("Missing Required Fields", {
-        description: "Slug and Name are required",
+      toast.error('Missing Required Fields', {
+        description: 'Slug and Name are required',
       });
       return;
     }
 
     // Validate slug format
     if (!isValidSlug(serviceForm.slug)) {
-      toast.error("Invalid Slug Format", {
-        description: "Slug must be lowercase with hyphens only (no spaces)",
+      toast.error('Invalid Slug Format', {
+        description: 'Slug must be lowercase with hyphens only (no spaces)',
       });
       return;
     }
@@ -115,29 +115,29 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
     const sortOrder = parseInt(serviceForm.sortOrder, 10);
 
     if (isNaN(durationMinutes) || durationMinutes < 5 || durationMinutes > 480) {
-      toast.error("Invalid Duration", {
-        description: "Duration must be between 5 and 480 minutes",
+      toast.error('Invalid Duration', {
+        description: 'Duration must be between 5 and 480 minutes',
       });
       return;
     }
 
     if (isNaN(bufferMinutes) || bufferMinutes < 0 || bufferMinutes > 120) {
-      toast.error("Invalid Buffer Time", {
-        description: "Buffer must be between 0 and 120 minutes",
+      toast.error('Invalid Buffer Time', {
+        description: 'Buffer must be between 0 and 120 minutes',
       });
       return;
     }
 
     if (isNaN(priceCents) || priceCents < 0) {
-      toast.error("Invalid Price", {
-        description: "Price must be 0 or greater",
+      toast.error('Invalid Price', {
+        description: 'Price must be 0 or greater',
       });
       return;
     }
 
     if (isNaN(sortOrder) || sortOrder < 0) {
-      toast.error("Invalid Sort Order", {
-        description: "Sort Order must be a number >= 0",
+      toast.error('Invalid Sort Order', {
+        description: 'Sort Order must be a number >= 0',
       });
       return;
     }
@@ -165,13 +165,13 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
         });
 
         if (result.status === 200) {
-          showSuccess("Service updated successfully");
+          showSuccess('Service updated successfully');
           setIsCreatingService(false);
           resetServiceForm();
           onServicesChange();
         } else {
-          toast.error("Failed to update service", {
-            description: "Please try again or contact support.",
+          toast.error('Failed to update service', {
+            description: 'Please try again or contact support.',
           });
         }
       } else {
@@ -193,24 +193,24 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
         });
 
         if (result.status === 201) {
-          showSuccess("Service created successfully");
+          showSuccess('Service created successfully');
           setIsCreatingService(false);
           resetServiceForm();
           onServicesChange();
         } else {
-          toast.error("Failed to create service", {
-            description: "Please try again or contact support.",
+          toast.error('Failed to create service', {
+            description: 'Please try again or contact support.',
           });
         }
       }
     } catch (err) {
-      logger.error("Failed to save service", {
+      logger.error('Failed to save service', {
         error: err,
-        component: "useServicesManager",
+        component: 'useServicesManager',
         editingServiceId,
       });
-      toast.error("An error occurred while saving the service", {
-        description: "Please try again or contact support.",
+      toast.error('An error occurred while saving the service', {
+        description: 'Please try again or contact support.',
       });
     } finally {
       setIsSaving(false);
@@ -232,23 +232,23 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
       });
 
       if (result.status === 204) {
-        showSuccess("Service deleted successfully");
+        showSuccess('Service deleted successfully');
         onServicesChange();
         setDeleteDialogOpen(false);
         setServiceToDelete(null);
       } else {
-        toast.error("Failed to delete service", {
-          description: "Please try again or contact support.",
+        toast.error('Failed to delete service', {
+          description: 'Please try again or contact support.',
         });
       }
     } catch (err) {
-      logger.error("Failed to delete service", {
+      logger.error('Failed to delete service', {
         error: err,
-        component: "useServicesManager",
+        component: 'useServicesManager',
         serviceId: serviceToDelete.id,
       });
-      toast.error("An error occurred while deleting the service", {
-        description: "Please try again or contact support.",
+      toast.error('An error occurred while deleting the service', {
+        description: 'Please try again or contact support.',
       });
     }
   };
@@ -269,18 +269,18 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
         showSuccess(`Service ${!service.active ? 'activated' : 'deactivated'} successfully`);
         onServicesChange();
       } else {
-        toast.error("Failed to toggle service status", {
-          description: "Please try again or contact support.",
+        toast.error('Failed to toggle service status', {
+          description: 'Please try again or contact support.',
         });
       }
     } catch (err) {
-      logger.error("Failed to toggle service status", {
+      logger.error('Failed to toggle service status', {
         error: err,
-        component: "useServicesManager",
+        component: 'useServicesManager',
         serviceId: service.id,
       });
-      toast.error("An error occurred while toggling service status", {
-        description: "Please try again or contact support.",
+      toast.error('An error occurred while toggling service status', {
+        description: 'Please try again or contact support.',
       });
     }
   };
@@ -292,7 +292,7 @@ export function useServicesManager({ showSuccess, onServicesChange }: UseService
 
   // Auto-generate slug from name when creating (not editing)
   const handleNameChange = (name: string) => {
-    setServiceForm(prev => {
+    setServiceForm((prev) => {
       const newForm = { ...prev, name };
       // Only auto-generate slug when creating (not editing)
       if (!editingServiceId) {

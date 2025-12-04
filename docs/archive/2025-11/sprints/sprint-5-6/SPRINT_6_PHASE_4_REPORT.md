@@ -11,6 +11,7 @@
 ## Phase 4 Strategy
 
 ### Approach
+
 1. **Continue Easy Wins**: Target remaining Phase 2 cascading failures
 2. **Batch Processing**: Re-enable 2-3 tests at a time
 3. **Stability Validation**: 3-run validation after each batch (0% variance target)
@@ -22,7 +23,9 @@
 After Phase 3's 17 re-enabled tests, the remaining 45 skipped tests fall into these categories:
 
 #### Category 1: Phase 1 Flaky Tests (8 tests - cache-isolation)
+
 Tests marked as "flaky" in Phase 1 with varying pass rates (33%-67%). May pass with stable infrastructure:
+
 - `should invalidate cache only for specific tenant (getPackageBySlug)` (2/3 pass rate)
 - `should handle concurrent updates from different tenants` (2/3 pass rate)
 - `should handle cache hits and misses correctly under concurrent load` (2/3 pass rate, timing)
@@ -32,16 +35,22 @@ Tests marked as "flaky" in Phase 1 with varying pass rates (33%-67%). May pass w
 - `should track cache statistics correctly` (1/3 pass rate)
 
 #### Category 2: Phase 2 Test Logic Issues (2 tests)
+
 Tests with test code problems needing fixes:
+
 - `should invalidate old and new slug caches when slug is updated` (cache-isolation) - Package not found error
 - `should handle concurrent package creation` (catalog) - Undefined data error
 
 #### Category 3: Data Contamination (1 test)
+
 Test with persistent cross-test data pollution:
+
 - `should maintain referential integrity on package deletion` (catalog) - Attempted in Phase 3 Batch 4, re-skipped
 
 #### Category 4: Complex Transaction Issues (9 tests - booking)
+
 Tests with transaction deadlocks, FK constraints, race conditions:
+
 - `should create booking successfully with lock` - Transaction deadlock
 - `should throw BookingConflictError on duplicate date` - Cascades from above
 - `should create booking with add-ons atomically` - FK constraint issues
@@ -52,6 +61,7 @@ Tests with transaction deadlocks, FK constraints, race conditions:
 - Plus 2 more booking tests
 
 #### Category 5: Race Condition Tests (14 tests - webhook)
+
 All webhook race condition tests (entire file skipped by design for stability)
 
 ---
@@ -61,6 +71,7 @@ All webhook race condition tests (entire file skipped by design for stability)
 ### Batch 1: Final Phase 2 Cascading Failures ✅ COMPLETE
 
 **Tests Re-enabled** (2 tests - cache-isolation.integration.spec.ts):
+
 1. ✅ `should invalidate both all-packages and specific package caches on update` (line 294)
 2. ✅ `should handle concurrent reads from multiple tenants without leakage` (line 401)
 
@@ -69,6 +80,7 @@ All webhook race condition tests (entire file skipped by design for stability)
 **Result**: **SUCCESS** - Both tests passed on first try
 
 **Validation**: 3-run stability check
+
 - Run 1: 59 passed | 45 skipped | 0 failed
 - Run 2: 59 passed | 45 skipped | 0 failed
 - Run 3: 59 passed | 45 skipped | 0 failed
@@ -77,6 +89,7 @@ All webhook race condition tests (entire file skipped by design for stability)
 **Root Cause Fixed**: Same as Phase 3 - catalog connection pool poisoning elimination via integration helpers enabled these cache tests to pass. Cache invalidation logic was always correct, but infrastructure instability made tests fail intermittently.
 
 **Files Modified**:
+
 - `server/test/integration/cache-isolation.integration.spec.ts` (2 tests re-enabled)
 
 ---
@@ -84,6 +97,7 @@ All webhook race condition tests (entire file skipped by design for stability)
 ### Batch 2: Phase 1 Flaky Cache Tests (67% Pass Rate) ✅ COMPLETE
 
 **Tests Re-enabled** (3 tests - cache-isolation.integration.spec.ts):
+
 1. ✅ `should invalidate cache only for specific tenant (getPackageBySlug)` (line 243)
 2. ✅ `should handle concurrent updates from different tenants` (line 421)
 3. ✅ `should handle cache hits and misses correctly under concurrent load` (line 463)
@@ -93,6 +107,7 @@ All webhook race condition tests (entire file skipped by design for stability)
 **Result**: **SUCCESS** - All 3 tests passed on first try
 
 **Validation**: 3-run stability check
+
 - Run 1: 62 passed | 42 skipped | 0 failed
 - Run 2: 62 passed | 42 skipped | 0 failed
 - Run 3: 62 passed | 42 skipped | 0 failed
@@ -101,18 +116,19 @@ All webhook race condition tests (entire file skipped by design for stability)
 **Pattern Confirmed**: Same as Phase 3 Batches 2-3 - tests marked as "flaky" (67% pass rate) are now 100% consistent. Infrastructure quality was the issue, not test logic.
 
 **Files Modified**:
+
 - `server/test/integration/cache-isolation.integration.spec.ts` (3 tests re-enabled)
 
 ---
 
 ## Metrics Tracking
 
-| Batch | Tests Re-enabled | Passing | Failed | Skipped | Variance | Notes |
-|-------|------------------|---------|--------|---------|----------|-------|
-| Start (Phase 3 end) | 0 | 57 | 0 | 47 | 0% | Phase 3 milestone exceeded baseline |
-| Batch 1 | 2 | 59 | 0 | 45 | 0% | ✅ Final Phase 2 cascading failures |
-| Batch 2 | 3 | 62 | 0 | 42 | 0% | ✅ Phase 1 flaky cache tests (67% → 100%) |
-| **Total** | **5** | **62** | **0** | **42** | **0%** | **60% pass rate achieved** |
+| Batch               | Tests Re-enabled | Passing | Failed | Skipped | Variance | Notes                                     |
+| ------------------- | ---------------- | ------- | ------ | ------- | -------- | ----------------------------------------- |
+| Start (Phase 3 end) | 0                | 57      | 0      | 47      | 0%       | Phase 3 milestone exceeded baseline       |
+| Batch 1             | 2                | 59      | 0      | 45      | 0%       | ✅ Final Phase 2 cascading failures       |
+| Batch 2             | 3                | 62      | 0      | 42      | 0%       | ✅ Phase 1 flaky cache tests (67% → 100%) |
+| **Total**           | **5**            | **62**  | **0**  | **42**  | **0%**   | **60% pass rate achieved**                |
 
 ---
 
@@ -123,6 +139,7 @@ All webhook race condition tests (entire file skipped by design for stability)
 **Problem**: 2 cache isolation tests marked as "cascading failures" in Phase 2, failing due to catalog infrastructure issues.
 
 **Root Cause**: Connection pool poisoning from catalog tests (Phase 2 issue) caused cache tests to fail intermittently:
+
 - Test 1: "should invalidate both all-packages and specific package caches on update" - Failed due to stale connections during cache invalidation operations
 - Test 2: "should handle concurrent reads from multiple tenants without leakage" - Failed due to cross-test data contamination from catalog tests
 
@@ -135,6 +152,7 @@ All webhook race condition tests (entire file skipped by design for stability)
 **Problem**: 3 cache isolation tests marked as "flaky" in Phase 1 with 67% pass rate (2/3 runs passing).
 
 **Root Cause**: Tests weren't actually flaky - they were consistently failing due to infrastructure issues:
+
 - Test 1: "should invalidate cache only for specific tenant (getPackageBySlug)" - Concurrent operation timing failures due to connection pool issues
 - Test 2: "should handle concurrent updates from different tenants" - Race condition timing failures due to database connection delays
 - Test 3: "should handle cache hits and misses correctly under concurrent load" - Performance timing assertion failures (expected 8 hits exactly) due to infrastructure instability
@@ -175,7 +193,7 @@ All webhook race condition tests (entire file skipped by design for stability)
 
 ## Blockers & Escalations
 
-*None identified in Batch 1*
+_None identified in Batch 1_
 
 ---
 
@@ -184,30 +202,35 @@ All webhook race condition tests (entire file skipped by design for stability)
 ### Remaining Work (42 Skipped Tests)
 
 **Option 1: Continue with Remaining Phase 1 Flaky Tests**
+
 - Target: 4 remaining cache isolation tests marked as "flaky" in Phase 1 (33% pass rate)
 - Hypothesis: May be harder than 67% pass rate tests, but worth attempting
 - Estimated time: ~1 hour
 - Success probability: Medium (50-60%) - lower pass rate suggests deeper issues
 
 **Option 2: Fix Test Logic Issues**
+
 - Target: 2 tests with test code problems (slug update, concurrent creation)
 - Requires: Actual test code fixes, not just infrastructure
 - Estimated time: ~2 hours
 - Success probability: Medium (50-60%)
 
 **Option 3: Deep-Dive Data Contamination**
+
 - Target: 1 test with persistent cross-test pollution
 - Requires: Investigation into test execution order and cleanup sequencing
 - Estimated time: ~2-3 hours
 - Success probability: Low-Medium (40-50%)
 
 **Option 4: Tackle Complex Transaction Issues**
+
 - Target: 9 booking tests with deadlocks and FK constraints
 - Requires: Significant refactoring of booking test infrastructure
 - Estimated time: ~4-6 hours
 - Success probability: Low (30-40%) without schema changes
 
 **Option 5: Stop and Escalate (Recommended)**
+
 - Current state: 62/104 tests passing (60% pass rate) 🎯
 - 0% variance maintained across 18 validation runs
 - All "easy wins" (cascading failures + 67% flaky tests) exhausted

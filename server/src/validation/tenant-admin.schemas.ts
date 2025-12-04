@@ -17,8 +17,19 @@ export const createPackageSchema = z.object({
   photoUrl: z.string().url().optional(),
   // Tier/segment organization fields (added for security validation)
   segmentId: z.string().min(1).nullable().optional(),
-  grouping: z.string().min(1).max(100, 'Grouping must be 100 characters or less').nullable().optional(),
-  groupingOrder: z.number().int().min(0).max(1000, 'Display order must be between 0 and 1000').nullable().optional(),
+  grouping: z
+    .string()
+    .min(1)
+    .max(100, 'Grouping must be 100 characters or less')
+    .nullable()
+    .optional(),
+  groupingOrder: z
+    .number()
+    .int()
+    .min(0)
+    .max(1000, 'Display order must be between 0 and 1000')
+    .nullable()
+    .optional(),
 });
 
 export const updatePackageSchema = z.object({
@@ -29,8 +40,19 @@ export const updatePackageSchema = z.object({
   photoUrl: z.string().url().optional(),
   // Tier/segment organization fields (added for security validation)
   segmentId: z.string().min(1).nullable().optional(),
-  grouping: z.string().min(1).max(100, 'Grouping must be 100 characters or less').nullable().optional(),
-  groupingOrder: z.number().int().min(0).max(1000, 'Display order must be between 0 and 1000').nullable().optional(),
+  grouping: z
+    .string()
+    .min(1)
+    .max(100, 'Grouping must be 100 characters or less')
+    .nullable()
+    .optional(),
+  groupingOrder: z
+    .number()
+    .int()
+    .min(0)
+    .max(1000, 'Display order must be between 0 and 1000')
+    .nullable()
+    .optional(),
 });
 
 // Blackout Management Schemas
@@ -46,8 +68,14 @@ export const blackoutIdSchema = z.object({
 // Booking Query Schemas
 export const bookingQuerySchema = z.object({
   status: z.enum(['PAID', 'REFUNDED', 'CANCELED']).optional(),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  endDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
 });
 
 // Branding Update Schema

@@ -1,12 +1,12 @@
-import { useMemo, useState } from "react";
-import { Download, Loader2, Filter, Calendar, X, Mail } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { EmptyState } from "@/components/shared/EmptyState";
-import { StatusBadge } from "@/components/shared/StatusBadge";
-import { formatCurrency } from "@/lib/utils";
-import type { BookingDto } from "@macon/contracts";
+import { useMemo, useState } from 'react';
+import { Download, Loader2, Filter, Calendar, X, Mail } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { formatCurrency } from '@/lib/utils';
+import type { BookingDto } from '@macon/contracts';
 
 /**
  * Sanitizes a CSV field to prevent CSV injection attacks.
@@ -16,13 +16,13 @@ import type { BookingDto } from "@macon/contracts";
  * @see https://owasp.org/www-community/attacks/CSV_Injection
  */
 const sanitizeCsvField = (field: string | null | undefined): string => {
-  if (!field) return "";
+  if (!field) return '';
 
   // Convert to string if needed
   const str = String(field);
 
   // Characters that can trigger formula execution in spreadsheets
-  const dangerousChars = ["=", "+", "-", "@", "\t", "\r", "\n"];
+  const dangerousChars = ['=', '+', '-', '@', '\t', '\r', '\n'];
 
   // If field starts with dangerous character, prefix with single quote
   if (dangerousChars.some((char) => str.startsWith(char))) {
@@ -30,7 +30,7 @@ const sanitizeCsvField = (field: string | null | undefined): string => {
   }
 
   // Escape quotes by doubling them and wrap in quotes if contains comma or quote
-  if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
     return `"${str.replace(/"/g, '""')}"`;
   }
 
@@ -40,16 +40,16 @@ const sanitizeCsvField = (field: string | null | undefined): string => {
 /**
  * Maps BookingDto status to display-friendly lowercase status
  */
-const getDisplayStatus = (status: BookingDto["status"]): string => {
+const getDisplayStatus = (status: BookingDto['status']): string => {
   switch (status) {
-    case "PAID":
-      return "confirmed";
-    case "REFUNDED":
-      return "refunded";
-    case "CANCELED":
-      return "cancelled";
+    case 'PAID':
+      return 'confirmed';
+    case 'REFUNDED':
+      return 'refunded';
+    case 'CANCELED':
+      return 'cancelled';
     default:
-      return "confirmed";
+      return 'confirmed';
   }
 };
 
@@ -65,13 +65,13 @@ interface TenantBookingListProps {
  * Design: Matches landing page aesthetic with sage accents
  */
 export function TenantBookingList({ bookings, isLoading }: TenantBookingListProps) {
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
 
   const hasBookings = useMemo(() => bookings.length > 0, [bookings.length]);
-  const hasActiveFilters = dateFrom || dateTo || statusFilter !== "all";
+  const hasActiveFilters = dateFrom || dateTo || statusFilter !== 'all';
 
   // Filter bookings by date range and status
   const filteredBookings = useMemo(() => {
@@ -85,7 +85,7 @@ export function TenantBookingList({ bookings, isLoading }: TenantBookingListProp
       if (to && eventDate > to) return false;
 
       // Status filter - map BookingDto status to display status for comparison
-      if (statusFilter !== "all") {
+      if (statusFilter !== 'all') {
         const displayStatus = getDisplayStatus(booking.status);
         if (displayStatus !== statusFilter) {
           return false;
@@ -99,7 +99,7 @@ export function TenantBookingList({ bookings, isLoading }: TenantBookingListProp
   const exportToCSV = () => {
     if (filteredBookings.length === 0) return;
 
-    const headers = ["Couple", "Email", "Event Date", "Package", "Status", "Total"];
+    const headers = ['Couple', 'Email', 'Event Date', 'Package', 'Status', 'Total'];
     const rows = filteredBookings.map((b) => [
       sanitizeCsvField(b.coupleName),
       sanitizeCsvField(b.email),
@@ -109,21 +109,20 @@ export function TenantBookingList({ bookings, isLoading }: TenantBookingListProp
       sanitizeCsvField(`$${(b.totalCents / 100).toFixed(2)}`),
     ]);
 
-    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
+    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
-    a.download = `bookings-${new Date().toISOString().split("T")[0]}.csv`;
+    a.download = `bookings-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
-
   const clearFilters = () => {
-    setDateFrom("");
-    setDateTo("");
-    setStatusFilter("all");
+    setDateFrom('');
+    setDateTo('');
+    setStatusFilter('all');
   };
 
   if (isLoading) {
@@ -143,8 +142,8 @@ export function TenantBookingList({ bookings, isLoading }: TenantBookingListProp
           <h2 className="font-serif text-2xl font-bold text-text-primary">Your Bookings</h2>
           <p className="text-text-muted text-sm mt-1">
             {hasBookings
-              ? `${filteredBookings.length}${filteredBookings.length !== bookings.length ? ` of ${bookings.length}` : ""} booking${filteredBookings.length !== 1 ? "s" : ""}`
-              : "No bookings yet"}
+              ? `${filteredBookings.length}${filteredBookings.length !== bookings.length ? ` of ${bookings.length}` : ''} booking${filteredBookings.length !== 1 ? 's' : ''}`
+              : 'No bookings yet'}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -152,13 +151,11 @@ export function TenantBookingList({ bookings, isLoading }: TenantBookingListProp
             onClick={() => setShowFilters(!showFilters)}
             variant="ghost"
             size="sm"
-            className={`text-text-muted hover:text-sage hover:bg-sage/10 ${hasActiveFilters ? "bg-sage/10 text-sage" : ""}`}
+            className={`text-text-muted hover:text-sage hover:bg-sage/10 ${hasActiveFilters ? 'bg-sage/10 text-sage' : ''}`}
           >
             <Filter className="w-4 h-4 mr-2" />
             Filters
-            {hasActiveFilters && (
-              <span className="ml-1.5 w-2 h-2 bg-sage rounded-full" />
-            )}
+            {hasActiveFilters && <span className="ml-1.5 w-2 h-2 bg-sage rounded-full" />}
           </Button>
           {hasBookings && (
             <Button
@@ -255,11 +252,7 @@ export function TenantBookingList({ bookings, isLoading }: TenantBookingListProp
           title="No matches found"
           description="Try adjusting your filters or date range above."
           action={
-            <Button
-              onClick={clearFilters}
-              variant="ghost"
-              className="text-sage hover:bg-sage/10"
-            >
+            <Button onClick={clearFilters} variant="ghost" className="text-sage hover:bg-sage/10">
               Clear filters
             </Button>
           }
@@ -274,7 +267,10 @@ export function TenantBookingList({ bookings, isLoading }: TenantBookingListProp
             const eventDate = new Date(booking.eventDate);
             const dayName = eventDate.toLocaleDateString('en-US', { weekday: 'short' });
             const dayNumber = eventDate.getDate();
-            const monthYear = eventDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            const monthYear = eventDate.toLocaleDateString('en-US', {
+              month: 'short',
+              year: 'numeric',
+            });
 
             return (
               <div
@@ -286,7 +282,9 @@ export function TenantBookingList({ bookings, isLoading }: TenantBookingListProp
                   {/* Date */}
                   <div className="w-16 h-16 bg-sage/10 rounded-xl flex flex-col items-center justify-center flex-shrink-0">
                     <span className="text-xs font-medium uppercase text-sage">{dayName}</span>
-                    <span className="font-serif text-2xl font-bold text-text-primary">{dayNumber}</span>
+                    <span className="font-serif text-2xl font-bold text-text-primary">
+                      {dayNumber}
+                    </span>
                   </div>
 
                   {/* Content */}

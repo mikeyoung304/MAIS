@@ -15,12 +15,14 @@
 ### Root Cause
 
 When Zod schema validation failed on webhook metadata, the code called `error.flatten()` which includes:
+
 - All schema field names
 - All validation failure reasons
 - Sample values that failed validation
 - Complete request metadata structure
 
 Example leak:
+
 ```typescript
 // This would get stored in DB:
 {
@@ -41,6 +43,7 @@ Example leak:
 File: `/Users/mikeyoung/CODING/MAIS/server/src/routes/webhooks.routes.ts`
 
 Before (lines 183-189, 197-204 - NOW FIXED):
+
 ```typescript
 // BEFORE: Stored full error details
 await this.webhookRepo.markFailed(
@@ -51,6 +54,7 @@ await this.webhookRepo.markFailed(
 ```
 
 After (CURRENT - Fixed):
+
 ```typescript
 // AFTER: Store only abstract error type
 await this.webhookRepo.markFailed(
@@ -65,17 +69,20 @@ await this.webhookRepo.markFailed(
 ## Impact Analysis
 
 ### Data at Risk
+
 - Customer email addresses (in webhook metadata)
 - Customer names (in webhook metadata)
 - Event dates and package information
 - Webhook payload structure (information disclosure)
 
 ### Affected Tenants
+
 - All tenants using webhook processing
 - Data persisted in `WebhookEvent.lastError` column
 - Indefinite retention (no automated purge)
 
 ### Blast Radius
+
 - Multi-tenant isolation weakened (if database access compromised)
 - Compliance violations (GDPR, CCPA data handling)
 - Information disclosure to system administrators
@@ -147,19 +154,22 @@ try {
 **Principle:** All errors stored in DB must be classified into safe, abstract types first.
 
 **Why:**
+
 - Prevents accidental exposure of request/payload details
 - Maintains multi-tenant isolation
 - Enables secure logging without PII concerns
 
 **Pattern:**
+
 ```typescript
 // Always classify before storing
-const errorType = classifyError(error);  // Returns: "ValidationFailed" | "ProcessingFailed"
-await repo.store(id, errorType);         // Safe to persist
+const errorType = classifyError(error); // Returns: "ValidationFailed" | "ProcessingFailed"
+await repo.store(id, errorType); // Safe to persist
 ```
 
 **Implementation:**
 Create error classifier utility:
+
 ```typescript
 export function classifyValidationError(error: ZodError): string {
   // Never return flatten(), never return error.message
@@ -172,6 +182,7 @@ export function classifyValidationError(error: ZodError): string {
 **Principle:** Before storing ANY error in DB, audit it for PII/sensitive data.
 
 **Audit Checklist:**
+
 - [ ] Contains email? → Don't store
 - [ ] Contains name? → Don't store
 - [ ] Contains phone/address? → Don't store
@@ -181,6 +192,7 @@ export function classifyValidationError(error: ZodError): string {
 - [ ] Contains field names from request? → Consider risk
 
 **Pattern:**
+
 ```typescript
 // BEFORE storing error in DB:
 if (containsSensitiveData(error.message)) {
@@ -195,6 +207,7 @@ if (containsSensitiveData(error.message)) {
 **Principle:** Use TypeScript to enforce what error info is safe to store.
 
 **Pattern:**
+
 ```typescript
 // Define safe error types at compile time
 type SafeWebhookError =
@@ -212,12 +225,12 @@ async markFailed(tenantId: string, eventId: string, error: SafeWebhookError): Pr
 
 **Principle:** Log to different destinations based on data sensitivity.
 
-| Destination | Safe Data | Unsafe Data |
-|-------------|-----------|------------|
-| Server logs | Full errors, stack traces, field names | ✅ YES - ephemeral |
-| Database | Only abstract types, error codes | ✅ Only this level |
-| Monitoring | Counts, aggregates, metrics | ✅ Aggregated |
-| API response | User-friendly messages, error codes | ✅ Filtered |
+| Destination  | Safe Data                              | Unsafe Data        |
+| ------------ | -------------------------------------- | ------------------ |
+| Server logs  | Full errors, stack traces, field names | ✅ YES - ephemeral |
+| Database     | Only abstract types, error codes       | ✅ Only this level |
+| Monitoring   | Counts, aggregates, metrics            | ✅ Aggregated      |
+| API response | User-friendly messages, error codes    | ✅ Filtered        |
 
 ---
 
@@ -226,6 +239,7 @@ async markFailed(tenantId: string, eventId: string, error: SafeWebhookError): Pr
 Use this checklist when reviewing code that stores errors:
 
 ### Error Handling Section
+
 - [ ] Confirm `error.flatten()` NOT used with `markFailed()` or DB `update()`
 - [ ] Confirm `error.message` NOT passed directly to DB storage
 - [ ] Confirm `JSON.stringify(error)` NOT used with DB
@@ -234,18 +248,21 @@ Use this checklist when reviewing code that stores errors:
 - [ ] Confirm error message uses abstract type ("validation failed") not field names ("tenantId required")
 
 ### Webhook Processing
+
 - [ ] All schema validation failure logs go to logger, not DB
 - [ ] Metadata validation errors store only error type in `lastError`
 - [ ] Signature verification failures don't expose keys
 - [ ] Idempotency errors don't expose request payloads
 
 ### Multi-Tenant Security
+
 - [ ] All error logs include `tenantId` parameter
 - [ ] Database schema prevents storing errors without `tenantId`
 - [ ] Cross-tenant error isolation verified
 - [ ] System namespace used for non-tenant errors
 
 ### Testing
+
 - [ ] Tests verify PII (email, names) not in `lastError`
 - [ ] Tests confirm Zod error details not stored
 - [ ] Tests check error messages are safe for logs
@@ -255,27 +272,35 @@ Use this checklist when reviewing code that stores errors:
 ## Detection Patterns (Find Similar Issues)
 
 ### 1. Zod Error Flatten Usage
+
 ```bash
 grep -rn "\.flatten()" server/src --include="*.ts"
 ```
+
 Look for any `.flatten()` being passed to database operations.
 
 ### 2. Error Message Storage
+
 ```bash
 grep -rn "lastError\|markFailed.*error" server/src --include="*.ts" -A 2
 ```
+
 Look for raw error.message or error.toString() in storage calls.
 
 ### 3. Validation Error Handling
+
 ```bash
 grep -rn "safeParse\|zod" server/src --include="*.ts" -A 5 | grep -E "update|create|insert"
 ```
+
 Find Zod validation failures that might leak details.
 
 ### 4. Exception Serialization
+
 ```bash
 grep -rn "JSON.stringify.*error\|toString().*error" server/src --include="*.ts"
 ```
+
 Find error serialization that could leak internal details.
 
 ---
@@ -283,16 +308,19 @@ Find error serialization that could leak internal details.
 ## Testing Strategy
 
 ### Unit Tests
+
 - Verify `markFailed()` doesn't expose field names
 - Verify error messages don't contain request data
 - Verify Zod error handling doesn't leak details
 
 ### Integration Tests
+
 - Send valid webhook → verify no errors stored
 - Send invalid webhook → verify abstract error stored
 - Verify email/name never in `lastError` column
 
 ### Security Tests
+
 ```typescript
 it('should not expose email in webhook error', async () => {
   const result = webhookRepo.events[0];
@@ -306,17 +334,21 @@ it('should not expose email in webhook error', async () => {
 ## Related Files
 
 ### Implementation (Fixed)
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/routes/webhooks.routes.ts` (lines 183-189, 197-204)
 - `/Users/mikeyoung/CODING/MAIS/server/src/adapters/prisma/webhook.repository.ts` (lines 190-206)
 
 ### Schema
+
 - `/Users/mikeyoung/CODING/MAIS/server/prisma/schema.prisma` (WebhookEvent.lastError, line 461)
 
 ### Error Classes
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/lib/errors/business.ts`
 - `/Users/mikeyoung/CODING/MAIS/server/src/lib/errors/base.ts`
 
 ### Testing
+
 - `/Users/mikeyoung/CODING/MAIS/server/test/controllers/webhooks.controller.spec.ts`
 - `/Users/mikeyoung/CODING/MAIS/server/test/integration/webhook-repository.integration.spec.ts`
 
@@ -366,6 +398,7 @@ it('should not expose email in webhook error', async () => {
 ## Action Items
 
 ### Before Next Release
+
 - [ ] Review and merge prevention strategy documents
 - [ ] Add PII leak detection tests to test suite
 - [ ] Run detection patterns across codebase
@@ -373,6 +406,7 @@ it('should not expose email in webhook error', async () => {
 - [ ] Update CLAUDE.md with error handling pattern section
 
 ### Ongoing
+
 - [ ] Apply checklist to all new code reviews
 - [ ] Monitor webhook error logs for leakage
 - [ ] Audit database for existing PII in error columns
@@ -385,4 +419,3 @@ it('should not expose email in webhook error', async () => {
 **Priority:** P0 - Security Critical
 **Reviewed By:** Platform Security Lead
 **Next Review:** 2025-12-28 (monthly)
-

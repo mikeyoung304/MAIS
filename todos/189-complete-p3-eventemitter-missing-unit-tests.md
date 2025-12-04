@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "189"
+issue_id: '189'
 tags: [code-review, testing, events]
 dependencies: []
 ---
@@ -17,6 +17,7 @@ The `InProcessEventEmitter` class has comprehensive type definitions but no dedi
 **Location:** `server/src/lib/core/events.ts`
 
 **Missing Test Coverage:**
+
 - Error isolation (one handler error doesn't affect others)
 - Multiple handlers for same event
 - Async handler execution
@@ -24,17 +25,20 @@ The `InProcessEventEmitter` class has comprehensive type definitions but no dedi
 - Handler registration and execution order
 
 **Current Test Approach:**
+
 - Services mock `EventEmitter` interface
 - No tests for `InProcessEventEmitter` implementation
 - `event-emitter-type-safety.ts` (in docs/examples/) is documentation, not runtime tests
 
 **Risk Assessment:**
+
 - Impact: Low (implementation is straightforward)
 - Likelihood: Low (pattern is well-established)
 
 ## Proposed Solutions
 
 ### Solution 1: Add dedicated unit tests (Recommended)
+
 - Create `test/lib/events.test.ts`
 - Test runtime behavior
 - **Pros:** Complete coverage
@@ -49,6 +53,7 @@ Implement **Solution 1** for confidence in event system.
 ## Technical Details
 
 **Proposed Test File (`server/test/lib/events.test.ts`):**
+
 ```typescript
 import { describe, it, expect, vi } from 'vitest';
 import { InProcessEventEmitter, BookingEvents } from '../../src/lib/core/events';
@@ -80,7 +85,9 @@ describe('InProcessEventEmitter', () => {
     emitter.subscribe(BookingEvents.PAID, errorHandler);
     emitter.subscribe(BookingEvents.PAID, successHandler);
 
-    await emitter.emit(BookingEvents.PAID, { /* payload */ });
+    await emitter.emit(BookingEvents.PAID, {
+      /* payload */
+    });
 
     expect(successHandler).toHaveBeenCalled(); // Still called despite error
   });
@@ -107,8 +114,8 @@ describe('InProcessEventEmitter', () => {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                      |
+| ---------- | ------- | ------------------------------------------ |
 | 2025-12-03 | Created | Found during code review of commit 45024e6 |
 
 ## Resources

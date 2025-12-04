@@ -66,11 +66,7 @@ export interface TenantRequest extends Request {
  * });
  */
 export function resolveTenant(prisma: PrismaClient) {
-  return async (
-    req: TenantRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  return async (req: TenantRequest, res: Response, next: NextFunction): Promise<void> => {
     const apiKey = req.headers['x-tenant-key'] as string;
 
     // API key required
@@ -149,16 +145,18 @@ export function resolveTenant(prisma: PrismaClient) {
       req.tenantId = tenant.id;
 
       logger.info(
-        { tenantId: tenant.id, slug: tenant.slug, apiKey: apiKey.substring(0, 20) + '...', path: req.path },
+        {
+          tenantId: tenant.id,
+          slug: tenant.slug,
+          apiKey: apiKey.substring(0, 20) + '...',
+          path: req.path,
+        },
         'Tenant resolved successfully'
       );
 
       next();
     } catch (error) {
-      logger.error(
-        { error, apiKey, path: req.path },
-        'Error resolving tenant'
-      );
+      logger.error({ error, apiKey, path: req.path }, 'Error resolving tenant');
       res.status(500).json({
         error: 'Failed to resolve tenant',
         code: 'TENANT_RESOLUTION_ERROR',
@@ -182,11 +180,7 @@ export function resolveTenant(prisma: PrismaClient) {
  * // Required tenant (protected routes)
  * router.get('/catalog', resolveTenant, requireTenant, catalogHandler);
  */
-export function requireTenant(
-  req: TenantRequest,
-  res: Response,
-  next: NextFunction
-): void {
+export function requireTenant(req: TenantRequest, res: Response, next: NextFunction): void {
   if (!req.tenant || !req.tenantId) {
     logger.warn({ path: req.path }, 'Tenant required but not resolved');
     res.status(401).json({

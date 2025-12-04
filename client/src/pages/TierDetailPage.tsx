@@ -101,9 +101,7 @@ function RootTierDetailContent() {
     () =>
       packages.filter(
         (p: PackageDto) =>
-          !p.segmentId &&
-          p.grouping &&
-          TIER_LEVELS.includes(p.grouping.toLowerCase() as TierLevel)
+          !p.segmentId && p.grouping && TIER_LEVELS.includes(p.grouping.toLowerCase() as TierLevel)
       ),
     [packages]
   );
@@ -115,13 +113,7 @@ function RootTierDetailContent() {
     return <Navigate to=".." replace />;
   }
 
-  return (
-    <TierDetail
-      package={pkg}
-      tierLevel={tierLevel as TierLevel}
-      allPackages={rootPackages}
-    />
-  );
+  return <TierDetail package={pkg} tierLevel={tierLevel as TierLevel} allPackages={rootPackages} />;
 }
 
 /**

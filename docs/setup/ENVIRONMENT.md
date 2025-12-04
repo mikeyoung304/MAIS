@@ -50,6 +50,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...  # Keep secret!
 ```
 
 **Important Security Notes:**
+
 - `DATABASE_URL` uses port 5432 (transaction mode pooler)
 - `DIRECT_URL` required for Prisma migrations with Supabase
 - `TENANT_SECRETS_ENCRYPTION_KEY` must be 32 bytes (64 hex characters)
@@ -62,6 +63,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...  # Keep secret!
 - See `IMMEDIATE_SECURITY_ACTIONS.md` for secret rotation checklist
 
 **Login Security:**
+
 - Login endpoints are rate-limited to 5 attempts per 15 minutes per IP
 - Failed login attempts are logged with IP addresses for security monitoring
 - See `SECURITY.md` for comprehensive security documentation
@@ -120,11 +122,13 @@ curl -X POST \
 ### API Key Security
 
 **Public Keys** (`pk_live_*`):
+
 - Safe to use in client-side code (browser, mobile app)
 - Can only access read operations and create bookings
 - Required in `X-Tenant-Key` header for all public API calls
 
 **Secret Keys** (`sk_live_*`):
+
 - NEVER expose to clients (server-side only)
 - Used for admin operations and Stripe Connect configuration
 - Stored encrypted in database using `TENANT_SECRETS_ENCRYPTION_KEY`
@@ -132,6 +136,7 @@ curl -X POST \
 ### Endpoints Requiring X-Tenant-Key
 
 All public endpoints require the header:
+
 - `GET /v1/packages` - List packages
 - `GET /v1/packages/:slug` - Get package details
 - `GET /v1/availability` - Check date availability
@@ -139,14 +144,15 @@ All public endpoints require the header:
 - `GET /v1/bookings/:id` - Get booking details
 
 **Admin endpoints** use JWT authentication (no X-Tenant-Key needed):
+
 - `POST /v1/admin/login` - Admin login
 - `GET /v1/admin/bookings` - List all bookings
 - `POST /v1/admin/packages` - Create package
 - `GET /v1/admin/tenants` - Manage tenants
 
 **Webhook endpoints** use Stripe signature verification (no X-Tenant-Key needed):
-- `POST /v1/webhooks/stripe` - Stripe payment webhooks
 
+- `POST /v1/webhooks/stripe` - Stripe payment webhooks
 
 ## WEB (client/)
 

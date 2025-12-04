@@ -24,6 +24,7 @@ The SDK is written in ES5-compatible JavaScript and supports:
 ### IE11 Considerations
 
 While the SDK uses ES5 syntax, IE11 users may experience:
+
 - No support for `document.currentScript` - the SDK will fail to load with an error message
 - URL encoding/decoding issues may require polyfills in the widget application
 - postMessage works but has stricter CORS requirements
@@ -38,8 +39,8 @@ While the SDK uses ES5 syntax, IE11 users may experience:
 <script
   src="https://widget.mais.com/sdk/mais-sdk.min.js"
   data-tenant="your-tenant-slug"
-  data-api-key="pk_live_yourtenant_0123456789abcdef">
-</script>
+  data-api-key="pk_live_yourtenant_0123456789abcdef"
+></script>
 ```
 
 ### 2. Add the Widget Container
@@ -53,22 +54,22 @@ While the SDK uses ES5 syntax, IE11 users may experience:
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <title>My Wedding Business</title>
-</head>
-<body>
-  <h1>Book Your Dream Wedding</h1>
+  <head>
+    <title>My Wedding Business</title>
+  </head>
+  <body>
+    <h1>Book Your Dream Wedding</h1>
 
-  <!-- Widget Container -->
-  <div id="mais-widget"></div>
+    <!-- Widget Container -->
+    <div id="mais-widget"></div>
 
-  <!-- SDK Loader -->
-  <script
-    src="https://widget.mais.com/sdk/mais-sdk.min.js"
-    data-tenant="bellaweddings"
-    data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8">
-  </script>
-</body>
+    <!-- SDK Loader -->
+    <script
+      src="https://widget.mais.com/sdk/mais-sdk.min.js"
+      data-tenant="bellaweddings"
+      data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8"
+    ></script>
+  </body>
 </html>
 ```
 
@@ -76,12 +77,12 @@ While the SDK uses ES5 syntax, IE11 users may experience:
 
 Configure the SDK using `data-*` attributes on the script tag:
 
-| Attribute | Required | Default | Description |
-|-----------|----------|---------|-------------|
-| `data-tenant` | Yes | - | Your tenant slug (e.g., "bellaweddings") |
-| `data-api-key` | Yes | - | Your publishable API key starting with `pk_live_` |
-| `data-container` | No | "mais-widget" | ID of the container element |
-| `data-mode` | No | "embedded" | Display mode: "embedded" or "modal" |
+| Attribute        | Required | Default       | Description                                       |
+| ---------------- | -------- | ------------- | ------------------------------------------------- |
+| `data-tenant`    | Yes      | -             | Your tenant slug (e.g., "bellaweddings")          |
+| `data-api-key`   | Yes      | -             | Your publishable API key starting with `pk_live_` |
+| `data-container` | No       | "mais-widget" | ID of the container element                       |
+| `data-mode`      | No       | "embedded"    | Display mode: "embedded" or "modal"               |
 
 ### API Key Format
 
@@ -128,7 +129,7 @@ Subscribe to widget events using the `on()` method:
 Fired when the widget has loaded:
 
 ```javascript
-window.MAISWidget.on('ready', function() {
+window.MAISWidget.on('ready', function () {
   console.log('Widget is ready!');
 });
 ```
@@ -138,7 +139,7 @@ window.MAISWidget.on('ready', function() {
 Fired when a booking is created:
 
 ```javascript
-window.MAISWidget.on('bookingCreated', function(data) {
+window.MAISWidget.on('bookingCreated', function (data) {
   console.log('Booking ID:', data.bookingId);
   console.log('Package:', data.packageSlug);
   console.log('Customer:', data.customerEmail);
@@ -146,6 +147,7 @@ window.MAISWidget.on('bookingCreated', function(data) {
 ```
 
 **Event Data:**
+
 ```javascript
 {
   bookingId: string,
@@ -161,13 +163,14 @@ window.MAISWidget.on('bookingCreated', function(data) {
 Fired when payment is completed:
 
 ```javascript
-window.MAISWidget.on('bookingCompleted', function(data) {
+window.MAISWidget.on('bookingCompleted', function (data) {
   console.log('Booking completed!', data.bookingId);
   // Optionally redirect or show confirmation
 });
 ```
 
 **Event Data:**
+
 ```javascript
 {
   bookingId: string,
@@ -183,7 +186,7 @@ If `returnUrl` is provided, the SDK will automatically redirect the user.
 Fired on widget errors:
 
 ```javascript
-window.MAISWidget.on('error', function(data) {
+window.MAISWidget.on('error', function (data) {
   console.error('Widget error:', data.error);
   console.error('Details:', data.details);
 });
@@ -196,22 +199,24 @@ window.MAISWidget.on('error', function(data) {
 ```html
 <script>
   // Wait for widget to be available
-  window.addEventListener('load', function() {
+  window.addEventListener('load', function () {
     if (window.MAISWidget) {
       // Track bookings with analytics
-      window.MAISWidget.on('bookingCreated', function(data) {
+      window.MAISWidget.on('bookingCreated', function (data) {
         // Google Analytics 4
         gtag('event', 'begin_checkout', {
           currency: 'USD',
           value: data.total,
-          items: [{
-            item_id: data.packageSlug,
-            item_name: data.packageName,
-          }]
+          items: [
+            {
+              item_id: data.packageSlug,
+              item_name: data.packageName,
+            },
+          ],
         });
       });
 
-      window.MAISWidget.on('bookingCompleted', function(data) {
+      window.MAISWidget.on('bookingCompleted', function (data) {
         // Google Analytics 4
         gtag('event', 'purchase', {
           transaction_id: data.bookingId,
@@ -241,8 +246,8 @@ window.MAISWidget.on('error', function(data) {
 <script
   src="https://widget.mais.com/sdk/mais-sdk.min.js"
   data-tenant="bellaweddings"
-  data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8">
-</script>
+  data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8"
+></script>
 
 <script>
   function bookPackage(packageSlug) {
@@ -263,8 +268,8 @@ window.MAISWidget.on('error', function(data) {
   src="https://widget.mais.com/sdk/mais-sdk.min.js"
   data-tenant="bellaweddings"
   data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8"
-  data-container="my-booking-widget">
-</script>
+  data-container="my-booking-widget"
+></script>
 ```
 
 ## Security Features
@@ -272,6 +277,7 @@ window.MAISWidget.on('error', function(data) {
 ### 1. API Key Validation
 
 The SDK validates API key format before initialization:
+
 - Must start with `pk_live_`
 - Must contain tenant slug
 - Must have 16-character hex suffix
@@ -279,6 +285,7 @@ The SDK validates API key format before initialization:
 ### 2. Origin Validation
 
 All postMessage communications validate the origin:
+
 - Production: `https://widget.mais.com`
 - Development: `http://localhost:5173`
 
@@ -305,6 +312,7 @@ Content-Security-Policy:
 ### Messages from Widget (iframe) to Parent
 
 #### READY
+
 ```javascript
 {
   source: 'mais-widget',
@@ -313,6 +321,7 @@ Content-Security-Policy:
 ```
 
 #### RESIZE
+
 ```javascript
 {
   source: 'mais-widget',
@@ -322,6 +331,7 @@ Content-Security-Policy:
 ```
 
 #### BOOKING_CREATED
+
 ```javascript
 {
   source: 'mais-widget',
@@ -335,6 +345,7 @@ Content-Security-Policy:
 ```
 
 #### BOOKING_COMPLETED
+
 ```javascript
 {
   source: 'mais-widget',
@@ -346,6 +357,7 @@ Content-Security-Policy:
 ```
 
 #### ERROR
+
 ```javascript
 {
   source: 'mais-widget',
@@ -358,6 +370,7 @@ Content-Security-Policy:
 ### Messages from Parent to Widget (iframe)
 
 #### OPEN_BOOKING
+
 ```javascript
 {
   source: 'mais-parent',
@@ -367,6 +380,7 @@ Content-Security-Policy:
 ```
 
 #### CLOSE
+
 ```javascript
 {
   source: 'mais-parent',
@@ -420,6 +434,7 @@ The SDK auto-detects localhost and connects to `http://localhost:5173` for the w
 ## Support
 
 For technical support or questions:
+
 - Email: support@mais.com
 - Documentation: https://docs.mais.com
 - Status: https://status.mais.com

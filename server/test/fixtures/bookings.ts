@@ -10,9 +10,7 @@ import type { Booking } from '../../src/lib/entities';
 /**
  * Create a booking fixture with sensible defaults
  */
-export function createBookingFixture(
-  overrides: Partial<Booking> = {}
-): Booking {
+export function createBookingFixture(overrides: Partial<Booking> = {}): Booking {
   return {
     id: `booking_${Date.now()}_${Math.random().toString(36).substring(7)}`,
     packageId: 'pkg_test_classic',
@@ -78,48 +76,52 @@ export const BookingScenarios = {
   /**
    * Standard $2,500 package with 12% commission
    */
-  standard: () => createBookingWithCommission(250000, 12.0, {
-    packageId: 'pkg_classic',
-    coupleName: 'Alice & Bob',
-    email: 'alice.bob@example.com',
-    eventDate: '2025-07-15',
-  }),
+  standard: () =>
+    createBookingWithCommission(250000, 12.0, {
+      packageId: 'pkg_classic',
+      coupleName: 'Alice & Bob',
+      email: 'alice.bob@example.com',
+      eventDate: '2025-07-15',
+    }),
 
   /**
    * Premium $5,000 package with 10% commission
    */
-  premium: () => createBookingWithCommission(500000, 10.0, {
-    packageId: 'pkg_premium',
-    coupleName: 'Carol & Dave',
-    email: 'carol.dave@example.com',
-    eventDate: '2025-08-20',
-  }),
+  premium: () =>
+    createBookingWithCommission(500000, 10.0, {
+      packageId: 'pkg_premium',
+      coupleName: 'Carol & Dave',
+      email: 'carol.dave@example.com',
+      eventDate: '2025-08-20',
+    }),
 
   /**
    * Package with add-ons totaling $3,000 (12% commission)
    */
-  withAddOns: (addOnIds: string[]) => createBookingWithAddOns(
-    250000, // $2,500 package
-    [30000, 20000], // $300 + $200 add-ons
-    addOnIds,
-    12.0,
-    {
-      packageId: 'pkg_classic',
-      coupleName: 'Eve & Frank',
-      email: 'eve.frank@example.com',
-      eventDate: '2025-09-10',
-    }
-  ),
+  withAddOns: (addOnIds: string[]) =>
+    createBookingWithAddOns(
+      250000, // $2,500 package
+      [30000, 20000], // $300 + $200 add-ons
+      addOnIds,
+      12.0,
+      {
+        packageId: 'pkg_classic',
+        coupleName: 'Eve & Frank',
+        email: 'eve.frank@example.com',
+        eventDate: '2025-09-10',
+      }
+    ),
 
   /**
    * Low-cost package for edge case testing
    */
-  lowCost: () => createBookingWithCommission(10000, 12.0, {
-    packageId: 'pkg_basic',
-    coupleName: 'Grace & Henry',
-    email: 'grace.henry@example.com',
-    eventDate: '2025-10-05',
-  }),
+  lowCost: () =>
+    createBookingWithCommission(10000, 12.0, {
+      packageId: 'pkg_basic',
+      coupleName: 'Grace & Henry',
+      email: 'grace.henry@example.com',
+      eventDate: '2025-10-05',
+    }),
 
   /**
    * Booking near cancellation deadline (for refund policy tests)
@@ -158,10 +160,7 @@ export const BookingScenarios = {
  * Calculate expected commission for a booking
  * Uses same rounding logic as CommissionService (always round up)
  */
-export function calculateExpectedCommission(
-  totalCents: number,
-  commissionPercent: number
-): number {
+export function calculateExpectedCommission(totalCents: number, commissionPercent: number): number {
   return Math.ceil(totalCents * (commissionPercent / 100));
 }
 

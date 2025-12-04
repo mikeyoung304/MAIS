@@ -21,12 +21,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { PackageDto } from '@macon/contracts';
 import { formatCurrency } from '@/lib/utils';
-import {
-  TIER_LEVELS,
-  getTierDisplayName,
-  extractTiers,
-  type TierLevel,
-} from './utils';
+import { TIER_LEVELS, getTierDisplayName, extractTiers, type TierLevel } from './utils';
 
 interface TierDetailProps {
   /** The package/tier to display */
@@ -139,9 +134,7 @@ export function TierDetail({
 
                 {/* Description */}
                 <div className="prose prose-lg max-w-none text-neutral-700">
-                  <p className="whitespace-pre-wrap leading-relaxed">
-                    {pkg.description}
-                  </p>
+                  <p className="whitespace-pre-wrap leading-relaxed">{pkg.description}</p>
                 </div>
               </CardContent>
             </Card>
@@ -169,9 +162,7 @@ export function TierDetail({
                         </div>
                       </Link>
                     ) : (
-                      <div className="p-4 text-neutral-400 text-sm">
-                        No previous tier
-                      </div>
+                      <div className="p-4 text-neutral-400 text-sm">No previous tier</div>
                     )}
                   </div>
 
@@ -194,9 +185,7 @@ export function TierDetail({
                         <ArrowRight className="w-5 h-5 text-neutral-400 group-hover:text-macon-orange transition-colors" />
                       </Link>
                     ) : (
-                      <div className="p-4 text-neutral-400 text-sm text-right">
-                        No next tier
-                      </div>
+                      <div className="p-4 text-neutral-400 text-sm text-right">No next tier</div>
                     )}
                   </div>
                 </div>
@@ -213,7 +202,8 @@ export function TierDetail({
                     Ready to book?
                   </h3>
                   <p className="text-neutral-600 mb-6">
-                    Secure your spot with this {getTierDisplayName(tierLevel).toLowerCase()} package.
+                    Secure your spot with this {getTierDisplayName(tierLevel).toLowerCase()}{' '}
+                    package.
                   </p>
 
                   <div className="space-y-3">
@@ -240,11 +230,9 @@ export function TierDetail({
               {/* Quick Tier Summary */}
               <Card className="bg-neutral-100 border-neutral-200">
                 <CardContent className="p-4">
-                  <h4 className="font-medium text-neutral-700 mb-3 text-sm">
-                    All Tiers
-                  </h4>
+                  <h4 className="font-medium text-neutral-700 mb-3 text-sm">All Tiers</h4>
                   <div className="space-y-2">
-                    {TIER_LEVELS.map(level => {
+                    {TIER_LEVELS.map((level) => {
                       const tierPkg = tiers[level];
                       if (!tierPkg) return null;
 
@@ -256,16 +244,21 @@ export function TierDetail({
                           to={buildTierLink(level)}
                           className={`
                             flex items-center justify-between p-2 rounded-md transition-colors
-                            ${isCurrent
-                              ? 'bg-macon-orange/10 border border-macon-orange/30'
-                              : 'hover:bg-white'
+                            ${
+                              isCurrent
+                                ? 'bg-macon-orange/10 border border-macon-orange/30'
+                                : 'hover:bg-white'
                             }
                           `}
                         >
-                          <span className={`text-sm ${isCurrent ? 'font-medium text-macon-orange' : 'text-neutral-600'}`}>
+                          <span
+                            className={`text-sm ${isCurrent ? 'font-medium text-macon-orange' : 'text-neutral-600'}`}
+                          >
                             {getTierDisplayName(level)}
                           </span>
-                          <span className={`text-sm ${isCurrent ? 'font-medium text-macon-orange' : 'text-neutral-500'}`}>
+                          <span
+                            className={`text-sm ${isCurrent ? 'font-medium text-macon-orange' : 'text-neutral-500'}`}
+                          >
                             {formatCurrency(tierPkg.priceCents)}
                           </span>
                         </Link>

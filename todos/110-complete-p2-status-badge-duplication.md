@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "110"
+issue_id: '110'
 tags: [code-review, architecture, duplication, ui-redesign]
 dependencies: []
 ---
@@ -19,21 +19,26 @@ Identical status badge implementation (Active/Inactive) duplicated in PackageLis
 ### From pattern-recognition agent:
 
 **Files with duplication:**
+
 - `client/src/features/tenant-admin/packages/PackageList.tsx` (lines 121-129)
 - `client/src/features/admin/segments/SegmentsList.tsx` (lines 77-85)
 
 **Duplicated pattern:**
+
 ```tsx
-<span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-  isActive ? "bg-sage/10 text-sage" : "bg-text-muted/10 text-text-muted"
-}`}>
-  {isActive ? "Active" : "Inactive"}
+<span
+  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+    isActive ? 'bg-sage/10 text-sage' : 'bg-text-muted/10 text-text-muted'
+  }`}
+>
+  {isActive ? 'Active' : 'Inactive'}
 </span>
 ```
 
 ## Proposed Solutions
 
 ### Solution 1: Create StatusBadge Component (Recommended)
+
 **Pros:** Reusable, consistent
 **Cons:** New component
 **Effort:** Small (30 min)
@@ -69,6 +74,6 @@ export function StatusBadge({ status }: StatusBadgeProps) {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                 |
+| ---------- | ------------------------ | ------------------------- |
 | 2025-11-30 | Created from code review | Pattern duplication found |

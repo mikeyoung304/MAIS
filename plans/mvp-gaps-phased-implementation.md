@@ -13,13 +13,13 @@ This is the **simplified implementation plan** for MVP gaps, reduced from 29 day
 
 ## Key Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Invoicing | **CUT** | Stripe receipts sufficient. Build when customers request. |
-| Token System | **JWT signed URLs** | Reuse existing infrastructure (see ADR below) |
-| Reminders | **Lazy evaluation** | "Within 24 hours" acceptable for MVP |
-| Per-Tenant Calendar | **KEEP** | Tenants need their own calendar integration |
-| Deposits | **SIMPLIFIED** | Add `depositPercent` to Tenant, not policy model |
+| Decision            | Choice              | Rationale                                                 |
+| ------------------- | ------------------- | --------------------------------------------------------- |
+| Invoicing           | **CUT**             | Stripe receipts sufficient. Build when customers request. |
+| Token System        | **JWT signed URLs** | Reuse existing infrastructure (see ADR below)             |
+| Reminders           | **Lazy evaluation** | "Within 24 hours" acceptable for MVP                      |
+| Per-Tenant Calendar | **KEEP**            | Tenants need their own calendar integration               |
+| Deposits            | **SIMPLIFIED**      | Add `depositPercent` to Tenant, not policy model          |
 
 ---
 
@@ -31,17 +31,22 @@ This is the **simplified implementation plan** for MVP gaps, reduced from 29 day
 Customers need secure links to reschedule/cancel bookings without logging in. Two approaches were considered:
 
 **Option A: JWT Signed URLs (Chosen)**
+
 ```typescript
-const token = jwt.sign({
-  bookingId: booking.id,
-  action: 'manage',
-  exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days
-}, config.JWT_SECRET);
+const token = jwt.sign(
+  {
+    bookingId: booking.id,
+    action: 'manage',
+    exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60, // 7 days
+  },
+  config.JWT_SECRET
+);
 
 const manageUrl = `${baseUrl}/bookings/${booking.id}/manage?token=${token}`;
 ```
 
 **Option B: Database Tokens (Deferred)**
+
 ```prisma
 model BookingActionToken {
   id        String   @id
@@ -57,6 +62,7 @@ model BookingActionToken {
 **Decision:** Use JWT signed URLs for MVP.
 
 **Pros:**
+
 - ✅ Zero new database tables
 - ✅ Stateless (no DB hit to validate)
 - ✅ Reuses existing JWT infrastructure
@@ -64,17 +70,20 @@ model BookingActionToken {
 - ✅ 100 lines vs 400+ lines
 
 **Cons:**
+
 - ⚠️ Cannot revoke individual tokens (only by rotating JWT_SECRET)
 - ⚠️ No audit trail of token usage
 - ⚠️ Token replay possible until expiry
 
 **Revisit When:**
+
 - If we need to revoke specific booking tokens
 - If we need audit trail of who accessed manage links
 - If security audit requires single-use enforcement
 - If we add sensitive actions beyond reschedule/cancel
 
 **Mitigation:**
+
 - Short expiry (7 days)
 - Include booking status check on validation (canceled bookings reject tokens)
 - Log all token validations for forensics
@@ -83,13 +92,13 @@ model BookingActionToken {
 
 ## Gap Summary (Simplified)
 
-| Gap | Approach | Effort |
-|-----|----------|--------|
-| Reschedule/Cancel | JWT tokens + existing patterns | 3-4 days |
-| Reminders | Lazy evaluation on dashboard load | 1-2 days |
-| Per-Tenant Calendar | Store config in Tenant.secrets | 2-3 days |
-| Deposits | Simple `depositPercent` on Tenant | 2 days |
-| ~~Invoicing~~ | ~~CUT - defer to v2~~ | ~~0 days~~ |
+| Gap                 | Approach                          | Effort     |
+| ------------------- | --------------------------------- | ---------- |
+| Reschedule/Cancel   | JWT tokens + existing patterns    | 3-4 days   |
+| Reminders           | Lazy evaluation on dashboard load | 1-2 days   |
+| Per-Tenant Calendar | Store config in Tenant.secrets    | 2-3 days   |
+| Deposits            | Simple `depositPercent` on Tenant | 2 days     |
+| ~~Invoicing~~       | ~~CUT - defer to v2~~             | ~~0 days~~ |
 
 **Total: ~10 days**
 
@@ -160,11 +169,9 @@ export function generateBookingToken(
   action: BookingTokenPayload['action'],
   expiresInDays: number = 7
 ): string {
-  return jwt.sign(
-    { bookingId, tenantId, action },
-    config.JWT_SECRET,
-    { expiresIn: `${expiresInDays}d` }
-  );
+  return jwt.sign({ bookingId, tenantId, action }, config.JWT_SECRET, {
+    expiresIn: `${expiresInDays}d`,
+  });
 }
 
 export function validateBookingToken(
@@ -300,13 +307,13 @@ export const publicBookingManagementContract = c.router({
     method: 'GET',
     path: '/v1/public/bookings/manage',
     query: z.object({
-      token: z.string()
+      token: z.string(),
     }),
     responses: {
       200: BookingManagementSchema,
       401: ErrorSchema,
-      404: ErrorSchema
-    }
+      404: ErrorSchema,
+    },
   },
 
   getAvailableDates: {
@@ -314,12 +321,12 @@ export const publicBookingManagementContract = c.router({
     path: '/v1/public/bookings/:id/available-dates',
     query: z.object({
       token: z.string(),
-      month: z.string().optional() // YYYY-MM format
+      month: z.string().optional(), // YYYY-MM format
     }),
     responses: {
       200: z.array(z.string()),
-      401: ErrorSchema
-    }
+      401: ErrorSchema,
+    },
   },
 
   rescheduleBooking: {
@@ -327,14 +334,14 @@ export const publicBookingManagementContract = c.router({
     path: '/v1/public/bookings/:id/reschedule',
     body: z.object({
       token: z.string(),
-      newDate: z.string() // YYYY-MM-DD
+      newDate: z.string(), // YYYY-MM-DD
     }),
     responses: {
       200: BookingSchema,
       400: ErrorSchema,
       401: ErrorSchema,
-      409: ErrorSchema
-    }
+      409: ErrorSchema,
+    },
   },
 
   cancelBooking: {
@@ -342,29 +349,32 @@ export const publicBookingManagementContract = c.router({
     path: '/v1/public/bookings/:id/cancel',
     body: z.object({
       token: z.string(),
-      reason: z.string().optional()
+      reason: z.string().optional(),
     }),
     responses: {
       200: BookingSchema,
-      401: ErrorSchema
-    }
-  }
+      401: ErrorSchema,
+    },
+  },
 });
 ```
 
 ### Client Pages
 
 **`client/src/pages/ManageBooking.tsx`**
+
 - Validates token from URL
 - Shows booking details
 - Provides reschedule/cancel buttons
 
 **`client/src/features/booking/RescheduleFlow.tsx`**
+
 - Date picker showing available dates
 - Confirmation step
 - Success/error handling
 
 **`client/src/features/booking/CancelFlow.tsx`**
+
 - Confirmation dialog
 - Optional reason input
 - Refund information display
@@ -389,6 +399,7 @@ export const publicBookingManagementContract = c.router({
 ### Schema Changes
 
 Fields already added to Booking in Phase 1:
+
 ```prisma
 reminderSentAt    DateTime?
 reminderDueDate   DateTime?  // Calculated: eventDate - 7 days
@@ -404,7 +415,7 @@ const reminderDueDate = new Date(booking.eventDate);
 reminderDueDate.setDate(reminderDueDate.getDate() - 7);
 
 await this.bookingRepo.update(tenantId, booking.id, {
-  reminderDueDate: reminderDueDate > new Date() ? reminderDueDate : null
+  reminderDueDate: reminderDueDate > new Date() ? reminderDueDate : null,
 });
 ```
 
@@ -547,9 +558,7 @@ export class GoogleCalendarSyncAdapter {
 
     if (tenant.secrets?.googleCalendar) {
       // Decrypt tenant-specific config
-      const decrypted = await this.encryptionService.decrypt(
-        tenant.secrets.googleCalendar
-      );
+      const decrypted = await this.encryptionService.decrypt(tenant.secrets.googleCalendar);
       return JSON.parse(decrypted);
     }
 
@@ -571,7 +580,7 @@ export class GoogleCalendarSyncAdapter {
       `https://www.googleapis.com/calendar/v3/calendars/${config.calendarId}/events/${eventId}`,
       {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${accessToken}` }
+        headers: { Authorization: `Bearer ${accessToken}` },
       }
     );
   }
@@ -590,7 +599,8 @@ export class GoogleCalendarSyncAdapter {
     const event = await eventResp.json();
 
     // Update dates
-    const duration = new Date(event.end.dateTime).getTime() - new Date(event.start.dateTime).getTime();
+    const duration =
+      new Date(event.end.dateTime).getTime() - new Date(event.start.dateTime).getTime();
     event.start.dateTime = newDate.toISOString();
     event.end.dateTime = new Date(newDate.getTime() + duration).toISOString();
 
@@ -600,9 +610,9 @@ export class GoogleCalendarSyncAdapter {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(event)
+        body: JSON.stringify(event),
       }
     );
   }
@@ -628,6 +638,7 @@ Add to existing tenant-admin routes:
 ### Admin UI
 
 **`client/src/features/tenant-admin/CalendarConfigCard.tsx`**
+
 - Shows current configuration status
 - File upload for service account JSON
 - Calendar ID input
@@ -837,27 +848,27 @@ WHERE "status" = 'DEPOSIT_PAID';
 
 ## Deliverables Summary
 
-| Phase | Days | Deliverables |
-|-------|------|--------------|
-| **Phase 1** | 3-4 | JWT tokens, reschedule/cancel, refund, public routes, React UI |
-| **Phase 2** | 1-2 | Lazy reminders, email template, dashboard integration |
-| **Phase 3** | 2-3 | Per-tenant calendar config, admin UI |
-| **Phase 4** | 2 | Simple deposits, balance payment |
-| **Total** | **~10 days** | |
+| Phase       | Days         | Deliverables                                                   |
+| ----------- | ------------ | -------------------------------------------------------------- |
+| **Phase 1** | 3-4          | JWT tokens, reschedule/cancel, refund, public routes, React UI |
+| **Phase 2** | 1-2          | Lazy reminders, email template, dashboard integration          |
+| **Phase 3** | 2-3          | Per-tenant calendar config, admin UI                           |
+| **Phase 4** | 2            | Simple deposits, balance payment                               |
+| **Total**   | **~10 days** |                                                                |
 
 ---
 
 ## What We Cut (Deferred to v2)
 
-| Feature | Original Effort | Reason for Cut |
-|---------|-----------------|----------------|
-| Invoicing | 7 days | Stripe receipts sufficient |
-| BookingActionToken model | 2-3 days | JWT signed URLs simpler |
-| BookingReminder model | 2-3 days | Lazy evaluation sufficient |
-| DepositPolicy model | 2-3 days | Simple tenant settings sufficient |
-| BookingCancellation model | 1-2 days | Fields on Booking sufficient |
-| node-cron / Bull queue | 1-2 days | Lazy evaluation sufficient |
-| Puppeteer / PDF generation | 2-3 days | Cut with invoicing |
+| Feature                    | Original Effort | Reason for Cut                    |
+| -------------------------- | --------------- | --------------------------------- |
+| Invoicing                  | 7 days          | Stripe receipts sufficient        |
+| BookingActionToken model   | 2-3 days        | JWT signed URLs simpler           |
+| BookingReminder model      | 2-3 days        | Lazy evaluation sufficient        |
+| DepositPolicy model        | 2-3 days        | Simple tenant settings sufficient |
+| BookingCancellation model  | 1-2 days        | Fields on Booking sufficient      |
+| node-cron / Bull queue     | 1-2 days        | Lazy evaluation sufficient        |
+| Puppeteer / PDF generation | 2-3 days        | Cut with invoicing                |
 
 **Total Savings:** ~18-20 days
 
@@ -865,12 +876,12 @@ WHERE "status" = 'DEPOSIT_PAID';
 
 ## Success Metrics
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Self-service reschedule rate | >50% | `cancelledBy` = CUSTOMER |
-| Reminder delivery | >90% within 24hrs | `reminderSentAt` - `reminderDueDate` |
-| Calendar sync success | >95% | Track in logs |
-| Balance collection | >80% before due | `balancePaidAt` vs `balanceDueDate` |
+| Metric                       | Target            | Measurement                          |
+| ---------------------------- | ----------------- | ------------------------------------ |
+| Self-service reschedule rate | >50%              | `cancelledBy` = CUSTOMER             |
+| Reminder delivery            | >90% within 24hrs | `reminderSentAt` - `reminderDueDate` |
+| Calendar sync success        | >95%              | Track in logs                        |
+| Balance collection           | >80% before due   | `balancePaidAt` vs `balanceDueDate`  |
 
 ---
 
@@ -887,6 +898,6 @@ WHERE "status" = 'DEPOSIT_PAID';
 
 ---
 
-*Simplified from 29 days → 10 days based on DHH, Technical, and Simplicity reviews*
+_Simplified from 29 days → 10 days based on DHH, Technical, and Simplicity reviews_
 
-*Generated with [Claude Code](https://claude.ai/code)*
+_Generated with [Claude Code](https://claude.ai/code)_

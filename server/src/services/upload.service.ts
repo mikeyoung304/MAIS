@@ -37,8 +37,11 @@ function createUploadConfig(): UploadAdapterConfig {
   // 1. ADAPTERS_PRESET=real AND SUPABASE_URL is configured, OR
   // 2. STORAGE_MODE=supabase is explicitly set
   // This allows integration tests to use real DB with local storage by not setting STORAGE_MODE
-  const isRealMode = process.env.STORAGE_MODE === 'supabase' ||
-    (process.env.ADAPTERS_PRESET === 'real' && !!process.env.SUPABASE_URL && process.env.STORAGE_MODE !== 'local');
+  const isRealMode =
+    process.env.STORAGE_MODE === 'supabase' ||
+    (process.env.ADAPTERS_PRESET === 'real' &&
+      !!process.env.SUPABASE_URL &&
+      process.env.STORAGE_MODE !== 'local');
 
   let supabaseClient;
   if (isRealMode) {
@@ -57,13 +60,7 @@ function createUploadConfig(): UploadAdapterConfig {
     segmentImageUploadDir: path.join(process.cwd(), 'uploads', 'segments'),
     maxFileSizeMB: parseInt(process.env.MAX_UPLOAD_SIZE_MB || '2', 10),
     maxPackagePhotoSizeMB: 5, // 5MB for package photos and segment images
-    allowedMimeTypes: [
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/svg+xml',
-      'image/webp',
-    ],
+    allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml', 'image/webp'],
     baseUrl: process.env.API_BASE_URL || 'http://localhost:5000',
     isRealMode,
     supabaseClient,
@@ -87,7 +84,11 @@ export class UploadService implements StorageProvider {
     return this.adapter.uploadLogo(file, tenantId);
   }
 
-  async uploadPackagePhoto(file: UploadedFile, packageId: string, tenantId?: string): Promise<UploadResult> {
+  async uploadPackagePhoto(
+    file: UploadedFile,
+    packageId: string,
+    tenantId?: string
+  ): Promise<UploadResult> {
     return this.adapter.uploadPackagePhoto(file, packageId, tenantId);
   }
 

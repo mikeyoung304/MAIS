@@ -1,14 +1,14 @@
 ---
-title: "Visual Editor E2E Testing: Shipping Pre-Fixed Bugs + Test Coverage"
+title: 'Visual Editor E2E Testing: Shipping Pre-Fixed Bugs + Test Coverage'
 category: testing-gaps
 severity: P2
 component: visual-editor
 symptoms:
-  - "Code review identified 3 bugs in useVisualEditor.ts"
-  - "Missing E2E test coverage for visual editor workflows"
-  - "Stale closures in updateDraft callback"
-  - "Race condition in publishAll function"
-  - "Type assertion bypass in EditableText.tsx"
+  - 'Code review identified 3 bugs in useVisualEditor.ts'
+  - 'Missing E2E test coverage for visual editor workflows'
+  - 'Stale closures in updateDraft callback'
+  - 'Race condition in publishAll function'
+  - 'Type assertion bypass in EditableText.tsx'
 tags:
   - visual-editor
   - e2e-testing
@@ -34,6 +34,7 @@ Code review of `client/src/features/tenant-admin/visual-editor/hooks/useVisualEd
 ### Bug #1: Stale Closure in updateDraft (ALREADY FIXED)
 
 **Original Problem:** Line 225 included `packages` in the dependency array of the `updateDraft` callback:
+
 ```typescript
 }, [packages, flushPendingChanges]);  // ← PROBLEM
 ```
@@ -41,6 +42,7 @@ Code review of `client/src/features/tenant-admin/visual-editor/hooks/useVisualEd
 Every keystroke triggered `setPackages()`, which created a new `packages` reference, which in turn recreated the callback with stale closure over old data.
 
 **How It Was Fixed:** The code in `catalog.repository.ts` (lines 506-511) uses explicit null checks instead of nullish coalescing:
+
 ```typescript
 // Correct approach in repository
 name: pkg.draftTitle !== null ? pkg.draftTitle : pkg.name,
@@ -53,11 +55,13 @@ This means the UI can intentionally clear fields (empty strings are valid), and 
 ### Bug #2: Type Assertion in EditableText.tsx (ALREADY FIXED)
 
 **Original Problem:** Using `as any` type assertion to bypass TypeScript:
+
 ```typescript
-ref: inputRef as any
+ref: inputRef as any;
 ```
 
 **How It Was Fixed:** Proper ref declarations in `EditableText.tsx` (lines 47-48):
+
 ```typescript
 const inputRef = useRef<HTMLInputElement>(null);
 const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -66,12 +70,14 @@ const textareaRef = useRef<HTMLTextAreaElement>(null);
 ### Bug #3: Race Condition in publishAll (MARKED WONTFIX)
 
 **Problem Description:** Between when `draftCount` is checked and when the publish API call is made, a user can edit a package. The new edits won't be included in the publish because:
+
 1. `flushPendingChanges()` is awaited, but takes 100-500ms
 2. User edits during this window are stored in `pendingChanges` map
 3. But `saveTimeout` is cleared, so those edits aren't saved before publish
 4. Publish API only includes the original drafts that were flushed
 
 **Decision:** WONTFIX because:
+
 - Race window is extremely narrow (~16ms, one React frame)
 - No evidence this has ever occurred in production
 - UI already prevents user interaction during publish (`setIsPublishing(true)`)
@@ -84,6 +90,7 @@ const textareaRef = useRef<HTMLTextAreaElement>(null);
 **File:** `/Users/mikeyoung/CODING/MAIS/e2e/tests/visual-editor.spec.ts`
 
 **Test Coverage:**
+
 - Load visual editor dashboard
 - Edit package title inline (with aria-label)
 - Edit package price inline
@@ -95,6 +102,7 @@ const textareaRef = useRef<HTMLTextAreaElement>(null);
 - Escape key cancels edit without saving
 
 **Key Implementation Details:**
+
 - Tests run in serial mode (share auth token, modify same packages)
 - Single signup per test run to avoid rate limiting
 - Reuse cached auth token across tests
@@ -105,12 +113,13 @@ const textareaRef = useRef<HTMLTextAreaElement>(null);
 **File:** `/Users/mikeyoung/CODING/MAIS/server/src/middleware/rateLimiter.ts`
 
 **Change:** Added E2E_TEST environment variable check (line 64):
+
 ```typescript
 const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.E2E_TEST === '1';
 
 export const signupLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: isTestEnvironment ? 100 : 5,  // Allow 100 signups in test/E2E mode
+  max: isTestEnvironment ? 100 : 5, // Allow 100 signups in test/E2E mode
   // ...
 });
 ```
@@ -122,6 +131,7 @@ export const signupLimiter = rateLimit({
 **File:** `/Users/mikeyoung/CODING/MAIS/e2e/playwright.config.ts`
 
 **Change:** Pass E2E_TEST=1 to the development server:
+
 ```typescript
 webServer: {
   command: 'npm run dev:api',
@@ -155,6 +165,7 @@ This ensures the rate limiter receives the E2E_TEST signal during test runs.
 ## Key Implementation Patterns
 
 ### E2E Test Isolation Pattern
+
 ```typescript
 // Run tests serially to share signup token
 test.describe.configure({ mode: 'serial' });
@@ -177,6 +188,7 @@ async function ensureLoggedIn(page: Page): Promise<void> {
 ```
 
 ### Draft Cleanup Pattern
+
 ```typescript
 async function discardDraftsIfAny(page: Page): Promise<void> {
   const discardButton = page.getByRole('button', { name: /Discard/i }).first();
@@ -195,6 +207,7 @@ async function discardDraftsIfAny(page: Page): Promise<void> {
 ```
 
 ### Aria Label Strategy
+
 ```typescript
 // Use aria-labels for semantic test selectors
 const titleField = page.locator('[aria-label="Package title"]').first();
@@ -205,6 +218,7 @@ const descField = page.locator('[aria-label="Package description"]').first();
 ## Test Results
 
 All 9 E2E tests pass:
+
 - ✅ loads visual editor dashboard with packages
 - ✅ edits package title inline and shows draft indicator
 - ✅ edits package price inline
@@ -242,6 +256,7 @@ ADAPTERS_PRESET=real npm run dev:all
 **Message:** `test(visual-editor): add E2E coverage for inline editing`
 
 Changes:
+
 - Added comprehensive E2E test suite (9 test cases)
 - Updated rate limiter to allow E2E tests
 - Updated Playwright config to pass E2E_TEST flag
@@ -252,6 +267,7 @@ Changes:
 ### For Future Visual Editor Changes
 
 1. **Always run E2E tests** before committing visual editor changes:
+
    ```bash
    npm run test:e2e -- e2e/tests/visual-editor.spec.ts
    ```

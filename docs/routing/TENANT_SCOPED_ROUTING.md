@@ -501,9 +501,7 @@ export default {
   "headers": [
     {
       "source": "/assets/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
       "source": "/t/:tenantSlug/:path(.*)",
@@ -545,6 +543,7 @@ For subdomain-based tenants (`tenant-slug.app.com`):
 ### Phase 1: Add Route Structure
 
 1. Update router to include tenant-scoped paths:
+
 ```typescript
 {
   path: '/t/:tenantSlug',
@@ -695,8 +694,8 @@ export function useTenantMeta() {
 
 ```typescript
 const TenantHome = lazy(() =>
-  import('../pages/tenant/TenantHome').then(m => ({
-    default: m.TenantHome
+  import('../pages/tenant/TenantHome').then((m) => ({
+    default: m.TenantHome,
   }))
 );
 ```
@@ -808,7 +807,7 @@ test('should load tenant-specific branding', async ({ page }) => {
 
   // Check custom CSS variable
   const logo = page.locator('[data-testid="tenant-logo"]');
-  const bgColor = await logo.evaluate(el =>
+  const bgColor = await logo.evaluate((el) =>
     getComputedStyle(el).getPropertyValue('--color-primary')
   );
   expect(bgColor).toBeTruthy();
@@ -820,10 +819,12 @@ test('should load tenant-specific branding', async ({ page }) => {
 ### From Global Tenant Key to Route-Based
 
 **Current system:**
+
 - Single tenant per session via `api.setTenantKey()`
 - Widget embedding pattern
 
 **New system:**
+
 - Multiple tenants accessible via URL
 - Full storefront per tenant
 - Maintain backward compatibility with widget mode
@@ -839,10 +840,14 @@ test('should load tenant-specific branding', async ({ page }) => {
 // Both modes supported
 export const api = {
   // Legacy: global tenant key for widgets
-  setTenantKey: (key: string | null) => { /* ... */ },
+  setTenantKey: (key: string | null) => {
+    /* ... */
+  },
 
   // New: route-based tenant slug
-  setTenantSlug: (slug: string | null) => { /* ... */ },
+  setTenantSlug: (slug: string | null) => {
+    /* ... */
+  },
 };
 ```
 

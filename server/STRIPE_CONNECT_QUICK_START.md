@@ -74,16 +74,16 @@ const dashboardUrl = await stripeConnect.createLoginLink('tenant_123');
 
 ## API Methods Reference
 
-| Method | Purpose | Returns |
-|--------|---------|---------|
-| `createConnectedAccount(tenantId, email, businessName, country?)` | Create Stripe Express account | `Promise<string>` (account ID) |
-| `createOnboardingLink(tenantId, refreshUrl, returnUrl)` | Generate onboarding URL | `Promise<string>` (URL) |
-| `checkOnboardingStatus(tenantId)` | Check if onboarding complete | `Promise<boolean>` |
-| `storeRestrictedKey(tenantId, restrictedKey)` | Encrypt & store Stripe key | `Promise<void>` |
-| `getRestrictedKey(tenantId)` | Decrypt & retrieve Stripe key | `Promise<string \| null>` |
-| `getAccountDetails(tenantId)` | Get full Stripe account object | `Promise<Stripe.Account \| null>` |
-| `createLoginLink(tenantId)` | Create Express dashboard link | `Promise<string>` (URL) |
-| `deleteConnectedAccount(tenantId)` | Delete account (irreversible!) | `Promise<void>` |
+| Method                                                            | Purpose                        | Returns                           |
+| ----------------------------------------------------------------- | ------------------------------ | --------------------------------- |
+| `createConnectedAccount(tenantId, email, businessName, country?)` | Create Stripe Express account  | `Promise<string>` (account ID)    |
+| `createOnboardingLink(tenantId, refreshUrl, returnUrl)`           | Generate onboarding URL        | `Promise<string>` (URL)           |
+| `checkOnboardingStatus(tenantId)`                                 | Check if onboarding complete   | `Promise<boolean>`                |
+| `storeRestrictedKey(tenantId, restrictedKey)`                     | Encrypt & store Stripe key     | `Promise<void>`                   |
+| `getRestrictedKey(tenantId)`                                      | Decrypt & retrieve Stripe key  | `Promise<string \| null>`         |
+| `getAccountDetails(tenantId)`                                     | Get full Stripe account object | `Promise<Stripe.Account \| null>` |
+| `createLoginLink(tenantId)`                                       | Create Express dashboard link  | `Promise<string>` (URL)           |
+| `deleteConnectedAccount(tenantId)`                                | Delete account (irreversible!) | `Promise<void>`                   |
 
 ---
 
@@ -150,18 +150,22 @@ const paymentIntent = await stripe.paymentIntents.create({
 ## Troubleshooting
 
 ### "STRIPE_SECRET_KEY environment variable is required"
+
 - Set `STRIPE_SECRET_KEY` in your `.env` file
 - Use test key: `sk_test_...` for development
 
 ### "TENANT_SECRETS_ENCRYPTION_KEY environment variable is required"
+
 - Generate key: `openssl rand -hex 32`
 - Add to `.env` file (64 hex characters)
 
 ### "Tenant does not have a Stripe account"
+
 - Call `createConnectedAccount()` first
 - Check `tenant.stripeAccountId` is set in database
 
 ### Onboarding link doesn't work
+
 - Links expire after 24 hours
 - Generate new link with `createOnboardingLink()`
 - Ensure refresh/return URLs are HTTPS in production
@@ -171,18 +175,22 @@ const paymentIntent = await stripe.paymentIntents.create({
 ## Testing
 
 ### Test Mode
+
 Always use test keys during development:
+
 ```bash
 STRIPE_SECRET_KEY=sk_test_...  # NOT sk_live_
 ```
 
 ### Test Onboarding
+
 1. Create test account
 2. Generate onboarding link
 3. Use Stripe's test data to complete form
 4. Check status returns `true`
 
 ### Test Webhooks
+
 ```bash
 stripe listen --forward-to localhost:3000/webhooks/stripe
 ```

@@ -14,13 +14,13 @@ Implement the MVP gaps following the detailed plan at `plans/mvp-gaps-implementa
 
 ## Gap Summary
 
-| Gap | Business Impact | Effort |
-|-----|-----------------|--------|
-| Reminder Emails | No automated reminders | 2-3 days |
-| Per-tenant Calendar | All tenants share one calendar | 3-4 days |
-| Reschedule/Cancel | Customers can't self-manage | 4-5 days |
-| Deposits/Partial Pay | Full prepay only | 4-5 days |
-| Invoicing | Can't generate professional invoices | 5-7 days |
+| Gap                  | Business Impact                      | Effort   |
+| -------------------- | ------------------------------------ | -------- |
+| Reminder Emails      | No automated reminders               | 2-3 days |
+| Per-tenant Calendar  | All tenants share one calendar       | 3-4 days |
+| Reschedule/Cancel    | Customers can't self-manage          | 4-5 days |
+| Deposits/Partial Pay | Full prepay only                     | 4-5 days |
+| Invoicing            | Can't generate professional invoices | 5-7 days |
 
 ## Recommended Order
 
@@ -70,11 +70,13 @@ npm exec prisma generate           # Regenerate client
 ## First Steps
 
 1. Install dependencies:
+
    ```bash
    npm install luxon @types/luxon node-cron @types/node-cron pdfkit @types/pdfkit
    ```
 
 2. Create the BookingActionToken migration:
+
    ```bash
    cd server
    npm exec prisma migrate dev --name add_booking_action_tokens

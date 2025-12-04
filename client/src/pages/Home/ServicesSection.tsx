@@ -1,5 +1,5 @@
-import { Container } from "@/ui/Container";
-import { Store, Brain, Users } from "lucide-react";
+import { Container } from '@/ui/Container';
+import { Store, Brain, Users } from 'lucide-react';
 
 /**
  * ServicesSection - Overview of MaconAI's three core offerings
@@ -12,36 +12,32 @@ export function ServicesSection() {
   const services = [
     {
       icon: Store,
-      title: "Custom Storefront",
-      subtitle: "3-tier booking system",
+      title: 'Custom Storefront',
+      subtitle: '3-tier booking system',
       description:
-        "Done-for-you storefront with entry, core, and premium tiers. Clients choose, book, pay—no back-and-forth.",
-      features: ["Tiered pricing", "Automated booking", "Integrated payments"],
+        'Done-for-you storefront with entry, core, and premium tiers. Clients choose, book, pay—no back-and-forth.',
+      features: ['Tiered pricing', 'Automated booking', 'Integrated payments'],
     },
     {
       icon: Brain,
-      title: "AI Consulting",
-      subtitle: "Strategy + implementation",
+      title: 'AI Consulting',
+      subtitle: 'Strategy + implementation',
       description:
-        "We audit your systems, find automation opportunities, and implement AI workflows that save time.",
-      features: ["Process automation", "AI follow-ups", "Custom integrations"],
+        'We audit your systems, find automation opportunities, and implement AI workflows that save time.',
+      features: ['Process automation', 'AI follow-ups', 'Custom integrations'],
     },
     {
       icon: Users,
-      title: "The Collective",
-      subtitle: "Growth partnership",
+      title: 'The Collective',
+      subtitle: 'Growth partnership',
       description:
-        "Not just software—a team. Product, UX, and AI specialists working on your business.",
-      features: ["Dedicated strategist", "Ongoing optimization", "Revenue-aligned"],
+        'Not just software—a team. Product, UX, and AI specialists working on your business.',
+      features: ['Dedicated strategist', 'Ongoing optimization', 'Revenue-aligned'],
     },
   ];
 
   return (
-    <section
-      id="services"
-      aria-labelledby="services-heading"
-      className="py-24 sm:py-32 bg-surface"
-    >
+    <section id="services" aria-labelledby="services-heading" className="py-24 sm:py-32 bg-surface">
       <Container>
         <div className="max-w-4xl mx-auto text-center mb-16">
           <h2
@@ -50,9 +46,7 @@ export function ServicesSection() {
           >
             What we build for you
           </h2>
-          <p className="text-xl text-text-muted">
-            Three services. More clients. Less friction.
-          </p>
+          <p className="text-xl text-text-muted">Three services. More clients. Less friction.</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
@@ -65,23 +59,14 @@ export function ServicesSection() {
                 <service.icon className="w-7 h-7 text-sage" />
               </div>
 
-              <h3 className="text-xl font-bold text-text-primary mb-1">
-                {service.title}
-              </h3>
-              <p className="text-sm text-sage font-medium mb-4">
-                {service.subtitle}
-              </p>
+              <h3 className="text-xl font-bold text-text-primary mb-1">{service.title}</h3>
+              <p className="text-sm text-sage font-medium mb-4">{service.subtitle}</p>
 
-              <p className="text-text-muted mb-6 leading-relaxed">
-                {service.description}
-              </p>
+              <p className="text-text-muted mb-6 leading-relaxed">{service.description}</p>
 
               <ul className="space-y-2">
                 {service.features.map((feature) => (
-                  <li
-                    key={feature}
-                    className="flex items-center gap-2 text-sm text-text-muted"
-                  >
+                  <li key={feature} className="flex items-center gap-2 text-sm text-text-muted">
                     <span className="w-1.5 h-1.5 bg-sage rounded-full" />
                     {feature}
                   </li>

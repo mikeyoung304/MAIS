@@ -11,21 +11,17 @@
  * - NO tenant-specific content
  */
 
-import { AdminLayout } from "../../../layouts/AdminLayout";
-import { DashboardHeader } from "./DashboardHeader";
-import { StatsSection } from "./StatsSection";
-import { TenantsTableSection } from "./TenantsTableSection";
-import { useDashboardData } from "./useDashboardData";
+import { AdminLayout } from '../../../layouts/AdminLayout';
+import { DashboardHeader } from './DashboardHeader';
+import { StatsSection } from './StatsSection';
+import { TenantsTableSection } from './TenantsTableSection';
+import { useDashboardData } from './useDashboardData';
 
 export function PlatformAdminDashboard() {
   const { tenants, stats, isLoading } = useDashboardData();
 
   return (
-    <AdminLayout
-      breadcrumbs={[
-        { label: "Dashboard" }
-      ]}
-    >
+    <AdminLayout breadcrumbs={[{ label: 'Dashboard' }]}>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header Section */}
         <DashboardHeader />

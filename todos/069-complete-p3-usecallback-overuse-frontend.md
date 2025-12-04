@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "069"
+issue_id: '069'
 tags: [code-review, code-quality, react, simplicity]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The ImageUploadField component wraps every handler in `useCallback`, adding 50+ lines of boilerplate with no performance benefit. The component doesn't pass handlers to memoized children, so `useCallback` provides zero optimization.
 
 **Why This Matters:**
+
 - 50+ lines of unnecessary code
 - Cognitive overhead (dependency arrays to track)
 - Cargo-culting React patterns
@@ -23,6 +24,7 @@ The ImageUploadField component wraps every handler in `useCallback`, adding 50+ 
 ### Evidence from Code Review
 
 **Current Over-Engineering:**
+
 ```typescript
 // 7 useCallback wrappers, none necessary
 const validateFile = useCallback((file: File): string | null => { ... }, [maxSizeMB]);
@@ -36,11 +38,13 @@ const handleClick = useCallback(() => { ... }, [disabled, isUploading]);
 ```
 
 **When useCallback IS needed:**
+
 - Passing callbacks to `React.memo` wrapped children
 - Using callbacks in `useEffect` dependencies
 - Neither applies here
 
 ### Code Simplicity Reviewer Assessment
+
 - SEVERE: "Pure cargo-culting React optimization patterns"
 - No child components receive these handlers
 - Same runtime performance without useCallback
@@ -52,12 +56,14 @@ const handleClick = useCallback(() => { ... }, [disabled, isUploading]);
 **Description:** Use regular functions, inline trivial handlers.
 
 **Pros:**
+
 - 50+ lines removed
 - Clearer code
 - No dependency arrays to maintain
 - Identical performance
 
 **Cons:**
+
 - None (purely beneficial)
 
 **Effort:** Small (30 minutes)
@@ -88,6 +94,7 @@ function handleDrop(e: React.DragEvent) {
 ## Technical Details
 
 **Affected Files:**
+
 - `client/src/components/ImageUploadField.tsx`
 
 ## Acceptance Criteria
@@ -99,9 +106,9 @@ function handleDrop(e: React.DragEvent) {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-29 | Created | Found during code review - Code Simplicity Reviewer |
+| Date       | Action    | Notes                                                          |
+| ---------- | --------- | -------------------------------------------------------------- |
+| 2025-11-29 | Created   | Found during code review - Code Simplicity Reviewer            |
 | 2025-12-02 | Completed | Verified component already refactored to use regular functions |
 
 ## Resources

@@ -1,7 +1,7 @@
-import { Container } from "@/ui/Container";
-import { Button } from "@/components/ui/button";
-import { Mail, Calendar, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Container } from '@/ui/Container';
+import { Button } from '@/components/ui/button';
+import { Mail, Calendar, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 /**
  * Contact Page - Discovery Call Booking
@@ -29,7 +29,8 @@ export function Contact() {
           </h1>
 
           <p className="text-xl text-text-muted mb-12">
-            20 minutes to see if a done-for-you AI storefront makes sense for your business. No pitch, just answers.
+            20 minutes to see if a done-for-you AI storefront makes sense for your business. No
+            pitch, just answers.
           </p>
 
           {/* Contact options */}
@@ -47,9 +48,7 @@ export function Contact() {
                 <h2 className="font-semibold text-text-primary text-lg">Schedule a call</h2>
                 <p className="text-text-muted">Pick a time that works for you</p>
               </div>
-              <Button className="bg-sage hover:bg-sage-hover text-white">
-                Book Now
-              </Button>
+              <Button className="bg-sage hover:bg-sage-hover text-white">Book Now</Button>
             </a>
 
             <a

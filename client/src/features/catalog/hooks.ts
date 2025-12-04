@@ -1,13 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
-import { api } from "../../lib/api";
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../../lib/api';
 
 export function usePackages() {
   return useQuery({
-    queryKey: ["packages"],
+    queryKey: ['packages'],
     queryFn: async () => {
       const response = await api.getPackages();
       if (response.status !== 200) {
-        throw new Error("Failed to fetch packages");
+        throw new Error('Failed to fetch packages');
       }
       return response.body;
     },
@@ -16,11 +16,11 @@ export function usePackages() {
 
 export function usePackage(slug: string) {
   return useQuery({
-    queryKey: ["package", slug],
+    queryKey: ['package', slug],
     queryFn: async () => {
       const response = await api.getPackageBySlug({ params: { slug } });
       if (response.status !== 200) {
-        throw new Error("Failed to fetch package");
+        throw new Error('Failed to fetch package');
       }
       return response.body;
     },
@@ -34,11 +34,11 @@ export function usePackage(slug: string) {
  */
 export function useSegments() {
   return useQuery({
-    queryKey: ["segments"],
+    queryKey: ['segments'],
     queryFn: async () => {
       const response = await api.getSegments();
       if (response.status !== 200) {
-        throw new Error("Failed to fetch segments");
+        throw new Error('Failed to fetch segments');
       }
       return response.body;
     },
@@ -52,11 +52,11 @@ export function useSegments() {
  */
 export function useSegmentWithPackages(slug: string) {
   return useQuery({
-    queryKey: ["segment", slug, "packages"],
+    queryKey: ['segment', slug, 'packages'],
     queryFn: async () => {
       const response = await api.getSegmentWithPackages({ params: { slug } });
       if (response.status !== 200) {
-        throw new Error("Failed to fetch segment");
+        throw new Error('Failed to fetch segment');
       }
       return response.body;
     },

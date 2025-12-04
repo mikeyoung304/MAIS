@@ -4,13 +4,13 @@
  * Form for creating and editing segments with modular sub-components
  */
 
-import { Card } from "@/components/ui/card";
-import type { SegmentFormData } from "../../types";
-import { BasicInfoFields } from "./BasicInfoFields";
-import { HeroFields } from "./HeroFields";
-import { MetaFields } from "./MetaFields";
-import { SettingsFields } from "./SettingsFields";
-import { FormActions } from "./FormActions";
+import { Card } from '@/components/ui/card';
+import type { SegmentFormData } from '../../types';
+import { BasicInfoFields } from './BasicInfoFields';
+import { HeroFields } from './HeroFields';
+import { MetaFields } from './MetaFields';
+import { SettingsFields } from './SettingsFields';
+import { FormActions } from './FormActions';
 
 interface SegmentFormProps {
   segmentForm: SegmentFormData;
@@ -32,7 +32,7 @@ export function SegmentForm({
   return (
     <Card className="p-6 bg-macon-navy-800 border-white/20">
       <h2 className="text-2xl font-semibold mb-4 text-white">
-        {editingSegmentId ? "Edit Segment" : "Create Segment"}
+        {editingSegmentId ? 'Edit Segment' : 'Create Segment'}
       </h2>
 
       <form onSubmit={onSubmit} className="space-y-4">
@@ -69,14 +69,12 @@ export function SegmentForm({
           disabled={isSaving}
           onDescriptionChange={(description) => onFormChange({ ...segmentForm, description })}
           onMetaTitleChange={(metaTitle) => onFormChange({ ...segmentForm, metaTitle })}
-          onMetaDescriptionChange={(metaDescription) => onFormChange({ ...segmentForm, metaDescription })}
+          onMetaDescriptionChange={(metaDescription) =>
+            onFormChange({ ...segmentForm, metaDescription })
+          }
         />
 
-        <FormActions
-          isEditing={!!editingSegmentId}
-          isSaving={isSaving}
-          onCancel={onCancel}
-        />
+        <FormActions isEditing={!!editingSegmentId} isSaving={isSaving} onCancel={onCancel} />
       </form>
     </Card>
   );

@@ -1,18 +1,18 @@
-import { useCallback } from "react";
-import { Plus, Pencil, Trash2, AlertTriangle, Layers, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import type { PackageDto, SegmentDto } from "@macon/contracts";
-import { PackagePhotoUploader } from "@/components/PackagePhotoUploader";
-import { SuccessMessage } from "@/components/shared/SuccessMessage";
-import { usePackageForm } from "./packages/hooks/usePackageForm";
-import { usePackageManager } from "./packages/hooks/usePackageManager";
-import { PackageForm } from "./packages/PackageForm";
-import { PackageList } from "./packages/PackageList";
-import { SegmentForm } from "../admin/segments/SegmentForm";
-import { useSegmentManager } from "../admin/segments/hooks/useSegmentManager";
-import { useSuccessMessage } from "../admin/packages/hooks/useSuccessMessage";
-import type { SegmentWithPackages } from "./TenantDashboard/useDashboardData";
+import { useCallback } from 'react';
+import { Plus, Pencil, Trash2, AlertTriangle, Layers, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import type { PackageDto, SegmentDto } from '@macon/contracts';
+import { PackagePhotoUploader } from '@/components/PackagePhotoUploader';
+import { SuccessMessage } from '@/components/shared/SuccessMessage';
+import { usePackageForm } from './packages/hooks/usePackageForm';
+import { usePackageManager } from './packages/hooks/usePackageManager';
+import { PackageForm } from './packages/PackageForm';
+import { PackageList } from './packages/PackageList';
+import { SegmentForm } from '../admin/segments/SegmentForm';
+import { useSegmentManager } from '../admin/segments/hooks/useSegmentManager';
+import { useSuccessMessage } from '../admin/packages/hooks/useSuccessMessage';
+import type { SegmentWithPackages } from './TenantDashboard/useDashboardData';
 
 interface TenantPackagesManagerProps {
   packages: PackageDto[];
@@ -51,23 +51,30 @@ export function TenantPackagesManager({
   });
 
   // Segment management
-  const { successMessage: segmentSuccessMessage, showSuccess: showSegmentSuccess } = useSuccessMessage();
+  const { successMessage: segmentSuccessMessage, showSuccess: showSegmentSuccess } =
+    useSuccessMessage();
   const segmentManager = useSegmentManager({
     onSegmentsChange: onPackagesChange,
     showSuccess: showSegmentSuccess,
   });
 
   // Handle edit - load package into form and fetch photos
-  const handleEdit = useCallback(async (pkg: PackageDto) => {
-    packageForm.loadPackage(pkg);
-    await packageManager.handleEdit(pkg);
-  }, [packageForm, packageManager]);
+  const handleEdit = useCallback(
+    async (pkg: PackageDto) => {
+      packageForm.loadPackage(pkg);
+      await packageManager.handleEdit(pkg);
+    },
+    [packageForm, packageManager]
+  );
 
   // Handle form submission
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    await packageForm.submitForm(packageManager.editingPackageId);
-  }, [packageForm, packageManager]);
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      await packageForm.submitForm(packageManager.editingPackageId);
+    },
+    [packageForm, packageManager]
+  );
 
   // Render segment form if creating/editing segment
   if (segmentManager.isCreatingSegment) {
@@ -155,8 +162,8 @@ export function TenantPackagesManager({
             <h2 className="font-serif text-2xl font-bold text-text-primary">Your Packages</h2>
             <p className="text-text-muted text-sm mt-1">
               {packages.length === 0
-                ? "Create your first package to get started"
-                : `${packages.length} package${packages.length !== 1 ? "s" : ""} available`}
+                ? 'Create your first package to get started'
+                : `${packages.length} package${packages.length !== 1 ? 's' : ''} available`}
             </p>
           </div>
           <div className="flex gap-2">
@@ -225,9 +232,7 @@ export function TenantPackagesManager({
           <h2 className="font-serif text-2xl font-bold text-text-primary">
             {segments.length} Segments, {packages.length} Packages
           </h2>
-          <p className="text-text-muted text-sm mt-1">
-            Packages organized by customer segment
-          </p>
+          <p className="text-text-muted text-sm mt-1">Packages organized by customer segment</p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -250,7 +255,7 @@ export function TenantPackagesManager({
 
       {/* Grouped by segment */}
       <div className="space-y-4">
-        {grouped.map(segment => (
+        {grouped.map((segment) => (
           <details
             key={segment.id}
             open
@@ -260,7 +265,8 @@ export function TenantPackagesManager({
               <span className="flex items-center gap-2">
                 <ChevronDown className="h-5 w-5 text-sage transition-transform duration-200 group-open:rotate-180" />
                 <span className="text-text-primary">
-                  {segment.name} <span className="font-normal text-text-muted">({segment.packages.length})</span>
+                  {segment.name}{' '}
+                  <span className="font-normal text-text-muted">({segment.packages.length})</span>
                 </span>
               </span>
               <div className="flex gap-2">

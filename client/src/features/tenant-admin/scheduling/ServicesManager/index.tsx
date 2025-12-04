@@ -19,18 +19,18 @@
  * - DELETE /v1/tenant-admin/services/:id - Delete service
  */
 
-import { useState, useEffect } from "react";
-import type { ServiceDto } from "@macon/contracts";
-import { api } from "@/lib/api";
-import { logger } from "@/lib/logger";
-import { toast } from "sonner";
-import { useSuccessMessage } from "@/hooks/useSuccessMessage";
-import { SuccessMessage } from "@/components/shared/SuccessMessage";
-import { ServiceForm } from "./ServiceForm";
-import { ServicesList } from "./ServicesList";
-import { CreateServiceButton } from "./CreateServiceButton";
-import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
-import { useServicesManager } from "./useServicesManager";
+import { useState, useEffect } from 'react';
+import type { ServiceDto } from '@macon/contracts';
+import { api } from '@/lib/api';
+import { logger } from '@/lib/logger';
+import { toast } from 'sonner';
+import { useSuccessMessage } from '@/hooks/useSuccessMessage';
+import { SuccessMessage } from '@/components/shared/SuccessMessage';
+import { ServiceForm } from './ServiceForm';
+import { ServicesList } from './ServicesList';
+import { CreateServiceButton } from './CreateServiceButton';
+import { DeleteConfirmationDialog } from './DeleteConfirmationDialog';
+import { useServicesManager } from './useServicesManager';
 
 export function ServicesManager() {
   const [services, setServices] = useState<ServiceDto[]>([]);
@@ -47,12 +47,12 @@ export function ServicesManager() {
         setServices(sortedServices);
       }
     } catch (error) {
-      logger.error("Failed to fetch services", {
+      logger.error('Failed to fetch services', {
         error,
-        component: "ServicesManager",
+        component: 'ServicesManager',
       });
-      toast.error("Failed to load services", {
-        description: "Please refresh the page or contact support.",
+      toast.error('Failed to load services', {
+        description: 'Please refresh the page or contact support.',
       });
     } finally {
       setIsLoading(false);
@@ -93,7 +93,7 @@ export function ServicesManager() {
       // Then update other fields (excluding name and slug which handleNameChange already set)
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { name, slug, ...otherFields } = form;
-      setServiceForm(prev => ({ ...prev, ...otherFields }));
+      setServiceForm((prev) => ({ ...prev, ...otherFields }));
     } else {
       setServiceForm(form);
     }

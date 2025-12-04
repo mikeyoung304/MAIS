@@ -13,11 +13,13 @@
 The current landing page suffers from **AI content bloat**—8 sections of well-written but excessive copy. For a pre-launch waitlist page, this is antithetical to Apple's design philosophy.
 
 **Current State:**
+
 - 8 sections totaling ~5000px of scroll
 - CTA: "Book Discovery Call" → /contact
 - Good StoryBrand copy, but too much of it
 
 **Desired State:**
+
 - **ONE section** (hero only)
 - Single purpose: capture email for waitlist
 - One powerful emotional message
@@ -27,16 +29,16 @@ The current landing page suffers from **AI content bloat**—8 sections of well-
 
 ## Design Decisions (Finalized)
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Headline | "Wake up to 'New booking confirmed.'" | Pure transformation, emotional |
-| Typography | Playfair Display (serif) | Premium service positioning |
-| Sections | 1 (hero only) | Maximum confidence |
-| Social proof | None | We're new - honesty over vanity |
-| CTA | "Request Early Access" | Exclusivity - you're asking, we're selective |
-| Exclusivity line | "Currently onboarding founding partners." | Active, selective, aspirational |
-| Transformation whisper | Include below CTA | Emotional payoff without separate section |
-| Backend | Mailchimp embed | Zero custom code, ship fast |
+| Decision               | Choice                                    | Rationale                                    |
+| ---------------------- | ----------------------------------------- | -------------------------------------------- |
+| Headline               | "Wake up to 'New booking confirmed.'"     | Pure transformation, emotional               |
+| Typography             | Playfair Display (serif)                  | Premium service positioning                  |
+| Sections               | 1 (hero only)                             | Maximum confidence                           |
+| Social proof           | None                                      | We're new - honesty over vanity              |
+| CTA                    | "Request Early Access"                    | Exclusivity - you're asking, we're selective |
+| Exclusivity line       | "Currently onboarding founding partners." | Active, selective, aspirational              |
+| Transformation whisper | Include below CTA                         | Emotional payoff without separate section    |
+| Backend                | Mailchimp embed                           | Zero custom code, ship fast                  |
 
 ---
 
@@ -82,6 +84,7 @@ The current landing page suffers from **AI content bloat**—8 sections of well-
 ## Copy Specification
 
 ### Headline
+
 ```
 Wake up to
 "New booking confirmed."
@@ -94,6 +97,7 @@ Wake up to
 - **Line-height:** 1.1
 
 **Why this works:**
+
 - Pure transformation promise (StoryBrand success state)
 - Paints a specific morning moment - emotional
 - The quoted text feels like a notification they'll receive
@@ -103,6 +107,7 @@ Wake up to
 ---
 
 ### Subheadline
+
 ```
 We build booking systems for select service businesses—so clients go from inquiry to paid while you focus on your craft.
 ```
@@ -115,6 +120,7 @@ We build booking systems for select service businesses—so clients go from inqu
 - **Line-height:** 1.5
 
 **Why this works:**
+
 - 22 words (under 25-word limit)
 - "Select service businesses" = exclusivity, not for everyone
 - "Inquiry to paid" = the gap where they lose money
@@ -124,6 +130,7 @@ We build booking systems for select service businesses—so clients go from inqu
 ---
 
 ### Exclusivity Line
+
 ```
 Currently onboarding founding partners.
 ```
@@ -135,6 +142,7 @@ Currently onboarding founding partners.
 - **Position:** Directly below CTA button
 
 **Why this works:**
+
 - "Currently" = you're active, not vaporware
 - "Onboarding" = there's a process, you're selective
 - "Founding partners" = status, not just "customers"
@@ -143,6 +151,7 @@ Currently onboarding founding partners.
 ---
 
 ### Transformation Whisper
+
 ```
 Your calendar is fuller.
 Your inbox is quieter.
@@ -156,6 +165,7 @@ You're back to doing what you love.
 - **Position:** Below email form, centered
 
 **Why this works:**
+
 - Extends transformation without separate section
 - Three short sentences = rhythm
 - "Back to doing what you love" = emotional resolution
@@ -164,6 +174,7 @@ You're back to doing what you love.
 ---
 
 ### CTA Form
+
 - **Input placeholder:** "Your email"
 - **Button text:** "Request Early Access" (sentence case)
 - **Button style:** Sage green (`bg-sage`), pill shape (`rounded-full`), 44px min-height
@@ -214,16 +225,17 @@ Per DHH review: "The best code is no code. Don't build what you can buy for $0/m
 
 ### Files to Modify
 
-| File | Action |
-|------|--------|
-| `client/src/pages/Home/index.tsx` | Import only HeroSection |
+| File                                    | Action                                          |
+| --------------------------------------- | ----------------------------------------------- |
+| `client/src/pages/Home/index.tsx`       | Import only HeroSection                         |
 | `client/src/pages/Home/HeroSection.tsx` | Complete rewrite with new copy + Mailchimp form |
-| `client/src/pages/Home/_archive/` | Move 7 cut sections here |
-| `client/src/app/AppShell.tsx` | Simplify header (remove "How It Works" link) |
+| `client/src/pages/Home/_archive/`       | Move 7 cut sections here                        |
+| `client/src/app/AppShell.tsx`           | Simplify header (remove "How It Works" link)    |
 
 ### Files to Archive (Not Delete)
 
 Move to `client/src/pages/Home/_archive/`:
+
 - ProblemSection.tsx
 - StorefrontSection.tsx
 - PsychologySection.tsx
@@ -237,14 +249,15 @@ Move to `client/src/pages/Home/_archive/`:
 ## Styling Specification
 
 ### Layout (Full Viewport Hero)
+
 ```css
 .hero {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 max(5vw, 24px);  /* Proportional, not fixed */
-  background: var(--surface);  /* #FFFBF8 soft cream */
+  padding: 0 max(5vw, 24px); /* Proportional, not fixed */
+  background: var(--surface); /* #FFFBF8 soft cream */
 }
 
 .hero-content {
@@ -254,6 +267,7 @@ Move to `client/src/pages/Home/_archive/`:
 ```
 
 ### Animation (Apple-Style Fade-In)
+
 ```css
 .headline {
   animation: fade-slide-up 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s backwards;
@@ -284,6 +298,7 @@ Move to `client/src/pages/Home/_archive/`:
 ```
 
 ### Typography Scale
+
 ```css
 /* Desktop */
 --headline-size: 56px;
@@ -300,35 +315,36 @@ Move to `client/src/pages/Home/_archive/`:
 
 ## What Gets Cut
 
-| Section | Decision | Post-Launch Use |
-|---------|----------|-----------------|
-| ProblemSection | Archive | Blog content |
-| StorefrontSection | Archive | Product page |
-| PsychologySection | Archive | Blog/thought leadership |
-| CollectiveSection | Archive | About page |
-| PartnershipSection | Archive | Pricing page |
-| FutureStateSection | Extract whisper, archive | Testimonials page |
-| FinalCTASection | Archive | Not needed |
+| Section            | Decision                 | Post-Launch Use         |
+| ------------------ | ------------------------ | ----------------------- |
+| ProblemSection     | Archive                  | Blog content            |
+| StorefrontSection  | Archive                  | Product page            |
+| PsychologySection  | Archive                  | Blog/thought leadership |
+| CollectiveSection  | Archive                  | About page              |
+| PartnershipSection | Archive                  | Pricing page            |
+| FutureStateSection | Extract whisper, archive | Testimonials page       |
+| FinalCTASection    | Archive                  | Not needed              |
 
 ---
 
 ## StoryBrand Alignment (Minimal Form)
 
-| SB7 Element | Where It Appears |
-|-------------|------------------|
+| SB7 Element   | Where It Appears                                 |
+| ------------- | ------------------------------------------------ |
 | **Character** | Implied: service professionals who want bookings |
-| **Problem** | "inquiry to paid" gap (subheadline) |
-| **Guide** | MaconAI brand in header |
-| **Plan** | Not shown (post-conversion) |
-| **CTA** | "Request Early Access" |
-| **Failure** | Not weaponized (confidence, not fear) |
-| **Success** | Headline + whisper = full transformation |
+| **Problem**   | "inquiry to paid" gap (subheadline)              |
+| **Guide**     | MaconAI brand in header                          |
+| **Plan**      | Not shown (post-conversion)                      |
+| **CTA**       | "Request Early Access"                           |
+| **Failure**   | Not weaponized (confidence, not fear)            |
+| **Success**   | Headline + whisper = full transformation         |
 
 ---
 
 ## Acceptance Criteria
 
 ### Must Have
+
 - [ ] Single viewport hero (no scroll needed to convert)
 - [ ] Mailchimp form submits successfully
 - [ ] Staggered fade-in animations on load
@@ -336,6 +352,7 @@ Move to `client/src/pages/Home/_archive/`:
 - [ ] Playfair Display loads correctly
 
 ### Nice to Have
+
 - [ ] Inline success message (no redirect)
 - [ ] Reduced motion support (`prefers-reduced-motion`)
 - [ ] Dark mode variant
@@ -349,6 +366,7 @@ Move to `client/src/pages/Home/_archive/`:
    - Get embed form action URL
 
 2. **Create archive folder** (2 min)
+
    ```bash
    mkdir -p client/src/pages/Home/_archive
    mv client/src/pages/Home/{Problem,Storefront,Psychology,Collective,Partnership,FutureState,FinalCTA}Section.tsx client/src/pages/Home/_archive/
@@ -396,11 +414,13 @@ Move to `client/src/pages/Home/_archive/`:
 ## References
 
 ### Internal
+
 - Current landing page: `client/src/pages/Home/index.tsx`
 - BrandScript: `docs/marketing/BRANDSCRIPT.md`
 - Design tokens: `client/src/styles/design-tokens.css`
 
 ### External
+
 - [Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/)
 - [StoryBrand Framework](https://storybrand.com)
 
@@ -410,10 +430,10 @@ Move to `client/src/pages/Home/_archive/`:
 
 This plan was reviewed by three specialized agents:
 
-| Reviewer | Score | Key Feedback |
-|----------|-------|--------------|
-| DHH (Simplicity) | Ship it | Use Mailchimp, skip database, deploy by lunch |
-| Apple UX | 7.5/10 | 56px headline, staggered animations, proportional spacing |
-| StoryBrand | 6.5→8/10 | Transformation headline + whisper preserves emotional core |
+| Reviewer         | Score    | Key Feedback                                               |
+| ---------------- | -------- | ---------------------------------------------------------- |
+| DHH (Simplicity) | Ship it  | Use Mailchimp, skip database, deploy by lunch              |
+| Apple UX         | 7.5/10   | 56px headline, staggered animations, proportional spacing  |
+| StoryBrand       | 6.5→8/10 | Transformation headline + whisper preserves emotional core |
 
 All reviewers approved the final structure.

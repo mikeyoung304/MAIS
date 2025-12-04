@@ -1,7 +1,7 @@
-import { HeroSection } from "./HeroSection";
-import { ProblemSection } from "./ProblemSection";
-import { StorefrontSection } from "./StorefrontSection";
-import { WaitlistCTASection } from "./WaitlistCTASection";
+import { HeroSection } from './HeroSection';
+import { ProblemSection } from './ProblemSection';
+import { StorefrontSection } from './StorefrontSection';
+import { WaitlistCTASection } from './WaitlistCTASection';
 
 /**
  * Home page - Apple-quality landing page

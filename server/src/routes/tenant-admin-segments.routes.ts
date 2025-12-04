@@ -249,10 +249,7 @@ export function createTenantAdminSegmentsRouter(segmentService: SegmentService):
       // Delete segment with tenant isolation (automatic ownership verification)
       await segmentService.deleteSegment(tenantId, id);
 
-      logger.info(
-        { tenantId, segmentId: id },
-        'Segment deleted by tenant admin'
-      );
+      logger.info({ tenantId, segmentId: id }, 'Segment deleted by tenant admin');
 
       res.status(204).send();
     } catch (error) {

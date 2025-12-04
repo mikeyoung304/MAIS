@@ -35,11 +35,13 @@ A comprehensive design token system has been created for the MAIS wedding platfo
 ### 1. Color System (93 tokens)
 
 #### Brand Colors - Macon Palette
+
 - **Navy**: 11 shades from #0a1929 (darkest) to #f3f6fa (lightest)
 - **Orange**: 11 shades from #7c2d12 to #fff7ed
 - **Teal**: 11 shades from #134e4a to #f0fdfa
 
 #### Surface Colors (6 tokens)
+
 ```css
 --surface-primary       #ffffff (White)
 --surface-secondary     #f9fafb (Off-white)
@@ -50,6 +52,7 @@ A comprehensive design token system has been created for the MAIS wedding platfo
 ```
 
 #### Text Colors (7 tokens)
+
 ```css
 --text-primary          #111827 (16.1:1 contrast - WCAG AAA)
 --text-secondary        #4b5563 (7.5:1 contrast - WCAG AAA)
@@ -61,12 +64,14 @@ A comprehensive design token system has been created for the MAIS wedding platfo
 ```
 
 #### Interactive States (15 tokens)
+
 - Primary (Navy): default, hover, active, disabled, focus
 - Secondary (Orange): default, hover, active, disabled, focus
 - Accent (Teal): default, hover, active, disabled, focus
 - Neutral: default, hover, active, disabled
 
 #### Semantic Colors (36 tokens)
+
 - **Success** (Green): 11 shades + interactive states
 - **Error** (Red): 11 shades + interactive states
 - **Warning** (Amber): 11 shades + interactive states
@@ -77,6 +82,7 @@ A comprehensive design token system has been created for the MAIS wedding platfo
 ### 2. Typography Scale (31 tokens)
 
 #### Font Families (3 tokens)
+
 ```css
 --font-heading   Playfair Display, Georgia, serif
 --font-body      -apple-system, BlinkMacSystemFont, Segoe UI, ...
@@ -84,6 +90,7 @@ A comprehensive design token system has been created for the MAIS wedding platfo
 ```
 
 #### Font Sizes - Modular Scale 1.250 (11 tokens)
+
 ```css
 --font-size-xs     0.75rem    (12px)
 --font-size-sm     0.875rem   (14px)
@@ -99,6 +106,7 @@ A comprehensive design token system has been created for the MAIS wedding platfo
 ```
 
 #### Line Heights (5 tokens)
+
 ```css
 --line-height-tight    1.2   (Headings)
 --line-height-snug     1.3   (Sub-headings)
@@ -108,6 +116,7 @@ A comprehensive design token system has been created for the MAIS wedding platfo
 ```
 
 #### Font Weights (5 tokens)
+
 ```css
 --font-weight-normal     400 (Regular)
 --font-weight-medium     500 (Slightly emphasized)
@@ -117,6 +126,7 @@ A comprehensive design token system has been created for the MAIS wedding platfo
 ```
 
 #### Letter Spacing (6 tokens)
+
 ```css
 --letter-spacing-tighter  -0.05em  (Large headings)
 --letter-spacing-tight    -0.025em (Regular headings)
@@ -152,6 +162,7 @@ A comprehensive design token system has been created for the MAIS wedding platfo
 ```
 
 #### Semantic Spacing (4 tokens)
+
 ```css
 --space-component-gap      16px (Between components)
 --space-section-gap        48px (Between sections)
@@ -179,6 +190,7 @@ A comprehensive design token system has been created for the MAIS wedding platfo
 ### 5. Elevation & Shadows (14 tokens)
 
 #### 4-Level Elevation System
+
 ```css
 --elevation-1   0 1px 2px rgba(26, 54, 93, 0.05)
                 Buttons, Input fields
@@ -197,6 +209,7 @@ A comprehensive design token system has been created for the MAIS wedding platfo
 ```
 
 #### Focus Ring Shadows (4 tokens)
+
 ```css
 --shadow-focus-primary     Navy focus (0 0 0 3px rgba(26, 54, 93, 0.15))
 --shadow-focus-secondary   Orange focus (0 0 0 3px rgba(251, 146, 60, 0.15))
@@ -209,6 +222,7 @@ A comprehensive design token system has been created for the MAIS wedding platfo
 ### 6. Borders (9 tokens)
 
 #### Widths
+
 ```css
 --border-width-0   0
 --border-width-1   1px (Default)
@@ -217,6 +231,7 @@ A comprehensive design token system has been created for the MAIS wedding platfo
 ```
 
 #### Colors
+
 ```css
 --border-color-default   #e5e7eb (Neutral borders)
 --border-color-strong    #d1d5db (Emphasized borders)
@@ -231,6 +246,7 @@ A comprehensive design token system has been created for the MAIS wedding platfo
 ### 7. Transitions & Animations (13 tokens)
 
 #### Duration (5 tokens)
+
 ```css
 --duration-instant   0ms
 --duration-fast      150ms (Micro interactions)
@@ -240,6 +256,7 @@ A comprehensive design token system has been created for the MAIS wedding platfo
 ```
 
 #### Easing Functions - Apple-style (5 tokens)
+
 ```css
 --ease-linear      linear
 --ease-in          cubic-bezier(0.4, 0, 1, 1)
@@ -250,6 +267,7 @@ A comprehensive design token system has been created for the MAIS wedding platfo
 ```
 
 #### Combined Transitions (3 tokens)
+
 ```css
 --transition-fast   150ms ease-in-out
 --transition-base   200ms ease-in-out (Default)
@@ -313,34 +331,43 @@ All old token names are mapped to the new system for backward compatibility:
 ### Pre-built Component Classes
 
 #### Typography (7 classes)
+
 - `.text-heading-1`, `.text-heading-2`, `.text-heading-3`
 - `.text-body-large`, `.text-body`, `.text-body-small`
 - `.text-label`
 
 #### Surfaces (3 classes)
+
 - `.surface-primary`, `.surface-secondary`, `.surface-elevated`
 
 #### Gradients (4 classes)
+
 - `.gradient-navy`, `.gradient-orange`, `.gradient-teal`
 - `.gradient-radial-navy`
 
 #### Elevation (4 classes)
+
 - `.elevation-1`, `.elevation-2`, `.elevation-3`, `.elevation-4`
 
 #### Interactive States (1 class)
+
 - `.interactive-primary` (with hover, active, disabled, focus states)
 
 #### Focus Rings (4 classes)
+
 - `.focus-ring-primary`, `.focus-ring-secondary`
 - `.focus-ring-error`, `.focus-ring-success`
 
 #### Status (4 classes)
+
 - `.status-success`, `.status-error`, `.status-warning`, `.status-info`
 
 #### Transitions (4 classes)
+
 - `.transition-fast`, `.transition-base`, `.transition-slow`, `.transition-all`
 
 #### Special Effects (1 class)
+
 - `.glass` (glass morphism with backdrop blur)
 
 ---
@@ -352,11 +379,13 @@ All old token names are mapped to the new system for backward compatibility:
 All color combinations meet WCAG AA standards (4.5:1 for normal text, 3:1 for large text):
 
 ✅ **Text on White Backgrounds**
+
 - `--text-primary`: 16.1:1 (AAA)
 - `--text-secondary`: 7.5:1 (AAA)
 - `--text-tertiary`: 5.9:1 (AA)
 
 ✅ **Text on Brand Colors**
+
 - White on Navy: 12.6:1 (AAA)
 - White on Orange: 4.8:1 (AA)
 - White on Teal: 4.5:1 (AA)
@@ -394,6 +423,7 @@ Dark mode tokens are included and ready for tenant customization:
 ```
 
 Dark mode automatically adjusts:
+
 - Surface colors (darker backgrounds)
 - Text colors (lighter text)
 - Border colors (higher contrast)
@@ -413,6 +443,7 @@ Dark mode automatically adjusts:
 ## Usage Examples
 
 ### Primary Button
+
 ```css
 .btn-primary {
   background: var(--interactive-primary-default);
@@ -449,6 +480,7 @@ Dark mode automatically adjusts:
 ```
 
 ### Card Component
+
 ```css
 .card {
   background: var(--surface-elevated);
@@ -465,6 +497,7 @@ Dark mode automatically adjusts:
 ```
 
 ### Input Field
+
 ```css
 .input {
   background: var(--surface-primary);
@@ -539,6 +572,7 @@ The design token system is fully integrated with the existing MAIS codebase:
 ## Best Practices
 
 ### Do's ✅
+
 1. Use semantic tokens (`--text-primary`) instead of direct colors
 2. Follow the spacing scale (multiples of 4px)
 3. Use the 4-level elevation system
@@ -548,6 +582,7 @@ The design token system is fully integrated with the existing MAIS codebase:
 7. Verify color contrast with WCAG guidelines
 
 ### Don'ts ❌
+
 1. Avoid hardcoded color values (`#1a365d`)
 2. Don't create custom spacing values outside the scale
 3. Don't create custom shadows outside the elevation system
@@ -573,6 +608,7 @@ Legacy tokens remain available during migration period.
 ## Maintenance
 
 ### Adding New Tokens
+
 1. Follow existing naming conventions
 2. Add to appropriate category
 3. Update documentation files
@@ -580,6 +616,7 @@ Legacy tokens remain available during migration period.
 5. Add usage examples
 
 ### Updating Tokens
+
 1. Check for breaking changes
 2. Update all documentation
 3. Test existing components
@@ -612,6 +649,7 @@ Legacy tokens remain available during migration period.
 ## Version History
 
 **Version 1.0** - November 2025
+
 - Initial implementation
 - 249 design tokens
 - Complete documentation suite

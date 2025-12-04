@@ -59,9 +59,7 @@ export const AboutSection = memo(function AboutSection({ config }: AboutSectionP
   return (
     <section className="py-16 md:py-24 bg-neutral-50">
       <Container>
-        <div
-          className={`grid grid-cols-1 ${hasImage ? 'lg:grid-cols-2' : ''} gap-12 items-center`}
-        >
+        <div className={`grid grid-cols-1 ${hasImage ? 'lg:grid-cols-2' : ''} gap-12 items-center`}>
           {/* Image - Left position */}
           {hasImage && imagePosition === 'left' && (
             <div className="order-1">
@@ -78,7 +76,9 @@ export const AboutSection = memo(function AboutSection({ config }: AboutSectionP
           )}
 
           {/* Content */}
-          <div className={`order-2 ${hasImage && imagePosition === 'left' ? 'lg:order-2' : 'lg:order-1'}`}>
+          <div
+            className={`order-2 ${hasImage && imagePosition === 'left' ? 'lg:order-2' : 'lg:order-1'}`}
+          >
             <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-900 mb-6">
               {config.headline}
             </h2>

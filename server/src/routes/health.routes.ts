@@ -86,11 +86,7 @@ export function registerHealthRoutes(app: Express, deps: HealthCheckDeps): void 
     }
 
     // Check required environment variables (real mode)
-    const requiredKeys = [
-      'DATABASE_URL',
-      'STRIPE_SECRET_KEY',
-      'STRIPE_WEBHOOK_SECRET',
-    ] as const;
+    const requiredKeys = ['DATABASE_URL', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'] as const;
 
     const missing: string[] = [];
     for (const key of requiredKeys) {

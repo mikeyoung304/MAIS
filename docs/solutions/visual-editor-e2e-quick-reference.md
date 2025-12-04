@@ -10,16 +10,18 @@ Set `E2E_TEST=1` environment variable to bypass signup rate limits during Playwr
 ## The Changes
 
 ### 1. Rate Limiter (server/src/middleware/rateLimiter.ts)
+
 ```typescript
 const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.E2E_TEST === '1';
 
 export const signupLimiter = rateLimit({
-  max: isTestEnvironment ? 100 : 5,  // Test: 100/hr, Prod: 5/hr
+  max: isTestEnvironment ? 100 : 5, // Test: 100/hr, Prod: 5/hr
   // ...
 });
 ```
 
 ### 2. Playwright Config (e2e/playwright.config.ts)
+
 ```typescript
 webServer: {
   command: 'ADAPTERS_PRESET=real E2E_TEST=1 VITE_API_URL=http://localhost:3001 ...',
@@ -28,6 +30,7 @@ webServer: {
 ```
 
 ### 3. Test Pattern (e2e/tests/visual-editor.spec.ts)
+
 ```typescript
 // Sign up once, cache token, reuse across all tests
 let authToken: string | null = null;
@@ -77,11 +80,11 @@ npm run test:e2e
 
 ## Rate Limit Comparison
 
-| Environment | Max Attempts | Window |
-|---|---|---|
-| Production | 5 | 1 hour |
-| Unit Tests (`NODE_ENV=test`) | 100 | 1 hour |
-| E2E Tests (`E2E_TEST=1`) | 100 | 1 hour |
+| Environment                  | Max Attempts | Window |
+| ---------------------------- | ------------ | ------ |
+| Production                   | 5            | 1 hour |
+| Unit Tests (`NODE_ENV=test`) | 100          | 1 hour |
+| E2E Tests (`E2E_TEST=1`)     | 100          | 1 hour |
 
 ## Files Changed
 
@@ -99,12 +102,12 @@ npm run test:e2e
 
 ## Common Issues & Fixes
 
-| Issue | Fix |
-|---|---|
-| Still getting 429 | Verify `E2E_TEST=1` in playwright.config.ts webServer command |
-| Tests interfering | Ensure `mode: 'serial'` in test.describe.configure |
-| Slow test runs | Normal - serial execution is intentional |
-| Token not persisting | Check that ensureLoggedIn properly caches/restores |
+| Issue                | Fix                                                           |
+| -------------------- | ------------------------------------------------------------- |
+| Still getting 429    | Verify `E2E_TEST=1` in playwright.config.ts webServer command |
+| Tests interfering    | Ensure `mode: 'serial'` in test.describe.configure            |
+| Slow test runs       | Normal - serial execution is intentional                      |
+| Token not persisting | Check that ensureLoggedIn properly caches/restores            |
 
 ## Implementation Pattern for Other Tests
 

@@ -56,31 +56,34 @@ Use this checklist when reviewing any PR that touches database code.
 
 #### Example Review Comment
 
-```markdown
+````markdown
 ### Database Query Issue
 
 I notice this PR adds a database query, but I have a concern:
 
 ```typescript
 // Line 42
-const { data } = await supabase.from('Tenant').select('*')
-  .eq('id', tenantId);
+const { data } = await supabase.from('Tenant').select('*').eq('id', tenantId);
 ```
+````
 
 **Issue:** This uses Supabase JS client for database queries, which:
+
 1. Uses slower HTTP REST API
 2. Tenant table may not be exposed
 3. Violates our architecture pattern
 
 **Fix:**
+
 ```typescript
 const data = await prisma.tenant.findUnique({
-  where: { id: tenantId }
+  where: { id: tenantId },
 });
 ```
 
 See: [Database Client Guide](../DATABASE-CLIENT-QUICK-REFERENCE.md)
-```
+
+````
 
 ### Manual Review: File Operations
 
@@ -111,7 +114,7 @@ Good use of Supabase Storage! Quick note:
 ```typescript
 // Line 156
 const storagePath = `${tenantId}/${folder}/${filename}`;
-```
+````
 
 ✅ Looks good - proper tenant isolation in path
 
@@ -122,7 +125,8 @@ if (storagePath.startsWith(`${req.tenantId}/`)) {
   // Safe - tenant owns this file
 }
 ```
-```
+
+````
 
 ---
 
@@ -136,9 +140,10 @@ async function verifyDatabaseWithPrisma(prisma: PrismaClient) {
   const result = await prisma.$queryRaw`SELECT COUNT(*) FROM "Tenant"`;
   logger.info('Database verified');
 }
-```
+````
 
 **Bad:**
+
 ```typescript
 async function verifyDatabase() {
   const { error } = await supabase.from('Tenant').select('count');
@@ -147,6 +152,7 @@ async function verifyDatabase() {
 ```
 
 **Review Comment:**
+
 ```markdown
 Startup verification should use Prisma, not Supabase JS.
 
@@ -159,23 +165,25 @@ Use: `prisma.$queryRaw<...>()` instead
 ### Pattern 2: Tenant Lookup by ID
 
 **Good:**
+
 ```typescript
 const tenant = await prisma.tenant.findUnique({
   where: { id },
-  select: { id: true, slug: true, stripeAccountId: true }
+  select: { id: true, slug: true, stripeAccountId: true },
 });
 ```
 
 **Bad:**
+
 ```typescript
-const { data: [tenant] } = await supabase
-  .from('Tenant')
-  .select('*')
-  .eq('id', id);
+const {
+  data: [tenant],
+} = await supabase.from('Tenant').select('*').eq('id', id);
 ```
 
 **Review Comment:**
-```markdown
+
+````markdown
 Use Prisma for database queries.
 
 Supabase JS client is for file storage and auth, not database queries.
@@ -183,13 +191,16 @@ This also attempts to select all fields - consider using `select()`
 to limit to needed columns.
 
 Fix:
+
 ```typescript
 const tenant = await prisma.tenant.findUnique({
   where: { id },
-  select: { id: true, slug: true }
+  select: { id: true, slug: true },
 });
 ```
-```
+````
+
+````
 
 ### Pattern 3: Transaction
 
@@ -199,9 +210,10 @@ await prisma.$transaction(async (tx) => {
   await tx.booking.create({ data: { /* ... */ } });
   await tx.audit.create({ data: { /* ... */ } });
 });
-```
+````
 
 **Bad:**
+
 ```typescript
 // Supabase doesn't support transactions
 const booking = await supabase.from('Booking').insert([data]);
@@ -209,7 +221,8 @@ const audit = await supabase.from('Audit').insert([logData]);
 ```
 
 **Review Comment:**
-```markdown
+
+````markdown
 For operations that need consistency guarantees (like booking + audit
 logging), use Prisma transactions:
 
@@ -218,9 +231,11 @@ await prisma.$transaction(async (tx) => {
   // Both operations succeed or both rollback
 });
 ```
+````
 
 This ensures data consistency.
-```
+
+````
 
 ### Pattern 4: File Upload
 
@@ -229,16 +244,16 @@ This ensures data consistency.
 const { error } = await supabase.storage
   .from('images')
   .upload(`${tenantId}/logos/${filename}`, buffer);
-```
+````
 
 **Bad:**
+
 ```typescript
-const { error } = await supabase.storage
-  .from('tenant_logos')
-  .upload(`${filename}`, buffer); // Missing tenantId!
+const { error } = await supabase.storage.from('tenant_logos').upload(`${filename}`, buffer); // Missing tenantId!
 ```
 
 **Review Comment:**
+
 ```markdown
 Files should be organized by tenant in the path.
 
@@ -285,7 +300,7 @@ git show HEAD | grep -n "create\|update\|delete" | grep -v "transaction"
 
 Add this to your PR template:
 
-```markdown
+````markdown
 ## Database Client Verification
 
 - [ ] All database queries use **Prisma** (not Supabase JS)
@@ -295,10 +310,13 @@ Add this to your PR template:
 - [ ] Database verification tested with Prisma if added
 
 ### Self-Review Checklist
+
 ```bash
 grep -r "supabase\.from(" server/src | grep -v storage
 # Expected: (empty)
 ```
+````
+
 ```
 
 ---
@@ -308,33 +326,38 @@ grep -r "supabase\.from(" server/src | grep -v storage
 ### Example 1: Good Review with Approval
 
 ```
+
 ✅ Code Review Approved
 
 This PR correctly implements database client selection:
 
-+ Uses `prisma.tenant.findUnique()` for queries ✓
-+ Uses `supabase.storage.from('images')` for uploads ✓
-+ All queries filtered by `tenantId` ✓
-+ Proper error handling for both clients ✓
-+ New tests verify client usage ✓
+- Uses `prisma.tenant.findUnique()` for queries ✓
+- Uses `supabase.storage.from('images')` for uploads ✓
+- All queries filtered by `tenantId` ✓
+- Proper error handling for both clients ✓
+- New tests verify client usage ✓
 
 No changes requested. Good work!
+
 ```
 
 ### Example 2: Review with Database Client Issues
 
 ```
+
 ⚠️ Code Review - Changes Requested
 
 I found a few database client issues:
 
 **Issue 1: Wrong Client for Database Query**
 Line 45:
+
 ```typescript
 const { data } = await supabase.from('Booking').select('*');
 ```
 
 Fix: Use Prisma instead
+
 ```typescript
 const data = await prisma.booking.findMany();
 ```
@@ -342,14 +365,16 @@ const data = await prisma.booking.findMany();
 **Issue 2: Missing Tenant Scoping**
 The above query doesn't filter by `tenantId`. This is a
 multi-tenant security issue. Fix:
+
 ```typescript
 const data = await prisma.booking.findMany({
-  where: { tenantId: req.tenantId }
+  where: { tenantId: req.tenantId },
 });
 ```
 
 **Issue 3: File Upload Organization**
 Lines 78-80: File path should include tenant prefix
+
 ```typescript
 // Before
 const path = `logos/${filename}`;
@@ -359,11 +384,13 @@ const path = `${tenantId}/logos/${filename}`;
 ```
 
 Please address these before resubmitting.
+
 ```
 
 ### Example 3: Review with Minor Suggestions
 
 ```
+
 ✅ Code Review Approved (with suggestions)
 
 The database client usage looks correct!
@@ -372,10 +399,11 @@ Minor suggestions for next PR:
 
 1. **Performance**: You're selecting all columns with `select(*)`.
    Consider limiting to needed fields:
+
    ```typescript
    const data = await prisma.booking.findMany({
      where: { tenantId },
-     select: { id: true, date: true, status: true }
+     select: { id: true, date: true, status: true },
    });
    ```
 
@@ -386,7 +414,8 @@ Minor suggestions for next PR:
    ```
 
 Approving as-is - these are optimizations for future PRs.
-```
+
+````
 
 ---
 
@@ -482,7 +511,7 @@ jobs:
 
       - name: Run database client tests
         run: npm test -- --grep "Database|Client"
-```
+````
 
 ---
 

@@ -15,6 +15,7 @@ This document outlines prevention strategies for three critical authentication i
 ### The Problem
 
 The seed script hashed the password `@Nupples8` but authentication attempts were failing because:
+
 - The seed password was hardcoded in `seed.ts`
 - Manual changes to seed passwords weren't reflected in test code
 - No single source of truth for development credentials
@@ -180,6 +181,7 @@ Create a `.env.example` with credential guidelines:
 ### The Problem
 
 Email lookups were case-sensitive at the database level:
+
 - User logged in with `Mike@Example.com` but tenant created with `mike@example.com`
 - Database query `WHERE email = 'Mike@Example.com'` found nothing
 - Authentication failed despite correct password
@@ -471,6 +473,7 @@ describe('Email Normalization Integration Tests', () => {
 ### The Problem
 
 Hardcoded demo credentials in code weren't synchronized with seed data:
+
 - Frontend might have `Email: demo@test.com` but seed script created `test@example.com`
 - E2E tests hardcoded different credentials than signup tests
 - When seed data changed, frontend autofill became invalid
@@ -766,6 +769,7 @@ describe('Dev Credentials Sync', () => {
 ## Comprehensive Prevention Checklist
 
 ### Password Hash Synchronization
+
 - [ ] Centralized credentials in `config/dev-credentials.ts`
 - [ ] Seed script imports from configuration
 - [ ] All tests import from same configuration
@@ -777,6 +781,7 @@ describe('Dev Credentials Sync', () => {
 - [ ] Integration test: login with seeded credentials
 
 ### Case-Insensitive Email Handling
+
 - [ ] Repository layer: All queries use `.toLowerCase()`
 - [ ] Repository layer: All inserts/updates normalize to lowercase
 - [ ] Service layer: Additional `.toLowerCase()` call
@@ -789,6 +794,7 @@ describe('Dev Credentials Sync', () => {
 - [ ] Integration test: End-to-end case normalization
 
 ### Demo/Dev Credentials Sync
+
 - [ ] Single credentials file: `config/dev-credentials.ts`
 - [ ] Build script generates frontend credentials
 - [ ] Frontend autofill uses generated credentials
@@ -805,21 +811,25 @@ describe('Dev Credentials Sync', () => {
 ## Quick Reference: Where Credentials Are Used
 
 ### Server-Side
+
 - **Seed Script**: `server/prisma/seed.ts` → imports from `config/dev-credentials.ts`
 - **Auth Service**: `src/services/tenant-auth.service.ts` → normalizes email
 - **Repository**: `src/adapters/prisma/tenant.repository.ts` → normalizes on lookup/storage
 - **Routes**: `src/routes/auth.routes.ts` → normalizes before operations
 
 ### Client-Side
+
 - **Login Form**: `client/src/components/LoginForm.tsx` → uses generated credentials
 - **Signup Form**: `client/src/components/SignupForm.tsx` → for test data
 
 ### Tests
+
 - **Auth Service Tests**: `test/services/tenant-auth.service.spec.ts`
 - **Integration Tests**: `test/http/auth-signup.test.ts`
 - **Sync Tests**: `test/integration/dev-credentials-sync.spec.ts`
 
 ### Configuration
+
 - **Dev Credentials**: `server/config/dev-credentials.ts` (SINGLE SOURCE OF TRUTH)
 - **Environment**: `.env.example` (documentation only)
 - **Build Script**: `server/scripts/generate-dev-credentials.ts`
@@ -829,7 +839,9 @@ describe('Dev Credentials Sync', () => {
 ## Common Pitfalls to Avoid
 
 ### Pitfall 1: Forgetting to Normalize in One Layer
+
 **Bad:** Repository normalizes but service doesn't
+
 ```typescript
 // Repository (good)
 async findByEmail(email: string) {
@@ -845,6 +857,7 @@ async login(email: string, password: string) {
 ```
 
 **Good:** Normalize at multiple layers (defense-in-depth)
+
 ```typescript
 // Service normalizes
 async login(email: string, password: string) {
@@ -860,7 +873,9 @@ async findByEmail(email: string) {
 ```
 
 ### Pitfall 2: Hardcoding Credentials in Multiple Places
+
 **Bad:**
+
 ```typescript
 // In LoginForm.tsx
 const testEmail = 'demo@example.com';
@@ -873,11 +888,12 @@ await createUser({ email: 'admin@test.com' });
 ```
 
 **Good:**
+
 ```typescript
 // Single source of truth
 // server/config/dev-credentials.ts
 export const DEV_CREDENTIALS = {
-  platformAdmin: { email: 'demo@example.com', password: '...' }
+  platformAdmin: { email: 'demo@example.com', password: '...' },
 };
 
 // Used everywhere
@@ -886,7 +902,9 @@ const { email, password } = DEV_CREDENTIALS.platformAdmin;
 ```
 
 ### Pitfall 3: Not Testing Case Sensitivity
+
 **Bad:** Tests only use lowercase emails
+
 ```typescript
 it('should login', async () => {
   await request(app)
@@ -897,6 +915,7 @@ it('should login', async () => {
 ```
 
 **Good:** Tests verify case-insensitive lookup
+
 ```typescript
 it('should login with mixed case email', async () => {
   const response = await request(app)
@@ -927,6 +946,7 @@ it('should prevent duplicate signup with different case', async () => {
 ### When to Update Dev Credentials
 
 You should update credentials in `config/dev-credentials.ts` when:
+
 1. Password security requirements change
 2. You want to use different test credentials
 3. Email format needs to change
@@ -948,8 +968,12 @@ You should update credentials in `config/dev-credentials.ts` when:
 ```typescript
 // server/config/dev-credentials.ts
 export const DEV_CREDENTIALS = {
-  platformAdmin: { /* ... */ },
-  testTenant: { /* ... */ },
+  platformAdmin: {
+    /* ... */
+  },
+  testTenant: {
+    /* ... */
+  },
 
   // NEW USER TYPE:
   teamMember: {
@@ -957,11 +981,12 @@ export const DEV_CREDENTIALS = {
     password: 'TeamPassword123!',
     name: 'Team Member',
     description: 'Test team member account',
-  }
+  },
 } as const;
 ```
 
 Then update:
+
 1. Seed script to create this user
 2. Tests to use this credential
 3. Frontend autofill (if needed)
@@ -997,31 +1022,27 @@ router.get('/health/dev-credentials', async (req, res) => {
     validateDevCredentials();
 
     // Verify seed data exists
-    const adminExists = await tenantRepo.findByEmail(
-      DEV_CREDENTIALS.platformAdmin.email
-    );
+    const adminExists = await tenantRepo.findByEmail(DEV_CREDENTIALS.platformAdmin.email);
 
-    const tenantExists = await tenantRepo.findBySlug(
-      DEV_CREDENTIALS.testTenant.slug
-    );
+    const tenantExists = await tenantRepo.findBySlug(DEV_CREDENTIALS.testTenant.slug);
 
     if (!adminExists || !tenantExists) {
       return res.status(503).json({
         status: 'unhealthy',
         message: 'Seed data missing',
-        hint: 'Run: npm run seed'
+        hint: 'Run: npm run seed',
       });
     }
 
     return res.json({
       status: 'healthy',
       credentialsValidated: true,
-      seedDataExists: true
+      seedDataExists: true,
     });
   } catch (error) {
     return res.status(503).json({
       status: 'unhealthy',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -1038,6 +1059,7 @@ These three prevention strategies work together to ensure robust authentication:
 3. **Demo/Dev Credentials Sync** - Generated credentials keep dev data in sync
 
 By implementing these patterns:
+
 - Developers spend less time debugging auth issues
 - Tests are more reliable and maintainable
 - Onboarding new team members is easier

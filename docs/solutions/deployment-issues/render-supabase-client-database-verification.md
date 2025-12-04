@@ -1,5 +1,5 @@
 ---
-title: "Render Deployment Failure: Supabase Client vs Prisma for Database Verification"
+title: 'Render Deployment Failure: Supabase Client vs Prisma for Database Verification'
 category: deployment-issues
 tags: [prisma, supabase, database, render, startup, permissions, postgresql]
 severity: critical
@@ -49,10 +49,7 @@ The `verifyDatabaseConnection()` function in `server/src/config/database.ts` was
 ```typescript
 // ❌ WRONG - Uses Supabase REST API
 const supabase = getSupabaseClient();
-const { data, error } = await supabase
-  .from('Tenant')
-  .select('id')
-  .limit(1);
+const { data, error } = await supabase.from('Tenant').select('id').limit(1);
 ```
 
 **Why this fails:**
@@ -63,6 +60,7 @@ const { data, error } = await supabase
 4. Even with `SERVICE_ROLE_KEY`, the table must be exposed in Supabase dashboard
 
 **Architecture mismatch:**
+
 - MAIS uses **Prisma** for all database queries (direct PostgreSQL connection)
 - Supabase JS client is only for **Storage** and **Auth** APIs
 - Mixing these patterns caused the deployment failure
@@ -74,17 +72,19 @@ const { data, error } = await supabase
 The DI container creates the Prisma client. Verification must happen AFTER this:
 
 **Before (broken):**
+
 ```typescript
 // server/src/index.ts
-await verifyDatabaseConnection();  // Uses Supabase client
-const container = buildContainer(config);  // Creates Prisma
+await verifyDatabaseConnection(); // Uses Supabase client
+const container = buildContainer(config); // Creates Prisma
 ```
 
 **After (fixed):**
+
 ```typescript
 // server/src/index.ts
-const container = buildContainer(config);  // Creates Prisma FIRST
-await verifyDatabaseWithPrisma(container.prisma);  // Uses Prisma
+const container = buildContainer(config); // Creates Prisma FIRST
+await verifyDatabaseWithPrisma(container.prisma); // Uses Prisma
 ```
 
 ### 2. New Prisma-based verification function
@@ -112,12 +112,15 @@ async function verifyDatabaseWithPrisma(prisma: PrismaClient): Promise<void> {
     logger.info(`📊 Database contains ${tenantCount} tenant(s)`);
   } catch (error) {
     const err = error as Error & { code?: string };
-    logger.error({
-      errorName: err.name,
-      errorMessage: err.message,
-      errorCode: err.code,
-      errorStack: err.stack,
-    }, '❌ Database connection verification failed');
+    logger.error(
+      {
+        errorName: err.name,
+        errorMessage: err.message,
+        errorCode: err.code,
+        errorStack: err.stack,
+      },
+      '❌ Database connection verification failed'
+    );
     throw error;
   }
 }
@@ -161,10 +164,10 @@ Added clarifying comment at top of `database.ts`:
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `server/src/index.ts` | Added `verifyDatabaseWithPrisma()`, moved verification after DI build |
-| `server/src/config/database.ts` | Deprecated old function, added clarifying docs |
+| File                            | Change                                                                |
+| ------------------------------- | --------------------------------------------------------------------- |
+| `server/src/index.ts`           | Added `verifyDatabaseWithPrisma()`, moved verification after DI build |
+| `server/src/config/database.ts` | Deprecated old function, added clarifying docs                        |
 
 ## Verification
 
@@ -195,12 +198,12 @@ grep -r "supabase\.from(" server/src | grep -v storage | grep -v test
 
 ### 3. Client Usage Matrix
 
-| Operation | Use This | NOT This |
-|-----------|----------|----------|
+| Operation        | Use This                  | NOT This                 |
+| ---------------- | ------------------------- | ------------------------ |
 | Database queries | `prisma.table.findMany()` | `supabase.from('table')` |
-| File uploads | `supabase.storage.from()` | N/A |
-| Authentication | `supabase.auth.*` | N/A |
-| Raw SQL | `prisma.$queryRaw` | `supabase.rpc()` |
+| File uploads     | `supabase.storage.from()` | N/A                      |
+| Authentication   | `supabase.auth.*`         | N/A                      |
+| Raw SQL          | `prisma.$queryRaw`        | `supabase.rpc()`         |
 
 ### 4. Architecture Rule
 

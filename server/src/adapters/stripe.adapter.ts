@@ -95,7 +95,7 @@ export class StripePaymentAdapter implements PaymentProvider {
   }): Promise<CheckoutSession> {
     // Validate application fee (Stripe requires 0.5% - 50%)
     const minFee = Math.ceil(input.amountCents * 0.005); // 0.5%
-    const maxFee = Math.floor(input.amountCents * 0.50); // 50%
+    const maxFee = Math.floor(input.amountCents * 0.5); // 50%
 
     if (input.applicationFeeAmount < minFee) {
       throw new Error(
@@ -158,11 +158,7 @@ export class StripePaymentAdapter implements PaymentProvider {
 
   async verifyWebhook(payload: string, signature: string): Promise<Stripe.Event> {
     try {
-      const event = this.stripe.webhooks.constructEvent(
-        payload,
-        signature,
-        this.webhookSecret
-      );
+      const event = this.stripe.webhooks.constructEvent(payload, signature, this.webhookSecret);
       return event;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';

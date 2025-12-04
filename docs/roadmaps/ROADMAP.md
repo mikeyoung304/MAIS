@@ -7,28 +7,33 @@
 **Completed in 35 minutes** using momentum-driven development:
 
 **Database:**
+
 - Added `photos` JSON column to Package model
 - Schema: `[{url, filename, size, order}]` - max 5 photos
 
 **Backend:**
+
 - Extended UploadService with package photo methods
 - POST /v1/tenant-admin/packages/:id/photos - Upload with 5MB limit
 - DELETE /v1/tenant-admin/packages/:id/photos/:filename - Delete photo
 - Static serving at /uploads/packages/
 
 **Architecture Decisions:**
+
 - JSON column approach (simpler than separate table for MVP)
 - 5MB limit per photo (vs 2MB for logos)
 - Tenant ownership verification on all operations
 - Order field for future drag-and-drop reordering
 
 **Files Modified:**
+
 - server/prisma/schema.prisma - Added photos column
 - server/src/services/upload.service.ts - Extended upload methods
 - server/src/app.ts - Added static serving route
 - server/src/routes/tenant-admin.routes.ts - Added photo endpoints
 
 **Next Steps:**
+
 - Build PackagePhotoUploader React component
 - Add drag-and-drop interface
 - Wire up to tenant dashboard
@@ -55,6 +60,7 @@
 - ✅ **All Integration Tests Passing** (5/5 tests green)
 
 ### Completed (2025-10-23):
+
 - Database schema with User passwordHash field
 - Prisma migrations and seed script
 - Stripe webhook signature verification
@@ -63,6 +69,7 @@
 - Comprehensive testing suite
 
 ### Next (Phase 2.1):
+
 - Image storage (R2/S3)
 - Analytics (Plausible)
 - SEO polish (OG images, sitemap)
@@ -70,6 +77,7 @@
 ## Stack Migration ✅ COMPLETE (Phase 1 - 2025-10-23)
 
 Migrated from hexagonal architecture to layered architecture to align with rebuild-6.0:
+
 - ✅ **Architecture**: Hexagonal → Layered (domains → services, ports consolidated)
 - ✅ **Package Manager**: pnpm → npm workspaces
 - ✅ **Directory Structure**: apps/api → server, apps/web → client

@@ -42,17 +42,20 @@ tags:
 After implementing the visual editor feature (commit f3db850), a comprehensive code review identified multiple priority issues:
 
 ### P1 Issues (Critical)
+
 1. **Missing useEffect cleanup** - Memory leaks from async operations on unmounted components
 2. **Sequential DB operations** - Creating 1 segment + 3 packages sequentially (800-1600ms latency)
 3. **No transaction wrapper** - Partial failures could leave tenant with incomplete data
 
 ### P2 Issues (Important)
+
 4. **Unsafe type assertions** - `body as Segment[]` bypassing TypeScript safety
 5. **Empty catch blocks** - Errors swallowed silently without logging
 6. **Business logic in route handler** - Default data creation mixed with HTTP handling
 7. **Parameter explosion** - Function with 7 parameters
 
 ### P3 Issues (Nice-to-Have)
+
 10. **Magic numbers** - Hardcoded `basePrice: 0`, `groupingOrder: 1,2,3`
 
 ## Root Cause Analysis
@@ -62,6 +65,7 @@ After implementing the visual editor feature (commit f3db850), a comprehensive c
 **Missing Cleanup**: The `VisualEditorDashboard` component fetched segments in a useEffect without cleanup, causing potential state updates on unmounted components.
 
 **Sequential Operations**: Default packages were created in a `for...of` loop, each awaiting the previous:
+
 ```typescript
 // BEFORE - Sequential (slow)
 for (const pkgData of DEFAULT_PACKAGES) {
@@ -74,12 +78,14 @@ for (const pkgData of DEFAULT_PACKAGES) {
 ### P2 Issues
 
 **Type Assertions**: Local `Segment` interface duplicated contract types:
+
 ```typescript
 // BEFORE - Unsafe
-const segments = body as Segment[];  // Could be wrong shape
+const segments = body as Segment[]; // Could be wrong shape
 ```
 
 **Empty Catch**: Errors were silently ignored:
+
 ```typescript
 // BEFORE - Silent failure
 } catch {
@@ -104,7 +110,7 @@ useEffect(() => {
   const fetchSegments = async () => {
     try {
       const { status, body } = await api.tenantAdminGetSegments();
-      if (isCancelled) return;  // Don't update state if unmounted
+      if (isCancelled) return; // Don't update state if unmounted
       if (status === 200 && body) {
         setSegments(body);
         if (body.length === 1) {
@@ -113,9 +119,9 @@ useEffect(() => {
       }
     } catch (error) {
       if (isCancelled) return;
-      logger.warn("Failed to load segments", {
+      logger.warn('Failed to load segments', {
         error,
-        component: "VisualEditorDashboard"
+        component: 'VisualEditorDashboard',
       });
     }
   };
@@ -208,11 +214,14 @@ export class TenantOnboardingService {
 
       const packages = await Promise.all(packagePromises);
 
-      logger.info({
-        tenantId,
-        segmentId: segment.id,
-        packagesCreated: packages.length,
-      }, 'Created default segment and packages for new tenant');
+      logger.info(
+        {
+          tenantId,
+          segmentId: segment.id,
+          packagesCreated: packages.length,
+        },
+        'Created default segment and packages for new tenant'
+      );
 
       return { segment, packages };
     });
@@ -233,9 +242,9 @@ const [segments, setSegments] = useState<Segment[]>([]);
 setSegments(body as Segment[]);
 
 // AFTER - Import from contracts
-import type { SegmentDto } from "@macon/contracts";
+import type { SegmentDto } from '@macon/contracts';
 const [segments, setSegments] = useState<SegmentDto[]>([]);
-setSegments(body);  // Type-safe, no assertion needed
+setSegments(body); // Type-safe, no assertion needed
 ```
 
 ### P2 Fix 5: Error Logging
@@ -320,10 +329,11 @@ expect(packages[1].slug).toBe('standard-package');
 expect(packages[2].slug).toBe('premium-package');
 
 // All packages linked to default segment
-expect(packages.every(p => p.segmentId === segments[0].id)).toBe(true);
+expect(packages.every((p) => p.segmentId === segments[0].id)).toBe(true);
 ```
 
 ### Results
+
 - **907 tests passing** (no regressions)
 - **TypeScript compilation** passes
 - **Performance improvement**: ~400ms vs ~1200ms for default data creation
@@ -341,18 +351,21 @@ useEffect(() => {
   const fetchData = async () => {
     const data = await api.getData();
     if (!isCancelled) {
-      setData(data);  // Only update if still mounted
+      setData(data); // Only update if still mounted
     }
   };
   fetchData();
 
-  return () => { isCancelled = true; };
+  return () => {
+    isCancelled = true;
+  };
 }, []);
 ```
 
 ### Database Operation Patterns
 
 **Use transactions for multi-step operations:**
+
 ```typescript
 // Atomic: all succeed or all rollback
 await prisma.$transaction(async (tx) => {
@@ -362,6 +375,7 @@ await prisma.$transaction(async (tx) => {
 ```
 
 **Parallelize independent operations:**
+
 ```typescript
 // Within transaction, parallelize when possible
 const [a, b, c] = await Promise.all([
@@ -374,17 +388,22 @@ const [a, b, c] = await Promise.all([
 ### Type Safety Patterns
 
 **Import types from contracts, not local definitions:**
+
 ```typescript
 // ✅ CORRECT
-import type { SegmentDto } from "@macon/contracts";
+import type { SegmentDto } from '@macon/contracts';
 
 // ❌ WRONG - Duplicate interface
-interface Segment { id: string; name: string; }
+interface Segment {
+  id: string;
+  name: string;
+}
 ```
 
 ### Code Organization Patterns
 
 **Extract business logic to services:**
+
 ```typescript
 // Route handler: thin, validation + delegation
 router.post('/signup', async (req, res) => {
@@ -400,6 +419,7 @@ class OnboardingService {
 ```
 
 **Use options objects for 4+ parameters:**
+
 ```typescript
 interface CreateUserOptions {
   email: string;
@@ -414,36 +434,40 @@ function createUser(options: CreateUserOptions) { ... }
 ## Checklist for Future Code Reviews
 
 ### React Hooks
+
 - [ ] Do useEffect hooks have cleanup functions?
 - [ ] Are async operations guarded against unmounted updates?
 - [ ] Are errors logged, not swallowed silently?
 
 ### Database Operations
+
 - [ ] Are multi-step mutations wrapped in transactions?
 - [ ] Are independent operations parallelized with Promise.all?
 - [ ] Is there rollback/cleanup on errors?
 
 ### Type Safety
+
 - [ ] Are contract types imported, not duplicated locally?
 - [ ] Are type assertions (`as`) avoided or justified?
 - [ ] Are API responses validated before use?
 
 ### Code Organization
+
 - [ ] Is business logic in service layer, not routes?
 - [ ] Do functions with 4+ params use options objects?
 - [ ] Are magic numbers extracted to named constants?
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `client/src/features/tenant-admin/visual-editor/VisualEditorDashboard.tsx` | AbortController cleanup, contract types, error logging |
-| `server/src/services/tenant-onboarding.service.ts` | **NEW** - Service with transaction + parallel execution |
-| `server/src/routes/auth.routes.ts` | Options object pattern, use onboarding service |
-| `server/src/routes/index.ts` | Wire up tenantOnboarding service |
-| `server/src/app.ts` | Pass tenantOnboarding to router |
-| `server/src/di.ts` | Create and export TenantOnboardingService |
-| `server/test/http/auth-signup.test.ts` | Test for default segment/packages |
+| File                                                                       | Change                                                  |
+| -------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `client/src/features/tenant-admin/visual-editor/VisualEditorDashboard.tsx` | AbortController cleanup, contract types, error logging  |
+| `server/src/services/tenant-onboarding.service.ts`                         | **NEW** - Service with transaction + parallel execution |
+| `server/src/routes/auth.routes.ts`                                         | Options object pattern, use onboarding service          |
+| `server/src/routes/index.ts`                                               | Wire up tenantOnboarding service                        |
+| `server/src/app.ts`                                                        | Pass tenantOnboarding to router                         |
+| `server/src/di.ts`                                                         | Create and export TenantOnboardingService               |
+| `server/test/http/auth-signup.test.ts`                                     | Test for default segment/packages                       |
 
 ## Related Documentation
 

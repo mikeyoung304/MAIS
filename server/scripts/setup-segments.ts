@@ -21,9 +21,11 @@ const SEGMENTS = [
     heroTitle: 'Get Started Fast',
     heroSubtitle: 'Essential services for solopreneurs',
     heroImage: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=1600&q=80',
-    description: 'Perfect for solo business owners ready to offload admin work. Our Starter packages include scheduling, basic marketing automation, and a professional web presence to help you focus on your craft.',
+    description:
+      'Perfect for solo business owners ready to offload admin work. Our Starter packages include scheduling, basic marketing automation, and a professional web presence to help you focus on your craft.',
     metaTitle: 'Starter Packages | Macon AI Solutions',
-    metaDescription: 'Essential business services for solopreneurs. AI-powered scheduling, marketing, and web presence.',
+    metaDescription:
+      'Essential business services for solopreneurs. AI-powered scheduling, marketing, and web presence.',
     sortOrder: 0,
   },
   {
@@ -32,9 +34,11 @@ const SEGMENTS = [
     heroTitle: 'Scale With Confidence',
     heroSubtitle: 'Full-service support for growing businesses',
     heroImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1600&q=80',
-    description: 'Ready to scale? Our Growth packages include advanced marketing automation, CRM integration, client onboarding systems, and data-driven insights to help you grow sustainably.',
+    description:
+      'Ready to scale? Our Growth packages include advanced marketing automation, CRM integration, client onboarding systems, and data-driven insights to help you grow sustainably.',
     metaTitle: 'Growth Packages | Macon AI Solutions',
-    metaDescription: 'Full-service business support for growing companies. Marketing automation, CRM, and data-driven growth.',
+    metaDescription:
+      'Full-service business support for growing companies. Marketing automation, CRM, and data-driven growth.',
     sortOrder: 1,
   },
   {
@@ -43,9 +47,11 @@ const SEGMENTS = [
     heroTitle: 'Your Complete Back Office',
     heroSubtitle: 'Comprehensive solutions for established businesses',
     heroImage: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&q=80',
-    description: 'Go all out with enterprise-level support. Our comprehensive packages include dedicated account management, custom integrations, multi-location support, and white-glove service.',
+    description:
+      'Go all out with enterprise-level support. Our comprehensive packages include dedicated account management, custom integrations, multi-location support, and white-glove service.',
     metaTitle: 'Enterprise Solutions | Macon AI Solutions',
-    metaDescription: 'Enterprise business solutions with dedicated support, custom integrations, and white-glove service.',
+    metaDescription:
+      'Enterprise business solutions with dedicated support, custom integrations, and white-glove service.',
     sortOrder: 2,
   },
 ];
@@ -145,7 +151,7 @@ async function main() {
       where: { tenantId: tenant.id },
     });
 
-    const segmentMap = new Map(segments.map(s => [s.slug, s.id]));
+    const segmentMap = new Map(segments.map((s) => [s.slug, s.id]));
 
     for (const [packageSlug, segmentSlug] of Object.entries(PACKAGE_SEGMENT_MAP)) {
       const segmentId = segmentMap.get(segmentSlug);
@@ -178,7 +184,8 @@ async function main() {
 
     const packagePhotos: Record<string, string> = {
       'garden-gathering': 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&q=80',
-      'farmhouse-reception': 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800&q=80',
+      'farmhouse-reception':
+        'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800&q=80',
       'barn-ceremony': 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80',
     };
 
@@ -195,12 +202,14 @@ async function main() {
       // Check if photos already exist
       const existingPhotos = pkg.photos ? JSON.parse(pkg.photos as string) : [];
       if (existingPhotos.length === 0) {
-        const photos = JSON.stringify([{
-          url: photoUrl,
-          filename: `${packageSlug}.jpg`,
-          size: 0,
-          order: 0,
-        }]);
+        const photos = JSON.stringify([
+          {
+            url: photoUrl,
+            filename: `${packageSlug}.jpg`,
+            size: 0,
+            order: 0,
+          },
+        ]);
 
         await prisma.package.update({
           where: { id: pkg.id },
@@ -231,10 +240,9 @@ async function main() {
     for (const segment of finalSegments) {
       console.log(`${segment.name} (${segment.slug})`);
       console.log(`   Hero: ${segment.heroTitle}`);
-      console.log(`   Packages: ${segment.packages.map(p => p.name).join(', ') || 'None'}`);
+      console.log(`   Packages: ${segment.packages.map((p) => p.name).join(', ') || 'None'}`);
       console.log('');
     }
-
   } catch (error) {
     console.error('\n❌ Error:', error);
     throw error;

@@ -2,21 +2,22 @@
 
 ## Status Overview
 
-| Dimension | Status | Note |
-|-----------|--------|------|
-| **Architecture** | ✅ Production-Ready | 95% multi-tenant isolation |
-| **Code Quality** | ⚠️ Regressed | 83 integration tests failing (was 100% in Sprint 10) |
-| **Payment System** | ✅ Complete | Stripe integration ready, revenue-sharing verified |
-| **Database** | ✅ Complete | 13 migrations, PostgreSQL with Prisma ORM |
-| **First Tenant** | ❌ Not Ready | Little Bit Farm is shell, needs real data |
-| **Cloud Storage** | ❌ Missing | Images on local filesystem (not persistent) |
-| **Security** | ✅ 70% OWASP | Multi-tenant tested, encryption in place |
+| Dimension          | Status              | Note                                                 |
+| ------------------ | ------------------- | ---------------------------------------------------- |
+| **Architecture**   | ✅ Production-Ready | 95% multi-tenant isolation                           |
+| **Code Quality**   | ⚠️ Regressed        | 83 integration tests failing (was 100% in Sprint 10) |
+| **Payment System** | ✅ Complete         | Stripe integration ready, revenue-sharing verified   |
+| **Database**       | ✅ Complete         | 13 migrations, PostgreSQL with Prisma ORM            |
+| **First Tenant**   | ❌ Not Ready        | Little Bit Farm is shell, needs real data            |
+| **Cloud Storage**  | ❌ Missing          | Images on local filesystem (not persistent)          |
+| **Security**       | ✅ 70% OWASP        | Multi-tenant tested, encryption in place             |
 
 ---
 
 ## Critical Blockers (Must Fix Before Launch)
 
 ### 1. Test Suite Regression (8-11 hours)
+
 - **Issue:** 83 integration tests failing
 - **Root Cause:** Webhook integration tests not refactored to modern helpers
 - **Fix Required:**
@@ -26,6 +27,7 @@
 - **Impact:** Blocks payment processing verification
 
 ### 2. Production Tenant Setup (3-4 hours)
+
 - **Issue:** Zero real tenants, only Little Bit Farm shell
 - **Fix Required:**
   - Upload professional photos
@@ -35,6 +37,7 @@
 - **Impact:** Cannot demo revenue-sharing model
 
 ### 3. Cloud Storage Configuration (2-3 hours)
+
 - **Issue:** Photos stored on local filesystem
 - **Problem:** Lost on every production redeploy
 - **Fix Required:**
@@ -47,13 +50,13 @@
 
 ## Non-Blockers (Can Add Post-Launch)
 
-| Item | Effort | MVP Critical? |
-|------|--------|---------------|
-| Email delivery (Postmark) | 1h | No (file-sink fallback exists) |
-| Segment navigation UI | 3-4h | No (backend complete) |
-| Add-ons UI integration | 2-3h | No (backend complete) |
-| Square integration | 48h | No (Stripe ready) |
-| Advanced analytics | TBD | No (not scoped for MVP) |
+| Item                      | Effort | MVP Critical?                  |
+| ------------------------- | ------ | ------------------------------ |
+| Email delivery (Postmark) | 1h     | No (file-sink fallback exists) |
+| Segment navigation UI     | 3-4h   | No (backend complete)          |
+| Add-ons UI integration    | 2-3h   | No (backend complete)          |
+| Square integration        | 48h    | No (Stripe ready)              |
+| Advanced analytics        | TBD    | No (not scoped for MVP)        |
 
 ---
 
@@ -72,6 +75,7 @@
 ## MVP Launch Checklist
 
 ### Pre-Launch (Must Complete)
+
 - [ ] Test suite: 100% pass rate
 - [ ] Webhook tests: 12 tests implemented
 - [ ] Cloud storage: Configured & tested
@@ -82,6 +86,7 @@
 - [ ] Documentation: Go-live runbook ready
 
 ### Day-of-Launch
+
 - [ ] Production deployment
 - [ ] Health checks: API, database, storage
 - [ ] Smoke test: Create test booking
@@ -99,6 +104,7 @@
 **User Mention:** Square sandbox
 
 **Options:**
+
 1. **Use Stripe** (0 hours) - Ready now, best for MVP
 2. **Implement Square** (48 hours) - Not in scope for MVP timeline
 
@@ -109,6 +115,7 @@
 ## Key Success Metrics
 
 ✅ **Functional:**
+
 - Little Bit Farm storefront loads < 2s
 - All packages display with photos
 - Booking form → Stripe → confirmation flow works
@@ -116,6 +123,7 @@
 - Admin dashboard shows new booking
 
 ✅ **Technical:**
+
 - 100% test pass rate
 - Zero cross-tenant data leakage
 - Images served from CDN (not local)
@@ -123,6 +131,7 @@
 - WCAG AA accessibility
 
 ✅ **Business:**
+
 - Commission: 5-10% per tenant agreement
 - Zero lost bookings due to tech issues
 - Zero failed payments due to our code
@@ -145,6 +154,7 @@
 **Full Analysis:** `/Users/mikeyoung/CODING/MAIS/MVP_REQUIREMENTS_GAP_ANALYSIS.md`
 
 **Key Project Files:**
+
 - Architecture: `/Users/mikeyoung/CODING/MAIS/ARCHITECTURE.md`
 - Development Guide: `/Users/mikeyoung/CODING/MAIS/CLAUDE.md`
 - Production Setup Plan: `/Users/mikeyoung/CODING/MAIS/plans/little-bit-farm-production-setup.md`

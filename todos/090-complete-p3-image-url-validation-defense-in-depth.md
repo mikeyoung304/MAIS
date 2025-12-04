@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "090"
+issue_id: '090'
 tags:
   - code-review
   - security
@@ -19,6 +19,7 @@ While the backend validates URLs in create/update DTOs, the response DTO (`Segme
 ## Findings
 
 ### Discovery
+
 Security review noted:
 
 ```typescript
@@ -30,17 +31,21 @@ heroImage: z.string().url().nullable().optional(),
 ```
 
 ### Current Protection
+
 - Backend validates URLs on create/update
 - React's JSX escapes text content (prevents script injection)
 - `<img src>` doesn't execute JavaScript in modern browsers
 
 ### Theoretical Risk
+
 If database were compromised, malicious URLs could be served. However:
+
 - `javascript:` URLs don't execute in img src
 - `data:` URLs with HTML would just show broken image
 - Attack requires database compromise first
 
 ### Assessment
+
 LOW RISK - Backend validation is the primary control. This is a defense-in-depth enhancement.
 
 ## Proposed Solutions
@@ -64,10 +69,12 @@ export function safeImageUrl(url: string | null): string | null {
 ```
 
 **Pros:**
+
 - Defense-in-depth
 - Validates protocol
 
 **Cons:**
+
 - Redundant with backend validation
 - Slight performance overhead
 
@@ -79,10 +86,12 @@ export function safeImageUrl(url: string | null): string | null {
 Add `img-src https:` to CSP headers in Express.
 
 **Pros:**
+
 - Browser-level protection
 - Covers all images
 
 **Cons:**
+
 - May break development (localhost)
 - Requires server config
 
@@ -94,10 +103,12 @@ Add `img-src https:` to CSP headers in Express.
 Add comment explaining why frontend validation is not needed.
 
 **Pros:**
+
 - Documents security reasoning
 - No code changes
 
 **Cons:**
+
 - No additional protection
 
 **Effort:** Small (5 min)
@@ -110,7 +121,9 @@ Add comment explaining why frontend validation is not needed.
 ### Findings During Review
 
 #### 1. Frontend Validation Already Exists ✅
+
 `client/src/lib/sanitize-url.ts` implements `sanitizeImageUrl()`:
+
 ```typescript
 export const sanitizeImageUrl = (url: string | undefined): string => {
   if (!url) return '';
@@ -135,7 +148,9 @@ export const sanitizeImageUrl = (url: string | undefined): string => {
 **Status:** In use by BrandingPreview and PackageList components ✅
 
 #### 2. CSP Headers Already Configured ✅
+
 `server/src/app.ts` (lines 51-56) includes:
+
 ```typescript
 imgSrc: [
   "'self'",
@@ -148,7 +163,9 @@ imgSrc: [
 **Status:** Prevents non-HTTPS, non-data: image loads at browser level ✅
 
 #### 3. Backend Validation Already Exists ✅
+
 `packages/contracts/src/dto.ts`:
+
 - Response DTO (line 433): `heroImage: z.string().nullable()`
 - Create DTO (line 450): `heroImage: z.string().url().or(z.literal('')).optional()`
 - Update DTO (line 465): `heroImage: z.string().url().or(z.literal('')).optional()`
@@ -158,10 +175,12 @@ imgSrc: [
 #### 4. Usage Gaps Identified 🟡
 
 **NOT using sanitizeImageUrl:**
+
 - `client/src/app/TenantStorefrontLayout.tsx` line 100: Direct `src={tenant.branding.logoUrl}`
 - `client/src/features/storefront/ChoiceCardBase.tsx` line 81: Direct `src={imageUrl}`
 
 **Using sanitizeImageUrl:**
+
 - `client/src/features/tenant-admin/branding/components/BrandingPreview.tsx` ✅
 - `client/src/features/tenant-admin/packages/PackageList.tsx` ✅
 
@@ -215,13 +234,16 @@ Three layers already protect against URL injection:
 ## Technical Details
 
 ### Affected Files
+
 - `client/src/features/storefront/ChoiceCardBase.tsx`
 - `packages/contracts/src/dto.ts` (documentation)
 
 ### Components
+
 - ChoiceCardBase
 
 ### Database Changes
+
 None
 
 ## Acceptance Criteria
@@ -234,10 +256,10 @@ None
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2025-11-29 | Created during code review | Security review identified theoretical risk |
-| 2025-12-03 | Security audit review | Found 3-layer defense already in place; CSP+backend sufficient; frontend validation optional for consistency |
+| Date       | Action                     | Learnings                                                                                                    |
+| ---------- | -------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 2025-11-29 | Created during code review | Security review identified theoretical risk                                                                  |
+| 2025-12-03 | Security audit review      | Found 3-layer defense already in place; CSP+backend sufficient; frontend validation optional for consistency |
 
 ## Resources
 

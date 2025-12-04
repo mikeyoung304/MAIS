@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "097"
+issue_id: '097'
 tags: [code-review, security, ui-redesign]
 dependencies: []
 ---
@@ -26,10 +26,11 @@ The StripeConnectCard component redirects users to Stripe URLs without validatin
 window.location.href = result.body.url;
 
 // Line 152 - Opens in new tab without validation
-window.open(result.body.url, "_blank");
+window.open(result.body.url, '_blank');
 ```
 
 **Attack Scenario:**
+
 1. Attacker compromises backend API or performs response manipulation
 2. Backend returns malicious URL in `result.body.url`
 3. User is redirected to attacker-controlled phishing site
@@ -37,6 +38,7 @@ window.open(result.body.url, "_blank");
 ## Proposed Solutions
 
 ### Solution 1: URL Validation Helper (Recommended)
+
 **Pros:** Simple, focused fix
 **Cons:** Requires maintenance if Stripe changes domains
 **Effort:** Small (30 min)
@@ -46,8 +48,7 @@ window.open(result.body.url, "_blank");
 const validateStripeUrl = (url: string): boolean => {
   try {
     const parsed = new URL(url);
-    return parsed.hostname.endsWith('.stripe.com') ||
-           parsed.hostname === 'stripe.com';
+    return parsed.hostname.endsWith('.stripe.com') || parsed.hostname === 'stripe.com';
   } catch {
     return false;
   }
@@ -56,7 +57,7 @@ const validateStripeUrl = (url: string): boolean => {
 // Before redirect
 if (result.status === 200 && result.body?.url) {
   if (!validateStripeUrl(result.body.url)) {
-    setError("Invalid redirect URL from server");
+    setError('Invalid redirect URL from server');
     return;
   }
   window.location.href = result.body.url;
@@ -64,6 +65,7 @@ if (result.status === 200 && result.body?.url) {
 ```
 
 ### Solution 2: Backend-Only Validation
+
 **Pros:** Single source of truth
 **Cons:** Doesn't protect against MITM
 **Effort:** Medium
@@ -78,9 +80,11 @@ Implement Solution 1 - client-side URL validation as defense-in-depth.
 ## Technical Details
 
 **Affected files:**
+
 - `client/src/features/tenant-admin/TenantDashboard/StripeConnectCard.tsx`
 
 **Components affected:**
+
 - StripeConnectCard
 
 ## Acceptance Criteria
@@ -92,8 +96,8 @@ Implement Solution 1 - client-side URL validation as defense-in-depth.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                         |
+| ---------- | ------------------------ | --------------------------------- |
 | 2025-11-30 | Created from code review | Security vulnerability identified |
 
 ## Resources

@@ -75,7 +75,6 @@ async function setupNewTenant() {
 
     console.log('✅ Stripe account created:', stripeAccountId);
     // Output: acct_1234567890abcdef
-
   } catch (error) {
     console.error('❌ Failed to create Stripe account:', error);
   }
@@ -83,6 +82,7 @@ async function setupNewTenant() {
 ```
 
 **Result:**
+
 - Stripe Express account created
 - `tenant.stripeAccountId` set to `acct_...`
 - `tenant.stripeOnboarded` set to `false` (pending onboarding)
@@ -100,18 +100,13 @@ async function generateOnboardingForTenant(tenantId: string) {
     const refreshUrl = 'https://yourdomain.com/onboarding/refresh';
     const returnUrl = 'https://yourdomain.com/onboarding/complete';
 
-    const onboardingUrl = await stripeConnect.createOnboardingLink(
-      tenantId,
-      refreshUrl,
-      returnUrl
-    );
+    const onboardingUrl = await stripeConnect.createOnboardingLink(tenantId, refreshUrl, returnUrl);
 
     console.log('✅ Onboarding URL:', onboardingUrl);
     // Tenant completes onboarding at this URL
 
     // URL expires after 24 hours
     // Redirect tenant to onboardingUrl
-
   } catch (error) {
     console.error('❌ Failed to create onboarding link:', error);
   }
@@ -119,6 +114,7 @@ async function generateOnboardingForTenant(tenantId: string) {
 ```
 
 **Onboarding Flow:**
+
 1. Platform generates onboarding link
 2. Tenant clicks link → redirected to Stripe
 3. Tenant fills out business info, bank details, tax info
@@ -145,7 +141,6 @@ async function checkTenantOnboardingStatus(tenantId: string) {
     }
 
     return isOnboarded;
-
   } catch (error) {
     console.error('❌ Failed to check onboarding status:', error);
   }
@@ -153,6 +148,7 @@ async function checkTenantOnboardingStatus(tenantId: string) {
 ```
 
 **Database Update:**
+
 - Sets `tenant.stripeOnboarded = true` if `account.charges_enabled === true`
 
 ---
@@ -162,10 +158,7 @@ async function checkTenantOnboardingStatus(tenantId: string) {
 For advanced use cases, store tenant's restricted API key:
 
 ```typescript
-async function storeRestrictedKeyForTenant(
-  tenantId: string,
-  restrictedKey: string
-) {
+async function storeRestrictedKeyForTenant(tenantId: string, restrictedKey: string) {
   try {
     // Validate key format
     if (!restrictedKey.startsWith('sk_test_') && !restrictedKey.startsWith('sk_live_')) {
@@ -176,7 +169,6 @@ async function storeRestrictedKeyForTenant(
     await stripeConnect.storeRestrictedKey(tenantId, restrictedKey);
 
     console.log('✅ Encrypted Stripe key stored for tenant');
-
   } catch (error) {
     console.error('❌ Failed to store restricted key:', error);
   }
@@ -184,6 +176,7 @@ async function storeRestrictedKeyForTenant(
 ```
 
 **Security:**
+
 - Key encrypted using AES-256-GCM
 - Stored in `tenant.secrets.stripe` JSON field
 - Only decryptable with `TENANT_SECRETS_ENCRYPTION_KEY`
@@ -211,7 +204,6 @@ async function getDecryptedKeyForTenant(tenantId: string) {
       console.log('⚠️  No Stripe key found for tenant');
       return null;
     }
-
   } catch (error) {
     console.error('❌ Failed to retrieve Stripe key:', error);
   }
@@ -234,7 +226,6 @@ async function generateDashboardLink(tenantId: string) {
 
     // Redirect tenant to dashboardUrl
     // They can view payouts, transactions, settings
-
   } catch (error) {
     console.error('❌ Failed to create dashboard link:', error);
   }
@@ -242,6 +233,7 @@ async function generateDashboardLink(tenantId: string) {
 ```
 
 **Use Case:**
+
 - Tenant wants to view payout schedule
 - Tenant wants to update bank account
 - Tenant wants to see transaction history
@@ -271,7 +263,6 @@ async function getTenantAccountInfo(tenantId: string) {
       console.log('⚠️  Tenant does not have Stripe account');
       return null;
     }
-
   } catch (error) {
     console.error('❌ Failed to retrieve account details:', error);
   }
@@ -320,7 +311,7 @@ async function completeOnboardingFlow(
     // (In real app, this would be triggered by webhook or return URL)
 
     // Simulate checking after some time
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     const isOnboarded = await stripeConnect.checkOnboardingStatus(tenantId);
 
@@ -331,12 +322,10 @@ async function completeOnboardingFlow(
       // Optional: Create dashboard link
       const dashboardUrl = await stripeConnect.createLoginLink(tenantId);
       console.log('📊 Dashboard:', dashboardUrl);
-
     } else {
       console.log('⚠️  Onboarding not yet complete');
       console.log('💡 Tenant needs to complete the onboarding form');
     }
-
   } catch (error) {
     console.error('❌ Onboarding flow failed:', error);
   }
@@ -364,7 +353,6 @@ async function deleteTenantsStripeAccount(tenantId: string) {
 
     console.log('⚠️  Stripe account deleted');
     console.log('Database cleared: stripeAccountId, stripeOnboarded, secrets');
-
   } catch (error) {
     console.error('❌ Failed to delete account:', error);
   }
@@ -372,6 +360,7 @@ async function deleteTenantsStripeAccount(tenantId: string) {
 ```
 
 **Use Cases:**
+
 - Tenant closes business
 - Tenant requests account deletion
 - Testing/development cleanup
@@ -432,11 +421,7 @@ Common errors and how to handle them:
 ```typescript
 async function handleErrors(tenantId: string) {
   try {
-    await stripeConnect.createConnectedAccount(
-      tenantId,
-      'test@example.com',
-      'Test Business'
-    );
+    await stripeConnect.createConnectedAccount(tenantId, 'test@example.com', 'Test Business');
   } catch (error) {
     if (error instanceof Error) {
       // Stripe API error
@@ -474,6 +459,7 @@ async function handleErrors(tenantId: string) {
 ### Local Development
 
 1. **Use Stripe Test Mode:**
+
    ```bash
    STRIPE_SECRET_KEY=sk_test_...  # NOT sk_live_
    ```
@@ -533,6 +519,7 @@ model Tenant {
 ## Support
 
 For issues or questions:
+
 1. Check server logs for detailed error messages
 2. Verify environment variables are set correctly
 3. Test with Stripe test mode before going live

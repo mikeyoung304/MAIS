@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { InputEnhanced } from "@/components/ui/input-enhanced";
-import { Logo } from "@/components/brand/Logo";
-import { ErrorSummary, type FormError } from "@/components/ui/ErrorSummary";
-import { Lock, ArrowLeft, CheckCircle, XCircle, AlertCircle } from "lucide-react";
-import { useForm } from "@/hooks/useForm";
-import { api } from "@/lib/api";
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { InputEnhanced } from '@/components/ui/input-enhanced';
+import { Logo } from '@/components/brand/Logo';
+import { ErrorSummary, type FormError } from '@/components/ui/ErrorSummary';
+import { Lock, ArrowLeft, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { useForm } from '@/hooks/useForm';
+import { api } from '@/lib/api';
 
 /**
  * Reset Password Page
@@ -17,7 +17,7 @@ import { api } from "@/lib/api";
  */
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  const token = searchParams.get('token');
 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -25,14 +25,14 @@ export function ResetPasswordPage() {
   const [validationErrors, setValidationErrors] = useState<FormError[]>([]);
 
   const { values, handleChange } = useForm({
-    password: "",
-    confirmPassword: "",
+    password: '',
+    confirmPassword: '',
   });
 
   // Check if token is present
   useEffect(() => {
     if (!token) {
-      setError("Invalid or missing reset token. Please request a new password reset link.");
+      setError('Invalid or missing reset token. Please request a new password reset link.');
     }
   }, [token]);
 
@@ -43,21 +43,27 @@ export function ResetPasswordPage() {
     const errors: FormError[] = [];
 
     if (!values.password) {
-      errors.push({ field: "password", message: "Password is required" });
+      errors.push({ field: 'password', message: 'Password is required' });
     } else if (values.password.length < 8) {
-      errors.push({ field: "password", message: "Password must be at least 8 characters" });
+      errors.push({ field: 'password', message: 'Password must be at least 8 characters' });
     } else if (!/[A-Z]/.test(values.password)) {
-      errors.push({ field: "password", message: "Password must contain at least one uppercase letter" });
+      errors.push({
+        field: 'password',
+        message: 'Password must contain at least one uppercase letter',
+      });
     } else if (!/[a-z]/.test(values.password)) {
-      errors.push({ field: "password", message: "Password must contain at least one lowercase letter" });
+      errors.push({
+        field: 'password',
+        message: 'Password must contain at least one lowercase letter',
+      });
     } else if (!/[0-9]/.test(values.password)) {
-      errors.push({ field: "password", message: "Password must contain at least one number" });
+      errors.push({ field: 'password', message: 'Password must contain at least one number' });
     }
 
     if (!values.confirmPassword) {
-      errors.push({ field: "confirmPassword", message: "Please confirm your password" });
+      errors.push({ field: 'confirmPassword', message: 'Please confirm your password' });
     } else if (values.password !== values.confirmPassword) {
-      errors.push({ field: "confirmPassword", message: "Passwords do not match" });
+      errors.push({ field: 'confirmPassword', message: 'Passwords do not match' });
     }
 
     return errors;
@@ -79,7 +85,7 @@ export function ResetPasswordPage() {
     }
 
     if (!token) {
-      setError("Invalid reset token");
+      setError('Invalid reset token');
       return;
     }
 
@@ -94,13 +100,13 @@ export function ResetPasswordPage() {
       });
 
       if (response.status !== 200) {
-        throw new Error("Failed to reset password");
+        throw new Error('Failed to reset password');
       }
 
       // Success
       setIsSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setIsLoading(false);
     }
@@ -128,8 +134,7 @@ export function ResetPasswordPage() {
               <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-white mb-2">Invalid Link</h2>
               <p className="text-white/70 mb-6">
-                This password reset link is invalid or has expired.
-                Please request a new one.
+                This password reset link is invalid or has expired. Please request a new one.
               </p>
               <Link to="/forgot-password">
                 <Button className="w-full bg-macon-orange hover:bg-macon-orange-dark text-white">
@@ -157,8 +162,8 @@ export function ResetPasswordPage() {
               <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-white mb-2">Password Reset!</h2>
               <p className="text-white/70 mb-6">
-                Your password has been successfully reset.
-                You can now log in with your new password.
+                Your password has been successfully reset. You can now log in with your new
+                password.
               </p>
               <Link to="/login">
                 <Button className="w-full bg-macon-orange hover:bg-macon-orange-dark text-white text-xl h-14">
@@ -190,25 +195,23 @@ export function ResetPasswordPage() {
         <Card colorScheme="navy" className="mx-auto">
           <CardHeader>
             <CardTitle className="text-center text-white text-3xl">Reset Password</CardTitle>
-            <p className="text-center text-white/70 text-sm mt-2">
-              Enter your new password
-            </p>
+            <p className="text-center text-white/70 text-sm mt-2">Enter your new password</p>
           </CardHeader>
           <CardContent>
             {/* Validation Errors */}
-            <ErrorSummary
-              errors={validationErrors}
-              onDismiss={() => setValidationErrors([])}
-            />
+            <ErrorSummary errors={validationErrors} onDismiss={() => setValidationErrors([])} />
 
             {/* Server Error */}
             {error && (
-              <div role="alert" className="mb-6 p-4 bg-red-900/50 border border-red-400 text-red-100 rounded">
+              <div
+                role="alert"
+                className="mb-6 p-4 bg-red-900/50 border border-red-400 text-red-100 rounded"
+              >
                 <div className="flex items-start gap-2">
                   <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
                   <div className="flex-1">
                     <p>{error}</p>
-                    {error.includes("expired") && (
+                    {error.includes('expired') && (
                       <Link
                         to="/forgot-password"
                         className="mt-2 inline-block text-sm underline hover:text-white"
@@ -226,7 +229,7 @@ export function ResetPasswordPage() {
                 id="password"
                 type="password"
                 value={values.password}
-                onChange={(e) => handleChange("password", e.target.value)}
+                onChange={(e) => handleChange('password', e.target.value)}
                 label="New Password"
                 floatingLabel
                 leftIcon={<Lock className="w-5 h-5 text-white/60" />}
@@ -240,7 +243,7 @@ export function ResetPasswordPage() {
                 id="confirmPassword"
                 type="password"
                 value={values.confirmPassword}
-                onChange={(e) => handleChange("confirmPassword", e.target.value)}
+                onChange={(e) => handleChange('confirmPassword', e.target.value)}
                 label="Confirm Password"
                 floatingLabel
                 leftIcon={<Lock className="w-5 h-5 text-white/60" />}

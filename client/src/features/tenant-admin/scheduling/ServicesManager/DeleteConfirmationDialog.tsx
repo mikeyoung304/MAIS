@@ -7,8 +7,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import type { DeleteConfirmationDialogProps } from "./types";
+} from '@/components/ui/alert-dialog';
+import type { DeleteConfirmationDialogProps } from './types';
 
 export function DeleteConfirmationDialog({
   isOpen,
@@ -23,12 +23,12 @@ export function DeleteConfirmationDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Service</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete the service{" "}
+            Are you sure you want to delete the service{' '}
             <span className="font-semibold">{serviceToDelete?.name}</span>?
             <br />
             <br />
-            This action cannot be undone. Any availability rules or appointments
-            associated with this service may be affected.
+            This action cannot be undone. Any availability rules or appointments associated with
+            this service may be affected.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

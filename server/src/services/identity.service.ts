@@ -31,8 +31,8 @@ export class IdentityService {
     };
 
     const token = jwt.sign(payload, this.jwtSecret, {
-      algorithm: 'HS256',  // Explicit algorithm prevents confusion attacks
-      expiresIn: '7d',     // Token expiration (7 days)
+      algorithm: 'HS256', // Explicit algorithm prevents confusion attacks
+      expiresIn: '7d', // Token expiration (7 days)
     });
     return { token };
   }
@@ -40,7 +40,7 @@ export class IdentityService {
   verifyToken(token: string): TokenPayload {
     try {
       return jwt.verify(token, this.jwtSecret, {
-        algorithms: ['HS256'],  // Only allow HS256, reject others
+        algorithms: ['HS256'], // Only allow HS256, reject others
       }) as TokenPayload;
     } catch {
       throw new UnauthorizedError('Invalid or expired token');

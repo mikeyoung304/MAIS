@@ -15,19 +15,23 @@
 **Lines:** 225
 
 ```typescript
-const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
-  // ...
-  if (!originalStates.current.has(packageId)) {
-    const original = packages.find((pkg) => pkg.id === packageId);  // ⚠️ STALE
-    if (original) {
-      originalStates.current.set(packageId, original);
+const updateDraft = useCallback(
+  (packageId: string, update: DraftUpdate) => {
+    // ...
+    if (!originalStates.current.has(packageId)) {
+      const original = packages.find((pkg) => pkg.id === packageId); // ⚠️ STALE
+      if (original) {
+        originalStates.current.set(packageId, original);
+      }
     }
-  }
-  // ...
-}, [packages, flushPendingChanges]);  // ← PROBLEM: `packages` in deps!
+    // ...
+  },
+  [packages, flushPendingChanges]
+); // ← PROBLEM: `packages` in deps!
 ```
 
 **The Problem:**
+
 - `packages` is included in the dependency array
 - Every keystroke calls `setPackages()` which updates state
 - State change triggers re-render with new `packages` reference
@@ -35,6 +39,7 @@ const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
 - New callback closes over stale package data
 
 **Why This Breaks:**
+
 1. Rapid edits create multiple closures with different `packages` snapshots
 2. Original state capture at line 193 uses stale data
 3. If package is edited again during save, wrong version is captured
@@ -42,6 +47,7 @@ const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
 5. **Result:** Data inconsistency or silent data loss
 
 **Example Failure Scenario:**
+
 ```
 1. User edits Package A → setPackages fires → callback v1 created
 2. User edits Package B (before debounce) → setPackages fires → callback v2 created
@@ -52,13 +58,18 @@ const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
 ```
 
 **The Fix:**
+
 ```typescript
-const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
-  // ... implementation unchanged ...
-}, [flushPendingChanges]);  // ← Remove `packages`!
+const updateDraft = useCallback(
+  (packageId: string, update: DraftUpdate) => {
+    // ... implementation unchanged ...
+  },
+  [flushPendingChanges]
+); // ← Remove `packages`!
 ```
 
 **Why It Works:**
+
 - Original state is captured in refs (always fresh)
 - Callback becomes stable (never recreated)
 - No closure over stale `packages` data
@@ -90,6 +101,7 @@ const publishAll = useCallback(async () => {
 ```
 
 **The Problem:**
+
 1. `draftCount` is checked BEFORE async flush completes
 2. User can edit while flush is in progress (100-500ms window)
 3. New edits are stored in `pendingChanges` map
@@ -98,6 +110,7 @@ const publishAll = useCallback(async () => {
 6. **Result:** Silent data loss, inconsistent state
 
 **Example Failure Scenario:**
+
 ```
 T0: User has 1 draft (PackageA)
 T1: User clicks "Publish All"
@@ -115,6 +128,7 @@ T5: Result: PackageB changes lost or inconsistent
 ```
 
 **The Fix:**
+
 ```typescript
 const publishAll = useCallback(async () => {
   // Remove early exit - draftCount may change during async
@@ -130,7 +144,7 @@ const publishAll = useCallback(async () => {
   // RE-CHECK draftCount after async completes
   const currentDraftCount = packages.filter((pkg) => pkg.hasDraft).length;
   if (currentDraftCount === 0) {
-    toast.info("No changes to publish");
+    toast.info('No changes to publish');
     return;
   }
 
@@ -141,6 +155,7 @@ const publishAll = useCallback(async () => {
 ```
 
 **Why It Works:**
+
 - Rechecks `draftCount` after async flush completes
 - Captures any edits made during the flush window
 - Ensures all changes are saved before publishing
@@ -167,12 +182,14 @@ const discardAll = useCallback(async () => {
 ```
 
 **The Problem:**
+
 - `draftCount` is computed fresh every render but not memoized
 - Callback captures value at definition time
 - If user calls these rapidly, stale value is used
 - UI buttons prevent clicking, but defensive code should recompute
 
 **The Fix:**
+
 ```typescript
 const draftCount = useMemo(
   () => packages.filter((pkg) => pkg.hasDraft).length,
@@ -185,6 +202,7 @@ if (currentDraftCount === 0) { ... }
 ```
 
 **Why It Works:**
+
 - Memoizes the computation
 - Recompute from fresh `packages` state when needed
 - Consistent with React best practices
@@ -194,6 +212,7 @@ if (currentDraftCount === 0) { ... }
 ## Performance Impact
 
 ### Current (Broken) Behavior:
+
 ```
 Single keystroke in EditableText:
 ├─ updateDraft called
@@ -211,6 +230,7 @@ Single keystroke in EditableText:
 ```
 
 ### After Fix:
+
 ```
 Single keystroke in EditableText:
 ├─ updateDraft called
@@ -271,6 +291,7 @@ Single keystroke in EditableText:
 ## Testing Recommendations
 
 ### 1. Unit Tests (Add)
+
 ```typescript
 test('updateDraft callback is stable across renders', () => {
   const { result } = renderHook(() => useVisualEditor());
@@ -284,6 +305,7 @@ test('updateDraft callback is stable across renders', () => {
 ```
 
 ### 2. Integration Tests (Add)
+
 ```typescript
 test('edits during publishAll flush are included', async () => {
   // Simulate user editing PackageB while PackageA is being flushed
@@ -292,6 +314,7 @@ test('edits during publishAll flush are included', async () => {
 ```
 
 ### 3. E2E Tests (Add)
+
 ```typescript
 test('rapid edits to multiple packages', async () => {
   // Edit Package A
@@ -305,29 +328,32 @@ test('rapid edits to multiple packages', async () => {
 
 ## Impact Summary
 
-| Category | Finding | Severity | Impact |
-|----------|---------|----------|--------|
-| Correctness | Stale closure | CRITICAL | Data loss, inconsistency |
-| Correctness | Race condition | HIGH | Lost edits, publish failure |
-| Performance | Callback recreation | MEDIUM | 6+ re-renders per keystroke |
-| Code quality | Stale draftCount | MEDIUM | Poor defensive coding |
+| Category     | Finding             | Severity | Impact                      |
+| ------------ | ------------------- | -------- | --------------------------- |
+| Correctness  | Stale closure       | CRITICAL | Data loss, inconsistency    |
+| Correctness  | Race condition      | HIGH     | Lost edits, publish failure |
+| Performance  | Callback recreation | MEDIUM   | 6+ re-renders per keystroke |
+| Code quality | Stale draftCount    | MEDIUM   | Poor defensive coding       |
 
 ---
 
 ## Recommended Actions
 
 ### Priority 1 (CRITICAL - Fix Immediately)
+
 - [ ] Remove `packages` from `updateDraft` dependencies (line 225)
 - [ ] Test manually: rapid edits in single and multiple packages
 - [ ] Run full test suite
 
 ### Priority 2 (HIGH - Fix Before Merge)
+
 - [ ] Add race condition check to `publishAll` (lines 231-266)
 - [ ] Add try/catch around flush operation
 - [ ] Test: Edit while publish is in progress
 - [ ] Run full test suite
 
 ### Priority 3 (MEDIUM - Fix in Next Sprint)
+
 - [ ] Memoize `draftCount` with useMemo
 - [ ] Add unit tests for callback stability
 - [ ] Add integration tests for race conditions

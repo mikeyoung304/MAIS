@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { toast } from "sonner";
-import { api } from "@/lib/api";
-import { useSuccessMessage } from "@/hooks/useSuccessMessage";
-import type { BlackoutDto } from "./types";
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
+import { useSuccessMessage } from '@/hooks/useSuccessMessage';
+import type { BlackoutDto } from './types';
 
 /**
  * useBlackoutsManager Hook
@@ -10,8 +10,8 @@ import type { BlackoutDto } from "./types";
  * Manages blackout form state and API interactions
  */
 export function useBlackoutsManager(onBlackoutsChange: () => void) {
-  const [newBlackoutDate, setNewBlackoutDate] = useState("");
-  const [newBlackoutReason, setNewBlackoutReason] = useState("");
+  const [newBlackoutDate, setNewBlackoutDate] = useState('');
+  const [newBlackoutReason, setNewBlackoutReason] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const { message: successMessage, showSuccess } = useSuccessMessage();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -32,21 +32,21 @@ export function useBlackoutsManager(onBlackoutsChange: () => void) {
       });
 
       if (result.status === 201) {
-        setNewBlackoutDate("");
-        setNewBlackoutReason("");
-        showSuccess("Blackout date added successfully");
+        setNewBlackoutDate('');
+        setNewBlackoutReason('');
+        showSuccess('Blackout date added successfully');
         onBlackoutsChange();
       } else {
-        toast.error("Failed to create blackout date", {
-          description: "Please try again or contact support.",
+        toast.error('Failed to create blackout date', {
+          description: 'Please try again or contact support.',
         });
       }
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.error("Failed to create blackout:", error);
+        console.error('Failed to create blackout:', error);
       }
-      toast.error("An error occurred while creating the blackout date", {
-        description: "Please try again or contact support.",
+      toast.error('An error occurred while creating the blackout date', {
+        description: 'Please try again or contact support.',
       });
     } finally {
       setIsAdding(false);
@@ -68,21 +68,21 @@ export function useBlackoutsManager(onBlackoutsChange: () => void) {
       });
 
       if (result.status === 204) {
-        showSuccess("Blackout date deleted successfully");
+        showSuccess('Blackout date deleted successfully');
         onBlackoutsChange();
         setDeleteDialogOpen(false);
         setBlackoutToDelete(null);
       } else {
-        toast.error("Failed to delete blackout date", {
-          description: "Please try again or contact support.",
+        toast.error('Failed to delete blackout date', {
+          description: 'Please try again or contact support.',
         });
       }
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.error("Failed to delete blackout:", error);
+        console.error('Failed to delete blackout:', error);
       }
-      toast.error("An error occurred while deleting the blackout date", {
-        description: "Please try again or contact support.",
+      toast.error('An error occurred while deleting the blackout date', {
+        description: 'Please try again or contact support.',
       });
     }
   };
@@ -93,7 +93,7 @@ export function useBlackoutsManager(onBlackoutsChange: () => void) {
   };
 
   // Calculate if form has unsaved changes
-  const isDirty = newBlackoutDate.trim() !== "" || newBlackoutReason.trim() !== "";
+  const isDirty = newBlackoutDate.trim() !== '' || newBlackoutReason.trim() !== '';
 
   return {
     // Form state

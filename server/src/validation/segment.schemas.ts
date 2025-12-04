@@ -18,26 +18,14 @@ export const createSegmentSchema = z.object({
     .min(1, 'Slug is required')
     .max(100, 'Slug must be 100 characters or less')
     .regex(slugRegex, 'Slug must contain only lowercase letters, numbers, and hyphens'),
-  name: z
-    .string()
-    .min(1, 'Name is required')
-    .max(100, 'Name must be 100 characters or less'),
+  name: z.string().min(1, 'Name is required').max(100, 'Name must be 100 characters or less'),
   heroTitle: z
     .string()
     .min(1, 'Hero title is required')
     .max(200, 'Hero title must be 200 characters or less'),
-  heroSubtitle: z
-    .string()
-    .max(300, 'Hero subtitle must be 300 characters or less')
-    .optional(),
-  heroImage: z
-    .string()
-    .url('Hero image must be a valid URL')
-    .optional(),
-  description: z
-    .string()
-    .max(2000, 'Description must be 2000 characters or less')
-    .optional(),
+  heroSubtitle: z.string().max(300, 'Hero subtitle must be 300 characters or less').optional(),
+  heroImage: z.string().url('Hero image must be a valid URL').optional(),
+  description: z.string().max(2000, 'Description must be 2000 characters or less').optional(),
   metaTitle: z
     .string()
     .max(60, 'Meta title must be 60 characters or less (SEO best practice)')
@@ -51,9 +39,7 @@ export const createSegmentSchema = z.object({
     .int('Sort order must be an integer')
     .min(0, 'Sort order must be non-negative')
     .optional(),
-  active: z
-    .boolean()
-    .optional(),
+  active: z.boolean().optional(),
 });
 
 /**
@@ -66,9 +52,7 @@ export const updateSegmentSchema = createSegmentSchema.partial();
  * Schema for validating segment ID in URL parameters
  */
 export const segmentIdSchema = z.object({
-  id: z
-    .string()
-    .cuid('Invalid segment ID format'),
+  id: z.string().cuid('Invalid segment ID format'),
 });
 
 /**

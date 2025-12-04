@@ -59,7 +59,9 @@ interface AccommodationSectionProps {
  *
  * @see AccommodationSectionConfigSchema in @macon/contracts for Zod validation
  */
-export const AccommodationSection = memo(function AccommodationSection({ config }: AccommodationSectionProps) {
+export const AccommodationSection = memo(function AccommodationSection({
+  config,
+}: AccommodationSectionProps) {
   // Sanitize URLs (defense-in-depth)
   const safeImageUrl = sanitizeImageUrl(config?.imageUrl);
   const safeCtaUrl = sanitizeUrl(config?.ctaUrl);
@@ -82,9 +84,7 @@ export const AccommodationSection = memo(function AccommodationSection({ config 
               {config?.headline}
             </h2>
 
-            <p className="text-lg text-neutral-300 mb-8 leading-relaxed">
-              {config?.description}
-            </p>
+            <p className="text-lg text-neutral-300 mb-8 leading-relaxed">{config?.description}</p>
 
             {/* Highlights */}
             {highlights.length > 0 && (

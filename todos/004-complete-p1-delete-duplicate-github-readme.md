@@ -1,9 +1,9 @@
 ---
 status: complete
 priority: p1
-issue_id: "004"
+issue_id: '004'
 tags: [documentation, cleanup, github]
-dependencies: ["003"]
+dependencies: ['003']
 ---
 
 # Delete Duplicate .github/workflows/README.md
@@ -11,6 +11,7 @@ dependencies: ["003"]
 ## Problem Statement
 
 The `.github/workflows/` directory contains two README files:
+
 1. `README.md` - References "Elope" project (WRONG)
 2. `WORKFLOWS_README.md` - References "MAIS" platform (CORRECT)
 
@@ -19,6 +20,7 @@ The duplicate README.md references the wrong project and should be deleted.
 ## Findings
 
 **File comparison:**
+
 ```
 workflows/README.md - Line 12:
   "![CI/CD Pipeline](https://github.com/YOUR_USERNAME/Elope/actions/workflows/ci.yml/badge.svg)"
@@ -30,6 +32,7 @@ workflows/WORKFLOWS_README.md - Line 1:
 ```
 
 **Impact:**
+
 - Confusion about which README is authoritative
 - Wrong project name in badge URLs
 - Duplicate content maintenance burden
@@ -37,6 +40,7 @@ workflows/WORKFLOWS_README.md - Line 1:
 ## Proposed Solutions
 
 ### Solution 1: Delete README.md, Keep WORKFLOWS_README.md (Recommended)
+
 - Remove `.github/workflows/README.md`
 - Keep `.github/workflows/WORKFLOWS_README.md` as authoritative
 - Effort: Trivial (5 min)
@@ -45,6 +49,7 @@ workflows/WORKFLOWS_README.md - Line 1:
 - Cons: None
 
 ### Solution 2: Merge and Keep README.md Name
+
 - Merge content into README.md
 - Delete WORKFLOWS_README.md
 - Update all "Elope" → "MAIS"
@@ -60,12 +65,15 @@ Solution 1 - Delete the incorrect README.md file.
 ## Technical Details
 
 **File to delete:**
+
 - `.github/workflows/README.md`
 
 **File to keep:**
+
 - `.github/workflows/WORKFLOWS_README.md`
 
 **Command:**
+
 ```bash
 git rm .github/workflows/README.md
 ```
@@ -78,8 +86,8 @@ git rm .github/workflows/README.md
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                  |
+| ---------- | ------- | -------------------------------------- |
 | 2025-11-24 | Created | Duplicate file with wrong project name |
 
 ## Resources

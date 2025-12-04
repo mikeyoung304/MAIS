@@ -30,6 +30,7 @@ This document provides actionable strategies to prevent the three major test fai
 ### Problem
 
 Tests that run multiple database transactions in parallel can cause:
+
 - Transaction timeouts and deadlocks
 - Non-deterministic failures under load
 - False negatives in CI environments
@@ -123,12 +124,12 @@ it('should create package with audit log', async () => {
 
 ### Best Practices
 
-| Scenario | Approach | Timeout |
-|----------|----------|---------|
-| Correctness validation | Sequential (`await` each operation) | Default (5s) |
-| Stress/load testing | Parallel with `Promise.allSettled()` | Extended (10-30s) |
-| Bulk operations | Batch with transaction pooling | Configured (see Pattern 3) |
-| Tenant isolation | Independent tenants, can parallelize | Default (5s) |
+| Scenario               | Approach                             | Timeout                    |
+| ---------------------- | ------------------------------------ | -------------------------- |
+| Correctness validation | Sequential (`await` each operation)  | Default (5s)               |
+| Stress/load testing    | Parallel with `Promise.allSettled()` | Extended (10-30s)          |
+| Bulk operations        | Batch with transaction pooling       | Configured (see Pattern 3) |
+| Tenant isolation       | Independent tenants, can parallelize | Default (5s)               |
 
 ### Decision Tree
 
@@ -145,6 +146,7 @@ Are you testing concurrency handling (e.g., race conditions, double-booking)?
 ### Problem
 
 The DI container returns `undefined` for required dependencies, causing:
+
 - Test failures in `afterAll` cleanup
 - Null pointer exceptions during test teardown
 - Misleading error messages
@@ -294,12 +296,12 @@ return {
 
 ### Best Practices
 
-| Issue | Solution |
-|-------|----------|
-| Missing dependency | Add to `buildMockAdapters()` return value |
-| Cleanup failures | Add existence checks (`if (dep)`) before cleanup |
-| Partial mocks | Export complete mock object matching real adapter |
-| Runtime errors | Add `validateContainer()` helper in dev mode |
+| Issue              | Solution                                          |
+| ------------------ | ------------------------------------------------- |
+| Missing dependency | Add to `buildMockAdapters()` return value         |
+| Cleanup failures   | Add existence checks (`if (dep)`) before cleanup  |
+| Partial mocks      | Export complete mock object matching real adapter |
+| Runtime errors     | Add `validateContainer()` helper in dev mode      |
 
 ### Decision Tree
 
@@ -320,6 +322,7 @@ Is this dependency cleaned up in afterAll?
 ### Problem
 
 Tests creating many records exceed default timeouts (5000ms), causing:
+
 - Flaky tests under system load
 - CI pipeline failures
 - False test failures masking real issues
@@ -383,7 +386,7 @@ it('should create 50 packages efficiently', async () => {
 
   // Prisma createMany for batch insert
   await prisma.package.createMany({
-    data: packageData.map(p => ({
+    data: packageData.map((p) => ({
       ...p,
       tenantId,
     })),
@@ -449,18 +452,18 @@ describe('Catalog Service - Bulk Operations', () => {
 
 ### Best Practices
 
-| Operation Type | Records | Recommended Timeout |
-|----------------|---------|---------------------|
-| Single CRUD | 1 | Default (5s) |
-| Small batch | 10-20 | 10s |
-| Medium batch | 20-50 | 15-30s |
-| Large batch | 50-100 | 30-60s |
-| Bulk import | 100+ | Use batch insert + 60s |
+| Operation Type | Records | Recommended Timeout    |
+| -------------- | ------- | ---------------------- |
+| Single CRUD    | 1       | Default (5s)           |
+| Small batch    | 10-20   | 10s                    |
+| Medium batch   | 20-50   | 15-30s                 |
+| Large batch    | 50-100  | 30-60s                 |
+| Bulk import    | 100+    | Use batch insert + 60s |
 
 ### Timeout Calculation Formula
 
 ```typescript
-timeout = BASE_TIMEOUT + (operationCount * timePerOperation)
+timeout = BASE_TIMEOUT + operationCount * timePerOperation;
 
 // Examples:
 // 10 operations  = 5000 + (10 * 200)  = 7000ms
@@ -519,30 +522,35 @@ Copy-paste this into your PR description for integration tests:
 ## Integration Test Checklist
 
 ### Transaction Contention
+
 - [ ] Tests use sequential `await` for correctness validation
 - [ ] Parallel tests are clearly marked as stress/load tests
 - [ ] Stress tests use `Promise.allSettled()` and validate conflicts
 - [ ] No unnecessary parallel execution in standard tests
 
 ### Dependency Injection
+
 - [ ] All mock instances exported from `buildMockAdapters()`
 - [ ] Cleanup code has existence checks (`if (dep)`)
 - [ ] Mock container shape matches real container shape
 - [ ] No `undefined` errors in test output
 
 ### Timeouts
+
 - [ ] Bulk operation tests have explicit timeouts
 - [ ] Timeout calculation based on operation count
 - [ ] Batch operations used where appropriate
 - [ ] Suite-level timeouts set for bulk operation suites
 
 ### Test Isolation
+
 - [ ] Tests use `createTestTenant()` helper
 - [ ] Cleanup in `finally` blocks
 - [ ] No shared test data between tests
 - [ ] Tenant isolation verified
 
 ### Code Quality
+
 - [ ] Test names are descriptive and accurate
 - [ ] Comments explain unusual patterns
 - [ ] Error messages don't leak implementation details
@@ -605,7 +613,7 @@ describe('CatalogService - Bulk Operations', () => {
 
     // Batch insert
     await prisma.package.createMany({
-      data: packageData.map(p => ({ ...p, tenantId })),
+      data: packageData.map((p) => ({ ...p, tenantId })),
     });
 
     const packages = await catalogRepo.getAllPackages(tenantId);
@@ -707,24 +715,24 @@ describe('CatalogService', () => {
 
 ### When to Use What
 
-| Scenario | Pattern | Timeout |
-|----------|---------|---------|
-| Standard CRUD test | Sequential await | Default (5s) |
-| Bulk insert (10-50) | Batch operation | 15-30s |
-| Bulk insert (100+) | Batch + suite timeout | 60s |
-| Race condition test | Promise.allSettled | 10s |
-| Multi-tenant isolation | Independent tenants | Default (5s) |
-| Cleanup operations | Guards + finally | N/A |
+| Scenario               | Pattern               | Timeout      |
+| ---------------------- | --------------------- | ------------ |
+| Standard CRUD test     | Sequential await      | Default (5s) |
+| Bulk insert (10-50)    | Batch operation       | 15-30s       |
+| Bulk insert (100+)     | Batch + suite timeout | 60s          |
+| Race condition test    | Promise.allSettled    | 10s          |
+| Multi-tenant isolation | Independent tenants   | Default (5s) |
+| Cleanup operations     | Guards + finally      | N/A          |
 
 ### Common Mistakes
 
-| ❌ Don't Do This | ✅ Do This Instead |
-|-----------------|-------------------|
-| `Promise.all([create(), create()])` | `await create(); await create();` |
-| Missing timeout on bulk ops | Add explicit timeout or batch |
+| ❌ Don't Do This                       | ✅ Do This Instead                |
+| -------------------------------------- | --------------------------------- |
+| `Promise.all([create(), create()])`    | `await create(); await create();` |
+| Missing timeout on bulk ops            | Add explicit timeout or batch     |
 | `await container.prisma.$disconnect()` | `if (container.prisma) await ...` |
-| Share test data between tests | Use `createTestTenant()` per test |
-| Hardcoded tenant IDs in tests | Use `createTestTenant()` helper |
+| Share test data between tests          | Use `createTestTenant()` per test |
+| Hardcoded tenant IDs in tests          | Use `createTestTenant()` helper   |
 
 ---
 

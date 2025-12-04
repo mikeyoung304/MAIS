@@ -41,7 +41,7 @@ The `RoleBasedNav` component was checking only `user.role` to determine which na
 
 ```typescript
 // BEFORE (Incorrect)
-const navItems = user.role === "PLATFORM_ADMIN" ? platformAdminNav : tenantAdminNav;
+const navItems = user.role === 'PLATFORM_ADMIN' ? platformAdminNav : tenantAdminNav;
 ```
 
 This logic failed to account for the **impersonation context**. When a Platform Admin clicked "Sign In As" to impersonate a tenant, the system generated a JWT token with impersonation metadata, but the navigation component didn't check this state. It only saw `user.role === "PLATFORM_ADMIN"` and displayed platform admin navigation even though the user was operating as a tenant.
@@ -75,18 +75,24 @@ export function RoleBasedNav({ variant = "sidebar" }: { variant?: "sidebar" | "h
 
 ```typescript
 // BEFORE
-export type DashboardTab = "packages" | "blackouts" | "bookings" | "branding" | "payments";
+export type DashboardTab = 'packages' | 'blackouts' | 'bookings' | 'branding' | 'payments';
 
 // AFTER
-export type DashboardTab = "packages" | "segments" | "blackouts" | "bookings" | "branding" | "payments";
+export type DashboardTab =
+  | 'packages'
+  | 'segments'
+  | 'blackouts'
+  | 'bookings'
+  | 'branding'
+  | 'payments';
 
 const tabs: { id: DashboardTab; label: string }[] = [
-  { id: "packages", label: "Packages" },
-  { id: "segments", label: "Segments" },  // NEW
-  { id: "blackouts", label: "Blackouts" },
-  { id: "bookings", label: "Bookings" },
-  { id: "branding", label: "Branding" },
-  { id: "payments", label: "Payments" },
+  { id: 'packages', label: 'Packages' },
+  { id: 'segments', label: 'Segments' }, // NEW
+  { id: 'blackouts', label: 'Blackouts' },
+  { id: 'bookings', label: 'Bookings' },
+  { id: 'branding', label: 'Branding' },
+  { id: 'payments', label: 'Payments' },
 ];
 ```
 

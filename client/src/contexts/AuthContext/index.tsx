@@ -24,13 +24,7 @@
 export { AuthProvider } from './AuthProvider';
 
 // Export hooks
-export {
-  useAuth,
-  useIsPlatformAdmin,
-  useIsTenantAdmin,
-  useHasRole,
-  useAuthStatus,
-} from './hooks';
+export { useAuth, useIsPlatformAdmin, useIsTenantAdmin, useHasRole, useAuthStatus } from './hooks';
 
 // Export context for advanced use cases
 export { AuthContext } from './context';

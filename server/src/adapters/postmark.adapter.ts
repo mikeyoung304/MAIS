@@ -75,10 +75,7 @@ export class PostmarkMailAdapter implements EmailProvider {
       const fname = `${Date.now()}_${to.replace(/[^a-z0-9@._-]/gi, '_')}.eml`;
       const raw = `From: ${this.cfg.fromEmail}\nTo: ${to}\nSubject: ${subject}\n\n${body}`;
       await fs.promises.writeFile(path.join(dir, fname), raw, 'utf8');
-      logger.info(
-        { to, file: path.join('tmp', 'emails', fname) },
-        'Email written to file sink'
-      );
+      logger.info({ to, file: path.join('tmp', 'emails', fname) }, 'Email written to file sink');
       return;
     }
 

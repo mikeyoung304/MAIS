@@ -15,11 +15,11 @@
  * - Partial saves when one request fails while another succeeds
  */
 
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { toast } from "sonner";
-import { api } from "@/lib/api";
-import { logger } from "@/lib/logger";
-import type { PackageWithDraftDto, UpdatePackageDraftDto } from "@macon/contracts";
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
+import { logger } from '@/lib/logger';
+import type { PackageWithDraftDto, UpdatePackageDraftDto } from '@macon/contracts';
 
 // Re-export types from contracts for convenience
 export type PackageWithDraft = PackageWithDraftDto;
@@ -75,10 +75,7 @@ export function useVisualEditor(): UseVisualEditorReturn {
   const saveInProgress = useRef<boolean>(false);
 
   // Calculate draft count (memoized to avoid recomputation on every render)
-  const draftCount = useMemo(
-    () => packages.filter((pkg) => pkg.hasDraft).length,
-    [packages]
-  );
+  const draftCount = useMemo(() => packages.filter((pkg) => pkg.hasDraft).length, [packages]);
 
   /**
    * Load packages with draft fields from API
@@ -92,15 +89,16 @@ export function useVisualEditor(): UseVisualEditorReturn {
       const { status, body } = await api.tenantAdminGetPackagesWithDrafts();
 
       if (status !== 200 || !body) {
-        const errorMessage = (body as { error?: string })?.error || `Failed to load packages: ${status}`;
+        const errorMessage =
+          (body as { error?: string })?.error || `Failed to load packages: ${status}`;
         throw new Error(errorMessage);
       }
 
       setPackages(body);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load packages";
+      const message = err instanceof Error ? err.message : 'Failed to load packages';
       setError(message);
-      toast.error("Failed to load packages", { description: message });
+      toast.error('Failed to load packages', { description: message });
     } finally {
       setLoading(false);
     }
@@ -137,17 +135,15 @@ export function useVisualEditor(): UseVisualEditorReturn {
         });
 
         if (status !== 200 || !body) {
-          const errorMessage = (body as { error?: string })?.error || "Failed to save draft";
+          const errorMessage = (body as { error?: string })?.error || 'Failed to save draft';
           throw new Error(errorMessage);
         }
 
         // Update with server response (may include server-side changes)
-        setPackages((prev) =>
-          prev.map((pkg) => (pkg.id === packageId ? body : pkg))
-        );
+        setPackages((prev) => prev.map((pkg) => (pkg.id === packageId ? body : pkg)));
       } catch (err) {
-        logger.error("Failed to save draft", {
-          component: "useVisualEditor",
+        logger.error('Failed to save draft', {
+          component: 'useVisualEditor',
           packageId,
           error: err,
         });
@@ -156,9 +152,7 @@ export function useVisualEditor(): UseVisualEditorReturn {
         // Rollback this package to original state
         const original = originalsToRestore.get(packageId);
         if (original) {
-          setPackages((prev) =>
-            prev.map((pkg) => (pkg.id === packageId ? original : pkg))
-          );
+          setPackages((prev) => prev.map((pkg) => (pkg.id === packageId ? original : pkg)));
         }
       }
     }
@@ -169,8 +163,8 @@ export function useVisualEditor(): UseVisualEditorReturn {
     // Show error toast if any packages failed
     if (failedPackages.length > 0) {
       toast.error(
-        `Failed to save ${failedPackages.length} package${failedPackages.length !== 1 ? "s" : ""}`,
-        { description: "Your changes have been reverted. Please try again." }
+        `Failed to save ${failedPackages.length} package${failedPackages.length !== 1 ? 's' : ''}`,
+        { description: 'Your changes have been reverted. Please try again.' }
       );
     }
   }, []);
@@ -184,50 +178,53 @@ export function useVisualEditor(): UseVisualEditorReturn {
    * - Inconsistent state from out-of-order updates
    * - Partial saves when some requests fail
    */
-  const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
-    // Clear existing timeout - we'll reschedule after accumulating this change
-    if (saveTimeout.current) {
-      clearTimeout(saveTimeout.current);
-      saveTimeout.current = null;
-    }
-
-    // Merge this update with any pending changes for this package
-    const existing = pendingChanges.current.get(packageId) || {};
-    pendingChanges.current.set(packageId, { ...existing, ...update });
-
-    // Apply optimistic update to UI immediately
-    // Use functional update to capture original state from current state (avoids stale closure)
-    setPackages((prev) => {
-      // Capture original state BEFORE first change for this package
-      // Done inside functional update to always get fresh state
-      if (!originalStates.current.has(packageId)) {
-        const original = prev.find((pkg) => pkg.id === packageId);
-        if (original) {
-          originalStates.current.set(packageId, original);
-        }
+  const updateDraft = useCallback(
+    (packageId: string, update: DraftUpdate) => {
+      // Clear existing timeout - we'll reschedule after accumulating this change
+      if (saveTimeout.current) {
+        clearTimeout(saveTimeout.current);
+        saveTimeout.current = null;
       }
 
-      return prev.map((pkg) =>
-        pkg.id === packageId
-          ? {
-              ...pkg,
-              draftTitle: update.title ?? pkg.draftTitle,
-              draftDescription: update.description ?? pkg.draftDescription,
-              draftPriceCents: update.priceCents ?? pkg.draftPriceCents,
-              draftPhotos: update.photos ?? pkg.draftPhotos,
-              hasDraft: true,
-              draftUpdatedAt: new Date().toISOString(),
-            }
-          : pkg
-      );
-    });
+      // Merge this update with any pending changes for this package
+      const existing = pendingChanges.current.get(packageId) || {};
+      pendingChanges.current.set(packageId, { ...existing, ...update });
 
-    // Schedule batched save after debounce window
-    saveTimeout.current = setTimeout(() => {
-      saveTimeout.current = null;
-      flushPendingChanges();
-    }, 1000);
-  }, [flushPendingChanges]);
+      // Apply optimistic update to UI immediately
+      // Use functional update to capture original state from current state (avoids stale closure)
+      setPackages((prev) => {
+        // Capture original state BEFORE first change for this package
+        // Done inside functional update to always get fresh state
+        if (!originalStates.current.has(packageId)) {
+          const original = prev.find((pkg) => pkg.id === packageId);
+          if (original) {
+            originalStates.current.set(packageId, original);
+          }
+        }
+
+        return prev.map((pkg) =>
+          pkg.id === packageId
+            ? {
+                ...pkg,
+                draftTitle: update.title ?? pkg.draftTitle,
+                draftDescription: update.description ?? pkg.draftDescription,
+                draftPriceCents: update.priceCents ?? pkg.draftPriceCents,
+                draftPhotos: update.photos ?? pkg.draftPhotos,
+                hasDraft: true,
+                draftUpdatedAt: new Date().toISOString(),
+              }
+            : pkg
+        );
+      });
+
+      // Schedule batched save after debounce window
+      saveTimeout.current = setTimeout(() => {
+        saveTimeout.current = null;
+        flushPendingChanges();
+      }, 1000);
+    },
+    [flushPendingChanges]
+  );
 
   /**
    * Publish all drafts to live
@@ -235,7 +232,7 @@ export function useVisualEditor(): UseVisualEditorReturn {
    */
   const publishAll = useCallback(async () => {
     if (draftCount === 0) {
-      toast.info("No changes to publish");
+      toast.info('No changes to publish');
       return;
     }
 
@@ -256,17 +253,17 @@ export function useVisualEditor(): UseVisualEditorReturn {
       });
 
       if (status !== 200 || !body) {
-        const errorMessage = (body as { error?: string })?.error || "Failed to publish changes";
+        const errorMessage = (body as { error?: string })?.error || 'Failed to publish changes';
         throw new Error(errorMessage);
       }
 
-      toast.success(`Published ${body.published} package${body.published !== 1 ? "s" : ""}`);
+      toast.success(`Published ${body.published} package${body.published !== 1 ? 's' : ''}`);
 
       // Reload packages to get fresh state
       await loadPackages();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to publish changes";
-      toast.error("Failed to publish changes", { description: message });
+      const message = err instanceof Error ? err.message : 'Failed to publish changes';
+      toast.error('Failed to publish changes', { description: message });
     } finally {
       setIsPublishing(false);
     }
@@ -279,7 +276,7 @@ export function useVisualEditor(): UseVisualEditorReturn {
    */
   const discardAll = useCallback(async () => {
     if (draftCount === 0) {
-      toast.info("No changes to discard");
+      toast.info('No changes to discard');
       return;
     }
 
@@ -297,17 +294,19 @@ export function useVisualEditor(): UseVisualEditorReturn {
       });
 
       if (status !== 200 || !body) {
-        const errorMessage = (body as { error?: string })?.error || "Failed to discard changes";
+        const errorMessage = (body as { error?: string })?.error || 'Failed to discard changes';
         throw new Error(errorMessage);
       }
 
-      toast.success(`Discarded changes to ${body.discarded} package${body.discarded !== 1 ? "s" : ""}`);
+      toast.success(
+        `Discarded changes to ${body.discarded} package${body.discarded !== 1 ? 's' : ''}`
+      );
 
       // Reload packages to get fresh state
       await loadPackages();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to discard changes";
-      toast.error("Failed to discard changes", { description: message });
+      const message = err instanceof Error ? err.message : 'Failed to discard changes';
+      toast.error('Failed to discard changes', { description: message });
     }
   }, [draftCount, loadPackages]);
 
@@ -315,9 +314,7 @@ export function useVisualEditor(): UseVisualEditorReturn {
    * Update local package state (for optimistic UI updates like photo reordering)
    */
   const updateLocalPackage = useCallback((packageId: string, update: Partial<PackageWithDraft>) => {
-    setPackages((prev) =>
-      prev.map((pkg) => (pkg.id === packageId ? { ...pkg, ...update } : pkg))
-    );
+    setPackages((prev) => prev.map((pkg) => (pkg.id === packageId ? { ...pkg, ...update } : pkg)));
   }, []);
 
   // Cleanup pending saves on unmount

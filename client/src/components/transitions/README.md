@@ -20,9 +20,11 @@ Smooth page transitions using Framer Motion for enhanced user experience during 
 ### Components
 
 #### `PageTransition.tsx`
+
 Wrapper component that applies fade-in animation to page content.
 
 **Animation Behavior:**
+
 - **Initial state**: opacity: 0, translateY: 8px
 - **Animate state**: opacity: 1, translateY: 0
 - **Exit state**: opacity: 0, translateY: -8px
@@ -44,6 +46,7 @@ The transition is integrated at the layout level in `AppShell.tsx`:
 ```
 
 **Key Points:**
+
 - `AnimatePresence` enables exit animations
 - `mode="wait"` ensures old page exits before new page enters
 - `key={location.pathname}` triggers animation on route change
@@ -77,6 +80,7 @@ if (isE2EMode) {
 ```
 
 This ensures:
+
 - Deterministic test behavior
 - Faster test execution
 - No animation-related flakiness
@@ -93,6 +97,7 @@ These properties don't trigger layout recalculation or repaint, ensuring 60fps a
 ## Browser Support
 
 Framer Motion supports:
+
 - Chrome/Edge 80+
 - Firefox 75+
 - Safari 13.1+
@@ -129,12 +134,14 @@ const pageVariants = {
 ### Reduced Motion Testing
 
 **Chrome DevTools:**
+
 1. Open DevTools (F12)
 2. CMD+SHIFT+P → "Emulate CSS prefers-reduced-motion"
 3. Select "prefers-reduced-motion: reduce"
 4. Navigate routes - animations should be instant
 
 **macOS System Settings:**
+
 1. System Settings → Accessibility → Display
 2. Enable "Reduce motion"
 3. Refresh app and navigate - animations should be instant
@@ -162,6 +169,7 @@ Navigate routes - animations should be completely disabled.
 ## Future Enhancements
 
 Possible improvements:
+
 - Directional transitions (slide left/right based on navigation direction)
 - Different animations for different route types (admin vs public)
 - Stagger children animations for content reveal

@@ -42,7 +42,7 @@ async function ensureLoggedIn(page: Page): Promise<void> {
     await page.fill('#confirmPassword', testPassword);
 
     const responsePromise = page.waitForResponse(
-      response => response.url().includes('/v1/auth/signup'),
+      (response) => response.url().includes('/v1/auth/signup'),
       { timeout: 30000 }
     );
     await page.getByRole('button', { name: /Create Account/i }).click();
@@ -75,7 +75,9 @@ async function ensureLoggedIn(page: Page): Promise<void> {
  */
 async function goToVisualEditor(page: Page): Promise<void> {
   await page.goto('/tenant/visual-editor');
-  await expect(page.getByRole('heading', { name: /Visual Editor/i })).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole('heading', { name: /Visual Editor/i })).toBeVisible({
+    timeout: 15000,
+  });
   await page.waitForLoadState('networkidle');
 }
 
@@ -99,7 +101,6 @@ async function discardDraftsIfAny(page: Page): Promise<void> {
 }
 
 test.describe('Visual Editor', () => {
-
   test('loads visual editor dashboard with packages', async ({ page }) => {
     await ensureLoggedIn(page);
     await goToVisualEditor(page);
@@ -185,7 +186,9 @@ test.describe('Visual Editor', () => {
     // Reload and verify draft persisted
     await page.reload();
     await page.waitForLoadState('networkidle');
-    await expect(page.getByRole('heading', { name: /Visual Editor/i })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: /Visual Editor/i })).toBeVisible({
+      timeout: 15000,
+    });
 
     // The edited title should still be visible
     await expect(page.getByText(uniqueTitle)).toBeVisible({ timeout: 10000 });
@@ -215,10 +218,9 @@ test.describe('Visual Editor', () => {
     await publishButton.click();
 
     // Wait for publish
-    await page.waitForResponse(
-      response => response.url().includes('/drafts/publish'),
-      { timeout: 15000 }
-    );
+    await page.waitForResponse((response) => response.url().includes('/drafts/publish'), {
+      timeout: 15000,
+    });
 
     // Verify success toast
     await expect(page.getByText(/Published/i)).toBeVisible({ timeout: 5000 });
@@ -254,16 +256,17 @@ test.describe('Visual Editor', () => {
     await discardButton.click();
 
     // Verify confirmation dialog
-    await expect(page.getByRole('heading', { name: /Discard Changes/i })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('heading', { name: /Discard Changes/i })).toBeVisible({
+      timeout: 5000,
+    });
 
     // Confirm
     await page.getByRole('button', { name: /Discard All/i }).click();
 
     // Wait for API call
-    await page.waitForResponse(
-      response => response.url().includes('/drafts/discard'),
-      { timeout: 10000 }
-    );
+    await page.waitForResponse((response) => response.url().includes('/drafts/discard'), {
+      timeout: 10000,
+    });
 
     // Verify toast
     await expect(page.getByText(/Discarded/i)).toBeVisible({ timeout: 5000 });
@@ -297,10 +300,9 @@ test.describe('Visual Editor', () => {
     await expect(page.getByText(/Publishing/i)).toBeVisible({ timeout: 2000 });
 
     // Wait for completion
-    await page.waitForResponse(
-      response => response.url().includes('/drafts/publish'),
-      { timeout: 15000 }
-    );
+    await page.waitForResponse((response) => response.url().includes('/drafts/publish'), {
+      timeout: 15000,
+    });
   });
 
   test('handles escape key to cancel edit', async ({ page }) => {

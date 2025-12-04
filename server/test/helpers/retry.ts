@@ -48,10 +48,7 @@ const DEFAULT_OPTIONS: Required<RetryOptions> = {
  * @returns Promise resolving to the function's return value
  * @throws The last error encountered if all retries fail
  */
-export async function withRetry<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {}
-): Promise<T> {
+export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   let lastError: any;
 
@@ -64,7 +61,7 @@ export async function withRetry<T>(
       if (attempt < opts.maxAttempts) {
         const delay = opts.delayMs * Math.pow(opts.backoffMultiplier, attempt - 1);
         opts.onRetry(attempt, error);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }
@@ -95,9 +92,7 @@ export async function withRetry<T>(
  * @param fn - Database operation to retry
  * @returns Promise resolving to the function's return value
  */
-export async function withDatabaseRetry<T>(
-  fn: () => Promise<T>
-): Promise<T> {
+export async function withDatabaseRetry<T>(fn: () => Promise<T>): Promise<T> {
   return withRetry(fn, {
     maxAttempts: 5,
     delayMs: 50,
@@ -143,9 +138,7 @@ export async function withDatabaseRetry<T>(
  * @param fn - Concurrent operation to retry
  * @returns Promise resolving to the function's return value
  */
-export async function withConcurrencyRetry<T>(
-  fn: () => Promise<T>
-): Promise<T> {
+export async function withConcurrencyRetry<T>(fn: () => Promise<T>): Promise<T> {
   return withRetry(fn, {
     maxAttempts: 3,
     delayMs: 200,
@@ -178,12 +171,10 @@ export async function withConcurrencyRetry<T>(
  * @param fn - Timing-sensitive operation to retry
  * @returns Promise resolving to the function's return value
  */
-export async function withTimingRetry<T>(
-  fn: () => Promise<T>
-): Promise<T> {
+export async function withTimingRetry<T>(fn: () => Promise<T>): Promise<T> {
   return withRetry(fn, {
     maxAttempts: 2, // Fewer retries for timing tests
-    delayMs: 500,    // Longer delay to let system settle
+    delayMs: 500, // Longer delay to let system settle
     backoffMultiplier: 1, // No exponential backoff
     onRetry: (attempt, error) => {
       console.log(`[Retry] Timing assertion failed on attempt ${attempt}, retrying...`);

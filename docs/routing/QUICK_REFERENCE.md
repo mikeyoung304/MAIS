@@ -240,9 +240,9 @@ export interface TenantLoadedData {
 
 ```typescript
 // Always include tenant slug
-['tenant', tenantSlug, 'packages']
-['tenant', tenantSlug, 'segment', segmentSlug]
-['tenant', tenantSlug, 'availability', startDate, endDate]
+['tenant', tenantSlug, 'packages'][('tenant', tenantSlug, 'segment', segmentSlug)][
+  ('tenant', tenantSlug, 'availability', startDate, endDate)
+];
 
 // NOT: ['packages'] or ['segment', slug]
 ```
@@ -302,8 +302,7 @@ export const routes = {
   tenantHome: (slug) => `/t/${slug}`,
   tenantPackages: (slug) => `/t/${slug}/packages`,
   tenantSegment: (slug, segment) => `/t/${slug}/s/${segment}`,
-  tenantPackageDetail: (slug, segment, pkg) =>
-    `/t/${slug}/s/${segment}/p/${pkg}`,
+  tenantPackageDetail: (slug, segment, pkg) => `/t/${slug}/s/${segment}/p/${pkg}`,
 } as const;
 
 // Usage

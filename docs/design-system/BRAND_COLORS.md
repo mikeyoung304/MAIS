@@ -22,6 +22,7 @@ The MAIS design system uses a comprehensive color palette built around the Macon
 ## Brand Colors
 
 ### Macon Navy (Primary)
+
 **Use for:** Primary actions, headings, navigation, brand elements
 
 ```tsx
@@ -41,6 +42,7 @@ var(--macon-navy-50) through var(--macon-navy-900)
 ```
 
 **Examples:**
+
 ```tsx
 // Primary button
 <button className="bg-macon-navy hover:bg-macon-navy-dark text-white">
@@ -57,6 +59,7 @@ var(--macon-navy-50) through var(--macon-navy-900)
 ```
 
 ### Macon Orange (Secondary)
+
 **Use for:** Call-to-action buttons, highlights, accents, important UI elements
 
 ```tsx
@@ -76,6 +79,7 @@ var(--macon-orange-50) through var(--macon-orange-900)
 ```
 
 **Examples:**
+
 ```tsx
 // CTA button
 <button className="bg-gradient-to-r from-macon-orange to-macon-orange-light">
@@ -94,6 +98,7 @@ var(--macon-orange-50) through var(--macon-orange-900)
 ```
 
 ### Macon Teal (Accent)
+
 **Use for:** Success states, confirmations, positive indicators, accent elements
 
 ```tsx
@@ -113,6 +118,7 @@ var(--macon-teal-50) through var(--macon-teal-900)
 ```
 
 **Examples:**
+
 ```tsx
 // Success message
 <div className="bg-macon-teal-50 border-l-4 border-macon-teal">
@@ -135,37 +141,38 @@ var(--macon-teal-50) through var(--macon-teal-900)
 
 ```tsx
 // Tailwind classes
-bg-neutral-50      // #f9fafb - Lightest gray (page backgrounds)
-bg-neutral-100     // #f3f4f6 - Very light gray (card backgrounds)
-bg-neutral-200     // #e5e7eb - Light gray (borders)
-bg-neutral-300     // #d1d5db - Medium-light gray (dividers)
-bg-neutral-400     // #9ca3af - Medium gray (placeholders)
-bg-neutral-500     // #6b7280 - Medium-dark gray (secondary text)
-bg-neutral-600     // #4b5563 - Dark gray (body text)
-bg-neutral-700     // #374151 - Darker gray (labels)
-bg-neutral-800     // #1f2937 - Very dark gray (headings)
-bg-neutral-900     // #111827 - Darkest gray (primary text)
+bg - neutral - 50; // #f9fafb - Lightest gray (page backgrounds)
+bg - neutral - 100; // #f3f4f6 - Very light gray (card backgrounds)
+bg - neutral - 200; // #e5e7eb - Light gray (borders)
+bg - neutral - 300; // #d1d5db - Medium-light gray (dividers)
+bg - neutral - 400; // #9ca3af - Medium gray (placeholders)
+bg - neutral - 500; // #6b7280 - Medium-dark gray (secondary text)
+bg - neutral - 600; // #4b5563 - Dark gray (body text)
+bg - neutral - 700; // #374151 - Darker gray (labels)
+bg - neutral - 800; // #1f2937 - Very dark gray (headings)
+bg - neutral - 900; // #111827 - Darkest gray (primary text)
 
-text-neutral-500   // For text
-border-neutral-200 // For borders
+text - neutral - 500; // For text
+border - neutral - 200; // For borders
 ```
 
 **Semantic Usage:**
 
-| Color | Purpose | Example Use Cases |
-|-------|---------|-------------------|
-| `neutral-50` | Page backgrounds, light surfaces | `<body>`, empty states |
-| `neutral-100` | Card backgrounds, hover states | `<Card>`, table row hover |
-| `neutral-200` | Borders, dividers | Input borders, hr elements |
-| `neutral-300` | Strong borders, disabled states | Button borders, disabled inputs |
-| `neutral-400` | Placeholder text, icons | Input placeholders, inactive icons |
-| `neutral-500` | Secondary text | Captions, helper text |
-| `neutral-600` | Body text, labels | Paragraph text, form labels |
-| `neutral-700` | Strong text, subheadings | Card titles, section labels |
-| `neutral-800` | Headings, emphasis | h2, h3 headings |
-| `neutral-900` | Primary text, hero headings | h1, important text |
+| Color         | Purpose                          | Example Use Cases                  |
+| ------------- | -------------------------------- | ---------------------------------- |
+| `neutral-50`  | Page backgrounds, light surfaces | `<body>`, empty states             |
+| `neutral-100` | Card backgrounds, hover states   | `<Card>`, table row hover          |
+| `neutral-200` | Borders, dividers                | Input borders, hr elements         |
+| `neutral-300` | Strong borders, disabled states  | Button borders, disabled inputs    |
+| `neutral-400` | Placeholder text, icons          | Input placeholders, inactive icons |
+| `neutral-500` | Secondary text                   | Captions, helper text              |
+| `neutral-600` | Body text, labels                | Paragraph text, form labels        |
+| `neutral-700` | Strong text, subheadings         | Card titles, section labels        |
+| `neutral-800` | Headings, emphasis               | h2, h3 headings                    |
+| `neutral-900` | Primary text, hero headings      | h1, important text                 |
 
 **Examples:**
+
 ```tsx
 // Card with proper text hierarchy
 <Card className="bg-neutral-50 border-neutral-200">
@@ -192,31 +199,32 @@ Semantic tokens map to brand colors for consistent theming:
 
 ```tsx
 // Primary (maps to Macon Navy)
-bg-primary              // #1a365d
-text-primary-foreground // #FFFFFF
+bg - primary; // #1a365d
+text - primary - foreground; // #FFFFFF
 
 // Secondary (maps to Macon Orange)
-bg-secondary            // #fb923c
-text-secondary-foreground // #FFFFFF
+bg - secondary; // #fb923c
+text - secondary - foreground; // #FFFFFF
 
 // Accent (maps to Macon Teal)
-bg-accent               // #38b2ac
-text-accent-foreground  // #FFFFFF
+bg - accent; // #38b2ac
+text - accent - foreground; // #FFFFFF
 
 // Muted (neutral palette)
-bg-muted                // #f3f4f6 (neutral-100)
-text-muted-foreground   // #6b7280 (neutral-500)
+bg - muted; // #f3f4f6 (neutral-100)
+text - muted - foreground; // #6b7280 (neutral-500)
 
 // Border and Input (neutral)
-border-border           // #e5e7eb (neutral-200)
-border-input            // #e5e7eb (neutral-200)
+border - border; // #e5e7eb (neutral-200)
+border - input; // #e5e7eb (neutral-200)
 
 // Background and Foreground
-bg-background           // #ffffff (white)
-text-foreground         // #111827 (neutral-900)
+bg - background; // #ffffff (white)
+text - foreground; // #111827 (neutral-900)
 ```
 
 **Examples:**
+
 ```tsx
 // Semantic button (adapts to theme)
 <button className="bg-primary text-primary-foreground hover:bg-primary/90">
@@ -232,21 +240,23 @@ text-foreground         // #111827 (neutral-900)
 ## Status Colors
 
 ### Success
+
 **Use for:** Success messages, confirmations, positive states
 
 ```tsx
-bg-success-50      // #f0fdf4 - Light background
-bg-success-100     // #dcfce7
-bg-success-200     // #bbf7d0
-bg-success-500     // #22c55e - Default success
-bg-success-600     // #16a34a - Darker
-bg-success-700     // #15803d - Darkest
+bg - success - 50; // #f0fdf4 - Light background
+bg - success - 100; // #dcfce7
+bg - success - 200; // #bbf7d0
+bg - success - 500; // #22c55e - Default success
+bg - success - 600; // #16a34a - Darker
+bg - success - 700; // #15803d - Darkest
 
-text-success-500
-border-success-500
+text - success - 500;
+border - success - 500;
 ```
 
 **Examples:**
+
 ```tsx
 // Success alert
 <div className="bg-success-50 border-l-4 border-success-500">
@@ -260,21 +270,23 @@ border-success-500
 ```
 
 ### Warning
+
 **Use for:** Warnings, cautions, pending states
 
 ```tsx
-bg-warning-50      // #fff7ed
-bg-warning-100     // #ffedd5
-bg-warning-200     // #fed7aa
-bg-warning-500     // #f59e0b
-bg-warning-600     // #d97706
-bg-warning-700     // #b45309
+bg - warning - 50; // #fff7ed
+bg - warning - 100; // #ffedd5
+bg - warning - 200; // #fed7aa
+bg - warning - 500; // #f59e0b
+bg - warning - 600; // #d97706
+bg - warning - 700; // #b45309
 
-text-warning-500
-border-warning-500
+text - warning - 500;
+border - warning - 500;
 ```
 
 **Examples:**
+
 ```tsx
 // Warning message
 <div className="bg-warning-50 border-warning-500">
@@ -283,21 +295,23 @@ border-warning-500
 ```
 
 ### Danger
+
 **Use for:** Errors, destructive actions, critical states
 
 ```tsx
-bg-danger-50       // #fef2f2
-bg-danger-100      // #fee2e2
-bg-danger-200      // #fecaca
-bg-danger-500      // #ef4444
-bg-danger-600      // #dc2626
-bg-danger-700      // #b91c1c
+bg - danger - 50; // #fef2f2
+bg - danger - 100; // #fee2e2
+bg - danger - 200; // #fecaca
+bg - danger - 500; // #ef4444
+bg - danger - 600; // #dc2626
+bg - danger - 700; // #b91c1c
 
-text-danger-500
-border-danger-500
+text - danger - 500;
+border - danger - 500;
 ```
 
 **Examples:**
+
 ```tsx
 // Error message
 <div className="bg-danger-50 border-l-4 border-danger-500">
@@ -320,17 +334,21 @@ border-danger-500
 These colors are maintained for **tenant customization only**. Do not use in core platform UI.
 
 ### Lavender Palette
+
 ```tsx
 lavender-50 through lavender-900
 ```
 
 ### Navy Palette (Legacy)
+
 ```tsx
 navy-50 through navy-900
 ```
+
 ⚠️ **Note:** This is NOT Macon Navy. Use `macon-navy-*` for brand colors.
 
 ### Purple Palette
+
 ```tsx
 purple-50 through purple-900
 ```
@@ -342,12 +360,14 @@ purple-50 through purple-900
 ### ✅ DO
 
 **Use brand colors for brand elements:**
+
 ```tsx
 <button className="bg-macon-orange">Book Now</button>
 <h1 className="text-macon-navy-900">Welcome to Macon</h1>
 ```
 
 **Use neutral palette for UI foundation:**
+
 ```tsx
 <Card className="bg-neutral-50 border-neutral-200">
   <p className="text-neutral-600">Content here</p>
@@ -355,21 +375,22 @@ purple-50 through purple-900
 ```
 
 **Use status colors for semantic states:**
+
 ```tsx
 <Alert className="bg-success-50 border-success-500">Success!</Alert>
 <Alert className="bg-danger-50 border-danger-500">Error!</Alert>
 ```
 
 **Use semantic tokens for flexible theming:**
+
 ```tsx
-<button className="bg-primary text-primary-foreground">
-  Adapts to theme
-</button>
+<button className="bg-primary text-primary-foreground">Adapts to theme</button>
 ```
 
 ### ❌ DON'T
 
 **Don't use generic Tailwind colors:**
+
 ```tsx
 // ❌ WRONG
 <div className="bg-gray-50 text-gray-900">
@@ -379,6 +400,7 @@ purple-50 through purple-900
 ```
 
 **Don't use blue/red/green generics:**
+
 ```tsx
 // ❌ WRONG
 <button className="bg-blue-600">Click</button>
@@ -390,6 +412,7 @@ purple-50 through purple-900
 ```
 
 **Don't use legacy colors in core UI:**
+
 ```tsx
 // ❌ WRONG (unless tenant customization)
 <Card className="bg-lavender-50">
@@ -399,6 +422,7 @@ purple-50 through purple-900
 ```
 
 **Don't hardcode hex colors:**
+
 ```tsx
 // ❌ WRONG
 <div style={{ color: '#4b5563' }}>
@@ -414,39 +438,43 @@ purple-50 through purple-900
 ### From Generic Tailwind to MAIS Design System
 
 #### Gray → Neutral
+
 ```tsx
 // Before
-className="bg-gray-50 text-gray-900 border-gray-200"
+className = 'bg-gray-50 text-gray-900 border-gray-200';
 
 // After
-className="bg-neutral-50 text-neutral-900 border-neutral-200"
+className = 'bg-neutral-50 text-neutral-900 border-neutral-200';
 ```
 
 #### Blue → Macon Navy
+
 ```tsx
 // Before
-className="bg-blue-600 text-blue-50"
+className = 'bg-blue-600 text-blue-50';
 
 // After
-className="bg-macon-navy-600 text-macon-navy-50"
+className = 'bg-macon-navy-600 text-macon-navy-50';
 ```
 
 #### Red → Danger
+
 ```tsx
 // Before
-className="border-red-500 text-red-700"
+className = 'border-red-500 text-red-700';
 
 // After
-className="border-danger-500 text-danger-700"
+className = 'border-danger-500 text-danger-700';
 ```
 
 #### Green → Success
+
 ```tsx
 // Before
-className="bg-green-500 text-green-50"
+className = 'bg-green-500 text-green-50';
 
 // After
-className="bg-success-500 text-success-50"
+className = 'bg-success-500 text-success-50';
 ```
 
 ### CSS Module Migration
@@ -482,16 +510,19 @@ All color combinations meet WCAG AA standards (4.5:1 for normal text, 3:1 for la
 ### Recommended Text/Background Pairs
 
 **Dark text on light backgrounds:**
+
 - `text-neutral-900` on `bg-neutral-50` ✓ 16.8:1
 - `text-neutral-700` on `bg-neutral-100` ✓ 10.2:1
 - `text-macon-navy-900` on `bg-macon-navy-50` ✓ 12.4:1
 
 **Light text on dark backgrounds:**
+
 - `text-white` on `bg-macon-navy` ✓ 8.2:1
 - `text-white` on `bg-macon-orange` ✓ 4.7:1
 - `text-white` on `bg-danger-600` ✓ 5.1:1
 
 **Status message combinations:**
+
 - `text-success-700` on `bg-success-50` ✓ 7.9:1
 - `text-danger-700` on `bg-danger-50` ✓ 8.1:1
 - `text-warning-700` on `bg-warning-50` ✓ 7.2:1
@@ -504,16 +535,17 @@ Use predefined gradient utilities for brand consistency:
 
 ```tsx
 // Macon Navy gradient
-bg-gradient-navy // linear-gradient(135deg, #1a365d 0%, #2d4a7c 100%)
+bg - gradient - navy; // linear-gradient(135deg, #1a365d 0%, #2d4a7c 100%)
 
 // Macon Orange gradient
-bg-gradient-orange // linear-gradient(135deg, #fb923c 0%, #fca85c 100%)
+bg - gradient - orange; // linear-gradient(135deg, #fb923c 0%, #fca85c 100%)
 
 // Macon Teal gradient
-bg-gradient-teal // linear-gradient(135deg, #38b2ac 0%, #4dd4cc 100%)
+bg - gradient - teal; // linear-gradient(135deg, #38b2ac 0%, #4dd4cc 100%)
 ```
 
 **Examples:**
+
 ```tsx
 <button className="bg-gradient-orange text-white">
   Premium Action
@@ -531,14 +563,14 @@ bg-gradient-teal // linear-gradient(135deg, #38b2ac 0%, #4dd4cc 100%)
 Shadows use Macon Navy with varying opacity for branded depth:
 
 ```tsx
-shadow-elevation-1  // Subtle: 0 1px 3px rgba(10, 37, 64, 0.12)
-shadow-elevation-2  // Light: 0 4px 6px rgba(10, 37, 64, 0.1)
-shadow-elevation-3  // Medium: 0 10px 15px rgba(10, 37, 64, 0.1)
-shadow-elevation-4  // Heavy: 0 20px 25px rgba(10, 37, 64, 0.1)
+shadow - elevation - 1; // Subtle: 0 1px 3px rgba(10, 37, 64, 0.12)
+shadow - elevation - 2; // Light: 0 4px 6px rgba(10, 37, 64, 0.1)
+shadow - elevation - 3; // Medium: 0 10px 15px rgba(10, 37, 64, 0.1)
+shadow - elevation - 4; // Heavy: 0 20px 25px rgba(10, 37, 64, 0.1)
 
-shadow-glow-orange  // 0 0 20px rgba(251, 146, 60, 0.4)
-shadow-glow-teal    // 0 0 20px rgba(56, 178, 172, 0.4)
-shadow-glow-success // 0 0 20px rgba(34, 197, 94, 0.4)
+shadow - glow - orange; // 0 0 20px rgba(251, 146, 60, 0.4)
+shadow - glow - teal; // 0 0 20px rgba(56, 178, 172, 0.4)
+shadow - glow - success; // 0 0 20px rgba(34, 197, 94, 0.4)
 ```
 
 ---

@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
-type TabValue = "bookings" | "blackouts" | "packages" | "tenants";
+type TabValue = 'bookings' | 'blackouts' | 'packages' | 'tenants';
 
 interface TabNavigationProps {
   activeTab: TabValue;
@@ -14,10 +14,10 @@ interface TabNavigationProps {
  */
 export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   const tabs: { value: TabValue; label: string }[] = [
-    { value: "tenants", label: "Tenants" },
-    { value: "bookings", label: "Bookings" },
-    { value: "blackouts", label: "Blackouts" },
-    { value: "packages", label: "Packages" },
+    { value: 'tenants', label: 'Tenants' },
+    { value: 'bookings', label: 'Bookings' },
+    { value: 'blackouts', label: 'Blackouts' },
+    { value: 'packages', label: 'Packages' },
   ];
 
   return (
@@ -28,10 +28,10 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
             key={tab.value}
             onClick={() => onTabChange(tab.value)}
             className={cn(
-              "py-4 px-1 border-b-2 font-medium text-lg transition-colors min-h-[44px]",
+              'py-4 px-1 border-b-2 font-medium text-lg transition-colors min-h-[44px]',
               activeTab === tab.value
-                ? "border-white/30 text-white/60"
-                : "border-transparent text-white/90 hover:text-white/60 hover:border-white/30"
+                ? 'border-white/30 text-white/60'
+                : 'border-transparent text-white/90 hover:text-white/60 hover:border-white/30'
             )}
           >
             {tab.label}

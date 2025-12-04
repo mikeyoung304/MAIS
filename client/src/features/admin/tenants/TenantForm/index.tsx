@@ -8,18 +8,18 @@
  * - UI sections via BasicInfoFields and ConfigurationFields
  */
 
-import { useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ChevronLeft, Save, AlertCircle } from "lucide-react";
+import { useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { ChevronLeft, Save, AlertCircle } from 'lucide-react';
 
-import { BasicInfoFields } from "./BasicInfoFields";
-import { ConfigurationFields } from "./ConfigurationFields";
-import { LoadingState } from "./LoadingState";
-import { useTenantForm } from "./useTenantForm";
-import { tenantApi } from "./tenantApi";
+import { BasicInfoFields } from './BasicInfoFields';
+import { ConfigurationFields } from './ConfigurationFields';
+import { LoadingState } from './LoadingState';
+import { useTenantForm } from './useTenantForm';
+import { tenantApi } from './tenantApi';
 
 export function TenantForm() {
   const navigate = useNavigate();
@@ -55,9 +55,9 @@ export function TenantForm() {
       setFormData(data);
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.error("Failed to load tenant:", error);
+        console.error('Failed to load tenant:', error);
       }
-      toast.error("Failed to load tenant");
+      toast.error('Failed to load tenant');
     } finally {
       setIsLoading(false);
     }
@@ -76,25 +76,25 @@ export function TenantForm() {
       let result;
       if (isEditing && id) {
         result = await tenantApi.updateTenant(id, formData);
-        toast.success("Tenant updated successfully!");
+        toast.success('Tenant updated successfully!');
       } else {
         result = await tenantApi.createTenant(formData);
         if (result.secretKey) {
-          toast.success("Tenant created successfully!", {
+          toast.success('Tenant created successfully!', {
             description: `IMPORTANT - Save this secret key: ${result.secretKey}\n\nThis will only be shown once.`,
             duration: 10000,
           });
         } else {
-          toast.success("Tenant created successfully!");
+          toast.success('Tenant created successfully!');
         }
       }
-      navigate("/admin/dashboard");
+      navigate('/admin/dashboard');
     } catch (error: any) {
       if (import.meta.env.DEV) {
-        console.error("Failed to save tenant:", error);
+        console.error('Failed to save tenant:', error);
       }
       setErrors({
-        submit: error.message || "Failed to save tenant. Please try again."
+        submit: error.message || 'Failed to save tenant. Please try again.',
       });
     } finally {
       setIsSubmitting(false);
@@ -112,7 +112,7 @@ export function TenantForm() {
         <div className="mb-8">
           <Button
             variant="ghost"
-            onClick={() => navigate("/admin/dashboard")}
+            onClick={() => navigate('/admin/dashboard')}
             className="mb-4 text-white/70 hover:text-white/90"
           >
             <ChevronLeft className="h-4 w-4 mr-2" />
@@ -120,22 +120,19 @@ export function TenantForm() {
           </Button>
 
           <h1 className="text-3xl font-bold text-white">
-            {isEditing ? "Edit Tenant" : "Add New Tenant"}
+            {isEditing ? 'Edit Tenant' : 'Add New Tenant'}
           </h1>
           <p className="text-white/70 mt-2">
             {isEditing
-              ? "Update tenant information and settings"
-              : "Create a new tenant account for the platform"
-            }
+              ? 'Update tenant information and settings'
+              : 'Create a new tenant account for the platform'}
           </p>
         </div>
 
         {/* Form */}
         <Card className="bg-macon-navy-800 border-white/20">
           <CardHeader>
-            <CardTitle className="text-white">
-              Tenant Information
-            </CardTitle>
+            <CardTitle className="text-white">Tenant Information</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -167,7 +164,7 @@ export function TenantForm() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate("/admin/dashboard")}
+                  onClick={() => navigate('/admin/dashboard')}
                   className="flex-1 border-white/20 text-white/70 hover:bg-macon-navy-700"
                   disabled={isSubmitting}
                 >
@@ -179,7 +176,7 @@ export function TenantForm() {
                   disabled={isSubmitting}
                 >
                   <Save className="h-4 w-4 mr-2" />
-                  {isSubmitting ? "Saving..." : (isEditing ? "Update Tenant" : "Create Tenant")}
+                  {isSubmitting ? 'Saving...' : isEditing ? 'Update Tenant' : 'Create Tenant'}
                 </Button>
               </div>
             </form>

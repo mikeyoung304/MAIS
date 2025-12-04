@@ -14,6 +14,7 @@ Simplify tenant storefront setup using AI agents. Two complementary approaches:
 ## Problem Statement
 
 ### Current Pain Points
+
 - Visual Editor requires manual navigation through multiple UI elements
 - Bulk operations (e.g., update all package prices) require repetitive clicking
 - New tenants face steep learning curve for storefront configuration
@@ -21,6 +22,7 @@ Simplify tenant storefront setup using AI agents. Two complementary approaches:
 - Power users want CLI-level efficiency for common operations
 
 ### Opportunity
+
 - AI agents can interpret natural language commands and execute configuration changes
 - Semantic naming system enables precise identification of storefront elements
 - Conversational UI reduces friction for non-technical users
@@ -33,6 +35,7 @@ Simplify tenant storefront setup using AI agents. Two complementary approaches:
 ### Approach 1: Developer-Facing (Claude Code CLI) - MVP
 
 **How it works:**
+
 ```
 User: "Update all Wellness Retreat packages to use earthy green (#2d5016) as accent color"
 Claude Code: [Calls MAIS API] → Updates 3 packages → Returns summary
@@ -42,6 +45,7 @@ Claude Code: [Calls MAIS API with dryRun=true] → Shows preview → User confir
 ```
 
 **Key Features:**
+
 - Natural language command parsing
 - Bulk operations with preview/confirmation
 - Integration with existing draft/publish workflow
@@ -51,6 +55,7 @@ Claude Code: [Calls MAIS API with dryRun=true] → Shows preview → User confir
 ### Approach 2: Customer-Facing (Tenant Chatbot) - Future
 
 **How it works:**
+
 ```
 Bot: "Welcome! Let's set up your storefront. What's your business name?"
 User: "Bella Weddings"
@@ -62,6 +67,7 @@ Bot: "Beautiful! Here's a preview... [shows storefront] Confirm to publish?"
 ```
 
 **Key Features:**
+
 - Conversational onboarding wizard
 - Streaming responses for real-time feel
 - Proactive suggestions based on analytics
@@ -114,10 +120,10 @@ Enable AI to precisely identify storefront elements:
 ```typescript
 // Semantic identifiers for AI-driven editing
 interface StorefrontElement {
-  semanticId: string;        // e.g., "tenant.branding.primaryColor"
-  humanName: string;         // e.g., "Primary Brand Color"
+  semanticId: string; // e.g., "tenant.branding.primaryColor"
+  humanName: string; // e.g., "Primary Brand Color"
   type: 'color' | 'text' | 'image' | 'price' | 'boolean';
-  path: string[];            // e.g., ["tenant", "branding", "primaryColor"]
+  path: string[]; // e.g., ["tenant", "branding", "primaryColor"]
   currentValue: unknown;
   validations: ZodSchema;
 }
@@ -245,6 +251,7 @@ const AGENT_TOOLS: Tool[] = [
 #### Phase 1: Agent API Foundation (Week 1)
 
 **Tasks:**
+
 - [ ] Add `@anthropic-ai/sdk` dependency to server
 - [ ] Create `ClaudeAdapter` implementing `AIAgentProvider` port
 - [ ] Add `AgentSession` and `AgentCommand` Prisma models
@@ -253,6 +260,7 @@ const AGENT_TOOLS: Tool[] = [
 - [ ] Add agent attribution to `ConfigChangeLog`
 
 **Files to create/modify:**
+
 ```
 server/src/adapters/claude.adapter.ts          # NEW: Claude API wrapper
 server/src/lib/ports.ts                        # ADD: AIAgentProvider interface
@@ -265,6 +273,7 @@ packages/contracts/src/api.agent.v1.ts         # NEW: Agent API contracts
 #### Phase 2: Tool Execution (Week 2)
 
 **Tasks:**
+
 - [ ] Implement `get_storefront_config` tool
 - [ ] Implement `update_branding` tool with validation
 - [ ] Implement `bulk_update_packages` tool with dryRun
@@ -273,6 +282,7 @@ packages/contracts/src/api.agent.v1.ts         # NEW: Agent API contracts
 - [ ] Add rate limiting (10 commands/minute per tenant)
 
 **Files to create/modify:**
+
 ```
 server/src/services/ai-agent.service.ts        # ADD: Tool implementations
 server/src/middleware/agent-rate-limit.ts      # NEW: Rate limiting
@@ -282,6 +292,7 @@ server/test/services/ai-agent.service.test.ts  # NEW: Unit tests
 #### Phase 3: Chatbot UI (Week 3-4) - Optional
 
 **Tasks:**
+
 - [ ] Add `ChatConversation` and `ChatMessage` Prisma models
 - [ ] Create SSE streaming endpoint for chat responses
 - [ ] Build `ChatInterface` React component with Vercel AI SDK
@@ -289,6 +300,7 @@ server/test/services/ai-agent.service.test.ts  # NEW: Unit tests
 - [ ] Implement conversation memory service
 
 **Files to create/modify:**
+
 ```
 server/src/routes/chatbot.routes.ts                    # NEW: Chat endpoints
 server/src/services/conversation-memory.service.ts     # NEW: State management
@@ -452,23 +464,24 @@ ${userMessage}
 
 ```typescript
 enum AIActionCategory {
-  READ_ONLY = 'read_only',        // Safe for autonomous AI
+  READ_ONLY = 'read_only', // Safe for autonomous AI
   STANDARD_WRITE = 'standard_write', // Reversible, preview required
-  SENSITIVE = 'sensitive',        // Requires explicit confirmation
+  SENSITIVE = 'sensitive', // Requires explicit confirmation
 }
 
 const ACTION_CATEGORIES: Record<string, AIActionCategory> = {
-  'get_storefront_config': AIActionCategory.READ_ONLY,
-  'update_branding': AIActionCategory.STANDARD_WRITE,
-  'bulk_update_packages': AIActionCategory.STANDARD_WRITE,
-  'publish_drafts': AIActionCategory.SENSITIVE,
-  'discard_drafts': AIActionCategory.SENSITIVE,
+  get_storefront_config: AIActionCategory.READ_ONLY,
+  update_branding: AIActionCategory.STANDARD_WRITE,
+  bulk_update_packages: AIActionCategory.STANDARD_WRITE,
+  publish_drafts: AIActionCategory.SENSITIVE,
+  discard_drafts: AIActionCategory.SENSITIVE,
 };
 ```
 
 ### Audit Trail Requirements
 
 Every agent action must log:
+
 - `tenantId`: Multi-tenant isolation
 - `userId`: Who initiated the command
 - `agentId`: Which AI agent (`claude_code`, `chatbot_v1`)
@@ -484,12 +497,14 @@ Every agent action must log:
 ## Success Metrics
 
 ### Phase 1 (Agent API)
+
 - 5+ tenants using CLI weekly
 - 50+ commands executed successfully
 - < 5% error rate on command execution
 - 0 security incidents
 
 ### Phase 2 (Chatbot)
+
 - 80% of new tenants complete onboarding via chatbot
 - 3+ conversations per tenant per month
 - < 3s p90 response time
@@ -500,15 +515,18 @@ Every agent action must log:
 ## Dependencies & Prerequisites
 
 ### External Dependencies
+
 - `@anthropic-ai/sdk` - Claude API client
 - `ai` (Vercel AI SDK) - React hooks for streaming chat (Phase 3)
 
 ### Internal Dependencies
+
 - Existing `AuditService` for change logging
 - Existing `PackageDraftService` for draft workflow
 - Existing tenant authentication middleware
 
 ### Infrastructure Requirements
+
 - Claude API key (`ANTHROPIC_API_KEY` env var)
 - Rate limiting storage (existing Redis or in-memory)
 
@@ -516,25 +534,27 @@ Every agent action must log:
 
 ## Risk Analysis & Mitigation
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Prompt injection attack | Medium | High | Tool use with Zod schemas, no freeform SQL |
-| Claude API outage | Low | Medium | Graceful degradation to manual UI |
-| Runaway API costs | Medium | Medium | Rate limiting, token budgets per request |
-| Cross-tenant data leakage | Low | Critical | All queries scoped by tenantId, unit tests |
-| Concurrent edit conflicts | Medium | Low | Optimistic locking, conflict detection |
+| Risk                      | Likelihood | Impact   | Mitigation                                 |
+| ------------------------- | ---------- | -------- | ------------------------------------------ |
+| Prompt injection attack   | Medium     | High     | Tool use with Zod schemas, no freeform SQL |
+| Claude API outage         | Low        | Medium   | Graceful degradation to manual UI          |
+| Runaway API costs         | Medium     | Medium   | Rate limiting, token budgets per request   |
+| Cross-tenant data leakage | Low        | Critical | All queries scoped by tenantId, unit tests |
+| Concurrent edit conflicts | Medium     | Low      | Optimistic locking, conflict detection     |
 
 ---
 
 ## Future Considerations
 
 ### Extensibility
+
 - Add more tools as features are built (booking management, analytics)
 - Multi-language support for chatbot (Spanish, French)
 - Voice input for mobile users
 - Integration with Slack/Teams for notifications
 
 ### Long-term Vision
+
 - Proactive AI suggestions based on analytics
 - A/B testing recommendations
 - Automated seasonal updates
@@ -545,12 +565,14 @@ Every agent action must log:
 ## References
 
 ### Internal
+
 - `client/src/features/tenant-admin/visual-editor/` - Current visual editor
 - `server/src/services/package-draft.service.ts` - Draft workflow
 - `server/src/services/audit.service.ts` - Audit trail
 - `docs/solutions/PREVENTION-STRATEGIES-INDEX.md` - Security patterns
 
 ### External
+
 - [Anthropic Tool Use Documentation](https://docs.anthropic.com/en/docs/tool-use)
 - [Vercel AI SDK](https://ai-sdk.dev/)
 - [AI Agent Security Best Practices](https://workos.com/blog/securing-ai-agents)

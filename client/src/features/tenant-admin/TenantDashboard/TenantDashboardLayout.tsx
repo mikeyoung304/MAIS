@@ -7,10 +7,10 @@
  * - Apple-minimal styling (soft cream background, generous whitespace)
  */
 
-import type { ReactNode } from "react";
-import { AdminLayout } from "../../../layouts/AdminLayout";
-import { ImpersonationBanner } from "../../admin/dashboard/components/ImpersonationBanner";
-import { useAuth } from "../../../contexts/AuthContext";
+import type { ReactNode } from 'react';
+import { AdminLayout } from '../../../layouts/AdminLayout';
+import { ImpersonationBanner } from '../../admin/dashboard/components/ImpersonationBanner';
+import { useAuth } from '../../../contexts/AuthContext';
 
 interface TenantDashboardLayoutProps {
   children: ReactNode;
@@ -19,7 +19,7 @@ interface TenantDashboardLayoutProps {
 
 export function TenantDashboardLayout({
   children,
-  breadcrumbs = [{ label: "Dashboard", href: "/tenant/dashboard" }],
+  breadcrumbs = [{ label: 'Dashboard', href: '/tenant/dashboard' }],
 }: TenantDashboardLayoutProps) {
   const { isImpersonating, impersonation } = useAuth();
 

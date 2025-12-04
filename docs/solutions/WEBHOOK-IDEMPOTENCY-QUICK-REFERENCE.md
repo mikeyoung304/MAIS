@@ -50,7 +50,8 @@ async function recordWebhook(eventId: string) {
     await db.webhookEvent.create({ data: { eventId } });
     return true; // New record created
   } catch (error) {
-    if (error.code === 'P2002') { // Unique constraint violated
+    if (error.code === 'P2002') {
+      // Unique constraint violated
       return false; // Duplicate detected
     }
     throw error;
@@ -102,7 +103,7 @@ it('prevents duplicate webhooks', async () => {
   ]);
 
   // Both should succeed (idempotency)
-  expect(results.every(r => r.status === 'fulfilled')).toBe(true);
+  expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
 
   // But only 1 record created (data integrity)
   const records = await db.find({ eventId });
@@ -140,7 +141,8 @@ const isDupe = await isDuplicate(eventId);
 try {
   await db.create({ eventId });
 } catch (error) {
-  if (error.code === 'P2002') { // Unique constraint
+  if (error.code === 'P2002') {
+    // Unique constraint
     logger.info('Duplicate detected');
     return 200; // Idempotent success to Stripe
   }
@@ -176,13 +178,13 @@ const tenantId = event.metadata?.tenantId || 'unknown';
 
 ## Common Mistakes
 
-| Mistake | Problem | Fix |
-|---------|---------|-----|
-| Check then create | Race condition window | Use database constraint |
-| Generic catch block | Can't distinguish errors | Check error.code === 'P2002' |
-| tenantId = "unknown" | Cross-tenant collisions | Fail fast if missing |
-| Sequential tests | Race condition hidden | Use Promise.allSettled |
-| Don't count records | Data corruption hidden | Verify exactly 1 record |
+| Mistake              | Problem                  | Fix                          |
+| -------------------- | ------------------------ | ---------------------------- |
+| Check then create    | Race condition window    | Use database constraint      |
+| Generic catch block  | Can't distinguish errors | Check error.code === 'P2002' |
+| tenantId = "unknown" | Cross-tenant collisions  | Fail fast if missing         |
+| Sequential tests     | Race condition hidden    | Use Promise.allSettled       |
+| Don't count records  | Data corruption hidden   | Verify exactly 1 record      |
 
 ---
 
@@ -215,7 +217,9 @@ const tenantId = metadata?.tenantId || 'unknown';
 describe('Webhook Idempotency', () => {
   it('should prevent duplicates under concurrency', async () => {
     const eventId = 'evt_test_001';
-    const eventData = { /* ... */ };
+    const eventData = {
+      /* ... */
+    };
 
     // 1. Run concurrent requests
     const results = await Promise.allSettled([
@@ -224,7 +228,7 @@ describe('Webhook Idempotency', () => {
     ]);
 
     // 2. Both should succeed
-    expect(results.every(r => r.status === 'fulfilled')).toBe(true);
+    expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
 
     // 3. Exactly 1 record created
     const records = await db.find({ eventId });
@@ -232,13 +236,11 @@ describe('Webhook Idempotency', () => {
   });
 
   it('should handle 10+ concurrent requests', async () => {
-    const requests = Array.from({ length: 10 }, () =>
-      handler(eventId, eventData)
-    );
+    const requests = Array.from({ length: 10 }, () => handler(eventId, eventData));
     const results = await Promise.allSettled(requests);
 
     // All should complete without error
-    expect(results.every(r => r.status === 'fulfilled')).toBe(true);
+    expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
 
     // Still exactly 1 record
     const records = await db.find({ eventId });
@@ -286,6 +288,7 @@ metrics.histogram('webhook.processing_time_ms', duration);
 > This one principle handles all race conditions automatically.
 
 **Three rules:**
+
 1. ✅ Unique constraint in database
 2. ✅ Catch and handle constraint violation gracefully
 3. ✅ Test with concurrent requests (Promise.allSettled)

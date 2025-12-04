@@ -1,11 +1,11 @@
 ---
 status: superseded
 priority: p3
-issue_id: "223"
+issue_id: '223'
 tags: [ux, admin, preview, landing-page]
 dependencies: []
-superseded_by: "plans/feat-landing-page-visual-editor.md"
-superseded_date: "2025-12-04"
+superseded_by: 'plans/feat-landing-page-visual-editor.md'
+superseded_date: '2025-12-04'
 ---
 
 # TODO-223: Missing Landing Page Preview Mode for Admin
@@ -17,6 +17,7 @@ superseded_date: "2025-12-04"
 ## Superseded By
 
 This TODO has been superseded by a comprehensive implementation plan:
+
 - **Plan File**: `plans/feat-landing-page-visual-editor.md`
 - **Date**: 2025-12-04
 - **Coverage**: The new plan implements a WYSIWYG editor where:
@@ -35,9 +36,9 @@ This TODO has been superseded by a comprehensive implementation plan:
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-12-01 | Created | Identified during landing page code review |
+| Date       | Action     | Notes                                                |
+| ---------- | ---------- | ---------------------------------------------------- |
+| 2025-12-01 | Created    | Identified during landing page code review           |
 | 2025-12-04 | Superseded | Replaced by visual editor plan with WYSIWYG approach |
 
 ## Tags

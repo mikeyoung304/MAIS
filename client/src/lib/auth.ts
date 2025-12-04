@@ -116,15 +116,16 @@ export function isPlatformAdminPayload(
   payload: TokenPayload
 ): payload is PlatformAdminTokenPayload {
   // Handle all platform admin role variants
-  return 'role' in payload && (payload.role === 'admin' || payload.role === 'ADMIN' || payload.role === 'PLATFORM_ADMIN');
+  return (
+    'role' in payload &&
+    (payload.role === 'admin' || payload.role === 'ADMIN' || payload.role === 'PLATFORM_ADMIN')
+  );
 }
 
 /**
  * Type guard to check if payload is tenant admin
  */
-export function isTenantAdminPayload(
-  payload: TokenPayload
-): payload is TenantAdminTokenPayload {
+export function isTenantAdminPayload(payload: TokenPayload): payload is TenantAdminTokenPayload {
   return 'type' in payload && payload.type === 'tenant';
 }
 
@@ -152,10 +153,7 @@ export function payloadToUser(payload: TokenPayload): User {
     };
   }
 
-  throw new AuthError(
-    AuthErrorType.INVALID_TOKEN,
-    'Unknown token payload type'
-  );
+  throw new AuthError(AuthErrorType.INVALID_TOKEN, 'Unknown token payload type');
 }
 
 /**

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "082"
+issue_id: '082'
 tags: [quality, code-review, typescript, testability]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 All seed functions return `Promise<void>` instead of the entities they create. This makes them untestable and non-composable.
 
 **Why it matters:**
+
 - Cannot verify what was created without additional queries
 - Cannot chain seeds or use returned data
 - Harder to write tests for seed logic
@@ -20,24 +21,27 @@ All seed functions return `Promise<void>` instead of the entities they create. T
 ## Findings
 
 **Current signatures:**
+
 ```typescript
-export async function seedPlatform(prisma: PrismaClient): Promise<void>
-export async function seedE2E(prisma: PrismaClient): Promise<void>
-export async function seedDemo(prisma: PrismaClient): Promise<void>
+export async function seedPlatform(prisma: PrismaClient): Promise<void>;
+export async function seedE2E(prisma: PrismaClient): Promise<void>;
+export async function seedDemo(prisma: PrismaClient): Promise<void>;
 ```
 
 **Recommended:**
+
 ```typescript
 export interface PlatformSeedResult {
   admin: { id: string; email: string; role: string };
 }
 
-export async function seedPlatform(prisma: PrismaClient): Promise<PlatformSeedResult>
+export async function seedPlatform(prisma: PrismaClient): Promise<PlatformSeedResult>;
 ```
 
 ## Proposed Solutions
 
 ### Solution A: Add return types to all seed functions
+
 **Pros:** Testable, composable, type-safe
 **Cons:** Minor effort
 **Effort:** Medium (1 hour)
@@ -55,8 +59,8 @@ export async function seedPlatform(prisma: PrismaClient): Promise<PlatformSeedRe
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                       |
+| ---------- | ------------------------ | ------------------------------- |
 | 2025-11-29 | Created from code review | void returns reduce testability |
 
 ## Resources

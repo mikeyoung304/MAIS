@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  InProcessEventEmitter,
-  BookingEvents,
-  AppointmentEvents,
-} from '../../src/lib/core/events';
+import { InProcessEventEmitter, BookingEvents, AppointmentEvents } from '../../src/lib/core/events';
 
 describe('InProcessEventEmitter', () => {
   let emitter: InProcessEventEmitter;

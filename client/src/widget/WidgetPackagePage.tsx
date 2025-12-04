@@ -1,17 +1,17 @@
-import { useState } from "react";
-import { toast } from "sonner";
-import { toUtcMidnight } from "@macon/shared";
-import { usePackage } from "../features/catalog/hooks";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { DatePicker } from "../features/booking/DatePicker";
-import { AddOnList } from "../features/booking/AddOnList";
-import { TotalBox } from "../features/booking/TotalBox";
-import { useBookingTotal } from "../features/booking/hooks";
-import { api } from "../lib/api";
-import { formatCurrency } from "@/lib/utils";
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { toUtcMidnight } from '@macon/shared';
+import { usePackage } from '../features/catalog/hooks';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { DatePicker } from '../features/booking/DatePicker';
+import { AddOnList } from '../features/booking/AddOnList';
+import { TotalBox } from '../features/booking/TotalBox';
+import { useBookingTotal } from '../features/booking/hooks';
+import { api } from '../lib/api';
+import { formatCurrency } from '@/lib/utils';
 
 interface Props {
   packageSlug: string;
@@ -36,22 +36,18 @@ export function WidgetPackagePage({ packageSlug, onBack, onBookingComplete }: Pr
   const [email, setEmail] = useState('');
 
   const packageData = pkg;
-  const total = useBookingTotal(packageData?.priceCents || 0, packageData?.addOns || [], selectedAddOns);
+  const total = useBookingTotal(
+    packageData?.priceCents || 0,
+    packageData?.addOns || [],
+    selectedAddOns
+  );
 
   if (isLoading) {
-    return (
-      <div className="text-center py-12 text-white/90 text-xl">
-        Loading package...
-      </div>
-    );
+    return <div className="text-center py-12 text-white/90 text-xl">Loading package...</div>;
   }
 
   if (error || !packageData) {
-    return (
-      <div className="text-center py-12 text-white text-xl">
-        Package not found
-      </div>
-    );
+    return <div className="text-center py-12 text-white text-xl">Package not found</div>;
   }
 
   const handleCheckout = async () => {
@@ -108,11 +104,7 @@ export function WidgetPackagePage({ packageSlug, onBack, onBookingComplete }: Pr
   return (
     <div>
       {/* Back button */}
-      <Button
-        variant="ghost"
-        onClick={onBack}
-        className="mb-6 text-white/70 hover:text-white"
-      >
+      <Button variant="ghost" onClick={onBack} className="mb-6 text-white/70 hover:text-white">
         ← Back to Packages
       </Button>
 
@@ -149,10 +141,7 @@ export function WidgetPackagePage({ packageSlug, onBack, onBookingComplete }: Pr
               <CardTitle className="text-white text-3xl">Select Date</CardTitle>
             </CardHeader>
             <CardContent>
-              <DatePicker
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-              />
+              <DatePicker selected={selectedDate} onSelect={setSelectedDate} />
             </CardContent>
           </Card>
 
@@ -164,7 +153,9 @@ export function WidgetPackagePage({ packageSlug, onBack, onBookingComplete }: Pr
             <CardContent>
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="coupleName" className="text-white/90 text-lg">Your Names</Label>
+                  <Label htmlFor="coupleName" className="text-white/90 text-lg">
+                    Your Names
+                  </Label>
                   <Input
                     id="coupleName"
                     type="text"
@@ -176,7 +167,9 @@ export function WidgetPackagePage({ packageSlug, onBack, onBookingComplete }: Pr
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-white/90 text-lg">Email Address</Label>
+                  <Label htmlFor="email" className="text-white/90 text-lg">
+                    Email Address
+                  </Label>
                   <Input
                     id="email"
                     type="email"
@@ -218,10 +211,10 @@ export function WidgetPackagePage({ packageSlug, onBack, onBookingComplete }: Pr
               data-testid="checkout"
             >
               {!selectedDate
-                ? "Pick your perfect date above"
+                ? 'Pick your perfect date above'
                 : !coupleName.trim() || !email.trim()
-                ? "Add your details to continue"
-                : "Secure Your Date →"}
+                  ? 'Add your details to continue'
+                  : 'Secure Your Date →'}
             </Button>
           </div>
         </div>

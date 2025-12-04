@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "090"
+issue_id: '090'
 tags: [todo]
 dependencies: []
 ---
@@ -16,6 +16,7 @@ dependencies: []
 ## Problem
 
 `TenantStorefrontLayout.tsx` violates Single Responsibility Principle by handling 3 distinct concerns in one component:
+
 1. Tenant data fetching and API key management
 2. CSS branding application
 3. Layout rendering (header/footer/outlet)
@@ -38,6 +39,7 @@ This makes the component harder to test, maintain, and reuse.
 Extract into focused hooks and components:
 
 ### 1. useTenantBranding hook
+
 ```typescript
 // client/src/hooks/useTenantBranding.ts
 export function useTenantBranding(branding?: TenantBranding) {
@@ -64,6 +66,7 @@ export function useTenantBranding(branding?: TenantBranding) {
 ```
 
 ### 2. useTenantContext hook
+
 ```typescript
 // client/src/hooks/useTenantContext.ts
 export function useTenantContext(tenantSlug: string | undefined) {
@@ -85,6 +88,7 @@ export function useTenantContext(tenantSlug: string | undefined) {
 ```
 
 ### 3. Simplified layout component
+
 ```typescript
 export function TenantStorefrontLayout() {
   const { tenantSlug } = useParams();

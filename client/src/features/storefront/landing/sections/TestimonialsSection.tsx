@@ -27,9 +27,7 @@ function StarRating({ rating }: { rating: number }) {
         <Star
           key={star}
           className={`w-5 h-5 ${
-            star <= rating
-              ? 'text-yellow-400 fill-yellow-400'
-              : 'text-neutral-300'
+            star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-neutral-300'
           }`}
         />
       ))}
@@ -74,12 +72,8 @@ function TestimonialCard({ testimonial }: { testimonial: TestimonialItem }) {
           </div>
         )}
         <cite className="not-italic">
-          <div className="font-semibold text-neutral-900">
-            {testimonial?.author ?? 'Anonymous'}
-          </div>
-          {testimonial?.role && (
-            <div className="text-sm text-neutral-500">{testimonial.role}</div>
-          )}
+          <div className="font-semibold text-neutral-900">{testimonial?.author ?? 'Anonymous'}</div>
+          {testimonial?.role && <div className="text-sm text-neutral-500">{testimonial.role}</div>}
         </cite>
       </figcaption>
     </figure>
@@ -133,7 +127,9 @@ function TestimonialCard({ testimonial }: { testimonial: TestimonialItem }) {
  * @see TestimonialsSectionConfigSchema in @macon/contracts for Zod validation
  * @see TODO-218 for cite element accessibility implementation
  */
-export const TestimonialsSection = memo(function TestimonialsSection({ config }: TestimonialsSectionProps) {
+export const TestimonialsSection = memo(function TestimonialsSection({
+  config,
+}: TestimonialsSectionProps) {
   // Defensive coding: ensure items array exists
   const items = config?.items ?? [];
   if (items.length === 0) return null;

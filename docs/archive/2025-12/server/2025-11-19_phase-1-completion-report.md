@@ -12,6 +12,7 @@ Phase 1 of the multi-tenant segment implementation is complete. All backend infr
 ## Completed Tasks (11/11)
 
 ### ✅ Task 1: Database Schema Updates
+
 - Added `Segment` table with proper multi-tenant isolation
 - Configured `onDelete: SetNull` for Package.segmentId relationship
 - Added `segmentId` to AddOn table for segment-specific add-ons
@@ -19,6 +20,7 @@ Phase 1 of the multi-tenant segment implementation is complete. All backend infr
 - File: `/server/prisma/schema.prisma`
 
 ### ✅ Task 2: Create SegmentRepository
+
 - Implemented PrismaSegmentRepository with full CRUD operations
 - Multi-tenant isolation on all queries
 - Slug uniqueness validation within tenant scope
@@ -26,6 +28,7 @@ Phase 1 of the multi-tenant segment implementation is complete. All backend infr
 - File: `/server/src/adapters/prisma/segment.repository.ts` (285 lines)
 
 ### ✅ Task 3: Create SegmentService
+
 - Business logic layer with validation
 - Application-level caching (15-minute TTL)
 - Cache invalidation on mutations
@@ -33,19 +36,23 @@ Phase 1 of the multi-tenant segment implementation is complete. All backend infr
 - File: `/server/src/services/segment.service.ts` (320+ lines)
 
 ### ✅ Task 4: Update Entities
+
 - Added Segment entity definition
 - File: `/server/src/lib/entities.ts`
 
 ### ✅ Task 5: Update Ports
+
 - Added SegmentRepository interface
 - File: `/server/src/lib/ports.ts`
 
 ### ✅ Task 6: Update DI Container
+
 - Registered SegmentRepository and SegmentService
 - Configured in both mock and real adapter modes
 - File: `/server/src/di.ts`
 
 ### ✅ Task 7: Create Zod Validation Schemas
+
 - Comprehensive validation for create/update operations
 - Slug format validation (lowercase alphanumeric + hyphens)
 - SEO field length constraints (metaTitle: 60 chars, metaDescription: 160 chars)
@@ -53,6 +60,7 @@ Phase 1 of the multi-tenant segment implementation is complete. All backend infr
 - File: `/server/src/validation/segment.schemas.ts` (95 lines)
 
 ### ✅ Task 8: Create Public API Endpoints
+
 - 3 customer-facing routes:
   - `GET /v1/segments` - List active segments
   - `GET /v1/segments/:slug` - Get segment metadata
@@ -62,6 +70,7 @@ Phase 1 of the multi-tenant segment implementation is complete. All backend infr
 - File: `/server/src/routes/segments.routes.ts` (155 lines)
 
 ### ✅ Task 9: Create Tenant Admin API Endpoints
+
 - 6 authenticated admin routes:
   - `GET /v1/tenant/admin/segments` - List all segments (including inactive)
   - `POST /v1/tenant/admin/segments` - Create segment
@@ -75,6 +84,7 @@ Phase 1 of the multi-tenant segment implementation is complete. All backend infr
 - File: `/server/src/routes/tenant-admin-segments.routes.ts` (370 lines)
 
 ### ✅ Task 10: Update Package Services for Segment Scoping
+
 - **CatalogRepository**: Added 3 segment-scoped methods:
   - `getPackagesBySegment()` - Get packages for a segment
   - `getPackagesBySegmentWithAddOns()` - Get packages with filtered add-ons
@@ -87,6 +97,7 @@ Phase 1 of the multi-tenant segment implementation is complete. All backend infr
   - `/server/src/lib/ports.ts` (interface updates)
 
 ### ✅ Task 11: Write Integration Tests
+
 - **segment-repository.integration.spec.ts** (507 lines, 17 tests):
   - Multi-tenant isolation tests
   - CRUD operation tests
@@ -131,30 +142,35 @@ Phase 1 of the multi-tenant segment implementation is complete. All backend infr
 ## Key Features Implemented
 
 ### Multi-Tenant Data Isolation
+
 - **Row-level tenantId scoping**: All database queries include tenantId filter
 - **Cache key isolation**: All cache keys prefixed with tenantId
 - **Composite unique constraints**: `(tenantId, slug)` prevents cross-tenant slug conflicts
 - **Middleware chain**: `resolveTenant → requireTenant` enforces tenant context
 
 ### Flexible 2-Level Architecture
+
 - **Not a rigid hierarchy**: Packages can optionally belong to segments
 - **Backward compatible**: Existing packages without segmentId still work
 - **Optional grouping**: `groupingOrder` field supports visual grouping without nesting
 - **Cascade behavior**: `onDelete: SetNull` preserves packages when segment deleted
 
 ### Global vs Segment-Specific Add-Ons
+
 - **Global add-ons**: `segmentId = null` → available to all segments
 - **Segment-specific add-ons**: `segmentId = specific` → only for that segment
 - **Filter logic**: Catalog methods return both types for segment queries
 - **Multi-tenant safe**: Add-ons scoped by tenantId + segmentId
 
 ### Application-Level Caching
+
 - **Cache TTL**: 15 minutes (900 seconds) consistently
 - **Cache invalidation**: Mutations invalidate relevant cache entries
 - **Tenant-scoped keys**: Prevents cross-tenant cache pollution
 - **Separate keys**: Different cache keys for different query types (active vs all, with/without relations)
 
 ### Validation & Error Handling
+
 - **Zod schemas**: Type-safe request validation
 - **Slug format**: Lowercase alphanumeric + hyphens only (`/^[a-z0-9-]+$/`)
 - **SEO constraints**: metaTitle ≤60 chars, metaDescription ≤160 chars
@@ -164,6 +180,7 @@ Phase 1 of the multi-tenant segment implementation is complete. All backend infr
 ## Test Coverage
 
 ### Integration Tests (57+ tests)
+
 - **Multi-tenant isolation**: 9 tests
 - **CRUD operations**: 12 tests
 - **Data integrity**: 6 tests
@@ -174,6 +191,7 @@ Phase 1 of the multi-tenant segment implementation is complete. All backend infr
 - **Global/segment add-on logic**: 7+ tests
 
 ### Test Status
+
 - All test files created with comprehensive coverage
 - Tests follow project conventions (describe.sequential, ctx.tenants pattern)
 - **Note**: Test execution deferred - requires test database reset to verify passing
@@ -181,6 +199,7 @@ Phase 1 of the multi-tenant segment implementation is complete. All backend infr
 ## Technical Patterns Established
 
 ### Repository Pattern
+
 ```typescript
 // Multi-tenant isolation on all queries
 async findByTenant(tenantId: string, onlyActive: boolean): Promise<Segment[]> {
@@ -195,6 +214,7 @@ async findByTenant(tenantId: string, onlyActive: boolean): Promise<Segment[]> {
 ```
 
 ### Service Layer with Caching
+
 ```typescript
 async getSegments(tenantId: string, onlyActive: boolean): Promise<Segment[]> {
   const cacheKey = `segments:${tenantId}:${onlyActive ? 'active' : 'all'}`;
@@ -208,6 +228,7 @@ async getSegments(tenantId: string, onlyActive: boolean): Promise<Segment[]> {
 ```
 
 ### Global vs Segment-Specific Filtering
+
 ```typescript
 // Include add-ons that are either segment-specific OR global
 where: {
@@ -221,12 +242,14 @@ where: {
 ```
 
 ### Route Organization
+
 - **Public routes**: `/v1/segments` - Customer-facing, read-only, active items only
 - **Admin routes**: `/v1/tenant/admin/segments` - Authenticated, full CRUD, all items
 
 ## Known Issues
 
 ### Test Database Setup (Minor)
+
 - **Issue**: Integration tests encounter unique constraint violations on repeated runs
 - **Root Cause**: Test database retains data from previous runs
 - **Impact**: Cannot verify all 57 tests pass without database reset
@@ -236,6 +259,7 @@ where: {
 ## API Endpoints Summary
 
 ### Public Endpoints (3)
+
 ```
 GET  /v1/segments                    # List active segments
 GET  /v1/segments/:slug              # Get segment metadata
@@ -243,6 +267,7 @@ GET  /v1/segments/:slug/packages     # Get segment with packages & add-ons
 ```
 
 ### Admin Endpoints (6)
+
 ```
 GET    /v1/tenant/admin/segments        # List all segments (including inactive)
 POST   /v1/tenant/admin/segments        # Create segment
@@ -255,6 +280,7 @@ GET    /v1/tenant/admin/segments/:id/stats  # Get stats (package/add-on counts)
 ## Cache Keys Established
 
 ### Segment Cache Keys
+
 ```
 segments:{tenantId}:active                         # Active segments list
 segments:{tenantId}:all                            # All segments list
@@ -264,6 +290,7 @@ segments:id:{id}                                   # Segment by ID
 ```
 
 ### Catalog Segment Cache Keys
+
 ```
 catalog:{tenantId}:segment:{segmentId}:packages                  # Packages for segment
 catalog:{tenantId}:segment:{segmentId}:packages-with-addons      # Packages with add-ons
@@ -273,6 +300,7 @@ catalog:{tenantId}:segment:{segmentId}:addons                    # Add-ons for s
 ## Database Schema Changes
 
 ### New Table: Segment
+
 ```prisma
 model Segment {
   id              String    @id @default(cuid())
@@ -300,6 +328,7 @@ model Segment {
 ```
 
 ### Updated Relationships
+
 ```prisma
 model Package {
   segmentId  String?   // Optional - packages can exist without segment
@@ -326,6 +355,7 @@ model AddOn {
 Phase 2 will build the admin interface for segment management:
 
 ### Tasks for Phase 2:
+
 1. Create SegmentManager component (list view with create/edit/delete)
 2. Create SegmentForm component (form for create/update)
 3. Update AdminHome to include Segments section
@@ -334,6 +364,7 @@ Phase 2 will build the admin interface for segment management:
 6. Write component tests
 
 ### Prerequisites:
+
 - Phase 1 backend complete ✅
 - Admin UI framework in place ✅
 - React + TypeScript + Vite setup ✅
@@ -341,6 +372,7 @@ Phase 2 will build the admin interface for segment management:
 ## Conclusion
 
 Phase 1 is **100% complete** with all backend infrastructure successfully implemented. The system now supports:
+
 - ✅ Flexible 2-level segment architecture
 - ✅ Multi-tenant data isolation
 - ✅ Global and segment-specific add-ons

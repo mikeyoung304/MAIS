@@ -10,10 +10,7 @@
 import { Router } from 'express';
 import type { BookingService } from '../services/booking.service';
 import type { CatalogService } from '../services/catalog.service';
-import {
-  validateBookingToken,
-  type BookingTokenPayload,
-} from '../lib/booking-tokens';
+import { validateBookingToken, type BookingTokenPayload } from '../lib/booking-tokens';
 import { logger } from '../lib/core/logger';
 import { handlePublicRouteError } from '../lib/public-route-error-handler';
 
@@ -36,9 +33,7 @@ export class PublicBookingManagementController {
    *
    * GET /v1/public/bookings/manage?token=xxx
    */
-  async getBookingDetails(
-    token: string
-  ): Promise<{
+  async getBookingDetails(token: string): Promise<{
     booking: any;
     canReschedule: boolean;
     canCancel: boolean;
@@ -58,15 +53,13 @@ export class PublicBookingManagementController {
 
     // Fetch package details with add-ons
     const packages = await this.catalogService.getAllPackages(tenantId);
-    const pkg = packages.find(p => p.id === booking.packageId);
+    const pkg = packages.find((p) => p.id === booking.packageId);
     const packageTitle = pkg?.title || 'Unknown Package';
 
     // Get add-on titles from the package
     let addOnTitles: string[] = [];
     if (booking.addOnIds && booking.addOnIds.length > 0 && pkg?.addOns) {
-      addOnTitles = pkg.addOns
-        .filter((a) => booking.addOnIds?.includes(a.id))
-        .map((a) => a.title);
+      addOnTitles = pkg.addOns.filter((a) => booking.addOnIds?.includes(a.id)).map((a) => a.title);
     }
 
     // Determine if booking can be modified
@@ -95,10 +88,7 @@ export class PublicBookingManagementController {
    *
    * POST /v1/public/bookings/reschedule?token=xxx
    */
-  async rescheduleBooking(
-    token: string,
-    newDate: string
-  ): Promise<any> {
+  async rescheduleBooking(token: string, newDate: string): Promise<any> {
     // Validate token (allow 'manage' or 'reschedule' action)
     const result = validateBookingToken(token, 'reschedule');
     if (!result.valid) {
@@ -108,16 +98,9 @@ export class PublicBookingManagementController {
     const { tenantId, bookingId } = result.payload;
 
     // Reschedule via service
-    const updated = await this.bookingService.rescheduleBooking(
-      tenantId,
-      bookingId,
-      newDate
-    );
+    const updated = await this.bookingService.rescheduleBooking(tenantId, bookingId, newDate);
 
-    logger.info(
-      { tenantId, bookingId, newDate },
-      'Booking rescheduled via public API'
-    );
+    logger.info({ tenantId, bookingId, newDate }, 'Booking rescheduled via public API');
 
     return {
       ...updated,
@@ -130,10 +113,7 @@ export class PublicBookingManagementController {
    *
    * POST /v1/public/bookings/cancel?token=xxx
    */
-  async cancelBooking(
-    token: string,
-    reason?: string
-  ): Promise<any> {
+  async cancelBooking(token: string, reason?: string): Promise<any> {
     // Validate token (allow 'manage' or 'cancel' action)
     const result = validateBookingToken(token, 'cancel');
     if (!result.valid) {
@@ -150,10 +130,7 @@ export class PublicBookingManagementController {
       reason
     );
 
-    logger.info(
-      { tenantId, bookingId, reason },
-      'Booking cancelled via public API'
-    );
+    logger.info({ tenantId, bookingId, reason }, 'Booking cancelled via public API');
 
     return {
       ...cancelled,

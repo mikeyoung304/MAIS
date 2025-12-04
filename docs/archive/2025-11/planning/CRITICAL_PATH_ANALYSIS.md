@@ -3,6 +3,7 @@
 ## Dependency Graph & Optimal Execution Order
 
 ### Core Sequential Chain (Cannot Parallelize)
+
 ```
 Business Decisions (3 days)
     ↓
@@ -26,6 +27,7 @@ Total Critical Path: 16 days minimum
 ### Parallel Tracks (Can Execute Simultaneously)
 
 #### Track A: Backend Development
+
 ```
 Day 1-2:   Schema migration
 Day 3-4:   Repository implementation
@@ -35,6 +37,7 @@ Day 9-10:  Integration testing
 ```
 
 #### Track B: Frontend Development
+
 ```
 Day 1-3:   Mockup finalization (can start early)
 Day 4-6:   Component development (with mocked data)
@@ -43,6 +46,7 @@ Day 9-10:  E2E testing
 ```
 
 #### Track C: Content & Admin
+
 ```
 Day 1-5:   Content creation (parallel)
 Day 6-8:   Admin dashboard updates
@@ -52,12 +56,14 @@ Day 9-10:  Documentation & training
 ## Decision Tree for Execution
 
 ### START: Do you have segment/tier definitions?
+
 ```
 NO → STOP: Complete Phase 0 first (2-3 days)
 YES → Continue ↓
 ```
 
 ### Check: Is your Stripe Connect configured?
+
 ```
 NO → Branch: Set up Stripe in parallel with Phase 1
      (Needed by Phase 2 for payment testing)
@@ -65,6 +71,7 @@ YES → Continue ↓
 ```
 
 ### Check: Do you have design mockups?
+
 ```
 NO → Risk: Frontend team blocked at Phase 4
      Mitigation: Start mockups NOW, parallel with backend
@@ -72,6 +79,7 @@ YES → Continue ↓
 ```
 
 ### Check: Is staging environment ready?
+
 ```
 NO → Risk: Cannot test migrations safely
      Action: Set up staging before Phase 1 schema work
@@ -83,6 +91,7 @@ YES → Proceed with confidence ↓
 ### Team Size: 2-3 Developers
 
 #### Developer 1 (Backend Focus)
+
 ```
 Week 1: Database, repositories, services
 Week 2: API contracts, payment integration
@@ -90,6 +99,7 @@ Week 3: Performance optimization, caching
 ```
 
 #### Developer 2 (Frontend Focus)
+
 ```
 Week 1: Component library, segment UI
 Week 2: Booking flow integration, upsell modals
@@ -97,6 +107,7 @@ Week 3: Admin dashboard, analytics integration
 ```
 
 #### Developer 3 (Full-Stack or QA)
+
 ```
 Week 1: Test data, staging setup, CI/CD
 Week 2: Integration tests, E2E tests
@@ -106,6 +117,7 @@ Week 3: Load testing, documentation
 ### Team Size: 1 Developer (You)
 
 #### Sequential Approach (Safest)
+
 ```
 Week 1: Backend foundations (DB, services)
 Week 2: API layer & basic frontend
@@ -115,6 +127,7 @@ Week 5: Optimization & deployment
 ```
 
 #### Time-Boxing Strategy
+
 ```
 Morning (3-4 hrs): Backend work (requires focus)
 Afternoon (2-3 hrs): Frontend work (visual feedback)
@@ -124,32 +137,36 @@ Evening (1 hr): Testing & documentation
 ## Risk-Weighted Priority Matrix
 
 ### Must Complete First (Blockers)
-| Task | Duration | Blocks | Risk if Delayed |
-|------|----------|--------|-----------------|
-| Segment definitions | 2 days | Everything | CRITICAL - Cannot proceed |
-| Schema migration | 1 day | All queries | HIGH - Cascading delays |
-| Repository layer | 2 days | Services | HIGH - Service layer blocked |
-| API contracts | 1 day | Frontend | HIGH - Frontend blocked |
+
+| Task                | Duration | Blocks      | Risk if Delayed              |
+| ------------------- | -------- | ----------- | ---------------------------- |
+| Segment definitions | 2 days   | Everything  | CRITICAL - Cannot proceed    |
+| Schema migration    | 1 day    | All queries | HIGH - Cascading delays      |
+| Repository layer    | 2 days   | Services    | HIGH - Service layer blocked |
+| API contracts       | 1 day    | Frontend    | HIGH - Frontend blocked      |
 
 ### Should Complete Early (Dependencies)
-| Task | Duration | Enables | Risk if Delayed |
-|------|----------|---------|-----------------|
-| Service layer | 3 days | Business logic | MEDIUM - Features incomplete |
-| Stripe setup | 2 hours | Payments | MEDIUM - Cannot test checkout |
-| Test data | 4 hours | Testing | MEDIUM - Testing blocked |
-| Caching | 1 day | Performance | LOW - Can add later |
+
+| Task          | Duration | Enables        | Risk if Delayed               |
+| ------------- | -------- | -------------- | ----------------------------- |
+| Service layer | 3 days   | Business logic | MEDIUM - Features incomplete  |
+| Stripe setup  | 2 hours  | Payments       | MEDIUM - Cannot test checkout |
+| Test data     | 4 hours  | Testing        | MEDIUM - Testing blocked      |
+| Caching       | 1 day    | Performance    | LOW - Can add later           |
 
 ### Can Complete Later (Enhancements)
-| Task | Duration | Impact | Risk if Delayed |
-|------|----------|--------|-----------------|
-| Analytics | 1 day | Metrics | LOW - Not customer-facing |
-| Admin dashboard | 2 days | Management | LOW - Can use SQL initially |
-| A/B testing | 1 day | Optimization | LOW - Post-launch feature |
-| Documentation | 2 days | Maintenance | LOW - Can document as built |
+
+| Task            | Duration | Impact       | Risk if Delayed             |
+| --------------- | -------- | ------------ | --------------------------- |
+| Analytics       | 1 day    | Metrics      | LOW - Not customer-facing   |
+| Admin dashboard | 2 days   | Management   | LOW - Can use SQL initially |
+| A/B testing     | 1 day    | Optimization | LOW - Post-launch feature   |
+| Documentation   | 2 days   | Maintenance  | LOW - Can document as built |
 
 ## Execution Checkpoints & Go/No-Go Decisions
 
 ### Checkpoint 1: After Schema Migration (Day 2)
+
 ```typescript
 // Verify: Can existing code still work?
 const packages = await prisma.package.findMany();
@@ -162,6 +179,7 @@ NO-GO → If breaks existing queries (rollback)
 ```
 
 ### Checkpoint 2: After Service Layer (Day 7)
+
 ```typescript
 // Verify: Core business logic works
 const segments = await segmentService.getSegments(tenantId);
@@ -176,6 +194,7 @@ NO-GO → If logic errors (fix before proceeding)
 ```
 
 ### Checkpoint 3: After Frontend Integration (Day 12)
+
 ```typescript
 // Verify: User can complete booking flow
 // E2E test: Select segment → Choose tier → Add-ons → Checkout
@@ -186,6 +205,7 @@ NO-GO → If UX broken (fix before admin tools)
 ```
 
 ### Checkpoint 4: Before Production (Day 15)
+
 ```
 Performance Metrics:
 □ Page load < 2s
@@ -205,6 +225,7 @@ NO-GO → If any critical metric fails
 ## Optimization Strategies for Faster Execution
 
 ### 1. Reuse Maximization (Save 5-7 days)
+
 ```typescript
 // Instead of new booking flow:
 extend existing BookingService.createCheckout()
@@ -217,6 +238,7 @@ add tabs to existing dashboard
 ```
 
 ### 2. Progressive Enhancement (Save 3-5 days)
+
 ```
 Phase 1: Basic segments (no UI) - 2 days
 Phase 2: Add tier comparison - 2 days
@@ -227,6 +249,7 @@ Ship Phase 1 immediately, enhance incrementally
 ```
 
 ### 3. Feature Flags for Partial Deployment
+
 ```typescript
 if (featureFlag('segments.enabled')) {
   // New segment code
@@ -240,12 +263,14 @@ if (featureFlag('segments.enabled')) {
 ## Acceleration Techniques
 
 ### Quick Wins (Implement in Hours)
+
 1. **Add segment field**: 1 migration, 1 hour
 2. **Filter by segment**: 1 WHERE clause, 30 min
 3. **Show tier badge**: CSS only, 30 min
 4. **Basic comparison**: Map existing data, 1 hour
 
 ### Template Generators (Save Days)
+
 ```bash
 # Generate boilerplate
 npm run generate:service segment
@@ -256,6 +281,7 @@ npm run generate:test segment.service
 ```
 
 ### Copy-Paste Foundations
+
 From `catalog.service.ts` → `segment.service.ts`
 From `PackageGrid.tsx` → `SegmentGrid.tsx`
 From `booking.test.ts` → `tiered-booking.test.ts`
@@ -263,6 +289,7 @@ From `booking.test.ts` → `tiered-booking.test.ts`
 ## Critical Success Factors
 
 ### Technical Must-Haves
+
 ✅ Backward compatibility maintained
 ✅ Tenant isolation preserved
 ✅ Type safety throughout
@@ -270,6 +297,7 @@ From `booking.test.ts` → `tiered-booking.test.ts`
 ✅ Security audit passed
 
 ### Business Must-Haves
+
 ✅ Clear segment differentiation
 ✅ Simple tier comparison
 ✅ Compelling upsell flow
@@ -277,6 +305,7 @@ From `booking.test.ts` → `tiered-booking.test.ts`
 ✅ Analytics tracking working
 
 ### Operational Must-Haves
+
 ✅ Feature flags for rollback
 ✅ Staging environment tested
 ✅ Documentation updated
@@ -309,6 +338,7 @@ From `booking.test.ts` → `tiered-booking.test.ts`
 ### The Power of Your Existing Architecture
 
 Your modular design means:
+
 - Each phase builds cleanly on the previous
 - Failures are isolated to single services
 - Testing can happen at every layer
@@ -320,6 +350,7 @@ This is not a rewrite—it's a calculated extension of what already works well.
 ## Final Recommendation
 
 **Start Sequence**:
+
 1. Complete Phase 0 requirements (2-3 days)
 2. Run Phase 1 schema migration (1 day)
 3. Build Phase 2 services in parallel with Phase 4 frontend mockups

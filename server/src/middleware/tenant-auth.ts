@@ -32,7 +32,9 @@ export function createTenantAuthMiddleware(
       // Verify Bearer token format
       const parts = authHeader.split(' ');
       if (parts.length !== 2 || parts[0] !== 'Bearer') {
-        throw new UnauthorizedError('Invalid Authorization header format. Expected: Bearer <token>');
+        throw new UnauthorizedError(
+          'Invalid Authorization header format. Expected: Bearer <token>'
+        );
       }
 
       const token = parts[1];

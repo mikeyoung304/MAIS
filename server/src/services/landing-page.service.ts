@@ -89,10 +89,7 @@ export class LandingPageService {
    * @param config - Draft configuration to save
    * @returns Save result with timestamp
    */
-  async saveDraft(
-    tenantId: string,
-    config: LandingPageConfig
-  ): Promise<SaveDraftResult> {
+  async saveDraft(tenantId: string, config: LandingPageConfig): Promise<SaveDraftResult> {
     // Sanitize all text fields (XSS prevention)
     // Note: URL fields are preserved as-is (validated by SafeUrlSchema in contracts)
     const sanitizedConfig = sanitizeObject(config, { allowHtml: [] });
@@ -100,10 +97,7 @@ export class LandingPageService {
     // Repository handles:
     // - Image URL validation (protocol check - defense in depth)
     // - Transaction management (ACID guarantees)
-    const result = await this.tenantRepo.saveLandingPageDraft(
-      tenantId,
-      sanitizedConfig
-    );
+    const result = await this.tenantRepo.saveLandingPageDraft(tenantId, sanitizedConfig);
 
     logger.info(
       {
@@ -189,10 +183,7 @@ export class LandingPageService {
     // Sanitize all text fields (XSS prevention)
     const sanitizedConfig = sanitizeObject(config, { allowHtml: [] });
 
-    const result = await this.tenantRepo.updateLandingPageConfig(
-      tenantId,
-      sanitizedConfig
-    );
+    const result = await this.tenantRepo.updateLandingPageConfig(tenantId, sanitizedConfig);
 
     logger.info(
       {
@@ -215,16 +206,8 @@ export class LandingPageService {
    * @param enabled - Whether section should be enabled
    * @returns Updated configuration
    */
-  async toggleSection(
-    tenantId: string,
-    section: string,
-    enabled: boolean
-  ): Promise<any> {
-    const result = await this.tenantRepo.toggleLandingPageSection(
-      tenantId,
-      section,
-      enabled
-    );
+  async toggleSection(tenantId: string, section: string, enabled: boolean): Promise<any> {
+    const result = await this.tenantRepo.toggleLandingPageSection(tenantId, section, enabled);
 
     logger.info(
       {

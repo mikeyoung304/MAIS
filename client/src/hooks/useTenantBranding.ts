@@ -54,13 +54,7 @@ export interface TenantBranding {
 export function useTenantBranding(branding?: TenantBranding | TenantBrandingDto | null): void {
   // Destructure specific branding properties to avoid unnecessary re-renders
   // when the branding object reference changes but values remain the same
-  const {
-    primaryColor,
-    secondaryColor,
-    accentColor,
-    backgroundColor,
-    fontFamily,
-  } = branding || {};
+  const { primaryColor, secondaryColor, accentColor, backgroundColor, fontFamily } = branding || {};
 
   useEffect(() => {
     // Early return if no branding values are present

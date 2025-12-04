@@ -1,5 +1,5 @@
-import { Container } from "@/ui/Container";
-import { Quote } from "lucide-react";
+import { Container } from '@/ui/Container';
+import { Quote } from 'lucide-react';
 
 /**
  * CustomerStorySection - Stories That Stick "Customer Story" Pattern
@@ -19,8 +19,8 @@ export function CustomerStorySection() {
           <Quote className="w-12 h-12 text-macon-orange/40 mx-auto mb-8" />
 
           <blockquote className="text-2xl sm:text-3xl md:text-4xl text-white font-light leading-relaxed mb-8">
-            "I was working 70-hour weeks and still falling behind. Now I work 40,
-            make more money, and actually went on vacation for the first time in three years."
+            "I was working 70-hour weeks and still falling behind. Now I work 40, make more money,
+            and actually went on vacation for the first time in three years."
           </blockquote>
 
           <div className="flex items-center justify-center gap-4">

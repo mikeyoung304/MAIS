@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { baseUrl } from "@/lib/api";
-import { getAuthToken } from "@/lib/auth";
-import { logger } from "@/lib/logger";
+import { useState } from 'react';
+import { baseUrl } from '@/lib/api';
+import { getAuthToken } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 /**
  * Package photo data structure
@@ -131,13 +131,15 @@ export function usePhotoUpload({
       const response = await fetch(`${baseUrl}/v1/tenant-admin/packages/${packageId}/photos`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
 
       if (!response.ok) {
-        const errorData: ApiErrorResponse = await response.json().catch(() => ({ error: 'Upload failed' }));
+        const errorData: ApiErrorResponse = await response
+          .json()
+          .catch(() => ({ error: 'Upload failed' }));
 
         if (response.status === 401) {
           throw new Error('Unauthorized: Please log in again');
@@ -184,18 +186,22 @@ export function usePhotoUpload({
         {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
       if (!response.ok) {
-        const errorData: ApiErrorResponse = await response.json().catch(() => ({ error: 'Delete failed' }));
+        const errorData: ApiErrorResponse = await response
+          .json()
+          .catch(() => ({ error: 'Delete failed' }));
 
         if (response.status === 401) {
           throw new Error('Unauthorized: Please log in again');
         } else if (response.status === 403) {
-          throw new Error('Forbidden: You do not have permission to delete photos from this package');
+          throw new Error(
+            'Forbidden: You do not have permission to delete photos from this package'
+          );
         } else if (response.status === 404) {
           throw new Error('Photo not found');
         } else {
@@ -203,11 +209,16 @@ export function usePhotoUpload({
         }
       }
 
-      const newPhotos = photos.filter(p => p.filename !== photo.filename);
+      const newPhotos = photos.filter((p) => p.filename !== photo.filename);
       updatePhotos(newPhotos);
       showSuccess('Photo deleted successfully');
     } catch (err) {
-      logger.error('Delete error', { error: err, packageId, filename: photo.filename, component: 'usePhotoUpload' });
+      logger.error('Delete error', {
+        error: err,
+        packageId,
+        filename: photo.filename,
+        component: 'usePhotoUpload',
+      });
       setError(err instanceof Error ? err.message : 'An error occurred while deleting');
     } finally {
       setIsDeleting(false);

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "216"
+issue_id: '216'
 tags: [ux, navigation, scroll, landing-page]
 dependencies: []
 ---
@@ -17,7 +17,9 @@ dependencies: []
 ## Resolution Date: 2025-12-03
 
 ## Implementation
+
 Implemented Option C (Layout-Level Scroll Reset) in `TenantStorefrontLayout.tsx`:
+
 - Added `useLocation` hook to detect route changes
 - Added scroll reset logic with hash fragment support
 - Used `behavior: 'instant'` for immediate scroll without animation

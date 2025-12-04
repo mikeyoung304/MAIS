@@ -16,10 +16,10 @@ Displays available time slots for a selected service on a specific date, allowin
 
 ```typescript
 interface TimeSlotPickerProps {
-  serviceId: string;                                    // Service ID to fetch slots for
-  selectedDate: Date;                                   // Date to show slots for
-  onSelect: (slot: { startTime: Date; endTime: Date }) => void;  // Callback when slot is selected
-  selectedSlot?: { startTime: Date; endTime: Date };    // Currently selected slot (optional)
+  serviceId: string; // Service ID to fetch slots for
+  selectedDate: Date; // Date to show slots for
+  onSelect: (slot: { startTime: Date; endTime: Date }) => void; // Callback when slot is selected
+  selectedSlot?: { startTime: Date; endTime: Date }; // Currently selected slot (optional)
 }
 ```
 

@@ -2,12 +2,12 @@
 
 ## Current State Analysis
 
-| Metric | Count |
-|--------|-------|
-| Total markdown files in docs/ | 559 |
-| Root-level docs (docs/*.md) | 21 |
-| Active subdirectories | 25 |
-| Archive subdirectories | 6 (by month) |
+| Metric                        | Count        |
+| ----------------------------- | ------------ |
+| Total markdown files in docs/ | 559          |
+| Root-level docs (docs/\*.md)  | 21           |
+| Active subdirectories         | 25           |
+| Archive subdirectories        | 6 (by month) |
 
 ### Problems Identified
 
@@ -59,6 +59,7 @@ This follows the **Diátaxis framework** (already referenced in existing docs).
 ## Cleanup Phases
 
 ### Phase 1: Quick Wins (30 min)
+
 **Goal**: Remove obvious cruft, fix wrong references
 
 - [ ] Delete `docs/LINK_UPDATES_NEEDED.md` (wrong project)
@@ -66,21 +67,26 @@ This follows the **Diátaxis framework** (already referenced in existing docs).
 - [ ] Fix "MAIS" → "MAIS" references in active docs
 
 ### Phase 2: Archive Completed Work (1 hour)
+
 **Goal**: Move historical docs to archive/2025-12/
 
 **Move to archive:**
+
 - [ ] `docs/phases/*.md` → `docs/archive/2025-12/phases/`
 - [ ] `docs/sprints/*.md` → `docs/archive/2025-12/sprints/`
 - [ ] `docs/reports/*_REPORT.md` → `docs/archive/2025-12/reports/`
 - [ ] `server/docs/*_COMPLETION.md` → `docs/archive/2025-12/server/`
 
 **Naming convention for archives:**
+
 ```
 YYYY-MM-DD_original-filename.md
 ```
+
 Example: `2025-11-17_PHASE_1_COMPLETION_REPORT.md`
 
 ### Phase 3: Consolidate Active Docs (1 hour)
+
 **Goal**: Merge scattered docs into logical locations
 
 - [ ] Merge `/DECISIONS/` ADRs into `/docs/adrs/` (single source)
@@ -89,6 +95,7 @@ Example: `2025-11-17_PHASE_1_COMPLETION_REPORT.md`
 - [ ] Consolidate setup guides into `docs/guides/`
 
 ### Phase 4: Update Index (30 min)
+
 **Goal**: Create discoverable navigation
 
 - [ ] Update `docs/README.md` with clear section links
@@ -96,9 +103,11 @@ Example: `2025-11-17_PHASE_1_COMPLETION_REPORT.md`
 - [ ] Update `CLAUDE.md` key documentation references
 
 ### Phase 5: Establish Conventions (ongoing)
+
 **Goal**: Prevent future sprawl
 
 Add to `CLAUDE.md`:
+
 ```markdown
 ## Documentation Conventions
 
@@ -112,14 +121,14 @@ Add to `CLAUDE.md`:
 
 ## Execution Order
 
-| Priority | Task | Effort | Impact |
-|----------|------|--------|--------|
-| 1 | Delete wrong-project files | 5 min | High |
-| 2 | Archive phases/sprints | 30 min | High |
-| 3 | Consolidate ADRs | 15 min | Medium |
-| 4 | Update multi-tenant docs | 20 min | Medium |
-| 5 | Create index files | 30 min | High |
-| 6 | Add conventions to CLAUDE.md | 10 min | High |
+| Priority | Task                         | Effort | Impact |
+| -------- | ---------------------------- | ------ | ------ |
+| 1        | Delete wrong-project files   | 5 min  | High   |
+| 2        | Archive phases/sprints       | 30 min | High   |
+| 3        | Consolidate ADRs             | 15 min | Medium |
+| 4        | Update multi-tenant docs     | 20 min | Medium |
+| 5        | Create index files           | 30 min | High   |
+| 6        | Add conventions to CLAUDE.md | 10 min | High   |
 
 **Total estimated time: ~2 hours**
 

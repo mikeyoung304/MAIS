@@ -8,6 +8,7 @@
 ## Executive Summary
 
 The Elope system has a **multi-tenant REST API** with clear separation between:
+
 1. **Public APIs** - Package browsing, availability checks, booking checkout
 2. **Platform Admin APIs** - Tenant management, global configuration
 3. **Tenant Admin APIs** - Self-service management of packages, branding, blackouts
@@ -22,145 +23,164 @@ The API uses **JWT token-based authentication**, **Zod schema validation**, and 
 ### 1.1 PUBLIC ENDPOINTS (No Authentication)
 
 #### Packages (Catalog)
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| GET | `/v1/packages` | List all packages | None | Public (300/15min) | Tenant-scoped via X-Tenant-Key header |
-| GET | `/v1/packages/:slug` | Get package by slug | None | Public | Includes add-ons |
+
+| Method | Path                 | Purpose             | Auth | Rate Limit         | Notes                                 |
+| ------ | -------------------- | ------------------- | ---- | ------------------ | ------------------------------------- |
+| GET    | `/v1/packages`       | List all packages   | None | Public (300/15min) | Tenant-scoped via X-Tenant-Key header |
+| GET    | `/v1/packages/:slug` | Get package by slug | None | Public             | Includes add-ons                      |
 
 #### Availability
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| GET | `/v1/availability?date=YYYY-MM-DD` | Check single date availability | None | Public | Returns: available boolean, reason (booked/blackout/calendar) |
-| GET | `/v1/availability/unavailable?startDate=X&endDate=Y` | Batch unavailable dates | None | Public | Efficient date range query |
+
+| Method | Path                                                 | Purpose                        | Auth | Rate Limit | Notes                                                         |
+| ------ | ---------------------------------------------------- | ------------------------------ | ---- | ---------- | ------------------------------------------------------------- |
+| GET    | `/v1/availability?date=YYYY-MM-DD`                   | Check single date availability | None | Public     | Returns: available boolean, reason (booked/blackout/calendar) |
+| GET    | `/v1/availability/unavailable?startDate=X&endDate=Y` | Batch unavailable dates        | None | Public     | Efficient date range query                                    |
 
 #### Bookings (Customer-Facing)
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| POST | `/v1/bookings/checkout` | Create Stripe checkout session | None | Public | Validates package exists, date available, add-ons valid |
-| GET | `/v1/bookings/:id` | Get booking details | None | Public | For confirmation page (no sensitive data leaked) |
+
+| Method | Path                    | Purpose                        | Auth | Rate Limit | Notes                                                   |
+| ------ | ----------------------- | ------------------------------ | ---- | ---------- | ------------------------------------------------------- |
+| POST   | `/v1/bookings/checkout` | Create Stripe checkout session | None | Public     | Validates package exists, date available, add-ons valid |
+| GET    | `/v1/bookings/:id`      | Get booking details            | None | Public     | For confirmation page (no sensitive data leaked)        |
 
 #### Branding
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| GET | `/v1/tenant/branding` | Get tenant branding config | None | Public | Colors, fonts, logo for widget customization |
+
+| Method | Path                  | Purpose                    | Auth | Rate Limit | Notes                                        |
+| ------ | --------------------- | -------------------------- | ---- | ---------- | -------------------------------------------- |
+| GET    | `/v1/tenant/branding` | Get tenant branding config | None | Public     | Colors, fonts, logo for widget customization |
 
 #### Webhooks
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| POST | `/v1/webhooks/stripe` | Stripe webhook receiver | Signature | Public | Raw body for HMAC verification |
+
+| Method | Path                  | Purpose                 | Auth      | Rate Limit | Notes                          |
+| ------ | --------------------- | ----------------------- | --------- | ---------- | ------------------------------ |
+| POST   | `/v1/webhooks/stripe` | Stripe webhook receiver | Signature | Public     | Raw body for HMAC verification |
 
 ---
 
 ### 1.2 AUTHENTICATION ENDPOINTS (Public but return tokens)
 
 #### Unified Authentication (RECOMMENDED)
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| POST | `/v1/auth/login` | Login for admin or tenant | None | **5/15min** (loginLimiter) | Body: email, password |
-| GET | `/v1/auth/verify` | Verify token & get user info | JWT | None | Returns role, tenantId if applicable |
+
+| Method | Path              | Purpose                      | Auth | Rate Limit                 | Notes                                |
+| ------ | ----------------- | ---------------------------- | ---- | -------------------------- | ------------------------------------ |
+| POST   | `/v1/auth/login`  | Login for admin or tenant    | None | **5/15min** (loginLimiter) | Body: email, password                |
+| GET    | `/v1/auth/verify` | Verify token & get user info | JWT  | None                       | Returns role, tenantId if applicable |
 
 #### Platform Admin Authentication (Legacy)
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| POST | `/v1/admin/login` | Platform admin login | None | **5/15min** | Returns token with role: 'admin' |
+
+| Method | Path              | Purpose              | Auth | Rate Limit  | Notes                            |
+| ------ | ----------------- | -------------------- | ---- | ----------- | -------------------------------- |
+| POST   | `/v1/admin/login` | Platform admin login | None | **5/15min** | Returns token with role: 'admin' |
 
 #### Tenant Admin Authentication
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| POST | `/v1/tenant-auth/login` | Tenant admin login | None | **5/15min** | Returns token with type: 'tenant', tenantId, slug |
-| GET | `/v1/tenant-auth/me` | Get current tenant context | Tenant JWT | None | Returns: tenantId, slug, email |
+
+| Method | Path                    | Purpose                    | Auth       | Rate Limit  | Notes                                             |
+| ------ | ----------------------- | -------------------------- | ---------- | ----------- | ------------------------------------------------- |
+| POST   | `/v1/tenant-auth/login` | Tenant admin login         | None       | **5/15min** | Returns token with type: 'tenant', tenantId, slug |
+| GET    | `/v1/tenant-auth/me`    | Get current tenant context | Tenant JWT | None        | Returns: tenantId, slug, email                    |
 
 ---
 
 ### 1.3 PLATFORM ADMIN ENDPOINTS (Requires Admin Authentication)
 
 #### Tenant Management
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| GET | `/v1/admin/tenants` | List all tenants | **Admin JWT** | Admin (120/15min) | Includes stats (bookings, packages, add-ons) |
-| POST | `/v1/admin/tenants` | Create new tenant | **Admin JWT** | Admin | Body: slug, name, commission(0-100) |
-| GET | `/v1/admin/tenants/:id` | Get tenant details | **Admin JWT** | Admin | Includes branding, stripe status, full stats |
-| PUT | `/v1/admin/tenants/:id` | Update tenant settings | **Admin JWT** | Admin | Can update: name, commission, branding, isActive |
-| DELETE | `/v1/admin/tenants/:id` | Deactivate tenant (soft delete) | **Admin JWT** | Admin | Sets isActive=false |
+
+| Method | Path                    | Purpose                         | Auth          | Rate Limit        | Notes                                            |
+| ------ | ----------------------- | ------------------------------- | ------------- | ----------------- | ------------------------------------------------ |
+| GET    | `/v1/admin/tenants`     | List all tenants                | **Admin JWT** | Admin (120/15min) | Includes stats (bookings, packages, add-ons)     |
+| POST   | `/v1/admin/tenants`     | Create new tenant               | **Admin JWT** | Admin             | Body: slug, name, commission(0-100)              |
+| GET    | `/v1/admin/tenants/:id` | Get tenant details              | **Admin JWT** | Admin             | Includes branding, stripe status, full stats     |
+| PUT    | `/v1/admin/tenants/:id` | Update tenant settings          | **Admin JWT** | Admin             | Can update: name, commission, branding, isActive |
+| DELETE | `/v1/admin/tenants/:id` | Deactivate tenant (soft delete) | **Admin JWT** | Admin             | Sets isActive=false                              |
 
 #### Stripe Connect Management
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| POST | `/v1/admin/tenants/:tenantId/stripe/connect` | Create Stripe account | **Admin JWT** | Admin | Body: country, email |
-| POST | `/v1/admin/tenants/:tenantId/stripe/onboarding` | Generate onboarding link | **Admin JWT** | Admin | Returns onboarding URL with expiration |
-| GET | `/v1/admin/tenants/:tenantId/stripe/status` | Check Stripe account status | **Admin JWT** | Admin | Returns: chargesEnabled, payoutsEnabled, requirements |
+
+| Method | Path                                            | Purpose                     | Auth          | Rate Limit | Notes                                                 |
+| ------ | ----------------------------------------------- | --------------------------- | ------------- | ---------- | ----------------------------------------------------- |
+| POST   | `/v1/admin/tenants/:tenantId/stripe/connect`    | Create Stripe account       | **Admin JWT** | Admin      | Body: country, email                                  |
+| POST   | `/v1/admin/tenants/:tenantId/stripe/onboarding` | Generate onboarding link    | **Admin JWT** | Admin      | Returns onboarding URL with expiration                |
+| GET    | `/v1/admin/tenants/:tenantId/stripe/status`     | Check Stripe account status | **Admin JWT** | Admin      | Returns: chargesEnabled, payoutsEnabled, requirements |
 
 #### Legacy Admin - Bookings
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| GET | `/v1/admin/bookings` | List all bookings | **Admin JWT** | Admin | Legacy - uses DEFAULT_TENANT='tenant_default_legacy' |
+
+| Method | Path                 | Purpose           | Auth          | Rate Limit | Notes                                                |
+| ------ | -------------------- | ----------------- | ------------- | ---------- | ---------------------------------------------------- |
+| GET    | `/v1/admin/bookings` | List all bookings | **Admin JWT** | Admin      | Legacy - uses DEFAULT_TENANT='tenant_default_legacy' |
 
 #### Legacy Admin - Blackouts
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| GET | `/v1/admin/blackouts` | List all blackouts | **Admin JWT** | Admin | Legacy single-tenant |
-| POST | `/v1/admin/blackouts` | Create blackout date | **Admin JWT** | Admin | Body: date (YYYY-MM-DD), reason (optional) |
+
+| Method | Path                  | Purpose              | Auth          | Rate Limit | Notes                                      |
+| ------ | --------------------- | -------------------- | ------------- | ---------- | ------------------------------------------ |
+| GET    | `/v1/admin/blackouts` | List all blackouts   | **Admin JWT** | Admin      | Legacy single-tenant                       |
+| POST   | `/v1/admin/blackouts` | Create blackout date | **Admin JWT** | Admin      | Body: date (YYYY-MM-DD), reason (optional) |
 
 #### Legacy Admin - Packages (deprecated, use tenant admin instead)
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| POST | `/v1/admin/packages` | Create package | **Admin JWT** | Admin | Body: slug, title, description, priceCents, photoUrl |
-| PUT | `/v1/admin/packages/:id` | Update package | **Admin JWT** | Admin | Partial update allowed |
-| DELETE | `/v1/admin/packages/:id` | Delete package | **Admin JWT** | Admin | Cascades to add-ons |
+
+| Method | Path                     | Purpose        | Auth          | Rate Limit | Notes                                                |
+| ------ | ------------------------ | -------------- | ------------- | ---------- | ---------------------------------------------------- |
+| POST   | `/v1/admin/packages`     | Create package | **Admin JWT** | Admin      | Body: slug, title, description, priceCents, photoUrl |
+| PUT    | `/v1/admin/packages/:id` | Update package | **Admin JWT** | Admin      | Partial update allowed                               |
+| DELETE | `/v1/admin/packages/:id` | Delete package | **Admin JWT** | Admin      | Cascades to add-ons                                  |
 
 #### Legacy Admin - Add-Ons (deprecated, use tenant admin instead)
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| POST | `/v1/admin/packages/:packageId/addons` | Create add-on | **Admin JWT** | Admin | Body: title, priceCents, photoUrl |
-| PUT | `/v1/admin/addons/:id` | Update add-on | **Admin JWT** | Admin | Partial update allowed |
-| DELETE | `/v1/admin/addons/:id` | Delete add-on | **Admin JWT** | Admin | |
+
+| Method | Path                                   | Purpose       | Auth          | Rate Limit | Notes                             |
+| ------ | -------------------------------------- | ------------- | ------------- | ---------- | --------------------------------- |
+| POST   | `/v1/admin/packages/:packageId/addons` | Create add-on | **Admin JWT** | Admin      | Body: title, priceCents, photoUrl |
+| PUT    | `/v1/admin/addons/:id`                 | Update add-on | **Admin JWT** | Admin      | Partial update allowed            |
+| DELETE | `/v1/admin/addons/:id`                 | Delete add-on | **Admin JWT** | Admin      |                                   |
 
 ---
 
 ### 1.4 TENANT ADMIN ENDPOINTS (Requires Tenant JWT)
 
 #### Self-Service Packages (Recommended)
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| GET | `/v1/tenant/admin/packages` | List tenant packages | **Tenant JWT** | Admin (120/15min) | Includes photo arrays |
-| POST | `/v1/tenant/admin/packages` | Create new package | **Tenant JWT** | Admin | Body: slug, title, description, priceCents, photoUrl |
-| PUT | `/v1/tenant/admin/packages/:id` | Update package | **Tenant JWT** | Admin | Partial update, ownership verified |
-| DELETE | `/v1/tenant/admin/packages/:id` | Delete package | **Tenant JWT** | Admin | Ownership verified |
+
+| Method | Path                            | Purpose              | Auth           | Rate Limit        | Notes                                                |
+| ------ | ------------------------------- | -------------------- | -------------- | ----------------- | ---------------------------------------------------- |
+| GET    | `/v1/tenant/admin/packages`     | List tenant packages | **Tenant JWT** | Admin (120/15min) | Includes photo arrays                                |
+| POST   | `/v1/tenant/admin/packages`     | Create new package   | **Tenant JWT** | Admin             | Body: slug, title, description, priceCents, photoUrl |
+| PUT    | `/v1/tenant/admin/packages/:id` | Update package       | **Tenant JWT** | Admin             | Partial update, ownership verified                   |
+| DELETE | `/v1/tenant/admin/packages/:id` | Delete package       | **Tenant JWT** | Admin             | Ownership verified                                   |
 
 #### Package Photos
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| POST | `/v1/tenant/admin/packages/:id/photos` | Upload package photo | **Tenant JWT** | Admin | Max 5 photos/package, max 5MB each |
-| DELETE | `/v1/tenant/admin/packages/:id/photos/:filename` | Delete photo | **Tenant JWT** | Admin | Deletes from storage and database |
+
+| Method | Path                                             | Purpose              | Auth           | Rate Limit | Notes                              |
+| ------ | ------------------------------------------------ | -------------------- | -------------- | ---------- | ---------------------------------- |
+| POST   | `/v1/tenant/admin/packages/:id/photos`           | Upload package photo | **Tenant JWT** | Admin      | Max 5 photos/package, max 5MB each |
+| DELETE | `/v1/tenant/admin/packages/:id/photos/:filename` | Delete photo         | **Tenant JWT** | Admin      | Deletes from storage and database  |
 
 #### Self-Service Blackouts
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| GET | `/v1/tenant/admin/blackouts` | List blackout dates | **Tenant JWT** | Admin | Ordered by date ASC |
-| POST | `/v1/tenant/admin/blackouts` | Add blackout date | **Tenant JWT** | Admin | Body: date (YYYY-MM-DD), reason (optional) |
-| DELETE | `/v1/tenant/admin/blackouts/:id` | Remove blackout | **Tenant JWT** | Admin | Ownership verified |
+
+| Method | Path                             | Purpose             | Auth           | Rate Limit | Notes                                      |
+| ------ | -------------------------------- | ------------------- | -------------- | ---------- | ------------------------------------------ |
+| GET    | `/v1/tenant/admin/blackouts`     | List blackout dates | **Tenant JWT** | Admin      | Ordered by date ASC                        |
+| POST   | `/v1/tenant/admin/blackouts`     | Add blackout date   | **Tenant JWT** | Admin      | Body: date (YYYY-MM-DD), reason (optional) |
+| DELETE | `/v1/tenant/admin/blackouts/:id` | Remove blackout     | **Tenant JWT** | Admin      | Ownership verified                         |
 
 #### Booking Visibility (Read-Only)
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| GET | `/v1/tenant/admin/bookings?status=X&startDate=X&endDate=X` | List tenant bookings | **Tenant JWT** | Admin | Query filters: status, startDate, endDate (all optional) |
+
+| Method | Path                                                       | Purpose              | Auth           | Rate Limit | Notes                                                    |
+| ------ | ---------------------------------------------------------- | -------------------- | -------------- | ---------- | -------------------------------------------------------- |
+| GET    | `/v1/tenant/admin/bookings?status=X&startDate=X&endDate=X` | List tenant bookings | **Tenant JWT** | Admin      | Query filters: status, startDate, endDate (all optional) |
 
 #### Branding Management
-| Method | Path | Purpose | Auth | Rate Limit | Notes |
-|--------|------|---------|------|------------|-------|
-| GET | `/v1/tenant/admin/branding` | Get branding config | **Tenant JWT** | Admin | Returns: primaryColor, secondaryColor, fontFamily, logo |
-| PUT | `/v1/tenant/admin/branding` | Update branding | **Tenant JWT** | Admin | Partial update, hex color validation |
-| POST | `/v1/tenant/logo` | Upload logo image | **Tenant JWT** | Admin | Max 2MB, returns URL |
+
+| Method | Path                        | Purpose             | Auth           | Rate Limit | Notes                                                   |
+| ------ | --------------------------- | ------------------- | -------------- | ---------- | ------------------------------------------------------- |
+| GET    | `/v1/tenant/admin/branding` | Get branding config | **Tenant JWT** | Admin      | Returns: primaryColor, secondaryColor, fontFamily, logo |
+| PUT    | `/v1/tenant/admin/branding` | Update branding     | **Tenant JWT** | Admin      | Partial update, hex color validation                    |
+| POST   | `/v1/tenant/logo`           | Upload logo image   | **Tenant JWT** | Admin      | Max 2MB, returns URL                                    |
 
 ---
 
 ### 1.5 DEVELOPMENT/DEBUG ENDPOINTS (Mock Mode Only)
 
-| Method | Path | Purpose | Notes |
-|--------|------|---------|-------|
-| POST | `/v1/dev/simulate-checkout-completed` | Simulate payment completion | Mock mode only |
-| GET | `/v1/dev/debug-state` | Get internal state | Mock mode only |
-| POST | `/v1/dev/reset` | Reset database | Mock mode only |
+| Method | Path                                  | Purpose                     | Notes          |
+| ------ | ------------------------------------- | --------------------------- | -------------- |
+| POST   | `/v1/dev/simulate-checkout-completed` | Simulate payment completion | Mock mode only |
+| GET    | `/v1/dev/debug-state`                 | Get internal state          | Mock mode only |
+| POST   | `/v1/dev/reset`                       | Reset database              | Mock mode only |
 
 ---
 
@@ -169,6 +189,7 @@ The API uses **JWT token-based authentication**, **Zod schema validation**, and 
 ### 2.1 Token Types
 
 #### Platform Admin Token
+
 ```typescript
 {
   userId: string;
@@ -180,6 +201,7 @@ The API uses **JWT token-based authentication**, **Zod schema validation**, and 
 ```
 
 #### Tenant Admin Token
+
 ```typescript
 {
   tenantId: string;
@@ -194,6 +216,7 @@ The API uses **JWT token-based authentication**, **Zod schema validation**, and 
 ### 2.2 Middleware Stack
 
 **Global Middleware** (applied in `app.ts`):
+
 1. Helmet (security headers)
 2. CORS (wildcard HTTPS in prod, specific origins in dev)
 3. Rate Limiting (public: 300/15min, admin: 120/15min, login: 5/15min)
@@ -201,6 +224,7 @@ The API uses **JWT token-based authentication**, **Zod schema validation**, and 
 5. Request Logging (request ID tracking)
 
 **Route-Specific Middleware**:
+
 - **Public routes** (`/v1/packages`, `/v1/bookings`, `/v1/availability`): None (except rate limit)
 - **Admin routes** (`/v1/admin/*`): `createAuthMiddleware()` validates JWT has `role: 'admin'`
 - **Tenant routes** (`/v1/tenant/admin/*`): `createTenantAuthMiddleware()` validates JWT has `type: 'tenant'`
@@ -233,6 +257,7 @@ if (!payload.tenantId || !payload.slug) {
 ### 3.1 Package Management Validation
 
 #### Create Package
+
 ```zod
 slug: string().min(1)
 title: string().min(1)
@@ -242,15 +267,18 @@ photoUrl: string().url().optional()
 ```
 
 **Constraints**:
+
 - Slug must be unique per tenant
 - Price must be >= 0 (no upper limit)
 - Photo URL must be valid HTTP(S)
 - No validation on slug format (alphanumeric, hyphens, etc.)
 
 #### Update Package
+
 Same schema but all fields optional (partial update)
 
 **Constraints**:
+
 - Ownership verified: tenantId from JWT vs package.tenantId
 - If slug changed: new slug must be unique for tenant
 - Can update price to 0 (might unintentionally create free packages)
@@ -258,6 +286,7 @@ Same schema but all fields optional (partial update)
 ### 3.2 Add-On Validation
 
 #### Create Add-On
+
 ```zod
 packageId: string().min(1)
 title: string().min(1)
@@ -266,9 +295,11 @@ photoUrl: string().url().optional()
 ```
 
 #### Update Add-On
+
 Same schema but all fields optional
 
 **Constraints**:
+
 - Package must exist
 - Can move add-on to different package
 - No validation on add-on count per package
@@ -281,6 +312,7 @@ reason: string().optional()                     // No length limit
 ```
 
 **Constraints**:
+
 - Date must be in exact format
 - No validation on past/future dates
 - Can create blackouts in the past
@@ -296,6 +328,7 @@ endDate: string().regex(/^\d{4}-\d{2}-\d{2}$/)
 ```
 
 **Constraints**:
+
 - No validation on startDate < endDate
 - No date range limits (can query 10-year range)
 
@@ -309,6 +342,7 @@ logo: string().url().optional()
 ```
 
 **Constraints**:
+
 - Colors must be 6-digit hex (no short form #RGB)
 - Font family no length validation
 - Logo URL must be valid HTTP(S)
@@ -324,6 +358,7 @@ addOnIds: string[].optional()
 ```
 
 **Constraints**:
+
 - Package must exist and be active
 - Event date must be available
 - All add-ons must belong to package
@@ -338,6 +373,7 @@ password: string()                       // No length requirements
 ```
 
 **Constraints**:
+
 - Email format validated
 - Password no length/complexity requirements
 - No rate limiting on password validation attempts (only on login endpoint)
@@ -349,6 +385,7 @@ password: string()                       // No length requirements
 ### 4.1 MISSING: Bulk Operations
 
 **Gap**: No batch endpoints for LLM operations
+
 - ❌ Cannot create multiple packages in one request
 - ❌ Cannot bulk update prices
 - ❌ Cannot bulk create blackout dates
@@ -359,6 +396,7 @@ password: string()                       // No length requirements
 ### 4.2 MISSING: Configuration Templates
 
 **Gap**: No pre-built package templates
+
 - ❌ No "wedding preset" with standard add-ons
 - ❌ No "elopement preset" with pricing tiers
 - ❌ No template duplication feature
@@ -368,6 +406,7 @@ password: string()                       // No length requirements
 ### 4.3 MISSING: Validation-Only Endpoints
 
 **Gap**: No dry-run endpoints to validate before committing
+
 - ❌ Cannot validate slug uniqueness before creation
 - ❌ Cannot preview pricing with add-ons
 - ❌ Cannot test branding colors on widget
@@ -377,6 +416,7 @@ password: string()                       // No length requirements
 ### 4.4 MISSING: Batch Query Endpoints
 
 **Gap**: No efficient multi-item fetch
+
 - ❌ Cannot get multiple packages by ID in one request
 - ❌ Cannot get all add-ons across packages
 - ❌ Cannot get bookings filtered by multiple statuses
@@ -386,6 +426,7 @@ password: string()                       // No length requirements
 ### 4.5 MISSING: Audit Trail API
 
 **Gap**: No endpoint to track configuration changes
+
 - ❌ Cannot see who changed package pricing
 - ❌ Cannot see change history of branding
 - ❌ Cannot audit blackout modifications
@@ -395,6 +436,7 @@ password: string()                       // No length requirements
 ### 4.6 MISSING: Configuration Export/Import
 
 **Gap**: No way to bulk export or backup configuration
+
 - ❌ Cannot export all packages for backup
 - ❌ Cannot import packages from CSV
 - ❌ Cannot clone configuration between tenants
@@ -404,6 +446,7 @@ password: string()                       // No length requirements
 ### 4.7 MISSING: Transaction Support
 
 **Gap**: No atomic multi-step operations
+
 - ❌ Creating package + add-ons not atomic
 - ❌ Updating pricing across package + add-ons not atomic
 - ❌ Cannot rollback partial updates on error
@@ -413,6 +456,7 @@ password: string()                       // No length requirements
 ### 4.8 MISSING: Conditional Updates
 
 **Gap**: No if-match or optimistic locking
+
 - ❌ Cannot prevent concurrent edits
 - ❌ No version/etag support
 - ❌ No last-write-wins conflict detection
@@ -422,6 +466,7 @@ password: string()                       // No length requirements
 ### 4.9 MISSING: Async Job Queue
 
 **Gap**: No long-running operations endpoint
+
 - ❌ Cannot queue large photo uploads
 - ❌ Cannot schedule bulk operations
 - ❌ No job status polling
@@ -431,6 +476,7 @@ password: string()                       // No length requirements
 ### 4.10 MISSING: AI-Friendly Response Format
 
 **Gap**: No structured response format optimized for LLM parsing
+
 - ❌ No machine-readable status enums (HTTP status codes used instead)
 - ❌ No consistent error code schema
 - ❌ Error messages vary by endpoint
@@ -444,43 +490,51 @@ password: string()                       // No length requirements
 ### 5.1 AGENTS SHOULD NEVER DO
 
 **1. Access data across tenants** ⛔
+
 - Each JWT is scoped to a tenantId
 - Service layer enforces ownership checks
 - `catalogService.updatePackage(tenantId, id, data)` validates tenantId ownership
 - Cross-tenant queries impossible due to middleware
 
 **2. Modify bookings** ⛔
+
 - Booking endpoints are **READ-ONLY** for tenant admins
 - Only Stripe webhooks can update booking status
 - Cannot refund, cancel, or edit customer data via API
 - Cannot modify totalCents or addOnIds
 
 **3. Delete tenants (as tenant admin)** ⛔
+
 - Only platform admins can deactivate tenants
 - Tenant admins cannot access `/v1/admin/tenants`
 - Token type validation rejects tenant tokens on admin routes
 
 **4. Modify other tenants' Stripe accounts** ⛔
+
 - Stripe Connect routes are platform-admin only
 - No tenant-level Stripe management
 - Cannot change commission percentage
 
 **5. Bypass price validation** ⛔
+
 - All prices must be integers >= 0
 - Zod schema enforces this at middleware level
 - Negative prices impossible
 
 **6. Create duplicate API keys** ⛔
+
 - API keys generated server-side only
 - Secret key shown once on creation
 - Cannot retrieve existing secret keys
 
 **7. Modify branding outside bounds** ⛔
+
 - Color validation enforces 6-digit hex
 - Font family persisted as-is but widget may not support all fonts
 - Logo URL must be valid HTTP(S)
 
 **8. Bypass rate limits** ⛔
+
 - 5 login attempts per 15 minutes (strict)
 - 120 admin requests per 15 minutes
 - No token refresh endpoint to reset counters
@@ -527,13 +581,13 @@ loginLimiter: {
 
 ### 6.3 Applied To Routes
 
-| Route Pattern | Limiter | Limit |
-|---------------|---------|-------|
-| `/v1/admin/login` | loginLimiter | 5/15min |
-| `/v1/tenant-auth/login` | loginLimiter | 5/15min |
-| `/v1/admin/*` (except login) | adminLimiter | 120/15min |
-| `/v1/tenant/admin/*` | adminLimiter | 120/15min |
-| All other public routes | publicLimiter | 300/15min |
+| Route Pattern                | Limiter       | Limit     |
+| ---------------------------- | ------------- | --------- |
+| `/v1/admin/login`            | loginLimiter  | 5/15min   |
+| `/v1/tenant-auth/login`      | loginLimiter  | 5/15min   |
+| `/v1/admin/*` (except login) | adminLimiter  | 120/15min |
+| `/v1/tenant/admin/*`         | adminLimiter  | 120/15min |
+| All other public routes      | publicLimiter | 300/15min |
 
 ---
 
@@ -542,6 +596,7 @@ loginLimiter: {
 ### 7.1 Tenant Isolation Mechanism
 
 **Middleware-Level Isolation** (`tenant.ts`):
+
 ```typescript
 // Extracts tenant from:
 // 1. X-Tenant-Key header (public APIs)
@@ -552,6 +607,7 @@ getTenantId(req): string
 ```
 
 **Service-Level Isolation**:
+
 ```typescript
 // Every service method signature includes tenantId
 catalogService.getAllPackages(tenantId: string)
@@ -563,6 +619,7 @@ if (pkg.tenantId !== tenantId) throw NotFoundError;
 ```
 
 **Database-Level Isolation**:
+
 ```prisma
 model Package {
   id        String
@@ -574,13 +631,13 @@ model Package {
 
 ### 7.2 Cross-Tenant Attack Vectors (BLOCKED)
 
-| Attack | Blocked By |
-|--------|-----------|
-| JWT token for tenant A accessing tenant B data | Service layer `tenantId` check |
-| Guessing other tenant package IDs | `catalogService.getPackageById(tenantId, id)` checks ownership |
-| Accessing other tenant bookings | `bookingService.getAllBookings(tenantId)` filters by tenantId |
-| Modifying other tenant blackouts | `blackoutRepo.findBlackoutById(tenantId, id)` checks ownership |
-| Changing other tenant branding | `tenantRepository.findById()` + JWT tenantId validation |
+| Attack                                         | Blocked By                                                     |
+| ---------------------------------------------- | -------------------------------------------------------------- |
+| JWT token for tenant A accessing tenant B data | Service layer `tenantId` check                                 |
+| Guessing other tenant package IDs              | `catalogService.getPackageById(tenantId, id)` checks ownership |
+| Accessing other tenant bookings                | `bookingService.getAllBookings(tenantId)` filters by tenantId  |
+| Modifying other tenant blackouts               | `blackoutRepo.findBlackoutById(tenantId, id)` checks ownership |
+| Changing other tenant branding                 | `tenantRepository.findById()` + JWT tenantId validation        |
 
 ---
 
@@ -588,22 +645,23 @@ model Package {
 
 ### 8.1 Standard HTTP Status Codes
 
-| Code | Scenario | Example |
-|------|----------|---------|
-| 200 | Successful GET/PUT | Get packages, update branding |
-| 201 | Resource created | POST /v1/admin/packages |
-| 204 | Successful DELETE | Delete package (no content) |
-| 400 | Validation error | Invalid slug, color not hex |
-| 401 | Missing/invalid auth | Missing Bearer token |
-| 403 | Forbidden (auth'd but unauthorized) | Tenant accessing admin routes |
-| 404 | Resource not found | Package ID doesn't exist |
-| 413 | File too large | Photo > 5MB |
-| 429 | Rate limited | Too many login attempts |
-| 500 | Server error | Database connection failure |
+| Code | Scenario                            | Example                       |
+| ---- | ----------------------------------- | ----------------------------- |
+| 200  | Successful GET/PUT                  | Get packages, update branding |
+| 201  | Resource created                    | POST /v1/admin/packages       |
+| 204  | Successful DELETE                   | Delete package (no content)   |
+| 400  | Validation error                    | Invalid slug, color not hex   |
+| 401  | Missing/invalid auth                | Missing Bearer token          |
+| 403  | Forbidden (auth'd but unauthorized) | Tenant accessing admin routes |
+| 404  | Resource not found                  | Package ID doesn't exist      |
+| 413  | File too large                      | Photo > 5MB                   |
+| 429  | Rate limited                        | Too many login attempts       |
+| 500  | Server error                        | Database connection failure   |
 
 ### 8.2 Error Response Format (varies by endpoint)
 
 **Validation Error**:
+
 ```json
 {
   "error": "Validation error",
@@ -618,6 +676,7 @@ model Package {
 ```
 
 **Authentication Error**:
+
 ```json
 {
   "error": "Invalid Authorization header format. Expected: Bearer <token>"
@@ -625,6 +684,7 @@ model Package {
 ```
 
 **Rate Limit Error**:
+
 ```json
 {
   "error": "too_many_login_attempts",
@@ -633,6 +693,7 @@ model Package {
 ```
 
 **Not Found Error**:
+
 ```json
 {
   "error": "Package not found"
@@ -673,6 +734,7 @@ GET /v1/tenant/admin/packages
 ```
 
 **Why Not Single Endpoint?**
+
 - Packages and add-ons are separate entities
 - Photos require multipart form data
 - API designed for sequential workflow, not bulk operations
@@ -773,14 +835,14 @@ GET /v1/tenant/admin/packages
 
 ## Part 11: API Endpoint Summary Table
 
-| Category | Count | Auth | Rate Limit | Bulk? | Notes |
-|----------|-------|------|-----------|-------|-------|
-| Public Endpoints | 7 | None | Public (300/15m) | No | Catalog, availability, checkout |
-| Auth Endpoints | 5 | None/JWT | Login (5/15m) | No | Admin/tenant login, verify |
-| Platform Admin | 11 | Admin JWT | Admin (120/15m) | No | Tenant management, Stripe Connect |
-| Tenant Admin | 13 | Tenant JWT | Admin (120/15m) | No | Packages, blackouts, branding, photos |
-| Dev/Debug | 3 | None | N/A | No | Mock mode only |
-| **TOTAL** | **39** | **Mixed** | **Tiered** | **❌** | **No bulk operations** |
+| Category         | Count  | Auth       | Rate Limit       | Bulk?  | Notes                                 |
+| ---------------- | ------ | ---------- | ---------------- | ------ | ------------------------------------- |
+| Public Endpoints | 7      | None       | Public (300/15m) | No     | Catalog, availability, checkout       |
+| Auth Endpoints   | 5      | None/JWT   | Login (5/15m)    | No     | Admin/tenant login, verify            |
+| Platform Admin   | 11     | Admin JWT  | Admin (120/15m)  | No     | Tenant management, Stripe Connect     |
+| Tenant Admin     | 13     | Tenant JWT | Admin (120/15m)  | No     | Packages, blackouts, branding, photos |
+| Dev/Debug        | 3      | None       | N/A              | No     | Mock mode only                        |
+| **TOTAL**        | **39** | **Mixed**  | **Tiered**       | **❌** | **No bulk operations**                |
 
 ---
 
@@ -806,4 +868,3 @@ GET /v1/tenant/admin/packages
 The Elope API is **well-secured** with proper multi-tenant isolation, strong rate limiting, and clear authentication boundaries. However, it lacks **bulk operations, transaction support, and audit trails** needed for enterprise agent integration.
 
 **Recommendation**: Implement Priority 1 enhancements (bulk ops, dry-run, optimistic locking) before deploying AI agents for configuration management.
-

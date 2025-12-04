@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "024"
+issue_id: '024'
 tags: [code-review, feature-incomplete, authentication, ux]
 dependencies: []
 ---
@@ -19,17 +19,20 @@ Backend routes for password reset exist (`POST /v1/auth/forgot-password` and `PO
 ### Backend Status: Complete
 
 **Location:** `server/src/routes/tenant-auth.routes.ts`
+
 - `POST /v1/auth/forgot-password` - Accepts email, sends reset link via Postmark
 - `POST /v1/auth/reset-password` - Accepts token and new password
 
 ### Frontend Status: Missing
 
 **Expected but NOT found:**
+
 - `/forgot-password` page - No component exists
 - `/reset-password/:token` page - No component exists
 - "Forgot Password?" link on Login page - Not present
 
 **Files checked:**
+
 - `client/src/pages/` - No forgot-password or reset-password pages
 - `client/src/features/auth/` - No password reset components
 - `client/src/App.tsx` - No routes for password reset
@@ -44,11 +47,13 @@ Backend routes for password reset exist (`POST /v1/auth/forgot-password` and `PO
 ## Proposed Solutions
 
 ### Option A: Create Complete Password Reset Flow (Required)
+
 **Effort:** Medium | **Risk:** Low
 
 Create two new pages:
 
 **1. ForgotPasswordPage.tsx**
+
 ```typescript
 // /forgot-password route
 - Email input field with validation
@@ -59,6 +64,7 @@ Create two new pages:
 ```
 
 **2. ResetPasswordPage.tsx**
+
 ```typescript
 // /reset-password/:token route
 - Parse token from URL params
@@ -70,6 +76,7 @@ Create two new pages:
 ```
 
 **3. Update Login.tsx**
+
 - Add "Forgot Password?" link below login form
 
 ## Recommended Action
@@ -79,14 +86,17 @@ Implement complete password reset flow with proper validation and user feedback.
 ## Technical Details
 
 **Files to Create:**
+
 - `client/src/pages/ForgotPasswordPage.tsx`
 - `client/src/pages/ResetPasswordPage.tsx`
 
 **Files to Update:**
+
 - `client/src/App.tsx` - Add routes
 - `client/src/features/auth/TenantLogin.tsx` - Add forgot password link
 
 **API Integration:**
+
 ```typescript
 // ForgotPasswordPage
 const response = await fetch('/v1/auth/forgot-password', {
@@ -114,9 +124,9 @@ const response = await fetch('/v1/auth/reset-password', {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-27 | Created | Found during comprehensive code review |
+| Date       | Action   | Notes                                                                                                                                                                                                                                           |
+| ---------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-11-27 | Created  | Found during comprehensive code review                                                                                                                                                                                                          |
 | 2025-12-01 | Complete | Already implemented: ForgotPasswordPage.tsx (210 lines), ResetPasswordPage.tsx (279 lines), routes in router.tsx (lines 137-144), "Forgot password?" link in Login.tsx (lines 189-196). Full validation, API integration, success/error states. |
 
 ## Resources

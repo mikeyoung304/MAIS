@@ -6,10 +6,7 @@
     "sourceType": "module"
   },
   "plugins": ["@typescript-eslint"],
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended"
-  ],
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   "rules": {
     // Sprint 2.2 Type Safety: Prevent backsliding on `as any` usage
     // Reduced from 24 to 6 casts (75% reduction)

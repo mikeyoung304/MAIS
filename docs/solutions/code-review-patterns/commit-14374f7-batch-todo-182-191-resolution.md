@@ -4,15 +4,15 @@
 
 ```yaml
 ---
-title: "Security, Type Safety & Observability - TODO 182-191 Resolution"
+title: 'Security, Type Safety & Observability - TODO 182-191 Resolution'
 category: code-review-patterns
 commit: 14374f7
 review_commit: 45024e6
 tags: [security, type-safety, observability, memory-leaks, testing, documentation]
 todos_resolved: [182, 183, 184, 185, 186, 187, 188, 189, 190, 191]
 priority_breakdown:
-  p2: 5  # 182-186
-  p3: 5  # 187-191
+  p2: 5 # 182-186
+  p3: 5 # 187-191
 date_resolved: 2025-12-03
 changes_summary:
   files_changed: 23
@@ -27,10 +27,10 @@ During multi-agent code review of commit 45024e6 (initial security/type safety c
 
 ### Priority Breakdown
 
-| Priority | Count | Categories |
-|----------|-------|------------|
-| P2 (Important) | 5 | Security (1), Type Safety (3), Data Integrity (1) |
-| P3 (Nice-to-Have) | 5 | Documentation (2), Code Quality (2), Testing (1) |
+| Priority          | Count | Categories                                        |
+| ----------------- | ----- | ------------------------------------------------- |
+| P2 (Important)    | 5     | Security (1), Type Safety (3), Data Integrity (1) |
+| P3 (Nice-to-Have) | 5     | Documentation (2), Code Quality (2), Testing (1)  |
 
 ## Solutions by Category
 
@@ -50,8 +50,8 @@ const metrics = {
   memory_usage: process.memoryUsage(),
   cpu_usage: process.cpuUsage(),
   service: 'mais-api',
-  version: process.env.npm_package_version || 'unknown',  // ❌ Remove
-  environment: process.env.NODE_ENV || 'development',     // ❌ Remove
+  version: process.env.npm_package_version || 'unknown', // ❌ Remove
+  environment: process.env.NODE_ENV || 'development', // ❌ Remove
 };
 
 // After
@@ -117,7 +117,14 @@ subscribe<K extends keyof AllEventPayloads>(
 
 ```typescript
 // Before (client/src/lib/utils.ts)
-export type BookingStatus = 'PENDING' | 'DEPOSIT_PAID' | 'PAID' | 'CONFIRMED' | 'CANCELED' | 'REFUNDED' | 'FULFILLED';
+export type BookingStatus =
+  | 'PENDING'
+  | 'DEPOSIT_PAID'
+  | 'PAID'
+  | 'CONFIRMED'
+  | 'CANCELED'
+  | 'REFUNDED'
+  | 'FULFILLED';
 export type RefundStatus = 'NONE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'PARTIAL' | 'FAILED';
 
 // After
@@ -136,7 +143,9 @@ export type RefundStatus = NonNullable<z.infer<typeof BookingManagementDtoSchema
 
 ```typescript
 // client/src/lib/utils.ts
-export function getStatusVariant(status: BookingStatus): 'default' | 'secondary' | 'destructive' | 'outline' {
+export function getStatusVariant(
+  status: BookingStatus
+): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status) {
     case 'CONFIRMED':
     case 'FULFILLED':
@@ -173,23 +182,27 @@ export function getStatusVariant(status: BookingStatus): 'default' | 'secondary'
 // server/prisma/seeds/demo.ts
 let secretKeyForLogging: string | null = null;
 
-await prisma.$transaction(async (tx) => {
-  // Generate keys INSIDE transaction
-  let secretKey: string | null = null;
+await prisma.$transaction(
+  async (tx) => {
+    // Generate keys INSIDE transaction
+    let secretKey: string | null = null;
 
-  if (!existingTenant) {
-    secretKey = `sk_live_${DEMO_SLUG}_${crypto.randomBytes(16).toString('hex')}`;
-  }
+    if (!existingTenant) {
+      secretKey = `sk_live_${DEMO_SLUG}_${crypto.randomBytes(16).toString('hex')}`;
+    }
 
-  const tenant = await createOrUpdateTenant(tx, {
-    apiKeyPublic: existingTenant?.apiKeyPublic ??
-      `pk_live_${DEMO_SLUG}_${crypto.randomBytes(8).toString('hex')}`,
-    apiKeySecret: secretKey ?? undefined,
-  });
+    const tenant = await createOrUpdateTenant(tx, {
+      apiKeyPublic:
+        existingTenant?.apiKeyPublic ??
+        `pk_live_${DEMO_SLUG}_${crypto.randomBytes(8).toString('hex')}`,
+      apiKeySecret: secretKey ?? undefined,
+    });
 
-  // Capture for logging after commit
-  secretKeyForLogging = secretKey;
-}, { timeout: 60000 });
+    // Capture for logging after commit
+    secretKeyForLogging = secretKey;
+  },
+  { timeout: 60000 }
+);
 
 // Log AFTER successful commit
 if (secretKeyForLogging) {
@@ -209,7 +222,7 @@ if (secretKeyForLogging) {
 
 ```typescript
 // client/src/hooks/useConfirmDialog.tsx
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 export function useConfirmDialog() {
   const [dialogState, setDialogState] = useState<ConfirmDialogState | null>(null);
@@ -238,14 +251,20 @@ export function useConfirmDialog() {
 logger.info({ slug: DEMO_SLUG, operations: 16 }, 'Starting seed transaction');
 const startTime = Date.now();
 
-await prisma.$transaction(async (tx) => {
-  // ... seed operations
-}, { timeout: 60000 });
+await prisma.$transaction(
+  async (tx) => {
+    // ... seed operations
+  },
+  { timeout: 60000 }
+);
 
-logger.info({
-  slug: DEMO_SLUG,
-  durationMs: Date.now() - startTime
-}, 'Seed transaction committed successfully');
+logger.info(
+  {
+    slug: DEMO_SLUG,
+    durationMs: Date.now() - startTime,
+  },
+  'Seed transaction committed successfully'
+);
 ```
 
 ---
@@ -261,13 +280,27 @@ logger.info({
 ```typescript
 // server/test/lib/events.test.ts
 describe('InProcessEventEmitter', () => {
-  it('should call all handlers for an event', async () => { /* ... */ });
-  it('should handle async handlers', async () => { /* ... */ });
-  it('should isolate handler errors', async () => { /* ... */ });
-  it('should clear all handlers with clearAll()', () => { /* ... */ });
-  it('should unsubscribe individual handlers', async () => { /* ... */ });
-  it('should handle unsubscribing multiple times safely', () => { /* ... */ });
-  it('should remove event key when last handler unsubscribed', () => { /* ... */ });
+  it('should call all handlers for an event', async () => {
+    /* ... */
+  });
+  it('should handle async handlers', async () => {
+    /* ... */
+  });
+  it('should isolate handler errors', async () => {
+    /* ... */
+  });
+  it('should clear all handlers with clearAll()', () => {
+    /* ... */
+  });
+  it('should unsubscribe individual handlers', async () => {
+    /* ... */
+  });
+  it('should handle unsubscribing multiple times safely', () => {
+    /* ... */
+  });
+  it('should remove event key when last handler unsubscribed', () => {
+    /* ... */
+  });
   // ... 7 more tests
 });
 ```
@@ -281,6 +314,7 @@ describe('InProcessEventEmitter', () => {
 **Problem:** Hardcoded lock ID `42424242` undocumented.
 
 **Solution:** Created `docs/reference/ADVISORY_LOCKS.md` with:
+
 - Lock ID registry table
 - FNV-1a hash algorithm reference
 - Guidelines for adding new locks
@@ -353,13 +387,13 @@ it('should unsubscribe handlers', async () => {
 
 ## Related TODOs
 
-| TODO | Relation |
-|------|----------|
-| 175 | Prior metrics cleanup (node_version, platform removed) |
-| 176 | useConfirmDialog Promise fix (base for 188) |
-| 177 | EventEmitter type safety (base for 184, 189) |
-| 178 | Seed transaction wrapping (base for 183, 190) |
-| 180 | Typed status unions (base for 185, 186) |
+| TODO | Relation                                               |
+| ---- | ------------------------------------------------------ |
+| 175  | Prior metrics cleanup (node_version, platform removed) |
+| 176  | useConfirmDialog Promise fix (base for 188)            |
+| 177  | EventEmitter type safety (base for 184, 189)           |
+| 178  | Seed transaction wrapping (base for 183, 190)          |
+| 180  | Typed status unions (base for 185, 186)                |
 
 ## Commits
 

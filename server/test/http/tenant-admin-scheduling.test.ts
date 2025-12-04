@@ -179,13 +179,11 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
     });
 
     it('should reject without authentication', async () => {
-      const response = await request(app)
-        .post('/v1/tenant-admin/availability-rules')
-        .send({
-          dayOfWeek: 2,
-          startTime: '09:00',
-          endTime: '17:00',
-        });
+      const response = await request(app).post('/v1/tenant-admin/availability-rules').send({
+        dayOfWeek: 2,
+        startTime: '09:00',
+        endTime: '17:00',
+      });
 
       expect(response.status).toBe(401);
     });
@@ -225,7 +223,7 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
         .set('Authorization', `Bearer ${validToken}`)
         .send({
           startTime: '10:00', // Change from 09:00 to 10:00
-          endTime: '18:00',   // Change from 17:00 to 18:00
+          endTime: '18:00', // Change from 17:00 to 18:00
         });
 
       expect(response.status).toBe(200);
@@ -410,8 +408,9 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
     });
 
     it('should reject delete without authentication', async () => {
-      const response = await request(app)
-        .delete(`/v1/tenant-admin/availability-rules/${testRuleId}`);
+      const response = await request(app).delete(
+        `/v1/tenant-admin/availability-rules/${testRuleId}`
+      );
 
       expect(response.status).toBe(401);
     });

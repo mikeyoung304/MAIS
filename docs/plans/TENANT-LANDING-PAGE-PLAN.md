@@ -154,6 +154,7 @@ client/src/features/tenant-admin/landing/
 ## Implementation Phases
 
 ### Phase 1: Core Infrastructure (Day 1)
+
 1. Update `TenantBrandingDtoSchema` in contracts with landing page types
 2. Create API endpoints:
    - `GET /v1/tenant-admin/landing` - Fetch landing config
@@ -162,6 +163,7 @@ client/src/features/tenant-admin/landing/
 4. Create `LandingPage.tsx` orchestrator component
 
 ### Phase 2: Section Components (Day 1-2)
+
 1. **HeroSection** - Full-width background, headline, CTA button
 2. **SocialProofBar** - Horizontal bar with trust indicators
 3. **AboutSection** - Two-column layout (image + text)
@@ -172,6 +174,7 @@ client/src/features/tenant-admin/landing/
 8. **FinalCtaSection** - Repeat CTA at bottom
 
 ### Phase 3: Admin Editor (Day 2-3)
+
 1. Add "Landing Page" tab to tenant dashboard
 2. Section toggle grid (enable/disable)
 3. Inline editors for each section
@@ -179,6 +182,7 @@ client/src/features/tenant-admin/landing/
 5. Image upload integration (reuse existing)
 
 ### Phase 4: Polish & Testing (Day 3)
+
 1. Responsive design testing
 2. A11y audit (keyboard nav, screen readers)
 3. Performance optimization (lazy load images)
@@ -227,18 +231,22 @@ Extend `GET /v1/public/tenants/:slug` response to include landing page config:
 ## Default Content (Little Bit Farm)
 
 ### Hero
+
 - **Headline**: "Your Story Starts Here"
 - **Subheadline**: "Intimate celebrations, peaceful retreats, and unforgettable getaways on our family farm"
 - **CTA**: "Explore Experiences"
 
 ### Social Proof Bar
+
 - "★★★★★ 50+ Happy Guests"
 - "Est. 2020"
 - "Family Owned"
 
 ### About
+
 - **Headline**: "Welcome to Little Bit Farm"
 - **Content**:
+
   ```
   Nestled in the rolling hills of [location], Little Bit Farm is a family-owned
   venue where modern meets rustic charm. Our 50-acre property features historic
@@ -250,17 +258,20 @@ Extend `GET /v1/public/tenants/:slug` response to include landing page config:
   ```
 
 ### Testimonials
+
 1. "The most magical day of our lives. The team went above and beyond to make our micro-wedding absolutely perfect." - Sarah & James M., Wedding 2024
 2. "I came for a wellness retreat and left feeling completely renewed. The equine therapy session was life-changing." - Amanda R., Retreat Guest
 3. "Our family weekend getaway exceeded all expectations. The kids couldn't stop talking about the goats!" - The Johnson Family, Weekend Guests
 
 ### Accommodation
+
 - **Headline**: "Extend Your Stay"
 - **Description**: "Book our cozy farmhouse cottage for the complete Little Bit Farm experience. Wake up to pastoral views, enjoy farm-fresh breakfast, and have the grounds to yourself."
 - **CTA**: "View on Airbnb"
 - **Highlights**: ["Sleeps 6", "Full Kitchen", "Private Hot Tub", "Farm-Fresh Breakfast"]
 
 ### FAQ
+
 1. **How far in advance should I book?**
    Popular dates book 6-12 months in advance for weddings, 2-4 weeks for wellness retreats and getaways.
 
@@ -280,6 +291,7 @@ Extend `GET /v1/public/tenants/:slug` response to include landing page config:
    Yes, we have free parking for up to 30 vehicles with easy access to the venue areas.
 
 ### Final CTA
+
 - **Headline**: "Ready to Start Planning?"
 - **Subheadline**: "Let's create something unforgettable together"
 - **CTA**: "Explore Packages"
@@ -287,6 +299,7 @@ Extend `GET /v1/public/tenants/:slug` response to include landing page config:
 ## Files to Create/Modify
 
 ### New Files
+
 - `client/src/features/storefront/landing/LandingPage.tsx`
 - `client/src/features/storefront/landing/sections/*.tsx` (8 section components)
 - `client/src/features/storefront/landing/hooks/useLandingPageConfig.ts`
@@ -296,6 +309,7 @@ Extend `GET /v1/public/tenants/:slug` response to include landing page config:
 - `server/src/routes/landing.routes.ts` (API endpoints)
 
 ### Modified Files
+
 - `packages/contracts/src/dto.ts` - Extend branding schema
 - `packages/contracts/src/api.v1.ts` - Add landing endpoints
 - `client/src/pages/StorefrontHome.tsx` - Use LandingPage component

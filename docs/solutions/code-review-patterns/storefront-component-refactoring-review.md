@@ -53,11 +53,11 @@ review_agents:
 
 The storefront feature implemented rapid MVP functionality but accumulated three repeating code patterns that impact maintainability and performance:
 
-| Pattern | Files Affected | Impact | Status |
-|---------|----------------|--------|--------|
-| 🔴 JSX Duplication | SegmentCard, TierCard | 45 duplicate lines | FIXED |
-| 🟡 Missing memo() | SegmentCard, TierCard | Unnecessary re-renders | FIXED |
-| 🔵 Scattered Constants | TierDetail, TierSelector, TierCard | Hard to maintain | FIXED |
+| Pattern                | Files Affected                     | Impact                 | Status |
+| ---------------------- | ---------------------------------- | ---------------------- | ------ |
+| 🔴 JSX Duplication     | SegmentCard, TierCard              | 45 duplicate lines     | FIXED  |
+| 🟡 Missing memo()      | SegmentCard, TierCard              | Unnecessary re-renders | FIXED  |
+| 🔵 Scattered Constants | TierDetail, TierSelector, TierCard | Hard to maintain       | FIXED  |
 
 **Result:** Extracted `ChoiceCardBase` + `cardStyles` + `utils.ts`, added `React.memo` to wrappers, eliminated magic constants.
 
@@ -69,6 +69,7 @@ The storefront feature implemented rapid MVP functionality but accumulated three
 
 **Problem:**
 Both `SegmentCard` and `TierCard` wrapped identical JSX structure:
+
 ```typescript
 // BEFORE: In SegmentCard.tsx (40+ lines)
 <Link to={href} className={cardStyles}>
@@ -88,6 +89,7 @@ Both `SegmentCard` and `TierCard` wrapped identical JSX structure:
 ```
 
 **Why It Matters:**
+
 - Bug fixes must be applied in multiple locations
 - Component evolution gets blocked (changing card layout requires 2+ edits)
 - Inconsistent styling across cards as one drifts from the other
@@ -95,6 +97,7 @@ Both `SegmentCard` and `TierCard` wrapped identical JSX structure:
 
 **Solution Applied:**
 Extracted to `ChoiceCardBase.tsx` with explicit prop interface:
+
 ```typescript
 // AFTER: Single source of truth
 export const ChoiceCardBase = memo(function ChoiceCardBase({
@@ -112,6 +115,7 @@ export const ChoiceCardBase = memo(function ChoiceCardBase({
 ```
 
 Wrappers are now thin:
+
 ```typescript
 // SegmentCard: 15 lines
 export const SegmentCard = memo(function SegmentCard({ segment }: SegmentCardProps) {
@@ -132,6 +136,7 @@ export const SegmentCard = memo(function SegmentCard({ segment }: SegmentCardPro
 
 **Problem:**
 `SegmentCard` and `TierCard` re-rendered whenever parent updated, even if props unchanged:
+
 ```typescript
 // BEFORE: No memo
 export function SegmentCard({ segment }: SegmentCardProps) {
@@ -145,12 +150,14 @@ export function SegmentCard({ segment }: SegmentCardProps) {
 ```
 
 **Why It Matters:**
+
 - Parent re-render (e.g., search filter) causes unnecessary child re-renders
 - `ChoiceCardBase` has image loading, hover effects, layout calculations
 - With 10+ cards visible, performance compounds
 - Especially noticeable in TierCard with price calculations
 
 **Solution Applied:**
+
 ```typescript
 // AFTER: Wrapped with memo()
 export const SegmentCard = memo(function SegmentCard({ segment }: SegmentCardProps) {
@@ -168,6 +175,7 @@ export const TierCard = memo(function TierCard({
 ```
 
 **Test Verification:**
+
 ```typescript
 // Verify memo works by tracking render count
 const { rerender } = render(<SegmentCard segment={mockSegment} />);
@@ -182,6 +190,7 @@ rerender(<SegmentCard segment={mockSegment} />);
 ### 3. Magic Constants and Scattered Utilities
 
 **Problem A: Tier names hardcoded in multiple places**
+
 ```typescript
 // BEFORE: In TierCard.tsx
 function getTierDisplayName(tierLevel: string): string {
@@ -206,6 +215,7 @@ function getTierDisplayName(tierLevel: string): string { ... }
 ```
 
 **Problem B: Text truncation duplicated**
+
 ```typescript
 // BEFORE: In TierCard.tsx
 function truncate(text: string, maxLength: number): string {
@@ -220,6 +230,7 @@ const truncatedDesc = description.slice(0, MAX_LENGTH) + '...';
 ```
 
 **Why It Matters:**
+
 - Changing tier display names requires finding all 3+ locations
 - Rebranding "Popular" → "Best Value" is error-prone
 - Text truncation length inconsistency (150 vs other values)
@@ -227,19 +238,24 @@ const truncatedDesc = description.slice(0, MAX_LENGTH) + '...';
 
 **Solution Applied:**
 Created `/features/storefront/utils.ts`:
+
 ```typescript
 // Single source of truth
 export const TIER_LEVELS = ['budget', 'middle', 'luxury'] as const;
-export type TierLevel = typeof TIER_LEVELS[number];
+export type TierLevel = (typeof TIER_LEVELS)[number];
 
 export const CARD_DESCRIPTION_MAX_LENGTH = 150;
 
 export function getTierDisplayName(tierLevel: string): string {
   switch (tierLevel) {
-    case 'budget': return 'Essential';
-    case 'middle': return 'Popular';
-    case 'luxury': return 'Premium';
-    default: return tierLevel.charAt(0).toUpperCase() + tierLevel.slice(1);
+    case 'budget':
+      return 'Essential';
+    case 'middle':
+      return 'Popular';
+    case 'luxury':
+      return 'Premium';
+    default:
+      return tierLevel.charAt(0).toUpperCase() + tierLevel.slice(1);
   }
 }
 
@@ -248,9 +264,7 @@ export function truncateText(text: string, maxLength: number): string {
   return text.slice(0, maxLength) + '...';
 }
 
-export function extractTiers(
-  packages: PackageDto[]
-): Record<TierLevel, PackageDto | undefined> {
+export function extractTiers(packages: PackageDto[]): Record<TierLevel, PackageDto | undefined> {
   const tiers: Record<TierLevel, PackageDto | undefined> = {
     budget: undefined,
     middle: undefined,
@@ -267,6 +281,7 @@ export function extractTiers(
 ```
 
 All components now import from utils:
+
 ```typescript
 import { getTierDisplayName, truncateText, CARD_DESCRIPTION_MAX_LENGTH } from './utils';
 
@@ -281,6 +296,7 @@ import { getTierDisplayName, truncateText, CARD_DESCRIPTION_MAX_LENGTH } from '.
 
 **Problem:**
 Long CSS class strings repeated in multiple card components:
+
 ```typescript
 // BEFORE: Hardcoded in SegmentCard
 className={clsx(
@@ -294,6 +310,7 @@ className={clsx(
 
 **Solution Applied:**
 Created `/features/storefront/cardStyles.ts`:
+
 ```typescript
 export const cardStyles = {
   base: clsx(
@@ -320,6 +337,7 @@ Add to `.github/PULL_REQUEST_TEMPLATE.md` under "Frontend Code Review":
 ## Component Structure Review
 
 **For ANY new React component:**
+
 - [ ] Component is not a copy-paste of existing component
   - Search for similar JSX structure before implementing
   - Ask: "Is this reusing existing component logic?"
@@ -338,6 +356,7 @@ Add to `.github/PULL_REQUEST_TEMPLATE.md` under "Frontend Code Review":
   - If same function defined in 2+ files, move to shared utils
 
 **For ANY wrapper component:**
+
 - [ ] Component uses `React.memo` if props are objects (not primitives)
 - [ ] Prop interface is explicit (no `...rest` catching unintended props)
 - [ ] Component does minimal calculation (mapping only)
@@ -349,12 +368,14 @@ Add to `.github/PULL_REQUEST_TEMPLATE.md` under "Frontend Code Review":
 When reviewing components, ask:
 
 **On Initial Submission:**
+
 1. "Is this component structure similar to existing components? If yes, why not reuse?"
 2. "Does this wrapper component do more than prop mapping? If yes, what logic?"
 3. "Are there hardcoded strings that appear elsewhere in the codebase?"
 4. "Is this function duplicated in another file?"
 
 **On Refactoring Review:**
+
 1. "What's the minimal data each wrapper needs from its domain (segment vs tier)?"
 2. "Could we have a 'smart' parent (segment/tier specific) and 'dumb' child (generic card)?"
 3. "Are all wrappers memoized? Does the perf benefit justify the memo() call?"
@@ -367,6 +388,7 @@ When reviewing components, ask:
 ### 1. When to Extract Shared Components
 
 **Extract to shared component when:**
+
 - ✅ JSX structure is identical (>80% same markup)
 - ✅ Multiple components render same structure with different props
 - ✅ Component is used in 3+ places
@@ -374,6 +396,7 @@ When reviewing components, ask:
 - ✅ Component has its own styling module (cardStyles.ts)
 
 **Don't extract (keep separate) when:**
+
 - ❌ Component is only used once
 - ❌ Logic is fundamentally different (e.g., SegmentCard vs BlogCard)
 - ❌ Props interface becomes 15+ fields (sign of mixing concerns)
@@ -382,6 +405,7 @@ When reviewing components, ask:
 ### 2. The Smart/Dumb Component Pattern
 
 Apply three-layer architecture:
+
 ```
 Layer 1: Smart Component (business logic)
 ├─ SegmentCard: Maps segment domain to card interface
@@ -396,6 +420,7 @@ Layer 3: Shared Styles/Utils
 ```
 
 **Benefits:**
+
 - SegmentCard is 15 lines (easy to understand)
 - TierCard is 15 lines (easy to understand)
 - ChoiceCardBase is 90 lines but completely pure (no domain logic)
@@ -404,18 +429,21 @@ Layer 3: Shared Styles/Utils
 ### 3. When to Use React.memo
 
 **Use memo() when:**
+
 - ✅ Component receives object/array props that don't change
 - ✅ Component is rendered in a list (siblings re-render together)
 - ✅ Component has expensive render (animations, images, calculations)
 - ✅ Parent re-renders frequently but child props stay same
 
 **Don't use memo() when:**
+
 - ❌ Component only receives primitive props (string, number, boolean)
 - ❌ Component is rendered once per page
 - ❌ Props change every parent render (memo overhead > benefit)
 - ❌ Component is simple <20 lines
 
 **Verification Pattern:**
+
 ```typescript
 // Track render count to verify memo works
 test('SegmentCard memoizes correctly', () => {
@@ -443,12 +471,14 @@ test('SegmentCard memoizes correctly', () => {
 ### 4. Signs of Premature vs Needed Optimization
 
 **Premature optimization (avoid):**
+
 - "This component might be reused someday" (YAGNI - You Aren't Gonna Need It)
 - Adding memo() to components used once
 - Creating utils file for single 2-line function
 - Extracting component used only in one place
 
 **Needed optimization (do):**
+
 - "This function is defined in 3 files, causing bugs"
 - "This component is in a list of 20 items, performance is noticeable"
 - "Changing this string requires editing 4 files"
@@ -463,13 +493,14 @@ test('SegmentCard memoizes correctly', () => {
 **Rule 1: Detect copy-pasted JSX blocks**
 
 Create custom ESLint rule `/eslint/rules/no-duplicate-jsx.js`:
+
 ```javascript
 module.exports = {
   meta: {
     type: 'suggestion',
     docs: {
-      description: 'Detect JSX blocks identical across multiple files'
-    }
+      description: 'Detect JSX blocks identical across multiple files',
+    },
   },
   create(context) {
     const jsxHashes = new Map(); // Track JSX structure hashes
@@ -485,17 +516,17 @@ module.exports = {
             message: `Identical JSX structure found in ${existing.file}. Consider extracting to shared component.`,
             fix(fixer) {
               return fixer.insertTextBefore(node, '// TODO: Extract to shared component\n');
-            }
+            },
           });
         }
 
         jsxHashes.set(hash, {
           file: context.getFilename(),
-          line: node.loc.start.line
+          line: node.loc.start.line,
         });
-      }
+      },
     };
-  }
+  },
 };
 ```
 
@@ -505,7 +536,7 @@ module.exports = {
 module.exports = {
   meta: {
     type: 'suggestion',
-    docs: { description: 'Ensure wrapper components use memo()' }
+    docs: { description: 'Ensure wrapper components use memo()' },
   },
   create(context) {
     return {
@@ -525,12 +556,12 @@ module.exports = {
             message: 'Wrapper component should be wrapped with React.memo()',
             fix(fixer) {
               return fixer.replaceText(node, `memo(${node.getText()})`);
-            }
+            },
           });
         }
-      }
+      },
     };
-  }
+  },
 };
 ```
 
@@ -555,6 +586,7 @@ done
 ```
 
 **Output triggers code review comment:**
+
 ```
 ⚠️  String "Popular" found in 3 files:
   - TierCard.tsx:42
@@ -571,6 +603,7 @@ Consider extracting to utils.ts constant.
 ### 1. Component Structure Tests
 
 **Test that ChoiceCardBase renders all props correctly:**
+
 ```typescript
 describe('ChoiceCardBase', () => {
   it('renders with all props', () => {
@@ -610,6 +643,7 @@ describe('ChoiceCardBase', () => {
 ### 2. Wrapper Component Integration Tests
 
 **Test that SegmentCard maps segment data correctly:**
+
 ```typescript
 describe('SegmentCard', () => {
   it('maps segment properties to ChoiceCardBase', () => {
@@ -643,6 +677,7 @@ describe('SegmentCard', () => {
 ### 3. Memoization Tests
 
 **Verify memo prevents unnecessary re-renders:**
+
 ```typescript
 describe('SegmentCard memoization', () => {
   it('does not re-render when parent re-renders with same segment', () => {
@@ -685,6 +720,7 @@ describe('SegmentCard memoization', () => {
 ### 4. Constants and Utils Tests
 
 **Test utility functions:**
+
 ```typescript
 describe('Storefront utilities', () => {
   describe('getTierDisplayName', () => {
@@ -740,6 +776,7 @@ describe('Storefront utilities', () => {
 ### 5. Visual Regression Tests
 
 **Use Playwright to catch style regressions:**
+
 ```typescript
 test('ChoiceCardBase visual consistency', async ({ page }) => {
   await page.goto('/storefront-test?view=cards');
@@ -748,7 +785,9 @@ test('ChoiceCardBase visual consistency', async ({ page }) => {
   await expect(page.locator('[data-testid="segment-card-1"]')).toHaveScreenshot();
 
   // Verify highlighted state visual
-  await expect(page.locator('[data-testid="tier-card-middle"]')).toHaveScreenshot('tier-card-highlighted.png');
+  await expect(page.locator('[data-testid="tier-card-middle"]')).toHaveScreenshot(
+    'tier-card-highlighted.png'
+  );
 
   // Verify hover state (image zoom)
   await page.locator('[data-testid="segment-card-2"]').hover();
@@ -792,11 +831,13 @@ Bundle size:                      -280 bytes (after gzip)
 When implementing 2 similar features, extract the common structure from feature 1 before building feature 2.
 
 **Timing:**
+
 - Day 1: Build SegmentCard (accept duplication)
 - Day 2: Add TierCard → notice duplication → extract ChoiceCardBase
 - Day 2: Implement TierCard using ChoiceCardBase
 
 **vs. The Old Way:**
+
 - Day 1: Build SegmentCard
 - Day 2: Build TierCard (duplicate without noticing)
 - Day 5: Code review finds duplication
@@ -808,25 +849,27 @@ When implementing 2 similar features, extract the common structure from feature 
 Extract string/number constants BEFORE using them in multiple functions.
 
 **Checklist:**
+
 1. Identify magic values: "Essential", 150, etc.
 2. Create constants file: `utils.ts`
 3. Use constants in first location
 4. When building second location, import constants (not hardcode)
 
 **Example:**
+
 ```typescript
 // ✅ GOOD: Define once
 export const CARD_DESCRIPTION_MAX_LENGTH = 150;
 
 // Use in TierCard
-truncateText(desc, CARD_DESCRIPTION_MAX_LENGTH)
+truncateText(desc, CARD_DESCRIPTION_MAX_LENGTH);
 
 // Use in TierDetail
-truncateText(desc, CARD_DESCRIPTION_MAX_LENGTH)
+truncateText(desc, CARD_DESCRIPTION_MAX_LENGTH);
 
 // ❌ WRONG: Hardcode in both
-truncateText(desc, 150)  // TierCard
-truncateText(desc, 150)  // TierDetail (if changed, must update both)
+truncateText(desc, 150); // TierCard
+truncateText(desc, 150); // TierDetail (if changed, must update both)
 ```
 
 ### Pattern 3: Wrapper Component Size Rule
@@ -834,6 +877,7 @@ truncateText(desc, 150)  // TierDetail (if changed, must update both)
 **Rule:** If component is >40 lines, ask "Am I doing more than prop mapping?"
 
 **40 Line Components:**
+
 ```typescript
 export const SegmentCard = memo(function SegmentCard({ segment }: SegmentCardProps) {
   return (
@@ -852,6 +896,7 @@ export const SegmentCard = memo(function SegmentCard({ segment }: SegmentCardPro
 ```
 
 **Too Big (>40 lines) = Refactor:**
+
 ```typescript
 // ❌ TOO BIG: Doing too much
 export function SegmentCard({ segment }: SegmentCardProps) {
@@ -886,11 +931,13 @@ function mapSegmentToCardProps(segment: SegmentDto): ChoiceCardBaseProps {
 Before submitting a PR that adds new components:
 
 - [ ] **Search first:** Is there a component I can reuse?
+
   ```bash
   grep -rn "interface.*Props" client/src/features/
   ```
 
 - [ ] **Constants first:** Are there magic strings/numbers?
+
   ```bash
   grep -rn "Essential\|Popular\|Premium" client/src/
   grep -rn "\b150\b\|\b300\b" client/src/ # Magic numbers
@@ -900,6 +947,7 @@ Before submitting a PR that adds new components:
   - Don't wait for code review to point it out
 
 - [ ] **Memoize wisely:** Does this wrapper component receive object/array props?
+
   ```bash
   # Check if component is wrapped with memo
   grep -n "export const.*= memo" client/src/features/

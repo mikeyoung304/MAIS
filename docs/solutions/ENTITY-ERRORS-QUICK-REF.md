@@ -7,50 +7,59 @@
 ## Modification Checklist (Copy & Paste)
 
 ```markdown
-## Entity Modified: ___________
+## Entity Modified: ****\_\_\_****
 
 Step 1: Entity Definition
+
 - [ ] Updated `server/src/lib/entities.ts`
   - [ ] Required fields without `?`
   - [ ] Optional fields with `?` or `| null`
 
 Step 2: API Contracts
+
 - [ ] Updated `packages/contracts/src/*.ts` (if API returns this entity)
   - [ ] DTO Zod schema updated
   - [ ] API response type matches
 
 Step 3: Input/Port Types
+
 - [ ] Updated `server/src/lib/ports.ts`
   - [ ] Repository input types (Create/Update DTOs)
   - [ ] If new field, add to input DTO
 
 Step 4: Mock Adapter
+
 - [ ] Updated `server/src/adapters/mock/index.ts`
   - [ ] All seed data objects
   - [ ] Builder/factory methods
   - [ ] Create/update method returns
 
 Step 5: Prisma Adapter
+
 - [ ] Updated `server/src/adapters/prisma/*.repository.ts`
   - [ ] Input type includes DB field
-  - [ ] Mapper function (toDomain*) maps field
+  - [ ] Mapper function (toDomain\*) maps field
   - [ ] Optional fields use guards
 
 Step 6: Routes
+
 - [ ] Updated `server/src/routes/*.routes.ts`
   - [ ] DTO → Entity mapping if applicable
   - [ ] Response mapping if needed
 
 Step 7: Services
+
 - [ ] Updated `server/src/services/*.service.ts`
   - [ ] Any factory methods creating entity
   - [ ] Comments in docstrings
 
 Step 8: Tests
+
 - [ ] Added test for new field behavior
 - [ ] Entity invariant tests pass: `npm test -- --grep "Entity Invariants"`
 
 Final: Verification
+
 - [ ] `npm run typecheck` - passes
 - [ ] `npm test` - all pass
 - [ ] `npm run build` - succeeds
@@ -173,7 +182,7 @@ packages.set('pkg_basic', {
   tenantId: DEFAULT_TENANT,
   slug: 'basic-elopement',
   title: 'Basic Elopement',
-  newField: 'value',  // Included
+  newField: 'value', // Included
 });
 ```
 
@@ -349,7 +358,7 @@ grep -r "toDomainPackage" server/src/
 return {
   id: pkg.id,
   tenantId: pkg.tenantId,
-  title: pkg.name,  // ADD THIS
+  title: pkg.name, // ADD THIS
   // ... rest of fields
 };
 ```
@@ -408,7 +417,7 @@ If you're blocked by entity type errors:
 
 1. **Identify the error** - Read TypeScript error message
 2. **Find the location** - Error shows file:line
-3. **Identify the mapper** - Usually toDomain* method
+3. **Identify the mapper** - Usually toDomain\* method
 4. **Map the field** - Add to input type AND return object
 5. **Test** - `npm run typecheck` to verify fix
 6. **Confirm** - `npm test` to catch runtime errors
@@ -423,4 +432,3 @@ If you're blocked by entity type errors:
 - **[CLAUDE.md](../../../CLAUDE.md)** - Repository pattern rules
 - **[server/src/lib/entities.ts](../../../server/src/lib/entities.ts)** - Entity definitions
 - **[server/src/lib/ports.ts](../../../server/src/lib/ports.ts)** - Input DTO definitions
-

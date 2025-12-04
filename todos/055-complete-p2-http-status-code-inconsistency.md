@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "055"
+issue_id: '055'
 tags: [code-review, scheduling, api, rest-conventions]
 dependencies: []
 ---
@@ -24,7 +24,7 @@ The tenant admin scheduling routes return 400 (Bad Request) when a referenced re
 if (data.serviceId) {
   const service = await serviceRepo.getById(tenantId, data.serviceId);
   if (!service) {
-    res.status(400).json({ error: 'Service not found' });  // Should be 404
+    res.status(400).json({ error: 'Service not found' }); // Should be 404
     return;
   }
 }
@@ -32,16 +32,17 @@ if (data.serviceId) {
 
 ### REST Convention
 
-| Scenario | Correct Status | Current |
-|----------|----------------|---------|
-| Invalid JSON body | 400 | 400 ✓ |
-| Missing required field | 400 | 400 ✓ |
-| Referenced resource not found | 404 | 400 ❌ |
-| Resource to update not found | 404 | 404 ✓ |
+| Scenario                      | Correct Status | Current |
+| ----------------------------- | -------------- | ------- |
+| Invalid JSON body             | 400            | 400 ✓   |
+| Missing required field        | 400            | 400 ✓   |
+| Referenced resource not found | 404            | 400 ❌  |
+| Resource to update not found  | 404            | 404 ✓   |
 
 ## Proposed Solutions
 
 ### Option A: Use 404 for Not Found (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 ```typescript
@@ -52,9 +53,11 @@ if (!service) {
 ```
 
 ### Option B: Use 422 Unprocessable Entity
+
 **Effort:** Small | **Risk:** Low
 
 Some APIs use 422 for "valid format but invalid reference":
+
 ```typescript
 res.status(422).json({ error: 'Referenced service does not exist' });
 ```
@@ -66,6 +69,7 @@ Implement **Option A** - 404 is clearer and matches existing patterns in codebas
 ## Technical Details
 
 **Files to Update:**
+
 - `server/src/routes/tenant-admin-scheduling.routes.ts:357` (and similar patterns)
 
 ## Acceptance Criteria
@@ -76,6 +80,6 @@ Implement **Option A** - 404 is clearer and matches existing patterns in codebas
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                            |
+| ---------- | ------- | -------------------------------- |
 | 2025-11-27 | Created | Found during Code Quality review |

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "181"
+issue_id: '181'
 tags: [todo]
 dependencies: []
 ---
@@ -45,6 +45,7 @@ client/src/components/ui/
 ## Context
 
 Looking at the codebase, the `client/src/components/ui/` directory consistently uses kebab-case:
+
 - `button.tsx`
 - `card.tsx`
 - `dialog.tsx`
@@ -52,6 +53,7 @@ Looking at the codebase, the `client/src/components/ui/` directory consistently 
 - `badge.tsx`
 
 However, feature components in `client/src/features/` use PascalCase:
+
 - `BookingForm.tsx`
 - `PackageCard.tsx`
 

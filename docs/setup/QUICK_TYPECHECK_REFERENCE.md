@@ -17,6 +17,7 @@ Overall: 6/10 TypeScript files pass (60%)
 ## Critical Issues at a Glance
 
 ### Issue 1: AddOnList.tsx (Lines 58-62)
+
 ```typescript
 // BROKEN - property doesn't exist on type
 {addOn.description && (
@@ -31,6 +32,7 @@ export const AddOnDtoSchema = z.object({
 ```
 
 ### Issue 2: DatePicker.tsx (Lines 40, 90)
+
 ```typescript
 // BROKEN - API methods don't exist
 const response = await api.getUnavailableDates?.({ ... });  // ERROR: Type 'never'
@@ -40,6 +42,7 @@ const response = await api.getAvailability?.({ ... });       // ERROR: Type 'nev
 ```
 
 ### Issue 3: PackagePage.tsx (Line 76)
+
 ```typescript
 // BROKEN - method possibly undefined
 const response = await api.createCheckout({ ... });  // ERROR: possibly undefined
@@ -49,18 +52,18 @@ const response = await api.createCheckout({ ... });  // ERROR: possibly undefine
 
 ## Type Safety Score by File
 
-| File | Status | Issues | Score |
-|------|--------|--------|-------|
-| CatalogGrid.tsx | ✓ PASS | 0 | 100% |
-| PackagePage.tsx | ✗ FAIL | 2 | 0% |
-| DatePicker.tsx | ✗ FAIL | 3 | 0% |
-| AddOnList.tsx | ✗ FAIL | 1 | 0% |
-| dialog.tsx | ✓ PASS | 0 | 100% |
-| card.tsx | ✓ PASS | 0 | 100% |
-| main.tsx | ✓ PASS | 0 | 100% |
-| TotalBox.tsx | ✓ PASS | 0 | 100% |
-| progress-steps.tsx | ✓ PASS | 0 | 100% |
-| DatePicker.module.css | N/A | N/A | N/A |
+| File                  | Status | Issues | Score |
+| --------------------- | ------ | ------ | ----- |
+| CatalogGrid.tsx       | ✓ PASS | 0      | 100%  |
+| PackagePage.tsx       | ✗ FAIL | 2      | 0%    |
+| DatePicker.tsx        | ✗ FAIL | 3      | 0%    |
+| AddOnList.tsx         | ✗ FAIL | 1      | 0%    |
+| dialog.tsx            | ✓ PASS | 0      | 100%  |
+| card.tsx              | ✓ PASS | 0      | 100%  |
+| main.tsx              | ✓ PASS | 0      | 100%  |
+| TotalBox.tsx          | ✓ PASS | 0      | 100%  |
+| progress-steps.tsx    | ✓ PASS | 0      | 100%  |
+| DatePicker.module.css | N/A    | N/A    | N/A   |
 
 ## Quick Fixes Checklist
 
@@ -83,23 +86,25 @@ const response = await api.createCheckout({ ... });  // ERROR: possibly undefine
 ## Performance Impact
 
 Runtime errors will occur in:
+
 1. **Adding add-ons to cart** - description undefined (low severity, handled gracefully)
 2. **Selecting dates** - API call fails (high severity, breaks functionality)
 3. **Checkout** - API call fails (high severity, breaks functionality)
 
 ## Code Quality Metrics
 
-| Metric | Status |
-|--------|--------|
-| TypeScript Strict Mode | ✓ Enabled |
-| Import Resolution | ✓ 100% |
-| Path Aliases | ✓ Configured |
-| Type Coverage | ✗ ~85% (5 unsafe casts/any types remain elsewhere) |
-| Production Ready | ✗ NO - 3 critical issues |
+| Metric                 | Status                                             |
+| ---------------------- | -------------------------------------------------- |
+| TypeScript Strict Mode | ✓ Enabled                                          |
+| Import Resolution      | ✓ 100%                                             |
+| Path Aliases           | ✓ Configured                                       |
+| Type Coverage          | ✗ ~85% (5 unsafe casts/any types remain elsewhere) |
+| Production Ready       | ✗ NO - 3 critical issues                           |
 
 ## Prevention
 
 To prevent similar issues:
+
 1. Enable strict TypeScript in CI/CD
 2. Add pre-commit hook: `npm run typecheck`
 3. Add type checking to pull request checks

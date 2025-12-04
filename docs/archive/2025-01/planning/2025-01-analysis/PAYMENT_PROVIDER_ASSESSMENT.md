@@ -22,7 +22,7 @@ export interface PaymentProvider {
     metadata: Record<string, string>;
     applicationFeeAmount?: number;
   }): Promise<CheckoutSession>;
-  
+
   createConnectCheckoutSession(input: {
     amountCents: number;
     email: string;
@@ -30,12 +30,13 @@ export interface PaymentProvider {
     stripeAccountId: string;
     applicationFeeAmount: number;
   }): Promise<CheckoutSession>;
-  
+
   verifyWebhook(payload: string, signature: string): Promise<Stripe.Event>;
 }
 ```
 
 **Assessment:**
+
 - Interface is abstract and provider-agnostic
 - Uses standardized types (amountCents, email, metadata)
 - Returns standard CheckoutSession type
@@ -44,12 +45,14 @@ export interface PaymentProvider {
 ### Stripe Adapter Implementation (server/src/adapters/stripe.adapter.ts)
 
 **Strengths:**
+
 - Clean implementation of PaymentProvider interface
 - Encapsulates Stripe-specific API calls
 - Handles application fee validation (0.5%-50% limits)
 - Implements both standard and Connect checkout patterns
 
 **Weaknesses:**
+
 - Hardcodes "Wedding Package" product name
 - Hardcodes "USD" currency
 - Hardcodes "payment" mode (vs. subscription, setup, etc.)
@@ -62,24 +65,25 @@ export interface PaymentProvider {
 
 **High-Risk Areas (Hardcoded Stripe References):**
 
-| File | Hardcoding | Severity |
-|------|-----------|----------|
-| server/src/adapters/stripe.adapter.ts:46-48 | `"Wedding Package"` product name | Medium |
-| server/src/adapters/stripe.adapter.ts:43-44 | `mode: 'payment'` | Medium |
-| server/src/adapters/stripe.adapter.ts:45 | `currency: 'usd'` | Low |
-| server/src/lib/ports.ts:104 | Return type `Stripe.Event` | High |
-| server/src/routes/webhooks.routes.ts:18-31 | `StripeSessionSchema` hardcoded | High |
-| server/src/routes/webhooks.routes.ts:155 | Event type string `'checkout.session.completed'` | Medium |
-| server/src/app.ts:68-70 | Route path `/v1/webhooks/stripe` | Low |
+| File                                        | Hardcoding                                       | Severity |
+| ------------------------------------------- | ------------------------------------------------ | -------- |
+| server/src/adapters/stripe.adapter.ts:46-48 | `"Wedding Package"` product name                 | Medium   |
+| server/src/adapters/stripe.adapter.ts:43-44 | `mode: 'payment'`                                | Medium   |
+| server/src/adapters/stripe.adapter.ts:45    | `currency: 'usd'`                                | Low      |
+| server/src/lib/ports.ts:104                 | Return type `Stripe.Event`                       | High     |
+| server/src/routes/webhooks.routes.ts:18-31  | `StripeSessionSchema` hardcoded                  | High     |
+| server/src/routes/webhooks.routes.ts:155    | Event type string `'checkout.session.completed'` | Medium   |
+| server/src/app.ts:68-70                     | Route path `/v1/webhooks/stripe`                 | Low      |
 
 **Client-Side Coupling (Minor):**
 
-| File | Issue |
-|------|-------|
-| client/src/features/catalog/PackagePage.tsx:74-77 | Redirects to Stripe checkout URL (provider-agnostic) |
-| client/src/pages/Success.tsx | Looks for `session_id` in query params (Stripe-specific) |
+| File                                              | Issue                                                    |
+| ------------------------------------------------- | -------------------------------------------------------- |
+| client/src/features/catalog/PackagePage.tsx:74-77 | Redirects to Stripe checkout URL (provider-agnostic)     |
+| client/src/pages/Success.tsx                      | Looks for `session_id` in query params (Stripe-specific) |
 
 ### Stripe Service Imports
+
 ```
 File                                          Count
 stripe.adapter.ts                             1
@@ -98,6 +102,7 @@ More than 269 occurrences across 19 files
 ### Quality: EXCELLENT (Highly Provider-Agnostic)
 
 **Key Strengths:**
+
 - Commission logic is in `CommissionService` (separate from PaymentProvider)
 - Calculates commission independently: `Math.ceil(bookingTotal * (commissionPercent / 100))`
 - Validates against Stripe Connect limits as guardrails (0.5%-50%)
@@ -107,16 +112,15 @@ More than 269 occurrences across 19 files
 
 ```typescript
 // Commission calculation is provider-independent
-const commissionCents = Math.ceil(
-  bookingTotal * (commissionPercent / 100)
-);
+const commissionCents = Math.ceil(bookingTotal * (commissionPercent / 100));
 
 // Stripe-specific validation (should be moved to adapter)
 const minCommission = Math.ceil(bookingTotal * 0.005);
-const maxCommission = Math.floor(bookingTotal * 0.50);
+const maxCommission = Math.floor(bookingTotal * 0.5);
 ```
 
 **Critical Insight:**
+
 - Commission is stored in Booking with both amount and percent
 - Commission is passed as `applicationFeeAmount` to provider's checkout method
 - This design allows different providers to handle fees differently
@@ -130,6 +134,7 @@ const maxCommission = Math.floor(bookingTotal * 0.50);
 ### Quality: MODERATE (Partial Abstraction)
 
 **Architecture:**
+
 ```
 Provider Webhook → PaymentProvider.verifyWebhook() → WebhooksController
                                                     → BookingService
@@ -142,6 +147,7 @@ Provider Webhook → PaymentProvider.verifyWebhook() → WebhooksController
    - Clean abstraction, provider-specific
 
 2. **Event Structure Validation:**
+
    ```typescript
    // TIGHTLY COUPLED TO STRIPE
    const StripeSessionSchema = z.object({
@@ -170,12 +176,14 @@ Provider Webhook → PaymentProvider.verifyWebhook() → WebhooksController
    ```
 
 **Problems:**
+
 - Schema validation is Stripe-specific (checkout.session.completed)
 - Assumes flat metadata structure
 - Event type strings are hardcoded
 - No provider-agnostic event mapper
 
 **What Would Be Needed:**
+
 - Provider-specific WebhookHandler interfaces
 - Event normalization layer
 - Provider-agnostic webhook schema
@@ -187,6 +195,7 @@ Provider Webhook → PaymentProvider.verifyWebhook() → WebhooksController
 ### Quality: GOOD
 
 **Pattern:**
+
 ```typescript
 // In booking.service.ts
 if (tenant.stripeAccountId && tenant.stripeOnboarded) {
@@ -202,11 +211,13 @@ if (tenant.stripeAccountId && tenant.stripeOnboarded) {
 ```
 
 **Assessment:**
+
 - Clean routing based on tenant configuration
 - Supports two Stripe modes (Connect and Standard)
 - Could extend to support different providers per tenant
 
 **Limitation:** Only checks for Stripe-specific fields (`stripeAccountId`, `stripeOnboarded`). To support multiple providers, would need:
+
 ```typescript
 interface TenantPaymentConfig {
   provider: 'stripe' | 'paypal' | 'square';
@@ -224,10 +235,12 @@ interface TenantPaymentConfig {
 ### Quality: GOOD (Clear DI Pattern)
 
 **Locations:**
+
 - server/src/di.ts: All adapters initialized once
 - server/src/app.ts: DI container injected into routes
 
 **Code Example:**
+
 ```typescript
 // di.ts - single place to swap implementations
 const paymentProvider = new StripePaymentAdapter({
@@ -241,6 +254,7 @@ const paymentProvider = new StripePaymentAdapter({
 ```
 
 **Missing:**
+
 - No configuration for selecting provider per environment
 - ADAPTER_PRESET only supports 'mock' vs 'real'
 - Should support: PAYMENT_PROVIDER env var
@@ -254,12 +268,14 @@ const paymentProvider = new StripePaymentAdapter({
 **Location:** server/src/services/stripe-connect.service.ts
 
 **Issues:**
+
 - Entirely Stripe Connect specific
 - Creates Express accounts
 - Manages Stripe-specific onboarding flows
 - No provider-agnostic interface
 
 **What It Does:**
+
 - `createConnectedAccount()` - Creates Stripe Express account
 - `createOnboardingLink()` - Generates Stripe onboarding URL
 - `checkOnboardingStatus()` - Checks Stripe-specific `charges_enabled`
@@ -267,11 +283,13 @@ const paymentProvider = new StripePaymentAdapter({
 - `getRestrictedKey()` - Retrieves Stripe keys
 
 **Impact:**
+
 - Would need equivalent services for PayPal, Square, etc.
 - Each provider has different onboarding mechanisms
 - No abstract interface defined
 
 **Example Problem:**
+
 ```typescript
 // Stripe-specific
 if (account.charges_enabled === true) {
@@ -288,13 +306,14 @@ if (account.charges_enabled === true) {
 
 ### Critical Type Dependencies
 
-| Type | Usage | Risk |
-|------|-------|------|
-| `Stripe.Event` | PaymentProvider.verifyWebhook() return type | HIGH |
-| `Stripe.Account` | StripeConnectService.getAccountDetails() return | HIGH |
-| `Stripe.Checkout.Session` | WebhooksController payload assumption | HIGH |
+| Type                      | Usage                                           | Risk |
+| ------------------------- | ----------------------------------------------- | ---- |
+| `Stripe.Event`            | PaymentProvider.verifyWebhook() return type     | HIGH |
+| `Stripe.Account`          | StripeConnectService.getAccountDetails() return | HIGH |
+| `Stripe.Checkout.Session` | WebhooksController payload assumption           | HIGH |
 
 **Problem Example:**
+
 ```typescript
 // In lib/ports.ts - return type is Stripe-specific
 verifyWebhook(payload: string, signature: string): Promise<Stripe.Event>;
@@ -316,6 +335,7 @@ verifyWebhook(payload: string, signature: string): Promise<Stripe.Event>;
    - Implement webhook verification
 
 2. **Provider-Agnostic Event Interface** (50-100 lines)
+
    ```typescript
    export interface PaymentEvent {
      id: string;
@@ -361,7 +381,7 @@ verifyWebhook(payload: string, signature: string): Promise<Stripe.Event>;
 ### Strengths ✓
 
 1. **Interface-Based Design**: PaymentProvider interface is clean and extensible
-2. **Separation of Concerns**: 
+2. **Separation of Concerns**:
    - Payment creation separate from commission calculation
    - Webhook handling separated from domain logic
 3. **DI Container**: Single place to swap implementations
@@ -371,7 +391,7 @@ verifyWebhook(payload: string, signature: string): Promise<Stripe.Event>;
 
 ### Weaknesses ✗
 
-1. **Stripe Type Leakage**: 
+1. **Stripe Type Leakage**:
    - `Stripe.Event` in PaymentProvider interface
    - `Stripe.Account` return types
    - Hardcoded Stripe schema validation
@@ -403,30 +423,35 @@ verifyWebhook(payload: string, signature: string): Promise<Stripe.Event>;
 ## 11. RECOMMENDED REFACTORING ROADMAP
 
 ### Phase 1: Foundation (1-2 days)
+
 - [ ] Create PaymentEvent interface (provider-agnostic)
 - [ ] Update PaymentProvider.verifyWebhook() return type
 - [ ] Create WebhookEventNormalizer for converting provider events
 - [ ] Add PAYMENT_PROVIDER environment variable
 
 ### Phase 2: Provider Abstraction (1-2 days)
+
 - [ ] Create PaymentProviderService interface for onboarding
 - [ ] Extract Stripe limits to StripeAdapter config
 - [ ] Create StripeConnectProviderService implementing PaymentProviderService
 - [ ] Update Tenant schema to support multiple provider fields generically
 
 ### Phase 3: Event Handling (1 day)
+
 - [ ] Create provider-specific webhook validators
 - [ ] Implement event normalizer pattern
 - [ ] Remove Stripe-specific schema from WebhooksController
 - [ ] Add provider detection logic
 
 ### Phase 4: Configuration (1 day)
+
 - [ ] Add PAYMENT_PROVIDER to Config type
 - [ ] Update DI to select provider from config
 - [ ] Add provider config (keys, API endpoints)
 - [ ] Update /ready endpoint to validate provider config
 
 ### Phase 5: Add First Alternative Provider (2-3 days)
+
 - [ ] Create PayPalAdapter
 - [ ] Create PayPalConnectProviderService
 - [ ] Test webhook integration
@@ -437,6 +462,7 @@ verifyWebhook(payload: string, signature: string): Promise<Stripe.Event>;
 ## 12. IMPLEMENTATION EXAMPLES
 
 ### Option A: Keep Stripe-Specific, Add PayPal
+
 (Lower effort, lower flexibility)
 
 ```typescript
@@ -453,6 +479,7 @@ export class PayPalAdapter implements PaymentProvider { }
 ```
 
 ### Option B: Fully Abstract (Recommended)
+
 (Higher effort, maximum flexibility)
 
 ```typescript
@@ -482,51 +509,56 @@ if (event.type === 'checkout_completed') {
 ## 13. TESTING CONSIDERATIONS
 
 **Current Test Coverage:**
+
 - MockPaymentProvider exists for testing
 - Shows how to implement interface
 
 **Needed Tests:**
+
 ```typescript
 // Multiple payment provider scenarios
-test('PayPal checkout creates session', async () => { });
-test('Stripe Connect checkout applies commission', async () => { });
-test('Square webhook normalizes to standard event', async () => { });
-test('Commission calculation is provider-agnostic', async () => { });
-test('Tenant routing works with different providers', async () => { });
+test('PayPal checkout creates session', async () => {});
+test('Stripe Connect checkout applies commission', async () => {});
+test('Square webhook normalizes to standard event', async () => {});
+test('Commission calculation is provider-agnostic', async () => {});
+test('Tenant routing works with different providers', async () => {});
 ```
 
 ---
 
 ## 14. SUMMARY TABLE
 
-| Aspect | Current | Rating | Effort to Fix |
-|--------|---------|--------|---|
-| Provider Interface | Abstract interface exists | 7/10 | Low |
-| Stripe Coupling | Moderate in adapter | 6/10 | Medium |
-| Commission Logic | Provider-agnostic | 9/10 | None |
-| Webhook Handling | Stripe-specific | 4/10 | Medium-High |
-| DI & Config | Good pattern | 7/10 | Low |
-| StripeConnect | No abstraction | 3/10 | High |
-| Client Assumptions | Some hardcoding | 6/10 | Low |
-| Multi-tenant Support | Good foundation | 8/10 | None |
-| Type Safety | Stripe types leak | 5/10 | Medium |
-| Overall Extensibility | Moderate | 6/10 | Medium-High |
+| Aspect                | Current                   | Rating | Effort to Fix |
+| --------------------- | ------------------------- | ------ | ------------- |
+| Provider Interface    | Abstract interface exists | 7/10   | Low           |
+| Stripe Coupling       | Moderate in adapter       | 6/10   | Medium        |
+| Commission Logic      | Provider-agnostic         | 9/10   | None          |
+| Webhook Handling      | Stripe-specific           | 4/10   | Medium-High   |
+| DI & Config           | Good pattern              | 7/10   | Low           |
+| StripeConnect         | No abstraction            | 3/10   | High          |
+| Client Assumptions    | Some hardcoding           | 6/10   | Low           |
+| Multi-tenant Support  | Good foundation           | 8/10   | None          |
+| Type Safety           | Stripe types leak         | 5/10   | Medium        |
+| Overall Extensibility | Moderate                  | 6/10   | Medium-High   |
 
 ---
 
 ## 15. RECOMMENDATIONS
 
 ### Do This First (Quick Wins)
+
 1. **Create PaymentEvent interface** - Removes Stripe.Event dependency
 2. **Add PAYMENT_PROVIDER config** - Enables provider selection
 3. **Extract Stripe limits to adapter** - Removes provider bias from business logic
 
 ### Do This Before Multiple Providers
+
 1. **Create PaymentProviderService interface** - Handle onboarding abstractly
 2. **Event normalizer pattern** - Convert provider events to standard format
 3. **Update Tenant model** - Support generic provider configuration
 
 ### Consider for Future
+
 1. **Provider factory pattern** - Dynamic provider loading
 2. **Feature detection** - Know provider capabilities at runtime
 3. **Provider comparison layer** - Switch providers based on criteria

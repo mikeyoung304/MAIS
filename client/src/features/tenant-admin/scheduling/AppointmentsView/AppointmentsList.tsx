@@ -41,7 +41,11 @@ function formatDateTime(isoString: string): string {
  * Get badge configuration (color and icon) based on appointment status
  * Icons provide non-color visual cue for accessibility (WCAG compliance)
  */
-function getStatusConfig(status: string): { className: string; icon: React.ReactNode; label: string } {
+function getStatusConfig(status: string): {
+  className: string;
+  icon: React.ReactNode;
+  label: string;
+} {
   switch (status) {
     case 'CONFIRMED':
       return {
@@ -76,18 +80,13 @@ function getStatusConfig(status: string): { className: string; icon: React.React
   }
 }
 
-export function AppointmentsList({
-  appointments,
-  isLoading,
-  totalCount,
-}: AppointmentsListProps) {
+export function AppointmentsList({ appointments, isLoading, totalCount }: AppointmentsListProps) {
   return (
     <Card className="p-6 bg-macon-navy-800 border-white/20">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold text-white">
           Appointments{' '}
-          {appointments.length !== totalCount &&
-            `(${appointments.length} of ${totalCount})`}
+          {appointments.length !== totalCount && `(${appointments.length} of ${totalCount})`}
         </h2>
       </div>
 
@@ -113,9 +112,7 @@ export function AppointmentsList({
             <TableRow className="hover:bg-macon-navy-700">
               <TableCell colSpan={6} className="text-center py-12 text-white/90">
                 <div className="flex flex-col items-center gap-2">
-                  <p className="text-xl font-medium text-white">
-                    No appointments found
-                  </p>
+                  <p className="text-xl font-medium text-white">No appointments found</p>
                   <p className="text-base text-white/70">
                     Try adjusting your filters or date range above.
                   </p>
@@ -124,10 +121,7 @@ export function AppointmentsList({
             </TableRow>
           ) : (
             appointments.map((appointment) => (
-              <TableRow
-                key={appointment.id}
-                className="border-white/20 hover:bg-macon-navy-700"
-              >
+              <TableRow key={appointment.id} className="border-white/20 hover:bg-macon-navy-700">
                 {/* Date/Time */}
                 <TableCell className="font-medium text-white text-base">
                   <div className="flex flex-col gap-1">
@@ -178,10 +172,7 @@ export function AppointmentsList({
                   {(() => {
                     const config = getStatusConfig(appointment.status);
                     return (
-                      <Badge
-                        variant="outline"
-                        className={`gap-1.5 ${config.className}`}
-                      >
+                      <Badge variant="outline" className={`gap-1.5 ${config.className}`}>
                         {config.icon}
                         {config.label}
                       </Badge>

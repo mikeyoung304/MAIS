@@ -1,10 +1,10 @@
-import { useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Logo } from "@/components/brand/Logo";
-import { ArrowLeft } from "lucide-react";
-import { SignupForm } from "./SignupForm";
-import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Logo } from '@/components/brand/Logo';
+import { ArrowLeft } from 'lucide-react';
+import { SignupForm } from './SignupForm';
+import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * Tenant Signup Page
@@ -28,9 +28,9 @@ export function SignupPage() {
   useEffect(() => {
     if (isAuthenticated && role) {
       if (role === 'PLATFORM_ADMIN') {
-        navigate("/admin/dashboard");
+        navigate('/admin/dashboard');
       } else if (role === 'TENANT_ADMIN') {
-        navigate("/tenant/dashboard");
+        navigate('/tenant/dashboard');
       }
     }
   }, [isAuthenticated, role, navigate]);
@@ -54,9 +54,7 @@ export function SignupPage() {
         <Card colorScheme="navy" className="mx-auto">
           <CardHeader>
             <CardTitle className="text-center text-white text-3xl">Sign Up</CardTitle>
-            <p className="text-center text-white/70 text-sm mt-2">
-              Create your business account
-            </p>
+            <p className="text-center text-white/70 text-sm mt-2">Create your business account</p>
           </CardHeader>
           <CardContent>
             <SignupForm />
@@ -64,7 +62,7 @@ export function SignupPage() {
             {/* Link to login */}
             <div className="mt-6 text-center">
               <p className="text-white/70 text-sm">
-                Already have an account?{" "}
+                Already have an account?{' '}
                 <Link
                   to="/login"
                   className="text-white font-semibold underline hover:text-macon-orange transition-colors"

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "057"
+issue_id: '057'
 tags: [code-review, scheduling, security, rate-limiting]
 dependencies: []
 ---
@@ -17,6 +17,7 @@ Public scheduling endpoints have no rate limiting. An attacker could enumerate a
 **Location:** `server/src/routes/public-scheduling.routes.ts`
 
 Current state:
+
 - `GET /v1/public/services` - No rate limit
 - `GET /v1/public/availability/slots` - No rate limit (expensive query!)
 
@@ -28,8 +29,8 @@ Add rate limiting middleware:
 import rateLimit from 'express-rate-limit';
 
 const schedulingLimiter = rateLimit({
-  windowMs: 60 * 1000,  // 1 minute
-  max: 100,             // 100 requests per minute per tenant
+  windowMs: 60 * 1000, // 1 minute
+  max: 100, // 100 requests per minute per tenant
   keyGenerator: (req) => req.tenantId || req.ip,
 });
 
@@ -67,13 +68,14 @@ Rate limiting has been fully implemented:
 4. **TypeScript:** All type checks pass
 
 The implementation protects both `/services` and `/availability/slots` endpoints with the same rate limit (100/min), which is appropriate since:
+
 - The limit is per-tenant, preventing abuse
 - 100 requests/minute allows legitimate use cases
 - The limit applies equally to both cheap (services list) and expensive (availability slots) queries
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-27 | Created | Found during Security Sentinel review |
+| Date       | Action    | Notes                                      |
+| ---------- | --------- | ------------------------------------------ |
+| 2025-11-27 | Created   | Found during Security Sentinel review      |
 | 2025-12-03 | Completed | Rate limiting fully implemented and tested |

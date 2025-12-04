@@ -1,6 +1,6 @@
-import { Trash2, Image as ImageIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import type { PackagePhoto } from "./hooks/usePhotoUpload";
+import { Trash2, Image as ImageIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import type { PackagePhoto } from './hooks/usePhotoUpload';
 
 interface PhotoGridProps {
   photos: PackagePhoto[];
@@ -20,7 +20,7 @@ export function PhotoGrid({
   onDeleteClick,
   onTriggerUpload,
   isUploading,
-  maxPhotos
+  maxPhotos,
 }: PhotoGridProps) {
   if (photos.length === 0) {
     return (
@@ -76,12 +76,8 @@ export function PhotoGrid({
 
             {/* Photo info overlay */}
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-navy-900/90 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-              <p className="text-xs text-white/70 truncate">
-                {photo.filename}
-              </p>
-              <p className="text-xs text-white/60">
-                {(photo.size / 1024).toFixed(1)} KB
-              </p>
+              <p className="text-xs text-white/70 truncate">{photo.filename}</p>
+              <p className="text-xs text-white/60">{(photo.size / 1024).toFixed(1)} KB</p>
             </div>
           </div>
         ))}
@@ -90,7 +86,8 @@ export function PhotoGrid({
       {/* Upload hint */}
       {photos.length < maxPhotos && (
         <p className="text-base text-white/70 mt-4">
-          You can upload {maxPhotos - photos.length} more {photos.length === maxPhotos - 1 ? 'photo' : 'photos'}
+          You can upload {maxPhotos - photos.length} more{' '}
+          {photos.length === maxPhotos - 1 ? 'photo' : 'photos'}
         </p>
       )}
     </>

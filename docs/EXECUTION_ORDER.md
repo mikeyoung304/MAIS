@@ -3,15 +3,18 @@
 Generated: November 7, 2025
 
 ## Overview
+
 This document provides the precise execution order to minimize broken links during the documentation reorganization. Follow these steps sequentially.
 
 ## Prerequisites
+
 - [x] Directory structure created in `/Users/mikeyoung/CODING/MAIS/docs/`
 - [x] Navigation README.md files created in each subdirectory
 - [x] Migration plan reviewed and approved
 - [ ] Backup created (recommended: create git branch)
 
 ## Pre-Migration: Create Safety Branch
+
 ```bash
 cd /Users/mikeyoung/CODING/MAIS
 git checkout -b docs-reorganization
@@ -22,10 +25,12 @@ git commit -m "docs: create directory structure and navigation files"
 ## Execution Phases
 
 ### Phase 1: Archive Files (Lowest Impact)
+
 **Estimated Time:** 10 minutes
 **Risk Level:** LOW - These files are rarely referenced
 
 #### Step 1.1: Move October 22 Audit Files
+
 ```bash
 # Move audit files to archive
 git mv AUDIT_ARCHITECTURE.md docs/archive/oct-22-analysis/
@@ -42,6 +47,7 @@ git mv REMEDIATION_PLAN.md docs/archive/oct-22-analysis/
 ```
 
 #### Step 1.2: Move Agent Reports
+
 ```bash
 git mv AGENT_1_TENANT_AUTH_REPORT.md docs/archive/
 git mv AGENT_2_REPORT.md docs/archive/
@@ -52,6 +58,7 @@ git mv AGENT_4_BRANDING_DOCS_REPORT.md docs/archive/
 ```
 
 #### Step 1.3: Move Miscellaneous Archive Files
+
 ```bash
 git mv work-log.md docs/archive/
 git mv MIGRATION_LOG.md docs/archive/
@@ -66,10 +73,12 @@ git mv PROMPTS.md docs/archive/
 ---
 
 ### Phase 2: Phase Reports (Low Impact)
+
 **Estimated Time:** 5 minutes
 **Risk Level:** LOW - Only referenced in README.md and ARCHITECTURE.md
 
 #### Step 2.1: Move All Phase Reports
+
 ```bash
 git mv PHASE_1_COMPLETION_REPORT.md docs/phases/
 git mv PHASE_2_ASSESSMENT.md docs/phases/
@@ -92,10 +101,12 @@ git mv PHASE_5_EXECUTION_PLAN.md docs/phases/
 ---
 
 ### Phase 3: Roadmap & API Files (Medium Impact)
+
 **Estimated Time:** 5 minutes
 **Risk Level:** MEDIUM - Referenced in README.md
 
 #### Step 3.1: Move Roadmap Files
+
 ```bash
 git mv ROADMAP.md docs/roadmaps/
 git mv IMPROVEMENT-ROADMAP-OPTIMIZED.md docs/roadmaps/
@@ -107,6 +118,7 @@ git mv SDK_IMPLEMENTATION_REPORT.md docs/roadmaps/
 ```
 
 #### Step 3.2: Move API Files
+
 ```bash
 git mv API_DOCS_QUICKSTART.md docs/api/
 git mv API_DOCUMENTATION_COMPLETION_REPORT.md docs/api/
@@ -116,15 +128,18 @@ git mv ERRORS.md docs/api/
 ---
 
 ### Phase 4: Architecture & Multi-Tenant Files (Medium Impact)
+
 **Estimated Time:** 5 minutes
 **Risk Level:** MEDIUM - Referenced in README.md and ARCHITECTURE.md
 
 #### Step 4.1: Move Architecture Files
+
 ```bash
 git mv ARCHITECTURE_DIAGRAM.md docs/architecture/
 ```
 
 #### Step 4.2: Move Multi-Tenant Files
+
 ```bash
 git mv MULTI_TENANT_ROADMAP.md docs/multi-tenant/
 git mv MULTI_TENANT_IMPLEMENTATION_GUIDE.md docs/multi-tenant/
@@ -137,10 +152,12 @@ git mv MULTI_TENANCY_READINESS_REPORT.md docs/multi-tenant/
 ---
 
 ### Phase 5: Operations & Security Files (High Impact)
+
 **Estimated Time:** 10 minutes
 **Risk Level:** HIGH - Frequently referenced
 
 #### Step 5.1: Move Operations Files
+
 ```bash
 git mv RUNBOOK.md docs/operations/
 git mv INCIDENT_RESPONSE.md docs/operations/
@@ -152,7 +169,9 @@ git mv SERVER_IMPLEMENTATION_CHECKLIST.md docs/operations/
 ```
 
 #### Step 5.2: Update Internal Links in RUNBOOK.md
+
 After moving RUNBOOK.md, update its internal references:
+
 ```bash
 # Edit docs/operations/RUNBOOK.md
 # Change:
@@ -162,6 +181,7 @@ After moving RUNBOOK.md, update its internal references:
 ```
 
 #### Step 5.3: Move Security Files
+
 ```bash
 git mv SECURITY.md docs/security/
 git mv SECRET_ROTATION_GUIDE.md docs/security/
@@ -174,10 +194,12 @@ git mv SECRETS.md docs/security/
 ---
 
 ### Phase 6: Setup Files (High Impact)
+
 **Estimated Time:** 5 minutes
 **Risk Level:** HIGH - Referenced in README.md and CONTRIBUTING.md
 
 #### Step 6.1: Move Setup Files
+
 ```bash
 git mv ENVIRONMENT.md docs/setup/
 git mv SUPABASE.md docs/setup/
@@ -188,14 +210,17 @@ git mv LOCAL_TESTING_GUIDE.md docs/setup/
 ---
 
 ### Phase 7: Update Root File Links (CRITICAL)
+
 **Estimated Time:** 20 minutes
 **Risk Level:** CRITICAL - Must be done carefully
 
 #### Step 7.1: Update README.md
+
 Edit `/Users/mikeyoung/CODING/MAIS/README.md` and update these links:
 
 ```markdown
 # Old → New
+
 ./MULTI_TENANT_ROADMAP.md → ./docs/multi-tenant/MULTI_TENANT_ROADMAP.md
 ./MULTI_TENANT_IMPLEMENTATION_GUIDE.md → ./docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md
 ./SUPABASE.md → ./docs/setup/SUPABASE.md
@@ -214,10 +239,12 @@ Edit `/Users/mikeyoung/CODING/MAIS/README.md` and update these links:
 ```
 
 #### Step 7.2: Update DEVELOPING.md
+
 Edit `/Users/mikeyoung/CODING/MAIS/DEVELOPING.md`:
 
 ```markdown
 # Old → New
+
 ../MULTI_TENANT_ROADMAP.md → ./docs/multi-tenant/MULTI_TENANT_ROADMAP.md
 ../PHASE_5_IMPLEMENTATION_SPEC.md → ./docs/phases/PHASE_5_IMPLEMENTATION_SPEC.md
 ../PHASE_4_TENANT_ADMIN_COMPLETION_REPORT.md → ./docs/phases/PHASE_4_TENANT_ADMIN_COMPLETION_REPORT.md
@@ -227,18 +254,22 @@ Edit `/Users/mikeyoung/CODING/MAIS/DEVELOPING.md`:
 ```
 
 #### Step 7.3: Update CONTRIBUTING.md
+
 Edit `/Users/mikeyoung/CODING/MAIS/CONTRIBUTING.md`:
 
 ```markdown
 # Old → New
+
 ./SUPABASE.md → ./docs/setup/SUPABASE.md (appears twice: lines 83, 644)
 ```
 
 #### Step 7.4: Update ARCHITECTURE.md
+
 Edit `/Users/mikeyoung/CODING/MAIS/ARCHITECTURE.md`:
 
 ```markdown
 # Old → New
+
 ./MULTI_TENANT_IMPLEMENTATION_GUIDE.md → ./docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md
 ./PHASE_1_COMPLETION_REPORT.md → ./docs/phases/PHASE_1_COMPLETION_REPORT.md
 ```
@@ -246,19 +277,23 @@ Edit `/Users/mikeyoung/CODING/MAIS/ARCHITECTURE.md`:
 ---
 
 ### Phase 8: Verification & Testing
+
 **Estimated Time:** 15 minutes
 **Risk Level:** N/A - Verification only
 
 #### Step 8.1: Manual Link Verification
+
 Click through all links in these files:
+
 - [ ] README.md - All links work
 - [ ] DEVELOPING.md - All links work
 - [ ] CONTRIBUTING.md - All links work
 - [ ] ARCHITECTURE.md - All links work
 - [ ] docs/README.md - Navigation works
-- [ ] Each docs/*/README.md - Navigation works
+- [ ] Each docs/\*/README.md - Navigation works
 
 #### Step 8.2: Automated Link Checking (Optional but Recommended)
+
 ```bash
 # Install link checker (if not already installed)
 npm install -g markdown-link-check
@@ -268,6 +303,7 @@ find . -name "*.md" -not -path "./node_modules/*" -exec markdown-link-check {} \
 ```
 
 #### Step 8.3: Visual Verification
+
 ```bash
 # View directory structure
 tree docs/ -L 2
@@ -313,9 +349,11 @@ tree docs/ -L 2
 ---
 
 ### Phase 9: Commit Changes
+
 **Estimated Time:** 5 minutes
 
 #### Step 9.1: Review Changes
+
 ```bash
 git status
 git diff README.md
@@ -325,11 +363,13 @@ git diff ARCHITECTURE.md
 ```
 
 #### Step 9.2: Stage All Changes
+
 ```bash
 git add -A
 ```
 
 #### Step 9.3: Commit with Descriptive Message
+
 ```bash
 git commit -m "docs: reorganize documentation into structured directories
 
@@ -353,6 +393,7 @@ All links verified and working. No broken references."
 ```
 
 #### Step 9.4: Push to Remote (Optional)
+
 ```bash
 git push origin docs-reorganization
 ```
@@ -362,12 +403,14 @@ git push origin docs-reorganization
 ## Post-Migration Tasks
 
 ### Update CHANGELOG.md
+
 Add entry to CHANGELOG.md:
 
 ```markdown
 ## [Unreleased]
 
 ### Changed
+
 - **Documentation Structure**: Reorganized 74+ documentation files into structured `/docs` directory
   - Created 9 category subdirectories with navigation files
   - Updated all cross-references in root documentation
@@ -376,6 +419,7 @@ Add entry to CHANGELOG.md:
 ```
 
 ### Create GitHub Discussion/Issue (Optional)
+
 Inform team of documentation reorganization with summary and navigation guide.
 
 ---
@@ -415,18 +459,18 @@ git checkout HEAD^ -- path/to/file.md
 
 ## Total Estimated Time
 
-| Phase | Time | Risk |
-|-------|------|------|
-| Phase 1: Archive Files | 10 min | LOW |
-| Phase 2: Phase Reports | 5 min | LOW |
-| Phase 3: Roadmap & API | 5 min | MEDIUM |
-| Phase 4: Architecture & Multi-Tenant | 5 min | MEDIUM |
-| Phase 5: Operations & Security | 10 min | HIGH |
-| Phase 6: Setup Files | 5 min | HIGH |
-| Phase 7: Update Root Links | 20 min | CRITICAL |
-| Phase 8: Verification | 15 min | N/A |
-| Phase 9: Commit | 5 min | N/A |
-| **Total** | **80 min** | |
+| Phase                                | Time       | Risk     |
+| ------------------------------------ | ---------- | -------- |
+| Phase 1: Archive Files               | 10 min     | LOW      |
+| Phase 2: Phase Reports               | 5 min      | LOW      |
+| Phase 3: Roadmap & API               | 5 min      | MEDIUM   |
+| Phase 4: Architecture & Multi-Tenant | 5 min      | MEDIUM   |
+| Phase 5: Operations & Security       | 10 min     | HIGH     |
+| Phase 6: Setup Files                 | 5 min      | HIGH     |
+| Phase 7: Update Root Links           | 20 min     | CRITICAL |
+| Phase 8: Verification                | 15 min     | N/A      |
+| Phase 9: Commit                      | 5 min      | N/A      |
+| **Total**                            | **80 min** |          |
 
 **Recommended:** Set aside 90 minutes for buffer time.
 

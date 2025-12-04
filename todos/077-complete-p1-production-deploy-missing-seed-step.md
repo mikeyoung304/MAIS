@@ -1,11 +1,11 @@
 ---
 status: complete
 priority: p1
-issue_id: "077"
+issue_id: '077'
 tags: [ci-cd, code-review, deployment, production]
 dependencies: []
-resolution: "Already fixed - Production seed step exists at deploy-production.yml:332-337"
-completed_date: "2025-11-30"
+resolution: 'Already fixed - Production seed step exists at deploy-production.yml:332-337'
+completed_date: '2025-11-30'
 ---
 
 # P1: Production Deployment Missing Seed Step
@@ -15,6 +15,7 @@ completed_date: "2025-11-30"
 The production deployment workflow runs migrations but **does not seed the platform admin user**. A fresh production database will have zero users, making the admin panel inaccessible.
 
 **Why it matters:**
+
 - Production lockout: No way to access admin panel after fresh deploy
 - Manual intervention required: SSH into database to create user
 - Security risk: Rushed manual user creation bypasses validation
@@ -31,6 +32,7 @@ The production deployment workflow runs migrations but **does not seed the platf
 ```
 
 **Expected:**
+
 ```yaml
 - name: Seed production database (platform admin only)
   run: npm run --workspace=server db:seed:production
@@ -44,6 +46,7 @@ The production deployment workflow runs migrations but **does not seed the platf
 ## Proposed Solutions
 
 ### Solution A: Add seed step after migrations (Recommended)
+
 **Pros:** Automated, consistent, secure
 **Cons:** Requires GitHub secrets setup
 **Effort:** Small (20 min)
@@ -66,6 +69,7 @@ The production deployment workflow runs migrations but **does not seed the platf
 ```
 
 ### Solution B: Manual seed after first deploy
+
 **Pros:** No CI changes needed
 **Cons:** Manual process, easy to forget
 **Effort:** None
@@ -74,6 +78,7 @@ The production deployment workflow runs migrations but **does not seed the platf
 Document in runbook: "After first production deploy, run seed manually."
 
 ### Solution C: App-level bootstrap on startup
+
 **Pros:** Self-healing, no CI changes
 **Cons:** Credentials in env vars at runtime
 **Effort:** Medium (1 hour)
@@ -81,7 +86,7 @@ Document in runbook: "After first production deploy, run seed manually."
 
 ```typescript
 // app.ts startup
-if (await prisma.user.count({ where: { role: 'PLATFORM_ADMIN' } }) === 0) {
+if ((await prisma.user.count({ where: { role: 'PLATFORM_ADMIN' } })) === 0) {
   await seedPlatform(prisma);
 }
 ```
@@ -93,15 +98,18 @@ if (await prisma.user.count({ where: { role: 'PLATFORM_ADMIN' } }) === 0) {
 ## Technical Details
 
 **Affected Files:**
+
 - `.github/workflows/deploy-production.yml`
 
 **Components:**
+
 - Production deployment job
 - Database setup steps
 
 **Database Changes:** Creates platform admin user
 
 **Required Secrets:**
+
 - `PRODUCTION_ADMIN_EMAIL`
 - `PRODUCTION_ADMIN_PASSWORD`
 
@@ -115,8 +123,8 @@ if (await prisma.user.count({ where: { role: 'PLATFORM_ADMIN' } }) === 0) {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                              |
+| ---------- | ------------------------ | -------------------------------------- |
 | 2025-11-29 | Created from code review | Fresh prod deploy = no users = lockout |
 
 ## Resources

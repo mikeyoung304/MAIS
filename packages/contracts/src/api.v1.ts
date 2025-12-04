@@ -272,10 +272,14 @@ export const Contracts = c.router({
     method: 'GET',
     path: '/v1/public/tenants/:slug',
     pathParams: z.object({
-      slug: z.string()
+      slug: z
+        .string()
         .min(1, 'Slug is required')
         .max(63, 'Slug must be 63 characters or less')
-        .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Invalid slug format: must be lowercase alphanumeric with hyphens'),
+        .regex(
+          /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+          'Invalid slug format: must be lowercase alphanumeric with hyphens'
+        ),
     }),
     responses: {
       200: TenantPublicDtoSchema,
@@ -456,7 +460,8 @@ export const Contracts = c.router({
       403: ForbiddenErrorSchema,
       500: InternalServerErrorSchema,
     },
-    summary: 'Get all packages with draft fields for visual editor (requires tenant admin authentication)',
+    summary:
+      'Get all packages with draft fields for visual editor (requires tenant admin authentication)',
   },
 
   /**
@@ -576,11 +581,29 @@ export const Contracts = c.router({
   tenantAdminGetBookings: {
     method: 'GET',
     path: '/v1/tenant-admin/bookings',
-    query: z.object({
-      status: z.enum(['PENDING', 'DEPOSIT_PAID', 'PAID', 'CONFIRMED', 'CANCELED', 'REFUNDED', 'FULFILLED']).optional(),
-      startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-      endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-    }).optional(),
+    query: z
+      .object({
+        status: z
+          .enum([
+            'PENDING',
+            'DEPOSIT_PAID',
+            'PAID',
+            'CONFIRMED',
+            'CANCELED',
+            'REFUNDED',
+            'FULFILLED',
+          ])
+          .optional(),
+        startDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
+        endDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
+      })
+      .optional(),
     responses: {
       200: z.array(BookingDtoSchema),
       400: BadRequestErrorSchema,
@@ -588,7 +611,8 @@ export const Contracts = c.router({
       403: ForbiddenErrorSchema,
       500: InternalServerErrorSchema,
     },
-    summary: 'Get all bookings for tenant with optional filters (requires tenant admin authentication)',
+    summary:
+      'Get all bookings for tenant with optional filters (requires tenant admin authentication)',
   },
 
   // Platform admin endpoints (authentication required - documented)
@@ -1399,9 +1423,11 @@ export const Contracts = c.router({
   tenantAdminGetAvailabilityRules: {
     method: 'GET',
     path: '/v1/tenant-admin/availability-rules',
-    query: z.object({
-      serviceId: z.string().optional(), // Filter by service
-    }).optional(),
+    query: z
+      .object({
+        serviceId: z.string().optional(), // Filter by service
+      })
+      .optional(),
     responses: {
       200: z.array(AvailabilityRuleDtoSchema),
       401: UnauthorizedErrorSchema,
@@ -1481,12 +1507,30 @@ export const Contracts = c.router({
   tenantAdminGetAppointments: {
     method: 'GET',
     path: '/v1/tenant-admin/appointments',
-    query: z.object({
-      status: z.enum(['PENDING', 'DEPOSIT_PAID', 'PAID', 'CONFIRMED', 'CANCELED', 'REFUNDED', 'FULFILLED']).optional(),
-      serviceId: z.string().optional(),
-      startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-      endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-    }).optional(),
+    query: z
+      .object({
+        status: z
+          .enum([
+            'PENDING',
+            'DEPOSIT_PAID',
+            'PAID',
+            'CONFIRMED',
+            'CANCELED',
+            'REFUNDED',
+            'FULFILLED',
+          ])
+          .optional(),
+        serviceId: z.string().optional(),
+        startDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
+        endDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
+      })
+      .optional(),
     responses: {
       200: z.array(AppointmentDtoSchema),
       400: BadRequestErrorSchema,
@@ -1494,7 +1538,8 @@ export const Contracts = c.router({
       403: ForbiddenErrorSchema,
       500: InternalServerErrorSchema,
     },
-    summary: 'Get all appointments (time-slot bookings) for tenant with optional filters (requires tenant admin authentication)',
+    summary:
+      'Get all appointments (time-slot bookings) for tenant with optional filters (requires tenant admin authentication)',
   },
 
   /**
@@ -1622,9 +1667,11 @@ export const Contracts = c.router({
   tenantAdminProcessReminders: {
     method: 'POST',
     path: '/v1/tenant-admin/reminders/process',
-    query: z.object({
-      limit: z.coerce.number().int().min(1).max(100).optional(),
-    }).optional(),
+    query: z
+      .object({
+        limit: z.coerce.number().int().min(1).max(100).optional(),
+      })
+      .optional(),
     body: z.undefined(),
     responses: {
       200: ProcessRemindersResponseSchema,

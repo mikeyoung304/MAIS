@@ -18,14 +18,14 @@ Migrate Elope's 261 documentation files from ad-hoc 9-category structure to the 
 
 ## By The Numbers
 
-| Metric | Value |
-|--------|-------|
-| **Total Files** | 261 markdown files |
-| **Current Categories** | 9 ad-hoc + scattered |
-| **Target Quadrants** | 4 (Diátaxis) + archive |
-| **Total Effort** | 106 hours (~3 weeks) |
-| **Team Impact** | 2 hours training, minimal disruption |
-| **ROI** | 100+ hours saved annually |
+| Metric                 | Value                                |
+| ---------------------- | ------------------------------------ |
+| **Total Files**        | 261 markdown files                   |
+| **Current Categories** | 9 ad-hoc + scattered                 |
+| **Target Quadrants**   | 4 (Diátaxis) + archive               |
+| **Total Effort**       | 106 hours (~3 weeks)                 |
+| **Team Impact**        | 2 hours training, minimal disruption |
+| **ROI**                | 100+ hours saved annually            |
 
 ---
 
@@ -46,6 +46,7 @@ Study ──────────────────┼─────�
 ```
 
 **Why Diátaxis?**
+
 - ✅ Proven at scale (Django: 50K pages/day, React: 100K+ pages/day)
 - ✅ Natural user mental model (learning vs working, doing vs understanding)
 - ✅ Prevents documentation drift (clear placement rules)
@@ -57,11 +58,11 @@ Study ──────────────────┼─────�
 
 ### 3-Week Plan
 
-| Week | Phase | Deliverables | Hours |
-|------|-------|--------------|-------|
-| **Week 1** | Foundation + Core Docs | Structure, tutorials, how-tos, reference, explanation | 49h |
-| **Week 2** | Archive + Remaining | Time-based archive, client/server docs, root updates | 27h |
-| **Week 3** | Cleanup + Launch | Deduplication, link validation, training, merge | 30h |
+| Week       | Phase                  | Deliverables                                          | Hours |
+| ---------- | ---------------------- | ----------------------------------------------------- | ----- |
+| **Week 1** | Foundation + Core Docs | Structure, tutorials, how-tos, reference, explanation | 49h   |
+| **Week 2** | Archive + Remaining    | Time-based archive, client/server docs, root updates  | 27h   |
+| **Week 3** | Cleanup + Launch       | Deduplication, link validation, training, merge       | 30h   |
 
 **Total**: 106 hours ÷ 8h/day = **13.25 work days** (~3 weeks)
 
@@ -92,6 +93,7 @@ root/                (24 files - some should be archived)
 ```
 
 **Problems**:
+
 - ❌ No clear "where does X go?" rule
 - ❌ Sprint docs in 3 different locations
 - ❌ Archive has no time structure
@@ -131,6 +133,7 @@ docs/
 ```
 
 **Improvements**:
+
 - ✅ Clear decision tree for placement
 - ✅ Time-based archive (YYYY-MM)
 - ✅ 100% metadata compliance
@@ -141,17 +144,17 @@ docs/
 
 ## File Migration Summary
 
-| Category | Count | Destination | Action |
-|----------|-------|-------------|--------|
-| **New Tutorials** | 5 | `docs/tutorials/` | Create from existing content |
-| **How-To Guides** | 28 | `docs/how-to/` | Move + extract |
-| **Reference** | 18 | `docs/reference/` | Move + consolidate |
-| **Explanation** | 12 | `docs/explanation/` | Expand concepts |
-| **Archive 2025-11** | 42 | `docs/archive/2025-11/` | Sprint 4-6, Phase 1-5 |
-| **Archive 2025-10** | 58 | `docs/archive/2025-10/` | Oct analysis, Sprint 1-3 |
-| **Archive 2025-01** | 48 | `docs/archive/2025-01/` | Planning docs |
-| **Root (Keep)** | 8 | Root | Core project docs |
-| **Delete (Duplicates)** | 8 | N/A | Confirmed duplicates |
+| Category                | Count | Destination             | Action                       |
+| ----------------------- | ----- | ----------------------- | ---------------------------- |
+| **New Tutorials**       | 5     | `docs/tutorials/`       | Create from existing content |
+| **How-To Guides**       | 28    | `docs/how-to/`          | Move + extract               |
+| **Reference**           | 18    | `docs/reference/`       | Move + consolidate           |
+| **Explanation**         | 12    | `docs/explanation/`     | Expand concepts              |
+| **Archive 2025-11**     | 42    | `docs/archive/2025-11/` | Sprint 4-6, Phase 1-5        |
+| **Archive 2025-10**     | 58    | `docs/archive/2025-10/` | Oct analysis, Sprint 1-3     |
+| **Archive 2025-01**     | 48    | `docs/archive/2025-01/` | Planning docs                |
+| **Root (Keep)**         | 8     | Root                    | Core project docs            |
+| **Delete (Duplicates)** | 8     | N/A                     | Confirmed duplicates         |
 
 **Total**: 261 files accounted for
 
@@ -159,12 +162,12 @@ docs/
 
 ## Risk Assessment
 
-| Risk | Severity | Likelihood | Mitigation |
-|------|----------|------------|------------|
-| **Broken Links** | High | High | Automated link checker, manual testing, migration map |
-| **Team Adaptation** | Medium | Medium | Training session, decision tree, pre-commit hooks |
-| **CI/CD Breakage** | Medium | Low | Audit CI scripts, test locally before push |
-| **Content Loss** | High | Very Low | Full backup, Git history, explicit tracking |
+| Risk                | Severity | Likelihood | Mitigation                                            |
+| ------------------- | -------- | ---------- | ----------------------------------------------------- |
+| **Broken Links**    | High     | High       | Automated link checker, manual testing, migration map |
+| **Team Adaptation** | Medium   | Medium     | Training session, decision tree, pre-commit hooks     |
+| **CI/CD Breakage**  | Medium   | Low        | Audit CI scripts, test locally before push            |
+| **Content Loss**    | High     | Very Low   | Full backup, Git history, explicit tracking           |
 
 **Overall Risk**: Medium (manageable with proper execution)
 
@@ -176,22 +179,22 @@ docs/
 
 ### 30-Day Targets
 
-| Metric | Current | Target |
-|--------|---------|--------|
-| Files Outside Structure | 33 | 0 |
-| Broken Links | Unknown | 0 |
-| Docs with Metadata | ~10% | 100% |
-| Team Adoption | N/A | 80% |
-| Documentation Health Score | N/A | >80% |
+| Metric                     | Current | Target |
+| -------------------------- | ------- | ------ |
+| Files Outside Structure    | 33      | 0      |
+| Broken Links               | Unknown | 0      |
+| Docs with Metadata         | ~10%    | 100%   |
+| Team Adoption              | N/A     | 80%    |
+| Documentation Health Score | N/A     | >80%   |
 
 ### 90-Day Targets
 
-| Metric | Target |
-|--------|--------|
-| Duplication Rate | <5% (from 23%) |
-| Security Exposures | 0 |
-| Team Self-Sufficiency | >90% |
-| User Satisfaction | >80% |
+| Metric                | Target         |
+| --------------------- | -------------- |
+| Duplication Rate      | <5% (from 23%) |
+| Security Exposures    | 0              |
+| Team Self-Sufficiency | >90%           |
+| User Satisfaction     | >80%           |
 
 ### 6-Month Target
 
@@ -224,10 +227,12 @@ docs/
 ### Documentation Standards
 
 **Naming**:
+
 - Use `kebab-case.md` for all docs
 - Exceptions: `UPPERCASE_UNDERSCORE.md` (reports), `0001-title.md` (ADRs)
 
 **Placement Decision Tree**:
+
 1. Teaching beginners? → `tutorials/`
 2. Solving a problem? → `how-to/`
 3. Factual reference? → `reference/`
@@ -235,6 +240,7 @@ docs/
 5. Historical? → `archive/YYYY-MM/`
 
 **Metadata** (required):
+
 ```markdown
 ---
 Last Updated: YYYY-MM-DD
@@ -245,6 +251,7 @@ Status: [Active|Draft|Deprecated]
 ```
 
 **Archival Policy**:
+
 - Sprint reports: Archive immediately after sprint
 - Phase reports: Archive immediately after phase
 - Audit reports: Archive 1 week after remediation
@@ -283,6 +290,7 @@ Status: [Active|Draft|Deprecated]
 ### Option B: Phased Approach
 
 **Phase 1 Only** (Week 1):
+
 - Create structure and foundation docs
 - Migrate core user-facing docs (tutorials, critical how-tos)
 - Keep old structure in parallel
@@ -293,6 +301,7 @@ Status: [Active|Draft|Deprecated]
 ### Option C: Pilot (1 Quadrant)
 
 **Test with tutorials only**:
+
 - Create `docs/tutorials/` with 5 beginner tutorials
 - Keep everything else unchanged
 - Gather team feedback
@@ -324,6 +333,6 @@ Status: [Active|Draft|Deprecated]
 
 ---
 
-*Document Status: Ready for Approval*
-*Created: 2025-11-12*
-*Version: 1.0*
+_Document Status: Ready for Approval_
+_Created: 2025-11-12_
+_Version: 1.0_

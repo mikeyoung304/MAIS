@@ -12,9 +12,11 @@
 ## Integration Test Files Status
 
 ### ✅ COMPLETED: booking-repository.integration.spec.ts
+
 **10/10 tests passing (100%)**
 
 All tests restored with proper tenant isolation:
+
 - Added `testTenantId` variable
 - Created test tenant in `beforeEach`
 - Updated Package/AddOn upserts to use composite keys (`tenantId_slug`)
@@ -25,9 +27,11 @@ All tests restored with proper tenant isolation:
 ---
 
 ### ✅ COMPLETED: webhook-repository.integration.spec.ts
+
 **17/17 tests passing (100%)**
 
 All tests restored with proper tenant isolation:
+
 - Added `testTenantId` variable
 - Created test tenant in `beforeEach`
 - Updated `recordWebhook()` calls to include `tenantId` in input object
@@ -38,25 +42,30 @@ All tests restored with proper tenant isolation:
 ---
 
 ### ⚠️ PARTIAL: booking-race-conditions.spec.ts
+
 **6/12 tests passing (50%)**
 
 **Completed Changes:**
+
 - Added tenant creation in `beforeEach`
 - Updated all `bookingRepo.create()` calls with `tenantId`
 - Updated all `bookingService.onPaymentCompleted()` calls with `tenantId`
 - Fixed Package/AddOn upserts with composite keys
 
 **Known Issues (6 failing tests):**
+
 1. **Service Layer Issue:** `BookingService.onPaymentCompleted()` is calling `catalogRepo.getPackageBySlug()` with package IDs instead of slugs
 2. **Race Condition Tests:** Some concurrent booking tests fail due to service layer logic, not tenant isolation
 3. **Root Cause:** The `input.packageId` parameter contains actual database IDs (e.g., `cmhtznbri0002p0i6aliaj19y`) but the service calls `getPackageBySlug()` expecting a slug
 
 **Passing Tests:**
+
 - ✅ Transaction Isolation tests (2/2)
 - ✅ Pessimistic Locking Behavior tests (3/3)
 - ✅ Edge Cases: bookings with add-ons (1/1)
 
 **Failing Tests:**
+
 - ❌ Concurrent Booking Prevention (3 tests) - Not tenant isolation issues
 - ❌ Service Layer Race Conditions (2 tests) - Package lookup issues
 - ❌ Edge Cases: mixed scenarios (1 test)
@@ -66,9 +75,11 @@ All tests restored with proper tenant isolation:
 ---
 
 ### ❌ NOT STARTED: webhook-race-conditions.spec.ts
+
 **~18 tests remaining**
 
 Same pattern as booking-race-conditions needed:
+
 - Add tenant creation
 - Update all repository method calls
 - Update service layer calls
@@ -78,9 +89,11 @@ Same pattern as booking-race-conditions needed:
 ---
 
 ### ❌ NOT STARTED: catalog.repository.integration.spec.ts
+
 **~70 tests remaining (LARGEST FILE)**
 
 Requires systematic updates:
+
 - Add tenant creation in `beforeEach`
 - Update all `createPackage()`, `updatePackage()`, `getPackageBySlug()` calls
 - Update all `createAddOn()`, `updateAddOn()` calls
@@ -217,20 +230,23 @@ model WebhookEvent {
 ## Test Metrics
 
 ### Overall Progress:
+
 - **Starting:** 133/228 tests (58.3%)
 - **Current:** 154/237 tests (65.0%)
 - **Improvement:** +21 tests (+6.7 percentage points)
 
 ### File-by-File:
-| File | Status | Passing | Total | %
-|------|--------|---------|-------|---
-| booking-repository.integration | ✅ DONE | 10 | 10 | 100%
-| webhook-repository.integration | ✅ DONE | 17 | 17 | 100%
-| booking-race-conditions | ⚠️ PARTIAL | 6 | 12 | 50%
-| webhook-race-conditions | ❌ TODO | 0 | ~18 | 0%
-| catalog.repository.integration | ❌ TODO | 0 | ~70 | 0%
+
+| File                           | Status     | Passing | Total | %    |
+| ------------------------------ | ---------- | ------- | ----- | ---- |
+| booking-repository.integration | ✅ DONE    | 10      | 10    | 100% |
+| webhook-repository.integration | ✅ DONE    | 17      | 17    | 100% |
+| booking-race-conditions        | ⚠️ PARTIAL | 6       | 12    | 50%  |
+| webhook-race-conditions        | ❌ TODO    | 0       | ~18   | 0%   |
+| catalog.repository.integration | ❌ TODO    | 0       | ~70   | 0%   |
 
 ### Unit Tests:
+
 - ✅ All 124 unit tests passing (from previous session)
 - ✅ Type safety regression tests passing (9 tests)
 - ✅ Webhook controller tests passing (8 tests)

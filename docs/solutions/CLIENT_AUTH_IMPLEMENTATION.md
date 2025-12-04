@@ -20,7 +20,7 @@ This guide walks through the actual code changes needed to fix the client-side a
 
 Add this function at the end of the file:
 
-```typescript
+````typescript
 /**
  * Get the correct authentication token for API requests
  *
@@ -67,9 +67,10 @@ export function getAuthToken(): string | null {
   // Not authenticated
   return null;
 }
-```
+````
 
 **Verify:**
+
 ```bash
 # Check it compiles
 npm run typecheck
@@ -86,7 +87,7 @@ grep "export function getAuthToken" client/src/lib/auth.ts
 
 Create this new file:
 
-```typescript
+````typescript
 /**
  * Type-safe fetch wrapper for authenticated API calls
  *
@@ -179,7 +180,7 @@ export async function authenticatedFetch<T = unknown>(
   // Build headers: merge user headers with Authorization
   const headers: Record<string, string> = {
     ...options.headers,
-    'Authorization': `Bearer ${token}`,
+    Authorization: `Bearer ${token}`,
   };
 
   // Make the request
@@ -203,9 +204,10 @@ export async function authenticatedFetch<T = unknown>(
     headers: response.headers,
   };
 }
-```
+````
 
 **Verify:**
+
 ```bash
 # Check it compiles
 npm run typecheck
@@ -239,6 +241,7 @@ import { getAuthToken } from './auth';
 ```
 
 **Verify:**
+
 ```bash
 # Count getAuthToken definitions
 grep -n "function getAuthToken\|const getAuthToken" client/src/lib/package-photo-api.ts
@@ -277,6 +280,7 @@ import { getAuthToken } from '@/lib/auth';
 ```
 
 **Verify:**
+
 ```bash
 grep -n "function getAuthToken" client/src/components/ImageUploadField.tsx
 # Should return 0
@@ -310,6 +314,7 @@ import { getAuthToken } from '@/lib/auth';
 ```
 
 **Verify:**
+
 ```bash
 grep -n "function getAuthToken" client/src/features/tenant-admin/branding/components/LogoUploadButton.tsx
 # Should return 0
@@ -353,6 +358,7 @@ import { getAuthToken } from '@/lib/auth';
 ```
 
 **Verify:**
+
 ```bash
 grep -n "function getAuthToken" client/src/features/photos/hooks/usePhotoUpload.ts
 # Should return 0
@@ -486,15 +492,15 @@ npm run dev:client
 3. **Token Selection During Impersonation**
    - [ ] Check localStorage:
      ```javascript
-     localStorage.getItem('adminToken') // Should be set
-     localStorage.getItem('impersonationTenantKey') // Should be set
-     localStorage.getItem('tenantToken') // May or may not exist
+     localStorage.getItem('adminToken'); // Should be set
+     localStorage.getItem('impersonationTenantKey'); // Should be set
+     localStorage.getItem('tenantToken'); // May or may not exist
      ```
    - [ ] Call getAuthToken():
      ```javascript
      // In console:
      import { getAuthToken } from './lib/auth.js';
-     getAuthToken() // Should return the adminToken
+     getAuthToken(); // Should return the adminToken
      ```
 
 ---
@@ -555,26 +561,26 @@ git reset --hard HEAD~1
 
 ## Files Modified Summary
 
-| File | Change | Impact |
-|------|--------|--------|
-| `client/src/lib/auth.ts` | Add `getAuthToken()` | LOW - new export, backwards compatible |
-| `client/src/lib/fetch-client.ts` | NEW FILE | LOW - new utility, opt-in |
-| `client/src/lib/package-photo-api.ts` | Remove duplicate `getAuthToken()` | NONE - same behavior, cleaner code |
-| `client/src/components/ImageUploadField.tsx` | Remove duplicate `getAuthToken()` | NONE - same behavior, cleaner code |
-| `client/src/features/tenant-admin/branding/components/LogoUploadButton.tsx` | Remove duplicate `getAuthToken()` | NONE - same behavior, cleaner code |
-| `client/src/features/photos/hooks/usePhotoUpload.ts` | Remove duplicate `getAuthToken()` | NONE - same behavior, cleaner code |
+| File                                                                        | Change                            | Impact                                 |
+| --------------------------------------------------------------------------- | --------------------------------- | -------------------------------------- |
+| `client/src/lib/auth.ts`                                                    | Add `getAuthToken()`              | LOW - new export, backwards compatible |
+| `client/src/lib/fetch-client.ts`                                            | NEW FILE                          | LOW - new utility, opt-in              |
+| `client/src/lib/package-photo-api.ts`                                       | Remove duplicate `getAuthToken()` | NONE - same behavior, cleaner code     |
+| `client/src/components/ImageUploadField.tsx`                                | Remove duplicate `getAuthToken()` | NONE - same behavior, cleaner code     |
+| `client/src/features/tenant-admin/branding/components/LogoUploadButton.tsx` | Remove duplicate `getAuthToken()` | NONE - same behavior, cleaner code     |
+| `client/src/features/photos/hooks/usePhotoUpload.ts`                        | Remove duplicate `getAuthToken()` | NONE - same behavior, cleaner code     |
 
 ---
 
 ## Timeline
 
-| Phase | Duration | Tasks |
-|-------|----------|-------|
-| Implementation | 1 hour | Add auth.ts function, create fetch-client.ts, update 4 files |
-| Testing | 30 min | Run unit tests, run E2E tests, manual testing |
-| Code Review | 30 min | Self-review, verify checklist items |
-| Deployment | 15 min | Commit, push, create PR, merge |
-| **TOTAL** | **~2.5 hours** | Done |
+| Phase          | Duration       | Tasks                                                        |
+| -------------- | -------------- | ------------------------------------------------------------ |
+| Implementation | 1 hour         | Add auth.ts function, create fetch-client.ts, update 4 files |
+| Testing        | 30 min         | Run unit tests, run E2E tests, manual testing                |
+| Code Review    | 30 min         | Self-review, verify checklist items                          |
+| Deployment     | 15 min         | Commit, push, create PR, merge                               |
+| **TOTAL**      | **~2.5 hours** | Done                                                         |
 
 ---
 
@@ -585,6 +591,7 @@ git reset --hard HEAD~1
 **Error:** `getAuthToken is not exported`
 
 **Solution:**
+
 ```bash
 # Make sure you added `export` keyword
 grep "export function getAuthToken" client/src/lib/auth.ts
@@ -598,6 +605,7 @@ grep "export function getAuthToken" client/src/lib/auth.ts
 **Error:** Module resolution issue
 
 **Solution:**
+
 ```bash
 # Verify file was created
 ls -la client/src/lib/fetch-client.ts
@@ -612,15 +620,16 @@ npm run typecheck
 ### Problem: 401 errors during impersonation test
 
 **Debug:**
+
 ```javascript
 // In browser console during impersonation
-localStorage.getItem('adminToken') // Should be set
-localStorage.getItem('impersonationTenantKey') // Should be set
+localStorage.getItem('adminToken'); // Should be set
+localStorage.getItem('impersonationTenantKey'); // Should be set
 
 // Import and test
-import { getAuthToken } from './lib/auth.js'
-const token = getAuthToken()
-console.log(token) // Should be adminToken
+import { getAuthToken } from './lib/auth.js';
+const token = getAuthToken();
+console.log(token); // Should be adminToken
 
 // Check if it's in request headers
 // Open DevTools → Network tab → click request → Headers
@@ -632,6 +641,7 @@ console.log(token) // Should be adminToken
 **Error:** Import statement missing
 
 **Solution:**
+
 ```typescript
 // Make sure to add import at top of file
 import { getAuthToken } from '@/lib/auth'; // ← Don't forget this

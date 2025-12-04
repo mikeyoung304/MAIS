@@ -7,9 +7,11 @@ Quick reference for fixing identified issues. See TEST_INFRASTRUCTURE_ANALYSIS.m
 ## Quick Win #1: Extract HTTP Test Helper (1 hour)
 
 ### Problem
+
 Duplicate beforeAll setup in 3+ HTTP test files (120+ lines of code duplication).
 
 ### Current Pattern (Duplicated)
+
 ```typescript
 // packages.test.ts - beforeAll #1
 describe('GET /v1/packages', () => {
@@ -25,7 +27,7 @@ describe('GET /v1/packages', () => {
     });
     testTenantApiKey = tenant.apiKeyPublic;
     await prisma.$disconnect();
-    
+
     const config = loadConfig();
     const container = buildContainer({ ...config, ADAPTERS_PRESET: 'mock' });
     app = createApp(config, container, Date.now());
@@ -44,6 +46,7 @@ describe('GET /v1/packages/:slug', () => {
 ```
 
 ### Solution: Create Helper
+
 ```typescript
 // server/test/helpers/http-setup.ts
 import { Express } from 'express';
@@ -58,14 +61,16 @@ export interface HttpTestContext {
   cleanup: () => Promise<void>;
 }
 
-export async function setupHttpTest(options: {
-  tenantSlug?: string;
-  preset?: 'mock' | 'real';
-  tenantId?: string;
-} = {}): Promise<HttpTestContext> {
+export async function setupHttpTest(
+  options: {
+    tenantSlug?: string;
+    preset?: 'mock' | 'real';
+    tenantId?: string;
+  } = {}
+): Promise<HttpTestContext> {
   const tenantSlug = options.tenantSlug || 'elope';
   const preset = options.preset || 'mock';
-  
+
   const prisma = new PrismaClient();
 
   // Create test tenant with unique API key
@@ -104,19 +109,18 @@ export async function setupHttpTest(options: {
 /**
  * Setup multiple tenants for multi-tenant HTTP tests
  */
-export async function setupMultiTenantHttpTest(options: {
-  tenants?: Array<{ slug: string; id?: string }>;
-  preset?: 'mock' | 'real';
-} = {}): Promise<{
+export async function setupMultiTenantHttpTest(
+  options: {
+    tenants?: Array<{ slug: string; id?: string }>;
+    preset?: 'mock' | 'real';
+  } = {}
+): Promise<{
   app: Express;
   tenants: Array<{ slug: string; apiKey: string }>;
   cleanup: () => Promise<void>;
 }> {
-  const tenantConfigs = options.tenants || [
-    { slug: 'tenant-a' },
-    { slug: 'tenant-b' }
-  ];
-  
+  const tenantConfigs = options.tenants || [{ slug: 'tenant-a' }, { slug: 'tenant-b' }];
+
   const prisma = new PrismaClient();
   const createdTenants: Array<{ slug: string; apiKey: string }> = [];
 
@@ -149,6 +153,7 @@ export async function setupMultiTenantHttpTest(options: {
 ```
 
 ### Refactored Test
+
 ```typescript
 // packages.test.ts (AFTER)
 import { setupHttpTest } from '../helpers/http-setup';
@@ -203,6 +208,7 @@ describe('GET /v1/packages/:slug', () => {
 ## Quick Win #2: Fix Package Factory Race Condition (30 minutes)
 
 ### Problem
+
 Multiple packages created in same millisecond get duplicate slugs, causing test flakiness.
 
 ```typescript
@@ -212,7 +218,7 @@ class PackageFactory {
 
   create(overrides: Partial<CreatePackageInput> = {}): CreatePackageInput {
     this.counter++;
-    const timestamp = Date.now();  // ← Problem: same ms = duplicate
+    const timestamp = Date.now(); // ← Problem: same ms = duplicate
     const uniqueSlug = overrides.slug || `test-package-${this.counter}-${timestamp}`;
     // If counter=1, timestamp=1700610000000, generates: test-package-1-1700610000000
     // Next call in same ms: counter=2, timestamp=1700610000000, generates: test-package-2-1700610000000
@@ -222,6 +228,7 @@ class PackageFactory {
 ```
 
 ### Solution
+
 ```typescript
 // AFTER - Guaranteed unique
 class PackageFactory {
@@ -231,9 +238,9 @@ class PackageFactory {
     this.counter++;
     const timestamp = Date.now();
     const randomSuffix = Math.random().toString(36).substring(2, 9);
-    const uniqueSlug = overrides.slug || 
-      `test-package-${this.counter}-${timestamp}-${randomSuffix}`;
-    
+    const uniqueSlug =
+      overrides.slug || `test-package-${this.counter}-${timestamp}-${randomSuffix}`;
+
     return {
       slug: uniqueSlug,
       title: overrides.title || `Test Package ${this.counter}`,
@@ -264,6 +271,7 @@ class PackageFactory {
 ## Quick Win #3: Add Error Type Assertions (1 hour)
 
 ### Problem
+
 Tests accept ANY error instead of verifying specific error types, allowing silent failures.
 
 ```typescript
@@ -276,13 +284,14 @@ it('should prevent double-booking when concurrent requests arrive', async () => 
 
   expect(succeeded).toHaveLength(1);
   expect(failed).toHaveLength(1);
-  
+
   const rejection = failed[0] as PromiseRejectedResult;
-  expect(rejection.reason).toBeDefined();  // ← WEAK: any error passes
+  expect(rejection.reason).toBeDefined(); // ← WEAK: any error passes
 });
 ```
 
 ### Solution
+
 ```typescript
 // AFTER - Strong assertions
 it('should prevent double-booking when concurrent requests arrive', async () => {
@@ -293,24 +302,24 @@ it('should prevent double-booking when concurrent requests arrive', async () => 
 
   expect(succeeded).toHaveLength(1);
   expect(failed).toHaveLength(1);
-  
+
   const rejection = failed[0] as PromiseRejectedResult;
-  
+
   // Verify error type and message
   expect(rejection.reason).toBeInstanceOf(BookingConflictError);
   expect(rejection.reason.message).toContain('already booked');
-  
+
   // Verify database consistency
   const bookings = await ctx.prisma.booking.findMany({
-    where: { 
+    where: {
       tenantId: testTenantId,
       date: new Date(eventDate),
     },
   });
-  
+
   // Critical: Only ONE booking should exist
   expect(bookings).toHaveLength(1);
-  
+
   // Verify it's one of the two attempted bookings
   const createdBooking = bookings[0];
   const successedBooking = (succeeded[0] as PromiseFulfilledResult<any>).value;
@@ -323,16 +332,18 @@ it('should prevent double-booking when concurrent requests arrive', async () => 
 ## Quick Win #4: Make Cleanup Failures Throw (30 minutes)
 
 ### Problem
+
 Test cleanup can fail silently, contaminating subsequent tests without alerting developers.
 
 ```typescript
 // BEFORE - Silent failures
 afterEach(async () => {
-  await ctx.tenants.cleanupTenants();  // ← Can fail, test still passes
+  await ctx.tenants.cleanupTenants(); // ← Can fail, test still passes
 });
 ```
 
 ### Solution
+
 ```typescript
 // AFTER - Fail loudly
 afterEach(async () => {
@@ -345,17 +356,18 @@ afterEach(async () => {
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString(),
     });
-    
+
     // Throw to make test fail and alert developer
     throw new Error(
       `Test cleanup failed and data may be contaminated. ` +
-      `Error: ${error instanceof Error ? error.message : String(error)}`
+        `Error: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 });
 ```
 
 Or in integration setup:
+
 ```typescript
 // server/test/helpers/integration-setup.ts
 export function setupCompleteIntegrationTest(
@@ -383,7 +395,7 @@ export function setupCompleteIntegrationTest(
 
     // If any cleanup failed, throw combined error
     if (errors.length > 0) {
-      const message = errors.map(e => e.message).join('\n');
+      const message = errors.map((e) => e.message).join('\n');
       throw new Error(`Test cleanup failed:\n${message}`);
     }
   };
@@ -397,27 +409,31 @@ export function setupCompleteIntegrationTest(
 ## Quick Win #5: Enhance Cache Isolation Verification (2 hours)
 
 ### Problem
+
 Cache isolation only checks key prefix, doesn't verify actual data isolation.
 
 ```typescript
 // BEFORE - Weak check
 verifyCacheKey = (key: string, tenantId: string): boolean => {
-  return key.startsWith(`${tenantId}:`);  // ← Only checks format
+  return key.startsWith(`${tenantId}:`); // ← Only checks format
 };
 ```
 
 ### Solution
+
 ```typescript
 // AFTER - Comprehensive verification
 export class CacheTestUtils {
   cache: CacheService;
-  
+
   /**
    * Assert cache key has proper tenant isolation format
    */
   assertCacheKeyFormat(key: string, tenantId: string): void {
-    expect(key).toMatch(new RegExp(`^${tenantId}:`), 
-      `Cache key must start with tenant ID. Got: "${key}"`);
+    expect(key).toMatch(
+      new RegExp(`^${tenantId}:`),
+      `Cache key must start with tenant ID. Got: "${key}"`
+    );
   }
 
   /**
@@ -448,9 +464,7 @@ export class CacheTestUtils {
     // Verify no data leakage with similar keys
     const similarKey = `${tenantId}_similar:${resource}`;
     const similarData = this.cache.get(similarKey);
-    expect(similarData).toBeNull(
-      `Similar but different tenant ID should not match: ${similarKey}`
-    );
+    expect(similarData).toBeNull(`Similar but different tenant ID should not match: ${similarKey}`);
   }
 
   /**
@@ -467,15 +481,14 @@ export class CacheTestUtils {
 
     // Invalidate cache
     this.cache.delete(key);
-    expect(this.cache.get(key)).toBeNull(
-      `Cache key "${key}" should be null after invalidation`
-    );
+    expect(this.cache.get(key)).toBeNull(`Cache key "${key}" should be null after invalidation`);
 
     // Verify new data is different
     this.cache.set(key, dataAfterInvalidation);
     const retrieved = this.cache.get(key);
     expect(retrieved).toEqual(dataAfterInvalidation);
-    expect(retrieved).not.toEqual(dataBeforeInvalidation,
+    expect(retrieved).not.toEqual(
+      dataBeforeInvalidation,
       'Cache invalidation should allow new data to be stored'
     );
   }
@@ -483,6 +496,7 @@ export class CacheTestUtils {
 ```
 
 ### Usage in Tests
+
 ```typescript
 describe.sequential('Cache Tenant Isolation - Enhanced', () => {
   const ctx = setupCompleteIntegrationTest('cache-isolation');
@@ -499,22 +513,17 @@ describe.sequential('Cache Tenant Isolation - Enhanced', () => {
 
   it('should enforce tenant isolation in cache', async () => {
     const testPackage = { id: 'pkg_1', title: 'Test Package' };
-    
+
     // Assert isolation
-    await ctx.cache.assertCacheIsolation(
-      tenantA_id,
-      tenantB_id,
-      'packages:pkg_1',
-      testPackage
-    );
+    await ctx.cache.assertCacheIsolation(tenantA_id, tenantB_id, 'packages:pkg_1', testPackage);
   });
 
   it('should properly invalidate cache', async () => {
     const oldData = { title: 'Old Package' };
     const newData = { title: 'Updated Package' };
-    
+
     const key = `${tenantA_id}:packages:pkg_1`;
-    
+
     await ctx.cache.assertCacheInvalidation(key, oldData, newData);
   });
 });
@@ -525,6 +534,7 @@ describe.sequential('Cache Tenant Isolation - Enhanced', () => {
 ## Medium Task: Fix Transaction Deadlock (1-2 days)
 
 ### Problem
+
 Pessimistic locking (FOR UPDATE) causes transaction deadlock in booking creation tests.
 
 ```typescript
@@ -533,12 +543,12 @@ async create(tenantId: string, booking: Booking): Promise<Booking> {
   return await this.prisma.$transaction(async (tx) => {
     // Lock the date row for update
     const existing = await tx.$queryRaw`
-      SELECT id FROM bookings 
-      WHERE tenantId = ${tenantId} 
-      AND date = ${booking.date} 
+      SELECT id FROM bookings
+      WHERE tenantId = ${tenantId}
+      AND date = ${booking.date}
       FOR UPDATE  // ← Causes deadlock in test environment
     `;
-    
+
     if (existing.length > 0) {
       throw new BookingConflictError(booking.date);
     }
@@ -559,6 +569,7 @@ async create(tenantId: string, booking: Booking): Promise<Booking> {
 ### Solution Options
 
 #### Option A: Remove Pessimistic Lock (Simplest)
+
 ```typescript
 // Rely on unique constraint + optimistic concurrency
 async create(tenantId: string, booking: Booking): Promise<Booking> {
@@ -587,18 +598,19 @@ async create(tenantId: string, booking: Booking): Promise<Booking> {
 **Cons:** Race condition between check and create (acceptable due to unique constraint)
 
 #### Option B: Use Pessimistic Lock With Timeout (Robust)
+
 ```typescript
 async create(tenantId: string, booking: Booking): Promise<Booking> {
   return await this.prisma.$transaction(
     async (tx) => {
       // Try to lock with timeout
       const existing = await tx.$queryRaw`
-        SELECT id FROM bookings 
-        WHERE tenantId = ${tenantId} 
-        AND date = ${booking.date} 
+        SELECT id FROM bookings
+        WHERE tenantId = ${tenantId}
+        AND date = ${booking.date}
         FOR UPDATE NOWAIT  // ← NOWAIT prevents hanging
       `;
-      
+
       if (existing.length > 0) {
         throw new BookingConflictError(booking.date);
       }
@@ -619,6 +631,7 @@ async create(tenantId: string, booking: Booking): Promise<Booking> {
 **Cons:** More complex, requires proper error handling
 
 #### Option C: Use Serializable Isolation (Most Reliable)
+
 ```typescript
 async create(tenantId: string, booking: Booking): Promise<Booking> {
   return await this.prisma.$transaction(
@@ -656,26 +669,31 @@ async create(tenantId: string, booking: Booking): Promise<Booking> {
 ## Testing After Fixes
 
 ### Verify HTTP Test Helper Works
+
 ```bash
 npm test -- server/test/http/packages.test.ts
 ```
 
 ### Verify Factory Fix
+
 ```bash
 npm test -- server/test/integration/booking-repository.integration.spec.ts
 ```
 
 ### Check Cache Isolation
+
 ```bash
 npm test -- server/test/integration/cache-isolation.integration.spec.ts
 ```
 
 ### Run Full Test Suite
+
 ```bash
 npm test
 ```
 
 ### Check Coverage
+
 ```bash
 npm run test:coverage
 ```
@@ -722,10 +740,10 @@ npm run test:coverage
 ---
 
 **Total Estimated Time:** 8-10 hours for all quick wins + medium task
-**Expected Impact:** 
+**Expected Impact:**
+
 - 100% test pass rate (up from 99.8%)
 - 0 skipped tests (down from 33)
 - 120+ fewer lines of duplicate code
 - Stronger test assertions
 - Critical path coverage > 95%
-

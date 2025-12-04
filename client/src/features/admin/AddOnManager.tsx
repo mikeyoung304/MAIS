@@ -1,12 +1,18 @@
-import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ImageUploadField } from "@/components/ImageUploadField";
-import { formatCurrency } from "@/lib/utils";
-import { baseUrl } from "@/lib/api";
-import type { AddOnManagerProps } from "./types";
+import { Plus, Edit, Trash2, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { ImageUploadField } from '@/components/ImageUploadField';
+import { formatCurrency } from '@/lib/utils';
+import { baseUrl } from '@/lib/api';
+import type { AddOnManagerProps } from './types';
 
 export function AddOnManager({
   package: pkg,
@@ -28,7 +34,7 @@ export function AddOnManager({
       {isAddingAddOn && (
         <div className="bg-macon-navy-800 p-4 rounded-lg space-y-3 border border-white/20">
           <h5 className="font-medium text-lg text-white">
-            {editingAddOnId ? "Edit Add-on" : "New Add-on"}
+            {editingAddOnId ? 'Edit Add-on' : 'New Add-on'}
           </h5>
 
           <form onSubmit={onSubmit} className="space-y-3">
@@ -41,9 +47,7 @@ export function AddOnManager({
                   id="addOnTitle"
                   type="text"
                   value={addOnForm.title}
-                  onChange={(e) =>
-                    onFormChange({ ...addOnForm, title: e.target.value })
-                  }
+                  onChange={(e) => onFormChange({ ...addOnForm, title: e.target.value })}
                   placeholder="Extra photography"
                   disabled={isSaving}
                   className="bg-macon-navy-900 border-white/20 text-white placeholder:text-white/50 focus:border-white/30 text-lg h-12"
@@ -58,9 +62,7 @@ export function AddOnManager({
                   id="addOnPrice"
                   type="number"
                   value={addOnForm.priceCents}
-                  onChange={(e) =>
-                    onFormChange({ ...addOnForm, priceCents: e.target.value })
-                  }
+                  onChange={(e) => onFormChange({ ...addOnForm, priceCents: e.target.value })}
                   placeholder="10000"
                   min="0"
                   disabled={isSaving}
@@ -82,9 +84,9 @@ export function AddOnManager({
                 Segment Availability
               </Label>
               <Select
-                value={addOnForm.segmentId || ""}
+                value={addOnForm.segmentId || ''}
                 onValueChange={(value) =>
-                  onFormChange({ ...addOnForm, segmentId: value === "" ? "" : value })
+                  onFormChange({ ...addOnForm, segmentId: value === '' ? '' : value })
                 }
                 disabled={isSaving}
               >
@@ -93,11 +95,13 @@ export function AddOnManager({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Global (All Segments)</SelectItem>
-                  {segments?.filter(s => s.active).map((segment) => (
-                    <SelectItem key={segment.id} value={segment.id}>
-                      {segment.name} only
-                    </SelectItem>
-                  ))}
+                  {segments
+                    ?.filter((s) => s.active)
+                    .map((segment) => (
+                      <SelectItem key={segment.id} value={segment.id}>
+                        {segment.name} only
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
               <p className="text-base text-white/70">
@@ -111,7 +115,7 @@ export function AddOnManager({
                 className="bg-macon-navy hover:bg-macon-navy-dark text-base h-10 px-4"
               >
                 {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {isSaving ? "Saving..." : editingAddOnId ? "Update" : "Add"}
+                {isSaving ? 'Saving...' : editingAddOnId ? 'Update' : 'Add'}
               </Button>
               <Button
                 type="button"
@@ -149,9 +153,7 @@ export function AddOnManager({
             >
               <div>
                 <div className="font-medium text-lg text-white">{addOn.title}</div>
-                <div className="text-lg text-white/60">
-                  {formatCurrency(addOn.priceCents)}
-                </div>
+                <div className="text-lg text-white/60">{formatCurrency(addOn.priceCents)}</div>
               </div>
               <div className="flex gap-2">
                 <Button
@@ -181,7 +183,9 @@ export function AddOnManager({
       )}
 
       {pkg.addOns.length === 0 && !isAddingAddOn && (
-        <p className="text-base text-white/70">Add optional extras to increase your average booking value.</p>
+        <p className="text-base text-white/70">
+          Add optional extras to increase your average booking value.
+        </p>
       )}
     </div>
   );

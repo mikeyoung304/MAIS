@@ -7,22 +7,27 @@
 ## The 7 Critical Rules
 
 ### 1. ALWAYS Include TenantId in Paths
+
 ```typescript
 ✅ const path = `${tenantId}/logos/${filename}`;
 ❌ const path = `logos/${filename}`;
 ```
+
 **Why:** Prevents cross-tenant file access
 
 ### 2. VALIDATE FILE CONTENT (Magic Bytes)
+
 ```typescript
 ✅ const detected = await fileType.fromBuffer(buffer);
    if (!ALLOWED_TYPES.includes(detected.mime)) throw;
 
 ❌ if (!ALLOWED_TYPES.includes(file.mimetype)) throw;
 ```
+
 **Why:** Prevents MIME spoofing (PNG file with .jpg extension)
 
 ### 3. VERIFY OWNERSHIP Before Delete
+
 ```typescript
 ✅ const file = await db.file.findFirst({
      where: { tenantId, folder, filename }
@@ -31,69 +36,79 @@
 
 ❌ await supabase.storage.from('images').remove([filename]);
 ```
+
 **Why:** Prevents unauthorized file deletion across tenants
 
 ### 4. RATE LIMIT Uploads
+
 ```typescript
 ✅ router.post('/upload', rateLimiter, async (req, res) => {...})
 
 ❌ router.post('/upload', async (req, res) => {...})
 ```
+
 **Why:** Prevents memory exhaustion and denial of service
 
 ### 5. Use DEPENDENCY INJECTION (Not Singletons)
+
 ```typescript
 ✅ constructor(private uploadService: UploadService) {}
 
 ❌ import { uploadService } from './services';
 ```
+
 **Why:** Makes code testable and maintainable
 
 ### 6. Cleanup Files on Entity Delete
+
 ```typescript
 ✅ await deleteFile(tenantId, folder, filename);
    await db.package.delete({where: {id}});
 
 ❌ await db.package.delete({where: {id}});
 ```
+
 **Why:** Prevents orphaned files and quota exhaustion
 
 ### 7. Handle ERRORS Without Leaking Data
+
 ```typescript
 ✅ throw new Error('Upload failed');
 
 ❌ throw new Error(`Failed: ${filepath}, ${err.message}`);
 ```
+
 **Why:** Prevents information disclosure
 
 ---
 
 ## Red Flags Checklist
 
-| Red Flag | Fix |
-|----------|-----|
-| ❌ No tenantId in path | Add: `${tenantId}/` prefix |
-| ❌ Only MIME type check | Add: Magic byte validation |
-| ❌ Public bucket | Make bucket private, use RLS |
-| ❌ No ownership verification | Query DB before delete |
-| ❌ No rate limiting | Add `rateLimit` middleware |
-| ❌ Singleton import | Inject via constructor |
-| ❌ No cleanup on delete | Cascade delete files |
-| ❌ Large file buffers | Stream instead of buffer |
-| ❌ SVG allowed unsanitized | Reject or sanitize |
-| ❌ Error shows filepath | Use generic message |
+| Red Flag                     | Fix                          |
+| ---------------------------- | ---------------------------- |
+| ❌ No tenantId in path       | Add: `${tenantId}/` prefix   |
+| ❌ Only MIME type check      | Add: Magic byte validation   |
+| ❌ Public bucket             | Make bucket private, use RLS |
+| ❌ No ownership verification | Query DB before delete       |
+| ❌ No rate limiting          | Add `rateLimit` middleware   |
+| ❌ Singleton import          | Inject via constructor       |
+| ❌ No cleanup on delete      | Cascade delete files         |
+| ❌ Large file buffers        | Stream instead of buffer     |
+| ❌ SVG allowed unsanitized   | Reject or sanitize           |
+| ❌ Error shows filepath      | Use generic message          |
 
 ---
 
 ## File Size Limits
 
-| Upload Type | Limit | Where |
-|-------------|-------|-------|
-| Logo | 2 MB | `MAX_UPLOAD_SIZE_MB` env |
-| Package Photo | 5 MB | `maxPackagePhotoSizeMB` |
-| Segment Hero | 5 MB | `maxPackagePhotoSizeMB` |
+| Upload Type   | Limit | Where                    |
+| ------------- | ----- | ------------------------ |
+| Logo          | 2 MB  | `MAX_UPLOAD_SIZE_MB` env |
+| Package Photo | 5 MB  | `maxPackagePhotoSizeMB`  |
+| Segment Hero  | 5 MB  | `maxPackagePhotoSizeMB`  |
 
 **Enforce at TWO levels:**
+
 1. Multer config: `limits: { fileSize: 5 * 1024 * 1024 }`
 2. Service validation: `if (size > limit) throw`
 
@@ -114,6 +129,7 @@
 If exceeded → `429 Too Many Requests`
 
 **Test with:**
+
 ```bash
 for i in {1..15}; do curl -X POST ... & done; wait
 ```
@@ -124,11 +140,11 @@ Should succeed: 1-10, fail: 11-15
 
 ## Magic Byte Examples
 
-| Format | Header | Code |
-|--------|--------|------|
-| PNG | `89 50 4E 47` | `buffer[0] === 0x89` |
-| JPEG | `FF D8 FF` | `buffer[0] === 0xFF` |
-| ZIP | `50 4B 03 04` | `buffer[0] === 0x50` |
+| Format | Header        | Code                 |
+| ------ | ------------- | -------------------- |
+| PNG    | `89 50 4E 47` | `buffer[0] === 0x89` |
+| JPEG   | `FF D8 FF`    | `buffer[0] === 0xFF` |
+| ZIP    | `50 4B 03 04` | `buffer[0] === 0x50` |
 
 **Use library:** `npm install file-type`
 
@@ -142,6 +158,7 @@ const detected = await fileType.fromBuffer(buffer);
 ## Testing Checklist
 
 ### Unit Tests
+
 - [ ] File size validation (under/over/exact limits)
 - [ ] MIME type rejection (invalid types)
 - [ ] Magic byte spoofing detection (PNG in .jpg)
@@ -149,17 +166,20 @@ const detected = await fileType.fromBuffer(buffer);
 - [ ] Filename generation (unique, safe)
 
 ### Integration Tests
+
 - [ ] Cascade delete files with package
 - [ ] Orphaned file detection
 - [ ] Cross-tenant isolation
 
 ### Security Tests
+
 - [ ] MIME spoofing (PNG header + JPEG ext)
 - [ ] ZIP file disguised as image
 - [ ] SVG with script tags (if allowed)
 - [ ] Path traversal in filename
 
 ### Load Tests
+
 - [ ] Concurrent uploads (20x 5MB = 100MB)
 - [ ] Rate limiting enforcement
 - [ ] Memory usage stays < 150MB increase
@@ -169,11 +189,13 @@ const detected = await fileType.fromBuffer(buffer);
 ## Common Mistakes
 
 ### ❌ Only Check MIME Type
+
 ```typescript
 if (!ALLOWED.includes(file.mimetype)) throw; // Not enough!
 ```
 
 ### ✅ Check MIME + Magic Bytes
+
 ```typescript
 if (!ALLOWED.includes(file.mimetype)) throw;
 const detected = await fileType.fromBuffer(file.buffer);
@@ -183,11 +205,13 @@ if (!detected || !ALLOWED.includes(detected.mime)) throw;
 ---
 
 ### ❌ No Tenant Scoping
+
 ```typescript
 const path = `logos/${filename}`; // Oops!
 ```
 
 ### ✅ Include TenantId
+
 ```typescript
 const path = `${tenantId}/logos/${filename}`; // Safe
 ```
@@ -195,11 +219,13 @@ const path = `${tenantId}/logos/${filename}`; // Safe
 ---
 
 ### ❌ No Ownership Check Before Delete
+
 ```typescript
 await supabase.storage.from('images').remove([filename]);
 ```
 
 ### ✅ Verify First
+
 ```typescript
 const file = await db.file.findFirst({
   where: { tenantId, folder, filename }
@@ -213,12 +239,14 @@ await supabase.storage.from('images').remove([...]);
 ## Environment Variables
 
 ### Mock Mode
+
 ```bash
 ADAPTERS_PRESET=mock
 # Files saved to: ./uploads/{logos,packages,segments}/
 ```
 
 ### Real Mode
+
 ```bash
 ADAPTERS_PRESET=real
 SUPABASE_URL=https://xxx.supabase.co
@@ -250,13 +278,13 @@ psql $DATABASE_URL -c "SELECT * FROM storage.objects WHERE bucket_id = 'images';
 
 ## Who to Ask
 
-| Topic | Contact |
-|-------|---------|
+| Topic           | Contact           |
+| --------------- | ----------------- |
 | Supabase config | DevOps / Platform |
-| Rate limiting | Middleware owner |
-| Security audit | Security team |
-| Storage quota | DevOps |
-| File lifecycle | Product |
+| Rate limiting   | Middleware owner  |
+| Security audit  | Security team     |
+| Storage quota   | DevOps            |
+| File lifecycle  | Product           |
 
 ---
 
@@ -272,6 +300,7 @@ psql $DATABASE_URL -c "SELECT * FROM storage.objects WHERE bucket_id = 'images';
 ## SOS (Emergency Issues)
 
 ### Storage Quota Exceeded
+
 ```bash
 # List files by tenant
 psql $DATABASE_URL << 'SQL'
@@ -291,6 +320,7 @@ SQL
 ```
 
 ### Orphaned Files
+
 ```bash
 # Find files with no matching package/segment
 psql $DATABASE_URL << 'SQL'
@@ -305,6 +335,7 @@ SQL
 ```
 
 ### Stuck Uploads
+
 ```bash
 # Check logs for errors
 kubectl logs -f deployment/api | grep upload

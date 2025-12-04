@@ -24,11 +24,13 @@
 ## [2025-11-24] - Phase 4 - Polish & Micro-interactions
 
 ### Added
+
 - **useScrollAnimation hook**: Intersection Observer-based scroll detection for animations
 - **AnimatedSection component**: Reusable wrapper for scroll-triggered fade-in animations
 - **Tailwind animations**: Added fade-in-up, fade-in, and scale-in keyframe animations
 
 ### Changed
+
 - **Empty States** (encouraging, actionable messaging):
   - BookingList: "No bookings yet" → "Your calendar is ready for clients"
   - TenantBookingList: Updated both empty and filter-no-results states
@@ -52,6 +54,7 @@
   - TestimonialsSection: Header and staggered card animations
 
 ### Files Modified
+
 - `client/tailwind.config.js` (animation keyframes)
 - `client/src/hooks/useScrollAnimation.ts` (NEW)
 - `client/src/components/AnimatedSection.tsx` (NEW)
@@ -74,11 +77,13 @@
 ## [2025-11-24] - Phase 3 - Social Proof & Lead Capture
 
 ### Added
+
 - **FAQSection**: New accordion FAQ with 5 questions from BRANDSCRIPT
 - **LeadMagnetSection**: Email capture for "The Admin Escape Plan" guide
 - **Social proof bar**: Added to Hero (50+ businesses, $2M+ managed, 4.9 rating)
 
 ### Changed
+
 - **TestimonialsSection**:
   - Title: "What Club Members Are Saying" → "Don't Take Our Word For It"
   - Subtitle: "Real businesses, real growth" → "Here's what happened when they joined"
@@ -92,6 +97,7 @@
   - Rewrote all 3 persona problems to be more visceral and specific
 
 ### Files Modified
+
 - `client/src/pages/Home/HeroSection.tsx` (social proof bar)
 - `client/src/pages/Home/TestimonialsSection.tsx`
 - `client/src/pages/Home/TargetAudienceSection.tsx`
@@ -104,9 +110,11 @@
 ## [2025-11-24] - Phase 2 - Homepage Transformation
 
 ### Added
+
 - **ProblemSection**: New "Sound Familiar?" section with 3 pain point cards (Drowning in Admin, Losing Leads, Burning Out)
 
 ### Changed
+
 - **ClubAdvantageSection**:
   - Title: "The Club Advantage" → "Your Growth Partner, Not Another Tool"
   - Card 1: "Business Growth, Accelerated" → "Marketing That Actually Works" + specific outcome
@@ -126,6 +134,7 @@
   - Trust badges updated to: "Free strategy call", "No credit card", "Cancel anytime"
 
 ### Files Modified
+
 - `client/src/pages/Home/ProblemSection.tsx` (NEW)
 - `client/src/pages/Home/index.tsx`
 - `client/src/pages/Home/ClubAdvantageSection.tsx`
@@ -137,6 +146,7 @@
 ## [2025-11-24] - Phase 1 - Copy Quick Wins
 
 ### Changed
+
 - **Hero headline**: "Unlock Your Business Potential..." → "Stop Drowning in Admin. Start Growing Your Business."
 - **Hero subheadline**: Feature list → Customer-focused value prop with social proof
 - **Primary CTA**: "Browse Packages" → "Start My Free Growth Audit"
@@ -148,6 +158,7 @@
 - **Mobile menu**: Updated to match desktop nav with CTA button
 
 ### Files Modified
+
 - `client/src/pages/Home/HeroSection.tsx`
 - `client/src/app/AppShell.tsx`
 
@@ -156,16 +167,19 @@
 ## [2025-11-24] - Phase 0 - Documentation Refactor
 
 ### Changed
+
 - Consolidated 5 bloated docs into 3 clean files
 - Established BRANDSCRIPT.md as single source of truth
 
 ### Added
+
 - `docs/marketing/BRANDSCRIPT.md` - Canonical brand messaging
 - `docs/marketing/IMPLEMENTATION.md` - Clean task checklist
 - `docs/marketing/CHANGELOG.md` - This file
 - `.claude/agents/donald-miller.md` - StoryBrand guidance agent
 
 ### Archived
+
 - `docs/marketing/00-MARKETING-OVERVIEW.md` → `docs/marketing/archive/`
 - `docs/marketing/01-STORYBRAND-AUDIT.md` → `docs/marketing/archive/`
 - `docs/marketing/03-COPY-IMPROVEMENTS.md` → `docs/marketing/archive/`
@@ -176,6 +190,7 @@
 ## Upcoming
 
 ### Phase 1: Quick Wins
+
 - [ ] Hero headline update
 - [ ] Primary CTA update
 - [ ] Footer fix
@@ -185,6 +200,7 @@
 - [ ] Testimonial enhancement
 
 ### Phase 2: Homepage Transform
+
 - [ ] Problem Section
 - [ ] Club Advantage rewrite
 - [ ] How It Works rewrite
@@ -193,6 +209,7 @@
 - [ ] Final CTA rewrite
 
 ### Phase 3: Full Funnel
+
 - [ ] Lead Magnet CTA
 - [ ] Package catalog updates
 - [ ] Booking flow progress
@@ -201,6 +218,7 @@
 - [ ] Exit intent modal
 
 ### Phase 4: Polish
+
 - [ ] Analytics events
 - [ ] Empty states
 - [ ] Hover effects

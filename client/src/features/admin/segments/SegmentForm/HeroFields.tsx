@@ -4,10 +4,10 @@
  * Hero section fields for segment form
  */
 
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { ImageUploadField } from "@/components/ImageUploadField";
-import { baseUrl } from "@/lib/api";
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { ImageUploadField } from '@/components/ImageUploadField';
+import { baseUrl } from '@/lib/api';
 
 interface HeroFieldsProps {
   heroTitle: string;

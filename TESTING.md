@@ -10,12 +10,14 @@
 ## Implemented Tests
 
 ### Unit Tests (44 passing)
+
 - `availability.service` — busy/booked/blackout cases ✅
 - `booking.service` — unique date + refund path; idempotent webhook ✅
 - `catalog.service` — package/add-on CRUD operations ✅
 - `identity.service` — login success/fail ✅
 
 ### E2E Tests (9 scenarios)
+
 - **Mock Booking Flow** (2 scenarios):
   - Complete booking with add-on and API availability check
   - Form validation (checkout disabled without required fields)
@@ -51,6 +53,7 @@ npm run build                       # Build all packages
 ## E2E Test Setup
 
 The E2E test suite uses Playwright and requires:
+
 1. **API server running on `http://localhost:3001` (mock mode)**
 2. Web dev server auto-started by Playwright on `http://localhost:3000`
 
@@ -67,6 +70,7 @@ npm run --workspace=server dev
 ### Environment Variables
 
 The E2E tests use environment variables set in `e2e/playwright.config.ts`:
+
 - `VITE_API_URL=http://localhost:3001` - API endpoint
 - `VITE_APP_MODE=mock` - Mock mode for testing
 
@@ -88,6 +92,7 @@ npm run test:e2e:headed
 ### Test Scenarios
 
 **Mock Booking Flow** (2 tests):
+
 - Complete booking with add-on and API availability verification
   - Selects first package, chooses future date, adds add-on
   - Completes mock checkout and payment
@@ -95,10 +100,12 @@ npm run test:e2e:headed
 - Form validation (checkout disabled without required fields)
 
 **Booking Flow** (2 tests):
+
 - Complete booking journey from homepage to confirmation
 - Form validation (checkout disabled without required fields)
 
 **Admin Flow** (5 tests):
+
 - Admin authentication and dashboard access
 - Package CRUD operations
 - Blackout date management
@@ -108,16 +115,19 @@ npm run test:e2e:headed
 ### Troubleshooting
 
 **API Connection Issues**:
+
 - Ensure API server is running on port 3001
 - Check no port conflicts: `lsof -i :3001`
 - Verify mock mode: API logs should show "🧪 Using MOCK adapters"
 
 **Test Flakiness**:
+
 - Tests use `waitForLoadState('networkidle')` to ensure API calls complete
 - If tests timeout, increase timeout in `e2e/playwright.config.ts`
 - Use `npm run test:e2e:headed` to debug visually
 
 **CI/CD**:
+
 - E2E tests run automatically in GitHub Actions via `.github/workflows/e2e.yml`
 - API server starts in mock mode; Playwright auto-starts web server
 - Tests are CI-ready with automatic retries (2 attempts)
@@ -125,6 +135,7 @@ npm run test:e2e:headed
 - Screenshots/videos captured on failure and uploaded as artifacts
 
 **Running a single test file**:
+
 ```bash
 npm run test:e2e e2e/tests/booking-mock.spec.ts
 ```

@@ -1,4 +1,5 @@
 # ELOPE - Architecture & Code Quality Assessment
+
 ## Post Phase 1 Migration Review (2025-10-23)
 
 ---
@@ -12,6 +13,7 @@ The Elope project has successfully completed migration from hexagonal to layered
 ### Phase 2B Completion Summary (2025-10-29)
 
 **Major Improvements Completed:**
+
 1. ✅ **Stripe Integration** - PaymentProvider fully wired into BookingService
 2. ✅ **Webhook Reliability** - Comprehensive error handling and idempotency checks
 3. ✅ **Concurrency Control** - Pessimistic locking for double-booking prevention
@@ -19,17 +21,20 @@ The Elope project has successfully completed migration from hexagonal to layered
 5. ✅ **Architecture Documentation** - ADRs created for all key decisions
 
 **Production Readiness Upgraded:**
+
 - Before: 82% production ready (Phase 2A)
 - After: 95% production ready (Phase 2B)
 - Remaining: Polish and optional enhancements
 
 **Critical Issues Resolved:**
+
 - Payment flow now functional end-to-end (Stripe checkout → webhook → booking creation)
 - Race conditions handled with database transaction locks
 - Webhook DLQ implemented for error recovery
 - Full audit trail for payment processing
 
 **See Also:**
+
 - DECISIONS.md for architectural decision records
 - PHASE_2B_COMPLETION_REPORT.md for detailed completion report
 - SUPABASE_INTEGRATION_COMPLETE.md for database setup details
@@ -41,18 +46,21 @@ The Elope project has successfully completed migration from hexagonal to layered
 ### 1.1 Critical Issues
 
 #### Issue: Inconsistent Stripe Checkout Implementation ~~(RESOLVED - Phase 2B)~~
+
 **Severity**: ~~HIGH~~ **RESOLVED** | **Impact**: Business logic correctness
 **Location**: `server/src/services/booking.service.ts:18-37`
 
 ~~The `createCheckout()` method returns a **placeholder URL** instead of integrating with Stripe.~~
 
 **Status: COMPLETED (Phase 2B - 2025-10-29)**
+
 - ✅ PaymentProvider injected into BookingService
 - ✅ Real Stripe checkout session created via `paymentProvider.createCheckoutSession()`
 - ✅ Metadata properly encoded for webhook processing
 - ✅ Error handling added for Stripe API failures
 
 **Implementation**:
+
 ```typescript
 // Now correctly implemented
 const session = await this.paymentProvider.createCheckoutSession({
@@ -75,19 +83,23 @@ return { checkoutUrl: session.url };
 ---
 
 #### Issue: Orphaned Services Without DI Wiring
+
 **Severity**: MEDIUM | **Impact**: Unused code, confusion
 **Location**: `server/src/services/`
 
 Two services are defined but **never injected into controllers or tests**:
+
 1. **webhook-handler.service.ts** — Defines `handlePaymentWebhook()` but is imported nowhere
 2. **catalog-optimized.service.ts** — Standalone query functions, no class, imported nowhere
 
 **Problem**:
+
 - These services suggest a P0/P1 implementation plan that was abandoned mid-flight
 - Code smell: "optimized" variant exists but "standard" CatalogService is used instead
 - Unclear which implementation is canonical; creates maintenance confusion
 
 **Recommendation**:
+
 - Delete `webhook-handler.service.ts` — logic is in WebhooksController
 - Delete `catalog-optimized.service.ts` — merge optimizations into main CatalogService if needed, or document why variant exists
 - Or: complete the implementation and wire both into DI container with feature flags
@@ -97,10 +109,12 @@ Two services are defined but **never injected into controllers or tests**:
 ### 1.2 Moderate Issues
 
 #### Issue: Missing PaymentProvider in DI for Real Mode
+
 **Severity**: MEDIUM | **Impact**: Incomplete dependency graph
 **Location**: `server/src/di.ts:147`, `server/src/services/booking.service.ts:11-16`
 
 BookingService constructor expects `paymentProvider` is NOT injected:
+
 ```typescript
 // DI.ts - missing:
 // const bookingService = new BookingService(bookingRepo, catalogRepo, eventEmitter, paymentProvider);
@@ -121,16 +135,18 @@ export class BookingService {
 ---
 
 #### Issue: Inconsistent Error Handling Patterns Across Repositories
+
 **Severity**: MEDIUM | **Impact**: Error consistency
 **Location**: `server/src/adapters/prisma/catalog.repository.ts`, `booking.repository.ts`
 
-- **CatalogRepository** throws `DomainError('NOT_FOUND')` 
+- **CatalogRepository** throws `DomainError('NOT_FOUND')`
 - **BookingRepository** throws `BookingConflictError` (which extends ConflictError)
 - No consistent pattern for repository error strategy
 
 Expected: All repos should follow same error hierarchy (e.g., always use DomainError subclasses).
 
 **Recommendation**: Create base repository error types:
+
 ```typescript
 export class RepositoryError extends DomainError {}
 export class RepositoryNotFoundError extends RepositoryError {}
@@ -142,6 +158,7 @@ export class RepositoryConflictError extends RepositoryError {}
 ### 1.3 Minor Architectural Inconsistencies
 
 #### Issue: BlackoutsController Directly Exposes Repository
+
 **Severity**: LOW | **Impact**: Inconsistent layering
 **Location**: `server/src/routes/blackouts.routes.ts:7-8`
 
@@ -155,16 +172,20 @@ export class BlackoutsController {
 **Why This Matters**: If business logic for blackouts is ever needed (e.g., validation, logging), there's no service layer to add it to.
 
 **Recommendation**: Create `BlackoutService`:
+
 ```typescript
 export class BlackoutService {
   constructor(private readonly repo: BlackoutRepository) {}
-  async addBlackout(date: string, reason?: string) { /* validation + repo call */ }
+  async addBlackout(date: string, reason?: string) {
+    /* validation + repo call */
+  }
 }
 ```
 
 ---
 
 #### Issue: Dev Routes Hardcoded in app.ts
+
 **Severity**: LOW | **Impact**: Code organization
 **Location**: `server/src/app.ts:102-135`
 
@@ -179,10 +200,12 @@ Dev simulator routes are manually wired in `app.ts` instead of through router se
 ### 2.1 High-Impact Issues
 
 #### Issue: Duplicate File Sink Logic in PostmarkMailAdapter
+
 **Severity**: MEDIUM | **Impact**: Maintainability, DRY violation
 **Location**: `server/src/adapters/postmark.adapter.ts`
 
 Same fallback logic appears **twice**:
+
 - Lines 13-25 in `sendEmail()`
 - Lines 71-82 in `sendBookingConfirm()`
 
@@ -200,6 +223,7 @@ if (!this.cfg.serverToken) {
 ```
 
 **Recommendation**: Extract into private method:
+
 ```typescript
 private async writeToFileSink(email: string, subject: string, body: string) { /* shared logic */ }
 ```
@@ -207,6 +231,7 @@ private async writeToFileSink(email: string, subject: string, body: string) { /*
 ---
 
 #### Issue: Unused Private Event Emitter in BookingService
+
 **Severity**: LOW | **Impact**: Code clarity
 **Location**: `server/src/services/booking.service.ts:15`
 
@@ -215,12 +240,14 @@ private readonly _eventEmitter: EventEmitter  // underscore prefix = unused?
 ```
 
 Event is used in `onPaymentCompleted()` but naming suggests it shouldn't be used. Either:
-1. Remove the underscore (it IS used) 
+
+1. Remove the underscore (it IS used)
 2. Remove the parameter (if not actually needed)
 
 ---
 
 #### Issue: Type-Unsafe Mapping in Catalog Repository
+
 **Severity**: LOW | **Impact**: Runtime safety
 **Location**: `server/src/adapters/prisma/catalog.repository.ts:258-271`
 
@@ -242,6 +269,7 @@ private toDomainAddOn(addOn: {
 **Risk**: If AddOn has no packages, returns empty string instead of throwing or handling.
 
 **Recommendation**: Either:
+
 ```typescript
 if (!addOn.packages[0]) throw new Error('AddOn must belong to a package');
 // OR in domain constraint
@@ -253,10 +281,12 @@ packageId: addOn.packages[0]!.packageId,  // Non-null assertion after validation
 ### 2.2 Moderate Issues
 
 #### Issue: Postmark Adapter Mixes Email Formatting with Sending
+
 **Severity**: MEDIUM | **Impact**: Single Responsibility Principle
 **Location**: `server/src/adapters/postmark.adapter.ts:49-104`
 
 `sendBookingConfirm()` creates its own email template instead of receiving HTML:
+
 ```typescript
 async sendBookingConfirm(to: string, payload: { ... }): Promise<void> {
   const subject = `Your micro-wedding is booked for ${payload.eventDate}`;
@@ -270,6 +300,7 @@ async sendBookingConfirm(to: string, payload: { ... }): Promise<void> {
 **Problem**: Template logic mixed with adapter — hard to change templates without touching infrastructure.
 
 **Better Pattern**:
+
 ```typescript
 // service/notification-formatter.ts
 export function formatBookingConfirmation(payload: { ... }): { subject: string; html: string } {
@@ -286,6 +317,7 @@ async sendBookingConfirm(to: string, payload: { ... }): Promise<void> {
 ---
 
 #### Issue: CatalogService N+1 Query in getAllPackages()
+
 **Severity**: MEDIUM | **Impact**: Performance
 **Location**: `server/src/services/catalog.service.ts:22-31`
 
@@ -306,13 +338,15 @@ async getAllPackages(): Promise<PackageWithAddOns[]> {
 
 **Note**: `catalog-optimized.service.ts` has eager loading example using Prisma `include`, but it's not used.
 
-**Recommendation**: 
+**Recommendation**:
+
 - Move eager loading logic into repository: `getAllPackagesWithAddOns()`
 - Or use Prisma's `.include()` in real mode (already shown in optimized variant)
 
 ---
 
 #### Issue: GoogleCalendar Adapter Missing Implementation Details
+
 **Severity**: LOW | **Impact**: Feature completeness
 **Location**: `server/src/adapters/gcal.adapter.ts` (not fully reviewed)
 
@@ -323,12 +357,14 @@ No detailed error handling for Google Calendar API failures observed. If API is 
 ### 2.3 Minor Issues
 
 #### Issue: Inconsistent Null/Undefined Handling
+
 **Severity**: LOW | **Impact**: Type safety
 **Location**: Multiple files
 
 Some functions use optional chaining (`?.`), others use explicit null checks. Inconsistent patterns reduce clarity.
 
 Example:
+
 ```typescript
 // catalog.service.ts:37-39 - explicit return
 if (!pkg) { throw ... }
@@ -345,9 +381,11 @@ return booking ? this.toDomainBooking(booking) : null;
 ### 3.1 Critical Coverage Gaps
 
 #### Gap 1: No Tests for WebhooksController ~~(RESOLVED - Phase 2B)~~
+
 **Severity**: ~~HIGH~~ **RESOLVED** | **Impact**: Payment flow validation
 
 **Status: COMPLETED (Phase 2B - 2025-10-29)**
+
 - ✅ Comprehensive webhook handler tests added
 - ✅ Signature verification tests (valid/invalid)
 - ✅ Metadata parsing with Zod validation tests
@@ -356,6 +394,7 @@ return booking ? this.toDomainBooking(booking) : null;
 - ✅ 100% coverage target achieved for webhook handler
 
 **Test Coverage:**
+
 ```typescript
 describe('WebhooksController', () => {
   describe('handleStripeWebhook', () => {
@@ -375,8 +414,10 @@ describe('WebhooksController', () => {
 ---
 
 #### Gap 2: No Tests for Stripe/Postmark Adapters
+
 **Severity**: HIGH | **Impact**: External integration validation
 **Missing Tests**:
+
 - StripePaymentAdapter.createCheckoutSession() — session creation
 - StripePaymentAdapter.verifyWebhook() — signature verification
 - PostmarkMailAdapter.sendEmail() — email delivery fallback logic
@@ -385,6 +426,7 @@ describe('WebhooksController', () => {
 **Note**: Fakes exist in test/helpers/fakes.ts but real adapters are untested.
 
 **Recommendation**: Add integration tests (can use environment variables for real credentials):
+
 ```typescript
 describe('StripePaymentAdapter (integration)', () => {
   it('creates real Stripe checkout session', async () => {
@@ -396,14 +438,17 @@ describe('StripePaymentAdapter (integration)', () => {
 ---
 
 #### Gap 3: No Tests for Repository Mappers
+
 **Severity**: MEDIUM | **Impact**: ORM integration correctness
 **Missing Tests**:
+
 - PrismaCatalogRepository.toDomainPackage() — null/undefined handling
 - PrismaCatalogRepository.toDomainAddOn() — packages[0] edge case
 - PrismaBookingRepository.toDomainBooking() — status mapping
 - Date conversions (toISOString, new Date())
 
 **Recommendation**: Add `test/adapters/prisma-mappers.spec.ts`:
+
 ```typescript
 describe('Prisma Mappers', () => {
   describe('toDomainAddOn', () => {
@@ -417,10 +462,12 @@ describe('Prisma Mappers', () => {
 ---
 
 #### Gap 4: No E2E Tests for Booking Flow
+
 **Severity**: MEDIUM | **Impact**: End-to-end correctness
 **Current E2E**: Only `/v1/packages` routes are tested (see `test/http/packages.test.ts`)
 
 **Missing**:
+
 - Complete booking creation flow (checkout → webhook → confirmation)
 - Admin authentication and blackout management
 - Availability checking with all three constraint types
@@ -433,15 +480,17 @@ describe('Prisma Mappers', () => {
 ### 3.2 Moderate Coverage Gaps
 
 #### Gap: Auth Middleware Test References Old Paths
+
 **Severity**: MEDIUM | **Impact**: Test maintenance
 **Location**: `test/middleware/auth.spec.ts:8-10`
 
 ```typescript
-import { IdentityService } from '../../src/domains/identity/service';  // WRONG PATH
-import type { TokenPayload } from '../../src/domains/identity/port';    // WRONG PATH
+import { IdentityService } from '../../src/domains/identity/service'; // WRONG PATH
+import type { TokenPayload } from '../../src/domains/identity/port'; // WRONG PATH
 ```
 
 After migration, these paths should be:
+
 ```typescript
 import { IdentityService } from '../../src/services/identity.service';
 import type { TokenPayload } from '../../src/lib/ports';
@@ -452,9 +501,11 @@ import type { TokenPayload } from '../../src/lib/ports';
 ---
 
 #### Gap: No Tests for Error Scenarios in Services
+
 **Severity**: LOW | **Impact**: Error path coverage
 
 While happy paths are tested, some error scenarios are missing:
+
 - CatalogService: What happens if repository operations fail unexpectedly?
 - AvailabilityService: What if calendar provider throws?
 - BookingService: What if eventEmitter.emit() throws?
@@ -464,20 +515,24 @@ While happy paths are tested, some error scenarios are missing:
 ### 3.3 Test Infrastructure Quality
 
 #### Good: Excellent Fake Implementations
+
 **Location**: `test/helpers/fakes.ts`
 
 Strong test infrastructure with:
+
 - Proper fake implementations of all ports
 - Builder functions with sensible defaults
 - Test helpers (addBooking, clear, etc.)
 - EventEmitter with event tracking
 
 #### Good: Error Handler Tests
+
 **Location**: `test/middleware/error-handler.spec.ts`
 
 Comprehensive error mapping tests (7/7 error types covered).
 
 #### Opportunity: Shared Test Setup
+
 Consider extracting repeated "beforeEach" and container setup into shared utilities.
 
 ---
@@ -487,17 +542,21 @@ Consider extracting repeated "beforeEach" and container setup into shared utilit
 ### 4.1 Issues
 
 #### Issue: ARCHITECTURE.md Misaligns with Current Code
+
 **Severity**: LOW | **Impact**: Onboarding confusion
 **Location**: `ARCHITECTURE.md` vs `server/src/`
 
 Documentation says:
+
 > **Booking** — create checkout, handle payment completion, unique‑per‑date guarantee. Uses: `PaymentProvider`, `BookingRepository`, `EmailProvider`
 
 But code shows:
+
 - BookingService never receives PaymentProvider (missing from DI)
 - EmailProvider interaction happens in di.ts event subscription, not in service
 
 **Recommendation**: Update ARCHITECTURE.md to clarify actual code paths, especially around:
+
 1. How Stripe checkout is (or isn't) called
 2. Where EmailProvider.sendEmail is wired up (in di.ts, not service)
 3. The orphaned services (webhook-handler, catalog-optimized)
@@ -505,9 +564,11 @@ But code shows:
 ---
 
 #### Issue: Missing Inline Documentation in Critical Paths
+
 **Severity**: LOW | **Impact**: Code maintainability
 
 High-complexity areas lack explanation:
+
 - `booking.repository.ts:31-42` — Status mapping between domain and Prisma enums
 - `postmark.adapter.ts:14-26` — File sink fallback logic
 - `di.ts:150-170` — Event subscription setup is complex but undocumented
@@ -519,6 +580,7 @@ High-complexity areas lack explanation:
 ### 4.2 Good Documentation Practices
 
 Strong documentation in:
+
 - Controllers — each route handler is clear
 - Ports — well-documented interface contracts
 - Error handling — error hierarchy is clear
@@ -531,6 +593,7 @@ Strong documentation in:
 ### 5.1 Analysis
 
 #### Good: Centralized DI Container
+
 - Single source of truth in `di.ts`
 - Clear two-mode setup (mock vs real)
 - Services wired to their dependencies
@@ -549,13 +612,16 @@ Strong documentation in:
    - If future code needs to call services directly (e.g., in a cronjob), they're not available
 
 **Recommendation**:
+
 ```typescript
 export interface Container {
-  controllers: { /* ... */ };
+  controllers: {
+    /* ... */
+  };
   services: {
     identity: IdentityService;
-    catalog: CatalogService;        // Add
-    booking: BookingService;         // Add
+    catalog: CatalogService; // Add
+    booking: BookingService; // Add
     availability: AvailabilityService; // Add
   };
 }
@@ -661,34 +727,29 @@ export interface Container {
 
 ## 8. SUMMARY TABLE
 
-| Category | Rating | Notes |
-|----------|--------|-------|
-| **Architectural Consistency** | 7/10 | Good layering; missing payment integration in booking flow |
-| **Code Quality** | 7/10 | DRY violations, minor SRP issues; overall clean |
-| **Test Coverage** | 6/10 | Services covered; adapters/controllers missing |
-| **Documentation** | 7/10 | Architecture.md accurate but slightly out of sync; good inline docs in most files |
-| **Error Handling** | 8/10 | Strong error hierarchy; consistent mapping to HTTP codes |
-| **Dependency Injection** | 7/10 | Clear DI container but some services not exposed |
-| **Performance** | 6/10 | N+1 query issue in catalog; otherwise solid |
+| Category                      | Rating | Notes                                                                             |
+| ----------------------------- | ------ | --------------------------------------------------------------------------------- |
+| **Architectural Consistency** | 7/10   | Good layering; missing payment integration in booking flow                        |
+| **Code Quality**              | 7/10   | DRY violations, minor SRP issues; overall clean                                   |
+| **Test Coverage**             | 6/10   | Services covered; adapters/controllers missing                                    |
+| **Documentation**             | 7/10   | Architecture.md accurate but slightly out of sync; good inline docs in most files |
+| **Error Handling**            | 8/10   | Strong error hierarchy; consistent mapping to HTTP codes                          |
+| **Dependency Injection**      | 7/10   | Clear DI container but some services not exposed                                  |
+| **Performance**               | 6/10   | N+1 query issue in catalog; otherwise solid                                       |
 
 ---
 
 ## 9. NEXT STEPS
 
 **Immediate (This Week)**:
+
 1. Fix BookingService Stripe integration
 2. Delete orphaned services
 3. Extract PostmarkMailAdapter file sink logic
 
-**Next Sprint**:
-4. Add WebhooksController tests
-5. Create BlackoutService
-6. Fix auth.spec.ts imports
+**Next Sprint**: 4. Add WebhooksController tests 5. Create BlackoutService 6. Fix auth.spec.ts imports
 
-**Ongoing**:
-7. Improve test coverage for adapters
-8. Document trade-offs (e.g., why catalog-optimized exists)
-9. Plan for notification system refactoring
+**Ongoing**: 7. Improve test coverage for adapters 8. Document trade-offs (e.g., why catalog-optimized exists) 9. Plan for notification system refactoring
 
 ---
 

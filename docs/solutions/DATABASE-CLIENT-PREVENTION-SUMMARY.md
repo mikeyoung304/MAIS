@@ -18,6 +18,7 @@ priority: P0
 **Root Cause:** Architecture mismatch - mixing two incompatible database access patterns
 
 **Impact:**
+
 - Database verification failed at startup
 - Confusion about which client to use
 - Potential for inconsistent patterns in future code
@@ -41,6 +42,7 @@ Transaction management               PRISMA ✓
 ```
 
 ### Key Principle
+
 **One client per purpose.** Prisma for databases, Supabase for storage and auth.
 
 ---
@@ -50,9 +52,11 @@ Transaction management               PRISMA ✓
 This prevention strategy includes 4 comprehensive documents:
 
 ### 1. **Full Prevention Strategy**
+
 📄 File: `PREVENTION-STRATEGY-DATABASE-CLIENT-MISMATCH.md` (15 sections, ~8,000 words)
 
 **Contains:**
+
 - Complete problem analysis
 - Architectural decision record (ADR-003)
 - Best practice patterns with code examples
@@ -67,9 +71,11 @@ This prevention strategy includes 4 comprehensive documents:
 ---
 
 ### 2. **Quick Reference Guide**
+
 📄 File: `DATABASE-CLIENT-QUICK-REFERENCE.md` (~500 words)
 
 **Contains:**
+
 - One-page cheat sheet
 - Client allocation matrix
 - Correct vs. wrong patterns
@@ -84,9 +90,11 @@ This prevention strategy includes 4 comprehensive documents:
 ---
 
 ### 3. **Testing Implementation Guide**
+
 📄 File: `DATABASE-CLIENT-TESTING-GUIDE.md` (~2,000 words)
 
 **Contains:**
+
 - Unit test patterns
 - Integration test patterns
 - E2E test patterns
@@ -101,9 +109,11 @@ This prevention strategy includes 4 comprehensive documents:
 ---
 
 ### 4. **Code Review Guide**
+
 📄 File: `DATABASE-CLIENT-CODE-REVIEW-GUIDE.md` (~2,500 words)
 
 **Contains:**
+
 - Complete review checklist
 - Common patterns to check
 - Anti-pattern detection
@@ -180,7 +190,7 @@ const { error } = await supabase.from('Tenant').select('count');
 
 // ❌ Never store files as JSON in database
 await prisma.tenant.update({
-  data: { logo: fileBuffer } // Wrong! Use Supabase Storage
+  data: { logo: fileBuffer }, // Wrong! Use Supabase Storage
 });
 ```
 
@@ -189,26 +199,31 @@ await prisma.tenant.update({
 ## Prevention Mechanisms
 
 ### 1. Code Review Checklist
+
 - All PRs must pass database client verification
 - Automated checks + manual review
 - Clear templates for common issues
 
 ### 2. Automated Testing
+
 - Integration tests verify Prisma startup
 - E2E tests verify complete API startup
 - Negative tests document why anti-patterns fail
 
 ### 3. Linting
+
 - ESLint rule to detect `supabase.from()` for database queries
 - Pre-commit hooks run linting
 - CI/CD gates prevent merge of violations
 
 ### 4. Documentation
+
 - Code comments in `database.ts` explain client usage
 - Architecture documentation in CLAUDE.md
 - Inline examples in repositories
 
 ### 5. Team Training
+
 - Onboarding includes 15-minute session
 - Quiz verifies understanding
 - Slack reminders about patterns
@@ -217,20 +232,21 @@ await prisma.tenant.update({
 
 ## Metrics & Success Criteria
 
-| Metric | Target | Status |
-|--------|--------|--------|
-| All database queries use Prisma | 100% | ✅ 100% |
+| Metric                              | Target     | Status        |
+| ----------------------------------- | ---------- | ------------- |
+| All database queries use Prisma     | 100%       | ✅ 100%       |
 | Zero supabase.from() for DB queries | 0 findings | ✅ 0 findings |
-| Startup verification working | 100% | ✅ Working |
-| Database client tests passing | 100% | ✅ All pass |
-| Code review checklist adoption | 100% | ✅ 100% |
-| Team awareness (quiz) | ≥90% | 🔄 Pending |
+| Startup verification working        | 100%       | ✅ Working    |
+| Database client tests passing       | 100%       | ✅ All pass   |
+| Code review checklist adoption      | 100%       | ✅ 100%       |
+| Team awareness (quiz)               | ≥90%       | 🔄 Pending    |
 
 ---
 
 ## Implementation Roadmap
 
 ### Phase 1: Documentation (Week 1) ✅
+
 - [x] Create prevention strategy document
 - [x] Create quick reference guide
 - [x] Create testing guide
@@ -238,18 +254,21 @@ await prisma.tenant.update({
 - [x] This summary document
 
 ### Phase 2: Code Quality (Week 2) ⏳
+
 - [ ] Add ESLint rule for database client mismatch
 - [ ] Update PR template with database verification
 - [ ] Add comments to database.ts
 - [ ] Configure CI/CD gates
 
 ### Phase 3: Testing (Week 3) ⏳
+
 - [ ] Implement integration test patterns
 - [ ] Implement E2E test patterns
 - [ ] Add database startup verification test
 - [ ] Configure test coverage gates
 
 ### Phase 4: Team Adoption (Week 4) ⏳
+
 - [ ] Conduct training sessions
 - [ ] Administer quiz to verify understanding
 - [ ] Review existing code for anti-patterns
@@ -264,6 +283,7 @@ await prisma.tenant.update({
 **Decision:** Prisma is the single source of truth for all database operations. Supabase JS client only for Storage and Auth APIs.
 
 **Rationale:**
+
 1. **Type Safety:** Prisma generates typed client from schema
 2. **Performance:** Connection pooling beats HTTP API
 3. **API Exposure:** Supabase doesn't expose all tables via REST
@@ -271,6 +291,7 @@ await prisma.tenant.update({
 5. **Transactions:** Prisma handles them; Supabase JS doesn't
 
 **Consequences:**
+
 - ✅ Clear client allocation prevents confusion
 - ✅ Faster database operations
 - ✅ Type-safe queries reduce runtime errors
@@ -281,41 +302,48 @@ await prisma.tenant.update({
 
 ## File Locations
 
-| Purpose | File |
-|---------|------|
-| Supabase/Prisma Config | `/server/src/config/database.ts` |
-| DI Container | `/server/src/di.ts` |
-| Startup Verification | `/server/src/index.ts` |
-| Upload Adapter | `/server/src/adapters/upload.adapter.ts` |
-| Repositories | `/server/src/adapters/prisma/*.ts` |
-| Architecture Docs | `/CLAUDE.md` (section: Architecture Patterns) |
+| Purpose                  | File                                                              |
+| ------------------------ | ----------------------------------------------------------------- |
+| Supabase/Prisma Config   | `/server/src/config/database.ts`                                  |
+| DI Container             | `/server/src/di.ts`                                               |
+| Startup Verification     | `/server/src/index.ts`                                            |
+| Upload Adapter           | `/server/src/adapters/upload.adapter.ts`                          |
+| Repositories             | `/server/src/adapters/prisma/*.ts`                                |
+| Architecture Docs        | `/CLAUDE.md` (section: Architecture Patterns)                     |
 | This Prevention Strategy | `/docs/solutions/PREVENTION-STRATEGY-DATABASE-CLIENT-MISMATCH.md` |
-| Quick Reference | `/docs/solutions/DATABASE-CLIENT-QUICK-REFERENCE.md` |
-| Testing Guide | `/docs/solutions/DATABASE-CLIENT-TESTING-GUIDE.md` |
-| Code Review Guide | `/docs/solutions/DATABASE-CLIENT-CODE-REVIEW-GUIDE.md` |
+| Quick Reference          | `/docs/solutions/DATABASE-CLIENT-QUICK-REFERENCE.md`              |
+| Testing Guide            | `/docs/solutions/DATABASE-CLIENT-TESTING-GUIDE.md`                |
+| Code Review Guide        | `/docs/solutions/DATABASE-CLIENT-CODE-REVIEW-GUIDE.md`            |
 
 ---
 
 ## Common Questions
 
 ### Q: Why not use Supabase JS client for everything?
+
 **A:**
+
 1. Supabase JS uses REST API (slower than Prisma connection pooling)
 2. Not all tables are exposed via REST API (e.g., Tenant table)
 3. No transaction support
 4. Less type safety
 
 ### Q: Can I use raw SQL instead of Prisma?
+
 **A:** For rare complex queries, use `prisma.$queryRaw()`. Never bypass Prisma entirely.
 
 ### Q: What about caching database queries?
+
 **A:** Use `CacheService` for application-level caching. Cache keys MUST include `tenantId`.
 
 ### Q: How do I verify database at startup?
+
 **A:** Use `prisma.$queryRaw()`, never Supabase JS client. See example in Section 4 of full strategy.
 
 ### Q: What if I need to query multiple tables in a transaction?
+
 **A:** Use `prisma.$transaction()`:
+
 ```typescript
 await prisma.$transaction(async (tx) => {
   const booking = await tx.booking.create({ data });
@@ -348,16 +376,19 @@ If you find a violation:
 ## Related Documentation
 
 ### Architecture & Design
+
 - [CLAUDE.md](../../CLAUDE.md) - Complete architecture guide
 - [ARCHITECTURE_DIAGRAM.md](../../ARCHITECTURE_DIAGRAM.md) - System diagrams
 - [DECISIONS.md](../../DECISIONS.md) - All architectural decisions
 
 ### Database & Setup
+
 - [docs/setup/DATABASE.md](../../docs/setup/DATABASE.md)
 - [docs/setup/SUPABASE.md](../../docs/setup/SUPABASE.md)
 - [docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md](../../docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md)
 
 ### Related ADRs
+
 - ADR-001: Double-Booking Prevention (transactions)
 - ADR-002: Webhook Idempotency (database deduplication)
 - ADR-003: Database Client Allocation (this strategy)
@@ -367,6 +398,7 @@ If you find a violation:
 ## Changelog
 
 ### Version 1.0 (2025-12-01)
+
 - ✅ Initial prevention strategy released
 - ✅ Quick reference guide created
 - ✅ Testing guide documented
@@ -374,6 +406,7 @@ If you find a violation:
 - ✅ This summary document created
 
 ### Planned Updates
+
 - Q1 2026: Post-implementation review
 - Ongoing: Updates based on team feedback
 
@@ -382,7 +415,9 @@ If you find a violation:
 ## Success Story: How We Resolved It
 
 ### The Problem
+
 During API startup verification, code attempted to query the `Tenant` table via Supabase JS client:
+
 ```typescript
 // ❌ WRONG: Attempted in earlier version
 const { error } = await supabase.from('Tenant').select('*');
@@ -390,12 +425,15 @@ if (error) throw new Error('Database down');
 ```
 
 **Why it failed:**
+
 - Tenant table not exposed via Supabase REST API
 - Server startup failed with cryptic error message
 - Confusion about which client to use for database
 
 ### The Solution
+
 Switched to Prisma for database verification:
+
 ```typescript
 // ✅ CORRECT: Now implemented
 const result = await prisma.$queryRaw<{ count: bigint }[]>`
@@ -404,13 +442,16 @@ const result = await prisma.$queryRaw<{ count: bigint }[]>`
 ```
 
 **Benefits:**
+
 - Startup verification works reliably
 - Clear pattern: Prisma for database, Supabase for storage
 - Faster due to connection pooling
 - Type-safe with generated types
 
 ### The Prevention
+
 Comprehensive documentation prevents similar issues:
+
 1. Clear allocation of client responsibilities
 2. Automated checks (ESLint, grep, tests)
 3. Code review templates and checklists
@@ -422,17 +463,20 @@ Comprehensive documentation prevents similar issues:
 ## Next Steps for Teams
 
 ### For Immediate Use
+
 1. ✅ Read quick reference (5 min)
 2. ✅ Use review checklist for PRs
 3. ✅ Run self-review commands before committing
 
 ### For Full Implementation
+
 1. ⏳ Complete Phase 2-4 of implementation roadmap
 2. ⏳ Set up ESLint rules and CI/CD gates
 3. ⏳ Implement test patterns
 4. ⏳ Conduct team training
 
 ### For Long-Term Success
+
 1. ⏳ Monitor metrics quarterly
 2. ⏳ Update documentation as patterns evolve
 3. ⏳ Celebrate zero violations milestone
@@ -468,13 +512,13 @@ Comprehensive documentation prevents similar issues:
 
 ## Document Index
 
-| Document | Purpose | Read Time | Audience |
-|----------|---------|-----------|----------|
-| [PREVENTION-STRATEGY-DATABASE-CLIENT-MISMATCH.md](./PREVENTION-STRATEGY-DATABASE-CLIENT-MISMATCH.md) | Complete guide | 20 min | Engineers, Tech Leads |
-| [DATABASE-CLIENT-QUICK-REFERENCE.md](./DATABASE-CLIENT-QUICK-REFERENCE.md) | Daily cheat sheet | 5 min | All engineers |
-| [DATABASE-CLIENT-TESTING-GUIDE.md](./DATABASE-CLIENT-TESTING-GUIDE.md) | Test patterns | 15 min | QA, Test authors |
-| [DATABASE-CLIENT-CODE-REVIEW-GUIDE.md](./DATABASE-CLIENT-CODE-REVIEW-GUIDE.md) | Review checklist | 10 min | Code reviewers |
-| [DATABASE-CLIENT-PREVENTION-SUMMARY.md](./DATABASE-CLIENT-PREVENTION-SUMMARY.md) | This document | 10 min | All engineers |
+| Document                                                                                             | Purpose           | Read Time | Audience              |
+| ---------------------------------------------------------------------------------------------------- | ----------------- | --------- | --------------------- |
+| [PREVENTION-STRATEGY-DATABASE-CLIENT-MISMATCH.md](./PREVENTION-STRATEGY-DATABASE-CLIENT-MISMATCH.md) | Complete guide    | 20 min    | Engineers, Tech Leads |
+| [DATABASE-CLIENT-QUICK-REFERENCE.md](./DATABASE-CLIENT-QUICK-REFERENCE.md)                           | Daily cheat sheet | 5 min     | All engineers         |
+| [DATABASE-CLIENT-TESTING-GUIDE.md](./DATABASE-CLIENT-TESTING-GUIDE.md)                               | Test patterns     | 15 min    | QA, Test authors      |
+| [DATABASE-CLIENT-CODE-REVIEW-GUIDE.md](./DATABASE-CLIENT-CODE-REVIEW-GUIDE.md)                       | Review checklist  | 10 min    | Code reviewers        |
+| [DATABASE-CLIENT-PREVENTION-SUMMARY.md](./DATABASE-CLIENT-PREVENTION-SUMMARY.md)                     | This document     | 10 min    | All engineers         |
 
 ---
 

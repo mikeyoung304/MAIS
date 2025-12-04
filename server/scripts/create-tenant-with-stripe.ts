@@ -273,9 +273,18 @@ async function main() {
 
     console.log('Account ID:   ', stripeAccount.accountId);
     console.log('Country:      ', country);
-    console.log('Charges:      ', stripeAccount.chargesEnabled ? 'Enabled' : 'Disabled (complete onboarding)');
-    console.log('Payouts:      ', stripeAccount.payoutsEnabled ? 'Enabled' : 'Disabled (complete onboarding)');
-    console.log('Details:      ', stripeAccount.detailsSubmitted ? 'Submitted' : 'Pending (complete onboarding)');
+    console.log(
+      'Charges:      ',
+      stripeAccount.chargesEnabled ? 'Enabled' : 'Disabled (complete onboarding)'
+    );
+    console.log(
+      'Payouts:      ',
+      stripeAccount.payoutsEnabled ? 'Enabled' : 'Disabled (complete onboarding)'
+    );
+    console.log(
+      'Details:      ',
+      stripeAccount.detailsSubmitted ? 'Submitted' : 'Pending (complete onboarding)'
+    );
 
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('🔗 STRIPE ONBOARDING');
@@ -321,7 +330,9 @@ async function main() {
 
     // Check account status
     console.log('💡 To check Stripe account status later, run:');
-    console.log(`   curl -X GET http://localhost:5000/v1/admin/tenants/${tenant.id}/stripe/status \\`);
+    console.log(
+      `   curl -X GET http://localhost:5000/v1/admin/tenants/${tenant.id}/stripe/status \\`
+    );
     console.log(`        -H "Authorization: Bearer YOUR_ADMIN_TOKEN"\n`);
 
     process.exit(0);

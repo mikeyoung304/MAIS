@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "100"
+issue_id: '100'
 tags: [code-review, typescript, contracts, ui-redesign]
 dependencies: []
 ---
@@ -37,6 +37,7 @@ The BookingDto contract likely doesn't include a `status` field, but the UI need
 ## Proposed Solutions
 
 ### Solution 1: Add Status to BookingDto Contract (Recommended)
+
 **Pros:** Proper type safety, single source of truth
 **Cons:** Requires contract change
 **Effort:** Small (1 hour)
@@ -57,6 +58,7 @@ export const BookingSchema = z.object({
 ```
 
 ### Solution 2: Create Extended Type in Component
+
 **Pros:** No contract change needed
 **Cons:** Type lives in wrong place
 **Effort:** Small
@@ -64,7 +66,7 @@ export const BookingSchema = z.object({
 
 ```typescript
 type BookingWithStatus = BookingDto & {
-  status?: 'confirmed' | 'pending' | 'cancelled'
+  status?: 'confirmed' | 'pending' | 'cancelled';
 };
 ```
 
@@ -75,6 +77,7 @@ Implement Solution 1 - Add status to the BookingDto contract.
 ## Technical Details
 
 **Affected files:**
+
 - `packages/contracts/src/schemas/booking.ts`
 - `client/src/features/tenant-admin/TenantBookingList.tsx`
 
@@ -88,8 +91,8 @@ Implement Solution 1 - Add status to the BookingDto contract.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                   |
+| ---------- | ------------------------ | --------------------------- |
 | 2025-11-30 | Created from code review | Type safety violation found |
 
 ## Resources

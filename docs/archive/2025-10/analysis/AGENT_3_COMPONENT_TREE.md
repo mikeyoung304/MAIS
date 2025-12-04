@@ -1,6 +1,7 @@
 # Agent 3: Component Hierarchy
 
 ## Route Structure
+
 ```
 /tenant/login
   └── TenantLogin (page)
@@ -37,6 +38,7 @@
 ## Data Flow
 
 ### Authentication Flow
+
 ```
 User → TenantLogin → POST /v1/tenant/login → JWT Token
   → api.setTenantToken(token) → localStorage
@@ -44,6 +46,7 @@ User → TenantLogin → POST /v1/tenant/login → JWT Token
 ```
 
 ### Dashboard Data Flow
+
 ```
 TenantDashboard (page)
   ↓
@@ -57,6 +60,7 @@ TenantDashboard (component)
 ```
 
 ### CRUD Operations
+
 ```
 Packages:
   - Create: POST /v1/tenant/packages
@@ -74,36 +78,42 @@ Branding:
 ## Component Responsibilities
 
 ### TenantLogin Component
+
 - Email/password form
 - Loading states
 - Error display
 - Calls login endpoint
 
 ### TenantDashboard Component
+
 - Tab navigation
 - Metric cards
 - Tab content rendering
 - Data loading per tab
 
 ### TenantPackagesManager
+
 - Package CRUD operations
 - Form validation
 - Success/error messages
 - Package list display
 
 ### BlackoutsManager
+
 - Add blackout dates
 - Delete blackouts
 - Date formatting
 - Table display
 
 ### TenantBookingList
+
 - Read-only bookings
 - Filtering (date, status)
 - CSV export
 - Status badges
 
 ### BrandingEditor
+
 - Color pickers
 - Font selector
 - Live preview

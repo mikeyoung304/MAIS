@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "061"
+issue_id: '061'
 tags: [code-review, scheduling, validation, ux]
 dependencies: []
 ---
@@ -20,10 +20,10 @@ The `generateSlug()` function in ServicesManager can produce an empty string if 
 const generateSlug = (name: string): string => {
   return name
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")  // Remove special chars
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special chars
     .trim()
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
 };
 
 // If name = "!!!???", slug = ""
@@ -37,10 +37,10 @@ Add fallback:
 const generateSlug = (name: string): string => {
   const slug = name
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/[^a-z0-9\s-]/g, '')
     .trim()
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
 
   return slug || 'untitled';
 };
@@ -54,7 +54,7 @@ const generateSlug = (name: string): string => {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-27 | Created | Found during Code Quality review |
+| Date       | Action    | Notes                                                 |
+| ---------- | --------- | ----------------------------------------------------- |
+| 2025-11-27 | Created   | Found during Code Quality review                      |
 | 2025-12-02 | Completed | Added fallback to 'untitled', TypeScript build passes |

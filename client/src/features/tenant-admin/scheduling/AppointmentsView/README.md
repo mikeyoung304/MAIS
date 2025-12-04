@@ -5,6 +5,7 @@ Main component for tenant admins to view and manage their scheduled appointments
 ## Purpose
 
 The AppointmentsView component allows tenant administrators to:
+
 - View all scheduled time-slot appointments
 - Filter appointments by status, service, and date range
 - See enriched appointment details including customer and service information
@@ -39,12 +40,14 @@ function TenantSchedulingPage() {
 ## API Endpoints Used
 
 ### Primary Endpoint
+
 - **GET** `/v1/tenant-admin/appointments`
   - Query params: `status`, `serviceId`, `startDate`, `endDate`
   - Returns: `AppointmentDto[]`
   - Requires: Tenant admin JWT token
 
 ### Enrichment Endpoints
+
 - **GET** `/v1/tenant-admin/services`
   - Returns: `ServiceDto[]` (for displaying service names)
 
@@ -55,11 +58,13 @@ function TenantSchedulingPage() {
 ## Features
 
 ### Filtering
+
 - **Status**: All, Pending, Confirmed, Canceled, Fulfilled
 - **Service**: Filter by specific service type
 - **Date Range**: Start date and end date filters
 
 ### Display Fields
+
 - **Date/Time**: Formatted display of appointment start time with timezone
 - **Service**: Service name (falls back to ID if name unavailable)
 - **Client**: Customer name
@@ -68,6 +73,7 @@ function TenantSchedulingPage() {
 - **Notes**: Appointment notes/details
 
 ### Status Badge Colors
+
 - **PENDING**: Yellow/warning
 - **CONFIRMED**: Green/success
 - **CANCELED**: Red/destructive
@@ -99,6 +105,7 @@ The token is automatically injected via the API client configured in `@/lib/api.
 ## State Management
 
 Uses TanStack Query (React Query) for:
+
 - Automatic caching of appointments, services, and customers
 - Invalidation when filters change
 - Loading and error states
@@ -107,6 +114,7 @@ Uses TanStack Query (React Query) for:
 ## Styling
 
 Follows the MAIS dark navy theme:
+
 - `bg-macon-navy-800`: Card backgrounds
 - `bg-macon-navy-900`: Input backgrounds
 - `border-white/20`: Subtle borders
@@ -116,6 +124,7 @@ Follows the MAIS dark navy theme:
 ## Future Enhancements
 
 Potential improvements:
+
 1. Add export to CSV functionality
 2. Add appointment detail modal/drawer
 3. Add inline status updates (confirm/cancel)

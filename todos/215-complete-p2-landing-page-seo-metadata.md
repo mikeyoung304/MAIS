@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "215"
+issue_id: '215'
 tags: [seo, metadata, social-sharing, landing-page]
 dependencies: []
 ---
@@ -29,19 +29,19 @@ Page title remains default/static regardless of tenant or landing page content.
 ```html
 <!-- Basic SEO -->
 <title>{tenant.name} - {hero.headline}</title>
-<meta name="description" content="{hero.subheadline or about.description}">
+<meta name="description" content="{hero.subheadline or about.description}" />
 
 <!-- Open Graph (Facebook, LinkedIn) -->
-<meta property="og:title" content="{hero.headline}">
-<meta property="og:description" content="{hero.subheadline}">
-<meta property="og:image" content="{hero.backgroundImageUrl}">
-<meta property="og:type" content="website">
+<meta property="og:title" content="{hero.headline}" />
+<meta property="og:description" content="{hero.subheadline}" />
+<meta property="og:image" content="{hero.backgroundImageUrl}" />
+<meta property="og:type" content="website" />
 
 <!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="{hero.headline}">
-<meta name="twitter:description" content="{hero.subheadline}">
-<meta name="twitter:image" content="{hero.backgroundImageUrl}">
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="{hero.headline}" />
+<meta name="twitter:description" content="{hero.subheadline}" />
+<meta name="twitter:image" content="{hero.backgroundImageUrl}" />
 ```
 
 ## Implementation Options
@@ -104,8 +104,9 @@ export function usePageMeta({ title, description, image }: PageMeta) {
     document.title = title;
 
     const setMeta = (name: string, content: string) => {
-      let el = document.querySelector(`meta[name="${name}"]`)
-        || document.querySelector(`meta[property="${name}"]`);
+      let el =
+        document.querySelector(`meta[name="${name}"]`) ||
+        document.querySelector(`meta[property="${name}"]`);
       if (!el) {
         el = document.createElement('meta');
         el.setAttribute(name.startsWith('og:') ? 'property' : 'name', name);
@@ -129,11 +130,13 @@ Consider adding SEO fields to landing page config:
 ```typescript
 export const LandingPageConfigSchema = z.object({
   // Existing fields...
-  seo: z.object({
-    title: z.string().max(60).optional(),
-    description: z.string().max(160).optional(),
-    ogImage: SafeImageUrlSchema.optional(),
-  }).optional(),
+  seo: z
+    .object({
+      title: z.string().max(60).optional(),
+      description: z.string().max(160).optional(),
+      ogImage: SafeImageUrlSchema.optional(),
+    })
+    .optional(),
 });
 ```
 
@@ -172,19 +175,21 @@ The implementation sets the following meta tags:
 ```html
 <!-- Basic SEO -->
 <title>{tenant.name} - {hero.headline}</title>
-<meta name="description" content="{description}">
+<meta name="description" content="{description}" />
 
 <!-- Open Graph (Facebook, LinkedIn) -->
-<meta property="og:title" content="{title}">
-<meta property="og:description" content="{description}">
-<meta property="og:image" content="{image}"> <!-- if available -->
-<meta property="og:type" content="website">
+<meta property="og:title" content="{title}" />
+<meta property="og:description" content="{description}" />
+<meta property="og:image" content="{image}" />
+<!-- if available -->
+<meta property="og:type" content="website" />
 
 <!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="{title}">
-<meta name="twitter:description" content="{description}">
-<meta name="twitter:image" content="{image}"> <!-- if available -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="{title}" />
+<meta name="twitter:description" content="{description}" />
+<meta name="twitter:image" content="{image}" />
+<!-- if available -->
 ```
 
 ### Validation

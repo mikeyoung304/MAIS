@@ -5,11 +5,11 @@
  * Design: Minimal, rounded pills with sage accent on active state
  */
 
-import { Package, CalendarOff, Calendar, Palette, CreditCard } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { ANIMATION_TRANSITION } from "@/lib/animation-constants";
+import { Package, CalendarOff, Calendar, Palette, CreditCard } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { ANIMATION_TRANSITION } from '@/lib/animation-constants';
 
-export type DashboardTab = "packages" | "blackouts" | "bookings" | "branding" | "payments";
+export type DashboardTab = 'packages' | 'blackouts' | 'bookings' | 'branding' | 'payments';
 
 interface TabNavigationProps {
   activeTab: DashboardTab;
@@ -18,11 +18,11 @@ interface TabNavigationProps {
 
 export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   const tabs: { id: DashboardTab; label: string; icon: typeof Package }[] = [
-    { id: "packages", label: "Packages", icon: Package },
-    { id: "blackouts", label: "Blackouts", icon: CalendarOff },
-    { id: "bookings", label: "Bookings", icon: Calendar },
-    { id: "branding", label: "Branding", icon: Palette },
-    { id: "payments", label: "Payments", icon: CreditCard },
+    { id: 'packages', label: 'Packages', icon: Package },
+    { id: 'blackouts', label: 'Blackouts', icon: CalendarOff },
+    { id: 'bookings', label: 'Bookings', icon: Calendar },
+    { id: 'branding', label: 'Branding', icon: Palette },
+    { id: 'payments', label: 'Payments', icon: CreditCard },
   ];
 
   return (
@@ -45,14 +45,14 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
                 className={cn(
                   `relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium ${ANIMATION_TRANSITION.DEFAULT} min-h-[44px]`,
                   isActive
-                    ? "bg-white text-text-primary shadow-soft"
-                    : "text-text-muted hover:text-text-primary hover:bg-white/50"
+                    ? 'bg-white text-text-primary shadow-soft'
+                    : 'text-text-muted hover:text-text-primary hover:bg-white/50'
                 )}
               >
                 <Icon
                   className={cn(
                     `w-4 h-4 ${ANIMATION_TRANSITION.COLORS}`,
-                    isActive ? "text-sage" : "text-text-muted"
+                    isActive ? 'text-sage' : 'text-text-muted'
                   )}
                   aria-hidden="true"
                 />

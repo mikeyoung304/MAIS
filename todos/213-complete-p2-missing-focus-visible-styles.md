@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "213"
+issue_id: '213'
 tags: [accessibility, a11y, focus, keyboard, landing-page]
 dependencies: []
 ---
@@ -85,6 +85,7 @@ module.exports = {
 ## Testing
 
 Use keyboard navigation to verify:
+
 1. Tab through all interactive elements
 2. Confirm focus indicator is visible
 3. Test with high contrast mode
@@ -114,6 +115,7 @@ Verified and added focus-visible styles to all interactive elements in landing p
    - Lightbox close button already had proper focus styles (line 187)
 
 All focus styles use:
+
 - `focus-visible:outline-none` to remove default browser outline
 - `focus-visible:ring-2` for consistent ring width
 - `focus-visible:ring-offset-2` for spacing between element and ring

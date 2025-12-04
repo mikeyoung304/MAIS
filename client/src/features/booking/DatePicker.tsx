@@ -1,14 +1,14 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { DayPicker } from "react-day-picker";
-import { Calendar, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { toUtcMidnight } from "@macon/shared";
-import { api } from "../../lib/api";
-import { cn } from "@/lib/utils";
-import { queryKeys, queryOptions } from "@/lib/queryClient";
-import "react-day-picker/style.css";
-import styles from "./DatePicker.module.css";
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { DayPicker } from 'react-day-picker';
+import { Calendar, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { toUtcMidnight } from '@macon/shared';
+import { api } from '../../lib/api';
+import { cn } from '@/lib/utils';
+import { queryKeys, queryOptions } from '@/lib/queryClient';
+import 'react-day-picker/style.css';
+import styles from './DatePicker.module.css';
 
 interface DatePickerProps {
   selected: Date | undefined;
@@ -35,7 +35,11 @@ export function DatePicker({ selected, onSelect }: DatePickerProps) {
   const { startDate, endDate } = useMemo(() => getDateRange(), []);
 
   // Batch fetch unavailable dates using React Query
-  const { data: unavailableData, isLoading, error: fetchError } = useQuery({
+  const {
+    data: unavailableData,
+    isLoading,
+    error: fetchError,
+  } = useQuery({
     queryKey: queryKeys.availability.dateRange(startDate, endDate),
     queryFn: async () => {
       const response = await api.getUnavailableDates?.({
@@ -82,7 +86,7 @@ export function DatePicker({ selected, onSelect }: DatePickerProps) {
     );
 
     if (isUnavailable) {
-      toast.error("Date Unavailable", {
+      toast.error('Date Unavailable', {
         description: `Sorry, ${dateStr} is not available. Please choose another date.`,
         duration: 5000,
       });
@@ -99,7 +103,7 @@ export function DatePicker({ selected, onSelect }: DatePickerProps) {
       } else {
         // Add to local unavailable list
         setLocalUnavailable((prev) => [...prev, date]);
-        toast.error("Date Unavailable", {
+        toast.error('Date Unavailable', {
           description: `Sorry, ${dateStr} is not available. Please choose another date.`,
           duration: 5000,
         });
@@ -107,8 +111,9 @@ export function DatePicker({ selected, onSelect }: DatePickerProps) {
       }
     } catch (error) {
       // FAIL CLOSED: On error, reject selection to prevent double-bookings
-      toast.error("Unable to Verify Availability", {
-        description: "We couldn't verify availability for this date. Please try again or contact support.",
+      toast.error('Unable to Verify Availability', {
+        description:
+          "We couldn't verify availability for this date. Please try again or contact support.",
         duration: 5000,
       });
       onSelect(undefined);
@@ -120,8 +125,7 @@ export function DatePicker({ selected, onSelect }: DatePickerProps) {
       <div className="mb-6 flex items-start gap-2">
         <Calendar className="h-5 w-5 mt-0.5 text-neutral-600" />
         <p className="text-lg text-neutral-700">
-          Select a date for your appointment. Unavailable dates are pre-loaded for your
-          convenience.
+          Select a date for your appointment. Unavailable dates are pre-loaded for your convenience.
         </p>
       </div>
 
@@ -129,8 +133,18 @@ export function DatePicker({ selected, onSelect }: DatePickerProps) {
         <div className="border border-red-300 bg-red-50 rounded-lg p-6">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0">
-              <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <svg
+                className="h-6 w-6 text-red-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
               </svg>
             </div>
             <div className="flex-1">
@@ -163,7 +177,7 @@ export function DatePicker({ selected, onSelect }: DatePickerProps) {
             onSelect={handleDateSelect}
             disabled={[{ before: today }, ...unavailableDates]}
             className={cn(
-              "border border-neutral-300 rounded-lg p-4 bg-neutral-50",
+              'border border-neutral-300 rounded-lg p-4 bg-neutral-50',
               styles.datePicker
             )}
           />

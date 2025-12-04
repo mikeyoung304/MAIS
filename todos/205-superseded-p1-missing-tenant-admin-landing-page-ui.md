@@ -1,11 +1,11 @@
 ---
 status: superseded
 priority: p1
-issue_id: "205"
+issue_id: '205'
 tags: [frontend, tenant-admin, landing-page, ui, forms]
 dependencies: []
-superseded_by: "plans/feat-landing-page-visual-editor.md"
-superseded_date: "2025-12-04"
+superseded_by: 'plans/feat-landing-page-visual-editor.md'
+superseded_date: '2025-12-04'
 ---
 
 # TODO-205: Missing Tenant Admin UI for Landing Page Configuration
@@ -17,6 +17,7 @@ superseded_date: "2025-12-04"
 ## Superseded By
 
 This TODO has been superseded by a comprehensive implementation plan:
+
 - **Plan File**: `plans/feat-landing-page-visual-editor.md`
 - **Date**: 2025-12-04
 - **Scope**: The new plan covers all requirements from this TODO plus additional features:
@@ -47,9 +48,9 @@ This TODO has been superseded by a comprehensive implementation plan:
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-12-01 | Created | Identified during landing page code review |
+| Date       | Action     | Notes                                        |
+| ---------- | ---------- | -------------------------------------------- |
+| 2025-12-01 | Created    | Identified during landing page code review   |
 | 2025-12-04 | Superseded | Replaced by comprehensive visual editor plan |
 
 ## Tags

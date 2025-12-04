@@ -135,16 +135,8 @@ function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
       {error && <p>{error}</p>}
       <button type="submit">Login</button>
     </form>
@@ -185,20 +177,20 @@ return <div>Welcome, {user?.email}</div>;
 
 ## API Quick Reference
 
-| Property/Method      | Type                                                              | Description                          |
-| -------------------- | ----------------------------------------------------------------- | ------------------------------------ |
-| `user`               | `User \| null`                                                    | Current user object                  |
-| `role`               | `'PLATFORM_ADMIN' \| 'TENANT_ADMIN' \| null`                      | Current user role                    |
-| `tenantId`           | `string \| null`                                                  | Tenant ID (tenant admins only)       |
-| `token`              | `string \| null`                                                  | JWT token                            |
-| `isAuthenticated`    | `boolean`                                                         | True if user is logged in            |
-| `isLoading`          | `boolean`                                                         | True during initial auth check       |
-| `login()`            | `(email, password, role) => Promise<void>`                        | Login method                         |
-| `logout()`           | `() => void`                                                      | Logout method                        |
-| `isPlatformAdmin()`  | `() => boolean`                                                   | Check if platform admin              |
-| `isTenantAdmin()`    | `() => boolean`                                                   | Check if tenant admin                |
-| `hasRole()`          | `(role: UserRole) => boolean`                                     | Check specific role                  |
-| `refreshAuth()`      | `() => void`                                                      | Manually refresh auth from storage   |
+| Property/Method     | Type                                         | Description                        |
+| ------------------- | -------------------------------------------- | ---------------------------------- |
+| `user`              | `User \| null`                               | Current user object                |
+| `role`              | `'PLATFORM_ADMIN' \| 'TENANT_ADMIN' \| null` | Current user role                  |
+| `tenantId`          | `string \| null`                             | Tenant ID (tenant admins only)     |
+| `token`             | `string \| null`                             | JWT token                          |
+| `isAuthenticated`   | `boolean`                                    | True if user is logged in          |
+| `isLoading`         | `boolean`                                    | True during initial auth check     |
+| `login()`           | `(email, password, role) => Promise<void>`   | Login method                       |
+| `logout()`          | `() => void`                                 | Logout method                      |
+| `isPlatformAdmin()` | `() => boolean`                              | Check if platform admin            |
+| `isTenantAdmin()`   | `() => boolean`                              | Check if tenant admin              |
+| `hasRole()`         | `(role: UserRole) => boolean`                | Check specific role                |
+| `refreshAuth()`     | `() => void`                                 | Manually refresh auth from storage |
 
 ## User Object Types
 

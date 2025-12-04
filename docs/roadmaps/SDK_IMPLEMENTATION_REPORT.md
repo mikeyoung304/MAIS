@@ -16,21 +16,21 @@ Successfully implemented the MAIS Widget SDK loader as a lightweight, ES5-compat
 
 ### SDK Files
 
-| File | Size | Gzipped | Purpose |
-|------|------|---------|---------|
-| `mais-sdk.js` | 6.6KB | 2.2KB | Development version with comments |
-| `mais-sdk.min.js` | 3.4KB | 1.4KB | Production minified version |
+| File              | Size  | Gzipped | Purpose                           |
+| ----------------- | ----- | ------- | --------------------------------- |
+| `mais-sdk.js`     | 6.6KB | 2.2KB   | Development version with comments |
+| `mais-sdk.min.js` | 3.4KB | 1.4KB   | Production minified version       |
 
 **Location:** `client/public/`
 
 ### Documentation & Examples
 
-| File | Size | Purpose |
-|------|------|---------|
-| `SDK_README.md` | 8.9KB | Complete API documentation |
-| `QUICK_START.md` | 1.7KB | 30-second integration guide |
-| `example.html` | 4.1KB | Full-featured integration example |
-| `test-sdk.html` | 9.0KB | Automated test suite |
+| File             | Size  | Purpose                           |
+| ---------------- | ----- | --------------------------------- |
+| `SDK_README.md`  | 8.9KB | Complete API documentation        |
+| `QUICK_START.md` | 1.7KB | 30-second integration guide       |
+| `example.html`   | 4.1KB | Full-featured integration example |
+| `test-sdk.html`  | 9.0KB | Automated test suite              |
 
 ---
 
@@ -39,26 +39,31 @@ Successfully implemented the MAIS Widget SDK loader as a lightweight, ES5-compat
 ### 1. Core Features
 
 ✅ **Iframe Creation**
+
 - Automatically creates and configures iframe
 - Passes tenant, API key, mode, and parent origin
 - Applies responsive styling
 
 ✅ **postMessage Communication**
+
 - Bidirectional message passing
 - Origin validation for security
 - Message source validation
 
 ✅ **Auto-Resize**
+
 - Listens for RESIZE messages from iframe
 - Dynamically adjusts iframe height
 - No scroll bars needed
 
 ✅ **Event System**
+
 - Simple `.on()` event subscription
 - Events: `ready`, `bookingCreated`, `bookingCompleted`, `error`
 - Custom event data passed to handlers
 
 ✅ **Public API**
+
 - `openBooking(packageSlug)` - Navigate to specific package
 - `close()` - Close modal widget
 - `destroy()` - Remove widget and cleanup
@@ -67,6 +72,7 @@ Successfully implemented the MAIS Widget SDK loader as a lightweight, ES5-compat
 ### 2. Security Features
 
 ✅ **API Key Validation**
+
 ```javascript
 // Validates format: pk_live_[tenant]_[16-hex-chars]
 if (!apiKey.match(/^pk_live_[a-z0-9-]+_[a-f0-9]{16}$/)) {
@@ -75,6 +81,7 @@ if (!apiKey.match(/^pk_live_[a-z0-9-]+_[a-f0-9]{16}$/)) {
 ```
 
 ✅ **Origin Validation**
+
 ```javascript
 // Only accept messages from widget domain
 if (event.origin !== widgetBaseUrl) {
@@ -83,6 +90,7 @@ if (event.origin !== widgetBaseUrl) {
 ```
 
 ✅ **Message Source Validation**
+
 ```javascript
 // Only process messages from MAIS components
 if (!message || message.source !== 'mais-widget') {
@@ -91,6 +99,7 @@ if (!message || message.source !== 'mais-widget') {
 ```
 
 ✅ **CSP Compliance**
+
 - No inline scripts required
 - No `eval()` or `Function()` constructor
 - Compatible with strict CSP policies
@@ -98,12 +107,14 @@ if (!message || message.source !== 'mais-widget') {
 ### 3. Browser Compatibility
 
 **ES5-Compatible Syntax:**
+
 - `var` instead of `let`/`const`
 - Prototype methods instead of class syntax
 - Manual object merging instead of spread operator
 - Traditional function expressions
 
 **Supported Browsers:**
+
 - Chrome 49+ (2016)
 - Firefox 45+ (2016)
 - Safari 10+ (2016)
@@ -113,16 +124,19 @@ if (!message || message.source !== 'mais-widget') {
 ### 4. Performance
 
 **File Sizes:**
+
 - Development: 6.6KB (2.2KB gzipped)
 - Production: 3.4KB (1.4KB gzipped)
 - **✅ Well under 5KB minified target**
 
 **Load Time:**
+
 - < 50ms on 3G connection
 - < 10ms on broadband
 - Non-blocking async load
 
 **Runtime Performance:**
+
 - Zero dependencies
 - Minimal DOM manipulation
 - Event delegation for efficiency
@@ -137,33 +151,33 @@ if (!message || message.source !== 'mais-widget') {
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Book Your Wedding</title>
-</head>
-<body>
-  <h1>Available Packages</h1>
+  <head>
+    <title>Book Your Wedding</title>
+  </head>
+  <body>
+    <h1>Available Packages</h1>
 
-  <!-- Container -->
-  <div id="mais-widget"></div>
+    <!-- Container -->
+    <div id="mais-widget"></div>
 
-  <!-- SDK Loader -->
-  <script
-    src="https://widget.mais.com/sdk/mais-sdk.min.js"
-    data-tenant="bellaweddings"
-    data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8">
-  </script>
+    <!-- SDK Loader -->
+    <script
+      src="https://widget.mais.com/sdk/mais-sdk.min.js"
+      data-tenant="bellaweddings"
+      data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8"
+    ></script>
 
-  <!-- Event Tracking -->
-  <script>
-    window.MAISWidget.on('bookingCompleted', function(data) {
-      // Track conversion
-      gtag('event', 'purchase', {
-        transaction_id: data.bookingId,
-        value: data.total
+    <!-- Event Tracking -->
+    <script>
+      window.MAISWidget.on('bookingCompleted', function (data) {
+        // Track conversion
+        gtag('event', 'purchase', {
+          transaction_id: data.bookingId,
+          value: data.total,
+        });
       });
-    });
-  </script>
-</body>
+    </script>
+  </body>
 </html>
 ```
 
@@ -176,11 +190,11 @@ function bookPackage(packageSlug) {
 }
 
 // Listen for events
-window.MAISWidget.on('ready', function() {
+window.MAISWidget.on('ready', function () {
   console.log('Widget loaded');
 });
 
-window.MAISWidget.on('bookingCreated', function(data) {
+window.MAISWidget.on('bookingCreated', function (data) {
   console.log('Booking created:', data.bookingId);
 });
 
@@ -197,16 +211,19 @@ function removeWidget() {
 ### Widget → Parent Messages
 
 **READY**
+
 ```javascript
 { source: 'mais-widget', type: 'READY' }
 ```
 
 **RESIZE**
+
 ```javascript
 { source: 'mais-widget', type: 'RESIZE', height: 800 }
 ```
 
 **BOOKING_CREATED**
+
 ```javascript
 {
   source: 'mais-widget',
@@ -219,6 +236,7 @@ function removeWidget() {
 ```
 
 **BOOKING_COMPLETED**
+
 ```javascript
 {
   source: 'mais-widget',
@@ -230,6 +248,7 @@ function removeWidget() {
 ```
 
 **ERROR**
+
 ```javascript
 {
   source: 'mais-widget',
@@ -242,6 +261,7 @@ function removeWidget() {
 ### Parent → Widget Messages
 
 **OPEN_BOOKING**
+
 ```javascript
 {
   source: 'mais-parent',
@@ -251,6 +271,7 @@ function removeWidget() {
 ```
 
 **CLOSE**
+
 ```javascript
 { source: 'mais-parent', type: 'CLOSE' }
 ```
@@ -261,12 +282,12 @@ function removeWidget() {
 
 SDK configuration via `data-*` attributes:
 
-| Attribute | Required | Default | Description |
-|-----------|----------|---------|-------------|
-| `data-tenant` | Yes | - | Tenant slug (e.g., "bellaweddings") |
-| `data-api-key` | Yes | - | Publishable API key (pk_live_*) |
-| `data-container` | No | "mais-widget" | Container element ID |
-| `data-mode` | No | "embedded" | Display mode: "embedded" or "modal" |
+| Attribute        | Required | Default       | Description                         |
+| ---------------- | -------- | ------------- | ----------------------------------- |
+| `data-tenant`    | Yes      | -             | Tenant slug (e.g., "bellaweddings") |
+| `data-api-key`   | Yes      | -             | Publishable API key (pk*live*\*)    |
+| `data-container` | No       | "mais-widget" | Container element ID                |
+| `data-mode`      | No       | "embedded"    | Display mode: "embedded" or "modal" |
 
 ---
 
@@ -295,6 +316,7 @@ Run `test-sdk.html` to verify:
 ### Browser Testing
 
 Tested and verified in:
+
 - Chrome 120+ (macOS)
 - Firefox 121+ (macOS)
 - Safari 17+ (macOS)
@@ -356,16 +378,19 @@ Connects to production widget application.
 ### ⚠️ Minor Concerns
 
 **IE11:**
+
 - `document.currentScript` not supported
 - Solution: Add polyfill or show error message
 - Impact: ~1% of users globally
 
 **Safari < 10:**
+
 - Limited postMessage support
 - Solution: Not supported (pre-2016 browser)
 - Impact: < 0.1% of users
 
 **CSP (Content Security Policy):**
+
 - Requires `frame-src https://widget.mais.com`
 - Requires `script-src https://widget.mais.com`
 - Solution: Document in integration guide

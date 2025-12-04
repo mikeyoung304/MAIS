@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "125"
+issue_id: '125'
 tags: [code-review, code-quality, dry, pr-12]
 dependencies: []
 resolution: FALSE POSITIVE - Headers are intentionally different for flat vs grouped views
@@ -14,6 +14,7 @@ resolution: FALSE POSITIVE - Headers are intentionally different for flat vs gro
 The header section with "Manage Segments" button is duplicated in both flat view and grouped view render paths. This violates DRY principle and increases maintenance burden.
 
 **Why it matters:**
+
 - Changes to header need to be made in two places
 - Risk of divergence between the two versions
 - Increases code size unnecessarily
@@ -27,6 +28,7 @@ The header section with "Manage Segments" button is duplicated in both flat view
 **Lines:** ~150-160 and ~180-190 (approximate)
 
 **Current Pattern:**
+
 ```typescript
 // In flat view section:
 <div className="flex justify-between items-center mb-6">
@@ -50,6 +52,7 @@ The header section with "Manage Segments" button is duplicated in both flat view
 ## Proposed Solutions
 
 ### Solution 1: Extract to Shared Variable (Recommended)
+
 ```typescript
 const headerBlock = (
   <div className="flex justify-between items-center mb-6">
@@ -71,6 +74,7 @@ const headerBlock = (
 **Risk:** Low
 
 ### Solution 2: Extract PackagesHeader Component
+
 Create a small sub-component for the header.
 
 **Pros:** Reusable, testable
@@ -85,6 +89,7 @@ Implement Solution 1 - extract to shared variable. Component extraction not need
 ## Technical Details
 
 **Affected Files:**
+
 - `client/src/features/tenant-admin/TenantPackagesManager.tsx`
 
 ## Acceptance Criteria
@@ -96,11 +101,10 @@ Implement Solution 1 - extract to shared variable. Component extraction not need
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                   |
+| ---------- | ------- | ----------------------- |
 | 2025-12-01 | Created | From PR #12 code review |
 
 ## Resources
 
 - PR: https://github.com/mikeyoung304/MAIS/pull/12
-

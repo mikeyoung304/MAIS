@@ -4,25 +4,25 @@
 
 ### P1 Issues (Blocker - Fix Before Deploy)
 
-| Issue | Problem | Solution | Files | Time |
-|-------|---------|----------|-------|------|
-| **#062** | Public bucket = cross-tenant data leak | Use signed URLs (1-year) | `upload.service.ts` | 2-3h |
-| **#063** | MIME validation bypassed (no magic bytes) | Add `file-type` package check | `upload.service.ts` | 1h |
-| **#064** | Orphaned files in storage forever | Delete on segment deletion | `upload.service.ts`, `segment.service.ts` | 1h |
+| Issue    | Problem                                   | Solution                      | Files                                     | Time |
+| -------- | ----------------------------------------- | ----------------------------- | ----------------------------------------- | ---- |
+| **#062** | Public bucket = cross-tenant data leak    | Use signed URLs (1-year)      | `upload.service.ts`                       | 2-3h |
+| **#063** | MIME validation bypassed (no magic bytes) | Add `file-type` package check | `upload.service.ts`                       | 1h   |
+| **#064** | Orphaned files in storage forever         | Delete on segment deletion    | `upload.service.ts`, `segment.service.ts` | 1h   |
 
 ### P2 Issues (Important - This Sprint)
 
-| Issue | Problem | Solution | Files | Time |
-|-------|---------|----------|-------|------|
-| **#065** | Breaks DI pattern (singleton bypasses container) | Refactor to StorageProvider adapter | `di.ts`, new adapters | 4-5h |
-| **#066** | 60+ lines code duplication (3 identical methods) | Single parameterized `upload()` | `upload.service.ts` | 1-2h |
-| **#067** | Rate limit per-IP, not per-tenant | Add tenant-level limiter (50/hr) | `rateLimiter.ts`, routes | 2-3h |
-| **#068** | Memory exhaustion (memoryStorage unbounded) | Max 3 concurrent uploads/tenant | new limiter, routes | 2-3h |
+| Issue    | Problem                                          | Solution                            | Files                    | Time |
+| -------- | ------------------------------------------------ | ----------------------------------- | ------------------------ | ---- |
+| **#065** | Breaks DI pattern (singleton bypasses container) | Refactor to StorageProvider adapter | `di.ts`, new adapters    | 4-5h |
+| **#066** | 60+ lines code duplication (3 identical methods) | Single parameterized `upload()`     | `upload.service.ts`      | 1-2h |
+| **#067** | Rate limit per-IP, not per-tenant                | Add tenant-level limiter (50/hr)    | `rateLimiter.ts`, routes | 2-3h |
+| **#068** | Memory exhaustion (memoryStorage unbounded)      | Max 3 concurrent uploads/tenant     | new limiter, routes      | 2-3h |
 
 ### P3 Issues (Enhancement)
 
-| Issue | Problem | Solution | Files | Time |
-|-------|---------|----------|-------|------|
+| Issue    | Problem                                   | Solution                        | Files                  | Time  |
+| -------- | ----------------------------------------- | ------------------------------- | ---------------------- | ----- |
 | **#069** | 7x useCallback (zero performance benefit) | Remove all useCallback wrappers | `ImageUploadField.tsx` | 30min |
 
 ---
@@ -84,6 +84,7 @@
 ## Critical Code Patterns
 
 ### Fix #062: Signed URL Generation
+
 ```typescript
 const { data, error } = await supabase.storage
   .from('images')
@@ -92,6 +93,7 @@ return data.signedUrl;
 ```
 
 ### Fix #063: Magic Byte Validation
+
 ```typescript
 const { fileTypeFromBuffer } = await import('file-type');
 const detected = await fileTypeFromBuffer(file.buffer);
@@ -99,6 +101,7 @@ if (!allowedTypes.includes(detected?.mime)) throw new Error('Invalid');
 ```
 
 ### Fix #064: Cleanup on Delete
+
 ```typescript
 async deleteSegment(id, tenantId) {
   const segment = await this.repo.findById(tenantId, id);
@@ -110,6 +113,7 @@ async deleteSegment(id, tenantId) {
 ```
 
 ### Fix #065: DI Port/Adapter Pattern
+
 ```typescript
 // ports.ts
 interface StorageProvider {
@@ -118,22 +122,24 @@ interface StorageProvider {
 }
 
 // di.ts
-const provider = preset === 'real'
-  ? new SupabaseStorageProvider(supabase)
-  : new MockStorageProvider();
+const provider =
+  preset === 'real' ? new SupabaseStorageProvider(supabase) : new MockStorageProvider();
 const uploadService = new UploadService(provider);
 ```
 
 ### Fix #067: Multi-Layer Rate Limiting
+
 ```typescript
-router.post('/upload',
-  uploadLimiterIP,     // 200/hour per IP (DDoS protection)
-  uploadLimiterTenant, // 50/hour per tenant (abuse protection)
+router.post(
+  '/upload',
+  uploadLimiterIP, // 200/hour per IP (DDoS protection)
+  uploadLimiterTenant // 50/hour per tenant (abuse protection)
   /* handler */
 );
 ```
 
 ### Fix #068: Concurrency Limiting
+
 ```typescript
 try {
   await concurrencyLimiter.acquire(tenantId);
@@ -144,6 +150,7 @@ try {
 ```
 
 ### Fix #069: Remove useCallback
+
 ```typescript
 // BEFORE
 const handleClick = useCallback(() => {
@@ -159,6 +166,7 @@ onClick={() => !disabled && !isUploading && fileInputRef.current?.click()}
 ## Test Coverage Goals
 
 After fixes, aim for:
+
 - **Unit tests**: All validation paths (MIME, size, concurrency)
 - **Integration tests**: Cross-tenant isolation, file cleanup
 - **E2E tests**: Upload → verify → delete flow
@@ -189,24 +197,26 @@ npm run test:e2e -- segment-image-upload.spec.ts # Full flow
 
 ## Risk Mitigation
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|-----------|
-| Signed URL expires | Low | User sees broken image | 1-year expiry, refresh on demand |
-| Rate limit too strict | Medium | Users frustrated | Monitor metrics, adjust 50→100 if needed |
-| OOM still possible | Low | Crash under attack | Concurrency limit + rate limit = defense in depth |
-| Cross-tenant access | Low | Data leak | Verify `tenantId` in all paths |
-| File delete fails silently | Low | Storage bloat | Log warnings, add monitoring |
+| Risk                       | Probability | Impact                 | Mitigation                                        |
+| -------------------------- | ----------- | ---------------------- | ------------------------------------------------- |
+| Signed URL expires         | Low         | User sees broken image | 1-year expiry, refresh on demand                  |
+| Rate limit too strict      | Medium      | Users frustrated       | Monitor metrics, adjust 50→100 if needed          |
+| OOM still possible         | Low         | Crash under attack     | Concurrency limit + rate limit = defense in depth |
+| Cross-tenant access        | Low         | Data leak              | Verify `tenantId` in all paths                    |
+| File delete fails silently | Low         | Storage bloat          | Log warnings, add monitoring                      |
 
 ---
 
 ## Files to Create/Modify
 
 ### New Files
+
 - `server/src/lib/concurrency-limiter.ts`
 - `server/src/adapters/supabase/supabase-storage.adapter.ts`
 - `server/src/adapters/mock/mock-storage.adapter.ts`
 
 ### Modified Files
+
 - `server/src/services/upload.service.ts` (major refactor)
 - `server/src/services/segment.service.ts` (add cleanup)
 - `server/src/di.ts` (wire StorageProvider)

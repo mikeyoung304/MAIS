@@ -1,4 +1,4 @@
-import { AlertTriangle, Trash2 } from "lucide-react";
+import { AlertTriangle, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,8 +8,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import type { BlackoutDto } from "./types";
+} from '@/components/ui/alert-dialog';
+import type { BlackoutDto } from './types';
 
 interface DeleteConfirmationDialogProps {
   isOpen: boolean;
@@ -29,7 +29,7 @@ export function DeleteConfirmationDialog({
   onOpenChange,
   blackoutToDelete,
   onConfirm,
-  onCancel
+  onCancel,
 }: DeleteConfirmationDialogProps) {
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
@@ -44,11 +44,12 @@ export function DeleteConfirmationDialog({
           <AlertDialogDescription className="text-base text-macon-navy-600 dark:text-white/60">
             Are you sure you want to delete the blackout date for{' '}
             <strong className="font-semibold text-macon-navy-900 dark:text-white">
-              {blackoutToDelete && new Date(blackoutToDelete.date).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
+              {blackoutToDelete &&
+                new Date(blackoutToDelete.date).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
             </strong>
             {blackoutToDelete?.reason && ` (${blackoutToDelete.reason})`}?
           </AlertDialogDescription>

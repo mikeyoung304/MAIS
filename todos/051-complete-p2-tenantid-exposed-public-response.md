@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "051"
+issue_id: '051'
 tags: [code-review, scheduling, security, information-disclosure]
 dependencies: []
 ---
@@ -23,7 +23,7 @@ Public scheduling endpoints (`GET /v1/public/services`) include `tenantId` in th
 ```typescript
 const serviceDtos: ServiceDto[] = services.map((service) => ({
   id: service.id,
-  tenantId: service.tenantId,  // <-- EXPOSED
+  tenantId: service.tenantId, // <-- EXPOSED
   slug: service.slug,
   name: service.name,
   // ...
@@ -39,6 +39,7 @@ const serviceDtos: ServiceDto[] = services.map((service) => ({
 ## Proposed Solutions
 
 ### Option A: Remove from Public DTOs (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 Create separate public-facing DTOs without tenantId:
@@ -56,6 +57,7 @@ const publicServiceDto = {
 ## Technical Details
 
 **Files to Update:**
+
 - `server/src/routes/public-scheduling.routes.ts:70-85, 130-145`
 
 ## Acceptance Criteria
@@ -66,6 +68,6 @@ const publicServiceDto = {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                 |
+| ---------- | ------- | ------------------------------------- |
 | 2025-11-27 | Created | Found during Security Sentinel review |

@@ -17,7 +17,9 @@ import type { StorageProvider, FileSystem, UploadedFile, UploadResult } from '..
 
 // file-type v16 is CommonJS - use createRequire for ESM compatibility in Node 25+
 const require = createRequire(import.meta.url);
-const fileType = require('file-type') as { fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined> };
+const fileType = require('file-type') as {
+  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>;
+};
 
 export interface UploadAdapterConfig {
   logoUploadDir: string;
@@ -96,40 +98,52 @@ export class UploadAdapter implements StorageProvider {
     }
 
     if (!this.config.allowedMimeTypes.includes(file.mimetype)) {
-      throw new Error(`Invalid file type. Allowed types: ${this.config.allowedMimeTypes.join(', ')}`);
+      throw new Error(
+        `Invalid file type. Allowed types: ${this.config.allowedMimeTypes.join(', ')}`
+      );
     }
 
     const detectedType = await fileType.fromBuffer(file.buffer);
 
     if (file.mimetype === 'image/svg+xml') {
       const content = file.buffer.toString('utf8', 0, 500).trim();
-      const isSvg = content.startsWith('<?xml') || content.startsWith('<svg') ||
-                    content.toLowerCase().includes('<svg');
+      const isSvg =
+        content.startsWith('<?xml') ||
+        content.startsWith('<svg') ||
+        content.toLowerCase().includes('<svg');
       if (!isSvg) {
-        logger.warn({ declaredType: file.mimetype, filename: file.originalname },
-          'SECURITY: File claimed to be SVG but does not contain valid SVG content');
+        logger.warn(
+          { declaredType: file.mimetype, filename: file.originalname },
+          'SECURITY: File claimed to be SVG but does not contain valid SVG content'
+        );
         throw new Error('File validation failed');
       }
       return;
     }
 
     if (!detectedType) {
-      logger.warn({ declaredType: file.mimetype, filename: file.originalname },
-        'Could not detect file type from magic bytes');
+      logger.warn(
+        { declaredType: file.mimetype, filename: file.originalname },
+        'Could not detect file type from magic bytes'
+      );
       throw new Error('Unable to verify file type. File may be corrupted.');
     }
 
     if (!this.config.allowedMimeTypes.includes(detectedType.mime)) {
-      logger.warn({ declared: file.mimetype, detected: detectedType.mime, filename: file.originalname },
-        'SECURITY: MIME type mismatch detected - possible spoofing attempt');
+      logger.warn(
+        { declared: file.mimetype, detected: detectedType.mime, filename: file.originalname },
+        'SECURITY: MIME type mismatch detected - possible spoofing attempt'
+      );
       throw new Error('File validation failed');
     }
 
     const normalizedDeclared = file.mimetype === 'image/jpg' ? 'image/jpeg' : file.mimetype;
     const normalizedDetected = detectedType.mime;
     if (normalizedDetected !== normalizedDeclared) {
-      logger.warn({ declared: file.mimetype, detected: detectedType.mime, filename: file.originalname },
-        'SECURITY: MIME type mismatch detected - possible spoofing attempt');
+      logger.warn(
+        { declared: file.mimetype, detected: detectedType.mime, filename: file.originalname },
+        'SECURITY: MIME type mismatch detected - possible spoofing attempt'
+      );
       throw new Error('File validation failed');
     }
   }
@@ -154,12 +168,10 @@ export class UploadAdapter implements StorageProvider {
     const supabase = this.config.supabaseClient;
     const storagePath = `${tenantId}/${folder}/${filename}`;
 
-    const { error } = await supabase.storage
-      .from('images')
-      .upload(storagePath, file.buffer, {
-        contentType: file.mimetype,
-        upsert: false,
-      });
+    const { error } = await supabase.storage.from('images').upload(storagePath, file.buffer, {
+      contentType: file.mimetype,
+      upsert: false,
+    });
 
     if (error) {
       logger.error({ tenantId, folder, error: error.message }, 'Supabase upload failed');
@@ -176,7 +188,10 @@ export class UploadAdapter implements StorageProvider {
       throw new Error('Failed to generate access URL');
     }
 
-    logger.info({ tenantId, folder, filename, size: file.size }, 'File uploaded to Supabase Storage with signed URL');
+    logger.info(
+      { tenantId, folder, filename, size: file.size },
+      'File uploaded to Supabase Storage with signed URL'
+    );
 
     return {
       url: signedUrlData.signedUrl,
@@ -251,7 +266,11 @@ export class UploadAdapter implements StorageProvider {
     });
   }
 
-  async uploadPackagePhoto(file: UploadedFile, packageId: string, tenantId?: string): Promise<UploadResult> {
+  async uploadPackagePhoto(
+    file: UploadedFile,
+    packageId: string,
+    tenantId?: string
+  ): Promise<UploadResult> {
     // Use tenantId if provided (for real mode), otherwise use packageId as context
     const effectiveTenantId = tenantId || packageId;
     return this.upload(file, effectiveTenantId, 'packages', {
@@ -319,8 +338,10 @@ export class UploadAdapter implements StorageProvider {
         const storagePath = this.extractStoragePathFromUrl(url);
 
         if (!storagePath.startsWith(`${tenantId}/`)) {
-          logger.error({ tenantId, storagePath, url },
-            'SECURITY: Attempted cross-tenant file deletion blocked');
+          logger.error(
+            { tenantId, storagePath, url },
+            'SECURITY: Attempted cross-tenant file deletion blocked'
+          );
           return;
         }
 
@@ -333,8 +354,10 @@ export class UploadAdapter implements StorageProvider {
           .remove([storagePath]);
 
         if (error) {
-          logger.warn({ error: error.message, storagePath },
-            'Supabase delete failed - file may already be deleted');
+          logger.warn(
+            { error: error.message, storagePath },
+            'Supabase delete failed - file may already be deleted'
+          );
         } else {
           logger.info({ tenantId, storagePath }, 'Segment image deleted from Supabase storage');
         }

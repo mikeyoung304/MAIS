@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "071"
+issue_id: '071'
 tags: [code-review, dry-violation, maintainability, authentication]
 dependencies: []
 ---
@@ -40,6 +40,7 @@ function getAuthToken(providedToken?: string): string | null {
 ### Existing Centralized Auth
 
 The codebase already has `client/src/lib/auth.ts` with auth utilities like:
+
 - `getToken(role: UserRole)`
 - `getActiveUser()`
 - `AUTH_STORAGE_KEYS`
@@ -53,12 +54,14 @@ The new function should be added here.
 **Description:** Add `getAuthToken()` to `client/src/lib/auth.ts` and update all 5 files to import it.
 
 **Pros:**
+
 - Single source of truth
 - Easy to test
 - Follows existing patterns
 - ~20 minute effort
 
 **Cons:**
+
 - Requires updating 5 files
 
 **Effort:** Small (30 minutes)
@@ -81,10 +84,12 @@ export function getAuthToken(providedToken?: string): string | null {
 **Description:** New file specifically for auth helper functions.
 
 **Pros:**
+
 - Clear separation
 - Could include other helpers
 
 **Cons:**
+
 - Fragmentates auth code
 - auth.ts already exists for this purpose
 
@@ -96,9 +101,11 @@ export function getAuthToken(providedToken?: string): string | null {
 **Description:** Accept duplication as technical debt.
 
 **Pros:**
+
 - No immediate work needed
 
 **Cons:**
+
 - Debt accumulates
 - Risk of inconsistent updates
 - Poor maintainability
@@ -113,10 +120,12 @@ export function getAuthToken(providedToken?: string): string | null {
 ## Technical Details
 
 ### Affected Files
+
 - `client/src/lib/auth.ts` (add new export)
 - 5 files listed above (update imports, remove local function)
 
 ### Migration Steps
+
 1. Add `getAuthToken()` to `auth.ts` with JSDoc
 2. Add unit tests in `auth.test.ts`
 3. Update each file to `import { getAuthToken } from '@/lib/auth'`
@@ -134,8 +143,8 @@ export function getAuthToken(providedToken?: string): string | null {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                    |
+| ---------- | ------- | ------------------------ |
 | 2025-11-29 | Created | Found during code review |
 
 ## Resources

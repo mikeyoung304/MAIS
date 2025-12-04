@@ -1,10 +1,10 @@
-import { useMemo } from "react";
-import { Download, Calendar } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { EmptyState } from "@/components/ui/empty-state";
-import { TableSkeleton } from "@/components/ui/skeleton";
+import { useMemo } from 'react';
+import { Download, Calendar } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import { TableSkeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -12,9 +12,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { formatCurrency } from "@/lib/utils";
-import type { BookingDto } from "@macon/contracts";
+} from '@/components/ui/table';
+import { formatCurrency } from '@/lib/utils';
+import type { BookingDto } from '@macon/contracts';
 
 interface BookingListProps {
   bookings: BookingDto[];
@@ -82,9 +82,7 @@ export function BookingList({ bookings, isLoading, onExportCSV }: BookingListPro
                     {booking.eventDate}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-white/90 text-base">
-                  {booking.packageId}
-                </TableCell>
+                <TableCell className="text-white/90 text-base">{booking.packageId}</TableCell>
                 <TableCell className="text-right font-medium text-white/60 text-xl">
                   {formatCurrency(booking.totalCents)}
                 </TableCell>

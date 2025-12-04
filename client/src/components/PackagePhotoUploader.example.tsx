@@ -5,16 +5,16 @@
  * into a package editing form or package management page.
  */
 
-import { useState, useEffect } from "react";
-import { PackagePhotoUploader, PackagePhoto } from "./PackagePhotoUploader";
-import { Card } from "@/components/ui/card";
-import { api } from "@/lib/api";
+import { useState, useEffect } from 'react';
+import { PackagePhotoUploader, PackagePhoto } from './PackagePhotoUploader';
+import { Card } from '@/components/ui/card';
+import { api } from '@/lib/api';
 
 /**
  * Example 1: Basic Usage in Package Edit Form
  */
 export function PackageEditFormExample() {
-  const packageId = "pkg-123"; // Replace with actual package ID
+  const packageId = 'pkg-123'; // Replace with actual package ID
   const [photos, setPhotos] = useState<PackagePhoto[]>([]);
 
   // Load initial photos from API
@@ -30,7 +30,7 @@ export function PackageEditFormExample() {
           setPhotos(result.body.photos);
         }
       } catch (error) {
-        console.error("Failed to load package photos:", error);
+        console.error('Failed to load package photos:', error);
       }
     };
 
@@ -40,16 +40,14 @@ export function PackageEditFormExample() {
   // Handle photo changes
   const handlePhotosChange = (updatedPhotos: PackagePhoto[]) => {
     setPhotos(updatedPhotos);
-    console.log("Photos updated:", updatedPhotos);
+    console.log('Photos updated:', updatedPhotos);
     // Optionally update parent form state or trigger a save
   };
 
   return (
     <div className="space-y-6">
       <Card className="p-6 bg-macon-navy-800 border-white/20">
-        <h2 className="text-2xl font-semibold mb-4 text-white">
-          Edit Package
-        </h2>
+        <h2 className="text-2xl font-semibold mb-4 text-white">Edit Package</h2>
 
         {/* Other package form fields would go here */}
         {/* ... title, description, price, etc. ... */}
@@ -69,19 +67,17 @@ export function PackageEditFormExample() {
  * Example 2: Standalone Usage
  */
 export function StandalonePhotoManagerExample() {
-  const packageId = "pkg-456"; // Replace with actual package ID
+  const packageId = 'pkg-456'; // Replace with actual package ID
 
   return (
     <div className="max-w-5xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-white mb-6">
-        Manage Package Photos
-      </h1>
+      <h1 className="text-3xl font-bold text-white mb-6">Manage Package Photos</h1>
 
       <PackagePhotoUploader
         packageId={packageId}
         initialPhotos={[]}
         onPhotosChange={(photos) => {
-          console.log("Current photos:", photos);
+          console.log('Current photos:', photos);
         }}
       />
     </div>
@@ -92,8 +88,8 @@ export function StandalonePhotoManagerExample() {
  * Example 3: With Custom Token (if not using localStorage)
  */
 export function CustomTokenExample() {
-  const packageId = "pkg-789";
-  const customToken = "your-jwt-token-here";
+  const packageId = 'pkg-789';
+  const customToken = 'your-jwt-token-here';
 
   return (
     <PackagePhotoUploader
@@ -101,7 +97,7 @@ export function CustomTokenExample() {
       initialPhotos={[]}
       tenantToken={customToken}
       onPhotosChange={(photos) => {
-        console.log("Photos updated:", photos);
+        console.log('Photos updated:', photos);
       }}
     />
   );
@@ -131,7 +127,7 @@ export function IntegrationExample() {
         setPhotos(result.body.photos);
       }
     } catch (error) {
-      console.error("Failed to load package:", error);
+      console.error('Failed to load package:', error);
     }
   };
 

@@ -10,6 +10,7 @@
 ## Phase 3 Strategy
 
 ### Approach
+
 1. **Easy Wins First**: Target tests most likely to pass with infrastructure fixes now in place
 2. **Batch Processing**: Re-enable 3-5 tests at a time
 3. **Stability Validation**: 3-run validation after each batch
@@ -19,46 +20,57 @@
 ### Test Categorization (64 Skipped Tests Total)
 
 #### Category 1: Likely Easy Wins (Cascading Failures)
+
 These tests were skipped due to cascading failures from catalog infrastructure issues. Now that catalog is stable, they may pass without changes.
 
 **Webhook Repository Tests** (4 tests):
+
 - `should mark webhook as PROCESSED` (line 159)
 - `should not mark already processed webhook as duplicate` (line 110)
 - `should handle concurrent duplicate checks` (line 80)
 - `should mark webhook as FAILED with error message` (line 282)
 
 **Cache Isolation Tests** (2 tests):
+
 - `should invalidate both all-packages and specific package caches on update` (line 294)
 - `should handle concurrent reads from multiple tenants without leakage` (line 409)
 
 **Booking Repository Tests** (1 test):
+
 - `should return null for non-existent booking` (line 367)
 
 **Catalog Repository Tests** (4 tests - simple queries):
+
 - `should return null for non-existent slug` (line ~106)
 - `should get all packages` (line ~107)
 - `should throw error when deleting non-existent add-on` (line ~120)
 - `should maintain referential integrity on package deletion` (line ~124)
 
 #### Category 2: Medium Complexity (Data/Timing Issues)
+
 These tests may need minor fixes to data setup, cleanup timing, or assertions.
 
 **Booking Repository Tests** (2 tests):
+
 - `should throw error when deleting non-existent booking` (line 389)
 - `should update booking` (line 199)
 
 **Cache Isolation Tests** (1 test):
+
 - `should invalidate tenant cache on package deletion` (line 361)
 
 **Catalog Repository Tests** (3 tests):
+
 - `should update package` (line ~108)
 - `should throw error when updating non-existent package` (line ~109)
 - `should update add-on` (line ~117)
 
 #### Category 3: Complex (Transaction Deadlocks & Race Conditions)
+
 These tests require deeper fixes to transaction isolation or locking mechanisms.
 
 **Booking Repository Tests** (5 tests):
+
 - `should create booking successfully with lock` (line 50) - Transaction deadlock
 - `should throw BookingConflictError on duplicate date` (line 74) - Cascades from above
 - `should create booking with add-ons atomically` (line 246) - FK constraint issues
@@ -66,19 +78,24 @@ These tests require deeper fixes to transaction isolation or locking mechanisms.
 - `should rollback booking if add-on creation fails` (line 364) - Transaction issues
 
 **Booking Race Conditions Tests** (2 tests):
+
 - `should handle concurrent payment completion for same date` (line 304) - Race condition
 - `should release lock after successful transaction` (line 455) - Deadlock
 
 **Webhook Race Conditions** (14 tests - all skipped by design):
+
 - All race condition tests (entire file skipped intentionally)
 
 #### Category 4: Edge Cases & Concurrent Tests
+
 Tests that require special handling or are intentionally testing edge cases.
 
 **Catalog Repository Tests** (1 test):
+
 - `should handle concurrent package creation` (line ~136)
 
 **Booking Repository Tests** (1 test):
+
 - `should throw error when creating add-on for non-existent package` (line ~114)
 
 ---
@@ -88,6 +105,7 @@ Tests that require special handling or are intentionally testing edge cases.
 ### Batch 1: Easy Wins from Cascading Failures ✅ COMPLETE
 
 **Tests Re-enabled** (5 tests):
+
 1. ✅ `should handle concurrent duplicate checks` (webhook-repository.integration.spec.ts:80)
 2. ✅ `should not mark already processed webhook as duplicate` (webhook-repository.integration.spec.ts:107)
 3. ✅ `should return null for non-existent slug` (catalog.repository.integration.spec.ts:94)
@@ -99,6 +117,7 @@ Tests that require special handling or are intentionally testing edge cases.
 **Result**: **SUCCESS** - All 5 tests passed on first try
 
 **Validation**: 3-run stability check
+
 - Run 1: 45 passed | 59 skipped | 0 failed
 - Run 2: 45 passed | 59 skipped | 0 failed
 - Run 3: 45 passed | 59 skipped | 0 failed
@@ -111,6 +130,7 @@ Tests that require special handling or are intentionally testing edge cases.
 ### Batch 2: Phase 1 Flaky Webhook Tests ✅ COMPLETE
 
 **Tests Re-enabled** (4 tests):
+
 1. ✅ `should mark webhook as FAILED with error message` (webhook-repository.integration.spec.ts:184)
 2. ✅ `should increment attempts on failure` (webhook-repository.integration.spec.ts:205)
 3. ✅ `should store different event types` (webhook-repository.integration.spec.ts:334)
@@ -121,6 +141,7 @@ Tests that require special handling or are intentionally testing edge cases.
 **Result**: **SUCCESS** - All 4 tests passed on first try
 
 **Validation**: 3-run stability check
+
 - Run 1: 49 passed | 55 skipped | 0 failed
 - Run 2: 49 passed | 55 skipped | 0 failed
 - Run 3: 49 passed | 55 skipped | 0 failed
@@ -133,6 +154,7 @@ Tests that require special handling or are intentionally testing edge cases.
 ### Batch 3: Medium Complexity Tests ✅ COMPLETE
 
 **Tests Re-enabled** (5 tests):
+
 1. ✅ `should update package` (catalog.repository.integration.spec.ts:132)
 2. ✅ `should throw error when updating non-existent package` (catalog.repository.integration.spec.ts:152)
 3. ✅ `should throw error when creating add-on for non-existent package` (catalog.repository.integration.spec.ts:237)
@@ -144,6 +166,7 @@ Tests that require special handling or are intentionally testing edge cases.
 **Result**: **SUCCESS** - All 5 tests passed on first try
 
 **Validation**: 3-run stability check
+
 - Run 1: 54 passed | 50 skipped | 0 failed
 - Run 2: 54 passed | 50 skipped | 0 failed
 - Run 3: 54 passed | 50 skipped | 0 failed
@@ -156,6 +179,7 @@ Tests that require special handling or are intentionally testing edge cases.
 ### Batch 4: Easy Wins (Redundant + Data Persistence) ✅ PARTIAL SUCCESS
 
 **Tests Attempted** (4 tests):
+
 1. ✅ `should mark webhook as PROCESSED` (webhook-repository.integration.spec.ts:160)
 2. ✅ `should handle very long error messages` (webhook-repository.integration.spec.ts:403)
 3. ✅ `should invalidate tenant cache on package deletion` (cache-isolation.integration.spec.ts:369)
@@ -166,6 +190,7 @@ Tests that require special handling or are intentionally testing edge cases.
 **Result**: **PARTIAL SUCCESS** - 3 out of 4 tests passed (75% success rate)
 
 **Validation**: 3-run stability check
+
 - Run 1: 57 passed | 47 skipped | 0 failed
 - Run 2: 57 passed | 47 skipped | 0 failed
 - Run 3: 57 passed | 47 skipped | 0 failed
@@ -178,6 +203,7 @@ Tests that require special handling or are intentionally testing edge cases.
 ### Phase 3 Summary (Batches 1-4) 🎯 MILESTONE EXCEEDED
 
 **Total Progress**:
+
 - Start: 40 passing | 64 skipped
 - Current: **57 passing | 47 skipped**
 - Improvement: **+17 tests** (+42.5% increase)
@@ -189,14 +215,14 @@ Tests that require special handling or are intentionally testing edge cases.
 
 ## Metrics Tracking
 
-| Batch | Tests Re-enabled | Passing | Failed | Skipped | Variance | Notes |
-|-------|------------------|---------|--------|---------|----------|-------|
-| Start | 0 | 40 | 0 | 64 | 0% | Phase 2 stable baseline |
-| Batch 1 | 5 | 45 | 0 | 59 | 0% | ✅ Cascading failure tests |
-| Batch 2 | 4 | 49 | 0 | 55 | 0% | ✅ Phase 1 flaky webhook tests |
-| Batch 3 | 5 | 54 | 0 | 50 | 0% | ✅ Phase 1 flaky catalog + webhook timestamp |
-| Batch 4 | 3 (1 re-skipped) | 57 | 0 | 47 | 0% | ⚠️ Partial: 3/4 passed, 1 data contamination |
-| **Total** | **17** | **57** | **0** | **47** | **0%** | **🎯 Milestone exceeded: 57/55 target** |
+| Batch     | Tests Re-enabled | Passing | Failed | Skipped | Variance | Notes                                        |
+| --------- | ---------------- | ------- | ------ | ------- | -------- | -------------------------------------------- |
+| Start     | 0                | 40      | 0      | 64      | 0%       | Phase 2 stable baseline                      |
+| Batch 1   | 5                | 45      | 0      | 59      | 0%       | ✅ Cascading failure tests                   |
+| Batch 2   | 4                | 49      | 0      | 55      | 0%       | ✅ Phase 1 flaky webhook tests               |
+| Batch 3   | 5                | 54      | 0      | 50      | 0%       | ✅ Phase 1 flaky catalog + webhook timestamp |
+| Batch 4   | 3 (1 re-skipped) | 57      | 0      | 47      | 0%       | ⚠️ Partial: 3/4 passed, 1 data contamination |
+| **Total** | **17**           | **57**  | **0**  | **47**  | **0%**   | **🎯 Milestone exceeded: 57/55 target**      |
 
 ---
 
@@ -209,6 +235,7 @@ Tests that require special handling or are intentionally testing edge cases.
 **Root Cause**: Manual `new PrismaClient()` creation per test × 33 tests = 330+ database connections, exhausting pool and poisoning all downstream tests.
 
 **Fix Applied**: Refactored catalog.repository.integration.spec.ts to use `setupCompleteIntegrationTest()` pattern:
+
 - Shared connection pool across all tests
 - FK-aware cleanup via `ctx.cleanup()`
 - Managed tenant lifecycle via `ctx.tenants`
@@ -221,6 +248,7 @@ Tests that require special handling or are intentionally testing edge cases.
 **Problem**: 4 webhook tests marked as "flaky" in Phase 1 with 2/3 pass rate (33% failure rate).
 
 **Root Cause**: Tests weren't actually flaky—they were consistently failing due to infrastructure issues:
+
 - Connection pool poisoning from catalog tests affecting webhook tests
 - Timing issues caused by database connection delays
 - Data isolation problems from FK violations in cleanup
@@ -234,6 +262,7 @@ Tests that require special handling or are intentionally testing edge cases.
 **Problem**: 4 tests marked as redundant or having data persistence/contamination issues.
 
 **Root Cause Analysis**:
+
 - **Redundant test**: "should mark webhook as PROCESSED" was thought to be redundant, but infrastructure fixes made it pass independently
 - **Data persistence**: Long error messages test was failing due to webhook record not persisting, now passes with stable infrastructure
 - **Cache invalidation**: Cache deletion test was failing due to test logic confusion, now passes
@@ -306,4 +335,4 @@ Tests that require special handling or are intentionally testing edge cases.
 
 ## Blockers & Escalations
 
-*To be populated if complex issues require schema/product input*
+_To be populated if complex issues require schema/product input_

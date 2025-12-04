@@ -1,7 +1,7 @@
 ---
 status: completed
 priority: p2
-issue_id: "135"
+issue_id: '135'
 tags: [code-review, visual-editor, performance, react]
 dependencies: []
 completed_date: 2025-12-01
@@ -18,9 +18,11 @@ The PhotoDropZone drag-over handler calls `handlePhotoReorder` on EVERY drag eve
 ## Findings
 
 ### Discovery Source
+
 Performance Review Agent - Code Review
 
 ### Evidence
+
 Location: `client/src/features/tenant-admin/visual-editor/components/PhotoDropZone.tsx` lines 206-214
 
 ```typescript
@@ -34,23 +36,28 @@ onDragOver={(e) => {
 ```
 
 The `handlePhotoReorder` function (lines 181-195) creates new arrays and calls `onPhotosChange`:
+
 ```typescript
-const handlePhotoReorder = useCallback((fromIndex: number, toIndex: number) => {
-  if (fromIndex === toIndex) return;
-  const newPhotos = [...photos];  // New array created
-  const [removed] = newPhotos.splice(fromIndex, 1);
-  newPhotos.splice(toIndex, 0, removed);
-  const reorderedPhotos = newPhotos.map((photo, i) => ({
-    ...photo,
-    order: i,
-  }));
-  onPhotosChange(reorderedPhotos);  // Triggers state update + debounced save
-}, [photos, onPhotosChange]);
+const handlePhotoReorder = useCallback(
+  (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const newPhotos = [...photos]; // New array created
+    const [removed] = newPhotos.splice(fromIndex, 1);
+    newPhotos.splice(toIndex, 0, removed);
+    const reorderedPhotos = newPhotos.map((photo, i) => ({
+      ...photo,
+      order: i,
+    }));
+    onPhotosChange(reorderedPhotos); // Triggers state update + debounced save
+  },
+  [photos, onPhotosChange]
+);
 ```
 
 ## Proposed Solutions
 
 ### Option 1: Only Reorder on Drop (Recommended)
+
 Move reordering logic to `onDrop` instead of `onDragOver`.
 
 ```typescript
@@ -79,6 +86,7 @@ onDrop={(e) => {
 **Risk**: Low
 
 ### Option 2: Debounce the Reorder Call
+
 Add debouncing to prevent rapid-fire reorders.
 
 ```typescript
@@ -102,6 +110,7 @@ onDragOver={(e) => {
 **Risk**: Low
 
 ### Option 3: Use React DnD Library
+
 Replace custom drag implementation with react-beautiful-dnd or similar.
 
 ```typescript
@@ -116,21 +125,26 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 **Risk**: Medium
 
 ## Recommended Action
+
 <!-- Filled during triage -->
 
 ## Technical Details
 
 ### Affected Files
+
 - `client/src/features/tenant-admin/visual-editor/components/PhotoDropZone.tsx`
 
 ### Affected Components
+
 - PhotoDropZone component
 - Photo reordering in visual editor
 
 ### Database Changes Required
+
 None
 
 ## Acceptance Criteria
+
 - [ ] Photo reordering doesn't cause visible lag/jank
 - [ ] Only one reorder operation per complete drag action
 - [ ] Debounced save is triggered once per reorder, not many times
@@ -139,10 +153,11 @@ None
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                       |
+| ---------- | ------- | ------------------------------------------- |
 | 2025-12-01 | Created | Identified during visual editor code review |
 
 ## Resources
+
 - PR: feat(visual-editor) commit 0327dee
 - react-beautiful-dnd: https://github.com/atlassian/react-beautiful-dnd

@@ -7,6 +7,7 @@ A comprehensive 6-parallel-agent code review of the Supabase Storage Image Uploa
 **Review Scope:** Implementation plan (`feat-supabase-storage-uploads.md`), backend service (`upload.service.ts`), frontend component (`ImageUploadField.tsx`), and test suite.
 
 **Review Team:** 6 specialized agents analyzing in parallel
+
 - Security Sentinel (vulnerability detection)
 - Data Integrity Guardian (multi-tenant isolation)
 - Architecture Strategist (pattern consistency)
@@ -23,9 +24,11 @@ A comprehensive 6-parallel-agent code review of the Supabase Storage Image Uploa
 **Severity:** CRITICAL | **Status:** Pending | **Effort:** 2-3 hours
 
 #### Problem
+
 The Supabase Storage bucket is configured as **public**, allowing any user who knows or guesses the URL structure to access any tenant's uploaded images. This violates core multi-tenant isolation principles and creates a data leak vulnerability.
 
 **Attack Vector:**
+
 ```bash
 # Attacker can enumerate tenant IDs and access images
 curl https://your-supabase.com/storage/v1/object/public/images/tenant-123/segments/sensitive.jpg
@@ -33,13 +36,16 @@ curl https://your-supabase.com/storage/v1/object/public/images/competitor-id/pac
 ```
 
 **Impact:**
+
 - Complete data leakage across all tenants
 - GDPR/compliance violations if customer data is uploaded
 - Competitors can steal package photos, branding, hero images
 - Violates multi-tenant isolation principle from CLAUDE.md
 
 #### Evidence
+
 **File:** `/Users/mikeyoung/CODING/MAIS/server/src/services/upload.service.ts` (lines 151-153)
+
 ```typescript
 // Current implementation exposes public URLs
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -49,6 +55,7 @@ const publicUrl = `${supabaseUrl}/storage/v1/object/public/images/${storagePath}
 #### Recommended Solution: Private Bucket with Signed URLs
 
 **Implementation:**
+
 1. Change Supabase bucket from public to private via Dashboard
 2. Generate signed URLs with 1-year expiry on upload
 3. Test cross-tenant access is blocked
@@ -92,12 +99,14 @@ private async uploadToSupabase(
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Supabase bucket changed from public to private
 - [ ] Upload returns signed URLs with 1-year expiry
 - [ ] Integration test verifies cross-tenant access is blocked
 - [ ] Frontend handles signed URL format correctly
 
 **Reference Issues:**
+
 - GitHub Issue: #062 (Public Supabase Bucket Data Leak)
 - Security Risk: Multi-tenant data isolation violation
 
@@ -108,9 +117,11 @@ private async uploadToSupabase(
 **Severity:** CRITICAL | **Status:** Pending | **Effort:** 1 hour
 
 #### Problem
+
 File upload validation relies solely on client-provided MIME type without verifying actual file contents. An attacker can upload malicious files (PHP shells, executables) by setting a fake `Content-Type: image/jpeg` header.
 
 **Attack Vector:**
+
 ```bash
 # Attacker uploads PHP shell disguised as image
 curl -X POST \
@@ -120,13 +131,16 @@ curl -X POST \
 ```
 
 **Impact:**
+
 - Potential for malicious file uploads disguised as images
 - XSS vulnerabilities via SVG files (if added to allowlist)
 - In filesystem mode, could lead to code execution if files are served
 - Compliance violations for secure file handling
 
 #### Evidence
+
 **File:** `/Users/mikeyoung/CODING/MAIS/server/src/services/upload.service.ts` (lines 95-108)
+
 ```typescript
 // Current implementation - trusts client-provided mimetype
 private validateFile(file: UploadedFile, maxSizeMB?: number): void {
@@ -145,11 +159,13 @@ private validateFile(file: UploadedFile, maxSizeMB?: number): void {
 **Implementation:**
 
 Step 1: Install the `file-type` package
+
 ```bash
 npm install file-type --workspace=server
 ```
 
 Step 2: Update validation to check magic bytes
+
 ```typescript
 import { fileTypeFromBuffer } from 'file-type';
 
@@ -184,6 +200,7 @@ private async validateFile(file: UploadedFile, maxSizeMB?: number): Promise<void
 ```
 
 Step 3: Update upload methods to await validation
+
 ```typescript
 async uploadSegmentImage(file: UploadedFile, tenantId: string): Promise<UploadResult> {
   await this.validateFile(file, this.maxPackagePhotoSizeMB); // NOW ASYNC
@@ -192,6 +209,7 @@ async uploadSegmentImage(file: UploadedFile, tenantId: string): Promise<UploadRe
 ```
 
 **Acceptance Criteria:**
+
 - [ ] `file-type` package installed
 - [ ] `validateFile` checks magic bytes against declared MIME type
 - [ ] Mismatch logs warning with both types for security monitoring
@@ -200,6 +218,7 @@ async uploadSegmentImage(file: UploadedFile, tenantId: string): Promise<UploadRe
 - [ ] Test: PNG file with image/jpeg header is rejected
 
 **Reference Issues:**
+
 - GitHub Issue: #063 (MIME Type Spoofing Vulnerability)
 - OWASP Reference: File Upload Cheat Sheet
 
@@ -210,16 +229,20 @@ async uploadSegmentImage(file: UploadedFile, tenantId: string): Promise<UploadRe
 **Severity:** CRITICAL | **Status:** Pending | **Effort:** 1 hour
 
 #### Problem
+
 When a segment is deleted or its heroImage is updated, the old image file remains in Supabase Storage indefinitely. There is no cleanup mechanism, leading to storage bloat, cost leakage, and GDPR compliance issues (deleted content remains).
 
 **Impact:**
+
 - Unlimited growth of orphaned files (~$0.021/GB/month cost in Supabase)
 - GDPR "right to erasure" may be violated
 - No way to reclaim storage from deleted segments
 - Cost explosion from untracked storage growth
 
 #### Evidence
+
 **Current gaps:**
+
 - `segment.service.ts` - `deleteSegment()` has no image cleanup logic
 - `upload.service.ts` - `deleteSegmentImage()` method does NOT exist
 - No cleanup on segment updates when heroImage changes
@@ -229,6 +252,7 @@ When a segment is deleted or its heroImage is updated, the old image file remain
 **Implementation:**
 
 Step 1: Add delete method to UploadService
+
 ```typescript
 // upload.service.ts - Add this method
 private async deleteFromSupabase(
@@ -277,6 +301,7 @@ async deleteSegmentImage(url: string, tenantId: string): Promise<void> {
 ```
 
 Step 2: Add cleanup to segment deletion
+
 ```typescript
 // segment.service.ts - Update deleteSegment()
 async deleteSegment(tenantId: string, id: string): Promise<void> {
@@ -301,6 +326,7 @@ async deleteSegment(tenantId: string, id: string): Promise<void> {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] `deleteSegmentImage(url, tenantId)` method exists in UploadService
 - [ ] `deleteSegment()` cleans up heroImage before deletion
 - [ ] Tenant ownership verified before file deletion (security)
@@ -309,6 +335,7 @@ async deleteSegment(tenantId: string, id: string): Promise<void> {
 - [ ] Test: Delete segment without heroImage succeeds
 
 **Reference Issues:**
+
 - GitHub Issue: #064 (Orphaned Files No Cleanup)
 - GDPR Compliance: Right to Erasure (Article 17)
 
@@ -321,16 +348,20 @@ async deleteSegment(tenantId: string, id: string): Promise<void> {
 **Severity:** P2 | **Status:** Pending | **Effort:** 4-5 hours | **Priority:** High
 
 #### Problem
+
 The UploadService is implemented as a singleton that self-configures based on `process.env.ADAPTERS_PRESET`, completely bypassing the established DI container (`di.ts`) and adapter/port pattern used throughout the codebase. This violates architectural consistency.
 
 **Impact:**
+
 - Violates Open/Closed Principle (cannot add S3 without modifying service)
 - Tests must manipulate process.env instead of injecting mocks
 - Inconsistent with BookingService, CatalogService patterns
 - Technical debt compounds with future upload features
 
 #### Evidence
+
 **Current pattern (non-DI):**
+
 ```typescript
 // upload.service.ts
 export class UploadService {
@@ -345,6 +376,7 @@ export const uploadService = new UploadService();
 ```
 
 **Expected pattern (from codebase):**
+
 ```typescript
 // di.ts - switches implementations
 if (config.ADAPTERS_PRESET === 'mock') {
@@ -364,6 +396,7 @@ export class BookingService {
 **Implementation:**
 
 Step 1: Define StorageProvider interface in ports.ts
+
 ```typescript
 // server/src/lib/ports.ts
 export interface StorageProvider {
@@ -379,6 +412,7 @@ export interface StorageProvider {
 ```
 
 Step 2: Create mock adapter
+
 ```typescript
 // server/src/adapters/mock/mock-storage.adapter.ts
 import path from 'path';
@@ -393,7 +427,7 @@ export class MockStorageProvider implements StorageProvider {
   };
 
   constructor() {
-    Object.values(this.uploadDirs).forEach(dir => {
+    Object.values(this.uploadDirs).forEach((dir) => {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
@@ -423,8 +457,8 @@ export class MockStorageProvider implements StorageProvider {
     const category = url.includes('/logos/')
       ? 'logos'
       : url.includes('/packages/')
-      ? 'packages'
-      : 'segments';
+        ? 'packages'
+        : 'segments';
     const filepath = path.join(this.uploadDirs[category], filename);
     if (fs.existsSync(filepath)) {
       await fs.promises.unlink(filepath);
@@ -434,6 +468,7 @@ export class MockStorageProvider implements StorageProvider {
 ```
 
 Step 3: Create Supabase adapter
+
 ```typescript
 // server/src/adapters/supabase/supabase-storage.adapter.ts
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -451,12 +486,10 @@ export class SupabaseStorageProvider implements StorageProvider {
   ): Promise<UploadResult> {
     const storagePath = `${tenantId}/${category}/${filename}`;
 
-    const { error } = await this.supabase.storage
-      .from('images')
-      .upload(storagePath, file.buffer, {
-        contentType: file.mimetype,
-        upsert: false,
-      });
+    const { error } = await this.supabase.storage.from('images').upload(storagePath, file.buffer, {
+      contentType: file.mimetype,
+      upsert: false,
+    });
 
     if (error) throw new Error('Failed to upload image');
 
@@ -498,6 +531,7 @@ export class SupabaseStorageProvider implements StorageProvider {
 ```
 
 Step 4: Refactor UploadService to accept provider
+
 ```typescript
 // server/src/services/upload.service.ts - SIMPLIFIED
 import { StorageProvider, UploadedFile, UploadResult } from '../lib/ports';
@@ -507,7 +541,11 @@ export class UploadService {
   private maxFileSizeMB: number = 2;
   private maxPackagePhotoSizeMB: number = 5;
   private allowedMimeTypes: string[] = [
-    'image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml', 'image/webp',
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/svg+xml',
+    'image/webp',
   ];
 
   constructor(private readonly storageProvider: StorageProvider) {}
@@ -528,10 +566,7 @@ export class UploadService {
     const { fileTypeFromBuffer } = await import('file-type');
     const detectedType = await fileTypeFromBuffer(file.buffer);
     if (!detectedType || !this.allowedMimeTypes.includes(detectedType.mime)) {
-      logger.warn(
-        { declared: file.mimetype, detected: detectedType?.mime },
-        'MIME mismatch'
-      );
+      logger.warn({ declared: file.mimetype, detected: detectedType?.mime }, 'MIME mismatch');
       throw new Error('File content does not match declared type');
     }
 
@@ -553,7 +588,11 @@ export class UploadService {
     return this.storageProvider.upload(tenantId, 'logos', filename, file);
   }
 
-  async uploadPackagePhoto(file: UploadedFile, packageId: string, tenantId: string): Promise<UploadResult> {
+  async uploadPackagePhoto(
+    file: UploadedFile,
+    packageId: string,
+    tenantId: string
+  ): Promise<UploadResult> {
     await this.validateFile(file, this.maxPackagePhotoSizeMB);
     const filename = this.generateFilename(file.originalname, 'package');
     return this.storageProvider.upload(tenantId, 'packages', filename, file);
@@ -572,6 +611,7 @@ export class UploadService {
 ```
 
 Step 5: Wire in DI container
+
 ```typescript
 // server/src/di.ts
 import { getSupabaseClient } from './config/database';
@@ -604,6 +644,7 @@ export function createMockContainer(): Container {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] StorageProvider interface defined in ports.ts
 - [ ] MockStorageProvider implements interface
 - [ ] SupabaseStorageProvider implements interface
@@ -613,6 +654,7 @@ export function createMockContainer(): Container {
 - [ ] All existing tests pass with refactored service
 
 **Reference Issues:**
+
 - GitHub Issue: #065 (UploadService DI Pattern Violation)
 - CLAUDE.md: "Repository Pattern with TenantId" section
 
@@ -623,15 +665,18 @@ export function createMockContainer(): Container {
 **Severity:** P2 | **Status:** Pending | **Effort:** 1-2 hours
 
 #### Problem
+
 The UploadService has three nearly identical upload methods (`uploadLogo`, `uploadPackagePhoto`, `uploadSegmentImage`) that follow the exact same pattern. This violates DRY principle and makes maintenance harder.
 
 **Impact:**
+
 - 60+ lines of duplicated code
 - Bug fixes need to be applied in 3 places
 - Adding new upload types requires copy-paste
 - Increased cognitive load for maintenance
 
 #### Evidence
+
 ```typescript
 // All three follow identical pattern
 async uploadLogo(file: UploadedFile, tenantId: string): Promise<UploadResult> {
@@ -656,6 +701,7 @@ async uploadSegmentImage(file: UploadedFile, tenantId: string): Promise<UploadRe
 #### Recommended Solution: Single Parameterized Method
 
 **Implementation:**
+
 ```typescript
 // server/src/services/upload.service.ts
 type UploadCategory = 'logos' | 'packages' | 'segments';
@@ -736,18 +782,21 @@ async uploadSegmentImage(file: UploadedFile, tenantId: string): Promise<UploadRe
 ```
 
 **Benefits:**
+
 - Eliminates 60+ lines of duplication
 - Single point of change for all uploads
 - Clear size limits mapping
 - Easy to add new categories in future
 
 **Acceptance Criteria:**
+
 - [ ] Single `upload()` method handles all categories
 - [ ] Size limits defined in SIZE_LIMITS config
 - [ ] Public wrapper methods maintain backwards compatibility
 - [ ] All existing tests pass with refactored implementation
 
 **Reference Issues:**
+
 - GitHub Issue: #066 (Upload Code Duplication)
 - DRY Principle: Don't Repeat Yourself
 
@@ -758,16 +807,20 @@ async uploadSegmentImage(file: UploadedFile, tenantId: string): Promise<UploadRe
 **Severity:** P2 | **Status:** Pending | **Effort:** 2-3 hours
 
 #### Problem
+
 The upload rate limiter uses IP-based limiting (100 uploads/hour/IP), which doesn't prevent per-tenant abuse. A single tenant with dynamic IPs can bypass limits, while shared IPs punish multiple tenants unfairly. No storage quota enforcement exists.
 
 **Impact:**
+
 - One tenant can exhaust storage quota (cost explosion)
 - Mobile users with changing IPs bypass limits
 - Corporate users behind NAT share rate limit unfairly
 - No defense against storage exhaustion attacks
 
 #### Evidence
+
 **Current Implementation:**
+
 ```typescript
 // server/src/middleware/rateLimiter.ts
 export const uploadLimiter = rateLimit({
@@ -778,6 +831,7 @@ export const uploadLimiter = rateLimit({
 ```
 
 **Attack Scenario:**
+
 ```
 Malicious tenant uses 10 different IPs (VPN/mobile):
 - 10 IPs × 100 uploads/hour × 5MB = 5GB/hour storage consumption
@@ -790,6 +844,7 @@ Malicious tenant uses 10 different IPs (VPN/mobile):
 **Implementation:**
 
 Step 1: Update middleware with both limiters
+
 ```typescript
 // server/src/middleware/rateLimiter.ts
 
@@ -813,13 +868,14 @@ export const uploadLimiterTenant = rateLimit({
 ```
 
 Step 2: Apply both limiters to upload routes
+
 ```typescript
 // server/src/routes/tenant-admin.routes.ts
 
 router.post(
   '/segment-image',
-  uploadLimiterIP,      // Layer 1: Protect against DDoS
-  uploadLimiterTenant,  // Layer 2: Protect against tenant abuse
+  uploadLimiterIP, // Layer 1: Protect against DDoS
+  uploadLimiterTenant, // Layer 2: Protect against tenant abuse
   uploadSegmentImage.single('file'),
   handleMulterError,
   async (req: Request, res: Response) => {
@@ -828,17 +884,19 @@ router.post(
 );
 
 // Apply to all upload endpoints
-router.post('/logo', uploadLimiterIP, uploadLimiterTenant, /* ... */);
-router.post('/package-photo', uploadLimiterIP, uploadLimiterTenant, /* ... */);
+router.post('/logo', uploadLimiterIP, uploadLimiterTenant /* ... */);
+router.post('/package-photo', uploadLimiterIP, uploadLimiterTenant /* ... */);
 ```
 
 **Limits:**
+
 - **IP-level:** 200 uploads/hour (protects against distributed attacks)
 - **Tenant-level:** 50 uploads/hour (prevents single-tenant abuse)
 - **Storage:** ~250MB/hour per tenant (50 uploads × 5MB max)
 - **Daily:** ~6GB per tenant (24 hours × 250MB)
 
 **Acceptance Criteria:**
+
 - [ ] IP-level rate limiter (200/hour) for DDoS protection
 - [ ] Tenant-level rate limiter (50/hour) for abuse prevention
 - [ ] Both applied to upload endpoints
@@ -847,6 +905,7 @@ router.post('/package-photo', uploadLimiterIP, uploadLimiterTenant, /* ... */);
 - [ ] Error messages distinguish IP vs tenant limits
 
 **Reference Issues:**
+
 - GitHub Issue: #067 (Rate Limiting Per-IP Not Per-Tenant)
 - express-rate-limit docs: keyGenerator option
 
@@ -857,16 +916,20 @@ router.post('/package-photo', uploadLimiterIP, uploadLimiterTenant, /* ... */);
 **Severity:** P2 | **Status:** Pending | **Effort:** 2-3 hours
 
 #### Problem
+
 File uploads use `multer.memoryStorage()` which loads entire files into RAM. With 5MB files and 100 uploads/hour rate limit, concurrent requests can cause memory spikes of 200-500MB, potentially crashing the server.
 
 **Impact:**
+
 - 10 concurrent 5MB uploads = 50MB+ memory spike
 - Under attack: 100 requests/minute × 5MB = 500MB consumption
 - Node.js GC pressure causes CPU spikes
 - OOM crashes in production
 
 #### Evidence
+
 **Current Configuration:**
+
 ```typescript
 const upload = multer({
   storage: multer.memoryStorage(), // Entire file in RAM
@@ -875,6 +938,7 @@ const upload = multer({
 ```
 
 **Memory Impact Analysis:**
+
 ```
 Normal load: 10 concurrent uploads × 5MB = 50MB
 High load: 50 concurrent uploads × 5MB = 250MB
@@ -889,6 +953,7 @@ Peak memory under attack: 500-1500MB
 **Implementation:**
 
 Step 1: Create concurrency management
+
 ```typescript
 // server/src/lib/concurrency-limiter.ts
 import { logger } from './core/logger';
@@ -900,10 +965,7 @@ export class ConcurrencyLimiter {
   async acquire(tenantId: string): Promise<void> {
     const current = this.uploadSemaphores.get(tenantId) || 0;
     if (current >= this.MAX_CONCURRENT_PER_TENANT) {
-      logger.warn(
-        { tenantId, current },
-        'Upload concurrency limit exceeded'
-      );
+      logger.warn({ tenantId, current }, 'Upload concurrency limit exceeded');
       throw new Error(
         `Too many concurrent uploads (${current}/${this.MAX_CONCURRENT_PER_TENANT}). Please wait.`
       );
@@ -928,6 +990,7 @@ export const concurrencyLimiter = new ConcurrencyLimiter();
 ```
 
 Step 2: Apply concurrency check to routes
+
 ```typescript
 // server/src/routes/tenant-admin.routes.ts
 import { concurrencyLimiter } from '../lib/concurrency-limiter';
@@ -973,11 +1036,13 @@ router.post(
 ```
 
 **Memory Protection:**
+
 - Max 3 concurrent uploads per tenant = 15MB per tenant max
 - With 100 tenants = 1.5GB theoretical max (realistic: 200-400MB)
 - Prevents memory exhaustion attacks
 
 **Acceptance Criteria:**
+
 - [ ] Max 3 concurrent uploads per tenant enforced
 - [ ] Exceeded concurrency returns 429 with clear message
 - [ ] Concurrency always released (even on error)
@@ -985,6 +1050,7 @@ router.post(
 - [ ] Test: Error response is 429 (Too Many Requests)
 
 **Reference Issues:**
+
 - GitHub Issue: #068 (Memory Exhaustion Multer)
 - Multer disk storage docs for future enhancement
 
@@ -997,16 +1063,20 @@ router.post(
 **Severity:** P3 | **Status:** Pending | **Effort:** 30 minutes
 
 #### Problem
+
 The ImageUploadField component wraps every handler in `useCallback`, adding 50+ lines of boilerplate with zero performance benefit. The component doesn't pass handlers to memoized children.
 
 **Impact:**
+
 - 50+ lines of unnecessary code
 - Cognitive overhead (dependency arrays to track)
 - Cargo-culting React patterns
 - Obscures simple logic
 
 #### Evidence
+
 **Current Over-Engineering:**
+
 ```typescript
 // 7 useCallback wrappers, none necessary
 const validateFile = useCallback((file: File): string | null => { ... }, [maxSizeMB]);
@@ -1022,6 +1092,7 @@ const handleClick = useCallback(() => { ... }, [disabled, isUploading]);
 #### Recommended Solution: Remove All useCallbacks
 
 **Implementation:**
+
 ```typescript
 // client/src/components/ImageUploadField.tsx
 import { useState, useRef } from 'react';
@@ -1198,12 +1269,14 @@ export function ImageUploadField({
 ```
 
 **Benefits:**
+
 - 50+ lines removed
 - Clearer code flow
 - No dependency arrays to maintain
 - Identical performance (React will re-render inline functions same as memoized)
 
 **Acceptance Criteria:**
+
 - [ ] No `useCallback` in ImageUploadField
 - [ ] Regular functions or inline handlers used
 - [ ] Component still works correctly
@@ -1211,6 +1284,7 @@ export function ImageUploadField({
 - [ ] All E2E tests pass
 
 **Reference Issues:**
+
 - GitHub Issue: #069 (useCallback Overuse)
 - Kent C. Dodds: When to useCallback - https://kentcdodds.com/blog/usememo-and-usecallback
 
@@ -1220,30 +1294,30 @@ export function ImageUploadField({
 
 ### Critical Path (Must Fix Before Deployment)
 
-| # | Issue | Effort | Status | Fix Priority |
-|---|-------|--------|--------|--------------|
-| 1 | Public Bucket Data Leak | 2-3h | Pending | P1 Blocker |
-| 2 | MIME Type Spoofing | 1h | Pending | P1 Blocker |
-| 3 | Orphaned Files No Cleanup | 1h | Pending | P1 Blocker |
+| #   | Issue                     | Effort | Status  | Fix Priority |
+| --- | ------------------------- | ------ | ------- | ------------ |
+| 1   | Public Bucket Data Leak   | 2-3h   | Pending | P1 Blocker   |
+| 2   | MIME Type Spoofing        | 1h     | Pending | P1 Blocker   |
+| 3   | Orphaned Files No Cleanup | 1h     | Pending | P1 Blocker   |
 
 **Total Critical: 4-5 hours**
 
 ### Important (Should Fix This Sprint)
 
-| # | Issue | Effort | Status | Fix Priority |
-|---|-------|--------|--------|--------------|
-| 4 | DI Pattern Violation | 4-5h | Pending | P2 High |
-| 5 | Code Duplication | 1-2h | Pending | P2 High |
-| 6 | Rate Limiting Per-IP | 2-3h | Pending | P2 High |
-| 7 | Memory Exhaustion Risk | 2-3h | Pending | P2 High |
+| #   | Issue                  | Effort | Status  | Fix Priority |
+| --- | ---------------------- | ------ | ------- | ------------ |
+| 4   | DI Pattern Violation   | 4-5h   | Pending | P2 High      |
+| 5   | Code Duplication       | 1-2h   | Pending | P2 High      |
+| 6   | Rate Limiting Per-IP   | 2-3h   | Pending | P2 High      |
+| 7   | Memory Exhaustion Risk | 2-3h   | Pending | P2 High      |
 
 **Total Important: 9-13 hours**
 
 ### Enhancements (Nice to Have)
 
-| # | Issue | Effort | Status | Fix Priority |
-|---|-------|--------|--------|--------------|
-| 8 | useCallback Overuse | 30min | Pending | P3 Nice |
+| #   | Issue               | Effort | Status  | Fix Priority |
+| --- | ------------------- | ------ | ------- | ------------ |
+| 8   | useCallback Overuse | 30min  | Pending | P3 Nice      |
 
 **Total Enhancements: 30 minutes**
 
@@ -1275,6 +1349,7 @@ export function ImageUploadField({
 ## Key Files Affected
 
 ### Backend
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/services/upload.service.ts` - Main refactoring target
 - `/Users/mikeyoung/CODING/MAIS/server/src/di.ts` - DI wiring
 - `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin.routes.ts` - Endpoint updates
@@ -1284,10 +1359,12 @@ export function ImageUploadField({
 - `/Users/mikeyoung/CODING/MAIS/server/src/adapters/mock/mock-storage.adapter.ts` - New file
 
 ### Frontend
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/components/ImageUploadField.tsx` - useCallback removal
 - `/Users/mikeyoung/CODING/MAIS/client/src/features/admin/segments/SegmentForm/HeroFields.tsx` - Component integration
 
 ### Tests
+
 - `/Users/mikeyoung/CODING/MAIS/server/test/services/upload.service.test.ts` - Update with new tests
 - `/Users/mikeyoung/CODING/MAIS/server/test/e2e/segment-image-upload.spec.ts` - New E2E tests
 

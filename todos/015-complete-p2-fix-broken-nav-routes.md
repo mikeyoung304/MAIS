@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "015"
+issue_id: '015'
 tags: [code-review, routing, navigation, ui]
 dependencies: []
 ---
@@ -19,10 +19,12 @@ Several navigation links in the admin sidebar point to routes that don't exist i
 ### Broken Platform Admin Routes
 
 **RoleBasedNav.tsx defines these links:**
+
 - `/admin/tenants` - No route defined (tenants shown in dashboard)
 - `/admin/settings` - No route defined (not implemented)
 
 **Router.tsx only has:**
+
 - `/admin/dashboard` - PlatformAdminDashboard
 - `/admin/segments` - SegmentsManager
 - `/admin/tenants/new` - TenantForm
@@ -31,6 +33,7 @@ Several navigation links in the admin sidebar point to routes that don't exist i
 ### Broken Tenant Admin Routes
 
 **RoleBasedNav.tsx defines these links:**
+
 - `/tenant/packages` - No route (component exists: TenantPackagesManager)
 - `/tenant/bookings` - No route (component exists: TenantBookingList)
 - `/tenant/blackouts` - No route (component exists: BlackoutsManager)
@@ -38,50 +41,61 @@ Several navigation links in the admin sidebar point to routes that don't exist i
 - `/tenant/settings` - No route (not implemented)
 
 **Router.tsx only has:**
+
 - `/tenant/dashboard` - TenantAdminDashboard
 
 ## Proposed Solutions
 
 ### Option A: Fix Navigation Links to Point to Dashboard (Quick Fix)
+
 **Effort:** Small | **Risk:** Low
 
 Change `/admin/tenants` link to point to `/admin/dashboard` since tenants are displayed there.
 
 **Pros:**
+
 - Quick fix
 - No new routes needed
 
 **Cons:**
+
 - Doesn't add missing functionality
 - Still have dead settings link
 
 ### Option B: Add Missing Routes (Complete Fix)
+
 **Effort:** Medium | **Risk:** Low
 
 Add routes for all navigation items:
+
 1. `/admin/tenants` → redirect to `/admin/dashboard` (or dedicated tenant list)
 2. `/admin/settings` → AdminSettings component (stub or full)
 3. `/tenant/packages`, `/tenant/bookings`, etc. → respective components
 
 **Pros:**
+
 - Complete fix
 - All navigation works
 - Better UX
 
 **Cons:**
+
 - More work
 - Some components may need to be created
 
 ### Option C: Remove Non-Working Nav Items (Minimal)
+
 **Effort:** Small | **Risk:** Low
 
 Hide navigation items that don't have routes yet.
 
 **Pros:**
+
 - Quick
 - No broken links
 
 **Cons:**
+
 - Reduced navigation
 - Feature discoverability lost
 
@@ -92,10 +106,12 @@ Start with **Option A** for immediate fix, then implement **Option B** as follow
 ## Technical Details
 
 **Files to Modify:**
+
 - `client/src/components/navigation/RoleBasedNav.tsx`
 - `client/src/router.tsx`
 
 **Components That Exist (need routes):**
+
 - `client/src/features/admin/dashboard/tabs/TenantsTab.tsx`
 - `client/src/features/admin/segments/SegmentsManager.tsx`
 - Various tenant admin components
@@ -109,8 +125,8 @@ Start with **Option A** for immediate fix, then implement **Option B** as follow
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                    |
+| ---------- | ------- | ------------------------ |
 | 2025-11-24 | Created | Found during code review |
 
 ## Resources

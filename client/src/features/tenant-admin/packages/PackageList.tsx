@@ -1,6 +1,6 @@
-import { useState, memo } from "react";
-import { Pencil, Trash2, Image, Package, AlertTriangle, ImageIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState, memo } from 'react';
+import { Pencil, Trash2, Image, Package, AlertTriangle, ImageIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,13 +10,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { MobileActionDropdown } from "@/components/shared/MobileActionDropdown";
-import { EmptyState } from "@/components/shared/EmptyState";
-import { StatusBadge } from "@/components/shared/StatusBadge";
-import { formatCurrency } from "@/lib/utils";
-import { sanitizeImageUrl } from "@/lib/sanitize-url";
-import type { PackageDto } from "@macon/contracts";
+} from '@/components/ui/alert-dialog';
+import { MobileActionDropdown } from '@/components/shared/MobileActionDropdown';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { formatCurrency } from '@/lib/utils';
+import { sanitizeImageUrl } from '@/lib/sanitize-url';
+import type { PackageDto } from '@macon/contracts';
 
 interface PackageListProps {
   packages: PackageDto[];
@@ -32,7 +32,11 @@ interface PackageListProps {
  * sage accents, and subtle hover states
  * Memoized to prevent unnecessary re-renders when parent re-renders
  */
-export const PackageList = memo(function PackageList({ packages, onEdit, onDelete }: PackageListProps) {
+export const PackageList = memo(function PackageList({
+  packages,
+  onEdit,
+  onDelete,
+}: PackageListProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [packageToDelete, setPackageToDelete] = useState<PackageDto | null>(null);
 
@@ -119,7 +123,7 @@ export const PackageList = memo(function PackageList({ packages, onEdit, onDelet
                     <h3 className="font-serif text-xl font-bold text-text-primary truncate">
                       {pkg.title}
                     </h3>
-                    <StatusBadge status={pkg.isActive !== false ? "Active" : "Inactive"} />
+                    <StatusBadge status={pkg.isActive !== false ? 'Active' : 'Inactive'} />
                   </div>
 
                   {/* Description */}
@@ -163,15 +167,15 @@ export const PackageList = memo(function PackageList({ packages, onEdit, onDelet
                   <MobileActionDropdown
                     actions={[
                       {
-                        label: "Edit",
+                        label: 'Edit',
                         icon: Pencil,
                         onClick: () => onEdit(pkg),
                       },
                       {
-                        label: "Delete",
+                        label: 'Delete',
                         icon: Trash2,
                         onClick: () => handleDeleteClick(pkg),
-                        variant: "danger",
+                        variant: 'danger',
                       },
                     ]}
                   />
@@ -195,16 +199,14 @@ export const PackageList = memo(function PackageList({ packages, onEdit, onDelet
               </AlertDialogTitle>
             </div>
             <AlertDialogDescription className="text-text-muted">
-              Are you sure you want to delete{" "}
+              Are you sure you want to delete{' '}
               <strong className="font-semibold text-text-primary">
                 "{packageToDelete?.title}"
               </strong>
               ?
             </AlertDialogDescription>
             <div className="mt-4 p-4 bg-danger-50 border border-danger-100 rounded-xl">
-              <p className="text-sm text-danger-700 font-medium">
-                This action cannot be undone
-              </p>
+              <p className="text-sm text-danger-700 font-medium">This action cannot be undone</p>
               <ul className="mt-2 text-sm text-danger-600 space-y-1">
                 <li className="flex items-center gap-2">
                   <span className="w-1 h-1 bg-danger-400 rounded-full" />

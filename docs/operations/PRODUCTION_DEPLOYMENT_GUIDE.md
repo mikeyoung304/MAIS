@@ -5,10 +5,10 @@
 
 ## Production URLs
 
-| Service | URL |
-|---------|-----|
-| **Frontend** | https://maconaisolutions.com |
-| **API** | https://mais-api.onrender.com |
+| Service      | URL                           |
+| ------------ | ----------------------------- |
+| **Frontend** | https://maconaisolutions.com  |
+| **API**      | https://mais-api.onrender.com |
 
 ---
 
@@ -32,21 +32,21 @@
 
 ### Build Settings
 
-| Setting | Value |
-|---------|-------|
-| **Root Directory** | *(empty - repo root)* |
-| **Framework Preset** | Vite |
-| **Build Command** | `npm run build --workspace=@macon/contracts && npm run build --workspace=@macon/shared && npm run build --workspace=@macon/web` |
-| **Output Directory** | `client/dist` |
-| **Install Command** | `npm ci --workspaces --include-workspace-root` |
+| Setting              | Value                                                                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Root Directory**   | _(empty - repo root)_                                                                                                           |
+| **Framework Preset** | Vite                                                                                                                            |
+| **Build Command**    | `npm run build --workspace=@macon/contracts && npm run build --workspace=@macon/shared && npm run build --workspace=@macon/web` |
+| **Output Directory** | `client/dist`                                                                                                                   |
+| **Install Command**  | `npm ci --workspaces --include-workspace-root`                                                                                  |
 
 ### Environment Variables
 
-| Key | Value |
-|-----|-------|
-| `VITE_API_URL` | `https://mais-api.onrender.com` |
-| `VITE_APP_MODE` | `real` |
-| `VITE_ENVIRONMENT` | `production` |
+| Key                | Value                           |
+| ------------------ | ------------------------------- |
+| `VITE_API_URL`     | `https://mais-api.onrender.com` |
+| `VITE_APP_MODE`    | `real`                          |
+| `VITE_ENVIRONMENT` | `production`                    |
 
 ### Custom Domain
 
@@ -60,29 +60,29 @@
 
 ### Build Settings
 
-| Setting | Value |
-|---------|-------|
-| **Root Directory** | `server` |
-| **Build Command** | `npm ci && npx prisma generate && npx tsc` |
-| **Start Command** | `npx tsx src/index.ts` |
+| Setting            | Value                                      |
+| ------------------ | ------------------------------------------ |
+| **Root Directory** | `server`                                   |
+| **Build Command**  | `npm ci && npx prisma generate && npx tsc` |
+| **Start Command**  | `npx tsx src/index.ts`                     |
 
 ### Environment Variables
 
 > **IMPORTANT:** Never commit secrets. All values below are stored in Render dashboard only.
 
-| Key | Description |
-|-----|-------------|
-| `NODE_ENV` | `production` |
-| `ADAPTERS_PRESET` | `real` |
-| `API_PORT` | `3001` |
-| `DATABASE_URL` | PostgreSQL connection string (from Supabase) |
-| `DIRECT_URL` | Same as DATABASE_URL |
-| `JWT_SECRET` | 64-char hex secret (generate with `openssl rand -hex 32`) |
-| `TENANT_SECRETS_ENCRYPTION_KEY` | 64-char hex secret |
-| `CORS_ORIGIN` | `https://maconaisolutions.com` |
-| `STRIPE_SECRET_KEY` | From Stripe dashboard |
-| `STRIPE_WEBHOOK_SECRET` | From Stripe webhook settings |
-| `POSTMARK_SERVER_TOKEN` | From Postmark dashboard |
+| Key                             | Description                                               |
+| ------------------------------- | --------------------------------------------------------- |
+| `NODE_ENV`                      | `production`                                              |
+| `ADAPTERS_PRESET`               | `real`                                                    |
+| `API_PORT`                      | `3001`                                                    |
+| `DATABASE_URL`                  | PostgreSQL connection string (from Supabase)              |
+| `DIRECT_URL`                    | Same as DATABASE_URL                                      |
+| `JWT_SECRET`                    | 64-char hex secret (generate with `openssl rand -hex 32`) |
+| `TENANT_SECRETS_ENCRYPTION_KEY` | 64-char hex secret                                        |
+| `CORS_ORIGIN`                   | `https://maconaisolutions.com`                            |
+| `STRIPE_SECRET_KEY`             | From Stripe dashboard                                     |
+| `STRIPE_WEBHOOK_SECRET`         | From Stripe webhook settings                              |
+| `POSTMARK_SERVER_TOKEN`         | From Postmark dashboard                                   |
 
 ---
 
@@ -101,11 +101,13 @@ git push origin main
 ### Manual Deployment
 
 **Vercel:**
+
 ```bash
 npx vercel --prod
 ```
 
 **Render:**
+
 - Go to Render Dashboard → mais-api → Manual Deploy
 
 ---
@@ -149,12 +151,14 @@ curl https://mais-api.onrender.com/v1/packages
 Render free tier spins down after 15 minutes of inactivity. First request takes 30-60s.
 
 **Solutions:**
+
 1. Upgrade to Render Starter ($7/mo) for always-on
 2. Use a cron job to ping the health endpoint every 10 minutes
 
 ### CORS Errors
 
 Ensure `CORS_ORIGIN` in Render matches exactly:
+
 - Must include `https://`
 - No trailing slash
 - Must match domain (not Vercel preview URL)

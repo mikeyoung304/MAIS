@@ -137,46 +137,50 @@ export function createSegmentsRouter(segmentService: SegmentService): Router {
       );
 
       // Transform packages to match PackageDto format for client consumption
-      const transformedPackages = segment.packages?.map((pkg) => {
-        // Parse photos JSON to get first photo URL
-        let photoUrl: string | undefined;
-        if (pkg.photos) {
-          try {
-            const photosArray = typeof pkg.photos === 'string' ? JSON.parse(pkg.photos) : pkg.photos;
-            if (Array.isArray(photosArray) && photosArray.length > 0) {
-              photoUrl = photosArray[0]?.url;
+      const transformedPackages =
+        segment.packages?.map((pkg) => {
+          // Parse photos JSON to get first photo URL
+          let photoUrl: string | undefined;
+          if (pkg.photos) {
+            try {
+              const photosArray =
+                typeof pkg.photos === 'string' ? JSON.parse(pkg.photos) : pkg.photos;
+              if (Array.isArray(photosArray) && photosArray.length > 0) {
+                photoUrl = photosArray[0]?.url;
+              }
+            } catch {
+              // Ignore JSON parse errors
             }
-          } catch {
-            // Ignore JSON parse errors
           }
-        }
 
-        return {
-          id: pkg.id,
-          slug: pkg.slug,
-          title: pkg.name,  // Map name -> title
-          description: pkg.description || '',
-          priceCents: pkg.basePrice,  // Map basePrice -> priceCents
-          photoUrl,
-          // Include tier grouping fields for storefront display
-          grouping: pkg.grouping || null,
-          groupingOrder: pkg.groupingOrder ?? null,
-          addOns: pkg.addOns?.map((pa) => ({
-            id: pa.addOn.id,
-            title: pa.addOn.name,
-            description: pa.addOn.description || '',
-            priceCents: pa.addOn.price,
-          })) || [],
-        };
-      }) || [];
+          return {
+            id: pkg.id,
+            slug: pkg.slug,
+            title: pkg.name, // Map name -> title
+            description: pkg.description || '',
+            priceCents: pkg.basePrice, // Map basePrice -> priceCents
+            photoUrl,
+            // Include tier grouping fields for storefront display
+            grouping: pkg.grouping || null,
+            groupingOrder: pkg.groupingOrder ?? null,
+            addOns:
+              pkg.addOns?.map((pa) => ({
+                id: pa.addOn.id,
+                title: pa.addOn.name,
+                description: pa.addOn.description || '',
+                priceCents: pa.addOn.price,
+              })) || [],
+          };
+        }) || [];
 
       // Transform add-ons to match AddOnDto format
-      const transformedAddOns = segment.addOns?.map((addOn) => ({
-        id: addOn.id,
-        title: addOn.name,
-        description: addOn.description || '',
-        priceCents: addOn.price,
-      })) || [];
+      const transformedAddOns =
+        segment.addOns?.map((addOn) => ({
+          id: addOn.id,
+          title: addOn.name,
+          description: addOn.description || '',
+          priceCents: addOn.price,
+        })) || [];
 
       res.json({
         ...segment,

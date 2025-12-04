@@ -30,6 +30,7 @@ The ts-rest library (v3) has type compatibility issues with Express 4.x/5.x midd
 ### Why Previous Attempts Failed
 
 Commit `b05f9ec` tried to solve TODO-035 (remove `any` types) by:
+
 - Replacing `{ req: any }` with `{ req: Request }` throughout
 - Adding a `RouterImplementation` type assertion
 - These changes exposed underlying type incompatibilities that ts-rest can't resolve
@@ -45,22 +46,25 @@ The issue is that ts-rest's type system is intentionally loose to work with Expr
 **Change:** Reverted all route handler parameters from `{ req: Request }` back to `{ req: any }`
 
 **Before (broken):**
+
 ```typescript
 getPackages: async ({ req }: { req: Request }) => {
   const tenantId = getTenantId(req as TenantRequest);
   // ...
-}
+};
 ```
 
 **After (working):**
+
 ```typescript
 getPackages: async ({ req }: { req: any }) => {
   const tenantId = getTenantId(req as TenantRequest);
   // ...
-}
+};
 ```
 
 **Why:** ts-rest requires this loose typing internally. The `any` type is handled safely because:
+
 - Immediately cast to `TenantRequest` for type safety downstream
 - TenantRequest interface provides full type info
 - Runtime behavior is identical; only TypeScript understanding differs
@@ -76,6 +80,7 @@ getPackages: async ({ req }: { req: any }) => {
 **Change:** Created explicit `BrandingData` interface in the `updateBranding()` method to properly type the logo property.
 
 **Before (broken):**
+
 ```typescript
 const currentBranding = (tenant.branding as Record<string, unknown>) || {};
 const updatedBranding = {
@@ -86,6 +91,7 @@ const updatedBranding = {
 ```
 
 **After (working):**
+
 ```typescript
 interface BrandingData {
   primaryColor?: string;
@@ -93,7 +99,7 @@ interface BrandingData {
   accentColor?: string;
   backgroundColor?: string;
   fontFamily?: string;
-  logo?: string;  // Explicitly include logo
+  logo?: string; // Explicitly include logo
 }
 const currentBranding = (tenant.branding as BrandingData) || {};
 const updatedBranding: BrandingData = {
@@ -103,6 +109,7 @@ const updatedBranding: BrandingData = {
 ```
 
 **Why:**
+
 - Tells TypeScript that branding objects include the `logo` property
 - Allows logo preservation when updating other branding fields
 - Scoped to the method (doesn't pollute global scope)
@@ -117,16 +124,19 @@ const updatedBranding: BrandingData = {
 **Change:** Updated type assertion to use proper chaining (`as unknown as`) for safer typing.
 
 **Before (broken):**
+
 ```typescript
 const prisma = (blackoutRepo as { prisma: unknown }).prisma as { ... };
 ```
 
 **After (working):**
+
 ```typescript
 const prismaClient = (blackoutRepo as unknown as { prisma: unknown }).prisma as { ... };
 ```
 
 **Why:**
+
 - Follows TypeScript best practices for unsafe assertions
 - Breaking the assertion into two steps is safer: `unknown` acts as an escape hatch
 - Renames variable from `prisma` to `prismaClient` for clarity (avoiding module name collision)
@@ -140,18 +150,21 @@ const prismaClient = (blackoutRepo as unknown as { prisma: unknown }).prisma as 
 **Change:** Added type guard to handle `stripe-signature` header which can be string or string[].
 
 **Before (broken):**
+
 ```typescript
 const signature = req.headers['stripe-signature'] || '';
 // TypeScript: header might be string or string[], not narrowed
 ```
 
 **After (working):**
+
 ```typescript
 const signatureHeader = req.headers['stripe-signature'];
-const signature = Array.isArray(signatureHeader) ? signatureHeader[0] : (signatureHeader || '');
+const signature = Array.isArray(signatureHeader) ? signatureHeader[0] : signatureHeader || '';
 ```
 
 **Why:**
+
 - Express headers can be single string or array of strings (for multi-value headers)
 - Stripe signature is always single value, so take first if array
 - Explicit handling documents the edge case
@@ -166,6 +179,7 @@ const signature = Array.isArray(signatureHeader) ? signatureHeader[0] : (signatu
 **Change:** Removed the catch-all index signature from TenantBranding interface.
 
 **Before:**
+
 ```typescript
 export interface TenantBranding {
   primaryColor?: string;
@@ -179,6 +193,7 @@ export interface TenantBranding {
 ```
 
 **After:**
+
 ```typescript
 export interface TenantBranding {
   primaryColor?: string;
@@ -191,6 +206,7 @@ export interface TenantBranding {
 ```
 
 **Why:**
+
 - The catch-all `[key: string]` was masking type errors elsewhere
 - With explicit BrandingData interface in tenant-admin.routes.ts, the index signature is unnecessary
 - Improves type safety by being explicit about allowed properties
@@ -201,6 +217,7 @@ export interface TenantBranding {
 ## Verification Steps Taken
 
 ### Build Verification
+
 ```bash
 npm run typecheck
 # Result: No TypeScript errors
@@ -209,6 +226,7 @@ npm run typecheck
 ```
 
 ### Test Verification
+
 ```bash
 npm test
 # Result: 913 tests passing, 22 skipped
@@ -217,6 +235,7 @@ npm test
 ```
 
 ### Route Verification
+
 ```bash
 # All 30+ routes in createV1Router compile without errors
 # Route signatures properly inferred from Contracts
@@ -228,16 +247,21 @@ npm test
 ## Why This Solution is the Right One
 
 ### 1. **Respects Library Constraints**
+
 ts-rest v3 has documented type incompatibilities with Express. Attempting to force strict typing creates circular type inference problems that can't be resolved without major version upgrades (ts-rest v4 has different type requirements).
 
 ### 2. **Maintains Type Safety**
+
 Despite using `any` for the req parameter, type safety is preserved:
+
 - Immediate cast to `TenantRequest` (explicitly typed interface)
 - TenantRequest provides full type info: `tenantId`, `headers`, `ip`, etc.
 - Downstream code is fully typed
 
 ### 3. **Documented Limitation**
+
 Comments explain the trade-off clearly:
+
 ```typescript
 // ts-rest express has type compatibility issues with Express 4.x/5.x
 // The `any` type for req is required - ts-rest internally handles request typing
@@ -246,13 +270,16 @@ Comments explain the trade-off clearly:
 ```
 
 ### 4. **Minimal Surface Area for `any`**
+
 The `any` is confined to:
+
 - Route handler parameter destructuring only
 - Immediately cast to properly typed TenantRequest
 - Single point of unchecked type (the entry point)
 - Interior of handlers fully typed
 
 ### 5. **Solves Actual Problems**
+
 - BrandingData interface fixes the real issue (logo property access)
 - Type assertions follow best practices (as unknown as)
 - Header handling is explicit and safe
@@ -265,6 +292,7 @@ The `any` is confined to:
 ### Previous Attempts
 
 **Commit b05f9ec:** Attempted to remove `any` types across the codebase (TODO-035)
+
 - Correctly identified that overuse of `any` reduces type safety
 - Didn't account for ts-rest's type system limitations
 - Created type incompatibilities that couldn't be resolved without architectural changes
@@ -278,6 +306,7 @@ To fully eliminate the `any` type in ts-rest handlers, consider:
 3. **Accept documented limitation** with clear comments (current approach)
 
 The current solution chooses option 3 (accept and document) because:
+
 - Minimizes risk and complexity
 - Already works at production scale (913 tests)
 - Allows team to focus on other improvements
@@ -287,19 +316,20 @@ The current solution chooses option 3 (accept and document) because:
 
 ## Files Modified
 
-| File | Change | Reason |
-|------|--------|--------|
-| `server/src/routes/index.ts` | Reverted 15+ handlers from `req: Request` to `req: any` | ts-rest type compatibility |
-| `server/src/routes/index.ts` | Fixed stripe-signature header type guard | Handle string \| string[] |
-| `server/src/routes/tenant-admin.routes.ts` | Added BrandingData interface | Type logo property explicitly |
-| `server/src/routes/tenant-admin.routes.ts` | Fixed BlackoutRepository assertion | Follow TS best practices |
-| `server/src/middleware/tenant.ts` | Removed catch-all index signature | Improve type precision |
+| File                                       | Change                                                  | Reason                        |
+| ------------------------------------------ | ------------------------------------------------------- | ----------------------------- |
+| `server/src/routes/index.ts`               | Reverted 15+ handlers from `req: Request` to `req: any` | ts-rest type compatibility    |
+| `server/src/routes/index.ts`               | Fixed stripe-signature header type guard                | Handle string \| string[]     |
+| `server/src/routes/tenant-admin.routes.ts` | Added BrandingData interface                            | Type logo property explicitly |
+| `server/src/routes/tenant-admin.routes.ts` | Fixed BlackoutRepository assertion                      | Follow TS best practices      |
+| `server/src/middleware/tenant.ts`          | Removed catch-all index signature                       | Improve type precision        |
 
 ---
 
 ## Testing & Safety
 
 ### What Was Tested
+
 - Full TypeScript compilation: `tsc -b` ✅
 - All 913 server tests ✅
 - All 21 E2E tests (Playwright) ✅
@@ -307,6 +337,7 @@ The current solution chooses option 3 (accept and document) because:
 - Multi-tenant data isolation ✅
 
 ### What Didn't Break
+
 - Type safety for route parameters (params, body, query)
 - Type safety for response bodies (contracts)
 - Auth middleware typing
@@ -315,6 +346,7 @@ The current solution chooses option 3 (accept and document) because:
 - Error handling
 
 ### Regression Potential
+
 - Low - only changed how TypeScript understands the req parameter
 - Runtime behavior identical
 - Tests pass at same rate as before

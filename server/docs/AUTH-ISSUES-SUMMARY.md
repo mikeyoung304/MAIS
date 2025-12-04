@@ -12,11 +12,11 @@ This document summarizes three critical authentication issues that were fixed in
 
 ## Issues Overview
 
-| Issue | Root Cause | Impact | Status |
-|-------|-----------|--------|--------|
-| Password hash not matching seeded credentials | Hardcoded seed password not synchronized with test code | Login failures in dev/test | ✅ Fixed |
-| Case-sensitive email lookups | Email normalization not enforced consistently across layers | Login failures with mixed-case emails | ✅ Fixed |
-| Hardcoded demo credentials | Demo credentials scattered in multiple files, not synchronized | Frontend autofill fails, credentials become stale | ✅ Fixed |
+| Issue                                         | Root Cause                                                     | Impact                                            | Status   |
+| --------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------- | -------- |
+| Password hash not matching seeded credentials | Hardcoded seed password not synchronized with test code        | Login failures in dev/test                        | ✅ Fixed |
+| Case-sensitive email lookups                  | Email normalization not enforced consistently across layers    | Login failures with mixed-case emails             | ✅ Fixed |
+| Hardcoded demo credentials                    | Demo credentials scattered in multiple files, not synchronized | Frontend autofill fails, credentials become stale | ✅ Fixed |
 
 ---
 
@@ -25,6 +25,7 @@ This document summarizes three critical authentication issues that were fixed in
 ### What Happened
 
 The seed script hashed password `@Nupples8` during setup:
+
 ```typescript
 // server/prisma/seed.ts
 const passwordHash = await bcrypt.hash('@Nupples8', BCRYPT_ROUNDS);
@@ -45,6 +46,7 @@ But when developers tried to login, they used different credentials or the hash 
 Created centralized credential configuration:
 
 **File:** `server/config/dev-credentials.ts` (NEW)
+
 ```typescript
 export const DEV_CREDENTIALS = {
   platformAdmin: {
@@ -57,11 +59,12 @@ export const DEV_CREDENTIALS = {
     password: 'TestPassword123!',
     slug: 'mais-e2e',
     name: 'MAIS E2E Test Tenant',
-  }
+  },
 } as const;
 ```
 
 **Updated files:**
+
 1. `server/prisma/seed.ts` - Import from config instead of hardcoding
 2. `server/test/helpers/dev-credentials.ts` - Provide test helpers
 3. `server/test/integration/auth-prevention-tests.spec.ts` - Test credentials sync
@@ -82,6 +85,7 @@ Database          Unit/Integration Tests   Playwright Tests
 See: [`docs/auth-prevention-strategies.md`](./auth-prevention-strategies.md) - **Section 1: Password Hash Synchronization**
 
 Key Points:
+
 - ✅ Centralized credentials in configuration file
 - ✅ Seed script imports from configuration
 - ✅ All tests import from same configuration
@@ -101,7 +105,7 @@ The database lookup failed because email comparison was case-sensitive.
 ```typescript
 // ❌ Before Fix
 const tenant = await prisma.tenant.findUnique({
-  where: { email: email } // Case-sensitive!
+  where: { email: email }, // Case-sensitive!
 });
 // Lookup for "Mike@Example.com" wouldn't find "mike@example.com"
 ```
@@ -119,6 +123,7 @@ const tenant = await prisma.tenant.findUnique({
 **Enforce email normalization at ALL layers:**
 
 1. **Repository Layer** (`src/adapters/prisma/tenant.repository.ts`)
+
    ```typescript
    async findByEmail(email: string): Promise<Tenant | null> {
      return await this.prisma.tenant.findUnique({
@@ -136,6 +141,7 @@ const tenant = await prisma.tenant.findUnique({
    ```
 
 2. **Service Layer** (`src/services/tenant-auth.service.ts`)
+
    ```typescript
    async login(email: string, password: string): Promise<{ token: string }> {
      const tenant = await this.tenantRepo.findByEmail(email.toLowerCase()); // ✅ Normalize here
@@ -143,6 +149,7 @@ const tenant = await prisma.tenant.findUnique({
    ```
 
 3. **Route Layer** (`src/routes/auth.routes.ts`)
+
    ```typescript
    const normalizedEmail = email.toLowerCase().trim(); // ✅ Normalize here
    ```
@@ -157,6 +164,7 @@ const tenant = await prisma.tenant.findUnique({
 ### Defense in Depth
 
 Normalization happens at multiple layers so even if one layer is missed, others catch it:
+
 - Route layer normalizes before calling service
 - Service layer normalizes before calling repository
 - Repository layer normalizes for both storage and retrieval
@@ -166,6 +174,7 @@ Normalization happens at multiple layers so even if one layer is missed, others 
 See: [`docs/auth-prevention-strategies.md`](./auth-prevention-strategies.md) - **Section 2: Case-Insensitive Email Handling**
 
 Key Points:
+
 - ✅ Repository normalizes all email lookups
 - ✅ Repository normalizes all email storage
 - ✅ Service layer provides defense-in-depth
@@ -178,6 +187,7 @@ Key Points:
 **File:** `server/test/integration/auth-prevention-tests.spec.ts`
 
 Tests verify:
+
 - ✅ Find tenant by email regardless of case
 - ✅ Email stored in lowercase
 - ✅ Duplicate prevention with different cases
@@ -192,6 +202,7 @@ Tests verify:
 ### What Happened
 
 Frontend might have hardcoded test credentials:
+
 ```typescript
 // client/src/components/LoginForm.tsx
 const testEmail = 'demo@old.com';
@@ -199,6 +210,7 @@ const testPassword = 'OldPassword123';
 ```
 
 But seed script created different credentials:
+
 ```typescript
 // server/prisma/seed.ts
 await createUser({ email: 'new@example.com', password: 'NewPassword456' });
@@ -234,6 +246,7 @@ Frontend (auto-filled)
 ```
 
 **Step 1: Define once in server**
+
 ```typescript
 // server/config/dev-credentials.ts
 export const DEV_CREDENTIALS = {
@@ -244,17 +257,19 @@ export const DEV_CREDENTIALS = {
   testTenant: {
     email: 'test@mais-e2e.com',
     password: 'TestPassword123!',
-  }
+  },
 } as const;
 ```
 
 **Step 2: Seed database**
+
 ```bash
 npm run seed
 # ↓ Uses DEV_CREDENTIALS to create users in database
 ```
 
 **Step 3: Generate frontend credentials**
+
 ```bash
 npm run build
 # ↓ Generates server/scripts/generate-dev-credentials.ts
@@ -262,6 +277,7 @@ npm run build
 ```
 
 **Step 4: Frontend uses generated credentials**
+
 ```typescript
 // client/src/components/LoginForm.tsx
 import { DEV_CREDENTIALS } from '../lib/dev-credentials';
@@ -269,7 +285,7 @@ import { DEV_CREDENTIALS } from '../lib/dev-credentials';
 React.useEffect(() => {
   if (isDevelopmentMode()) {
     const cred = DEV_CREDENTIALS.platformAdmin;
-    setEmail(cred.email);    // Always matches what seed created
+    setEmail(cred.email); // Always matches what seed created
     setPassword(cred.password); // Always matches what seed created
   }
 }, []);
@@ -280,6 +296,7 @@ React.useEffect(() => {
 See: [`docs/auth-prevention-strategies.md`](./auth-prevention-strategies.md) - **Section 3: Demo/Dev Credentials Sync**
 
 Key Points:
+
 - ✅ Single source of truth for credentials
 - ✅ Auto-generation during build
 - ✅ Frontend always in sync with backend
@@ -295,6 +312,7 @@ Key Points:
 ### Code Changes
 
 **New Files:**
+
 1. `server/config/dev-credentials.ts` - Centralized credentials
 2. `server/scripts/generate-dev-credentials.ts` - Build-time generation
 3. `server/test/integration/auth-prevention-tests.spec.ts` - Prevention tests
@@ -304,6 +322,7 @@ Key Points:
 7. `docs/AUTH-ISSUES-SUMMARY.md` - This file
 
 **Modified Files:**
+
 1. `server/prisma/seed.ts` - Uses `config/dev-credentials.ts`
 2. `server/src/services/tenant-auth.service.ts` - Normalizes email
 3. `server/src/adapters/prisma/tenant.repository.ts` - Normalizes email at all layers
@@ -313,6 +332,7 @@ Key Points:
 ### Test Coverage
 
 **New Tests:**
+
 - `test/integration/auth-prevention-tests.spec.ts` - 40+ test cases
   - Password hash synchronization (6 tests)
   - Case-insensitive email handling (10 tests)
@@ -320,6 +340,7 @@ Key Points:
   - Regression tests (4 tests)
 
 **Existing Tests:**
+
 - `test/services/tenant-auth.service.spec.ts` - All passing
 - `test/http/auth-signup.test.ts` - All passing
 - `test/middleware/auth.spec.ts` - All passing
@@ -385,28 +406,33 @@ Follow the **Implementation Checklist** in:
 ## Key Takeaways
 
 ### 1. **Centralize Configuration**
+
 - Don't hardcode credentials in multiple places
 - Use a single source of truth
 - Import from shared configuration
 
 ### 2. **Normalize Early and Often**
+
 - Normalize email at repository layer (most critical)
 - Normalize at service layer (defense-in-depth)
 - Normalize at route layer (consistency)
 - Always normalize before storing AND retrieving
 
 ### 3. **Test for Real-World Usage**
+
 - Test with uppercase emails
 - Test with mixed-case emails
 - Test with whitespace
 - Test duplicate prevention across cases
 
 ### 4. **Generate, Don't Hardcode**
+
 - Generate frontend credentials from backend config
 - Run generation during build
 - Never hardcode in frontend code
 
 ### 5. **Document Requirements**
+
 - Add comments in code explaining WHY normalization is needed
 - Document in schema that email is stored lowercase
 - Document in commit messages
@@ -416,16 +442,19 @@ Follow the **Implementation Checklist** in:
 ## Issues by Severity
 
 ### Critical (Auth Failures)
+
 - ✅ Case-sensitive email lookups causing login failures
 - ✅ Password hash mismatches due to credential sync issues
 - ✅ Demo credentials not matching seed data
 
 ### High (Security/UX)
+
 - Email case variations causing unexpected behavior
 - Hardcoded credentials scattered across codebase
 - No validation that seed data matches tests
 
 ### Medium (Maintenance)
+
 - Documentation of why normalization is critical
 - Test coverage for edge cases
 - Monitoring for auth failures
@@ -435,6 +464,7 @@ Follow the **Implementation Checklist** in:
 ## Metrics
 
 ### Before Fix
+
 - ❌ Auth tests: Failing due to credential mismatch
 - ❌ Email lookups: Case-sensitive failures
 - ❌ Frontend: Outdated demo credentials
@@ -442,6 +472,7 @@ Follow the **Implementation Checklist** in:
 - Test coverage: 70% (missing edge cases)
 
 ### After Fix
+
 - ✅ Auth tests: 771 passing (100%)
 - ✅ Email lookups: Case-insensitive everywhere
 - ✅ Frontend: Auto-synced credentials
@@ -453,6 +484,7 @@ Follow the **Implementation Checklist** in:
 ## Future Improvements
 
 ### Potential Enhancements
+
 1. [ ] Add credential rotation mechanism
 2. [ ] Add email verification flow
 3. [ ] Add multi-factor authentication
@@ -462,6 +494,7 @@ Follow the **Implementation Checklist** in:
 7. [ ] Add OAuth/SSO integration
 
 ### Monitoring Recommendations
+
 1. [ ] Alert on repeated failed login attempts
 2. [ ] Alert on unusual login patterns
 3. [ ] Alert on rate limit breaches
@@ -499,6 +532,7 @@ For questions about these fixes:
 **Approval Required Before Merge:** Yes
 
 All three authentication issues have been:
+
 1. ✅ Root cause analyzed
 2. ✅ Fixed with comprehensive solutions
 3. ✅ Tested with 40+ new test cases
@@ -518,6 +552,7 @@ If you're new to the project and want to understand authentication:
 4. **Before committing:** Run `npm test -- auth-prevention-tests.spec.ts`
 
 **Remember:**
+
 - Credentials are in `server/config/dev-credentials.ts`
 - Email is ALWAYS lowercase
 - Tests import from shared config

@@ -1,13 +1,9 @@
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import { api } from "@/lib/api";
-import { useConfirmDialog } from "@/hooks/useConfirmDialog";
-import type {
-  PackageDto,
-  CreatePackageDto,
-  UpdatePackageDto,
-} from "@macon/contracts";
-import type { PackageFormData } from "../../types";
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import type { PackageDto, CreatePackageDto, UpdatePackageDto } from '@macon/contracts';
+import type { PackageFormData } from '../../types';
 
 interface UsePackageManagerProps {
   onPackagesChange: () => void;
@@ -18,16 +14,18 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
   const [isCreatingPackage, setIsCreatingPackage] = useState(false);
   const [editingPackageId, setEditingPackageId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [segments, setSegments] = useState<Array<{ id: string; name: string; active: boolean }>>([]);
+  const [segments, setSegments] = useState<Array<{ id: string; name: string; active: boolean }>>(
+    []
+  );
   const { confirm, dialogState, handleOpenChange } = useConfirmDialog();
 
   const [packageForm, setPackageForm] = useState<PackageFormData>({
-    slug: "",
-    title: "",
-    description: "",
-    priceCents: "",
-    photoUrl: "",
-    segmentId: "",
+    slug: '',
+    title: '',
+    description: '',
+    priceCents: '',
+    photoUrl: '',
+    segmentId: '',
   });
 
   // Fetch segments
@@ -53,12 +51,12 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
   // Reset form
   const resetPackageForm = () => {
     setPackageForm({
-      slug: "",
-      title: "",
-      description: "",
-      priceCents: "",
-      photoUrl: "",
-      segmentId: "",
+      slug: '',
+      title: '',
+      description: '',
+      priceCents: '',
+      photoUrl: '',
+      segmentId: '',
     });
   };
 
@@ -75,8 +73,8 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
       title: pkg.title,
       description: pkg.description,
       priceCents: pkg.priceCents.toString(),
-      photoUrl: pkg.photoUrl || "",
-      segmentId: pkg.segmentId || "",
+      photoUrl: pkg.photoUrl || '',
+      segmentId: pkg.segmentId || '',
     });
     setEditingPackageId(pkg.id);
     setIsCreatingPackage(true);
@@ -85,24 +83,29 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
   const handleSavePackage = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!packageForm.slug || !packageForm.title || !packageForm.description || !packageForm.priceCents) {
-      toast.error("Missing Required Fields", {
-        description: "All fields except Photo URL are required",
+    if (
+      !packageForm.slug ||
+      !packageForm.title ||
+      !packageForm.description ||
+      !packageForm.priceCents
+    ) {
+      toast.error('Missing Required Fields', {
+        description: 'All fields except Photo URL are required',
       });
       return;
     }
 
     if (!isValidSlug(packageForm.slug)) {
-      toast.error("Invalid Slug Format", {
-        description: "Slug must be lowercase with hyphens only (no spaces)",
+      toast.error('Invalid Slug Format', {
+        description: 'Slug must be lowercase with hyphens only (no spaces)',
       });
       return;
     }
 
     const priceCents = parseInt(packageForm.priceCents, 10);
     if (isNaN(priceCents) || priceCents <= 0) {
-      toast.error("Invalid Price", {
-        description: "Price must be a positive number",
+      toast.error('Invalid Price', {
+        description: 'Price must be a positive number',
       });
       return;
     }
@@ -126,13 +129,13 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
         });
 
         if (result.status === 200) {
-          showSuccess("Package updated successfully");
+          showSuccess('Package updated successfully');
           setIsCreatingPackage(false);
           resetPackageForm();
           onPackagesChange();
         } else {
-          toast.error("Failed to update package", {
-            description: "Please try again or contact support.",
+          toast.error('Failed to update package', {
+            description: 'Please try again or contact support.',
           });
         }
       } else {
@@ -150,22 +153,22 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
         });
 
         if (result.status === 200) {
-          showSuccess("Package created successfully");
+          showSuccess('Package created successfully');
           setIsCreatingPackage(false);
           resetPackageForm();
           onPackagesChange();
         } else {
-          toast.error("Failed to create package", {
-            description: "Please try again or contact support.",
+          toast.error('Failed to create package', {
+            description: 'Please try again or contact support.',
           });
         }
       }
     } catch (err) {
       if (import.meta.env.DEV) {
-        console.error("Failed to save package:", err);
+        console.error('Failed to save package:', err);
       }
-      toast.error("An error occurred while saving the package", {
-        description: "Please try again or contact support.",
+      toast.error('An error occurred while saving the package', {
+        description: 'Please try again or contact support.',
       });
     } finally {
       setIsSaving(false);
@@ -174,11 +177,11 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
 
   const handleDeletePackage = async (packageId: string) => {
     const confirmed = await confirm({
-      title: "Delete Package",
-      description: "Are you sure you want to delete this package? This action cannot be undone.",
-      confirmLabel: "Delete",
-      cancelLabel: "Cancel",
-      variant: "destructive",
+      title: 'Delete Package',
+      description: 'Are you sure you want to delete this package? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      variant: 'destructive',
     });
 
     if (!confirmed) {
@@ -192,19 +195,19 @@ export function usePackageManager({ onPackagesChange, showSuccess }: UsePackageM
       });
 
       if (result.status === 204) {
-        showSuccess("Package deleted successfully");
+        showSuccess('Package deleted successfully');
         onPackagesChange();
       } else {
-        toast.error("Failed to delete package", {
-          description: "Please try again or contact support.",
+        toast.error('Failed to delete package', {
+          description: 'Please try again or contact support.',
         });
       }
     } catch (err) {
       if (import.meta.env.DEV) {
-        console.error("Failed to delete package:", err);
+        console.error('Failed to delete package:', err);
       }
-      toast.error("An error occurred while deleting the package", {
-        description: "Please try again or contact support.",
+      toast.error('An error occurred while deleting the package', {
+        description: 'Please try again or contact support.',
       });
     }
   };

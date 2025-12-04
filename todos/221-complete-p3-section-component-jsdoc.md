@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "221"
+issue_id: '221'
 tags: [documentation, jsdoc, landing-page]
 dependencies: []
 ---
@@ -29,7 +29,7 @@ export function HeroSection({ config }: HeroSectionProps) {
 
 ## Suggested Documentation
 
-```typescript
+````typescript
 /**
  * Hero section for landing pages
  *
@@ -54,7 +54,7 @@ export function HeroSection({ config }: HeroSectionProps) {
 export function HeroSection({ config }: HeroSectionProps) {
   // ...
 }
-```
+````
 
 ## Components to Document
 
@@ -88,6 +88,7 @@ All 8 landing page section components now have comprehensive JSDoc documentation
 8. **FinalCtaSection.tsx** - Bottom call-to-action section with gradient background
 
 Each JSDoc comment includes:
+
 - Comprehensive description of component purpose and behavior
 - Detailed `@param` documentation for all props and nested config properties
 - Practical `@example` with realistic usage code
@@ -95,6 +96,7 @@ Each JSDoc comment includes:
 - Related TODO references where applicable (e.g., TODO-212, TODO-218, TODO-222)
 
 Files modified:
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/features/storefront/landing/sections/HeroSection.tsx`
 - `/Users/mikeyoung/CODING/MAIS/client/src/features/storefront/landing/sections/SocialProofBar.tsx`
 - `/Users/mikeyoung/CODING/MAIS/client/src/features/storefront/landing/sections/AboutSection.tsx`

@@ -54,7 +54,7 @@ describe.sequential('SegmentRepository Integration Tests', () => {
       // Verify tenant B's queries don't return tenant A's segment
       const segmentsB = await repository.findByTenant(tenantB.id, false);
       expect(segmentsB).toHaveLength(0);
-      expect(segmentsB.find(s => s.id === segmentA.id)).toBeUndefined();
+      expect(segmentsB.find((s) => s.id === segmentA.id)).toBeUndefined();
     });
 
     it('should prevent cross-tenant segment updates', async () => {

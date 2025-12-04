@@ -9,6 +9,7 @@ Quick solutions for common CI/CD deployment failures.
 **Problem:** Prisma migration fails in CI pipeline
 
 **Solution:**
+
 ```yaml
 # In GitHub Actions workflow, add DIRECT_URL:
 env:
@@ -19,6 +20,7 @@ env:
 **Why:** Supabase uses connection pooler (DATABASE_URL) for app connections and direct URL for migrations.
 
 **Files to check:**
+
 - `.github/workflows/main-pipeline.yml` (line 268)
 - `.github/workflows/deploy-production.yml` (line 300)
 - `server/prisma/schema.prisma` (should have `directUrl = env("DIRECT_URL")`)
@@ -30,6 +32,7 @@ env:
 **Problem:** Strict TypeScript linting rules fail in CI environment
 
 **Solution 1: Generate types before linting**
+
 ```bash
 # Run in CI before lint job
 npm run typecheck -- --noEmit
@@ -38,17 +41,20 @@ npm run lint
 ```
 
 **Solution 2: Clear ESLint cache**
+
 ```bash
 rm -rf .eslintcache
 npm run lint
 ```
 
 **Solution 3: Fix root configurations**
+
 - Update `.eslintrc.cjs` to include workspace tsconfig references
 - Create workspace-specific overrides (`server/.eslintrc.cjs`, `client/.eslintrc.cjs`)
 - See `docs/deployment/CI_CD_FAILURE_PREVENTION.md` Part 2 Strategy 1
 
 **Files to check:**
+
 - `.eslintrc.cjs`
 - `server/.eslintrc.cjs`
 - `client/.eslintrc.cjs`
@@ -61,12 +67,15 @@ npm run lint
 **Problem:** Required variable not available in deployment
 
 **Solution:**
+
 1. **Add to `.env.example`** (with example value):
+
    ```
    MY_VARIABLE=example-value
    ```
 
 2. **Document in `docs/deployment/ENVIRONMENT_VARIABLES.md`:**
+
    ```markdown
    | MY_VARIABLE | Tier | Purpose | Default |
    ```
@@ -88,6 +97,7 @@ npm run lint
    ```
 
 **Verification:**
+
 ```bash
 npm run doctor  # Should show the variable
 ```
@@ -101,13 +111,15 @@ npm run doctor  # Should show the variable
 **Solution:** Remove the bypass and fix the root cause
 
 **Wrong:**
+
 ```yaml
 - name: Run ESLint
   run: npm run lint
-  continue-on-error: true  # ❌ Masks the problem
+  continue-on-error: true # ❌ Masks the problem
 ```
 
 **Right:**
+
 ```yaml
 - name: Generate Prisma Client
   run: npm run --workspace=server prisma:generate
@@ -118,6 +130,7 @@ npm run doctor  # Should show the variable
 ```
 
 **Files to check:**
+
 - `.github/workflows/deploy-production.yml` (line 131)
 
 ---
@@ -127,6 +140,7 @@ npm run doctor  # Should show the variable
 **Problem:** Types missing when running linting or tests
 
 **Solution:** Generate types before other checks
+
 ```bash
 npm run --workspace=server prisma:generate
 npm run typecheck -- --noEmit
@@ -134,6 +148,7 @@ npm run lint
 ```
 
 **In GitHub Actions:**
+
 ```yaml
 - name: Generate Prisma Client
   run: npm run --workspace=server prisma:generate
@@ -172,6 +187,7 @@ npm run build --workspaces
 ```
 
 **For production deployment:**
+
 ```bash
 # Verify in CI
 git push origin main  # Push to trigger CI
@@ -205,6 +221,7 @@ gh secret list --repo myorg/MAIS --env production
 ```
 
 **Required for production:**
+
 - `PRODUCTION_DATABASE_URL`
 - `PRODUCTION_DIRECT_URL`
 - `STRIPE_SECRET_KEY`
@@ -219,6 +236,7 @@ gh secret list --repo myorg/MAIS --env production
 ## Environment Variable Quick Reference
 
 ### Always Required
+
 ```
 JWT_SECRET=...
 TENANT_SECRETS_ENCRYPTION_KEY=...
@@ -227,6 +245,7 @@ DIRECT_URL=...
 ```
 
 ### Required for Real Mode
+
 ```
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_test_...
@@ -234,6 +253,7 @@ POSTMARK_SERVER_TOKEN=...
 ```
 
 ### Required for Production
+
 ```
 PRODUCTION_DATABASE_URL=...
 PRODUCTION_DIRECT_URL=...
@@ -242,6 +262,7 @@ STRIPE_WEBHOOK_SECRET=whsec_live_...  (different from test)
 ```
 
 ### Optional (Graceful Fallbacks)
+
 ```
 POSTMARK_FROM_EMAIL=...  (files to ./tmp/emails/ if not set)
 GOOGLE_CALENDAR_ID=...   (uses mock calendar if not set)
@@ -266,6 +287,7 @@ env:
 ### Production Secrets Not Available in PR
 
 **This is intentional!** Production secrets only available to:
+
 - Push to `main` branch
 - Manual `workflow_dispatch` trigger
 - Tagged releases
@@ -275,12 +297,14 @@ env:
 ### Database Connection Fails
 
 **Check:**
+
 1. Connection string format is correct
 2. Both `DATABASE_URL` and `DIRECT_URL` are set
 3. Database allows connections from GitHub Actions IPs
 4. Password doesn't have special characters that need escaping
 
 **Fix:**
+
 ```yaml
 env:
   DATABASE_URL: postgresql://user:pass@host:5432/db?connection_limit=10&pool_timeout=20
@@ -302,6 +326,7 @@ env:
    - Migration error → Need to check DIRECT_URL
 
 3. **Fix locally first:**
+
    ```bash
    npm run doctor
    npm run lint --fix
@@ -326,20 +351,24 @@ env:
 ## Documentation Files
 
 ### Quick Start
+
 - `docs/deployment/CI_CD_QUICK_REFERENCE.md` (this file)
 
 ### Deep Dive
+
 - `docs/deployment/CI_CD_FAILURE_PREVENTION.md` - Root causes and strategies
 - `docs/deployment/ENVIRONMENT_VARIABLES.md` - Complete reference
 - `docs/deployment/GITHUB_SECRETS_SETUP.md` - Secret configuration guide
 
 ### Configuration
+
 - `.eslintrc.cjs` - Linting rules
 - `server/prisma/schema.prisma` - Database schema
 - `.github/workflows/main-pipeline.yml` - CI pipeline
 - `.github/workflows/deploy-production.yml` - Production deployment
 
 ### Tools
+
 - `npm run doctor` - Validate environment
 - `scripts/ci-preflight-check.sh` - Pre-flight validation
 - `tests/ci/ci-validation.test.ts` - Configuration tests

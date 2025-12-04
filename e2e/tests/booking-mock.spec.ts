@@ -25,7 +25,9 @@ test.describe('Mock Booking Flow', () => {
     await expect(page).toHaveURL('/');
 
     // Verify hero section loaded
-    await expect(page.getByRole('heading', { name: /Your Perfect Day, Simplified/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /Your Perfect Day, Simplified/i })
+    ).toBeVisible();
 
     // Click "View Packages" to scroll to packages section
     await page.getByRole('button', { name: /View Packages/i }).click();
@@ -54,8 +56,8 @@ test.describe('Mock Booking Flow', () => {
     await dateButton.click();
 
     // Wait for availability check to complete
-    await page.waitForResponse(response =>
-      response.url().includes('/v1/availability') && response.status() === 200
+    await page.waitForResponse(
+      (response) => response.url().includes('/v1/availability') && response.status() === 200
     );
 
     // Verify date was selected
@@ -110,7 +112,10 @@ test.describe('Mock Booking Flow', () => {
     await expect(page.getByText('mock-e2e@example.com')).toBeVisible();
 
     // Extract booking ID from confirmation
-    const confirmationText = await page.locator('text=Confirmation Number').locator('..').textContent();
+    const confirmationText = await page
+      .locator('text=Confirmation Number')
+      .locator('..')
+      .textContent();
     expect(confirmationText).toContain('booking_');
 
     // Step 6: Verify date becomes unavailable via API
@@ -162,8 +167,8 @@ test.describe('Mock Booking Flow', () => {
     await dateButton.click();
 
     // Wait for availability check
-    await page.waitForResponse(response =>
-      response.url().includes('/v1/availability') && response.status() === 200
+    await page.waitForResponse(
+      (response) => response.url().includes('/v1/availability') && response.status() === 200
     );
 
     // Button should now ask for details

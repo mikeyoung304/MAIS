@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "027"
+issue_id: '027'
 tags: [code-review, ux, feature-incomplete, stripe]
 dependencies: []
 ---
@@ -21,12 +21,12 @@ The Stripe Connect onboarding component uses browser `prompt()` dialogs for coll
 **Location:** `client/src/features/tenant-admin/TenantDashboard/StripeConnectCard.tsx:72-73`
 
 ```typescript
-let email = "admin@example.com";
-let businessName = "My Business";
+let email = 'admin@example.com';
+let businessName = 'My Business';
 
 // Uses browser prompt() instead of proper form
-const promptEmail = prompt("Enter your email for Stripe:", email);
-const promptBusiness = prompt("Enter your business name:", businessName);
+const promptEmail = prompt('Enter your email for Stripe:', email);
+const promptBusiness = prompt('Enter your business name:', businessName);
 ```
 
 ### Problems
@@ -48,6 +48,7 @@ const promptBusiness = prompt("Enter your business name:", businessName);
 ## Proposed Solutions
 
 ### Option A: Replace with Proper Form Modal (Recommended)
+
 **Effort:** Medium | **Risk:** Low
 
 Create a proper modal with form fields:
@@ -100,6 +101,7 @@ const StripeConnectModal = ({ isOpen, onClose }) => {
 ```
 
 **Pros:**
+
 - Professional appearance
 - Proper validation
 - Pre-populated with tenant data
@@ -107,6 +109,7 @@ const StripeConnectModal = ({ isOpen, onClose }) => {
 - Consistent with rest of app
 
 **Cons:**
+
 - More code than prompt()
 
 ## Recommended Action
@@ -116,12 +119,15 @@ Implement **Option A** - Create proper modal with form validation.
 ## Technical Details
 
 **Files to Update:**
+
 - `client/src/features/tenant-admin/TenantDashboard/StripeConnectCard.tsx`
 
 **New Components:**
+
 - `StripeConnectModal.tsx` (or inline in StripeConnectCard)
 
 **Data Flow:**
+
 1. User clicks "Complete Setup"
 2. Modal opens with email/name pre-filled from tenant profile
 3. User confirms/edits and submits
@@ -142,8 +148,8 @@ Implement **Option A** - Create proper modal with form validation.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                  |
+| ---------- | ------- | -------------------------------------- |
 | 2025-11-27 | Created | Found during comprehensive code review |
 
 ## Resources

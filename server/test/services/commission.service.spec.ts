@@ -117,9 +117,9 @@ describe('CommissionService', () => {
       mockPrisma.tenant.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.calculateCommission('nonexistent', 50000)
-      ).rejects.toThrow('Tenant not found: nonexistent');
+      await expect(service.calculateCommission('nonexistent', 50000)).rejects.toThrow(
+        'Tenant not found: nonexistent'
+      );
     });
   });
 
@@ -185,9 +185,7 @@ describe('CommissionService', () => {
       });
 
       // Only one add-on returned (missing addon_2)
-      mockPrisma.addOn.findMany.mockResolvedValue([
-        { id: 'addon_1', price: 10000 },
-      ]);
+      mockPrisma.addOn.findMany.mockResolvedValue([{ id: 'addon_1', price: 10000 }]);
 
       // Act & Assert
       await expect(
@@ -222,11 +220,7 @@ describe('CommissionService', () => {
 
       // Act & Assert
       await expect(
-        service.calculateBookingTotal(
-          'tenant_123',
-          50000,
-          ['addon_inactive']
-        )
+        service.calculateBookingTotal('tenant_123', 50000, ['addon_inactive'])
       ).rejects.toThrow('Invalid or inactive add-ons: addon_inactive');
     });
   });

@@ -55,7 +55,9 @@ function SegmentTiersContent() {
       packages={packages}
       segmentSlug={slug}
       title={segment.heroTitle || 'Choose Your Experience'}
-      subtitle={segment.heroSubtitle || segment.description || 'Select the tier that best fits your needs'}
+      subtitle={
+        segment.heroSubtitle || segment.description || 'Select the tier that best fits your needs'
+      }
       backLink=".."
       backLinkText="Back to all options"
     />

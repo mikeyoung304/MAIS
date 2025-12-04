@@ -15,6 +15,7 @@ This document provides explicit YES/NO answers to the 6 critical questions requi
 ### Rationale:
 
 **✅ AUDITED Mutation Paths (Tenant Admin API):**
+
 - ✅ Package create/update/delete (via `/v1/tenant/admin/packages/*`)
 - ✅ Package photo upload/delete (via `/v1/tenant/admin/packages/:id/photos`)
 - ✅ Branding updates (via `/v1/tenant/admin/branding`)
@@ -26,6 +27,7 @@ This document provides explicit YES/NO answers to the 6 critical questions requi
 **File:** `server/src/routes/admin-packages.routes.ts`
 
 **Routes Missing Audit Hooks:**
+
 1. `POST /v1/admin/packages` - createPackage (line 22)
 2. `PUT /v1/admin/packages/:id` - updatePackage (line 34)
 3. `DELETE /v1/admin/packages/:id` - deletePackage (line 46)
@@ -34,15 +36,18 @@ This document provides explicit YES/NO answers to the 6 critical questions requi
 6. `DELETE /v1/admin/addons/:id` - deleteAddOn (line 75)
 
 **Why Not Audited:**
+
 - Uses `DEFAULT_TENANT = 'tenant_default_legacy'` (line 16)
 - Legacy single-tenant mode (pre-multi-tenant architecture)
 - No audit context extraction (no JWT with user email/role)
 
 **Impact:**
+
 - If platform admin creates/updates/deletes packages via these routes, NO audit trail exists
 - Cannot track who made changes or rollback mutations
 
 **Recommendation:**
+
 - **Option 1:** Add audit hooks to platform admin routes (use platform admin email from JWT)
 - **Option 2:** Deprecate platform admin routes, require use of tenant admin routes
 - **Option 3:** Document as known limitation for legacy single-tenant support
@@ -64,12 +69,14 @@ This document provides explicit YES/NO answers to the 6 critical questions requi
    - No background processors
 
 **Verification:**
+
 - All tenant admin API routes audited: ✅ (9 routes)
 - Platform admin routes NOT audited: ❌ (6 routes, legacy)
 - CLI scripts reviewed and documented: ✅
 - Future automation guidelines established: ✅
 
 **Gap Summary:**
+
 - **Tenant operations (primary use case):** 100% coverage ✅
 - **Platform admin operations (legacy):** 0% coverage ❌
 
@@ -101,22 +108,26 @@ function getAuditContext(res: Response): AuditContext {
 ```
 
 **Attribution Sources:**
+
 - `email`: From JWT token (tenant's login email)
 - `role`: Always 'TENANT_ADMIN' for tenant routes
 - `userId`: Not used in tenant context (platform admin only)
 
 **Enforcement Mechanism:**
+
 1. **Authentication Required:** All audit-enabled routes protected by `tenantAuthMiddleware`
 2. **JWT Validation:** Middleware validates token before route handler executes
 3. **Context Extraction:** `getAuditContext()` throws if `tenantAuth` missing
 4. **Type Safety:** TypeScript ensures AuditContext has required fields
 
 **Edge Cases:**
+
 - Unauthenticated requests: Blocked by middleware (never reach route handler)
 - Invalid JWT: Rejected by middleware (401 Unauthorized)
 - System operations: Use `SYSTEM_AUDIT_CONTEXT` with email: 'system@elope.internal'
 
 **Verification:**
+
 - All routes call `getAuditContext()`: ✅ (server/src/routes/tenant-admin.routes.ts:161, 178, 196, 212, 236, 271, 287, 352, 370)
 - Integration tests verify email/role in audit logs: ✅ (catalog.service.integration.test.ts:87-88)
 
@@ -133,6 +144,7 @@ function getAuditContext(res: Response): AuditContext {
 **Current Policy: Fail-Open (Operations succeed without audit context)**
 
 This is **intentional** and supports:
+
 1. Gradual adoption (CLI scripts, migrations, testing)
 2. Backward compatibility (seed scripts don't need audit)
 3. Development workflow (tests can create data without auth)
@@ -140,6 +152,7 @@ This is **intentional** and supports:
 **Implementation Details:**
 
 **Service Layer (CatalogService):**
+
 ```typescript
 async createPackage(
   tenantId: string,
@@ -158,6 +171,7 @@ async createPackage(
 ```
 
 **Verification via Integration Tests:**
+
 - **WITH context:** Audit log created ✅ (catalog.service.integration.test.ts:55-95)
 - **WITHOUT context:** Operation succeeds, NO audit log ✅ (catalog.service.integration.test.ts:97-117)
 
@@ -203,6 +217,7 @@ If we need to enforce audit logging:
 **MISSING Safety Nets (Future Work):**
 
 1. **Runtime Monitoring (Recommended for Sprint 3):**
+
    ```typescript
    // Pseudo-code for monitoring
    class AuditMonitor {
@@ -228,6 +243,7 @@ If we need to enforce audit logging:
 **Immediate Safeguards Available:**
 
 **SQL Query to Detect Anomalies:**
+
 ```sql
 -- Monitor audit log creation rate
 SELECT
@@ -243,6 +259,7 @@ ORDER BY hour DESC;
 ```
 
 **Recommendation:**
+
 - Current: Type safety + integration tests provide basic coverage ✅
 - Future (Sprint 3): Add runtime monitoring and alerts
 - Workaround: Manual SQL queries can detect missing audit logs
@@ -258,6 +275,7 @@ ORDER BY hour DESC;
 **PR Checklist for New Tenant Mutations:**
 
 ### Code Changes
+
 - [ ] Service method has `auditContext?: AuditContext` optional parameter
 - [ ] Service calls `auditService.trackLegacyChange()` when `auditContext` provided
 - [ ] Route handler calls `getAuditContext(res)` to extract tenant auth
@@ -272,6 +290,7 @@ ORDER BY hour DESC;
 - [ ] `entityType` and `entityId` accurately identify the mutated entity
 
 ### Testing
+
 - [ ] Integration test: Operation WITH audit context creates log
 - [ ] Integration test: Operation WITHOUT audit context succeeds (no log)
 - [ ] Test verifies `beforeSnapshot` matches expected structure
@@ -280,16 +299,19 @@ ORDER BY hour DESC;
 - [ ] Unit test: Service method with mocked audit service
 
 ### Documentation
+
 - [ ] If mutation is CLI/automation, document in audit strategy guide
 - [ ] Update API documentation with audit behavior
 - [ ] If new `changeType`, update AuditService type definitions
 
 ### Verification
+
 - [ ] Run integration tests: `npm run test:integration`
 - [ ] Verify audit log entry in database after manual testing
 - [ ] Check tenant isolation: audit log only visible to correct tenant
 
 ### Example Implementation Reference
+
 See: `server/src/routes/tenant-admin.routes.ts:161-171` (package create with audit)
 
 **Template Code:**
@@ -356,6 +378,7 @@ async createEntity(
 **File:** `server/src/services/catalog.service.integration.test.ts`
 
 **Test: "should update package AND audit log with before/after snapshots"** (lines 121-169)
+
 - Creates package with `priceCents: 10000`
 - Updates to `priceCents: 12000`
 - **Verifies audit log contains:**
@@ -363,6 +386,7 @@ async createEntity(
   - `afterSnapshot: { title: 'Updated Title', priceCents: 12000 }`
 
 **Rollback Query (from this test data):**
+
 ```sql
 -- Get the previous state
 SELECT "beforeSnapshot"
@@ -388,11 +412,13 @@ WHERE id = 'pkg_abc';
 **File:** `SPRINT_2_1_ROLLBACK_GUIDE.md`
 
 **Scenarios Documented:**
+
 - Example 1: Rollback Package Price Change (lines 123-179)
 - Example 2: Restore Deleted Blackout Date (lines 181-218)
 - Example 3: Rollback Branding Change (lines 220-247)
 
 **Automated Rollback Script Template:** (lines 252-327)
+
 ```typescript
 async function rollbackEntity(options: RollbackOptions) {
   // Find target state from audit log
@@ -461,11 +487,13 @@ SELECT id, "priceCents" FROM "Package" WHERE id = 'pkg_id';
 ### 4. Entity History API Available
 
 **AuditService Method:** `getEntityHistory(tenantId, entityType, entityId)`
+
 - Returns full audit trail ordered by recency
 - Used for rollback UI in future sprints
 - Verified in integration tests (catalog.service.integration.test.ts:358-405)
 
 **Recommendation:**
+
 - Rollback capability PROVEN through integration tests ✅
 - SQL procedures DOCUMENTED in rollback guide ✅
 - Manual verification POSSIBLE in local environment ✅
@@ -495,6 +523,7 @@ SELECT id, "priceCents" FROM "Package" WHERE id = 'pkg_id';
 All 6 questions answered with YES or documented justification. All tests passing. All documentation complete.
 
 **Next Steps:**
+
 1. Commit all changes to `audit/cache-tenant-isolation` branch
 2. Update `SPRINT_2_1_AUDIT_LOGGING_PROGRESS.md` to 100% complete
 3. Create PR with comprehensive description

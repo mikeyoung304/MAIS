@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "177"
+issue_id: '177'
 tags: [todo]
 dependencies: []
 ---
@@ -36,7 +36,7 @@ export const BookingEvents = {
   // ...
 } as const;
 
-export type BookingEventName = typeof BookingEvents[keyof typeof BookingEvents];
+export type BookingEventName = (typeof BookingEvents)[keyof typeof BookingEvents];
 
 // EventEmitter still uses generic string for event names:
 class EventEmitter {
@@ -57,10 +57,7 @@ interface BookingEventPayloads {
 
 // Type-safe emit/on methods
 class TypedEventEmitter {
-  emit<K extends keyof BookingEventPayloads>(
-    event: K,
-    payload: BookingEventPayloads[K]
-  ): void;
+  emit<K extends keyof BookingEventPayloads>(event: K, payload: BookingEventPayloads[K]): void;
 
   on<K extends keyof BookingEventPayloads>(
     event: K,

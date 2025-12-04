@@ -7,6 +7,7 @@
 ## Pre-Migration State
 
 ### Current Architecture
+
 - **Structure:** Hexagonal/Clean Architecture
   - `apps/api/src/domains/` - Domain logic
   - `apps/api/src/adapters/` - Port implementations
@@ -21,6 +22,7 @@
 - **Testing:** Vitest + Playwright (extensive)
 
 ### Target Architecture (rebuild-6.0)
+
 - **Structure:** Layered/Pragmatic
   - `server/src/routes/` - Express routes
   - `server/src/services/` - Business logic
@@ -37,10 +39,12 @@
 ## Migration Phases
 
 ### Phase 1: Structural Alignment ✅ COMPLETED (95%)
+
 **Status:** Completed 2025-10-23 (schema alignment pending)
 **Branch:** `stack-migration`
 
 **Tasks:**
+
 - [x] Create git branch
 - [x] Create backup branch
 - [x] Document current state
@@ -54,6 +58,7 @@
 - [ ] Verify tests pass
 
 **Changes Log:**
+
 - 2025-10-23: Created `stack-migration` branch
 - 2025-10-23: Created `backup-before-migration` branch for rollback safety
 - 2025-10-23: Moved apps/api/ → server/ and apps/web/ → client/
@@ -66,25 +71,30 @@
 - 2025-10-23: Updated tsconfig.json with esModuleInterop and removed extends
 
 **Known Issues:**
+
 - Prisma schema field names don't match entity DTOs (name vs title, basePrice vs priceCents)
 - Requires schema alignment or mapper functions in adapters
 - Some adapters need interface updates (Stripe API version, PaymentProvider)
 
 ### Phase 2: Supabase Migration (Future)
+
 **Status:** Not Started
 **Estimated Duration:** 8-12 hours
 
 ### Phase 3: API & Logging Alignment (Future)
+
 **Status:** Not Started
 **Estimated Duration:** 10-13 hours
 
 ### Phase 4: Testing Simplification (Future)
+
 **Status:** Not Started
 **Estimated Duration:** 6-8 hours
 
 ## Decisions & Tradeoffs
 
 ### What We're Changing
+
 1. ✅ Architecture: Hexagonal → Layered (pragmatic)
 2. ✅ Package Manager: pnpm → npm (consistency)
 3. ✅ Database: Prisma → Supabase + Prisma (managed services)
@@ -94,11 +104,13 @@
 7. ✅ React: 19.x → 18.x (stability)
 
 ### What We're Keeping (Exceptions to "Nearly Identical")
+
 1. ← @ts-rest API (too valuable, will add to rebuild-6.0 later)
 2. ← Extensive testing (good documentation, will restructure to match)
 3. ← Domain services (simplify but keep clean business logic)
 
 ### Rationale
+
 **Goal:** Master ONE stack deeply rather than maintain TWO different architectures.
 **Optimization:** Learning velocity > architectural purity
 **Timeline:** Save 2-3 months by standardizing
@@ -106,6 +118,7 @@
 ## Rollback Plan
 
 If migration fails or causes issues:
+
 ```bash
 git checkout main
 git branch -D stack-migration
@@ -113,6 +126,7 @@ git checkout -b stack-migration backup-before-migration
 ```
 
 ## Resources
+
 - **rebuild-6.0 Location:** `~/CODING/rebuild-6.0`
 - **Comparison Report:** See earlier analysis
 - **Target Stack Definition:** See migration plan

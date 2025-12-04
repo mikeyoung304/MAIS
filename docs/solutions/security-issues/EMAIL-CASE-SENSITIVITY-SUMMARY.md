@@ -9,6 +9,7 @@
 **Solution:** Implement email normalization to lowercase at ALL layers (routes, services, repositories) ensuring case-insensitive authentication.
 
 **Impact:**
+
 - ✅ 100% of auth flows now support mixed-case emails
 - ✅ Unique constraint prevents duplicate emails regardless of case
 - ✅ 40+ new test cases verify the fix
@@ -31,6 +32,7 @@ User Action:
 ### Why This Happened
 
 **Layer 1 - Database:**
+
 ```sql
 -- PostgreSQL UNIQUE constraint is case-sensitive by default
 CREATE TABLE tenants (
@@ -43,15 +45,17 @@ INSERT INTO tenants (email) VALUES ('Admin@example.com'); -- Allowed (different 
 ```
 
 **Layer 2 - Repository Query:**
+
 ```typescript
 // Prisma query is case-sensitive like SQL
 const tenant = await prisma.tenant.findUnique({
-  where: { email: 'Admin@example.com' } // Exact match required
+  where: { email: 'Admin@example.com' }, // Exact match required
 });
 // Won't find: admin@example.com (different case)
 ```
 
 **Layer 3 - No Normalization:**
+
 ```typescript
 async login(email: string, password: string) {
   // Email NOT normalized before query
@@ -214,6 +218,7 @@ model Tenant {
 ### Test Strategy
 
 Test at three levels:
+
 1. **Repository Tests** - Verify database queries are case-insensitive
 2. **Service Tests** - Verify business logic normalizes correctly
 3. **API Tests** - Verify HTTP endpoints handle mixed-case emails
@@ -301,9 +306,9 @@ describe('Service - Email Case Insensitivity', () => {
     await service.signup('user@example.com', 'password123', 'Business');
 
     // Second signup with uppercase - should fail
-    expect(() =>
-      service.signup('USER@EXAMPLE.COM', 'different123', 'Different')
-    ).rejects.toThrow('Email already registered');
+    expect(() => service.signup('USER@EXAMPLE.COM', 'different123', 'Different')).rejects.toThrow(
+      'Email already registered'
+    );
   });
 });
 ```
@@ -389,6 +394,7 @@ describe('API - Email Case Insensitivity', () => {
 **File:** `server/test/integration/auth-prevention-tests.spec.ts`
 
 Contains 40+ test cases covering:
+
 - ✅ Repository email normalization (4 tests)
 - ✅ Service layer authentication (3 tests)
 - ✅ Route/API layer handling (5+ tests)
@@ -438,12 +444,12 @@ await db.create({
 ```typescript
 // ✅ GOOD
 const user = await db.findUnique({
-  where: { email: email.toLowerCase() }
+  where: { email: email.toLowerCase() },
 });
 
 // ❌ BAD
 const user = await db.findUnique({
-  where: { email: email } // Case-sensitive query
+  where: { email: email }, // Case-sensitive query
 });
 ```
 
@@ -483,10 +489,10 @@ model Tenant {
 // ✅ Good test - covers variations
 it('should login with any case', async () => {
   const variations = [
-    'user@example.com',    // lowercase
-    'USER@EXAMPLE.COM',    // uppercase
-    'User@Example.Com',    // mixed case
-    '  user@example.com  ' // with whitespace
+    'user@example.com', // lowercase
+    'USER@EXAMPLE.COM', // uppercase
+    'User@Example.Com', // mixed case
+    '  user@example.com  ', // with whitespace
   ];
 
   for (const email of variations) {
@@ -622,16 +628,16 @@ if (storedEmail.toLowerCase() === inputEmail.toLowerCase()) {
 ```typescript
 // ❌ WRONG - Only normalizes at DB
 const user = await db.findUnique({
-  where: { email: email.toLowerCase() } // Normalized here
+  where: { email: email.toLowerCase() }, // Normalized here
 });
 
 // But what if the input `email` is missing for some reason?
 // There's no protection in the service layer.
 
 // ✅ CORRECT - Normalize at multiple layers
-const normalized = email.toLowerCase();      // Service
+const normalized = email.toLowerCase(); // Service
 const user = await db.findUnique({
-  where: { email: normalized.toLowerCase() } // Repository
+  where: { email: normalized.toLowerCase() }, // Repository
 });
 ```
 
@@ -640,12 +646,12 @@ const user = await db.findUnique({
 ```typescript
 // ❌ WRONG - Doesn't trim whitespace
 await db.create({
-  email: email.toLowerCase()  // Might have leading/trailing spaces
+  email: email.toLowerCase(), // Might have leading/trailing spaces
 });
 
 // ✅ CORRECT - Normalize completely
 await db.create({
-  email: email.toLowerCase().trim()  // Remove whitespace
+  email: email.toLowerCase().trim(), // Remove whitespace
 });
 ```
 
@@ -654,13 +660,13 @@ await db.create({
 ```typescript
 // ❌ WRONG - Stores original case
 await db.create({
-  email: inputEmail  // "User@Example.COM" stored as-is
+  email: inputEmail, // "User@Example.COM" stored as-is
 });
 // Later lookups with "user@example.com" won't find it
 
 // ✅ CORRECT - Store normalized
 await db.create({
-  email: inputEmail.toLowerCase()  // Always "user@example.com"
+  email: inputEmail.toLowerCase(), // Always "user@example.com"
 });
 ```
 
@@ -726,7 +732,7 @@ const user = await repo.findByEmail(email.toLowerCase());
 
 // Repository: Normalize for storage and queries
 return db.findUnique({
-  where: { email: email.toLowerCase() }
+  where: { email: email.toLowerCase() },
 });
 ```
 
@@ -840,6 +846,7 @@ npm test -- --watch auth-prevention
 ### The Defense-in-Depth Approach
 
 Four layers of protection mean the system remains secure even if:
+
 - One developer forgets normalization
 - Code is refactored
 - New features are added
@@ -848,6 +855,7 @@ Four layers of protection mean the system remains secure even if:
 ### Testing as Prevention
 
 40+ test cases ensure:
+
 - No regression if code is modified
 - All case variations are covered
 - Full auth flows are tested
@@ -860,6 +868,7 @@ Four layers of protection mean the system remains secure even if:
 Email case-sensitivity is a common authentication issue that causes confusing "Invalid credentials" errors. By implementing normalization at multiple layers and testing thoroughly, we eliminate this class of bugs entirely.
 
 **Key Points:**
+
 - Normalize at routes, services, and repositories
 - Test with uppercase, lowercase, mixed-case, and whitespace
 - Document the requirement in code and schema

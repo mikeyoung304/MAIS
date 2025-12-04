@@ -8,9 +8,9 @@
  * - Validates numeric input
  */
 
-import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react";
-import { cn } from "@/lib/utils";
-import { Pencil } from "lucide-react";
+import { useState, useRef, useEffect, useCallback, KeyboardEvent } from 'react';
+import { cn } from '@/lib/utils';
+import { Pencil } from 'lucide-react';
 
 interface EditablePriceProps {
   /** Price in cents */
@@ -20,7 +20,7 @@ interface EditablePriceProps {
   className?: string;
   hasDraft?: boolean;
   disabled?: boolean;
-  "aria-label"?: string;
+  'aria-label'?: string;
 }
 
 /**
@@ -45,7 +45,7 @@ export function EditablePrice({
   className,
   hasDraft = false,
   disabled = false,
-  "aria-label": ariaLabel,
+  'aria-label': ariaLabel,
 }: EditablePriceProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(formatCentsToDollars(value));
@@ -84,7 +84,7 @@ export function EditablePrice({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
+      if (e.key === 'Enter') {
         e.preventDefault();
         const cents = parseDollarsToCents(editValue);
         if (cents !== value) {
@@ -92,7 +92,7 @@ export function EditablePrice({
         }
         setEditValue(formatCentsToDollars(cents));
         setIsEditing(false);
-      } else if (e.key === "Escape") {
+      } else if (e.key === 'Escape') {
         e.preventDefault();
         setEditValue(formatCentsToDollars(value));
         setIsEditing(false);
@@ -104,7 +104,7 @@ export function EditablePrice({
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     // Allow only numeric input with optional decimal point
     const inputValue = e.target.value;
-    if (/^\d*\.?\d{0,2}$/.test(inputValue) || inputValue === "") {
+    if (/^\d*\.?\d{0,2}$/.test(inputValue) || inputValue === '') {
       setEditValue(inputValue);
     }
   }, []);
@@ -114,26 +114,24 @@ export function EditablePrice({
     return (
       <div
         onClick={handleClick}
-        onKeyDown={(e) => e.key === "Enter" && handleClick()}
+        onKeyDown={(e) => e.key === 'Enter' && handleClick()}
         role="button"
         tabIndex={disabled ? -1 : 0}
-        aria-label={ariaLabel || "Edit price"}
+        aria-label={ariaLabel || 'Edit price'}
         className={cn(
-          "group relative inline-flex items-center cursor-pointer rounded px-2 py-1 transition-colors",
-          "hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-          hasDraft && "ring-1 ring-amber-400/50 bg-amber-50/30",
-          disabled && "cursor-not-allowed opacity-60",
+          'group relative inline-flex items-center cursor-pointer rounded px-2 py-1 transition-colors',
+          'hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+          hasDraft && 'ring-1 ring-amber-400/50 bg-amber-50/30',
+          disabled && 'cursor-not-allowed opacity-60',
           className
         )}
       >
-        <span className="font-semibold text-lg">
-          ${formatCentsToDollars(value)}
-        </span>
+        <span className="font-semibold text-lg">${formatCentsToDollars(value)}</span>
         {!disabled && (
           <Pencil
             className={cn(
-              "ml-1 h-3 w-3 text-muted-foreground opacity-0 transition-opacity",
-              "group-hover:opacity-100 group-focus:opacity-100"
+              'ml-1 h-3 w-3 text-muted-foreground opacity-0 transition-opacity',
+              'group-hover:opacity-100 group-focus:opacity-100'
             )}
             aria-hidden="true"
           />
@@ -154,11 +152,11 @@ export function EditablePrice({
         onChange={handleChange}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        aria-label={ariaLabel || "Edit price"}
+        aria-label={ariaLabel || 'Edit price'}
         className={cn(
-          "w-24 rounded border border-input bg-background px-2 py-1",
-          "focus:outline-none focus:ring-2 focus:ring-ring",
-          "font-semibold text-lg"
+          'w-24 rounded border border-input bg-background px-2 py-1',
+          'focus:outline-none focus:ring-2 focus:ring-ring',
+          'font-semibold text-lg'
         )}
       />
     </div>

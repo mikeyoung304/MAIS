@@ -44,10 +44,7 @@ export class CommissionService {
    * // Tenant has 12% commission rate
    * // Returns: { amount: 6000, percent: 12.0 }
    */
-  async calculateCommission(
-    tenantId: string,
-    bookingTotal: number
-  ): Promise<CommissionResult> {
+  async calculateCommission(tenantId: string, bookingTotal: number): Promise<CommissionResult> {
     // Validate input
     if (!tenantId || typeof tenantId !== 'string') {
       throw new Error('Invalid tenantId');
@@ -72,23 +69,18 @@ export class CommissionService {
 
     // Validate commission percent
     if (commissionPercent < 0 || commissionPercent > 100) {
-      logger.error(
-        { tenantId, commissionPercent },
-        'Invalid commission percent'
-      );
+      logger.error({ tenantId, commissionPercent }, 'Invalid commission percent');
       throw new Error(
         `Invalid commission percent: ${commissionPercent}%. Must be between 0 and 100.`
       );
     }
 
     // Calculate commission (always round UP to protect platform revenue)
-    const commissionCents = Math.ceil(
-      bookingTotal * (commissionPercent / 100)
-    );
+    const commissionCents = Math.ceil(bookingTotal * (commissionPercent / 100));
 
     // Validate Stripe Connect limits (0.5% - 50%)
     const minCommission = Math.ceil(bookingTotal * 0.005); // 0.5%
-    const maxCommission = Math.ceil(bookingTotal * 0.50); // 50%
+    const maxCommission = Math.ceil(bookingTotal * 0.5); // 50%
 
     let finalCommission = commissionCents;
 
@@ -192,17 +184,12 @@ export class CommissionService {
           { tenantId, requestedIds: addOnIds, foundIds, missingIds },
           'Invalid add-ons requested'
         );
-        throw new Error(
-          `Invalid or inactive add-ons: ${missingIds.join(', ')}`
-        );
+        throw new Error(`Invalid or inactive add-ons: ${missingIds.join(', ')}`);
       }
 
       addOnsTotal = addOns.reduce((sum, addOn) => sum + addOn.price, 0);
 
-      logger.debug(
-        { tenantId, addOnCount: addOns.length, addOnsTotal },
-        'Add-ons calculated'
-      );
+      logger.debug({ tenantId, addOnCount: addOns.length, addOnsTotal }, 'Add-ons calculated');
     }
 
     // Calculate subtotal

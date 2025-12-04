@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "116"
+issue_id: '116'
 tags: [code-review, accessibility, ui-redesign]
 dependencies: []
 ---
@@ -19,12 +19,14 @@ Many decorative icons throughout the dashboard components don't have `aria-hidde
 ### From accessibility specialist agent:
 
 **Files with decorative icons missing aria-hidden:**
+
 - TenantDashboard/index.tsx (line 73-74) - Sparkles icon
 - MetricsCards.tsx (lines 75-79) - All metric icons
 - BrandingForm (line 56) - Palette icon
 - Empty states - All icons
 
 **Pattern to fix:**
+
 ```tsx
 // Current
 <Sparkles className="w-5 h-5 text-sage" />
@@ -36,6 +38,7 @@ Many decorative icons throughout the dashboard components don't have `aria-hidde
 ## Proposed Solutions
 
 ### Solution 1: Add aria-hidden to All Decorative Icons
+
 **Pros:** Better screen reader experience
 **Cons:** Minor tedium
 **Effort:** Small (30 min)
@@ -49,7 +52,7 @@ Many decorative icons throughout the dashboard components don't have `aria-hidde
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2025-11-30 | Created from code review | Accessibility improvement |
-| 2025-12-02 | Added aria-hidden to all decorative icons | Updated 15 components |
+| Date       | Action                                    | Learnings                 |
+| ---------- | ----------------------------------------- | ------------------------- |
+| 2025-11-30 | Created from code review                  | Accessibility improvement |
+| 2025-12-02 | Added aria-hidden to all decorative icons | Updated 15 components     |

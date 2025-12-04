@@ -89,8 +89,7 @@ export function RescheduleDialog({
         <DialogHeader>
           <DialogTitle className="text-xl">Reschedule Your Booking</DialogTitle>
           <DialogDescription className="text-white/60">
-            Choose a new date for your event. The original date will be released
-            for other bookings.
+            Choose a new date for your event. The original date will be released for other bookings.
           </DialogDescription>
         </DialogHeader>
 
@@ -122,17 +121,11 @@ export function RescheduleDialog({
               min={getMinDate()}
               className="bg-macon-navy-700 border-white/20 text-white"
             />
-            {newDate && (
-              <p className="text-sm text-macon-gold">
-                {formatDate(newDate)}
-              </p>
-            )}
+            {newDate && <p className="text-sm text-macon-gold">{formatDate(newDate)}</p>}
           </div>
 
           {/* Error Message */}
-          {error && (
-            <p className="text-sm text-red-400">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-400">{error}</p>}
         </div>
 
         <DialogFooter className="gap-2">

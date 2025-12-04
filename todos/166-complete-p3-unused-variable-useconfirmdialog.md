@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "166"
+issue_id: '166'
 tags: [code-review, cleanup, hooks]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The `useConfirmDialog` hook contains unused variables (`handleCancel`, `_isCancel`) that were likely part of an earlier implementation but are no longer used.
 
 **Why This Matters:**
+
 - Code clarity - unused code creates confusion
 - Maintenance burden - developers wonder if it's needed
 - Minor technical debt
@@ -24,6 +25,7 @@ The `useConfirmDialog` hook contains unused variables (`handleCancel`, `_isCance
 **Location:** `client/src/hooks/useConfirmDialog.tsx` (lines 56-76)
 
 **Evidence:**
+
 ```typescript
 // These variables are created but never used
 const handleCancel = ...;
@@ -35,12 +37,14 @@ const _isCancel = ...;
 ## Proposed Solutions
 
 ### Option A: Remove Unused Code (Recommended)
+
 **Pros:** Cleaner code, no confusion
 **Cons:** None
 **Effort:** Minimal (15 minutes)
 **Risk:** Very Low
 
 ### Option B: Add JSDoc Explaining Intent
+
 **Pros:** Documents why code exists if there's a reason
 **Cons:** Still unused code in bundle
 **Effort:** Minimal (15 minutes)
@@ -53,6 +57,7 @@ Option A - Remove the unused variables.
 ## Technical Details
 
 **File to Update:**
+
 - `client/src/hooks/useConfirmDialog.tsx`
 
 ## Acceptance Criteria
@@ -63,9 +68,9 @@ Option A - Remove the unused variables.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-12-02 | Created | Found during code review of commit 012bd9b |
+| Date       | Action    | Notes                                                   |
+| ---------- | --------- | ------------------------------------------------------- |
+| 2025-12-02 | Created   | Found during code review of commit 012bd9b              |
 | 2025-12-02 | Completed | Removed `handleCancel` and `_isCancel` unused variables |
 
 ## Resources

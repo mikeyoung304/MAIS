@@ -10,6 +10,7 @@
 ## Context for New Chat Session
 
 This is a **multi-tenant wedding booking SaaS platform** with:
+
 - **Frontend**: React 18 + Vite + TypeScript + Tailwind CSS
 - **Location**: `/Users/mikeyoung/CODING/Elope/client/`
 - **Current State**: Functional but inconsistent UI with basic components
@@ -17,6 +18,7 @@ This is a **multi-tenant wedding booking SaaS platform** with:
 - **Component Library**: Shadcn UI (Radix primitives)
 
 ### Key Problems Identified
+
 1. Inconsistent light/dark theme usage across pages
 2. Booking flow feels unpolished (DatePicker not branded, basic add-ons)
 3. Admin interfaces lack visual polish (plain tabs, basic forms)
@@ -214,6 +216,7 @@ This is a **multi-tenant wedding booking SaaS platform** with:
 ### Example Subagent Prompts:
 
 **Phase 1, Task 1:**
+
 ```
 Launch Explore agent:
 "Analyze all pages in client/src/pages/ and client/src/features/
@@ -223,6 +226,7 @@ and current theme state. Thoroughness: medium."
 ```
 
 **Phase 2, Task 1:**
+
 ```
 Launch Code agent:
 "Create custom CSS module for DatePicker at
@@ -236,6 +240,7 @@ Reference: client/src/styles/design-tokens.css for color values."
 ## Success Criteria
 
 ### Phase 1 Complete When:
+
 - [ ] Theme zones documented
 - [ ] Package pages use light theme
 - [ ] Dialog component has backdrop blur and animations
@@ -243,6 +248,7 @@ Reference: client/src/styles/design-tokens.css for color values."
 - [ ] Toast notifications work in at least one form
 
 ### Phase 2 Complete When:
+
 - [ ] DatePicker uses Macon colors
 - [ ] Add-ons displayed as animated cards
 - [ ] Progress indicator shows current step
@@ -250,6 +256,7 @@ Reference: client/src/styles/design-tokens.css for color values."
 - [ ] Booking flow feels cohesive and branded
 
 ### Phase 3 Complete When:
+
 - [ ] Admin tabs have orange active state with icons
 - [ ] Loading skeletons show while fetching data
 - [ ] Empty states have icon + message + CTA
@@ -257,6 +264,7 @@ Reference: client/src/styles/design-tokens.css for color values."
 - [ ] No jarring empty states in admin
 
 ### Phase 4 Complete When:
+
 - [ ] Inputs have floating labels and validation states
 - [ ] Forms show real-time validation feedback
 - [ ] Buttons show loading spinners during submit
@@ -264,6 +272,7 @@ Reference: client/src/styles/design-tokens.css for color values."
 - [ ] Success page has celebration animation
 
 ### Phase 5 Complete When:
+
 - [ ] Admin dashboard has charts
 - [ ] Photos have lightbox and drag-drop
 - [ ] Command palette works (Cmd+K)
@@ -280,11 +289,13 @@ Reference: client/src/styles/design-tokens.css for color values."
 **Tailwind Config**: `client/tailwind.config.js`
 
 **Brand Colors**:
+
 - Navy: `#1a365d` (primary)
 - Orange: `#fb923c` (secondary)
 - Teal: `#38b2ac` (accent)
 
 **Key Files Referenced**:
+
 - Full plan: `/Users/mikeyoung/CODING/Elope/UI_UX_IMPROVEMENT_PLAN.md`
 - Screenshots: `/Users/mikeyoung/CODING/Elope/.playwright-mcp/july25-*.png`
 

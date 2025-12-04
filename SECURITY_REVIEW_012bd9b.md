@@ -31,6 +31,7 @@ Commit 012bd9b implements 15+ quality improvements with **zero security regressi
 **File:** `server/src/lib/core/config.ts`, `server/src/lib/booking-tokens.ts`
 
 **Change Summary:**
+
 ```typescript
 // NEW: Separate secret for booking tokens with fallback to JWT_SECRET
 export function getBookingTokenSecret(config: Config): string {
@@ -41,6 +42,7 @@ export function getBookingTokenSecret(config: Config): string {
 **Security Assessment:** ✅ POSITIVE
 
 **Rationale:**
+
 - **Before:** Booking tokens and session JWTs used same secret. If one was compromised, both would be affected.
 - **After:** Separate `BOOKING_TOKEN_SECRET` allows independent rotation without invalidating tenant sessions.
 - **Impact:** JWT_SECRET compromise requires rotating booking tokens separately (zero-trust principle).
@@ -63,6 +65,7 @@ export function getBookingTokenSecret(config: Config): string {
 **File:** `client/src/features/booking/DatePicker.tsx`
 
 **Change Summary:**
+
 ```typescript
 catch (error) {
   // FAIL CLOSED: On error, reject selection to prevent double-bookings
@@ -77,6 +80,7 @@ catch (error) {
 **Security Assessment:** ✅ POSITIVE
 
 **Rationale:**
+
 - **Before:** Unknown error handling could allow user to proceed with unverified date.
 - **After:** Network error, timeout, or API failure → date is rejected until verification succeeds.
 - **Impact:** Eliminates race condition window between client-side check and server-side booking.
@@ -100,15 +104,18 @@ catch (error) {
 **File:** `server/prisma/seeds/demo.ts`
 
 **Change Summary:**
+
 ```typescript
 // Before: Regenerated keys on each seed
 if (existingTenant) {
   // After: Preserve existing keys on re-seed
   tenant = await prisma.tenant.update({
     where: { slug: DEMO_SLUG },
-    data: { /* non-sensitive fields only */ },
+    data: {
+      /* non-sensitive fields only */
+    },
   });
-  publicKey = tenant.apiKeyPublic;  // ← REUSED
+  publicKey = tenant.apiKeyPublic; // ← REUSED
 } else {
   // New tenant: Generate fresh keys
   publicKey = `pk_live_${DEMO_SLUG}_${crypto.randomBytes(8).toString('hex')}`;
@@ -119,12 +126,14 @@ if (existingTenant) {
 **Security Assessment:** ✅ POSITIVE
 
 **Rationale:**
+
 - **Before:** Each seed regenerated keys, breaking local development (TODO-079).
 - **After:** Keys preserved after first creation, allowing safe re-seeding without breakage.
 - **Security Impact:** No regression - keys still hashed before storage, still cryptographically random on initial generation.
 - **Implementation:** Uses `upsert` pattern correctly - update preserves sensitive fields, create generates fresh secrets.
 
 **Key Rotation Impact:**
+
 - Initial seed: Keys generated once and logged (one-time secret exposure in dev logs)
 - Re-seeds: Keys preserved, no new secrets exposed
 - Production: Should manually generate and rotate keys, never auto-seed
@@ -138,6 +147,7 @@ if (existingTenant) {
 **File:** `server/src/lib/errors/sentry.ts`
 
 **Changes:**
+
 ```typescript
 // Trace sample rate increased from 10% to 50% for better observability
 tracesSampleRate: config?.tracesSampleRate || 0.5,  // ← Increased
@@ -166,14 +176,14 @@ beforeBreadcrumb(breadcrumb) {
 
 **Threat Model Analysis:**
 
-| Finding | Severity | Assessment |
-|---------|----------|------------|
-| Increased trace sampling (10% → 50%) | P2 | Safe - matches operational needs without exposing secrets |
-| Health check filtering | P3 | Correct - removes noise from monitoring |
-| 404 filtering | P3 | Correct - expected in normal operations |
-| 429 filtering | P3 | Correct - expected when rate limiter works |
-| isOperational flag filtering | P2 | Correct - only filters when explicitly marked |
-| Sensitive data scrubbing | P1 | ✅ Excellent - regex correctly masks passwords/tokens/keys/secrets |
+| Finding                              | Severity | Assessment                                                         |
+| ------------------------------------ | -------- | ------------------------------------------------------------------ |
+| Increased trace sampling (10% → 50%) | P2       | Safe - matches operational needs without exposing secrets          |
+| Health check filtering               | P3       | Correct - removes noise from monitoring                            |
+| 404 filtering                        | P3       | Correct - expected in normal operations                            |
+| 429 filtering                        | P3       | Correct - expected when rate limiter works                         |
+| isOperational flag filtering         | P2       | Correct - only filters when explicitly marked                      |
+| Sensitive data scrubbing             | P1       | ✅ Excellent - regex correctly masks passwords/tokens/keys/secrets |
 
 **Security Note:** The `beforeBreadcrumb` scrubbing regex correctly removes sensitive query parameters from logs. This prevents credential leakage to Sentry even if a URL with token parameters is logged.
 
@@ -186,6 +196,7 @@ beforeBreadcrumb(breadcrumb) {
 **File:** `server/src/services/reminder.service.ts`, `server/src/adapters/prisma/catalog.repository.ts`
 
 **Changes:**
+
 ```typescript
 // New batch method added to CatalogRepository
 async getPackagesByIds(tenantId: string, ids: string[]): Promise<Package[]> {
@@ -209,11 +220,13 @@ for (const booking of bookingsToRemind) {
 **Security Assessment:** ✅ POSITIVE (Denial-of-Service Prevention)
 
 **DoS Vector Eliminated:**
+
 - **Before:** O(N) database queries for N reminders → Reminder cron job could saturate connection pool
 - **After:** O(1) queries → Batch fetch + in-memory lookup
 - **Impact:** Prevents accidental database exhaustion
 
 **Tenant Isolation:** ✅ Maintained
+
 - Batch method filters by `tenantId`
 - No cross-tenant data leakage possible
 - `new Set()` deduplication happens before filtering
@@ -227,13 +240,14 @@ for (const booking of bookingsToRemind) {
 **File:** `server/src/lib/shutdown.ts`
 
 **Changes:**
+
 ```typescript
 export interface ShutdownManager {
   server: Server;
   prisma?: PrismaClient;
   cleanup?: () => Promise<void>;
   onShutdown?: () => Promise<void> | void;
-  timeoutMs?: number;  // ← NEW: Configurable timeout
+  timeoutMs?: number; // ← NEW: Configurable timeout
 }
 
 // Usage
@@ -247,6 +261,7 @@ const shutdownTimeout = setTimeout(() => {
 **Security Assessment:** ✅ NEUTRAL (Infrastructure)
 
 **Rationale:**
+
 - No security impact - this is operational infrastructure
 - Default 30s timeout is reasonable (prevents hanging processes in production)
 - Configurable allows aggressive shutdown on resource-constrained systems
@@ -260,11 +275,13 @@ const shutdownTimeout = setTimeout(() => {
 #### A. Window.confirm() Replacement [SECURITY IMPROVEMENT]
 
 **Files:**
+
 - `client/src/hooks/useConfirmDialog.tsx` (new)
 - `client/src/components/ui/confirm-dialog.tsx` (new)
 - `client/src/hooks/useUnsavedChanges.ts` (updated)
 
 **Change Summary:**
+
 ```typescript
 // OLD: window.confirm can be spoofed by CSS/iframe
 const shouldProceed = window.confirm("Delete?");
@@ -284,12 +301,12 @@ const shouldProceed = window.confirm("Delete?");
 
 **Threat Model - UI Spoofing Prevention:**
 
-| Attack | Window.confirm | ConfirmDialog | Status |
-|--------|---|---|---|
-| CSS overlay | 🔴 Spoofable | 🟢 Protected by browser | FIXED |
-| iframe injection | 🔴 Spoofable | 🟢 Protected by DOM isolation | FIXED |
-| Screen reader attacks | 🔴 Browser default | 🟢 Full ARIA support | IMPROVED |
-| Clickjacking | 🔴 Vulnerable | 🟢 Native modal handling | FIXED |
+| Attack                | Window.confirm     | ConfirmDialog                 | Status   |
+| --------------------- | ------------------ | ----------------------------- | -------- |
+| CSS overlay           | 🔴 Spoofable       | 🟢 Protected by browser       | FIXED    |
+| iframe injection      | 🔴 Spoofable       | 🟢 Protected by DOM isolation | FIXED    |
+| Screen reader attacks | 🔴 Browser default | 🟢 Full ARIA support          | IMPROVED |
+| Clickjacking          | 🔴 Vulnerable      | 🟢 Native modal handling      | FIXED    |
 
 **Implementation Details:**
 
@@ -297,34 +314,37 @@ const shouldProceed = window.confirm("Delete?");
 // useUnsavedChanges now accepts custom confirm function
 export function useUnsavedChanges({
   isDirty,
-  message = "You have unsaved changes...",
+  message = 'You have unsaved changes...',
   enabled = true,
-  confirmFn,  // ← Custom confirm function (for testing!)
-}: UseUnsavedChangesOptions)
+  confirmFn, // ← Custom confirm function (for testing!)
+}: UseUnsavedChangesOptions);
 
 // Usage with ConfirmDialog hook
 const { confirm } = useConfirmDialog();
 useUnsavedChanges({
   isDirty,
-  confirmFn: (msg) => confirm({
-    title: "Unsaved Changes",
-    description: msg,
-    variant: "destructive"
-  })
+  confirmFn: (msg) =>
+    confirm({
+      title: 'Unsaved Changes',
+      description: msg,
+      variant: 'destructive',
+    }),
 });
 ```
 
 **Testability:** ✅ Excellent
+
 - Custom `confirmFn` parameter allows unit tests to bypass dialogs
 - No window.confirm calls pollute test output
 - Enables full automation of confirmation flows in E2E tests
 
 **Fallback Behavior:** ✅ Safe
+
 ```typescript
 if (confirmFnRef.current) {
   shouldProceed = await confirmFnRef.current(messageRef.current);
 } else {
-  shouldProceed = window.confirm(messageRef.current);  // ← Fallback preserved
+  shouldProceed = window.confirm(messageRef.current); // ← Fallback preserved
 }
 ```
 
@@ -339,11 +359,13 @@ if (confirmFnRef.current) {
 **Security Assessment:** ✅ POSITIVE (Defense against accessibility-based attacks)
 
 **Rationale:**
+
 - Color-only indicators vulnerable to color-blind users and CSS-based attacks
 - Adding icon redundancy prevents UI spoofing via color override
 - `aria-hidden` on decorative icons prevents screen reader noise
 
 **Example:**
+
 ```typescript
 // Before: Color-only indicator
 <span className="w-2 h-2 rounded-full bg-green-500" />
@@ -363,6 +385,7 @@ if (confirmFnRef.current) {
 **File:** `client/src/lib/animation-constants.ts` (new)
 
 **Change Summary:**
+
 ```typescript
 // Extracted hardcoded delays to constants
 export const ANIMATION_DELAYS = {
@@ -376,6 +399,7 @@ export const ANIMATION_DELAYS = {
 **Security Assessment:** ✅ NEUTRAL
 
 **Rationale:**
+
 - Prevents magic number attacks where timings are hardcoded
 - Allows consistent animation timing across app
 - No security impact but improves maintainability
@@ -391,6 +415,7 @@ export const ANIMATION_DELAYS = {
 **File:** `.env.example`
 
 **Changes:**
+
 ```env
 # NEW entries added
 BOOKING_TOKEN_SECRET=                # Optional: separate secret for booking tokens
@@ -400,6 +425,7 @@ SHUTDOWN_TIMEOUT_MS=30000            # Graceful shutdown timeout
 **Security Assessment:** ✅ POSITIVE
 
 **Assessment:**
+
 - Properly documents optional nature of BOOKING_TOKEN_SECRET
 - Clear explanation that it defaults to JWT_SECRET
 - SHUTDOWN_TIMEOUT_MS documented but has safe default
@@ -411,22 +437,22 @@ SHUTDOWN_TIMEOUT_MS=30000            # Graceful shutdown timeout
 
 ## Comprehensive Security Checklist
 
-| Item | Status | Notes |
-|------|--------|-------|
-| **No secrets hardcoded** | ✅ | All secrets via environment variables |
-| **Proper input validation** | ✅ | Zod schema validation maintained |
-| **No XSS vulnerabilities** | ✅ | React auto-escaping, no dangerouslySetInnerHTML |
-| **Proper error handling** | ✅ | Errors logged without leaking sensitive data |
-| **Tenant isolation maintained** | ✅ | All batch operations filter by tenantId |
-| **Authentication/authorization unchanged** | ✅ | No regressions in auth code |
-| **Cryptography unchanged** | ✅ | JWT algorithms, hashing methods untouched |
-| **SQL injection prevention** | ✅ | Prisma parameterized queries maintained |
-| **CSRF/CORS correctly configured** | ✅ | Per CLAUDE.md already reviewed |
-| **Rate limiting preserved** | ✅ | Rate limiters still in place |
-| **No hardcoded ports/domains** | ✅ | Environment-driven configuration |
-| **Logging doesn't expose secrets** | ✅ | Sentry scrubbing added, structured logging used |
-| **Database constraints intact** | ✅ | Unique constraints, foreign keys preserved |
-| **API key format validation** | ✅ | Per tenant.ts middleware |
+| Item                                       | Status | Notes                                           |
+| ------------------------------------------ | ------ | ----------------------------------------------- |
+| **No secrets hardcoded**                   | ✅     | All secrets via environment variables           |
+| **Proper input validation**                | ✅     | Zod schema validation maintained                |
+| **No XSS vulnerabilities**                 | ✅     | React auto-escaping, no dangerouslySetInnerHTML |
+| **Proper error handling**                  | ✅     | Errors logged without leaking sensitive data    |
+| **Tenant isolation maintained**            | ✅     | All batch operations filter by tenantId         |
+| **Authentication/authorization unchanged** | ✅     | No regressions in auth code                     |
+| **Cryptography unchanged**                 | ✅     | JWT algorithms, hashing methods untouched       |
+| **SQL injection prevention**               | ✅     | Prisma parameterized queries maintained         |
+| **CSRF/CORS correctly configured**         | ✅     | Per CLAUDE.md already reviewed                  |
+| **Rate limiting preserved**                | ✅     | Rate limiters still in place                    |
+| **No hardcoded ports/domains**             | ✅     | Environment-driven configuration                |
+| **Logging doesn't expose secrets**         | ✅     | Sentry scrubbing added, structured logging used |
+| **Database constraints intact**            | ✅     | Unique constraints, foreign keys preserved      |
+| **API key format validation**              | ✅     | Per tenant.ts middleware                        |
 
 ---
 
@@ -511,6 +537,7 @@ export function loadConfig(): Config {
 ### 2. Rotate BOOKING_TOKEN_SECRET Periodically
 
 Implement scheduled rotation (independent of JWT_SECRET) using:
+
 - Key versioning scheme
 - Token validation against multiple active keys during rotation window
 - Monitoring for booking token validation failures

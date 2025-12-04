@@ -19,6 +19,7 @@ MAIS API Server (with tenant isolation)
 ## Files Created
 
 ### 1. Widget Entry Point
+
 **File:** `/client/src/widget-main.tsx`
 
 - Parses URL parameters (tenant, apiKey, mode, parentOrigin)
@@ -27,17 +28,20 @@ MAIS API Server (with tenant isolation)
 - Serves as the iframe entry point
 
 **URL Parameters:**
+
 - `tenant` (required): Tenant identifier (e.g., 'acme')
 - `apiKey` (required): Tenant API key (e.g., 'pk_live_xxx')
 - `mode` (optional): Display mode ('embedded' | 'modal', default: 'embedded')
 - `parentOrigin` (optional): Parent window origin for security
 
 ### 2. Widget Messenger Service
+
 **File:** `/client/src/widget/WidgetMessenger.ts`
 
 Singleton service for postMessage communication with parent window.
 
 **Methods:**
+
 - `sendReady()` - Notify parent widget is loaded
 - `sendResize(height)` - Request iframe height adjustment
 - `sendBookingCreated(bookingId)` - Notify booking created
@@ -46,16 +50,19 @@ Singleton service for postMessage communication with parent window.
 - `sendNavigation(route, params)` - Notify route change
 
 **Security:**
+
 - Validates parent origin before sending messages
-- Uses explicit target origin (not '*' in production)
+- Uses explicit target origin (not '\*' in production)
 - Debounces resize events to prevent spam
 
 ### 3. Widget App Component
+
 **File:** `/client/src/widget/WidgetApp.tsx`
 
 Main widget application component.
 
 **Features:**
+
 - Fetches tenant branding from API
 - Applies branding via CSS variables
 - Auto-resizes iframe using ResizeObserver
@@ -64,64 +71,78 @@ Main widget application component.
 - Sends events to parent window
 
 **Branding Support:**
+
 - Primary/secondary colors
 - Custom fonts
 - Logo
 - Custom CSS overrides
 
 ### 4. Widget Catalog Grid
+
 **File:** `/client/src/widget/WidgetCatalogGrid.tsx`
 
 Widget-specific version of CatalogGrid component.
 
 **Differences from main app:**
+
 - Uses callback instead of React Router Link
 - No router dependency
 - Optimized for iframe embedding
 
 ### 5. Widget Package Page
+
 **File:** `/client/src/widget/WidgetPackagePage.tsx`
 
 Widget-specific version of PackagePage component.
 
 **Differences from main app:**
+
 - Uses callback for navigation instead of router
 - Notifies parent of booking completion
 - Back button navigates to catalog view
 
 ### 6. Widget HTML Template
+
 **File:** `/client/widget.html`
 
 HTML entry point for widget build.
 
 **Features:**
+
 - CSS reset to prevent parent styles bleeding in
 - Preconnects to Google Fonts
 - Isolated styling with `.mais-widget` class
 
 ### 7. Vite Configuration
+
 **File:** `/client/vite.config.ts` (modified)
 
 Configured for multi-entry build:
+
 - Main app entry: `index.html`
 - Widget entry: `widget.html`
 
 **Build output:**
+
 - Main app: `dist/index.html`, `dist/assets/*`
 - Widget: `dist/widget.html`, `dist/widget/assets/*`
 
 ### 8. API Client Updates
+
 **File:** `/client/src/lib/api.ts` (modified)
 
 Added multi-tenant support:
+
 - `api.setTenantKey(key)` - Set tenant API key
 - Automatically injects `X-Tenant-Key` header for all requests
 - Works alongside existing admin JWT authentication
 
 ### 9. Contracts Updates
+
 **File:** `/packages/contracts/src/dto.ts` (modified)
 
 Added TenantBrandingDto:
+
 ```typescript
 interface TenantBrandingDto {
   primaryColor?: string;
@@ -132,11 +153,13 @@ interface TenantBrandingDto {
 ```
 
 ### 10. Test Page
+
 **File:** `/client/widget-test.html`
 
 Standalone test page for widget development.
 
 **Features:**
+
 - Loads widget in iframe
 - Monitors postMessage events
 - Event log console
@@ -181,13 +204,14 @@ const config = {
   tenant: 'your-tenant-slug',
   apiKey: 'pk_test_your_key', // Must match a real tenant key in your DB
   mode: 'embedded',
-  parentOrigin: window.location.origin
+  parentOrigin: window.location.origin,
 };
 ```
 
 ### 4. Test Widget Functionality
 
 The test page provides:
+
 - **Reload Widget** - Refresh the iframe
 - **Clear Event Log** - Clear the event console
 - **Send: NAVIGATE_BACK** - Test parent-to-widget messaging
@@ -196,6 +220,7 @@ The test page provides:
 ### 5. Monitor Events
 
 Watch the event log for:
+
 - ✅ `READY` - Widget loaded successfully
 - 📏 `RESIZE` - Auto-resize triggered
 - 📍 `NAVIGATION` - Route changes
@@ -234,6 +259,7 @@ dist/
 Upload `dist/widget.html` and `dist/widget/assets/*` to your CDN.
 
 Widget URL will be:
+
 ```
 https://cdn.mais.com/widget.html?tenant=acme&apiKey=pk_live_xxx
 ```
@@ -249,12 +275,13 @@ Once the SDK loader is implemented (Phase 3), parent pages will embed the widget
     element: '#mais-widget',
     tenant: 'acme',
     apiKey: 'pk_live_xxx',
-    mode: 'embedded'
+    mode: 'embedded',
   });
 </script>
 ```
 
 The SDK loader will:
+
 1. Create iframe pointing to widget URL
 2. Inject tenant/apiKey via URL parameters
 3. Handle auto-resize via postMessage
@@ -266,11 +293,13 @@ The SDK loader will:
 ### Issue 1: Reusing Existing Components
 
 **Solution:** Created wrapper components (WidgetCatalogGrid, WidgetPackagePage) that:
+
 - Import and reuse business logic from existing components
 - Replace React Router with callback-based navigation
 - Add widget-specific behaviors (postMessage, auto-resize)
 
 **Components Reused:**
+
 - ✅ CatalogGrid logic (via usePackages hook)
 - ✅ PackagePage logic (via usePackage hook)
 - ✅ DatePicker component
@@ -281,6 +310,7 @@ The SDK loader will:
 ### Issue 2: API Client Tenant Isolation
 
 **Solution:** Extended API client with `setTenantKey()` method:
+
 - Stores tenant key in module-level variable
 - Automatically injects `X-Tenant-Key` header
 - Works alongside existing admin JWT authentication
@@ -288,6 +318,7 @@ The SDK loader will:
 ### Issue 3: CSS Isolation
 
 **Solution:**
+
 - Widget HTML template includes CSS reset
 - All widget styles scoped to `.mais-widget` class
 - `box-sizing: border-box` for all widget elements
@@ -295,6 +326,7 @@ The SDK loader will:
 ### Issue 4: Auto-Resize Implementation
 
 **Solution:**
+
 - Uses ResizeObserver to detect content height changes
 - Debounces resize events (100ms) to prevent spam
 - Skips resize if height change < 5px
@@ -303,6 +335,7 @@ The SDK loader will:
 ### Issue 5: Tenant Branding
 
 **Current Status:**
+
 - TenantBrandingDto added to contracts
 - WidgetApp fetches branding (mocked for now)
 - CSS variables applied dynamically
@@ -403,6 +436,7 @@ The SDK loader will:
 ## Support
 
 For issues or questions:
+
 - Check implementation plan: `EMBEDDABLE_MULTI_TENANT_IMPLEMENTATION_PLAN.md`
 - Review server-side tenant middleware: `server/src/middleware/tenant.ts`
 - Review API contracts: `packages/contracts/src/`

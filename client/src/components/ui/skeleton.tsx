@@ -1,19 +1,16 @@
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Accessible label for screen readers */
   label?: string;
 }
 
-export function Skeleton({ className, label = "Loading...", ...props }: SkeletonProps) {
+export function Skeleton({ className, label = 'Loading...', ...props }: SkeletonProps) {
   return (
     <div
       role="status"
       aria-label={label}
-      className={cn(
-        "animate-pulse rounded-md bg-neutral-200 dark:bg-neutral-700",
-        className
-      )}
+      className={cn('animate-pulse rounded-md bg-neutral-200 dark:bg-neutral-700', className)}
       {...props}
     >
       <span className="sr-only">{label}</span>
@@ -25,13 +22,13 @@ export function Skeleton({ className, label = "Loading...", ...props }: Skeleton
  * Shimmer effect skeleton with gradient animation
  * Use this for a more polished loading experience
  */
-export function SkeletonShimmer({ className, label = "Loading...", ...props }: SkeletonProps) {
+export function SkeletonShimmer({ className, label = 'Loading...', ...props }: SkeletonProps) {
   return (
     <div
       role="status"
       aria-label={label}
       className={cn(
-        "relative overflow-hidden rounded-md bg-neutral-200 dark:bg-neutral-700",
+        'relative overflow-hidden rounded-md bg-neutral-200 dark:bg-neutral-700',
         className
       )}
       {...props}

@@ -63,15 +63,18 @@ function PackageCatalogContent() {
   const packagesByTier = useMemo(() => {
     if (!filteredAndSortedPackages) return {};
 
-    const grouped = filteredAndSortedPackages.reduce((acc, pkg) => {
-      const tier = pkg.grouping || 'Featured';
-      if (!acc[tier]) acc[tier] = [];
-      acc[tier].push(pkg);
-      return acc;
-    }, {} as Record<string, PackageDto[]>);
+    const grouped = filteredAndSortedPackages.reduce(
+      (acc, pkg) => {
+        const tier = pkg.grouping || 'Featured';
+        if (!acc[tier]) acc[tier] = [];
+        acc[tier].push(pkg);
+        return acc;
+      },
+      {} as Record<string, PackageDto[]>
+    );
 
     // Sort within each tier by groupingOrder, then by title
-    Object.values(grouped).forEach(tierPackages => {
+    Object.values(grouped).forEach((tierPackages) => {
       tierPackages.sort((a, b) => {
         const orderA = a.groupingOrder ?? Infinity;
         const orderB = b.groupingOrder ?? Infinity;
@@ -117,12 +120,7 @@ function PackageCatalogContent() {
           <p className="text-xl text-danger-700 mb-4 font-medium">
             Failed to load packages. Please try again.
           </p>
-          <Button
-            onClick={() => refetch()}
-            variant="secondary"
-            size="lg"
-            className="min-h-[44px]"
-          >
+          <Button onClick={() => refetch()} variant="secondary" size="lg" className="min-h-[44px]">
             Retry
           </Button>
         </div>
@@ -139,12 +137,8 @@ function PackageCatalogContent() {
         </h1>
         <div className="text-center py-16 bg-neutral-50 rounded-xl border border-neutral-200">
           <Package className="w-12 h-12 mx-auto text-neutral-300 mb-4" />
-          <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-            Coming Soon
-          </h3>
-          <p className="text-neutral-600">
-            We're preparing something special for you.
-          </p>
+          <h3 className="text-xl font-semibold text-neutral-900 mb-2">Coming Soon</h3>
+          <p className="text-neutral-600">We're preparing something special for you.</p>
         </div>
       </Container>
     );
@@ -174,12 +168,8 @@ function PackageCatalogContent() {
 
         <div className="text-center py-16 bg-neutral-50 rounded-xl border border-neutral-200 mt-8">
           <Search className="w-12 h-12 mx-auto text-neutral-300 mb-4" />
-          <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-            No matches found
-          </h3>
-          <p className="text-neutral-600 mb-6">
-            Try adjusting your search or filter criteria.
-          </p>
+          <h3 className="text-xl font-semibold text-neutral-900 mb-2">No matches found</h3>
+          <p className="text-neutral-600 mb-6">Try adjusting your search or filter criteria.</p>
           {hasActiveFilters && (
             <Button
               onClick={() => {
@@ -219,7 +209,8 @@ function PackageCatalogContent() {
 
       <div className="mt-12">
         <p className="text-lg text-neutral-600 mb-6">
-          Showing {filteredAndSortedPackages.length} {filteredAndSortedPackages.length === 1 ? 'package' : 'packages'}
+          Showing {filteredAndSortedPackages.length}{' '}
+          {filteredAndSortedPackages.length === 1 ? 'package' : 'packages'}
         </p>
 
         {hasTiers ? (

@@ -8,14 +8,15 @@
 
 import { useState, useEffect, useCallback, ReactNode, useMemo } from 'react';
 import { AuthContext } from './context';
-import {
-  authenticateUser,
-  signupTenant,
-  logoutUser,
-  restoreAuthState,
-} from './services';
+import { authenticateUser, signupTenant, logoutUser, restoreAuthState } from './services';
 import { useTokenExpiration } from './useTokenExpiration';
-import type { User, UserRole, AuthContextType, ImpersonationData, SignupResponse } from '../../types/auth';
+import type {
+  User,
+  UserRole,
+  AuthContextType,
+  ImpersonationData,
+  SignupResponse,
+} from '../../types/auth';
 
 /**
  * Auth Provider Props

@@ -1,6 +1,7 @@
 # Todo Tests Catalog - MAIS Platform
 
 ## Summary
+
 Found **12 todo tests** in the codebase, all located in a single test file.
 
 **File:** `/Users/mikeyoung/CODING/MAIS/server/test/http/webhooks.http.spec.ts`
@@ -14,14 +15,15 @@ Found **12 todo tests** in the codebase, all located in a single test file.
 ### Category 1: Signature Verification (3 tests)
 
 #### 1. Webhook Signature Validation - Missing Header
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/server/test/http/webhooks.http.spec.ts:36-44`
 - **Test Name:** "should reject webhook without signature header"
 - **Feature Area:** Stripe webhook security - authentication
-- **Expected Behavior:** 
+- **Expected Behavior:**
   - POST to `/v1/webhooks/stripe` without `stripe-signature` header
   - Should return HTTP 400
   - Response should indicate signature missing
-- **Implementation Hints:** 
+- **Implementation Hints:**
   - Use supertest to make HTTP POST request
   - Omit the `stripe-signature` header
   - Validate error message contains "signature"
@@ -31,6 +33,7 @@ Found **12 todo tests** in the codebase, all located in a single test file.
 - **Error Handling:** WebhookValidationError should map to 400 response
 
 #### 2. Webhook Signature Validation - Invalid Signature
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/server/test/http/webhooks.http.spec.ts:46-55`
 - **Test Name:** "should reject webhook with invalid signature"
 - **Feature Area:** Stripe webhook security - signature verification
@@ -49,6 +52,7 @@ Found **12 todo tests** in the codebase, all located in a single test file.
 - **Key Code:** WebhooksController.handleStripeWebhook() lines 117-122
 
 #### 3. Webhook Signature Validation - Valid Signature
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/server/test/http/webhooks.http.spec.ts:57-72`
 - **Test Name:** "should accept webhook with valid signature"
 - **Feature Area:** Stripe webhook security - successful validation
@@ -73,6 +77,7 @@ Found **12 todo tests** in the codebase, all located in a single test file.
 ### Category 2: Idempotency & Duplicate Handling (2 tests)
 
 #### 4. Idempotency - Duplicate Webhook Returns 200
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/server/test/http/webhooks.http.spec.ts:76-100`
 - **Test Name:** "should return 200 for duplicate webhook"
 - **Feature Area:** Webhook idempotency - duplicate detection
@@ -94,6 +99,7 @@ Found **12 todo tests** in the codebase, all located in a single test file.
 - **Key Code:** WebhooksController.handleStripeWebhook() lines 137-143, PrismaWebhookRepository.isDuplicate() lines 36-68
 
 #### 5. Idempotency - Duplicate Webhook Not Reprocessed
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/server/test/http/webhooks.http.spec.ts:102-129`
 - **Test Name:** "should not process duplicate webhook"
 - **Feature Area:** Webhook idempotency - business logic isolation
@@ -120,6 +126,7 @@ Found **12 todo tests** in the codebase, all located in a single test file.
 ### Category 3: Error Handling (3 tests)
 
 #### 6. Error Handling - Invalid JSON Payload
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/server/test/http/webhooks.http.spec.ts:133-141`
 - **Test Name:** "should return 400 for invalid JSON"
 - **Feature Area:** Webhook validation - malformed request handling
@@ -141,6 +148,7 @@ Found **12 todo tests** in the codebase, all located in a single test file.
 - **Note:** Implementation depends on Express middleware configuration for raw body parsing
 
 #### 7. Error Handling - Missing Required Fields
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/server/test/http/webhooks.http.spec.ts:143-156`
 - **Test Name:** "should return 422 for missing required fields"
 - **Feature Area:** Webhook validation - schema validation
@@ -165,6 +173,7 @@ Found **12 todo tests** in the codebase, all located in a single test file.
 - **Key Code:** WebhooksController.handleStripeWebhook() lines 158-167, route-level error mapping
 
 #### 8. Error Handling - Internal Server Error (Database Failure)
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/server/test/http/webhooks.http.spec.ts:158-178`
 - **Test Name:** "should return 500 for internal server errors"
 - **Feature Area:** Webhook resilience - graceful degradation
@@ -191,6 +200,7 @@ Found **12 todo tests** in the codebase, all located in a single test file.
 ### Category 4: Event Type Handling (2 tests)
 
 #### 9. Event Type Processing - Checkout Completion
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/server/test/http/webhooks.http.spec.ts:182-216`
 - **Test Name:** "should handle checkout.session.completed events"
 - **Feature Area:** Webhook event processing - booking creation flow
@@ -223,6 +233,7 @@ Found **12 todo tests** in the codebase, all located in a single test file.
 - **Key Code:** WebhooksController.handleStripeWebhook() lines 155-245
 
 #### 10. Event Type Processing - Unsupported Event Types
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/server/test/http/webhooks.http.spec.ts:218-234`
 - **Test Name:** "should ignore unsupported event types"
 - **Feature Area:** Webhook event processing - graceful ignoring
@@ -251,6 +262,7 @@ Found **12 todo tests** in the codebase, all located in a single test file.
 ### Category 5: Webhook Recording & Audit Trail (2 tests)
 
 #### 11. Webhook Recording - Complete Event Audit Trail
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/server/test/http/webhooks.http.spec.ts:238-260`
 - **Test Name:** "should record all webhook events in database"
 - **Feature Area:** Webhook audit trail - event tracking
@@ -282,6 +294,7 @@ Found **12 todo tests** in the codebase, all located in a single test file.
 - **Key Code:** PrismaWebhookRepository.recordWebhook() lines 92-129, markProcessed() lines 147-162
 
 #### 12. Webhook Recording - Failed Event Tracking
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/server/test/http/webhooks.http.spec.ts:262-290`
 - **Test Name:** "should mark failed webhooks in database"
 - **Feature Area:** Webhook audit trail - error tracking
@@ -319,10 +332,12 @@ Found **12 todo tests** in the codebase, all located in a single test file.
 ## Implementation Priority & Complexity
 
 ### Quick Wins (Simple - 2 tests)
+
 1. Test 1: Missing signature header (40 lines of code)
 2. Test 6: Invalid JSON error (20 lines of code)
 
 ### Medium Priority (Medium - 6 tests)
+
 3. Test 2: Invalid signature (30 lines)
 4. Test 4: Duplicate webhook returns 200 (50 lines)
 5. Test 5: Duplicate not reprocessed (60 lines)
@@ -331,6 +346,7 @@ Found **12 todo tests** in the codebase, all located in a single test file.
 8. Test 11: Webhook event recording (45 lines)
 
 ### Complex Implementation (Complex - 4 tests)
+
 9. Test 3: Valid signature (80 lines - needs crypto HMAC)
 10. Test 8: Database failure handling (70 lines - needs DB mocking)
 11. Test 9: Checkout completion (100 lines - full flow)
@@ -376,18 +392,21 @@ webhooks.http.spec.ts
 ## Key Dependencies & Helpers
 
 ### Required Test Setup
+
 - Supertest for HTTP testing
 - Test database connection via Prisma
 - Mock or real Stripe secret for signature generation
 - Tenant record in test database
 
 ### Helper Function Needed
+
 - `generateTestSignature(payload: string): string` (line 298)
   - Current: Returns placeholder
   - Needs: HMAC-SHA256 with STRIPE_WEBHOOK_SECRET
   - Format: `t={timestamp},v1={signature}`
 
 ### Environment Variables Required
+
 - `STRIPE_WEBHOOK_SECRET` - For signature generation/verification
 - `DATABASE_URL` - Test database connection
 - `ADAPTERS_PRESET=mock` - For isolated testing (optional)
@@ -412,6 +431,7 @@ npm run test:watch -- server/test/http/webhooks.http.spec.ts
 ## Related Source Code References
 
 ### Main Implementation Files
+
 1. **WebhooksController** - `/Users/mikeyoung/CODING/MAIS/server/src/routes/webhooks.routes.ts`
    - Handles signature verification (lines 117-122)
    - Duplicate detection (lines 137-143)
@@ -431,10 +451,11 @@ npm run test:watch -- server/test/http/webhooks.http.spec.ts
    - Fields: eventId, eventType, status, rawPayload, lastError, attempts, processedAt
 
 ### Error Classes
+
 - `WebhookValidationError` - Signature/schema validation failures (400/422)
 - `WebhookProcessingError` - Processing failures (500)
 
 ### Service Dependencies
+
 - `PaymentProvider.verifyWebhook(rawBody, signature)` - Stripe signature verification
 - `BookingService.onPaymentCompleted(tenantId, data)` - Create booking from webhook
-

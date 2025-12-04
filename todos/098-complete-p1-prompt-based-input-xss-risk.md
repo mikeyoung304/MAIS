@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "098"
+issue_id: '098'
 tags: [code-review, security, ux, ui-redesign]
 dependencies: []
 ---
@@ -11,6 +11,7 @@ dependencies: []
 ## Problem Statement
 
 The StripeConnectCard component uses browser `prompt()` to collect email and business name. This is:
+
 1. A security risk (no client-side validation before API submission)
 2. Poor UX (blocking, unstyled, not accessible)
 3. Cannot be styled to match the application design
@@ -25,8 +26,8 @@ The StripeConnectCard component uses browser `prompt()` to collect email and bus
 **Lines:** 74-82
 
 ```typescript
-const emailInput = prompt("Enter your business email:");
-const nameInput = prompt("Enter your business name:");
+const emailInput = prompt('Enter your business email:');
+const nameInput = prompt('Enter your business name:');
 
 if (!emailInput || !nameInput) {
   setCreating(false);
@@ -38,6 +39,7 @@ businessName = nameInput;
 ```
 
 **Issues:**
+
 - Browser `prompt()` is blocking and not accessible
 - No email format validation
 - No input sanitization
@@ -47,6 +49,7 @@ businessName = nameInput;
 ## Proposed Solutions
 
 ### Solution 1: Radix Dialog with Form (Recommended)
+
 **Pros:** Accessible, styled, validates input
 **Cons:** More code to write
 **Effort:** Medium (2-3 hours)
@@ -90,6 +93,7 @@ export function StripeOnboardingDialog({ open, onOpenChange, onSubmit }) {
 ```
 
 ### Solution 2: Inline Form in Card
+
 **Pros:** No modal needed
 **Cons:** Changes UI layout
 **Effort:** Medium
@@ -102,6 +106,7 @@ Implement Solution 1 - Create proper dialog component with validation.
 ## Technical Details
 
 **Affected files:**
+
 - `client/src/features/tenant-admin/TenantDashboard/StripeConnectCard.tsx`
 - New: `client/src/features/tenant-admin/TenantDashboard/StripeOnboardingDialog.tsx`
 
@@ -116,8 +121,8 @@ Implement Solution 1 - Create proper dialog component with validation.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                      |
+| ---------- | ------------------------ | ------------------------------ |
 | 2025-11-30 | Created from code review | Security + accessibility issue |
 
 ## Resources

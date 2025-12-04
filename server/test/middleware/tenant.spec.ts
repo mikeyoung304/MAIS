@@ -14,7 +14,14 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Response, NextFunction } from 'express';
-import { resolveTenant, requireTenant, requireStripeOnboarded, getTenantId, getTenant, type TenantRequest } from '../../src/middleware/tenant';
+import {
+  resolveTenant,
+  requireTenant,
+  requireStripeOnboarded,
+  getTenantId,
+  getTenant,
+  type TenantRequest,
+} from '../../src/middleware/tenant';
 import type { PrismaClient } from '../../src/generated/prisma';
 
 // Mock logger module globally
@@ -453,9 +460,7 @@ describe('Tenant Resolution Middleware - CRITICAL SECURITY', () => {
 
     it('should handle Prisma query timeout', async () => {
       req.headers = { 'x-tenant-key': 'pk_live_testbiz_a3f8c9d2e1b4f7a8' };
-      (mockPrisma.tenant!.findUnique as any).mockRejectedValue(
-        new Error('Query timeout')
-      );
+      (mockPrisma.tenant!.findUnique as any).mockRejectedValue(new Error('Query timeout'));
 
       await tenantMiddleware(req as TenantRequest, res as Response, next);
 

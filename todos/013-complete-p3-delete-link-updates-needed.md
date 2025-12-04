@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "013"
+issue_id: '013'
 tags: [documentation, cleanup]
 dependencies: []
 ---
@@ -15,6 +15,7 @@ The file `docs/LINK_UPDATES_NEEDED.md` references the wrong project ("Elope" ins
 ## Findings
 
 **Issues identified:**
+
 - References "Elope" project throughout
 - File paths reference `/Users/mikeyoung/CODING/Elope/` (should be MAIS)
 - Generated: November 7, 2025 (17 days old)
@@ -22,6 +23,7 @@ The file `docs/LINK_UPDATES_NEEDED.md` references the wrong project ("Elope" ins
 - Link targets may not exist in MAIS project
 
 **Content example:**
+
 ```markdown
 # Link Updates Needed
 
@@ -33,12 +35,14 @@ Path: /Users/mikeyoung/CODING/Elope/
 ## Proposed Solutions
 
 ### Solution 1: Delete File (Recommended)
+
 - Remove file entirely as it's from wrong project
 - Effort: Trivial (2 min)
 - Risk: None
 - Pros: Clean up confusion
 
 ### Solution 2: Verify and Update
+
 - Check if any link issues apply to MAIS
 - Update file paths and project name
 - Effort: Medium (1 hour)
@@ -46,6 +50,7 @@ Path: /Users/mikeyoung/CODING/Elope/
 - Cons: May be unnecessary work
 
 ### Solution 3: Archive
+
 - Move to archive with note about wrong project
 - Effort: Trivial (5 min)
 - Risk: None
@@ -58,14 +63,17 @@ Solution 1 - Delete the file.
 ## Technical Details
 
 **File location:**
+
 - `docs/LINK_UPDATES_NEEDED.md`
 
 **Command:**
+
 ```bash
 git rm docs/LINK_UPDATES_NEEDED.md
 ```
 
 **Before deleting, verify no useful content:**
+
 ```bash
 # Check if any issues might apply to MAIS
 cat docs/LINK_UPDATES_NEEDED.md | grep -v "Elope" | grep -v "/Users/mikeyoung/CODING/Elope"
@@ -79,8 +87,8 @@ cat docs/LINK_UPDATES_NEEDED.md | grep -v "Elope" | grep -v "/Users/mikeyoung/CO
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                              |
+| ---------- | ------- | ---------------------------------- |
 | 2025-11-24 | Created | Wrong project reference identified |
 
 ## Resources

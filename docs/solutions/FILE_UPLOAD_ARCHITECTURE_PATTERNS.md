@@ -9,7 +9,9 @@ This document describes architectural patterns for implementing secure, multi-te
 ## Pattern 1: Dual-Mode Storage (Mock vs. Real)
 
 ### Problem
+
 Testing file uploads requires either:
+
 - Real cloud storage (expensive, slow, requires credentials)
 - Mock filesystem (doesn't test integration)
 
@@ -22,10 +24,11 @@ export class UploadService {
 
   constructor() {
     // Use Supabase in real mode, filesystem in mock mode
-    this.isRealMode = process.env.STORAGE_MODE === 'supabase' ||
+    this.isRealMode =
+      process.env.STORAGE_MODE === 'supabase' ||
       (process.env.ADAPTERS_PRESET === 'real' &&
-       !!process.env.SUPABASE_URL &&
-       process.env.STORAGE_MODE !== 'local');
+        !!process.env.SUPABASE_URL &&
+        process.env.STORAGE_MODE !== 'local');
   }
 
   async uploadLogo(file: UploadedFile, tenantId: string): Promise<UploadResult> {
@@ -52,10 +55,10 @@ export class UploadService {
 
 ### Benefits
 
-| Mode | Use Case | Speed | Cost | Auth |
-|------|----------|-------|------|------|
-| **Mock** | Unit/E2E tests, development | Instant | Free | None |
-| **Real** | Integration tests, staging, production | ~500ms | $5-10/month | Service key |
+| Mode     | Use Case                               | Speed   | Cost        | Auth        |
+| -------- | -------------------------------------- | ------- | ----------- | ----------- |
+| **Mock** | Unit/E2E tests, development            | Instant | Free        | None        |
+| **Real** | Integration tests, staging, production | ~500ms  | $5-10/month | Service key |
 
 ### Environment Control
 
@@ -78,6 +81,7 @@ ADAPTERS_PRESET=real npm run start
 ## Pattern 2: Dependency Injection for Storage
 
 ### Problem
+
 Hard-coding storage imports makes code untestable:
 
 ```typescript
@@ -153,6 +157,7 @@ const packageService = new PackageService(uploadService, packageRepo);
 ## Pattern 3: Transaction-Based Cleanup
 
 ### Problem
+
 Deletion can fail halfway:
 
 ```
@@ -223,6 +228,7 @@ async deletePackage(tenantId: string, id: string): Promise<void> {
 ## Pattern 4: Lazy Orphan Cleanup
 
 ### Problem
+
 Real-time cleanup adds latency to every deletion. What if Supabase is slow?
 
 ### Solution: Background Job
@@ -329,6 +335,7 @@ const cleanupService = new OrphanCleanupService(...);
 ## Pattern 5: Multi-Layer Validation
 
 ### Problem
+
 Single validation point can be bypassed. Better to validate at multiple layers:
 
 ```
@@ -341,6 +348,7 @@ file
 ### Solution: Defense in Depth
 
 **Layer 1: Frontend (UX)**
+
 ```typescript
 // client/src/features/admin/segments/SegmentForm/HeroFields.tsx
 const validateFileSize = (file: File): boolean => {
@@ -364,30 +372,24 @@ if (!validateFiletype(file)) {
 ```
 
 **Layer 2: Route (Protocol)**
+
 ```typescript
 // server/src/routes/packages.routes.ts
 const uploadPhotoSchema = {
   body: z.object({
-    file: z.instanceof(Buffer)
-      .refine(b => b.length <= 5 * 1024 * 1024, 'File too large'),
+    file: z.instanceof(Buffer).refine((b) => b.length <= 5 * 1024 * 1024, 'File too large'),
   }),
 };
 
-router.post('/packages/:id/upload-photo',
-  validateRequest(uploadPhotoSchema),
-  async (req) => {
-    // Multer already validated size via middleware
-    const result = await packageService.uploadPhoto(
-      req.tenantId,
-      req.params.id,
-      req.file
-    );
-    return { status: 200, body: result };
-  }
-);
+router.post('/packages/:id/upload-photo', validateRequest(uploadPhotoSchema), async (req) => {
+  // Multer already validated size via middleware
+  const result = await packageService.uploadPhoto(req.tenantId, req.params.id, req.file);
+  return { status: 200, body: result };
+});
 ```
 
 **Layer 3: Service (Business Logic)**
+
 ```typescript
 // server/src/services/upload.service.ts
 async uploadPackagePhoto(file: UploadedFile, packageId: string, tenantId?: string): Promise<UploadResult> {
@@ -407,6 +409,7 @@ async uploadPackagePhoto(file: UploadedFile, packageId: string, tenantId?: strin
 ```
 
 **Layer 4: Storage (Policy)**
+
 ```sql
 -- Supabase: RLS policy on "images" bucket
 -- Only users can upload to their own tenant path
@@ -424,6 +427,7 @@ FOR ALL USING (auth.role() = 'authenticated');
 ### Benefit: Layered Security
 
 Even if one layer is bypassed, others catch the attack:
+
 - Frontend malfunction? → Route validates
 - Route vulnerability? → Service validates
 - Service compromise? → Storage RLS enforces
@@ -466,13 +470,13 @@ return data.signedUrl;
 
 ### Why This Matters
 
-| Setting | Public Bucket | Private Bucket |
-|---------|---------------|-----------------|
-| **Direct URL Access** | ✅ Anyone can view | ❌ Token required |
-| **Guessable Paths** | ✅ Easy to access | ❌ Protected by RLS |
-| **Signed URLs** | ❌ Not needed | ✅ Required |
-| **Scaling Cost** | Higher | Lower (less bandwidth) |
-| **Security** | ❌ Poor | ✅ Good |
+| Setting               | Public Bucket      | Private Bucket         |
+| --------------------- | ------------------ | ---------------------- |
+| **Direct URL Access** | ✅ Anyone can view | ❌ Token required      |
+| **Guessable Paths**   | ✅ Easy to access  | ❌ Protected by RLS    |
+| **Signed URLs**       | ❌ Not needed      | ✅ Required            |
+| **Scaling Cost**      | Higher             | Lower (less bandwidth) |
+| **Security**          | ❌ Poor            | ✅ Good                |
 
 ---
 
@@ -483,36 +487,45 @@ return data.signedUrl;
 ```typescript
 // Log all security-relevant events
 if (!ALLOWED_TYPES.includes(detectedType.mime)) {
-  logger.warn({
-    tenantId,
-    filename: file.originalname,
-    declared: file.mimetype,
-    detected: detectedType.mime,
-    size: file.size,
-    timestamp: new Date().toISOString(),
-  }, 'SECURITY: MIME type mismatch detected - possible spoofing attempt');
+  logger.warn(
+    {
+      tenantId,
+      filename: file.originalname,
+      declared: file.mimetype,
+      detected: detectedType.mime,
+      size: file.size,
+      timestamp: new Date().toISOString(),
+    },
+    'SECURITY: MIME type mismatch detected - possible spoofing attempt'
+  );
 }
 
 // Cross-tenant access attempt
 if (!storagePath.startsWith(`${tenantId}/`)) {
-  logger.error({
-    tenantId,
-    storagePath,
-    url,
-    timestamp: new Date().toISOString(),
-    source: 'file_upload_service',
-  }, 'SECURITY: Attempted cross-tenant file deletion blocked');
+  logger.error(
+    {
+      tenantId,
+      storagePath,
+      url,
+      timestamp: new Date().toISOString(),
+      source: 'file_upload_service',
+    },
+    'SECURITY: Attempted cross-tenant file deletion blocked'
+  );
 }
 
 // Cleanup failures (important for ops)
-logger.warn({
-  tenantId,
-  packageId,
-  photoFilename,
-  error: error.message,
-  timestamp: new Date().toISOString(),
-  context: 'orphan_cleanup_job',
-}, 'File cleanup failed - will be retried');
+logger.warn(
+  {
+    tenantId,
+    packageId,
+    photoFilename,
+    error: error.message,
+    timestamp: new Date().toISOString(),
+    context: 'orphan_cleanup_job',
+  },
+  'File cleanup failed - will be retried'
+);
 ```
 
 ### Monitoring Dashboard
@@ -580,7 +593,10 @@ class TokenBucket {
   private tokens: number;
   private lastRefill: number;
 
-  constructor(private capacity: number, private refillSeconds: number) {
+  constructor(
+    private capacity: number,
+    private refillSeconds: number
+  ) {
     this.tokens = capacity;
     this.lastRefill = Date.now();
   }
@@ -603,12 +619,13 @@ class TokenBucket {
   }
 
   getRetryAfter(): number {
-    return Math.ceil((this.capacity - this.tokens) * this.refillSeconds / this.capacity);
+    return Math.ceil(((this.capacity - this.tokens) * this.refillSeconds) / this.capacity);
   }
 }
 
 // In routes
-router.post('/upload-photo',
+router.post(
+  '/upload-photo',
   uploadLimiter(10, 60), // 10 uploads per 60 seconds per tenant
   async (req) => {
     // ... handler
@@ -618,12 +635,12 @@ router.post('/upload-photo',
 
 ### Limits
 
-| Endpoint | Limit | Period | Why |
-|----------|-------|--------|-----|
-| Logo upload | 5 | per hour | Logo changes rare |
-| Package photo | 10 | per hour | Photo uploads moderate |
-| Segment image | 10 | per hour | Image uploads moderate |
-| Bulk import | 100 | per day | Admin operation |
+| Endpoint      | Limit | Period   | Why                    |
+| ------------- | ----- | -------- | ---------------------- |
+| Logo upload   | 5     | per hour | Logo changes rare      |
+| Package photo | 10    | per hour | Photo uploads moderate |
+| Segment image | 10    | per hour | Image uploads moderate |
+| Bulk import   | 100   | per day  | Admin operation        |
 
 ---
 

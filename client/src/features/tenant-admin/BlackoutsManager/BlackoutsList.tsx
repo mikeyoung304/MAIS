@@ -1,8 +1,8 @@
-import { Trash2, Loader2, CalendarOff, Calendar } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/shared/EmptyState";
-import type { BlackoutDto } from "./types";
-import { ANIMATION_TRANSITION } from "@/lib/animation-constants";
+import { Trash2, Loader2, CalendarOff, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/shared/EmptyState';
+import type { BlackoutDto } from './types';
+import { ANIMATION_TRANSITION } from '@/lib/animation-constants';
 
 interface BlackoutsListProps {
   blackouts: BlackoutDto[];
@@ -18,15 +18,15 @@ interface BlackoutsListProps {
  */
 export function BlackoutsList({ blackouts, isLoading, onDeleteClick }: BlackoutsListProps) {
   // Sort blackouts by date (upcoming first, then past)
-  const sortedBlackouts = [...blackouts].sort((a, b) =>
-    new Date(a.date).getTime() - new Date(b.date).getTime()
+  const sortedBlackouts = [...blackouts].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const upcomingBlackouts = sortedBlackouts.filter(b => new Date(b.date) >= today);
-  const pastBlackouts = sortedBlackouts.filter(b => new Date(b.date) < today);
+  const upcomingBlackouts = sortedBlackouts.filter((b) => new Date(b.date) >= today);
+  const pastBlackouts = sortedBlackouts.filter((b) => new Date(b.date) < today);
 
   if (isLoading) {
     return (
@@ -57,18 +57,24 @@ export function BlackoutsList({ blackouts, isLoading, onDeleteClick }: Blackouts
       <div
         className={`group flex items-center gap-4 p-4 rounded-xl border ${ANIMATION_TRANSITION.DEFAULT} ${
           isPast
-            ? "bg-surface-alt/50 border-sage-light/10 opacity-60"
-            : "bg-surface-alt border-sage-light/20 hover:border-sage-light/40 hover:shadow-soft"
+            ? 'bg-surface-alt/50 border-sage-light/10 opacity-60'
+            : 'bg-surface-alt border-sage-light/20 hover:border-sage-light/40 hover:shadow-soft'
         }`}
       >
         {/* Date Display */}
-        <div className={`w-16 h-16 rounded-xl flex flex-col items-center justify-center flex-shrink-0 ${
-          isPast ? "bg-text-muted/5" : "bg-sage/10"
-        }`}>
-          <span className={`text-xs font-medium uppercase ${isPast ? "text-text-muted" : "text-sage"}`}>
+        <div
+          className={`w-16 h-16 rounded-xl flex flex-col items-center justify-center flex-shrink-0 ${
+            isPast ? 'bg-text-muted/5' : 'bg-sage/10'
+          }`}
+        >
+          <span
+            className={`text-xs font-medium uppercase ${isPast ? 'text-text-muted' : 'text-sage'}`}
+          >
             {dayName}
           </span>
-          <span className={`font-serif text-2xl font-bold ${isPast ? "text-text-muted" : "text-text-primary"}`}>
+          <span
+            className={`font-serif text-2xl font-bold ${isPast ? 'text-text-muted' : 'text-text-primary'}`}
+          >
             {dayNumber}
           </span>
         </div>
@@ -76,7 +82,9 @@ export function BlackoutsList({ blackouts, isLoading, onDeleteClick }: Blackouts
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className={`text-sm font-medium ${isPast ? "text-text-muted" : "text-text-primary"}`}>
+            <span
+              className={`text-sm font-medium ${isPast ? 'text-text-muted' : 'text-text-primary'}`}
+            >
               {monthYear}
             </span>
             {isPast && (
@@ -85,8 +93,8 @@ export function BlackoutsList({ blackouts, isLoading, onDeleteClick }: Blackouts
               </span>
             )}
           </div>
-          <p className={`text-sm mt-0.5 ${isPast ? "text-text-muted/70" : "text-text-muted"}`}>
-            {blackout.reason || "No reason provided"}
+          <p className={`text-sm mt-0.5 ${isPast ? 'text-text-muted/70' : 'text-text-muted'}`}>
+            {blackout.reason || 'No reason provided'}
           </p>
         </div>
 
@@ -128,9 +136,7 @@ export function BlackoutsList({ blackouts, isLoading, onDeleteClick }: Blackouts
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <CalendarOff className="w-4 h-4 text-text-muted" aria-hidden="true" />
-            <h3 className="text-sm font-medium text-text-muted">
-              Past ({pastBlackouts.length})
-            </h3>
+            <h3 className="text-sm font-medium text-text-muted">Past ({pastBlackouts.length})</h3>
           </div>
           <div className="space-y-2">
             {pastBlackouts.map((blackout) => (

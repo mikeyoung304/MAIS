@@ -15,6 +15,7 @@ This document captures the complete solution details from PR #12 resolution, add
 ### P1 (Critical) - Performance & Accessibility
 
 #### #119: Missing useCallback for load functions in useDashboardData.ts
+
 **Impact:** Load functions were recreated on every render, breaking React.memo dependencies and causing unnecessary re-renders.
 
 **Root Cause:** Async functions were defined as regular arrow functions without memoization, causing identity changes between renders.
@@ -22,6 +23,7 @@ This document captures the complete solution details from PR #12 resolution, add
 **Solution Applied:** Wrapped all four load functions in `useCallback` with empty dependency arrays (`[]`).
 
 #### #120: useEffect missing dependencies
+
 **Impact:** ESLint warning; load functions weren't in dependency array, violating React best practices.
 
 **Root Cause:** Dependencies weren't being tracked in the useEffect hook.
@@ -29,6 +31,7 @@ This document captures the complete solution details from PR #12 resolution, add
 **Solution Applied:** Added all four load functions to the useEffect dependency array after wrapping them in useCallback.
 
 #### #121: Unstable event handlers break React.memo in TenantPackagesManager.tsx
+
 **Impact:** Memoized child components were re-rendering unnecessarily due to unstable handler references.
 
 **Root Cause:** `handleEdit` and `handleSubmit` were recreated on every render.
@@ -36,6 +39,7 @@ This document captures the complete solution details from PR #12 resolution, add
 **Solution Applied:** Wrapped both handlers in `useCallback` with appropriate dependencies.
 
 #### #122: Missing keyboard focus indicator (WCAG 2.4.7)
+
 **Impact:** Keyboard users cannot see which accordion summary is focused.
 
 **Root Cause:** No focus styles were applied to the accordion summary element.
@@ -43,6 +47,7 @@ This document captures the complete solution details from PR #12 resolution, add
 **Solution Applied:** Added `focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2` to summary styling.
 
 #### #123: No chevron icon for accordion state (WCAG 1.3.1)
+
 **Impact:** Visual-only indicator of accordion state; users need semantic indication.
 
 **Root Cause:** Accordion had no icon; relied solely on open/closed styling.
@@ -50,6 +55,7 @@ This document captures the complete solution details from PR #12 resolution, add
 **Solution Applied:** Added rotating `ChevronRight` icon that rotates 90° when accordion opens.
 
 #### #124: Button clicks toggle accordion unexpectedly
+
 **Impact:** Clicking edit/delete buttons on segment header closes/opens the accordion.
 
 **Root Cause:** Button clicks were propagating to the `<details>` parent element.
@@ -59,18 +65,22 @@ This document captures the complete solution details from PR #12 resolution, add
 ### P2 (Verified False Positives or Deferred)
 
 #### #125-126: Duplicate header blocks / success message logic
+
 **Status:** ✅ FALSE POSITIVE
 **Reason:** Headers intentionally differ between flat and grouped views (different content reflects different states).
 
 #### #127: Type export location
+
 **Status:** 🟡 DEFERRED
 **Reason:** Type location is acceptable; moving it would require refactoring contracts.
 
 #### #128-129: Missing toast error feedback / console.error
+
 **Status:** ✅ NOT NEEDED
 **Reason:** Component uses logger service, not console.error; error handling is present.
 
 #### #130: Accordion default state not explicit
+
 **Status:** ✅ ALREADY IMPLEMENTED
 **Reason:** `<details open>` attribute already sets default open state.
 
@@ -81,15 +91,17 @@ This document captures the complete solution details from PR #12 resolution, add
 ### File 1: `client/src/features/tenant-admin/TenantDashboard/useDashboardData.ts`
 
 **Import Changes:**
+
 ```typescript
 // BEFORE
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from 'react';
 
 // AFTER
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from 'react';
 ```
 
 **Load Function Wrapping (All Four Functions):**
+
 ```typescript
 // BEFORE
 const loadPackagesAndSegments = async () => {
@@ -101,7 +113,7 @@ const loadPackagesAndSegments = async () => {
     ]);
     // ... rest of function
   } catch (error) {
-    logger.error("Failed to load packages/segments:", { error, component: "useDashboardData" });
+    logger.error('Failed to load packages/segments:', { error, component: 'useDashboardData' });
   } finally {
     setIsLoading(false);
   }
@@ -117,7 +129,7 @@ const loadPackagesAndSegments = useCallback(async () => {
     ]);
     // ... rest of function
   } catch (error) {
-    logger.error("Failed to load packages/segments:", { error, component: "useDashboardData" });
+    logger.error('Failed to load packages/segments:', { error, component: 'useDashboardData' });
   } finally {
     setIsLoading(false);
   }
@@ -125,34 +137,36 @@ const loadPackagesAndSegments = useCallback(async () => {
 ```
 
 Same pattern applied to:
+
 - `loadBlackouts`
 - `loadBookings`
 - `loadBranding`
 
 **useEffect Dependency Array Fix:**
+
 ```typescript
 // BEFORE
 useEffect(() => {
-  if (activeTab === "packages") {
+  if (activeTab === 'packages') {
     loadPackagesAndSegments();
-  } else if (activeTab === "blackouts") {
+  } else if (activeTab === 'blackouts') {
     loadBlackouts();
-  } else if (activeTab === "bookings") {
+  } else if (activeTab === 'bookings') {
     loadBookings();
-  } else if (activeTab === "branding") {
+  } else if (activeTab === 'branding') {
     loadBranding();
   }
 }, [activeTab]);
 
 // AFTER
 useEffect(() => {
-  if (activeTab === "packages") {
+  if (activeTab === 'packages') {
     loadPackagesAndSegments();
-  } else if (activeTab === "blackouts") {
+  } else if (activeTab === 'blackouts') {
     loadBlackouts();
-  } else if (activeTab === "bookings") {
+  } else if (activeTab === 'bookings') {
     loadBookings();
-  } else if (activeTab === "branding") {
+  } else if (activeTab === 'branding') {
     loadBranding();
   }
 }, [activeTab, loadPackagesAndSegments, loadBlackouts, loadBookings, loadBranding]);
@@ -163,16 +177,18 @@ useEffect(() => {
 ### File 2: `client/src/features/tenant-admin/TenantPackagesManager.tsx`
 
 **Import Changes:**
+
 ```typescript
 // BEFORE
-import { Plus, Pencil, Trash2, AlertTriangle, Layers } from "lucide-react";
+import { Plus, Pencil, Trash2, AlertTriangle, Layers } from 'lucide-react';
 
 // AFTER
-import { useCallback } from "react";
-import { Plus, Pencil, Trash2, AlertTriangle, Layers, ChevronRight } from "lucide-react";
+import { useCallback } from 'react';
+import { Plus, Pencil, Trash2, AlertTriangle, Layers, ChevronRight } from 'lucide-react';
 ```
 
 **Event Handler Wrapping (handleEdit):**
+
 ```typescript
 // BEFORE
 const handleEdit = async (pkg: PackageDto) => {
@@ -181,13 +197,17 @@ const handleEdit = async (pkg: PackageDto) => {
 };
 
 // AFTER
-const handleEdit = useCallback(async (pkg: PackageDto) => {
-  packageForm.loadPackage(pkg);
-  await packageManager.handleEdit(pkg);
-}, [packageForm.loadPackage, packageManager.handleEdit]);
+const handleEdit = useCallback(
+  async (pkg: PackageDto) => {
+    packageForm.loadPackage(pkg);
+    await packageManager.handleEdit(pkg);
+  },
+  [packageForm.loadPackage, packageManager.handleEdit]
+);
 ```
 
 **Event Handler Wrapping (handleSubmit):**
+
 ```typescript
 // BEFORE
 const handleSubmit = async (e: React.FormEvent) => {
@@ -196,13 +216,17 @@ const handleSubmit = async (e: React.FormEvent) => {
 };
 
 // AFTER
-const handleSubmit = useCallback(async (e: React.FormEvent) => {
-  e.preventDefault();
-  await packageForm.submitForm(packageManager.editingPackageId);
-}, [packageForm.submitForm, packageManager.editingPackageId]);
+const handleSubmit = useCallback(
+  async (e: React.FormEvent) => {
+    e.preventDefault();
+    await packageForm.submitForm(packageManager.editingPackageId);
+  },
+  [packageForm.submitForm, packageManager.editingPackageId]
+);
 ```
 
 **Accordion Summary Styling (Focus & Icon):**
+
 ```typescript
 // BEFORE
 <details
@@ -239,6 +263,7 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
 ```
 
 **Key Changes:**
+
 1. Changed `group/details` to `group` (simpler grouping context)
 2. Added focus styling: `focus:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2`
 3. Wrapped segment name in nested span with flex layout for icon + text
@@ -251,25 +276,26 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
 
 ### Performance Improvements
 
-| Issue | Impact | Fix | Expected Result |
-|-------|--------|-----|-----------------|
-| #119 | Unnecessary re-renders | useCallback memoization | ~15-20% fewer renders |
-| #120 | ESLint violations | Dependency array completion | Clean lint checks |
-| #121 | Child component re-renders | Stable handler references | React.memo works correctly |
+| Issue | Impact                     | Fix                         | Expected Result            |
+| ----- | -------------------------- | --------------------------- | -------------------------- |
+| #119  | Unnecessary re-renders     | useCallback memoization     | ~15-20% fewer renders      |
+| #120  | ESLint violations          | Dependency array completion | Clean lint checks          |
+| #121  | Child component re-renders | Stable handler references   | React.memo works correctly |
 
 ### Accessibility Improvements (WCAG Compliance)
 
-| Issue | WCAG Criterion | Fix | Compliance |
-|-------|----------------|-----|-----------|
-| #122 | 2.4.7 Focus Visible | Added focus-visible ring | ✅ Keyboard navigation visible |
-| #123 | 1.3.1 Info and Relationships | ChevronRight icon + rotation | ✅ State semantically indicated |
-| #124 | 2.1.1 Keyboard | stopPropagation verified | ✅ No unwanted toggles |
+| Issue | WCAG Criterion               | Fix                          | Compliance                      |
+| ----- | ---------------------------- | ---------------------------- | ------------------------------- |
+| #122  | 2.4.7 Focus Visible          | Added focus-visible ring     | ✅ Keyboard navigation visible  |
+| #123  | 1.3.1 Info and Relationships | ChevronRight icon + rotation | ✅ State semantically indicated |
+| #124  | 2.1.1 Keyboard               | stopPropagation verified     | ✅ No unwanted toggles          |
 
 ---
 
 ## Testing & Validation
 
 ### Performance Testing
+
 ```typescript
 // Verify useCallback is preventing re-renders
 import { render, screen } from '@testing-library/react';
@@ -287,6 +313,7 @@ test('load functions are memoized', () => {
 ```
 
 ### Accessibility Testing
+
 ```typescript
 // Keyboard navigation
 test('focus visible on accordion summary', async () => {

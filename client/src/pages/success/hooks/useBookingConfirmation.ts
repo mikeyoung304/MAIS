@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { api } from "@/lib/api";
-import { logger } from "@/lib/logger";
-import type { BookingDto, PackageDto } from "@macon/contracts";
+import { useState, useEffect } from 'react';
+import { api } from '@/lib/api';
+import { logger } from '@/lib/logger';
+import type { BookingDto, PackageDto } from '@macon/contracts';
 
 interface UseBookingConfirmationProps {
   bookingId: string | null;
@@ -44,19 +44,21 @@ export function useBookingConfirmation({
           // Fetch package data to get names
           const packagesResponse = await api.getPackages();
           if (packagesResponse.status === 200) {
-            const pkg = packagesResponse.body.find(
-              (p) => p.id === response.body.packageId
-            );
+            const pkg = packagesResponse.body.find((p) => p.id === response.body.packageId);
             if (pkg) {
               setPackageData(pkg);
             }
           }
         } else {
-          setError("Booking not found");
+          setError('Booking not found');
         }
       } catch (err) {
-        logger.error("Error fetching booking", { error: err, bookingId, component: "useBookingConfirmation" });
-        setError("Failed to load booking details");
+        logger.error('Error fetching booking', {
+          error: err,
+          bookingId,
+          component: 'useBookingConfirmation',
+        });
+        setError('Failed to load booking details');
       } finally {
         setIsLoading(false);
       }

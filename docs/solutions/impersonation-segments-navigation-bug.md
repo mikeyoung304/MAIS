@@ -26,6 +26,7 @@ When a Platform Admin was impersonating a tenant (e.g., Little Bit Farm), clicki
 The `RoleBasedNav` component was checking `user.role === "PLATFORM_ADMIN"` to show platform admin navigation, but it wasn't accounting for the impersonation state. When impersonating a tenant, the sidebar should show tenant-appropriate navigation, not platform admin navigation.
 
 The navigation logic didn't differentiate between:
+
 - Actually being a platform admin (should show admin nav)
 - Being a platform admin who is currently impersonating a tenant (should show tenant nav)
 

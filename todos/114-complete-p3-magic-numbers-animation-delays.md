@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "114"
+issue_id: '114'
 tags: [code-review, code-quality, ui-redesign]
 dependencies: []
 ---
@@ -19,6 +19,7 @@ Animation delay values are hardcoded inline throughout components with inconsist
 ### From pattern-recognition and code-quality agents:
 
 **Inconsistent patterns:**
+
 - TenantDashboard: Fixed `"0.1s"`, `"0.2s"`, `"0.3s"`, `"0.4s"`
 - MetricsCards: `${0.1 + index * 0.05}s`
 - PackageList: `${index * 0.05}s`
@@ -27,6 +28,7 @@ Animation delay values are hardcoded inline throughout components with inconsist
 ## Proposed Solutions
 
 ### Solution 1: Create Animation Constants/Hook (Recommended)
+
 **Pros:** Consistent, maintainable
 **Cons:** Minor abstraction
 **Effort:** Small (1 hour)
@@ -41,13 +43,13 @@ export const ANIMATION = {
     metrics: '0.2s',
     tabs: '0.3s',
     content: '0.4s',
-  }
+  },
 } as const;
 
 // hooks/useStaggeredAnimation.ts
 export const useStaggeredAnimation = (index: number, baseDelay = 0) => ({
   animationDelay: `${baseDelay + index * ANIMATION.stagger}s`,
-  animationFillMode: 'backwards' as const
+  animationFillMode: 'backwards' as const,
 });
 ```
 
@@ -61,12 +63,14 @@ export const useStaggeredAnimation = (index: number, baseDelay = 0) => ({
 ## Implementation Summary
 
 **Created:** `/Users/mikeyoung/CODING/MAIS/client/src/lib/animation-constants.ts`
+
 - Comprehensive animation constants for Tailwind CSS classes
 - Separate constants for durations (150ms, 200ms, 300ms, 500ms, 700ms)
 - Common transition combinations (ALL, COLORS, OPACITY, TRANSFORM, DEFAULT, HOVER)
 - Numeric values for JavaScript animations (ANIMATION_DURATION_MS, ANIMATION_DELAY_MS)
 
 **Updated Components (7 files):**
+
 1. `client/src/ui/Button.tsx` - transition-all duration-200 → ANIMATION_TRANSITION.DEFAULT
 2. `client/src/features/storefront/ChoiceCardBase.tsx` - duration-300 → ANIMATION_DURATION.NORMAL, transition-colors → ANIMATION_TRANSITION.COLORS
 3. `client/src/features/tenant-admin/TenantDashboard/index.tsx` - duration-300 → ANIMATION_TRANSITION.HOVER
@@ -76,6 +80,7 @@ export const useStaggeredAnimation = (index: number, baseDelay = 0) => ({
 7. `client/src/features/tenant-admin/BlackoutsManager/BlackoutForm.tsx` - duration-300 → ANIMATION_TRANSITION.HOVER
 
 **Results:**
+
 - 21 usages of new animation constants across codebase
 - 36 files still have inline duration values (intentionally left for single-use cases)
 - TypeScript compilation successful (no errors)
@@ -85,7 +90,7 @@ export const useStaggeredAnimation = (index: number, baseDelay = 0) => ({
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2025-11-30 | Created from code review | Inconsistent magic numbers |
+| Date       | Action                          | Learnings                                                                                                            |
+| ---------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 2025-11-30 | Created from code review        | Inconsistent magic numbers                                                                                           |
 | 2025-12-02 | Implemented animation constants | Created comprehensive constants file, updated 7 key components with most repeated values, code compiles successfully |

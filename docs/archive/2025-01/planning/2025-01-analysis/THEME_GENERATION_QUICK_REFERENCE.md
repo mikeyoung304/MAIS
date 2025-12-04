@@ -4,26 +4,27 @@
 
 ### Frontend Components
 
-| Component | File | Current State | Enhancement Needed |
-|-----------|------|---------------|--------------------|
-| ColorPicker | `components/ColorPicker.tsx` | Manual hex input + visual picker | Add palette suggestions |
-| FontSelector | `components/FontSelector.tsx` | Fixed 8 fonts, live preview | Add font pairing AI |
-| BrandingEditor | `features/tenant-admin/BrandingEditor.tsx` | 6 hardcoded presets + manual input | Add AI generation tab |
-| useBranding hook | `hooks/useBranding.ts` | CSS variable injection | Extend for dynamic theming |
+| Component        | File                                       | Current State                      | Enhancement Needed         |
+| ---------------- | ------------------------------------------ | ---------------------------------- | -------------------------- |
+| ColorPicker      | `components/ColorPicker.tsx`               | Manual hex input + visual picker   | Add palette suggestions    |
+| FontSelector     | `components/FontSelector.tsx`              | Fixed 8 fonts, live preview        | Add font pairing AI        |
+| BrandingEditor   | `features/tenant-admin/BrandingEditor.tsx` | 6 hardcoded presets + manual input | Add AI generation tab      |
+| useBranding hook | `hooks/useBranding.ts`                     | CSS variable injection             | Extend for dynamic theming |
 
 ### Backend Services
 
-| Service | File | Current State | Enhancement Needed |
-|---------|------|---------------|--------------------|
-| UploadService | `services/upload.service.ts` | File validation only | Add image processing |
-| Branding Routes | `routes/tenant-admin.routes.ts` | GET/PUT endpoints | Add POST /generate endpoint |
-| Theme Generation | MISSING | N/A | Create new service |
-| Color Utils | MISSING | N/A | Create library |
-| Image Processing | MISSING | N/A | Add extraction logic |
+| Service          | File                            | Current State        | Enhancement Needed          |
+| ---------------- | ------------------------------- | -------------------- | --------------------------- |
+| UploadService    | `services/upload.service.ts`    | File validation only | Add image processing        |
+| Branding Routes  | `routes/tenant-admin.routes.ts` | GET/PUT endpoints    | Add POST /generate endpoint |
+| Theme Generation | MISSING                         | N/A                  | Create new service          |
+| Color Utils      | MISSING                         | N/A                  | Create library              |
+| Image Processing | MISSING                         | N/A                  | Add extraction logic        |
 
 ## Implementation Checklist
 
 ### Phase 1: Foundation Libraries
+
 ```
 [ ] npm install --save sharp vibrant chroma-js
 [ ] Create server/src/lib/color-utils/
@@ -35,6 +36,7 @@
 ```
 
 ### Phase 2: Core Service
+
 ```
 [ ] Create server/src/services/theme-generation.service.ts
 [ ] Implement color extraction from image buffer
@@ -47,6 +49,7 @@
 ```
 
 ### Phase 3: API Routes
+
 ```
 [ ] Add POST /v1/tenant-admin/branding/generate endpoint
 [ ] Wire theme-generation.service
@@ -55,6 +58,7 @@
 ```
 
 ### Phase 4: Frontend UI
+
 ```
 [ ] Create AIThemeGenerator.tsx component
 [ ] Add "Generate with AI" button to BrandingEditor
@@ -65,6 +69,7 @@
 ```
 
 ### Phase 5: Enhancements
+
 ```
 [ ] Add font pairing recommendations
 [ ] Add template system (database + UI)
@@ -77,6 +82,7 @@
 ### Adding AI Generation Tab to BrandingEditor
 
 **Current Structure (Line ~350):**
+
 ```tsx
 <div className="space-y-3">
   <Label className="text-lavender-100 text-lg">Quick Start Themes</Label>
@@ -85,17 +91,16 @@
 ```
 
 **Enhancement Point:** Add tab system above this:
+
 ```tsx
 <Tabs defaultValue="presets" className="space-y-3">
   <TabsList>
     <TabsTrigger value="presets">Presets</TabsTrigger>
     <TabsTrigger value="ai">Generate with AI</TabsTrigger>
   </TabsList>
-  
-  <TabsContent value="presets">
-    {/* existing presets code */}
-  </TabsContent>
-  
+
+  <TabsContent value="presets">{/* existing presets code */}</TabsContent>
+
   <TabsContent value="ai">
     <AIThemeGenerator onThemeGenerated={handleThemeGenerated} />
   </TabsContent>
@@ -115,14 +120,14 @@ router.post(
     try {
       const tenantAuth = res.locals.tenantAuth;
       const tenantId = tenantAuth.tenantId;
-      
+
       const themeGen = new ThemeGenerationService();
       const result = await themeGen.generateTheme({
         image: req.file,
         mood: req.body.mood,
         style: req.body.style,
       });
-      
+
       res.status(200).json(result);
     } catch (error) {
       next(error);
@@ -134,6 +139,7 @@ router.post(
 ### Database-Backed Templates
 
 **Migration Needed:**
+
 ```prisma
 model BrandingTemplate {
   id        String   @id @default(cuid())
@@ -141,17 +147,17 @@ model BrandingTemplate {
   category  String
   mood      String
   style     String
-  
+
   primaryColor    String
   secondaryColor  String
   accentColor     String?
   fontFamily      String
-  
+
   headingFont     String?
   bodyFont        String?
-  
+
   metadata        Json
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -180,16 +186,19 @@ packages/contracts/src/
 ## Missing Libraries to Install
 
 **Production Dependencies:**
+
 ```bash
 npm install --save sharp vibrant chroma-js colorsys
 ```
 
 **Types:**
+
 ```bash
 npm install --save-dev @types/vibrant
 ```
 
 **Optional (for AI features):**
+
 ```bash
 npm install --save openai  # For Claude/GPT integration
 npm install --save @huggingface/inference  # For local ML
@@ -248,17 +257,20 @@ Content-Type: multipart/form-data
 ## Testing Strategy
 
 ### Unit Tests
+
 - Color conversion functions (RGB↔HSL↔HEX)
 - Palette harmony algorithms
 - WCAG contrast validation
 - Font matching logic
 
 ### Integration Tests
+
 - Image upload → color extraction pipeline
 - API endpoint response validation
 - Database storage and retrieval
 
 ### E2E Tests
+
 - User uploads image → receives theme → applies branding
 - User selects mood → receives suggestions
 - Generated theme passes accessibility checks
@@ -292,16 +304,15 @@ Content-Type: multipart/form-data
 
 ## Quick Links to Code
 
-| Component | Path | Key Lines |
-|-----------|------|-----------|
-| Presets | `BrandingEditor.tsx` | 44-81 |
-| Manual Colors | `BrandingEditor.tsx` | 397-430 |
-| Font Selection | `BrandingEditor.tsx` | 518-555 |
-| Contrast Check | `BrandingEditor.tsx` | 467-516 |
-| API Calls | `BrandingEditor.tsx` | 210-263 |
-| Upload Service | `upload.service.ts` | 108-141 |
-| Branding Routes | `tenant-admin.routes.ts` | 198-250 |
-| useBranding Hook | `useBranding.ts` | 78-99 |
-| Color Utils Stub | `ColorPicker.tsx` | 21-34 |
-| Font Loading | `useBranding.ts` | 14-46 |
-
+| Component        | Path                     | Key Lines |
+| ---------------- | ------------------------ | --------- |
+| Presets          | `BrandingEditor.tsx`     | 44-81     |
+| Manual Colors    | `BrandingEditor.tsx`     | 397-430   |
+| Font Selection   | `BrandingEditor.tsx`     | 518-555   |
+| Contrast Check   | `BrandingEditor.tsx`     | 467-516   |
+| API Calls        | `BrandingEditor.tsx`     | 210-263   |
+| Upload Service   | `upload.service.ts`      | 108-141   |
+| Branding Routes  | `tenant-admin.routes.ts` | 198-250   |
+| useBranding Hook | `useBranding.ts`         | 78-99     |
+| Color Utils Stub | `ColorPicker.tsx`        | 21-34     |
+| Font Loading     | `useBranding.ts`         | 14-46     |

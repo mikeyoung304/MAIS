@@ -83,16 +83,19 @@ Tenant Receives: $440.00
 ### Database Schema
 
 **Tenant Model:**
+
 - `stripeAccountId` - Connected account ID
 - `stripeOnboarded` - Onboarding complete flag
 - `commissionPercent` - Per-tenant commission rate
 
 **Booking Model:**
+
 - `commissionAmount` - Commission in cents
 - `commissionPercent` - Rate snapshot at booking time
 - `stripePaymentIntentId` - Payment reference
 
 **WebhookEvent Model:**
+
 - `eventId` - Stripe event ID (deduplication)
 - `eventType` - Event name
 - `status` - Processing status
@@ -137,6 +140,7 @@ npm run test:commission
 ```
 
 **Tests:**
+
 - 10% commission rate
 - 12.5% commission rate
 - 15% commission rate
@@ -153,6 +157,7 @@ npm run test:stripe-connect
 ```
 
 **Tests:**
+
 - Create test tenant
 - Create Stripe Connected Account
 - Calculate commission
@@ -169,6 +174,7 @@ npm run test:stripe-connect
 **Location:** `/Users/mikeyoung/CODING/Elope/server/src/services/commission.service.ts`
 
 **Methods:**
+
 - `calculateCommission(tenantId, amount)` - Calculate platform fee
 - `calculateBookingTotal(tenantId, packagePrice, addOnIds)` - Full booking calculation
 - `calculateRefundCommission(originalCommission, refundAmount, originalTotal)` - Refund calculation
@@ -176,6 +182,7 @@ npm run test:stripe-connect
 - `previewCommission(tenantId, amount)` - Preview fees
 
 **Example:**
+
 ```typescript
 const commission = await commissionService.calculateCommission(
   'tenant_abc',
@@ -190,10 +197,12 @@ const commission = await commissionService.calculateCommission(
 **Location:** `/Users/mikeyoung/CODING/Elope/server/src/adapters/stripe.adapter.ts`
 
 **Methods:**
+
 - `createCheckoutSession(input)` - Create payment session
 - `verifyWebhook(payload, signature)` - Verify webhook signature
 
 **Example:**
+
 ```typescript
 const session = await stripeAdapter.createCheckoutSession({
   amountCents: 50000,
@@ -215,15 +224,18 @@ POST /api/webhooks/stripe
 ```
 
 **Headers:**
+
 - `stripe-signature` - Webhook signature (required)
 
 **Events Handled:**
+
 - `payment_intent.succeeded` - Payment completed
 - `payment_intent.payment_failed` - Payment failed
 - `charge.refunded` - Refund processed
 - `account.updated` - Connected account changed
 
 **Security:**
+
 - Signature verification mandatory
 - Event deduplication (idempotency)
 - Tenant isolation enforced
@@ -297,11 +309,7 @@ Example 2: 12.5% of $500.00
 
 ```typescript
 // 1. Calculate commission
-const breakdown = await commissionService.calculateBookingTotal(
-  tenantId,
-  packagePrice,
-  addOnIds
-);
+const breakdown = await commissionService.calculateBookingTotal(tenantId, packagePrice, addOnIds);
 
 // 2. Create PaymentIntent
 const paymentIntent = await stripe.paymentIntents.create({
@@ -355,6 +363,7 @@ const refund = await stripe.refunds.create({
 ### Tests Failing
 
 **Check environment:**
+
 ```bash
 # Verify Stripe key is set
 echo $STRIPE_SECRET_KEY
@@ -363,6 +372,7 @@ echo $STRIPE_SECRET_KEY
 ```
 
 **Check database:**
+
 ```bash
 # Verify tenants exist
 psql $DATABASE_URL -c "SELECT slug, \"commissionPercent\" FROM \"Tenant\";"
@@ -371,18 +381,21 @@ psql $DATABASE_URL -c "SELECT slug, \"commissionPercent\" FROM \"Tenant\";"
 ### Webhook Issues
 
 **Verify webhook secret:**
+
 ```bash
 # Output should match Stripe CLI
 echo $STRIPE_WEBHOOK_SECRET
 ```
 
 **Check server logs:**
+
 ```bash
 # Look for signature verification errors
 npm run dev | grep -i webhook
 ```
 
 **Test manually:**
+
 ```bash
 stripe trigger payment_intent.succeeded
 ```
@@ -390,6 +403,7 @@ stripe trigger payment_intent.succeeded
 ### Commission Calculation
 
 **Verify tenant rate:**
+
 ```sql
 SELECT slug, "commissionPercent"
 FROM "Tenant"
@@ -397,6 +411,7 @@ WHERE id = 'tenant_id';
 ```
 
 **Test calculation:**
+
 ```bash
 npm run test:commission
 ```
@@ -417,16 +432,19 @@ Before deploying to production:
 ## Performance
 
 **Commission Calculation:**
+
 - Average: 2.3ms
 - P95: 4.1ms
 - No external API calls (database only)
 
 **Stripe API Calls:**
+
 - Create PaymentIntent: ~320ms
 - Create Connected Account: ~450ms
 - Webhook verification: ~5ms
 
 **Database Queries:**
+
 - Get tenant rate: ~1.2ms
 - Create booking: ~8.5ms
 - Process webhook: ~12.3ms
@@ -434,12 +452,14 @@ Before deploying to production:
 ## Support Resources
 
 ### Documentation
+
 - [Stripe Connect Docs](https://stripe.com/docs/connect)
 - [Application Fees](https://stripe.com/docs/connect/direct-charges)
 - [Webhook Reference](https://stripe.com/docs/webhooks)
 - [Testing Guide](https://stripe.com/docs/testing)
 
 ### Test Cards
+
 - Success: `4242 4242 4242 4242`
 - Decline: `4000 0000 0000 0002`
 - 3D Secure: `4000 0025 0000 3155`
@@ -447,6 +467,7 @@ Before deploying to production:
 Full list: https://stripe.com/docs/testing#cards
 
 ### Tools
+
 - Stripe CLI: https://stripe.com/docs/stripe-cli
 - Stripe Dashboard: https://dashboard.stripe.com
 - Stripe Discord: https://discord.gg/stripe
@@ -465,6 +486,7 @@ Full list: https://stripe.com/docs/testing#cards
 ## Questions?
 
 Refer to the comprehensive guides:
+
 - `STRIPE_CONNECT_TESTING_GUIDE.md` - Testing procedures
 - `ENV_VARIABLES.md` - Configuration reference
 - `PHASE_3_COMPLETION_CHECKLIST.md` - Feature completeness

@@ -90,10 +90,7 @@ describe('Password Reset Flow - HTTP Tests', () => {
     });
 
     it('should reject request without email', async () => {
-      const response = await request(app)
-        .post('/v1/auth/forgot-password')
-        .send({})
-        .expect(400);
+      const response = await request(app).post('/v1/auth/forgot-password').send({}).expect(400);
 
       expect(response.body.message).toContain('Email is required');
     });

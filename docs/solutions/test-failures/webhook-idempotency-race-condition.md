@@ -1,16 +1,16 @@
 ---
-title: "Webhook Idempotency Race Condition Fix"
+title: 'Webhook Idempotency Race Condition Fix'
 date: 2025-12-01
 category: test-failures
 component: webhooks
 severity: P0
 symptoms:
-  - "Concurrent webhook processing caused duplicate booking attempts"
-  - "Tests failing: should prevent duplicate webhook processing"
-  - "Two concurrent calls could both pass isDuplicate check before either recorded"
-  - "Race condition between isDuplicate check and recordWebhook"
-root_cause: "recordWebhook returned void, preventing controller from detecting if concurrent call already recorded the event"
-solution: "Changed recordWebhook return type from void to boolean - returns true if new record created, false if duplicate detected via P2002 unique constraint"
+  - 'Concurrent webhook processing caused duplicate booking attempts'
+  - 'Tests failing: should prevent duplicate webhook processing'
+  - 'Two concurrent calls could both pass isDuplicate check before either recorded'
+  - 'Race condition between isDuplicate check and recordWebhook'
+root_cause: 'recordWebhook returned void, preventing controller from detecting if concurrent call already recorded the event'
+solution: 'Changed recordWebhook return type from void to boolean - returns true if new record created, false if duplicate detected via P2002 unique constraint'
 tags:
   - webhooks
   - race-conditions
@@ -82,7 +82,7 @@ export interface WebhookRepository {
     eventId: string;
     eventType: string;
     rawPayload: string;
-  }): Promise<boolean>;  // Changed from void
+  }): Promise<boolean>; // Changed from void
   // ...
 }
 ```
@@ -128,8 +128,11 @@ const isNewRecord = await this.webhookRepo.recordWebhook({
 
 // RACE CONDITION FIX: Return early if duplicate detected
 if (!isNewRecord) {
-  logger.info({ eventId: event.id }, 'Webhook duplicate detected during recording - returning 200 OK');
-  return;  // Idempotent success
+  logger.info(
+    { eventId: event.id },
+    'Webhook duplicate detected during recording - returning 200 OK'
+  );
+  return; // Idempotent success
 }
 
 // Continue with processing...
@@ -201,6 +204,7 @@ it('should prevent duplicate webhook processing', async () => {
 ### 1. Design Pattern: Atomic Record-and-Check
 
 When implementing idempotency:
+
 - Use database unique constraints as the source of truth
 - Return success/failure from the create operation
 - Don't separate "check if exists" from "create if not exists"
@@ -208,12 +212,14 @@ When implementing idempotency:
 ### 2. Interface Design
 
 Repository methods that can fail due to duplicates should:
+
 - Return boolean (true = new, false = duplicate)
 - Or throw a specific exception that callers handle as success
 
 ### 3. Code Review Checklist
 
 When reviewing webhook handlers:
+
 - [ ] Is there a gap between duplicate check and record creation?
 - [ ] Are unique constraints being used?
 - [ ] Does the handler return 200 for duplicates?

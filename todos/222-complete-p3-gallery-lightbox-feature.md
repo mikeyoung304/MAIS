@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "222"
+issue_id: '222'
 tags: [ux, gallery, lightbox, landing-page, resolved]
 dependencies: []
 ---
@@ -189,6 +189,7 @@ function GallerySection({ config }: GallerySectionProps) {
 ## Notes
 
 This implementation uses Option A (Radix Dialog) as suggested, which was the best choice because:
+
 - @radix-ui/react-dialog was already installed in the project
 - No additional dependencies required
 - Consistent with other Radix UI components in the codebase

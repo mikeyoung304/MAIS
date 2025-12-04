@@ -1,6 +1,6 @@
-import { Calendar, Check, Eye } from "lucide-react";
-import { SectionHeader } from "@/components/ui/section-header";
-import { sanitizeImageUrl } from "@/lib/sanitize-url";
+import { Calendar, Check, Eye } from 'lucide-react';
+import { SectionHeader } from '@/components/ui/section-header';
+import { sanitizeImageUrl } from '@/lib/sanitize-url';
 
 interface BrandingPreviewProps {
   primaryColor: string;
@@ -23,15 +23,11 @@ export function BrandingPreview({
   accentColor,
   backgroundColor,
   fontFamily,
-  logoUrl
+  logoUrl,
 }: BrandingPreviewProps) {
   return (
     <div className="bg-surface-alt rounded-2xl border border-sage-light/20 p-6">
-      <SectionHeader
-        icon={Eye}
-        title="Live Preview"
-        description="See how your branding appears"
-      />
+      <SectionHeader icon={Eye} title="Live Preview" description="See how your branding appears" />
 
       {/* Booking Widget Preview */}
       <div
@@ -71,10 +67,7 @@ export function BrandingPreview({
         {/* Package Content */}
         <div className="p-5 space-y-4">
           <div>
-            <h3
-              className="text-lg font-bold mb-1"
-              style={{ color: primaryColor }}
-            >
+            <h3 className="text-lg font-bold mb-1" style={{ color: primaryColor }}>
               Sample Package
             </h3>
             <p className="text-sm opacity-70">
@@ -95,9 +88,7 @@ export function BrandingPreview({
 
           {/* Date Picker Mockup */}
           <div>
-            <label className="block text-xs font-medium mb-1.5 opacity-70">
-              Select Date
-            </label>
+            <label className="block text-xs font-medium mb-1.5 opacity-70">Select Date</label>
             <div
               className="flex items-center gap-2 px-3 py-2 rounded-lg border text-sm"
               style={{ borderColor: `${primaryColor}30` }}
@@ -142,10 +133,10 @@ export function BrandingPreview({
       {/* Color Swatches */}
       <div className="mt-5 grid grid-cols-4 gap-2">
         {[
-          { label: "Primary", color: primaryColor },
-          { label: "Secondary", color: secondaryColor },
-          { label: "Accent", color: accentColor },
-          { label: "Background", color: backgroundColor },
+          { label: 'Primary', color: primaryColor },
+          { label: 'Secondary', color: secondaryColor },
+          { label: 'Accent', color: accentColor },
+          { label: 'Background', color: backgroundColor },
         ].map(({ label, color }) => (
           <div key={label} className="text-center">
             <div

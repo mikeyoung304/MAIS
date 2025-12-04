@@ -1,11 +1,5 @@
 {
-  "passed": [
-    "Hero headline",
-    "Statistics",
-    "Testimonials section",
-    "Admin login",
-    "Footer"
-  ],
+  "passed": ["Hero headline", "Statistics", "Testimonials section", "Admin login", "Footer"],
   "failed": [
     "Package count",
     "Package images",

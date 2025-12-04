@@ -1,10 +1,10 @@
 ---
 status: complete
 priority: p2
-issue_id: "243"
+issue_id: '243'
 tags: [architecture, landing-page, schema-design]
 dependencies: []
-source: "code-review-pr-14"
+source: 'code-review-pr-14'
 ---
 
 # TODO-243: Document JSON Wrapper Limitations for Future Versioning
@@ -24,6 +24,7 @@ The current implementation stores draft and published configs in a single JSON c
 3. JSON column has no schema evolution protection
 
 **Why It Matters:**
+
 - Feature requests like "undo publish" or "view history" would require schema migration
 - Better to document limitation now than discover it later
 
@@ -102,9 +103,9 @@ The ARCHITECTURE.md update is deferred as it's not required for the code review 
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-12-04 | Created | Code review of PR #14 |
+| Date       | Action   | Notes                                      |
+| ---------- | -------- | ------------------------------------------ |
+| 2025-12-04 | Created  | Code review of PR #14                      |
 | 2025-12-04 | Resolved | Added documentation comments in repository |
 
 ## Tags

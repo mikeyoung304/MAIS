@@ -13,6 +13,7 @@
 Node.js 25 with tsx runs in pure ESM mode, preventing direct use of CommonJS-only libraries via named imports. The `file-type` v16 library is CommonJS-only, causing runtime failures during file upload validation.
 
 **Symptoms:**
+
 - `ReferenceError: require is not defined in ES module scope`
 - `Cannot use named import syntax in ESM for CommonJS module`
 - File upload validation fails with no clear error message
@@ -28,6 +29,7 @@ Use Node's built-in `createRequire` function to create a CommonJS-compatible req
 ## The Problem
 
 ### Scenario 1: Direct require() Fails
+
 ```typescript
 // ❌ WRONG: Node 25 ESM doesn't have require() in scope
 const fileType = require('file-type');
@@ -35,6 +37,7 @@ const fileType = require('file-type');
 ```
 
 ### Scenario 2: ESM Import Also Fails
+
 ```typescript
 // ❌ WRONG: Named imports from CJS module fail in pure ESM
 import { fromBuffer } from 'file-type';
@@ -42,6 +45,7 @@ import { fromBuffer } from 'file-type';
 ```
 
 ### Scenario 3: Default Import Doesn't Work Either
+
 ```typescript
 // ❌ WRONG: Default import from CJS also fails
 import fileType from 'file-type';
@@ -51,12 +55,14 @@ import fileType from 'file-type';
 ### Error Messages Encountered
 
 **Attempt 1: Direct require()**
+
 ```
 ReferenceError: require is not defined in ES module scope
     at /Users/mikeyoung/CODING/MAIS/server/src/services/upload.service.ts:18
 ```
 
 **Attempt 2: ESM named import**
+
 ```
 SyntaxError: The requested module 'file-type' is not a valid module target
     for this operation at /Users/mikeyoung/CODING/MAIS/server/src/services/upload.service.ts:14
@@ -76,7 +82,7 @@ const require = createRequire(import.meta.url);
 
 // Now you can require CommonJS modules
 const fileType = require('file-type') as {
-  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>
+  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>;
 };
 
 // Use it normally
@@ -95,6 +101,7 @@ const detectedType = await fileType.fromBuffer(buffer);
 **File:** `/Users/mikeyoung/CODING/MAIS/server/src/services/upload.service.ts`
 
 **Before (Broken):**
+
 ```typescript
 import { fromBuffer as detectFileType } from 'file-type';
 
@@ -103,13 +110,14 @@ const detectedType = await detectFileType(file.buffer);
 ```
 
 **After (Fixed):**
+
 ```typescript
 import { createRequire } from 'module';
 
 // file-type v16 is CommonJS - use createRequire for ESM compatibility in Node 25+
 const require = createRequire(import.meta.url);
 const fileType = require('file-type') as {
-  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>
+  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>;
 };
 
 // In validateFile method:
@@ -123,22 +131,26 @@ const detectedType = await fileType.fromBuffer(file.buffer);
 ### Why Not Other Solutions?
 
 **Option 1: Dynamic ESM Import**
+
 ```typescript
 const fileType = await import('file-type');
 // Problem: Doesn't work with CommonJS modules that lack ESM wrapper
 ```
 
 **Option 2: Upgrade file-type to v18 (ESM native)**
+
 ```typescript
 // Problem: Breaking changes, different API, requires extensive refactoring
 ```
 
 **Option 3: Configure TypeScript to use CommonJS target**
+
 ```typescript
 // Problem: Defeats purpose of ESM benefits, breaks modern Node tooling
 ```
 
 **Why createRequire is best:**
+
 - No external dependencies
 - Works with pure ESM execution environment
 - Minimal code changes
@@ -150,6 +162,7 @@ const fileType = await import('file-type');
 ## Implementation Checklist
 
 ### For Current Issue
+
 - [x] Import `createRequire` from `module` package
 - [x] Create scoped require function using `import.meta.url`
 - [x] Replace named ESM imports with require call
@@ -163,17 +176,20 @@ const fileType = await import('file-type');
 When encountering `ReferenceError: require is not defined` or similar CJS compatibility issues:
 
 1. **Identify the problem module**
+
    ```bash
    npm ls {module-name}  # Check version and ESM support
    npm view {module-name} types  # Check if ESM wrapper exists
    ```
 
 2. **Check if ESM alternative exists**
+
    ```bash
    npm search {module-name} --long | grep esm
    ```
 
 3. **If upgrading is not viable, use createRequire:**
+
    ```typescript
    import { createRequire } from 'module';
    const require = createRequire(import.meta.url);
@@ -192,6 +208,7 @@ When encountering `ReferenceError: require is not defined` or similar CJS compat
 ## Testing
 
 ### Unit Test (Magic Byte Detection)
+
 ```typescript
 test('validates file by magic bytes', async () => {
   const service = new UploadService();
@@ -215,6 +232,7 @@ test('validates file by magic bytes', async () => {
 ```
 
 ### Test Attack Scenario
+
 ```typescript
 test('rejects PHP shell disguised as image', async () => {
   const service = new UploadService();
@@ -226,14 +244,13 @@ test('rejects PHP shell disguised as image', async () => {
     fieldname: 'image',
     originalname: 'photo.png',
     encoding: '7bit',
-    mimetype: 'image/png',  // Declared as PNG
-    buffer: phpBuffer,       // Actually PHP code
+    mimetype: 'image/png', // Declared as PNG
+    buffer: phpBuffer, // Actually PHP code
     size: phpBuffer.length,
   };
 
   // Should throw validation error
-  expect(() => service.uploadLogo(file, 'tenant-1'))
-    .rejects.toThrow('File validation failed');
+  expect(() => service.uploadLogo(file, 'tenant-1')).rejects.toThrow('File validation failed');
 });
 ```
 
@@ -251,12 +268,12 @@ test('rejects PHP shell disguised as image', async () => {
 
 ## Compatibility Matrix
 
-| Node Version | ESM Mode | Solution | Status |
-|--------------|----------|----------|--------|
-| 18-20        | Optional | Direct require() | Works |
-| 21-24        | Optional | Direct require() | Works |
-| 25+          | Pure ESM | createRequire() | ✅ Required |
-| Future       | Pure ESM | createRequire() | ✅ Future-proof |
+| Node Version | ESM Mode | Solution         | Status          |
+| ------------ | -------- | ---------------- | --------------- |
+| 18-20        | Optional | Direct require() | Works           |
+| 21-24        | Optional | Direct require() | Works           |
+| 25+          | Pure ESM | createRequire()  | ✅ Required     |
+| Future       | Pure ESM | createRequire()  | ✅ Future-proof |
 
 ---
 
@@ -265,6 +282,7 @@ test('rejects PHP shell disguised as image', async () => {
 If this approach causes issues:
 
 1. **Immediate:** Revert to version control
+
    ```bash
    git revert <commit-hash>
    ```
@@ -290,6 +308,7 @@ If this approach causes issues:
 In modern Node.js with pure ESM execution, `createRequire` is the standard way to import CommonJS-only libraries. This pattern is officially recommended by Node.js and is not a workaround—it's the correct solution.
 
 **Pin this pattern for reference:**
+
 ```typescript
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);

@@ -17,12 +17,14 @@ MAIS's documentation contains sensitive information but lacks systematic securit
 **Incident 1: Password Exposure (Critical)**
 
 During the strategic documentation audit (November 2025), analysis revealed:
+
 - Passwords exposed in documentation files (referenced in audit findings)
 - Exposure duration: Weeks (potentially months)
 - Discovery method: Manual audit (not automated detection)
 - Root cause: No security review process for documentation
 
 **Typical Exposure Pattern**:
+
 ```
 Developer creates quick troubleshooting doc:
 "To fix the database issue, connect with:
@@ -34,6 +36,7 @@ File committed to git → pushed to remote → password now in git history forev
 ```
 
 **Scale of Risk**:
+
 - 248 documentation files (any could contain secrets)
 - 30+ contributors over project lifetime (variable security awareness)
 - No automated scanning (secrets can persist indefinitely)
@@ -42,6 +45,7 @@ File committed to git → pushed to remote → password now in git history forev
 ### Current State: No Documentation Security Process
 
 **Documentation Creation Flow (Current)**:
+
 ```
 Developer writes doc → git add → git commit → git push → merged
                                                           ↓
@@ -51,6 +55,7 @@ Developer writes doc → git add → git commit → git push → merged
 ```
 
 **Problems**:
+
 1. **No security checklist**: Developers don't consider security when writing docs
 2. **No automated scanning**: Secrets not detected until manual audit (rare)
 3. **No review requirement**: Documentation PRs can merge without security review
@@ -60,28 +65,34 @@ Developer writes doc → git add → git commit → git push → merged
 ### Common Documentation Security Vulnerabilities
 
 **1. Credentials and API Keys**
+
 ```markdown
 # Setup Guide
 
 Configure Stripe with:
+
 - API Key: sk_live_51234567890abcdef
 - Webhook Secret: whsec_1234567890abcdef
 
 Connect to database:
+
 - Connection String: postgresql://user:password@host:5432/db
 ```
 
 **2. Internal Infrastructure Details**
+
 ```markdown
 # Deployment Guide
 
 Production servers:
+
 - Web: 10.0.1.15 (SSH key: ~/.ssh/prod_rsa)
 - Database: 10.0.1.20 (Root password in 1Password)
 - Redis: 10.0.1.30 (No auth, internal only)
 ```
 
 **3. Customer/User Data**
+
 ```markdown
 # Bug Investigation
 
@@ -91,6 +102,7 @@ API tokens: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **4. Security Vulnerabilities**
+
 ```markdown
 # Known Issues
 
@@ -100,6 +112,7 @@ BUG: XSS vulnerability in comment rendering (CVE pending)
 ```
 
 **5. Business-Sensitive Information**
+
 ```markdown
 # Sprint 6 Plan
 
@@ -123,18 +136,21 @@ Rebuild 6.0 implements **mandatory security review** for all documentation:
 ### Regulatory and Compliance Context
 
 **GDPR Requirements**:
+
 - Personal data in documentation = "processing personal data"
 - Requires data minimization (don't collect/store unnecessary personal data)
 - Requires security measures (protect personal data from unauthorized access)
 - Violations: Up to 4% annual revenue or €20M fine (whichever is greater)
 
 **SOC 2 / ISO 27001 Requirements**:
+
 - Access controls on sensitive information
 - Audit trail of who accessed sensitive data
 - Incident response process for data exposures
 - Regular security reviews and audits
 
 **Industry Standards**:
+
 - OWASP: "Sensitive data exposure" is #3 in Top 10 vulnerabilities
 - CWE-798: "Use of Hard-coded Credentials" is critical weakness
 - NIST: Documentation should undergo same security review as code
@@ -152,6 +168,7 @@ Rebuild 6.0 implements **mandatory security review** for all documentation:
 **Tool**: gitleaks (open-source secret scanner)
 
 **Installation**:
+
 ```bash
 # Install gitleaks
 brew install gitleaks  # macOS
@@ -181,6 +198,7 @@ chmod +x .git/hooks/pre-commit
 ```
 
 **Configuration**: `.gitleaks.toml`
+
 ```toml
 title = "MAIS gitleaks config"
 
@@ -230,6 +248,7 @@ paths = [
 ```
 
 **Coverage**:
+
 - API keys (AWS, Stripe, generic)
 - Passwords and connection strings
 - JWT tokens
@@ -251,6 +270,7 @@ Add security section:
 If this PR includes documentation changes, complete this checklist:
 
 ### Sensitive Data Check (REQUIRED)
+
 - [ ] No passwords, API keys, or credentials included
 - [ ] No connection strings with embedded passwords
 - [ ] No internal IP addresses or infrastructure details
@@ -259,16 +279,19 @@ If this PR includes documentation changes, complete this checklist:
 - [ ] No business-sensitive information (revenue, pricing, strategy)
 
 ### Example Data Validation
+
 - [ ] All example data is clearly fictional (use example.com, test accounts)
 - [ ] Example API keys use placeholder format (sk_test_EXAMPLE_KEY_NOT_REAL)
 - [ ] Example passwords use obvious placeholders (your-password-here)
 
 ### Compliance Check
+
 - [ ] GDPR: No unnecessary personal data collected in examples
 - [ ] Security: No information that could aid attackers
 - [ ] Legal: No confidential business information disclosed
 
 ### If Sensitive Data Required
+
 - [ ] Documented why sensitive data is necessary
 - [ ] Added to .gitleaksignore with justification comment
 - [ ] Scheduled for rotation/removal (add calendar reminder)
@@ -278,6 +301,7 @@ If this PR includes documentation changes, complete this checklist:
 ```
 
 **Enforcement**:
+
 - PR cannot merge without checklist completion
 - Code review must include security review
 - Security team notified of any exceptions
@@ -309,13 +333,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Full history for comprehensive scan
+          fetch-depth: 0 # Full history for comprehensive scan
 
       - name: Run gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}  # Optional
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Optional
 
       - name: Report findings
         if: failure()
@@ -387,11 +411,13 @@ jobs:
 ```
 
 **CI Checks**:
+
 1. **gitleaks scan**: Comprehensive secret detection
 2. **Pattern matching**: Email addresses, IP addresses, security TODOs
 3. **Checklist validation**: Ensures PR template security section completed
 
 **Failure Actions**:
+
 - Block PR merge if secrets detected
 - Warn on potential sensitive patterns
 - Require checklist completion
@@ -465,11 +491,13 @@ git push origin --force --tags
 **New Developer Onboarding (30 Minutes)**
 
 **Module 1: Documentation Security Risks (10 min)**
+
 - Real incident examples (anonymized)
 - Impact of credential exposure
 - Regulatory requirements (GDPR, SOC 2)
 
 **Module 2: What Not to Document (10 min)**
+
 - Credentials and API keys
 - Infrastructure details
 - Customer data
@@ -477,33 +505,36 @@ git push origin --force --tags
 - Business secrets
 
 **Module 3: Safe Documentation Practices (10 min)**
+
 - Use example.com, test accounts
 - Placeholder credentials (your-password-here)
-- Redaction techniques (user-****@example.com)
+- Redaction techniques (user-\*\*\*\*@example.com)
 - When to use internal wiki vs public docs
 
 **Training Materials**:
+
 - Recorded video (can watch asynchronously)
 - Interactive quiz (must pass 80%)
 - Quick reference card (printed/digital)
 
 **Quarterly Refresher** (15 minutes):
+
 - Recent incidents and lessons learned
 - New security patterns to avoid
 - Tool updates (gitleaks, CI checks)
 
 ### Security Categories and Guidelines
 
-| Category | Examples | Allowed in Docs? | Guidelines |
-|----------|----------|------------------|------------|
-| **Credentials** | Passwords, API keys, tokens | ❌ Never | Use placeholders: `your-api-key-here` |
-| **Infrastructure** | IP addresses, hostnames | ⚠️ Rarely | Use examples: `10.0.1.x`, `prod-server.internal` |
-| **Customer Data** | Emails, names, IDs | ❌ Never | Use synthetic: `user-****@example.com` |
-| **Security Issues** | Vulnerabilities, exploits | ❌ Never | Report via security policy, not docs |
-| **Business Secrets** | Revenue, pricing, strategy | ⚠️ Internal only | Mark as confidential, restrict access |
-| **Debug Info** | Stack traces, logs | ⚠️ Sanitized | Redact sensitive data before including |
-| **Example Code** | Sample requests/responses | ✅ Yes | Use test mode, fictional data |
-| **Architecture** | System design, patterns | ✅ Yes | Document architecture, not secrets |
+| Category             | Examples                    | Allowed in Docs? | Guidelines                                       |
+| -------------------- | --------------------------- | ---------------- | ------------------------------------------------ |
+| **Credentials**      | Passwords, API keys, tokens | ❌ Never         | Use placeholders: `your-api-key-here`            |
+| **Infrastructure**   | IP addresses, hostnames     | ⚠️ Rarely        | Use examples: `10.0.1.x`, `prod-server.internal` |
+| **Customer Data**    | Emails, names, IDs          | ❌ Never         | Use synthetic: `user-****@example.com`           |
+| **Security Issues**  | Vulnerabilities, exploits   | ❌ Never         | Report via security policy, not docs             |
+| **Business Secrets** | Revenue, pricing, strategy  | ⚠️ Internal only | Mark as confidential, restrict access            |
+| **Debug Info**       | Stack traces, logs          | ⚠️ Sanitized     | Redact sensitive data before including           |
+| **Example Code**     | Sample requests/responses   | ✅ Yes           | Use test mode, fictional data                    |
+| **Architecture**     | System design, patterns     | ✅ Yes           | Document architecture, not secrets               |
 
 ---
 
@@ -514,6 +545,7 @@ git push origin --force --tags
 **Cost of Prevention vs Remediation**:
 
 **Prevention** (ADR-005):
+
 - Pre-commit hook: 2 seconds per commit
 - PR security checklist: 2 minutes per PR
 - CI scanning: 3 minutes per PR
@@ -521,6 +553,7 @@ git push origin --force --tags
 - **Total cost per PR**: ~5 minutes
 
 **Remediation** (exposed secret):
+
 - Discover exposure: 0-90 days (often found during audits)
 - Rotate credential: 30 minutes
 - Clean git history: 2-4 hours (force push coordination)
@@ -534,6 +567,7 @@ git push origin --force --tags
 ### Why Automated + Manual Review?
 
 **Automation Alone (Insufficient)**:
+
 ```
 ✅ Catches: Known patterns (API keys, passwords, tokens)
 ❌ Misses: Business secrets, customer data, security issues
@@ -542,6 +576,7 @@ git push origin --force --tags
 ```
 
 **Manual Review Alone (Insufficient)**:
+
 ```
 ✅ Catches: Context-dependent sensitivity
 ✅ Catches: Business secrets, strategic information
@@ -551,6 +586,7 @@ git push origin --force --tags
 ```
 
 **Automated + Manual (Defense in Depth)**:
+
 ```
 ✅ Automation catches 90% of technical secrets
 ✅ Manual review catches 90% of contextual sensitivity
@@ -574,16 +610,19 @@ git push origin --force --tags
 **Alternatives Considered**:
 
 **Alternative 1: truffleHog**
+
 - ✅ Good secret detection
 - ❌ Slower than gitleaks (entropy-based scanning)
 - ❌ Higher false positive rate
 
 **Alternative 2: detect-secrets (Yelp)**
+
 - ✅ Good Python integration
 - ❌ Fewer built-in patterns
 - ❌ Less active maintenance
 
 **Alternative 3: Custom regex scripts**
+
 - ✅ Full control
 - ❌ Requires maintenance (new patterns, false positives)
 - ❌ Not battle-tested (will miss edge cases)
@@ -600,11 +639,13 @@ git push origin --force --tags
 **Description**: Rely solely on PR reviewers to spot sensitive data
 
 **Pros**:
+
 - No tooling setup (zero implementation cost)
 - Human context understanding (catches business secrets)
 - Flexible (no false positives from automation)
 
 **Cons**:
+
 - ❌ Human error (reviewers miss subtle exposures)
 - ❌ Inconsistent (depends on reviewer security awareness)
 - ❌ Doesn't scale (high review burden as team grows)
@@ -617,11 +658,13 @@ git push origin --force --tags
 **Description**: Rely solely on gitleaks and CI checks
 
 **Pros**:
+
 - Consistent (same checks for every commit)
 - Fast (automated, no human time)
 - Comprehensive (scans entire history)
 
 **Cons**:
+
 - ❌ Misses context-dependent sensitivity (business secrets, internal IPs)
 - ❌ False positives require manual triage anyway
 - ❌ Can't catch "this looks suspicious" patterns
@@ -634,11 +677,13 @@ git push origin --force --tags
 **Description**: Run scans in CI only, not as pre-commit hook
 
 **Pros**:
+
 - Doesn't slow down local development
 - Centralized scanning (same environment for everyone)
 - Can scan entire repository regularly
 
 **Cons**:
+
 - ❌ Secrets reach remote repository (even briefly)
 - ❌ Requires force-push cleanup (disruptive)
 - ❌ Developers discover issues late (after commit)
@@ -651,11 +696,13 @@ git push origin --force --tags
 **Description**: Manual security audit of all documentation quarterly
 
 **Pros**:
+
 - Low overhead (4x per year vs every PR)
 - Deep review (dedicated time for thorough analysis)
 - Catches accumulated issues
 
 **Cons**:
+
 - ❌ Secrets exposed for months before discovery
 - ❌ Large cleanup effort (90 days of documents to review)
 - ❌ No prevention (only detection after the fact)
@@ -668,11 +715,13 @@ git push origin --force --tags
 **Description**: Continue current practice, rely on developer awareness
 
 **Pros**:
+
 - Zero implementation cost
 - No process overhead
 - Maximum developer flexibility
 
 **Cons**:
+
 - ❌ Already failed (password exposure persisted for weeks)
 - ❌ Compliance risk (GDPR, SOC 2 violations)
 - ❌ Security incidents (credential exposure enables attacks)
@@ -700,26 +749,31 @@ git push origin --force --tags
 ### Negative Consequences
 
 ⚠️ **False positives**: gitleaks may flag non-sensitive patterns
+
 - **Impact**: Developer adds to .gitleaksignore, documents justification
 - **Mitigation**: Well-tuned gitleaks config reduces false positive rate to <5%
 - **Effort**: ~1 minute to review and whitelist false positive
 
 ⚠️ **Commit friction**: Pre-commit hook adds 2 seconds to every commit
+
 - **Impact**: Minimal (2 seconds vs 0 seconds)
 - **Mitigation**: Can skip with --no-verify in emergency (discouraged)
 - **Trade-off**: 2 seconds per commit prevents hours of remediation
 
 ⚠️ **PR checklist overhead**: Security section adds 2 minutes to PR creation
+
 - **Impact**: 2 minutes per documentation PR
 - **Mitigation**: Becomes routine after 2-3 PRs (muscle memory)
 - **Benefit**: Forces developers to think about security (education)
 
 ⚠️ **Learning curve**: Developers must learn what to avoid in docs
+
 - **Impact**: 30-minute security training required
 - **Mitigation**: Training recorded (watch anytime), quiz validates understanding
 - **Long-term benefit**: Security awareness reduces incidents across codebase
 
 ⚠️ **Git history cleanup complexity**: Force-push required if secret in history
+
 - **Risk**: Disruptive to team (requires coordination)
 - **Mitigation**: Prevention reduces need for cleanup (secrets caught pre-commit)
 - **Fallback**: BFG Repo-Cleaner simplifies history rewriting
@@ -738,6 +792,7 @@ git push origin --force --tags
 ### Phase 1: Tool Setup (Week 1, Day 1-2)
 
 **1. Install gitleaks**:
+
 ```bash
 # Install gitleaks (choose one)
 brew install gitleaks                    # macOS
@@ -749,6 +804,7 @@ gitleaks version
 ```
 
 **2. Create gitleaks configuration**:
+
 ```bash
 # Copy from ADR-005 (above)
 cat > .gitleaks.toml << 'EOF'
@@ -760,6 +816,7 @@ gitleaks detect --verbose
 ```
 
 **3. Setup pre-commit hook**:
+
 ```bash
 # Copy from ADR-005 (above)
 cat > .git/hooks/pre-commit << 'EOF'
@@ -777,6 +834,7 @@ rm test-secret.md
 ```
 
 **4. Distribute to team**:
+
 ```bash
 # Copy pre-commit hook to shared location
 cp .git/hooks/pre-commit scripts/install-git-hooks.sh
@@ -786,6 +844,7 @@ echo "Run \`./scripts/install-git-hooks.sh\` after clone" >> README.md
 ```
 
 **Success Criteria**:
+
 - [x] ADR-005 written and accepted
 - [ ] gitleaks installed and configured
 - [ ] Pre-commit hook tested and working
@@ -794,6 +853,7 @@ echo "Run \`./scripts/install-git-hooks.sh\` after clone" >> README.md
 ### Phase 2: CI Integration (Week 1, Day 3-4)
 
 **1. Create GitHub Actions workflow**:
+
 ```bash
 mkdir -p .github/workflows
 cat > .github/workflows/documentation-security.yml << 'EOF'
@@ -802,6 +862,7 @@ EOF
 ```
 
 **2. Test workflow**:
+
 ```bash
 # Create test PR with secret
 git checkout -b test-security-scan
@@ -815,6 +876,7 @@ git push origin test-security-scan
 ```
 
 **3. Configure branch protection**:
+
 ```
 GitHub repo settings → Branches → Add rule for `main`:
 - [x] Require status checks to pass before merging
@@ -823,6 +885,7 @@ GitHub repo settings → Branches → Add rule for `main`:
 ```
 
 **Success Criteria**:
+
 - [ ] GitHub Actions workflow created
 - [ ] CI scans tested on test PR
 - [ ] Branch protection configured
@@ -831,6 +894,7 @@ GitHub repo settings → Branches → Add rule for `main`:
 ### Phase 3: PR Template Update (Week 1, Day 5)
 
 **1. Update PR template**:
+
 ```bash
 # Add security section to existing template
 # or create new template if doesn't exist
@@ -869,6 +933,7 @@ EOF
 ```
 
 **2. Test PR template**:
+
 ```bash
 # Create test PR, verify template includes security section
 git checkout -b test-pr-template
@@ -880,6 +945,7 @@ git push origin test-pr-template
 ```
 
 **Success Criteria**:
+
 - [ ] PR template updated with security section
 - [ ] Template tested on new PR
 - [ ] Team notified of new PR requirements
@@ -889,15 +955,18 @@ git push origin test-pr-template
 **1. Create training materials**:
 
 **Slide deck**: `docs/security/documentation-security-training.md`
+
 ```markdown
 # Documentation Security Training
 
 ## Why Documentation Security Matters
+
 - Real incident: Password exposed for weeks
 - Impact: Credential compromise, compliance risk
 - Cost: 10+ hours remediation vs 5 minutes prevention
 
 ## What Not to Document
+
 ❌ Credentials (passwords, API keys, tokens)
 ❌ Infrastructure (IP addresses, hostnames)
 ❌ Customer data (emails, names, session IDs)
@@ -905,29 +974,34 @@ git push origin test-pr-template
 ❌ Business secrets (revenue, pricing, strategy)
 
 ## Safe Documentation Practices
+
 ✅ Use example.com, fictional data
-✅ Placeholders: your-password-here, EXAMPLE_API_KEY
-✅ Redaction: user-****@example.com
-✅ Test mode: sk_test_*, pk_test_*
+✅ Placeholders: your-password-here, EXAMPLE*API_KEY
+✅ Redaction: user-\*\*\*\*@example.com
+✅ Test mode: sk_test*_, pk*test*_
 
 ## Tools and Process
+
 - Pre-commit hook: gitleaks scans every commit (2 sec)
 - PR checklist: Security review required
 - CI scanning: Automated checks on every PR
 - If found: Rotate immediately, clean git history
 
 ## Quiz
+
 1. Can I include a real customer email in documentation? [Y/N]
 2. How should I document an API key example? [answer]
 3. What should I do if I find a password in docs? [answer]
 ```
 
 **2. Record training video**:
+
 - 15-minute walkthrough of slide deck
 - Live demo: gitleaks catching a secret
 - Upload to internal wiki or YouTube (unlisted)
 
 **3. Create quiz**:
+
 ```markdown
 # Documentation Security Quiz
 
@@ -960,11 +1034,13 @@ Passing: 3/4 correct (75%)
 ```
 
 **4. Schedule onboarding**:
+
 - Add to new developer onboarding checklist
 - 30 minutes: Watch video + take quiz
 - Quarterly: 15-minute refresher (new incidents, tool updates)
 
 **Success Criteria**:
+
 - [ ] Training materials created (slides, video, quiz)
 - [ ] Training added to onboarding checklist
 - [ ] All current team members complete training
@@ -975,22 +1051,26 @@ Passing: 3/4 correct (75%)
 **1. Create incident response runbook**:
 
 `docs/security/secret-exposure-response.md`:
-```markdown
+
+````markdown
 # Secret Exposure Incident Response
 
 ## Severity Levels
 
 **Critical** (API keys, passwords, tokens):
+
 - Response time: Immediate (within 1 hour)
 - Escalation: Security team, engineering lead
 - Actions: Rotate, clean history, incident report
 
 **High** (Infrastructure details, internal IPs):
+
 - Response time: Same day (within 8 hours)
 - Escalation: Security team
 - Actions: Remove from docs, assess exposure
 
 **Medium** (Business data, customer emails):
+
 - Response time: Within 24 hours
 - Escalation: Team lead
 - Actions: Remove, notify if GDPR applies
@@ -998,18 +1078,21 @@ Passing: 3/4 correct (75%)
 ## Response Procedure
 
 ### Step 1: Immediate Actions (Within 1 Hour)
+
 1. Verify exposure: Check what was exposed and for how long
 2. Rotate credential: Change password, regenerate key, revoke token
 3. Update production: Deploy new credential to production
 4. Notify security team: Slack #security channel
 
 ### Step 2: Git History Cleanup (Within 24 Hours)
+
 1. Remove from current version: git rm or edit file
 2. Clean history: Use BFG Repo-Cleaner or git filter-repo
 3. Force push: Coordinate with team (disruptive)
 4. Verify: Scan repository again with gitleaks
 
 ### Step 3: Post-Incident (Within 1 Week)
+
 1. Incident report: What, when, how long, who had access
 2. Team notification: All-hands or engineering meeting
 3. Process improvement: Update gitleaks patterns, training
@@ -1018,11 +1101,14 @@ Passing: 3/4 correct (75%)
 ## Tools
 
 **BFG Repo-Cleaner** (recommended):
+
 ```bash
 java -jar bfg.jar --replace-text passwords.txt repo.git
 ```
+````
 
 **git filter-repo** (fastest):
+
 ```bash
 git filter-repo --invert-paths --path <file>
 ```
@@ -1032,7 +1118,8 @@ git filter-repo --invert-paths --path <file>
 - Security team: security@company.com
 - On-call: Slack #security-oncall
 - Incident commander: [Name], [Phone]
-```
+
+````
 
 **2. Create .gitleaksignore template**:
 ```bash
@@ -1051,9 +1138,10 @@ docs/reference/api/authentication.md:*:sk_test_*  # Example API keys only
 docs/reference/api/authentication.md:*:pk_test_*  # Example API keys only
 .env.example:*:*  # Example environment variables, not real credentials
 EOF
-```
+````
 
 **3. Update SECURITY.md**:
+
 ```bash
 cat >> SECURITY.md << 'EOF'
 
@@ -1074,6 +1162,7 @@ EOF
 ```
 
 **Success Criteria**:
+
 - [ ] Incident response runbook created
 - [ ] .gitleaksignore template created
 - [ ] SECURITY.md updated with documentation security section
@@ -1131,6 +1220,7 @@ fi
 ```
 
 **2. Schedule quarterly audit**:
+
 ```bash
 # Add to calendar (repeat quarterly)
 # Q1: End of March
@@ -1143,10 +1233,12 @@ echo "Run ./scripts/security-audit-docs.sh" > docs/security/QUARTERLY_AUDIT_REMI
 ```
 
 **3. Create audit checklist**:
+
 ```markdown
 # Quarterly Documentation Security Audit Checklist
 
 ## Automated Checks
+
 - [ ] Run ./scripts/security-audit-docs.sh
 - [ ] Review gitleaks report (any findings?)
 - [ ] Check email address count (should be 0)
@@ -1154,28 +1246,33 @@ echo "Run ./scripts/security-audit-docs.sh" > docs/security/QUARTERLY_AUDIT_REMI
 - [ ] Check security TODOs (should be 0)
 
 ## Manual Review
+
 - [ ] Review .gitleaksignore (still valid exceptions?)
 - [ ] Check documentation in root/ (should it be in docs/?)
 - [ ] Review .claude/ (any sensitive data in AI session notes?)
 - [ ] Check new documentation categories (need security review?)
 
 ## Incident Review
+
 - [ ] Any security incidents this quarter? (review incident log)
 - [ ] Lessons learned? (update training, gitleaks patterns)
 - [ ] Process improvements? (checklist updates)
 
 ## Compliance
+
 - [ ] GDPR: Any personal data in documentation?
 - [ ] SOC 2: Access controls on sensitive docs?
 - [ ] Incident response: All incidents documented?
 
 ## Report
+
 - [ ] Summarize findings (doc: YYYY-QN-security-audit-report.md)
 - [ ] Present to team (engineering all-hands)
 - [ ] Action items (assign owners, due dates)
 ```
 
 **Success Criteria**:
+
 - [ ] Audit script created and tested
 - [ ] Quarterly audit scheduled (calendar reminder)
 - [ ] Audit checklist documented
@@ -1185,21 +1282,22 @@ echo "Run ./scripts/security-audit-docs.sh" > docs/security/QUARTERLY_AUDIT_REMI
 
 ## Risks and Mitigation
 
-| Risk | Impact | Likelihood | Mitigation Strategy |
-|------|--------|------------|---------------------|
-| False positives overwhelm developers | Medium | High | Well-tuned gitleaks config, .gitleaksignore for exceptions |
-| Developers skip pre-commit hook (--no-verify) | High | Medium | CI catches what pre-commit misses, code review enforcement |
-| Secrets in git history (pre-ADR-005) | High | High | Run initial scan, clean history proactively |
-| Team resistance (process overhead) | Medium | Medium | Training emphasizes benefits, show real incident cost |
-| gitleaks maintenance (outdated patterns) | Low | Low | Quarterly audit includes tool update review |
-| Git history cleanup disruption | High | Low | Prevention reduces need, coordinate force-push carefully |
-| Compliance audit failure | High | Low | Quarterly audits ensure readiness, ISO 8601 archives |
+| Risk                                          | Impact | Likelihood | Mitigation Strategy                                        |
+| --------------------------------------------- | ------ | ---------- | ---------------------------------------------------------- |
+| False positives overwhelm developers          | Medium | High       | Well-tuned gitleaks config, .gitleaksignore for exceptions |
+| Developers skip pre-commit hook (--no-verify) | High   | Medium     | CI catches what pre-commit misses, code review enforcement |
+| Secrets in git history (pre-ADR-005)          | High   | High       | Run initial scan, clean history proactively                |
+| Team resistance (process overhead)            | Medium | Medium     | Training emphasizes benefits, show real incident cost      |
+| gitleaks maintenance (outdated patterns)      | Low    | Low        | Quarterly audit includes tool update review                |
+| Git history cleanup disruption                | High   | Low        | Prevention reduces need, coordinate force-push carefully   |
+| Compliance audit failure                      | High   | Low        | Quarterly audits ensure readiness, ISO 8601 archives       |
 
 ---
 
 ## Compliance and Standards
 
 **Does this decision affect:**
+
 - [x] Security requirements - Yes (core security process)
 - [x] Privacy/compliance (GDPR, etc.) - Yes (protects personal data in docs)
 - [ ] Performance SLAs - No
@@ -1208,12 +1306,14 @@ echo "Run ./scripts/security-audit-docs.sh" > docs/security/QUARTERLY_AUDIT_REMI
 - [ ] Testing requirements - No direct impact
 
 **How are these addressed?**
+
 - **Security**: Three-layer defense (pre-commit, PR review, CI) catches 99%+ of secrets
 - **Privacy/GDPR**: Prevents personal data exposure in documentation
 - **Architecture**: Security integrated into documentation workflow (not bolted on)
 - **Documentation Standards**: Security checklist required for all documentation PRs
 
 **Regulatory Compliance**:
+
 - **GDPR Article 32**: "Appropriate security measures" - scanning and review process
 - **SOC 2 Trust Principle**: "Security" - documented security controls for documentation
 - **ISO 27001**: "Information security incident management" - incident response process
@@ -1225,18 +1325,21 @@ echo "Run ./scripts/security-audit-docs.sh" > docs/security/QUARTERLY_AUDIT_REMI
 ### Success Metrics
 
 **Immediate (Week 1)**:
+
 - [x] ADR-005 written and accepted
 - [ ] gitleaks installed and configured
 - [ ] Pre-commit hook tested (catches test secret)
 - [ ] CI workflow created and tested
 
 **Short-term (Month 1)**:
+
 - [ ] 100% of team completes security training
 - [ ] All PRs include security checklist
 - [ ] Zero credential exposures detected in new documentation
 - [ ] Historical scan of existing docs completed
 
 **Long-term (Quarter 1)**:
+
 - [ ] Zero security incidents (exposed credentials) in documentation
 - [ ] Quarterly audit passes (no critical findings)
 - [ ] Developer feedback: "Security process is lightweight and valuable"
@@ -1245,6 +1348,7 @@ echo "Run ./scripts/security-audit-docs.sh" > docs/security/QUARTERLY_AUDIT_REMI
 ### Test Scenarios
 
 **Scenario 1: Developer Commits Secret (Pre-Commit Catch)**
+
 ```bash
 Action: Developer adds password to documentation, commits
 Expected: Pre-commit hook fails, blocks commit
@@ -1254,6 +1358,7 @@ Verify: Commit blocked, developer removes password, commits successfully
 ```
 
 **Scenario 2: Secret in PR (CI Catch)**
+
 ```bash
 Action: Developer pushes PR with API key (skipped pre-commit with --no-verify)
 Expected: CI workflow fails, blocks merge
@@ -1262,6 +1367,7 @@ Verify: PR cannot merge until API key removed
 ```
 
 **Scenario 3: Secret Discovered in Existing Docs (Incident Response)**
+
 ```bash
 Action: Quarterly audit discovers password in old documentation
 Expected: Incident response triggered within 1 hour
@@ -1274,6 +1380,7 @@ Verify: Credential rotated, history cleaned, incident documented
 ```
 
 **Scenario 4: False Positive (Exception Process)**
+
 ```bash
 Action: gitleaks flags example API key (sk_test_EXAMPLE)
 Expected: Developer adds to .gitleaksignore with justification
@@ -1299,12 +1406,14 @@ Verify: Future scans ignore this pattern in this file
 ## Follow-up
 
 **Open Questions**:
+
 - [ ] Should we scan code comments for sensitive data? (Answer: Yes, extend gitleaks to src/)
 - [ ] How to handle third-party documentation (vendor docs)? (Answer: Apply same rules)
 - [ ] Should we encrypt sensitive internal docs? (Answer: Use separate internal wiki with access controls)
 - [ ] What about documentation in Slack/email? (Answer: Out of scope for ADR-005, consider separate policy)
 
 **Next Actions**:
+
 - [ ] Install and configure gitleaks
 - [ ] Create pre-commit hook and test
 - [ ] Create GitHub Actions workflow
@@ -1322,40 +1431,47 @@ Verify: Future scans ignore this pattern in this file
 ### False Positive Examples
 
 **Example 1: Test API Keys**
+
 ```markdown
 # Authentication Guide
 
 Example request:
 curl -H "Authorization: Bearer sk_test_EXAMPLE_KEY_NOT_REAL" \\
-     https://api.example.com/users
+https://api.example.com/users
 
-# False positive: gitleaks flags sk_test_*
+# False positive: gitleaks flags sk*test*\*
+
 # Solution: Add to .gitleaksignore with comment "Example key only"
 ```
 
 **Example 2: Fictional Passwords**
+
 ```markdown
 # Setup Guide
 
 Create a user with password: your-password-here
 
 # False positive: gitleaks flags "password: your-password-here"
+
 # Solution: Rephrase as "Enter your password when prompted"
 ```
 
 **Example 3: Redacted Data**
+
 ```markdown
 # Bug Report
 
-User email: user-****@example.com
+User email: user-\*\*\*\*@example.com
 
 # False positive: gitleaks flags email pattern
+
 # Solution: Add to .gitleaksignore (already redacted)
 ```
 
 ### Common Pitfalls
 
 **Pitfall 1: Committing .env Files**
+
 ```bash
 # Wrong
 git add .env
@@ -1366,25 +1482,31 @@ git add .env.example  # Only commit example, not real .env
 ```
 
 **Pitfall 2: Copy-Pasting from Production**
+
 ```markdown
 # Wrong
+
 Testing showed error:
 Connection string: postgresql://admin:MyP@ss@prod-db.company.com:5432/db
 
 # Right
+
 Testing showed error:
 Connection string: postgresql://user:password@host:5432/database
 (see .env for actual production connection details - not in docs!)
 ```
 
 **Pitfall 3: "TODO: Remove Before Commit"**
+
 ```markdown
 # Wrong
-API Key: sk_live_abc123  # TODO: Remove before commit
+
+API Key: sk_live_abc123 # TODO: Remove before commit
 (Developer forgets to remove)
 
 # Right
-API Key: sk_test_EXAMPLE_PLACEHOLDER  # Example only, not real key
+
+API Key: sk_test_EXAMPLE_PLACEHOLDER # Example only, not real key
 ```
 
 ---
@@ -1392,11 +1514,13 @@ API Key: sk_test_EXAMPLE_PLACEHOLDER  # Example only, not real key
 ## Lessons Learned (To Be Updated Quarterly)
 
 ### From Password Exposure Incident (Nov 2025)
+
 1. **No process = guaranteed exposure**: Relying on developer vigilance insufficient
 2. **Detection delay costly**: Weeks of exposure = high remediation cost
 3. **Prevention cheaper than cure**: 5 minutes per PR vs 10+ hours per incident
 
 ### From Rebuild 6.0 Success (18+ Months, Zero Incidents)
+
 1. **Automation + manual review = 99% detection**: Two layers catch what one layer misses
 2. **Pre-commit hook is key**: Catches secrets before they reach remote repository
 3. **Training matters**: Developers who understand "why" make fewer mistakes
@@ -1407,12 +1531,14 @@ API Key: sk_test_EXAMPLE_PLACEHOLDER  # Example only, not real key
 ## Approval
 
 This ADR addresses critical security gaps identified through:
+
 - **Security incident**: Password exposure persisted for weeks before discovery
 - **Compliance risk**: GDPR/SOC 2 require security controls on sensitive data
 - **Industry practice**: Documentation security is standard practice (gitleaks used by thousands)
 - **Cost-benefit analysis**: 5 minutes prevention vs 10+ hours remediation per incident
 
 **Decision validated through**:
+
 - **Rebuild 6.0 success**: Zero security incidents in 18+ months with this process
 - **Industry tools**: gitleaks battle-tested by GitHub, GitLab, major enterprises
 - **Regulatory requirements**: GDPR, SOC 2, ISO 27001 require documented security controls
@@ -1422,4 +1548,5 @@ This ADR addresses critical security gaps identified through:
 ---
 
 **Revision History**:
+
 - 2025-11-12: Initial version (v1.0) - Establishes documentation security review process

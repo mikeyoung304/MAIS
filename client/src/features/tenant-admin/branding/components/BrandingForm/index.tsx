@@ -7,15 +7,15 @@
  * Refactored to accept form object instead of 11 individual props (TODO 106)
  */
 
-import { Save, Palette } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { SectionHeader } from "@/components/ui/section-header";
-import { ColorInput } from "./ColorInput";
-import { FontSelector } from "./FontSelector";
-import { LogoSection } from "./LogoSection";
-import { ErrorMessage } from "./ErrorMessage";
-import type { BrandingForm as BrandingFormData } from "../../hooks/useBrandingManager";
+import { Save, Palette } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { SectionHeader } from '@/components/ui/section-header';
+import { ColorInput } from './ColorInput';
+import { FontSelector } from './FontSelector';
+import { LogoSection } from './LogoSection';
+import { ErrorMessage } from './ErrorMessage';
+import type { BrandingForm as BrandingFormData } from '../../hooks/useBrandingManager';
 
 interface BrandingFormProps {
   form: BrandingFormData;

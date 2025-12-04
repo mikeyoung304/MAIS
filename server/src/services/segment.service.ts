@@ -12,7 +12,11 @@ import {
   invalidateCacheKeys,
   getSegmentInvalidationKeys,
 } from '../lib/cache-helpers';
-import type { PrismaSegmentRepository, CreateSegmentInput, UpdateSegmentInput } from '../adapters/prisma/segment.repository';
+import type {
+  PrismaSegmentRepository,
+  CreateSegmentInput,
+  UpdateSegmentInput,
+} from '../adapters/prisma/segment.repository';
 import { logger } from '../lib/core/logger';
 
 export interface PackageWithAddOns extends Package {
@@ -223,11 +227,7 @@ export class SegmentService {
         throw new ValidationError('Slug must be lowercase alphanumeric with hyphens only');
       }
 
-      const isAvailable = await this.repository.isSlugAvailable(
-        tenantId,
-        data.slug,
-        id
-      );
+      const isAvailable = await this.repository.isSlugAvailable(tenantId, data.slug, id);
       if (!isAvailable) {
         throw new ValidationError(`Slug already exists: ${data.slug}`);
       }
@@ -270,8 +270,10 @@ export class SegmentService {
         await this.storageProvider.deleteSegmentImage(existing.heroImage, tenantId);
       } catch (err) {
         // Don't block segment deletion if cleanup fails
-        logger.warn({ err, heroImage: existing.heroImage, segmentId: id },
-          'Failed to delete segment image - continuing with segment deletion');
+        logger.warn(
+          { err, heroImage: existing.heroImage, segmentId: id },
+          'Failed to delete segment image - continuing with segment deletion'
+        );
       }
     }
 
@@ -294,7 +296,10 @@ export class SegmentService {
    * @returns Package and add-on counts
    * @throws {NotFoundError} If segment doesn't exist or access denied
    */
-  async getSegmentStats(tenantId: string, id: string): Promise<{
+  async getSegmentStats(
+    tenantId: string,
+    id: string
+  ): Promise<{
     packageCount: number;
     addOnCount: number;
   }> {

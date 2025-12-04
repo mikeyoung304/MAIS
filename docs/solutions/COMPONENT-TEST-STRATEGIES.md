@@ -16,6 +16,7 @@ Test patterns to catch duplication issues and verify performance optimizations.
 ### What to Test
 
 **✅ Test these in component tests:**
+
 - Component renders expected output
 - Props are mapped correctly (wrapper → base)
 - User interactions work (clicks, hovers)
@@ -24,6 +25,7 @@ Test patterns to catch duplication issues and verify performance optimizations.
 - Edge cases (missing props, null values)
 
 **❌ Don't test in component tests:**
+
 - Business logic (belongs in service tests)
 - API calls (mock them)
 - Complex calculations (unit test the utility)
@@ -738,9 +740,7 @@ describe('Storefront Utilities', () => {
     });
 
     it('handles missing tiers', () => {
-      const packages: PackageDto[] = [
-        { ...mockPackage, grouping: 'budget' },
-      ];
+      const packages: PackageDto[] = [{ ...mockPackage, grouping: 'budget' }];
 
       const tiers = extractTiers(packages);
 
@@ -764,9 +764,7 @@ describe('Storefront Utilities', () => {
     });
 
     it('ignores unknown grouping values', () => {
-      const packages: PackageDto[] = [
-        { ...mockPackage, grouping: 'unknown-tier' },
-      ];
+      const packages: PackageDto[] = [{ ...mockPackage, grouping: 'unknown-tier' }];
 
       const tiers = extractTiers(packages);
 
@@ -1094,6 +1092,7 @@ it('does not re-render when parent state changes but prop stays same', () => {
 ## Summary
 
 **Test Strategy:**
+
 1. Base component: 100% prop coverage
 2. Wrappers: Props mapping + routing
 3. Memoization: Verify memo prevents re-renders

@@ -23,16 +23,18 @@ Successfully implemented Stripe Connect payment processing with automatic platfo
       "destination": "acct_1234567890ABCDEF"
     }
   },
-  "line_items": [{
-    "price_data": {
-      "currency": "usd",
-      "unit_amount": 150000,
-      "product_data": {
-        "name": "Wedding Package"
-      }
-    },
-    "quantity": 1
-  }],
+  "line_items": [
+    {
+      "price_data": {
+        "currency": "usd",
+        "unit_amount": 150000,
+        "product_data": {
+          "name": "Wedding Package"
+        }
+      },
+      "quantity": 1
+    }
+  ],
   "metadata": {
     "tenantId": "tenant_abc123",
     "commissionAmount": "18000",
@@ -42,6 +44,7 @@ Successfully implemented Stripe Connect payment processing with automatic platfo
 ```
 
 **Payment Flow:**
+
 - Customer pays: $1,500.00
 - Platform fee (12%): $180.00
 - Tenant receives: $1,320.00
@@ -49,18 +52,21 @@ Successfully implemented Stripe Connect payment processing with automatic platfo
 ## Integration Notes
 
 ### Commission Calculation
+
 - Uses existing `CommissionService` for accurate calculation
 - Fetches tenant's `commissionPercent` from database
 - Validates against Stripe limits (0.5% - 50%)
 - Stores commission data in booking record for audit trail
 
 ### Backwards Compatibility
+
 - **100% backwards compatible** - no breaking changes
 - Tenants without Stripe Connect use standard checkout
 - Existing code continues to work unchanged
 - Automatic fallback logic based on `stripeAccountId` presence
 
 ### Routing Logic
+
 ```typescript
 if (tenant.stripeAccountId && tenant.stripeOnboarded) {
   // Stripe Connect - payment to tenant account
@@ -78,9 +84,11 @@ if (tenant.stripeAccountId && tenant.stripeOnboarded) {
 ## Testing
 
 ### Verification Script
+
 Run: `node server/verify-stripe-connect.js`
 
 **Output:**
+
 ```
 === Stripe Connect Integration Verification ===
 
@@ -102,11 +110,13 @@ Stripe Validation:
 ```
 
 ### TypeScript Compilation
+
 - ✅ All modified files compile successfully
 - ✅ No type errors in core payment logic
 - ✅ Interface contracts satisfied
 
 ### Manual Testing Steps
+
 1. Create a booking with a tenant that has `stripeAccountId`
 2. Verify checkout session includes `payment_intent_data`
 3. Confirm `application_fee_amount` matches commission calculation

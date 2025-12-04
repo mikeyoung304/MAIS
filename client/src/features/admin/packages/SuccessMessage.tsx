@@ -1,4 +1,4 @@
-import { CheckCircle } from "lucide-react";
+import { CheckCircle } from 'lucide-react';
 
 interface SuccessMessageProps {
   message: string;

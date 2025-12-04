@@ -1,5 +1,5 @@
 ---
-title: "ESM/CJS Module Compatibility - Implementation Summary"
+title: 'ESM/CJS Module Compatibility - Implementation Summary'
 slug: esm-cjs-implementation-summary
 category: prevention
 tags: [modules, esm, cjs, summary, implementation-guide, architecture]
@@ -23,9 +23,11 @@ This document summarizes the complete ESM/CJS module compatibility prevention sy
 ## Documents Created
 
 ### 1. ESM_CJS_COMPATIBILITY_INDEX.md
+
 **Purpose:** Central index and navigation guide
 **Audience:** Developers starting work on module imports
 **Key Sections:**
+
 - Quick prevention checklist
 - Current module compatibility status table
 - Key concepts explained
@@ -33,6 +35,7 @@ This document summarizes the complete ESM/CJS module compatibility prevention sy
 - Decision tree for pattern selection
 
 **When to Use:**
+
 - First time working with module imports
 - Need overview of ESM/CJS in this project
 - Looking for document you need
@@ -40,9 +43,11 @@ This document summarizes the complete ESM/CJS module compatibility prevention sy
 ---
 
 ### 2. ESM_CJS_COMPATIBILITY_PREVENTION_CHECKLIST.md
+
 **Purpose:** Step-by-step checklist for adding new npm packages
 **Audience:** Developers adding new dependencies
 **Key Sections:**
+
 - Pre-installation investigation (5 minutes)
 - Package metadata analysis
 - Dual package hazard prevention
@@ -51,6 +56,7 @@ This document summarizes the complete ESM/CJS module compatibility prevention sy
 - Post-installation verification
 
 **When to Use:**
+
 - Before running `npm install`
 - Evaluating whether to add a new package
 - Troubleshooting module compatibility issues
@@ -60,9 +66,11 @@ This document summarizes the complete ESM/CJS module compatibility prevention sy
 ---
 
 ### 3. ESM_CJS_CODE_REVIEW_CHECKLIST.md
+
 **Purpose:** Code review items for verifying module compatibility
 **Audience:** Code reviewers during PR reviews
 **Key Sections:**
+
 - Import pattern classification
 - Package.json verification
 - Type safety verification
@@ -75,6 +83,7 @@ This document summarizes the complete ESM/CJS module compatibility prevention sy
 - Example review comments
 
 **When to Use:**
+
 - Reviewing PR with new imports
 - Checking if CJS import has proper comment
 - Verifying tests cover module usage
@@ -83,9 +92,11 @@ This document summarizes the complete ESM/CJS module compatibility prevention sy
 ---
 
 ### 4. ESM_CJS_BEST_PRACTICES.md
+
 **Purpose:** Implementation patterns for handling different module types
 **Audience:** Developers implementing module imports
 **Key Sections:**
+
 - Pattern 1: Direct Imports (ESM-native)
 - Pattern 2: createRequire (CJS-only)
 - Pattern 3: Dynamic Import (Lazy loading)
@@ -97,6 +108,7 @@ This document summarizes the complete ESM/CJS module compatibility prevention sy
 - Testing patterns
 
 **When to Use:**
+
 - Actually writing import statements
 - Designing module architecture
 - Setting up dependency injection
@@ -107,9 +119,11 @@ This document summarizes the complete ESM/CJS module compatibility prevention sy
 ---
 
 ### 5. ESM_CJS_TESTING_RECOMMENDATIONS.md
+
 **Purpose:** Testing strategies for module compatibility
 **Audience:** QA engineers and developers
 **Key Sections:**
+
 - Unit testing CJS imports
 - Integration testing with CJS packages
 - E2E testing with Playwright
@@ -119,12 +133,14 @@ This document summarizes the complete ESM/CJS module compatibility prevention sy
 - Common test failures and solutions
 
 **When to Use:**
+
 - Writing tests for code using CJS packages
 - Verifying new packages work correctly
 - Setting up CI/CD pipeline
 - Debugging test failures
 
 **Real Examples:**
+
 - Unit tests for file-type adapter
 - Integration tests with database
 - E2E tests for user file upload
@@ -133,9 +149,11 @@ This document summarizes the complete ESM/CJS module compatibility prevention sy
 ---
 
 ### 6. ESM_CJS_ALTERNATIVES_GUIDE.md
+
 **Purpose:** Decision framework for dealing with CJS packages
 **Audience:** Tech leads and architects
 **Key Sections:**
+
 - Option 1: Upgrade to ESM version
 - Option 2: Find ESM alternative package
 - Option 3: Use dynamic import
@@ -145,6 +163,7 @@ This document summarizes the complete ESM/CJS module compatibility prevention sy
 - Case study: Successful upgrade
 
 **When to Use:**
+
 - CJS package causing problems
 - Evaluating long-term maintenance
 - Planning package upgrades
@@ -153,9 +172,11 @@ This document summarizes the complete ESM/CJS module compatibility prevention sy
 ---
 
 ### 7. ESM_CJS_QUICK_REFERENCE.md
+
 **Purpose:** One-page cheat sheet for quick decisions
 **Audience:** All developers (print and pin to desk!)
 **Key Sections:**
+
 - Step-by-step: Adding new package
 - Common patterns at a glance
 - Dangerous mistakes (with fixes)
@@ -165,6 +186,7 @@ This document summarizes the complete ESM/CJS module compatibility prevention sy
 - Package status table
 
 **When to Use:**
+
 - Quick decision needed right now
 - Can't remember the pattern
 - Debugging "Cannot find module" error
@@ -247,6 +269,7 @@ Add reference section:
 ### In PR Template
 
 Add section:
+
 ```markdown
 ## Module Compatibility
 
@@ -261,26 +284,31 @@ Add section:
 ## Key Principles Embedded in Documents
 
 ### 1. Prevention Over Cure
+
 - Pre-installation checklist prevents wrong packages
 - Code review catches issues before merge
 - Testing verifies compatibility early
 
 ### 2. Documentation
+
 - Every CJS import must have a comment
 - Comments explain why pattern is needed
 - Links to package repos for future reference
 
 ### 3. Automation
+
 - `npm run typecheck` catches module errors
 - Tests verify actual module behavior
 - CI/CD verifies build succeeds
 
 ### 4. Centralization
+
 - CJS imports wrapped in adapters
 - Single place to maintain type assertions
 - Easier future upgrades
 
 ### 5. Testing Strategy
+
 - Unit tests verify adapter functions
 - Integration tests verify with database
 - E2E tests verify full workflows
@@ -328,7 +356,7 @@ import { createRequire } from 'module';
 // v17+ is ESM - consider upgrading in future
 const require = createRequire(import.meta.url);
 const fileType = require('file-type') as {
-  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>
+  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>;
 };
 
 export class UploadService {
@@ -340,6 +368,7 @@ export class UploadService {
 ```
 
 This implementation:
+
 - ✅ Works in pure ESM environment
 - ✅ Has TypeScript support via type assertion
 - ✅ Is documented with comment and GitHub link
@@ -352,15 +381,18 @@ This implementation:
 ## Maintenance Schedule
 
 ### Monthly
+
 - [ ] Check ESM_CJS_QUICK_REFERENCE for outdated patterns
 - [ ] Review "Package Status" table for new versions
 
 ### Quarterly
+
 - [ ] Check alternatives for CJS packages (any upgrades available?)
 - [ ] Review GitHub issues for "ESM" tags
 - [ ] Update migration opportunities
 
 ### Annually
+
 - [ ] Review which CJS packages can be upgraded
 - [ ] Consider deprecating very old patterns
 - [ ] Update Node.js version if needed
@@ -400,6 +432,7 @@ npm run check:cjs || exit 1
 ## File Locations
 
 All prevention documents are in:
+
 ```
 docs/solutions/
 ├── ESM_CJS_COMPATIBILITY_INDEX.md                    # Start here
@@ -455,6 +488,7 @@ This prevention system was created from real experience with MAIS:
 - **Good documentation** prevents future confusion
 
 The system scales from individual developers to teams:
+
 - **Solo dev:** Print QUICK_REFERENCE.md, bookmark INDEX.md
 - **Small team:** Use CODE_REVIEW_CHECKLIST.md in PRs
 - **Growing team:** Integrate into CLAUDE.md and lint rules
@@ -464,16 +498,16 @@ The system scales from individual developers to teams:
 
 ## Resources Created
 
-| Document | Pages | Audience | Purpose |
-|----------|-------|----------|---------|
-| INDEX | 4 | Everyone | Navigation & overview |
-| PREVENTION_CHECKLIST | 8 | Developers adding packages | Step-by-step evaluation |
-| CODE_REVIEW_CHECKLIST | 10 | Code reviewers | Verification items |
-| BEST_PRACTICES | 12 | Developers implementing | Patterns & examples |
-| TESTING_RECOMMENDATIONS | 8 | QA & developers | Testing strategies |
-| ALTERNATIVES_GUIDE | 8 | Tech leads | Package selection |
-| QUICK_REFERENCE | 6 | All developers | Print & pin |
-| **Total** | **56** | **All roles** | **Complete system** |
+| Document                | Pages  | Audience                   | Purpose                 |
+| ----------------------- | ------ | -------------------------- | ----------------------- |
+| INDEX                   | 4      | Everyone                   | Navigation & overview   |
+| PREVENTION_CHECKLIST    | 8      | Developers adding packages | Step-by-step evaluation |
+| CODE_REVIEW_CHECKLIST   | 10     | Code reviewers             | Verification items      |
+| BEST_PRACTICES          | 12     | Developers implementing    | Patterns & examples     |
+| TESTING_RECOMMENDATIONS | 8      | QA & developers            | Testing strategies      |
+| ALTERNATIVES_GUIDE      | 8      | Tech leads                 | Package selection       |
+| QUICK_REFERENCE         | 6      | All developers             | Print & pin             |
+| **Total**               | **56** | **All roles**              | **Complete system**     |
 
 ---
 

@@ -24,9 +24,7 @@ const UpdateDepositSettingsSchema = z.object({
  *
  * @param tenantRepo - PrismaTenantRepository from DI container
  */
-export function createTenantAdminDepositRoutes(
-  tenantRepo: PrismaTenantRepository
-): Router {
+export function createTenantAdminDepositRoutes(tenantRepo: PrismaTenantRepository): Router {
   const router = Router();
 
   /**
@@ -56,10 +54,7 @@ export function createTenantAdminDepositRoutes(
       const depositPercent = tenant.depositPercent ? Number(tenant.depositPercent) : null;
       const balanceDueDays = tenant.balanceDueDays || 30;
 
-      logger.debug(
-        { tenantId, depositPercent, balanceDueDays },
-        'Deposit settings retrieved'
-      );
+      logger.debug({ tenantId, depositPercent, balanceDueDays }, 'Deposit settings retrieved');
 
       res.status(200).json({
         depositPercent,

@@ -18,13 +18,11 @@ export type TenantBrandingDto = z.infer<typeof TenantBrandingDtoSchema>;
 export const UpdateBrandingDtoSchema = z.object({
   primaryColor: z
     .string()
-    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 
-      'Must be hex color: #RRGGBB or #RGB')
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Must be hex color: #RRGGBB or #RGB')
     .optional(),
   secondaryColor: z
     .string()
-    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 
-      'Must be hex color: #RRGGBB or #RGB')
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Must be hex color: #RRGGBB or #RGB')
     .optional(),
   fontFamily: z.string().min(1, 'Font family required').optional(),
   logo: z.string().url('Invalid URL').optional(),
@@ -48,21 +46,21 @@ model Tenant {
   slug String @unique
   name String
   email String?
-  
+
   // Branding configuration - flexible JSON schema
   branding Json @default("{}")
   // Example value:
   // {
   //   "primaryColor": "#9b87f5",
-  //   "secondaryColor": "#7e69ab", 
+  //   "secondaryColor": "#7e69ab",
   //   "fontFamily": "Inter",
   //   "logo": "https://cdn.example.com/logo.png"
   // }
-  
+
   isActive Boolean @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([slug])
 }
 ```
@@ -128,15 +126,15 @@ router.get('/branding', async (req: Request, res: Response): Promise<void> => {
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
-    
+
     const tenantId = tenantAuth.tenantId; // From JWT token
     const tenant = await tenantRepository.findById(tenantId);
-    
+
     if (!tenant) {
       res.status(404).json({ error: 'Tenant not found' });
       return;
     }
-    
+
     const branding = (tenant.branding as any) || {};
     res.status(200).json({
       primaryColor: branding.primaryColor,
@@ -156,16 +154,22 @@ router.put('/branding', async (req: Request, res: Response): Promise<void> => {
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
-    
+
     const tenantId = tenantAuth.tenantId;
-    
+
     // Validate request
     const schema = z.object({
-      primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-      secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+      primaryColor: z
+        .string()
+        .regex(/^#[0-9A-Fa-f]{6}$/)
+        .optional(),
+      secondaryColor: z
+        .string()
+        .regex(/^#[0-9A-Fa-f]{6}$/)
+        .optional(),
       fontFamily: z.string().optional(),
     });
-    
+
     const validation = schema.safeParse(req.body);
     if (!validation.success) {
       res.status(400).json({
@@ -174,26 +178,26 @@ router.put('/branding', async (req: Request, res: Response): Promise<void> => {
       });
       return;
     }
-    
+
     // Get current tenant
     const tenant = await tenantRepository.findById(tenantId);
     if (!tenant) {
       res.status(404).json({ error: 'Tenant not found' });
       return;
     }
-    
+
     // Merge updates with existing config
     const currentBranding = (tenant.branding as any) || {};
     const updatedBranding = {
       ...currentBranding,
       ...validation.data,
     };
-    
+
     // Save to database
     await tenantRepository.update(tenantId, {
       branding: updatedBranding,
     });
-    
+
     // Return updated config
     res.status(200).json({
       primaryColor: updatedBranding.primaryColor,
@@ -213,19 +217,17 @@ router.put('/branding', async (req: Request, res: Response): Promise<void> => {
 // From server/src/controllers/tenant-admin.controller.ts
 
 export class TenantAdminController {
-  constructor(
-    private readonly tenantRepo: PrismaTenantRepository
-  ) {}
+  constructor(private readonly tenantRepo: PrismaTenantRepository) {}
 
   async getBranding(tenantId: string): Promise<BrandingDto> {
     const tenant = await this.tenantRepo.findById(tenantId);
-    
+
     if (!tenant) {
       throw new NotFoundError('Tenant not found');
     }
 
     const branding = (tenant.branding as any) || {};
-    
+
     return {
       primaryColor: branding.primaryColor,
       secondaryColor: branding.secondaryColor,
@@ -234,12 +236,9 @@ export class TenantAdminController {
     };
   }
 
-  async updateBranding(
-    tenantId: string,
-    data: UpdateBrandingInput
-  ): Promise<BrandingDto> {
+  async updateBranding(tenantId: string, data: UpdateBrandingInput): Promise<BrandingDto> {
     const tenant = await this.tenantRepo.findById(tenantId);
-    
+
     if (!tenant) {
       throw new NotFoundError('Tenant not found');
     }
@@ -282,7 +281,7 @@ let tenantToken: string | null = null;
   body: unknown;
 }> => {
   const token = tenantToken || localStorage.getItem('tenantToken');
-  
+
   const response = await fetch(`${baseUrl}/v1/tenant/admin/branding`, {
     method: 'GET',
     headers: {
@@ -307,7 +306,7 @@ let tenantToken: string | null = null;
   };
 }): Promise<{ status: number; body: unknown }> => {
   const token = tenantToken || localStorage.getItem('tenantToken');
-  
+
   if (!token) {
     throw new Error('Not authenticated');
   }
@@ -592,7 +591,7 @@ import { api } from '@/lib/api';
 describe('Branding API', () => {
   it('fetches tenant branding', async () => {
     const { status, body } = await api.tenantGetBranding();
-    
+
     expect(status).toBe(200);
     expect(body).toHaveProperty('primaryColor');
     expect(body).toHaveProperty('secondaryColor');
@@ -607,7 +606,7 @@ describe('Branding API', () => {
     });
 
     expect(status).toBe(200);
-    
+
     // Verify update
     const { body } = await api.tenantGetBranding();
     expect(body.primaryColor).toBe('#FF5733');
@@ -632,6 +631,7 @@ describe('Branding API', () => {
 ### Adding `accentColor` Field
 
 **Step 1**: Update Zod schema
+
 ```typescript
 // packages/contracts/src/dto.ts
 export const TenantBrandingDtoSchema = z.object({
@@ -639,11 +639,15 @@ export const TenantBrandingDtoSchema = z.object({
   secondaryColor: z.string().optional(),
   fontFamily: z.string().optional(),
   logo: z.string().url().optional(),
-  accentColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).optional(),
+  accentColor: z
+    .string()
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+    .optional(),
 });
 ```
 
 **Step 2**: Update API contract
+
 ```typescript
 // packages/contracts/src/api.v1.ts
 tenantUpdateBranding: {
@@ -662,6 +666,7 @@ tenantUpdateBranding: {
 ```
 
 **Step 3**: No database changes needed!
+
 ```prisma
 // PostgreSQL JSONB automatically handles new fields
 // No migration required
@@ -669,6 +674,7 @@ tenantUpdateBranding: {
 ```
 
 **Step 4**: Update client component
+
 ```typescript
 const [accentColor, setAccentColor] = useState('#FFD700');
 
@@ -684,4 +690,3 @@ await api.tenantUpdateBranding({
 ```
 
 That's it! Backward compatible, no downtime.
-

@@ -7,6 +7,7 @@ Audit of MAIS documentation system to identify outdated content, assess system e
 ## Problem Statement
 
 Documentation may be out of sync with codebase reality. Need to:
+
 1. Identify stale/inaccurate documentation
 2. Assess if doc system is working effectively
 3. Understand and optimize "compound engineering flow"
@@ -18,18 +19,21 @@ Documentation may be out of sync with codebase reality. Need to:
 ### Critical Issues Found
 
 #### 1. Test Count Mismatch
+
 - **CLAUDE.md claims**: 773 server tests passing
 - **Actual**: 771 passing, 2 failing
 - **Location**: CLAUDE.md lines 16, 414, 425
 - **Fix**: Update test counts, note failing tests
 
 #### 2. Doctor Script Wrong Paths
+
 - **File**: `server/scripts/doctor.ts`
 - **Problem**: References old `apps/api/` path structure (lines 133-134, 209, 272)
 - **Reality**: Project uses `server/` directory
 - **Impact**: `npm run doctor` gives misleading guidance
 
 #### 3. Date/Sprint Inconsistencies
+
 - CLAUDE.md: "November 25, 2025" (Day 1 Status)
 - ARCHITECTURE.md: "January 2025" (Sprint 10 Complete)
 - Confusing timeline for readers
@@ -37,16 +41,19 @@ Documentation may be out of sync with codebase reality. Need to:
 ### Medium Issues
 
 #### 4. Missing Retry Helper Documentation
+
 - Sprint 10 added retry helpers with exponential backoff (225 lines)
 - Not mentioned in CLAUDE.md Test Strategy section
 - Developers miss this for concurrent/race-condition tests
 
 #### 5. Undocumented Test Commands
+
 - `test:e2e:headed` exists in package.json but not in CLAUDE.md
 
 ### Low Priority
 
 #### 6. Prisma Deprecation Warning
+
 - `package.json#prisma` config deprecated, will be removed in Prisma 7
 - Should migrate to `prisma/prisma.config.ts`
 
@@ -56,29 +63,30 @@ Documentation may be out of sync with codebase reality. Need to:
 
 ### What's Working Well
 
-| Aspect | Status | Evidence |
-|--------|--------|----------|
-| Pre-commit validation | ✅ Strong | `scripts/validate-docs.sh` runs automatically |
-| AI-first design | ✅ Strong | CLAUDE.md + PATTERNS.md optimized for agents |
-| Diátaxis framework | ✅ Adopted | ADR-001 documents decision |
-| Secret scanning | ✅ Active | Prevents credentials in docs |
-| Metadata tracking | ✅ Present | Version/LastUpdated headers |
-| Archive system | ✅ Working | Time-based `archive/{YYYY-MM}/` |
+| Aspect                | Status     | Evidence                                      |
+| --------------------- | ---------- | --------------------------------------------- |
+| Pre-commit validation | ✅ Strong  | `scripts/validate-docs.sh` runs automatically |
+| AI-first design       | ✅ Strong  | CLAUDE.md + PATTERNS.md optimized for agents  |
+| Diátaxis framework    | ✅ Adopted | ADR-001 documents decision                    |
+| Secret scanning       | ✅ Active  | Prevents credentials in docs                  |
+| Metadata tracking     | ✅ Present | Version/LastUpdated headers                   |
+| Archive system        | ✅ Working | Time-based `archive/{YYYY-MM}/`               |
 
 ### Gaps Identified
 
-| Gap | Impact | Effort to Fix |
-|-----|--------|---------------|
-| No link validation | Broken references undetected | Medium |
-| Code example staleness | Examples drift from actual code | High |
-| No bidirectional ADR links | ADRs don't link to code they govern | Low |
-| No adherence metrics | Can't measure pattern compliance | Medium |
+| Gap                        | Impact                              | Effort to Fix |
+| -------------------------- | ----------------------------------- | ------------- |
+| No link validation         | Broken references undetected        | Medium        |
+| Code example staleness     | Examples drift from actual code     | High          |
+| No bidirectional ADR links | ADRs don't link to code they govern | Low           |
+| No adherence metrics       | Can't measure pattern compliance    | Medium        |
 
 ---
 
 ## What is "Compound Engineering Flow"?
 
 ### Definition
+
 A systematic approach where each development step builds on previous steps, creating compounding quality improvements:
 
 ```
@@ -107,6 +115,7 @@ Code → Pattern Validation → Documentation → AI Guidance → Review → Tes
    - Versioned audit trail (ADRs)
 
 ### Key Benefit
+
 Each step reinforces previous work. Quality compounds over time rather than degrading.
 
 ---
@@ -137,12 +146,14 @@ Each step reinforces previous work. Quality compounds over time rather than degr
 ## Files to Modify
 
 ### Phase A
+
 ```
 server/scripts/doctor.ts        # Fix path references
 CLAUDE.md                       # Update test counts, add commands
 ```
 
 ### Phase B
+
 ```
 CLAUDE.md                       # Add retry helpers, fix dates
 DEVELOPING.md                   # Sync test counts
@@ -168,4 +179,3 @@ ARCHITECTURE.md                 # Clarify sprint timeline
 - **Option A**: Phase A only (30 min) - fix critical inaccuracies
 - **Option B**: Phase A + B (2 hours) - comprehensive update
 - **Option C**: All phases - includes system improvements
-

@@ -16,6 +16,7 @@ Stripe webhooks are the critical link between payment success and booking creati
 4. Customer is charged with no booking
 
 Stripe has built-in retry logic (sends webhook up to 3 times), but we need additional safety nets:
+
 - What if all 3 attempts fail?
 - How do we track webhook processing attempts?
 - How do we manually recover from persistent failures?
@@ -25,6 +26,7 @@ Stripe has built-in retry logic (sends webhook up to 3 times), but we need addit
 We have chosen to implement a **database-based webhook dead letter queue (DLQ)** by adding a `WebhookEvent` table to our schema.
 
 **Schema:**
+
 ```prisma
 model WebhookEvent {
   id          String   @id @default(cuid())
@@ -42,6 +44,7 @@ model WebhookEvent {
 ```
 
 **Webhook Handler Logic:**
+
 ```typescript
 async handleStripeWebhook(rawBody: string, signature: string) {
   // 1. Verify signature
@@ -90,6 +93,7 @@ async handleStripeWebhook(rawBody: string, signature: string) {
 ## Consequences
 
 **Positive:**
+
 - **Auditability:** Every webhook attempt is logged in database
 - **Idempotency:** Duplicate webhooks are automatically detected and skipped
 - **Manual recovery:** Failed webhooks can be reprocessed manually via admin dashboard
@@ -98,11 +102,13 @@ async handleStripeWebhook(rawBody: string, signature: string) {
 - **No additional infrastructure:** Uses existing PostgreSQL database
 
 **Negative:**
+
 - **Database writes:** Every webhook creates/updates a database row
 - **Storage growth:** Webhook events table grows over time (requires cleanup strategy)
 - **Transaction overhead:** Each webhook requires 2+ database operations
 
 **Mitigation Strategies:**
+
 - Add cron job to archive old webhook events (>90 days)
 - Add index on `status` and `createdAt` for fast queries
 - Consider table partitioning for high-volume scenarios
@@ -114,6 +120,7 @@ async handleStripeWebhook(rawBody: string, signature: string) {
 **Approach:** Store failed webhooks in Redis queue, process with background worker.
 
 **Why Rejected:**
+
 - **Additional infrastructure:** Requires Redis deployment
 - **Complexity:** Requires background worker process
 - **Volatility:** Redis is in-memory; data lost on restart
@@ -124,6 +131,7 @@ async handleStripeWebhook(rawBody: string, signature: string) {
 **Approach:** Write failed webhooks to files, process with cron job.
 
 **Why Rejected:**
+
 - **No concurrent access:** Multiple servers can't safely access files
 - **No transactions:** Can't atomically check + update webhook status
 - **Limited querying:** Can't easily query by status or date
@@ -134,6 +142,7 @@ async handleStripeWebhook(rawBody: string, signature: string) {
 **Approach:** Send failed webhooks to external queue service.
 
 **Why Rejected:**
+
 - **Additional cost:** AWS SQS or RabbitMQ hosting fees
 - **Complexity:** Another service to maintain and monitor
 - **Network dependency:** Queue unavailability blocks webhook processing
@@ -144,6 +153,7 @@ async handleStripeWebhook(rawBody: string, signature: string) {
 **Approach:** Let Stripe retry webhook, log errors, manually reconcile failures.
 
 **Why Rejected:**
+
 - **Lost payments:** If all Stripe retries fail, payment → booking link is lost
 - **Manual reconciliation:** Operations team must manually match payments to bookings
 - **No audit trail:** No record of webhook attempts or failures
@@ -152,22 +162,26 @@ async handleStripeWebhook(rawBody: string, signature: string) {
 ## Implementation Details
 
 **Files Modified:**
+
 - `server/prisma/schema.prisma` - Added `WebhookEvent` model
 - `server/src/routes/webhooks.routes.ts` - Updated webhook handler with DLQ logic
 - `server/src/adapters/prisma/webhook.repository.ts` - Created (handles webhook event persistence)
 
 **Migration:**
+
 ```bash
 npx prisma migrate dev --name add_webhook_events
 ```
 
 **Testing:**
+
 - Added test for duplicate webhook handling
 - Added test for failed webhook storage
 - Verified webhook replay from database
 
 **Rollback Plan:**
 If webhook events table causes performance issues:
+
 1. Remove webhook event persistence
 2. Keep idempotency check only (use in-memory cache with TTL)
 3. Revert to Stripe retry-only approach

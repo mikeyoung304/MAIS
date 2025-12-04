@@ -54,7 +54,11 @@ export function cacheMiddleware(options: CacheOptions = {}) {
     const key = keyGenerator(req);
 
     // Check if response is in cache
-    const cachedResponse = cache.get<{ status: number; body: any; headers: Record<string, string> }>(key);
+    const cachedResponse = cache.get<{
+      status: number;
+      body: any;
+      headers: Record<string, string>;
+    }>(key);
 
     if (cachedResponse) {
       logger.debug({ key, ttl }, 'Cache hit');

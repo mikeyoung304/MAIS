@@ -13,6 +13,7 @@ This document reviews all CLI scripts, automation tools, and non-request-context
 **Purpose:** One-time tenant creation script for Macon, GA tenant
 
 **Mutations:**
+
 - Creates Tenant record with initial branding
 - Sets commission percentage
 - Generates API keys
@@ -20,6 +21,7 @@ This document reviews all CLI scripts, automation tools, and non-request-context
 **Audit Strategy:** ✅ **SKIP AUDITING**
 
 **Rationale:**
+
 - One-time setup script (not production automation)
 - Creates initial state (no "before" state to audit)
 - Can be re-run safely (uses upsert)
@@ -34,12 +36,14 @@ This document reviews all CLI scripts, automation tools, and non-request-context
 **Purpose:** Updates admin user email and password
 
 **Mutations:**
+
 - Modifies User table only
 - Changes email from admin@example.com to admin@elope.com
 
 **Audit Strategy:** ✅ **OUT OF SCOPE**
 
 **Rationale:**
+
 - User table is NOT in audit scope (Sprint 2.1 focuses on Package/Branding/Blackout)
 - Platform admin operations (not tenant-scoped)
 - One-time migration script
@@ -53,6 +57,7 @@ This document reviews all CLI scripts, automation tools, and non-request-context
 **Purpose:** Seeds database with sample data for development
 
 **Mutations:**
+
 - Creates User (admin)
 - Creates Packages (classic, garden, luxury)
 - Creates AddOns
@@ -62,6 +67,7 @@ This document reviews all CLI scripts, automation tools, and non-request-context
 **Audit Strategy:** ✅ **SKIP AUDITING**
 
 **Rationale:**
+
 - Development/test data only (not production)
 - Initial seed (no before state)
 - Creates sample data for local development
@@ -98,6 +104,7 @@ const SYSTEM_AUDIT_CONTEXT = {
 No batch import or export functionality exists.
 
 **Future Recommendation:** Batch operations should:
+
 1. Log each entity mutation individually
 2. Use system context with metadata indicating batch ID
 3. Include reason field: "Batch import - ID: batch_123"
@@ -135,6 +142,7 @@ Error handlers in `server/src/middleware/error-handler.ts` only log errors, do n
 **File:** `server/src/routes/webhooks.routes.ts`
 
 **Mutations:**
+
 - Updates Booking status (NOT in audit scope)
 - No Package/Branding/Blackout modifications
 
@@ -166,21 +174,21 @@ No background job processors (Bull, BeeQueue, etc.) configured.
 
 ### Current Scripts (All Acceptable)
 
-| Script                  | Mutations            | Audit? | Rationale                |
-|-------------------------|----------------------|--------|--------------------------|
-| create-macon-tenant.ts  | Tenant + Branding    | NO     | One-time setup           |
-| fix-admin-user.ts       | User table           | NO     | Out of scope             |
-| prisma/seed.ts          | All tables           | NO     | Dev/test data            |
+| Script                 | Mutations         | Audit? | Rationale      |
+| ---------------------- | ----------------- | ------ | -------------- |
+| create-macon-tenant.ts | Tenant + Branding | NO     | One-time setup |
+| fix-admin-user.ts      | User table        | NO     | Out of scope   |
+| prisma/seed.ts         | All tables        | NO     | Dev/test data  |
 
 ### Future Automation (Guidelines)
 
-| Type                    | Audit Required? | Context                  |
-|-------------------------|-----------------|--------------------------|
-| Cron jobs               | YES             | System context           |
-| Batch imports           | YES             | System context + batch ID|
-| Data migrations         | YES             | System context + reason  |
-| Webhooks                | CONDITIONAL     | Depends on entity        |
-| Error handlers          | NO              | Read-only                |
+| Type            | Audit Required? | Context                   |
+| --------------- | --------------- | ------------------------- |
+| Cron jobs       | YES             | System context            |
+| Batch imports   | YES             | System context + batch ID |
+| Data migrations | YES             | System context + reason   |
+| Webhooks        | CONDITIONAL     | Depends on entity         |
+| Error handlers  | NO              | Read-only                 |
 
 ---
 
@@ -224,15 +232,18 @@ async function processScheduledPriceUpdates() {
 ## Migration Path for CLI Scripts
 
 ### Phase 1: Current State (Sprint 2.1) ✅
+
 - Setup scripts skip auditing (acceptable)
 - All production mutations via API are audited
 
 ### Phase 2: Production Automation (Sprint 5+)
+
 - Add system audit context to any new automation
 - Cron jobs MUST audit changes
 - Batch operations MUST audit each entity
 
 ### Phase 3: Comprehensive Audit (Sprint 6+)
+
 - Audit User table changes (platform admin operations)
 - Audit Booking mutations (currently out of scope)
 - Add audit log viewer UI for ops team

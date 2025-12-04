@@ -327,9 +327,9 @@ describe('ApiKeyService', () => {
     it('rejects public key with wrong random length', () => {
       // Act & Assert
       expect(service.isValidPublicKeyFormat('pk_live_bellaweddings_abc123')).toBe(false); // Too short
-      expect(
-        service.isValidPublicKeyFormat('pk_live_bellaweddings_a3f8c9d2e1b4f7g8abcdef')
-      ).toBe(false); // Too long
+      expect(service.isValidPublicKeyFormat('pk_live_bellaweddings_a3f8c9d2e1b4f7g8abcdef')).toBe(
+        false
+      ); // Too long
     });
 
     it('rejects public key with uppercase random chars', () => {
@@ -376,12 +376,12 @@ describe('ApiKeyService', () => {
 
     it('rejects secret key with wrong prefix', () => {
       // Act & Assert
-      expect(
-        service.isValidSecretKeyFormat('pk_live_bellaweddings_a3f8c9d2e1b4f7g8h9i0j1k2')
-      ).toBe(false);
-      expect(
-        service.isValidSecretKeyFormat('sk_test_bellaweddings_a3f8c9d2e1b4f7g8h9i0j1k2')
-      ).toBe(false);
+      expect(service.isValidSecretKeyFormat('pk_live_bellaweddings_a3f8c9d2e1b4f7g8h9i0j1k2')).toBe(
+        false
+      );
+      expect(service.isValidSecretKeyFormat('sk_test_bellaweddings_a3f8c9d2e1b4f7g8h9i0j1k2')).toBe(
+        false
+      );
     });
 
     it('rejects secret key with wrong random length', () => {
@@ -389,9 +389,7 @@ describe('ApiKeyService', () => {
       expect(service.isValidSecretKeyFormat('sk_live_bellaweddings_abc123')).toBe(false); // Too short (6 chars)
       expect(service.isValidSecretKeyFormat('sk_live_bellaweddings_a3f8c9d2e1b4f7g8')).toBe(false); // Too short (16 chars)
       expect(
-        service.isValidSecretKeyFormat(
-          'sk_live_bellaweddings_a3f8c9d2e1b4f7g8h9i0j1k2l3m4n5o6p7q8'
-        )
+        service.isValidSecretKeyFormat('sk_live_bellaweddings_a3f8c9d2e1b4f7g8h9i0j1k2l3m4n5o6p7q8')
       ).toBe(false); // Too long
     });
 

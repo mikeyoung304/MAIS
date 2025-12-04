@@ -1,8 +1,8 @@
-import React, { useRef, useState } from "react";
-import { Upload, X, Loader2, CheckCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
-import { getAuthToken } from "@/lib/auth";
+import React, { useRef, useState } from 'react';
+import { Upload, X, Loader2, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api';
+import { getAuthToken } from '@/lib/auth';
 
 interface LogoUploadButtonProps {
   currentLogoUrl?: string;
@@ -27,16 +27,16 @@ export function LogoUploadButton({
     if (!file) return;
 
     // Validate file type
-    const validTypes = ["image/png", "image/jpeg", "image/jpg", "image/svg+xml", "image/webp"];
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-      onUploadError?.("Please upload a valid image file (PNG, JPG, SVG, or WebP)");
+      onUploadError?.('Please upload a valid image file (PNG, JPG, SVG, or WebP)');
       return;
     }
 
     // Validate file size (2MB max)
     const maxSize = 2 * 1024 * 1024; // 2MB
     if (file.size > maxSize) {
-      onUploadError?.("Logo file must be less than 2MB");
+      onUploadError?.('Logo file must be less than 2MB');
       return;
     }
 
@@ -54,15 +54,15 @@ export function LogoUploadButton({
 
     try {
       const formData = new FormData();
-      formData.append("logo", file);
+      formData.append('logo', file);
 
       const token = getAuthToken();
       if (!token) {
-        throw new Error("Authentication required");
+        throw new Error('Authentication required');
       }
 
       const response = await fetch(`${api.baseUrl}/v1/tenant-admin/logo`, {
-        method: "POST",
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -70,8 +70,8 @@ export function LogoUploadButton({
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: "Upload failed" }));
-        throw new Error(error.error || "Failed to upload logo");
+        const error = await response.json().catch(() => ({ error: 'Upload failed' }));
+        throw new Error(error.error || 'Failed to upload logo');
       }
 
       const result = await response.json();
@@ -82,9 +82,9 @@ export function LogoUploadButton({
       setTimeout(() => setUploadSuccess(false), 3000);
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.error("Logo upload failed:", error);
+        console.error('Logo upload failed:', error);
       }
-      onUploadError?.(error instanceof Error ? error.message : "Failed to upload logo");
+      onUploadError?.(error instanceof Error ? error.message : 'Failed to upload logo');
       // Reset preview on error
       setPreviewUrl(currentLogoUrl);
     } finally {
@@ -98,9 +98,9 @@ export function LogoUploadButton({
 
   const handleRemoveLogo = () => {
     setPreviewUrl(undefined);
-    onUploadSuccess("");
+    onUploadSuccess('');
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = '';
     }
   };
 
@@ -162,15 +162,13 @@ export function LogoUploadButton({
         ) : (
           <>
             <Upload className="w-4 h-4 mr-2" aria-hidden="true" />
-            {previewUrl ? "Change Logo" : "Upload Logo"}
+            {previewUrl ? 'Change Logo' : 'Upload Logo'}
           </>
         )}
       </Button>
 
       {/* Helper text */}
-      <p className="text-sm text-white/60">
-        Recommended: Square image, PNG or SVG format, max 2MB
-      </p>
+      <p className="text-sm text-white/60">Recommended: Square image, PNG or SVG format, max 2MB</p>
     </div>
   );
 }

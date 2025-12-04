@@ -35,9 +35,11 @@
 ### ts-rest Handlers (DO NOT REMOVE)
 
 **Files:**
+
 - `server/src/routes/index.ts` - All route handlers
 
 **Pattern:**
+
 ```typescript
 // ❌ DON'T CHANGE THIS
 const getPackages: async ({ req }: { req: any }) => {
@@ -46,8 +48,9 @@ const getPackages: async ({ req }: { req: any }) => {
 **Why:** ts-rest v3 incompatible with Express 4.x/5.x types
 
 **Workaround:** Type after extraction
+
 ```typescript
-const tenantId = getTenantId(req as TenantRequest);  // ← This asserts the type
+const tenantId = getTenantId(req as TenantRequest); // ← This asserts the type
 ```
 
 ---
@@ -130,12 +133,12 @@ npm run typecheck
 
 ## Files That Are Safe to Type
 
-| File | Status | Action |
-|------|--------|--------|
-| `routes/index.ts` | ❌ DO NOT CHANGE `req` parameter | Keep `any` |
-| `adapters/stripe.adapter.ts` | ✅ Review each case | Usually fixable |
-| `services/*.ts` | ✅ Safe to improve | Remove `any` |
-| `lib/*.ts` | ✅ Safe to improve | Remove `any` |
+| File                         | Status                           | Action          |
+| ---------------------------- | -------------------------------- | --------------- |
+| `routes/index.ts`            | ❌ DO NOT CHANGE `req` parameter | Keep `any`      |
+| `adapters/stripe.adapter.ts` | ✅ Review each case              | Usually fixable |
+| `services/*.ts`              | ✅ Safe to improve               | Remove `any`    |
+| `lib/*.ts`                   | ✅ Safe to improve               | Remove `any`    |
 
 ---
 
@@ -166,4 +169,3 @@ async function handleWebhook(event: any): Promise<void> {
 **If the build breaks when you remove `any`, put it back and document why.**
 
 That's the signal that it's a library limitation, not a code quality issue.
-

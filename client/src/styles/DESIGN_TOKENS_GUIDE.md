@@ -9,9 +9,11 @@ This design token system follows Apple Human Interface Guidelines and ensures al
 ## Core Principles
 
 ### 1. Semantic Over Direct
+
 Always use semantic tokens (e.g., `--text-primary`) rather than direct color values (e.g., `--macon-navy-900`).
 
 **Good:**
+
 ```css
 .my-component {
   color: var(--text-primary);
@@ -20,6 +22,7 @@ Always use semantic tokens (e.g., `--text-primary`) rather than direct color val
 ```
 
 **Avoid:**
+
 ```css
 .my-component {
   color: var(--macon-navy-900);
@@ -28,6 +31,7 @@ Always use semantic tokens (e.g., `--text-primary`) rather than direct color val
 ```
 
 ### 2. Interactive States
+
 Use the complete interactive state tokens for buttons and controls.
 
 ```css
@@ -181,52 +185,65 @@ Use semantic colors for status indicators and user feedback:
 
 ```css
 /* Headings - Serif Font */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
 }
 
 /* Body Text - System Font Stack */
-body, p, span {
+body,
+p,
+span {
   font-family: var(--font-body);
 }
 
 /* Code - Monospace */
-code, pre {
+code,
+pre {
   font-family: var(--font-mono);
 }
 ```
 
 ### Font Sizes (Modular Scale - 1.250 ratio)
 
-| Token | Size | Use Case |
-|-------|------|----------|
-| `--font-size-xs` | 12px | Fine print, captions |
-| `--font-size-sm` | 14px | Small text, labels |
-| `--font-size-base` | 16px | Body text (default) |
-| `--font-size-md` | 18px | Large body text |
-| `--font-size-lg` | 20px | Subheadings |
-| `--font-size-xl` | 24px | Small headings |
-| `--font-size-2xl` | 30px | Medium headings |
-| `--font-size-3xl` | 36px | Large headings |
-| `--font-size-4xl` | 48px | Extra large headings |
-| `--font-size-5xl` | 60px | Hero headings |
-| `--font-size-6xl` | 72px | Display text |
+| Token              | Size | Use Case             |
+| ------------------ | ---- | -------------------- |
+| `--font-size-xs`   | 12px | Fine print, captions |
+| `--font-size-sm`   | 14px | Small text, labels   |
+| `--font-size-base` | 16px | Body text (default)  |
+| `--font-size-md`   | 18px | Large body text      |
+| `--font-size-lg`   | 20px | Subheadings          |
+| `--font-size-xl`   | 24px | Small headings       |
+| `--font-size-2xl`  | 30px | Medium headings      |
+| `--font-size-3xl`  | 36px | Large headings       |
+| `--font-size-4xl`  | 48px | Extra large headings |
+| `--font-size-5xl`  | 60px | Hero headings        |
+| `--font-size-6xl`  | 72px | Display text         |
 
 ### Line Heights (Readability Optimized)
 
 ```css
 /* Headings - Tighter spacing */
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   line-height: var(--line-height-tight); /* 1.2 */
 }
 
 /* Subheadings */
-h4, h5, h6 {
+h4,
+h5,
+h6 {
   line-height: var(--line-height-snug); /* 1.3 */
 }
 
 /* Body Text - Optimal readability */
-p, li {
+p,
+li {
   line-height: var(--line-height-normal); /* 1.5 */
 }
 
@@ -239,11 +256,21 @@ p, li {
 ### Font Weights
 
 ```css
-.regular { font-weight: var(--font-weight-normal); }    /* 400 */
-.medium { font-weight: var(--font-weight-medium); }     /* 500 */
-.semibold { font-weight: var(--font-weight-semibold); } /* 600 */
-.bold { font-weight: var(--font-weight-bold); }         /* 700 */
-.extrabold { font-weight: var(--font-weight-extrabold); } /* 800 */
+.regular {
+  font-weight: var(--font-weight-normal);
+} /* 400 */
+.medium {
+  font-weight: var(--font-weight-medium);
+} /* 500 */
+.semibold {
+  font-weight: var(--font-weight-semibold);
+} /* 600 */
+.bold {
+  font-weight: var(--font-weight-bold);
+} /* 700 */
+.extrabold {
+  font-weight: var(--font-weight-extrabold);
+} /* 800 */
 ```
 
 ### Letter Spacing
@@ -255,7 +282,9 @@ p, li {
 }
 
 /* Regular Headings */
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   letter-spacing: var(--letter-spacing-tight); /* -0.025em */
 }
 
@@ -291,22 +320,22 @@ p {
 
 All spacing uses a 4px base unit for perfect alignment.
 
-| Token | Value | Pixels |
-|-------|-------|--------|
-| `--space-0` | 0 | 0px |
-| `--space-1` | 0.25rem | 4px |
-| `--space-2` | 0.5rem | 8px |
-| `--space-3` | 0.75rem | 12px |
-| `--space-4` | 1rem | 16px |
-| `--space-5` | 1.25rem | 20px |
-| `--space-6` | 1.5rem | 24px |
-| `--space-8` | 2rem | 32px |
-| `--space-10` | 2.5rem | 40px |
-| `--space-12` | 3rem | 48px |
-| `--space-16` | 4rem | 64px |
-| `--space-20` | 5rem | 80px |
-| `--space-24` | 6rem | 96px |
-| `--space-32` | 8rem | 128px |
+| Token        | Value   | Pixels |
+| ------------ | ------- | ------ |
+| `--space-0`  | 0       | 0px    |
+| `--space-1`  | 0.25rem | 4px    |
+| `--space-2`  | 0.5rem  | 8px    |
+| `--space-3`  | 0.75rem | 12px   |
+| `--space-4`  | 1rem    | 16px   |
+| `--space-5`  | 1.25rem | 20px   |
+| `--space-6`  | 1.5rem  | 24px   |
+| `--space-8`  | 2rem    | 32px   |
+| `--space-10` | 2.5rem  | 40px   |
+| `--space-12` | 3rem    | 48px   |
+| `--space-16` | 4rem    | 64px   |
+| `--space-20` | 5rem    | 80px   |
+| `--space-24` | 6rem    | 96px   |
+| `--space-32` | 8rem    | 128px  |
 
 ### Semantic Spacing
 
@@ -520,9 +549,7 @@ The elevation system creates depth and hierarchy:
 
 ```html
 <!-- Elevated Card -->
-<div class="surface-elevated">
-  Elevated card with shadow
-</div>
+<div class="surface-elevated">Elevated card with shadow</div>
 
 <!-- Status Badges -->
 <span class="status-success">Success</span>
@@ -552,14 +579,30 @@ The elevation system creates depth and hierarchy:
 Maintain proper layering with the z-index scale:
 
 ```css
-.dropdown { z-index: var(--z-dropdown); }      /* 1000 */
-.sticky-header { z-index: var(--z-sticky); }   /* 1020 */
-.fixed-element { z-index: var(--z-fixed); }    /* 1030 */
-.modal-backdrop { z-index: var(--z-modal-backdrop); } /* 1040 */
-.modal { z-index: var(--z-modal); }            /* 1050 */
-.popover { z-index: var(--z-popover); }        /* 1060 */
-.tooltip { z-index: var(--z-tooltip); }        /* 1070 */
-.notification { z-index: var(--z-notification); } /* 1080 */
+.dropdown {
+  z-index: var(--z-dropdown);
+} /* 1000 */
+.sticky-header {
+  z-index: var(--z-sticky);
+} /* 1020 */
+.fixed-element {
+  z-index: var(--z-fixed);
+} /* 1030 */
+.modal-backdrop {
+  z-index: var(--z-modal-backdrop);
+} /* 1040 */
+.modal {
+  z-index: var(--z-modal);
+} /* 1050 */
+.popover {
+  z-index: var(--z-popover);
+} /* 1060 */
+.tooltip {
+  z-index: var(--z-tooltip);
+} /* 1070 */
+.notification {
+  z-index: var(--z-notification);
+} /* 1080 */
 ```
 
 ---

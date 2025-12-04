@@ -3,6 +3,7 @@
 ## Start Here
 
 **New to this analysis?** Read in this order:
+
 1. **CONFIG_DRIVEN_PIVOT_EXECUTIVE_SUMMARY.md** (3-min read) - Start here for high-level overview
 2. Pick your role below to find relevant sections
 
@@ -11,12 +12,15 @@
 ## Quick Links by Role
 
 ### For Executives / Product Leaders
+
 **Read these files (30 min total):**
+
 1. **CONFIG_DRIVEN_PIVOT_EXECUTIVE_SUMMARY.md** - Business impact, timeline, budget
 2. **CONFIG_DRIVEN_PIVOT_MASTER_ANALYSIS_PART3.md** - Section: Open-Ended Question 5 (Rapid Wins)
 3. **CONFIG_DRIVEN_PIVOT_MASTER_ANALYSIS_PART3.md** - Section: Question 2 (Migration Plan)
 
 **Key Takeaways:**
+
 - 70% ready, 5 critical blockers
 - 2-3 weeks minimum, 4-5 weeks recommended
 - $7,300-$9,900 investment for production-ready
@@ -24,13 +28,16 @@
 ---
 
 ### For Engineering Managers / Tech Leads
+
 **Read these files (1-2 hours total):**
+
 1. **CONFIG_DRIVEN_PIVOT_EXECUTIVE_SUMMARY.md** - Overview
 2. **CONFIG_DRIVEN_PIVOT_MASTER_ANALYSIS.md** - All questions 1-7
 3. **CONFIG_DRIVEN_PIVOT_MASTER_ANALYSIS_PART3.md** - Questions 11-15
 4. **TECHNICAL_DEBT_AUDIT.md** - Detailed tech debt analysis
 
 **Key Focus Areas:**
+
 - Critical blockers (cache bug, audit logging, testing)
 - Architecture assessment (multi-tenancy, config extensibility)
 - Technical debt profile (37+ type assertions, missing tests)
@@ -39,13 +46,16 @@
 ---
 
 ### For Backend Developers
+
 **Read these files:**
+
 1. **API_SURFACE_AREA_ANALYSIS.md** - Complete API inventory
 2. **DATABASE_LAYER_ANALYSIS.md** - Schema, repositories, isolation
 3. **SECURITY_AUDIT.md** - Authentication, authorization, vulnerabilities
 4. **PAYMENT_PROVIDER_ASSESSMENT.md** - Stripe coupling analysis
 
 **Key Files to Review:**
+
 - `server/src/middleware/cache.ts:44` - **BUG: Fix cache tenant isolation**
 - `server/src/adapters/stripe.adapter.ts:159` - **TODO: Implement refund**
 - `server/src/lib/ports.ts` - Repository interfaces
@@ -54,12 +64,15 @@
 ---
 
 ### For Frontend Developers
+
 **Read these files:**
+
 1. **Widget Implementation Analysis** (embedded in Part 1, Q1-3)
 2. **FRONTEND_ARCHITECTURE_REPORT.md** (if created)
 3. **CONFIG_DRIVEN_PIVOT_MASTER_ANALYSIS_PART2.md** - Questions 8-9
 
 **Key Files to Review:**
+
 - `client/src/widget/WidgetApp.tsx:50-62` - **TODO: Implement branding fetch**
 - `client/src/contexts/AuthContext.tsx` - Duplicate AuthProvider bug
 - `client/src/hooks/useBranding.ts` - Branding hook
@@ -68,17 +81,21 @@
 ---
 
 ### For QA / Test Engineers
+
 **Read these files:**
+
 1. **CONFIG_DRIVEN_PIVOT_MASTER_ANALYSIS_PART3.md** - Question 13 (Testing)
 2. **CONFIG_DRIVEN_PIVOT_MASTER_ANALYSIS_PART3.md** - Question 4 (CI/CD Risks)
 
 **Key Gaps Identified:**
+
 - **0% unit test coverage** - No tests for components, services, repositories
 - **50-60% E2E coverage** - Missing branding, widget, mobile tests
 - **No CI/CD pipeline** - Manual testing only
 - **No visual regression tests** - Layout changes not detected
 
 **Action Items:**
+
 - Set up Vitest + React Testing Library (4 hours)
 - Write unit tests for critical paths (20 hours)
 - Add E2E tests for branding/widget (20 hours)
@@ -87,11 +104,14 @@
 ---
 
 ### For DevOps / SRE
+
 **Read these files:**
+
 1. **CONFIG_DRIVEN_PIVOT_MASTER_ANALYSIS_PART3.md** - Question 4 (CI/CD & Observability)
 2. **DEPLOYMENT_GUIDE.md** (if exists in /docs/operations/)
 
 **Critical Missing Infrastructure:**
+
 - ❌ No CI/CD pipeline
 - ❌ No monitoring (APM, error tracking, logs)
 - ❌ No staging environment
@@ -100,6 +120,7 @@
 - ❌ No feature flags
 
 **Priority 1 (2 weeks):**
+
 1. Set up GitHub Actions CI/CD (8 hours)
 2. Add Sentry error tracking (2 hours)
 3. Set up automated daily backups (4 hours)
@@ -108,18 +129,22 @@
 ---
 
 ### For Security / Compliance
+
 **Read these files:**
+
 1. **SECURITY_AUDIT.md** - Complete security analysis
 2. **CONFIG_DRIVEN_PIVOT_MASTER_ANALYSIS_PART3.md** - Question 11 (Security)
 3. **CONFIG_DRIVEN_PIVOT_MASTER_ANALYSIS_PART2.md** - Question 10 (Audit Logging)
 
 **Critical Security Issues:**
+
 1. ❌ **Cross-tenant cache data leakage** (P0 - Fix immediately)
 2. ❌ **No audit logging** (Blocks SOC 2, GDPR, HIPAA compliance)
 3. ⚠️ **Type-unsafe JSONB casts** (37+ occurrences)
 4. ⚠️ **Missing rate limits on mutations**
 
 **Compliance Status:**
+
 - GDPR: ❌ FAIL (no audit trail)
 - SOC 2: ❌ FAIL (no audit logging, no monitoring)
 - HIPAA: ❌ FAIL (no audit trail, no access logs)
@@ -357,39 +382,40 @@
 
 ### 15 Directed Discovery Questions
 
-| Question | Location | Key Finding |
-|----------|----------|-------------|
-| 1. Widget Config Consumption | Part 1 | TODO: Branding endpoint not implemented |
-| 2. Config Schema & Extensibility | Part 1 | 9/10 - Excellent JSONB schema |
-| 3. Runtime Widget Integration | Part 1 | 8.5/10 - Production-ready |
-| 4. Database Models & Separation | Part 1 | 9/10 - Excellent separation |
-| 5. Agent/API Integration Surface | Part 1 | 6/10 - Missing bulk ops, 10 gaps |
-| 6. Live Preview & Safe Publishing | Part 1 | 2/10 - Critical gap, not implemented |
-| 7. Validation & Guardrails | Part 1 | 7/10 - Good, needs rate limits |
-| 8. Frontend State Management | Part 2 | 7.5/10 - Well-designed, needs hot-reload |
-| 9. Theme Generation & Ingestion | Part 2 | 4/10 - Manual only, no AI |
-| 10. Audit Logging & History | Part 2 | 0/10 - Missing entirely (blocker) |
-| 11. Permissions & Security | Part 3 | 9/10 - Excellent, cache bug found |
-| 12. Payment Provider Abstraction | Part 3 | 6/10 - Moderate Stripe coupling |
-| 13. Frontend Testing & E2E Coverage | Part 3 | 3/10 - Poor, 0% unit tests |
-| 14. Dependency Risks & Tech Debt | Part 3 | 8/10 - Low debt, 2 critical issues |
-| 15. Edge Cases & Known Gaps | Part 3 | 16 issues found, 5 P0/P1 |
+| Question                            | Location | Key Finding                              |
+| ----------------------------------- | -------- | ---------------------------------------- |
+| 1. Widget Config Consumption        | Part 1   | TODO: Branding endpoint not implemented  |
+| 2. Config Schema & Extensibility    | Part 1   | 9/10 - Excellent JSONB schema            |
+| 3. Runtime Widget Integration       | Part 1   | 8.5/10 - Production-ready                |
+| 4. Database Models & Separation     | Part 1   | 9/10 - Excellent separation              |
+| 5. Agent/API Integration Surface    | Part 1   | 6/10 - Missing bulk ops, 10 gaps         |
+| 6. Live Preview & Safe Publishing   | Part 1   | 2/10 - Critical gap, not implemented     |
+| 7. Validation & Guardrails          | Part 1   | 7/10 - Good, needs rate limits           |
+| 8. Frontend State Management        | Part 2   | 7.5/10 - Well-designed, needs hot-reload |
+| 9. Theme Generation & Ingestion     | Part 2   | 4/10 - Manual only, no AI                |
+| 10. Audit Logging & History         | Part 2   | 0/10 - Missing entirely (blocker)        |
+| 11. Permissions & Security          | Part 3   | 9/10 - Excellent, cache bug found        |
+| 12. Payment Provider Abstraction    | Part 3   | 6/10 - Moderate Stripe coupling          |
+| 13. Frontend Testing & E2E Coverage | Part 3   | 3/10 - Poor, 0% unit tests               |
+| 14. Dependency Risks & Tech Debt    | Part 3   | 8/10 - Low debt, 2 critical issues       |
+| 15. Edge Cases & Known Gaps         | Part 3   | 16 issues found, 5 P0/P1                 |
 
 ### 5 Open-Ended Empowerment Questions
 
-| Question | Location | Key Finding |
-|----------|----------|-------------|
-| 1. Assumptions That Will Cause Trouble | Part 3 | 7 critical assumptions identified |
-| 2. Migration Plan & Refactoring Priority | Part 3 | 5-phase plan, 12-14 weeks total |
-| 3. Hidden Complexity & Tech Debt Profile | Part 3 | B+ grade, 5 complexity hotspots |
-| 4. CI/CD & Observability Risks | Part 3 | 0.5/5 maturity - critical gap |
-| 5. Rapid Wins & Opportunities | Part 3 | 5 wins, 18-26 hours, high impact |
+| Question                                 | Location | Key Finding                       |
+| ---------------------------------------- | -------- | --------------------------------- |
+| 1. Assumptions That Will Cause Trouble   | Part 3   | 7 critical assumptions identified |
+| 2. Migration Plan & Refactoring Priority | Part 3   | 5-phase plan, 12-14 weeks total   |
+| 3. Hidden Complexity & Tech Debt Profile | Part 3   | B+ grade, 5 complexity hotspots   |
+| 4. CI/CD & Observability Risks           | Part 3   | 0.5/5 maturity - critical gap     |
+| 5. Rapid Wins & Opportunities            | Part 3   | 5 wins, 18-26 hours, high impact  |
 
 ---
 
 ## Statistics
 
 **Total Analysis:**
+
 - **Duration:** 8 hours of deep codebase exploration
 - **Files Analyzed:** 100+ source files + documentation
 - **Lines of Code Reviewed:** ~50,000+
@@ -397,6 +423,7 @@
 - **Total Size:** ~84KB of technical analysis
 
 **Coverage:**
+
 - ✅ 15 Directed Discovery Questions - 100% answered
 - ✅ 5 Open-Ended Empowerment Questions - 100% answered
 - ✅ Code references provided with file:line precision

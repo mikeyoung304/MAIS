@@ -90,13 +90,16 @@ export class FakeCatalogRepository implements CatalogRepository {
     return this.addOns.find((a) => a.id === id) || null;
   }
 
-  async createPackage(tenantId: string, data: {
-    slug: string;
-    title: string;
-    description: string;
-    priceCents: number;
-    photoUrl?: string;
-  }): Promise<Package> {
+  async createPackage(
+    tenantId: string,
+    data: {
+      slug: string;
+      title: string;
+      description: string;
+      priceCents: number;
+      photoUrl?: string;
+    }
+  ): Promise<Package> {
     const pkg: Package = {
       id: `pkg_${Date.now()}_${Math.random()}`,
       ...data,
@@ -139,12 +142,15 @@ export class FakeCatalogRepository implements CatalogRepository {
     this.addOns = this.addOns.filter((a) => a.packageId !== id);
   }
 
-  async createAddOn(tenantId: string, data: {
-    packageId: string;
-    title: string;
-    priceCents: number;
-    photoUrl?: string;
-  }): Promise<AddOn> {
+  async createAddOn(
+    tenantId: string,
+    data: {
+      packageId: string;
+      title: string;
+      priceCents: number;
+      photoUrl?: string;
+    }
+  ): Promise<AddOn> {
     const addOn: AddOn = {
       id: `addon_${Date.now()}_${Math.random()}`,
       ...data,
@@ -271,11 +277,7 @@ export class FakePaymentProvider implements PaymentProvider {
 export class FakeEmailProvider implements EmailProvider {
   public sentEmails: Array<{ to: string; subject: string; html: string }> = [];
 
-  async sendEmail(input: {
-    to: string;
-    subject: string;
-    html: string;
-  }): Promise<void> {
+  async sendEmail(input: { to: string; subject: string; html: string }): Promise<void> {
     this.sentEmails.push(input);
   }
 

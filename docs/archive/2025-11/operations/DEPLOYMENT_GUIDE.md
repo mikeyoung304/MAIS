@@ -42,6 +42,7 @@ Complete guide for deploying Elope to production environments.
 ### Infrastructure Requirements
 
 **Minimum Production Specs:**
+
 - **CPU**: 2 vCPUs
 - **Memory**: 4GB RAM
 - **Storage**: 20GB SSD
@@ -49,6 +50,7 @@ Complete guide for deploying Elope to production environments.
 - **OS**: Ubuntu 22.04 LTS or similar
 
 **Recommended Production Specs:**
+
 - **CPU**: 4 vCPUs
 - **Memory**: 8GB RAM
 - **Storage**: 50GB SSD
@@ -351,6 +353,7 @@ psql "$DATABASE_URL"
 ### Option A: Docker Deployment (Recommended)
 
 1. **Build Docker Image**
+
    ```bash
    # Build server image
    docker build -t elope/api:v1.1.0 -f server/Dockerfile .
@@ -360,6 +363,7 @@ psql "$DATABASE_URL"
    ```
 
 2. **Create Docker Compose File**
+
    ```yaml
    # docker-compose.production.yml
    version: '3.8'
@@ -371,11 +375,11 @@ psql "$DATABASE_URL"
        restart: unless-stopped
        env_file: server/.env.production
        ports:
-         - "3001:3001"
+         - '3001:3001'
        volumes:
          - ./server/uploads:/app/server/uploads
        healthcheck:
-         test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+         test: ['CMD', 'curl', '-f', 'http://localhost:3001/health']
          interval: 30s
          timeout: 10s
          retries: 3
@@ -386,7 +390,7 @@ psql "$DATABASE_URL"
        container_name: elope-web
        restart: unless-stopped
        ports:
-         - "3000:80"
+         - '3000:80'
        depends_on:
          - api
        environment:
@@ -394,6 +398,7 @@ psql "$DATABASE_URL"
    ```
 
 3. **Start Services**
+
    ```bash
    docker-compose -f docker-compose.production.yml up -d
 
@@ -407,11 +412,13 @@ psql "$DATABASE_URL"
 ### Option B: PM2 Deployment
 
 1. **Install PM2**
+
    ```bash
    npm install -g pm2
    ```
 
 2. **Create PM2 Ecosystem File**
+
    ```javascript
    // ecosystem.config.js
    module.exports = {
@@ -422,20 +429,21 @@ psql "$DATABASE_URL"
          script: 'dist/index.js',
          env_production: {
            NODE_ENV: 'production',
-           ADAPTERS_PRESET: 'real'
+           ADAPTERS_PRESET: 'real',
          },
          instances: 2,
          exec_mode: 'cluster',
          max_memory_restart: '500M',
          error_file: './logs/api-error.log',
          out_file: './logs/api-out.log',
-         log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
-       }
-     ]
+         log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+       },
+     ],
    };
    ```
 
 3. **Build and Start**
+
    ```bash
    # Build server
    cd server
@@ -452,6 +460,7 @@ psql "$DATABASE_URL"
    ```
 
 4. **Serve Client**
+
    ```bash
    # Build client
    cd client
@@ -463,6 +472,7 @@ psql "$DATABASE_URL"
 ### Option C: Systemd Service
 
 1. **Create Systemd Service**
+
    ```ini
    # /etc/systemd/system/elope-api.service
    [Unit]
@@ -485,6 +495,7 @@ psql "$DATABASE_URL"
    ```
 
 2. **Enable and Start**
+
    ```bash
    # Reload systemd
    sudo systemctl daemon-reload
@@ -627,6 +638,7 @@ pm2 logs elope-api | grep "webhook"
 ### Application Monitoring
 
 **Recommended Tools:**
+
 - **Sentry** - Error tracking and performance monitoring
 - **DataDog** - Infrastructure and application metrics
 - **UptimeRobot** - Uptime monitoring and alerts
@@ -635,6 +647,7 @@ pm2 logs elope-api | grep "webhook"
 ### Health Check Endpoints
 
 Monitor these endpoints:
+
 - `GET /health` - Basic health check
 - `GET /health/db` - Database connectivity
 - `GET /ready` - Readiness probe (used by load balancers)
@@ -658,10 +671,12 @@ journalctl -u elope-api --since "1 hour ago"
 ### Database Backups
 
 Supabase provides automatic backups:
+
 - **Free tier**: Daily backups, 7-day retention
 - **Pro tier**: Daily backups, configurable retention
 
 **Manual backup:**
+
 ```bash
 # Backup database
 pg_dump "$DATABASE_URL" > backup-$(date +%Y%m%d).sql
@@ -799,6 +814,7 @@ Before going live:
    - Run `npm run doctor` to check configuration
 
 For additional help:
+
 - Review [RUNBOOK.md](./docs/operations/RUNBOOK.md)
 - Check [INCIDENT_RESPONSE.md](./docs/operations/INCIDENT_RESPONSE.md)
 - Open a GitHub issue

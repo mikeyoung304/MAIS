@@ -111,7 +111,10 @@ export class PrismaWebhookRepository implements WebhookRepository {
         },
       });
 
-      logger.info({ tenantId: input.tenantId, eventId: input.eventId, eventType: input.eventType }, 'Webhook event recorded');
+      logger.info(
+        { tenantId: input.tenantId, eventId: input.eventId, eventType: input.eventType },
+        'Webhook event recorded'
+      );
       return true; // New record created
     } catch (error) {
       // Only ignore unique constraint violations (duplicate eventId)
@@ -121,17 +124,23 @@ export class PrismaWebhookRepository implements WebhookRepository {
 
       // Check for P2002 (unique constraint) via error code and name
       if (errorCode === 'P2002' && errorName === 'PrismaClientKnownRequestError') {
-        logger.info({ tenantId: input.tenantId, eventId: input.eventId }, 'Webhook already recorded (duplicate eventId)');
+        logger.info(
+          { tenantId: input.tenantId, eventId: input.eventId },
+          'Webhook already recorded (duplicate eventId)'
+        );
         return false; // Duplicate detected
       }
 
       // Log and re-throw other errors
-      logger.error({
-        error,
-        tenantId: input.tenantId,
-        eventId: input.eventId,
-        eventType: input.eventType
-      }, 'Failed to record webhook event');
+      logger.error(
+        {
+          error,
+          tenantId: input.tenantId,
+          eventId: input.eventId,
+          eventType: input.eventType,
+        },
+        'Failed to record webhook event'
+      );
 
       // Re-throw unexpected errors
       throw error;

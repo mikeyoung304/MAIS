@@ -1,5 +1,5 @@
-import { Container } from "@/ui/Container";
-import { Check } from "lucide-react";
+import { Container } from '@/ui/Container';
+import { Check } from 'lucide-react';
 
 /**
  * StorefrontSection - The solution with 3-tier elevation
@@ -9,11 +9,7 @@ import { Check } from "lucide-react";
  */
 export function StorefrontSection() {
   return (
-    <section
-      id="solution"
-      aria-labelledby="solution-heading"
-      className="py-32 md:py-40 bg-white"
-    >
+    <section id="solution" aria-labelledby="solution-heading" className="py-32 md:py-40 bg-white">
       <Container>
         {/* Section header */}
         <div className="max-w-3xl mx-auto text-center mb-20">
@@ -42,7 +38,7 @@ export function StorefrontSection() {
               <TierCard
                 name="Entry"
                 tagline="The essentials"
-                features={["Quick consultation", "Basic deliverables", "Email support"]}
+                features={['Quick consultation', 'Basic deliverables', 'Email support']}
                 emphasized={false}
               />
             </div>
@@ -53,17 +49,23 @@ export function StorefrontSection() {
               <div className="absolute inset-0 bg-sage/15 blur-2xl -z-10 rounded-3xl scale-110" />
 
               {/* Badge */}
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10
+              <div
+                className="absolute -top-4 left-1/2 -translate-x-1/2 z-10
                               bg-sage text-white text-xs font-semibold
                               px-4 py-1.5 rounded-full shadow-lg
-                              tracking-wider uppercase">
+                              tracking-wider uppercase"
+              >
                 Most Popular
               </div>
 
               <TierCard
                 name="Core"
                 tagline="Everything you need"
-                features={["Full service package", "Priority scheduling", "All deliverables included"]}
+                features={[
+                  'Full service package',
+                  'Priority scheduling',
+                  'All deliverables included',
+                ]}
                 emphasized={true}
               />
             </div>
@@ -73,7 +75,7 @@ export function StorefrontSection() {
               <TierCard
                 name="Premium"
                 tagline="The full experience"
-                features={["VIP treatment", "Extended coverage", "Unlimited revisions"]}
+                features={['VIP treatment', 'Extended coverage', 'Unlimited revisions']}
                 emphasized={false}
               />
             </div>
@@ -83,7 +85,9 @@ export function StorefrontSection() {
         {/* Bottom line */}
         <p className="text-center text-text-muted mt-16 text-lg">
           Need a new site? We'll build it. Already have one? We'll plug right in.
-          <span className="block mt-1 text-text-primary font-medium">Your brand. Your bookings. Zero tech headaches.</span>
+          <span className="block mt-1 text-text-primary font-medium">
+            Your brand. Your bookings. Zero tech headaches.
+          </span>
         </p>
       </Container>
     </section>
@@ -101,15 +105,15 @@ function TierCard({ name, tagline, features, emphasized }: TierCardProps) {
   return (
     <div
       className={`rounded-3xl p-8 transition-all duration-300 h-full
-                  ${emphasized
-                    ? 'bg-white shadow-2xl ring-2 ring-sage/20'
-                    : 'bg-white shadow-lg border border-neutral-100'}
+                  ${
+                    emphasized
+                      ? 'bg-white shadow-2xl ring-2 ring-sage/20'
+                      : 'bg-white shadow-lg border border-neutral-100'
+                  }
                   hover:shadow-xl hover:-translate-y-1`}
     >
       {/* Tier name */}
-      <h3 className="text-2xl font-bold text-text-primary mb-2">
-        {name}
-      </h3>
+      <h3 className="text-2xl font-bold text-text-primary mb-2">{name}</h3>
 
       {/* Tagline */}
       <p className={`text-sm mb-6 ${emphasized ? 'text-sage font-medium' : 'text-text-muted'}`}>
@@ -120,7 +124,9 @@ function TierCard({ name, tagline, features, emphasized }: TierCardProps) {
       <ul className="space-y-3">
         {features.map((feature) => (
           <li key={feature} className="flex items-start gap-3">
-            <Check className={`w-5 h-5 flex-shrink-0 mt-0.5 ${emphasized ? 'text-sage' : 'text-neutral-400'}`} />
+            <Check
+              className={`w-5 h-5 flex-shrink-0 mt-0.5 ${emphasized ? 'text-sage' : 'text-neutral-400'}`}
+            />
             <span className="text-text-muted leading-relaxed">{feature}</span>
           </li>
         ))}

@@ -1,4 +1,5 @@
 # Phase 2B Remediation Plan
+
 ## Step-by-Step Fix Instructions for All Audit Findings
 
 **Date:** 2025-10-29
@@ -27,6 +28,7 @@ These issues **block production deployment** and must be resolved immediately.
 #### Step-by-Step Instructions
 
 **1. Generate New JWT Secret (5 min)**
+
 ```bash
 # Generate new 256-bit secret
 openssl rand -hex 32
@@ -39,6 +41,7 @@ JWT_SECRET=<YOUR_NEW_SECRET_HERE>
 ```
 
 **2. Rotate Stripe Keys (15 min)**
+
 ```bash
 # Steps:
 1. Login to https://dashboard.stripe.com/test/apikeys
@@ -55,6 +58,7 @@ JWT_SECRET=<YOUR_NEW_SECRET_HERE>
 ```
 
 **3. Rotate Database Password (10 min)**
+
 ```bash
 # Steps:
 1. Login to https://supabase.com/dashboard/project/gpyvdknhmevcfdbgtqir
@@ -69,6 +73,7 @@ JWT_SECRET=<YOUR_NEW_SECRET_HERE>
 ```
 
 **4. Rotate Supabase API Keys (10 min)**
+
 ```bash
 # Steps:
 1. Supabase Dashboard → Settings → API
@@ -80,6 +85,7 @@ JWT_SECRET=<YOUR_NEW_SECRET_HERE>
 ```
 
 **5. Update Production Environment (10 min)**
+
 ```bash
 # For Vercel/Railway/Render:
 # Go to your hosting dashboard → Environment Variables
@@ -95,8 +101,10 @@ JWT_SECRET=<YOUR_NEW_SECRET_HERE>
 ```
 
 **6. Notify Users of JWT Rotation (5 min)**
+
 ```markdown
 # Email/Slack message:
+
 Subject: JWT Token Rotation - Re-login Required
 
 All JWT tokens have been invalidated due to security key rotation.
@@ -108,6 +116,7 @@ Action Required: Users must re-authenticate
 ```
 
 **7. Verification (5 min)**
+
 ```bash
 # Test new JWT secret
 curl -X POST http://localhost:3001/api/v1/admin/login \
@@ -135,6 +144,7 @@ npx prisma studio
 #### Preparation (10 min)
 
 **1. Create Backup Branch**
+
 ```bash
 cd /Users/mikeyoung/CODING/Elope
 git branch backup-before-sanitization
@@ -142,6 +152,7 @@ git push origin backup-before-sanitization
 ```
 
 **2. Document Current State**
+
 ```bash
 # Count secrets in history
 git log --all -p | grep -c "sk_test_51SLPlv"
@@ -153,6 +164,7 @@ git log --oneline > commits-before-sanitization.txt
 ```
 
 **3. Notify Team (15 min)**
+
 ```markdown
 Subject: URGENT: Git History Rewrite Scheduled
 
@@ -163,11 +175,13 @@ WHEN: [Schedule 2-hour window]
 IMPACT: All developers must re-clone repository
 
 BEFORE THE REWRITE:
+
 1. Commit all local changes
 2. Push all branches to remote
 3. Note your current branch name
 
 AFTER THE REWRITE:
+
 1. Delete local repository
 2. Re-clone from origin: git clone <url>
 3. Recreate any local-only branches
@@ -178,6 +192,7 @@ Questions? Reply to this thread.
 #### Execute Sanitization (1 hour)
 
 **4. Install BFG Repo-Cleaner**
+
 ```bash
 # macOS
 brew install bfg
@@ -187,6 +202,7 @@ curl -L https://repo1.maven.org/maven2/com/madgag/bfg/1.14.0/bfg-1.14.0.jar -o b
 ```
 
 **5. Create Secrets File**
+
 ```bash
 cat > secrets-to-remove.txt <<EOF
 sk_test_51SLPlvBPdt7IPpHp4VgimjlRIpzYvwa7Mvu2Gmbow0lrsxQsNpQzm1Vfv52vdF9qqEpFtw7ntaVmQyGU199zbRlf00RrztV7fZ
@@ -199,6 +215,7 @@ EOF
 ```
 
 **6. Run BFG (Delete Sensitive Files)**
+
 ```bash
 # Remove files that contain secrets
 bfg --delete-files "SECRETS_ROTATION.md" --no-blob-protection
@@ -213,6 +230,7 @@ git gc --prune=now --aggressive
 ```
 
 **7. Verify Sanitization (10 min)**
+
 ```bash
 # Search for secrets (should find NONE)
 git log --all -p | grep -c "sk_test_51SLPlv"
@@ -233,6 +251,7 @@ git log --all -p | grep -c "@Orangegoat11"
 #### Force Push (Dangerous - Coordinate!) (10 min)
 
 **8. Force Push to Remote**
+
 ```bash
 # ⚠️ WARNING: This is destructive and requires team coordination
 
@@ -250,6 +269,7 @@ git log --all -p | grep -c "sk_test_51SLPlv"
 #### Post-Sanitization (20 min)
 
 **9. Team Re-Clone Instructions**
+
 ```markdown
 # Send to all developers:
 
@@ -277,6 +297,7 @@ Note: All old branches and commits are preserved in backup-before-sanitization b
 ```
 
 **10. Add Pre-Commit Hook**
+
 ```bash
 # Install git-secrets
 brew install git-secrets
@@ -317,6 +338,7 @@ These issues should be fixed before production deployment to ensure reliability 
 **Lines:** 18-29
 
 #### Current Code (UNSAFE)
+
 ```typescript
 try {
   await tx.$queryRawUnsafe(lockQuery, new Date(booking.eventDate));
@@ -326,6 +348,7 @@ try {
 ```
 
 #### Fixed Code
+
 ```typescript
 try {
   await tx.$queryRawUnsafe(lockQuery, new Date(booking.eventDate));
@@ -334,17 +357,23 @@ try {
   if (lockError instanceof PrismaClientKnownRequestError) {
     // P2034 = Transaction failed due to lock timeout
     if (lockError.code === 'P2034') {
-      logger.warn({ date: booking.eventDate, error: lockError.code }, 'Lock timeout on booking date');
+      logger.warn(
+        { date: booking.eventDate, error: lockError.code },
+        'Lock timeout on booking date'
+      );
       throw new BookingLockTimeoutError(booking.eventDate);
     }
   }
 
   // Log unexpected errors for debugging
-  logger.error({
-    error: lockError,
-    date: booking.eventDate,
-    query: lockQuery
-  }, 'Unexpected error during lock acquisition');
+  logger.error(
+    {
+      error: lockError,
+      date: booking.eventDate,
+      query: lockQuery,
+    },
+    'Unexpected error during lock acquisition'
+  );
 
   // Re-throw to prevent masking real database issues
   throw lockError;
@@ -352,12 +381,14 @@ try {
 ```
 
 #### Import Required
+
 ```typescript
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { logger } from '../lib/core/logger';
 ```
 
 #### Testing
+
 ```typescript
 // Add to test/repositories/booking-concurrency.spec.ts
 
@@ -472,8 +503,7 @@ describe('PrismaBookingRepository Integration Tests', () => {
       // Try to create second booking for same date
       const booking2 = { ...booking1, id: 'test-booking-2' };
 
-      await expect(repository.create(booking2))
-        .rejects.toThrow(BookingConflictError);
+      await expect(repository.create(booking2)).rejects.toThrow(BookingConflictError);
     });
 
     it('should handle concurrent booking attempts (lock timeout)', async () => {
@@ -499,8 +529,8 @@ describe('PrismaBookingRepository Integration Tests', () => {
       const results = await Promise.allSettled([promise1, promise2]);
 
       // One should succeed, one should fail with timeout or conflict
-      const succeeded = results.filter(r => r.status === 'fulfilled');
-      const failed = results.filter(r => r.status === 'rejected');
+      const succeeded = results.filter((r) => r.status === 'fulfilled');
+      const failed = results.filter((r) => r.status === 'rejected');
 
       expect(succeeded.length).toBe(1);
       expect(failed.length).toBe(1);
@@ -509,7 +539,7 @@ describe('PrismaBookingRepository Integration Tests', () => {
       const failedResult = failed[0] as PromiseRejectedResult;
       expect(
         failedResult.reason instanceof BookingLockTimeoutError ||
-        failedResult.reason instanceof BookingConflictError
+          failedResult.reason instanceof BookingConflictError
       ).toBe(true);
     });
 
@@ -529,12 +559,15 @@ describe('PrismaBookingRepository Integration Tests', () => {
 
       try {
         // Hold lock in long-running transaction
-        await prisma.$transaction(async (tx) => {
-          await tx.$executeRaw`SELECT * FROM "Booking" FOR UPDATE`;
+        await prisma.$transaction(
+          async (tx) => {
+            await tx.$executeRaw`SELECT * FROM "Booking" FOR UPDATE`;
 
-          // Try to create booking (should timeout)
-          await repository.create(booking);
-        }, { timeout: 10000 });
+            // Try to create booking (should timeout)
+            await repository.create(booking);
+          },
+          { timeout: 10000 }
+        );
       } catch (error) {
         // Expected to fail
       }
@@ -576,7 +609,7 @@ describe('PrismaBookingRepository Integration Tests', () => {
       ]);
 
       // With Serializable isolation, only ONE should succeed
-      const succeeded = results.filter(r => r.status === 'fulfilled');
+      const succeeded = results.filter((r) => r.status === 'fulfilled');
       expect(succeeded.length).toBe(1);
     });
   });
@@ -628,7 +661,7 @@ describe('PrismaWebhookRepository Integration Tests', () => {
         where: { eventId: 'evt_test_123' },
       });
       expect(event?.status).toBe('DUPLICATE');
-      expect(event?.attempts).toBe(2);  // Incremented
+      expect(event?.attempts).toBe(2); // Incremented
     });
 
     it('should handle concurrent duplicate checks', async () => {
@@ -649,7 +682,7 @@ describe('PrismaWebhookRepository Integration Tests', () => {
       ]);
 
       // All should return true (duplicate)
-      expect(checks.every(c => c === true)).toBe(true);
+      expect(checks.every((c) => c === true)).toBe(true);
     });
   });
 
@@ -684,7 +717,7 @@ describe('PrismaWebhookRepository Integration Tests', () => {
       });
       expect(event?.status).toBe('FAILED');
       expect(event?.lastError).toBe('Database connection failed');
-      expect(event?.attempts).toBe(2);  // Incremented
+      expect(event?.attempts).toBe(2); // Incremented
     });
   });
 });
@@ -797,6 +830,7 @@ function generateTestSignature(payload: string): string {
 **1. Add Test Database**
 
 Update `package.json`:
+
 ```json
 {
   "scripts": {
@@ -807,11 +841,13 @@ Update `package.json`:
 ```
 
 Add to `.env.test`:
+
 ```bash
 DATABASE_URL_TEST=postgresql://postgres:testpassword@localhost:5433/elope_test
 ```
 
 **2. Setup Test Database**
+
 ```bash
 # Create test database (Docker)
 docker run --name elope-test-db -p 5433:5432 -e POSTGRES_PASSWORD=testpassword -d postgres:15
@@ -821,6 +857,7 @@ DATABASE_URL=$DATABASE_URL_TEST npx prisma migrate deploy
 ```
 
 **3. Run Integration Tests**
+
 ```bash
 npm run test:integration
 ```
@@ -834,6 +871,7 @@ npm run test:integration
 **Line:** 67
 
 #### Current Code (WRONG)
+
 ```typescript
 addOns: {
   create: booking.addOnIds.map((addOnId) => ({
@@ -845,6 +883,7 @@ addOns: {
 ```
 
 #### Fixed Code
+
 ```typescript
 // Add before booking creation
 const addOnPrices = new Map<string, number>();
@@ -856,7 +895,7 @@ if (booking.addOnIds.length > 0) {
     },
     select: { id: true, price: true },
   });
-  addOns.forEach(a => addOnPrices.set(a.id, a.price));
+  addOns.forEach((a) => addOnPrices.set(a.id, a.price));
 }
 
 // Create booking with correct prices
@@ -867,7 +906,7 @@ const created = await tx.booking.create({
       create: booking.addOnIds.map((addOnId) => ({
         addOnId,
         quantity: 1,
-        unitPrice: addOnPrices.get(addOnId) || 0,  // ✅ Real price
+        unitPrice: addOnPrices.get(addOnId) || 0, // ✅ Real price
       })),
     },
   },
@@ -876,6 +915,7 @@ const created = await tx.booking.create({
 ```
 
 #### Testing
+
 ```typescript
 // Add to booking.repository.spec.ts
 it('should capture correct add-on prices', async () => {
@@ -898,8 +938,8 @@ it('should capture correct add-on prices', async () => {
     where: { bookingId: booking.id },
   });
 
-  expect(bookingAddOns[0].unitPrice).toBe(50000);  // ✅ Not 0
-  expect(bookingAddOns[1].unitPrice).toBe(30000);  // ✅ Not 0
+  expect(bookingAddOns[0].unitPrice).toBe(50000); // ✅ Not 0
+  expect(bookingAddOns[1].unitPrice).toBe(30000); // ✅ Not 0
 });
 ```
 
@@ -912,22 +952,25 @@ it('should capture correct add-on prices', async () => {
 **File:** `server/src/services/identity.service.ts`
 
 **Current Code (VULNERABLE):**
+
 ```typescript
-const token = jwt.sign(payload, this.secret);  // ❌ Algorithm not specified
+const token = jwt.sign(payload, this.secret); // ❌ Algorithm not specified
 ```
 
 **Fixed Code:**
+
 ```typescript
 const token = jwt.sign(payload, this.secret, {
-  algorithm: 'HS256',  // ✅ Explicit algorithm
-  expiresIn: '7d',     // ✅ Token expiration
+  algorithm: 'HS256', // ✅ Explicit algorithm
+  expiresIn: '7d', // ✅ Token expiration
 });
 ```
 
 **Verification:**
+
 ```typescript
 const decoded = jwt.verify(token, this.secret, {
-  algorithms: ['HS256'],  // ✅ Only allow HS256
+  algorithms: ['HS256'], // ✅ Only allow HS256
 }) as TokenPayload;
 ```
 
@@ -936,13 +979,15 @@ const decoded = jwt.verify(token, this.secret, {
 **File:** `server/src/services/identity.service.ts`
 
 **Current Code:**
+
 ```typescript
-const salt = await bcrypt.genSalt(10);  // ❌ Too low (OWASP recommends 12+)
+const salt = await bcrypt.genSalt(10); // ❌ Too low (OWASP recommends 12+)
 ```
 
 **Fixed Code:**
+
 ```typescript
-const BCRYPT_ROUNDS = 12;  // ✅ OWASP 2023 recommendation
+const BCRYPT_ROUNDS = 12; // ✅ OWASP 2023 recommendation
 const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
 ```
 
@@ -951,14 +996,16 @@ const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
 **File:** `server/prisma/seed.ts`
 
 **Current Code (INSECURE):**
+
 ```typescript
 const adminUser = {
   email: 'admin@example.com',
-  password: 'admin',  // ❌ Weak default password
+  password: 'admin', // ❌ Weak default password
 };
 ```
 
 **Fixed Code:**
+
 ```typescript
 // Require from environment
 const adminPassword = process.env.ADMIN_DEFAULT_PASSWORD;
@@ -971,11 +1018,12 @@ if (adminPassword.length < 12) {
 
 const adminUser = {
   email: 'admin@example.com',
-  password: adminPassword,  // ✅ From environment
+  password: adminPassword, // ✅ From environment
 };
 ```
 
 **Update `.env.example`:**
+
 ```bash
 # Admin user default password (CHANGE THIS!)
 ADMIN_DEFAULT_PASSWORD=ChangeThisToAStrongPassword123!
@@ -986,12 +1034,14 @@ ADMIN_DEFAULT_PASSWORD=ChangeThisToAStrongPassword123!
 **File:** `server/prisma/migrations/01_add_webhook_events.sql`
 
 **Current Code (NOT IDEMPOTENT):**
+
 ```sql
 CREATE TYPE "WebhookStatus" AS ENUM (...);
 CREATE TABLE "WebhookEvent" (...);
 ```
 
 **Fixed Code:**
+
 ```sql
 -- Make migration idempotent (can run multiple times safely)
 
@@ -1048,6 +1098,7 @@ END $$;
 **File:** `server/src/adapters/prisma/webhook.repository.ts:52-55`
 
 **Current Code:**
+
 ```typescript
 try {
   await this.prisma.webhookEvent.create({ data: input });
@@ -1057,6 +1108,7 @@ try {
 ```
 
 **Fixed Code:**
+
 ```typescript
 try {
   await this.prisma.webhookEvent.create({ data: input });
@@ -1064,7 +1116,7 @@ try {
   // Only ignore unique constraint violations (duplicate eventId)
   if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
     logger.info({ eventId: input.eventId }, 'Webhook already recorded (duplicate)');
-    return;  // Graceful handling
+    return; // Graceful handling
   }
   // Re-throw other errors
   throw error;
@@ -1078,18 +1130,22 @@ try {
 **File:** `server/src/adapters/prisma/booking.repository.ts`
 
 **Extract Constants:**
+
 ```typescript
 // At top of file
-const BOOKING_TRANSACTION_TIMEOUT_MS = 5000;  // 5 seconds
+const BOOKING_TRANSACTION_TIMEOUT_MS = 5000; // 5 seconds
 const BOOKING_ISOLATION_LEVEL = 'Serializable';
 
 // In transaction call
-await this.prisma.$transaction(async (tx) => {
-  // ...
-}, {
-  timeout: BOOKING_TRANSACTION_TIMEOUT_MS,
-  isolationLevel: BOOKING_ISOLATION_LEVEL as any,
-});
+await this.prisma.$transaction(
+  async (tx) => {
+    // ...
+  },
+  {
+    timeout: BOOKING_TRANSACTION_TIMEOUT_MS,
+    isolationLevel: BOOKING_ISOLATION_LEVEL as any,
+  }
+);
 ```
 
 ---
@@ -1099,6 +1155,7 @@ await this.prisma.$transaction(async (tx) => {
 **File:** `server/src/lib/errors.ts`
 
 **Remove:**
+
 ```typescript
 export class WebhookDuplicateError extends ConflictError {
   constructor(eventId: string) {
@@ -1117,12 +1174,13 @@ export class WebhookDuplicateError extends ConflictError {
 **Create middleware for request tracking:**
 
 **File:** `server/src/middleware/correlation-id.ts`
+
 ```typescript
 import { randomUUID } from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
 
 export function correlationIdMiddleware(req: Request, res: Response, next: NextFunction) {
-  const correlationId = req.headers['x-correlation-id'] as string || randomUUID();
+  const correlationId = (req.headers['x-correlation-id'] as string) || randomUUID();
   req.correlationId = correlationId;
   res.setHeader('x-correlation-id', correlationId);
 
@@ -1142,11 +1200,13 @@ export function correlationIdMiddleware(req: Request, res: Response, next: NextF
 **File:** `server/src/di.ts`
 
 **Current:**
+
 ```typescript
 const prisma = new PrismaClient();
 ```
 
 **Explicit Configuration:**
+
 ```typescript
 const prisma = new PrismaClient({
   datasources: {
@@ -1169,6 +1229,7 @@ prisma.$on('query', (e) => {
 ```
 
 **Add to `.env`:**
+
 ```bash
 # Prisma connection pool (Supabase)
 DATABASE_URL=postgresql://postgres:password@host:5432/db?connection_limit=5&pool_timeout=10
@@ -1205,12 +1266,14 @@ DATABASE_URL=postgresql://postgres:password@host:5432/db?connection_limit=5&pool
 After completing all tasks, verify:
 
 ### Phase 1 Verification
+
 - [ ] All secrets rotated (JWT, Stripe, Database, Supabase)
 - [ ] Git history clean (no secrets found with `git log -p | grep "sk_test"`)
 - [ ] Pre-commit hooks installed (`git secrets --list`)
 - [ ] Team has re-cloned repository
 
 ### Phase 2 Verification
+
 - [ ] Raw SQL error handling checks specific error codes
 - [ ] Integration tests pass (103+ tests)
 - [ ] AddOn prices captured correctly (not hardcoded 0)
@@ -1220,6 +1283,7 @@ After completing all tasks, verify:
 - [ ] Migration is idempotent
 
 ### Phase 3 Verification
+
 - [ ] Webhook error handling improved
 - [ ] Magic numbers extracted to constants
 - [ ] Dead code removed (WebhookDuplicateError)
@@ -1228,6 +1292,7 @@ After completing all tasks, verify:
 - [ ] Documentation updated (no false claims)
 
 ### Final Smoke Tests
+
 ```bash
 # 1. TypeScript compiles
 npm run typecheck
@@ -1260,11 +1325,11 @@ curl -X POST http://localhost:3001/api/v1/webhooks/stripe \
 
 ## Timeline Summary
 
-| Phase | Priority | Duration | Start | End |
-|-------|----------|----------|-------|-----|
-| Phase 1 | P0 BLOCKER | 3 hours | Day 1, 9am | Day 1, 12pm |
-| Phase 2 | P1 HIGH | 13-14 hours | Day 1, 1pm | Day 2, 3pm |
-| Phase 3 | P2 MEDIUM | 5-6 hours | Day 3, 9am | Day 3, 3pm |
+| Phase   | Priority   | Duration    | Start      | End         |
+| ------- | ---------- | ----------- | ---------- | ----------- |
+| Phase 1 | P0 BLOCKER | 3 hours     | Day 1, 9am | Day 1, 12pm |
+| Phase 2 | P1 HIGH    | 13-14 hours | Day 1, 1pm | Day 2, 3pm  |
+| Phase 3 | P2 MEDIUM  | 5-6 hours   | Day 3, 9am | Day 3, 3pm  |
 
 **Total Time:** 21-23 hours (3 days with focused effort)
 

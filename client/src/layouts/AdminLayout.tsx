@@ -9,16 +9,16 @@
  * - Logout functionality
  */
 
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
-import { RoleBasedNav } from "../components/navigation/RoleBasedNav";
-import { Badge } from "../components/ui/badge";
-import { Button } from "../components/ui/button";
-import { Logo } from "../components/brand/Logo";
-import { useAuth } from "../contexts/AuthContext";
-import { cn } from "../lib/utils";
-import "@/styles/a11y.css";
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { RoleBasedNav } from '../components/navigation/RoleBasedNav';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { Logo } from '../components/brand/Logo';
+import { useAuth } from '../contexts/AuthContext';
+import { cn } from '../lib/utils';
+import '@/styles/a11y.css';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -33,7 +33,7 @@ export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate('/login');
   };
 
   // Keyboard navigation: Escape key closes mobile menu
@@ -60,8 +60,8 @@ export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
     return null;
   }
 
-  const roleLabel = user.role === "PLATFORM_ADMIN" ? "Platform Admin" : "Tenant Admin";
-  const roleVariant = user.role === "PLATFORM_ADMIN" ? "destructive" : "secondary";
+  const roleLabel = user.role === 'PLATFORM_ADMIN' ? 'Platform Admin' : 'Tenant Admin';
+  const roleVariant = user.role === 'PLATFORM_ADMIN' ? 'destructive' : 'secondary';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -84,7 +84,7 @@ export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="text-white hover:text-macon-orange-500 transition-colors"
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -104,12 +104,12 @@ export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
       {/* Sidebar - Desktop & Mobile */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-screen bg-macon-navy-900 border-r border-macon-navy-700 z-40 transition-all duration-300",
+          'fixed top-0 left-0 h-screen bg-macon-navy-900 border-r border-macon-navy-700 z-40 transition-all duration-300',
           // Desktop
-          "hidden lg:block",
-          sidebarCollapsed ? "lg:w-20" : "lg:w-64",
+          'hidden lg:block',
+          sidebarCollapsed ? 'lg:w-20' : 'lg:w-64',
           // Mobile
-          mobileMenuOpen ? "block w-64 mt-[57px]" : "hidden"
+          mobileMenuOpen ? 'block w-64 mt-[57px]' : 'hidden'
         )}
       >
         <div className="flex flex-col h-full">
@@ -126,7 +126,7 @@ export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               className="text-white/60 hover:text-white transition-colors"
-              aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {sidebarCollapsed ? (
                 <ChevronRight className="w-5 h-5" />
@@ -186,12 +186,12 @@ export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
       {/* Main Content */}
       <div
         className={cn(
-          "min-h-screen transition-all duration-300",
+          'min-h-screen transition-all duration-300',
           // Desktop padding
-          "lg:pl-64",
-          sidebarCollapsed && "lg:pl-20",
+          'lg:pl-64',
+          sidebarCollapsed && 'lg:pl-20',
           // Mobile padding for fixed header
-          "pt-[57px] lg:pt-0"
+          'pt-[57px] lg:pt-0'
         )}
       >
         {/* Header with Breadcrumbs */}
@@ -218,7 +218,9 @@ export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
         )}
 
         {/* Page Content */}
-        <main id="main-content" tabIndex={-1} className="p-6">{children}</main>
+        <main id="main-content" tabIndex={-1} className="p-6">
+          {children}
+        </main>
       </div>
     </div>
   );

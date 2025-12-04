@@ -22,16 +22,18 @@ Before reviewing code, verify the PR description includes:
 **File:** `server/src/lib/entities.ts`
 
 ### Required fields check:
+
 ```typescript
 export interface Package {
-  id: string;           // ✅ Required - no ? or | null
-  title: string;        // ✅ Required
-  photoUrl?: string;    // ✅ Optional - has ?
-  segmentId?: string | null;  // ✅ Optional - has ? and union
+  id: string; // ✅ Required - no ? or | null
+  title: string; // ✅ Required
+  photoUrl?: string; // ✅ Optional - has ?
+  segmentId?: string | null; // ✅ Optional - has ? and union
 }
 ```
 
 **Checklist:**
+
 - [ ] New field has `?` if optional, nothing if required
 - [ ] Union types include null if nullable: `Type | null`
 - [ ] Field names are semantic (not abbreviated: `tenantId` not `tid`)
@@ -39,6 +41,7 @@ export interface Package {
 - [ ] Matches business logic (is this really required?)
 
 **Red flags:**
+
 - ❌ `id?: string` (ID should always be required)
 - ❌ `createdAt: Date | string | null` (pick one, be consistent)
 - ❌ `metadata: any` (too vague, use specific types)
@@ -71,13 +74,14 @@ export const PackageResponse = z.object({
   id: z.string(),
   slug: z.string(),
   title: z.string(),
-  newField: z.string().optional(),  // New field here
+  newField: z.string().optional(), // New field here
 });
 
 export interface IPackageResponse extends z.infer<typeof PackageResponse> {}
 ```
 
 **Checklist:**
+
 - [ ] Zod schema updated with new field
 - [ ] Validation matches field type (z.string(), z.number(), etc.)
 - [ ] Optional fields use `.optional()` in Zod
@@ -85,6 +89,7 @@ export interface IPackageResponse extends z.infer<typeof PackageResponse> {}
 - [ ] API documentation updated if applicable
 
 **Red flags:**
+
 - ❌ New field in entity but not in Zod schema
 - ❌ Zod says required (`z.string()`) but entity says optional (`string?`)
 - ❌ Type mismatch: Zod `z.number()` but entity `string`
@@ -113,17 +118,19 @@ export interface CreatePackageInput {
   title: string;
   description: string;
   priceCents: number;
-  newField?: string;  // Added here
+  newField?: string; // Added here
 }
 ```
 
 **Checklist:**
+
 - [ ] `CreatePackageInput` includes new field if settable on creation
 - [ ] `UpdatePackageInput` includes new field if settable on update
 - [ ] Repository interface return types match entity definition
 - [ ] Input types are complete (can create entity without separate fields)
 
 **Red flags:**
+
 - ❌ Input DTO missing new field but it's set somewhere
 - ❌ Required field in entity but optional in input (or vice versa)
 - ❌ Field type doesn't match between entity and DTO
@@ -153,7 +160,7 @@ packages.set('pkg_basic', {
   tenantId: DEFAULT_TENANT,
   slug: 'basic-elopement',
   title: 'Basic Elopement',
-  newField: 'value',  // Added
+  newField: 'value', // Added
   priceCents: 99900,
 });
 ```
@@ -193,6 +200,7 @@ async createPackage(tenantId: string, data: CreatePackageInput): Promise<Package
 ```
 
 **Checklist:**
+
 - [ ] All seed data objects include new field
 - [ ] Type annotations don't use `any` (should be strict `Package`)
 - [ ] Optional fields use guards: `data.field ?? defaultValue`
@@ -200,6 +208,7 @@ async createPackage(tenantId: string, data: CreatePackageInput): Promise<Package
 - [ ] Mock behavior matches Prisma adapter (consistency)
 
 **Red flags:**
+
 - ❌ Seed data uses `any` type
 - ❌ Return type is `any` instead of `Package`
 - ❌ New optional field not guarded (could be undefined)
@@ -269,7 +278,7 @@ return {
   tenantId: pkg.tenantId,
   title: pkg.name,
   priceCents: pkg.basePrice,
-  newField: pkg.newField,  // Mapped
+  newField: pkg.newField, // Mapped
 };
 ```
 
@@ -296,7 +305,7 @@ const pkg = await tx.package.create({
     name: data.title,
     description: data.description,
     basePrice: data.priceCents,
-    newField: data.newField ?? null,  // Set here
+    newField: data.newField ?? null, // Set here
   },
 });
 ```
@@ -308,25 +317,26 @@ const pkg = await tx.package.create({
 return {
   id: pkg.id,
   title: pkg.name,
-  newField: pkg.newField,  // Could be null/undefined
+  newField: pkg.newField, // Could be null/undefined
 };
 
 // ✅ CORRECT - Optional field guarded
 return {
   id: pkg.id,
   title: pkg.name,
-  ...(pkg.newField && { newField: pkg.newField }),  // Only set if exists
+  ...(pkg.newField && { newField: pkg.newField }), // Only set if exists
 };
 
 // OR for nullable fields
 return {
   id: pkg.id,
   title: pkg.name,
-  newField: pkg.newField ?? null,  // Explicitly null if not set
+  newField: pkg.newField ?? null, // Explicitly null if not set
 };
 ```
 
 **Checklist:**
+
 - [ ] Mapper input type includes ALL Prisma model fields
 - [ ] Return mapping includes new field
 - [ ] Field type conversion correct (e.g., Prisma string → domain Date)
@@ -335,6 +345,7 @@ return {
 - [ ] Create/update methods include field in data object
 
 **Red flags:**
+
 - ❌ Input type missing field but mapper tries to use it
 - ❌ Mapper return missing field entirely
 - ❌ Optional field set to undefined instead of guarded
@@ -362,17 +373,19 @@ res.status(200).json({
   id: pkg.id,
   slug: pkg.slug,
   title: pkg.title,
-  newField: pkg.newField,  // Included
+  newField: pkg.newField, // Included
 });
 ```
 
 **Checklist:**
+
 - [ ] DTO in response includes new field
 - [ ] DTO structure matches contract (from Step 2)
 - [ ] Validation done via Zod before using field
 - [ ] No type assertions (`as Package`) bypassing validation
 
 **Red flags:**
+
 - ❌ Response DTO missing field but contract expects it
 - ❌ Using `as any` or `as Package` to bypass type checking
 
@@ -423,12 +436,14 @@ async createPackage(tenantId: string, input: CreatePackageInput): Promise<Packag
 ```
 
 **Checklist:**
+
 - [ ] Factory methods create complete entities (no missing fields)
 - [ ] Default values set for optional fields
 - [ ] No `any` types in factories
 - [ ] Return type strictly typed (not `Partial<Package>`)
 
 **Red flags:**
+
 - ❌ Factory returns incomplete entity
 - ❌ Using `as any` in factory
 - ❌ Optional field not initialized to default
@@ -461,6 +476,7 @@ describe('Entity Invariants', () => {
 ```
 
 **Checklist:**
+
 - [ ] New field tested in entity invariant tests
 - [ ] All 3+ creation paths tested together
 - [ ] Optional field test confirms default value
@@ -468,6 +484,7 @@ describe('Entity Invariants', () => {
 - [ ] Integration tests verify end-to-end
 
 **Red flags:**
+
 - ❌ No tests for new field
 - ❌ Only unit tests, no integration tests
 - ❌ Tests only check one creation path
@@ -479,12 +496,14 @@ describe('Entity Invariants', () => {
 **Before approving the PR:**
 
 **Author must confirm:**
+
 - [ ] `npm run typecheck` passes with no errors
 - [ ] `npm test` passes all tests
 - [ ] `npm run build` succeeds
 - [ ] Entity invariant tests pass: `npm test -- --grep "Entity Invariants"`
 
 **Reviewer must verify:**
+
 - [ ] All 5-7 locations updated (checklist from Step 1)
 - [ ] No `any` types bypass type safety
 - [ ] Optional vs required fields consistent
@@ -522,47 +541,56 @@ APPROVED ✅
 
 ### Comment: Missing mapper field
 
-```
+````
 The new `newField` was added to the entity but the
 `toDomainPackage()` mapper doesn't include it in the return statement.
 
 Please add:
 ```typescript
 newField: pkg.newField,
-```
+````
 
 to the return object on line 612.
+
 ```
 
 ### Comment: Input type incomplete
 
 ```
+
 The `CreatePackageInput` DTO in ports.ts is missing the new `newField`.
 Since it's a required field in the entity, it should be settable on creation.
 
 Please add `newField: string;` to CreatePackageInput interface.
+
 ```
 
 ### Comment: Seed data missing field
 
 ```
+
 Mock seed data in `/mock/index.ts` is missing the new `newField`.
 
 Please update all `packages.set()` calls to include:
+
 ```typescript
 newField: 'value',
 ```
+
 ```
 
 ### Comment: Type safety
 
 ```
+
 Found unsafe type usage:
+
 - Line 45: `...data as any` bypasses type checking
 - Line 89: Return type should be `Package` not `any`
 
 This prevents TypeScript from catching missing fields.
 Please use strict types instead.
+
 ```
 
 ---
@@ -572,13 +600,15 @@ Please use strict types instead.
 Copy this list and verify each location is updated:
 
 ```
+
 [ ] 1. server/src/lib/entities.ts - Entity interface
-[ ] 2. packages/contracts/src/*.ts - API contracts (if applicable)
+[ ] 2. packages/contracts/src/_.ts - API contracts (if applicable)
 [ ] 3. server/src/lib/ports.ts - Input/output DTOs
 [ ] 4. server/src/adapters/mock/index.ts - Mock implementation
-[ ] 5. server/src/adapters/prisma/*.repository.ts - Prisma mapper
-[ ] 6. server/src/routes/*.routes.ts - DTO response mapping
-[ ] 7. server/src/services/*.service.ts - Factory methods
+[ ] 5. server/src/adapters/prisma/_.repository.ts - Prisma mapper
+[ ] 6. server/src/routes/_.routes.ts - DTO response mapping
+[ ] 7. server/src/services/_.service.ts - Factory methods
+
 ```
 
 ---
@@ -590,3 +620,4 @@ Copy this list and verify each location is updated:
 - **[CLAUDE.md](../../../CLAUDE.md)** - Repository pattern rules
 - **[server/src/lib/entities.ts](../../../server/src/lib/entities.ts)** - Entity definitions
 
+```

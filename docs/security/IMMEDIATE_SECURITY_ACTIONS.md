@@ -33,6 +33,7 @@ JWT_SECRET=911b49e08b8639af2b47572ccb34b0b84ae4fab64b6e124287407ea9e26c5734
 ### 3. Rotate Stripe Webhook Secret (5 minutes)
 
 For local development:
+
 ```bash
 # Stop current listener, then restart:
 stripe listen --forward-to localhost:3001/api/webhooks/stripe
@@ -60,6 +61,7 @@ npm run dev
 ```
 
 Test that everything works:
+
 - Database connection
 - User authentication
 - Stripe checkout
@@ -69,11 +71,13 @@ Test that everything works:
 This is **CRITICAL** but requires a migration script because it encrypts tenant data in the database.
 
 **New value generated:**
+
 ```
 307e73f2de1661253885027e135079212782f573c6efde1fb0857c943b27d1e7
 ```
 
 **DO NOT** just replace it in `.env` - you need to:
+
 1. Create a migration script to re-encrypt tenant secrets
 2. See full instructions in `SECRET_ROTATION_GUIDE.md`
 
@@ -100,11 +104,13 @@ After completing the above steps:
 ## Security Reminders
 
 **DO:**
+
 - Keep `.env` local only
 - Use strong, unique secrets for each environment
 - Store production secrets in a secure vault
 
 **DON'T:**
+
 - Commit `.env` to git (already protected by .gitignore)
 - Share secrets via email/Slack
 - Reuse secrets across projects

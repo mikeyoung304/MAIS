@@ -25,10 +25,7 @@ export function AppointmentFilters({
   onClearFilters,
 }: AppointmentFiltersProps) {
   const hasActiveFilters =
-    filters.status !== 'all' ||
-    filters.serviceId !== 'all' ||
-    filters.startDate ||
-    filters.endDate;
+    filters.status !== 'all' || filters.serviceId !== 'all' || filters.startDate || filters.endDate;
 
   return (
     <Card className="p-6 bg-macon-navy-800 border-white/20">
@@ -46,9 +43,7 @@ export function AppointmentFilters({
           <select
             id="status"
             value={filters.status}
-            onChange={(e) =>
-              onFilterChange({ ...filters, status: e.target.value })
-            }
+            onChange={(e) => onFilterChange({ ...filters, status: e.target.value })}
             className="w-full h-10 px-3 bg-macon-navy-900 border border-white/20 text-white rounded-md focus:border-white/30 focus:outline-none"
           >
             <option value="all">All Statuses</option>
@@ -67,9 +62,7 @@ export function AppointmentFilters({
           <select
             id="service"
             value={filters.serviceId}
-            onChange={(e) =>
-              onFilterChange({ ...filters, serviceId: e.target.value })
-            }
+            onChange={(e) => onFilterChange({ ...filters, serviceId: e.target.value })}
             className="w-full h-10 px-3 bg-macon-navy-900 border border-white/20 text-white rounded-md focus:border-white/30 focus:outline-none"
           >
             <option value="all">All Services</option>
@@ -90,9 +83,7 @@ export function AppointmentFilters({
             id="startDate"
             type="date"
             value={filters.startDate}
-            onChange={(e) =>
-              onFilterChange({ ...filters, startDate: e.target.value })
-            }
+            onChange={(e) => onFilterChange({ ...filters, startDate: e.target.value })}
             className="bg-macon-navy-900 border-white/20 text-white focus:border-white/30 h-10"
           />
         </div>
@@ -106,9 +97,7 @@ export function AppointmentFilters({
             id="endDate"
             type="date"
             value={filters.endDate}
-            onChange={(e) =>
-              onFilterChange({ ...filters, endDate: e.target.value })
-            }
+            onChange={(e) => onFilterChange({ ...filters, endDate: e.target.value })}
             className="bg-macon-navy-900 border-white/20 text-white focus:border-white/30 h-10"
           />
         </div>

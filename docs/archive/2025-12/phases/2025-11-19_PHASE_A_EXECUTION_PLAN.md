@@ -33,14 +33,17 @@ WAVE 3 (Sequential - 1 hour)
 ## 🌊 WAVE 1: ANALYSIS & FOUNDATION (2 hours, 3 parallel subagents)
 
 ### SUBAGENT 1A: TypeScript Type Safety Audit
+
 **Agent Type**: general-purpose
 **Priority**: Critical
 **Estimated Time**: 2 hours
 
 #### Mission:
+
 Fix all 116 TypeScript `any` types and enable strict mode compliance.
 
 #### Specific Tasks:
+
 1. **Audit Phase**:
    - Search for all `any` types using Grep: `pattern: ": any"`
    - Prioritize files by severity:
@@ -61,6 +64,7 @@ Fix all 116 TypeScript `any` types and enable strict mode compliance.
    - Fix ESLint configuration issues
 
 #### Deliverables:
+
 - All files with proper TypeScript types
 - Updated `tsconfig.json` with strict mode enabled
 - Clean `tsc --noEmit` output
@@ -69,14 +73,17 @@ Fix all 116 TypeScript `any` types and enable strict mode compliance.
 ---
 
 ### SUBAGENT 1B: Database Schema & Query Analysis
+
 **Agent Type**: general-purpose
 **Priority**: High
 **Estimated Time**: 1.5 hours
 
 #### Mission:
+
 Analyze and optimize database schema for performance and add missing indexes.
 
 #### Specific Tasks:
+
 1. **Schema Analysis**:
    - Read `server/prisma/schema.prisma`
    - Identify missing indexes for:
@@ -95,6 +102,7 @@ Analyze and optimize database schema for performance and add missing indexes.
    - Add query result caching opportunities
 
 #### Deliverables:
+
 - Updated `schema.prisma` with new indexes
 - Migration file for index additions
 - List of optimized query patterns
@@ -103,14 +111,17 @@ Analyze and optimize database schema for performance and add missing indexes.
 ---
 
 ### SUBAGENT 1C: Test Coverage Assessment
+
 **Agent Type**: general-purpose
 **Priority**: High
 **Estimated Time**: 1.5 hours
 
 #### Mission:
+
 Analyze current test coverage and create plan for reaching 70% coverage.
 
 #### Specific Tasks:
+
 1. **Coverage Analysis**:
    - Run `npm run test:coverage` to get baseline
    - Identify untested or poorly tested files:
@@ -130,6 +141,7 @@ Analyze current test coverage and create plan for reaching 70% coverage.
      - `server/test/race-conditions/*.test.ts` (NEW)
 
 #### Deliverables:
+
 - Current coverage report analysis
 - List of files needing tests (prioritized)
 - Test file structure plan
@@ -140,15 +152,19 @@ Analyze current test coverage and create plan for reaching 70% coverage.
 ## 🌊 WAVE 2: IMPLEMENTATION (3 hours, 3 parallel subagents)
 
 ### SUBAGENT 2A: God Component Refactoring
+
 **Agent Type**: general-purpose
 **Priority**: Critical
 **Estimated Time**: 3 hours
 
 #### Mission:
+
 Refactor 7 god components (462+ lines) into smaller, maintainable components.
 
 #### Specific Tasks:
+
 1. **PackagePhotoUploader** (462 lines → 5 files):
+
    ```
    client/src/features/photos/
    ├── PhotoUploader.tsx (main, 80 lines)
@@ -157,12 +173,14 @@ Refactor 7 god components (462+ lines) into smaller, maintainable components.
    ├── PhotoDeleteDialog.tsx (60 lines)
    └── usePhotoUpload.ts (120 lines)
    ```
+
    - Extract photo grid display logic
    - Create upload button component
    - Extract delete confirmation dialog
    - Move upload logic to custom hook
 
 2. **TenantPackagesManager** (425 lines → 5 files):
+
    ```
    client/src/features/tenant-admin/packages/
    ├── TenantPackagesManager.tsx (80 lines)
@@ -172,11 +190,13 @@ Refactor 7 god components (462+ lines) into smaller, maintainable components.
        ├── usePackageForm.ts (60 lines)
        └── usePackageManager.ts (80 lines)
    ```
+
    - Separate form from list view
    - Extract form logic to hook
    - Create package list component
 
 3. **Admin Dashboard** (343 lines → 5 files):
+
    ```
    client/src/features/admin/dashboard/
    ├── DashboardLayout.tsx (70 lines)
@@ -189,6 +209,7 @@ Refactor 7 god components (462+ lines) into smaller, maintainable components.
 4. **Remaining 4 components** (similar pattern)
 
 #### Deliverables:
+
 - 7 refactored components
 - ~30 new focused component files
 - All original functionality preserved
@@ -198,15 +219,19 @@ Refactor 7 god components (462+ lines) into smaller, maintainable components.
 ---
 
 ### SUBAGENT 2B: Error Handling & Logging System
+
 **Agent Type**: general-purpose
 **Priority**: High
 **Estimated Time**: 1 hour
 
 #### Mission:
+
 Implement production-ready error handling and logging infrastructure.
 
 #### Specific Tasks:
+
 1. **Server-Side Error Handling**:
+
    ```
    server/src/lib/
    ├── error-handler.ts (NEW)
@@ -222,6 +247,7 @@ Implement production-ready error handling and logging infrastructure.
    ```
 
 2. **Client-Side Error Handling**:
+
    ```
    client/src/components/errors/
    ├── ErrorBoundary.tsx (NEW)
@@ -240,6 +266,7 @@ Implement production-ready error handling and logging infrastructure.
    - Standardize error response format
 
 #### Deliverables:
+
 - Complete error handling infrastructure
 - Sentry setup (ready for DSN)
 - Error boundaries in React app
@@ -249,16 +276,20 @@ Implement production-ready error handling and logging infrastructure.
 ---
 
 ### SUBAGENT 2C: Test Suite Expansion
+
 **Agent Type**: general-purpose
 **Priority**: Critical
 **Estimated Time**: 2.5 hours
 **Depends On**: Subagent 1C (test planning)
 
 #### Mission:
+
 Write comprehensive tests to reach 70% coverage (from 51%).
 
 #### Specific Tasks:
+
 1. **Service Tests** (30 new tests):
+
    ```
    server/test/services/
    ├── payment.service.test.ts (NEW)
@@ -277,6 +308,7 @@ Write comprehensive tests to reach 70% coverage (from 51%).
    ```
 
 2. **Integration Tests** (15 new tests):
+
    ```
    server/test/integration/
    ├── payment-flow.test.ts (NEW)
@@ -299,6 +331,7 @@ Write comprehensive tests to reach 70% coverage (from 51%).
    ```
 
 #### Deliverables:
+
 - 55+ new test cases
 - 70% code coverage achieved
 - All critical paths tested
@@ -310,11 +343,13 @@ Write comprehensive tests to reach 70% coverage (from 51%).
 ## 🌊 WAVE 3: INTEGRATION & FINALIZATION (1 hour, sequential)
 
 ### STEP 3A: Integration Testing & Validation
+
 **Executor**: Main agent (sequential)
 **Priority**: Critical
 **Estimated Time**: 30 minutes
 
 #### Tasks:
+
 1. Run full test suite: `npm run test`
 2. Run E2E tests: `npm run test:e2e`
 3. Run TypeScript check: `npx tsc --noEmit`
@@ -322,6 +357,7 @@ Write comprehensive tests to reach 70% coverage (from 51%).
 5. Validate test coverage: `npm run test:coverage`
 
 #### Success Criteria:
+
 - All unit tests passing (200+)
 - All E2E tests passing (9 tests)
 - No TypeScript errors
@@ -331,11 +367,13 @@ Write comprehensive tests to reach 70% coverage (from 51%).
 ---
 
 ### STEP 3B: Documentation Updates
+
 **Executor**: Main agent (sequential)
 **Priority**: Medium
 **Estimated Time**: 20 minutes
 
 #### Tasks:
+
 1. Update README.md with Phase A changes
 2. Create/update technical docs:
    ```
@@ -351,12 +389,15 @@ Write comprehensive tests to reach 70% coverage (from 51%).
 ---
 
 ### STEP 3C: Phase A Completion Report
+
 **Executor**: Main agent (sequential)
 **Priority**: High
 **Estimated Time**: 10 minutes
 
 #### Deliverables:
+
 Create comprehensive report with:
+
 - Files modified count
 - Code metrics (lines added/removed/changed)
 - Test coverage improvement (51% → 70%)
@@ -372,6 +413,7 @@ Create comprehensive report with:
 ### Parallel Execution Plan:
 
 **WAVE 1** - Launch 3 subagents simultaneously:
+
 ```bash
 # Launch all 3 at once in single message
 Task 1A: TypeScript Audit & Fixes
@@ -380,6 +422,7 @@ Task 1C: Test Coverage Assessment
 ```
 
 **WAVE 2** - After Wave 1 completes, launch 3 more:
+
 ```bash
 # Launch all 3 at once in single message
 Task 2A: Component Refactoring
@@ -388,6 +431,7 @@ Task 2C: Test Suite Expansion (uses output from 1C)
 ```
 
 **WAVE 3** - Sequential execution by main agent:
+
 ```bash
 # Execute one at a time
 1. Integration testing
@@ -396,6 +440,7 @@ Task 2C: Test Suite Expansion (uses output from 1C)
 ```
 
 ### Time Savings:
+
 - **Sequential Execution**: 8+ hours
 - **Parallel Execution**: 3-4 hours
 - **Time Saved**: 4-5 hours (50% reduction)
@@ -407,24 +452,28 @@ Task 2C: Test Suite Expansion (uses output from 1C)
 Each subagent will receive:
 
 ### Context:
+
 - Link to relevant analysis docs
 - Specific files to modify
 - Code style guidelines
 - Testing requirements
 
 ### Constraints:
+
 - Don't modify unrelated files
 - Maintain backward compatibility
 - Write tests for all new code
 - Follow existing patterns
 
 ### Success Criteria:
+
 - All tests passing
 - No TypeScript errors
 - Coverage targets met
 - Code review checklist completed
 
 ### Reporting:
+
 - Files modified list
 - Changes summary
 - Tests added
@@ -436,17 +485,20 @@ Each subagent will receive:
 ## 🛡️ SAFETY MEASURES
 
 ### Before Starting:
+
 - [ ] Create git branch: `phase-a-automation`
 - [ ] Backup current state
 - [ ] Document baseline metrics
 
 ### During Execution:
+
 - [ ] Each subagent commits changes separately
 - [ ] Run tests after each subagent completes
 - [ ] Review changes before merging
 - [ ] Keep detailed change log
 
 ### After Completion:
+
 - [ ] Full test suite validation
 - [ ] Code review of all changes
 - [ ] Create PR for review
@@ -457,24 +509,28 @@ Each subagent will receive:
 ## 📊 SUCCESS METRICS
 
 ### Code Quality:
+
 - ✅ 0 TypeScript `any` types (from 116)
 - ✅ 0 ESLint errors
 - ✅ 0 TypeScript errors
 - ✅ All components < 200 lines
 
 ### Test Coverage:
+
 - ✅ 70%+ overall coverage (from 51%)
 - ✅ 90%+ service coverage (from 38%)
 - ✅ 100% critical path coverage
 - ✅ All race conditions tested
 
 ### Performance:
+
 - ✅ Database queries optimized
 - ✅ N+1 queries eliminated
 - ✅ API response times < 200ms
 - ✅ Test suite runs < 2 minutes
 
 ### Documentation:
+
 - ✅ All public APIs documented
 - ✅ Architecture diagrams updated
 - ✅ Troubleshooting guide created
@@ -485,11 +541,13 @@ Each subagent will receive:
 ## 🚀 READY TO LAUNCH
 
 **To start Phase A execution with this plan, say:**
+
 ```
 "Execute Phase A with parallel subagents"
 ```
 
 **This will trigger:**
+
 1. Git branch creation
 2. Wave 1 subagent launch (3 parallel)
 3. Wave 2 subagent launch (3 parallel)
@@ -505,16 +563,19 @@ Each subagent will receive:
 I'll provide updates after each wave:
 
 **After Wave 1**:
+
 - TypeScript audit results
 - Database optimization plan
 - Test coverage gaps identified
 
 **After Wave 2**:
+
 - Components refactored count
 - Error handling implemented
 - New tests written count
 
 **After Wave 3**:
+
 - Final test results
 - Coverage achieved
 - Complete change summary

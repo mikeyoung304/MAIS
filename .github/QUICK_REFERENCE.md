@@ -52,6 +52,7 @@ git push origin v1.2.3
 ## ✅ PR Checklist
 
 Before creating a PR:
+
 - [ ] Code passes `npm run lint`
 - [ ] Code passes `npm run typecheck`
 - [ ] All tests pass (`npm test`)
@@ -63,6 +64,7 @@ Before creating a PR:
 ## 📊 Workflow Status
 
 Check workflow status:
+
 1. Go to **Actions** tab in GitHub
 2. See running/completed workflows
 3. Click workflow for details
@@ -71,6 +73,7 @@ Check workflow status:
 ## 🔍 Debugging Failed Workflows
 
 ### Lint/Format Failures
+
 ```bash
 # Fix locally
 npm run lint          # See errors
@@ -81,6 +84,7 @@ git push
 ```
 
 ### Test Failures
+
 ```bash
 # Run tests locally
 npm run test:unit -- --reporter=verbose
@@ -96,6 +100,7 @@ git push
 ```
 
 ### Build Failures
+
 ```bash
 # Build locally
 npm run build --workspaces --if-present
@@ -108,20 +113,22 @@ npm run typecheck
 
 ## 🎯 Deployment Environments
 
-| Environment | Branch | URL | Auto-Deploy |
-|-------------|--------|-----|-------------|
-| **Staging** | develop | staging.mais.app | ✅ Yes |
-| **Production** | main | mais.app | ⚠️  Requires approval |
+| Environment    | Branch  | URL              | Auto-Deploy          |
+| -------------- | ------- | ---------------- | -------------------- |
+| **Staging**    | develop | staging.mais.app | ✅ Yes               |
+| **Production** | main    | mais.app         | ⚠️ Requires approval |
 
 ## 🔐 Environment Variables
 
 **Never commit:**
+
 - `.env` files
 - API keys
 - Database passwords
 - JWT secrets
 
 **Use instead:**
+
 - GitHub Secrets (for CI/CD)
 - `.env.example` (for documentation)
 - Local `.env` (gitignored)
@@ -129,15 +136,18 @@ npm run typecheck
 ## 📱 Quick Actions
 
 ### Re-run Failed Workflow
+
 1. Actions tab → Failed workflow
 2. Click "Re-run failed jobs"
 3. Or "Re-run all jobs"
 
 ### Cancel Running Workflow
+
 1. Actions tab → Running workflow
 2. Click "Cancel workflow"
 
 ### Manual Deploy
+
 1. Actions tab → deploy-staging or deploy-production
 2. Click "Run workflow"
 3. Select branch
@@ -147,6 +157,7 @@ npm run typecheck
 ## 🆘 Emergency Procedures
 
 ### Rollback Production
+
 ```bash
 # Via Vercel
 vercel rollback https://mais.app
@@ -156,6 +167,7 @@ vercel rollback https://mais.app
 ```
 
 ### Hotfix Deploy
+
 ```bash
 git checkout -b hotfix/critical-bug main
 # ... fix bug ...
@@ -167,6 +179,7 @@ git push origin hotfix/critical-bug
 ```
 
 ### Secret Leaked
+
 ```bash
 # 1. Immediately rotate secret
 gh secret set SECRET_NAME
@@ -179,22 +192,24 @@ gh secret set SECRET_NAME
 
 ## 📞 Getting Help
 
-| Issue | Resource |
-|-------|----------|
-| **Workflow errors** | `.github/WORKFLOWS_README.md` → Troubleshooting |
-| **Secret management** | `.github/SECRETS_TEMPLATE.md` |
-| **Database migrations** | Workflow: database-maintenance.yml |
-| **Deployment issues** | Check Render/Vercel dashboards |
-| **General questions** | Create GitHub Issue |
+| Issue                   | Resource                                        |
+| ----------------------- | ----------------------------------------------- |
+| **Workflow errors**     | `.github/WORKFLOWS_README.md` → Troubleshooting |
+| **Secret management**   | `.github/SECRETS_TEMPLATE.md`                   |
+| **Database migrations** | Workflow: database-maintenance.yml              |
+| **Deployment issues**   | Check Render/Vercel dashboards                  |
+| **General questions**   | Create GitHub Issue                             |
 
 ## 🎓 Learning Resources
 
 **Essential Reading (30 min):**
+
 1. `.github/WORKFLOWS_README.md` - Workflow overview
 2. `CLAUDE.md` - Project setup
 3. This file - Quick reference
 
 **For Deep Dive (2-3 hours):**
+
 1. `.github/workflows/*.yml` - Actual workflow files
 2. `docs/TESTING.md` - Testing strategy
 3. `docs/operations/PRODUCTION_DEPLOYMENT_GUIDE.md`
@@ -202,24 +217,28 @@ gh secret set SECRET_NAME
 ## 💡 Pro Tips
 
 **Speed up CI:**
+
 - Keep PRs small (<300 lines)
 - Write focused commits
 - Run tests locally first
 - Use `npm run format` before committing
 
 **Avoid failures:**
+
 - Use pre-commit hooks (husky)
 - Check `npm run typecheck` often
 - Test migrations locally first
 - Don't skip CI checks
 
 **Database migrations:**
+
 - Always test on staging first
 - Name migrations descriptively
 - Include rollback plan
 - Coordinate with team
 
 **Deployment best practices:**
+
 - Deploy during low-traffic hours
 - Monitor logs after deploy
 - Have rollback plan ready
@@ -227,13 +246,13 @@ gh secret set SECRET_NAME
 
 ## 📋 Workflow Triggers
 
-| Workflow | Triggered By | Duration |
-|----------|--------------|----------|
-| **PR Validation** | Pull requests | ~8-12 min |
-| **Deploy Staging** | Push to develop | ~15-20 min |
+| Workflow              | Triggered By       | Duration   |
+| --------------------- | ------------------ | ---------- |
+| **PR Validation**     | Pull requests      | ~8-12 min  |
+| **Deploy Staging**    | Push to develop    | ~15-20 min |
 | **Deploy Production** | Push to main, tags | ~20-30 min |
-| **Cache Warmup** | Daily 2 AM UTC | ~10-15 min |
-| **DB Maintenance** | Manual only | Varies |
+| **Cache Warmup**      | Daily 2 AM UTC     | ~10-15 min |
+| **DB Maintenance**    | Manual only        | Varies     |
 
 ## 🔧 Useful Aliases
 
@@ -281,11 +300,13 @@ git commit -m "test: add unit tests for booking service"
 ## 🎯 Goals & Metrics
 
 **Current Sprint:**
+
 - Test pass rate: 60% → 70%
 - Coverage: >80%
 - CI time: <15 min
 
 **Your Contribution:**
+
 - Write tests for new code
 - Fix failing tests
 - Improve coverage

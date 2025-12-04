@@ -1,14 +1,14 @@
-import * as React from 'react'
-import { Slot } from '@radix-ui/react-slot'
-import { cva, type VariantProps } from 'class-variance-authority'
-import { Loader2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-semibold touch-manipulation relative overflow-hidden isolate ' +
-  'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-macon-navy/30 focus-visible:ring-offset-2 ' +
-  'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed ' +
-  'transform-gpu',
+    'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-macon-navy/30 focus-visible:ring-offset-2 ' +
+    'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed ' +
+    'transform-gpu',
   {
     variants: {
       variant: {
@@ -70,20 +70,41 @@ const buttonVariants = cva(
       size: 'default',
     },
   }
-)
+);
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
-  asChild?: boolean
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 'teal' | 'success'
-  isLoading?: boolean
-  loadingText?: string
+  asChild?: boolean;
+  variant?:
+    | 'default'
+    | 'destructive'
+    | 'outline'
+    | 'secondary'
+    | 'ghost'
+    | 'link'
+    | 'teal'
+    | 'success';
+  isLoading?: boolean;
+  loadingText?: string;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, isLoading = false, loadingText, children, disabled, ...props }, ref) => {
-    const Comp = asChild ? Slot : 'button'
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      isLoading = false,
+      loadingText,
+      children,
+      disabled,
+      ...props
+    },
+    ref
+  ) => {
+    const Comp = asChild ? Slot : 'button';
 
     return (
       <Comp
@@ -101,9 +122,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           children
         )}
       </Comp>
-    )
+    );
   }
-)
-Button.displayName = 'Button'
+);
+Button.displayName = 'Button';
 
-export { Button, buttonVariants }
+export { Button, buttonVariants };

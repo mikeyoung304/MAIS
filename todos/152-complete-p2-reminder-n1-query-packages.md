@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "152"
+issue_id: '152'
 tags: [code-review, performance, mvp-gaps, reminders]
 dependencies: []
 resolved_date: 2025-12-02
@@ -14,6 +14,7 @@ resolved_date: 2025-12-02
 The `processOverdueReminders` method iterates through bookings and makes individual queries for package details, causing N+1 query performance issues.
 
 **Why This Matters:**
+
 - 10 reminders = 11 database queries
 - Dashboard load blocks on sequential processing
 - Performance degrades linearly with reminder count
@@ -25,9 +26,10 @@ The `processOverdueReminders` method iterates through bookings and makes individ
 **Location:** `server/src/services/reminder.service.ts:86-99`
 
 **Evidence:**
+
 ```typescript
 for (const booking of bookingsToRemind) {
-  await this.sendReminderForBooking(tenantId, booking);  // Line 88
+  await this.sendReminderForBooking(tenantId, booking); // Line 88
   // Inside sendReminderForBooking:
   const pkg = await this.catalogRepo.getPackageById(tenantId, booking.packageId); // Line 137
 }
@@ -36,15 +38,16 @@ for (const booking of bookingsToRemind) {
 ## Proposed Solutions
 
 ### Option A: Batch Fetch Packages (Recommended)
+
 **Pros:** Single query for all packages
 **Cons:** Requires new repository method
 **Effort:** Small (2-3 hours)
 **Risk:** Low
 
 ```typescript
-const packageIds = bookingsToRemind.map(b => b.packageId);
+const packageIds = bookingsToRemind.map((b) => b.packageId);
 const packages = await this.catalogRepo.getPackagesByIds(tenantId, packageIds);
-const packageMap = new Map(packages.map(p => [p.id, p]));
+const packageMap = new Map(packages.map((p) => [p.id, p]));
 
 for (const booking of bookingsToRemind) {
   const pkg = packageMap.get(booking.packageId);
@@ -55,6 +58,7 @@ for (const booking of bookingsToRemind) {
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/services/reminder.service.ts`
 - `server/src/lib/ports.ts` (add getPackagesByIds)
 - `server/src/adapters/prisma/catalog.repository.ts`
@@ -70,6 +74,7 @@ for (const booking of bookingsToRemind) {
 **Date:** 2025-12-02
 
 **Changes Made:**
+
 1. Added `getPackagesByIds(tenantId: string, ids: string[]): Promise<Package[]>` to `CatalogRepository` interface in `/Users/mikeyoung/CODING/MAIS/server/src/lib/ports.ts`
 2. Implemented `getPackagesByIds` in Prisma repository at `/Users/mikeyoung/CODING/MAIS/server/src/adapters/prisma/catalog.repository.ts`
 3. Implemented `getPackagesByIds` in Mock repository at `/Users/mikeyoung/CODING/MAIS/server/src/adapters/mock/index.ts`
@@ -81,6 +86,7 @@ for (const booking of bookingsToRemind) {
 5. Updated `sendReminderForBooking` method signature to accept optional `Package` parameter
 
 **Performance Impact:**
+
 - **Before:** N+1 queries (1 for bookings + N for packages)
   - Example: 10 reminders = 11 database queries
 - **After:** 2 queries (1 for bookings + 1 batch fetch for all packages)
@@ -88,6 +94,7 @@ for (const booking of bookingsToRemind) {
 - **Improvement:** ~82% reduction in queries for 10 reminders
 
 **Testing:**
+
 - TypeScript compilation passes
 - All existing tests pass (816/888 passed, failures unrelated to this change)
 - Mock and Prisma implementations both handle batch fetching correctly

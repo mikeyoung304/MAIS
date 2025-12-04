@@ -1,4 +1,4 @@
-import { AlertTriangle, Trash2 } from "lucide-react";
+import { AlertTriangle, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,10 +8,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import type { AvailabilityRuleDto } from "./types";
-import { DAYS_OF_WEEK } from "./types";
-import { formatTime } from "./utils";
+} from '@/components/ui/alert-dialog';
+import type { AvailabilityRuleDto } from './types';
+import { DAYS_OF_WEEK } from './types';
+import { formatTime } from './utils';
 
 interface DeleteConfirmationDialogProps {
   isOpen: boolean;
@@ -49,11 +49,9 @@ export function DeleteConfirmationDialog({
             <AlertDialogTitle className="text-2xl">Delete Availability Rule?</AlertDialogTitle>
           </div>
           <AlertDialogDescription className="text-base text-macon-navy-600 dark:text-white/60">
-            Are you sure you want to delete the availability rule for{" "}
-            <strong className="font-semibold text-macon-navy-900 dark:text-white">
-              {dayName}
-            </strong>{" "}
-            from{" "}
+            Are you sure you want to delete the availability rule for{' '}
+            <strong className="font-semibold text-macon-navy-900 dark:text-white">{dayName}</strong>{' '}
+            from{' '}
             <strong className="font-semibold text-macon-navy-900 dark:text-white">
               {timeRange}
             </strong>

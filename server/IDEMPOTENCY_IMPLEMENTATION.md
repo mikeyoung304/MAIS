@@ -49,6 +49,7 @@ model IdempotencyKey {
 ### Checkout Sessions
 
 Keys include:
+
 - Tenant ID (data isolation)
 - Customer email
 - Package ID
@@ -58,6 +59,7 @@ Keys include:
 Format: `checkout_<sha256_hash>`
 
 Example:
+
 ```typescript
 const key = idempotencyService.generateCheckoutKey(
   'tenant_123',
@@ -72,6 +74,7 @@ const key = idempotencyService.generateCheckoutKey(
 ### Refunds
 
 Keys include:
+
 - Payment Intent ID
 - Refund amount (or 'full' for full refund)
 - Rounded timestamp (10-second window)
@@ -79,6 +82,7 @@ Keys include:
 Format: `refund_<sha256_hash>`
 
 Example:
+
 ```typescript
 const key = idempotencyService.generateRefundKey(
   'pi_123abc',
@@ -91,6 +95,7 @@ const key = idempotencyService.generateRefundKey(
 ### Transfers
 
 Keys include:
+
 - Tenant ID
 - Transfer amount
 - Destination account ID
@@ -99,6 +104,7 @@ Keys include:
 Format: `transfer_<sha256_hash>`
 
 Example:
+
 ```typescript
 const key = idempotencyService.generateTransferKey(
   'tenant_123',
@@ -205,7 +211,7 @@ The implementation handles race conditions where multiple identical requests arr
 const isNew = await this.idempotencyService.checkAndStore(idempotencyKey);
 if (!isNew) {
   // Race condition detected - wait for first request
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
   const retryResponse = await this.idempotencyService.getStoredResponse(idempotencyKey);
   if (retryResponse) {
     return { checkoutUrl: retryResponse.data.url };
@@ -310,6 +316,7 @@ describe('Checkout Idempotency', () => {
 ### Manual Testing with Stripe CLI
 
 1. Trigger duplicate webhook events:
+
 ```bash
 stripe trigger checkout.session.completed
 stripe trigger checkout.session.completed # Same event
@@ -318,6 +325,7 @@ stripe trigger checkout.session.completed # Same event
 2. Verify only one booking is created
 
 3. Check logs for idempotency key hits:
+
 ```
 Idempotency key already exists (duplicate request)
 Retrieved cached response for idempotency key
@@ -344,12 +352,14 @@ INFO: Cleaned up expired idempotency keys { count: 42 }
 ## Stripe API Behavior
 
 Stripe's idempotency keys:
+
 - Valid for 24 hours
 - Stored with the API response
 - Return the same result for the same key
 - Different keys = different operations (even with identical parameters)
 
 Our implementation:
+
 - Mirrors Stripe's 24-hour window
 - Generates deterministic keys (same inputs = same key)
 - Caches responses locally for faster duplicate detection

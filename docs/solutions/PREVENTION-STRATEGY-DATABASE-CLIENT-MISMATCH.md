@@ -18,19 +18,20 @@ severity: HIGH
 
 ## Quick Reference
 
-| Aspect | Rule | Example |
-|--------|------|---------|
-| **Database Queries** | Always use Prisma | `prisma.tenant.findUnique()` |
-| **File Storage** | Use Supabase Storage | `supabase.storage.from('images').upload()` |
-| **Authentication** | Use Supabase Auth (if enabled) | `supabase.auth.signIn()` |
-| **Verification** | Use Prisma, never Supabase REST API | `prisma.$queryRaw()` |
-| **Error Signal** | Tenant table not exposed via Supabase API | Cannot query via Supabase JS client |
+| Aspect               | Rule                                      | Example                                    |
+| -------------------- | ----------------------------------------- | ------------------------------------------ |
+| **Database Queries** | Always use Prisma                         | `prisma.tenant.findUnique()`               |
+| **File Storage**     | Use Supabase Storage                      | `supabase.storage.from('images').upload()` |
+| **Authentication**   | Use Supabase Auth (if enabled)            | `supabase.auth.signIn()`                   |
+| **Verification**     | Use Prisma, never Supabase REST API       | `prisma.$queryRaw()`                       |
+| **Error Signal**     | Tenant table not exposed via Supabase API | Cannot query via Supabase JS client        |
 
 ---
 
 ## 1. Problem Statement
 
 ### The Issue
+
 The codebase attempted to use the Supabase JavaScript client to verify database connections by querying the `Tenant` table:
 
 ```typescript
@@ -40,12 +41,14 @@ const { data, error } = await supabase.from('Tenant').select('*');
 ```
 
 ### Why This Failed
+
 1. **API Not Exposed:** The `Tenant` table is not exposed via Supabase's REST API
 2. **Architecture Mismatch:** The app uses Prisma for all database queries, not Supabase JS
 3. **Performance:** Supabase JS client uses HTTP REST API (slower than Prisma connection pooling)
 4. **Maintenance Burden:** Two database clients = two failure modes to handle
 
 ### Impact
+
 - Database verification failed during server startup
 - Unclear error messages about which client to use
 - Inconsistent data access patterns across codebase
@@ -88,6 +91,7 @@ const { data, error } = await supabase.from('Tenant').select('*');
 ```
 
 ### Key Principle
+
 **One client per purpose.** Never use the same client for multiple purposes unless it's explicitly designed for it.
 
 ---
@@ -151,10 +155,7 @@ import { PrismaClient } from '@prisma/client';
  * ONLY for file uploads, not for database queries
  */
 export function getSupabaseClient(): SupabaseClient {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_KEY!
-  );
+  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
 }
 
 /**
@@ -177,9 +178,7 @@ import { getPrismaClient } from './config/database';
  * Verify database connection using Prisma
  * ✅ CORRECT: Uses Prisma, not Supabase JS
  */
-async function verifyDatabaseWithPrisma(
-  prisma: PrismaClient
-): Promise<void> {
+async function verifyDatabaseWithPrisma(prisma: PrismaClient): Promise<void> {
   try {
     logger.info('🔍 Verifying database connection via Prisma...');
 
@@ -215,7 +214,9 @@ export class UploadAdapter {
       .upload(`${tenantId}/logos/${filename}`, file.buffer);
 
     if (error) throw new Error('Upload failed');
-    return { /* ... */ };
+    return {
+      /* ... */
+    };
   }
 }
 ```
@@ -285,10 +286,7 @@ describe('Database Startup Verification', () => {
     // This will either:
     // 1. Fail with "relation not found" (table not exposed)
     // 2. Return empty results (table not exposed via API)
-    const { data, error } = await supabase
-      .from('Tenant')
-      .select('id')
-      .limit(1);
+    const { data, error } = await supabase.from('Tenant').select('id').limit(1);
 
     expect(error).toBeDefined(); // Expected to fail
     expect(data).toBeNull();
@@ -329,17 +327,20 @@ describe('API Startup Sequence', () => {
 **Status:** ACCEPTED
 
 **Context:**
+
 - MAIS is a multi-tenant SaaS platform requiring strict data isolation
 - Uses PostgreSQL with Prisma as primary ORM
 - Uses Supabase for managed infrastructure and storage
 - Attempted to use Supabase JS client for all backend operations
 
 **Decision:**
+
 - **Prisma is the single source of truth for all database operations**
 - Supabase JS client only for Storage and Auth APIs
 - Database verification uses Prisma, never Supabase REST API
 
 **Rationale:**
+
 1. **Type Safety:** Prisma generates typed client from schema
 2. **Performance:** Prisma uses connection pooling, Supabase JS uses HTTP
 3. **API Exposure:** Supabase doesn't expose all tables via REST API
@@ -347,6 +348,7 @@ describe('API Startup Sequence', () => {
 5. **Transactions:** Prisma handles transactions; Supabase JS doesn't
 
 **Consequences:**
+
 - ✅ Clear client allocation prevents confusion
 - ✅ Faster database operations via connection pooling
 - ✅ Type-safe queries reduce runtime errors
@@ -354,6 +356,7 @@ describe('API Startup Sequence', () => {
 - ⚠️ Two dependencies to manage (Prisma + Supabase)
 
 **Related:**
+
 - ADR-001: Double-Booking Prevention (transactions)
 - ADR-002: Webhook Idempotency (database deduplication)
 
@@ -367,6 +370,7 @@ describe('API Startup Sequence', () => {
 ## Database Client Selection Guide
 
 ### Use Prisma When:
+
 ✅ Querying any table (`Tenant`, `User`, `Booking`, etc.)
 ✅ Creating, updating, or deleting records
 ✅ Need transaction support
@@ -375,17 +379,20 @@ describe('API Startup Sequence', () => {
 ✅ Running raw SQL queries
 
 ### Use Supabase Storage When:
+
 ✅ Uploading files (logos, photos, segment images)
 ✅ Generating signed URLs
 ✅ Deleting files
 ✅ Working with storage buckets
 
 ### Use Supabase Auth When:
+
 ✅ Managing user authentication (if enabled)
 ✅ Handling password reset via Auth API
 ✅ Session management
 
 ### Never Use Supabase JS for:
+
 ❌ Database queries (use Prisma instead)
 ❌ Table operations (use Prisma instead)
 ❌ Batch operations (use Prisma instead)
@@ -401,24 +408,28 @@ Create file at: `/server/docs/DATABASE_CLIENT_GUIDE.md`
 ## 8. Implementation Roadmap
 
 ### Phase 1: Documentation (Week 1)
+
 - [ ] Add this prevention strategy to docs
 - [ ] Update architecture documentation
 - [ ] Add code comments in database configuration files
 - [ ] Create cheat sheet for developers
 
 ### Phase 2: Code Quality (Week 2)
+
 - [ ] Add ESLint rule to prevent Supabase JS for database queries
 - [ ] Update PR template with database verification checklist
 - [ ] Create self-review grep commands
 - [ ] Add linting check to CI/CD
 
 ### Phase 3: Testing (Week 3)
+
 - [ ] Add integration test for database startup verification
 - [ ] Add E2E test for API startup sequence
 - [ ] Verify all existing tests use correct client
 - [ ] Create negative test cases
 
 ### Phase 4: Code Review (Week 4)
+
 - [ ] Review all existing database queries for client consistency
 - [ ] Update contribution guidelines
 - [ ] Conduct team training session
@@ -438,11 +449,12 @@ module.exports = {
     'no-restricted-syntax': [
       'error',
       {
-        selector: 'CallExpression[callee.property.name="from"] ' +
-                  '[callee.object.name="supabase"]',
-        message: 'Use Prisma for database queries, ' +
-                 'not supabase.from(). Use supabase.storage.from() ' +
-                 'for file uploads only.',
+        selector:
+          'CallExpression[callee.property.name="from"] ' + '[callee.object.name="supabase"]',
+        message:
+          'Use Prisma for database queries, ' +
+          'not supabase.from(). Use supabase.storage.from() ' +
+          'for file uploads only.',
       },
     ],
   },
@@ -474,9 +486,10 @@ export const rule = {
         if (isBadPattern) {
           context.report({
             node,
-            message: 'Use Prisma for database queries, ' +
-                     'not supabase.from(). This pattern ' +
-                     'causes architecture mismatch.',
+            message:
+              'Use Prisma for database queries, ' +
+              'not supabase.from(). This pattern ' +
+              'causes architecture mismatch.',
           });
         }
       },
@@ -513,16 +526,18 @@ Questions? Ask in #architecture channel
 
 ### Code Review Comment Template
 
-```markdown
+````markdown
 ### Database Client Issue Detected
 
 This PR uses `supabase.from()` for database operations, which:
+
 1. Uses REST API (slower than Prisma connection pooling)
 2. May not expose the table you're querying
 3. Violates our architecture pattern
 
 **Fix:**
 Replace with Prisma:
+
 ```typescript
 // Before ❌
 const { data } = await supabase.from('Tenant').select('*');
@@ -530,9 +545,11 @@ const { data } = await supabase.from('Tenant').select('*');
 // After ✅
 const data = await prisma.tenant.findMany();
 ```
+````
 
 See [Database Client Guide](../../docs/solutions/PREVENTION-STRATEGY-DATABASE-CLIENT-MISMATCH.md)
-```
+
+````
 
 ---
 
@@ -556,19 +573,21 @@ grep -r "supabase\.from(" server/src --include="*.ts" \
   | grep -v "storage" | wc -l
 
 # Expected output: 0 (zero findings)
-```
+````
 
 ---
 
 ## 12. Historical Context & Resolution
 
 ### Original Problem (Commit: 0059be8)
+
 - File: `server/src/config/database.ts`
 - Function: `verifyDatabaseConnection()`
 - Issue: Attempted to query `Tenant` table via Supabase JS client
 - Error: REST API doesn't expose the Tenant table
 
 ### Resolution (Commit: 31f1ae3)
+
 - File: `server/src/index.ts`
 - Function: `verifyDatabaseWithPrisma()`
 - Solution: Use `prisma.$queryRaw()` instead
@@ -577,6 +596,7 @@ grep -r "supabase\.from(" server/src --include="*.ts" \
 ### Code Evolution
 
 **Before (❌ WRONG):**
+
 ```typescript
 // server/src/config/database.ts
 export async function verifyDatabaseConnection(): Promise<void> {
@@ -587,11 +607,10 @@ export async function verifyDatabaseConnection(): Promise<void> {
 ```
 
 **After (✅ CORRECT):**
+
 ```typescript
 // server/src/index.ts
-async function verifyDatabaseWithPrisma(
-  prisma: PrismaClient
-): Promise<void> {
+async function verifyDatabaseWithPrisma(prisma: PrismaClient): Promise<void> {
   const result = await prisma.$queryRaw<{ count: bigint }[]>`
     SELECT COUNT(*) as count FROM "Tenant" LIMIT 1
   `;
@@ -603,17 +622,20 @@ async function verifyDatabaseWithPrisma(
 ## 13. Cross-Reference
 
 ### Related Documentation
+
 - [CLAUDE.md](../../CLAUDE.md) - Architecture patterns section
 - [Database Setup Guide](../../docs/setup/DATABASE.md)
 - [Supabase Configuration](../../docs/setup/SUPABASE.md)
 - [Multi-Tenant Implementation](../../docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md)
 
 ### Related ADRs
+
 - ADR-001: Double-Booking Prevention
 - ADR-002: Webhook Idempotency
 - ADR-003: Database Client Allocation (this document)
 
 ### File Locations
+
 - Config: `/server/src/config/database.ts`
 - Startup: `/server/src/index.ts`
 - Tests: `/server/test/integration/database-startup.spec.ts`
@@ -624,18 +646,23 @@ async function verifyDatabaseWithPrisma(
 ## 14. FAQ
 
 ### Q: Can I use Supabase JS client instead of Prisma?
+
 **A:** No. Supabase JS client uses REST API which is slower and doesn't expose all tables. Prisma is the single source of truth for database operations.
 
 ### Q: What about Supabase's RLS policies?
+
 **A:** RLS policies are enforced at the database level. Use Prisma with `tenantId` filtering - this is equivalent and more performant.
 
 ### Q: Do we need both Prisma and Supabase clients?
+
 **A:** Yes. Prisma for database queries, Supabase for Storage. This is the optimal division of concerns.
 
 ### Q: Can I use raw SQL instead of Prisma?
+
 **A:** In rare cases, yes. Use `prisma.$queryRaw()` for complex queries. Never use `supabase.from()` or direct SQL connections for this.
 
 ### Q: How do I migrate existing Supabase JS queries?
+
 **A:** Replace `supabase.from(table).select()` with `prisma.table.findMany()`. See examples in section 4.
 
 ---
@@ -649,9 +676,7 @@ async function verifyDatabaseWithPrisma(
 import { buildContainer } from './di';
 import type { PrismaClient } from './generated/prisma';
 
-async function verifyDatabaseWithPrisma(
-  prisma: PrismaClient
-): Promise<void> {
+async function verifyDatabaseWithPrisma(prisma: PrismaClient): Promise<void> {
   try {
     logger.info('🔍 Verifying database connection via Prisma...');
 
@@ -668,11 +693,14 @@ async function verifyDatabaseWithPrisma(
     logger.info(`📊 Database contains ${tenantCount} tenant(s)`);
   } catch (error) {
     const err = error as Error & { code?: string };
-    logger.error({
-      errorName: err.name,
-      errorMessage: err.message,
-      errorCode: err.code,
-    }, '❌ Database connection verification failed');
+    logger.error(
+      {
+        errorName: err.name,
+        errorMessage: err.message,
+        errorCode: err.code,
+      },
+      '❌ Database connection verification failed'
+    );
     throw error;
   }
 }
@@ -696,10 +724,7 @@ import { getSupabaseClient } from '../config/database';
 export class UploadAdapter implements StorageProvider {
   private supabase = getSupabaseClient();
 
-  async uploadLogo(
-    file: UploadedFile,
-    tenantId: string
-  ): Promise<UploadResult> {
+  async uploadLogo(file: UploadedFile, tenantId: string): Promise<UploadResult> {
     // ✅ CORRECT: Use Supabase Storage for file uploads
     const { error } = await this.supabase.storage
       .from('images')

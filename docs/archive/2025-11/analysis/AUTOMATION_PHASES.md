@@ -9,9 +9,11 @@
 ---
 
 ## PHASE 1: CRITICAL DATA CORRUPTION FIXES (30 minutes)
+
 **Status**: 🟢 STARTING NOW
 
 ### Subagent 1A: Schema Fixes
+
 ```
 Task: Fix Customer, Venue, WebhookEvent models
 Files:
@@ -24,6 +26,7 @@ Actions:
 ```
 
 ### Subagent 1B: Repository Updates
+
 ```
 Task: Update all database queries for tenant isolation
 Files:
@@ -40,9 +43,11 @@ Actions:
 ---
 
 ## PHASE 2: RACE CONDITION & PAYMENT SAFETY (1 hour)
+
 **Status**: ⏸️ PENDING
 
 ### Subagent 2A: Stripe Idempotency
+
 ```
 Task: Add idempotency keys to all Stripe operations
 Files:
@@ -55,6 +60,7 @@ Actions:
 ```
 
 ### Subagent 2B: Booking Locking
+
 ```
 Task: Implement pessimistic locking for bookings
 Files:
@@ -67,6 +73,7 @@ Actions:
 ```
 
 ### Subagent 2C: Webhook State Machine
+
 ```
 Task: Fix webhook duplicate processing
 Files:
@@ -81,9 +88,11 @@ Actions:
 ---
 
 ## PHASE 3: CODE HEALTH & TYPE SAFETY (2 hours)
+
 **Status**: ⏸️ PENDING
 
 ### Subagent 3A: TypeScript Fixes
+
 ```
 Task: Remove all 116 'any' types
 Files:
@@ -97,6 +106,7 @@ Actions:
 ```
 
 ### Subagent 3B: God Component Refactoring
+
 ```
 Task: Split components > 300 lines
 Files:
@@ -110,6 +120,7 @@ Actions:
 ```
 
 ### Subagent 3C: Security & Dependencies
+
 ```
 Task: Fix vulnerabilities and update packages
 Commands:
@@ -121,9 +132,11 @@ Commands:
 ---
 
 ## PHASE 4: CUSTOMER FEATURES (2 hours)
+
 **Status**: ⏸️ PENDING
 
 ### Subagent 4A: Email Service
+
 ```
 Task: Create email service with templates
 New Files:
@@ -138,6 +151,7 @@ Actions:
 ```
 
 ### Subagent 4B: Customer Portal
+
 ```
 Task: Build customer booking portal
 New Files:
@@ -154,6 +168,7 @@ Actions:
 ```
 
 ### Subagent 4C: Cancellation System
+
 ```
 Task: Implement cancellation workflow
 Files:
@@ -169,9 +184,11 @@ Actions:
 ---
 
 ## PHASE 5: COMPLIANCE & LEGAL (1 hour)
+
 **Status**: ⏸️ PENDING
 
 ### Subagent 5A: Terms & Privacy
+
 ```
 Task: Add legal acceptance flow
 New Files:
@@ -187,6 +204,7 @@ Actions:
 ```
 
 ### Subagent 5B: GDPR Compliance
+
 ```
 Task: Implement data rights
 New Files:
@@ -202,6 +220,7 @@ Actions:
 ```
 
 ### Subagent 5C: Error Tracking
+
 ```
 Task: Add Sentry integration
 Files:
@@ -218,9 +237,11 @@ Actions:
 ---
 
 ## PHASE 6: TESTING & COVERAGE (2 hours)
+
 **Status**: ⏸️ PENDING
 
 ### Subagent 6A: Unit Tests
+
 ```
 Task: Increase coverage from 51% to 70%
 New Files:
@@ -235,6 +256,7 @@ Actions:
 ```
 
 ### Subagent 6B: Integration Tests
+
 ```
 Task: Add integration tests
 New Files:
@@ -248,6 +270,7 @@ Actions:
 ```
 
 ### Subagent 6C: E2E Test Fixes
+
 ```
 Task: Fix failing E2E tests
 Files:

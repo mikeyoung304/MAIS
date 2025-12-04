@@ -5,6 +5,7 @@
 **Issue:** Code quality TODO #035 attempted to replace `any` types in ts-rest route handlers with proper `Request` types. This caused build failures (TS2345 errors) because ts-rest v3 has known type compatibility issues with Express 4.x/5.x and **requires** `any` for request parameters.
 
 **Impact:**
+
 - Build failed when agent attempted "type safety improvement"
 - Rollback required in commit 417b8c0
 - Highlighted gap between automated type safety rules and library constraints
@@ -21,27 +22,34 @@
 
 ```typescript
 // server/src/routes/index.ts (REQUIRED - do NOT change)
-createExpressEndpoints(Contracts, s.router(Contracts, {
-  getPackages: async ({ req }: { req: any }) => {  // ← REQUIRED
-    const tenantId = getTenantId(req as TenantRequest);
-    const data = await controllers.packages.getPackages(tenantId);
-    return { status: 200 as const, body: data };
-  },
-}));
+createExpressEndpoints(
+  Contracts,
+  s.router(Contracts, {
+    getPackages: async ({ req }: { req: any }) => {
+      // ← REQUIRED
+      const tenantId = getTenantId(req as TenantRequest);
+      const data = await controllers.packages.getPackages(tenantId);
+      return { status: 200 as const, body: data };
+    },
+  })
+);
 ```
 
 **Why `any` here:**
+
 - ts-rest internally has middleware signature typing that doesn't match Express 4.x/5.x
 - Attempting to type as `Request` causes TS2345 errors
 - The code IS type-safe at runtime (through `as TenantRequest` assertion after)
 - Library maintainers are aware of this limitation
 
 **References:**
+
 - GitHub issue: https://github.com/ts-rest/ts-rest/issues
 - Known since ts-rest v3.x
 - Runtime behavior is correct despite type error
 
 **Solution Pattern:**
+
 1. Document the library limitation with comment
 2. Use `as TenantRequest` assertion after extracting from `any`
 3. Make all downstream code properly typed
@@ -61,11 +69,13 @@ const headerValue: string | string[] | undefined = req.get('stripe-signature');
 ```
 
 **When NOT to remove:**
+
 - Library has no TypeScript support and you use `any` pragmatically
 - Type definitions are genuinely incomplete/wrong in the library
 - PR to library to fix types is pending
 
 **When TO fix:**
+
 - It's a naming/usage error, not library limitation
 - A more specific type is available but ignored
 - You can use proper typing with type guards
@@ -85,6 +95,7 @@ async function legacyController(req: any): Promise<void> {
 ```
 
 **Requirements to remove later:**
+
 - Must have explicit TODO with clear blocker
 - Must reference what needs to happen first
 - Review at sprint planning to unblock
@@ -129,11 +140,14 @@ Type Safety Review:
 
 ```typescript
 // BAD: Silently confusing
-createExpressEndpoints(Contracts, s.router(Contracts, {
-  getPackages: async ({ req }: { req: any }) => {
-    // ...
-  },
-}));
+createExpressEndpoints(
+  Contracts,
+  s.router(Contracts, {
+    getPackages: async ({ req }: { req: any }) => {
+      // ...
+    },
+  })
+);
 
 // GOOD: Document WHY it exists
 // NOTE: ts-rest v3 has known type compatibility issues with Express 4.x/5.x.
@@ -141,12 +155,15 @@ createExpressEndpoints(Contracts, s.router(Contracts, {
 // DO NOT replace with `Request` type - it will cause TS2345 build errors.
 // The type is safe at runtime via `getTenantId()` type guard below.
 // See: https://github.com/ts-rest/ts-rest/issues/[issue-number]
-createExpressEndpoints(Contracts, s.router(Contracts, {
-  getPackages: async ({ req }: { req: any }) => {
-    const tenantId = getTenantId(req as TenantRequest);  // ← Runtime type guard
-    // ...
-  },
-}));
+createExpressEndpoints(
+  Contracts,
+  s.router(Contracts, {
+    getPackages: async ({ req }: { req: any }) => {
+      const tenantId = getTenantId(req as TenantRequest); // ← Runtime type guard
+      // ...
+    },
+  })
+);
 ```
 
 ### Mark Gradual Migrations
@@ -181,6 +198,7 @@ Create or update documentation in `/server/README.md` or inline:
 ## Known Type Limitations
 
 ### ts-rest Handler Parameters
+
 - **Location:** `server/src/routes/index.ts`
 - **Reason:** Library type compatibility with Express 4.x/5.x
 - **Impact:** Build will fail if `any` is replaced with `Request`
@@ -188,6 +206,7 @@ Create or update documentation in `/server/README.md` or inline:
 - **Mitigation:** Type assertions after extraction (`as TenantRequest`)
 
 ### Payment Provider Types
+
 - **Location:** `server/src/adapters/stripe.adapter.ts`
 - **Reason:** Stripe SDK types incomplete for webhook events
 - **Impact:** High - webhook data must be carefully validated
@@ -262,23 +281,23 @@ Library Status:
 
 ### Red Flags - Investigate Before Removing `any`
 
-| Pattern | Investigation | Decision |
-|---------|---|----------|
-| `{ req: any }` in route handler | Check route file comments + framework used | **Keep if ts-rest** |
-| `data: any` without validation | Check if followed by Zod/schema validation | **Keep if validated** |
-| `result: any` after external API call | Check if library has types available | **Remove if types exist** |
-| `.unwrap()` or type assertion after | Check what the assertion is doing | **Keep if safety measure** |
-| Nested in middleware/adapter | Check library source | **Assess based on context** |
+| Pattern                               | Investigation                              | Decision                    |
+| ------------------------------------- | ------------------------------------------ | --------------------------- |
+| `{ req: any }` in route handler       | Check route file comments + framework used | **Keep if ts-rest**         |
+| `data: any` without validation        | Check if followed by Zod/schema validation | **Keep if validated**       |
+| `result: any` after external API call | Check if library has types available       | **Remove if types exist**   |
+| `.unwrap()` or type assertion after   | Check what the assertion is doing          | **Keep if safety measure**  |
+| Nested in middleware/adapter          | Check library source                       | **Assess based on context** |
 
 ### Green Lights - Safe to Remove `any`
 
-| Pattern | Action |
-|---------|--------|
-| Unused parameters | Remove if not accessed |
-| Explicit TODOs with resolution | Remove if blocker is resolved |
-| Type can be inferred | Remove and let TypeScript infer |
-| Return value from known API | Use return type from API definition |
-| Validated by schema before use | Replace with validated type |
+| Pattern                        | Action                              |
+| ------------------------------ | ----------------------------------- |
+| Unused parameters              | Remove if not accessed              |
+| Explicit TODOs with resolution | Remove if blocker is resolved       |
+| Type can be inferred           | Remove and let TypeScript infer     |
+| Return value from known API    | Use return type from API definition |
+| Validated by schema before use | Replace with validated type         |
 
 ---
 
@@ -315,39 +334,52 @@ Library Status:
 ### What Happened (Commit 417b8c0)
 
 **Step 1: Agent removed the `any` type**
+
 ```typescript
 // Before: Had `any` due to ts-rest limitation
-createExpressEndpoints(Contracts, s.router(Contracts, {
-  getPackages: async ({ req }: { req: any }) => {
-    // ...
-  },
-}));
+createExpressEndpoints(
+  Contracts,
+  s.router(Contracts, {
+    getPackages: async ({ req }: { req: any }) => {
+      // ...
+    },
+  })
+);
 
 // After: Agent tried to fix type safety
-createExpressEndpoints(Contracts, s.router(Contracts, {
-  getPackages: async ({ req }: { req: Request }) => {  // ← Build error!
-    // ...
-  },
-}));
+createExpressEndpoints(
+  Contracts,
+  s.router(Contracts, {
+    getPackages: async ({ req }: { req: Request }) => {
+      // ← Build error!
+      // ...
+    },
+  })
+);
 ```
 
 **Step 2: Build failed**
+
 ```
 TS2345: Argument of type '{ req: Request }' is not assignable
 to parameter of type '{ req: unknown }'
 ```
 
 **Step 3: Had to revert and document**
+
 ```typescript
 // NOW with documentation
 // ts-rest v3 has type compatibility issues with Express 4.x/5.x
 // DO NOT replace with `Request` - causes TS2345 errors
 // See: https://github.com/ts-rest/ts-rest/issues/...
-createExpressEndpoints(Contracts, s.router(Contracts, {
-  getPackages: async ({ req }: { req: any }) => {
-    // ...
-  },
-}));
+createExpressEndpoints(
+  Contracts,
+  s.router(Contracts, {
+    getPackages: async ({ req }: { req: any }) => {
+      // ...
+    },
+  })
+);
 ```
 
 ### Prevention Strategy Applied
@@ -385,6 +417,7 @@ createExpressEndpoints(Contracts, s.router(Contracts, {
 **Key Takeaway:** Not all `any` types are code quality issues. Some are **required workarounds** for library limitations.
 
 **Prevention Checklist:**
+
 1. Document library limitations inline
 2. Add "do not remove" markers for known issues
 3. Check code review checklist before removing `any`
@@ -393,8 +426,8 @@ createExpressEndpoints(Contracts, s.router(Contracts, {
 6. Reference upstream issues in commit messages
 
 **For This Project (MAIS):**
+
 - ts-rest handlers: Keep `any`, document limitation
 - Stripe/Postmark adapters: Review per-case
 - Schema-validated data: Replace with schema type
 - Gradual migrations: Add explicit TODO with blocker
-

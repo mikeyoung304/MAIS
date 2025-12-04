@@ -273,67 +273,67 @@ Macon AI Solutions is a **production-grade, multi-tenant SaaS platform** for pro
 
 ### 2.1 Frontend Stack
 
-| Layer | Technology | Purpose | Key Features |
-|-------|-----------|---------|--------------|
-| **Framework** | React 18.3 | UI library | Hooks, context, strict mode |
-| **Routing** | React Router v7 | Client-side routing | Dynamic nested routes, loaders |
-| **Bundler** | Vite 6.0 | Build tool | Fast HMR, production optimization |
-| **Styling** | Tailwind CSS 3.4 | Utility-first CSS | Design tokens (Macon brand colors) |
-| **UI Components** | Radix UI + shadcn | Accessible primitives | Dialog, select, dropdown, alert |
-| **State Management** | React Context | Local state | Auth, theme context |
-| **Data Fetching** | TanStack React Query 5 | Server state | Caching, background sync, retries |
-| **HTTP Client** | ts-rest core | Type-safe API client | Runtime request validation |
-| **Form Handling** | Custom hooks + validation | Form state | useForm hook with Zod schemas |
-| **Icons** | Lucide React | Icon library | ~500+ icons |
-| **Notifications** | Sonner | Toast notifications | Non-blocking notifications |
-| **Date Picker** | React Day Picker | Calendar UI | Calendar selection with React Day Picker |
-| **Utilities** | clsx, classname-variance-authority | Class merging | CVA for component variants |
-| **Error Tracking** | Sentry React | Error reporting | Browser error logging |
-| **Types** | TypeScript 5.3 | Type safety | Strict mode, ESNext target |
+| Layer                | Technology                         | Purpose               | Key Features                             |
+| -------------------- | ---------------------------------- | --------------------- | ---------------------------------------- |
+| **Framework**        | React 18.3                         | UI library            | Hooks, context, strict mode              |
+| **Routing**          | React Router v7                    | Client-side routing   | Dynamic nested routes, loaders           |
+| **Bundler**          | Vite 6.0                           | Build tool            | Fast HMR, production optimization        |
+| **Styling**          | Tailwind CSS 3.4                   | Utility-first CSS     | Design tokens (Macon brand colors)       |
+| **UI Components**    | Radix UI + shadcn                  | Accessible primitives | Dialog, select, dropdown, alert          |
+| **State Management** | React Context                      | Local state           | Auth, theme context                      |
+| **Data Fetching**    | TanStack React Query 5             | Server state          | Caching, background sync, retries        |
+| **HTTP Client**      | ts-rest core                       | Type-safe API client  | Runtime request validation               |
+| **Form Handling**    | Custom hooks + validation          | Form state            | useForm hook with Zod schemas            |
+| **Icons**            | Lucide React                       | Icon library          | ~500+ icons                              |
+| **Notifications**    | Sonner                             | Toast notifications   | Non-blocking notifications               |
+| **Date Picker**      | React Day Picker                   | Calendar UI           | Calendar selection with React Day Picker |
+| **Utilities**        | clsx, classname-variance-authority | Class merging         | CVA for component variants               |
+| **Error Tracking**   | Sentry React                       | Error reporting       | Browser error logging                    |
+| **Types**            | TypeScript 5.3                     | Type safety           | Strict mode, ESNext target               |
 
 ### 2.2 Backend Stack
 
-| Layer | Technology | Purpose | Key Features |
-|-------|-----------|---------|--------------|
-| **Runtime** | Node.js 20+ | JavaScript runtime | ES modules, built-in crypto |
-| **Framework** | Express 4.21 | HTTP server | Middleware, routing |
-| **API Protocol** | ts-rest | Type-safe REST | Compile-time validation, OpenAPI generation |
-| **Database** | PostgreSQL 15 | Relational DB | Multi-tenant isolation via schemas |
-| **ORM** | Prisma 6.17 | Database abstraction | Type-safe queries, migrations |
-| **Authentication** | JWT + bcrypt | Auth security | Token-based, password hashing |
-| **Payments** | Stripe | Payment processing | Checkout sessions, Connect accounts |
-| **Email** | Postmark | Transactional email | Booking confirmations |
-| **Calendar** | Google Calendar API | Availability mgmt | Availability checks, event creation |
-| **Logging** | Pino + pino-pretty | Structured logging | JSON logs with context |
-| **Error Tracking** | Sentry Node | Server error monitoring | Error tracking, performance monitoring |
-| **Rate Limiting** | express-rate-limit | DDoS protection | Login and admin rate limiting |
-| **Security** | Helmet | Security headers | CORS, CSP, XSS protection |
-| **CORS** | cors | Cross-origin requests | Multi-origin support for widget embedding |
-| **File Upload** | Multer | File handling | Logo and photo uploads |
-| **Caching** | node-cache | In-memory caching | 15-minute TTL for catalog |
-| **Testing** | Vitest | Unit/integration tests | Fast test runner, coverage |
-| **Validation** | Zod | Schema validation | Runtime request validation |
-| **Types** | TypeScript 5.3 | Type safety | Strict mode, ES2022 target |
+| Layer              | Technology          | Purpose                 | Key Features                                |
+| ------------------ | ------------------- | ----------------------- | ------------------------------------------- |
+| **Runtime**        | Node.js 20+         | JavaScript runtime      | ES modules, built-in crypto                 |
+| **Framework**      | Express 4.21        | HTTP server             | Middleware, routing                         |
+| **API Protocol**   | ts-rest             | Type-safe REST          | Compile-time validation, OpenAPI generation |
+| **Database**       | PostgreSQL 15       | Relational DB           | Multi-tenant isolation via schemas          |
+| **ORM**            | Prisma 6.17         | Database abstraction    | Type-safe queries, migrations               |
+| **Authentication** | JWT + bcrypt        | Auth security           | Token-based, password hashing               |
+| **Payments**       | Stripe              | Payment processing      | Checkout sessions, Connect accounts         |
+| **Email**          | Postmark            | Transactional email     | Booking confirmations                       |
+| **Calendar**       | Google Calendar API | Availability mgmt       | Availability checks, event creation         |
+| **Logging**        | Pino + pino-pretty  | Structured logging      | JSON logs with context                      |
+| **Error Tracking** | Sentry Node         | Server error monitoring | Error tracking, performance monitoring      |
+| **Rate Limiting**  | express-rate-limit  | DDoS protection         | Login and admin rate limiting               |
+| **Security**       | Helmet              | Security headers        | CORS, CSP, XSS protection                   |
+| **CORS**           | cors                | Cross-origin requests   | Multi-origin support for widget embedding   |
+| **File Upload**    | Multer              | File handling           | Logo and photo uploads                      |
+| **Caching**        | node-cache          | In-memory caching       | 15-minute TTL for catalog                   |
+| **Testing**        | Vitest              | Unit/integration tests  | Fast test runner, coverage                  |
+| **Validation**     | Zod                 | Schema validation       | Runtime request validation                  |
+| **Types**          | TypeScript 5.3      | Type safety             | Strict mode, ES2022 target                  |
 
 ### 2.3 Shared Packages
 
-| Package | Purpose | Exports |
-|---------|---------|---------|
+| Package              | Purpose                  | Exports                                    |
+| -------------------- | ------------------------ | ------------------------------------------ |
 | **@macon/contracts** | API contract definitions | API v1 routes, DTO types, ts-rest contract |
-| **@macon/shared** | Shared utilities | date, money, result, error-guards |
+| **@macon/shared**    | Shared utilities         | date, money, result, error-guards          |
 
 ### 2.4 Development Tools
 
-| Tool | Purpose | Config |
-|------|---------|--------|
-| **pnpm** | Package manager | Fast, space-efficient workspaces |
-| **TypeScript** | Type safety | tsconfig.base.json (strict mode) |
-| **ESLint** | Code linting | @typescript-eslint strict config |
-| **Prettier** | Code formatting | .prettierrc.json (2-space indentation) |
-| **Husky** | Git hooks | Pre-commit linting |
-| **Playwright** | E2E testing | 30s timeout, Chromium, trace retention |
-| **Vitest** | Unit testing | Globals, node environment, v8 coverage |
-| **tsx** | TypeScript runner | CLI scripts, server dev mode |
+| Tool           | Purpose           | Config                                 |
+| -------------- | ----------------- | -------------------------------------- |
+| **pnpm**       | Package manager   | Fast, space-efficient workspaces       |
+| **TypeScript** | Type safety       | tsconfig.base.json (strict mode)       |
+| **ESLint**     | Code linting      | @typescript-eslint strict config       |
+| **Prettier**   | Code formatting   | .prettierrc.json (2-space indentation) |
+| **Husky**      | Git hooks         | Pre-commit linting                     |
+| **Playwright** | E2E testing       | 30s timeout, Chromium, trace retention |
+| **Vitest**     | Unit testing      | Globals, node environment, v8 coverage |
+| **tsx**        | TypeScript runner | CLI scripts, server dev mode           |
 
 ---
 
@@ -385,6 +385,7 @@ The application follows **hexagonal architecture** for maximum testability and l
 ```
 
 **Key Pattern Benefits:**
+
 - **Testability**: Mock adapters for unit testing without external services
 - **Loose Coupling**: Services depend on interfaces, not implementations
 - **Swappability**: Easy to switch between Stripe/Postmark or add new payment providers
@@ -412,12 +413,14 @@ return { controllers, services };
 ```
 
 **Container Exports**:
+
 - `controllers`: All route handlers (packages, bookings, webhooks, admin, etc.)
 - `services`: Domain services (catalog, booking, identity, stripe-connect, segment, audit)
 
 ### 3.3 Multi-Tenant Architecture
 
-**Tenant Isolation Strategy**: 
+**Tenant Isolation Strategy**:
+
 - **API Key Authentication**: Every request includes `X-Tenant-Key: pk_live_slug_xxx` header
 - **Middleware Extraction**: `auth.ts` middleware extracts and validates tenant key
 - **Service Scoping**: All repository methods accept `tenantId` as first parameter
@@ -425,13 +428,15 @@ return { controllers, services };
 - **Response Headers**: X-Tenant-Key exposed in CORS for client verification
 
 **Example Request Flow**:
+
 ```
-Client Request → X-Tenant-Key header → auth middleware 
-→ Extract tenantId → Service.catalog.getPackages(tenantId) 
+Client Request → X-Tenant-Key header → auth middleware
+→ Extract tenantId → Service.catalog.getPackages(tenantId)
 → SQL: WHERE tenant_id = ? → Tenant-isolated results
 ```
 
 **Multi-Tenant Entities**:
+
 - `Tenant`: Represents a property management business (branding, stripe account, commission %)
 - `User`: Linked to tenant (TENANT_ADMIN role)
 - `Customer`: Tenant-scoped customers (bookings, contact info)
@@ -442,13 +447,14 @@ Client Request → X-Tenant-Key header → auth middleware
 ### 3.4 Data Flow Patterns
 
 #### Booking Flow
+
 ```
 1. Client: GET /v1/packages?tenantKey=pk_live_...
-   → CatalogService.getPackages(tenantId) 
+   → CatalogService.getPackages(tenantId)
    → PrismaCatalogRepository.getAllPackages(tenantId)
    → Return packages with cached pricing
 
-2. Client: POST /v1/bookings 
+2. Client: POST /v1/bookings
    → BookingService.createBooking(tenantId, bookingData)
    → Check availability via AvailabilityService
    → Call StripePaymentAdapter.createCheckoutSession()
@@ -470,6 +476,7 @@ Client Request → X-Tenant-Key header → auth middleware
 ```
 
 #### Tenant Admin Flow
+
 ```
 1. Tenant Admin: POST /v1/tenant-admin/login
    → TenantAuthController
@@ -491,6 +498,7 @@ Client Request → X-Tenant-Key header → auth middleware
 ```
 
 #### Admin Operations Flow
+
 ```
 1. Platform Admin: POST /v1/admin/packages
    → AdminPackagesController
@@ -543,6 +551,7 @@ External Systems (PostgreSQL, Stripe, Postmark, Google Calendar)
 ### 4.3 Key Module Dependencies
 
 **Client Dependencies** (package.json):
+
 ```
 @macon/contracts → Type-safe API definitions
 @macon/shared    → Date/money utilities
@@ -554,6 +563,7 @@ react-router-dom → Routing
 ```
 
 **Server Dependencies** (package.json):
+
 ```
 @macon/contracts    → API contract definitions
 @macon/shared       → Shared utilities
@@ -565,14 +575,16 @@ zod                 → Validation schemas
 ```
 
 **Contracts Package Exports** (index.ts):
+
 ```typescript
-export * from './dto';           // All data transfer objects
+export * from './dto'; // All data transfer objects
 export { Contracts } from './api.v1'; // ts-rest API definition
 ```
 
 ### 4.4 Circular Dependency Prevention
 
 **Dependency Graph**:
+
 ```
 Packages (Contracts, Shared)
     ↑
@@ -592,12 +604,14 @@ No cross-dependencies between client/server
 **Decision**: Use ts-rest for compile-time API contract validation
 
 **Rationale**:
+
 - Single source of truth for API definitions
 - Client and server generate types from same contract
 - Prevents request/response mismatches at compile time
 - Automatic OpenAPI documentation generation
 
 **Implementation**:
+
 ```typescript
 // packages/contracts/src/api.v1.ts
 export const Contracts = {
@@ -625,12 +639,14 @@ export const Contracts = {
 **Decision**: Implement Ports & Adapters pattern with mock implementations
 
 **Rationale**:
+
 - Run full test suites without Stripe/PostgreSQL/Google Calendar
 - Fast feedback loop during development
 - Deterministic test behavior (mock data, predictable responses)
 - Isolated unit tests vs. integrated tests
 
 **Implementation**:
+
 ```typescript
 // Port definition (interface)
 interface CatalogRepository {
@@ -649,14 +665,13 @@ class PrismaCatalogRepository implements CatalogRepository {
 class MockCatalogRepository implements CatalogRepository {
   private packages: Package[] = []; // In-memory store
   async getAllPackages(tenantId: string) {
-    return this.packages.filter(p => p.tenantId === tenantId);
+    return this.packages.filter((p) => p.tenantId === tenantId);
   }
 }
 
 // DI Container switches adapters
-const adapters = ADAPTERS_PRESET === 'mock' 
-  ? buildMockAdapters() 
-  : buildRealAdapters(prisma, stripe, postmark);
+const adapters =
+  ADAPTERS_PRESET === 'mock' ? buildMockAdapters() : buildRealAdapters(prisma, stripe, postmark);
 ```
 
 ### 5.3 Event-Driven Architecture for Side Effects
@@ -664,11 +679,13 @@ const adapters = ADAPTERS_PRESET === 'mock'
 **Decision**: Use in-process event emitter for async operations
 
 **Rationale**:
+
 - Decouple core domain logic (booking) from side effects (email, webhooks)
 - Enable future scaling to message queues (Kafka, RabbitMQ) without code changes
 - Support multiple listeners for same event (audit, email, Slack, etc.)
 
 **Implementation**:
+
 ```typescript
 // Event emission
 eventEmitter.publish('BookingPaid', {
@@ -686,12 +703,14 @@ eventEmitter.subscribe('BookingPaid', async (payload) => {
 **Decision**: Tenant ID in every API request and service call
 
 **Rationale**:
+
 - Prevents accidental cross-tenant data leakage
 - Enables multi-tenant isolation at service layer (not just database)
 - Supports audit trails (know which tenant triggered each operation)
 - Allows per-tenant rate limiting and quotas
 
 **Implementation**:
+
 ```typescript
 // Every service method requires tenantId
 async getPackages(tenantId: string): Promise<Package[]> {
@@ -712,26 +731,31 @@ app.get('/v1/packages', authMiddleware, (req, res) => {
 **Decision**: In-memory LRU cache with 15-minute TTL for catalog
 
 **Rationale**:
+
 - Catalog (packages, add-ons) changes infrequently
 - Reduces database load and response time
 - Cache key: `tenant:${tenantId}:packages`
 - Invalidation on create/update/delete operations
 
 **Implementation**:
+
 ```typescript
 class CatalogService {
-  constructor(private repo: CatalogRepository, private cache: CacheService) {}
-  
+  constructor(
+    private repo: CatalogRepository,
+    private cache: CacheService
+  ) {}
+
   async getPackages(tenantId: string): Promise<Package[]> {
     const cacheKey = `tenant:${tenantId}:packages`;
     const cached = this.cache.get(cacheKey);
     if (cached) return cached;
-    
+
     const packages = await this.repo.getAllPackages(tenantId);
     this.cache.set(cacheKey, packages, 900); // 15-minute TTL
     return packages;
   }
-  
+
   async createPackage(tenantId: string, data): Promise<Package> {
     const pkg = await this.repo.createPackage(tenantId, data);
     this.cache.del(`tenant:${tenantId}:packages`); // Invalidate
@@ -745,12 +769,14 @@ class CatalogService {
 **Decision**: Single repository with separate client, server, and shared packages
 
 **Rationale**:
+
 - Share contracts and utilities across packages (DRY)
 - Single version control history for related code
 - Atomic commits across client/server changes
 - Simplified deployment (both can be versioned together)
 
 **Implementation**:
+
 ```yaml
 # pnpm-workspace.yaml
 packages:
@@ -774,11 +800,13 @@ packages:
 **Decision**: Enable all strict type-checking options
 
 **Rationale**:
+
 - Catch type errors at compile time (e.g., missing null checks)
 - Self-documenting code (types serve as contracts)
 - Reduced debugging time and runtime errors
 
 **Configuration** (tsconfig.base.json):
+
 ```json
 {
   "compilerOptions": {
@@ -857,18 +885,21 @@ packages:
 ### 6.2 Key Schema Constraints
 
 **Tenant Isolation**:
+
 - ✅ `tenantId` foreign key on all tenant-scoped tables
 - ✅ Index on `(tenantId, ...)` for fast filtering
 - ✅ Service layer enforces tenantId in queries
 - ✅ Auth middleware extracts and validates tenantId
 
 **Data Integrity**:
+
 - ✅ Unique constraints: `apiKeyPublic`, `slug`, `stripeAccountId`
 - ✅ Foreign keys with `onDelete: Cascade` for cleanup
 - ✅ Default values for timestamps and status fields
 - ✅ Type safety via Prisma schema (no raw SQL in services)
 
 **Performance Indexes**:
+
 - `tenantId` on all scoped tables
 - `(tenantId, slug)` on Package for unique slug per tenant
 - `(tenantId, date)` on BlackoutDate for range queries
@@ -916,6 +947,7 @@ packages:
 ### 7.2 Request/Response Patterns
 
 **Successful Response**:
+
 ```json
 {
   "status": "success",
@@ -929,6 +961,7 @@ packages:
 ```
 
 **Error Response**:
+
 ```json
 {
   "status": "error",
@@ -940,6 +973,7 @@ packages:
 ```
 
 **Paginated Response** (when applicable):
+
 ```json
 {
   "status": "success",
@@ -955,6 +989,7 @@ packages:
 ### 7.3 Authentication & Authorization
 
 **API Key Authentication** (Public Client):
+
 ```
 Header: X-Tenant-Key: pk_live_bellaweddings_abc123xyz
 → Validated in auth middleware
@@ -962,6 +997,7 @@ Header: X-Tenant-Key: pk_live_bellaweddings_abc123xyz
 ```
 
 **JWT Authentication** (Admin):
+
 ```
 Header: Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 → Verified with JWT_SECRET
@@ -970,6 +1006,7 @@ Header: Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 ```
 
 **Rate Limiting**:
+
 - Login endpoints: 5 attempts per 15 minutes per IP
 - Admin routes: Global rate limit (100 req/min)
 - Webhook endpoints: Skipped (no limit)
@@ -996,7 +1033,7 @@ Header: Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
       ╱───────────┼───────────╲
      ╱            │            ╲
     ╱─────────────┴─────────────╲
-   
+
 Coverage Target: 80% lines, 75% branches, 80% functions
 Current: 76% (Phase 6 post-stabilization)
 ```
@@ -1004,6 +1041,7 @@ Current: 76% (Phase 6 post-stabilization)
 ### 8.2 Test Categories
 
 **Unit Tests** (`*.test.ts`):
+
 - Location: Co-located with source files
 - Runner: Vitest
 - Adapters: Mock repositories
@@ -1011,6 +1049,7 @@ Current: 76% (Phase 6 post-stabilization)
 - Example: `catalog.service.test.ts` (no database)
 
 **Integration Tests** (`test/integration/`):
+
 - Location: Separate test directory
 - Runner: Vitest
 - Adapters: Real Prisma + test database
@@ -1019,6 +1058,7 @@ Current: 76% (Phase 6 post-stabilization)
 - Example: `test/integration/booking.service.test.ts`
 
 **E2E Tests** (`e2e/tests/`):
+
 - Location: Playwright test files
 - Runner: Playwright
 - Scope: Full user flows (booking, admin, auth)
@@ -1029,6 +1069,7 @@ Current: 76% (Phase 6 post-stabilization)
 ### 8.3 Test Configuration
 
 **Vitest** (`server/vitest.config.ts`):
+
 ```typescript
 export default defineConfig({
   test: {
@@ -1046,6 +1087,7 @@ export default defineConfig({
 ```
 
 **Playwright** (`e2e/playwright.config.ts`):
+
 ```typescript
 export default defineConfig({
   testDir: './tests',
@@ -1064,22 +1106,23 @@ export default defineConfig({
 ### 8.4 Continuous Integration
 
 **GitHub Actions** (`.github/workflows/ci.yml`):
+
 ```yaml
 jobs:
   lint:
     - ESLint for TypeScript/TSX files
     - Prettier format check
-  
+
   typecheck:
     - TypeScript strict compile check
-  
+
   test:
     - Unit tests: vitest run --coverage
     - Coverage report uploaded to Codecov
-  
+
   integration-tests:
     - Integration tests: vitest run test/integration/ (with DATABASE_URL_TEST)
-  
+
   build:
     - Client: vite build (production bundle)
     - Server: tsc -b (emit TypeScript declarations)
@@ -1092,17 +1135,20 @@ jobs:
 ### 9.1 Authentication & Authorization
 
 **User Roles**:
+
 - `USER`: Default platform user (future)
 - `ADMIN`: Platform admin (view all tenants, manage infrastructure)
 - `TENANT_ADMIN`: Tenant admin (manage own tenant's data)
 - `PLATFORM_ADMIN`: Same as ADMIN (legacy naming)
 
 **Authentication Methods**:
+
 1. **JWT (Admin)**: `POST /v1/auth/login` → returns `{ token: "JWT..." }`
 2. **API Key (Public Client)**: `X-Tenant-Key: pk_live_slug_xxx` header
 3. **Tenant Auth**: `POST /v1/tenant-admin/login` → returns tenant admin JWT
 
 **Authorization Checks**:
+
 ```typescript
 // Middleware validates JWT signature
 const decoded = jwt.verify(token, config.JWT_SECRET);
@@ -1121,21 +1167,25 @@ async getPackages(tenantId: string) {
 ### 9.2 Data Protection
 
 **Passwords**:
+
 - Hashed with bcryptjs (10 rounds)
 - Never logged or exposed in responses
 - Validated on admin/tenant login
 
 **API Keys**:
+
 - Public key: `pk_live_tenant_slug_random` (safe to expose)
 - Secret key: Stored hashed in database
 - Generation: UUID + tenant slug + random suffix
 
 **Secrets Storage**:
+
 - Tenant.secrets: JSON field with encrypted Stripe credentials
 - Encryption: AES-256-GCM (CipherText + IV + AuthTag)
 - Decryption key: From environment (DB-level encryption possible)
 
 **CORS Security**:
+
 - Whitelist: localhost, https://mais.com, https://widget.mais.com
 - Production: All HTTPS origins allowed (for widget embedding)
 - Credentials: true (allows cookies if needed)
@@ -1144,15 +1194,18 @@ async getPackages(tenantId: string) {
 ### 9.3 Rate Limiting & DDoS Prevention
 
 **Login Endpoints**:
+
 - 5 attempts per 15 minutes per IP
 - Blocks further attempts (429 Too Many Requests)
 - Implements exponential backoff client-side
 
 **Admin Routes**:
+
 - Global rate limit: 100 requests per 1 minute
 - Skipped for: health, ready, dev endpoints
 
 **Helmet Middleware**:
+
 - Content-Security-Policy headers
 - X-Frame-Options: DENY (prevent clickjacking)
 - X-Content-Type-Options: nosniff
@@ -1161,6 +1214,7 @@ async getPackages(tenantId: string) {
 ### 9.4 Input Validation
 
 **Server-Side Validation** (Zod schemas):
+
 ```typescript
 const CreatePackageSchema = z.object({
   title: z.string().min(1).max(200),
@@ -1173,6 +1227,7 @@ const validated = CreatePackageSchema.parse(req.body);
 ```
 
 **API Key Validation**:
+
 ```typescript
 // X-Tenant-Key format: pk_live_slug_random
 const isValidApiKey = (key: string) => {
@@ -1182,6 +1237,7 @@ const isValidApiKey = (key: string) => {
 ```
 
 **HTTPS Enforcement** (Production):
+
 - Stripe Webhook: Only HTTPS endpoints allowed
 - Google Calendar: Only HTTPS requests accepted
 - Postmark: Only HTTPS API calls accepted
@@ -1193,6 +1249,7 @@ const isValidApiKey = (key: string) => {
 ### 10.1 Environment Configuration
 
 **Development**:
+
 ```bash
 ADAPTERS_PRESET=mock              # Use in-memory adapters
 API_PORT=3001
@@ -1202,6 +1259,7 @@ VITE_APP_MODE=development
 ```
 
 **Testing**:
+
 ```bash
 ADAPTERS_PRESET=mock
 DATABASE_URL=postgresql://localhost/macon_test
@@ -1210,6 +1268,7 @@ VITE_TENANT_API_KEY=pk_live_elope-e2e_000000000000
 ```
 
 **Production**:
+
 ```bash
 ADAPTERS_PRESET=real
 DATABASE_URL=postgresql://user:pass@supabase.co/db  # Connection pooling
@@ -1224,24 +1283,28 @@ NODE_ENV=production
 ### 10.2 Build & Deployment Process
 
 **Client Build** (Vite):
+
 ```bash
 npm run build --workspace=client
 # Output: client/dist/ → Deployed to CDN or static hosting
 ```
 
 **Server Build** (TypeScript):
+
 ```bash
 npm run build --workspace=server
 # Output: server/dist/ → Node.js runtime
 ```
 
 **Database**:
+
 ```bash
 npx prisma migrate deploy  # Apply pending migrations
 npx prisma db seed        # Run seed script (optional)
 ```
 
 **Startup**:
+
 ```bash
 npm start --workspace=server
 # Loads config → Initializes Prisma → Starts Express on port 3001
@@ -1250,18 +1313,21 @@ npm start --workspace=server
 ### 10.3 Scaling Considerations
 
 **Horizontal Scaling**:
+
 - Stateless Express servers (no session storage)
 - Use external session store (Redis) if needed
 - Database connection pooling via Prisma/Supabase
 - In-memory cache (node-cache) could be replaced with Redis
 
 **Database Optimization**:
+
 - Indexes on `tenantId`, `(tenantId, slug)`, `(tenantId, date)`
 - Query optimization via Prisma query optimization
 - Connection pooling (Supabase manages automatically)
 - Slow query logging in dev mode
 
 **Monitoring**:
+
 - Sentry error tracking (Node + Browser)
 - Pino structured logging (JSON format for log aggregation)
 - Health checks: `/health`, `/ready` endpoints
@@ -1274,6 +1340,7 @@ npm start --workspace=server
 ### 11.1 Error Handling
 
 **Custom Error Types**:
+
 ```typescript
 export class ValidationError extends AppError {
   constructor(message: string, details?: Record<string, unknown>) {
@@ -1296,6 +1363,7 @@ export class UnauthorizedError extends AppError {
 ```
 
 **Error Middleware**:
+
 ```typescript
 app.use(errorHandler);
 // Catches thrown errors and formats as JSON response
@@ -1305,6 +1373,7 @@ app.use(errorHandler);
 ### 11.2 Idempotency & Retry Safety
 
 **Idempotency Service**:
+
 ```typescript
 // Prevents duplicate bookings if webhook retried
 const idempotencyKey = req.headers['idempotency-key'];
@@ -1317,6 +1386,7 @@ return result;
 ```
 
 **Webhook Handling**:
+
 - Verify Stripe signature
 - Store event ID to prevent duplicates
 - Return 200 immediately (async processing)
@@ -1325,6 +1395,7 @@ return result;
 ### 11.3 Audit & Compliance
 
 **Audit Service**:
+
 ```typescript
 // Log all package changes
 await auditService.log({
@@ -1339,6 +1410,7 @@ await auditService.log({
 ```
 
 **Retention**:
+
 - ConfigChangeLog: 90 days (configurable)
 - WebhookEvent: 1 year (compliance)
 - Audit logs: Structured logging (Datadog/CloudWatch)
@@ -1419,6 +1491,7 @@ gh pr create --title "PR Title" --body "Description"
 ### 13.1 Shared Components (shadcn/Radix)
 
 **Form Components**:
+
 - `Button` - Primary, secondary, destructive variants
 - `Input` - Text, email, password inputs
 - `Select` - Dropdown selection
@@ -1427,11 +1500,13 @@ gh pr create --title "PR Title" --body "Description"
 - `Label` - Form labels
 
 **Layout Components**:
+
 - `Card` - Content container
 - `Container` - Page width limiter
 - `Loading` - Spinner animation
 
 **Indicators**:
+
 - `Badge` - Status badges
 - `Alert` - Alert boxes
 - `Toast` - Notifications (via Sonner)
@@ -1439,18 +1514,21 @@ gh pr create --title "PR Title" --body "Description"
 ### 13.2 Feature Components
 
 **Admin Dashboard**:
+
 - AdminLayout - Admin dashboard layout
 - AdminNav - Admin navigation
 - TenantList - Tenant management table
 - SegmentList - Segment management
 
 **Tenant Admin**:
+
 - TenantDashboard - Tenant main dashboard
 - BrandingEditor - Logo, color picker
 - PackageEditor - Package CRUD
 - BlackoutDateManager - Availability management
 
 **Booking**:
+
 - CatalogBrowser - Package listing and filtering
 - CheckoutForm - Billing information
 - BookingConfirmation - Success page
@@ -1462,6 +1540,7 @@ gh pr create --title "PR Title" --body "Description"
 ### 14.1 Caching Strategy
 
 **HTTP Cache Headers**:
+
 ```typescript
 // Cacheable endpoints
 GET /v1/packages  → Cache-Control: public, max-age=300 (5 min)
@@ -1473,11 +1552,13 @@ GET /v1/admin/*   → Cache-Control: private, no-cache
 ```
 
 **Server-Side Caching**:
+
 - Catalog (packages): 15-minute TTL
 - Availability: 1-minute TTL (fresh data for date checking)
 - Admin data: No cache (real-time updates)
 
 **Client-Side Caching** (React Query):
+
 - Stale time: 5 minutes (when to refetch)
 - Cache time: 10 minutes (when to garbage collect)
 - Background refetch: On window focus
@@ -1485,6 +1566,7 @@ GET /v1/admin/*   → Cache-Control: private, no-cache
 ### 14.2 Database Query Optimization
 
 **N+1 Query Prevention**:
+
 ```typescript
 // Bad: N+1 queries
 const packages = await repo.getAllPackages(tenantId);
@@ -1497,6 +1579,7 @@ const packages = await repo.getAllPackagesWithAddOns(tenantId);
 ```
 
 **Index Strategy**:
+
 - `(tenantId)` on all scoped tables
 - `(tenantId, slug)` on Package
 - `(tenantId, status)` on Booking
@@ -1505,6 +1588,7 @@ const packages = await repo.getAllPackagesWithAddOns(tenantId);
 ### 14.3 Bundle Size Optimization
 
 **Client Build**:
+
 ```typescript
 // Tree-shaking unused code
 import { Button } from '@/components/ui'; // Only Button included
@@ -1515,6 +1599,7 @@ const AdminLayout = lazy(() => import('@/features/admin/layout'));
 ```
 
 **Chunk Analysis**:
+
 ```bash
 npm run build --workspace=client
 # View dist/ file sizes
@@ -1528,6 +1613,7 @@ npm run build --workspace=client
 ### 15.1 Phase 7-8 Roadmap
 
 **Planned Improvements**:
+
 - [ ] Redis caching layer (replace node-cache)
 - [ ] Message queue (Kafka/RabbitMQ) for webhook processing
 - [ ] Micro-services split (catalog, booking as separate services)
@@ -1554,48 +1640,53 @@ npm run build --workspace=client
 
 ## 16. Summary: Architecture at a Glance
 
-| Aspect | Technology | Pattern |
-|--------|-----------|---------|
-| **API Layer** | ts-rest + Express | RESTful with type-safe contracts |
-| **Frontend** | React 18 + Vite | SPA with client-side routing |
-| **Styling** | Tailwind CSS | Utility-first design system |
-| **Database** | PostgreSQL + Prisma | Relational with ORM abstraction |
-| **Architecture** | Hexagonal (Ports & Adapters) | Loose coupling, high testability |
-| **Multi-Tenancy** | Tenant-scoped queries | Complete data isolation |
-| **Testing** | Vitest + Playwright | Unit + integration + E2E |
-| **Auth** | JWT + API Keys | Role-based access control |
-| **Payments** | Stripe + Stripe Connect | Commission-based multi-tenant billing |
-| **Logging** | Pino structured logging | JSON logs for log aggregation |
-| **Error Tracking** | Sentry | Client + server error monitoring |
-| **Package Manager** | pnpm workspaces | Monorepo with shared packages |
-| **CI/CD** | GitHub Actions | Automated lint, test, build pipeline |
+| Aspect              | Technology                   | Pattern                               |
+| ------------------- | ---------------------------- | ------------------------------------- |
+| **API Layer**       | ts-rest + Express            | RESTful with type-safe contracts      |
+| **Frontend**        | React 18 + Vite              | SPA with client-side routing          |
+| **Styling**         | Tailwind CSS                 | Utility-first design system           |
+| **Database**        | PostgreSQL + Prisma          | Relational with ORM abstraction       |
+| **Architecture**    | Hexagonal (Ports & Adapters) | Loose coupling, high testability      |
+| **Multi-Tenancy**   | Tenant-scoped queries        | Complete data isolation               |
+| **Testing**         | Vitest + Playwright          | Unit + integration + E2E              |
+| **Auth**            | JWT + API Keys               | Role-based access control             |
+| **Payments**        | Stripe + Stripe Connect      | Commission-based multi-tenant billing |
+| **Logging**         | Pino structured logging      | JSON logs for log aggregation         |
+| **Error Tracking**  | Sentry                       | Client + server error monitoring      |
+| **Package Manager** | pnpm workspaces              | Monorepo with shared packages         |
+| **CI/CD**           | GitHub Actions               | Automated lint, test, build pipeline  |
 
 ---
 
 ## Appendix: Key Files Reference
 
 **Root Config Files**:
+
 - `/package.json` - Monorepo workspace definitions
 - `/tsconfig.base.json` - Base TypeScript strict config
 - `/.eslintrc.cjs` - ESLint rules
 - `/.prettierrc.json` - Code formatting
 
 **Server Entry Points**:
+
 - `server/src/index.ts` - Server startup
 - `server/src/app.ts` - Express app factory
 - `server/src/di.ts` - Dependency injection container
 - `server/prisma/schema.prisma` - Database schema
 
 **Client Entry Points**:
+
 - `client/src/main.tsx` - React root
 - `client/src/router.tsx` - Route definitions
 - `client/tailwind.config.js` - Design tokens
 
 **API Contracts**:
+
 - `packages/contracts/src/api.v1.ts` - ts-rest API definition
 - `packages/contracts/src/dto.ts` - Data transfer objects
 
 **Test Configuration**:
+
 - `server/vitest.config.ts` - Unit/integration test config
 - `e2e/playwright.config.ts` - E2E test config
 

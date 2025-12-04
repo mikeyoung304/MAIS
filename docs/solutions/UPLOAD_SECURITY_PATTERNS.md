@@ -3,6 +3,7 @@
 ## Pattern 1: Magic Byte Validation Flow
 
 ### Before (Vulnerable)
+
 ```typescript
 async uploadLogo(file: any, tenantId: string) {
   // Only checks declared MIME type
@@ -14,6 +15,7 @@ async uploadLogo(file: any, tenantId: string) {
 ```
 
 ### After (Secure)
+
 ```typescript
 async uploadLogo(file: UploadedFile, tenantId: string): Promise<UploadResult> {
   // 1. Validate file (includes magic bytes)
@@ -109,10 +111,13 @@ private async validateFile(file: UploadedFile, maxSizeMB?: number): Promise<void
 ## Pattern 2: Signed URL Architecture
 
 ### Before (Vulnerable)
+
 ```typescript
 // Public bucket, anyone can enumerate URLs
-const { data: { publicUrl } } = await supabase.storage
-  .from('public-images')  // ❌ Public!
+const {
+  data: { publicUrl },
+} = await supabase.storage
+  .from('public-images') // ❌ Public!
   .getPublicUrl(`${tenantId}/logos/file.jpg`);
 
 // URL: https://bucket.supabase.co/public-images/tenant-abc/logos/file.jpg
@@ -120,6 +125,7 @@ const { data: { publicUrl } } = await supabase.storage
 ```
 
 ### After (Secure)
+
 ```typescript
 private async uploadToSupabase(
   tenantId: string,
@@ -180,6 +186,7 @@ private async uploadToSupabase(
 ## Pattern 3: Orphaned File Cleanup
 
 ### Before (Vulnerable)
+
 ```typescript
 async deleteSegment(tenantId: string, id: string): Promise<void> {
   // Just delete from database
@@ -189,6 +196,7 @@ async deleteSegment(tenantId: string, id: string): Promise<void> {
 ```
 
 ### After (Secure)
+
 ```typescript
 async deleteSegment(tenantId: string, id: string): Promise<void> {
   // 1. Verify ownership
@@ -331,10 +339,11 @@ export class UploadService {
 
   constructor() {
     // Use Supabase storage ONLY when explicitly configured
-    this.isRealMode = process.env.STORAGE_MODE === 'supabase' ||
+    this.isRealMode =
+      process.env.STORAGE_MODE === 'supabase' ||
       (process.env.ADAPTERS_PRESET === 'real' &&
-       !!process.env.SUPABASE_URL &&
-       process.env.STORAGE_MODE !== 'local');
+        !!process.env.SUPABASE_URL &&
+        process.env.STORAGE_MODE !== 'local');
 
     // Only create local directories in mock mode
     if (!this.isRealMode) {
@@ -400,14 +409,15 @@ describe('Magic Byte Security Validation', () => {
 
     const maliciousFile = createMockFile({
       originalname: 'shell.php.jpg',
-      mimetype: 'image/jpeg',  // ❌ Fake header
-      buffer: phpShell,         // ✅ Real content (PHP)
+      mimetype: 'image/jpeg', // ❌ Fake header
+      buffer: phpShell, // ✅ Real content (PHP)
       size: phpShell.length,
     });
 
     // Should be rejected despite fake MIME type
-    await expect(service.uploadLogo(maliciousFile, 'tenant_123'))
-      .rejects.toThrow('Unable to verify file type');
+    await expect(service.uploadLogo(maliciousFile, 'tenant_123')).rejects.toThrow(
+      'Unable to verify file type'
+    );
 
     expect(mockWriteFile).not.toHaveBeenCalled();
   });
@@ -415,13 +425,14 @@ describe('Magic Byte Security Validation', () => {
   it('should reject PNG file claiming to be JPEG', async () => {
     const mismatchedFile = createMockFile({
       originalname: 'image.jpg',
-      mimetype: 'image/jpeg',  // ❌ Declared type
+      mimetype: 'image/jpeg', // ❌ Declared type
       buffer: PNG_MAGIC_BYTES, // ✅ Actual type
       size: PNG_MAGIC_BYTES.length,
     });
 
-    await expect(service.uploadLogo(mismatchedFile, 'tenant_123'))
-      .rejects.toThrow('File validation failed');
+    await expect(service.uploadLogo(mismatchedFile, 'tenant_123')).rejects.toThrow(
+      'File validation failed'
+    );
 
     expect(mockWriteFile).not.toHaveBeenCalled();
   });
@@ -448,7 +459,8 @@ describe('Magic Byte Security Validation', () => {
 describe('Cross-Tenant Security', () => {
   it('should block cross-tenant deletion attempts', async () => {
     // URL belongs to tenant-abc
-    const url = 'https://xxx.supabase.co/storage/v1/object/sign/images/tenant-abc/segments/photo.jpg?token=xxx';
+    const url =
+      'https://xxx.supabase.co/storage/v1/object/sign/images/tenant-abc/segments/photo.jpg?token=xxx';
 
     // But request comes from tenant-xyz
     await service.deleteSegmentImage(url, 'tenant-xyz');
@@ -457,7 +469,7 @@ describe('Cross-Tenant Security', () => {
     expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({
         tenantId: 'tenant-xyz',
-        storagePath: expect.stringMatching(/^tenant-abc\//),  // Mismatch detected
+        storagePath: expect.stringMatching(/^tenant-abc\//), // Mismatch detected
       }),
       expect.stringContaining('SECURITY: Attempted cross-tenant file deletion blocked')
     );

@@ -1,6 +1,6 @@
-import { Container } from "../ui/Container";
-import { PackagePage } from "../features/catalog/PackagePage";
-import { FeatureErrorBoundary } from "../components/errors";
+import { Container } from '../ui/Container';
+import { PackagePage } from '../features/catalog/PackagePage';
+import { FeatureErrorBoundary } from '../components/errors';
 
 export function Package() {
   return (

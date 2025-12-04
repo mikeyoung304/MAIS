@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "196"
+issue_id: '196'
 tags: [code-review, error-handling, consistency]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The `updateAddOn` and `deleteAddOn` routes call service methods that throw `NotFoundError`, but the routes don't have explicit catch blocks for this error type, relying on the global error handler instead.
 
 ### Why It Matters
+
 - Inconsistent with other routes in the file that explicitly handle NotFoundError
 - Error response format may differ from explicit handlers
 - Harder to reason about error handling behavior
@@ -22,6 +23,7 @@ The `updateAddOn` and `deleteAddOn` routes call service methods that throw `NotF
 **Source:** Security Review, Architecture Review
 
 **Evidence:**
+
 - `catalog.service.ts` line 342 throws `NotFoundError` in `updateAddOn`
 - `catalog.service.ts` line 383 throws `NotFoundError` in `deleteAddOn`
 - Route handlers at lines 1149 and 1185 only catch ZodError, not NotFoundError
@@ -32,6 +34,7 @@ The `updateAddOn` and `deleteAddOn` routes call service methods that throw `NotF
 ## Proposed Solutions
 
 ### Option A: Add Explicit Catch (Recommended)
+
 **Pros:** Consistent with other routes, explicit error handling
 **Cons:** Slightly more code
 **Effort:** Small (10 minutes)
@@ -68,6 +71,7 @@ Option A - Add explicit NotFoundError handling for consistency.
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/routes/tenant-admin.routes.ts`
 
 **Database Changes:** None
@@ -81,8 +85,8 @@ Option A - Add explicit NotFoundError handling for consistency.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                        |
+| ---------- | ------------------------ | -------------------------------- |
 | 2025-12-03 | Created from code review | Be explicit about error handling |
 
 ## Resources

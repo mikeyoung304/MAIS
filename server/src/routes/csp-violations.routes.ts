@@ -20,15 +20,18 @@ router.post('/csp-violations', express.json({ type: 'application/csp-report' }),
   const report = req.body['csp-report'];
 
   if (report) {
-    logger.warn({
-      type: 'csp-violation',
-      documentUri: report['document-uri'],
-      violatedDirective: report['violated-directive'],
-      blockedUri: report['blocked-uri'],
-      sourceFile: report['source-file'],
-      lineNumber: report['line-number'],
-      originalPolicy: report['original-policy'],
-    }, 'Content Security Policy violation detected');
+    logger.warn(
+      {
+        type: 'csp-violation',
+        documentUri: report['document-uri'],
+        violatedDirective: report['violated-directive'],
+        blockedUri: report['blocked-uri'],
+        sourceFile: report['source-file'],
+        lineNumber: report['line-number'],
+        originalPolicy: report['original-policy'],
+      },
+      'Content Security Policy violation detected'
+    );
   }
 
   // Always return 204 (don't expose internal errors)

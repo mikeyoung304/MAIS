@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "044"
+issue_id: '044'
 tags: [code-review, scheduling, architecture, type-safety, critical]
 dependencies: []
 ---
@@ -29,7 +29,11 @@ interface ServiceRepository {
 
 interface AvailabilityRuleRepository {
   findByService(tenantId: string, serviceId: string, date: Date): Promise<AvailabilityRule[]>;
-  findEffectiveRules(tenantId: string, serviceId: string | null, date: Date): Promise<AvailabilityRule[]>;
+  findEffectiveRules(
+    tenantId: string,
+    serviceId: string | null,
+    date: Date
+  ): Promise<AvailabilityRule[]>;
 }
 ```
 
@@ -40,7 +44,7 @@ interface ServiceRepository {
   getAll(tenantId: string, includeInactive?: boolean): Promise<Service[]>;
   getActiveServices(tenantId: string): Promise<Service[]>;
   getBySlug(tenantId: string, slug: string): Promise<Service | null>;
-  getById(tenantId: string, id: string): Promise<Service | null>;  // NOT findById!
+  getById(tenantId: string, id: string): Promise<Service | null>; // NOT findById!
   create(tenantId: string, data: CreateServiceInput): Promise<Service>;
   update(tenantId: string, id: string, data: UpdateServiceInput): Promise<Service>;
   delete(tenantId: string, id: string): Promise<void>;
@@ -49,19 +53,27 @@ interface ServiceRepository {
 interface AvailabilityRuleRepository {
   getAll(tenantId: string): Promise<AvailabilityRule[]>;
   getByService(tenantId: string, serviceId: string | null): Promise<AvailabilityRule[]>;
-  getByDayOfWeek(tenantId: string, dayOfWeek: number, serviceId?: string | null): Promise<AvailabilityRule[]>;
-  getEffectiveRules(tenantId: string, date: Date, serviceId?: string | null): Promise<AvailabilityRule[]>;  // Different signature!
+  getByDayOfWeek(
+    tenantId: string,
+    dayOfWeek: number,
+    serviceId?: string | null
+  ): Promise<AvailabilityRule[]>;
+  getEffectiveRules(
+    tenantId: string,
+    date: Date,
+    serviceId?: string | null
+  ): Promise<AvailabilityRule[]>; // Different signature!
   // ...
 }
 ```
 
 ### Method Name Mismatches
 
-| Service Calls | ports.ts Has | Status |
-|---------------|--------------|--------|
-| `findById()` | `getById()` | ❌ MISMATCH |
-| `findBySlug()` | `getBySlug()` | ❌ MISMATCH |
-| `findAll()` | `getAll()` | ❌ MISMATCH |
+| Service Calls                                   | ports.ts Has                                    | Status         |
+| ----------------------------------------------- | ----------------------------------------------- | -------------- |
+| `findById()`                                    | `getById()`                                     | ❌ MISMATCH    |
+| `findBySlug()`                                  | `getBySlug()`                                   | ❌ MISMATCH    |
+| `findAll()`                                     | `getAll()`                                      | ❌ MISMATCH    |
 | `findEffectiveRules(tenantId, serviceId, date)` | `getEffectiveRules(tenantId, date, serviceId?)` | ❌ PARAM ORDER |
 
 ### DI Bypasses Type Safety
@@ -70,8 +82,8 @@ interface AvailabilityRuleRepository {
 
 ```typescript
 const schedulingAvailabilityService = new SchedulingAvailabilityService(
-  serviceRepo as any,  // ← TYPE SAFETY BYPASSED
-  availabilityRuleRepo as any,  // ← TYPE SAFETY BYPASSED
+  serviceRepo as any, // ← TYPE SAFETY BYPASSED
+  availabilityRuleRepo as any, // ← TYPE SAFETY BYPASSED
   bookingRepo
 );
 ```
@@ -79,6 +91,7 @@ const schedulingAvailabilityService = new SchedulingAvailabilityService(
 ### Runtime Failure Example
 
 When service calls `this.serviceRepo.findById(tenantId, serviceId)`:
+
 1. TypeScript sees local interface with `findById()` - compiles OK
 2. At runtime, `PrismaServiceRepository` has `getById()`, not `findById()`
 3. `undefined is not a function` error
@@ -86,6 +99,7 @@ When service calls `this.serviceRepo.findById(tenantId, serviceId)`:
 ## Proposed Solutions
 
 ### Option A: Align Service with ports.ts (Recommended)
+
 **Effort:** Medium | **Risk:** Low
 
 1. Remove local interface definitions from `scheduling-availability.service.ts`
@@ -112,28 +126,34 @@ export class SchedulingAvailabilityService {
 ```
 
 **Pros:**
+
 - Restores type safety
 - Follows existing codebase patterns
 - Removes technical debt
 
 **Cons:**
+
 - Need to update all method calls in service
 
 ### Option B: Extend ports.ts to Match Service
+
 **Effort:** Large | **Risk:** Medium
 
 Add missing methods to ports.ts interfaces:
+
 ```typescript
 interface ServiceRepository {
   // existing methods...
-  findById(tenantId: string, id: string): Promise<Service | null>;  // alias for getById
+  findById(tenantId: string, id: string): Promise<Service | null>; // alias for getById
 }
 ```
 
 **Pros:**
+
 - Doesn't require changing service code
 
 **Cons:**
+
 - Creates duplicate methods
 - Inconsistent with codebase conventions
 - Larger change surface
@@ -145,6 +165,7 @@ Implement **Option A** - Align scheduling service with existing ports.ts interfa
 ## Technical Details
 
 **Files to Update:**
+
 1. `server/src/services/scheduling-availability.service.ts`
    - Remove lines 45-74 (local interface definitions)
    - Import from `ports.ts`
@@ -154,6 +175,7 @@ Implement **Option A** - Align scheduling service with existing ports.ts interfa
    - Remove `as any` assertions (lines 161-162, 330-331)
 
 **Method Call Updates:**
+
 ```typescript
 // Line ~142
 - const service = await this.serviceRepo.findById(tenantId, serviceId);
@@ -176,8 +198,8 @@ Implement **Option A** - Align scheduling service with existing ports.ts interfa
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                                      |
+| ---------- | ------- | ---------------------------------------------------------- |
 | 2025-11-27 | Created | Found during Architecture Strategist review - BLOCKS MERGE |
 
 ## Resources

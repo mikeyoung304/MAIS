@@ -131,13 +131,7 @@ export function buildContainer(config: Config): Container {
         segmentImageUploadDir: path.join(process.cwd(), 'uploads', 'segments'),
         maxFileSizeMB: 2,
         maxPackagePhotoSizeMB: 5,
-        allowedMimeTypes: [
-          'image/jpeg',
-          'image/jpg',
-          'image/png',
-          'image/svg+xml',
-          'image/webp',
-        ],
+        allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml', 'image/webp'],
         baseUrl: config.API_BASE_URL || 'http://localhost:5000',
         isRealMode: false,
         supabaseClient: undefined,
@@ -215,7 +209,11 @@ export function buildContainer(config: Config): Container {
       packages: new PackagesController(catalogService),
       availability: new AvailabilityController(availabilityService),
       bookings: new BookingsController(bookingService),
-      webhooks: new WebhooksController(adapters.paymentProvider, bookingService, adapters.webhookRepo),
+      webhooks: new WebhooksController(
+        adapters.paymentProvider,
+        bookingService,
+        adapters.webhookRepo
+      ),
       admin: new AdminController(identityService, bookingService),
       blackouts: new BlackoutsController(adapters.blackoutRepo),
       adminPackages: new AdminPackagesController(catalogService),
@@ -328,20 +326,23 @@ export function buildContainer(config: Config): Container {
         url: databaseUrl.toString(),
       },
     },
-    log: process.env.NODE_ENV === 'production'
-      ? ['error', 'warn']
-      : ['query', 'error', 'warn'],
+    log: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['query', 'error', 'warn'],
   });
 
-  logger.info(`📊 Prisma connection pool: limit=${config.DATABASE_CONNECTION_LIMIT}, timeout=${config.DATABASE_POOL_TIMEOUT}s`);
+  logger.info(
+    `📊 Prisma connection pool: limit=${config.DATABASE_CONNECTION_LIMIT}, timeout=${config.DATABASE_POOL_TIMEOUT}s`
+  );
 
   // Add slow query monitoring
   if (process.env.NODE_ENV !== 'production') {
-    prisma.$on('query' as never, ((e: { duration: number; query: string }) => {
-      if (e.duration > 1000) {
-        logger.warn({ duration: e.duration, query: e.query }, 'Slow query detected (>1s)');
-      }
-    }) as never);
+    prisma.$on(
+      'query' as never,
+      ((e: { duration: number; query: string }) => {
+        if (e.duration > 1000) {
+          logger.warn({ duration: e.duration, query: e.query }, 'Slow query detected (>1s)');
+        }
+      }) as never
+    );
   }
 
   // Build real repository adapters
@@ -380,7 +381,9 @@ export function buildContainer(config: Config): Container {
   // Build Google Calendar adapter (or fallback to mock if creds missing)
   let calendarProvider;
   if (config.GOOGLE_CALENDAR_ID && config.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64) {
-    logger.info('📅 Using Google Calendar sync adapter (one-way sync enabled, per-tenant config supported)');
+    logger.info(
+      '📅 Using Google Calendar sync adapter (one-way sync enabled, per-tenant config supported)'
+    );
     // Use GoogleCalendarSyncAdapter for full sync capabilities (extends GoogleCalendarAdapter)
     // Pass tenantRepo to enable per-tenant calendar configuration
     calendarProvider = new GoogleCalendarSyncAdapter(
@@ -391,7 +394,9 @@ export function buildContainer(config: Config): Container {
       tenantRepo
     );
   } else {
-    logger.warn('⚠️  Google Calendar credentials not configured; using mock calendar (all dates available)');
+    logger.warn(
+      '⚠️  Google Calendar credentials not configured; using mock calendar (all dates available)'
+    );
     const mockAdapters = buildMockAdapters();
     calendarProvider = mockAdapters.calendarProvider;
   }
@@ -407,7 +412,9 @@ export function buildContainer(config: Config): Container {
   // This allows integration tests to use real DB with local storage by not setting STORAGE_MODE
   if (
     process.env.STORAGE_MODE === 'supabase' ||
-    (config.ADAPTERS_PRESET === 'real' && process.env.SUPABASE_URL && process.env.STORAGE_MODE !== 'local')
+    (config.ADAPTERS_PRESET === 'real' &&
+      process.env.SUPABASE_URL &&
+      process.env.STORAGE_MODE !== 'local')
   ) {
     try {
       supabaseClient = getSupabaseClient();
@@ -427,13 +434,7 @@ export function buildContainer(config: Config): Container {
       segmentImageUploadDir: path.join(process.cwd(), 'uploads', 'segments'),
       maxFileSizeMB: parseInt(process.env.MAX_UPLOAD_SIZE_MB || '2', 10),
       maxPackagePhotoSizeMB: 5,
-      allowedMimeTypes: [
-        'image/jpeg',
-        'image/jpg',
-        'image/png',
-        'image/svg+xml',
-        'image/webp',
-      ],
+      allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml', 'image/webp'],
       baseUrl: config.API_BASE_URL || 'http://localhost:5000',
       isRealMode,
       supabaseClient,
@@ -450,11 +451,7 @@ export function buildContainer(config: Config): Container {
 
   // Build domain services with caching and audit logging
   const catalogService = new CatalogService(catalogRepo, cacheAdapter, auditService);
-  const availabilityService = new AvailabilityService(
-    calendarProvider,
-    blackoutRepo,
-    bookingRepo
-  );
+  const availabilityService = new AvailabilityService(calendarProvider, blackoutRepo, bookingRepo);
   const bookingService = new BookingService(
     bookingRepo,
     catalogRepo,
@@ -494,11 +491,7 @@ export function buildContainer(config: Config): Container {
   const landingPageService = new LandingPageService(tenantRepo);
 
   // Create ReminderService with real adapters
-  const reminderService = new ReminderService(
-    bookingRepo,
-    catalogRepo,
-    eventEmitter
-  );
+  const reminderService = new ReminderService(bookingRepo, catalogRepo, eventEmitter);
 
   // ============================================================================
   // Event Subscriptions - Type-safe event handlers
@@ -517,7 +510,10 @@ export function buildContainer(config: Config): Container {
         addOnTitles: payload.addOnTitles,
       });
     } catch (err) {
-      logger.error({ err, bookingId: payload.bookingId }, 'Failed to send booking confirmation email');
+      logger.error(
+        { err, bookingId: payload.bookingId },
+        'Failed to send booking confirmation email'
+      );
     }
   });
 
@@ -541,18 +537,15 @@ export function buildContainer(config: Config): Container {
   eventEmitter.subscribe(AppointmentEvents.BOOKED, async (payload) => {
     try {
       // Sync appointment to Google Calendar
-      const result = await googleCalendarService.createAppointmentEvent(
-        payload.tenantId,
-        {
-          id: payload.bookingId,
-          serviceName: payload.serviceName,
-          clientName: payload.clientName,
-          clientEmail: payload.clientEmail,
-          startTime: new Date(payload.startTime),
-          endTime: new Date(payload.endTime),
-          notes: payload.notes,
-        }
-      );
+      const result = await googleCalendarService.createAppointmentEvent(payload.tenantId, {
+        id: payload.bookingId,
+        serviceName: payload.serviceName,
+        clientName: payload.clientName,
+        clientEmail: payload.clientEmail,
+        startTime: new Date(payload.startTime),
+        endTime: new Date(payload.endTime),
+        notes: payload.notes,
+      });
 
       if (result?.eventId) {
         // Store Google event ID in booking for future cancellation sync

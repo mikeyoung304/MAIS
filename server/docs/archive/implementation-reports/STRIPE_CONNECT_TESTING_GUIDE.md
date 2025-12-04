@@ -7,11 +7,13 @@ This guide covers testing the Stripe Connect integration for Phase 3 of the mult
 ## Prerequisites
 
 ### 1. Stripe Test Account
+
 - Sign up at https://dashboard.stripe.com
 - Use **Test Mode** (toggle in top-right corner)
 - Never use production keys during testing
 
 ### 2. Environment Variables
+
 Ensure your `/Users/mikeyoung/CODING/Elope/server/.env` contains:
 
 ```bash
@@ -26,11 +28,13 @@ STRIPE_CANCEL_URL=http://localhost:3000
 ```
 
 **Get Your Keys:**
+
 1. Go to https://dashboard.stripe.com/test/apikeys
 2. Copy **Publishable key** (starts with `pk_test_`)
 3. Reveal and copy **Secret key** (starts with `sk_test_`)
 
 ### 3. Stripe CLI (for webhook testing)
+
 ```bash
 # Install Stripe CLI
 brew install stripe/stripe-cli/stripe
@@ -53,6 +57,7 @@ This will output a webhook signing secret like `whsec_...` - add it to your `.en
 Stripe Connect requires each tenant to have a connected Stripe account. In test mode, you can create test accounts instantly.
 
 **Option A: Use Stripe Dashboard**
+
 1. Go to https://dashboard.stripe.com/test/connect/accounts/overview
 2. Click "Add account"
 3. Fill in test business details:
@@ -62,6 +67,7 @@ Stripe Connect requires each tenant to have a connected Stripe account. In test 
 4. Copy the Account ID (starts with `acct_...`)
 
 **Option B: Use Stripe API (Programmatic)**
+
 ```typescript
 // See scripts/test-stripe-connect.ts for automated approach
 const account = await stripe.accounts.create({
@@ -77,6 +83,7 @@ console.log('Account ID:', account.id);
 ```
 
 **Update Tenant:**
+
 ```sql
 UPDATE "Tenant"
 SET "stripeAccountId" = 'acct_...',
@@ -102,11 +109,13 @@ const accountLink = await stripe.accountLinks.create({
 ```
 
 **Test Mode Shortcut:**
+
 - Stripe provides a test onboarding URL
 - All test accounts can be instantly activated
 - No need to fill out KYC/bank details
 
 **Verification:**
+
 ```typescript
 const account = await stripe.accounts.retrieve('acct_...');
 console.log('Charges enabled:', account.charges_enabled);
@@ -127,6 +136,7 @@ npm run test:commission
 ```
 
 Expected output:
+
 ```
 Test 1: Tenant A - $500.00 booking
   Expected: $50.00 commission (5000 cents)
@@ -156,6 +166,7 @@ const paymentIntent = await stripe.paymentIntents.create({
 **Step 3: Complete Test Payment**
 
 Use Stripe test cards:
+
 - Success: `4242 4242 4242 4242`
 - Decline: `4000 0000 0000 0002`
 - 3D Secure: `4000 0025 0000 3155`
@@ -169,20 +180,24 @@ Use Stripe test cards:
 After a successful payment, verify the funds distribution:
 
 **Check Platform Balance:**
+
 ```bash
 stripe balance
 ```
 
 **Check Connected Account Balance:**
+
 ```bash
 stripe balance --stripe-account acct_...
 ```
 
 **Expected Results:**
+
 - Platform receives: $50.00 (commission)
 - Tenant receives: $450.00 (net after commission)
 
 **Query Booking Record:**
+
 ```sql
 SELECT
   id,
@@ -201,12 +216,14 @@ WHERE id = 'booking_xyz';
 Stripe sends webhook events for payment lifecycle:
 
 **Important Events:**
+
 - `payment_intent.succeeded` - Payment completed
 - `payment_intent.payment_failed` - Payment failed
 - `charge.refunded` - Refund processed
 - `account.updated` - Connected account changed
 
 **Start Webhook Listener:**
+
 ```bash
 # Terminal 1: Run server
 cd /Users/mikeyoung/CODING/Elope/server
@@ -217,11 +234,13 @@ stripe listen --forward-to localhost:3001/api/webhooks/stripe
 ```
 
 **Trigger Test Event:**
+
 ```bash
 stripe trigger payment_intent.succeeded
 ```
 
 **Verify Event Processing:**
+
 ```sql
 SELECT * FROM "WebhookEvent"
 ORDER BY "createdAt" DESC
@@ -237,6 +256,7 @@ Expected status: `PROCESSED`
 Refunds automatically reverse the commission proportionally:
 
 **Full Refund:**
+
 ```typescript
 const refund = await stripe.refunds.create({
   payment_intent: 'pi_...',
@@ -246,11 +266,13 @@ const refund = await stripe.refunds.create({
 ```
 
 Result:
+
 - Customer receives: $500.00
 - Platform returns: $50.00 (commission reversed)
 - Tenant returns: $450.00 (net reversed)
 
 **Partial Refund ($250):**
+
 ```typescript
 const refund = await stripe.refunds.create({
   payment_intent: 'pi_...',
@@ -261,6 +283,7 @@ const refund = await stripe.refunds.create({
 ```
 
 Result:
+
 - Customer receives: $250.00
 - Platform returns: $25.00 (50% of commission)
 - Tenant returns: $225.00 (50% of net)
@@ -277,6 +300,7 @@ npm run test:stripe-connect
 ```
 
 This script will:
+
 1. Create a test tenant with 12% commission
 2. Create a Stripe Connected Account
 3. Create a test booking ($500.00)
@@ -289,17 +313,20 @@ This script will:
 ## Test Checklist
 
 ### Basic Integration
+
 - [ ] Stripe test keys configured in `.env`
 - [ ] Stripe CLI installed and authenticated
 - [ ] Webhook listener running locally
 
 ### Connected Accounts
+
 - [ ] Can create test connected account
 - [ ] Can retrieve account details
 - [ ] Account has charges enabled
 - [ ] Tenant record updated with `stripeAccountId`
 
 ### Payment Flow
+
 - [ ] Can create checkout session with commission
 - [ ] Commission calculated correctly (matches tenant rate)
 - [ ] Test card payment succeeds
@@ -307,12 +334,14 @@ This script will:
 - [ ] Booking record created with commission details
 
 ### Webhooks
+
 - [ ] `payment_intent.succeeded` webhook received
 - [ ] Webhook signature verified
 - [ ] Webhook event stored in database
 - [ ] Booking status updated to CONFIRMED
 
 ### Commission Calculation
+
 - [ ] 10% commission calculates correctly
 - [ ] 12.5% commission calculates correctly
 - [ ] 15% commission calculates correctly
@@ -320,6 +349,7 @@ This script will:
 - [ ] Commission within Stripe limits (0.5% - 50%)
 
 ### Edge Cases
+
 - [ ] Handles missing connected account gracefully
 - [ ] Handles non-onboarded account gracefully
 - [ ] Handles invalid commission percent
@@ -327,6 +357,7 @@ This script will:
 - [ ] Handles duplicate webhook events (idempotency)
 
 ### Security
+
 - [ ] API keys never exposed to client
 - [ ] Webhook secret verified on all events
 - [ ] Tenant isolation enforced (no cross-tenant payments)
@@ -337,13 +368,16 @@ This script will:
 
 ## Common Issues & Solutions
 
-### Issue: "No such account: acct_..."
+### Issue: "No such account: acct\_..."
+
 **Cause:** Connected account doesn't exist or was deleted.
 **Solution:** Create a new test account via Stripe Dashboard or API.
 
 ### Issue: "The account must have at least one of the following capabilities enabled: transfers"
+
 **Cause:** Connected account not fully set up.
 **Solution:** Enable capabilities:
+
 ```typescript
 await stripe.accounts.update('acct_...', {
   capabilities: {
@@ -353,14 +387,17 @@ await stripe.accounts.update('acct_...', {
 ```
 
 ### Issue: "Webhook signature verification failed"
+
 **Cause:** Wrong `STRIPE_WEBHOOK_SECRET` in `.env`.
 **Solution:** Copy secret from `stripe listen` output.
 
 ### Issue: "Application fee amount too large"
+
 **Cause:** Commission exceeds 50% of total.
 **Solution:** Verify tenant `commissionPercent` is reasonable (10-15%).
 
 ### Issue: Commission calculation incorrect
+
 **Cause:** Rounding error or incorrect formula.
 **Solution:** Review `CommissionService.calculateCommission()` - should use `Math.ceil()`.
 
@@ -371,6 +408,7 @@ await stripe.accounts.update('acct_...', {
 Before deploying to production:
 
 ### Stripe Configuration
+
 - [ ] Switch to production Stripe keys
 - [ ] Configure production webhook endpoint
 - [ ] Set up webhook URL in Stripe Dashboard
@@ -378,12 +416,14 @@ Before deploying to production:
 - [ ] Test webhook delivery in production
 
 ### Connected Accounts
+
 - [ ] Production onboarding flow implemented
 - [ ] Account Links configured correctly
 - [ ] Return/refresh URLs point to production domain
 - [ ] Error handling for failed onboarding
 
 ### Security
+
 - [ ] All Stripe keys stored in secure environment variables
 - [ ] Never log sensitive data (keys, account IDs)
 - [ ] Webhook signature verification mandatory
@@ -391,6 +431,7 @@ Before deploying to production:
 - [ ] HTTPS enforced on all endpoints
 
 ### Monitoring
+
 - [ ] Log all payment attempts (success/failure)
 - [ ] Alert on webhook processing failures
 - [ ] Monitor commission calculation accuracy
@@ -398,6 +439,7 @@ Before deploying to production:
 - [ ] Set up Stripe Dashboard alerts
 
 ### Compliance
+
 - [ ] Commission rates documented in tenant agreements
 - [ ] Platform fee disclosure shown to customers
 - [ ] Refund policy documented
@@ -408,18 +450,22 @@ Before deploying to production:
 ## Resources
 
 ### Documentation
+
 - [Stripe Connect Overview](https://stripe.com/docs/connect)
 - [Application Fees](https://stripe.com/docs/connect/direct-charges#collecting-fees)
 - [Testing Connect](https://stripe.com/docs/connect/testing)
 - [Webhook Reference](https://stripe.com/docs/webhooks)
 
 ### Test Cards
+
 - https://stripe.com/docs/testing#cards
 
 ### Stripe CLI
+
 - https://stripe.com/docs/stripe-cli
 
 ### Support
+
 - Stripe Discord: https://discord.gg/stripe
 - Stripe Support: support@stripe.com
 
@@ -428,6 +474,7 @@ Before deploying to production:
 ## Next Steps
 
 After testing is complete:
+
 1. Review security configuration
 2. Implement production webhook handler
 3. Add monitoring and alerting

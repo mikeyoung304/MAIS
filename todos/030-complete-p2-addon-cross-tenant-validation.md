@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "030"
+issue_id: '030'
 tags: [code-review, security, multi-tenant, data-integrity]
 dependencies: []
 ---
@@ -39,7 +39,7 @@ async getAddOnsByPackageId(tenantId: string, packageId: string): Promise<AddOn[]
 // Attacker is tenant A
 const addOns = await catalogRepo.getAddOnsByPackageId(
   'tenantA',
-  'packageB_from_tenantB'  // Not validated!
+  'packageB_from_tenantB' // Not validated!
 );
 // Could return add-ons associated with packageB
 ```
@@ -47,6 +47,7 @@ const addOns = await catalogRepo.getAddOnsByPackageId(
 ## Proposed Solutions
 
 ### Option A: Add Package Ownership Validation (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 ```typescript
@@ -78,6 +79,6 @@ async getAddOnsByPackageId(tenantId: string, packageId: string): Promise<AddOn[]
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                              |
+| ---------- | ------- | ---------------------------------- |
 | 2025-11-27 | Created | Found during data integrity review |

@@ -7,23 +7,27 @@ MAIS is a **production-ready multi-tenant wedding/elopement booking platform** t
 ## Key Strengths
 
 ### 1. **Sophisticated Multi-Tenant Architecture**
+
 - Database-level tenant isolation with API key-based tenant resolution
 - Clean separation between platform admins, tenant admins, and public customers
 - Tenant data protected at multiple layers: database, API, middleware, service, and application
 
 ### 2. **Type-Safe End-to-End APIs**
+
 - Uses ts-rest for contract-driven API design
 - Single source of truth for API contracts (no OpenAPI drift)
 - Full TypeScript type inference on client - compile-time API validation
 - Eliminates entire class of client/server mismatch bugs
 
 ### 3. **Stripe Connect Payment Integration**
+
 - Sophisticated multi-tenant payment splitting
 - Platform takes commission via `application_fee_amount`
 - Tenants receive payments directly to their bank accounts
 - Server-side commission calculation with Stripe Connect constraints (0.5% - 50%)
 
 ### 4. **Clean Architecture Patterns**
+
 - Modular monolith with explicit service boundaries
 - Dependency injection for testability and loose coupling
 - Repository/adapter pattern for data access and external services
@@ -31,6 +35,7 @@ MAIS is a **production-ready multi-tenant wedding/elopement booking platform** t
 - Clear error handling with domain-specific exceptions
 
 ### 5. **Comprehensive Security**
+
 - JWT authentication with algorithm validation (HS256 only)
 - bcryptjs password hashing (10 rounds)
 - Webhook signature verification (HMAC)
@@ -39,6 +44,7 @@ MAIS is a **production-ready multi-tenant wedding/elopement booking platform** t
 - Rate limiting on login and admin routes
 
 ### 6. **Developer Experience**
+
 - Mock mode for development (no external dependencies)
 - Real mode with PostgreSQL, Stripe, Google Calendar, Postmark
 - Comprehensive documentation using Diátaxis framework
@@ -48,6 +54,7 @@ MAIS is a **production-ready multi-tenant wedding/elopement booking platform** t
 ## Core Features
 
 ### For Customers
+
 - Browse wedding packages with add-ons
 - Check availability calendar with blackout dates and Google Calendar integration
 - Secure checkout via Stripe
@@ -55,6 +62,7 @@ MAIS is a **production-ready multi-tenant wedding/elopement booking platform** t
 - Widget embedded on partner websites via postMessage
 
 ### For Tenant Admins
+
 - Dashboard to configure packages and add-ons with photos
 - Customize branding (colors, fonts, logo)
 - Manage bookings and view revenue
@@ -63,6 +71,7 @@ MAIS is a **production-ready multi-tenant wedding/elopement booking platform** t
 - Upload logo and package photos
 
 ### For Platform Admins
+
 - View all tenants and their metrics
 - Manage tenant status (activate/deactivate)
 - Monitor bookings and revenue
@@ -71,6 +80,7 @@ MAIS is a **production-ready multi-tenant wedding/elopement booking platform** t
 ## Technology Stack
 
 ### Backend
+
 - **Framework:** Express 4.21 + TypeScript
 - **Database:** PostgreSQL with Prisma ORM 6.17
 - **API:** @ts-rest/express 3.52 (type-safe contracts)
@@ -82,6 +92,7 @@ MAIS is a **production-ready multi-tenant wedding/elopement booking platform** t
 - **Testing:** Vitest
 
 ### Frontend
+
 - **Framework:** React 18.3 + TypeScript
 - **Build:** Vite 6
 - **Routing:** React Router 7
@@ -90,12 +101,14 @@ MAIS is a **production-ready multi-tenant wedding/elopement booking platform** t
 - **Icons:** Lucide React
 
 ### Shared Packages
+
 - **Contracts:** ts-rest API contracts (shared between client/server)
 - **Shared:** Common utilities and types
 
 ## Architecture Highlights
 
 ### Multi-Tenant Data Flow
+
 ```
 Request → X-Tenant-Key header
     ↓
@@ -117,6 +130,7 @@ Response only contains tenant's data
 ```
 
 ### Payment Processing Flow
+
 ```
 Customer clicks "Book"
     ↓
@@ -138,6 +152,7 @@ Email service sends confirmation
 ```
 
 ### Event Architecture
+
 ```
 Stripe webhook
     ↓
@@ -181,11 +196,13 @@ ConfigChangeLog (audit trail for compliance)
 ## Key Files to Understand
 
 ### Backend Core
+
 - `server/src/app.ts` - Express setup and middleware pipeline
 - `server/src/di.ts` - Dependency injection container (where services are wired together)
 - `server/src/index.ts` - Entry point
 
 ### Services (Domain Logic)
+
 - `server/src/services/catalog.service.ts` - Package/add-on management
 - `server/src/services/booking.service.ts` - Checkout and booking creation
 - `server/src/services/commission.service.ts` - Platform commission calculation
@@ -193,23 +210,27 @@ ConfigChangeLog (audit trail for compliance)
 - `server/src/services/audit.service.ts` - Configuration change logging
 
 ### Routes (Endpoints)
+
 - `server/src/routes/index.ts` - Route registration
 - `server/src/routes/tenant-admin.routes.ts` - Tenant admin endpoints
 - `server/src/routes/webhooks.routes.ts` - Stripe webhook handler
 
 ### Middleware (Cross-Cutting Concerns)
+
 - `server/src/middleware/tenant.ts` - Tenant resolution via API key
 - `server/src/middleware/auth.ts` - Admin authentication via JWT
 - `server/src/middleware/tenant-auth.ts` - Tenant authentication via JWT
 - `server/src/middleware/error-handler.ts` - Error to HTTP status mapping
 
 ### Adapters (External Services)
+
 - `server/src/adapters/stripe.adapter.ts` - Stripe payment processing
 - `server/src/adapters/gcal.adapter.ts` - Google Calendar integration
 - `server/src/adapters/postmark.adapter.ts` - Email sending
 - `server/src/adapters/prisma/*.ts` - Data repositories
 
 ### Frontend Pages
+
 - `client/src/pages/Home.tsx` - Public home page
 - `client/src/pages/Package.tsx` - Package detail page
 - `client/src/pages/Success.tsx` - Payment success page
@@ -217,15 +238,18 @@ ConfigChangeLog (audit trail for compliance)
 - `client/src/pages/tenant/TenantAdminDashboard.tsx` - Tenant admin view
 
 ### Widget (Embeddable)
+
 - `client/src/widget/WidgetApp.tsx` - Main widget component
 - `client/src/widget/WidgetMessenger.ts` - postMessage communication
 - `client/src/widget-main.tsx` - Widget entry point
 
 ### API Contract
+
 - `packages/contracts/src/api.v1.ts` - All API endpoints (ts-rest)
 - `packages/contracts/src/dto.ts` - Data Transfer Objects with Zod schemas
 
 ### Authentication
+
 - `client/src/contexts/AuthContext.tsx` - React auth context (login/logout)
 - `client/src/lib/auth.ts` - JWT decoding and token management
 - `client/src/lib/api.ts` - ts-rest API client with auto-auth injection
@@ -255,6 +279,7 @@ npm run dev:all
 ```
 
 **Access Points:**
+
 - API: http://localhost:3001
 - Web: http://localhost:5173
 - API Docs: http://localhost:3001/api/docs
@@ -262,6 +287,7 @@ npm run dev:all
 ## Documentation Structure
 
 MAIS uses the **Diátaxis framework** for documentation organization:
+
 - **Tutorials:** Learning-focused, step-by-step guides
 - **How-To Guides:** Task-focused, problem-solving instructions
 - **Reference:** Technical specifications and APIs
@@ -289,6 +315,7 @@ See `/docs/README.md` for the full documentation index.
 ## Extension Points
 
 The architecture makes it easy to extend:
+
 - **New Services:** Add to `/services/` and wire in `di.ts`
 - **New Repositories:** Implement `*Repository` interface and add adapter
 - **New External Services:** Create adapter implementing port interface

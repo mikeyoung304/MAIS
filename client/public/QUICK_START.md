@@ -8,8 +8,8 @@
 <script
   src="https://widget.mais.com/sdk/mais-sdk.min.js"
   data-tenant="YOUR_TENANT_SLUG"
-  data-api-key="YOUR_API_KEY">
-</script>
+  data-api-key="YOUR_API_KEY"
+></script>
 ```
 
 ### Step 2: Add the Container
@@ -29,22 +29,22 @@ That's it. The widget will automatically load and display in the container.
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Book Your Wedding</title>
-</head>
-<body>
-  <h1>Available Wedding Packages</h1>
+  <head>
+    <title>Book Your Wedding</title>
+  </head>
+  <body>
+    <h1>Available Wedding Packages</h1>
 
-  <!-- Widget Container -->
-  <div id="mais-widget"></div>
+    <!-- Widget Container -->
+    <div id="mais-widget"></div>
 
-  <!-- SDK Loader -->
-  <script
-    src="https://widget.mais.com/sdk/mais-sdk.min.js"
-    data-tenant="bellaweddings"
-    data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8">
-  </script>
-</body>
+    <!-- SDK Loader -->
+    <script
+      src="https://widget.mais.com/sdk/mais-sdk.min.js"
+      data-tenant="bellaweddings"
+      data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8"
+    ></script>
+  </body>
 </html>
 ```
 
@@ -66,7 +66,7 @@ Get your API key from the MAIS dashboard:
 
 ```html
 <script>
-  window.MAISWidget.on('bookingCompleted', function(data) {
+  window.MAISWidget.on('bookingCompleted', function (data) {
     // Redirect to thank you page
     window.location.href = '/thank-you?booking=' + data.bookingId;
   });

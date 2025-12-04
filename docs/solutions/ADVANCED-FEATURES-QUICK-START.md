@@ -5,24 +5,26 @@
 
 ## TL;DR - Feature Recommendations
 
-| Feature | Approach | Library | Status |
-|---------|----------|---------|--------|
-| Secure tokens | JWT + single-use HMAC | `crypto`, `jsonwebtoken` | Implement Phase 1 |
-| Reminders | Bull queue (Redis) | `bull`, `luxon` | Implement Phase 2 |
-| Deposits | Payment Intent API | `stripe` | Implement Phase 2 |
-| Refunds | Async with idempotency | `stripe`, `bull` | Implement Phase 3 |
-| Invoices | Puppeteer + Handlebars | `puppeteer`, `handlebars` | Implement Phase 1 |
+| Feature       | Approach               | Library                   | Status            |
+| ------------- | ---------------------- | ------------------------- | ----------------- |
+| Secure tokens | JWT + single-use HMAC  | `crypto`, `jsonwebtoken`  | Implement Phase 1 |
+| Reminders     | Bull queue (Redis)     | `bull`, `luxon`           | Implement Phase 2 |
+| Deposits      | Payment Intent API     | `stripe`                  | Implement Phase 2 |
+| Refunds       | Async with idempotency | `stripe`, `bull`          | Implement Phase 3 |
+| Invoices      | Puppeteer + Handlebars | `puppeteer`, `handlebars` | Implement Phase 1 |
 
 ---
 
 ## 1. Secure Tokens (Status: PARTIALLY IMPLEMENTED)
 
 ### What's Already Done ✅
+
 - JWT tenant authentication (`tenantAuthService.ts`)
 - Password reset tokens with hashing (`tenant-auth.service.ts`)
 - Rate limiting on auth endpoints
 
 ### What's Missing
+
 - Booking action tokens (reschedule, cancel)
 - One-time admin setup links
 - Payment dispute tokens
@@ -30,6 +32,7 @@
 ### Quick Implementation
 
 **Add to Prisma schema:**
+
 ```prisma
 model BookingActionToken {
   id                String    @id @default(cuid())
@@ -47,6 +50,7 @@ model BookingActionToken {
 ```
 
 **Create service:**
+
 ```typescript
 // Use crypto.randomBytes(32) + SHA-256 hash pattern
 // Follow same pattern as tenant-auth.service.ts forgotPassword()
@@ -57,6 +61,7 @@ model BookingActionToken {
 ## 2. Reminders (Implement First for Revenue Impact)
 
 ### Why Bull + Redis?
+
 - No external service dependency (unlike SendGrid scheduling)
 - Distributed job queue (scales to multiple servers)
 - Automatic retries on failure
@@ -65,11 +70,13 @@ model BookingActionToken {
 ### Quick Setup
 
 **1. Install:**
+
 ```bash
 npm install bull redis ioredis luxon
 ```
 
 **2. Create queue:**
+
 ```typescript
 // lib/queue/reminder-queue.ts
 import Queue from 'bull';
@@ -85,6 +92,7 @@ reminderQueue.process(async (job) => {
 ```
 
 **3. Schedule from booking service:**
+
 ```typescript
 // On booking.onPaymentCompleted():
 const eventDate = DateTime.fromISO(booking.eventDate).setZone(tenantTimezone);
@@ -98,6 +106,7 @@ await reminderQueue.add(
 ```
 
 **Benefits:**
+
 - Timezone-aware scheduling with Luxon
 - Automatic retries on network failures
 - Persistent (survives server restarts)
@@ -110,18 +119,21 @@ await reminderQueue.add(
 ### When to Use Payment Intent vs Checkout Session
 
 Use **Payment Intent** when:
+
 - Customers pay deposit (50%) + remainder (50%)
 - Multi-stage payment workflows
 - Flexible payment scheduling
 - Refund tracking per stage
 
 Use **Checkout Session** when:
+
 - Simple one-time payment
 - Redirect-based flow (current MAIS pattern)
 
 ### Quick Implementation
 
 **1. Add Payment Intent support to adapter:**
+
 ```typescript
 // In stripe.adapter.ts:
 async createPaymentIntent(input: {
@@ -135,6 +147,7 @@ async createPaymentIntent(input: {
 ```
 
 **2. Add schema:**
+
 ```prisma
 model BookingPaymentStage {
   id                    String  @id @default(cuid())
@@ -152,11 +165,13 @@ model BookingPaymentStage {
 ```
 
 **3. Create deposit service:**
+
 ```typescript
 // services/deposit.service.ts follows same pattern as booking.service.ts
 ```
 
 **Key diff from full payment:**
+
 - Create Payment Intent (not Checkout Session)
 - Track multiple stages (deposit + remainder)
 - Calculate remainder on second payment
@@ -182,6 +197,7 @@ model BookingPaymentStage {
 ### Minimal Implementation
 
 **1. Schema:**
+
 ```prisma
 model RefundRequest {
   id                    String    @id @default(cuid())
@@ -199,6 +215,7 @@ model RefundRequest {
 ```
 
 **2. Service (simplified):**
+
 ```typescript
 async createRefund(tenantId, bookingId, reason) {
   // Check for existing refund (idempotency)
@@ -238,6 +255,7 @@ async processRefund(refundRequestId, tenantId) {
 ## 5. Invoice Generation (Puppeeter + Handlebars)
 
 ### Why Puppeteer?
+
 - Renders HTML → PDF with perfect layout
 - Reusable HTML templates (Handlebars)
 - Handles complex designs (images, tables, CSS Grid)
@@ -246,11 +264,13 @@ async processRefund(refundRequestId, tenantId) {
 ### Quick Setup
 
 **1. Install:**
+
 ```bash
 npm install puppeteer handlebars
 ```
 
 **2. Create service:**
+
 ```typescript
 // lib/invoice-template.ts
 const invoiceHTML = `
@@ -321,7 +341,9 @@ export class InvoiceService {
       customerEmail: booking.email,
       eventDate: booking.eventDate,
       packageName: booking.package.title,
-      lineItems: [{ description: booking.package.title, amount: `$${(booking.totalPrice / 100).toFixed(2)}` }],
+      lineItems: [
+        { description: booking.package.title, amount: `$${(booking.totalPrice / 100).toFixed(2)}` },
+      ],
       total: `$${(booking.totalPrice / 100).toFixed(2)}`,
     });
 
@@ -334,7 +356,7 @@ export class InvoiceService {
 
     // 5. Store invoice record
     await prisma.invoice.create({
-      data: { tenantId, bookingId, invoiceNumber, fileName: `invoice-${invoiceNumber}.pdf` }
+      data: { tenantId, bookingId, invoiceNumber, fileName: `invoice-${invoiceNumber}.pdf` },
     });
 
     return pdf;
@@ -343,6 +365,7 @@ export class InvoiceService {
 ```
 
 **3. Send via email:**
+
 ```typescript
 // In PostmarkMailAdapter, add method:
 async sendInvoice(to: string, invoiceBuffer: Buffer, fileName: string) {
@@ -372,12 +395,14 @@ async sendInvoice(to: string, invoiceBuffer: Buffer, fileName: string) {
 ## Implementation Checklist
 
 ### Phase 1 (MVP - This Sprint)
+
 - [ ] Add `BookingActionToken` model to schema
 - [ ] Create `BookingActionTokenService` (copy password reset pattern)
 - [ ] Add invoice generation service (Puppeteer)
 - [ ] Add invoice model and API routes
 
 ### Phase 2 (Post-MVP)
+
 - [ ] Set up Redis locally (`docker run -d redis:7`)
 - [ ] Create reminder queue (`bull`, `luxon`)
 - [ ] Schedule reminders on booking completion
@@ -385,6 +410,7 @@ async sendInvoice(to: string, invoiceBuffer: Buffer, fileName: string) {
 - [ ] Create deposit payment service
 
 ### Phase 3 (Advanced)
+
 - [ ] Create `RefundRequest` model
 - [ ] Create refund service with Bull queue
 - [ ] Implement Stripe webhook handlers for refund status
@@ -395,6 +421,7 @@ async sendInvoice(to: string, invoiceBuffer: Buffer, fileName: string) {
 ## Local Development Setup
 
 ### Redis (for reminders & refunds)
+
 ```bash
 # Install Docker, then:
 docker run -d \
@@ -407,6 +434,7 @@ redis-cli ping  # Should return PONG
 ```
 
 ### Environment Variables
+
 ```bash
 # .env
 REDIS_HOST=localhost
@@ -417,6 +445,7 @@ PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 ```
 
 ### Dependencies Installation
+
 ```bash
 # All at once:
 npm install bull redis ioredis luxon puppeteer handlebars
@@ -431,6 +460,7 @@ npm install puppeteer handlebars      # Invoices
 ## Testing Patterns
 
 ### Secure Tokens
+
 ```typescript
 test('token is single-use', async () => {
   const token = await service.generateToken(...);
@@ -443,6 +473,7 @@ test('token is single-use', async () => {
 ```
 
 ### Reminders
+
 ```typescript
 test('reminder scheduled at correct time', async () => {
   await service.scheduleReminder(tenantId, bookingId, 'America/New_York');
@@ -454,6 +485,7 @@ test('reminder scheduled at correct time', async () => {
 ```
 
 ### Refunds
+
 ```typescript
 test('refund is idempotent', async () => {
   const refund1 = await service.createRefund(tenantId, bookingId, 'customer_request');
@@ -468,6 +500,7 @@ test('refund is idempotent', async () => {
 ## Debugging Tips
 
 ### Check Redis queue
+
 ```bash
 redis-cli
 > KEYS *  # See all keys
@@ -476,6 +509,7 @@ redis-cli
 ```
 
 ### Monitor Bull queue
+
 ```typescript
 // In di.ts or startup:
 import Queue from 'bull';
@@ -487,15 +521,19 @@ queue.on('failed', (job, error) => console.log('Failed:', job.id, error.message)
 ```
 
 ### Test Stripe refund locally
+
 ```typescript
 // In test file:
-const refund = await stripe.refunds.create({
-  payment_intent: 'pi_test123',  // Use test PI
-  amount: 5000,
-}, { idempotencyKey: 'test-key-1' });
+const refund = await stripe.refunds.create(
+  {
+    payment_intent: 'pi_test123', // Use test PI
+    amount: 5000,
+  },
+  { idempotencyKey: 'test-key-1' }
+);
 
-console.log('Refund ID:', refund.id);  // Should succeed
-console.log('Status:', refund.status);  // "succeeded"
+console.log('Refund ID:', refund.id); // Should succeed
+console.log('Status:', refund.status); // "succeeded"
 ```
 
 ---
@@ -503,6 +541,7 @@ console.log('Status:', refund.status);  // "succeeded"
 ## Common Gotchas
 
 ### Timezone Handling
+
 ```typescript
 // ❌ WRONG - Treats date as UTC
 const dt = DateTime.fromISO('2025-06-15');
@@ -516,17 +555,19 @@ const delay = utcTime.diffNow().as('milliseconds');
 ```
 
 ### Multi-Tenant Isolation
+
 ```typescript
 // ❌ WRONG - Missing tenantId
 const reminders = await prisma.reminderLog.findMany({ where: { status: 'FAILED' } });
 
 // ✅ CORRECT - Always include tenantId
 const reminders = await prisma.reminderLog.findMany({
-  where: { tenantId, status: 'FAILED' }
+  where: { tenantId, status: 'FAILED' },
 });
 ```
 
 ### Idempotency Keys
+
 ```typescript
 // ❌ WRONG - Changes on every call
 const key = `refund_${Date.now()}`;
@@ -539,6 +580,7 @@ const key = await generateStableKey(tenantId, bookingId, reason);
 ```
 
 ### Error Logging
+
 ```typescript
 // ❌ WRONG - Logs sensitive data
 logger.error({ token, bookingId }, 'Verification failed');

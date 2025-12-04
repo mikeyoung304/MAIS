@@ -1,7 +1,7 @@
 ---
 status: completed
 priority: p2
-issue_id: "139"
+issue_id: '139'
 tags: [code-review, visual-editor, data-integrity, concurrency]
 dependencies: []
 completed_date: 2025-12-01
@@ -18,16 +18,19 @@ When multiple autosave requests arrive simultaneously (within 1s from client deb
 ## Findings
 
 ### Discovery Source
+
 Data Integrity Review Agent - Code Review
 
 ### Evidence
 
 **Client-side debounce (useVisualEditor.ts line 194):**
+
 ```typescript
 }, 1000);  // 1 second debounce - CLIENT side only
 ```
 
 **Server has no debouncing (catalog.repository.ts lines 464-476):**
+
 ```typescript
 async updateDraft(tenantId: string, packageId: string, draft: UpdatePackageDraftInput): Promise<PackageWithDraft> {
   const pkg = await this.prisma.package.update({
@@ -39,6 +42,7 @@ async updateDraft(tenantId: string, packageId: string, draft: UpdatePackageDraft
 ```
 
 **Scenario:**
+
 1. User types title "ABC" → Request A sent with `{ title: "ABC" }`
 2. User immediately types description "XYZ" → Request B sent with `{ description: "XYZ" }`
 3. Request A completes, saves title
@@ -46,6 +50,7 @@ async updateDraft(tenantId: string, packageId: string, draft: UpdatePackageDraft
 5. Result: Title saved, description lost, user doesn't know
 
 **Worse scenario with photo uploads:**
+
 1. User uploads photo → Request A
 2. User edits title → Request B (includes photo references)
 3. If Request B completes before A, photo state is inconsistent
@@ -53,6 +58,7 @@ async updateDraft(tenantId: string, packageId: string, draft: UpdatePackageDraft
 ## Proposed Solutions
 
 ### Option 1: Optimistic Locking with Version Field (Recommended)
+
 Add version tracking to detect conflicts.
 
 ```prisma
@@ -87,6 +93,7 @@ async updateDraft(tenantId, packageId, draft, expectedVersion) {
 **Risk**: Low
 
 ### Option 2: Server-Side Request Deduplication
+
 Use a short-lived cache to prevent rapid duplicate saves.
 
 ```typescript
@@ -117,6 +124,7 @@ async updateDraft(tenantId, packageId, draft) {
 **Risk**: Medium
 
 ### Option 3: Batch Updates on Client
+
 Collect all changes and send as single request after debounce.
 
 ```typescript
@@ -138,23 +146,28 @@ const updateDraft = (packageId, update) => {
 **Risk**: Low
 
 ## Recommended Action
+
 <!-- Filled during triage -->
 
 ## Technical Details
 
 ### Affected Files
+
 - `server/src/adapters/prisma/catalog.repository.ts`
 - `server/prisma/schema.prisma` (if adding version field)
 - `client/src/features/tenant-admin/visual-editor/hooks/useVisualEditor.ts`
 
 ### Affected Components
+
 - Draft autosave flow
 - Concurrent editing detection
 
 ### Database Changes Required
+
 Option 1: Add `draftVersion Int @default(0)` to Package model
 
 ## Acceptance Criteria
+
 - [ ] Concurrent saves don't cause data loss
 - [ ] Conflicts are detected and reported to user
 - [ ] User can recover from conflict state
@@ -163,10 +176,11 @@ Option 1: Add `draftVersion Int @default(0)` to Package model
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                       |
+| ---------- | ------- | ------------------------------------------- |
 | 2025-12-01 | Created | Identified during visual editor code review |
 
 ## Resources
+
 - PR: feat(visual-editor) commit 0327dee
 - Prisma optimistic locking: https://www.prisma.io/docs/concepts/components/prisma-client/optimistic-locking

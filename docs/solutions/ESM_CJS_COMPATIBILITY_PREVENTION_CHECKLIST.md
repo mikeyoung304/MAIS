@@ -1,5 +1,5 @@
 ---
-title: "ESM/CJS Compatibility Prevention Checklist"
+title: 'ESM/CJS Compatibility Prevention Checklist'
 slug: esm-cjs-prevention-checklist
 category: prevention
 tags: [npm, package-selection, esm, cjs, module-compatibility, checklist]
@@ -40,6 +40,7 @@ Create a mental checklist:
 - [ ] Package is in `node_modules` with mixed exports → Investigate further
 
 **Where to check:**
+
 ```bash
 npm view package-name type
 npm view package-name exports
@@ -47,6 +48,7 @@ npm view package-name main
 ```
 
 **Example:**
+
 ```bash
 $ npm view file-type type
 # (returns nothing) → CJS-only
@@ -64,6 +66,7 @@ $ npm view file-type exports
 - [ ] Look at PR history for module-related changes
 
 **Red flags:**
+
 - ❌ "Cannot find module in ESM" (unresolved, no workaround)
 - ❌ "ESM support removed in v2.0" (means it used to work)
 - ✅ "Using createRequire works" (community has workaround)
@@ -78,6 +81,7 @@ npm view package-name versions --json | tail -20
 ```
 
 **Decision:**
+
 - If v17+ is ESM and you need v16 features → File a GitHub issue to check for backports
 - If v17+ is ESM and v16 works fine → Consider upgrading preemptively
 - If v16 is latest → Use `createRequire` wrapper (like file-type)
@@ -102,34 +106,35 @@ Or visit `https://unpkg.com/package-name/package.json`
   "version": "16.5.4",
 
   // ✅ Check these fields
-  "type": "module",                    // Pure ESM?
+  "type": "module", // Pure ESM?
 
-  "main": "index.js",                  // CJS entry point
+  "main": "index.js", // CJS entry point
 
-  "exports": {                         // Modern conditional exports
-    "import": "./index.js",            // ESM entry
-    "require": "./cjs-index.js"        // CJS entry
+  "exports": {
+    // Modern conditional exports
+    "import": "./index.js", // ESM entry
+    "require": "./cjs-index.js" // CJS entry
   },
 
-  "module": "index.esm.js",            // ESM fallback (older packages)
+  "module": "index.esm.js", // ESM fallback (older packages)
 
   // ❌ Check Node version compatibility
   "engines": {
-    "node": ">=10"                     // Supports Node 25? Usually yes for >=10
+    "node": ">=10" // Supports Node 25? Usually yes for >=10
   }
 }
 ```
 
 **Key Investigation:**
 
-| Field | What It Means | Action |
-|-------|---------------|--------|
-| `"type": "module"` | Pure ESM package | Use direct import: `import { x } from 'pkg'` |
-| No `type` field | CJS-only | Use `createRequire` |
-| `"exports.import"` | Has ESM entry point | Use direct import |
-| `"exports.require"` | Has CJS entry point | Package supports both |
-| `"main"` | Entry point | Must resolve to valid file |
-| `"module"` | ESM entry (older pattern) | Fallback for older packages |
+| Field               | What It Means             | Action                                       |
+| ------------------- | ------------------------- | -------------------------------------------- |
+| `"type": "module"`  | Pure ESM package          | Use direct import: `import { x } from 'pkg'` |
+| No `type` field     | CJS-only                  | Use `createRequire`                          |
+| `"exports.import"`  | Has ESM entry point       | Use direct import                            |
+| `"exports.require"` | Has CJS entry point       | Package supports both                        |
+| `"main"`            | Entry point               | Must resolve to valid file                   |
+| `"module"`          | ESM entry (older pattern) | Fallback for older packages                  |
 
 ---
 
@@ -145,27 +150,30 @@ npm view package-name exports
 ```
 
 **Safe patterns:**
+
 ```json
 {
   "exports": {
-    "import": "./index.js",           // Only one ESM entry
-    "require": "./index.cjs"          // Only one CJS entry
+    "import": "./index.js", // Only one ESM entry
+    "require": "./index.cjs" // Only one CJS entry
   }
 }
 ```
 
 **Dangerous patterns:**
+
 ```json
 {
   "exports": {
-    ".": "./index.js",                 // Default - imports JS
+    ".": "./index.js", // Default - imports JS
     "./package.json": "./package.json" // Allows esmeta.json import
   },
-  "main": "./index.cjs"                // CJS fallback
+  "main": "./index.cjs" // CJS fallback
 }
 ```
 
 When in doubt, test with both import styles:
+
 ```typescript
 // Test 1: ESM import
 import * as pkg1 from 'package';
@@ -208,6 +216,7 @@ ls node_modules/package-name/*.d.ts
 ```
 
 **Success criteria:**
+
 - ✅ Package installed to `node_modules/`
 - ✅ No warnings during install
 - ✅ TypeScript definitions available (`.d.ts` files)
@@ -224,11 +233,13 @@ Based on package.json investigation, choose ONE pattern:
 #### Pattern A: Direct Import (ESM-native packages)
 
 **Conditions:**
+
 - Package has `"type": "module"`
 - OR Package has `"exports.import"`
 - AND No import issues reported on GitHub
 
 **Implementation:**
+
 ```typescript
 // ✅ Use direct import
 import { functionName } from 'package-name';
@@ -239,11 +250,13 @@ const result = functionName(); // Full IntelliSense
 ```
 
 **Examples in MAIS:**
+
 - `import { PrismaClient } from '@prisma/client'`
 - `import express from 'express'`
 - `import { stripe } from 'stripe'`
 
 **Test:**
+
 ```bash
 npm run typecheck  # Should pass
 npm test           # Should pass
@@ -254,11 +267,13 @@ npm test           # Should pass
 #### Pattern B: createRequire (CJS packages or dual packages)
 
 **Conditions:**
+
 - Package is CJS-only (no `"type": "module"`)
 - OR Package has both ESM and CJS exports
 - AND You need to import it at module level (not lazy-loaded)
 
 **Implementation:**
+
 ```typescript
 import { createRequire } from 'module';
 
@@ -270,22 +285,25 @@ const detected = await fileType.fromBuffer(buffer);
 ```
 
 **Why this works:**
+
 - `createRequire` creates a CommonJS `require()` function scoped to current module
 - Works in pure ESM mode (Node.js compatibility layer)
 - Type assertion tells TypeScript to treat it as ESM
 
 **Real example from MAIS:**
+
 ```typescript
 // server/src/services/upload.service.ts
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
 const fileType = require('file-type') as {
-  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>
+  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>;
 };
 ```
 
 **Test:**
+
 ```bash
 npm run typecheck  # Check type assertions
 npm test           # Verify require works
@@ -296,11 +314,13 @@ npm test           # Verify require works
 #### Pattern C: Dynamic Import (Lazy loading)
 
 **Conditions:**
+
 - Package is CJS-only
 - You only need it in certain code paths
 - Early loading is not required
 
 **Implementation:**
+
 ```typescript
 async function validateFile(buffer: Buffer) {
   // ✅ Import only when needed
@@ -311,11 +331,13 @@ async function validateFile(buffer: Buffer) {
 ```
 
 **When to use:**
+
 - Heavy packages used occasionally
 - Optional dependencies
 - Circular dependency breaking
 
 **Test:**
+
 ```bash
 npm test           # Verify async behavior
 npm run test:e2e   # Full flow testing
@@ -326,10 +348,12 @@ npm run test:e2e   # Full flow testing
 #### Pattern D: Conditional Imports (Future-proofing)
 
 **Conditions:**
+
 - Package provides both ESM and CJS
 - You want to use ESM if available, fall back to CJS
 
 **Implementation:**
+
 ```typescript
 // ✅ Progressive enhancement
 let fileType: any;
@@ -348,6 +372,7 @@ export default fileType;
 ```
 
 **When to use:**
+
 - Packages that might upgrade to ESM soon
 - Maximum compatibility requirements
 
@@ -357,17 +382,18 @@ export default fileType;
 
 Rate the package using this matrix:
 
-| Factor | Low Risk | Medium Risk | High Risk |
-|--------|----------|-------------|-----------|
-| Module Type | ESM-native | Dual export | CJS-only |
-| Active Maintenance | Recent commits | 1-3 months old | 6+ months old |
-| Issues on GitHub | None about ESM | Some closed issues | Unresolved ESM issues |
-| Usage in MAIS | 0 dependencies | Used in 1-2 places | Many files depend on it |
-| Import Pattern | Direct import | createRequire | Dynamic import needed |
-| Test Coverage | High (>80%) | Medium (50-80%) | Low (<50%) |
-| Size | Small (<100KB) | Medium (100KB-1MB) | Large (>1MB) |
+| Factor             | Low Risk       | Medium Risk        | High Risk               |
+| ------------------ | -------------- | ------------------ | ----------------------- |
+| Module Type        | ESM-native     | Dual export        | CJS-only                |
+| Active Maintenance | Recent commits | 1-3 months old     | 6+ months old           |
+| Issues on GitHub   | None about ESM | Some closed issues | Unresolved ESM issues   |
+| Usage in MAIS      | 0 dependencies | Used in 1-2 places | Many files depend on it |
+| Import Pattern     | Direct import  | createRequire      | Dynamic import needed   |
+| Test Coverage      | High (>80%)    | Medium (50-80%)    | Low (<50%)              |
+| Size               | Small (<100KB) | Medium (100KB-1MB) | Large (>1MB)            |
 
 **Scoring:**
+
 - All low: ✅ Safe to install
 - Mostly low: ✅ Safe with testing
 - Mixed: ⚠️ Install but plan careful testing
@@ -387,6 +413,7 @@ import { PrismaClient } from '@prisma/client';
 ```
 
 **Prevention steps:**
+
 1. Just install normally: `npm install stripe`
 2. Import directly
 3. Run tests
@@ -407,6 +434,7 @@ const multer = require('multer');
 ```
 
 **Prevention steps:**
+
 1. Check package.json carefully
 2. Test in both modes
 3. Add comments explaining why this pattern is used
@@ -485,9 +513,9 @@ const fileType = require('file-type') as typeof import('file-type');
 Update `CLAUDE.md` or `docs/MODULE_COMPATIBILITY.md`:
 
 ```markdown
-| Package | Version | Type | Pattern | Status | Notes |
-|---------|---------|------|---------|--------|-------|
-| file-type | ^16.5.4 | CJS | createRequire | ✅ | ESM version (v17+) available, consider upgrade |
+| Package   | Version | Type | Pattern       | Status | Notes                                          |
+| --------- | ------- | ---- | ------------- | ------ | ---------------------------------------------- |
+| file-type | ^16.5.4 | CJS  | createRequire | ✅     | ESM version (v17+) available, consider upgrade |
 ```
 
 ---

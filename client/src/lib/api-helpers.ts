@@ -51,7 +51,7 @@ export function validateRequired<T extends Record<string, any>>(
   data: T,
   requiredFields: (keyof T)[]
 ): void {
-  const missing = requiredFields.filter(field => !data[field]);
+  const missing = requiredFields.filter((field) => !data[field]);
 
   if (missing.length > 0) {
     throw new Error(`Missing required fields: ${missing.join(', ')}`);

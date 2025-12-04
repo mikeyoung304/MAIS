@@ -35,12 +35,14 @@ Rather than chasing individual test failures, we identified and fixed root infra
 **Goal**: Establish stable baseline by skipping flaky tests
 
 **Actions**:
+
 - Ran integration suite 3 times sequentially
 - Identified 9 tests with inconsistent pass rates (8.7% variance)
 - Skipped 41 flaky tests with detailed TODO comments
 - Documented root causes for each test
 
 **Results**:
+
 - **Stable baseline**: 47-48 passing tests (46.2% pass rate)
 - **Variance reduced**: 8.7% → 0.96% (90% reduction)
 - Commit: `854391a`
@@ -54,18 +56,21 @@ Rather than chasing individual test failures, we identified and fixed root infra
 **Goal**: Fix root infrastructure issues causing cascading failures
 
 **Problem Identified**:
+
 - Catalog repository tests manually created `new PrismaClient()` per test
 - 33 catalog tests × 10 operations each = 330+ database connections
 - Exhausted connection pool (default limit: 10 connections)
 - Poisoned pool caused 179-second timeouts in downstream tests
 
 **Solution**:
+
 - Refactored catalog tests to use `setupCompleteIntegrationTest()` pattern
 - Shared connection pool across all tests
 - Implemented FK-aware cleanup via `ctx.cleanup()`
 - Managed tenant lifecycle via `ctx.tenants`
 
 **Results**:
+
 - **Stable baseline**: 40 passing tests with **0% variance** across 3 runs
 - Connection pool no longer exhausted
 - All catalog tests passing consistently
@@ -83,18 +88,21 @@ Rather than chasing individual test failures, we identified and fixed root infra
 **Approach**: Batch processing (3-5 tests per batch) with 3-run validation
 
 #### Batch 1: Cascading Failures (5 tests)
+
 - **Tests**: 2 webhook + 3 catalog tests marked as "cascading failures" from Phase 2
 - **Hypothesis**: Should pass without changes now that infrastructure is stable
 - **Result**: ✅ All 5 passed on first try
 - **Validation**: 45 passing | 59 skipped | 0 failed (0% variance)
 
 #### Batch 2: Flaky Webhook Tests (4 tests)
+
 - **Tests**: 4 webhook tests with 67% pass rate (2/3 runs) in Phase 1
 - **Hypothesis**: "Flakiness" was actually infrastructure issues
 - **Result**: ✅ All 4 passed on first try, now 100% consistent
 - **Validation**: 49 passing | 55 skipped | 0 failed (0% variance)
 
 #### Batch 3: Flaky Catalog Tests (5 tests)
+
 - **Tests**: 4 catalog + 1 webhook test with 67% pass rate in Phase 1
 - **Hypothesis**: Same pattern as Batch 2
 - **Result**: ✅ All 5 passed on first try, now 100% consistent
@@ -102,12 +110,14 @@ Rather than chasing individual test failures, we identified and fixed root infra
 - **Milestone**: Reached 54/55 target (98%)
 
 #### Batch 4: Easy Wins (3 of 4 tests)
+
 - **Tests**: 4 tests marked as "redundant" or "data persistence issues"
 - **Result**: ⚠️ 3 passed, 1 re-skipped (data contamination persists)
 - **Validation**: 57 passing | 47 skipped | 0 failed (0% variance)
 - **Milestone**: Exceeded 55-65 target (104%)
 
 **Total Phase 3 Results**:
+
 - **17 tests re-enabled** with **0 test code changes**
 - **Final**: 57 passing | 47 skipped | 0 failed
 - **0% variance** across 12 validation runs
@@ -125,18 +135,21 @@ Rather than chasing individual test failures, we identified and fixed root infra
 **Approach**: Same batch processing strategy as Phase 3
 
 #### Batch 1: Final Cascading Failures (2 tests)
+
 - **Tests**: 2 cache isolation tests (last Phase 2 cascading failures)
 - **Result**: ✅ Both passed on first try
 - **Validation**: 59 passing | 45 skipped | 0 failed (0% variance)
 - **Pattern**: All 7 "cascading failure" tests now resolved (5 in Phase 3 + 2 in Phase 4)
 
 #### Batch 2: Flaky Cache Tests (3 tests)
+
 - **Tests**: 3 cache tests with 67% pass rate in Phase 1
 - **Result**: ✅ All 3 passed on first try, now 100% consistent
 - **Validation**: 62 passing | 42 skipped | 0 failed (0% variance)
 - **Milestone**: 60% pass rate achieved 🎯
 
 **Total Phase 4 Results**:
+
 - **5 tests re-enabled** with **0 test code changes**
 - **Final**: 62 passing | 42 skipped | 0 failed (60% pass rate)
 - **0% variance** across 18 validation runs (6 in Phase 4)
@@ -154,6 +167,7 @@ Rather than chasing individual test failures, we identified and fixed root infra
 **Observation**: All tests with exactly 2/3 pass rate (67%) were actually infrastructure issues
 
 **Tests Affected**: 11 total (8 in Phase 3 + 3 in Phase 4)
+
 - 4 webhook tests (Phase 3 Batch 2)
 - 4 catalog tests (Phase 3 Batch 3)
 - 3 cache tests (Phase 4 Batch 2)
@@ -173,6 +187,7 @@ Rather than chasing individual test failures, we identified and fixed root infra
 **Example**: Phase 2 catalog refactoring (~4 hours of work) enabled 22 tests to pass across Phases 3-4
 
 **Multiplier Calculation**:
+
 - Investment: 4 hours (Phase 2 catalog refactoring)
 - Tests fixed: 22 (17 in Phase 3 + 5 in Phase 4)
 - Re-enablement time: ~4 hours across Phases 3-4
@@ -187,12 +202,14 @@ Rather than chasing individual test failures, we identified and fixed root infra
 **Observation**: Connection pool exhaustion in one test file poisoned downstream test files
 
 **Chain of Events**:
+
 1. Catalog tests create 330+ manual PrismaClient instances
 2. Connection pool exhausted (10 connection limit)
 3. Downstream tests (cache, webhook) experience 179-second timeouts
 4. Tests marked as "flaky" when they're actually consistent failures
 
 **Tests Affected**: 7 tests marked as "cascading failures"
+
 - 5 tests in Phase 3 Batch 1 (2 webhook + 3 catalog)
 - 2 tests in Phase 4 Batch 1 (2 cache)
 
@@ -205,12 +222,14 @@ Rather than chasing individual test failures, we identified and fixed root infra
 ### 4. Integration Helper Pattern Success
 
 **Pattern**: `setupCompleteIntegrationTest()` provides:
+
 - Shared PrismaClient connection pool
 - Managed tenant lifecycle (`ctx.tenants.tenantA.create()`)
 - FK-aware cleanup (`ctx.cleanup()`)
 - Test isolation without manual disconnects
 
 **Impact**:
+
 - Eliminated connection pool exhaustion
 - Eliminated FK constraint violations during cleanup
 - Reduced boilerplate by 70% (from Sprint 5)
@@ -227,6 +246,7 @@ Rather than chasing individual test failures, we identified and fixed root infra
 **True Flaky Tests**: 0 identified (all "flaky" tests had root infrastructure causes)
 
 **Infrastructure-Caused "Flakiness"**:
+
 - Connection pool poisoning → intermittent timeouts
 - Data contamination → tests pass/fail based on execution order
 - Timing dependencies → tests pass/fail based on system load
@@ -238,21 +258,25 @@ Rather than chasing individual test failures, we identified and fixed root infra
 ## Technical Achievements
 
 ### Connection Pool Management
+
 - **Before**: 330+ manual `new PrismaClient()` instances per test run
 - **After**: Single shared connection pool via integration helpers
 - **Impact**: Eliminated 179-second timeout failures
 
 ### FK-Aware Cleanup
+
 - **Before**: Manual cleanup caused FK constraint violations
 - **After**: `ctx.cleanup()` handles dependencies correctly
 - **Impact**: Eliminated data contamination between tests
 
 ### Test Isolation
+
 - **Before**: Tests interfered with each other (cross-test data pollution)
 - **After**: Managed tenant lifecycle isolates test data
 - **Impact**: Enabled 0% variance across 18+ validation runs
 
 ### Zero Test Logic Changes
+
 - **Tests Re-enabled**: 22 across Phases 3-4
 - **Test Code Modified**: 0 lines
 - **All Changes**: Infrastructure-only (connection pooling, cleanup, lifecycle)
@@ -265,33 +289,44 @@ Rather than chasing individual test failures, we identified and fixed root infra
 ### Tests Still Skipped (42 tests)
 
 #### Category 1: Phase 1 Flaky Tests (33% pass rate) - 4 tests
+
 Lower pass rate suggests deeper issues than Phase 3-4 tests:
+
 - Cache validation tests (1/3 pass rate)
 - Performance/timing tests (0ms failures suggest setup issues)
 
 #### Category 2: Test Logic Issues - 2 tests
+
 Require actual test code fixes:
+
 - `should invalidate old and new slug caches when slug is updated` - Package not found error
 - `should handle concurrent package creation` - Undefined data passed to function
 
 #### Category 3: Data Contamination - 1 test
+
 Test with persistent cross-test pollution despite integration helpers:
+
 - `should maintain referential integrity on package deletion` - Orphaned add-on persists
 - **Note**: Attempted in Phase 3 Batch 4, re-skipped
 
 #### Category 4: Complex Transaction Issues - 9 tests
+
 Booking tests with deadlocks, FK constraints, race conditions:
+
 - Transaction deadlocks in concurrent booking scenarios
 - FK constraint violations during atomic operations
 - Complex pessimistic locking failures
 
 #### Category 5: Race Condition Tests - 14 tests
+
 Webhook race condition tests (entire file skipped intentionally):
+
 - Tests timing-dependent race conditions
 - Inherently flaky by design
 - May require different testing approach
 
 #### Category 6: Remaining Issues - 12 tests
+
 Various other tests requiring investigation
 
 ---
@@ -301,16 +336,19 @@ Various other tests requiring investigation
 ### Short Term (Next Sprint)
 
 **Option 1: Tackle Test Logic Issues (2 tests)**
+
 - **Effort**: ~2 hours
 - **Success Probability**: Medium (50-60%)
 - **Value**: Learn patterns for remaining harder tests
 
 **Option 2: Investigate 33% Pass Rate Tests (4 tests)**
+
 - **Effort**: ~1-2 hours
 - **Success Probability**: Medium (40-50%)
 - **Value**: May uncover additional infrastructure issues
 
 **Option 3: CI/CD Integration (Recommended)**
+
 - **Effort**: ~2-3 hours
 - **Success Probability**: High (80-90%)
 - **Value**: 62 stable tests with 0% variance ready for CI/CD
@@ -319,11 +357,13 @@ Various other tests requiring investigation
 ### Medium Term (Next 2-3 Sprints)
 
 **Deep-Dive Data Contamination**
+
 - Investigate test execution order and cleanup sequencing
 - May require global test suite refactoring
 - Target: Resolve remaining 1 data contamination test
 
 **Complex Transaction Refactoring**
+
 - Booking tests require significant infrastructure work
 - May need schema changes or transaction isolation improvements
 - Target: Resolve 9 booking transaction tests
@@ -331,11 +371,13 @@ Various other tests requiring investigation
 ### Long Term (Future Sprints)
 
 **Race Condition Testing Strategy**
+
 - Rethink approach to race condition tests
 - Consider behavior-based assertions vs. timing-based
 - May require new testing paradigms
 
 **Performance Test Suite**
+
 - Separate performance tests from integration tests
 - Create dedicated benchmark suite
 - Focus integration tests on correctness only
@@ -345,15 +387,18 @@ Various other tests requiring investigation
 ## Files Modified
 
 ### Documentation Created
+
 - `.claude/SPRINT_6_PHASE_2_REPORT.md` - Phase 2 infrastructure fixes (NEW)
 - `.claude/SPRINT_6_PHASE_3_REPORT.md` - Phase 3 re-enablement batches (NEW)
 - `.claude/SPRINT_6_PHASE_4_REPORT.md` - Phase 4 continuation (NEW)
 - `.claude/SPRINT_6_COMPLETE_SUMMARY.md` - This comprehensive summary (NEW)
 
 ### Documentation Updated
+
 - `.claude/SPRINT_6_STABILIZATION_PLAN.md` - Updated with all 4 phases complete
 
 ### Test Files Modified
+
 - `server/test/integration/catalog.repository.integration.spec.ts` - Refactored + re-enabled 8 tests
 - `server/test/integration/cache-isolation.integration.spec.ts` - Re-enabled 6 tests
 - `server/test/integration/webhook-repository.integration.spec.ts` - Re-enabled 7 tests
@@ -364,18 +409,22 @@ Various other tests requiring investigation
 ## Commits Summary
 
 ### Phase 1
+
 - `854391a` - Skip 26+ flaky tests to establish stable baseline
 
 ### Phase 2
+
 - `c4e6b74` - Fix catalog integration test infrastructure (connection pool refactoring)
 
 ### Phase 3
+
 - `87b8e5d` - Batch 1: Re-enable 5 cascading failure tests
 - `5b3a96e` - Batch 2: Re-enable 4 flaky webhook tests
 - `8f4c2a1` - Batch 3: Re-enable 5 flaky catalog tests
 - `1463566` - Batch 4: Re-enable 3 easy wins (57 passing - milestone exceeded)
 
 ### Phase 4
+
 - `4f51826` - Batch 1: Re-enable 2 final cascading failures (59 passing)
 - `a8a7e32` - Batch 2: Re-enable 3 flaky cache tests (62 passing - 60% milestone)
 
@@ -384,6 +433,7 @@ Various other tests requiring investigation
 ## Statistics
 
 ### Test Count Progression
+
 - **Start**: 54-63 passing (51.9-60.6%) with 8.7% variance
 - **Phase 1**: 47-48 passing (46.2%) with 0.96% variance ✅
 - **Phase 2**: 40 passing (38.5%) with 0% variance ✅ (dropped due to refactoring, but stable)
@@ -391,16 +441,19 @@ Various other tests requiring investigation
 - **Phase 4**: 62 passing (59.6%) with 0% variance ✅
 
 ### Variance Reduction
+
 - **Start**: 9 tests varying (8.7%)
 - **Phase 1**: 1 test varying (0.96%)
 - **Phases 2-4**: 0 tests varying (0%) ✅
 
 ### Infrastructure ROI
+
 - **Investment**: 4 hours (Phase 2 catalog refactoring)
 - **Return**: 22 tests fixed with 0 code changes in ~4 hours (Phases 3-4)
 - **ROI**: 5.5x
 
 ### Validation Runs
+
 - **Phase 1**: 3 validation runs (1 test variance)
 - **Phase 2**: 3 validation runs (0 variance)
 - **Phase 3**: 12 validation runs (0 variance)
@@ -452,21 +505,25 @@ Various other tests requiring investigation
 ## Next Steps
 
 **Immediate** (This sprint):
+
 - Push all changes to `main` branch
 - Announce 60% milestone to team
 - Schedule team review session
 
 **Short Term** (Next sprint):
+
 - Integrate test suite into CI/CD pipeline
 - Consider tackling test logic issues (2 tests) or 33% pass rate tests (4 tests)
 - Document patterns for future test development
 
 **Medium Term** (Next 2-3 sprints):
+
 - Deep-dive data contamination investigation
 - Booking transaction test infrastructure refactoring
 - Performance test suite separation
 
 **Long Term** (Future):
+
 - Reach 70% pass rate with stable tests
 - Rethink race condition testing approach
 - Establish test quality standards for new features

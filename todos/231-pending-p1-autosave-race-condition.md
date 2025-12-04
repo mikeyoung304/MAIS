@@ -1,12 +1,12 @@
 ---
 status: resolved
 priority: p1
-issue_id: "231"
+issue_id: '231'
 tags: [data-integrity, code-review, landing-page, race-conditions]
 dependencies: []
-source: "code-review-landing-page-visual-editor"
-resolved_at: "2025-12-04"
-resolved_by: "feat/landing-page-editor-p1-security branch (documentation in plan)"
+source: 'code-review-landing-page-visual-editor'
+resolved_at: '2025-12-04'
+resolved_by: 'feat/landing-page-editor-p1-security branch (documentation in plan)'
 ---
 
 # TODO-231: Flush Auto-Save Before Publish to Prevent Race Condition
@@ -22,6 +22,7 @@ resolved_by: "feat/landing-page-editor-p1-security branch (documentation in plan
 The plan specifies 1s debounced auto-save, but if user clicks Publish before debounce timer fires, the stale auto-save could overwrite published content after the publish completes.
 
 **Why It Matters:**
+
 - User's latest edits silently lost
 - Published content reverted to older draft
 - No error message shown, corruption undetected
@@ -29,6 +30,7 @@ The plan specifies 1s debounced auto-save, but if user clicks Publish before deb
 ## Findings
 
 **Race Condition Scenario:**
+
 1. User edits hero headline at T=0
 2. Auto-save debounce timer starts (will fire at T=1000ms)
 3. User clicks Publish at T=800ms
@@ -37,6 +39,7 @@ The plan specifies 1s debounced auto-save, but if user clicks Publish before deb
 6. Old draft overwrites just-published content
 
 **Evidence:**
+
 - Plan (line 270): "auto-save with 1s debounce"
 - useVisualEditor.ts (lines 226-229): Similar debounce pattern exists
 - Plan doesn't address race between auto-save and publish
@@ -44,6 +47,7 @@ The plan specifies 1s debounced auto-save, but if user clicks Publish before deb
 ## Proposed Solutions
 
 ### Option A: Flush Debounce Before Publish (Recommended)
+
 Cancel pending auto-save and flush immediately before publish.
 
 **Pros:** Simple, deterministic, no lost edits
@@ -75,6 +79,7 @@ const publishChanges = useCallback(async () => {
 ```
 
 ### Option B: Optimistic Locking with Version Numbers
+
 Track version numbers and reject stale saves.
 
 **Pros:** Catches all race conditions
@@ -89,6 +94,7 @@ Track version numbers and reject stale saves.
 ## Technical Details
 
 **Affected Files:**
+
 - `client/src/features/tenant-admin/landing-page-editor/hooks/useLandingPageEditor.ts` - Add flush logic
 
 ## Acceptance Criteria
@@ -100,8 +106,8 @@ Track version numbers and reject stale saves.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                                    |
+| ---------- | ------- | -------------------------------------------------------- |
 | 2025-12-04 | Created | Data integrity review of landing page visual editor plan |
 
 ## Tags

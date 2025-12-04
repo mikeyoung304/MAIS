@@ -7,6 +7,7 @@ This document lists every environment variable used in the MAIS API, organized b
 ## Core Configuration
 
 ### `ADAPTERS_PRESET`
+
 - **Mode**: Both (mock/real)
 - **Required**: Yes (defaults to `mock`)
 - **Used in**: `server/src/core/config.ts:11`, `server/src/di.ts:51`
@@ -14,6 +15,7 @@ This document lists every environment variable used in the MAIS API, organized b
 - **Valid values**: `mock`, `real`
 
 ### `NODE_ENV`
+
 - **Mode**: Both
 - **Required**: No (defaults to development)
 - **Used in**: `server/src/core/logger.ts:7`
@@ -21,6 +23,7 @@ This document lists every environment variable used in the MAIS API, organized b
 - **Valid values**: `development`, `production`
 
 ### `LOG_LEVEL`
+
 - **Mode**: Both
 - **Required**: No (defaults to `info`)
 - **Used in**: `server/src/core/logger.ts:10`
@@ -28,6 +31,7 @@ This document lists every environment variable used in the MAIS API, organized b
 - **Valid values**: `trace`, `debug`, `info`, `warn`, `error`, `fatal`
 
 ### `API_PORT`
+
 - **Mode**: Both
 - **Required**: No (defaults to `3001`)
 - **Used in**: `server/src/core/config.ts:12`, `server/src/index.ts`
@@ -35,6 +39,7 @@ This document lists every environment variable used in the MAIS API, organized b
 - **Example**: `3001`
 
 ### `CORS_ORIGIN`
+
 - **Mode**: Both
 - **Required**: No (defaults to `http://localhost:5173`)
 - **Used in**: `server/src/core/config.ts:13`, `server/src/index.ts`
@@ -46,6 +51,7 @@ This document lists every environment variable used in the MAIS API, organized b
 ## Authentication
 
 ### `JWT_SECRET`
+
 - **Mode**: Both (mock/real)
 - **Required**: ✅ **Yes**
 - **Used in**: `server/src/core/config.ts:14`, `server/src/di.ts:69,148`
@@ -58,6 +64,7 @@ This document lists every environment variable used in the MAIS API, organized b
 ## Database (PostgreSQL + Prisma)
 
 ### `DATABASE_URL`
+
 - **Mode**: Real only
 - **Required**: ✅ **Yes in real mode** (mock mode uses in-memory storage)
 - **Used in**: `server/src/core/config.ts:16`, `server/src/di.ts:93-94`
@@ -71,6 +78,7 @@ This document lists every environment variable used in the MAIS API, organized b
 ## Payment Processing (Stripe)
 
 ### `STRIPE_SECRET_KEY`
+
 - **Mode**: Real only
 - **Required**: ✅ **Yes in real mode**
 - **Used in**: `server/src/core/config.ts:17`, `server/src/di.ts:109-110`, `server/src/adapters/stripe.adapter.ts`
@@ -80,6 +88,7 @@ This document lists every environment variable used in the MAIS API, organized b
 - **Error if missing (real mode)**: `STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET required for real adapters mode`
 
 ### `STRIPE_WEBHOOK_SECRET`
+
 - **Mode**: Real only
 - **Required**: ✅ **Yes in real mode**
 - **Used in**: `server/src/core/config.ts:18`, `server/src/di.ts:109-110`, `server/src/adapters/stripe.adapter.ts`
@@ -89,6 +98,7 @@ This document lists every environment variable used in the MAIS API, organized b
 - **Error if missing (real mode)**: `STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET required for real adapters mode`
 
 ### `STRIPE_SUCCESS_URL`
+
 - **Mode**: Real only
 - **Required**: No (defaults to `http://localhost:5173/success`)
 - **Used in**: `server/src/core/config.ts:19`, `server/src/di.ts:116`
@@ -96,6 +106,7 @@ This document lists every environment variable used in the MAIS API, organized b
 - **Example**: `http://localhost:5173/success`, `https://yourdomain.com/booking-confirmed`
 
 ### `STRIPE_CANCEL_URL`
+
 - **Mode**: Real only
 - **Required**: No (defaults to `http://localhost:5173`)
 - **Used in**: `server/src/core/config.ts:20`, `server/src/di.ts:117`
@@ -107,6 +118,7 @@ This document lists every environment variable used in the MAIS API, organized b
 ## Email (Postmark)
 
 ### `POSTMARK_SERVER_TOKEN`
+
 - **Mode**: Real only
 - **Required**: ⚠️ **No** (falls back to file-sink in `tmp/emails/`)
 - **Used in**: `server/src/core/config.ts:21`, `server/src/di.ts:122`, `server/src/adapters/postmark.adapter.ts`
@@ -116,6 +128,7 @@ This document lists every environment variable used in the MAIS API, organized b
 - **Fallback behavior**: If missing, emails are written to `tmp/emails/*.json` (file-sink mode)
 
 ### `POSTMARK_FROM_EMAIL`
+
 - **Mode**: Real only
 - **Required**: No (defaults to `bookings@example.com`)
 - **Used in**: `server/src/core/config.ts:22`, `server/src/di.ts:123`, `server/src/adapters/postmark.adapter.ts`
@@ -128,6 +141,7 @@ This document lists every environment variable used in the MAIS API, organized b
 ## Calendar Integration (Google Calendar)
 
 ### `GOOGLE_CALENDAR_ID`
+
 - **Mode**: Real only
 - **Required**: ⚠️ **No** (falls back to mock calendar with all dates available)
 - **Used in**: `server/src/core/config.ts:23`, `server/src/di.ts:128`, `server/src/adapters/gcal.adapter.ts`
@@ -137,6 +151,7 @@ This document lists every environment variable used in the MAIS API, organized b
 - **Fallback behavior**: If missing, all dates are marked as available (mock calendar)
 
 ### `GOOGLE_SERVICE_ACCOUNT_JSON_BASE64`
+
 - **Mode**: Real only
 - **Required**: ⚠️ **No** (falls back to mock calendar)
 - **Used in**: `server/src/core/config.ts:24`, `server/src/di.ts:128`, `server/src/adapters/gcal.adapter.ts`
@@ -151,25 +166,32 @@ This document lists every environment variable used in the MAIS API, organized b
 ## Quick Reference
 
 ### Mock Mode (`ADAPTERS_PRESET=mock`)
+
 **Required:**
+
 - `JWT_SECRET` ✅
 
 **Optional:**
+
 - `API_PORT`, `CORS_ORIGIN`, `NODE_ENV`, `LOG_LEVEL`
 
 **Ignored:**
+
 - All database, Stripe, Postmark, and Google Calendar variables
 
 ---
 
 ### Real Mode (`ADAPTERS_PRESET=real`)
+
 **Required:**
+
 - `JWT_SECRET` ✅
 - `DATABASE_URL` ✅
 - `STRIPE_SECRET_KEY` ✅
 - `STRIPE_WEBHOOK_SECRET` ✅
 
 **Optional (with graceful fallbacks):**
+
 - `POSTMARK_SERVER_TOKEN` (→ file-sink)
 - `POSTMARK_FROM_EMAIL`
 - `GOOGLE_CALENDAR_ID` (→ mock calendar)
@@ -188,6 +210,7 @@ npm run doctor
 ```
 
 The script will:
+
 - Check if `.env` exists
 - Validate required variables per mode
 - Warn about missing optional variables
@@ -203,6 +226,7 @@ See `RUNBOOK.md` for example output and troubleshooting.
 ### When to Rotate Secrets
 
 **Immediate Rotation Required:**
+
 - Secret exposed in git history
 - Secret exposed in logs or error messages
 - Suspected security breach or unauthorized access
@@ -210,6 +234,7 @@ See `RUNBOOK.md` for example output and troubleshooting.
 - Secret shared via insecure channel (email, Slack, etc.)
 
 **Regular Rotation Schedule:**
+
 - **JWT_SECRET**: Every 90 days
 - **Stripe keys**: Only if compromised (Stripe manages rotation)
 - **Database credentials**: Every 180 days (coordinate with Supabase)
@@ -316,14 +341,14 @@ npm run dev:api
 
 ### Secret Rotation Log
 
-| Secret | Last Rotated | Next Rotation Due | Rotated By |
-|--------|--------------|-------------------|------------|
-| JWT_SECRET | 2025-10-29 | 2026-01-27 (90 days) | Initial setup |
-| STRIPE_SECRET_KEY | Never | On compromise | N/A |
-| STRIPE_WEBHOOK_SECRET | Never | On compromise | N/A |
-| DATABASE_URL | 2025-10-29 | 2026-04-27 (180 days) | Supabase setup |
-| POSTMARK_SERVER_TOKEN | Never | On compromise | N/A |
-| GOOGLE_SERVICE_ACCOUNT | Never | 2026-10-29 (365 days) | N/A |
+| Secret                 | Last Rotated | Next Rotation Due     | Rotated By     |
+| ---------------------- | ------------ | --------------------- | -------------- |
+| JWT_SECRET             | 2025-10-29   | 2026-01-27 (90 days)  | Initial setup  |
+| STRIPE_SECRET_KEY      | Never        | On compromise         | N/A            |
+| STRIPE_WEBHOOK_SECRET  | Never        | On compromise         | N/A            |
+| DATABASE_URL           | 2025-10-29   | 2026-04-27 (180 days) | Supabase setup |
+| POSTMARK_SERVER_TOKEN  | Never        | On compromise         | N/A            |
+| GOOGLE_SERVICE_ACCOUNT | Never        | 2026-10-29 (365 days) | N/A            |
 
 **Update this table after each rotation.**
 
@@ -334,11 +359,13 @@ npm run dev:api
 ### Problem
 
 During development, several secrets were accidentally committed to git history:
+
 - Default JWT_SECRET in `.env.example`
 - Stripe test keys in code comments
 - Database credentials in early setup commits
 
 **Risk Level:**
+
 - **High**: Database credentials (production access)
 - **Medium**: Stripe test keys (limited damage, but possible abuse)
 - **Low**: Default JWT_SECRET (should be changed anyway)
@@ -391,6 +418,7 @@ git push --force --tags origin
 ### Post-Sanitization Checklist
 
 After history rewrite:
+
 - [ ] Backup created and verified
 - [ ] All secrets removed from history
 - [ ] All developers notified
@@ -435,6 +463,7 @@ rm test.txt
 ### Best Practices
 
 **DO:**
+
 - Use `.env` files (never committed)
 - Use environment variables in production
 - Use secrets management service (AWS Secrets Manager, HashiCorp Vault)
@@ -443,6 +472,7 @@ rm test.txt
 - Use git-secrets or similar tools
 
 **DON'T:**
+
 - Commit secrets to git (even in private repos)
 - Share secrets via email or Slack
 - Use same secret across multiple environments
@@ -473,6 +503,7 @@ If a secret is exposed publicly:
    - Update team training
 
 **Emergency Contacts:**
+
 - Engineering Lead: [Contact Info]
 - Security Team: [Contact Info]
 - Supabase Support: https://supabase.com/support

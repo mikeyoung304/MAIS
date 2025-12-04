@@ -9,7 +9,9 @@ This is a comprehensive exploration of versioning, draft/publish workflows, and 
 ## Documents Included
 
 ### 1. VERSIONING_FINDINGS_SUMMARY.txt
+
 **Quick reference** - Start here for a 2-minute overview
+
 - Current state assessment
 - Gap analysis
 - High-level recommendations
@@ -18,7 +20,9 @@ This is a comprehensive exploration of versioning, draft/publish workflows, and 
 **Key Takeaway**: No versioning exists. Branding and package changes apply immediately with no rollback capability.
 
 ### 2. VERSIONING_DRAFT_PUBLISH_ANALYSIS.md
+
 **Comprehensive deep-dive** - Full technical analysis with code examples
+
 - Detailed current state by component
 - Schema examination
 - Service layer analysis
@@ -33,7 +37,9 @@ This is a comprehensive exploration of versioning, draft/publish workflows, and 
 **Target**: Architects and senior developers planning implementation
 
 ### 3. VERSIONING_TECHNICAL_REFERENCE.md
+
 **Implementation guide** - Code locations and technical details
+
 - Line-by-line code location reference
 - Exact schema changes needed
 - DTOs and service signatures
@@ -50,6 +56,7 @@ This is a comprehensive exploration of versioning, draft/publish workflows, and 
 ## Key Findings at a Glance
 
 ### What Exists
+
 ```
 ✅ Soft-delete pattern (Tenant.isActive)
 ✅ Timestamps (createdAt, updatedAt)
@@ -59,6 +66,7 @@ This is a comprehensive exploration of versioning, draft/publish workflows, and 
 ```
 
 ### What's Missing
+
 ```
 ❌ Draft vs published state
 ❌ Version history tracking
@@ -80,6 +88,7 @@ This is a comprehensive exploration of versioning, draft/publish workflows, and 
 ## Implementation at a Glance
 
 ### Required Schema Changes
+
 ```
 Add to Tenant:
   - draftBranding (JSON)
@@ -99,6 +108,7 @@ Create:
 ```
 
 ### New Service Layer
+
 ```
 BrandingService:
   - saveDraft()
@@ -119,6 +129,7 @@ AuditLogService:
 ```
 
 ### New API Endpoints (~15 endpoints)
+
 ```
 Branding:
   POST   /v1/tenant/branding/draft
@@ -142,27 +153,30 @@ Audit:
 
 ## Implementation Timeline
 
-| Phase | Duration | Focus |
-|-------|----------|-------|
-| 1 | 2-3 days | Database schema, migrations |
-| 2 | 3-4 days | Service layer implementation |
-| 3 | 2-3 days | API endpoints |
-| 4 | 3-4 days | Frontend components |
-| 5 | 2-3 days | Testing & documentation |
-| **Total** | **2-3 weeks** | **Complete implementation** |
+| Phase     | Duration      | Focus                        |
+| --------- | ------------- | ---------------------------- |
+| 1         | 2-3 days      | Database schema, migrations  |
+| 2         | 3-4 days      | Service layer implementation |
+| 3         | 2-3 days      | API endpoints                |
+| 4         | 3-4 days      | Frontend components          |
+| 5         | 2-3 days      | Testing & documentation      |
+| **Total** | **2-3 weeks** | **Complete implementation**  |
 
 ## Code Locations Map
 
 ### Current Implementation Locations
+
 - **Branding**: `/server/src/controllers/tenant-admin.controller.ts:248-295`
 - **Packages**: `/server/src/services/catalog.service.ts:154-184`
 - **Schema**: `/server/prisma/schema.prisma`
 - **Frontend**: `/client/src/features/tenant-admin/BrandingEditor.tsx`
 
 ### Files to Create
+
 - 7 new files (migrations, services, routes, components)
 
 ### Files to Modify
+
 - 5 existing files (schema, DTOs, contracts, controllers, components)
 
 ## Recommended Reading Order
@@ -184,6 +198,7 @@ Audit:
 ## Quick Decision Checklist
 
 **Should we implement versioning?**
+
 - [ ] Do we need audit trails for compliance?
 - [ ] Do tenants need to preview changes?
 - [ ] Do we need to rollback branding/pricing?
@@ -193,6 +208,7 @@ Audit:
 If any boxes are checked, versioning is HIGH priority.
 
 **Phase prioritization**:
+
 - [ ] **MUST HAVE**: Draft/published state, publish/rollback, version history
 - [ ] **SHOULD HAVE**: Preview, audit logging, snapshots
 - [ ] **NICE TO HAVE**: Scheduling, approval workflows, A/B testing
@@ -200,16 +216,19 @@ If any boxes are checked, versioning is HIGH priority.
 ## Performance Impact Summary
 
 ### Database
+
 - 3 new tables
 - ~7 new indexes
 - More storage for history (mitigated by archival policy)
 
 ### API
+
 - 15+ new endpoints
 - More database queries (mitigated by caching strategy)
 - Slightly higher latency on version lookups
 
 ### Mitigation
+
 - Aggressive caching of current version
 - Archive versions older than 1 year
 - Index optimization for common queries
@@ -258,6 +277,7 @@ Before implementation:
 This analysis is current as of: **November 10, 2025**
 
 For updates on schema status or feature implementation, check:
+
 - `/server/prisma/schema.prisma` for current schema
 - `/server/src/services/` for service implementations
 - `/server/src/routes/` for new API endpoints

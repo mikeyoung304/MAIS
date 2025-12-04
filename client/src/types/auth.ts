@@ -157,7 +157,7 @@ export enum AuthErrorType {
 export class AuthError extends Error {
   constructor(
     public type: AuthErrorType,
-    message: string,
+    message: string
   ) {
     super(message);
     this.name = 'AuthError';

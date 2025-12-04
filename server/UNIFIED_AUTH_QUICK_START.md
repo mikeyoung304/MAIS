@@ -13,12 +13,14 @@ POST /v1/auth/login
 ## Test Credentials
 
 ### Platform Admin (MOCK Mode)
+
 ```
 Email:    admin@elope.com
 Password: admin123
 ```
 
 ### Tenant Admin (Database Mode)
+
 ```
 Email:    test-tenant@example.com
 Password: Test123456
@@ -60,7 +62,7 @@ async function login(email: string, password: string) {
   const response = await fetch('http://localhost:3001/v1/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({ email, password }),
   });
 
   const data = await response.json();
@@ -111,6 +113,7 @@ cd server
 ## JWT Token Structure
 
 ### Platform Admin Token Payload
+
 ```json
 {
   "userId": "user_admin",
@@ -122,6 +125,7 @@ cd server
 ```
 
 ### Tenant Admin Token Payload
+
 ```json
 {
   "tenantId": "cmhp91lct0000p0i3hi347g0v",
@@ -135,12 +139,12 @@ cd server
 
 ## Error Handling
 
-| HTTP Code | Error | Cause |
-|-----------|-------|-------|
-| 400 | Email and password are required | Missing fields |
-| 401 | Invalid credentials | Wrong email/password |
-| 401 | Invalid or expired token | Token expired or invalid signature |
-| 429 | Too Many Requests | Rate limit (5 attempts/15min) |
+| HTTP Code | Error                           | Cause                              |
+| --------- | ------------------------------- | ---------------------------------- |
+| 400       | Email and password are required | Missing fields                     |
+| 401       | Invalid credentials             | Wrong email/password               |
+| 401       | Invalid or expired token        | Token expired or invalid signature |
+| 429       | Too Many Requests               | Rate limit (5 attempts/15min)      |
 
 ## Legacy Endpoints (Still Supported)
 
@@ -154,11 +158,13 @@ The original endpoints continue to work:
 ## Files Created/Modified
 
 ### New Files
+
 - `/server/src/routes/auth.routes.ts` - Unified auth controller
 - `/server/docs/archive/implementation-reports/UNIFIED_AUTH_IMPLEMENTATION_REPORT.md` - Full documentation
 - `/server/test-unified-auth.sh` - Test script
 
 ### Modified Files
+
 - `/server/src/routes/index.ts` - Added unified auth routes
 - `/server/src/lib/ports.ts` - Added UserRole type
 
@@ -171,5 +177,6 @@ The original endpoints continue to work:
 ## Support
 
 For detailed information, see:
+
 - [Full Implementation Report](./docs/archive/implementation-reports/UNIFIED_AUTH_IMPLEMENTATION_REPORT.md)
 - [Auth Quick Reference](../client/AUTH_QUICK_REFERENCE.md)

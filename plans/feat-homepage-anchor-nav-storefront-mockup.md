@@ -16,10 +16,10 @@ Minimal fix: Add the ID to existing `StorefrontSection`, enable smooth scroll wi
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `client/src/index.css` | Add `scroll-behavior: smooth` and `scroll-padding-top` |
-| `client/src/pages/Home/StorefrontSection.tsx` | Add `id="how-it-works"` to section element |
+| File                                          | Change                                                 |
+| --------------------------------------------- | ------------------------------------------------------ |
+| `client/src/index.css`                        | Add `scroll-behavior: smooth` and `scroll-padding-top` |
+| `client/src/pages/Home/StorefrontSection.tsx` | Add `id="how-it-works"` to section element             |
 
 ## Technical Changes
 
@@ -76,5 +76,6 @@ Change the section's `id` from `"storefront"` to `"how-it-works"`:
 ## Summary
 
 Two-line fix:
+
 1. Add CSS smooth scroll with header offset
 2. Add `id="how-it-works"` to existing StorefrontSection

@@ -88,10 +88,7 @@ export function createPublicSchedulingRoutes(
         updatedAt: service.updatedAt.toISOString(),
       }));
 
-      logger.info(
-        { tenantId, serviceCount: serviceDtos.length },
-        'Public services list accessed'
-      );
+      logger.info({ tenantId, serviceCount: serviceDtos.length }, 'Public services list accessed');
 
       res.json(serviceDtos);
     } catch (error) {
@@ -147,10 +144,7 @@ export function createPublicSchedulingRoutes(
         updatedAt: service.updatedAt.toISOString(),
       };
 
-      logger.info(
-        { tenantId, slug, serviceId: service.id },
-        'Public service details accessed'
-      );
+      logger.info({ tenantId, slug, serviceId: service.id }, 'Public service details accessed');
 
       res.json(serviceDto);
     } catch (error) {
@@ -189,105 +183,108 @@ export function createPublicSchedulingRoutes(
    * @returns 404 - Service not found
    * @returns 500 - Internal server error
    */
-  router.get('/availability/slots', async (req: TenantRequest, res: Response, next: NextFunction) => {
-    try {
-      const tenantId = req.tenantId;
-      if (!tenantId) {
-        res.status(401).json({ error: 'Tenant context required' });
-        return;
-      }
+  router.get(
+    '/availability/slots',
+    async (req: TenantRequest, res: Response, next: NextFunction) => {
+      try {
+        const tenantId = req.tenantId;
+        if (!tenantId) {
+          res.status(401).json({ error: 'Tenant context required' });
+          return;
+        }
 
-      // Validate query params
-      const query = AvailableSlotsQuerySchema.parse(req.query);
-      const { serviceId, date: dateStr, timezone: clientTimezone } = query;
+        // Validate query params
+        const query = AvailableSlotsQuerySchema.parse(req.query);
+        const { serviceId, date: dateStr, timezone: clientTimezone } = query;
 
-      // Validate date format (YYYY-MM-DD)
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(dateStr)) {
-        res.status(400).json({
-          error: 'Invalid date format. Expected YYYY-MM-DD',
+        // Validate date format (YYYY-MM-DD)
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(dateStr)) {
+          res.status(400).json({
+            error: 'Invalid date format. Expected YYYY-MM-DD',
+          });
+          return;
+        }
+
+        // Convert date string to Date object
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) {
+          res.status(400).json({
+            error: 'Invalid date value',
+          });
+          return;
+        }
+
+        // Verify service exists and belongs to tenant
+        const service = await serviceRepo.getById(tenantId, serviceId);
+        if (!service) {
+          throw new NotFoundError(`Service not found: ${serviceId}`);
+        }
+
+        // Get available slots from availability service
+        const slots = await availabilityService.getAvailableSlots({
+          tenantId,
+          serviceId,
+          date,
         });
-        return;
-      }
 
-      // Convert date string to Date object
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) {
-        res.status(400).json({
-          error: 'Invalid date value',
-        });
-        return;
-      }
+        // Transform slots to DTO format
+        const slotDtos: TimeSlotDto[] = slots.map((slot) => ({
+          startTime: slot.startTime.toISOString(),
+          endTime: slot.endTime.toISOString(),
+          available: slot.available,
+        }));
 
-      // Verify service exists and belongs to tenant
-      const service = await serviceRepo.getById(tenantId, serviceId);
-      if (!service) {
-        throw new NotFoundError(`Service not found: ${serviceId}`);
-      }
+        // Determine timezone for response (client timezone or service timezone)
+        const responseTimezone = clientTimezone ?? service.timezone;
 
-      // Get available slots from availability service
-      const slots = await availabilityService.getAvailableSlots({
-        tenantId,
-        serviceId,
-        date,
-      });
+        // Log if falling back to service timezone
+        if (!clientTimezone) {
+          logger.warn(
+            {
+              tenantId,
+              serviceId,
+              fallbackTimezone: service.timezone,
+              date: dateStr,
+              context: 'available_slots_query',
+            },
+            'Timezone fallback used - no client timezone provided in available slots query'
+          );
+        }
 
-      // Transform slots to DTO format
-      const slotDtos: TimeSlotDto[] = slots.map((slot) => ({
-        startTime: slot.startTime.toISOString(),
-        endTime: slot.endTime.toISOString(),
-        available: slot.available,
-      }));
-
-      // Determine timezone for response (client timezone or service timezone)
-      const responseTimezone = clientTimezone ?? service.timezone;
-
-      // Log if falling back to service timezone
-      if (!clientTimezone) {
-        logger.warn(
+        logger.info(
           {
             tenantId,
             serviceId,
-            fallbackTimezone: service.timezone,
             date: dateStr,
-            context: 'available_slots_query',
+            slotCount: slotDtos.length,
+            availableCount: slotDtos.filter((s) => s.available).length,
           },
-          'Timezone fallback used - no client timezone provided in available slots query'
+          'Available slots queried'
         );
-      }
 
-      logger.info(
-        {
-          tenantId,
-          serviceId,
+        res.json({
           date: dateStr,
-          slotCount: slotDtos.length,
-          availableCount: slotDtos.filter(s => s.available).length,
-        },
-        'Available slots queried'
-      );
-
-      res.json({
-        date: dateStr,
-        serviceId,
-        timezone: responseTimezone,
-        slots: slotDtos,
-      });
-    } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
+          serviceId,
+          timezone: responseTimezone,
+          slots: slotDtos,
         });
-        return;
+      } catch (error) {
+        if (error instanceof ZodError) {
+          res.status(400).json({
+            error: 'Validation error',
+            details: error.issues,
+          });
+          return;
+        }
+        if (error instanceof NotFoundError) {
+          res.status(404).json({ error: error.message });
+          return;
+        }
+        next(error);
       }
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
-      next(error);
     }
-  });
+  );
 
   return router;
 }

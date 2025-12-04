@@ -9,6 +9,7 @@ Your MAIS platform is exceptionally well-positioned for the three-tier, segment-
 ## 1. Feature Architecture
 
 ### Current State
+
 - **Modular service architecture** with dependency injection (server/src/services/)
 - Clean separation: CatalogService, BookingService, CommissionService, PaymentProvider
 - Repository pattern with ports/adapters (server/src/lib/ports/)
@@ -29,12 +30,14 @@ export interface PackageWithSegments extends Package {
 ```
 
 **Action Items**:
+
 1. Add `getPackagesBySegment(tenantId, segment)` method to CatalogService:108
 2. Extend `BookingService.createCheckout()`:55 to handle tier upgrades
 3. Create new `UpsellService` that wraps existing services
 4. Reuse existing cache patterns with segment-aware keys
 
 **Code References**:
+
 - CatalogService: server/src/services/catalog.service.ts
 - BookingService: server/src/services/booking.service.ts
 - Repository interfaces: server/src/lib/ports/catalog.repository.ts
@@ -44,6 +47,7 @@ export interface PackageWithSegments extends Package {
 ## 2. Data Models
 
 ### Current State
+
 - Prisma schema with clean multi-tenant design (server/prisma/schema.prisma)
 - Package model (line 107) supports JSON fields for extensibility
 - Strong tenant isolation patterns
@@ -73,11 +77,13 @@ model Package {
 ```
 
 **REUSE EXISTING**:
+
 - AddOn model already perfect for add-ons/upsells
 - BlackoutDate model handles availability
 - Booking model tracks all purchases
 
 **Action Items**:
+
 1. Create migration: `npx prisma migrate dev --name add-segments-tiers`
 2. Update repository interfaces with segment queries
 3. Leverage existing JSON fields for feature lists
@@ -87,6 +93,7 @@ model Package {
 ## 3. Admin Dashboard Integration
 
 ### Current State
+
 - Tenant admin dashboard exists (referenced in contracts)
 - Platform admin for multi-tenant management
 - API endpoints for package/addon CRUD (api.v1.ts:193-250)
@@ -108,12 +115,14 @@ export const CreatePackageDtoSchema = z.object({
 ```
 
 **Reusable Components**:
+
 1. Package editor form - add segment/tier dropdowns
 2. Pricing table builder - visualize tiers
 3. Blackout calendar - already exists
 4. Analytics dashboard - extend for segment metrics
 
 **Action Items**:
+
 1. Add "Segment Manager" to tenant dashboard menu
 2. Create tier comparison table component
 3. Reuse existing photo upload for tier imagery
@@ -124,6 +133,7 @@ export const CreatePackageDtoSchema = z.object({
 ## 4. API & DTO Extension
 
 ### Current State
+
 - Type-safe contracts via @ts-rest/core (packages/contracts/)
 - Zod schemas for validation (dto.ts)
 - Clean separation of public/admin endpoints
@@ -142,7 +152,7 @@ export const Contracts = c.router({
     method: 'GET',
     path: '/v1/packages/segment/:segment',
     pathParams: z.object({
-      segment: z.enum(['budget', 'premium', 'luxury'])
+      segment: z.enum(['budget', 'premium', 'luxury']),
     }),
     responses: {
       200: z.array(PackageWithSegmentDtoSchema), // Extended DTO
@@ -169,6 +179,7 @@ export const Contracts = c.router({
 ```
 
 **Action Items**:
+
 1. Version new endpoints as /v2 if needed
 2. Add `x-api-version` header support
 3. Use existing validation patterns
@@ -179,6 +190,7 @@ export const Contracts = c.router({
 ## 5. Payment Logic
 
 ### Current State
+
 - Stripe Connect integration (server/src/services/stripe-connect.service.ts)
 - Commission calculation service (commission.service.ts)
 - PaymentProvider abstraction for Stripe
@@ -207,11 +219,13 @@ interface PaymentProvider {
 ```
 
 **REUSE**:
+
 - CommissionService.calculateBookingTotal():169 for tier+addon totals
 - Webhook handlers for payment confirmation
 - Existing refund logic for downgrades
 
 **Action Items**:
+
 1. Add tier-based commission rates if needed
 2. Implement dynamic pricing in CommissionService
 3. Add upsell tracking to webhook handler
@@ -221,6 +235,7 @@ interface PaymentProvider {
 ## 6. Booking & Add-on Flow
 
 ### Current State
+
 - BookingService.createCheckout():55 handles full flow
 - Support for add-ons already built-in
 - Email notifications via EventEmitter
@@ -232,17 +247,18 @@ interface PaymentProvider {
 ```typescript
 // Frontend flow (pseudocode for widget/app)
 const bookingFlow = {
-  1: 'SegmentSelector',     // NEW: Choose budget/premium/luxury
-  2: 'TierComparison',       // NEW: Show 3 tiers in segment
-  3: 'PackageCustomizer',    // EXISTING: Add-ons selection
-  4: 'DatePicker',          // EXISTING: Availability check
-  5: 'ContactForm',         // EXISTING: Customer details
-  6: 'UpsellOffer',         // NEW: "Upgrade to next tier?"
-  7: 'CheckoutRedirect',    // EXISTING: Stripe checkout
+  1: 'SegmentSelector', // NEW: Choose budget/premium/luxury
+  2: 'TierComparison', // NEW: Show 3 tiers in segment
+  3: 'PackageCustomizer', // EXISTING: Add-ons selection
+  4: 'DatePicker', // EXISTING: Availability check
+  5: 'ContactForm', // EXISTING: Customer details
+  6: 'UpsellOffer', // NEW: "Upgrade to next tier?"
+  7: 'CheckoutRedirect', // EXISTING: Stripe checkout
 };
 ```
 
 **State Management**:
+
 ```typescript
 // Extend existing booking state
 interface BookingState {
@@ -255,6 +271,7 @@ interface BookingState {
 ```
 
 **Action Items**:
+
 1. Add segment selection as step 0
 2. Create tier comparison component
 3. Add upsell modal before checkout
@@ -265,6 +282,7 @@ interface BookingState {
 ## 7. Tenant Isolation & Security
 
 ### Current State
+
 - Database-level isolation via tenantId (all models)
 - Middleware validates tenant context
 - API key authentication for widgets
@@ -272,11 +290,13 @@ interface BookingState {
 ### No Changes Required ✅
 
 **ALREADY SECURE**:
+
 - Every query includes tenantId filter
 - Row-level security enforced in services
 - Cross-tenant access impossible by design
 
 **Validation**:
+
 ```typescript
 // Example from catalog.service.ts:68
 const packages = await this.repository.getAllPackagesWithAddOns(tenantId);
@@ -284,6 +304,7 @@ const packages = await this.repository.getAllPackagesWithAddOns(tenantId);
 ```
 
 **Action Items**:
+
 1. No changes needed for segments/tiers
 2. Continue existing patterns
 3. Add segment-level permissions if needed (future)
@@ -293,6 +314,7 @@ const packages = await this.repository.getAllPackagesWithAddOns(tenantId);
 ## 8. Event/Hooks
 
 ### Current State
+
 - EventEmitter in BookingService:20
 - Booking confirmation emails
 - Webhook event logging
@@ -324,12 +346,14 @@ this._eventEmitter.emit('segment.selected', {
 ```
 
 **Hook Opportunities**:
+
 1. Post-segment selection → Personalization
 2. Tier comparison viewed → Analytics
 3. Upsell accepted/rejected → A/B testing
 4. Package fully booked → Upgrade promotions
 
 **Action Items**:
+
 1. Add new event types to EventEmitter
 2. Create analytics aggregator service
 3. Add conversion tracking
@@ -340,6 +364,7 @@ this._eventEmitter.emit('segment.selected', {
 ## 9. Authentication & Authorization
 
 ### Current State
+
 - JWT-based auth (server/src/middleware/auth.ts)
 - Role-based: PLATFORM_ADMIN, TENANT_ADMIN, USER
 - API key auth for public widgets
@@ -347,11 +372,13 @@ this._eventEmitter.emit('segment.selected', {
 ### Current Model Handles New Flows ✅
 
 **NO CHANGES NEEDED**:
+
 - Tenant admins can manage segments/tiers
 - Platform admins see all segments
 - Public users browse by segment
 
 **Optional Enhancement**:
+
 ```typescript
 // Add tier-based permissions
 enum Permission {
@@ -362,6 +389,7 @@ enum Permission {
 ```
 
 **Action Items**:
+
 1. No immediate changes required
 2. Add segment-specific roles later if needed
 3. Use existing JWT/API key patterns
@@ -371,6 +399,7 @@ enum Permission {
 ## 10. UI/UX Reuse
 
 ### Current State
+
 - Widget planned for embedding
 - Admin dashboard components
 - Responsive design patterns
@@ -379,22 +408,24 @@ enum Permission {
 
 **DIRECT REUSE**:
 
-| New Feature | Existing Component | Location |
-|------------|-------------------|----------|
-| Segment Selector | Package Grid | Catalog display |
-| Tier Comparison | Pricing Table | Package details |
-| Feature List | AddOn List | Catalog service |
+| New Feature           | Existing Component  | Location        |
+| --------------------- | ------------------- | --------------- |
+| Segment Selector      | Package Grid        | Catalog display |
+| Tier Comparison       | Pricing Table       | Package details |
+| Feature List          | AddOn List          | Catalog service |
 | Availability Calendar | BlackoutDate viewer | Admin dashboard |
-| Upgrade Modal | Checkout Modal | Booking flow |
-| Progress Indicator | Booking Steps | Multi-step form |
+| Upgrade Modal         | Checkout Modal      | Booking flow    |
+| Progress Indicator    | Booking Steps       | Multi-step form |
 
 **NEW COMPONENTS NEEDED**:
+
 1. SegmentToggle (Budget/Premium/Luxury tabs)
 2. TierComparisonTable (3-column layout)
 3. UpsellBanner (limited-time offers)
 4. PopularBadge (visual indicator)
 
 **Action Items**:
+
 1. Create component library in packages/ui
 2. Implement segment-aware theming
 3. Add comparison table generator
@@ -405,6 +436,7 @@ enum Permission {
 ## 11. Error Handling and Edge Cases
 
 ### Current State
+
 - Custom error classes (NotFoundError, ValidationError)
 - Comprehensive logging via pino
 - Webhook retry logic
@@ -423,19 +455,24 @@ export class TierMismatchError extends Error {
 }
 
 export class UpsellValidationError extends Error {
-  constructor(public fromTier: number, public toTier: number) {
+  constructor(
+    public fromTier: number,
+    public toTier: number
+  ) {
     super(`Cannot upgrade from tier ${fromTier} to ${toTier}`);
   }
 }
 ```
 
 **Critical Validations**:
+
 1. Prevent tier downgrades after booking
 2. Handle sold-out tier scenarios
 3. Validate segment transitions
 4. Price consistency during checkout
 
 **Action Items**:
+
 1. Add tier validation middleware
 2. Implement optimistic UI updates
 3. Add fallback tier recommendations
@@ -446,6 +483,7 @@ export class UpsellValidationError extends Error {
 ## 12. Testing Strategy
 
 ### Current State
+
 - Vitest for unit tests
 - 70% coverage target
 - Mock adapters for external services
@@ -471,6 +509,7 @@ describe('CatalogService - Segments', () => {
 ```
 
 **Test Coverage Areas**:
+
 1. Segment filtering logic
 2. Tier upgrade calculations
 3. Upsell display rules
@@ -478,6 +517,7 @@ describe('CatalogService - Segments', () => {
 5. Multi-tenant segment isolation
 
 **Action Items**:
+
 1. Add segment-specific test fixtures
 2. Create tier upgrade test scenarios
 3. Test upsell conversion tracking
@@ -488,6 +528,7 @@ describe('CatalogService - Segments', () => {
 ## 13. Scalability & Performance
 
 ### Current State
+
 - Caching layer (15-minute TTL)
 - Optimized queries (avoid N+1)
 - Database indexing on key fields
@@ -495,6 +536,7 @@ describe('CatalogService - Segments', () => {
 ### Performance Optimizations
 
 **ADD INDEXES**:
+
 ```sql
 -- server/prisma/schema.prisma
 @@index([tenantId, segment, tierLevel])
@@ -502,6 +544,7 @@ describe('CatalogService - Segments', () => {
 ```
 
 **CACHE STRATEGY**:
+
 ```typescript
 // Segment-aware caching
 const cacheKey = `catalog:${tenantId}:segment:${segment}:tiers`;
@@ -509,12 +552,14 @@ cache.set(cacheKey, tiers, 900); // 15 min
 ```
 
 **Potential Bottlenecks**:
+
 1. Tier comparison queries (3 packages at once)
 2. Real-time availability for popular tiers
 3. Dynamic pricing calculations
 4. Upsell recommendation engine
 
 **Action Items**:
+
 1. Add segment-specific caching
 2. Implement tier pre-loading
 3. Use database views for comparisons
@@ -525,6 +570,7 @@ cache.set(cacheKey, tiers, 900); // 15 min
 ## 14. Codebase Cleanliness & Extension Points
 
 ### Current State
+
 - Clean architecture with DI
 - Adapter pattern for external services
 - Repository pattern for data access
@@ -551,12 +597,14 @@ cache.set(cacheKey, tiers, 900); // 15 min
    - Simulate upsell scenarios
 
 **Cleanup Opportunities**:
+
 1. Extract magic numbers to config
 2. Centralize segment definitions
 3. Create tier feature matrix type
 4. Standardize upsell rules engine
 
 **Action Items**:
+
 1. Create SegmentConfig in packages/config
 2. Build TierFeatureMatrix type
 3. Add UpsellRulesEngine service
@@ -569,6 +617,7 @@ cache.set(cacheKey, tiers, 900); // 15 min
 ### Current State Review
 
 **MINIMAL DEBT** - Architecture is solid:
+
 - ✅ Clean separation of concerns
 - ✅ Type safety throughout
 - ✅ Multi-tenant isolation
@@ -602,7 +651,7 @@ async function migrateToSegments() {
   // 2. Backfill existing packages
   await prisma.package.updateMany({
     where: { segment: null },
-    data: { segment: 'standard', tierLevel: 1 }
+    data: { segment: 'standard', tierLevel: 1 },
   });
 
   // 3. Update incrementally
@@ -611,6 +660,7 @@ async function migrateToSegments() {
 ```
 
 **Action Items**:
+
 1. Add segment fields via safe migration
 2. Backfill existing packages as "standard"
 3. Roll out segment features gradually
@@ -621,24 +671,28 @@ async function migrateToSegments() {
 ## Implementation Roadmap
 
 ### Phase 1: Foundation (Week 1)
+
 1. ✅ Extend Package model with segments/tiers
 2. ✅ Update CatalogService with segment queries
 3. ✅ Add segment/tier DTOs
 4. ✅ Create basic tier comparison endpoint
 
 ### Phase 2: Core Features (Week 2)
+
 1. Build segment selector UI
 2. Implement tier comparison table
 3. Add upsell logic to BookingService
 4. Create tier upgrade calculations
 
 ### Phase 3: Admin Tools (Week 3)
+
 1. Add segment manager to admin dashboard
 2. Build tier configuration interface
 3. Implement bulk operations
 4. Add analytics dashboard
 
 ### Phase 4: Optimization (Week 4)
+
 1. Add segment-aware caching
 2. Implement A/B testing for upsells
 3. Add conversion tracking
@@ -649,18 +703,21 @@ async function migrateToSegments() {
 ## Quick Wins Summary
 
 ### Immediate Actions (Day 1)
+
 1. **Add segment field** to Package model - 1 migration
 2. **Extend CatalogService** with getBySegment() - 20 lines
 3. **Create TierComparisonDto** - Reuse existing DTOs
 4. **Add segment filter** to package list endpoint - 5 lines
 
 ### High-Impact, Low-Effort (Week 1)
+
 1. **Reuse PackageGrid** for segment display - 0 new code
 2. **Leverage existing checkout** for tier bookings - Works now
 3. **Use current commission logic** for tiers - No changes
 4. **Apply existing multi-tenant patterns** - Already secure
 
 ### Revenue Accelerators
+
 1. **Upsell modal** before checkout - 1 component
 2. **Popular badge** on recommended tier - CSS only
 3. **Limited availability** warnings - Reuse blackout logic
@@ -671,12 +728,14 @@ async function migrateToSegments() {
 ## Technical Recommendations
 
 ### Architecture Decisions
+
 1. **Keep segments in Package model** (not separate entity)
 2. **Use JSON for tier features** (flexible, no migrations)
 3. **Implement upsells as service** (not in BookingService)
 4. **Cache tier comparisons aggressively** (immutable data)
 
 ### Code Organization
+
 ```
 server/
   src/
@@ -692,12 +751,14 @@ server/
 ```
 
 ### Testing Strategy
+
 - Unit test tier calculations
 - Integration test segment filtering
 - E2E test full booking with upsell
 - Load test tier comparison queries
 
 ### Monitoring & Analytics
+
 - Track segment selection rates
 - Monitor tier upgrade conversions
 - Alert on commission calculation errors
@@ -708,12 +769,14 @@ server/
 ## Risk Mitigation
 
 ### Low-Risk Approach
+
 1. Start with read-only segment viewing
 2. Test with single tenant first
 3. Roll out upsells gradually
 4. Keep existing booking flow as fallback
 
 ### Rollback Plan
+
 - Feature flags for all new features
 - Database changes are additive only
 - Old API endpoints remain unchanged
@@ -726,6 +789,7 @@ server/
 Your MAIS platform is **exceptionally well-architected** for this integration. The modular service design, clean data models, and robust multi-tenant isolation provide an ideal foundation. With minimal changes to existing code, you can implement a sophisticated three-tier, segment-driven booking system.
 
 **Key Success Factors**:
+
 - 85% of required infrastructure already exists
 - No breaking changes needed
 - Clean extension points throughout

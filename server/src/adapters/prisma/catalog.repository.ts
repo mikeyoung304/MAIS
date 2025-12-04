@@ -44,12 +44,14 @@ export class PrismaCatalogRepository implements CatalogRepository {
 
     return packages.map((pkg) => ({
       ...this.toDomainPackage(pkg),
-      addOns: pkg.addOns.map((pa) => this.toDomainAddOn({
-        id: pa.addOn.id,
-        name: pa.addOn.name,
-        price: pa.addOn.price,
-        packages: [{ packageId: pkg.id }],
-      })),
+      addOns: pkg.addOns.map((pa) =>
+        this.toDomainAddOn({
+          id: pa.addOn.id,
+          name: pa.addOn.name,
+          price: pa.addOn.price,
+          packages: [{ packageId: pkg.id }],
+        })
+      ),
     }));
   }
 
@@ -207,7 +209,9 @@ export class PrismaCatalogRepository implements CatalogRepository {
         ...(data.title !== undefined && { name: data.title }),
         ...(data.description !== undefined && { description: data.description }),
         ...(data.priceCents !== undefined && { basePrice: data.priceCents }),
-        ...(data.photos !== undefined && { photos: data.photos as unknown as Prisma.InputJsonValue }),
+        ...(data.photos !== undefined && {
+          photos: data.photos as unknown as Prisma.InputJsonValue,
+        }),
         // Tier/segment organization fields
         ...(data.segmentId !== undefined && { segmentId: data.segmentId }),
         ...(data.grouping !== undefined && { grouping: data.grouping }),
@@ -359,10 +363,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
         segmentId,
         active: true,
       },
-      orderBy: [
-        { groupingOrder: 'asc' },
-        { createdAt: 'asc' },
-      ],
+      orderBy: [{ groupingOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
     return packages.map((pkg) => this.toDomainPackage(pkg));
@@ -396,10 +397,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
           },
         },
       },
-      orderBy: [
-        { groupingOrder: 'asc' },
-        { createdAt: 'asc' },
-      ],
+      orderBy: [{ groupingOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
     // Filter add-ons to include only those that are segment-specific or global
@@ -409,17 +407,16 @@ export class PrismaCatalogRepository implements CatalogRepository {
         .filter((pa: any) => {
           // Include add-ons that are either segment-specific OR global (null segmentId)
           const addOn = pa.addOn;
-          return (
-            addOn.active &&
-            (addOn.segmentId === segmentId || addOn.segmentId === null)
-          );
+          return addOn.active && (addOn.segmentId === segmentId || addOn.segmentId === null);
         })
-        .map((pa: any) => this.toDomainAddOn({
-          id: pa.addOn.id,
-          name: pa.addOn.name,
-          price: pa.addOn.price,
-          packages: [{ packageId: pkg.id }],
-        })),
+        .map((pa: any) =>
+          this.toDomainAddOn({
+            id: pa.addOn.id,
+            name: pa.addOn.name,
+            price: pa.addOn.price,
+            packages: [{ packageId: pkg.id }],
+          })
+        ),
     }));
   }
 
@@ -441,10 +438,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
       where: {
         tenantId,
         // Include add-ons that are either segment-specific OR global
-        OR: [
-          { segmentId },
-          { segmentId: null },
-        ],
+        OR: [{ segmentId }, { segmentId: null }],
         active: true,
       },
       include: {
@@ -490,7 +484,9 @@ export class PrismaCatalogRepository implements CatalogRepository {
         ...(draft.title !== undefined && { draftTitle: draft.title }),
         ...(draft.description !== undefined && { draftDescription: draft.description }),
         ...(draft.priceCents !== undefined && { draftPriceCents: draft.priceCents }),
-        ...(draft.photos !== undefined && { draftPhotos: draft.photos as unknown as Prisma.InputJsonValue }),
+        ...(draft.photos !== undefined && {
+          draftPhotos: draft.photos as unknown as Prisma.InputJsonValue,
+        }),
         hasDraft: true,
         draftUpdatedAt: new Date(),
       },
@@ -530,9 +526,10 @@ export class PrismaCatalogRepository implements CatalogRepository {
             name: pkg.draftTitle !== null ? pkg.draftTitle : pkg.name,
             description: pkg.draftDescription !== null ? pkg.draftDescription : pkg.description,
             basePrice: pkg.draftPriceCents !== null ? pkg.draftPriceCents : pkg.basePrice,
-            photos: pkg.draftPhotos !== null
-              ? (pkg.draftPhotos as Prisma.InputJsonValue)
-              : (pkg.photos as Prisma.InputJsonValue),
+            photos:
+              pkg.draftPhotos !== null
+                ? (pkg.draftPhotos as Prisma.InputJsonValue)
+                : (pkg.photos as Prisma.InputJsonValue),
             // Clear all draft fields
             draftTitle: null,
             draftDescription: null,

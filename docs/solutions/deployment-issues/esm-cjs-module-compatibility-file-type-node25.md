@@ -6,7 +6,7 @@ component: server/upload-service
 tags: [esm, commonjs, node-25, module-system, file-type, render, createRequire]
 date_solved: 2025-11-29
 symptoms:
-  - "ReferenceError: require is not defined in ES module scope"
+  - 'ReferenceError: require is not defined in ES module scope'
   - "The requested module 'file-type' does not provide an export named 'fromBuffer'"
   - Server fails to start on Render deployment
   - Works locally but fails in production
@@ -23,6 +23,7 @@ root_cause: |
 When deploying to Render (Node.js 25), the server fails to start with module import errors. The `file-type` v16 package (used for magic byte validation) is CommonJS, but Node.js 25 runs tsx in pure ESM mode.
 
 **User Impact:**
+
 - Server crashes on startup in production
 - File upload security validation unavailable
 - Platform admin photo uploads fail
@@ -30,11 +31,13 @@ When deploying to Render (Node.js 25), the server fails to start with module imp
 **Error Messages:**
 
 Attempt 1 - Named ESM import:
+
 ```
 Error: The requested module 'file-type' does not provide an export named 'fromBuffer'
 ```
 
 Attempt 2 - Direct require():
+
 ```
 ReferenceError: require is not defined in ES module scope, you can use import instead
     at <anonymous> (/opt/render/project/src/server/src/services/upload.service.ts:18:18)
@@ -43,20 +46,25 @@ ReferenceError: require is not defined in ES module scope, you can use import in
 ## Investigation
 
 ### Step 1: Named Import Attempt
+
 ```typescript
 // FAILED - CJS doesn't have real named exports
 import { fromBuffer } from 'file-type';
 ```
+
 **Why it failed:** CommonJS modules use `module.exports`, not ES6 named exports. Node.js can't resolve named exports from CJS packages.
 
 ### Step 2: require() Attempt
+
 ```typescript
 // FAILED - require not available in ESM
 const fileType = require('file-type');
 ```
+
 **Why it failed:** In pure ESM mode (`"type": "module"` in package.json), the `require()` function is not globally available.
 
 ### Step 3: Environment Analysis
+
 - **Local development:** Works because tsx may use different module resolution
 - **Render production:** Node.js 25 with stricter ESM/CJS boundary enforcement
 - **Package version:** `file-type@16.5.4` is CommonJS-only (v17+ is ESM)
@@ -91,7 +99,7 @@ import { logger } from '../lib/core/logger';
 // file-type v16 is CommonJS - use createRequire for ESM compatibility in Node 25+
 const require = createRequire(import.meta.url);
 const fileType = require('file-type') as {
-  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>
+  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>;
 };
 ```
 
@@ -123,8 +131,8 @@ const detectedType = await fileType.fromBuffer(file.buffer);
 
 ### Files Modified
 
-| File | Changes |
-|------|---------|
+| File                                    | Changes                                               |
+| --------------------------------------- | ----------------------------------------------------- |
 | `server/src/services/upload.service.ts` | Added `createRequire` import, replaced direct require |
 
 ### Diff
@@ -150,6 +158,7 @@ const detectedType = await fileType.fromBuffer(file.buffer);
 ### When Adding New npm Packages
 
 1. **Check Package Type:**
+
    ```bash
    npm info <package> type  # Look for "module" or "commonjs"
    ```
@@ -189,21 +198,26 @@ describe('file-type CJS import', () => {
 ## Alternative Approaches
 
 ### Option 1: Upgrade to file-type v17+ (ESM-native)
+
 ```typescript
 // file-type v17+ is ESM
 import { fileTypeFromBuffer } from 'file-type';
 ```
+
 **Pros:** Native ESM, cleaner code
 **Cons:** API changes, requires testing, version bump
 
 ### Option 2: Dynamic Import
+
 ```typescript
 const fileType = await import('file-type');
 ```
+
 **Pros:** No createRequire needed
 **Cons:** Requires top-level await, async initialization overhead
 
 ### Option 3: Use Different Library
+
 **Pros:** May find ESM-native alternative
 **Cons:** API differences, requires rewrites and testing
 
@@ -215,8 +229,8 @@ This fix enables critical security validation. The `file-type` package detects f
 // Attack scenario prevented:
 const maliciousFile = {
   originalname: 'shell.php.jpg',
-  mimetype: 'image/jpeg',        // Attacker claims JPEG
-  buffer: Buffer.from('<?php system($_GET["cmd"]); ?>')  // Actually PHP
+  mimetype: 'image/jpeg', // Attacker claims JPEG
+  buffer: Buffer.from('<?php system($_GET["cmd"]); ?>'), // Actually PHP
 };
 
 // With magic byte validation:
@@ -228,15 +242,18 @@ const detectedType = await fileType.fromBuffer(file.buffer);
 ## Verification
 
 **Before Fix:**
+
 - Server crashes on Render with `require is not defined`
 
 **After Fix:**
+
 - Server starts successfully
 - Magic byte validation functional
 - 75 upload service tests pass
 - File upload security intact
 
 **Test Command:**
+
 ```bash
 npm test -- test/services/upload.service.test.ts
 ```
@@ -251,11 +268,13 @@ npm test -- test/services/upload.service.test.ts
 ## See Also
 
 ### Similar Issues
+
 - ESM/CJS compatibility with other packages
 - Dynamic imports in server initialization
 - Module resolution in monorepo workspaces
 
 ### Follow-up Tasks
+
 - Consider upgrading to `file-type` v17+ when API stabilizes
 - Document pattern in team onboarding materials
 - Add ESLint rule to detect bare `require()` in ESM files

@@ -157,7 +157,12 @@ describe('CI/CD Configuration Validation', () => {
       const docPath = path.join(projectRoot, 'docs/deployment/ENVIRONMENT_VARIABLES.md');
       const content = readFileSync(docPath, 'utf-8');
 
-      const tier1Vars = ['JWT_SECRET', 'DATABASE_URL', 'DIRECT_URL', 'TENANT_SECRETS_ENCRYPTION_KEY'];
+      const tier1Vars = [
+        'JWT_SECRET',
+        'DATABASE_URL',
+        'DIRECT_URL',
+        'TENANT_SECRETS_ENCRYPTION_KEY',
+      ];
       for (const variable of tier1Vars) {
         expect(content).toMatch(new RegExp(variable));
       }

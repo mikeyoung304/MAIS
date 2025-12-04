@@ -55,13 +55,13 @@ When the entity interface changes, **ALL** these locations must be updated. The 
 
 ### Affected Locations (5 files)
 
-| Layer | File | What Creates AddOn |
-|-------|------|-------------------|
-| Entity | `entities.ts` | Interface definition |
-| Mock | `adapters/mock/index.ts` | 6 test fixtures |
-| Repository | `adapters/prisma/catalog.repository.ts` | `toDomainAddOn()` mapper |
-| Routes | `routes/tenant-admin.routes.ts` | `mapAddOnToDto()` function |
-| Routes | `routes/admin-packages.routes.ts` | Inline DTO mapping |
+| Layer      | File                                    | What Creates AddOn         |
+| ---------- | --------------------------------------- | -------------------------- |
+| Entity     | `entities.ts`                           | Interface definition       |
+| Mock       | `adapters/mock/index.ts`                | 6 test fixtures            |
+| Repository | `adapters/prisma/catalog.repository.ts` | `toDomainAddOn()` mapper   |
+| Routes     | `routes/tenant-admin.routes.ts`         | `mapAddOnToDto()` function |
+| Routes     | `routes/admin-packages.routes.ts`       | Inline DTO mapping         |
 
 ## Solution
 
@@ -74,9 +74,9 @@ export interface AddOn {
   id: string;
   packageId: string;
   title: string;
-  description?: string | null;  // Optional AND nullable
+  description?: string | null; // Optional AND nullable
   priceCents: number;
-  photoUrl?: string;  // Optional only (matches DTO schema)
+  photoUrl?: string; // Optional only (matches DTO schema)
 }
 ```
 
@@ -91,7 +91,7 @@ addOns.set('addon_video', {
   id: 'addon_video',
   packageId: 'pkg_basic',
   title: 'Video Recording',
-  description: 'Professional video recording of your ceremony',  // ADDED
+  description: 'Professional video recording of your ceremony', // ADDED
   priceCents: 50000,
   photoUrl: 'https://...',
 });
@@ -132,7 +132,7 @@ const mapAddOnToDto = (addOn: AddOn) => ({
   id: addOn.id,
   packageId: addOn.packageId,
   title: addOn.title,
-  description: addOn.description ?? null,  // Handle undefined → null
+  description: addOn.description ?? null, // Handle undefined → null
   priceCents: addOn.priceCents,
   photoUrl: addOn.photoUrl,
 });
@@ -180,11 +180,11 @@ When reviewing entity changes, verify:
 
 ### 4. Type Safety Patterns
 
-| Pattern | Use When | Example |
-|---------|----------|---------|
-| `field?: Type` | Optional, never null | `photoUrl?: string` |
+| Pattern                | Use When                    | Example                        |
+| ---------------------- | --------------------------- | ------------------------------ |
+| `field?: Type`         | Optional, never null        | `photoUrl?: string`            |
 | `field?: Type \| null` | Optional OR null (database) | `description?: string \| null` |
-| `field: Type \| null` | Required but nullable | `deletedAt: Date \| null` |
+| `field: Type \| null`  | Required but nullable       | `deletedAt: Date \| null`      |
 
 ## Related Documentation
 

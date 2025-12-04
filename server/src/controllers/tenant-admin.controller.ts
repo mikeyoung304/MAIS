@@ -150,7 +150,9 @@ export class TenantAdminController {
    * Get all blackout dates for tenant
    * @param tenantId - Tenant ID from JWT token
    */
-  async getBlackouts(tenantId: string): Promise<Array<{ id: string; date: string; reason?: string }>> {
+  async getBlackouts(
+    tenantId: string
+  ): Promise<Array<{ id: string; date: string; reason?: string }>> {
     const blackouts = await this.blackoutRepo.getAllBlackouts(tenantId);
 
     // Need to fetch full records with IDs
@@ -281,7 +283,14 @@ export class TenantAdminController {
     }
 
     // Separate color fields from other branding fields
-    const { primaryColor, secondaryColor, accentColor, backgroundColor, fontFamily, ...otherBranding } = data;
+    const {
+      primaryColor,
+      secondaryColor,
+      accentColor,
+      backgroundColor,
+      fontFamily,
+      ...otherBranding
+    } = data;
 
     // Update color fields at database column level
     const colorUpdates: any = {};

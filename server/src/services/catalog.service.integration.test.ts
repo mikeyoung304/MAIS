@@ -376,25 +376,11 @@ describe('CatalogService Integration - Audit Logging', () => {
       );
 
       // Update multiple times
-      await catalogService.updatePackage(
-        testTenantId,
-        pkg.id,
-        { priceCents: 11000 },
-        auditCtx
-      );
-      await catalogService.updatePackage(
-        testTenantId,
-        pkg.id,
-        { priceCents: 12000 },
-        auditCtx
-      );
+      await catalogService.updatePackage(testTenantId, pkg.id, { priceCents: 11000 }, auditCtx);
+      await catalogService.updatePackage(testTenantId, pkg.id, { priceCents: 12000 }, auditCtx);
 
       // Get history
-      const history = await auditService.getEntityHistory(
-        testTenantId,
-        'Package',
-        pkg.id
-      );
+      const history = await auditService.getEntityHistory(testTenantId, 'Package', pkg.id);
 
       // Should have 3 entries (create + 2 updates)
       expect(history).toHaveLength(3);

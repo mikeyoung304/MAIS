@@ -25,44 +25,44 @@ The implementation is **production-ready from a security perspective**, with som
 
 ### 1. Authentication Tests (10 tests)
 
-| Test ID | Scenario | Status | HTTP Code | Details |
-|---------|----------|--------|-----------|---------|
-| AUTH-001 | Valid token - GET packages | ✅ PASS | 200 | Successfully retrieved package list |
-| AUTH-002 | Valid token - Upload photo | ✅ PASS | 201 | Photo uploaded and metadata returned |
-| AUTH-003 | Valid token - Delete photo | ✅ PASS | 204 | Photo successfully deleted |
-| AUTH-004 | No Authorization header | ✅ PASS | 401 | Correctly rejected with clear error |
-| AUTH-005 | Malformed header (missing Bearer) | ✅ PASS | 401 | Format validation working |
-| AUTH-006 | Invalid token format | ✅ PASS | 401 | Rejected random string as token |
-| AUTH-007 | Empty token | ✅ PASS | 401 | Correctly handled empty token |
-| AUTH-008 | Invalid JWT signature | ✅ PASS | 401 | Signature validation working |
-| AUTH-009 | Expired token | ✅ PASS | 401 | Expiry validation enforced |
-| AUTH-010 | File size > 5MB | ✅ PASS | 413 | File size limit enforced |
+| Test ID  | Scenario                          | Status  | HTTP Code | Details                              |
+| -------- | --------------------------------- | ------- | --------- | ------------------------------------ |
+| AUTH-001 | Valid token - GET packages        | ✅ PASS | 200       | Successfully retrieved package list  |
+| AUTH-002 | Valid token - Upload photo        | ✅ PASS | 201       | Photo uploaded and metadata returned |
+| AUTH-003 | Valid token - Delete photo        | ✅ PASS | 204       | Photo successfully deleted           |
+| AUTH-004 | No Authorization header           | ✅ PASS | 401       | Correctly rejected with clear error  |
+| AUTH-005 | Malformed header (missing Bearer) | ✅ PASS | 401       | Format validation working            |
+| AUTH-006 | Invalid token format              | ✅ PASS | 401       | Rejected random string as token      |
+| AUTH-007 | Empty token                       | ✅ PASS | 401       | Correctly handled empty token        |
+| AUTH-008 | Invalid JWT signature             | ✅ PASS | 401       | Signature validation working         |
+| AUTH-009 | Expired token                     | ✅ PASS | 401       | Expiry validation enforced           |
+| AUTH-010 | File size > 5MB                   | ✅ PASS | 413       | File size limit enforced             |
 
 ### 2. Authorization Tests (5 tests)
 
-| Test ID | Scenario | Status | HTTP Code | Details |
-|---------|----------|--------|-----------|---------|
-| AUTHZ-001 | Upload to own package | ✅ PASS | 201 | Tenant can access own resources |
-| AUTHZ-002 | **Cross-tenant access blocked** | ✅ PASS | 403 | **CRITICAL: Tenant isolation working** |
-| AUTHZ-003 | Non-existent package | ✅ PASS | 404 | Proper 404 handling |
-| AUTHZ-004 | Delete non-existent photo | ✅ PASS | 404 | Clear error message |
-| AUTHZ-005 | Multiple photo uploads | ✅ PASS | 201 | Photo ordering working (0, 1, 2...) |
+| Test ID   | Scenario                        | Status  | HTTP Code | Details                                |
+| --------- | ------------------------------- | ------- | --------- | -------------------------------------- |
+| AUTHZ-001 | Upload to own package           | ✅ PASS | 201       | Tenant can access own resources        |
+| AUTHZ-002 | **Cross-tenant access blocked** | ✅ PASS | 403       | **CRITICAL: Tenant isolation working** |
+| AUTHZ-003 | Non-existent package            | ✅ PASS | 404       | Proper 404 handling                    |
+| AUTHZ-004 | Delete non-existent photo       | ✅ PASS | 404       | Clear error message                    |
+| AUTHZ-005 | Multiple photo uploads          | ✅ PASS | 201       | Photo ordering working (0, 1, 2...)    |
 
 ### 3. Input Validation Tests (2 tests)
 
-| Test ID | Scenario | Status | HTTP Code | Details |
-|---------|----------|--------|-----------|---------|
-| VAL-001 | Missing photo field | ✅ PASS | 400 | Field validation working |
-| VAL-002 | Wrong field name | ✅ PASS | 400 | Strict field name enforcement |
+| Test ID | Scenario            | Status  | HTTP Code | Details                       |
+| ------- | ------------------- | ------- | --------- | ----------------------------- |
+| VAL-001 | Missing photo field | ✅ PASS | 400       | Field validation working      |
+| VAL-002 | Wrong field name    | ✅ PASS | 400       | Strict field name enforcement |
 
 ### 4. Token Storage Verification (1 test)
 
-| Aspect | Status | Implementation |
-|--------|--------|----------------|
-| Storage mechanism | ✅ PASS | `localStorage.setItem('tenantToken', token)` |
-| Retrieval pattern | ✅ PASS | `localStorage.getItem('tenantToken')` |
-| Login flow | ✅ PASS | Token set via `api.setTenantToken()` after successful login |
-| Token format | ✅ PASS | JWT with HS256, 7-day expiry |
+| Aspect            | Status  | Implementation                                              |
+| ----------------- | ------- | ----------------------------------------------------------- |
+| Storage mechanism | ✅ PASS | `localStorage.setItem('tenantToken', token)`                |
+| Retrieval pattern | ✅ PASS | `localStorage.getItem('tenantToken')`                       |
+| Login flow        | ✅ PASS | Token set via `api.setTenantToken()` after successful login |
+| Token format      | ✅ PASS | JWT with HS256, 7-day expiry                                |
 
 ---
 
@@ -96,12 +96,14 @@ TOTAL:            21/21 ✅ PASS (100%)
 ### High Priority
 
 **REC-001: Use httpOnly Cookies Instead of localStorage**
+
 - **Current:** Token stored in `localStorage` (vulnerable to XSS)
 - **Recommended:** Use httpOnly cookies with SameSite=Strict
 - **Impact:** Prevents token theft via XSS attacks
 - **Implementation:** Requires backend cookie handling and frontend changes
 
 **REC-002: Implement Token Refresh Mechanism**
+
 - **Current:** 7-day token expiry
 - **Recommended:** Short-lived access tokens (15min) + refresh tokens
 - **Impact:** Reduces window of opportunity for token misuse
@@ -110,11 +112,13 @@ TOTAL:            21/21 ✅ PASS (100%)
 ### Medium Priority
 
 **REC-003: Rate Limiting on Upload Endpoints**
+
 - **Recommended:** Limit photo uploads per tenant (e.g., 10/minute)
 - **Impact:** Prevents DoS and resource exhaustion
 - **Implementation:** Add rate limiter middleware to photo upload routes
 
 **REC-004: CSRF Protection**
+
 - **Recommended:** Add CSRF tokens for state-changing operations
 - **Impact:** Additional layer of security for authenticated requests
 - **Implementation:** Add CSRF middleware and token validation
@@ -130,9 +134,9 @@ TOTAL:            21/21 ✅ PASS (100%)
 api.setTenantToken = (token: string | null) => {
   tenantToken = token;
   if (token) {
-    localStorage.setItem("tenantToken", token);
+    localStorage.setItem('tenantToken', token);
   } else {
-    localStorage.removeItem("tenantToken");
+    localStorage.removeItem('tenantToken');
   }
 };
 
@@ -210,12 +214,14 @@ api.setTenantToken(result.body.token);
 ✅ **All 21 authentication and authorization tests passed successfully.**
 
 The Package Photo Upload feature correctly implements:
+
 - JWT-based authentication with signature and expiry validation
 - Tenant isolation preventing cross-tenant data access
 - File upload validation and error handling
 - Clear, secure error messages
 
 **The implementation is secure for development** and demonstrates proper security controls. For production deployment, consider implementing the recommended security enhancements, particularly:
+
 1. httpOnly cookies instead of localStorage
 2. Token refresh mechanism
 3. Rate limiting on upload endpoints

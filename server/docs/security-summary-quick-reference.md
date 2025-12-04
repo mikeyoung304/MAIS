@@ -65,15 +65,15 @@ PATH TRAVERSAL      PASS ✓           -               -               -
 
 ## Vulnerability Quick Reference
 
-| Issue | Severity | Impact | Fix Time |
-|-------|----------|--------|----------|
-| No magic number validation | CRITICAL | Arbitrary file upload | 2 hours |
-| No virus scanning | CRITICAL | Malware distribution | 4 hours |
-| MIME type spoofing | HIGH | Bypass validation | 1 hour |
-| SVG XSS vectors | HIGH | Script execution | 1 hour |
-| Weak file permissions | MEDIUM | Privacy leak | 30 min |
-| No upload rate limit | MEDIUM | Disk exhaustion | 1 hour |
-| Missing security headers | MEDIUM | MIME sniffing attacks | 30 min |
+| Issue                      | Severity | Impact                | Fix Time |
+| -------------------------- | -------- | --------------------- | -------- |
+| No magic number validation | CRITICAL | Arbitrary file upload | 2 hours  |
+| No virus scanning          | CRITICAL | Malware distribution  | 4 hours  |
+| MIME type spoofing         | HIGH     | Bypass validation     | 1 hour   |
+| SVG XSS vectors            | HIGH     | Script execution      | 1 hour   |
+| Weak file permissions      | MEDIUM   | Privacy leak          | 30 min   |
+| No upload rate limit       | MEDIUM   | Disk exhaustion       | 1 hour   |
+| Missing security headers   | MEDIUM   | MIME sniffing attacks | 30 min   |
 
 ## Code Quality Scores
 
@@ -122,6 +122,7 @@ Before Production Must Implement:
 ## Attack Scenarios & Mitigations
 
 ### Attack 1: Malware Upload
+
 ```
 Attacker:  Uploads executable.exe as image.jpeg
 Current:   VULNERABLE - MIME type spoofing allows it
@@ -130,6 +131,7 @@ Risk:      CRITICAL - Malware could spread via download
 ```
 
 ### Attack 2: Disk Exhaustion
+
 ```
 Attacker:  Upload 120 × 5MB files in 15 minutes = 600MB
 Current:   VULNERABLE - No upload-specific rate limiting
@@ -138,6 +140,7 @@ Risk:      MEDIUM - Can cause DoS
 ```
 
 ### Attack 3: XSS via SVG
+
 ```
 Attacker:  Upload <svg onload="steal_data()"> file
 Current:   VULNERABLE - SVG allows scripts
@@ -146,6 +149,7 @@ Risk:      MEDIUM - Only if SVG embedded in pages
 ```
 
 ### Attack 4: MIME Type Spoofing
+
 ```
 Attacker:  curl -F "logo=@shell.php;type=image/jpeg"
 Current:   VULNERABLE - Only checks MIME header
@@ -154,6 +158,7 @@ Risk:      HIGH - Shell execution if served wrong
 ```
 
 ### Attack 5: Arbitrary File Deletion
+
 ```
 Attacker:  DELETE /v1/tenant/admin/packages/123/photos/other_tenant_file.jpg
 Current:   PROTECTED - Filename must exist in package's photos array
@@ -218,18 +223,17 @@ OPTIONAL (Week 4+):
 🔴 server/src/services/upload.service.ts
    Lines: 44-90 (MIME validation needs enhancement)
    Lines: 95-100 (Extension handling needs review)
-   
+
 🟢 server/src/middleware/tenant-auth.ts
    All: Excellent implementation
-   
+
 🟡 server/src/routes/tenant-admin.routes.ts
    Lines: 30-43 (Multer config needs fileFilter)
    Lines: 75-125 (Upload logic solid)
-   
+
 🟡 server/src/middleware/rateLimiter.ts
    Lines: 16-26 (Needs upload-specific limiter)
-   
+
 🟡 server/src/app.ts
    Lines: 87-93 (Needs security headers)
 ```
-

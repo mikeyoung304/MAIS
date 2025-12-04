@@ -19,10 +19,14 @@ export const ErrorResponseSchema = z.object({
   error: z.string(), // Error code (e.g., 'NOT_FOUND', 'VALIDATION_ERROR')
   message: z.string(),
   requestId: z.string().optional(),
-  errors: z.array(z.object({
-    field: z.string(),
-    message: z.string(),
-  })).optional(), // Field-level validation errors
+  errors: z
+    .array(
+      z.object({
+        field: z.string(),
+        message: z.string(),
+      })
+    )
+    .optional(), // Field-level validation errors
 });
 
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
@@ -88,12 +92,16 @@ export const PackageDtoSchema = z.object({
   grouping: z.string().nullable().optional(),
   groupingOrder: z.number().int().nullable().optional(),
   isActive: z.boolean().default(true),
-  photos: z.array(z.object({
-    url: z.string().url(),
-    filename: z.string(),
-    size: z.number(),
-    order: z.number().int(),
-  })).default([]),
+  photos: z
+    .array(
+      z.object({
+        url: z.string().url(),
+        filename: z.string(),
+        size: z.number(),
+        order: z.number().int(),
+      })
+    )
+    .default([]),
 });
 
 export type PackageDto = z.infer<typeof PackageDtoSchema>;
@@ -124,7 +132,15 @@ export const BookingDtoSchema = z.object({
   eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
   addOnIds: z.array(z.string()),
   totalCents: z.number().int(),
-  status: z.enum(['PENDING', 'DEPOSIT_PAID', 'PAID', 'CONFIRMED', 'CANCELED', 'REFUNDED', 'FULFILLED']),
+  status: z.enum([
+    'PENDING',
+    'DEPOSIT_PAID',
+    'PAID',
+    'CONFIRMED',
+    'CANCELED',
+    'REFUNDED',
+    'FULFILLED',
+  ]),
   createdAt: z.string().datetime(), // ISO datetime
 });
 
@@ -237,7 +253,11 @@ export const CreateAddOnDtoSchema = z.object({
   packageId: z.string().min(1),
   title: z.string().min(1),
   description: z.string().optional(),
-  priceCents: z.number().int().min(0).max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' }),
+  priceCents: z
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' }),
   photoUrl: z.string().url().optional(),
 });
 
@@ -247,7 +267,12 @@ export const UpdateAddOnDtoSchema = z.object({
   packageId: z.string().min(1).optional(),
   title: z.string().min(1).optional(),
   description: z.string().optional(),
-  priceCents: z.number().int().min(0).max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' }).optional(),
+  priceCents: z
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' })
+    .optional(),
   photoUrl: z.string().url().optional(),
 });
 
@@ -267,10 +292,22 @@ export type TenantBrandingDto = z.infer<typeof TenantBrandingDtoSchema>;
 
 // Update Tenant Branding DTO (for tenant admin)
 export const UpdateBrandingDtoSchema = z.object({
-  primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  accentColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  backgroundColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  primaryColor: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional(),
+  secondaryColor: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional(),
+  accentColor: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional(),
+  backgroundColor: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional(),
   fontFamily: z.string().optional(),
 });
 
@@ -451,7 +488,11 @@ export const SegmentDtoSchema = z.object({
 export type SegmentDto = z.infer<typeof SegmentDtoSchema>;
 
 export const CreateSegmentDtoSchema = z.object({
-  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only'),
+  slug: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only'),
   name: z.string().min(1).max(100),
   heroTitle: z.string().min(1).max(200),
   heroSubtitle: z.string().max(300).optional(),
@@ -466,7 +507,12 @@ export const CreateSegmentDtoSchema = z.object({
 export type CreateSegmentDto = z.infer<typeof CreateSegmentDtoSchema>;
 
 export const UpdateSegmentDtoSchema = z.object({
-  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only').optional(),
+  slug: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only')
+    .optional(),
   name: z.string().min(1).max(100).optional(),
   heroTitle: z.string().min(1).max(200).optional(),
   heroSubtitle: z.string().max(300).optional(),
@@ -483,17 +529,15 @@ export type UpdateSegmentDto = z.infer<typeof UpdateSegmentDtoSchema>;
 // Platform Admin - Tenant Management DTOs
 
 export const CreateTenantDtoSchema = z.object({
-  slug: z.string()
+  slug: z
+    .string()
     .min(2, 'Slug must be at least 2 characters')
     .max(50, 'Slug must be less than 50 characters')
     .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
-  name: z.string()
-    .min(2, 'Name is required')
-    .max(100, 'Name must be less than 100 characters'),
-  email: z.string()
-    .email('Invalid email format')
-    .optional(),
-  commissionPercent: z.number()
+  name: z.string().min(2, 'Name is required').max(100, 'Name must be less than 100 characters'),
+  email: z.string().email('Invalid email format').optional(),
+  commissionPercent: z
+    .number()
     .min(0, 'Commission must be at least 0%')
     .max(100, 'Commission cannot exceed 100%')
     .default(10.0),
@@ -591,7 +635,11 @@ export const PublicServiceDtoSchema = ServiceDtoSchema.omit({ tenantId: true });
 export type PublicServiceDto = z.infer<typeof PublicServiceDtoSchema>;
 
 export const CreateServiceDtoSchema = z.object({
-  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only'),
+  slug: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only'),
   name: z.string().min(1).max(100),
   description: z.string().max(2000).optional(),
   durationMinutes: z.number().int().positive().min(5).max(480), // 5 min to 8 hours
@@ -605,7 +653,12 @@ export const CreateServiceDtoSchema = z.object({
 export type CreateServiceDto = z.infer<typeof CreateServiceDtoSchema>;
 
 export const UpdateServiceDtoSchema = z.object({
-  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only').optional(),
+  slug: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only')
+    .optional(),
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(2000).optional(),
   durationMinutes: z.number().int().positive().min(5).max(480).optional(),
@@ -649,8 +702,14 @@ export type CreateAvailabilityRuleDto = z.infer<typeof CreateAvailabilityRuleDto
 export const UpdateAvailabilityRuleDtoSchema = z.object({
   serviceId: z.string().nullable().optional(),
   dayOfWeek: z.number().int().min(0).max(6).optional(),
-  startTime: z.string().regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Format: HH:MM (e.g., 09:00)').optional(),
-  endTime: z.string().regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Format: HH:MM (e.g., 17:00)').optional(),
+  startTime: z
+    .string()
+    .regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Format: HH:MM (e.g., 09:00)')
+    .optional(),
+  endTime: z
+    .string()
+    .regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Format: HH:MM (e.g., 17:00)')
+    .optional(),
   effectiveFrom: z.string().datetime().optional(),
   effectiveTo: z.string().datetime().nullable().optional(),
 });
@@ -699,7 +758,15 @@ export const AppointmentDtoSchema = z.object({
   startTime: z.string().datetime(), // Full UTC datetime
   endTime: z.string().datetime(), // Full UTC datetime
   clientTimezone: z.string().nullable(),
-  status: z.enum(['PENDING', 'DEPOSIT_PAID', 'PAID', 'CONFIRMED', 'CANCELED', 'REFUNDED', 'FULFILLED']),
+  status: z.enum([
+    'PENDING',
+    'DEPOSIT_PAID',
+    'PAID',
+    'CONFIRMED',
+    'CANCELED',
+    'REFUNDED',
+    'FULFILLED',
+  ]),
   totalPrice: z.number().int(),
   notes: z.string().nullable(),
   createdAt: z.string().datetime(),
@@ -716,7 +783,10 @@ export const CreateAppointmentCheckoutDtoSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
   startTime: z.string().datetime({ message: 'Start time must be a valid ISO datetime' }),
   endTime: z.string().datetime({ message: 'End time must be a valid ISO datetime' }),
-  customerName: z.string().min(1, 'Customer name is required').max(100, 'Name must be 100 characters or less'),
+  customerName: z
+    .string()
+    .min(1, 'Customer name is required')
+    .max(100, 'Name must be 100 characters or less'),
   customerEmail: z.string().email('Valid email is required'),
   customerPhone: z.string().optional(),
   notes: z.string().max(1000, 'Notes must be 1000 characters or less').optional(),
@@ -746,9 +816,20 @@ const HexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color 
  * SECURITY: Allowlist prevents CSS injection via fontFamily field
  */
 export const ALLOWED_FONT_FAMILIES = [
-  'Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat',
-  'Poppins', 'Source Sans Pro', 'Nunito', 'Raleway', 'Work Sans',
-  'system-ui', 'sans-serif', 'serif', 'monospace',
+  'Inter',
+  'Roboto',
+  'Open Sans',
+  'Lato',
+  'Montserrat',
+  'Poppins',
+  'Source Sans Pro',
+  'Nunito',
+  'Raleway',
+  'Work Sans',
+  'system-ui',
+  'sans-serif',
+  'serif',
+  'monospace',
 ] as const;
 
 /**
@@ -760,17 +841,19 @@ export const TenantPublicDtoSchema = z.object({
   slug: z.string(),
   name: z.string(),
   apiKeyPublic: z.string(), // Needed to set X-Tenant-Key for subsequent API calls
-  branding: z.object({
-    primaryColor: HexColorSchema.optional(),
-    secondaryColor: HexColorSchema.optional(),
-    accentColor: HexColorSchema.optional(),
-    backgroundColor: HexColorSchema.optional(),
-    fontFamily: z.enum(ALLOWED_FONT_FAMILIES).optional(),
-    logoUrl: z.string().url().optional(),
-    // Landing page configuration - composed from landing-page.ts (DRY)
-    // SECURITY: LandingPageConfigSchema uses SafeUrlSchema for XSS prevention
-    landingPage: LandingPageConfigSchema.optional(),
-  }).optional(),
+  branding: z
+    .object({
+      primaryColor: HexColorSchema.optional(),
+      secondaryColor: HexColorSchema.optional(),
+      accentColor: HexColorSchema.optional(),
+      backgroundColor: HexColorSchema.optional(),
+      fontFamily: z.enum(ALLOWED_FONT_FAMILIES).optional(),
+      logoUrl: z.string().url().optional(),
+      // Landing page configuration - composed from landing-page.ts (DRY)
+      // SECURITY: LandingPageConfigSchema uses SafeUrlSchema for XSS prevention
+      landingPage: LandingPageConfigSchema.optional(),
+    })
+    .optional(),
 });
 
 export type TenantPublicDto = z.infer<typeof TenantPublicDtoSchema>;
@@ -804,7 +887,9 @@ export type CancelBookingDto = z.infer<typeof CancelBookingDtoSchema>;
 export const BookingManagementDtoSchema = BookingDtoSchema.extend({
   cancelledBy: z.enum(['CUSTOMER', 'TENANT', 'ADMIN', 'SYSTEM']).optional(),
   cancellationReason: z.string().optional(),
-  refundStatus: z.enum(['NONE', 'PENDING', 'PROCESSING', 'COMPLETED', 'PARTIAL', 'FAILED']).optional(),
+  refundStatus: z
+    .enum(['NONE', 'PENDING', 'PROCESSING', 'COMPLETED', 'PARTIAL', 'FAILED'])
+    .optional(),
   refundAmount: z.number().int().optional(),
   refundedAt: z.string().datetime().optional(),
 });

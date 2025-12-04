@@ -34,7 +34,7 @@ describe('Schema Consistency Checks', () => {
         'model AvailabilityRule',
       ];
 
-      requiredModels.forEach(model => {
+      requiredModels.forEach((model) => {
         expect(schema).toContain(model);
       });
     });
@@ -48,7 +48,7 @@ describe('Schema Consistency Checks', () => {
         'enum PaymentStatus',
       ];
 
-      requiredEnums.forEach(enumType => {
+      requiredEnums.forEach((enumType) => {
         expect(schema).toContain(enumType);
       });
     });
@@ -57,14 +57,14 @@ describe('Schema Consistency Checks', () => {
   describe('Migration Files', () => {
     it('should have at least one Prisma migration', () => {
       const files = fs.readdirSync(migrationsPath);
-      const prismaFormats = files.filter(f => /^20[0-9]{12}_/.test(f));
+      const prismaFormats = files.filter((f) => /^20[0-9]{12}_/.test(f));
       expect(prismaFormats.length).toBeGreaterThan(0);
     });
 
     it('should have numbered manual SQL migrations', () => {
       const files = fs.readdirSync(migrationsPath);
-      const sqlFiles = files.filter(f => f.endsWith('.sql'));
-      const numericFiles = sqlFiles.filter(f => /^\d+_/.test(f));
+      const sqlFiles = files.filter((f) => f.endsWith('.sql'));
+      const numericFiles = sqlFiles.filter((f) => /^\d+_/.test(f));
 
       // We have hybrid system: 01_, 02_, etc. for manual, plus 20[date] for Prisma
       expect(files.length).toBeGreaterThan(2);
@@ -74,16 +74,16 @@ describe('Schema Consistency Checks', () => {
       const files = fs.readdirSync(migrationsPath);
 
       // Check .sql files
-      const sqlFiles = files.filter(f => f.endsWith('.sql'));
-      sqlFiles.forEach(file => {
+      const sqlFiles = files.filter((f) => f.endsWith('.sql'));
+      sqlFiles.forEach((file) => {
         const filePath = path.join(migrationsPath, file);
         const content = fs.readFileSync(filePath, 'utf-8');
         expect(content.trim().length).toBeGreaterThan(0);
       });
 
       // Check Prisma migration directories
-      const prismaFormats = files.filter(f => /^20[0-9]{12}_/.test(f));
-      prismaFormats.forEach(dir => {
+      const prismaFormats = files.filter((f) => /^20[0-9]{12}_/.test(f));
+      prismaFormats.forEach((dir) => {
         const migrationFile = path.join(migrationsPath, dir, 'migration.sql');
         if (fs.existsSync(migrationFile)) {
           const content = fs.readFileSync(migrationFile, 'utf-8');
@@ -96,7 +96,7 @@ describe('Schema Consistency Checks', () => {
   describe('Manual SQL Migration Best Practices', () => {
     it('should use idempotent SQL in manual migrations', () => {
       const files = fs.readdirSync(migrationsPath);
-      const manualSqlFiles = files.filter(f => /^\d+_.*\.sql$/.test(f));
+      const manualSqlFiles = files.filter((f) => /^\d+_.*\.sql$/.test(f));
 
       if (manualSqlFiles.length === 0) {
         // Skip if no manual migrations
@@ -113,14 +113,12 @@ describe('Schema Consistency Checks', () => {
         'DO $$', // PL/pgSQL blocks for conditional logic
       ];
 
-      manualSqlFiles.forEach(file => {
+      manualSqlFiles.forEach((file) => {
         const filePath = path.join(migrationsPath, file);
         const content = fs.readFileSync(filePath, 'utf-8').toUpperCase();
 
         // At least one idempotent pattern should be present
-        const hasIdempotent = idempotentPatterns.some(pattern =>
-          content.includes(pattern)
-        );
+        const hasIdempotent = idempotentPatterns.some((pattern) => content.includes(pattern));
 
         expect(hasIdempotent).toBe(true);
       });
@@ -128,7 +126,7 @@ describe('Schema Consistency Checks', () => {
 
     it('should maintain sequential numbering in manual migrations', () => {
       const files = fs.readdirSync(migrationsPath);
-      const manualSqlFiles = files.filter(f => /^\d+_.*\.sql$/.test(f));
+      const manualSqlFiles = files.filter((f) => /^\d+_.*\.sql$/.test(f));
 
       if (manualSqlFiles.length === 0) {
         expect(true).toBe(true);
@@ -136,9 +134,7 @@ describe('Schema Consistency Checks', () => {
       }
 
       // Extract numbers and sort
-      const numbers = manualSqlFiles
-        .map(f => parseInt(f.split('_')[0]))
-        .sort((a, b) => a - b);
+      const numbers = manualSqlFiles.map((f) => parseInt(f.split('_')[0])).sort((a, b) => a - b);
 
       // Check that we don't have large gaps (allow up to 5-unit gaps for resets)
       for (let i = 0; i < numbers.length - 1; i++) {
@@ -164,8 +160,10 @@ describe('Schema Consistency Checks', () => {
         'Payment',
       ];
 
-      multiTenantModels.forEach(model => {
-        const modelMatch = schema.match(new RegExp(`model ${model}[\\s\\S]*?(?=model|enum|\\Z)`, 'm'));
+      multiTenantModels.forEach((model) => {
+        const modelMatch = schema.match(
+          new RegExp(`model ${model}[\\s\\S]*?(?=model|enum|\\Z)`, 'm')
+        );
         expect(modelMatch).toBeTruthy();
         if (modelMatch) {
           expect(modelMatch[0]).toContain('tenantId');
@@ -182,7 +180,7 @@ describe('Schema Consistency Checks', () => {
         '@@unique([tenantId, date])', // For BlackoutDate
       ];
 
-      expectedUnique.forEach(constraint => {
+      expectedUnique.forEach((constraint) => {
         expect(schema).toContain(constraint);
       });
     });
@@ -217,7 +215,7 @@ describe('Schema Consistency Checks', () => {
         'model AvailabilityRule {',
       ];
 
-      criticalTables.forEach(table => {
+      criticalTables.forEach((table) => {
         expect(schema).toContain(table);
       });
     });

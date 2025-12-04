@@ -35,34 +35,89 @@ vi.mock('../../src/lib/core/logger', () => ({
 // Real magic bytes for image formats (for security tests)
 // PNG needs a valid minimal PNG structure to be detected
 const PNG_MAGIC = Buffer.from([
-  0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG signature
-  0x00, 0x00, 0x00, 0x0D, // IHDR chunk length (13 bytes)
-  0x49, 0x48, 0x44, 0x52, // IHDR chunk type
-  0x00, 0x00, 0x00, 0x01, // width: 1
-  0x00, 0x00, 0x00, 0x01, // height: 1
-  0x08, 0x02,             // bit depth: 8, color type: 2 (RGB)
-  0x00, 0x00, 0x00,       // compression, filter, interlace
-  0x90, 0x77, 0x53, 0xDE, // CRC
+  0x89,
+  0x50,
+  0x4e,
+  0x47,
+  0x0d,
+  0x0a,
+  0x1a,
+  0x0a, // PNG signature
+  0x00,
+  0x00,
+  0x00,
+  0x0d, // IHDR chunk length (13 bytes)
+  0x49,
+  0x48,
+  0x44,
+  0x52, // IHDR chunk type
+  0x00,
+  0x00,
+  0x00,
+  0x01, // width: 1
+  0x00,
+  0x00,
+  0x00,
+  0x01, // height: 1
+  0x08,
+  0x02, // bit depth: 8, color type: 2 (RGB)
+  0x00,
+  0x00,
+  0x00, // compression, filter, interlace
+  0x90,
+  0x77,
+  0x53,
+  0xde, // CRC
 ]);
 
 // JPEG needs more structure for file-type to detect it
 const JPEG_MAGIC = Buffer.from([
-  0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01,
-  0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00
+  0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01,
+  0x00, 0x01, 0x00, 0x00,
 ]);
 
 // WebP needs RIFF header structure
 const WEBP_MAGIC = Buffer.from([
-  0x52, 0x49, 0x46, 0x46, // RIFF
-  0x24, 0x00, 0x00, 0x00, // file size (small)
-  0x57, 0x45, 0x42, 0x50, // WEBP
-  0x56, 0x50, 0x38, 0x4C, // VP8L
-  0x17, 0x00, 0x00, 0x00, // chunk size
-  0x2F, 0x00, 0x00, 0x00, // signature
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
+  0x52,
+  0x49,
+  0x46,
+  0x46, // RIFF
+  0x24,
+  0x00,
+  0x00,
+  0x00, // file size (small)
+  0x57,
+  0x45,
+  0x42,
+  0x50, // WEBP
+  0x56,
+  0x50,
+  0x38,
+  0x4c, // VP8L
+  0x17,
+  0x00,
+  0x00,
+  0x00, // chunk size
+  0x2f,
+  0x00,
+  0x00,
+  0x00, // signature
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
 ]);
 
 const MAGIC_BYTES = {
@@ -76,7 +131,9 @@ const MAGIC_BYTES = {
 };
 
 // Valid SVG content
-const SVG_CONTENT = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>');
+const SVG_CONTENT = Buffer.from(
+  '<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>'
+);
 
 describe('UploadService', () => {
   let service: UploadService;
@@ -259,9 +316,7 @@ describe('UploadService', () => {
         it(`should reject ${mimetype} files`, async () => {
           const file = createMockFile({ mimetype });
 
-          await expect(service.uploadLogo(file, 'tenant_123')).rejects.toThrow(
-            'Invalid file type'
-          );
+          await expect(service.uploadLogo(file, 'tenant_123')).rejects.toThrow('Invalid file type');
           expect(mockWriteFile).not.toHaveBeenCalled();
         });
       });
@@ -567,9 +622,7 @@ describe('UploadService', () => {
       mockExistsSync.mockReturnValue(true);
       mockUnlink.mockRejectedValueOnce(new Error('EACCES: permission denied'));
 
-      await expect(service.deleteLogo('logo.png')).rejects.toThrow(
-        'EACCES: permission denied'
-      );
+      await expect(service.deleteLogo('logo.png')).rejects.toThrow('EACCES: permission denied');
     });
 
     it('should not allow path traversal in filename', async () => {
@@ -607,9 +660,7 @@ describe('UploadService', () => {
       mockExistsSync.mockReturnValue(true);
       mockUnlink.mockRejectedValueOnce(new Error('File is locked'));
 
-      await expect(service.deletePackagePhoto('photo.jpg')).rejects.toThrow(
-        'File is locked'
-      );
+      await expect(service.deletePackagePhoto('photo.jpg')).rejects.toThrow('File is locked');
     });
   });
 
@@ -677,7 +728,7 @@ describe('UploadService', () => {
     });
 
     it('should handle files one byte over limit', async () => {
-      const overLimit = createMockFile({ size: (1024 * 1024 * 2) + 1 }); // Exactly 2MB + 1 byte
+      const overLimit = createMockFile({ size: 1024 * 1024 * 2 + 1 }); // Exactly 2MB + 1 byte
 
       await expect(service.uploadLogo(overLimit, 'tenant_123')).rejects.toThrow(
         'File size exceeds maximum of 2MB'
@@ -847,7 +898,9 @@ describe('UploadService', () => {
       });
 
       it('should accept valid SVG file (no magic bytes)', async () => {
-        const svgContent = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100"/></svg>');
+        const svgContent = Buffer.from(
+          '<svg xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100"/></svg>'
+        );
         const validFile = createMockFile({
           originalname: 'icon.svg',
           mimetype: 'image/svg+xml',
@@ -953,7 +1006,8 @@ describe('UploadService', () => {
       it('should block cross-tenant deletion attempts', async () => {
         const { logger } = await import('../../src/lib/core/logger');
         // URL belongs to tenant-abc but requesting tenant is tenant-xyz
-        const url = 'https://xxx.supabase.co/storage/v1/object/sign/images/tenant-abc/segments/photo.jpg?token=xxx';
+        const url =
+          'https://xxx.supabase.co/storage/v1/object/sign/images/tenant-abc/segments/photo.jpg?token=xxx';
 
         await service.deleteSegmentImage(url, 'tenant-xyz');
 

@@ -15,13 +15,13 @@ Complete CI/CD pipeline for the MAIS multi-tenant business growth platform.
 
 ## Workflow Overview
 
-| Workflow | Trigger | Purpose | Duration |
-|----------|---------|---------|----------|
-| **PR Validation** | Pull requests to `main`/`develop` | Comprehensive testing & validation | ~8-12 min |
-| **Deploy Staging** | Push to `develop` | Deploy to staging environment | ~15-20 min |
-| **Deploy Production** | Push to `main` or version tags | Deploy to production | ~20-30 min |
-| **Cache Warmup** | Daily schedule / dependency changes | Pre-build dependencies | ~10-15 min |
-| **Database Maintenance** | Manual trigger | Database operations & migrations | Varies |
+| Workflow                 | Trigger                             | Purpose                            | Duration   |
+| ------------------------ | ----------------------------------- | ---------------------------------- | ---------- |
+| **PR Validation**        | Pull requests to `main`/`develop`   | Comprehensive testing & validation | ~8-12 min  |
+| **Deploy Staging**       | Push to `develop`                   | Deploy to staging environment      | ~15-20 min |
+| **Deploy Production**    | Push to `main` or version tags      | Deploy to production               | ~20-30 min |
+| **Cache Warmup**         | Daily schedule / dependency changes | Pre-build dependencies             | ~10-15 min |
+| **Database Maintenance** | Manual trigger                      | Database operations & migrations   | Varies     |
 
 ## Quick Start
 
@@ -42,12 +42,14 @@ Complete CI/CD pipeline for the MAIS multi-tenant business growth platform.
 ### Initial Setup
 
 1. **Configure GitHub Secrets:**
+
    ```bash
    # Navigate to: Settings → Secrets and variables → Actions
    # Add all required secrets (see section below)
    ```
 
 2. **Set up Environments:**
+
    ```bash
    # Navigate to: Settings → Environments
    # Create: staging, production, production-migrations
@@ -55,6 +57,7 @@ Complete CI/CD pipeline for the MAIS multi-tenant business growth platform.
    ```
 
 3. **Enable Workflows:**
+
    ```bash
    # Push workflow files to repository
    git add .github/workflows/
@@ -72,10 +75,12 @@ Complete CI/CD pipeline for the MAIS multi-tenant business growth platform.
 ### 1. PR Validation (`pr-validation.yml`)
 
 **Triggers:**
+
 - Pull requests to `main` or `develop` branches
 - Manual workflow dispatch
 
 **Jobs:**
+
 1. **Code Quality** - ESLint + Prettier (5 min)
 2. **TypeScript Check** - Full type validation (5 min)
 3. **Security Audit** - npm audit + Snyk (5 min)
@@ -86,6 +91,7 @@ Complete CI/CD pipeline for the MAIS multi-tenant business growth platform.
 8. **Migration Validation** - Prisma schema & migrations (10 min)
 
 **Branch Protection:**
+
 ```yaml
 Required status checks:
   - code-quality
@@ -98,6 +104,7 @@ Required status checks:
 ```
 
 **Features:**
+
 - Automatic PR comments on failure
 - Coverage reports uploaded to Codecov
 - Parallel job execution for speed
@@ -106,10 +113,12 @@ Required status checks:
 ### 2. Deploy Staging (`deploy-staging.yml`)
 
 **Triggers:**
+
 - Push to `develop` branch
 - Manual workflow dispatch (with options)
 
 **Deployment Flow:**
+
 ```mermaid
 graph LR
     A[Tests] --> B[Build]
@@ -120,9 +129,11 @@ graph LR
 ```
 
 **Manual Trigger Options:**
+
 - `skip_tests`: Emergency deploy without tests (use with caution)
 
 **Jobs:**
+
 1. **Pre-Deployment Tests** - Full test suite (15 min)
 2. **Build** - Production builds for all packages (10 min)
 3. **Migrate Database** - Run Prisma migrations on staging DB (10 min)
@@ -131,6 +142,7 @@ graph LR
 6. **E2E Staging** - Validate deployment with E2E tests (20 min)
 
 **Features:**
+
 - Health check retries with exponential backoff
 - Automatic rollback on failure
 - Smoke tests after deployment
@@ -139,16 +151,19 @@ graph LR
 ### 3. Deploy Production (`deploy-production.yml`)
 
 **Triggers:**
+
 - Push to `main` branch
 - Version tags (e.g., `v1.2.3`)
 - Manual workflow dispatch (with approvals)
 
 **Manual Trigger Options:**
+
 - `environment`: Target environment (default: production)
 - `skip_tests`: Emergency hotfix mode (default: false)
 - `run_migrations`: Run database migrations (default: true)
 
 **Jobs:**
+
 1. **Pre-Deployment Checks** - Version validation, breaking change detection (5 min)
 2. **Comprehensive Tests** - Full test suite including coverage (20 min)
 3. **Build Production** - Production-optimized builds (10 min)
@@ -158,12 +173,14 @@ graph LR
 7. **Post-Deployment Validation** - E2E tests against production (25 min)
 
 **Protection:**
+
 - **Environment approval required** for `production-migrations`
 - Breaking change detection in commits
 - Pre-migration backup verification
 - Comprehensive rollback instructions on failure
 
 **Features:**
+
 - Automatic GitHub Release creation on version tags
 - Rollback instructions artifact on failure
 - 30-day artifact retention
@@ -172,16 +189,19 @@ graph LR
 ### 4. Cache Warmup (`cache-warmup.yml`)
 
 **Triggers:**
+
 - Daily at 2 AM UTC (cron schedule)
 - Push to `main`/`develop` that changes dependencies
 - Manual workflow dispatch
 
 **Purpose:**
+
 - Pre-build and cache npm dependencies
 - Install and cache Playwright browsers
 - Speed up subsequent workflow runs by 50-70%
 
 **What Gets Cached:**
+
 - npm dependencies (node_modules)
 - Prisma Client generation
 - Playwright browser binaries
@@ -221,6 +241,7 @@ graph LR
    - Provides step-by-step recovery plan
 
 **Safety Features:**
+
 - All destructive operations require manual execution
 - Comprehensive documentation generated
 - Environment-specific protections
@@ -289,6 +310,7 @@ DISCORD_WEBHOOK_URL=your-discord-webhook
 ### How to Generate Secrets
 
 #### Vercel Token
+
 ```bash
 # Login to Vercel
 npx vercel login
@@ -302,6 +324,7 @@ npx vercel link
 ```
 
 #### Render Deploy Hook
+
 ```bash
 # Navigate to: Render Dashboard → Your Service → Settings
 # Scroll to: Deploy Hook
@@ -310,6 +333,7 @@ npx vercel link
 ```
 
 #### Database URLs (Supabase)
+
 ```bash
 # Navigate to: Supabase Dashboard → Project Settings → Database
 # Connection String → Transaction Mode (for DATABASE_URL)
@@ -364,6 +388,7 @@ Deployment branches:
 ```
 
 **Why separate migration environment?**
+
 - Database migrations are high-risk operations
 - Requires explicit approval from team members
 - Provides time to verify backup status
@@ -403,15 +428,15 @@ Deployment branches:
 
 ### Environment Differences
 
-| Aspect | Staging | Production |
-|--------|---------|------------|
-| Database | Supabase staging project | Supabase production project |
-| API Domain | staging-api.mais.app | api.mais.app |
-| Client Domain | staging.mais.app | mais.app, www.mais.app |
-| Approval Required | No | Yes (for migrations) |
-| Branch | develop | main |
-| Test Data | Seeded test data | Real customer data |
-| Monitoring | Basic logging | Full monitoring + alerts |
+| Aspect            | Staging                  | Production                  |
+| ----------------- | ------------------------ | --------------------------- |
+| Database          | Supabase staging project | Supabase production project |
+| API Domain        | staging-api.mais.app     | api.mais.app                |
+| Client Domain     | staging.mais.app         | mais.app, www.mais.app      |
+| Approval Required | No                       | Yes (for migrations)        |
+| Branch            | develop                  | main                        |
+| Test Data         | Seeded test data         | Real customer data          |
+| Monitoring        | Basic logging            | Full monitoring + alerts    |
 
 ## Troubleshooting
 
@@ -422,6 +447,7 @@ Deployment branches:
 **Cause:** PostgreSQL service container not ready
 
 **Solution:**
+
 ```yaml
 # Workflow already includes health checks
 options: >-
@@ -432,6 +458,7 @@ options: >-
 ```
 
 If issue persists:
+
 - Check DATABASE_URL format in workflow
 - Verify connection pool limits: `?connection_limit=10&pool_timeout=20`
 - Review test cleanup (connection leaks)
@@ -441,6 +468,7 @@ If issue persists:
 **Cause:** Schema changed but client not regenerated
 
 **Solution:**
+
 ```bash
 # Always run after schema changes:
 npm run --workspace=server prisma:generate
@@ -453,6 +481,7 @@ npm run --workspace=server prisma:generate
 **Cause:** Expired or incorrect Vercel token
 
 **Solution:**
+
 ```bash
 # Generate new token at:
 https://vercel.com/account/tokens
@@ -465,6 +494,7 @@ https://vercel.com/account/tokens
 **Cause:** Deploy hook not responding or service down
 
 **Solution:**
+
 ```bash
 # Check Render status:
 https://status.render.com
@@ -478,6 +508,7 @@ https://status.render.com
 **Cause:** API server failed to start in mock mode
 
 **Solution:**
+
 ```yaml
 # Check API startup logs in workflow
 # Verify JWT_SECRET is set
@@ -491,6 +522,7 @@ npx wait-on http://localhost:3001/health --timeout 60000
 **Cause:** Schema conflicts or invalid migration files
 
 **Solution:**
+
 ```bash
 # Locally test migrations:
 cd server
@@ -552,6 +584,7 @@ cd server && npx prisma migrate deploy
 ### For Developers
 
 1. **Test Locally First**
+
    ```bash
    # Before pushing:
    npm run lint
@@ -561,6 +594,7 @@ cd server && npx prisma migrate deploy
    ```
 
 2. **Meaningful Commit Messages**
+
    ```bash
    # Use conventional commits:
    feat(api): add package photo upload endpoint
@@ -581,6 +615,7 @@ cd server && npx prisma migrate deploy
 ### For DevOps
 
 1. **Secrets Rotation**
+
    ```bash
    # Rotate sensitive secrets quarterly:
    - Database passwords
@@ -619,6 +654,7 @@ cd server && npx prisma migrate deploy
 ### For Team Leads
 
 1. **Branch Protection Rules**
+
    ```yaml
    # Recommended settings for main branch:
    - Require pull request reviews: 1+

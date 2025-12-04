@@ -11,22 +11,24 @@ Your current landing page copy is **solid but conventional**. It follows the Sto
 
 ### Key Findings
 
-| Area | Current State | Opportunity |
-|------|--------------|-------------|
-| **Hero** | Good problem/solution | Could be more emotionally liberating |
-| **AI Positioning** | Implicit | Should be explicitly approachable |
-| **Partnership Model** | Mentioned in FAQ | Should be front-and-center differentiator |
-| **Community Feel** | Weak | Needs "collective" language throughout |
-| **Voice** | Professional | Could be warmer, more personal |
+| Area                  | Current State         | Opportunity                               |
+| --------------------- | --------------------- | ----------------------------------------- |
+| **Hero**              | Good problem/solution | Could be more emotionally liberating      |
+| **AI Positioning**    | Implicit              | Should be explicitly approachable         |
+| **Partnership Model** | Mentioned in FAQ      | Should be front-and-center differentiator |
+| **Community Feel**    | Weak                  | Needs "collective" language throughout    |
+| **Voice**             | Professional          | Could be warmer, more personal            |
 
 ---
 
 ## Section-by-Section Analysis & Recommendations
 
 ### 1. HERO SECTION
+
 **File:** `client/src/pages/Home/HeroSection.tsx`
 
 #### Current Copy
+
 - **Subheading:** "For business owners who want AI working for them—not the other way around"
 - **Headline:** "What if growing your business didn't mean losing your life?"
 - **Body:** "We become your AI-powered back office. You keep doing what you love. No employees. No tech stack to master. Just growth."
@@ -34,6 +36,7 @@ Your current landing page copy is **solid but conventional**. It follows the Sto
 - **CTA Subtext:** "Free 15-minute call. No pitch, just answers."
 
 #### Analysis
+
 ✅ **Strong:** The headline asks a provocative question that resonates
 ✅ **Strong:** "You keep doing what you love" is on-message
 ⚠️ **Needs Work:** "AI working for them" assumes they understand/want AI
@@ -44,6 +47,7 @@ Your current landing page copy is **solid but conventional**. It follows the Sto
 #### Recommended Rewrites
 
 **Option A - The Liberation Approach (Breezy-inspired)**
+
 ```
 Subheading: "For entrepreneurs who'd rather grow their business than manage it"
 
@@ -58,6 +62,7 @@ CTA Subtext: "Free 15-minute call. Real conversation, zero sales pitch."
 ```
 
 **Option B - The Partnership Approach**
+
 ```
 Subheading: "The growth partnership for entrepreneurs who want their time back"
 
@@ -73,6 +78,7 @@ CTA Subtext: "15-minute call. Just clarity."
 ```
 
 **Option C - The Plain-English AI Approach**
+
 ```
 Subheading: "AI-powered growth without the AI headache"
 
@@ -89,14 +95,17 @@ CTA Subtext: "Free strategy call. We'll show you exactly how it works."
 ---
 
 ### 2. PROBLEM SECTION
+
 **File:** `client/src/pages/Home/ProblemSection.tsx`
 
 #### Current Copy
+
 - **"Drowning in Admin"** - Started business to do what you love, now spending 60 hours on scheduling/invoices
 - **"Losing Leads"** - Competitors with better systems booking your potential clients
 - **"Burning Out"** - Wearing every hat isn't sustainable
 
 #### Analysis
+
 ✅ **Strong:** These pain points are accurate and relatable
 ✅ **Strong:** The transition "You didn't start a business for this" is powerful
 ⚠️ **Needs Work:** Missing the "AI overwhelm" pain point
@@ -105,6 +114,7 @@ CTA Subtext: "Free strategy call. We'll show you exactly how it works."
 #### Recommended Additions
 
 **Add a 4th pain point - The AI Overwhelm:**
+
 ```
 Title: "AI FOMO"
 
@@ -127,12 +137,15 @@ occasionally gets to do what you actually built this for."
 ---
 
 ### 3. STORY SECTION
+
 **File:** `client/src/pages/Home/StorySection.tsx`
 
 #### Current Copy
+
 The friend who closed her photography studio story—she was talented and booked solid but burned out on admin.
 
 #### Analysis
+
 ✅ **Strong:** Origin story creates emotional connection
 ✅ **Strong:** "She needed a partner" is on-message
 ⚠️ **Needs Work:** Could emphasize the AI angle more
@@ -150,6 +163,7 @@ for them."
 ```
 
 **Add AI-approachability paragraph:**
+
 ```
 "And here's the thing about AI that nobody tells you: you don't need to understand
 how it works to use it. You don't need to learn prompts or master new software.
@@ -160,14 +174,17 @@ That's what partnership means."
 ---
 
 ### 4. VALUE SECTION (Transformation)
+
 **File:** `client/src/pages/Home/ValueSection.tsx`
 
 #### Current Copy
+
 - Before: "15+ hours/week on admin" → After: "Your weekends back"
 - Before: "Feast or famine bookings" → After: "Consistent pipeline"
 - Before: "Guessing what works" → After: "Data-driven growth"
 
 #### Analysis
+
 ✅ **Strong:** Before/After format is effective
 ⚠️ **Needs Work:** "Data-driven growth" sounds technical
 ⚠️ **Needs Work:** Could be more emotionally resonant
@@ -197,12 +214,15 @@ No tech debt. Just tell us what you need—we make it happen."
 ---
 
 ### 5. TARGET AUDIENCE SECTION
+
 **File:** `client/src/pages/Home/TargetAudienceSection.tsx`
 
 #### Current Copy
+
 Three personas: The Solopreneur, The Scaling Startup, The Pivot Artist
 
 #### Analysis
+
 ✅ **Strong:** Persona approach is effective
 ⚠️ **Needs Work:** "Scaling Startup" doesn't feel like your core audience
 ❌ **Missing:** The "AI-Curious but Lost" persona
@@ -227,13 +247,16 @@ You Focus On: "Your clients. Your craft. Your life."
 ---
 
 ### 6. CLUB ADVANTAGE SECTION
+
 **File:** `client/src/pages/Home/ClubAdvantageSection.tsx`
 
 #### Current Copy
+
 - "Your Growth Partner, Not Another Tool"
 - "We don't hand you software and disappear. We partner in your success."
 
 #### Analysis
+
 ✅ **Strong:** This is the right positioning
 ⚠️ **Needs Work:** "Club" feel isn't fully realized
 ❌ **Missing:** Revenue-share model explanation here
@@ -266,12 +289,15 @@ You approve. They execute. Revenue grows. Simple."
 ---
 
 ### 7. HOW IT WORKS SECTION
+
 **File:** `client/src/pages/Home/HowItWorksSection.tsx`
 
 #### Current Copy
+
 Step 1: Discovery Call → Step 2: Custom Blueprint → Step 3: Launch & Partner
 
 #### Analysis
+
 ✅ **Strong:** Three-step process is clear
 ⚠️ **Needs Work:** Could emphasize the AI simplicity more
 ⚠️ **Needs Work:** "Launch & Partner" is vague
@@ -303,12 +329,15 @@ Badge: "True partnership"
 ---
 
 ### 8. FAQ SECTION
+
 **File:** `client/src/pages/Home/FAQSection.tsx`
 
 #### Current Copy
+
 Good coverage of revenue-sharing, existing websites, timeline, AI support, cancellation.
 
 #### Analysis
+
 ✅ **Strong:** Revenue-sharing explanation is clear
 ⚠️ **Needs Work:** Could add AI-specific questions
 
@@ -345,12 +374,15 @@ across the club (anonymized, of course). Rising tide lifts all boats."
 ---
 
 ### 9. LEAD MAGNET SECTION
+
 **File:** `client/src/pages/Home/LeadMagnetSection.tsx`
 
 #### Current Copy
+
 "The Admin Escape Plan" - 5 Systems Every Small Business Needs
 
 #### Analysis
+
 ✅ **Strong:** "Escape Plan" is action-oriented
 ⚠️ **Needs Work:** Could be more AI-specific to qualify leads
 
@@ -371,12 +403,15 @@ you can implement this week."
 ---
 
 ### 10. FINAL CTA SECTION
+
 **File:** `client/src/pages/Home/FinalCTASection.tsx`
 
 #### Current Copy
+
 "Ready to Stop Doing Everything Yourself?"
 
 #### Analysis
+
 ✅ **Strong:** Direct challenge
 ⚠️ **Needs Work:** Could emphasize the partnership more
 
@@ -403,20 +438,21 @@ Benefit Pills:
 
 ### 1. Language Shifts Throughout
 
-| **Stop Saying** | **Start Saying** |
-|----------------|------------------|
-| "Customers" | "Members" |
-| "Subscribe" | "Join" |
-| "Platform/Software" | "Club/Partnership" |
-| "AI-powered" | "Powered by AI you don't have to understand" |
-| "Sign up" | "Become a member" |
-| "Our solution" | "Our partnership" |
-| "Tech stack" | "Your AI toolkit" |
-| "Automation" | "Systems that work while you sleep" |
+| **Stop Saying**     | **Start Saying**                             |
+| ------------------- | -------------------------------------------- |
+| "Customers"         | "Members"                                    |
+| "Subscribe"         | "Join"                                       |
+| "Platform/Software" | "Club/Partnership"                           |
+| "AI-powered"        | "Powered by AI you don't have to understand" |
+| "Sign up"           | "Become a member"                            |
+| "Our solution"      | "Our partnership"                            |
+| "Tech stack"        | "Your AI toolkit"                            |
+| "Automation"        | "Systems that work while you sleep"          |
 
 ### 2. Add "Plain English AI" Positioning
 
 Weave throughout the page:
+
 - "No tech skills required"
 - "Explain what you want in your own words"
 - "AI that speaks your language"
@@ -425,6 +461,7 @@ Weave throughout the page:
 ### 3. Strengthen Revenue-Share Messaging
 
 Make these points **earlier** and **more prominent**:
+
 - "We only get paid when you grow"
 - "Zero monthly fees"
 - "Your success is our business model"
@@ -433,6 +470,7 @@ Make these points **earlier** and **more prominent**:
 ### 4. Build the "Collective" Feeling
 
 Add these elements:
+
 - Member count that feels like community size, not customer count
 - "Club" language consistently
 - Hints at member-to-member connections
@@ -442,6 +480,7 @@ Add these elements:
 ### 5. Address the AI-Overwhelmed Directly
 
 Create a dedicated section or weave throughout:
+
 - "You've heard AI is transforming business. You're not sure where to start. That's exactly why we exist."
 - "We've already done the AI research. We've tested the tools. We've built the systems. You just tell us what you need."
 
@@ -450,21 +489,25 @@ Create a dedicated section or weave throughout:
 ## Tone & Voice Guidelines
 
 ### Current Tone
+
 Professional, competent, slightly formal, solution-focused
 
 ### Recommended Tone Shifts
 
 **More conversational:**
+
 - Use contractions ("we're" not "we are")
 - Shorter sentences
 - Questions that feel like real conversation
 
 **More emotionally resonant:**
+
 - Paint vivid "before" pictures
 - Use specific scenarios over abstract benefits
 - Acknowledge the emotional weight of entrepreneurship
 
 **More partnership-focused:**
+
 - "We" language when talking about working together
 - "You" language when talking about their success
 - Less "our platform" and more "your growth"
@@ -472,9 +515,11 @@ Professional, competent, slightly formal, solution-focused
 ### Voice Examples
 
 **Current Style:**
+
 > "Our AI strategist support includes a dedicated strategist who handles your marketing campaigns, booking setup, website updates, and growth strategy."
 
 **Recommended Style:**
+
 > "Your strategist isn't a chatbot—they're a real person who learns your business, writes your campaigns, and actually cares if they work. Think of them as your marketing department, minus the $80k salary."
 
 ---
@@ -498,17 +543,20 @@ Professional, competent, slightly formal, solution-focused
 ## Priority Implementation Order
 
 ### Phase 1: Quick Wins (This Week)
+
 - Hero section rewrites
 - Add AI-FOMO problem card
 - FAQ additions
 - Language swap (customers → members)
 
 ### Phase 2: Section Enhancements (Next Week)
+
 - Value section transformation rewrites
 - How It Works section rewrites
 - Club Advantage revenue-share card
 
 ### Phase 3: New Content (Week 3)
+
 - New target persona (The AI-Curious)
 - Lead magnet alternative
 - Story section AI paragraph addition
@@ -531,6 +579,7 @@ From our Breezy AI research, these patterns resonate:
 ## Appendix: Key Phrases Bank
 
 ### For Hero/Headlines
+
 - "You handle the craft. We handle everything else."
 - "Your growth partner, not your software vendor."
 - "AI-powered growth without the AI headache."
@@ -538,6 +587,7 @@ From our Breezy AI research, these patterns resonate:
 - "The business partner you've always wanted."
 
 ### For Body Copy
+
 - "Tell us what you want in plain English—we build it."
 - "No coding. No learning curve. No 47-tab tech stack."
 - "We take a small cut of revenue we help generate."
@@ -545,6 +595,7 @@ From our Breezy AI research, these patterns resonate:
 - "Think of us as your behind-the-scenes tech team."
 
 ### For CTAs
+
 - "Join the club"
 - "Become a member"
 - "Let's talk growth"
@@ -552,6 +603,7 @@ From our Breezy AI research, these patterns resonate:
 - "See if we're a fit"
 
 ### For Trust/Risk Reversal
+
 - "Zero monthly fees"
 - "We only get paid when you grow"
 - "No upfront cost"
@@ -560,28 +612,32 @@ From our Breezy AI research, these patterns resonate:
 
 ---
 
-*Report generated by analyzing current MAIS landing page copy against Breezy AI patterns, SMB copywriting best practices, community membership positioning, and revenue-share model messaging frameworks.*
+_Report generated by analyzing current MAIS landing page copy against Breezy AI patterns, SMB copywriting best practices, community membership positioning, and revenue-share model messaging frameworks._
 
 ---
 
 ## REFINED DIRECTION (November 2025 Session)
 
 ### Target Niche Confirmed
+
 **Primary clients:** Horse farm rentals, elopement agencies, wedding photographers, event planners
 **Common thread:** High-value service businesses that run on **trust and timing**
 
 ### Core Offer Crystallized
 
 MAIS builds and runs a **3-tier online storefront** for service businesses:
+
 - Handles booking and payments end-to-end
 - Wraps with AI help for people who know they should be using AI but don't know where to start
 - Charges **monthly fee + percentage of sales** through the app
 - Positions as "skills of the collective" they're bringing on
 
 ### Primary CTA
+
 **"Book a Discovery Call"** - 20 minutes to see if a done-for-you AI storefront makes sense
 
 ### Tone Direction
+
 **Punchy and enterprise-grade** - think Donald Miller StoryBrand and "Stories That Stick"
 
 ---
@@ -591,18 +647,23 @@ MAIS builds and runs a **3-tier online storefront** for service businesses:
 ### HERO
 
 **Headline:**
+
 > AI-powered storefronts for high-value service businesses
 
 **Subheadline:**
+
 > MaconaI Solutions builds and runs a 3-tier online storefront for your services—booking, payments, and AI workflows included—so you sell more experiences without adding more admin.
 
 **Context line:**
+
 > Built for horse farm rentals, elopement agencies, wedding photographers, and event planners.
 
 **Primary CTA:**
+
 > Book a Discovery Call
 
 **CTA supporting line:**
+
 > 20 minutes to see if a done-for-you AI storefront makes sense for your business.
 
 ---
@@ -610,20 +671,24 @@ MAIS builds and runs a **3-tier online storefront** for service businesses:
 ### PROBLEM / EMPATHY
 
 **Section title:**
+
 > Your services are premium. Your systems shouldn't feel homemade.
 
 **Body:**
+
 > Your clients are ready to buy. They've found the right venue, date, or package.
 > Then things slow down: emails, DMs, questions, invoices, contracts, payment links.
 >
 > You know AI and automation could streamline this, but you don't have the time—or interest—to become a tech team. Meanwhile, opportunities leak out of your pipeline every week.
 
 **Pain bullets:**
+
 - Bookings scattered across email, Instagram, and text
 - Payments delayed by manual back-and-forth
 - Clients unsure which option to choose or what happens next
 
 **Close:**
+
 > MaconaI turns that chaos into a clean, trustworthy storefront your clients can actually buy from.
 
 ---
@@ -631,23 +696,29 @@ MAIS builds and runs a **3-tier online storefront** for service businesses:
 ### WHAT MACONAI DOES
 
 **Section title:**
+
 > A 3-tier storefront, designed for how people actually buy services
 
 **Intro:**
+
 > We design and operate a custom storefront for your business so clients can choose, book, and pay in one place—without you chasing them.
 
 **The three tiers:**
 
 **Tier 1 – Entry Offer**
+
 > A low-friction way for new clients to start working with you, without a big commitment.
 
 **Tier 2 – Core Package**
+
 > Your primary revenue driver, clearly framed so clients instantly understand what's included and why it's the obvious choice.
 
 **Tier 3 – Premium Experience**
+
 > A high-touch, high-ticket offer positioned for clients who want the full, elevated experience.
 
 **Supporting line:**
+
 > Each tier is backed by clear copy, smart intake forms, and automated follow-ups so fewer interested clients fall through the cracks.
 
 ---
@@ -655,21 +726,27 @@ MAIS builds and runs a **3-tier online storefront** for service businesses:
 ### THE PSYCHOLOGY BEHIND THE 3-TIER STOREFRONT
 
 **Section title:**
+
 > Why three tiers work better than "DM me for pricing"
 
 **Body:**
+
 > People don't like guessing. They want to feel in control, informed, and confident they're choosing the right level of service. A 3-tier storefront taps into that:
 
 **Clear choices reduce decision friction.**
+
 > With three well-defined options, clients can quickly see "which one is me" instead of feeling overwhelmed or confused.
 
 **A "middle" option anchors value.**
+
 > Most clients gravitate to the clearly positioned core package. The entry tier lowers the barrier to start; the premium tier signals what "top-shelf" looks like and makes your core offer feel like a smart, safe decision.
 
 **Transparency builds trust.**
+
 > Clear pricing, inclusions, and next steps reduce the anxiety that often stalls bookings—especially for high-emotion events like weddings or once-in-a-lifetime experiences.
 
 **Authority close:**
+
 > At MaconaI, we've done the research, tested the flows, and refined the wording. You're not starting from a blank page or guessing at what might work. You're plugging into a proven storefront pattern tuned for service businesses that sell trust, timing, and experience.
 
 ---
@@ -677,17 +754,21 @@ MAIS builds and runs a **3-tier online storefront** for service businesses:
 ### AI + "SKILLS OF THE COLLECTIVE"
 
 **Section title:**
+
 > You're not buying software. You're gaining a collective.
 
 **Body:**
+
 > When you join MaconaI Solutions, you're bringing on the skills of the collective—product, UX, and AI specialists who treat your booking flow like a revenue engine.
 
 **Behind the scenes, we use AI to:**
+
 - Qualify inquiries and collect key details before you ever get on a call
 - Answer common questions so you're not repeating yourself
 - Trigger reminders and follow-ups so clients don't drift between "interested" and "paid"
 
 **Close:**
+
 > You stay focused on delivering unforgettable experiences. We handle the invisible infrastructure.
 
 ---
@@ -695,15 +776,18 @@ MAIS builds and runs a **3-tier online storefront** for service businesses:
 ### PARTNERSHIP MODEL
 
 **Section title:**
+
 > A simple partnership that scales with your bookings
 
 **Body:**
+
 > MaconaI works like a growth partner, not just another SaaS tool.
 
 - A predictable monthly fee for hosting, maintenance, and ongoing optimization
 - A percentage of sales that go through your storefront
 
 **Close:**
+
 > If your storefront isn't producing, we feel it too. Our incentives are aligned with your growth.
 
 ---
@@ -711,9 +795,11 @@ MAIS builds and runs a **3-tier online storefront** for service businesses:
 ### FUTURE-STATE STORY (StoryBrand Style)
 
 **Section title:**
+
 > From inquiry to paid booking—without the chase
 
 **Narrative:**
+
 > A couple finds your elopement services. They land on a page with three clear options. They choose a package, see available dates, answer a few guided questions, sign the agreement, and pay a deposit—without a single email thread.
 >
 > You wake up to a notification: "New booking confirmed." Your calendar is fuller. Your inbox is quieter.
@@ -723,12 +809,15 @@ MAIS builds and runs a **3-tier online storefront** for service businesses:
 ### FINAL CTA
 
 **Headline:**
+
 > Ready for a storefront that sells while you serve?
 
 **Copy:**
+
 > If you're a service business owner who's serious about growth but done with duct-taped systems, MaconaI can help.
 
 **Button:**
+
 > Book a Discovery Call
 
 ---
@@ -736,41 +825,52 @@ MAIS builds and runs a **3-tier online storefront** for service businesses:
 ## KEY LESSONS FROM THIS SESSION
 
 ### 1. Separate Today's Value from Tomorrow's Vision
+
 - **Today (concrete):** Package catalog, photos, booking, payments, availability, admin dashboard
 - **Future (hint):** Agents proposing changes, automated promotions, config versioning
 - On landing page: "What you get on day one" vs. "Where this is going"
 
 ### 2. Make Internal Language External
-| Internal (Builder) | External (Customer) |
-|--------------------|---------------------|
-| Multi-tenant modular monolith | Your online storefront |
-| Config-driven | Customized for your business |
-| Agent-powered platform | AI that works behind the scenes |
-| Repository pattern | Reliable, tested systems |
+
+| Internal (Builder)            | External (Customer)             |
+| ----------------------------- | ------------------------------- |
+| Multi-tenant modular monolith | Your online storefront          |
+| Config-driven                 | Customized for your business    |
+| Agent-powered platform        | AI that works behind the scenes |
+| Repository pattern            | Reliable, tested systems        |
 
 ### 3. The 3-Tier Psychology is a Selling Point
+
 Don't just show three tiers—**explain why** they work:
+
 - Reduces decision friction
 - Anchors value with middle option
 - Builds trust through transparency
 - **Position MAIS as the expert:** "We've done the research"
 
 ### 4. "Skills of the Collective" Needs Concrete Outcomes
+
 Abstract: "You're partnering with a collective"
 Concrete: "Product, UX, and AI specialists who treat your booking flow like a revenue engine"
 
 ### 5. Revenue-Share Model is a Trust Signal
+
 Frame it as **alignment**, not pricing complexity:
+
 - "If your storefront isn't producing, we feel it too"
 - "Our incentives are aligned with your growth"
 - "We only win when you win"
 
 ### 6. The "Future State Story" Sells Better Than Features
+
 Instead of listing features, paint the transformation:
+
 > "You wake up to a notification: 'New booking confirmed.' Your calendar is fuller. Your inbox is quieter."
 
 ### 7. Address the AI-Curious Directly
+
 These people know AI is important but are paralyzed:
+
 - Don't assume they want AI
 - Don't explain how AI works
 - Show outcomes: "Qualify inquiries before you get on a call"
@@ -780,11 +880,13 @@ These people know AI is important but are paralyzed:
 ## COPY PRINCIPLES ESTABLISHED
 
 ### The "Enterprise-Grade But Human" Balance
+
 - **Enterprise:** Professional, authoritative, trustworthy
 - **Human:** Warm, conversational, relatable
 - **How:** Short sentences. Specific outcomes. Real scenarios.
 
 ### Pain Points for This Niche
+
 1. Bookings scattered across channels (email, IG, text)
 2. Payments delayed by manual back-and-forth
 3. Clients confused about options and next steps
@@ -792,11 +894,13 @@ These people know AI is important but are paralyzed:
 5. Systems feel "homemade" despite premium services
 
 ### Value Hierarchy
+
 1. **Primary:** Time back + more bookings (outcomes)
 2. **Secondary:** AI without the learning curve (enabler)
 3. **Tertiary:** Partnership model (trust signal)
 
 ### CTA Progression
+
 - **Hero:** "Book a Discovery Call" (commitment)
 - **Mid-page:** "See how it works" (education)
 - **Final:** "Book a Discovery Call" (repeat commitment)

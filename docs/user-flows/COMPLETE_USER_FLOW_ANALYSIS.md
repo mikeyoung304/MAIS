@@ -14,6 +14,7 @@ This document synthesizes the complete user experience across all four user type
 ### Document Structure
 
 This synthesis is built from four detailed journey documents:
+
 1. **[FOUNDER_JOURNEY.md](./FOUNDER_JOURNEY.md)** - Platform administration and tenant management (43KB)
 2. **[POTENTIAL_TENANT_JOURNEY.md](./POTENTIAL_TENANT_JOURNEY.md)** - Prospect acquisition and onboarding (35KB)
 3. **[TENANT_JOURNEY.md](./TENANT_JOURNEY.md)** - Member business management (55KB)
@@ -47,6 +48,7 @@ This synthesis is built from four detailed journey documents:
 **Access Level:** Platform-wide (all tenants, all data)
 
 **Journey Phases:**
+
 1. Platform initialization (environment setup, database migrations)
 2. Tenant onboarding (CLI tools, API key generation)
 3. Platform operations (monitoring, health checks)
@@ -54,6 +56,7 @@ This synthesis is built from four detailed journey documents:
 5. Advanced operations (secret rotation, incident response)
 
 **Key Capabilities:**
+
 - Create and manage all tenants
 - Generate API keys for tenants
 - Setup Stripe Connect accounts
@@ -76,6 +79,7 @@ This synthesis is built from four detailed journey documents:
 **Access Level:** None (not yet onboarded)
 
 **Journey Phases:**
+
 1. Awareness (marketing homepage, value propositions)
 2. Consideration (research, competitor comparison)
 3. Application (❌ **NOT IMPLEMENTED** - manual email contact)
@@ -87,6 +91,7 @@ This synthesis is built from four detailed journey documents:
 9. Advocacy (❌ **NOT IMPLEMENTED** - no referral program)
 
 **Key Gaps:**
+
 - ❌ No self-service signup form (marketing promises "5-minute application")
 - ❌ AI agent consultation system not implemented (despite marketing focus)
 - ❌ No lead nurturing or drip campaigns
@@ -105,6 +110,7 @@ This synthesis is built from four detailed journey documents:
 **Access Level:** Own tenant data only (strict multi-tenant isolation)
 
 **Journey Phases:**
+
 1. Onboarding (platform admin creates account)
 2. Initial setup (first login, dashboard access, branding configuration)
 3. Service configuration (packages, add-ons, photos, segments, availability)
@@ -113,6 +119,7 @@ This synthesis is built from four detailed journey documents:
 6. Growth & analytics (❌ **PARTIAL** - basic metrics, no AI agent support)
 
 **Key Capabilities:**
+
 - ✅ Complete branding customization (logo, 4 colors, 8 fonts)
 - ✅ Full package management (CRUD, photo gallery, 5 photos per package)
 - ✅ Segment-based catalog organization (Sprint 9)
@@ -139,6 +146,7 @@ This synthesis is built from four detailed journey documents:
 **Access Level:** Public (no authentication, tenant-scoped via API key)
 
 **Journey Stages:**
+
 1. Discovery (homepage, segments, widget embedding)
 2. Browse catalog (package cards, photo galleries)
 3. Package selection (detailed view, add-ons preview)
@@ -151,6 +159,7 @@ This synthesis is built from four detailed journey documents:
 10. Success page (polling, booking details)
 
 **Key Features:**
+
 - ✅ Tenant-scoped catalog (multi-tenant isolation)
 - ✅ Segment-based organization (Sprint 9)
 - ✅ Real-time availability (pessimistic locking)
@@ -174,24 +183,24 @@ This synthesis is built from four detailed journey documents:
 
 ## User Flow Comparison Matrix
 
-| Dimension | Founder/Admin | Potential Tenant | Tenant (Member) | Customer |
-|-----------|---------------|------------------|-----------------|----------|
-| **Access Scope** | Platform-wide | None | Own tenant only | Public (tenant-scoped) |
-| **Authentication** | JWT (PLATFORM_ADMIN) | None | JWT (tenant-scoped) | None |
-| **Primary Interface** | CLI + Admin API | Marketing site | Admin dashboard | Public catalog |
-| **Data Visibility** | All tenants | None | Own data only | Tenant's public packages |
-| **Technical Skill** | High | Medium | Low-Medium | Low |
-| **Onboarding Path** | Self (owner) | Manual (admin-provisioned) | Admin-provisioned | No onboarding |
-| **Revenue Impact** | Platform operations | Future revenue | Commission payer | Commission generator |
-| **Multi-Tenant Aware** | Yes (manages isolation) | N/A | No (isolated automatically) | No (transparent isolation) |
-| **Stripe Involvement** | Setup Connect accounts | None | Onboard to Connect | Payment processor |
-| **Commission Role** | Recipient | N/A | Payer (10-15%) | N/A (transparent) |
-| **Database Access** | Direct (migrations) | None | Via API only | Via API only |
-| **Can Create Tenants** | ✅ Yes | ❌ No | ❌ No | ❌ No |
-| **Can Manage Packages** | ✅ All tenants | ❌ No | ✅ Own tenant | ❌ No (view only) |
-| **Can Book Services** | ✅ Via admin | ❌ No | ⚠️ Limited | ✅ Primary flow |
-| **Sees Platform Metrics** | ✅ System-wide | ❌ No | ⚠️ Own metrics | ❌ No |
-| **Implementation Status** | ✅ 100% | ⚠️ 40% (gaps) | ✅ 95% | ✅ 100% |
+| Dimension                 | Founder/Admin           | Potential Tenant           | Tenant (Member)             | Customer                   |
+| ------------------------- | ----------------------- | -------------------------- | --------------------------- | -------------------------- |
+| **Access Scope**          | Platform-wide           | None                       | Own tenant only             | Public (tenant-scoped)     |
+| **Authentication**        | JWT (PLATFORM_ADMIN)    | None                       | JWT (tenant-scoped)         | None                       |
+| **Primary Interface**     | CLI + Admin API         | Marketing site             | Admin dashboard             | Public catalog             |
+| **Data Visibility**       | All tenants             | None                       | Own data only               | Tenant's public packages   |
+| **Technical Skill**       | High                    | Medium                     | Low-Medium                  | Low                        |
+| **Onboarding Path**       | Self (owner)            | Manual (admin-provisioned) | Admin-provisioned           | No onboarding              |
+| **Revenue Impact**        | Platform operations     | Future revenue             | Commission payer            | Commission generator       |
+| **Multi-Tenant Aware**    | Yes (manages isolation) | N/A                        | No (isolated automatically) | No (transparent isolation) |
+| **Stripe Involvement**    | Setup Connect accounts  | None                       | Onboard to Connect          | Payment processor          |
+| **Commission Role**       | Recipient               | N/A                        | Payer (10-15%)              | N/A (transparent)          |
+| **Database Access**       | Direct (migrations)     | None                       | Via API only                | Via API only               |
+| **Can Create Tenants**    | ✅ Yes                  | ❌ No                      | ❌ No                       | ❌ No                      |
+| **Can Manage Packages**   | ✅ All tenants          | ❌ No                      | ✅ Own tenant               | ❌ No (view only)          |
+| **Can Book Services**     | ✅ Via admin            | ❌ No                      | ⚠️ Limited                  | ✅ Primary flow            |
+| **Sees Platform Metrics** | ✅ System-wide          | ❌ No                      | ⚠️ Own metrics              | ❌ No                      |
+| **Implementation Status** | ✅ 100%                 | ⚠️ 40% (gaps)              | ✅ 95%                      | ✅ 100%                    |
 
 ### Key Insights from Matrix
 
@@ -240,11 +249,13 @@ This map shows which APIs, services, and databases each user type interacts with
 #### Founder/Platform Admin
 
 **Authentication Endpoints:**
+
 - `POST /v1/auth/login` - Login with email/password
 - `POST /v1/auth/logout` - Invalidate JWT token
 - `GET /v1/auth/me` - Get current admin user
 
 **Tenant Management:**
+
 - `POST /v1/admin/tenants` - Create new tenant (alternative to CLI)
 - `GET /v1/admin/tenants` - List all tenants (platform-wide)
 - `GET /v1/admin/tenants/:id` - Get tenant details
@@ -252,11 +263,13 @@ This map shows which APIs, services, and databases each user type interacts with
 - `DELETE /v1/admin/tenants/:id` - Deactivate tenant
 
 **Stripe Connect Management:**
+
 - `POST /v1/admin/tenants/:id/stripe/account` - Create Stripe Connect account
 - `POST /v1/admin/tenants/:id/stripe/onboarding` - Generate onboarding link
 - `GET /v1/admin/tenants/:id/stripe/status` - Check onboarding status
 
 **Platform Operations:**
+
 - `GET /health` - API health check
 - `GET /health/cache` - Redis cache health
 - `GET /v1/platform/stats` - Platform-wide metrics
@@ -264,6 +277,7 @@ This map shows which APIs, services, and databases each user type interacts with
 #### Potential Tenant (Prospect)
 
 **Marketing Endpoints:**
+
 - `GET /` - Homepage (React SPA)
 - `GET /about` - About page (future)
 - ❌ `POST /v1/leads` - Lead capture (NOT IMPLEMENTED)
@@ -273,15 +287,18 @@ This map shows which APIs, services, and databases each user type interacts with
 #### Tenant (Member)
 
 **Authentication:**
+
 - `POST /v1/tenant/login` - Tenant admin login
 - `POST /v1/tenant/logout` - Logout
 
 **Branding Management:**
+
 - `GET /v1/tenant/branding` - Get current branding config
 - `PUT /v1/tenant/branding` - Update branding (colors, fonts)
 - `POST /v1/tenant/branding/logo` - Upload logo (multipart/form-data)
 
 **Package Management:**
+
 - `GET /v1/tenant/packages` - List own packages
 - `POST /v1/tenant/packages` - Create package
 - `GET /v1/tenant/packages/:id` - Get package details
@@ -291,33 +308,39 @@ This map shows which APIs, services, and databases each user type interacts with
 - `DELETE /v1/tenant/packages/:id/photos/:photoId` - Delete photo
 
 **Segment Management (Sprint 9):**
+
 - `GET /v1/tenant/segments` - List segments
 - `POST /v1/tenant/segments` - Create segment
 - `PUT /v1/tenant/segments/:id` - Update segment
 - `DELETE /v1/tenant/segments/:id` - Delete segment
 
 **Add-On Management:**
+
 - `GET /v1/tenant/addons` - List add-ons
 - `POST /v1/tenant/addons` - Create add-on
 - `PUT /v1/tenant/addons/:id` - Update add-on
 - `DELETE /v1/tenant/addons/:id` - Delete add-on
 
 **Availability Management:**
+
 - `GET /v1/tenant/blackouts` - List blackout dates
 - `POST /v1/tenant/blackouts` - Create blackout
 - `DELETE /v1/tenant/blackouts/:id` - Delete blackout
 
 **Booking Management:**
+
 - `GET /v1/tenant/bookings` - List bookings (with filters)
 - `GET /v1/tenant/bookings/:id` - Get booking details
 
 **Stripe Connect:**
+
 - `GET /v1/tenant/stripe/status` - Check Connect onboarding status
 - `POST /v1/tenant/stripe/dashboard-link` - Generate Stripe dashboard link
 
 #### Customer (End User)
 
 **Public Catalog (Tenant-Scoped via X-Tenant-Key header):**
+
 - `GET /v1/packages` - List active packages
 - `GET /v1/packages/:slug` - Get package details with add-ons
 - `GET /v1/segments` - List active segments (Sprint 9)
@@ -325,14 +348,17 @@ This map shows which APIs, services, and databases each user type interacts with
 - `GET /v1/segments/:slug/packages` - List packages in segment
 
 **Availability:**
+
 - `POST /v1/availability/check` - Check date availability (single date)
 - `POST /v1/availability/batch` - Batch availability check (calendar)
 
 **Booking:**
+
 - `POST /v1/bookings` - Create checkout session (returns Stripe URL)
 - `GET /v1/bookings/:id/status` - Poll booking status after payment
 
 **Webhooks (Stripe):**
+
 - `POST /v1/webhooks/stripe` - Stripe webhook receiver (payment events)
 
 ### Services Layer
@@ -373,17 +399,17 @@ This map shows which APIs, services, and databases each user type interacts with
 
 **Service Touchpoints by User:**
 
-| Service | Founder | Prospect | Tenant | Customer |
-|---------|---------|----------|--------|----------|
-| CatalogService | ✅ Admin | ❌ | ✅ CRUD | ✅ Read |
-| BookingService | ✅ Admin | ❌ | ✅ View | ✅ Create |
-| AvailabilityService | ⚠️ Indirect | ❌ | ✅ Manage | ✅ Check |
-| IdentityService | ✅ Admin auth | ❌ | ✅ Tenant auth | ❌ |
-| PaymentProvider | ✅ Connect setup | ❌ | ✅ Connect onboard | ✅ Checkout |
-| NotificationService | ⚠️ Indirect | ❌ | ⚠️ Config | ✅ Receive |
-| CommissionService | ✅ Platform fee | ❌ | ⚠️ View | ❌ (transparent) |
-| UploadService | ⚠️ Indirect | ❌ | ✅ Logo/photos | ❌ |
-| SegmentService | ✅ Admin | ❌ | ✅ CRUD | ✅ Browse |
+| Service             | Founder          | Prospect | Tenant             | Customer         |
+| ------------------- | ---------------- | -------- | ------------------ | ---------------- |
+| CatalogService      | ✅ Admin         | ❌       | ✅ CRUD            | ✅ Read          |
+| BookingService      | ✅ Admin         | ❌       | ✅ View            | ✅ Create        |
+| AvailabilityService | ⚠️ Indirect      | ❌       | ✅ Manage          | ✅ Check         |
+| IdentityService     | ✅ Admin auth    | ❌       | ✅ Tenant auth     | ❌               |
+| PaymentProvider     | ✅ Connect setup | ❌       | ✅ Connect onboard | ✅ Checkout      |
+| NotificationService | ⚠️ Indirect      | ❌       | ⚠️ Config          | ✅ Receive       |
+| CommissionService   | ✅ Platform fee  | ❌       | ⚠️ View            | ❌ (transparent) |
+| UploadService       | ⚠️ Indirect      | ❌       | ✅ Logo/photos     | ❌               |
+| SegmentService      | ✅ Admin         | ❌       | ✅ CRUD            | ✅ Browse        |
 
 ---
 
@@ -440,21 +466,25 @@ Every request that accesses tenant data must resolve tenant context. Here's how 
 ### Multi-Tenant Isolation Guarantees
 
 **Row-Level Security:**
+
 - Every model (except `User`) has `tenantId` foreign key
 - All queries MUST filter by `tenantId` (enforced by repository interfaces)
 - No cross-tenant queries possible at application layer
 
 **API Key Scoping:**
+
 - Public keys (`pk_live_*`) embed tenant slug in key format
 - Secret keys (`sk_live_*`) stored as SHA-256 hashes with tenant association
 - API key validation happens before any data access
 
 **Cache Isolation:**
+
 - All cache keys include tenant ID: `catalog:${tenantId}:packages`
 - Redis caching (Sprint 10) with tenant-scoped TTL
 - No cache poisoning possible between tenants
 
 **Database Constraints:**
+
 - Unique constraints include `tenantId`: `@@unique([tenantId, slug])`
 - Foreign keys enforce tenant relationships
 - Prisma Client generates tenant-aware queries
@@ -462,6 +492,7 @@ Every request that accesses tenant data must resolve tenant context. Here's how 
 **Code Examples:**
 
 **File:** `/server/src/middleware/tenant.ts` (lines 1-120)
+
 ```typescript
 export const resolveTenant = async (req, res, next) => {
   const apiKey = req.headers['x-tenant-key'];
@@ -490,6 +521,7 @@ export const resolveTenant = async (req, res, next) => {
 ```
 
 **File:** `/server/src/lib/ports.ts` (lines 45-70)
+
 ```typescript
 // All repository methods REQUIRE tenantId as first parameter
 export interface PackageRepository {
@@ -505,14 +537,14 @@ export interface PackageRepository {
 
 Despite strict isolation, user actions do have cross-tenant effects:
 
-| Action | Actor | Cross-Tenant Effect |
-|--------|-------|---------------------|
-| Founder creates tenant | Founder | New tenant can now receive bookings |
-| Founder deactivates tenant | Founder | Tenant's customers can't book anymore |
-| Tenant creates package | Tenant | Customers can now book this package |
-| Tenant sets blackout date | Tenant | Customers can't book on that date |
-| Customer completes booking | Customer | Tenant receives commission, platform receives cut |
-| Stripe webhook confirms payment | System | Booking created, emails sent to tenant & customer |
+| Action                          | Actor    | Cross-Tenant Effect                               |
+| ------------------------------- | -------- | ------------------------------------------------- |
+| Founder creates tenant          | Founder  | New tenant can now receive bookings               |
+| Founder deactivates tenant      | Founder  | Tenant's customers can't book anymore             |
+| Tenant creates package          | Tenant   | Customers can now book this package               |
+| Tenant sets blackout date       | Tenant   | Customers can't book on that date                 |
+| Customer completes booking      | Customer | Tenant receives commission, platform receives cut |
+| Stripe webhook confirms payment | System   | Booking created, emails sent to tenant & customer |
 
 **Key Insight:** The multi-tenant architecture creates independent businesses that share infrastructure but never share data.
 
@@ -522,28 +554,29 @@ Despite strict isolation, user actions do have cross-tenant effects:
 
 ### Overall Platform Maturity: 9.8/10
 
-| Component | Status | Completeness | Notes |
-|-----------|--------|--------------|-------|
-| **Founder Flow** | ✅ Complete | 100% | CLI tools, admin APIs fully functional |
-| **Prospect Flow** | ⚠️ Partial | 40% | Marketing exists, no self-service signup |
-| **Tenant Flow** | ✅ Complete | 95% | Full dashboard, minor gaps in analytics |
-| **Customer Flow** | ✅ Complete | 100% | Primary business flow fully implemented |
-| **Multi-Tenant Architecture** | ✅ Complete | 100% | Row-level isolation, cache scoping robust |
-| **Authentication** | ✅ Complete | 100% | JWT for admins, API keys for public |
-| **Payment Processing** | ✅ Complete | 100% | Stripe Checkout + Connect integration |
-| **Double-Booking Prevention** | ✅ Complete | 100% | Three-layer defense with DB constraints |
-| **Email Notifications** | ✅ Complete | 90% | Postmark integration, file-sink fallback |
-| **Calendar Integration** | ⚠️ Partial | 70% | Google Calendar API, mock fallback |
-| **Mobile Responsiveness** | ✅ Complete | 100% | Sprint 8 deliverable, touch-optimized |
-| **Performance Optimization** | ✅ Complete | 100% | Sprint 10: Redis caching, 16 DB indexes |
-| **Security Hardening** | ✅ Complete | 70% | Sprint 10: OWASP compliance, input sanitization |
-| **Testing Infrastructure** | ✅ Complete | 92.2% | Sprint 10: 568/616 tests passing |
+| Component                     | Status      | Completeness | Notes                                           |
+| ----------------------------- | ----------- | ------------ | ----------------------------------------------- |
+| **Founder Flow**              | ✅ Complete | 100%         | CLI tools, admin APIs fully functional          |
+| **Prospect Flow**             | ⚠️ Partial  | 40%          | Marketing exists, no self-service signup        |
+| **Tenant Flow**               | ✅ Complete | 95%          | Full dashboard, minor gaps in analytics         |
+| **Customer Flow**             | ✅ Complete | 100%         | Primary business flow fully implemented         |
+| **Multi-Tenant Architecture** | ✅ Complete | 100%         | Row-level isolation, cache scoping robust       |
+| **Authentication**            | ✅ Complete | 100%         | JWT for admins, API keys for public             |
+| **Payment Processing**        | ✅ Complete | 100%         | Stripe Checkout + Connect integration           |
+| **Double-Booking Prevention** | ✅ Complete | 100%         | Three-layer defense with DB constraints         |
+| **Email Notifications**       | ✅ Complete | 90%          | Postmark integration, file-sink fallback        |
+| **Calendar Integration**      | ⚠️ Partial  | 70%          | Google Calendar API, mock fallback              |
+| **Mobile Responsiveness**     | ✅ Complete | 100%         | Sprint 8 deliverable, touch-optimized           |
+| **Performance Optimization**  | ✅ Complete | 100%         | Sprint 10: Redis caching, 16 DB indexes         |
+| **Security Hardening**        | ✅ Complete | 70%          | Sprint 10: OWASP compliance, input sanitization |
+| **Testing Infrastructure**    | ✅ Complete | 92.2%        | Sprint 10: 568/616 tests passing                |
 
 ### Feature Completeness by User Type
 
 #### Founder/Platform Admin: 100% ✅
 
 **Fully Implemented:**
+
 - ✅ Platform initialization (environment setup, database migrations)
 - ✅ Tenant creation (CLI + API)
 - ✅ API key generation (public/secret pairs)
@@ -553,6 +586,7 @@ Despite strict isolation, user actions do have cross-tenant effects:
 - ✅ Secret rotation procedures
 
 **Gaps:**
+
 - ⚠️ Platform admin dashboard UI (minimal, CLI-focused)
 - ⚠️ Real-time monitoring/alerting (Sentry integration planned)
 - ⚠️ Multi-admin support (single admin account currently)
@@ -560,11 +594,13 @@ Despite strict isolation, user actions do have cross-tenant effects:
 #### Potential Tenant (Prospect): 40% ⚠️
 
 **Fully Implemented:**
+
 - ✅ Marketing homepage with value props
 - ✅ Testimonials and social proof
 - ✅ CTAs leading to email contact
 
 **Critical Gaps:**
+
 - ❌ Self-service signup form (marketing promises "5-minute application")
 - ❌ Lead capture and CRM integration
 - ❌ Application review dashboard for founder
@@ -578,6 +614,7 @@ Despite strict isolation, user actions do have cross-tenant effects:
 #### Tenant (Member): 95% ✅
 
 **Fully Implemented:**
+
 - ✅ JWT authentication with rate limiting
 - ✅ Admin dashboard UI (React, TailwindCSS)
 - ✅ Complete branding customization (logo, 4 colors, 8 fonts)
@@ -590,6 +627,7 @@ Despite strict isolation, user actions do have cross-tenant effects:
 - ✅ Commission calculation and tracking
 
 **Minor Gaps:**
+
 - ⚠️ Email template customization (file-sink only, no UI)
 - ⚠️ Advanced analytics dashboard (basic metrics only)
 - ⚠️ AI agent proposals (not implemented despite marketing)
@@ -597,6 +635,7 @@ Despite strict isolation, user actions do have cross-tenant effects:
 #### Customer (End User): 100% ✅
 
 **Fully Implemented:**
+
 - ✅ Tenant-scoped catalog browsing
 - ✅ Segment-based organization
 - ✅ Package detail views with photo galleries
@@ -620,16 +659,19 @@ Despite strict isolation, user actions do have cross-tenant effects:
 ### Gap 1: Self-Service Tenant Signup ❌ CRITICAL
 
 **Current State:**
+
 - Marketing homepage promises "5-minute application"
 - CTAs lead to generic email contact
 - All onboarding is manual via CLI tools
 
 **Impact:**
+
 - **High friction** for prospect conversion
 - **Founder bottleneck** - can't scale without automation
 - **Marketing-reality mismatch** - damages trust
 
 **Recommendation:**
+
 1. **Phase 1 (4 weeks):** Build lead capture form with basic validation
    - Collect: business name, email, phone, business type, current revenue
    - Store in `ProspectLead` table
@@ -651,11 +693,13 @@ Despite strict isolation, user actions do have cross-tenant effects:
 ### Gap 2: AI Agent System ❌ CRITICAL (Marketing Mismatch)
 
 **Current State:**
+
 - Marketing heavily promotes "dedicated AI strategist" and "AI consulting"
 - Homepage features AI agent capabilities prominently
 - **NONE of this is implemented**
 
 **Impact:**
+
 - **Severe marketing-reality mismatch**
 - **Broken promises** to new tenants
 - **Churn risk** - tenants expect AI features
@@ -663,12 +707,14 @@ Despite strict isolation, user actions do have cross-tenant effects:
 **Options:**
 
 **Option A: Implement AI Agent System (16+ weeks)**
+
 - Build agent proposal system (Sprint 11+)
 - Train AI models on tenant business data
 - Create approval workflow for tenant admins
 - This is a MAJOR undertaking
 
 **Option B: De-Emphasize AI in Marketing (2 weeks)**
+
 - Rewrite homepage to focus on booking/payment automation
 - Position AI as "coming soon" or "beta access"
 - This is faster but requires rebranding
@@ -682,16 +728,19 @@ Despite strict isolation, user actions do have cross-tenant effects:
 ### Gap 3: Advanced Tenant Analytics ⚠️ MEDIUM
 
 **Current State:**
+
 - Tenants can view bookings in dashboard
 - No revenue trends, conversion rates, or customer insights
 - Basic metrics only (booking count, total revenue)
 
 **Impact:**
+
 - **Limited tenant value** - can't optimize business
 - **No data-driven decisions** - tenants flying blind
 - **Reduced stickiness** - lacks "aha moment" analytics
 
 **Recommendation:**
+
 1. **Phase 1 (6 weeks):** Revenue dashboard
    - Monthly revenue trends (line chart)
    - Booking conversion rate (funnel)
@@ -710,15 +759,18 @@ Despite strict isolation, user actions do have cross-tenant effects:
 ### Gap 4: Referral/Affiliate Program ❌ LOW
 
 **Current State:**
+
 - No referral incentives for tenants
 - No affiliate program for partners
 - No viral growth mechanics
 
 **Impact:**
+
 - **Slow organic growth** - no built-in virality
 - **Missed revenue opportunity** - affiliates could drive signups
 
 **Recommendation:**
+
 1. **Phase 1 (8 weeks):** Tenant referral program
    - Unique referral links per tenant
    - Track referrals in `TenantReferral` table
@@ -735,16 +787,19 @@ Despite strict isolation, user actions do have cross-tenant effects:
 ### Gap 5: Multi-Admin Support ⚠️ MEDIUM
 
 **Current State:**
+
 - Single platform admin account (`admin@example.com`)
 - No role-based access control (RBAC) for tenants
 - Tenants can't add staff members to their dashboard
 
 **Impact:**
+
 - **Founder single point of failure** - no backup admin
 - **Tenant limitation** - can't delegate to staff
 - **Security risk** - password sharing for tenant teams
 
 **Recommendation:**
+
 1. **Phase 1 (4 weeks):** Platform admin roles
    - Add `role` column to `User` model (PLATFORM_ADMIN, PLATFORM_VIEWER)
    - RBAC middleware for admin endpoints
@@ -818,6 +873,7 @@ STEP 5: Tenant Manages Booking
 ```
 
 **Files Touched:**
+
 1. `/server/prisma/seed.ts` - Tenant creation
 2. `/server/src/adapters/prisma/tenant.repository.ts` - Database insert
 3. `/server/src/lib/api-key.service.ts` - API key generation
@@ -915,12 +971,14 @@ STEP 4: Tenant Sees Booking in Dashboard
 ```
 
 **Timing:**
+
 - Webhook processed: ~1-3 seconds after payment
 - Email sent: ~5-10 seconds (async queue)
 - Calendar event: ~10-15 seconds (async queue)
 - Tenant sees booking: Immediately (if dashboard open), or on next login
 
 **Failure Handling:**
+
 - If webhook fails, Stripe retries automatically (exponential backoff)
 - If email fails, logged to error tracking (no user impact)
 - If calendar fails, booking still confirmed (graceful degradation)
@@ -1075,6 +1133,7 @@ pk_live_bellaweddings_abc123             pk_live_lunaevents_xyz789
 ```
 
 **Key Security Guarantees:**
+
 1. ✅ Tenant context ALWAYS resolved via API key
 2. ✅ All service methods REQUIRE tenantId parameter
 3. ✅ All database queries FILTER by tenantId
@@ -1187,6 +1246,7 @@ FINAL STATE:
 **Commission Calculation Logic:**
 
 **File:** `/server/src/services/commission.service.ts` (lines 15-45)
+
 ```typescript
 calculateCommission(totalAmount: number, tenantCommissionPercent: number) {
   // Commission rate is per-tenant (10-15%, default 12%)
@@ -1205,6 +1265,7 @@ calculateCommission(totalAmount: number, tenantCommissionPercent: number) {
 ```
 
 **Why Stripe Connect?**
+
 - ✅ Tenant receives direct payouts (no MAIS middleman for funds)
 - ✅ Platform commission automatic (no invoice/billing needed)
 - ✅ PCI compliance handled by Stripe (MAIS never sees card data)
@@ -1218,11 +1279,13 @@ calculateCommission(totalAmount: number, tenantCommissionPercent: number) {
 ### Insight 1: Customer Flow is Most Polished (100% Complete)
 
 **Why:**
+
 - This is the PRIMARY revenue generation mechanism
 - Every dollar flows through this path
 - Business dies if this flow is broken
 
 **Evidence:**
+
 - 100% test coverage for booking flow
 - Three-layer double-booking prevention
 - Mobile-responsive design (Sprint 8)
@@ -1235,11 +1298,13 @@ calculateCommission(totalAmount: number, tenantCommissionPercent: number) {
 ### Insight 2: Prospect Flow is Weakest Link (40% Complete)
 
 **Why:**
+
 - Platform initially admin-operated (not self-service)
 - Focus was on proving booking flow works BEFORE scaling
 - Marketing site created but no backend integration
 
 **Evidence:**
+
 - Marketing homepage promises "5-minute application"
 - NO lead capture form exists
 - NO self-service signup API
@@ -1254,11 +1319,13 @@ calculateCommission(totalAmount: number, tenantCommissionPercent: number) {
 ### Insight 3: Multi-Tenant Architecture is ROBUST (100% Complete)
 
 **Why:**
+
 - Security is non-negotiable for multi-tenant SaaS
 - Early investment in proper isolation patterns
 - Sprint 10 focused on hardening security (OWASP 70%)
 
 **Evidence:**
+
 - Row-level security on all models (tenantId foreign key)
 - Tenant middleware enforces context resolution
 - Repository interfaces REQUIRE tenantId parameter
@@ -1274,17 +1341,20 @@ calculateCommission(totalAmount: number, tenantCommissionPercent: number) {
 ### Insight 4: AI Agent System is Vaporware (0% Complete)
 
 **Why:**
+
 - Marketing positioning emphasizes AI consultation
 - "Dedicated AI strategist" is a key value prop
 - NONE of this backend exists
 
 **Evidence:**
+
 - No agent proposal system in codebase
 - No AI model integrations (OpenAI, Anthropic, etc.)
 - No agent-tenant communication channel
 - No tenant approval workflow for agent proposals
 
 **Implication:**
+
 - **Option A:** De-emphasize AI in marketing (2 weeks)
 - **Option B:** Build AI agent system (16+ weeks, major undertaking)
 
@@ -1295,11 +1365,13 @@ calculateCommission(totalAmount: number, tenantCommissionPercent: number) {
 ### Insight 5: Platform is Optimized for Technical Founders
 
 **Why:**
+
 - CLI-heavy operations (tenant creation, database migrations)
 - Minimal platform admin UI
 - Manual onboarding process
 
 **Evidence:**
+
 - `npm run create-tenant` is primary onboarding method
 - No web-based tenant creation form
 - Founder must understand Prisma, environment variables, PostgreSQL
@@ -1407,6 +1479,7 @@ calculateCommission(totalAmount: number, tenantCommissionPercent: number) {
 The MAIS platform demonstrates **strong technical foundations** (9.8/10 maturity) with robust multi-tenant architecture, complete customer booking flow, and production-ready security hardening. The platform is ready for demo user deployment.
 
 **Key Strengths:**
+
 - ✅ Customer flow is 100% complete (business-critical path works)
 - ✅ Multi-tenant isolation is robust (security guaranteed)
 - ✅ Payment processing with Stripe Connect is production-grade
@@ -1414,11 +1487,13 @@ The MAIS platform demonstrates **strong technical foundations** (9.8/10 maturity
 - ✅ Performance optimized (Sprint 10: Redis caching, indexes)
 
 **Critical Gaps:**
+
 - ❌ Prospect onboarding flow only 40% complete (founder bottleneck)
 - ❌ AI agent system not implemented (marketing-reality mismatch)
 - ⚠️ CLI-heavy operations (limits scalability)
 
 **Strategic Recommendation:**
+
 1. **Deploy to demo users NOW** (platform is ready)
 2. **Fix marketing integrity IMMEDIATELY** (de-emphasize AI)
 3. **Build self-service onboarding in Sprint 11** (unlock growth)
@@ -1442,6 +1517,7 @@ The platform has achieved technical excellence (Sprint 10) but must now focus on
 ---
 
 **Document Maintenance:**
+
 - Update this synthesis when new user flows are implemented
 - Re-run gap analysis after each sprint
 - Track implementation status changes in this document

@@ -169,18 +169,19 @@ async function testStripeConnect() {
     console.log('🧮 STEP 3: Test Commission Calculation\n');
 
     const testBookingAmount = 50000; // $500.00
-    const commission = await commissionService.calculateCommission(
-      testTenantId,
-      testBookingAmount
-    );
+    const commission = await commissionService.calculateCommission(testTenantId, testBookingAmount);
 
     console.log(`Booking Amount: $${(testBookingAmount / 100).toFixed(2)}`);
     console.log(`Commission Rate: ${commission.percent}%`);
-    console.log(`Commission Amount: $${(commission.amount / 100).toFixed(2)} (${commission.amount} cents)`);
+    console.log(
+      `Commission Amount: $${(commission.amount / 100).toFixed(2)} (${commission.amount} cents)`
+    );
     console.log(`Tenant Receives: $${((testBookingAmount - commission.amount) / 100).toFixed(2)}`);
 
     // Verify calculation
-    const expectedCommission = Math.ceil(testBookingAmount * (Number(tenant.commissionPercent) / 100));
+    const expectedCommission = Math.ceil(
+      testBookingAmount * (Number(tenant.commissionPercent) / 100)
+    );
     if (commission.amount !== expectedCommission) {
       throw new Error(
         `Commission calculation mismatch! Expected ${expectedCommission}, got ${commission.amount}`
@@ -197,8 +198,8 @@ async function testStripeConnect() {
 
     const breakdown = await commissionService.calculateBookingTotal(
       testTenantId,
-      50000,  // $500 package
-      []      // No add-ons for this test
+      50000, // $500 package
+      [] // No add-ons for this test
     );
 
     console.log('Booking Breakdown:');
@@ -206,7 +207,9 @@ async function testStripeConnect() {
     console.log(`  Add-ons Total:     $${(breakdown.addOnsTotal / 100).toFixed(2)}`);
     console.log(`  ─────────────────────────────────────`);
     console.log(`  Subtotal:          $${(breakdown.subtotal / 100).toFixed(2)}`);
-    console.log(`  Platform Fee:      $${(breakdown.commissionAmount / 100).toFixed(2)} (${breakdown.commissionPercent}%)`);
+    console.log(
+      `  Platform Fee:      $${(breakdown.commissionAmount / 100).toFixed(2)} (${breakdown.commissionPercent}%)`
+    );
     console.log(`  ─────────────────────────────────────`);
     console.log(`  Tenant Receives:   $${(breakdown.tenantReceives / 100).toFixed(2)}`);
 
@@ -253,7 +256,6 @@ async function testStripeConnect() {
       // Cancel the test payment intent (cleanup)
       await stripe.paymentIntents.cancel(paymentIntent.id);
       console.log(`✓ Cancelled test PaymentIntent (cleanup)`);
-
     } catch (error) {
       if (error instanceof Error) {
         console.error(`❌ Error creating PaymentIntent: ${error.message}`);
@@ -320,7 +322,6 @@ async function testStripeConnect() {
     console.log('  5. Test refund scenarios');
 
     process.exit(0);
-
   } catch (error) {
     console.error('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.error('❌ TEST FAILED');

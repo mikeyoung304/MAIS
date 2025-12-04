@@ -7,6 +7,7 @@ This document provides code examples for fixing the identified technical debt it
 ## 1. Hardcoded Environment Values - Before & After
 
 ### BEFORE: Hardcoded CORS Origins
+
 ```typescript
 // server/src/app.ts
 app.use(
@@ -32,11 +33,13 @@ app.use(
 ```
 
 ### AFTER: Configurable CORS Origins
+
 ```typescript
 // server/src/lib/core/config.ts
 const configSchema = z.object({
-  CORS_ORIGINS: z.string()
-    .transform(val => val.split(',').map(o => o.trim()))
+  CORS_ORIGINS: z
+    .string()
+    .transform((val) => val.split(',').map((o) => o.trim()))
     .default('http://localhost:5173,http://localhost:3000'),
   // ... other config
 });
@@ -46,13 +49,16 @@ export class ConfigurationService {
   private corsOrigins: Set<string> = new Set();
   private cache = new Map<string, any>();
 
-  constructor(private config: Config, private tenantRepo: TenantRepository) {
+  constructor(
+    private config: Config,
+    private tenantRepo: TenantRepository
+  ) {
     this.initializeOrigins();
   }
 
   private initializeOrigins() {
     // Load from env
-    this.config.CORS_ORIGINS.forEach(origin => this.corsOrigins.add(origin));
+    this.config.CORS_ORIGINS.forEach((origin) => this.corsOrigins.add(origin));
   }
 
   async getTenantOrigins(tenantId: string): Promise<string[]> {
@@ -61,7 +67,7 @@ export class ConfigurationService {
 
     const tenant = await this.tenantRepository.findById(tenantId);
     const origins = tenant?.config?.allowedOrigins || [];
-    
+
     this.cache.set(`tenant-origins:${tenantId}`, origins, 900000); // 15 min
     return origins;
   }
@@ -99,6 +105,7 @@ app.use(
 ## 2. Type-Safe JSON Columns - Before & After
 
 ### BEFORE: Unsafe JSON Casting
+
 ```typescript
 // server/src/routes/tenant-admin.routes.ts
 async getBranding(req: Request, res: Response): Promise<void> {
@@ -120,6 +127,7 @@ async getBranding(req: Request, res: Response): Promise<void> {
 ```
 
 ### AFTER: Type-Safe JSON Parsing
+
 ```typescript
 // server/src/types/branding.ts
 import { z } from 'zod';
@@ -162,6 +170,7 @@ async getBranding(req: Request, res: Response): Promise<void> {
 ## 3. Deprecated Dependencies - Before & After
 
 ### BEFORE: Using Deprecated node-cache
+
 ```typescript
 // server/src/lib/cache.ts
 import NodeCache from 'node-cache'; // DEPRECATED - memory leaks!
@@ -188,6 +197,7 @@ export class CacheService {
 ```
 
 ### AFTER: Using LRU Cache
+
 ```typescript
 // server/src/lib/cache.ts
 import { LRUCache } from 'lru-cache';
@@ -195,7 +205,8 @@ import { LRUCache } from 'lru-cache';
 export class CacheService {
   private cache: LRUCache<string, any>;
 
-  constructor(maxSize = 500, ttlMs = 300000) { // 5 minutes default
+  constructor(maxSize = 500, ttlMs = 300000) {
+    // 5 minutes default
     this.cache = new LRUCache<string, any>({
       max: maxSize, // 500 items max
       ttl: ttlMs,
@@ -261,6 +272,7 @@ export class CacheService {
 ## 4. Request Correlation & Error Context - Before & After
 
 ### BEFORE: Lost Error Context
+
 ```typescript
 // server/src/routes/tenant-admin.routes.ts
 async uploadLogo(req: Request, res: Response): Promise<void> {
@@ -280,6 +292,7 @@ async uploadLogo(req: Request, res: Response): Promise<void> {
 ```
 
 ### AFTER: With Request ID & Error Context
+
 ```typescript
 // server/src/types/error.ts
 import { z } from 'zod';
@@ -313,7 +326,7 @@ export function requestContextMiddleware(
   const requestId = crypto.randomUUID();
   res.locals.requestId = requestId;
   res.locals.requestStart = Date.now();
-  
+
   // Add to logger context
   res.locals.logger = logger.child({ requestId });
 
@@ -357,8 +370,8 @@ export function errorHandler(
     return res.status(error.statusCode).json({
       error: error.message,
       requestId,
-      ...(process.env.NODE_ENV === 'development' && { 
-        context: error.context 
+      ...(process.env.NODE_ENV === 'development' && {
+        context: error.context
       }),
     });
   }
@@ -376,8 +389,8 @@ export function errorHandler(
   res.status(500).json({
     error: 'Internal server error',
     requestId,
-    ...(process.env.NODE_ENV === 'development' && { 
-      message: error.message 
+    ...(process.env.NODE_ENV === 'development' && {
+      message: error.message
     }),
   });
 }
@@ -389,7 +402,7 @@ async uploadLogo(req: Request, res: Response): Promise<void> {
 
   try {
     const tenantId = res.locals.tenantId;
-    
+
     if (!req.file) {
       throw new AppError('No file uploaded', 400, {
         requestId,
@@ -400,7 +413,7 @@ async uploadLogo(req: Request, res: Response): Promise<void> {
     }
 
     const result = await uploadService.uploadLogo(req.file as any, tenantId);
-    
+
     logger.info({ filename: result.filename }, 'Logo uploaded successfully');
     res.status(200).json(result);
   } catch (error) {
@@ -432,6 +445,7 @@ async uploadLogo(req: Request, res: Response): Promise<void> {
 ## 5. Centralized Auth Middleware - Before & After
 
 ### BEFORE: Repeated Auth Logic
+
 ```typescript
 // server/src/routes/tenant-admin.routes.ts
 router.get('/branding', (req, res) => {
@@ -460,6 +474,7 @@ router.put('/branding', (req, res) => {
 ```
 
 ### AFTER: Centralized Middleware
+
 ```typescript
 // server/src/middleware/tenant-auth.ts
 import { Request, Response, NextFunction } from 'express';
@@ -472,13 +487,9 @@ export interface TenantAuthRequest extends Request {
   };
 }
 
-export function requireTenantAuth(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
+export function requireTenantAuth(req: Request, res: Response, next: NextFunction): void {
   const tenantAuth = res.locals.tenantAuth;
-  
+
   if (!tenantAuth) {
     res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
     return;
@@ -487,7 +498,7 @@ export function requireTenantAuth(
   // Attach to locals for easy access
   res.locals.tenantId = tenantAuth.tenantId;
   res.locals.logger = res.locals.logger?.child({ tenantId: tenantAuth.tenantId });
-  
+
   next();
 }
 
@@ -514,6 +525,7 @@ router.put('/branding', (req, res) => {
 ## 6. Type-Safe Error Handlers - Before & After
 
 ### BEFORE: Type Unsafe
+
 ```typescript
 // server/src/routes/tenant-admin.routes.ts
 function handleMulterError(
@@ -535,6 +547,7 @@ function handleMulterError(
 ```
 
 ### AFTER: Type Safe
+
 ```typescript
 // server/src/middleware/file-upload.ts
 import multer from 'multer';
@@ -547,12 +560,7 @@ export type FileUploadErrorHandler = (
   next: NextFunction
 ) => void;
 
-export const handleFileUploadError: FileUploadErrorHandler = (
-  error,
-  req,
-  res,
-  next
-): void => {
+export const handleFileUploadError: FileUploadErrorHandler = (error, req, res, next): void => {
   const logger = res.locals.logger;
 
   // Type guard for multer errors
@@ -561,37 +569,37 @@ export const handleFileUploadError: FileUploadErrorHandler = (
 
     switch (error.code) {
       case 'LIMIT_FILE_SIZE':
-        res.status(413).json({ 
+        res.status(413).json({
           error: 'File too large (max 5MB)',
-          code: 'FILE_SIZE_EXCEEDED'
+          code: 'FILE_SIZE_EXCEEDED',
         });
         return;
 
       case 'LIMIT_FILE_COUNT':
-        res.status(400).json({ 
+        res.status(400).json({
           error: 'Too many files',
-          code: 'FILE_COUNT_EXCEEDED'
+          code: 'FILE_COUNT_EXCEEDED',
         });
         return;
 
       case 'LIMIT_FIELD_KEY':
-        res.status(400).json({ 
+        res.status(400).json({
           error: 'Field name too long',
-          code: 'FIELD_NAME_TOO_LONG'
+          code: 'FIELD_NAME_TOO_LONG',
         });
         return;
 
       case 'LIMIT_FIELD_VALUE':
-        res.status(400).json({ 
+        res.status(400).json({
           error: 'Field value too long',
-          code: 'FIELD_VALUE_TOO_LONG'
+          code: 'FIELD_VALUE_TOO_LONG',
         });
         return;
 
       default:
-        res.status(400).json({ 
+        res.status(400).json({
           error: error.message,
-          code: 'FILE_UPLOAD_ERROR'
+          code: 'FILE_UPLOAD_ERROR',
         });
         return;
     }
@@ -600,9 +608,9 @@ export const handleFileUploadError: FileUploadErrorHandler = (
   // Type guard for generic errors
   if (error instanceof Error) {
     logger.error({ message: error.message }, 'File upload error');
-    res.status(400).json({ 
+    res.status(400).json({
       error: error.message,
-      code: 'UPLOAD_ERROR'
+      code: 'UPLOAD_ERROR',
     });
     return;
   }
@@ -630,6 +638,7 @@ router.post(
 ## 7. Configuration Service - Before & After
 
 ### BEFORE: Hardcoded Constants
+
 ```typescript
 // server/src/routes/tenant-admin.routes.ts
 const upload = multer({
@@ -650,6 +659,7 @@ export const adminLimiter = rateLimit({
 ```
 
 ### AFTER: Configurable Service
+
 ```typescript
 // server/src/services/configuration.service.ts
 export interface AppConfiguration {
@@ -749,4 +759,3 @@ These examples show how to fix the most impactful technical debt items. Implemen
 4. Remove deprecated dependencies
 5. Reduce code duplication
 6. Follow consistent architectural patterns
-

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "212"
+issue_id: '212'
 tags: [accessibility, a11y, images, landing-page, hero, resolved]
 dependencies: []
 ---
@@ -44,6 +44,7 @@ Background images are purely decorative to assistive technology. If the image pr
 ### Option A: Treat as Decorative (if applicable)
 
 If the background is purely aesthetic:
+
 ```typescript
 // No changes needed - background images are ignored by screen readers
 // This is acceptable if the headline/subheadline convey all meaning
@@ -52,6 +53,7 @@ If the background is purely aesthetic:
 ### Option B: Add ARIA Description
 
 If the image conveys meaning:
+
 ```typescript
 <section
   role="img"
@@ -65,6 +67,7 @@ If the image conveys meaning:
 ### Option C: Use Actual Image Element
 
 For maximum accessibility:
+
 ```typescript
 <section className="relative">
   {config.backgroundImageUrl && (
@@ -110,12 +113,14 @@ export const HeroSectionConfigSchema = z.object({
 **Rationale:** The headline and subheadline convey all meaningful content. The background image is purely aesthetic and provides visual atmosphere, not semantic information.
 
 **Implementation:** Added comprehensive accessibility comment to `HeroSection.tsx` explaining:
+
 1. Background image is decorative (correct screen reader behavior)
 2. Headline/subheadline provide semantic content
 3. Future path if background needs to be semantic (role="img" + aria-label)
 4. Reference to TODO-212 resolution
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/features/storefront/landing/sections/HeroSection.tsx`
 
 **Verification:** Client build successful (vite build passed).

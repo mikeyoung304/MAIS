@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "048"
+issue_id: '048'
 tags: [code-review, scheduling, react, frontend, bug, critical]
 dependencies: []
 ---
@@ -49,6 +49,7 @@ When using array index as key:
 ### React Key Requirements
 
 From React docs: "Keys should be stable, predictable, and unique. Using index as key only works if:
+
 - List is static (never reorders)
 - Items have no identity (like dividers)
 
@@ -64,6 +65,7 @@ Time slots have identity (`startTime`) and list changes (slots become unavailabl
 ## Proposed Solutions
 
 ### Option A: Use startTime as Key (Recommended)
+
 **Effort:** Trivial | **Risk:** None
 
 ```typescript
@@ -81,14 +83,17 @@ Time slots have identity (`startTime`) and list changes (slots become unavailabl
 ```
 
 **Pros:**
+
 - `startTime` is already unique per slot (ISO datetime string)
 - Zero risk, trivial change
 - Follows React best practices
 
 **Cons:**
+
 - None
 
 ### Option B: Composite Key
+
 **Effort:** Trivial | **Risk:** None
 
 If startTime could somehow repeat (edge case):
@@ -104,14 +109,17 @@ Implement **Option A** immediately - single line change with zero risk.
 ## Technical Details
 
 **File to Update:**
+
 - `client/src/features/scheduling/TimeSlotPicker.tsx:159`
 
 **Current Code:**
+
 ```typescript
-key={index}
+key = { index };
 ```
 
 **Fixed Code:**
+
 ```typescript
 key={slot.startTime}
 ```
@@ -125,8 +133,8 @@ key={slot.startTime}
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                           |
+| ---------- | ------- | ----------------------------------------------- |
 | 2025-11-27 | Created | Found during Code Quality review - BLOCKS MERGE |
 
 ## Resources

@@ -9,9 +9,7 @@
 
 import { Router } from 'express';
 import type { BookingService } from '../services/booking.service';
-import {
-  validateBookingToken,
-} from '../lib/booking-tokens';
+import { validateBookingToken } from '../lib/booking-tokens';
 import { logger } from '../lib/core/logger';
 import { handlePublicRouteError } from '../lib/public-route-error-handler';
 
@@ -42,10 +40,7 @@ export class PublicBalancePaymentController {
     const { tenantId, bookingId } = result.payload;
 
     // Create balance payment checkout
-    const checkout = await this.bookingService.createBalancePaymentCheckout(
-      tenantId,
-      bookingId
-    );
+    const checkout = await this.bookingService.createBalancePaymentCheckout(tenantId, bookingId);
 
     logger.info(
       { tenantId, bookingId, balanceAmountCents: checkout.balanceAmountCents },

@@ -1,4 +1,4 @@
-import { AlertCircle } from "lucide-react";
+import { AlertCircle } from 'lucide-react';
 
 interface ErrorAlertProps {
   message: string;
@@ -9,7 +9,7 @@ interface ErrorAlertProps {
  * Error alert component with warning icon
  * Used across admin and tenant-admin features for displaying error messages
  */
-export function ErrorAlert({ message, className = "" }: ErrorAlertProps) {
+export function ErrorAlert({ message, className = '' }: ErrorAlertProps) {
   return (
     <div
       role="alert"

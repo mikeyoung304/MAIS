@@ -1,5 +1,5 @@
 ---
-title: "Render Deployment: TypeScript Errors in Visual Editor Draft Operations"
+title: 'Render Deployment: TypeScript Errors in Visual Editor Draft Operations'
 date: 2025-12-02
 category: build-errors
 severity: high
@@ -26,9 +26,9 @@ root_cause: |
   2. Prisma.JsonNull used with type-only import (needs value import)
   3. Missing type assertions for conditional JSON field assignments
 trigger_commits:
-  - "37e9184: fix(visual-editor): address code review findings"
+  - '37e9184: fix(visual-editor): address code review findings'
 solution_commits:
-  - "bfcc00c: fix(build): resolve TypeScript errors for Render deployment"
+  - 'bfcc00c: fix(build): resolve TypeScript errors for Render deployment'
 ---
 
 # Render Deployment: TypeScript Errors in Visual Editor Draft Operations
@@ -81,6 +81,7 @@ photos: pkg.draftPhotos !== null ? pkg.draftPhotos : pkg.photos,
 ```
 
 Prisma distinguishes between:
+
 - `JsonValue` - output type when reading from database
 - `InputJsonValue` - input type when writing to database
 
@@ -93,7 +94,7 @@ The mock adapter used object spread on Package objects:
 ```typescript
 // BROKEN - spreads optional properties as undefined
 return Array.from(packages.values()).map((pkg) => ({
-  ...pkg,  // active?: boolean becomes boolean | undefined
+  ...pkg, // active?: boolean becomes boolean | undefined
   name: pkg.title,
   // ...
 }));
@@ -207,10 +208,10 @@ cd server && npm run build
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
+| File                                               | Changes                                     |
+| -------------------------------------------------- | ------------------------------------------- |
 | `server/src/adapters/prisma/catalog.repository.ts` | Import fix, type assertions, JsonNull usage |
-| `server/src/adapters/mock/index.ts` | Explicit property mapping in 2 methods |
+| `server/src/adapters/mock/index.ts`                | Explicit property mapping in 2 methods      |
 
 ## Commit
 

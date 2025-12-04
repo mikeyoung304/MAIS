@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "049"
+issue_id: '049'
 tags: [code-review, scheduling, validation, dos-prevention]
 dependencies: []
 ---
@@ -46,6 +46,7 @@ while (currentTime < endTime) {
 ## Proposed Solutions
 
 ### Option A: Add Zod Range Validation (Recommended)
+
 **Effort:** Trivial | **Risk:** None
 
 ```typescript
@@ -59,6 +60,7 @@ bufferMinutes: z.number().int().min(0).max(240),    // 0 to 4 hours
 ## Technical Details
 
 **Files to Update:**
+
 - `packages/contracts/src/dto.ts` - CreateServiceDtoSchema, UpdateServiceDtoSchema
 
 ## Acceptance Criteria
@@ -70,6 +72,6 @@ bufferMinutes: z.number().int().min(0).max(240),    // 0 to 4 hours
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                 |
+| ---------- | ------- | ------------------------------------- |
 | 2025-11-27 | Created | Found during Security Sentinel review |

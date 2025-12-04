@@ -8,11 +8,11 @@
  * - Settings
  */
 
-import { useEffect, useState } from "react";
-import { TenantDashboard as TenantDashboardComponent } from "../../features/tenant-admin/TenantDashboard";
-import { useAuth } from "../../contexts/AuthContext";
-import { api } from "../../lib/api";
-import { logger } from "../../lib/logger";
+import { useEffect, useState } from 'react';
+import { TenantDashboard as TenantDashboardComponent } from '../../features/tenant-admin/TenantDashboard';
+import { useAuth } from '../../contexts/AuthContext';
+import { api } from '../../lib/api';
+import { logger } from '../../lib/logger';
 
 type TenantDto = {
   id: string;
@@ -39,13 +39,13 @@ export function TenantAdminDashboard() {
           setTenantInfo(result.body);
         }
       } catch (error) {
-        logger.error("Failed to load tenant info", { error, component: "TenantAdminDashboard" });
+        logger.error('Failed to load tenant info', { error, component: 'TenantAdminDashboard' });
       } finally {
         setIsLoadingInfo(false);
       }
     };
 
-    if (user?.role === "TENANT_ADMIN") {
+    if (user?.role === 'TENANT_ADMIN') {
       fetchTenantInfo();
     }
   }, [user]);

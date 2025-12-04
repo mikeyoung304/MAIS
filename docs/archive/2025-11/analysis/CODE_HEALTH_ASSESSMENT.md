@@ -22,6 +22,7 @@ The Elope codebase is a well-structured monorepo with strong foundations in arch
 ### 1.1 Cyclomatic Complexity Analysis
 
 **Findings:**
+
 - **Large files identified:**
   - `tenant-admin.routes.ts` (704 lines) - HIGH complexity
   - `catalog.service.ts` (350 lines) - MEDIUM-HIGH complexity
@@ -31,11 +32,13 @@ The Elope codebase is a well-structured monorepo with strong foundations in arch
   - `catalog.repository.ts` (305 lines) - MEDIUM complexity
 
 **Issues:**
+
 - Routes file (704 lines) handles multiple concerns: validation, error handling, file uploads, business logic
 - Service files exceed recommended 200-300 line threshold for single responsibility
 - Missing function-level complexity metrics (no static analysis tool configured)
 
 **Recommendation:**
+
 - Break `tenant-admin.routes.ts` into multiple specialized route handlers
 - Extract validation logic into dedicated middleware
 - Split large services into focused domain objects
@@ -45,6 +48,7 @@ The Elope codebase is a well-structured monorepo with strong foundations in arch
 ### 1.2 Code Duplication (DRY Violations)
 
 **Critical Findings:**
+
 - **Validation schemas repeated** across routes (~50+ instances of `res.status()` patterns)
 - **Error handling boilerplate** duplicated in every route handler
   ```typescript
@@ -62,6 +66,7 @@ The Elope codebase is a well-structured monorepo with strong foundations in arch
 **Severity:** MEDIUM-HIGH
 
 **Recommended Solutions:**
+
 - Create centralized error response helper
 - Use ts-rest contract middleware for automatic validation
 - Extract tenant isolation into repository base class
@@ -74,22 +79,26 @@ The Elope codebase is a well-structured monorepo with strong foundations in arch
 **Identified Issues:**
 
 **Unused Imports:**
+
 ```typescript
 // From tenant-admin.routes.ts line 10
-import { ZodError } from 'zod';  // ❌ Never used, validation delegated elsewhere
+import { ZodError } from 'zod'; // ❌ Never used, validation delegated elsewhere
 ```
 
 **Orphaned Code:**
+
 - `gcal.adapter.ts` (11.26% coverage) - Calendar integration incomplete
 - `stripe.adapter.ts` (9.41% coverage) - Payment adapter partially stubbed
 - `gcal.jwt.ts` (2.08% coverage) - JWT handling unreachable
 - Entire `types/prisma-json.ts` (0% coverage) - Type definitions only
 
 **Dead Routes:**
+
 - `/dev/reset` endpoint exists but marked as development-only
 - Several adapter files included in DI but never instantiated in production
 
 **Action Items:**
+
 - Remove or complete calendar integration (gcal)
 - Clarify stripe adapter usage vs. stripe-connect service
 - Archive orphaned files to `_deprecated` folder
@@ -100,6 +109,7 @@ import { ZodError } from 'zod';  // ❌ Never used, validation delegated elsewhe
 ### 1.4 TypeScript Strict Mode Compliance
 
 **Configuration Status:**
+
 ```json
 ✅ "strict": true (Enabled globally)
 ✅ "noImplicitReturns": true
@@ -110,6 +120,7 @@ import { ZodError } from 'zod';  // ❌ Never used, validation delegated elsewhe
 ```
 
 **ESLint Type Safety Rules:**
+
 ```javascript
 ✅ '@typescript-eslint/no-explicit-any': 'error'
 ✅ '@typescript-eslint/no-non-null-assertion': 'error'
@@ -118,6 +129,7 @@ import { ZodError } from 'zod';  // ❌ Never used, validation delegated elsewhe
 ```
 
 **Type Safety Violations (116 instances found):**
+
 ```typescript
 // VIOLATION 1: Direct 'any' casting
 const result = await uploadService.uploadLogo(req.file as any, tenantId);
@@ -136,6 +148,7 @@ async uploadLogo(req: Request, res: Response): Promise<void> {
 ```
 
 **Issues Found:**
+
 - 116 `any` casts needed due to JSON column handling in Prisma
 - Prisma's JSON type returns `JsonValue` but database stores union types
 - Type guards for `tenant.branding` and `tenant.secrets` repetitive
@@ -144,6 +157,7 @@ async uploadLogo(req: Request, res: Response): Promise<void> {
 Prisma's `Json` column type is too permissive. Solution requires type-safe JSON schemas.
 
 **Recommended Approach:**
+
 ```typescript
 // Create strongly-typed JSON serializers
 type BrandingConfig = {
@@ -168,6 +182,7 @@ function getBranding(tenant: Tenant): BrandingConfig {
 ```
 
 **Action Items (Priority: MEDIUM):**
+
 - Enable `noUnusedLocals` and `noUnusedParameters` in server tsconfig.json
 - Create type-safe JSON validators for all Prisma JSON columns
 - Replace all `as any` casts with proper type guards
@@ -178,6 +193,7 @@ function getBranding(tenant: Tenant): BrandingConfig {
 ### 1.5 Test Coverage Gap Analysis
 
 **Current Coverage Metrics:**
+
 ```
 Overall:           51.15% statements (Target: 80%)
   Lines:           42.35% (Target: 80%)
@@ -187,7 +203,7 @@ Overall:           51.15% statements (Target: 80%)
 
 Critical Areas:
   src/adapters:    7.83% coverage ⚠️  CRITICAL
-  src/controllers: 2.99% coverage ⚠️  CRITICAL  
+  src/controllers: 2.99% coverage ⚠️  CRITICAL
   src/types:       0% coverage (TYPE-ONLY)
   src/lib:         43.41% coverage ⚠️  MEDIUM-HIGH
   src/routes:      31.75% coverage ⚠️  MEDIUM-HIGH
@@ -217,28 +233,30 @@ Well-Tested Areas:
    - Error paths underdeveloped
 
 4. **Critical Test Gaps Identified:**
+
    ```typescript
    // Missing Coverage:
-   
+
    // 1. Multi-tenant data isolation
    // ✗ No tests verify tenant A can't access tenant B's bookings
-   
+
    // 2. Commission calculation accuracy
    // ✗ Edge cases: rounding, currency conversion not tested
-   
+
    // 3. Stripe webhook race conditions
    // ✗ 8+ test cases SKIPPED due to flakiness
    // ✗ No handling for concurrent payment events
-   
+
    // 4. Cascading delete operations
    // ✗ Orphaned payment records when tenant deleted?
    // ✗ Add-on deletion impact on bookings untested
-   
+
    // 5. Database transaction integrity
    // ✗ Multiple SKIPPED tests cite transaction deadlocks
    ```
 
 **Test Debt Issues:**
+
 - 30+ integration tests marked SKIPPED with TODO comments
 - Test database has data contamination issues (tests failing due to test pollution)
 - Race condition tests flaky and unreliable
@@ -246,11 +264,11 @@ Well-Tested Areas:
 
 **Coverage Targets by Phase:**
 
-| Phase | Target | Focus Area | Current |
-|-------|--------|-----------|---------|
-| **Pre-Launch** | 70% | Routes, services, auth | 51% ⚠️ |
-| **1-Month** | 80% | All business logic | TBD |
-| **3-Month** | 85% | Edge cases, integration | TBD |
+| Phase          | Target | Focus Area              | Current |
+| -------------- | ------ | ----------------------- | ------- |
+| **Pre-Launch** | 70%    | Routes, services, auth  | 51% ⚠️  |
+| **1-Month**    | 80%    | All business logic      | TBD     |
+| **3-Month**    | 85%    | Edge cases, integration | TBD     |
 
 ---
 
@@ -259,6 +277,7 @@ Well-Tested Areas:
 ### 2.1 Outdated Packages & Security Vulnerabilities
 
 **Critical Security Issue Found:**
+
 ```
 Severity: MODERATE
 Package: js-yaml <4.1.1
@@ -269,20 +288,21 @@ Status: FIXABLE
 
 **Outdated Dependencies Report:**
 
-| Category | Package | Current | Latest | Action |
-|----------|---------|---------|--------|--------|
-| **Critical** | @prisma/client | 6.18.0 | 6.19.0 | Update |
-| **Critical** | prisma | 6.18.0 | 6.19.0 | Update |
-| **High** | stripe | 19.1.0 | 19.3.1 | Update (payment provider!) |
-| **High** | react | 18.3.1 | 19.2.0 | Defer (stability) |
-| **High** | express | 4.21.2 | 5.1.0 | Defer (breaking changes) |
-| **Medium** | @typescript-eslint/* | 7.x | 8.x | Plan for next sprint |
-| **Medium** | tailwindcss | 3.4.18 | 4.1.17 | Defer (major version) |
-| **Medium** | vite | 6.4.1 | 7.2.2 | Plan migration |
-| **Medium** | vitest | 3.2.4 | 4.0.9 | Plan migration |
-| **Low** | Various @radix-ui/* | Mixed | Current | Update minor versions |
+| Category     | Package               | Current | Latest  | Action                     |
+| ------------ | --------------------- | ------- | ------- | -------------------------- |
+| **Critical** | @prisma/client        | 6.18.0  | 6.19.0  | Update                     |
+| **Critical** | prisma                | 6.18.0  | 6.19.0  | Update                     |
+| **High**     | stripe                | 19.1.0  | 19.3.1  | Update (payment provider!) |
+| **High**     | react                 | 18.3.1  | 19.2.0  | Defer (stability)          |
+| **High**     | express               | 4.21.2  | 5.1.0   | Defer (breaking changes)   |
+| **Medium**   | @typescript-eslint/\* | 7.x     | 8.x     | Plan for next sprint       |
+| **Medium**   | tailwindcss           | 3.4.18  | 4.1.17  | Defer (major version)      |
+| **Medium**   | vite                  | 6.4.1   | 7.2.2   | Plan migration             |
+| **Medium**   | vitest                | 3.2.4   | 4.0.9   | Plan migration             |
+| **Low**      | Various @radix-ui/\*  | Mixed   | Current | Update minor versions      |
 
 **Immediate Actions Required:**
+
 ```bash
 # 1. Fix prototype pollution (SECURITY)
 npm audit fix  # Fixes js-yaml
@@ -295,6 +315,7 @@ npm update @prisma/client prisma  # 6.18.0 → 6.19.0
 ```
 
 **Deferred Updates:**
+
 - React 19: Wait for ecosystem stabilization (3-month plan)
 - Express 5: Major breaking changes require testing (4-month plan)
 - Tailwind CSS 4: Wait for widespread adoption (2-month plan)
@@ -304,6 +325,7 @@ npm update @prisma/client prisma  # 6.18.0 → 6.19.0
 ### 2.2 Heavy Dependency Analysis
 
 **Monorepo Dependencies:**
+
 ```
 Total npm packages: 200+
 Production dependencies: 15 core (well-managed)
@@ -311,6 +333,7 @@ Dev dependencies: 25+ (mostly build/test tools)
 ```
 
 **Large/Heavy Dependencies:**
+
 ```
 pino@10.1.0                    ~60KB  Logging (essential)
 prisma@6.18.0 + @prisma/client ~300MB  ORM (necessary for features)
@@ -321,12 +344,14 @@ zod@4.1.12                     ~30KB  Validation (lightweight)
 ```
 
 **Candidate Replacements (Not Recommended):**
+
 - ❌ Pino → Winston/Bunyan: Already optimized for production
 - ❌ Prisma → TypeORM/Sequelize: Monorepo support better, migrations more stable
 - ❌ Express → Fastify: Consider ONLY if performance critical (not currently)
 - ❌ Zod → io-ts: Zod more ergonomic, similar bundle size
 
 **Bundling Strategy:**
+
 - Client: No critical performance issues yet
 - Server: Running on Node.js, bundle size irrelevant
 
@@ -338,15 +363,16 @@ zod@4.1.12                     ~30KB  Validation (lightweight)
 
 **Multiple Packages Doing Similar Things:**
 
-| Function | Package 1 | Package 2 | Recommendation |
-|----------|-----------|-----------|-----------------|
-| **Logging** | pino | console.log | CONSOLIDATE: Replace all `console.*` with logger |
-| **Validation** | Zod | ts-rest types | KEEP BOTH: ts-rest for routes, Zod for business logic |
-| **Cache** | node-cache | In-memory | ACCEPTABLE: node-cache good for simple use case |
-| **Auth** | JWT (manual) | No middleware | IMPROVE: Consider passport.js later |
-| **API types** | ts-rest/core | OpenAPI types | INTEGRATED: Good separation |
+| Function       | Package 1    | Package 2     | Recommendation                                        |
+| -------------- | ------------ | ------------- | ----------------------------------------------------- |
+| **Logging**    | pino         | console.log   | CONSOLIDATE: Replace all `console.*` with logger      |
+| **Validation** | Zod          | ts-rest types | KEEP BOTH: ts-rest for routes, Zod for business logic |
+| **Cache**      | node-cache   | In-memory     | ACCEPTABLE: node-cache good for simple use case       |
+| **Auth**       | JWT (manual) | No middleware | IMPROVE: Consider passport.js later                   |
+| **API types**  | ts-rest/core | OpenAPI types | INTEGRATED: Good separation                           |
 
 **Action Items:**
+
 - Remove console.log usage, route through logger
 - Consider unified auth middleware in future
 - Cache strategy is adequate for current scale
@@ -372,12 +398,14 @@ export function createDependencies() {
 
 **Assessment:**
 ✅ **Strengths:**
+
 - No external DI framework dependency
 - Explicit dependency graph visible in single file
 - Type-safe (all dependencies typed)
 - Testable (easy to inject mocks)
 
 ❌ **Weaknesses:**
+
 - Manual wiring is error-prone with 20+ services
 - Difficult to track circular dependencies
 - No lazy loading (all services instantiated)
@@ -387,6 +415,7 @@ export function createDependencies() {
 
 **Recommendation:**
 Keep current approach for stability. Future improvement:
+
 ```typescript
 // Future: Consider class-based DI (tsyringe or similar)
 // But only if service count exceeds 30
@@ -403,6 +432,7 @@ Keep current approach for stability. Future improvement:
 Searched 27 files with Prisma queries. Found potential N+1 in:
 
 **High Risk Files:**
+
 ```typescript
 // 1. catalog.repository.ts
 // ⚠️ Finding package with add-ons
@@ -429,6 +459,7 @@ const logs = await db.configChangeLog.findMany({
 ```
 
 **Impact Estimate:**
+
 - Catalog queries: ~2-5 extra queries per booking (MEDIUM impact)
 - Booking details: ~3-8 extra queries per view (MEDIUM impact)
 - Audit logs: Affects admin dashboard load time (LOW impact)
@@ -459,6 +490,7 @@ const packages = await db.package.findMany({
 ```
 
 **Action Items:**
+
 1. Audit all `.findMany()` and `.findUnique()` calls
 2. Add `include:` clauses to prevent N+1
 3. Add Prisma query optimization test
@@ -471,6 +503,7 @@ const packages = await db.package.findMany({
 **Schema Analysis of `/server/src/generated/prisma/schema.prisma`:**
 
 **Well-Indexed:**
+
 ```prisma
 ✅ Tenant: slug, apiKeyPublic, isActive
 ✅ Package: tenantId (compound), tenantId + active (compound)
@@ -480,6 +513,7 @@ const packages = await db.package.findMany({
 ```
 
 **Potentially Missing Indexes:**
+
 ```prisma
 // 1. User table - missing tenant admin lookups
 model User {
@@ -529,7 +563,7 @@ Add 3-4 strategic indexes to optimize query performance:
 ```prisma
 // Migration commands:
 @@index([tenantId, role])        // User queries
-@@index([bookingId, status])     // Payment queries  
+@@index([bookingId, status])     // Payment queries
 @@index([tenantId, userId])      // Audit filtering
 @@index([tenantId, status, createdAt]) // Recent booking filters
 ```
@@ -576,12 +610,14 @@ src/middleware/rateLimiter.ts
 **Client-side Analysis:**
 
 **Findings:**
+
 - No performance monitoring hooks configured
 - No React DevTools Profiler integration
 - Missing React.memo on expensive components
 - No code splitting detected
 
 **Recommendations:**
+
 1. Add React Profiler to identify render bottlenecks
 2. Use `React.memo()` on package list components
 3. Split routes with lazy loading
@@ -594,6 +630,7 @@ src/middleware/rateLimiter.ts
 **Vite Build Analysis:**
 
 No build output available to analyze. Recommendations:
+
 1. Enable CSS code splitting
 2. Lazy load admin routes
 3. Analyze bundle with `vite-plugin-visualizer`
@@ -608,6 +645,7 @@ No build output available to analyze. Recommendations:
 **Status:** PARTIALLY COMPLETE
 
 **Existing Documentation:**
+
 - ✅ API docs auto-generated via ts-rest OpenAPI
 - ✅ Swagger UI available at `/api/docs`
 - ✅ Type-safe routing prevents most documentation drift
@@ -632,6 +670,7 @@ async createCheckout(tenantId: string, input: CreateBookingInput) {
 ```
 
 **Recommended Additions:**
+
 ```typescript
 /**
  * Creates a Stripe checkout session for a wedding package booking.
@@ -678,12 +717,14 @@ async createCheckout(tenantId: string, input: CreateBookingInput) {
 **Current Status:**
 
 ✅ **Exist:**
+
 - `/README.md` - Root project overview
 - `/DEVELOPING.md` - Development setup
 - `/CONTRIBUTING.md` - Contribution guidelines
 - `/docs/` folder with comprehensive guides
 
 ❌ **Missing:**
+
 - `/server/README.md` - API layer overview
 - `/client/README.md` - Web app documentation
 - `/packages/contracts/README.md` - API contract explanation
@@ -695,12 +736,14 @@ async createCheckout(tenantId: string, input: CreateBookingInput) {
 # Server API Module
 
 ## Architecture
+
 - Express.js with ts-rest for type-safe routing
 - Prisma ORM with PostgreSQL
 - Multi-tenant isolation at database layer
 - Dependency injection in `src/di.ts`
 
 ## Directory Structure
+
 - `src/routes/` - HTTP route handlers
 - `src/services/` - Business logic (booking, catalog, etc.)
 - `src/adapters/` - External integrations (Stripe, Prisma, etc.)
@@ -708,6 +751,7 @@ async createCheckout(tenantId: string, input: CreateBookingInput) {
 - `src/lib/` - Core utilities (logger, cache, validation)
 
 ## Adding a New Feature
+
 1. Define schema in `src/validation/`
 2. Create service in `src/services/`
 3. Create repository in `src/adapters/prisma/`
@@ -716,6 +760,7 @@ async createCheckout(tenantId: string, input: CreateBookingInput) {
 6. Write tests in `test/`
 
 ## Common Patterns
+
 - Multi-tenant data isolation (see `booking.repository.ts`)
 - Error handling (see `src/lib/core/errors.ts`)
 - Request logging with tenant context (see `middleware/request-logger.ts`)
@@ -726,6 +771,7 @@ async createCheckout(tenantId: string, input: CreateBookingInput) {
 ### 4.3 Inline Code Comments for Complex Logic
 
 **Current State:**
+
 - ✅ Good JSDoc comments on public methods
 - ✅ Validation logic documented
 - ❌ Complex business logic lacks explanation
@@ -789,6 +835,7 @@ calculateCommission(baseAmountCents: number, commissionPercent: Decimal): number
 **Status:** Good for public APIs, missing for internal types
 
 **Well-Documented:**
+
 ```typescript
 // ✅ Server contracts (auto-generated OpenAPI)
 // ✅ Validation schemas (Zod provides descriptions)
@@ -820,6 +867,7 @@ Create `TYPES.md` documenting all major types:
 ## Entities
 
 ### Booking
+
 - id: CUID unique identifier
 - tenantId: Multi-tenant isolation
 - totalPrice: In cents, includes platform fees
@@ -827,6 +875,7 @@ Create `TYPES.md` documenting all major types:
 - status: PENDING → CONFIRMED → FULFILLED or CANCELED
 
 ### Tenant
+
 - branding: JSON with structure { primaryColor, secondaryColor, fontFamily, logo }
 - secrets: Encrypted JSON with structure { stripe: { ciphertext, iv, authTag } }
 ```
@@ -838,6 +887,7 @@ Create `TYPES.md` documenting all major types:
 **Status:** PARTIAL
 
 **Documentation:**
+
 - ✅ `.env.example` exists
 - ❌ Deployment instructions missing
 - ❌ Environment variable documentation incomplete
@@ -847,48 +897,57 @@ Create `TYPES.md` documenting all major types:
 **Missing Documentation to Create:**
 
 1. **DEPLOYMENT.md**
-   ```markdown
+
+   ````markdown
    # Deployment Guide
-   
+
    ## Prerequisites
+
    - Node.js 20+
    - PostgreSQL 15+
    - Stripe account with API keys
    - AWS S3 account (for photo uploads)
-   
+
    ## Environment Setup
+
    - DATABASE_URL: PostgreSQL connection string
    - STRIPE_SECRET_KEY: From Stripe dashboard
    - STRIPE_WEBHOOK_SECRET: Generated in Stripe → Webhooks
    - AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY: For S3
    - JWT_SECRET: Generate with `crypto.randomBytes(32).toString('hex')`
-   
+
    ## Database Migration
+
    ```bash
    npm run db:migrate  # Prisma automatic migration
    npm run db:seed     # Load mock data (development only)
    ```
-   
+   ````
+
    ## Health Checks
    - GET /health → 200 OK
    - GET /api/docs → Swagger UI
+
+   ```
+
    ```
 
 2. **Environment Variable Documentation**
+
    ```env
    # Authentication
    JWT_SECRET              # 32-byte random secret, never share
    JWT_EXPIRY              # Token TTL in seconds (default: 86400 = 1 day)
-   
+
    # Payment Processing
    STRIPE_SECRET_KEY       # sk_test_* or sk_live_*
    STRIPE_WEBHOOK_SECRET   # Webhook signing secret
    STRIPE_API_VERSION      # Stripe API version (default: 2024-04-10)
-   
+
    # Database
    DATABASE_URL            # postgresql://user:pass@host:5432/dbname
    DIRECT_URL             # Direct connection for migrations
-   
+
    # File Storage
    AWS_REGION              # e.g., us-east-1
    AWS_S3_BUCKET          # Bucket name for uploads
@@ -901,6 +960,7 @@ Create `TYPES.md` documenting all major types:
 ### 5.1 Logging Strategy & Consistency
 
 **Current Implementation:**
+
 - Logger: Pino (well-structured, production-ready)
 - Level: Configurable via `LOG_LEVEL` env var
 - Format: JSON in production, pretty-printed in development
@@ -908,17 +968,20 @@ Create `TYPES.md` documenting all major types:
 **Assessment:**
 
 ✅ **Strengths:**
+
 - Centralized logger with request ID tracking
 - Pino performance excellent for high throughput
 - Child loggers for context (request ID, tenant ID)
 
 ❌ **Weaknesses:**
+
 - 150+ files manually pass logger as dependency
 - console.log in 8+ files (mock adapter, config, etc.)
 - No structured log fields (missing: duration, userId, tenantId)
 - No log aggregation setup documented
 
 **Inconsistencies Found:**
+
 ```typescript
 // Pattern 1: Manual logger passing
 constructor(private readonly logger: Logger) {}
@@ -963,8 +1026,8 @@ logger.info('Checkout session created', {
 });
 
 // 3. Replace console.log
-- console.log('✅ Mock data seeded: 6 packages, 6 add-ons, 1 admin user');
-+ logger.info('Mock data seeded', { packages: 6, addOns: 6, admins: 1 });
+-console.log('✅ Mock data seeded: 6 packages, 6 add-ons, 1 admin user');
++logger.info('Mock data seeded', { packages: 6, addOns: 6, admins: 1 });
 ```
 
 ---
@@ -975,9 +1038,10 @@ logger.info('Checkout session created', {
 Located in `/server/src/lib/core/errors.ts`
 
 **Custom Errors:**
+
 ```typescript
 ✅ NotFoundError
-✅ ValidationError  
+✅ ValidationError
 ✅ ForbiddenError
 ✅ ConflictError
 ❌ Missing: RateLimitError
@@ -986,6 +1050,7 @@ Located in `/server/src/lib/core/errors.ts`
 ```
 
 **Error Handler Middleware:**
+
 ```typescript
 // src/middleware/error-handler.ts
 // ✓ 100% test coverage
@@ -993,22 +1058,25 @@ Located in `/server/src/lib/core/errors.ts`
 ```
 
 **Issues:**
+
 1. Error messages sometimes reveal internal structure
+
    ```typescript
    throw new ValidationError(`Package ${input.packageId} not found`);
    // Better: "Invalid package"
    ```
 
 2. No error codes for programmatic handling
+
    ```typescript
    // ❌ Client can't distinguish error types from message
    res.status(400).json({ error: 'Validation failed' });
-   
+
    // ✅ Should include code
-   res.status(400).json({ 
+   res.status(400).json({
      error: 'Validation failed',
      code: 'INVALID_PACKAGE',
-     details: { field: 'packageId' }
+     details: { field: 'packageId' },
    });
    ```
 
@@ -1049,6 +1117,7 @@ interface ApiErrorResponse {
 **Current State:** None detected
 
 **Missing:**
+
 - No request duration tracking
 - No database query performance monitoring
 - No error rate metrics
@@ -1060,7 +1129,7 @@ interface ApiErrorResponse {
 // 1. Request timing middleware
 app.use((req, res, next) => {
   const startTime = Date.now();
-  
+
   res.on('finish', () => {
     const duration = Date.now() - startTime;
     logger.info('HTTP request completed', {
@@ -1071,7 +1140,7 @@ app.use((req, res, next) => {
       tenantId: res.locals.tenantAuth?.tenantId,
     });
   });
-  
+
   next();
 });
 
@@ -1080,15 +1149,16 @@ prisma.$use(async (params, next) => {
   const before = Date.now();
   const result = await next(params);
   const after = Date.now();
-  
-  if (after - before > 1000) { // Log slow queries >1s
+
+  if (after - before > 1000) {
+    // Log slow queries >1s
     logger.warn('Slow database query', {
       model: params.model,
       action: params.action,
       duration: after - before,
     });
   }
-  
+
   return result;
 });
 
@@ -1117,9 +1187,7 @@ Enable Prisma query logging in development:
 ```typescript
 // src/lib/core/config.ts
 const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' 
-    ? ['query', 'error', 'warn'] 
-    : ['error'],
+  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
 });
 
 // Or use Prisma middleware for structured logging
@@ -1129,15 +1197,15 @@ prisma.$use(async (params, next) => {
     action: params.action,
     where: params.args.where,
   });
-  
+
   const result = await next(params);
-  
+
   logger.debug('Query completed', {
     model: params.model,
     action: params.action,
     rowCount: Array.isArray(result) ? result.length : 1,
   });
-  
+
   return result;
 });
 ```
@@ -1155,7 +1223,7 @@ prisma.$use(async (params, next) => {
 app.use((req, res, next) => {
   const requestId = generateRequestId();
   res.locals.requestId = requestId;
-  
+
   logger.info('API request received', {
     requestId,
     method: req.method,
@@ -1164,7 +1232,7 @@ app.use((req, res, next) => {
     tenantId: res.locals.tenantAuth?.tenantId,
     userId: res.locals.user?.id,
   });
-  
+
   res.on('finish', () => {
     logger.info('API request completed', {
       requestId,
@@ -1175,7 +1243,7 @@ app.use((req, res, next) => {
       duration: Date.now() - res.locals.startTime,
     });
   });
-  
+
   res.locals.startTime = Date.now();
   next();
 });
@@ -1190,6 +1258,7 @@ app.use((req, res, next) => {
 **Analysis of Recent Commits:**
 
 Recent commits show GOOD quality:
+
 ```
 ✅ a8a1b85  fix: resolve E2E test issues via parallel subagent investigation
 ✅ 3267b45  fix: remove deprecated husky.sh sourcing from pre-commit hook
@@ -1199,6 +1268,7 @@ Recent commits show GOOD quality:
 ```
 
 **Conventions Used:**
+
 - Semantic prefixes: `fix:`, `docs:`, `chore:`, `feat:`
 - Clear, descriptive messages
 - No long commit hashes in messages
@@ -1206,6 +1276,7 @@ Recent commits show GOOD quality:
 **Assessment:** 8/10 - Good adherence to conventional commits
 
 **Recommendations:**
+
 - Consider adding body for complex changes
 - Reference issue numbers (e.g., `fixes #123`)
 - Ensure pre-commit hooks run before push
@@ -1215,6 +1286,7 @@ Recent commits show GOOD quality:
 ### 6.2 PR Review Process Evidence
 
 **Findings:**
+
 - Limited PR history available in current branch
 - No evidence of formal review process
 - No PR templates configured
@@ -1222,27 +1294,33 @@ Recent commits show GOOD quality:
 **Recommendations:**
 
 Create `.github/pull_request_template.md`:
+
 ```markdown
 ## Description
+
 Brief summary of changes
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
 - [ ] Documentation
 
 ## Testing
+
 - [ ] Unit tests added
 - [ ] Integration tests added
 - [ ] Manual testing completed
 
 ## Coverage Impact
+
 - Current: X%
 - After: Y%
 - Delta: +Z%
 
 ## Checklist
+
 - [ ] Code follows style guidelines
 - [ ] Documentation updated
 - [ ] No breaking changes
@@ -1254,11 +1332,13 @@ Brief summary of changes
 ### 6.3 Code Formatting Consistency
 
 **Current Setup:**
+
 - ✅ Prettier configured (`.prettierrc.json`)
 - ✅ ESLint configured (`.eslintrc.cjs`)
 - ✅ Pre-commit hooks run typecheck and tests
 
 **Prettier Config:**
+
 ```json
 {
   "semi": true,
@@ -1272,11 +1352,13 @@ Brief summary of changes
 **Assessment:** 9/10 - Well configured
 
 **Missing:**
+
 - No `.editorconfig` enforcement documented
 - No formatting check in CI/CD
 
 **Recommendation:**
 Add formatting check to pre-commit:
+
 ```bash
 prettier --check "**/*.{ts,tsx,json,md}"
 ```
@@ -1289,8 +1371,8 @@ prettier --check "**/*.{ts,tsx,json,md}"
 ESLint broken due to missing `parserOptions.project` configuration
 
 ```
-Error: You have used a rule which requires parserServices to be generated. 
-You must therefore provide a value for the "parserOptions.project" property 
+Error: You have used a rule which requires parserServices to be generated.
+You must therefore provide a value for the "parserOptions.project" property
 for @typescript-eslint/parser.
 ```
 
@@ -1310,6 +1392,7 @@ module.exports = {
 ```
 
 **Fix Required:**
+
 ```javascript
 module.exports = {
   parser: '@typescript-eslint/parser',
@@ -1317,10 +1400,7 @@ module.exports = {
     project: ['./tsconfig.json', './server/tsconfig.json', './client/tsconfig.json'],
     projectCacheLocation: './node_modules/.eslint-parser-cache',
   },
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/strict-type-checked',
-  ],
+  extends: ['eslint:recommended', 'plugin:@typescript-eslint/strict-type-checked'],
 };
 ```
 
@@ -1329,6 +1409,7 @@ module.exports = {
 ### 6.5 Pre-commit Hook Effectiveness
 
 **Current Hooks (`/.husky/pre-commit`):**
+
 ```bash
 npm run test:unit       # Unit tests only (good - fast)
 npm run typecheck       # Full TypeScript check
@@ -1336,16 +1417,19 @@ npm run typecheck       # Full TypeScript check
 
 **Assessment:**
 ✅ **Strengths:**
+
 - Prevents obvious TypeScript errors
 - Catches breaking changes before push
 - Fast enough to not block developers
 
 ❌ **Gaps:**
+
 - No linting (ESLint broken anyway)
 - No formatting check
 - No commit message validation
 
 **Recommended Enhancement:**
+
 ```bash
 #!/bin/bash
 
@@ -1520,18 +1604,21 @@ echo "✅ All pre-commit checks passed!"
 ### TOOLS & PRACTICES TO ADOPT
 
 **Immediate (Month 1):**
+
 1. **Error Tracking:** Sentry for production error monitoring
 2. **Analytics:** Mixpanel or Segment for event tracking
 3. **Log Aggregation:** Datadog or New Relic
 4. **Performance Monitoring:** Datadog APM or New Relic
 
 **Near-term (Months 2-3):**
+
 1. **Code Coverage Tools:** Codecov for tracking coverage over time
 2. **Bundle Analysis:** vite-plugin-visualizer for bundle optimization
 3. **Load Testing:** k6 for performance testing
 4. **Security Scanning:** Snyk for dependency vulnerabilities
 
 **Long-term (Months 4-6):**
+
 1. **Feature Flags:** LaunchDarkly for gradual rollouts
 2. **A/B Testing:** Optimizely or similar
 3. **Profiling:** Node.js built-in profiler or clinic.js
@@ -1541,19 +1628,19 @@ echo "✅ All pre-commit checks passed!"
 
 ## 8. CODEBASE HEALTH SCORECARD
 
-| Category | Score | Status | Priority |
-|----------|-------|--------|----------|
-| **Code Quality** | 6.5/10 | NEEDS WORK | CRITICAL |
-| **Type Safety** | 7/10 | ACCEPTABLE | HIGH |
-| **Test Coverage** | 5/10 | INSUFFICIENT | CRITICAL |
-| **Documentation** | 6/10 | INCOMPLETE | MEDIUM |
-| **Performance** | 7.5/10 | ACCEPTABLE | LOW |
-| **Monitoring** | 3/10 | MINIMAL | HIGH |
-| **Development Practices** | 7.5/10 | GOOD | MEDIUM |
-| **Dependency Management** | 7/10 | ACCEPTABLE | MEDIUM |
-| **Scalability** | 6.5/10 | LIMITED | MEDIUM |
-| **Security** | 7.5/10 | GOOD | LOW |
-| **OVERALL** | **6.7/10** | **CONDITIONALLY READY** | — |
+| Category                  | Score      | Status                  | Priority |
+| ------------------------- | ---------- | ----------------------- | -------- |
+| **Code Quality**          | 6.5/10     | NEEDS WORK              | CRITICAL |
+| **Type Safety**           | 7/10       | ACCEPTABLE              | HIGH     |
+| **Test Coverage**         | 5/10       | INSUFFICIENT            | CRITICAL |
+| **Documentation**         | 6/10       | INCOMPLETE              | MEDIUM   |
+| **Performance**           | 7.5/10     | ACCEPTABLE              | LOW      |
+| **Monitoring**            | 3/10       | MINIMAL                 | HIGH     |
+| **Development Practices** | 7.5/10     | GOOD                    | MEDIUM   |
+| **Dependency Management** | 7/10       | ACCEPTABLE              | MEDIUM   |
+| **Scalability**           | 6.5/10     | LIMITED                 | MEDIUM   |
+| **Security**              | 7.5/10     | GOOD                    | LOW      |
+| **OVERALL**               | **6.7/10** | **CONDITIONALLY READY** | —        |
 
 ---
 
@@ -1564,6 +1651,7 @@ echo "✅ All pre-commit checks passed!"
 **Assessment: CONDITIONAL** ✓
 
 **Must Have Before Launch:**
+
 - ✅ Type safety (fix `any` casts)
 - ✅ Security (fix js-yaml, update packages)
 - ✅ Critical path testing (70%+ coverage on routes)
@@ -1571,6 +1659,7 @@ echo "✅ All pre-commit checks passed!"
 - ✅ Documentation (API docs complete)
 
 **Can Add Post-Launch:**
+
 - Performance monitoring
 - Advanced observability
 - Long-term refactoring

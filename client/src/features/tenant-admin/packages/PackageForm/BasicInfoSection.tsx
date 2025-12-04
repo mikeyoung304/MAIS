@@ -1,8 +1,8 @@
-import { AlertCircle } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import type { PackageFormData } from "../hooks/usePackageForm";
+import { AlertCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import type { PackageFormData } from '../hooks/usePackageForm';
 
 interface BasicInfoSectionProps {
   form: PackageFormData;
@@ -26,7 +26,7 @@ export function BasicInfoSection({
   fieldErrors,
   setFieldErrors,
   validateField,
-  isSaving
+  isSaving,
 }: BasicInfoSectionProps) {
   return (
     <>

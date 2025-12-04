@@ -77,9 +77,12 @@ export function useBrandingManager({
   }, [branding]);
 
   // Update a single form field
-  const updateField = useCallback(<K extends keyof BrandingForm>(field: K, value: BrandingForm[K]) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  }, []);
+  const updateField = useCallback(
+    <K extends keyof BrandingForm>(field: K, value: BrandingForm[K]) => {
+      setForm((prev) => ({ ...prev, [field]: value }));
+    },
+    []
+  );
 
   // Validate hex color format
   const validateHexColor = (color: string, fieldName: string): boolean => {

@@ -20,6 +20,7 @@ The MAIS authentication system had three critical issues that prevented successf
 **Technical Root Cause:** The `User` table password hash didn't match the bcrypt hash of `@Nupples8` due to previous manual database modifications or seed script changes.
 
 **Data Layer Impact:** The seed script (line 22, `seed.ts`) uses bcrypt with 12 rounds (OWASP 2023 recommended):
+
 ```typescript
 const BCRYPT_ROUNDS = 12;
 const passwordHash = await bcrypt.hash('@Nupples8', BCRYPT_ROUNDS);
@@ -32,11 +33,13 @@ const passwordHash = await bcrypt.hash('@Nupples8', BCRYPT_ROUNDS);
 **Technical Root Cause:** Email addresses were stored in the database with their original casing (e.g., `Mike@MaconHeadshots.com`), but the `findByEmail()` method in `tenant.repository.ts` was converting input to lowercase for lookup.
 
 **Flow Mismatch:**
+
 - **Database:** `SELECT * FROM tenants WHERE email = 'Mike@MaconHeadshots.com'`
 - **Service Layer:** Searching for `WHERE email = 'mike@maconheadshots.com'` (lowercase)
 - **Result:** Unique constraint would prevent finding the record
 
 **Database Schema:** The Prisma schema (line 43) defines email as `@unique`:
+
 ```prisma
 email String? @unique
 ```
@@ -48,6 +51,7 @@ This enforces database-level uniqueness but doesn't normalize case, leading to c
 **Technical Root Cause:** The `Login.tsx` component had hardcoded default form values that didn't match the actual seeded credentials.
 
 **Frontend State:** Default values were:
+
 ```typescript
 email: "mike@maconheadshots.com",
 password: "@Nupples8"
@@ -68,17 +72,20 @@ password: "@Nupples8"
 **Change:** No code change required - re-run the seed script to regenerate the password hash using the current bcrypt configuration.
 
 **Verification Command:**
+
 ```bash
 cd /Users/mikeyoung/CODING/MAIS/server
 npm exec prisma db seed
 ```
 
 **Why This Works:**
+
 - Generates fresh bcrypt hash with BCRYPT_ROUNDS = 12
 - Ensures hash matches what `bcrypt.compare()` expects in authentication flow
 - Idempotent operation using `upsert()` pattern (safe to run multiple times)
 
 **Hash Generation Process:**
+
 1. `bcrypt.hash('@Nupples8', 12)` → generates random salt + hashes to 60-char string
 2. Stored in `User.passwordHash` field
 3. On login, `bcrypt.compare(password, stored_hash)` verifies match
@@ -106,11 +113,13 @@ async findByEmail(email: string): Promise<Tenant | null> {
 ```
 
 **Why This Works:**
+
 - Converts all email lookups to lowercase
 - Matches the normalization done in service layer (tenant-auth.service.ts line 28)
 - Prevents case-sensitivity mismatches
 
 **Database-Level Fix:** Future tenant registrations should store emails in lowercase:
+
 ```prisma
 // In seed.ts or signup endpoint
 email: email.toLowerCase()
@@ -134,6 +143,7 @@ async login(email: string, password: string): Promise<{ token: string }> {
 ```
 
 **Why This Works:**
+
 - Double-ensures case-insensitive lookup at service layer
 - Prevents case sensitivity bugs in any implementation of `findByEmail()`
 - Defensive programming pattern
@@ -147,12 +157,13 @@ async login(email: string, password: string): Promise<{ token: string }> {
 ```typescript
 // Auto-fill for local development - use actual seeded admin credentials
 const { values, handleChange } = useForm({
-  email: "mike@maconheadshots.com",
-  password: "@Nupples8"
+  email: 'mike@maconheadshots.com',
+  password: '@Nupples8',
 });
 ```
 
 **Why This Works:**
+
 - Shows users the exact credentials that work in development
 - Reduces confusion when testing
 - Matches the seed script output exactly
@@ -162,14 +173,18 @@ const { values, handleChange } = useForm({
 ## Verification Steps Taken
 
 ### Step 1: Database Integrity Check
+
 ```bash
 cd /Users/mikeyoung/CODING/MAIS/server
 npm exec prisma db seed
 ```
+
 ✅ Confirmed user `mike@maconheadshots.com` created with correct password hash
 
 ### Step 2: Repository Method Testing
+
 Tested `findByEmail()` normalization:
+
 ```typescript
 // Both should find the same user
 const user1 = await tenantRepo.findByEmail('mike@maconheadshots.com');
@@ -178,7 +193,9 @@ assert(user1.id === user2.id); // ✅ PASS
 ```
 
 ### Step 3: Authentication Service Flow
+
 Verified complete login flow:
+
 ```typescript
 // Test with lowercase
 const result = await authService.login('mike@maconheadshots.com', '@Nupples8');
@@ -190,7 +207,9 @@ assert(result2.token); // ✅ Also works (normalized internally)
 ```
 
 ### Step 4: Password Verification
+
 Confirmed bcrypt hash validation:
+
 ```typescript
 const password = '@Nupples8';
 const stored = await bcrypt.hash(password, 12);
@@ -199,7 +218,9 @@ assert(isValid === true); // ✅ Hashes match
 ```
 
 ### Step 5: Frontend Form Testing
+
 Verified form defaults work with login flow:
+
 - Form shows: `mike@maconheadshots.com` / `@Nupples8`
 - Submit → `AuthContext.login()` → Backend validation
 - ✅ Login succeeds, JWT stored, redirect to dashboard
@@ -210,32 +231,34 @@ Verified form defaults work with login flow:
 
 ### Authentication Tier
 
-| File | Purpose | Change |
-|------|---------|--------|
-| `/server/src/services/tenant-auth.service.ts` | Login & JWT generation | Email normalization on line 28 |
-| `/server/src/adapters/prisma/tenant.repository.ts` | Tenant data access | Email normalization in `findByEmail()` (lines 88-93) |
-| `/server/prisma/seed.ts` | Database initialization | Re-run to refresh password hash |
-| `/client/src/pages/Login.tsx` | Login UI | Updated default credentials (lines 25-28) |
+| File                                               | Purpose                 | Change                                               |
+| -------------------------------------------------- | ----------------------- | ---------------------------------------------------- |
+| `/server/src/services/tenant-auth.service.ts`      | Login & JWT generation  | Email normalization on line 28                       |
+| `/server/src/adapters/prisma/tenant.repository.ts` | Tenant data access      | Email normalization in `findByEmail()` (lines 88-93) |
+| `/server/prisma/seed.ts`                           | Database initialization | Re-run to refresh password hash                      |
+| `/client/src/pages/Login.tsx`                      | Login UI                | Updated default credentials (lines 25-28)            |
 
 ### Database Schema
 
 **Tenant Model** (`/server/prisma/schema.prisma` lines 37-100):
+
 - Email field: `email String? @unique` (line 43)
 - Password field: `passwordHash String?` (line 44)
 - Status: `isActive Boolean @default(true)` (line 80)
 
 **User Model** (`/server/prisma/schema.prisma` lines 15-27):
+
 - Email field: `email String @unique` (line 17)
 - Password field: `passwordHash String` (line 19)
 - Role field: `role UserRole @default(USER)` (line 20)
 
 ### Test Coverage
 
-| Test File | Coverage |
-|-----------|----------|
+| Test File                                           | Coverage                                                      |
+| --------------------------------------------------- | ------------------------------------------------------------- |
 | `/server/test/services/tenant-auth.service.spec.ts` | Comprehensive auth service testing (277 lines, 11 test cases) |
-| `/server/test/http/auth-signup.test.ts` | Signup flow validation |
-| `/server/test/middleware/auth.spec.ts` | Auth middleware validation |
+| `/server/test/http/auth-signup.test.ts`             | Signup flow validation                                        |
+| `/server/test/middleware/auth.spec.ts`              | Auth middleware validation                                    |
 
 ---
 
@@ -338,11 +361,13 @@ describe('Email Normalization', () => {
 ## Impact Assessment
 
 ### Before Fix
+
 - ❌ Admin login: BROKEN (password hash mismatch)
 - ❌ Tenant login: BROKEN (case-sensitive lookup)
 - ❌ Demo credentials: MISLEADING (wrong values displayed)
 
 ### After Fix
+
 - ✅ Admin login: WORKING
 - ✅ Tenant login: WORKING (case-insensitive)
 - ✅ Demo credentials: ACCURATE
@@ -350,6 +375,7 @@ describe('Email Normalization', () => {
 - ✅ No database migration required (only seed refresh)
 
 ### User Experience Impact
+
 - Users can now login with their credentials
 - Email address case no longer matters
 - Form shows working demo credentials
@@ -360,15 +386,18 @@ describe('Email Normalization', () => {
 ## References
 
 ### Documentation
+
 - **CLAUDE.md** - Project guidelines and authentication patterns
 - **DEVELOPING.md** - Setup and development commands
 - **TESTING.md** - Test running instructions
 
 ### Related ADRs
+
 - **ADR-001** - Double-booking prevention (transaction isolation)
 - **ADR-002** - Webhook idempotency (database deduplication)
 
 ### External Resources
+
 - [bcryptjs Documentation](https://github.com/dcodeIO/bcrypt.js)
 - [JWT (JSON Web Tokens)](https://jwt.io/)
 - [OWASP Password Hashing](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)

@@ -5,11 +5,13 @@ This directory contains comprehensive documentation of the Elope codebase archit
 ## Generated Documentation Files
 
 ### 1. **EXPLORATION_SUMMARY.md** (Start here!)
+
 **Purpose:** Quick executive overview of the entire system  
 **Length:** ~310 lines  
 **Best for:** Getting oriented, understanding what Elope does, key strengths, tech stack overview
 
 **Covers:**
+
 - What is Elope?
 - Key architectural strengths
 - Core features (customers, tenant admins, platform admins)
@@ -24,11 +26,13 @@ This directory contains comprehensive documentation of the Elope codebase archit
 **Time to read:** 10-15 minutes
 
 ### 2. **CODEBASE_EXPLORATION_COMPLETE.md** (Deep dive)
+
 **Purpose:** Comprehensive architecture documentation with implementation details  
 **Length:** ~1,480 lines  
 **Best for:** Understanding design patterns, implementation details, all architectural decisions
 
 **16 Detailed Sections:**
+
 1. Overall Architecture & Structure
 2. Feature Services (7 services explained)
 3. Multi-Tenant Architecture (3 subsections)
@@ -79,7 +83,7 @@ This directory contains comprehensive documentation of the Elope codebase archit
 → Read: EXPLORATION_SUMMARY.md (section: "Key Files to Understand")
 
 **Security considerations**
-→ Read: CODEBASE_EXPLORATION_COMPLETE.md (section: "12. SECURITY & TENANT ISOLATION PATTERNS") 
+→ Read: CODEBASE_EXPLORATION_COMPLETE.md (section: "12. SECURITY & TENANT ISOLATION PATTERNS")
 AND EXPLORATION_SUMMARY.md (section: "Security Notes")
 
 **How to extend the system**
@@ -90,6 +94,7 @@ AND EXPLORATION_SUMMARY.md (section: "Security Notes")
 ## File Locations Mentioned
 
 ### Backend (Node.js/Express)
+
 ```
 server/
 ├── src/
@@ -106,6 +111,7 @@ server/
 ```
 
 ### Frontend (React)
+
 ```
 client/
 ├── src/
@@ -119,6 +125,7 @@ client/
 ```
 
 ### Shared
+
 ```
 packages/
 ├── contracts/                  # ts-rest API contracts
@@ -126,6 +133,7 @@ packages/
 ```
 
 ### Documentation
+
 ```
 docs/
 ├── architecture/               # ADRs and architecture docs
@@ -141,30 +149,35 @@ docs/
 ## Key Concepts Quick Reference
 
 ### Multi-Tenancy
+
 - **Approach:** Database-level isolation (single PostgreSQL, shared schema)
 - **Tenant Resolution:** API key in `X-Tenant-Key` header
 - **API Keys:** Public (`pk_live_tenant_*`) for widgets, secret for admin operations
 - **Isolation:** Database, middleware, service, application levels
 
 ### Authentication
+
 - **Admins:** JWT with `role: 'admin'`
 - **Tenants:** JWT with `type: 'tenant'` and `tenantId`
 - **Widget:** No auth, uses `X-Tenant-Key` header
 - **Password:** bcryptjs 10 rounds
 
 ### Payment Processing
+
 - **Provider:** Stripe + Stripe Connect
 - **Model:** Destination charges (payment to tenant, platform takes commission)
 - **Commission:** Server-side calculation, always round UP, clamp to 0.5%-50%
 - **Webhook:** HMAC signature verification, idempotency checking
 
 ### API Design
+
 - **Framework:** ts-rest (contract-driven)
 - **Contracts:** `/packages/contracts/src/api.v1.ts`
 - **DTOs:** Zod schemas in `/packages/contracts/src/dto.ts`
 - **Validation:** Automatic request validation, OpenAPI generation
 
 ### Architecture Pattern
+
 - **Style:** Modular monolith
 - **DI:** Manual in `di.ts`, wired in `app.ts`
 - **Adapters:** Stripe, Google Calendar, Postmark, Prisma repositories
@@ -197,13 +210,13 @@ npm run dev:real
 
 ## Architecture Decisions
 
-| Decision | Rationale | Trade-offs |
-|----------|-----------|-----------|
-| Modular monolith | Simpler operations, shared models | Lower initial scalability |
-| Database-level multi-tenancy | Easier ops, natural analytics | Cannot have separate infra per tenant |
-| Stripe Connect (destination charges) | Simple, direct payouts, good compliance | Higher Stripe fee |
-| ts-rest contracts | Type safety, single source of truth | Learning curve |
-| In-process event emitter | Adequate for monolith | Replace with queue for distributed systems |
+| Decision                             | Rationale                               | Trade-offs                                 |
+| ------------------------------------ | --------------------------------------- | ------------------------------------------ |
+| Modular monolith                     | Simpler operations, shared models       | Lower initial scalability                  |
+| Database-level multi-tenancy         | Easier ops, natural analytics           | Cannot have separate infra per tenant      |
+| Stripe Connect (destination charges) | Simple, direct payouts, good compliance | Higher Stripe fee                          |
+| ts-rest contracts                    | Type safety, single source of truth     | Learning curve                             |
+| In-process event emitter             | Adequate for monolith                   | Replace with queue for distributed systems |
 
 ---
 

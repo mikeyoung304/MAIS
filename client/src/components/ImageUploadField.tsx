@@ -21,13 +21,7 @@ interface ImageUploadFieldProps {
   className?: string;
 }
 
-const ALLOWED_TYPES = [
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'image/webp',
-  'image/svg+xml',
-];
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml'];
 
 export function ImageUploadField({
   label,
@@ -82,9 +76,7 @@ export function ImageUploadField({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error || `Upload failed (${response.status})`
-        );
+        throw new Error(errorData.error || `Upload failed (${response.status})`);
       }
 
       const data = await response.json();
@@ -201,12 +193,8 @@ export function ImageUploadField({
           ) : (
             <>
               <Upload className="h-8 w-8 text-white/60" />
-              <span className="text-sm text-white/60">
-                Drag & drop or click to upload
-              </span>
-              <span className="text-xs text-white/40">
-                Max {maxSizeMB}MB - JPG, PNG, WebP, SVG
-              </span>
+              <span className="text-sm text-white/60">Drag & drop or click to upload</span>
+              <span className="text-xs text-white/40">Max {maxSizeMB}MB - JPG, PNG, WebP, SVG</span>
             </>
           )}
         </div>

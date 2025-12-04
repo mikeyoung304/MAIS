@@ -5,6 +5,7 @@
 Transform the tenant dashboard into an interactive visual editor where tenants see their marketplace **exactly as customers see it** - with click-to-edit photos, text, and prices inline. Changes autosave as drafts, then publish to customer-facing view with one button.
 
 **Core UX Flow:**
+
 1. Tenant opens dashboard → sees their storefront exactly as customers see it
 2. Click any element (photo, text, price) → edit inline
 3. Changes autosave to draft state automatically
@@ -16,31 +17,33 @@ Transform the tenant dashboard into an interactive visual editor where tenants s
 
 ## Key Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| **Photo storage** | `draftPhotos` JSON array | Matches existing `photos` structure for consistency |
-| **Draft count** | Count packages with drafts | Simpler than counting individual fields; "3 packages with changes" |
-| **Save behavior** | Autosave per field (1s debounce) | Modern UX, reduces lost work |
-| **Publish** | Single button, no confirmation | Fast workflow; Discard has confirmation instead |
-| **Discard** | Button with confirmation dialog | Prevents accidental data loss |
-| **Navigation warning** | Popup if unpublished drafts | Browser close + in-app navigation both handled |
-| **Draft persistence** | Survives browser close | Drafts in DB, recovered on next visit |
-| **Segment rename/delete** | Included in MVP | Keep full segment management |
-| **Photo crop** | Deferred to v1.1 | Simplifies MVP; users can pre-crop |
-| **Tab drag-reorder** | Deferred to v1.1 | Simplifies MVP; static order sufficient |
-| **Timeline** | 9-10 days (conservative) | Quality over speed |
+| Decision                  | Choice                           | Rationale                                                          |
+| ------------------------- | -------------------------------- | ------------------------------------------------------------------ |
+| **Photo storage**         | `draftPhotos` JSON array         | Matches existing `photos` structure for consistency                |
+| **Draft count**           | Count packages with drafts       | Simpler than counting individual fields; "3 packages with changes" |
+| **Save behavior**         | Autosave per field (1s debounce) | Modern UX, reduces lost work                                       |
+| **Publish**               | Single button, no confirmation   | Fast workflow; Discard has confirmation instead                    |
+| **Discard**               | Button with confirmation dialog  | Prevents accidental data loss                                      |
+| **Navigation warning**    | Popup if unpublished drafts      | Browser close + in-app navigation both handled                     |
+| **Draft persistence**     | Survives browser close           | Drafts in DB, recovered on next visit                              |
+| **Segment rename/delete** | Included in MVP                  | Keep full segment management                                       |
+| **Photo crop**            | Deferred to v1.1                 | Simplifies MVP; users can pre-crop                                 |
+| **Tab drag-reorder**      | Deferred to v1.1                 | Simplifies MVP; static order sufficient                            |
+| **Timeline**              | 9-10 days (conservative)         | Quality over speed                                                 |
 
 ---
 
 ## Problem Statement
 
 Current tenant dashboard (`TenantPackagesManager.tsx`) uses:
+
 - Modal forms for editing packages (multiple clicks)
 - Separate photo upload flow after package creation
 - List-style display that doesn't match customer view
 - No draft/publish workflow
 
 **Pain Points:**
+
 1. Disconnect between admin view and customer view
 2. Multiple steps to edit simple content
 3. No way to preview changes before going live
@@ -88,6 +91,7 @@ Edit Flow:
 ```
 
 **Database Model:**
+
 - Packages have `draftTitle`, `draftDescription`, `draftPriceCents`, `draftPhotos` fields
 - `draftPhotos` is a JSON array matching existing `photos` structure: `[{url, filename, size, order}]`
 - `hasDraft` boolean + `draftUpdatedAt` timestamp for tracking
@@ -136,6 +140,7 @@ model Package {
 ```
 
 **Best Practices Applied:**
+
 - `draftPhotos` uses same JSON structure as `photos` for consistency
 - `hasDraft` boolean enables efficient queries (find all packages with pending changes)
 - Draft count = count of packages where `hasDraft = true` (simpler than counting fields)
@@ -201,6 +206,7 @@ model Package {
 ### Phase 1: Backend + Schema (Days 1-3)
 
 **Tasks:**
+
 - [ ] Add draft fields to Package model in `schema.prisma`
 - [ ] Run migration: `prisma migrate dev --name add_package_drafts`
 - [ ] Create `PATCH /v1/tenant-admin/packages/:id/draft` endpoint
@@ -213,6 +219,7 @@ model Package {
 - [ ] Add tests for new endpoints (unit + integration)
 
 **Files to modify:**
+
 - `server/prisma/schema.prisma`
 - `server/src/routes/tenant-admin.routes.ts`
 - `server/src/services/package-draft.service.ts` (new)
@@ -220,6 +227,7 @@ model Package {
 - `packages/contracts/src/dto.ts`
 
 **Migration SQL:**
+
 ```sql
 ALTER TABLE "Package" ADD COLUMN "draftTitle" TEXT;
 ALTER TABLE "Package" ADD COLUMN "draftDescription" TEXT;
@@ -235,6 +243,7 @@ CREATE INDEX "Package_tenantId_hasDraft_idx" ON "Package"("tenantId", "hasDraft"
 ### Phase 2: Visual Editor Shell (Days 3-4)
 
 **Tasks:**
+
 - [ ] Create `VisualEditorDashboard.tsx` - main container
 - [ ] Implement segment tabs (Radix UI Tabs, no drag)
 - [ ] Add "+ Add Segment" button with modal (simple name input)
@@ -245,10 +254,12 @@ CREATE INDEX "Package_tenantId_hasDraft_idx" ON "Package"("tenantId", "hasDraft"
 - [ ] Add "Publish Changes" + "Discard" buttons with draft count
 
 **Files to create:**
+
 - `client/src/features/tenant-admin/visual-editor/VisualEditorDashboard.tsx`
 - `client/src/features/tenant-admin/visual-editor/useVisualEditor.ts`
 
 **Key Component:**
+
 ```typescript
 // VisualEditorDashboard.tsx
 export function VisualEditorDashboard() {
@@ -344,6 +355,7 @@ export function VisualEditorDashboard() {
 ### Phase 3: Inline Editing Components (Days 5-6)
 
 **Tasks:**
+
 - [ ] Create `EditableText.tsx` - click-to-edit with autosave
 - [ ] Create `EditablePrice.tsx` - price input with $ formatting
 - [ ] Create `EditablePackageCard.tsx` - composes all fields
@@ -352,11 +364,13 @@ export function VisualEditorDashboard() {
 - [ ] Add keyboard shortcuts (Enter to save, Escape to cancel)
 
 **Files to create:**
+
 - `client/src/features/tenant-admin/visual-editor/EditableText.tsx`
 - `client/src/features/tenant-admin/visual-editor/EditablePrice.tsx`
 - `client/src/features/tenant-admin/visual-editor/EditablePackageCard.tsx`
 
 **Key Pattern - Autosave:**
+
 ```typescript
 // EditableText.tsx
 export function EditableText({
@@ -430,6 +444,7 @@ export function EditableText({
 ### Phase 4: Photo Upload (Days 6-7)
 
 **Tasks:**
+
 - [ ] Create `PhotoDropZone.tsx` - drag-drop + click upload
 - [ ] Integrate with existing photo upload API
 - [ ] Save uploaded photo URL to draft field
@@ -437,9 +452,11 @@ export function EditableText({
 - [ ] Handle upload errors gracefully
 
 **Files to create:**
+
 - `client/src/features/tenant-admin/visual-editor/PhotoDropZone.tsx`
 
 **Key Pattern:**
+
 ```typescript
 // PhotoDropZone.tsx
 export function PhotoDropZone({
@@ -524,6 +541,7 @@ export function PhotoDropZone({
 ### Phase 5: Polish & Testing (Days 7-8)
 
 **Tasks:**
+
 - [ ] Add "Add Package" button with placeholder creation
 - [ ] Add delete package confirmation
 - [ ] Mobile responsive adjustments (tap-to-edit)
@@ -534,6 +552,7 @@ export function PhotoDropZone({
 - [ ] E2E test for complete workflow
 
 **Test Coverage:**
+
 ```typescript
 // __tests__/EditableText.test.tsx
 describe('EditableText', () => {
@@ -583,6 +602,7 @@ describe('Publish Flow', () => {
 ### Phase 6: Integration & Deploy (Days 9-10)
 
 **Tasks:**
+
 - [ ] Replace `TenantPackagesManager` with `VisualEditorDashboard` in routes
 - [ ] Add feature flag for gradual rollout (optional)
 - [ ] Update any navigation/links pointing to old editor
@@ -596,6 +616,7 @@ describe('Publish Flow', () => {
 ## Acceptance Criteria
 
 ### Functional Requirements
+
 - [ ] Tenant sees packages in 3-column grid matching customer view
 - [ ] Segment tabs at top, default named "Customer 1"
 - [ ] Clicking "+ Add Segment" shows inline input, creates new segment
@@ -613,6 +634,7 @@ describe('Publish Flow', () => {
 - [ ] Drafts persist in database even if browser closes (recovered on next visit)
 
 ### Non-Functional Requirements
+
 - [ ] Autosave completes within 500ms
 - [ ] Publish completes within 2s for 10 packages
 - [ ] Works on mobile (tap to edit)
@@ -777,7 +799,7 @@ export class PackageDraftService {
 
     // Apply drafts to live fields
     const published = await Promise.all(
-      packages.map(pkg => this.packageRepo.applyDraft(tenantId, pkg.id))
+      packages.map((pkg) => this.packageRepo.applyDraft(tenantId, pkg.id))
     );
 
     return { published: published.length, packages: published };
@@ -882,12 +904,12 @@ export class PrismaPackageRepository {
 
 ## Risk Analysis
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
+| Risk                           | Impact | Mitigation                                                                   |
+| ------------------------------ | ------ | ---------------------------------------------------------------------------- |
 | Draft data loss on session end | Medium | Drafts persist to DB immediately; add "unsaved drafts" warning on page leave |
-| Publish fails mid-batch | Medium | Wrap in transaction; all-or-nothing publish |
-| Photo upload fails | Low | Show clear error; retry button |
-| Mobile UX issues | Low | Test early; tap-to-edit fallback |
+| Publish fails mid-batch        | Medium | Wrap in transaction; all-or-nothing publish                                  |
+| Photo upload fails             | Low    | Show clear error; retry button                                               |
+| Mobile UX issues               | Low    | Test early; tap-to-edit fallback                                             |
 
 ---
 
@@ -915,12 +937,14 @@ export class PrismaPackageRepository {
 ## References
 
 ### Internal
+
 - Current package card: `client/src/features/catalog/PackageCard.tsx`
 - Current package form: `client/src/features/tenant-admin/packages/PackageForm/`
 - Photo uploader: `client/src/features/photos/PhotoUploader.tsx`
 - Prisma schema: `server/prisma/schema.prisma`
 
 ### External
+
 - [Radix UI Tabs](https://www.radix-ui.com/primitives/docs/components/tabs)
 - [useDebouncedCallback](https://github.com/xnimorz/use-debounce)
 - [TailwindCSS Group Hover](https://tailwindcss.com/docs/hover-focus-and-other-states)

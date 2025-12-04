@@ -64,10 +64,7 @@ export const SocialProofBar = memo(function SocialProofBar({ config }: SocialPro
           {config.items.map((item, index) => {
             const IconComponent = iconMap[item.icon];
             return (
-              <div
-                key={index}
-                className="flex items-center gap-2 text-neutral-700"
-              >
+              <div key={index} className="flex items-center gap-2 text-neutral-700">
                 <IconComponent className="w-5 h-5 text-primary flex-shrink-0" />
                 <span className="text-sm md:text-base font-medium whitespace-nowrap">
                   {item.text}

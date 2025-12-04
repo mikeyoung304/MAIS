@@ -1,5 +1,5 @@
 ---
-title: "Supabase Storage Image Upload - Code Review Findings"
+title: 'Supabase Storage Image Upload - Code Review Findings'
 category: code-review-patterns
 tags:
   - supabase-storage
@@ -50,11 +50,11 @@ review_agents:
 
 A comprehensive code review of the Supabase Storage image upload feature identified **3 CRITICAL issues** that block merge, **4 IMPORTANT issues** that should be fixed, and **1 NICE-TO-HAVE enhancement**.
 
-| Severity | Count | Status |
-|----------|-------|--------|
-| 🔴 P1 CRITICAL | 3 | **BLOCKS MERGE** |
-| 🟡 P2 IMPORTANT | 4 | Should Fix |
-| 🔵 P3 NICE-TO-HAVE | 1 | Enhancement |
+| Severity           | Count | Status           |
+| ------------------ | ----- | ---------------- |
+| 🔴 P1 CRITICAL     | 3     | **BLOCKS MERGE** |
+| 🟡 P2 IMPORTANT    | 4     | Should Fix       |
+| 🔵 P3 NICE-TO-HAVE | 1     | Enhancement      |
 
 ---
 
@@ -67,16 +67,19 @@ A comprehensive code review of the Supabase Storage image upload feature identif
 
 **Problem:**
 The Supabase bucket is configured as public, allowing anyone to access any tenant's images by guessing URLs:
+
 ```
 https://{project}.supabase.co/storage/v1/object/public/images/{tenantId}/segments/image.jpg
 ```
 
 **Impact:**
+
 - Complete data leakage across all tenants
 - GDPR/compliance violations
 - Competitors can steal package photos, branding
 
 **Evidence:**
+
 ```typescript
 // upload.service.ts:151-153
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -84,6 +87,7 @@ const publicUrl = `${supabaseUrl}/storage/v1/object/public/images/${storagePath}
 ```
 
 **Solution:**
+
 ```typescript
 // Use signed URLs with expiry
 const { data: signedUrlData } = await supabase.storage
@@ -104,6 +108,7 @@ return { url: signedUrlData.signedUrl, ... };
 
 **Problem:**
 File validation relies solely on client-provided MIME type header, not file content:
+
 ```typescript
 // Current - trusts client header
 if (!this.allowedMimeTypes.includes(file.mimetype)) {
@@ -112,22 +117,27 @@ if (!this.allowedMimeTypes.includes(file.mimetype)) {
 ```
 
 **Attack Vector:**
+
 ```bash
 # Upload PHP shell disguised as image
 curl -F "file=@webshell.php;type=image/jpeg" /v1/tenant-admin/segment-image
 ```
 
 **Solution:**
+
 ```bash
 npm install file-type --workspace=server
 ```
+
 ```typescript
 import { fileTypeFromBuffer } from 'file-type';
 
 const detectedType = await fileTypeFromBuffer(file.buffer);
 if (!detectedType || !allowedTypes.includes(detectedType.mime)) {
-  logger.warn({ declaredType: file.mimetype, detectedType: detectedType?.mime },
-    'MIME type mismatch - possible spoofing');
+  logger.warn(
+    { declaredType: file.mimetype, detectedType: detectedType?.mime },
+    'MIME type mismatch - possible spoofing'
+  );
   throw new Error('File content does not match declared type');
 }
 ```
@@ -143,11 +153,13 @@ if (!detectedType || !allowedTypes.includes(detectedType.mime)) {
 
 **Problem:**
 When a segment is deleted, its hero image remains in Supabase Storage forever:
+
 - No `deleteSegmentImage()` method exists
 - Segment deletion has no cleanup hook
 - Files accumulate, costs increase
 
 **Solution:**
+
 ```typescript
 // Add to upload.service.ts
 async deleteSegmentImage(url: string, tenantId: string): Promise<void> {
@@ -191,6 +203,7 @@ async deleteSegment(tenantId: string, id: string) {
 UploadService is a singleton that self-configures via `process.env`, bypassing the established DI container pattern used by other services.
 
 **Current (inconsistent):**
+
 ```typescript
 export class UploadService {
   constructor() {
@@ -201,16 +214,23 @@ export const uploadService = new UploadService(); // Singleton
 ```
 
 **Expected (per CLAUDE.md):**
+
 ```typescript
 // ports.ts
 export interface StorageProvider {
-  upload(tenantId: string, category: string, filename: string, file: UploadedFile): Promise<UploadResult>;
+  upload(
+    tenantId: string,
+    category: string,
+    filename: string,
+    file: UploadedFile
+  ): Promise<UploadResult>;
 }
 
 // di.ts
-const storageProvider = config.ADAPTERS_PRESET === 'real'
-  ? new SupabaseStorageProvider(supabase)
-  : new MockStorageProvider();
+const storageProvider =
+  config.ADAPTERS_PRESET === 'real'
+    ? new SupabaseStorageProvider(supabase)
+    : new MockStorageProvider();
 
 export const uploadService = new UploadService(storageProvider);
 ```
@@ -228,6 +248,7 @@ export const uploadService = new UploadService(storageProvider);
 Three nearly identical methods (`uploadLogo`, `uploadPackagePhoto`, `uploadSegmentImage`) with 60+ lines of duplicated code.
 
 **Solution:**
+
 ```typescript
 async upload(
   file: UploadedFile,
@@ -256,11 +277,13 @@ async upload(
 
 **Problem:**
 Rate limiter uses IP-based keys, allowing:
+
 - Single tenant with VPN/mobile to bypass via IP rotation
 - Corporate users behind NAT to share limits unfairly
 - No storage quota enforcement
 
 **Solution:**
+
 ```typescript
 // Multi-layer rate limiting
 export const uploadLimiterIP = rateLimit({
@@ -290,12 +313,14 @@ router.post('/segment-image', uploadLimiterIP, uploadLimiterTenant, ...);
 
 **Problem:**
 `multer.memoryStorage()` loads entire files into RAM. With 5MB files and concurrent uploads:
+
 - 10 concurrent × 5MB = 50MB memory spike
 - Under attack: 100 concurrent × 5MB = 500MB
 - Can cause OOM crashes
 
 **Solution:**
 Add tenant-level upload concurrency limits:
+
 ```typescript
 const MAX_CONCURRENT = 3;
 const uploadSemaphores = new Map<string, number>();
@@ -325,6 +350,7 @@ async function checkConcurrency(tenantId: string): Promise<void> {
 
 **Solution:**
 Remove unnecessary useCallbacks, use regular functions:
+
 ```typescript
 // Remove useCallback from simple handlers
 function handleRemove() {
@@ -342,16 +368,16 @@ function handleRemove() {
 
 ## Summary Table
 
-| Priority | Issue | Component | Fix Time | Impact |
-|----------|-------|-----------|----------|--------|
-| 🔴 P1 | Public bucket data leak | Supabase config | 2-3h | Data breach |
-| 🔴 P1 | MIME type spoofing | upload.service.ts | 1h | Malware upload |
-| 🔴 P1 | Orphaned files | service + routes | 1-2h | Storage leak |
-| 🟡 P2 | DI pattern violation | di.ts + service | 4-5h | Tech debt |
-| 🟡 P2 | Code duplication | upload.service.ts | 1-2h | Maintenance |
-| 🟡 P2 | Rate limit by IP | rateLimiter.ts | 2-3h | Abuse vector |
-| 🟡 P2 | Memory exhaustion | routes config | 1-2h | DoS risk |
-| 🔵 P3 | useCallback overuse | ImageUploadField | 0.5h | Code quality |
+| Priority | Issue                   | Component         | Fix Time | Impact         |
+| -------- | ----------------------- | ----------------- | -------- | -------------- |
+| 🔴 P1    | Public bucket data leak | Supabase config   | 2-3h     | Data breach    |
+| 🔴 P1    | MIME type spoofing      | upload.service.ts | 1h       | Malware upload |
+| 🔴 P1    | Orphaned files          | service + routes  | 1-2h     | Storage leak   |
+| 🟡 P2    | DI pattern violation    | di.ts + service   | 4-5h     | Tech debt      |
+| 🟡 P2    | Code duplication        | upload.service.ts | 1-2h     | Maintenance    |
+| 🟡 P2    | Rate limit by IP        | rateLimiter.ts    | 2-3h     | Abuse vector   |
+| 🟡 P2    | Memory exhaustion       | routes config     | 1-2h     | DoS risk       |
+| 🔵 P3    | useCallback overuse     | ImageUploadField  | 0.5h     | Code quality   |
 
 **Total P1 Fix Time:** 4-6 hours (REQUIRED before merge)
 **Total All Fixes:** 13-18.5 hours
@@ -433,11 +459,11 @@ Warning signs of problematic file upload implementations:
 
 ## Appendix: Review Agents Used
 
-| Agent | Focus | Key Findings |
-|-------|-------|--------------|
-| Security Sentinel | Vulnerabilities | Public bucket, MIME spoofing |
-| Architecture Strategist | Patterns | DI violation, interface gaps |
-| Performance Oracle | Scaling | Memory exhaustion, rate limits |
-| Code Simplicity Reviewer | Quality | Duplication, useCallback overuse |
-| Data Integrity Guardian | Data | Orphaned files, tenant isolation |
-| Pattern Recognition Specialist | Consistency | Architectural deviations |
+| Agent                          | Focus           | Key Findings                     |
+| ------------------------------ | --------------- | -------------------------------- |
+| Security Sentinel              | Vulnerabilities | Public bucket, MIME spoofing     |
+| Architecture Strategist        | Patterns        | DI violation, interface gaps     |
+| Performance Oracle             | Scaling         | Memory exhaustion, rate limits   |
+| Code Simplicity Reviewer       | Quality         | Duplication, useCallback overuse |
+| Data Integrity Guardian        | Data            | Orphaned files, tenant isolation |
+| Pattern Recognition Specialist | Consistency     | Architectural deviations         |

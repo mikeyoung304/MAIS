@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "092"
+issue_id: '092'
 tags: [todo]
 dependencies: []
 ---
@@ -16,6 +16,7 @@ dependencies: []
 ## Problem
 
 CSS branding application logic is duplicated between `TenantStorefrontLayout.tsx` and `WidgetApp.tsx`. Both components:
+
 1. Apply CSS custom properties from branding object
 2. Clean up CSS variables on unmount
 3. Map the same branding fields to the same CSS variables
@@ -77,7 +78,7 @@ export function useTenantBranding(branding?: TenantBranding) {
 
     // Cleanup on unmount or branding change
     return () => {
-      appliedVariables.forEach(cssVar => {
+      appliedVariables.forEach((cssVar) => {
         root.style.removeProperty(cssVar);
       });
     };
@@ -86,6 +87,7 @@ export function useTenantBranding(branding?: TenantBranding) {
 ```
 
 Then use in both components:
+
 ```typescript
 // TenantStorefrontLayout.tsx
 useTenantBranding(tenant?.branding);

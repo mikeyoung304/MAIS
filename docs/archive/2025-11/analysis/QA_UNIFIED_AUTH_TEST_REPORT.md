@@ -13,6 +13,7 @@
 Comprehensive testing of the unified authentication and role-based access control system has been completed. **11 out of 13 tests passed (84.6%)**, demonstrating a robust authentication system with proper separation between Platform Admin and Tenant Admin roles.
 
 ### Key Findings:
+
 - ✅ **Platform Admin authentication working correctly**
 - ✅ **Tenant Admin authentication working correctly**
 - ✅ **JWT token generation and validation functional**
@@ -27,13 +28,16 @@ Comprehensive testing of the unified authentication and role-based access contro
 ## Test Environment Setup
 
 ### Database Configuration
+
 - **Database:** PostgreSQL (Supabase)
 - **Schema Status:** Up to date with latest migrations
 - **Tenant Table:** Created successfully with email/passwordHash fields
 - **Test Data:** Properly seeded
 
 ### Test Credentials Created
+
 **Platform Admin:**
+
 ```
 Email: admin@example.com
 Password: admin
@@ -41,6 +45,7 @@ Role: ADMIN
 ```
 
 **Tenant Admin:**
+
 ```
 Email: tenant@test.com
 Password: Test123456
@@ -48,6 +53,7 @@ Tenant: test-tenant
 ```
 
 ### Server Configuration
+
 - **Backend:** Running on port 3001
 - **Adapter Mode:** REAL (connects to actual PostgreSQL database)
 - **JWT Secret:** Configured via environment
@@ -57,14 +63,14 @@ Tenant: test-tenant
 
 ## Test Results Summary
 
-| Category | Tests Passed | Tests Failed | Pass Rate |
-|----------|-------------|--------------|-----------|
-| Platform Admin Authentication | 3/3 | 0 | 100% |
-| Tenant Admin Authentication | 2/2 | 0 | 100% |
-| Route Protection | 3/4 | 1 | 75% |
-| Token Validation | 2/2 | 0 | 100% |
-| Cross-Authentication | 1/2 | 1 | 50% |
-| **TOTAL** | **11/13** | **2** | **84.6%** |
+| Category                      | Tests Passed | Tests Failed | Pass Rate |
+| ----------------------------- | ------------ | ------------ | --------- |
+| Platform Admin Authentication | 3/3          | 0            | 100%      |
+| Tenant Admin Authentication   | 2/2          | 0            | 100%      |
+| Route Protection              | 3/4          | 1            | 75%       |
+| Token Validation              | 2/2          | 0            | 100%      |
+| Cross-Authentication          | 1/2          | 1            | 50%       |
+| **TOTAL**                     | **11/13**    | **2**        | **84.6%** |
 
 ---
 
@@ -73,6 +79,7 @@ Tenant: test-tenant
 ### 1. Platform Admin Authentication Tests (3/3 PASS)
 
 #### TEST 1.1: Valid Credentials ✅ PASS
+
 - **Endpoint:** `POST /v1/admin/login`
 - **Request:** `{"email":"admin@example.com","password":"admin"}`
 - **Expected:** HTTP 200 with JWT token
@@ -83,6 +90,7 @@ Tenant: test-tenant
 - **Token Expiry:** 7 days
 
 #### TEST 1.2: Invalid Password ✅ PASS
+
 - **Endpoint:** `POST /v1/admin/login`
 - **Request:** `{"email":"admin@example.com","password":"wrongpassword"}`
 - **Expected:** HTTP 401
@@ -91,6 +99,7 @@ Tenant: test-tenant
 - **Result:** ✅ **PASS**
 
 #### TEST 1.3: Missing Email ✅ PASS
+
 - **Endpoint:** `POST /v1/admin/login`
 - **Request:** `{"password":"admin"}`
 - **Expected:** HTTP 400
@@ -103,6 +112,7 @@ Tenant: test-tenant
 ### 2. Tenant Admin Authentication Tests (2/2 PASS)
 
 #### TEST 2.1: Valid Credentials ✅ PASS
+
 - **Endpoint:** `POST /v1/tenant-auth/login`
 - **Request:** `{"email":"tenant@test.com","password":"Test123456"}`
 - **Expected:** HTTP 200 with JWT token
@@ -114,6 +124,7 @@ Tenant: test-tenant
 - **Type Discrimination:** Token includes `type: "tenant"` to prevent confusion attacks
 
 #### TEST 2.2: Invalid Password ✅ PASS
+
 - **Endpoint:** `POST /v1/tenant-auth/login`
 - **Request:** `{"email":"tenant@test.com","password":"wrongpassword"}`
 - **Expected:** HTTP 401
@@ -126,6 +137,7 @@ Tenant: test-tenant
 ### 3. Route Protection Tests (3/4 PASS)
 
 #### TEST 3.1: Admin Route - No Token ✅ PASS
+
 - **Endpoint:** `GET /v1/admin/bookings`
 - **Headers:** None
 - **Expected:** HTTP 401
@@ -134,6 +146,7 @@ Tenant: test-tenant
 - **Result:** ✅ **PASS**
 
 #### TEST 3.2: Admin Route - Valid Token ✅ PASS
+
 - **Endpoint:** `GET /v1/admin/bookings`
 - **Headers:** `Authorization: Bearer <admin-token>`
 - **Expected:** HTTP 200
@@ -142,6 +155,7 @@ Tenant: test-tenant
 - **Result:** ✅ **PASS**
 
 #### TEST 3.3: Tenant Route - No Token ✅ PASS
+
 - **Endpoint:** `GET /v1/tenant-auth/me`
 - **Headers:** None
 - **Expected:** HTTP 401
@@ -150,6 +164,7 @@ Tenant: test-tenant
 - **Result:** ✅ **PASS**
 
 #### TEST 3.4: Tenant Route - Valid Token ❌ FAIL
+
 - **Endpoint:** `GET /v1/tenant-auth/me`
 - **Headers:** `Authorization: Bearer <tenant-token>`
 - **Expected:** HTTP 200 with tenant info
@@ -169,6 +184,7 @@ Tenant: test-tenant
 ### 4. Token Validation Tests (2/2 PASS)
 
 #### TEST 4.1: Invalid Token Format ✅ PASS
+
 - **Endpoint:** `GET /v1/admin/bookings`
 - **Headers:** `Authorization: Bearer invalid.token.here`
 - **Expected:** HTTP 401
@@ -177,6 +193,7 @@ Tenant: test-tenant
 - **Result:** ✅ **PASS**
 
 #### TEST 4.2: Malformed Authorization Header ✅ PASS
+
 - **Endpoint:** `GET /v1/admin/bookings`
 - **Headers:** `Authorization: InvalidFormat`
 - **Expected:** HTTP 401
@@ -189,6 +206,7 @@ Tenant: test-tenant
 ### 5. Cross-Authentication Tests (1/2 PASS)
 
 #### TEST 5.1: Admin Route with Tenant Token ❌ FAIL
+
 - **Endpoint:** `GET /v1/admin/bookings`
 - **Headers:** `Authorization: Bearer <tenant-token>`
 - **Expected:** HTTP 401 (tenant token should be rejected)
@@ -202,6 +220,7 @@ Tenant: test-tenant
 - **Recommendation:** Add token type validation to admin auth middleware to reject non-admin tokens
 
 #### TEST 5.2: Tenant Route with Admin Token ✅ PASS
+
 - **Endpoint:** `GET /v1/tenant-auth/me`
 - **Headers:** `Authorization: Bearer <admin-token>`
 - **Expected:** HTTP 401 (admin token should be rejected)
@@ -215,11 +234,13 @@ Tenant: test-tenant
 ## Security Findings
 
 ### Critical Issues
+
 **None identified**
 
 ### High Priority Issues
 
 **Issue #1: Cross-Authentication Vulnerability**
+
 - **Severity:** HIGH
 - **Description:** Tenant admin tokens are accepted by platform admin routes
 - **Affected Endpoints:** All `/v1/admin/*` routes except `/v1/admin/login`
@@ -234,6 +255,7 @@ Tenant: test-tenant
 ### Medium Priority Issues
 
 **Issue #2: Missing Middleware on Tenant Auth Routes**
+
 - **Severity:** MEDIUM
 - **Description:** The `/v1/tenant-auth/me` endpoint is not protected by tenant auth middleware
 - **Affected Endpoints:** `GET /v1/tenant-auth/me`
@@ -249,6 +271,7 @@ Tenant: test-tenant
 - **Test to Verify Fix:** TEST 3.4 should return HTTP 200 with tenant info
 
 ### Low Priority Issues
+
 **None identified**
 
 ---
@@ -256,23 +279,27 @@ Tenant: test-tenant
 ## Additional Security Controls Verified
 
 ### Password Security ✅
+
 - **Hashing Algorithm:** bcrypt with 10-12 rounds
 - **Storage:** Only password hashes stored, never plain text
 - **Validation:** Constant-time comparison via bcrypt.compare()
 
 ### JWT Security ✅
+
 - **Algorithm:** HS256 (symmetric signing)
 - **Secret:** Stored in environment variable (JWT_SECRET)
 - **Expiry:** 7 days
 - **Header Format:** Strict validation ("Bearer <token>")
 
 ### Rate Limiting ✅
+
 - **Login Endpoints:** Limited to 5 attempts per 15 minutes
 - **Scope:** Applied to both admin and tenant login endpoints
 - **Response:** HTTP 429 with clear error message
 - **Verified:** Rate limiter triggered during initial testing
 
 ### Input Validation ✅
+
 - **Schema Validation:** Zod schemas for request validation
 - **Missing Fields:** Properly rejected with HTTP 400
 - **Invalid Formats:** Caught and returned with descriptive errors
@@ -282,6 +309,7 @@ Tenant: test-tenant
 ## Token Structure Analysis
 
 ### Platform Admin Token (Decoded)
+
 ```json
 {
   "userId": "clzadmin00000000000000000",
@@ -291,9 +319,11 @@ Tenant: test-tenant
   "exp": 1763156143
 }
 ```
+
 **Note:** Missing `type` field (should be `type: "admin"`)
 
 ### Tenant Admin Token (Decoded)
+
 ```json
 {
   "tenantId": "cmhp91lct0000p0i3hi347g0v",
@@ -304,6 +334,7 @@ Tenant: test-tenant
   "exp": 1763156143
 }
 ```
+
 **Note:** Correctly includes `type: "tenant"` for discrimination
 
 ---
@@ -311,6 +342,7 @@ Tenant: test-tenant
 ## Test Coverage Analysis
 
 ### What Was Tested ✅
+
 - ✅ User authentication (both roles)
 - ✅ Password validation
 - ✅ JWT token generation
@@ -324,6 +356,7 @@ Tenant: test-tenant
 - ✅ Rate limiting enforcement
 
 ### What Was NOT Tested ⚠️
+
 - ⚠️ Token expiration behavior (would require waiting 7 days or manipulating system time)
 - ⚠️ Tenant isolation for data access (would require creating test packages/bookings)
 - ⚠️ Token refresh mechanism (not implemented yet)
@@ -338,6 +371,7 @@ Tenant: test-tenant
 ### Immediate Actions (Critical/High Priority)
 
 **1. Fix Cross-Authentication Vulnerability**
+
 - **Priority:** HIGH
 - **Effort:** Low (1-2 hours)
 - **Steps:**
@@ -351,6 +385,7 @@ Tenant: test-tenant
   3. Update test suites to verify type discrimination
 
 **2. Apply Middleware to Tenant Auth Routes**
+
 - **Priority:** MEDIUM
 - **Effort:** Low (<1 hour)
 - **Steps:**
@@ -361,6 +396,7 @@ Tenant: test-tenant
 ### Short-Term Improvements (Medium Priority)
 
 **3. Implement Token Refresh Mechanism**
+
 - **Priority:** MEDIUM
 - **Effort:** Medium (4-6 hours)
 - **Benefits:**
@@ -369,6 +405,7 @@ Tenant: test-tenant
   - Industry best practice
 
 **4. Add Comprehensive Tenant Isolation Tests**
+
 - **Priority:** MEDIUM
 - **Effort:** Medium (3-4 hours)
 - **Scope:**
@@ -380,12 +417,14 @@ Tenant: test-tenant
 ### Long-Term Enhancements (Low Priority)
 
 **5. Consider httpOnly Cookies for Web Clients**
+
 - **Priority:** LOW
 - **Effort:** Medium (4-6 hours)
 - **Benefits:** Protection against XSS attacks
 - **Note:** Current localStorage approach is acceptable for API-only usage
 
 **6. Add Audit Logging**
+
 - **Priority:** LOW
 - **Effort:** Medium (6-8 hours)
 - **Scope:**
@@ -399,17 +438,21 @@ Tenant: test-tenant
 ## Comparison with Previous Test Reports
 
 ### Previous Report: Package Photo Upload Authentication (Nov 7, 2025)
+
 - **Result:** 21/21 tests passed (100%)
 - **Scope:** Photo upload endpoints with tenant authentication
 - **Key Finding:** Tenant isolation working correctly for photo upload
 
 ### This Report: Unified Authentication System (Nov 7, 2025)
+
 - **Result:** 11/13 tests passed (84.6%)
 - **Scope:** Core authentication for both platform admin and tenant admin
 - **Key Finding:** Cross-authentication vulnerability discovered
 
 ### Integration
+
 The two test reports cover complementary areas:
+
 - **Photo Upload Report:** Verified tenant-specific features work correctly
 - **This Report:** Verified core authentication foundation has minor issues
 
@@ -420,18 +463,21 @@ Both reports confirm that tenant-to-tenant isolation is working correctly (diffe
 ## Test Execution Environment
 
 ### Tools Used
+
 - `curl` for HTTP requests
 - `bash` for test script automation
 - `jq` for JSON parsing
 - Custom test script: `/tmp/test-auth.sh`
 
 ### Test Data
+
 - Platform Admin: Created via Prisma with bcrypt hashed password
 - Tenant Admin: Created via Prisma with bcrypt hashed password
 - Test database: PostgreSQL (Supabase)
 - No mock data used (REAL adapter mode)
 
 ### Test Artifacts
+
 - Test script: `/tmp/test-auth.sh`
 - Test results: `/tmp/auth-test-results.txt`
 - Individual response files: `/tmp/test*.json`
@@ -450,14 +496,17 @@ The unified authentication system is **substantially functional** with an 84.6% 
 - ✅ Rate limiting protection
 
 However, **one high-priority security issue was identified**:
+
 - ❌ Cross-authentication vulnerability allowing tenant admin tokens to access platform admin routes
 
 And **one medium-priority functional issue**:
+
 - ❌ Missing middleware protection on `/v1/tenant-auth/me` endpoint
 
 **Overall Assessment:** The system is **NOT production-ready** until the cross-authentication vulnerability is fixed. Once Issue #1 is resolved and verified with TEST 5.1, the system will be production-ready for the authentication layer.
 
 ### Risk Level: MEDIUM
+
 - **Rationale:** The cross-authentication issue is serious but requires an authenticated tenant admin to exploit
 - **Mitigation:** Fix is straightforward and low-effort (1-2 hours)
 - **Timeline:** Should be resolved before production deployment
@@ -472,6 +521,7 @@ And **one medium-priority functional issue**:
 **Status:** ⚠️ **CONDITIONAL PASS** (pending fix for Issue #1)
 
 **Next Steps:**
+
 1. Development team to fix Issue #1 (cross-authentication)
 2. Development team to fix Issue #2 (middleware application)
 3. Re-run tests to verify fixes

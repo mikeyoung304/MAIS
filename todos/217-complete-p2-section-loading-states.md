@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "217"
+issue_id: '217'
 tags: [ux, loading, skeleton, landing-page, performance]
 dependencies: []
 ---

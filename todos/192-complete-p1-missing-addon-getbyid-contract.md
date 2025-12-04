@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "192"
+issue_id: '192'
 tags: [code-review, api-contract, type-safety]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The route handler `GET /v1/tenant-admin/addons/:id` is implemented in tenant-admin.routes.ts (lines 1050-1078), but there is **no corresponding API contract definition** in the contracts package. This breaks the type-safe API contract pattern that is mandatory in this codebase.
 
 ### Why It Matters
+
 - Type safety is bypassed - response structure not validated
 - Frontend clients cannot generate type-safe API calls
 - Documentation generation will be incomplete
@@ -23,17 +24,20 @@ The route handler `GET /v1/tenant-admin/addons/:id` is implemented in tenant-adm
 **Source:** Security Review, Architecture Review
 
 **Evidence:**
+
 - Routes file implements: `router.get('/addons/:id', ...)` (line 1050)
 - Contracts file has: `tenantAdminGetAddOns` (all add-ons) but NOT `tenantAdminGetAddOnById`
 - Other similar endpoints (packages, segments) all have individual GET by ID contracts
 
 **Location:**
+
 - `server/src/routes/tenant-admin.routes.ts:1050-1078` (route exists)
 - `packages/contracts/src/api.v1.ts` (contract missing)
 
 ## Proposed Solutions
 
 ### Option A: Add Missing Contract (Recommended)
+
 **Pros:** Maintains type-safe API pattern, quick fix
 **Cons:** None
 **Effort:** Small (5 minutes)
@@ -70,6 +74,7 @@ Option A - Add the missing contract to maintain consistency.
 ## Technical Details
 
 **Affected Files:**
+
 - `packages/contracts/src/api.v1.ts`
 
 **Database Changes:** None
@@ -83,8 +88,8 @@ Option A - Add the missing contract to maintain consistency.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                             |
+| ---------- | ------------------------ | ------------------------------------- |
 | 2025-12-03 | Created from code review | Always create contracts before routes |
 
 ## Resources

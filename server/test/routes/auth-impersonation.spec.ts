@@ -93,9 +93,9 @@ describe('Impersonation API Endpoints', () => {
       });
 
       // Act & Assert
-      await expect(
-        controller.startImpersonation(token, 'tenant_123')
-      ).rejects.toThrow('Only platform admins can impersonate tenants');
+      await expect(controller.startImpersonation(token, 'tenant_123')).rejects.toThrow(
+        'Only platform admins can impersonate tenants'
+      );
     });
 
     it('throws UnauthorizedError if tenant does not exist', async () => {
@@ -107,9 +107,9 @@ describe('Impersonation API Endpoints', () => {
       });
 
       // Act & Assert
-      await expect(
-        controller.startImpersonation(adminToken, 'tenant_nonexistent')
-      ).rejects.toThrow('Tenant not found');
+      await expect(controller.startImpersonation(adminToken, 'tenant_nonexistent')).rejects.toThrow(
+        'Tenant not found'
+      );
     });
 
     it('preserves admin user information in impersonation token', async () => {
@@ -202,9 +202,9 @@ describe('Impersonation API Endpoints', () => {
       });
 
       // Act & Assert
-      await expect(
-        controller.stopImpersonation(token)
-      ).rejects.toThrow('Invalid impersonation token');
+      await expect(controller.stopImpersonation(token)).rejects.toThrow(
+        'Invalid impersonation token'
+      );
     });
 
     it('preserves admin user information after stopping impersonation', async () => {

@@ -23,10 +23,12 @@ Ship self-service tenant signup with Stripe Connect payments in **5 days**.
 **Build `POST /v1/auth/signup` endpoint**
 
 Files to modify:
+
 - `packages/contracts/src/api.v1.ts` - Add contract
 - `server/src/routes/auth.routes.ts` - Add endpoint
 
 **Minimal Implementation:**
+
 ```typescript
 // In auth.routes.ts - add alongside existing login
 router.post('/signup', async (req, res) => {
@@ -47,7 +49,10 @@ router.post('/signup', async (req, res) => {
   }
 
   // Generate slug: simple timestamp approach (guaranteed unique)
-  const baseSlug = businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 50);
+  const baseSlug = businessName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .slice(0, 50);
   const slug = `${baseSlug}-${Date.now()}`;
 
   // Hash password (existing service method)
@@ -77,12 +82,13 @@ router.post('/signup', async (req, res) => {
     token,
     tenantId: tenant.id,
     slug,
-    email: tenant.email
+    email: tenant.email,
   });
 });
 ```
 
 **Schema change needed:** Add `emailVerified` field
+
 ```prisma
 model Tenant {
   // ... existing fields
@@ -91,6 +97,7 @@ model Tenant {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Endpoint accepts email, password, businessName
 - [ ] Returns JWT token on success
 - [ ] Returns 409 if email exists
@@ -103,9 +110,11 @@ model Tenant {
 **Build `/signup` page**
 
 Files to create:
+
 - `client/src/pages/SignupPage.tsx`
 
 **Minimal Implementation:**
+
 ```tsx
 // Simple form, no fancy validation
 export function SignupPage() {
@@ -134,14 +143,35 @@ export function SignupPage() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
-      <input type="password" placeholder="Password (8+ chars)" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} />
-      <input type="text" placeholder="Business Name" value={businessName} onChange={e => setBusinessName(e.target.value)} required />
+      <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
+      <input
+        type="password"
+        placeholder="Password (8+ chars)"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        minLength={8}
+      />
+      <input
+        type="text"
+        placeholder="Business Name"
+        value={businessName}
+        onChange={(e) => setBusinessName(e.target.value)}
+        required
+      />
       {error && <p className="text-red-500">{error}</p>}
       <button type="submit" disabled={loading}>
         {loading ? 'Creating...' : 'Create Account'}
       </button>
-      <p>We charge 10% commission on bookings. <Link to="/login">Already have account?</Link></p>
+      <p>
+        We charge 10% commission on bookings. <Link to="/login">Already have account?</Link>
+      </p>
     </form>
   );
 }
@@ -150,6 +180,7 @@ export function SignupPage() {
 **Password Reset (magic link):**
 
 Files to modify:
+
 - `server/src/routes/auth.routes.ts` - Add reset endpoints
 - `packages/contracts/src/api.v1.ts` - Add contracts
 
@@ -165,7 +196,7 @@ router.post('/forgot-password', async (req, res) => {
 
     await tenantRepo.update(tenant.id, {
       passwordResetToken: resetToken,
-      passwordResetExpires: expires
+      passwordResetExpires: expires,
     });
 
     // Send email with link
@@ -189,7 +220,7 @@ router.post('/reset-password', async (req, res) => {
   await tenantRepo.update(tenant.id, {
     passwordHash,
     passwordResetToken: null,
-    passwordResetExpires: null
+    passwordResetExpires: null,
   });
 
   return res.json({ message: 'Password updated' });
@@ -197,6 +228,7 @@ router.post('/reset-password', async (req, res) => {
 ```
 
 **Schema addition:**
+
 ```prisma
 model Tenant {
   // ... existing
@@ -206,6 +238,7 @@ model Tenant {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Signup form works end-to-end
 - [ ] Redirects to dashboard on success
 - [ ] Password reset email sends
@@ -218,10 +251,12 @@ model Tenant {
 **Add "Connect Your Bank" to dashboard**
 
 Files to modify:
+
 - `client/src/features/tenant-admin/TenantDashboard/index.tsx`
 - `server/src/routes/tenant-admin.routes.ts`
 
 **Backend endpoints (service already exists):**
+
 ```typescript
 // POST /v1/tenant-admin/stripe/onboarding-link
 router.post('/stripe/onboarding-link', tenantAuthMiddleware, async (req, res) => {
@@ -252,13 +287,14 @@ router.get('/stripe/status', tenantAuthMiddleware, async (req, res) => {
 ```
 
 **Frontend component:**
+
 ```tsx
 function StripeConnectButton() {
   const [status, setStatus] = useState({ hasAccount: false, onboarded: false });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    api.getStripeStatus().then(r => r.status === 200 && setStatus(r.body));
+    api.getStripeStatus().then((r) => r.status === 200 && setStatus(r.body));
   }, []);
 
   const handleConnect = async () => {
@@ -283,6 +319,7 @@ function StripeConnectButton() {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Button visible on tenant dashboard
 - [ ] Clicking opens Stripe onboarding
 - [ ] After return, status shows "Connected" (via webhook)
@@ -294,21 +331,25 @@ function StripeConnectButton() {
 **Morning: Deploy**
 
 1. Run migrations:
+
 ```bash
 cd server && npm exec prisma migrate dev --name add_email_verified_and_reset
 ```
 
 2. Deploy API to Render:
+
 ```bash
 git push origin main  # Render auto-deploys from main
 ```
 
 3. Deploy client to Vercel:
+
 ```bash
 cd client && vercel --prod
 ```
 
 4. Configure production environment:
+
 - `JWT_SECRET` (generate new for prod)
 - `DATABASE_URL` (Supabase production)
 - `STRIPE_SECRET_KEY` (live key)
@@ -316,6 +357,7 @@ cd client && vercel --prod
 - `POSTMARK_SERVER_TOKEN`
 
 5. Register Stripe webhook:
+
 ```bash
 stripe listen --forward-to https://api.maconaisolutions.com/v1/webhooks/stripe
 ```
@@ -365,11 +407,13 @@ Explicitly excluded (add later based on user feedback):
 ## Files to Create/Modify Summary
 
 **Create:**
+
 - `client/src/pages/SignupPage.tsx`
 - `client/src/pages/ResetPasswordPage.tsx`
 - `client/src/pages/ForgotPasswordPage.tsx`
 
 **Modify:**
+
 - `packages/contracts/src/api.v1.ts` - Add signup, reset, Stripe contracts
 - `server/src/routes/auth.routes.ts` - Add signup, reset endpoints
 - `server/src/routes/tenant-admin.routes.ts` - Add Stripe endpoints
@@ -378,6 +422,7 @@ Explicitly excluded (add later based on user feedback):
 - `client/src/features/tenant-admin/TenantDashboard/index.tsx` - Add Stripe button
 
 **Already Fixed:**
+
 - `server/test/http/tenant-admin-photos.test.ts` - Path fix, all 19 tests pass
 
 ---
@@ -394,12 +439,12 @@ Explicitly excluded (add later based on user feedback):
 
 ## Risk Mitigation
 
-| Risk | Mitigation |
-|------|------------|
+| Risk                      | Mitigation                                    |
+| ------------------------- | --------------------------------------------- |
 | Stripe onboarding dropout | Clear instructions, "Resume" button on return |
-| Password forgotten | Magic link reset (Day 2) |
-| Email typos | Show confirmation before submit |
-| Deployment issues | Deploy Day 4 morning, full afternoon to fix |
+| Password forgotten        | Magic link reset (Day 2)                      |
+| Email typos               | Show confirmation before submit               |
+| Deployment issues         | Deploy Day 4 morning, full afternoon to fix   |
 
 ---
 

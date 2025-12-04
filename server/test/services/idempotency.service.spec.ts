@@ -232,20 +232,8 @@ describe('IdempotencyService', () => {
       const timestamp2 = 1700000005000; // 5 seconds later (within 10s window)
 
       // Act
-      const key1 = service.generateCheckoutKey(
-        tenantId,
-        email,
-        packageId,
-        eventDate,
-        timestamp1
-      );
-      const key2 = service.generateCheckoutKey(
-        tenantId,
-        email,
-        packageId,
-        eventDate,
-        timestamp2
-      );
+      const key1 = service.generateCheckoutKey(tenantId, email, packageId, eventDate, timestamp1);
+      const key2 = service.generateCheckoutKey(tenantId, email, packageId, eventDate, timestamp2);
 
       // Assert - Same key because timestamps round to same 10-second window
       expect(key1).toBe(key2);
@@ -253,13 +241,7 @@ describe('IdempotencyService', () => {
 
       // Different timestamp (outside 10s window)
       const timestamp3 = 1700000015000; // 15 seconds later
-      const key3 = service.generateCheckoutKey(
-        tenantId,
-        email,
-        packageId,
-        eventDate,
-        timestamp3
-      );
+      const key3 = service.generateCheckoutKey(tenantId, email, packageId, eventDate, timestamp3);
 
       // Should be different key
       expect(key3).not.toBe(key1);

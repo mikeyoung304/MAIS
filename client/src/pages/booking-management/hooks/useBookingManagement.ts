@@ -81,11 +81,11 @@ export function useBookingManagement(token: string | null): UseBookingManagement
    */
   const fetchBookingDetails = useCallback(async () => {
     if (!token) {
-      setState(prev => ({ ...prev, error: 'No access token provided' }));
+      setState((prev) => ({ ...prev, error: 'No access token provided' }));
       return;
     }
 
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
+    setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
       const response = await fetch(
@@ -106,7 +106,8 @@ export function useBookingManagement(token: string | null): UseBookingManagement
 
         // User-friendly error messages
         if (errorData.error === 'TOKEN_EXPIRED') {
-          errorMessage = 'Your access link has expired. Please request a new one from your confirmation email.';
+          errorMessage =
+            'Your access link has expired. Please request a new one from your confirmation email.';
         } else if (errorData.error === 'INVALID_TOKEN') {
           errorMessage = 'Invalid access link. Please use the link from your confirmation email.';
         } else if (errorData.error === 'NOT_FOUND') {
@@ -116,13 +117,13 @@ export function useBookingManagement(token: string | null): UseBookingManagement
         throw new Error(errorMessage);
       }
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         bookingDetails: data as BookingDetails,
         isLoading: false,
       }));
     } catch (err) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         error: err instanceof Error ? err.message : 'Failed to load booking details',
         isLoading: false,
@@ -133,133 +134,143 @@ export function useBookingManagement(token: string | null): UseBookingManagement
   /**
    * Reschedule booking to a new date
    */
-  const rescheduleBooking = useCallback(async (newDate: string): Promise<boolean> => {
-    if (!token) {
-      setState(prev => ({ ...prev, error: 'No access token provided' }));
-      return false;
-    }
-
-    setState(prev => ({ ...prev, isRescheduling: true, error: null }));
-
-    try {
-      const response = await fetch(
-        `${baseUrl}/v1/public/bookings/reschedule?token=${encodeURIComponent(token)}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ newDate }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        const errorData = data as ErrorResponse;
-        let errorMessage = errorData.message;
-
-        if (errorData.error === 'BOOKING_CONFLICT') {
-          errorMessage = 'That date is not available. Please choose a different date.';
-        } else if (errorData.error === 'BOOKING_ALREADY_CANCELLED') {
-          errorMessage = 'This booking has already been cancelled.';
-        } else if (errorData.error === 'TOKEN_EXPIRED') {
-          errorMessage = 'Your access link has expired. Please request a new one.';
-        }
-
-        throw new Error(errorMessage);
+  const rescheduleBooking = useCallback(
+    async (newDate: string): Promise<boolean> => {
+      if (!token) {
+        setState((prev) => ({ ...prev, error: 'No access token provided' }));
+        return false;
       }
 
-      // Update local state with new booking details
-      setState(prev => ({
-        ...prev,
-        bookingDetails: prev.bookingDetails ? {
-          ...prev.bookingDetails,
-          booking: {
-            ...prev.bookingDetails.booking,
-            eventDate: newDate,
-          },
-        } : null,
-        isRescheduling: false,
-      }));
+      setState((prev) => ({ ...prev, isRescheduling: true, error: null }));
 
-      return true;
-    } catch (err) {
-      setState(prev => ({
-        ...prev,
-        error: err instanceof Error ? err.message : 'Failed to reschedule booking',
-        isRescheduling: false,
-      }));
-      return false;
-    }
-  }, [token]);
+      try {
+        const response = await fetch(
+          `${baseUrl}/v1/public/bookings/reschedule?token=${encodeURIComponent(token)}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ newDate }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          const errorData = data as ErrorResponse;
+          let errorMessage = errorData.message;
+
+          if (errorData.error === 'BOOKING_CONFLICT') {
+            errorMessage = 'That date is not available. Please choose a different date.';
+          } else if (errorData.error === 'BOOKING_ALREADY_CANCELLED') {
+            errorMessage = 'This booking has already been cancelled.';
+          } else if (errorData.error === 'TOKEN_EXPIRED') {
+            errorMessage = 'Your access link has expired. Please request a new one.';
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        // Update local state with new booking details
+        setState((prev) => ({
+          ...prev,
+          bookingDetails: prev.bookingDetails
+            ? {
+                ...prev.bookingDetails,
+                booking: {
+                  ...prev.bookingDetails.booking,
+                  eventDate: newDate,
+                },
+              }
+            : null,
+          isRescheduling: false,
+        }));
+
+        return true;
+      } catch (err) {
+        setState((prev) => ({
+          ...prev,
+          error: err instanceof Error ? err.message : 'Failed to reschedule booking',
+          isRescheduling: false,
+        }));
+        return false;
+      }
+    },
+    [token]
+  );
 
   /**
    * Cancel booking
    */
-  const cancelBooking = useCallback(async (reason?: string): Promise<boolean> => {
-    if (!token) {
-      setState(prev => ({ ...prev, error: 'No access token provided' }));
-      return false;
-    }
-
-    setState(prev => ({ ...prev, isCancelling: true, error: null }));
-
-    try {
-      const response = await fetch(
-        `${baseUrl}/v1/public/bookings/cancel?token=${encodeURIComponent(token)}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ reason }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        const errorData = data as ErrorResponse;
-        let errorMessage = errorData.message;
-
-        if (errorData.error === 'BOOKING_ALREADY_CANCELLED') {
-          errorMessage = 'This booking has already been cancelled.';
-        } else if (errorData.error === 'TOKEN_EXPIRED') {
-          errorMessage = 'Your access link has expired. Please request a new one.';
-        }
-
-        throw new Error(errorMessage);
+  const cancelBooking = useCallback(
+    async (reason?: string): Promise<boolean> => {
+      if (!token) {
+        setState((prev) => ({ ...prev, error: 'No access token provided' }));
+        return false;
       }
 
-      // Update local state with cancelled status
-      setState(prev => ({
-        ...prev,
-        bookingDetails: prev.bookingDetails ? {
-          ...prev.bookingDetails,
-          booking: {
-            ...prev.bookingDetails.booking,
-            status: 'CANCELED',
-            cancelledBy: 'CUSTOMER',
-            cancellationReason: reason,
-            refundStatus: prev.bookingDetails.booking.status === 'PAID' ? 'PENDING' : 'NONE',
-          },
-          canReschedule: false,
-          canCancel: false,
-        } : null,
-        isCancelling: false,
-      }));
+      setState((prev) => ({ ...prev, isCancelling: true, error: null }));
 
-      return true;
-    } catch (err) {
-      setState(prev => ({
-        ...prev,
-        error: err instanceof Error ? err.message : 'Failed to cancel booking',
-        isCancelling: false,
-      }));
-      return false;
-    }
-  }, [token]);
+      try {
+        const response = await fetch(
+          `${baseUrl}/v1/public/bookings/cancel?token=${encodeURIComponent(token)}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ reason }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          const errorData = data as ErrorResponse;
+          let errorMessage = errorData.message;
+
+          if (errorData.error === 'BOOKING_ALREADY_CANCELLED') {
+            errorMessage = 'This booking has already been cancelled.';
+          } else if (errorData.error === 'TOKEN_EXPIRED') {
+            errorMessage = 'Your access link has expired. Please request a new one.';
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        // Update local state with cancelled status
+        setState((prev) => ({
+          ...prev,
+          bookingDetails: prev.bookingDetails
+            ? {
+                ...prev.bookingDetails,
+                booking: {
+                  ...prev.bookingDetails.booking,
+                  status: 'CANCELED',
+                  cancelledBy: 'CUSTOMER',
+                  cancellationReason: reason,
+                  refundStatus: prev.bookingDetails.booking.status === 'PAID' ? 'PENDING' : 'NONE',
+                },
+                canReschedule: false,
+                canCancel: false,
+              }
+            : null,
+          isCancelling: false,
+        }));
+
+        return true;
+      } catch (err) {
+        setState((prev) => ({
+          ...prev,
+          error: err instanceof Error ? err.message : 'Failed to cancel booking',
+          isCancelling: false,
+        }));
+        return false;
+      }
+    },
+    [token]
+  );
 
   // Fetch booking details on mount
   useEffect(() => {

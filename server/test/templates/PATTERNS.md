@@ -3,6 +3,7 @@
 Visual reference for common testing patterns in the Elope project.
 
 ## Table of Contents
+
 - [Test Structure Patterns](#test-structure-patterns)
 - [Data Setup Patterns](#data-setup-patterns)
 - [Assertion Patterns](#assertion-patterns)
@@ -17,6 +18,7 @@ Visual reference for common testing patterns in the Elope project.
 ## Test Structure Patterns
 
 ### Basic Test Structure
+
 ```typescript
 describe('ComponentName', () => {
   // 1. Declare dependencies
@@ -47,6 +49,7 @@ describe('ComponentName', () => {
 ```
 
 ### Nested Describe Blocks
+
 ```typescript
 describe('BookingService', () => {
   describe('create operations', () => {
@@ -74,6 +77,7 @@ describe('BookingService', () => {
 ## Data Setup Patterns
 
 ### Using Builder Functions
+
 ```typescript
 // Pattern: Builder with defaults
 const booking = buildBooking();
@@ -95,6 +99,7 @@ const addon2 = buildAddOn({ packageId: package1.id });
 ```
 
 ### Repository Test Data Setup
+
 ```typescript
 // Pattern: Pre-populate repository
 beforeEach(() => {
@@ -120,6 +125,7 @@ it('finds existing booking', async () => {
 ```
 
 ### HTTP Test Data Setup
+
 ```typescript
 // Pattern: Database setup in beforeAll
 beforeAll(async () => {
@@ -158,6 +164,7 @@ beforeAll(async () => {
 ## Assertion Patterns
 
 ### Basic Assertions
+
 ```typescript
 // Pattern: Exact equality
 expect(result.id).toBe('booking_123');
@@ -183,6 +190,7 @@ expect(result).toMatchObject({
 ```
 
 ### Array Assertions
+
 ```typescript
 // Pattern: Array length
 expect(results).toHaveLength(3);
@@ -190,20 +198,21 @@ expect(results.length).toBe(3);
 
 // Pattern: Array contents
 expect(results).toContain(booking1);
-expect(results.some(b => b.id === 'booking_1')).toBe(true);
+expect(results.some((b) => b.id === 'booking_1')).toBe(true);
 
 // Pattern: Array is empty
 expect(results).toHaveLength(0);
 expect(results).toEqual([]);
 
 // Pattern: Every item matches
-results.forEach(booking => {
+results.forEach((booking) => {
   expect(booking.status).toBe('PAID');
   expect(booking.tenantId).toBe('test-tenant');
 });
 ```
 
 ### Complex Assertions
+
 ```typescript
 // Pattern: Partial object matching
 expect(result).toEqual(
@@ -234,52 +243,51 @@ expect(result.metadata).toEqual({
 ## Error Testing Patterns
 
 ### Basic Error Testing
+
 ```typescript
 // Pattern: Error type only
-await expect(
-  service.getById('test-tenant', 'nonexistent')
-).rejects.toThrow(NotFoundError);
+await expect(service.getById('test-tenant', 'nonexistent')).rejects.toThrow(NotFoundError);
 
 // Pattern: Error type and message
-await expect(
-  service.getById('test-tenant', 'nonexistent')
-).rejects.toThrow(NotFoundError);
+await expect(service.getById('test-tenant', 'nonexistent')).rejects.toThrow(NotFoundError);
 
-await expect(
-  service.getById('test-tenant', 'nonexistent')
-).rejects.toThrow('Entity with id "nonexistent" not found');
+await expect(service.getById('test-tenant', 'nonexistent')).rejects.toThrow(
+  'Entity with id "nonexistent" not found'
+);
 
 // Pattern: Error message substring
-await expect(
-  service.create('test-tenant', invalidData)
-).rejects.toThrow('required');
+await expect(service.create('test-tenant', invalidData)).rejects.toThrow('required');
 ```
 
 ### Validation Error Testing
+
 ```typescript
 // Pattern: Multiple validation tests
 describe('validation', () => {
   it('throws ValidationError for missing field', async () => {
     await expect(
-      service.create('test-tenant', { /* missing required field */ })
+      service.create('test-tenant', {
+        /* missing required field */
+      })
     ).rejects.toThrow(ValidationError);
   });
 
   it('throws ValidationError for invalid format', async () => {
-    await expect(
-      service.create('test-tenant', { field: 'invalid-format' })
-    ).rejects.toThrow(ValidationError);
+    await expect(service.create('test-tenant', { field: 'invalid-format' })).rejects.toThrow(
+      ValidationError
+    );
   });
 
   it('throws ValidationError for negative price', async () => {
-    await expect(
-      service.create('test-tenant', { priceCents: -100 })
-    ).rejects.toThrow('priceCents must be non-negative');
+    await expect(service.create('test-tenant', { priceCents: -100 })).rejects.toThrow(
+      'priceCents must be non-negative'
+    );
   });
 });
 ```
 
 ### Try-Catch Error Testing
+
 ```typescript
 // Pattern: Capture error for detailed assertions
 it('throws error with details', async () => {
@@ -299,6 +307,7 @@ it('throws error with details', async () => {
 ## Multi-Tenancy Patterns
 
 ### Service Multi-Tenancy
+
 ```typescript
 // Pattern: Always pass tenantId first
 it('respects tenant isolation', async () => {
@@ -310,12 +319,13 @@ it('respects tenant isolation', async () => {
   const tenant1Bookings = await service.getAll('tenant-1');
 
   // Assert: Only tenant-1 data returned
-  expect(tenant1Bookings.some(b => b.id === 'booking_1')).toBe(true);
-  expect(tenant1Bookings.some(b => b.id === 'booking_2')).toBe(false);
+  expect(tenant1Bookings.some((b) => b.id === 'booking_1')).toBe(true);
+  expect(tenant1Bookings.some((b) => b.id === 'booking_2')).toBe(false);
 });
 ```
 
 ### Repository Multi-Tenancy
+
 ```typescript
 // Pattern: Tenant-scoped queries
 it('queries are tenant-scoped', async () => {
@@ -335,6 +345,7 @@ it('queries are tenant-scoped', async () => {
 ```
 
 ### HTTP Multi-Tenancy
+
 ```typescript
 // Pattern: Tenant authentication
 it('authenticates via tenant API key', async () => {
@@ -344,7 +355,7 @@ it('authenticates via tenant API key', async () => {
     .expect(200);
 
   // All results belong to authenticated tenant
-  res.body.forEach(booking => {
+  res.body.forEach((booking) => {
     expect(booking.tenantId).toBe('tenant_test');
   });
 });
@@ -367,6 +378,7 @@ it('prevents access to other tenant data', async () => {
 ## Async Patterns
 
 ### Basic Async/Await
+
 ```typescript
 // Pattern: Standard async test
 it('handles async operation', async () => {
@@ -385,6 +397,7 @@ it('handles multiple async operations', async () => {
 ```
 
 ### Parallel Async Operations
+
 ```typescript
 // Pattern: Promise.all for independent operations
 it('executes operations in parallel', async () => {
@@ -401,6 +414,7 @@ it('executes operations in parallel', async () => {
 ```
 
 ### Concurrent Operations with Error Handling
+
 ```typescript
 // Pattern: Promise.allSettled for concurrent ops with possible failures
 it('handles some failures in concurrent operations', async () => {
@@ -410,8 +424,8 @@ it('handles some failures in concurrent operations', async () => {
     repository.create('test-tenant', booking1), // Will fail (duplicate)
   ]);
 
-  const successes = results.filter(r => r.status === 'fulfilled');
-  const failures = results.filter(r => r.status === 'rejected');
+  const successes = results.filter((r) => r.status === 'fulfilled');
+  const failures = results.filter((r) => r.status === 'rejected');
 
   expect(successes.length).toBe(2);
   expect(failures.length).toBe(1);
@@ -424,6 +438,7 @@ it('handles some failures in concurrent operations', async () => {
 ```
 
 ### Async Timeouts
+
 ```typescript
 // Pattern: Test with timeout
 it('completes within timeout', async () => {
@@ -433,9 +448,9 @@ it('completes within timeout', async () => {
 
 // Pattern: Test timeout behavior
 it('throws timeout error for slow operation', async () => {
-  await expect(
-    service.operationWithTimeout('test-tenant', { timeout: 100 })
-  ).rejects.toThrow('Operation timed out');
+  await expect(service.operationWithTimeout('test-tenant', { timeout: 100 })).rejects.toThrow(
+    'Operation timed out'
+  );
 });
 ```
 
@@ -444,6 +459,7 @@ it('throws timeout error for slow operation', async () => {
 ## HTTP Testing Patterns
 
 ### GET Requests
+
 ```typescript
 // Pattern: Basic GET
 it('gets list of resources', async () => {
@@ -462,7 +478,7 @@ it('filters by query parameters', async () => {
     .set('X-Tenant-Key', testTenantApiKey)
     .expect(200);
 
-  res.body.forEach(booking => {
+  res.body.forEach((booking) => {
     expect(booking.status).toBe('PAID');
   });
   expect(res.body.length).toBeLessThanOrEqual(10);
@@ -480,6 +496,7 @@ it('gets single resource by id', async () => {
 ```
 
 ### POST Requests
+
 ```typescript
 // Pattern: Create resource
 it('creates new resource', async () => {
@@ -519,6 +536,7 @@ it('returns 400 for invalid data', async () => {
 ```
 
 ### PATCH/PUT Requests
+
 ```typescript
 // Pattern: Update resource
 it('updates existing resource', async () => {
@@ -546,6 +564,7 @@ it('returns 404 for non-existent resource', async () => {
 ```
 
 ### DELETE Requests
+
 ```typescript
 // Pattern: Delete resource
 it('deletes resource', async () => {
@@ -563,28 +582,21 @@ it('deletes resource', async () => {
 ```
 
 ### Authentication Testing
+
 ```typescript
 // Pattern: Missing auth
 it('returns 401 without API key', async () => {
-  await request(app)
-    .get('/v1/bookings')
-    .expect(401);
+  await request(app).get('/v1/bookings').expect(401);
 });
 
 // Pattern: Invalid auth
 it('returns 401 for invalid API key', async () => {
-  await request(app)
-    .get('/v1/bookings')
-    .set('X-Tenant-Key', 'invalid_key')
-    .expect(401);
+  await request(app).get('/v1/bookings').set('X-Tenant-Key', 'invalid_key').expect(401);
 });
 
 // Pattern: Inactive tenant
 it('returns 403 for inactive tenant', async () => {
-  await request(app)
-    .get('/v1/bookings')
-    .set('X-Tenant-Key', inactiveTenantApiKey)
-    .expect(403);
+  await request(app).get('/v1/bookings').set('X-Tenant-Key', inactiveTenantApiKey).expect(403);
 });
 ```
 
@@ -593,6 +605,7 @@ it('returns 403 for inactive tenant', async () => {
 ## Webhook Patterns
 
 ### Webhook Event Mocking
+
 ```typescript
 // Pattern: Mock webhook event
 it('processes webhook event', async () => {
@@ -623,10 +636,7 @@ it('processes webhook event', async () => {
   paymentProvider.verifyWebhook = async () => webhookEvent;
 
   // Act
-  await controller.handleWebhook(
-    JSON.stringify(webhookEvent),
-    'signature'
-  );
+  await controller.handleWebhook(JSON.stringify(webhookEvent), 'signature');
 
   // Assert
   expect(webhookRepo.events[0]?.status).toBe('PROCESSED');
@@ -634,6 +644,7 @@ it('processes webhook event', async () => {
 ```
 
 ### Idempotency Testing
+
 ```typescript
 // Pattern: Duplicate webhook handling
 it('handles duplicate webhooks idempotently', async () => {
@@ -658,6 +669,7 @@ it('handles duplicate webhooks idempotently', async () => {
 ```
 
 ### Webhook Validation
+
 ```typescript
 // Pattern: Invalid signature
 it('rejects invalid webhook signature', async () => {
@@ -665,9 +677,9 @@ it('rejects invalid webhook signature', async () => {
     throw new Error('Invalid signature');
   };
 
-  await expect(
-    controller.handleWebhook('payload', 'bad_signature')
-  ).rejects.toThrow(WebhookValidationError);
+  await expect(controller.handleWebhook('payload', 'bad_signature')).rejects.toThrow(
+    WebhookValidationError
+  );
 });
 
 // Pattern: Missing metadata
@@ -681,13 +693,14 @@ it('rejects webhook with missing metadata', async () => {
 
   paymentProvider.verifyWebhook = async () => invalidEvent;
 
-  await expect(
-    controller.handleWebhook(JSON.stringify(invalidEvent), 'sig')
-  ).rejects.toThrow(WebhookValidationError);
+  await expect(controller.handleWebhook(JSON.stringify(invalidEvent), 'sig')).rejects.toThrow(
+    WebhookValidationError
+  );
 });
 ```
 
 ### Webhook Error Handling
+
 ```typescript
 // Pattern: Processing failure
 it('marks webhook as failed on error', async () => {
@@ -701,9 +714,7 @@ it('marks webhook as failed on error', async () => {
   paymentProvider.verifyWebhook = async () => event;
 
   // Act & Assert
-  await expect(
-    controller.handleWebhook(JSON.stringify(event), 'sig')
-  ).rejects.toThrow();
+  await expect(controller.handleWebhook(JSON.stringify(event), 'sig')).rejects.toThrow();
 
   // Assert: Webhook marked as failed
   expect(webhookRepo.events[0]?.status).toBe('FAILED');
@@ -718,6 +729,7 @@ it('marks webhook as failed on error', async () => {
 This patterns guide provides visual examples of common testing patterns in the Elope project. Use these patterns as references when writing your tests.
 
 **Key Takeaways:**
+
 - Always use the AAA pattern (Arrange-Act-Assert)
 - Pass tenantId as first parameter for multi-tenancy
 - Use builder functions for test data
@@ -728,6 +740,7 @@ This patterns guide provides visual examples of common testing patterns in the E
 - Keep tests isolated and independent
 
 For complete templates with full examples, see:
+
 - [service.test.template.ts](./service.test.template.ts)
 - [repository.test.template.ts](./repository.test.template.ts)
 - [controller.test.template.ts](./controller.test.template.ts)

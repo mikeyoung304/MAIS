@@ -17,7 +17,11 @@ export class AvailabilityController {
     };
   }
 
-  async getUnavailableDates(tenantId: string, startDate: string, endDate: string): Promise<{ dates: string[] }> {
+  async getUnavailableDates(
+    tenantId: string,
+    startDate: string,
+    endDate: string
+  ): Promise<{ dates: string[] }> {
     const dates = await this.availabilityService.getUnavailableDates(
       tenantId,
       new Date(startDate),

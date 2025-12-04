@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "122"
+issue_id: '122'
 tags: [code-review, accessibility, pr-12]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The `<summary>` element in the accordion has no visible focus indicator for keyboard navigation. Users navigating with Tab key cannot see which accordion is focused.
 
 **Why it matters:**
+
 - Violates WCAG 2.1 Success Criterion 2.4.7 (Focus Visible - Level AA)
 - ~15-20% of users rely on keyboard navigation
 - Screen reader users often navigate without a mouse
@@ -26,6 +27,7 @@ The `<summary>` element in the accordion has no visible focus indicator for keyb
 **Line:** 205
 
 **Current Code:**
+
 ```typescript
 <summary className="px-6 py-4 cursor-pointer font-serif text-lg font-bold flex items-center justify-between hover:bg-sage-light/5 transition-colors list-none [&::-webkit-details-marker]:hidden">
 ```
@@ -35,6 +37,7 @@ The `<summary>` element in the accordion has no visible focus indicator for keyb
 ## Proposed Solutions
 
 ### Solution 1: Add Tailwind Focus Classes (Recommended)
+
 ```typescript
 <summary className="px-6 py-4 cursor-pointer font-serif text-lg font-bold flex items-center justify-between hover:bg-sage-light/5 focus:bg-sage-light/10 focus:outline-none focus:ring-2 focus:ring-sage focus:ring-offset-2 transition-colors list-none [&::-webkit-details-marker]:hidden">
 ```
@@ -51,6 +54,7 @@ Implement Solution 1 immediately. This is a WCAG compliance issue.
 ## Technical Details
 
 **Affected Files:**
+
 - `client/src/features/tenant-admin/TenantPackagesManager.tsx` (line 205)
 
 ## Acceptance Criteria
@@ -62,8 +66,8 @@ Implement Solution 1 immediately. This is a WCAG compliance issue.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                   |
+| ---------- | ------- | ----------------------- |
 | 2025-12-01 | Created | From PR #12 code review |
 
 ## Resources

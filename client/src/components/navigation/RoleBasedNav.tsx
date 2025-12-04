@@ -4,18 +4,10 @@
  * When impersonating a tenant, shows tenant navigation instead of platform admin nav
  */
 
-import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
-import {
-  Building2,
-  Package,
-  Calendar,
-  Settings,
-  Users,
-  Palette,
-  XCircle
-} from "lucide-react";
-import { cn } from "../../lib/utils";
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { Building2, Package, Calendar, Settings, Users, Palette, XCircle } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 interface NavItem {
   label: string;
@@ -24,7 +16,7 @@ interface NavItem {
   description?: string;
 }
 
-export function RoleBasedNav({ variant = "sidebar" }: { variant?: "sidebar" | "horizontal" }) {
+export function RoleBasedNav({ variant = 'sidebar' }: { variant?: 'sidebar' | 'horizontal' }) {
   const { user, isImpersonating } = useAuth();
   const location = useLocation();
 
@@ -34,26 +26,26 @@ export function RoleBasedNav({ variant = "sidebar" }: { variant?: "sidebar" | "h
 
   const platformAdminNav: NavItem[] = [
     {
-      label: "Dashboard",
-      path: "/admin/dashboard",
+      label: 'Dashboard',
+      path: '/admin/dashboard',
       icon: <Building2 className="w-5 h-5" aria-hidden="true" />,
-      description: "System overview & tenants"
+      description: 'System overview & tenants',
     },
     {
-      label: "Segments",
-      path: "/admin/segments",
+      label: 'Segments',
+      path: '/admin/segments',
       icon: <Users className="w-5 h-5" aria-hidden="true" />,
-      description: "Manage customer segments"
-    }
+      description: 'Manage customer segments',
+    },
   ];
 
   const tenantAdminNav: NavItem[] = [
     {
-      label: "Dashboard",
-      path: "/tenant/dashboard",
+      label: 'Dashboard',
+      path: '/tenant/dashboard',
       icon: <Building2 className="w-5 h-5" aria-hidden="true" />,
-      description: "Tenant overview"
-    }
+      description: 'Tenant overview',
+    },
     // TODO: Uncomment routes as they are implemented
     // {
     //   label: "Packages",
@@ -89,11 +81,10 @@ export function RoleBasedNav({ variant = "sidebar" }: { variant?: "sidebar" | "h
 
   // When impersonating a tenant, show tenant navigation instead of platform admin
   const isCurrentlyImpersonating = isImpersonating();
-  const navItems = (user.role === "PLATFORM_ADMIN" && !isCurrentlyImpersonating)
-    ? platformAdminNav
-    : tenantAdminNav;
+  const navItems =
+    user.role === 'PLATFORM_ADMIN' && !isCurrentlyImpersonating ? platformAdminNav : tenantAdminNav;
 
-  if (variant === "horizontal") {
+  if (variant === 'horizontal') {
     return (
       <nav className="flex gap-6">
         {navItems.map((item) => {
@@ -104,10 +95,10 @@ export function RoleBasedNav({ variant = "sidebar" }: { variant?: "sidebar" | "h
               to={item.path}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg",
-                "text-white/80 hover:text-white hover:bg-white/10",
-                "transition-colors",
-                isActive && "bg-white/10 text-white font-semibold"
+                'flex items-center gap-2 px-4 py-2 rounded-lg',
+                'text-white/80 hover:text-white hover:bg-white/10',
+                'transition-colors',
+                isActive && 'bg-white/10 text-white font-semibold'
               )}
             >
               {item.icon}
@@ -130,26 +121,23 @@ export function RoleBasedNav({ variant = "sidebar" }: { variant?: "sidebar" | "h
             to={item.path}
             aria-current={isActive ? 'page' : undefined}
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-lg",
-              "text-white/80 hover:text-white hover:bg-white/10",
-              "transition-colors group",
-              isActive && "bg-white/10 text-white border-l-4 border-macon-orange"
+              'flex items-center gap-3 px-4 py-3 rounded-lg',
+              'text-white/80 hover:text-white hover:bg-white/10',
+              'transition-colors group',
+              isActive && 'bg-white/10 text-white border-l-4 border-macon-orange'
             )}
           >
-            <div className={cn(
-              "text-white/60 group-hover:text-white",
-              isActive && "text-macon-orange"
-            )}>
+            <div
+              className={cn(
+                'text-white/60 group-hover:text-white',
+                isActive && 'text-macon-orange'
+              )}
+            >
               {item.icon}
             </div>
             <div className="flex-1">
-              <div className={cn(
-                "font-medium",
-                isActive && "font-semibold"
-              )}>{item.label}</div>
-              {item.description && (
-                <div className="text-sm text-white/60">{item.description}</div>
-              )}
+              <div className={cn('font-medium', isActive && 'font-semibold')}>{item.label}</div>
+              {item.description && <div className="text-sm text-white/60">{item.description}</div>}
             </div>
           </Link>
         );

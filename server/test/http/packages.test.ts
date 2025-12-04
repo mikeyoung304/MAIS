@@ -69,9 +69,7 @@ describe('GET /v1/packages', () => {
   });
 
   it('handles invalid route with 404', async () => {
-    await request(app)
-      .get('/v1/nonexistent')
-      .expect(404);
+    await request(app).get('/v1/nonexistent').expect(404);
   });
 });
 

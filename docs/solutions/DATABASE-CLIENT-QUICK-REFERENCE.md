@@ -53,8 +53,16 @@ await supabase.storage.from('images').remove([path]);
 
 // Transactions use Prisma
 await prisma.$transaction(async (tx) => {
-  await tx.booking.create({ data: { /* ... */ } });
-  await tx.audit.create({ data: { /* ... */ } });
+  await tx.booking.create({
+    data: {
+      /* ... */
+    },
+  });
+  await tx.audit.create({
+    data: {
+      /* ... */
+    },
+  });
 });
 ```
 
@@ -112,8 +120,10 @@ grep -n "prisma\." server/src --include="*.ts" -r | head -20
 ## Troubleshooting
 
 ### Error: "relation does not exist" or "not found"
+
 **Cause:** Trying to query via Supabase REST API
 **Fix:** Use Prisma instead
+
 ```typescript
 // ❌ Fails
 const { data, error } = await supabase.from('Tenant').select('*');
@@ -123,16 +133,20 @@ const data = await prisma.tenant.findMany();
 ```
 
 ### Error: "Toast table not exposed"
+
 **Cause:** Table not exposed via Supabase REST API
 **Fix:** Always use Prisma for database operations
+
 ```typescript
 // Use Prisma for any table:
 await prisma.customTable.findMany();
 ```
 
 ### Performance issue during startup
+
 **Cause:** Using Supabase HTTP client instead of Prisma connection pool
 **Fix:** Migrate to Prisma for database verification
+
 ```typescript
 // ❌ Slow: REST API call
 await supabase.from('Tenant').select('count');
@@ -166,14 +180,14 @@ Do you need to work with:
 
 ## File Locations
 
-| Component | File |
-|-----------|------|
-| Prisma Config | `server/src/config/database.ts` (import only) |
-| Supabase Config | `server/src/config/database.ts` (getSupabaseClient) |
-| DI Container | `server/src/di.ts` |
-| Database Startup | `server/src/index.ts` (verifyDatabaseWithPrisma) |
-| Upload Adapter | `server/src/adapters/upload.adapter.ts` |
-| Repositories | `server/src/adapters/prisma/*.ts` |
+| Component        | File                                                |
+| ---------------- | --------------------------------------------------- |
+| Prisma Config    | `server/src/config/database.ts` (import only)       |
+| Supabase Config  | `server/src/config/database.ts` (getSupabaseClient) |
+| DI Container     | `server/src/di.ts`                                  |
+| Database Startup | `server/src/index.ts` (verifyDatabaseWithPrisma)    |
+| Upload Adapter   | `server/src/adapters/upload.adapter.ts`             |
+| Repositories     | `server/src/adapters/prisma/*.ts`                   |
 
 ---
 

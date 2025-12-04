@@ -521,7 +521,7 @@ git log --all --source --full-history -S "@Orangegoat11"
 **Analysis**:
 
 - JWT_SECRET: Correct format (256-bit hex), BUT exposed in git history
-- Stripe keys: Test mode keys (sk*test*_, whsec\__), BUT still sensitive
+- Stripe keys: Test mode keys (sk*test*\_, whsec\_\_), BUT still sensitive
 - Database password: `@Orangegoat11` - weak password, exposed in git
 - Supabase keys: Service role key is highly sensitive (bypass RLS)
 

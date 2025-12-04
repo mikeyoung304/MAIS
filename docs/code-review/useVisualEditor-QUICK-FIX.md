@@ -13,11 +13,13 @@
 ## Fix #1: Line 225 (1 line change)
 
 **Current:**
+
 ```typescript
 }, [packages, flushPendingChanges]);
 ```
 
 **Change to:**
+
 ```typescript
 }, [flushPendingChanges]);
 ```
@@ -29,6 +31,7 @@
 ## Fix #2: Lines 231-266 (Restructure function body)
 
 **Current:**
+
 ```typescript
 const publishAll = useCallback(async () => {
   if (draftCount === 0) {
@@ -47,6 +50,7 @@ const publishAll = useCallback(async () => {
 ```
 
 **Change to:**
+
 ```typescript
 const publishAll = useCallback(async () => {
   if (saveTimeout.current) {
@@ -74,6 +78,7 @@ const publishAll = useCallback(async () => {
 ```
 
 **Also update deps** (same line as before, now includes `packages`):
+
 ```typescript
 }, [packages, loadPackages, flushPendingChanges]);
 ```
@@ -85,16 +90,15 @@ const publishAll = useCallback(async () => {
 ## Fix #3: Line 78 (Add memoization)
 
 **Current:**
+
 ```typescript
 const draftCount = packages.filter((pkg) => pkg.hasDraft).length;
 ```
 
 **Change to:**
+
 ```typescript
-const draftCount = useMemo(
-  () => packages.filter((pkg) => pkg.hasDraft).length,
-  [packages]
-);
+const draftCount = useMemo(() => packages.filter((pkg) => pkg.hasDraft).length, [packages]);
 ```
 
 **Reason:** Prevents stale closure over draftCount in callbacks.
@@ -141,6 +145,7 @@ npm run test:e2e
 ## Rollback Plan
 
 Each fix is independent:
+
 ```bash
 git revert <commit-hash>
 npm test
@@ -151,6 +156,7 @@ npm test
 ## Questions?
 
 See detailed documentation:
+
 - `useVisualEditor-SUMMARY.md` - Executive summary
 - `useVisualEditor-analysis.md` - Technical deep dive
 - `useVisualEditor-race-conditions.md` - Timeline diagrams

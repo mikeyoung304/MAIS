@@ -1,5 +1,5 @@
-import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface FormActionsProps {
   isSaving: boolean;
@@ -23,7 +23,7 @@ export function FormActions({ isSaving, editingPackageId, onCancel }: FormAction
         className="bg-macon-navy hover:bg-macon-navy-dark text-lg h-12 px-6"
       >
         {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-        {isSaving ? "Saving..." : editingPackageId ? "Update Package" : "Create Package"}
+        {isSaving ? 'Saving...' : editingPackageId ? 'Update Package' : 'Create Package'}
       </Button>
       <Button
         type="button"

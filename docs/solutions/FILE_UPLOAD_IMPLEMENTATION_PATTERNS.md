@@ -7,6 +7,7 @@ Proven patterns and refactorings for file upload features in the MAIS multi-tena
 ## Pattern 1: Repository-Based Storage Architecture
 
 ### Current Issue
+
 - UploadService is a singleton with no DI
 - Tightly coupled to both Supabase and filesystem
 - Hard to test with mocks
@@ -82,22 +83,18 @@ export class SupabaseStorageRepository implements StorageRepository {
   ): Promise<string> {
     const path = this.buildPath(tenantId, folder, filename);
 
-    const { error, data } = await this.supabase.storage
-      .from(this.bucket)
-      .upload(path, content, {
-        contentType: mimetype,
-        upsert: false,
-        cacheControl: '3600' // Cache for 1 hour
-      });
+    const { error, data } = await this.supabase.storage.from(this.bucket).upload(path, content, {
+      contentType: mimetype,
+      upsert: false,
+      cacheControl: '3600', // Cache for 1 hour
+    });
 
     if (error) {
       this.logger.error(
         { tenantId, folder, filename, error: error.message },
         'Supabase upload failed'
       );
-      throw new UploadFailedError(
-        `Failed to upload ${filename}: ${error.message}`
-      );
+      throw new UploadFailedError(`Failed to upload ${filename}: ${error.message}`);
     }
 
     // Construct public URL
@@ -108,10 +105,7 @@ export class SupabaseStorageRepository implements StorageRepository {
 
     const publicUrl = `${supabaseUrl}/storage/v1/object/public/${this.bucket}/${path}`;
 
-    this.logger.info(
-      { tenantId, folder, filename, url: publicUrl },
-      'File uploaded to Supabase'
-    );
+    this.logger.info({ tenantId, folder, filename, url: publicUrl }, 'File uploaded to Supabase');
 
     return publicUrl;
   }
@@ -123,9 +117,7 @@ export class SupabaseStorageRepository implements StorageRepository {
   ): Promise<void> {
     const path = this.buildPath(tenantId, folder, filename);
 
-    const { error } = await this.supabase.storage
-      .from(this.bucket)
-      .remove([path]);
+    const { error } = await this.supabase.storage.from(this.bucket).remove([path]);
 
     if (error) {
       // Log but don't throw - file may already be deleted
@@ -152,19 +144,13 @@ export class SupabaseStorageRepository implements StorageRepository {
       .createSignedUrl(path, expiresIn);
 
     if (error) {
-      throw new UrlGenerationError(
-        `Failed to generate signed URL: ${error.message}`
-      );
+      throw new UrlGenerationError(`Failed to generate signed URL: ${error.message}`);
     }
 
     return data.signedUrl;
   }
 
-  private buildPath(
-    tenantId: string,
-    folder: string,
-    filename: string
-  ): string {
+  private buildPath(tenantId: string, folder: string, filename: string): string {
     return `${tenantId}/${folder}/${filename}`;
   }
 }
@@ -198,10 +184,7 @@ export class FileSystemStorageRepository implements StorageRepository {
     // Write file
     await fs.promises.writeFile(filepath, content);
 
-    this.logger.info(
-      { filepath, size: content.length },
-      'File written to filesystem'
-    );
+    this.logger.info({ filepath, size: content.length }, 'File written to filesystem');
 
     // Return URL
     return this.buildUrl(tenantId, folder, filename);
@@ -263,21 +246,14 @@ export function createContainer(): Container {
 export function createRealContainer(): Container {
   const supabase = getSupabaseClient();
 
-  const storageRepository = new SupabaseStorageRepository(
-    supabase,
-    logger
-  );
+  const storageRepository = new SupabaseStorageRepository(supabase, logger);
 
-  const uploadService = new UploadService(
-    storageRepository,
-    new FileTypeValidator(),
-    logger
-  );
+  const uploadService = new UploadService(storageRepository, new FileTypeValidator(), logger);
 
   return {
     // ... other services
     storageRepository,
-    uploadService
+    uploadService,
   };
 }
 
@@ -289,16 +265,12 @@ export function createMockContainer(): Container {
     logger
   );
 
-  const uploadService = new UploadService(
-    storageRepository,
-    new FileTypeValidator(),
-    logger
-  );
+  const uploadService = new UploadService(storageRepository, new FileTypeValidator(), logger);
 
   return {
     // ... other services
     storageRepository,
-    uploadService
+    uploadService,
   };
 }
 ```
@@ -308,6 +280,7 @@ export function createMockContainer(): Container {
 ## Pattern 2: File Validation with Magic Bytes
 
 ### Current Issue
+
 - Only checks MIME type header from multer
 - Vulnerable to MIME spoofing
 - No protection against ZIP files disguised as images
@@ -330,22 +303,17 @@ export class FileTypeValidator {
     'image/jpg',
     'image/png',
     'image/webp',
-    'image/svg+xml'
+    'image/svg+xml',
   ];
 
   /**
    * Validate file content against allowed MIME types
    * Uses magic bytes to detect actual format, not header
    */
-  async validateFileContent(
-    buffer: Buffer,
-    declaredMimetype: string
-  ): Promise<DetectedFileType> {
+  async validateFileContent(buffer: Buffer, declaredMimetype: string): Promise<DetectedFileType> {
     // Layer 1: Check declared MIME type
     if (!this.allowedMimeTypes.includes(declaredMimetype)) {
-      throw new InvalidMimeTypeError(
-        `Declared type "${declaredMimetype}" not allowed`
-      );
+      throw new InvalidMimeTypeError(`Declared type "${declaredMimetype}" not allowed`);
     }
 
     // Layer 2: Detect actual format from magic bytes
@@ -358,9 +326,7 @@ export class FileTypeValidator {
     }
 
     if (!detected) {
-      throw new FileValidationError(
-        'File content could not be identified - magic bytes missing'
-      );
+      throw new FileValidationError('File content could not be identified - magic bytes missing');
     }
 
     // Layer 3: Verify detected MIME matches allowed types
@@ -383,7 +349,7 @@ export class FileTypeValidator {
 
     return {
       ext: detected.fileTypeFromBuffer ? `.${detected.ext}` : '.bin',
-      mime: detected.mime
+      mime: detected.mime,
     };
   }
 
@@ -401,14 +367,12 @@ export class FileTypeValidator {
       /javascript:/i,
       /<iframe/i,
       /<embed/i,
-      /<object/i
+      /<object/i,
     ];
 
     for (const pattern of dangerousPatterns) {
       if (pattern.test(content)) {
-        throw new SvgSecurityError(
-          `SVG contains potentially dangerous content: ${pattern}`
-        );
+        throw new SvgSecurityError(`SVG contains potentially dangerous content: ${pattern}`);
       }
     }
   }
@@ -439,10 +403,7 @@ export class UploadService {
     private readonly logger: Logger
   ) {}
 
-  async uploadLogo(
-    tenantId: string,
-    file: UploadedFile
-  ): Promise<UploadResult> {
+  async uploadLogo(tenantId: string, file: UploadedFile): Promise<UploadResult> {
     try {
       // Validate file
       const validation = await this.validateFileForUpload(
@@ -467,7 +428,7 @@ export class UploadService {
         url,
         filename,
         size: file.size,
-        mimetype: validation.mime
+        mimetype: validation.mime,
       };
     } catch (error) {
       this.logger.error({ tenantId, error }, 'Logo upload failed');
@@ -492,10 +453,7 @@ export class UploadService {
     }
 
     // Content validation (two-layer)
-    const detected = await this.fileTypeValidator.validateFileContent(
-      file.buffer,
-      file.mimetype
-    );
+    const detected = await this.fileTypeValidator.validateFileContent(file.buffer, file.mimetype);
 
     // SVG special handling
     if (detected.mime === 'image/svg+xml') {
@@ -522,6 +480,7 @@ export class UploadService {
 ## Pattern 3: Tenant-Scoped File Management with Database Tracking
 
 ### Current Issue
+
 - Files uploaded but not tracked in database
 - Can't cascade delete files when entity deleted
 - Orphaned files accumulate
@@ -611,7 +570,7 @@ export class UploadService {
   ): Promise<UploadResult> {
     // Verify package exists and belongs to tenant
     const pkg = await this.db.package.findFirst({
-      where: { id: packageId, tenantId }
+      where: { id: packageId, tenantId },
     });
 
     if (!pkg) {
@@ -644,20 +603,17 @@ export class UploadService {
           size: file.size,
           url,
           packageId,
-          createdBy: this.getCurrentUserId() // Optional: track who uploaded
-        }
+          createdBy: this.getCurrentUserId(), // Optional: track who uploaded
+        },
       });
 
-      this.logger.info(
-        { tenantId, packageId, filename },
-        'Package photo uploaded and tracked'
-      );
+      this.logger.info({ tenantId, packageId, filename }, 'Package photo uploaded and tracked');
 
       return {
         url,
         filename,
         size: file.size,
-        mimetype: detected.mime
+        mimetype: detected.mime,
       };
     } catch (error) {
       this.logger.error({ tenantId, packageId, error }, 'Photo upload failed');
@@ -677,13 +633,11 @@ export class UploadService {
     try {
       // Query database to verify ownership
       const file = await this.db.uploadedFile.findFirst({
-        where: { tenantId, folder, filename }
+        where: { tenantId, folder, filename },
       });
 
       if (!file) {
-        throw new FileNotFoundError(
-          `File ${filename} not found in ${folder}`
-        );
+        throw new FileNotFoundError(`File ${filename} not found in ${folder}`);
       }
 
       // Delete from storage
@@ -691,13 +645,10 @@ export class UploadService {
 
       // Delete from database (cascade cleanup happens automatically)
       await this.db.uploadedFile.delete({
-        where: { id: file.id }
+        where: { id: file.id },
       });
 
-      this.logger.info(
-        { tenantId, folder, filename },
-        'File deleted successfully'
-      );
+      this.logger.info({ tenantId, folder, filename }, 'File deleted successfully');
     } catch (error) {
       this.logger.error({ tenantId, folder, filename, error }, 'Delete failed');
       throw error;
@@ -707,14 +658,9 @@ export class UploadService {
   /**
    * Get all files for a tenant
    */
-  async getTenantFiles(
-    tenantId: string,
-    folder?: 'logos' | 'packages' | 'segments'
-  ) {
+  async getTenantFiles(tenantId: string, folder?: 'logos' | 'packages' | 'segments') {
     return this.db.uploadedFile.findMany({
-      where: folder
-        ? { tenantId, folder }
-        : { tenantId }
+      where: folder ? { tenantId, folder } : { tenantId },
     });
   }
 
@@ -725,11 +671,8 @@ export class UploadService {
     return this.db.uploadedFile.findMany({
       where: {
         tenantId,
-        AND: [
-          { packageId: null },
-          { segmentId: null }
-        ]
-      }
+        AND: [{ packageId: null }, { segmentId: null }],
+      },
     });
   }
 
@@ -750,10 +693,7 @@ export class UploadService {
       }
     }
 
-    this.logger.info(
-      { tenantId, count: orphaned.length },
-      'Orphaned files cleaned up'
-    );
+    this.logger.info({ tenantId, count: orphaned.length }, 'Orphaned files cleaned up');
   }
 
   private getCurrentUserId(): string | undefined {
@@ -768,6 +708,7 @@ export class UploadService {
 ## Pattern 4: Rate Limiting for Uploads
 
 ### Current Issue
+
 - No rate limiting on upload endpoints
 - Single tenant can exhaust quota
 - Concurrent uploads can cause memory exhaustion
@@ -793,21 +734,21 @@ const createMemoryLimiter = () => {
       // Use tenantId if available, fallback to IP
       const tenantId = res.locals.tenantAuth?.tenantId;
       return tenantId ? `uploads:${tenantId}` : `uploads:${req.ip}`;
-    }
+    },
   });
 };
 
 // For production (Redis store for distributed rate limiting)
 const createRedisLimiter = () => {
   const client = redis.createClient({
-    url: process.env.REDIS_URL
+    url: process.env.REDIS_URL,
   });
 
   return rateLimit({
     store: new RedisStore({
       client,
       prefix: 'uploads:', // Key format: uploads:tenant_id
-      expiry: 60
+      expiry: 60,
     }),
     windowMs: 1 * 60 * 1000,
     max: 10,
@@ -815,7 +756,7 @@ const createRedisLimiter = () => {
     keyGenerator: (req) => {
       const tenantId = req.tenantAuth?.tenantId;
       return tenantId || req.ip;
-    }
+    },
   });
 };
 
@@ -845,8 +786,8 @@ const uploadLogo = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 2 * 1024 * 1024, // 2MB
-    files: 1 // Single file only
-  }
+    files: 1, // Single file only
+  },
 });
 
 /**
@@ -882,29 +823,26 @@ router.post(
     } catch (error) {
       if (error instanceof FileSizeExceededError) {
         return res.status(413).json({
-          error: 'File size exceeds 2MB limit'
+          error: 'File size exceeds 2MB limit',
         });
       }
 
       if (error instanceof InvalidMimeTypeError) {
         return res.status(400).json({
-          error: 'Invalid file type. Allowed: JPG, PNG, WebP, SVG'
+          error: 'Invalid file type. Allowed: JPG, PNG, WebP, SVG',
         });
       }
 
       if (error instanceof MimeSpoofingError) {
         return res.status(400).json({
-          error: 'File content does not match file type'
+          error: 'File content does not match file type',
         });
       }
 
-      container.logger.error(
-        { tenantId: tenantAuth.tenantId, error },
-        'Logo upload failed'
-      );
+      container.logger.error({ tenantId: tenantAuth.tenantId, error }, 'Logo upload failed');
 
       return res.status(500).json({
-        error: 'Upload failed. Please try again.'
+        error: 'Upload failed. Please try again.',
       });
     }
   }
@@ -916,6 +854,7 @@ router.post(
 ## Pattern 5: Proper Error Handling
 
 ### Current Issue
+
 - Generic error messages don't distinguish between issues
 - Some errors leak internal details
 - No clear HTTP status codes
@@ -940,7 +879,7 @@ export abstract class UploadError extends Error {
   toJSON() {
     return {
       error: this.message,
-      type: this.name
+      type: this.name,
     };
   }
 }
@@ -1037,13 +976,13 @@ export const uploadErrorHandler = (
       {
         tenantId: res.locals.tenantAuth?.tenantId,
         error: error.name,
-        message: error.message
+        message: error.message,
       },
       'Upload error'
     );
 
     return res.status(error.statusCode).json({
-      error: error.message
+      error: error.message,
     });
   }
 
@@ -1052,7 +991,7 @@ export const uploadErrorHandler = (
     logger.warn({ error: error.message }, 'Multer validation error');
 
     return res.status(400).json({
-      error: 'Invalid form field'
+      error: 'Invalid form field',
     });
   }
 
@@ -1061,7 +1000,7 @@ export const uploadErrorHandler = (
     logger.warn({ error: error.message }, 'File too large');
 
     return res.status(413).json({
-      error: 'File is too large'
+      error: 'File is too large',
     });
   }
 
@@ -1070,13 +1009,13 @@ export const uploadErrorHandler = (
     {
       tenantId: res.locals.tenantAuth?.tenantId,
       error: error.message,
-      stack: error.stack
+      stack: error.stack,
     },
     'Unexpected upload error'
   );
 
   return res.status(500).json({
-    error: 'An unexpected error occurred during upload'
+    error: 'An unexpected error occurred during upload',
   });
 };
 ```
@@ -1094,6 +1033,7 @@ These patterns provide:
 5. **Proper Error Handling** - Clear errors with appropriate HTTP status codes
 
 When implementing file uploads, apply all five patterns to ensure:
+
 - Security (tenant isolation, MIME validation, ownership verification)
 - Reliability (cascade deletion, orphaned file detection)
 - Maintainability (dependency injection, clear error handling)

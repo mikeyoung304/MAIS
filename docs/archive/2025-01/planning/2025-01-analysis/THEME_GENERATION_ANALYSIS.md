@@ -3,6 +3,7 @@
 ## Executive Summary
 
 The Elope platform currently has **basic manual theme customization** with:
+
 - Manual hex color picker (primary & secondary colors)
 - Font family dropdown selector (8 wedding-appropriate fonts)
 - Logo URL input field
@@ -10,6 +11,7 @@ The Elope platform currently has **basic manual theme customization** with:
 - 6 curated wedding color presets
 
 **Major gaps identified:**
+
 - No AI-powered theme generation
 - No image-based color extraction
 - No CSS/design token parsing
@@ -25,9 +27,11 @@ The Elope platform currently has **basic manual theme customization** with:
 ### 1.1 Where Themes Are Defined
 
 #### Frontend (Client-Side)
+
 **File:** `/Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/BrandingEditor.tsx`
 
 **Hardcoded Wedding Color Presets (Lines 44-81):**
+
 ```typescript
 const WEDDING_COLOR_PRESETS = [
   {
@@ -47,17 +51,21 @@ const WEDDING_COLOR_PRESETS = [
 ```
 
 **Approach:** Static array with 6 curated pairs. Users can:
+
 1. Click a preset to apply it instantly
 2. Manually override with hex color picker
 3. Select from fixed font list
 
 #### Backend (Server-Side)
+
 **Database Schema:** `/Users/mikeyoung/CODING/Elope/server/prisma/schema.prisma` (Line 56)
+
 ```prisma
 branding Json @default("{}") // Widget branding settings
 ```
 
 **Structure stored in JSON:**
+
 ```json
 {
   "primaryColor": "#9b87f5",
@@ -68,6 +76,7 @@ branding Json @default("{}") // Widget branding settings
 ```
 
 **Data Transfer Object (DTO):** `/Users/mikeyoung/CODING/Elope/packages/contracts/src/dto.ts` (Lines 134-156)
+
 ```typescript
 export const TenantBrandingDtoSchema = z.object({
   primaryColor: z.string().optional(),
@@ -82,13 +91,22 @@ export const TenantBrandingDtoSchema = z.object({
 **File:** `/Users/mikeyoung/CODING/Elope/client/src/components/FontSelector.tsx` (Lines 19-68)
 
 **Curated Font List (8 Options):**
+
 ```typescript
 const FONT_OPTIONS: FontOption[] = [
   { name: 'Inter', displayName: 'Inter (Modern Sans-Serif)', googleFontUrl: '...' },
-  { name: 'Playfair Display', displayName: 'Playfair Display (Elegant Serif)', googleFontUrl: '...' },
+  {
+    name: 'Playfair Display',
+    displayName: 'Playfair Display (Elegant Serif)',
+    googleFontUrl: '...',
+  },
   { name: 'Lora', displayName: 'Lora (Classic Serif)', googleFontUrl: '...' },
   { name: 'Montserrat', displayName: 'Montserrat (Clean Sans-Serif)', googleFontUrl: '...' },
-  { name: 'Cormorant Garamond', displayName: 'Cormorant Garamond (Romantic Serif)', googleFontUrl: '...' },
+  {
+    name: 'Cormorant Garamond',
+    displayName: 'Cormorant Garamond (Romantic Serif)',
+    googleFontUrl: '...',
+  },
   { name: 'Raleway', displayName: 'Raleway (Refined Sans-Serif)', googleFontUrl: '...' },
   { name: 'Crimson Text', displayName: 'Crimson Text (Traditional Serif)', googleFontUrl: '...' },
   { name: 'Poppins', displayName: 'Poppins (Friendly Sans-Serif)', googleFontUrl: '...' },
@@ -102,6 +120,7 @@ const FONT_OPTIONS: FontOption[] = [
 **File:** `/Users/mikeyoung/CODING/Elope/client/tailwind.config.js`
 
 **Color Palette (Fixed/Extended):**
+
 ```javascript
 colors: {
   lavender: { 50-900 }, // 10-step scale
@@ -120,15 +139,19 @@ colors: {
 ## 2. External Source Parsing Capabilities
 
 ### 2.1 CSS File Parsing
+
 **Status:** NOT IMPLEMENTED
 
 ### 2.2 Screenshot/Image Analysis
+
 **Status:** NOT IMPLEMENTED
 
 ### 2.3 Design Token Import
+
 **Status:** NOT IMPLEMENTED
 
 ### Gap: No code exists to:
+
 - Parse CSS files for color definitions
 - Extract colors from uploaded images/screenshots
 - Import design token systems (JSON, YAML, CSS variables)
@@ -143,6 +166,7 @@ colors: {
 **File:** `/Users/mikeyoung/CODING/Elope/client/src/components/ColorPicker.tsx`
 
 **Hex Validation (Lines 21-34):**
+
 ```typescript
 function isValidHex(color: string): boolean {
   return /^#[0-9A-Fa-f]{6}$/.test(color);
@@ -164,6 +188,7 @@ function normalizeHex(color: string): string {
 **File:** `/Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/BrandingEditor.tsx` (Lines 84-108)
 
 **Luminance Calculation (WCAG Formula):**
+
 ```typescript
 function getLuminance(hex: string): number {
   const rgb = parseInt(hex.slice(1), 16);
@@ -188,11 +213,13 @@ function getContrastRatio(hex1: string, hex2: string): number {
 ```
 
 **Features:**
+
 - Validates contrast against white background (4.5:1 for normal, 3.0:1 for large text)
 - Shows visual warnings for accessibility failures
 - No automatic color adjustment suggestions
 
 ### 3.3 Gaps in Color Generation
+
 - No complementary color suggestion
 - No analogous palette generation
 - No triadic harmony calculation
@@ -210,12 +237,13 @@ function getContrastRatio(hex1: string, hex2: string): number {
 **File:** `/Users/mikeyoung/CODING/Elope/client/src/components/FontSelector.tsx`
 
 **Key Features:**
+
 ```typescript
 // Dynamic font loading from Google Fonts
 function loadGoogleFont(fontUrl: string): void {
   const existingLink = document.querySelector(`link[href="${fontUrl}"]`);
   if (existingLink) return;
-  
+
   const link = document.createElement('link');
   link.rel = 'stylesheet';
   link.href = fontUrl;
@@ -238,8 +266,8 @@ function loadGoogleFont(fontFamily: string): void {
 
   const fontUrlMap: Record<string, string> = {
     'Playfair Display': '...',
-    'Lora': '...',
-    'Montserrat': '...',
+    Lora: '...',
+    Montserrat: '...',
     // ... hardcoded mapping
   };
 
@@ -284,6 +312,7 @@ useEffect(() => {
 **Limitation:** Only applies `--font-family` as CSS variable. No font weight, size, or line-height customization.
 
 ### 4.4 Gaps in Typography System
+
 - No font pairing suggestions
 - No heading vs body font customization
 - No font weight selection
@@ -301,6 +330,7 @@ useEffect(() => {
 **File:** `/Users/mikeyoung/CODING/Elope/server/src/services/upload.service.ts`
 
 **Features:**
+
 ```typescript
 export class UploadService {
   private logoUploadDir: string;
@@ -317,13 +347,13 @@ export class UploadService {
   async uploadLogo(file: UploadedFile, tenantId: string): Promise<UploadResult> {
     // Validate file
     this.validateFile(file);
-    
+
     // Generate unique filename
     const filename = this.generateFilename(file.originalname, 'logo');
-    
+
     // Write to disk
     await fs.promises.writeFile(filepath, file.buffer);
-    
+
     // Return public URL
     return {
       url: `${this.baseUrl}/uploads/logos/${filename}`,
@@ -336,6 +366,7 @@ export class UploadService {
 ```
 
 **Limitations:**
+
 - Only validates file size (2MB) and MIME type
 - No image processing (resize, optimize, compress)
 - No color extraction from uploaded images
@@ -347,14 +378,11 @@ export class UploadService {
 **File:** `/Users/mikeyoung/CODING/Elope/server/src/routes/tenant-admin.routes.ts` (Lines 240-245)
 
 ```typescript
-router.post(
-  '/logo',
-  upload.single('logo'),
-  (req, res) => controller.uploadLogo(req, res)
-);
+router.post('/logo', upload.single('logo'), (req, res) => controller.uploadLogo(req, res));
 ```
 
 **Gaps:**
+
 - No post-processing pipeline
 - No color palette generation from logo
 - No image optimization
@@ -393,6 +421,7 @@ router.post(
 **Location:** `BrandingEditor.tsx` (Lines 44-81)
 
 **Current Presets (6 total):**
+
 1. Romantic Blush (#F7C5C7, #C9A0A4)
 2. Garden Sage (#7A9E7E, #2C5F6F)
 3. Elegant Gold (#D4AF37, #8B7355)
@@ -401,6 +430,7 @@ router.post(
 6. Lavender Dreams (#9b87f5, #7e69ab)
 
 **Application Logic (Lines 174-181):**
+
 ```typescript
 const applyPreset = useCallback(
   (preset: (typeof WEDDING_COLOR_PRESETS)[0]) => {
@@ -415,6 +445,7 @@ const applyPreset = useCallback(
 ### 6.2 Reset to Defaults
 
 **Lines 183-189:**
+
 ```typescript
 const resetToDefaults = useCallback(() => {
   setPrimaryColor('#9b87f5');
@@ -426,6 +457,7 @@ const resetToDefaults = useCallback(() => {
 ```
 
 ### 6.3 Gaps in Template System
+
 - **No database-stored templates:** Presets are hardcoded
 - **No user-created templates:** Can't save custom palettes
 - **No template marketplace:** Can't share templates across tenants
@@ -443,14 +475,15 @@ const resetToDefaults = useCallback(() => {
 **File:** `/Users/mikeyoung/CODING/Elope/server/src/routes/tenant-admin.routes.ts`
 
 **GET /v1/tenant/branding (Lines 198-225)**
+
 ```typescript
 async getBranding(req: Request, res: Response): Promise<void> {
   const tenantAuth = res.locals.tenantAuth;
   const tenantId = tenantAuth.tenantId;
-  
+
   const tenant = await this.tenantRepository.findById(tenantId);
   const branding = (tenant.branding as any) || {};
-  
+
   res.status(200).json({
     primaryColor: branding.primaryColor,
     secondaryColor: branding.secondaryColor,
@@ -461,6 +494,7 @@ async getBranding(req: Request, res: Response): Promise<void> {
 ```
 
 **PUT /v1/tenant/branding (Lines 131-192)**
+
 ```typescript
 async updateBranding(req: Request, res: Response): Promise<void> {
   const validation = UpdateBrandingSchema.safeParse(req.body);
@@ -487,10 +521,17 @@ async updateBranding(req: Request, res: Response): Promise<void> {
 ```
 
 **Validation Schema (Lines 141-145):**
+
 ```typescript
 const UpdateBrandingSchema = z.object({
-  primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  primaryColor: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional(),
+  secondaryColor: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional(),
   fontFamily: z.string().optional(),
 });
 ```
@@ -498,6 +539,7 @@ const UpdateBrandingSchema = z.object({
 ### 7.2 Logo Upload Endpoint (Partially Implemented)
 
 **POST /v1/tenant/logo (Lines 75-125)**
+
 ```typescript
 async uploadLogo(req: Request, res: Response): Promise<void> {
   if (!req.file) {
@@ -602,9 +644,11 @@ interface ExtendedApiClient {
 ### 8.2 Implementation Insertion Points
 
 #### Point 1: BrandingEditor Component
+
 **File:** `client/src/features/tenant-admin/BrandingEditor.tsx`
 
 **Add after line 82 (after WEDDING_COLOR_PRESETS):**
+
 ```typescript
 // Add AI Theme Generation Tab/Section
 // Option A: Modal triggered by new "Generate with AI" button
@@ -613,9 +657,11 @@ interface ExtendedApiClient {
 ```
 
 #### Point 2: API Routes
+
 **File:** `server/src/routes/tenant-admin.routes.ts`
 
 **Add after line 249 (after branding routes):**
+
 ```typescript
 // New AI theme generation endpoint
 router.post('/branding/generate', async (req, res) => {
@@ -624,32 +670,38 @@ router.post('/branding/generate', async (req, res) => {
 ```
 
 #### Point 3: New Service Layer
+
 **Create:** `server/src/services/theme-generation.service.ts`
 
 **Main exports:**
+
 ```typescript
 export class ThemeGenerationService {
-  async generateThemeFromImage(file, preferences): Promise<GeneratedTheme>
-  async generateThemeFromDescription(prompt): Promise<GeneratedTheme>
-  async generatePaletteVariants(baseColor, count): Promise<Palette[]>
-  async suggestFonts(palette, mood): Promise<FontPair[]>
-  async validateTheme(theme): Promise<ValidationResult>
+  async generateThemeFromImage(file, preferences): Promise<GeneratedTheme>;
+  async generateThemeFromDescription(prompt): Promise<GeneratedTheme>;
+  async generatePaletteVariants(baseColor, count): Promise<Palette[]>;
+  async suggestFonts(palette, mood): Promise<FontPair[]>;
+  async validateTheme(theme): Promise<ValidationResult>;
 }
 ```
 
 #### Point 4: Color Utilities Library
+
 **Create:** `server/src/lib/color-utils/`
 
 **Modules:**
+
 - `color-extraction.ts` - Vibrant.js or sharp for image analysis
 - `palette-generation.ts` - Chroma.js or colorsys for harmony
 - `font-matching.ts` - Font pairing algorithms
 - `theme-validation.ts` - WCAG contrast, semantics
 
 #### Point 5: Data Transfer Objects
+
 **File:** `packages/contracts/src/dto.ts`
 
 **Add after line 156 (after UpdateBrandingDto):**
+
 ```typescript
 export const GenerateThemeRequestDtoSchema = z.object({
   imageUrl: z.string().url().optional(),
@@ -664,10 +716,12 @@ export const GeneratedThemeDtoSchema = z.object({
   secondaryColor: z.string(),
   accentColor: z.string().optional(),
   fontFamily: z.string(),
-  fontPair: z.object({
-    heading: z.string(),
-    body: z.string(),
-  }).optional(),
+  fontPair: z
+    .object({
+      heading: z.string(),
+      body: z.string(),
+    })
+    .optional(),
   palette: z.array(z.string()),
   confidence: z.number(),
   reasoning: z.string(),
@@ -683,15 +737,16 @@ export type GeneratedThemeDto = z.infer<typeof GeneratedThemeDtoSchema>;
 
 ### 9.1 Image Processing Libraries Needed
 
-| Library | Purpose | Status |
-|---------|---------|--------|
-| `sharp` | Image processing, optimization | NOT INSTALLED |
-| `vibrant.js` | Dominant color extraction from images | NOT INSTALLED |
-| `chroma-js` | Advanced color manipulation, harmony | NOT INSTALLED |
-| `colorsys` | Color space conversion (RGB→HSL→etc) | NOT INSTALLED |
-| `wcag-contrast` | Advanced accessibility checking | NOT INSTALLED |
+| Library         | Purpose                               | Status        |
+| --------------- | ------------------------------------- | ------------- |
+| `sharp`         | Image processing, optimization        | NOT INSTALLED |
+| `vibrant.js`    | Dominant color extraction from images | NOT INSTALLED |
+| `chroma-js`     | Advanced color manipulation, harmony  | NOT INSTALLED |
+| `colorsys`      | Color space conversion (RGB→HSL→etc)  | NOT INSTALLED |
+| `wcag-contrast` | Advanced accessibility checking       | NOT INSTALLED |
 
 ### 9.2 Current Dependencies
+
 ```json
 {
   "react-colorful": "^5.6.3" (only hex picker)
@@ -702,19 +757,20 @@ export type GeneratedThemeDto = z.infer<typeof GeneratedThemeDtoSchema>;
 
 ### 9.3 Optional AI Integration Libraries
 
-| Library | Purpose | Pros | Cons |
-|---------|---------|------|------|
+| Library                   | Purpose                      | Pros                     | Cons                      |
+| ------------------------- | ---------------------------- | ------------------------ | ------------------------- |
 | OpenAI API (Claude/GPT-4) | Theme description to palette | High quality, contextual | Costs $, requires API key |
-| Hugging Face Transformers | Local ML inference | Free, private | Requires model download |
-| Coolors API | Theme generation API | Pre-built, reliable | Rate-limited free tier |
-| Color.adobe.com API | Adobe color harmony | Professional | Rate-limited free tier |
-| Local ML (TensorFlow.js) | Client-side color analysis | No backend needed | Large bundle size |
+| Hugging Face Transformers | Local ML inference           | Free, private            | Requires model download   |
+| Coolors API               | Theme generation API         | Pre-built, reliable      | Rate-limited free tier    |
+| Color.adobe.com API       | Adobe color harmony          | Professional             | Rate-limited free tier    |
+| Local ML (TensorFlow.js)  | Client-side color analysis   | No backend needed        | Large bundle size         |
 
 ---
 
 ## 10. Current Capabilities Summary
 
 ### What Works
+
 ✅ Manual hex color selection (two colors)
 ✅ WCAG AA/AAA contrast validation
 ✅ 6 curated wedding color presets (apply instantly)
@@ -726,6 +782,7 @@ export type GeneratedThemeDto = z.infer<typeof GeneratedThemeDtoSchema>;
 ✅ Type-safe contracts with Zod validation
 
 ### What's Missing
+
 ❌ AI-powered theme generation from images
 ❌ Logo color extraction & analysis
 ❌ Color palette generation (complementary, analogous, triadic)
@@ -743,6 +800,7 @@ export type GeneratedThemeDto = z.infer<typeof GeneratedThemeDtoSchema>;
 ## 11. Recommended Implementation Order
 
 ### Phase 1: Foundation (Weeks 1-2)
+
 1. Install color utilities: `sharp`, `vibrant`, `chroma-js`
 2. Create `color-utils/` library with:
    - Color space conversion functions
@@ -752,18 +810,21 @@ export type GeneratedThemeDto = z.infer<typeof GeneratedThemeDtoSchema>;
 4. Create `ThemeGenerationService` with basic palette generation
 
 ### Phase 2: Image Processing (Weeks 2-3)
+
 1. Implement image upload in frontend (`BrandingEditor.tsx`)
 2. Create image color extraction service (vibrant.js)
 3. Add image validation and optimization (sharp)
 4. Build image preview component
 
 ### Phase 3: AI Integration (Weeks 3-4)
+
 1. Add "Generate from Description" UI component
 2. Integrate Claude/OpenAI for intelligent suggestions
 3. Create font pairing recommendation engine
 4. Build theme preview with multiple variants
 
 ### Phase 4: Polish & Distribution (Weeks 4-5)
+
 1. Add theme templates to database
 2. Create template management UI
 3. Add import/export functionality
@@ -773,20 +834,19 @@ export type GeneratedThemeDto = z.infer<typeof GeneratedThemeDtoSchema>;
 
 ## 12. Code Locations Reference
 
-| Feature | File | Lines |
-|---------|------|-------|
-| Color Picker | `client/src/components/ColorPicker.tsx` | 1-154 |
-| Font Selector | `client/src/components/FontSelector.tsx` | 1-222 |
-| Branding Editor | `client/src/features/tenant-admin/BrandingEditor.tsx` | 1-690 |
-| Color Presets | `client/src/features/tenant-admin/BrandingEditor.tsx` | 44-81 |
-| Contrast Check | `client/src/features/tenant-admin/BrandingEditor.tsx` | 84-108 |
-| useBranding Hook | `client/src/hooks/useBranding.ts` | 1-107 |
-| Font Loading | `client/src/hooks/useBranding.ts` | 14-46 |
-| CSS Application | `client/src/hooks/useBranding.ts` | 78-99 |
-| Upload Service | `server/src/services/upload.service.ts` | 1-237 |
-| Branding Routes | `server/src/routes/tenant-admin.routes.ts` | 198-225 |
-| Branding DTOs | `packages/contracts/src/dto.ts` | 134-156 |
-| Tailwind Config | `client/tailwind.config.js` | 1-104 |
-| API Client | `client/src/lib/api.ts` | 1-50 |
-| Database Schema | `server/prisma/schema.prisma` | 37-81 |
-
+| Feature          | File                                                  | Lines   |
+| ---------------- | ----------------------------------------------------- | ------- |
+| Color Picker     | `client/src/components/ColorPicker.tsx`               | 1-154   |
+| Font Selector    | `client/src/components/FontSelector.tsx`              | 1-222   |
+| Branding Editor  | `client/src/features/tenant-admin/BrandingEditor.tsx` | 1-690   |
+| Color Presets    | `client/src/features/tenant-admin/BrandingEditor.tsx` | 44-81   |
+| Contrast Check   | `client/src/features/tenant-admin/BrandingEditor.tsx` | 84-108  |
+| useBranding Hook | `client/src/hooks/useBranding.ts`                     | 1-107   |
+| Font Loading     | `client/src/hooks/useBranding.ts`                     | 14-46   |
+| CSS Application  | `client/src/hooks/useBranding.ts`                     | 78-99   |
+| Upload Service   | `server/src/services/upload.service.ts`               | 1-237   |
+| Branding Routes  | `server/src/routes/tenant-admin.routes.ts`            | 198-225 |
+| Branding DTOs    | `packages/contracts/src/dto.ts`                       | 134-156 |
+| Tailwind Config  | `client/tailwind.config.js`                           | 1-104   |
+| API Client       | `client/src/lib/api.ts`                               | 1-50    |
+| Database Schema  | `server/prisma/schema.prisma`                         | 37-81   |

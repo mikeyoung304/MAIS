@@ -139,10 +139,7 @@ export function forbiddenError(
 /**
  * Creates a not found error response
  */
-export function notFoundError(
-  resource: string,
-  requestId?: string
-): ApiErrorResponse {
+export function notFoundError(resource: string, requestId?: string): ApiErrorResponse {
   return createApiError(404, `${resource} not found`, {
     code: 'NOT_FOUND',
     requestId,
@@ -152,10 +149,7 @@ export function notFoundError(
 /**
  * Creates a conflict error response
  */
-export function conflictError(
-  message: string,
-  requestId?: string
-): ApiErrorResponse {
+export function conflictError(message: string, requestId?: string): ApiErrorResponse {
   return createApiError(409, message, {
     code: 'CONFLICT',
     requestId,

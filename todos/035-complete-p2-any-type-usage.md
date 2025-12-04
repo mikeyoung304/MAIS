@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "035"
+issue_id: '035'
 tags: [code-review, typescript, type-safety]
 dependencies: []
 ---
@@ -19,14 +19,17 @@ Widespread use of `any` type in route handlers and middleware violates strict Ty
 ### Code Evidence
 
 **Location:** `server/src/routes/index.ts`
+
 - Line 296: `} as any)` - ts-rest router type assertion
 
 **Location:** `server/src/middleware/tenant.ts`
+
 - Line 17: `branding: any` - Prisma Json field without proper typing
 
 ## Solution Implemented
 
 ### TenantBranding Interface
+
 Created proper TypeScript interface for Prisma Json field:
 
 ```typescript
@@ -42,6 +45,7 @@ export interface TenantBranding {
 ```
 
 ### ts-rest Type Assertion
+
 Replaced `as any` with documented type assertion:
 
 ```typescript
@@ -62,7 +66,7 @@ Added detailed comment explaining ts-rest v3 has known type compatibility issues
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-27 | Created | Found during code quality review |
+| Date       | Action   | Notes                                                                                                   |
+| ---------- | -------- | ------------------------------------------------------------------------------------------------------- |
+| 2025-11-27 | Created  | Found during code quality review                                                                        |
 | 2025-12-02 | Resolved | Created TenantBranding interface, replaced `as any` with documented type assertion, all typechecks pass |

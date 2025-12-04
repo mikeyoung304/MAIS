@@ -186,10 +186,7 @@ describe('Error Handler Middleware', () => {
 
       errorHandler(error, req as Request, res as Response, next);
 
-      expect(res.locals!.logger.error).toHaveBeenCalledWith(
-        { err: error },
-        'Unhandled error'
-      );
+      expect(res.locals!.logger.error).toHaveBeenCalledWith({ err: error }, 'Unhandled error');
     });
 
     it('should hide unknown error details from client', () => {
@@ -231,10 +228,7 @@ describe('Error Handler Middleware', () => {
 
       errorHandler(error, req as Request, res as Response, next);
 
-      expect(res.locals!.logger.error).toHaveBeenCalledWith(
-        { err: error },
-        'Unhandled error'
-      );
+      expect(res.locals!.logger.error).toHaveBeenCalledWith({ err: error }, 'Unhandled error');
     });
 
     it('should use fallback logger if res.locals.logger is missing', () => {

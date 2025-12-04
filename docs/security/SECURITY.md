@@ -7,12 +7,14 @@ MAIS is a **multi-tenant SaaS platform** supporting up to 50 independent wedding
 ### Tenant Isolation Guarantees
 
 **Row-Level Data Isolation:**
+
 - Every database table includes `tenantId UUID NOT NULL`
 - All queries automatically scoped by tenantId
 - Composite unique constraints prevent cross-tenant conflicts: `[tenantId, slug]`, `[tenantId, date]`
 - Impossible to query data from other tenants (enforced at database level)
 
 **Tenant Resolution Middleware:**
+
 ```typescript
 // All public API requests require X-Tenant-Key header
 // Middleware extracts tenant, validates, injects into request context
@@ -25,12 +27,14 @@ X-Tenant-Key: pk_live_tenant_a_xxx
 ```
 
 **API Key Security:**
+
 - **Public keys** (`pk_live_*`): Safe for client-side use, included in HTTP headers
 - **Secret keys** (`sk_live_*`): Server-side only, encrypted in database with AES-256-GCM
 - Encryption key: `TENANT_SECRETS_ENCRYPTION_KEY` (must be backed up securely)
 - Format validation before database lookup (prevents injection)
 
 **Cache Isolation:**
+
 - All cache keys include tenantId: `catalog:${tenantId}:packages`
 - **Critical P0 Fix (Phase 1)**: Removed HTTP cache middleware that was generating keys without tenantId
   - Vulnerability: All tenants shared same cached data (cross-tenant data leakage)
@@ -38,6 +42,7 @@ X-Tenant-Key: pk_live_tenant_a_xxx
   - Verified: Each tenant sees only their own data
 
 **Commission Security:**
+
 - Commission rates calculated **server-side only** (never trust client)
 - Always rounds UP to protect platform revenue
 - Stripe Connect enforces 0.5% - 50% limits
@@ -46,21 +51,25 @@ X-Tenant-Key: pk_live_tenant_a_xxx
 ### Authentication Model
 
 **Public API Endpoints** (require X-Tenant-Key):
+
 - `/v1/packages` - List tenant's packages
 - `/v1/bookings` - Create bookings for tenant
 - `/v1/availability` - Check tenant's availability
 
 **Admin Endpoints** (require Bearer JWT):
+
 - `/v1/admin/login` - Get JWT token
 - `/v1/admin/bookings` - Manage all bookings
 - `/v1/admin/tenants` - Tenant management (CRUD)
 
 **Webhook Endpoints** (require Stripe signature):
+
 - `/v1/webhooks/stripe` - Process Stripe events
 
 ### Security Best Practices
 
 **Tenant Provisioning:**
+
 ```bash
 # 1. Generate encryption key (production)
 openssl rand -hex 32
@@ -78,12 +87,14 @@ pnpm --filter @elope/api exec tsx server/scripts/create-tenant.ts \
 ```
 
 **API Key Rotation:**
+
 1. Generate new API key pair for tenant
 2. Update tenant record in database
 3. Notify tenant to update their integration
 4. Invalidate old keys after grace period
 
 **Monitoring for Security Issues:**
+
 ```bash
 # Check for cross-tenant data access (should be zero)
 SELECT tenantId, COUNT(*) FROM bookings GROUP BY tenantId;
@@ -104,23 +115,27 @@ To prevent brute force attacks and credential stuffing, strict rate limiting is 
 ### Configuration
 
 **Rate Limit Settings:**
+
 - **Window:** 15 minutes (900 seconds)
 - **Max Attempts:** 5 failed login attempts per IP address
 - **Tracking:** Per IP address (IP-based isolation)
 - **Scope:** Failed attempts only (successful logins don't count toward limit)
 
 **Protected Endpoints:**
+
 - `POST /v1/admin/login` - Platform admin login
 - `POST /v1/tenant-auth/login` - Tenant admin login
 
 ### Behavior
 
 **Normal Operation:**
+
 1. User attempts login with wrong password → 401 Unauthorized
 2. Attempts 1-5 → Standard authentication error
 3. Attempt 6+ → 429 Too Many Requests
 
 **Rate Limit Response:**
+
 ```json
 {
   "error": "too_many_login_attempts",
@@ -129,6 +144,7 @@ To prevent brute force attacks and credential stuffing, strict rate limiting is 
 ```
 
 **Response Headers:**
+
 ```
 RateLimit-Limit: 5
 RateLimit-Remaining: 3
@@ -152,6 +168,7 @@ All failed login attempts are logged with structured data for security monitorin
 ```
 
 **Monitoring Recommendations:**
+
 - Alert on high volume of 429 responses (potential attack in progress)
 - Track failed login patterns for specific emails (targeted attacks)
 - Monitor distributed failures across IPs targeting same email (credential stuffing)
@@ -160,6 +177,7 @@ All failed login attempts are logged with structured data for security monitorin
 ### Testing
 
 **Manual Test Script:**
+
 ```bash
 # Run the provided test script
 cd server
@@ -172,6 +190,7 @@ curl -X POST http://localhost:3000/v1/tenant-auth/login \
 ```
 
 **Expected Behavior:**
+
 - Attempts 1-5: HTTP 401 (authentication error)
 - Attempt 6+: HTTP 429 (rate limit exceeded)
 
@@ -182,6 +201,7 @@ curl -X POST http://localhost:3000/v1/tenant-auth/login \
 Current implementation uses in-memory storage. For production with multiple servers, consider:
 
 **Option 1: Redis Store (Recommended)**
+
 ```typescript
 import RedisStore from 'rate-limit-redis';
 import { createClient } from 'redis';
@@ -198,12 +218,14 @@ export const loginLimiter = rateLimit({
 ```
 
 **Option 2: Sticky Sessions**
+
 - Configure load balancer for session affinity based on IP address
 - Ensures requests from same IP always route to same server instance
 
 ### Compliance
 
 This implementation helps meet:
+
 - **PCI DSS 8.1.6:** Limit repeated access attempts
 - **OWASP Top 10:** Broken Authentication prevention
 - **NIST SP 800-63B:** Authentication and lifecycle management guidelines
@@ -233,28 +255,33 @@ This implementation helps meet:
 **Status:** ✅ Resolved (commit `efda74b`)
 
 **Vulnerability:**
+
 - HTTP cache middleware generated keys without tenantId
 - Cache key format: `GET:/v1/packages:{}` (same for ALL tenants)
 - Cache hit returned immediately, bypassing tenant middleware
 - Result: All tenants saw cached data from first request
 
 **Impact:**
+
 - Complete breach of tenant isolation
 - Tenant A's packages visible to Tenant B, C, etc.
 - Only affected cached responses (GET /v1/packages, GET /v1/availability)
 
 **Resolution:**
+
 - Removed HTTP cache middleware from `server/src/app.ts` (lines 18, 81-86)
 - Application-level cache (CacheService) provides performance with proper tenant isolation
 - Cache keys now include tenantId: `catalog:${tenantId}:packages`
 
 **Verification:**
+
 - Tested with 3 tenants (tenant-a, tenant-b, tenant-c)
 - Each tenant sees only their own data ✓
 - No X-Cache headers in responses ✓
 - Tenant middleware runs on EVERY request ✓
 
 **Lessons Learned:**
+
 1. Cache keys MUST include all scoping parameters (tenantId)
 2. Middleware execution order critical for security
 3. Comprehensive integration testing required for multi-tenant systems

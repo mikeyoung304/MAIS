@@ -183,7 +183,7 @@ if (!available) {
 if (error instanceof DomainError) {
   res.status(error.statusCode).json({
     error: error.code,
-    message: error.message
+    message: error.message,
   });
 }
 ```
@@ -264,8 +264,8 @@ export const contracts = c.router({
     method: 'GET',
     path: '/v1/packages',
     responses: {
-      200: z.array(PackageSchema)
-    }
+      200: z.array(PackageSchema),
+    },
   },
   createBooking: {
     method: 'POST',
@@ -273,9 +273,9 @@ export const contracts = c.router({
     body: CreateBookingSchema,
     responses: {
       200: z.object({ checkoutUrl: z.string() }),
-      409: z.object({ error: z.literal('BOOKING_CONFLICT') })
-    }
-  }
+      409: z.object({ error: z.literal('BOOKING_CONFLICT') }),
+    },
+  },
 });
 
 // Client usage (type-safe)
@@ -291,14 +291,14 @@ ALWAYS round UP to protect platform revenue:
 
 ```typescript
 // ✅ Correct - Math.ceil ensures platform never loses revenue
-const commission = Math.ceil(subtotal * tenant.commissionPercent / 100);
+const commission = Math.ceil((subtotal * tenant.commissionPercent) / 100);
 // Example: $100.01 * 12.5% = $12.50125 → $13 (not $12)
 
 // ❌ Wrong - Math.floor shortchanges platform
-const commission = Math.floor(subtotal * tenant.commissionPercent / 100);
+const commission = Math.floor((subtotal * tenant.commissionPercent) / 100);
 // Example: $100.01 * 12.5% = $12.50125 → $12 (lose $1!)
 
 // ❌ Wrong - Math.round inconsistent
-const commission = Math.round(subtotal * tenant.commissionPercent / 100);
+const commission = Math.round((subtotal * tenant.commissionPercent) / 100);
 // Sometimes rounds down, sometimes up - unpredictable revenue
 ```

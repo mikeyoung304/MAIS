@@ -5,74 +5,78 @@
 ### Primary Implementation
 
 #### 1. Upload Service (upload.service.ts)
+
 **Location**: `/Users/mikeyoung/CODING/MAIS/server/src/services/upload.service.ts`
 
-| Component | Lines | Purpose |
-|-----------|-------|---------|
-| **Class Definition** | 33-42 | UploadService class + properties |
-| **Constructor** | 44-72 | Mode detection (mock vs real Supabase) |
-| **getSupabaseClient()** | 78-86 | Lazy initialization of Supabase client |
-| **ensureUploadDir()** | 91-96 | Create upload directories in mock mode |
-| **validateFile()** | 102-162 | MAGIC BYTE VALIDATION (Layer 1) |
-| **generateFilename()** | 167-172 | Secure filename generation |
-| **uploadToSupabase()** | 181-225 | SIGNED URLS (Layer 2) |
-| **uploadLogo()** | 233-271 | Logo upload entry point |
-| **uploadPackagePhoto()** | 280-318 | Package photo upload entry point |
-| **uploadSegmentImage()** | 326-364 | Segment image upload entry point |
-| **deleteLogo()** | 370-382 | Delete logo file |
-| **deletePackagePhoto()** | 388-400 | Delete package photo file |
-| **extractStoragePathFromUrl()** | 408-423 | Parse storage path from signed URL |
-| **deleteSegmentImage()** | 432-470 | ORPHAN CLEANUP (Layer 3) + tenant validation |
-| **getLogoUploadDir()** | 475-477 | Get logo directory path |
-| **getPackagePhotoUploadDir()** | 482-484 | Get package photo directory path |
-| **getSegmentImageUploadDir()** | 489-491 | Get segment image directory path |
+| Component                       | Lines   | Purpose                                      |
+| ------------------------------- | ------- | -------------------------------------------- |
+| **Class Definition**            | 33-42   | UploadService class + properties             |
+| **Constructor**                 | 44-72   | Mode detection (mock vs real Supabase)       |
+| **getSupabaseClient()**         | 78-86   | Lazy initialization of Supabase client       |
+| **ensureUploadDir()**           | 91-96   | Create upload directories in mock mode       |
+| **validateFile()**              | 102-162 | MAGIC BYTE VALIDATION (Layer 1)              |
+| **generateFilename()**          | 167-172 | Secure filename generation                   |
+| **uploadToSupabase()**          | 181-225 | SIGNED URLS (Layer 2)                        |
+| **uploadLogo()**                | 233-271 | Logo upload entry point                      |
+| **uploadPackagePhoto()**        | 280-318 | Package photo upload entry point             |
+| **uploadSegmentImage()**        | 326-364 | Segment image upload entry point             |
+| **deleteLogo()**                | 370-382 | Delete logo file                             |
+| **deletePackagePhoto()**        | 388-400 | Delete package photo file                    |
+| **extractStoragePathFromUrl()** | 408-423 | Parse storage path from signed URL           |
+| **deleteSegmentImage()**        | 432-470 | ORPHAN CLEANUP (Layer 3) + tenant validation |
+| **getLogoUploadDir()**          | 475-477 | Get logo directory path                      |
+| **getPackagePhotoUploadDir()**  | 482-484 | Get package photo directory path             |
+| **getSegmentImageUploadDir()**  | 489-491 | Get segment image directory path             |
 
 #### 2. Segment Service (segment.service.ts)
+
 **Location**: `/Users/mikeyoung/CODING/MAIS/server/src/services/segment.service.ts`
 
-| Component | Lines | Purpose |
-|-----------|-------|---------|
-| **deleteSegment()** | 259-285 | INTEGRATION POINT: Calls cleanup before deletion |
-| **Cleanup block** | 266-276 | Calls `uploadService.deleteSegmentImage()` |
-| **Non-blocking cleanup** | 271-275 | Try-catch prevents cascade failures |
+| Component                | Lines   | Purpose                                          |
+| ------------------------ | ------- | ------------------------------------------------ |
+| **deleteSegment()**      | 259-285 | INTEGRATION POINT: Calls cleanup before deletion |
+| **Cleanup block**        | 266-276 | Calls `uploadService.deleteSegmentImage()`       |
+| **Non-blocking cleanup** | 271-275 | Try-catch prevents cascade failures              |
 
 ### Test Suite
 
 #### 3. Upload Service Tests (upload.service.test.ts)
+
 **Location**: `/Users/mikeyoung/CODING/MAIS/server/test/services/upload.service.test.ts`
 
-| Test Section | Lines | Coverage |
-|--------------|-------|----------|
-| **Setup & Mocks** | 1-96 | Test infrastructure |
-| **Constructor & Init** | 140-177 | Directory creation, env vars |
-| **File Size Validation** | 180-230 | Size limits for each upload type |
-| **MIME Type Validation** | 232-277 | Valid/invalid MIME types |
-| **Filename Generation** | 279-368 | Uniqueness, security properties |
-| **Logo Upload** | 370-435 | Logo-specific tests |
-| **Package Photo Upload** | 437-490 | Package photo-specific tests |
-| **Segment Image Upload** | 492-545 | Segment image-specific tests |
-| **Logo Deletion** | 547-586 | Deletion with non-existent handling |
-| **Package Photo Deletion** | 588-614 | Package photo deletion |
-| **Directory Path Getters** | 616-639 | Path validation |
-| **Edge Cases** | 641-711 | Concurrent uploads, large files, SVG, WebP |
-| **Integration Scenarios** | 713-747 | Upload-delete-upload cycles |
-| **Magic Byte Security** | 749-877 | LAYER 1 TESTS (23 tests) |
-| - PHP spoofing | 751-763 | PHP shell with fake MIME |
-| - Plain text spoofing | 765-777 | Text with fake MIME |
-| - PNG vs JPEG | 779-805 | Type confusion attacks |
-| - Valid files | 807-847 | Legitimate uploads accepted |
-| - SVG validation | 849-876 | Content inspection for SVG |
-| **Cross-Tenant Security** | 938-969 | LAYER 3 TESTS (9 tests) |
-| - Cross-tenant blocking | 953-968 | Prevents deletion by wrong tenant |
-| **Segment Image Deletion** | 902-970 | LAYER 3 TESTS (orphan cleanup) |
-| - Mock mode deletion | 903-936 | Filesystem cleanup |
-| - Cross-tenant validation | 938-969 | Real mode validation |
+| Test Section               | Lines   | Coverage                                   |
+| -------------------------- | ------- | ------------------------------------------ |
+| **Setup & Mocks**          | 1-96    | Test infrastructure                        |
+| **Constructor & Init**     | 140-177 | Directory creation, env vars               |
+| **File Size Validation**   | 180-230 | Size limits for each upload type           |
+| **MIME Type Validation**   | 232-277 | Valid/invalid MIME types                   |
+| **Filename Generation**    | 279-368 | Uniqueness, security properties            |
+| **Logo Upload**            | 370-435 | Logo-specific tests                        |
+| **Package Photo Upload**   | 437-490 | Package photo-specific tests               |
+| **Segment Image Upload**   | 492-545 | Segment image-specific tests               |
+| **Logo Deletion**          | 547-586 | Deletion with non-existent handling        |
+| **Package Photo Deletion** | 588-614 | Package photo deletion                     |
+| **Directory Path Getters** | 616-639 | Path validation                            |
+| **Edge Cases**             | 641-711 | Concurrent uploads, large files, SVG, WebP |
+| **Integration Scenarios**  | 713-747 | Upload-delete-upload cycles                |
+| **Magic Byte Security**    | 749-877 | LAYER 1 TESTS (23 tests)                   |
+| - PHP spoofing             | 751-763 | PHP shell with fake MIME                   |
+| - Plain text spoofing      | 765-777 | Text with fake MIME                        |
+| - PNG vs JPEG              | 779-805 | Type confusion attacks                     |
+| - Valid files              | 807-847 | Legitimate uploads accepted                |
+| - SVG validation           | 849-876 | Content inspection for SVG                 |
+| **Cross-Tenant Security**  | 938-969 | LAYER 3 TESTS (9 tests)                    |
+| - Cross-tenant blocking    | 953-968 | Prevents deletion by wrong tenant          |
+| **Segment Image Deletion** | 902-970 | LAYER 3 TESTS (orphan cleanup)             |
+| - Mock mode deletion       | 903-936 | Filesystem cleanup                         |
+| - Cross-tenant validation  | 938-969 | Real mode validation                       |
 
 ---
 
 ## Code Flow Diagrams
 
 ### Upload Flow (with validation)
+
 ```
 POST /v1/tenant-admin/segments/{id}/hero-image
     |
@@ -122,6 +126,7 @@ Response: { url: "https://...?token=...", filename: "...", size: ..., mimetype: 
 ```
 
 ### Delete Flow (with cleanup)
+
 ```
 DELETE /v1/tenant-admin/segments/{id}
     |
@@ -166,6 +171,7 @@ Response: 200 OK (regardless of cleanup result)
 ## Key Code Snippets
 
 ### Layer 1: Magic Byte Validation (lines 102-162)
+
 ```typescript
 private async validateFile(file: UploadedFile, maxSizeMB?: number): Promise<void> {
   // Size check
@@ -210,6 +216,7 @@ private async validateFile(file: UploadedFile, maxSizeMB?: number): Promise<void
 ```
 
 ### Layer 2: Signed URLs (lines 181-225)
+
 ```typescript
 private async uploadToSupabase(
   tenantId: string,
@@ -259,6 +266,7 @@ private async uploadToSupabase(
 ```
 
 ### Layer 3: Cleanup with Tenant Validation (lines 432-470)
+
 ```typescript
 async deleteSegmentImage(url: string, tenantId: string): Promise<void> {
   if (!url) return;
@@ -302,6 +310,7 @@ async deleteSegmentImage(url: string, tenantId: string): Promise<void> {
 ```
 
 ### Integration: deleteSegment (lines 259-285)
+
 ```typescript
 async deleteSegment(tenantId: string, id: string): Promise<void> {
   // Verify ownership
@@ -336,6 +345,7 @@ async deleteSegment(tenantId: string, id: string): Promise<void> {
 ## Test Execution
 
 ### Run All Tests
+
 ```bash
 cd /Users/mikeyoung/CODING/MAIS
 npm test
@@ -343,11 +353,13 @@ npm test
 ```
 
 ### Run Upload Service Tests Only
+
 ```bash
 npm test -- test/services/upload.service.test.ts
 ```
 
 ### Run Specific Test Suite
+
 ```bash
 # Magic byte security tests
 npm test -- --grep "Magic Byte"
@@ -360,11 +372,13 @@ npm test -- --grep "spoofing"
 ```
 
 ### Watch Mode
+
 ```bash
 npm run test:watch -- test/services/upload.service.test.ts
 ```
 
 ### With Coverage
+
 ```bash
 npm run test:coverage -- test/services/upload.service.test.ts
 ```
@@ -399,13 +413,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
 ### Allowed MIME Types
 
 ```typescript
-this.allowedMimeTypes = [
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'image/svg+xml',
-  'image/webp',
-];
+this.allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml', 'image/webp'];
 ```
 
 ---
@@ -422,6 +430,7 @@ this.allowedMimeTypes = [
 ```
 
 Install with:
+
 ```bash
 npm install file-type@16
 ```
@@ -433,17 +442,23 @@ npm install file-type@16
 All security events logged with context:
 
 ```typescript
-logger.warn({
-  declared: 'image/jpeg',
-  detected: 'image/png',
-  filename: 'malicious.jpg'
-}, 'SECURITY: MIME type mismatch detected - possible spoofing attempt');
+logger.warn(
+  {
+    declared: 'image/jpeg',
+    detected: 'image/png',
+    filename: 'malicious.jpg',
+  },
+  'SECURITY: MIME type mismatch detected - possible spoofing attempt'
+);
 
-logger.error({
-  tenantId: 'tenant-xyz',
-  storagePath: 'tenant-abc/segments/photo.jpg',
-  url: 'https://...'
-}, 'SECURITY: Attempted cross-tenant file deletion blocked');
+logger.error(
+  {
+    tenantId: 'tenant-xyz',
+    storagePath: 'tenant-abc/segments/photo.jpg',
+    url: 'https://...',
+  },
+  'SECURITY: Attempted cross-tenant file deletion blocked'
+);
 ```
 
 ---

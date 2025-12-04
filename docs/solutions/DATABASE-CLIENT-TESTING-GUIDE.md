@@ -14,6 +14,7 @@ priority: P1
 ## Overview
 
 This guide provides test patterns to verify that:
+
 1. Database operations use Prisma (not Supabase JS)
 2. File operations use Supabase Storage
 3. Startup verification works correctly
@@ -56,18 +57,10 @@ describe('Database Client Usage - Unit Tests', () => {
     });
 
     it('should verify all repository methods exist', () => {
-      const methods = [
-        'findById',
-        'findBySlug',
-        'create',
-        'update',
-        'delete',
-        'count',
-      ];
+      const methods = ['findById', 'findBySlug', 'create', 'update', 'delete', 'count'];
 
       for (const method of methods) {
-        expect(typeof tenantRepo[method as keyof typeof tenantRepo])
-          .toBe('function');
+        expect(typeof tenantRepo[method as keyof typeof tenantRepo]).toBe('function');
       }
     });
   });
@@ -303,9 +296,7 @@ import { test, expect } from '@playwright/test';
 test.describe('API Startup Sequence', () => {
   const API_BASE_URL = 'http://localhost:3001';
 
-  test('should start API with successful database verification', async ({
-    request,
-  }) => {
+  test('should start API with successful database verification', async ({ request }) => {
     // ✅ Verify API is running
     const response = await request.get(`${API_BASE_URL}/health/live`);
     expect(response.status()).toBe(200);
@@ -314,9 +305,7 @@ test.describe('API Startup Sequence', () => {
     expect(health).toHaveProperty('status');
   });
 
-  test('should verify database is connected on /health/ready', async ({
-    request,
-  }) => {
+  test('should verify database is connected on /health/ready', async ({ request }) => {
     // ✅ Ready check includes database verification
     const response = await request.get(`${API_BASE_URL}/health/ready`);
 
@@ -329,9 +318,7 @@ test.describe('API Startup Sequence', () => {
 
   test('should have Prisma connection available', async ({ request }) => {
     // API should have verified Prisma connection at startup
-    const response = await request.get(
-      `${API_BASE_URL}/health/ready?detailed=true`
-    );
+    const response = await request.get(`${API_BASE_URL}/health/ready?detailed=true`);
 
     expect(response.status()).toBe(200);
     const health = await response.json();
@@ -564,12 +551,12 @@ npm run test:coverage -- test/integration/database-startup-verification.spec.ts
 
 ## 9. Test Coverage Targets
 
-| Test Type | Coverage Target | Current |
-|-----------|-----------------|---------|
-| Unit Tests | ≥90% | ~95% |
-| Integration Tests | ≥80% | ~90% |
-| E2E Tests | ≥70% | ~85% |
-| Overall | ≥80% | ~90% |
+| Test Type         | Coverage Target | Current |
+| ----------------- | --------------- | ------- |
+| Unit Tests        | ≥90%            | ~95%    |
+| Integration Tests | ≥80%            | ~90%    |
+| E2E Tests         | ≥70%            | ~85%    |
+| Overall           | ≥80%            | ~90%    |
 
 ---
 

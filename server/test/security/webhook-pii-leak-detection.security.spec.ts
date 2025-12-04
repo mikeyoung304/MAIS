@@ -46,7 +46,9 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
     webhookRepo = new FakeWebhookRepository();
 
     const commissionService = {
-      calculateCommission: vi.fn().mockReturnValue({ platformFeeCents: 500, vendorPayoutCents: 99500 }),
+      calculateCommission: vi
+        .fn()
+        .mockReturnValue({ platformFeeCents: 500, vendorPayoutCents: 99500 }),
       calculateBookingTotal: vi.fn().mockResolvedValue({
         basePrice: 100000,
         addOnsTotal: 0,
@@ -55,8 +57,8 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
         vendorPayoutCents: 95000,
         customerTotalCents: 100000,
         commissionAmount: 5000,
-        commissionPercent: 5.0
-      })
+        commissionPercent: 5.0,
+      }),
     };
 
     const tenantRepo = {
@@ -64,11 +66,18 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
         id: 'test-tenant',
         stripeAccountId: 'acct_test123',
         stripeOnboarded: true,
-        name: 'Test Tenant'
-      })
+        name: 'Test Tenant',
+      }),
     };
 
-    bookingService = new BookingService(bookingRepo, catalogRepo, eventEmitter, paymentProvider, commissionService, tenantRepo);
+    bookingService = new BookingService(
+      bookingRepo,
+      catalogRepo,
+      eventEmitter,
+      paymentProvider,
+      commissionService,
+      tenantRepo
+    );
     controller = new WebhooksController(paymentProvider, bookingService, webhookRepo);
   });
 
@@ -203,7 +212,9 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
       ).rejects.toThrow();
 
       // Verify webhook was recorded (even on error)
-      const failedEvent = webhookRepo.events[0] || webhookRepo.events.find(e => e.eventId === 'evt_security_name_leak');
+      const failedEvent =
+        webhookRepo.events[0] ||
+        webhookRepo.events.find((e) => e.eventId === 'evt_security_name_leak');
       if (failedEvent?.lastError) {
         // CRITICAL: Name components should not leak if error is stored
         expect(failedEvent.lastError).not.toContain('John');
@@ -248,7 +259,9 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
         controller.handleStripeWebhook(JSON.stringify(stripeEvent), 'valid_signature')
       ).rejects.toThrow();
 
-      const failedEvent = webhookRepo.events[0] || webhookRepo.events.find(e => e.eventId === 'evt_security_full_name');
+      const failedEvent =
+        webhookRepo.events[0] ||
+        webhookRepo.events.find((e) => e.eventId === 'evt_security_full_name');
       if (failedEvent?.lastError) {
         expect(failedEvent.lastError).not.toContain('Mr.');
         expect(failedEvent.lastError).not.toContain('Mrs.');
@@ -397,8 +410,8 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
 
       // CRITICAL: Validation keywords should not appear
       // These reveal schema structure and validation rules
-      expect(error.toLowerCase()).not.toMatch(/^.*required.*$/i);  // "required"
-      expect(error.toLowerCase()).not.toMatch(/is not a valid/i);  // "is not a valid"
+      expect(error.toLowerCase()).not.toMatch(/^.*required.*$/i); // "required"
+      expect(error.toLowerCase()).not.toMatch(/is not a valid/i); // "is not a valid"
       expect(error.toLowerCase()).not.toMatch(/expected string/i); // "expected string"
       expect(error.toLowerCase()).not.toMatch(/expected number/i); // "expected number"
 
@@ -423,7 +436,7 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
               packageId: 'pkg_test_123',
               eventDate: '2025-06-15',
               email: 'invalid', // Invalid email
-              coupleName: '',   // Invalid empty name
+              coupleName: '', // Invalid empty name
             },
             amount_total: 100000,
           } as unknown as Stripe.CheckoutSession,
@@ -441,7 +454,9 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
         controller.handleStripeWebhook(JSON.stringify(stripeEvent), 'valid_signature')
       ).rejects.toThrow();
 
-      const failedEvent = webhookRepo.events.find(e => e.eventId === 'evt_security_abstract_type');
+      const failedEvent = webhookRepo.events.find(
+        (e) => e.eventId === 'evt_security_abstract_type'
+      );
 
       // CRITICAL: Error must be abstract type (not field-specific)
       if (failedEvent?.lastError) {
@@ -478,7 +493,9 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
         controller.handleStripeWebhook(JSON.stringify(stripeEvent), 'valid_signature')
       ).rejects.toThrow();
 
-      const failedEvent = webhookRepo.events.find(e => e.eventId === 'evt_security_session_structure');
+      const failedEvent = webhookRepo.events.find(
+        (e) => e.eventId === 'evt_security_session_structure'
+      );
 
       // CRITICAL: Must be abstract, not specific to missing fields
       if (failedEvent?.lastError) {

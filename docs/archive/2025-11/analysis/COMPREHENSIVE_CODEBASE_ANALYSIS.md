@@ -5,9 +5,10 @@
 **MAIS** is a production-ready, multi-tenant SaaS wedding booking platform built with modern web technologies and cloud-native architecture patterns. The application supports up to 50 independent wedding businesses with complete data isolation, variable commission rates, and secure payment processing.
 
 **Key Stats:**
+
 - **Total TypeScript/TSX Files:** 274
 - **Server Files:** 140 TypeScript files
-- **Client Files:** 77 TSX files  
+- **Client Files:** 77 TSX files
 - **Architecture:** Monorepo with shared packages
 - **Test Coverage:** 76% across unit, integration, and E2E tests
 - **Status:** Production-ready with comprehensive CI/CD pipeline
@@ -17,39 +18,46 @@
 ## Part 1: Technology Stack
 
 ### Frontend Stack
+
 **Framework:** React 18.3
 **Build Tool:** Vite 6.0
 **Language:** TypeScript 5.7
 **Styling:** Tailwind CSS 3.4 + PostCSS
-**UI Components:** 
-  - Radix UI (accessible component library)
-  - Lucide React (icons)
-  - React Day Picker (calendar widget)
-  - React Colorful (color picker)
+**UI Components:**
+
+- Radix UI (accessible component library)
+- Lucide React (icons)
+- React Day Picker (calendar widget)
+- React Colorful (color picker)
 
 **State Management & Data:**
-  - TanStack React Query 5.62 (server state management)
-  - React Router DOM 7.1 (routing)
-  - Zod 4.1 (runtime type validation)
+
+- TanStack React Query 5.62 (server state management)
+- React Router DOM 7.1 (routing)
+- Zod 4.1 (runtime type validation)
 
 **APIs & Integration:**
-  - Axios (HTTP client)
-  - @ts-rest/core (type-safe API contracts)
-  - Sentry React 10.25 (error tracking)
+
+- Axios (HTTP client)
+- @ts-rest/core (type-safe API contracts)
+- Sentry React 10.25 (error tracking)
 
 **Key Features:**
+
 - Embeddable widget architecture (separate entry point: `widget.html`)
 - Multi-entry build configuration for main app + widget bundle
 - Vite path alias for cleaner imports (@/)
 - Development server on port 5173
 
 ### Backend Stack
+
 **Framework:** Express.js 4.21
 **Language:** TypeScript 5.7
 **Database:** PostgreSQL 16 with Prisma ORM 6.17
 **Database Connection:** Supabase support with connection pooling
 
 **Key Libraries:**
+
 - **Security:** Helmet 8.1 (HTTP headers), bcryptjs 3.0, jsonwebtoken 9.0
 - **Validation:** Zod 4.1, Joi (optional)
 - **File Upload:** Multer 2.0, Formidable 2.0
@@ -61,6 +69,7 @@
 - **Rate Limiting:** Express Rate Limit 8.1
 
 **API Design:**
+
 - REST API with ts-rest contract-first design
 - OpenAPI/Swagger documentation auto-generated
 - Multi-tenant API authentication via X-Tenant-Key header
@@ -69,18 +78,23 @@
 **API Server Port:** 3001
 
 ### Shared Packages
+
 **@mais/contracts** (274 lines of API definition)
+
 - ts-rest based API contract definitions
 - Zod schemas for request/response DTOs
 - Shared type definitions across frontend and backend
 - Minimal dependencies (only @ts-rest/core, zod)
 
 **@mais/shared**
+
 - Shared utilities and helpers
 - No external dependencies
 
 ### Database (Prisma)
+
 **Schema Structure:**
+
 - **Multi-tenant models:** Tenant, User, Customer, Booking, Package, AddOn, Segment
 - **Isolation:** Tenant ID on all customer-facing tables (CRITICAL for data isolation)
 - **Business Models:**
@@ -96,6 +110,7 @@
   - ConfigChangeLog: Audit trail for tenant configuration changes
 
 **Key Constraints:**
+
 - Composite unique indexes: (tenantId, email), (tenantId, slug)
 - Foreign key cascading for tenant-scoped deletion
 - Proper indexing for tenant isolation queries
@@ -106,6 +121,7 @@
 ## Part 2: Directory Structure & Module Organization
 
 ### Root Structure
+
 ```
 /elope
 ├── package.json                    # Monorepo root with npm workspaces
@@ -126,6 +142,7 @@
 ```
 
 ### Client Structure (`/client/src`)
+
 ```
 client/src/
 ├── main.tsx                        # Main app entry point
@@ -177,6 +194,7 @@ client/src/
 ```
 
 ### Server Structure (`/server/src`)
+
 ```
 server/src/
 ├── index.ts                        # Entry point (loads config, starts server)
@@ -305,12 +323,14 @@ server/src/
 ### Key Services
 
 **1. CatalogService** (catalog.service.ts)
+
 - Manages packages, add-ons, and segments
 - Handles package visibility and filtering
 - Manages segment-based product organization
 - Methods: getPackages(), getPackageBySlug(), createSegment(), etc.
 
 **2. BookingService** (booking.service.ts)
+
 - Creates and manages bookings
 - Handles checkout flow
 - Manages booking status transitions
@@ -318,6 +338,7 @@ server/src/
 - Methods: createBooking(), updateBooking(), cancelBooking()
 
 **3. AvailabilityService** (availability.service.ts)
+
 - Checks date availability
 - Manages blackout dates
 - Handles double-booking prevention
@@ -325,69 +346,82 @@ server/src/
 - Methods: checkAvailability(), getUnavailableDates()
 
 **4. SegmentService** (segment.service.ts)
+
 - Manages business segments (distinct product lines)
 - Handles segment visibility and filtering
 - Manages segment-specific pricing and configuration
 - NEW: Multi-segment support for wedding businesses
 
 **5. StripeConnectService** (stripe-connect.service.ts)
+
 - Manages Stripe Connected Accounts
 - Handles onboarding flow
 - Commission calculation and payout configuration
 - Stripe account verification
 
 **6. CommissionService** (commission.service.ts)
+
 - Calculates platform commission
 - Handles Stripe fee deductions
 - Tracks commission history per tenant
 - Multi-tenant commission rate support
 
 **7. IdentityService** (identity.service.ts)
+
 - Manages user authentication context
 - Handles JWT token validation
 - Stores request-scoped identity information
 
 **8. TenantAuthService** (tenant-auth.service.ts)
+
 - Tenant-specific authentication
 - Password hashing and verification
 - Tenant admin login flow
 
 **9. AuditService** (audit.service.ts)
+
 - Logs configuration changes
 - Tracks admin actions
 - Generates audit reports
 
 **10. IdempotencyService** (idempotency.service.ts)
+
 - Ensures idempotent webhook processing
 - Prevents duplicate booking creation
 - Stores request fingerprints and responses
 
 **11. UploadService** (upload.service.ts)
+
 - Handles file uploads (logos, package photos)
 - Manages upload directories
 - Validates file types and sizes
 
 **12. EncryptionService** (lib/encryption.service.ts)
+
 - Encrypts tenant secrets (Stripe keys, API tokens)
 - Uses tenant-specific encryption key
 - Provides secure secret storage
 
 **13. ApiKeyService** (lib/api-key.service.ts)
+
 - Generates tenant API keys
 - Validates API key format
 - Key rotation support
 
 **14. CacheService** (lib/cache.ts)
+
 - In-memory caching with TTL
 - Default 15-minute TTL
 - Tenant-scoped cache isolation
 
 **15. EventEmitter** (lib/core/events.ts)
+
 - In-process event emission
 - Used for async processing
 - Booking confirmation events, etc.
 
 ### Service Dependencies
+
 ```
 BookingService
   ├── AvailabilityService
@@ -416,9 +450,11 @@ AvailabilityService
 ## Part 4: API Endpoints & Routes
 
 ### Route Organization
+
 **Total Routes:** 15+ route files with 50+ endpoints
 
 **Public API Routes** (No Authentication)
+
 ```
 GET    /v1/packages                    - List all packages
 GET    /v1/packages/:slug              - Get package details
@@ -430,6 +466,7 @@ GET    /ready                          - Readiness check
 ```
 
 **Tenant API Routes** (X-Tenant-Key Header)
+
 ```
 GET    /v1/tenant/packages             - List tenant's packages
 POST   /v1/tenant/packages             - Create package
@@ -443,6 +480,7 @@ GET    /v1/tenant/availability         - Get availability for tenant
 ```
 
 **Admin Routes** (JWT Authorization)
+
 ```
 POST   /v1/auth/login                  - Platform admin login
 POST   /v1/auth/logout                 - Admin logout
@@ -453,6 +491,7 @@ GET    /v1/admin/bookings              - View all bookings across tenants
 ```
 
 **Tenant Admin Routes** (Tenant JWT Authorization)
+
 ```
 POST   /v1/tenant-auth/login           - Tenant admin login
 GET    /v1/tenant-admin/dashboard      - Tenant dashboard data
@@ -463,12 +502,14 @@ POST   /v1/tenant-admin/stripe-onboard - Stripe Connect onboarding
 ```
 
 **Webhook Routes** (Stripe Signature Verification)
+
 ```
 POST   /v1/webhooks/stripe             - Stripe webhook receiver
        (Handles: checkout.session.completed, payment_intent.*, etc.)
 ```
 
 **Developer Routes** (Mock Mode Only)
+
 ```
 POST   /v1/dev/simulate-checkout-completed - Simulate payment
 GET    /v1/dev/debug-state             - Debug application state
@@ -476,6 +517,7 @@ POST   /v1/dev/reset                   - Reset to clean state
 ```
 
 **API Documentation**
+
 ```
 GET    /api/docs/openapi.json          - OpenAPI specification
 GET    /api/docs                       - Swagger UI interface
@@ -502,6 +544,7 @@ GET    /api/docs                       - Swagger UI interface
 12. **Global Error Handler** - Centralized error formatting (MUST be last)
 
 **Key Middleware Functions:**
+
 - **authMiddleware** - JWT validation
 - **tenantMiddleware** - X-Tenant-Key extraction and validation
 - **tenantAuthMiddleware** - Tenant-specific JWT validation
@@ -515,13 +558,16 @@ GET    /api/docs                       - Swagger UI interface
 ## Part 6: Testing Strategy & Coverage
 
 ### Test Structure
+
 **Total Test Files:** 20+ dedicated test files
 **Test Types:** Unit + Integration + E2E + HTTP
 
 ### Unit Tests
+
 **Coverage:** Core business logic
 **Framework:** Vitest
 **Files:**
+
 - `test/availability.service.spec.ts`
 - `test/adapters/prisma/tenant.repository.spec.ts`
 - `test/adapters/stripe.adapter.spec.ts`
@@ -529,9 +575,11 @@ GET    /api/docs                       - Swagger UI interface
 - `test/middleware/error-handler.spec.ts`
 
 ### Integration Tests (with real database)
+
 **Coverage:** Service interactions, database operations
 **Requires:** PostgreSQL test database
 **Key Tests:**
+
 - `test/integration/catalog.repository.integration.spec.ts`
 - `test/integration/segment-repository.integration.spec.ts`
 - `test/integration/booking-repository.integration.spec.ts`
@@ -545,21 +593,26 @@ GET    /api/docs                       - Swagger UI interface
 - `test/integration/booking-race-conditions.spec.ts`
 
 ### HTTP Tests (API endpoint tests)
+
 **Coverage:** Full request/response cycles
 **Framework:** Supertest
 **Files:**
+
 - `test/http/packages.test.ts`
 - `test/http/webhooks.http.spec.ts`
 
 ### E2E Tests (Browser-based)
+
 **Coverage:** Complete user workflows
 **Framework:** Playwright
 **Test Files:**
+
 - `e2e/tests/booking-flow.spec.ts` - End-to-end booking workflow
 - `e2e/tests/booking-mock.spec.ts` - Mock mode booking tests
 - `e2e/tests/admin-flow.spec.ts` - Admin dashboard tests
 
 **E2E Configuration:**
+
 - Base URL: http://localhost:5173
 - Timeout: 30 seconds per test
 - Reporter: HTML with screenshots on failure
@@ -567,20 +620,25 @@ GET    /api/docs                       - Swagger UI interface
 - Video: On failure only
 
 ### Test Configuration Files
+
 **Vitest:** `server/vitest.config.ts`
+
 - Coverage target: 80% (lines, functions), 75% (branches)
 - Current baseline: 42.35% lines, 77.45% branches, 36.94% functions
 - Reporters: text, json, html, lcov
 - Environment: Node.js
 
 **Playwright:** `e2e/playwright.config.ts`
+
 - Projects: Chromium (primary browser)
 - Parallel execution: enabled
 - CI mode: Single worker, 2 retries
 - Local: Multiple workers, no retries
 
 ### CI/CD Test Pipeline
+
 **Jobs:**
+
 1. Lint & Format (5 min)
 2. TypeScript Type Check (5 min)
 3. Unit Tests with Coverage (10 min)
@@ -596,11 +654,13 @@ GET    /api/docs                       - Swagger UI interface
 ## Part 7: Configuration & Environment
 
 ### Configuration System
+
 **Method:** Zod schema validation with dotenv
 **File:** `server/src/lib/core/config.ts`
 **Pattern:** Safe parsing with explicit error handling
 
 **Required Environment Variables:**
+
 ```
 # Application Mode
 ADAPTERS_PRESET=mock|real              # Determines which adapters to load
@@ -636,16 +696,19 @@ ADMIN_DEFAULT_PASSWORD=                # Seed admin password
 ```
 
 ### Adapter Pattern (Dependency Injection)
+
 **Purpose:** Support mock (testing) and real (production) implementations
 **Pattern:** Factory functions with environment-based selection
 
 **Mock Adapters** (ADAPTERS_PRESET=mock)
+
 - In-memory data storage
 - No external service calls
 - Fast test execution
 - Development convenience
 
 **Real Adapters** (ADAPTERS_PRESET=real)
+
 - PostgreSQL via Prisma
 - Stripe payment processing
 - Google Calendar integration
@@ -656,6 +719,7 @@ ADMIN_DEFAULT_PASSWORD=                # Seed admin password
 ## Part 8: Infrastructure & Deployment
 
 ### CI/CD Pipeline (.github/workflows/ci.yml)
+
 **Trigger:** Every push and pull request to any branch
 **Concurrency:** Cancel in-progress runs on same branch
 
@@ -701,11 +765,13 @@ ADMIN_DEFAULT_PASSWORD=                # Seed admin password
    - Reports overall status
 
 ### Development Environment
+
 **Node.js:** 20.0+
 **npm:** 8.0+
 **Package Manager:** npm workspaces (monorepo)
 
 **Development Commands:**
+
 ```bash
 npm run dev:api              # Start backend server (Vite watch)
 npm run dev:client           # Start frontend dev server (Vite)
@@ -719,20 +785,24 @@ npm run build                # Compile all packages
 ```
 
 ### Deployment Considerations
+
 **Docker:** Not configured (use Node.js host or serverless)
 **Database:** Supabase PostgreSQL recommended
-**Hosting:** 
+**Hosting:**
+
 - Backend: Node.js hosting (Vercel, Railway, Render, etc.)
 - Frontend: Static hosting (Vercel, Netlify, etc.) or Node.js
 - Storage: S3 or equivalent for file uploads
 
 **Health Checks:**
+
 ```
 GET /health    - Basic health check (always 200)
 GET /ready     - Readiness check (verifies required env vars)
 ```
 
 **Environment-Specific:**
+
 - Development: ADAPTERS_PRESET=mock
 - Testing: ADAPTERS_PRESET=mock + test database
 - Production: ADAPTERS_PRESET=real + secure env vars
@@ -742,32 +812,39 @@ GET /ready     - Readiness check (verifies required env vars)
 ## Part 9: Security Architecture
 
 ### Authentication & Authorization
+
 **Public Endpoints:** No auth required (packages, availability)
 **API Key Auth:** X-Tenant-Key header for tenant API
-  - Format: `pk_live_slug_xxxxxxx`
-  - Hashed storage in database
-  - Per-tenant isolation enforced
+
+- Format: `pk_live_slug_xxxxxxx`
+- Hashed storage in database
+- Per-tenant isolation enforced
 
 **JWT Authentication:** Admin endpoints
-  - Algorithm: HS256 (symmetric)
-  - Secret: Environment variable (JWT_SECRET)
-  - Payload includes role and tenantId
-  - Token validation in authMiddleware
+
+- Algorithm: HS256 (symmetric)
+- Secret: Environment variable (JWT_SECRET)
+- Payload includes role and tenantId
+- Token validation in authMiddleware
 
 **Tenant JWT:** Tenant admin endpoints
-  - Separate from platform admin tokens
-  - Tenant-specific permissions
-  - Validated in tenantAuthMiddleware
+
+- Separate from platform admin tokens
+- Tenant-specific permissions
+- Validated in tenantAuthMiddleware
 
 ### Data Isolation
+
 **Tenant ID on All Models:** CRITICAL for multi-tenant safety
+
 - Customer: tenantId isolation
 - Booking: tenantId isolation
 - Package: tenantId isolation
 - Venue: tenantId isolation
 - Segment: tenantId isolation
 
-**Composite Unique Indexes:** 
+**Composite Unique Indexes:**
+
 - (tenantId, email) for customers
 - (tenantId, slug) for packages/segments
 - Prevents cross-tenant collisions at database level
@@ -775,38 +852,48 @@ GET /ready     - Readiness check (verifies required env vars)
 **Middleware Enforcement:** tenantMiddleware extracts and validates X-Tenant-Key
 
 ### Encryption
+
 **Tenant Secrets:** Encrypted at rest
+
 - AES-256-GCM encryption
 - Tenant-specific encryption key (TENANT_SECRETS_ENCRYPTION_KEY)
 - Stores: Stripe keys, API tokens, etc.
 - Uses: encryptionService.encrypt/decrypt
 
 **Password Hashing:** bcryptjs with salt rounds
+
 - Admin passwords hashed with bcryptjs
 - Tenant admin passwords hashed
 - Never stored plaintext
 
 ### Rate Limiting
+
 **Global:** All routes except /health and /ready
+
 - Default limits: 15 requests per minute per IP
 - Bypass for health/ready checks
 
 **Admin-Specific:** Stricter limits on /v1/admin
+
 - Enhanced protection for sensitive endpoints
 - Prevents brute force attacks
 
 ### Webhook Security
+
 **Stripe Signature Verification:** Critical
+
 - Raw body parsing for /v1/webhooks/stripe
 - Stripe SDK verifies signature
 - Prevents webhook forgery
 
 **Idempotency:** Webhook request fingerprinting
+
 - Deduplication of duplicate webhook deliveries
 - Stored in WebhookEvent table
 - Prevents double-processing
 
 ### Middleware Security Stack
+
 1. **Helmet:** HTTP security headers
 2. **CORS:** Origin whitelisting
 3. **Rate Limiting:** Request throttling
@@ -819,8 +906,10 @@ GET /ready     - Readiness check (verifies required env vars)
 ## Part 10: Key Features & Implementations
 
 ### Multi-Tenant Architecture
+
 **Isolation Level:** Complete logical isolation per tenant
-**Tenant Model:** 
+**Tenant Model:**
+
 - Unique slug and apiKeyPublic
 - Branding configuration (JSON)
 - Stripe Connect account management
@@ -828,14 +917,17 @@ GET /ready     - Readiness check (verifies required env vars)
 - Encrypted secrets storage
 
 **API Key System:**
+
 - Public key format: `pk_live_tenant-slug_xxxxxxx`
 - Secret key: hashed and stored
 - Rotation support via new key generation
 
 ### Segments (Business Lines)
+
 **Concept:** Distinct product categories within a tenant
 **Examples:** "Micro-Wedding", "Wellness Retreat", "Full Wedding"
 **Features:**
+
 - Slug-based URLs
 - Hero image and custom title
 - SEO metadata (title, description)
@@ -845,26 +937,32 @@ GET /ready     - Readiness check (verifies required env vars)
 - Active/inactive visibility toggle
 
 **Relationships:**
+
 - Package belongs to one Segment (optional)
 - AddOn can be segment-scoped or global
 - Queries filtered by tenantId and segment
 
 ### Embeddable Widget
+
 **Technology:** Separate Vite entry point (`widget.html`)
 **Components:**
+
 - WidgetApp.tsx - Container component
 - WidgetCatalogGrid.tsx - Product listing
 - WidgetPackagePage.tsx - Product detail
 
 **Features:**
+
 - Iframe-embeddable on customer websites
 - Self-contained styling (Tailwind)
 - Communication with parent window
 - Branding customization via config
 
 ### Photo Upload System
+
 **Multer Integration:** File upload handling
 **Features:**
+
 - Up to 5 photos per package
 - Drag-and-drop UI
 - Filename and size tracking
@@ -874,12 +972,15 @@ GET /ready     - Readiness check (verifies required env vars)
 
 **Storage:** File system (can be replaced with S3)
 **Upload Directories:**
+
 - `/server/uploads/logos` - Tenant logos
 - `/server/uploads/packages` - Package photos
 
 ### Stripe Integration
+
 **Stripe Connect:** Multi-tenant payment processing
 **Flow:**
+
 1. Tenant creates account via onboarding
 2. Stripe account ID stored encrypted
 3. Customers checkout through platform
@@ -887,29 +988,35 @@ GET /ready     - Readiness check (verifies required env vars)
 5. Tenant receives payout
 
 **Webhook Processing:**
+
 - Event verification via signature
 - Idempotent processing (deduplication)
 - Error handling with retry logic
 - Booking status updates from checkout completion
 
 **Commission Calculation:**
+
 - Per-tenant configurable rate
 - Automatic deduction from booking total
 - CommissionService handles math
 - Stored in audit trail
 
 ### Google Calendar Integration (Optional)
+
 **Purpose:** Sync unavailable dates from tenant's calendar
 **Configuration:** Service account with JSON credentials
 **Features:**
+
 - Check calendar events for conflicts
 - Mark dates as unavailable
 - Calendar query optimization
 
 ### Email Delivery (Optional)
+
 **Provider:** Postmark
 **Configuration:** Server token + from email
 **Events:**
+
 - Booking confirmation
 - Booking cancellation
 - Admin notifications
@@ -922,12 +1029,14 @@ GET /ready     - Readiness check (verifies required env vars)
 ### Key Models
 
 **User Model**
+
 - id, email (unique), passwordHash, role (enum), tenantId
 - Roles: USER, ADMIN, PLATFORM_ADMIN, TENANT_ADMIN
 - Tenant relation (cascade delete)
 - Index: tenantId
 
 **Tenant Model**
+
 - id, slug (unique), name, email, passwordHash (nullable)
 - API Keys: apiKeyPublic (unique), apiKeySecret (hashed)
 - Commission: commissionPercent (decimal)
@@ -938,6 +1047,7 @@ GET /ready     - Readiness check (verifies required env vars)
 - Relations: users, customers, venues, segments, packages, addOns, bookings, webhookEvents
 
 **Segment Model**
+
 - id, tenantId (composite unique with slug), slug, name
 - Landing page: heroTitle, heroSubtitle, heroImage
 - SEO: metaTitle, metaDescription
@@ -946,6 +1056,7 @@ GET /ready     - Readiness check (verifies required env vars)
 - Index: (tenantId, active), (tenantId, sortOrder)
 
 **Package Model**
+
 - id, tenantId (composite unique with slug), slug, name, description
 - basePrice (integer in cents), active (boolean)
 - segmentId (optional, fk to Segment with SetNull)
@@ -955,6 +1066,7 @@ GET /ready     - Readiness check (verifies required env vars)
 - Index: (tenantId, active), (segmentId, grouping)
 
 **Booking Model**
+
 - id, tenantId (isolation), customerId, packageId, venueId (optional)
 - date (DATE), startTime (DATETIME), endTime (DATETIME)
 - status (enum: PENDING, CONFIRMED, CANCELED, FULFILLED)
@@ -965,12 +1077,14 @@ GET /ready     - Readiness check (verifies required env vars)
 - Indexes: (tenantId, status), (customerId), (stripeSessionId)
 
 **Customer Model**
+
 - id, tenantId (isolation), email, phone, name
 - Composite unique: (tenantId, email)
 - Relations: tenant, bookings
 - Index: (tenantId), (email)
 
 **WebhookEvent Model**
+
 - id, tenantId (isolation), externalId (Stripe event ID, unique)
 - eventType (string), payload (JSON), processedAt (timestamp)
 - status (enum: PENDING, PROCESSED, FAILED)
@@ -978,6 +1092,7 @@ GET /ready     - Readiness check (verifies required env vars)
 - Composite unique: (tenantId, externalId)
 
 **ConfigChangeLog Model**
+
 - id, tenantId, userId, action (string), changes (JSON), timestamp
 - Audit trail for all configuration modifications
 
@@ -986,7 +1101,9 @@ GET /ready     - Readiness check (verifies required env vars)
 ## Part 12: Code Quality & Standards
 
 ### TypeScript Strictness
+
 **tsconfig.base.json Configuration:**
+
 - strict: true (all strict options enabled)
 - target: ES2022
 - noUnusedLocals: true
@@ -996,20 +1113,25 @@ GET /ready     - Readiness check (verifies required env vars)
 - noUncheckedIndexedAccess: true
 
 ### ESLint Rules
+
 **Base:** eslint:recommended + @typescript-eslint strict + stylistic
 **Strict Enforcement:**
+
 - @typescript-eslint/no-explicit-any: ERROR (no 'any' type)
 - @typescript-eslint/no-non-null-assertion: ERROR (no '!' operator)
 - @typescript-eslint/explicit-function-return-type: ERROR (types required)
-- @typescript-eslint/no-unused-vars: ERROR (with '^_' pattern exception)
+- @typescript-eslint/no-unused-vars: ERROR (with '^\_' pattern exception)
 - no-console: WARN (only warn, error for log/debug)
 
 ### Code Formatting
+
 **Prettier:** Consistent formatting across entire codebase
 **Configuration:** Default Prettier settings in .prettierrc.json
 
 ### Documentation
+
 **Architecture Docs:** /docs directory with:
+
 - Security architecture
 - API documentation
 - Multi-tenant patterns
@@ -1036,35 +1158,43 @@ GET /ready     - Readiness check (verifies required env vars)
 ## Part 14: Development Workflow
 
 ### Git Hooks (Husky)
+
 **Pre-commit:** Likely runs linting/formatting
 **Configuration:** .husky/ directory
 
 ### Monorepo Management
+
 **Workspaces:** npm workspaces
 **Packages:**
+
 - client (@mais/web)
 - server (@mais/api)
 - packages/contracts (@mais/contracts)
 - packages/shared (@mais/shared)
 
 **Workspace Scripts:**
+
 ```bash
 npm run <script> --workspace=<name>    # Run in specific workspace
 npm run <script> --workspaces          # Run in all workspaces
 ```
 
 ### Build Process
+
 **TypeScript Compilation:** tsc -b (composite project references)
 **Client Build:** Vite build with separate widget output
 **Server Build:** TypeScript to JavaScript + declaration files
 
 ### Local Development
+
 **Port Configuration:**
+
 - Client: 5173 (Vite dev server)
 - API: 3001 (Express)
 - Database: 5432 (PostgreSQL, local or Supabase)
 
 **Mock vs Real Mode:**
+
 - ADAPTERS_PRESET=mock: No external services needed
 - ADAPTERS_PRESET=real: Requires .env with all credentials
 
@@ -1073,4 +1203,3 @@ npm run <script> --workspaces          # Run in all workspaces
 ## Summary
 
 **MAIS** is a well-architected, production-ready SaaS platform built with modern JavaScript/TypeScript technologies. The multi-tenant architecture provides complete data isolation while the comprehensive testing strategy (76% coverage) ensures reliability. The codebase follows strict TypeScript and code quality standards, with clear separation of concerns and extensible design patterns. The platform is designed to handle complex wedding booking workflows while maintaining security, performance, and scalability.
-

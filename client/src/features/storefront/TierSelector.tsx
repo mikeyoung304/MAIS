@@ -72,9 +72,7 @@ export function TierSelector({
           <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-4">
             {title}
           </h1>
-          <p className="text-xl md:text-2xl text-neutral-600 max-w-3xl mx-auto">
-            {subtitle}
-          </p>
+          <p className="text-xl md:text-2xl text-neutral-600 max-w-3xl mx-auto">{subtitle}</p>
         </div>
 
         {/* Admin warning removed - customers shouldn't see incomplete tier warnings */}
@@ -83,12 +81,8 @@ export function TierSelector({
         {configuredTiers.length === 0 && (
           <div className="text-center py-16 bg-neutral-50 rounded-xl border border-neutral-200">
             <Package className="w-12 h-12 mx-auto text-neutral-300 mb-4" aria-hidden="true" />
-            <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-              Coming Soon
-            </h3>
-            <p className="text-neutral-600">
-              We're preparing something special for you.
-            </p>
+            <h3 className="text-xl font-semibold text-neutral-900 mb-2">Coming Soon</h3>
+            <p className="text-neutral-600">We're preparing something special for you.</p>
           </div>
         )}
 
@@ -117,8 +111,8 @@ export function TierSelector({
           <div className="mt-12 text-center">
             <p className="text-neutral-500 text-sm">
               Not sure which to choose? Our{' '}
-              <span className="font-medium text-macon-orange">Popular</span>{' '}
-              tier is perfect for most customers.
+              <span className="font-medium text-macon-orange">Popular</span> tier is perfect for
+              most customers.
             </p>
           </div>
         )}

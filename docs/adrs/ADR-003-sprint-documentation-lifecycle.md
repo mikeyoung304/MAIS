@@ -15,6 +15,7 @@ MAIS's sprint documentation is severely fragmented across multiple locations wit
 ### Current Sprint Documentation Chaos
 
 **1. Location Scatter (5+ Different Locations)**
+
 ```
 Sprint 4 Documentation Found In:
 ├── /SPRINT_4_HANDOFF.md                    (project root)
@@ -35,6 +36,7 @@ Sprint 5-6 Documentation Found In:
 ```
 
 **Problem**: Developers don't know where to:
+
 - Create new sprint documentation (which directory?)
 - Find current sprint status (5+ places to check)
 - Archive completed sprint work (no clear process)
@@ -42,12 +44,14 @@ Sprint 5-6 Documentation Found In:
 ### No Lifecycle Management
 
 **Active vs Historical Confusion**:
+
 - `/docs/archive/sprints/` contains Sprint 2-3 docs (archived)
 - `/docs/sprints/sprint-4/` contains Sprint 4 docs (completed 2 weeks ago, not archived)
 - `/.claude/SPRINT_6_*.md` contains active Sprint 6 docs (mixed with completed sprint reports)
 - No clear rule for when to archive (30 days? 60 days? never?)
 
 **Consequences**:
+
 1. **Search overload**: `grep "sprint 4"` returns 30+ files across 5 directories
 2. **Duplication**: Developers create new status docs because they can't find existing ones
 3. **Archive bloat**: Completed sprint docs remain in active directories indefinitely
@@ -57,6 +61,7 @@ Sprint 5-6 Documentation Found In:
 ### Root Cause Analysis
 
 **Why Sprint Docs Scatter**:
+
 1. **No designated active location**: Each developer chooses intuitively (root, .claude, docs/sprints)
 2. **No archive trigger**: No rule for "Sprint 6 ends, move docs to archive"
 3. **No lifecycle stages**: Can't distinguish "planning", "active", "completed", "archived"
@@ -65,6 +70,7 @@ Sprint 5-6 Documentation Found In:
 ### Comparative Evidence: Rebuild 6.0 Sprint Management
 
 Rebuild 6.0 handles 15+ sprints with zero scatter using:
+
 - **Single active location**: `docs/sprints/sprint-N/` for all Sprint N work
 - **90-day archive rule**: Sprint docs move to `docs/archive/YYYY-MM/sprints/` 90 days after completion
 - **Lifecycle states**: Planning (UPPERCASE), Active (UPPERCASE), Completed (archived with date)
@@ -87,6 +93,7 @@ Rebuild 6.0 handles 15+ sprints with zero scatter using:
 **Purpose**: All active work for Sprint N lives here during the sprint
 
 **Contents**:
+
 ```
 docs/sprints/sprint-6/
 ├── SPRINT_6_PLAN.md                  # Sprint goals, scope, timeline
@@ -101,6 +108,7 @@ docs/sprints/sprint-6/
 ```
 
 **Naming Convention**:
+
 - Status docs: `SPRINT_N_*.md` (UPPERCASE per ADR-002)
 - Supporting docs: `kebab-case.md` in subdirectories
 - All files use Sprint N prefix for clarity
@@ -116,6 +124,7 @@ docs/sprints/sprint-6/
 **Duration**: Until sprint completion (then archive)
 
 **Archiving Rule**:
+
 ```bash
 # When Sprint 6 completes:
 /.claude/SPRINT_6_PHASE_2_REPORT.md → docs/archive/2025-11/2025-11-08-sprint-6-phase-2-report.md
@@ -131,6 +140,7 @@ docs/sprints/sprint-6/
 **Purpose**: Long-term storage for completed sprint documentation
 
 **Contents**:
+
 ```
 docs/archive/2025-11/sprints/
 ├── 2025-11-01-sprint-4-handoff.md
@@ -143,6 +153,7 @@ docs/archive/2025-11/sprints/
 ```
 
 **Naming Convention**:
+
 - All files prefixed with `YYYY-MM-DD-sprint-N-description.md` (per ADR-002)
 - Use sprint completion date or final session date
 - Convert UPPERCASE → kebab-case with date prefix
@@ -180,27 +191,30 @@ docs/archive/YYYY-MM/sprints/YYYY-MM-DD-sprint-N-*.md
 
 ### Decision Rules Matrix
 
-| Question | Answer | Action |
-|----------|--------|--------|
-| Creating new sprint doc? | Sprint N active | Create in `docs/sprints/sprint-N/` |
-| Claude session report? | AI-generated report | Create in `.claude/SPRINT_N_*.md` |
-| Sprint just completed? | Within 90 days | Keep in `docs/sprints/sprint-N/` (read-only) |
-| Sprint completed 90+ days ago? | Archive trigger | Move to `docs/archive/YYYY-MM/sprints/` |
-| Looking for old sprint data? | Historical research | Check `docs/archive/YYYY-MM/sprints/` |
-| Looking for current sprint? | Active development | Check `docs/sprints/sprint-N/` |
+| Question                       | Answer              | Action                                       |
+| ------------------------------ | ------------------- | -------------------------------------------- |
+| Creating new sprint doc?       | Sprint N active     | Create in `docs/sprints/sprint-N/`           |
+| Claude session report?         | AI-generated report | Create in `.claude/SPRINT_N_*.md`            |
+| Sprint just completed?         | Within 90 days      | Keep in `docs/sprints/sprint-N/` (read-only) |
+| Sprint completed 90+ days ago? | Archive trigger     | Move to `docs/archive/YYYY-MM/sprints/`      |
+| Looking for old sprint data?   | Historical research | Check `docs/archive/YYYY-MM/sprints/`        |
+| Looking for current sprint?    | Active development  | Check `docs/sprints/sprint-N/`               |
 
 ### Archive Trigger Events
 
 **Automatic Archive (90 Days After Sprint Completion)**:
+
 - Sprint completion date + 90 days = archive trigger
 - Example: Sprint 6 completes Nov 12, 2025 → Archive on Feb 10, 2026
 
 **Manual Archive (Sprint Lead Discretion)**:
+
 - Sprint cancelled or abandoned: Archive immediately with cancellation note
 - Sprint merged into another sprint: Archive with merge documentation
 - Major sprint pivot: Archive old plan, create new sprint directory
 
 **Archive Process**:
+
 1. Create `docs/archive/YYYY-MM/sprints/` directory (if not exists)
 2. Rename all `SPRINT_N_*.md` files to `YYYY-MM-DD-sprint-N-*.md`
 3. Move supporting directories with date prefix: `sprint-6-investigation/` → `2025-11-12-sprint-6-investigation/`
@@ -221,21 +235,27 @@ docs/archive/YYYY-MM/sprints/YYYY-MM-DD-sprint-N-*.md
 ✅ **Diátaxis compatibility**: Sprints are time-bound projects (fits "explanation" quadrant as context)
 
 **Alternative Rejected: Project Root**
+
 ```
 ❌ /SPRINT_6_PLAN.md
 ❌ /SPRINT_6_BLOCKERS.md
 ```
+
 **Why rejected**:
+
 - Root directory cluttered with 58+ files already
 - No natural grouping (Sprint 6 files mixed with config, readme, etc.)
 - Doesn't scale (Sprint 7, 8, 9... = 30+ root files)
 
 **Alternative Rejected: .claude/ Directory**
+
 ```
 ❌ /.claude/SPRINT_6_PLAN.md
 ❌ /.claude/SPRINT_6_BLOCKERS.md
 ```
+
 **Why rejected**:
+
 - `.claude/` is ephemeral AI workspace, not permanent documentation
 - Hidden directory (starts with `.`) reduces discoverability
 - Gitignored in many setups (risk of data loss)
@@ -246,39 +266,46 @@ docs/archive/YYYY-MM/sprints/YYYY-MM-DD-sprint-N-*.md
 **90 days balances accessibility vs archive hygiene**:
 
 **Week 1-30 (Active Reference)**:
+
 - Developers frequently reference completed sprint work
 - Retrospectives happen in first 2 weeks
 - Bug fixes and follow-up work common in first month
 - **Keep in active location**: docs/sprints/sprint-N/
 
 **Week 30-90 (Declining Reference)**:
+
 - Reference frequency drops 80%
 - Most follow-up work completed
 - Still occasionally referenced for context
 - **Still in active location** (minimal cost, high convenience)
 
 **Week 90+ (Historical Only)**:
+
 - Reference rare (<5% of original frequency)
 - Sprint context irrelevant to current work
 - Primarily used for historical research
 - **Archive to date-based structure** (declutter active directories)
 
 **Data Supporting 90 Days**:
+
 - Analysis of rebuild 6.0: 85% of sprint doc access in first 90 days
 - Industry standard: Quarterly cycles (Q1, Q2, Q3, Q4) = 90-day boundaries
 - Practical: 3 months enough for all follow-up work, long enough to avoid premature archiving
 
 **Alternative Considered: 30-Day Archive**:
+
 - ❌ Too aggressive (follow-up work still active)
 - ❌ Constant archiving overhead
 - ❌ Developers complain about losing access too quickly
 
 **Alternative Considered: Never Archive**:
+
 - ❌ Clutter accumulates (20 sprints = 20 directories)
 - ❌ Slows search (grep must check 20+ sprint directories)
 - ❌ No chronological organization for historical research
 
 **Alternative Considered: Archive on Sprint Completion**:
+
 - ❌ Immediate archive loses context for retrospectives
 - ❌ Follow-up work requires constant archive references
 - ❌ Too rigid (what if sprint runs long?)
@@ -295,6 +322,7 @@ docs/archive/YYYY-MM/sprints/YYYY-MM-DD-sprint-N-*.md
 ✅ **Historical research**: Trace sprint evolution by month/quarter/year
 
 **Archive Path Examples**:
+
 ```
 docs/archive/2025-11/sprints/    # All sprints completed in November 2025
 docs/archive/2025-12/sprints/    # All sprints completed in December 2025
@@ -302,11 +330,14 @@ docs/archive/2026-01/sprints/    # All sprints completed in January 2026
 ```
 
 **Alternative Rejected: docs/archive/sprints/sprint-N/**:
+
 ```
 ❌ docs/archive/sprints/sprint-6/
 ❌ docs/archive/sprints/sprint-7/
 ```
+
 **Why rejected**:
+
 - Sprint-based grouping doesn't support chronological research
 - Question: "What work happened in Q4 2025?" requires checking 6+ sprint directories
 - Doesn't align with time-based archive strategy (ADR-004)
@@ -329,11 +360,13 @@ docs/sprints/
 ```
 
 **Pros**:
+
 - Simpler structure (no subdirectories)
 - All sprint work in one place
 - Easy to grep across all sprints
 
 **Cons**:
+
 - Doesn't scale (10 sprints × 10 files = 100 files in one directory)
 - No clear sprint boundaries (Sprint 6 files mixed with Sprint 4)
 - Difficult to archive (must identify all Sprint N files)
@@ -351,11 +384,13 @@ Sprint 6 completes Nov 12, 2025
 ```
 
 **Pros**:
+
 - Clean separation (active vs archived)
 - No documents linger in active directories
 - Archive always up-to-date
 
 **Cons**:
+
 - Retrospectives need archived docs (week 1-2 post-completion)
 - Follow-up bugs reference completed sprint context (week 1-4)
 - Constant archive churn (every sprint completion = archive operation)
@@ -378,11 +413,13 @@ docs/sprints/
 ```
 
 **Pros**:
+
 - No archive process needed (zero maintenance)
 - All sprint history in one place
 - Easy to compare across sprints (all in same directory tree)
 
 **Cons**:
+
 - Clutters active workspace (20 sprint directories for 1 active sprint)
 - Slows search (grep checks 20 directories for every search)
 - No chronological organization (can't easily find "Q4 2025 work")
@@ -395,11 +432,13 @@ docs/sprints/
 **Description**: Continue current practice, let developers choose intuitively
 
 **Pros**:
+
 - No implementation cost (already happening)
 - No migration needed
 - Maximum developer flexibility
 
 **Cons**:
+
 - Already proven to fail (5+ locations for Sprint 4-6 docs)
 - 30+ files scattered with no pattern
 - AI agent confusion (Claude Code references wrong sprint data)
@@ -428,27 +467,32 @@ docs/sprints/
 ### Negative Consequences
 
 ⚠️ **Migration effort**: Existing Sprint 4-6 docs need consolidation
+
 - **Mitigation**: Migration script automates file movement
 - **Effort**: ~2 hours to migrate Sprint 4-6 docs
 - **Priority**: P1 (complete during Sprint 6)
 
 ⚠️ **90-day tracking overhead**: Must remember to archive after 90 days
+
 - **Mitigation**: Calendar reminder when sprint completes
 - **Mitigation**: Quarterly documentation audit (checks for overdue archives)
 - **Effort**: 30 minutes per quarter to check archive compliance
 
 ⚠️ **Active directory bloat** (if not archived)
+
 - **Risk**: Developers forget to archive, 10+ completed sprints linger
 - **Mitigation**: Documentation health check in quarterly reviews
 - **Mitigation**: Automated reminder script (warns when sprint doc >90 days old)
 
 ⚠️ **Link breakage** during archive operation
+
 - **Risk**: Internal links break when files move to archive
 - **Mitigation**: Use relative paths where possible
 - **Mitigation**: Create redirect/notice in old location pointing to archive
 - **Mitigation**: Track link updates in LINK_UPDATES_NEEDED.md
 
 ⚠️ **.claude/ confusion**: Developers may continue creating sprint docs in .claude/
+
 - **Risk**: Habit from Sprint 4-6 continues
 - **Mitigation**: Update Claude Code instructions to reference sprint-N directory
 - **Mitigation**: Code review checklist includes sprint doc location validation
@@ -468,7 +512,9 @@ docs/sprints/
 ### Phase 1: Establish Structure (Week 1)
 
 **Tasks**:
+
 1. Create template for sprint directories:
+
    ```bash
    mkdir -p docs/sprints/sprint-N/
    touch docs/sprints/sprint-N/SPRINT_N_PLAN.md
@@ -478,17 +524,20 @@ docs/sprints/
    ```
 
 2. Create `docs/sprints/SPRINT_DIRECTORY_TEMPLATE.md`:
+
    ```markdown
    # Sprint N Directory Template
 
    Use this structure for all new sprint directories.
 
    Required files:
+
    - SPRINT_N_PLAN.md
    - SPRINT_N_DAILY_NOTES.md
    - SPRINT_N_BLOCKERS.md
 
    Optional subdirectories:
+
    - test-analysis/
    - decisions/
    - investigations/
@@ -499,6 +548,7 @@ docs/sprints/
 4. Write `docs/adrs/ADR-003-sprint-documentation-lifecycle.md` (this document)
 
 **Success Criteria**:
+
 - [x] ADR-003 written and accepted
 - [ ] Sprint directory template created
 - [ ] INDEX.md updated with sprint documentation section
@@ -600,10 +650,12 @@ done
 ```
 
 **2. Calendar Reminders**:
+
 - Add 90-day reminder when sprint completes
 - Example: Sprint 6 completes Nov 12, 2025 → Calendar reminder Feb 10, 2026
 
 **3. Quarterly Documentation Audit**:
+
 - Add to quarterly review checklist: "Check sprint directories for overdue archives"
 - Run `scripts/check-sprint-archive.sh` during audit
 - Archive any sprints >90 days old
@@ -618,7 +670,7 @@ done
 When working on sprint-related tasks:
 
 1. **Active Sprint Work**: Create/update files in `docs/sprints/sprint-N/`
-   - Use UPPERCASE_UNDERSCORE naming: `SPRINT_N_*.md`
+   - Use UPPERCASE*UNDERSCORE naming: `SPRINT_N*\*.md`
    - All Sprint N work goes in this directory
 
 2. **Session Reports**: Create in `.claude/SPRINT_N_SESSION_*.md`
@@ -649,6 +701,7 @@ When working on sprint-related tasks:
 ### Phase 5: Team Training (Week 2)
 
 **15-Minute Team Briefing**:
+
 1. Explain the problem (5 min): Show Sprint 4-6 scatter examples
 2. Present the solution (5 min): Single directory per sprint, 90-day archive
 3. Q&A (5 min): Address concerns and edge cases
@@ -665,7 +718,7 @@ Looking for current sprint?
 → docs/sprints/sprint-N/
 
 Looking for old sprint (completed >90 days ago)?
-→ docs/archive/YYYY-MM/sprints/YYYY-MM-DD-sprint-N-*
+→ docs/archive/YYYY-MM/sprints/YYYY-MM-DD-sprint-N-\*
 
 Sprint completed?
 → Keep in docs/sprints/sprint-N/ for 90 days, then archive
@@ -675,20 +728,21 @@ Sprint completed?
 
 ## Risks and Mitigation
 
-| Risk | Impact | Likelihood | Mitigation Strategy |
-|------|--------|------------|---------------------|
-| Developers continue using .claude/ for sprint docs | Medium | High | Update AI instructions, code review enforcement |
-| Sprint docs not archived after 90 days | Low | Medium | Automated reminder script, quarterly audit |
-| Migration breaks existing links | Medium | Medium | Track in LINK_UPDATES_NEEDED.md, create redirects |
-| Confusion about sprint numbering | Low | Low | Document in ADR-003, use sequential numbering only |
-| Lost sprint data during migration | High | Low | Verify all files moved, keep git history, test migration script |
-| Team resistance to new structure | Medium | Low | 15-minute briefing, clear rationale, show rebuild 6.0 success |
+| Risk                                               | Impact | Likelihood | Mitigation Strategy                                             |
+| -------------------------------------------------- | ------ | ---------- | --------------------------------------------------------------- |
+| Developers continue using .claude/ for sprint docs | Medium | High       | Update AI instructions, code review enforcement                 |
+| Sprint docs not archived after 90 days             | Low    | Medium     | Automated reminder script, quarterly audit                      |
+| Migration breaks existing links                    | Medium | Medium     | Track in LINK_UPDATES_NEEDED.md, create redirects               |
+| Confusion about sprint numbering                   | Low    | Low        | Document in ADR-003, use sequential numbering only              |
+| Lost sprint data during migration                  | High   | Low        | Verify all files moved, keep git history, test migration script |
+| Team resistance to new structure                   | Medium | Low        | 15-minute briefing, clear rationale, show rebuild 6.0 success   |
 
 ---
 
 ## Compliance and Standards
 
 **Does this decision affect:**
+
 - [ ] Security requirements - No direct impact
 - [ ] Privacy/compliance (GDPR, etc.) - No (sprint docs are internal)
 - [x] Performance SLAs - Yes (faster documentation search)
@@ -697,6 +751,7 @@ Sprint completed?
 - [ ] Testing requirements - No direct impact
 
 **How are these addressed?**
+
 - **Performance**: Single directory for active sprint reduces search scope (5+ locations → 1)
 - **Architecture**: Establishes clear lifecycle pattern for documentation
 - **Documentation Standards**: Aligns with ADR-001 (Diátaxis) and ADR-002 (Naming) to create comprehensive governance
@@ -708,18 +763,21 @@ Sprint completed?
 ### Success Metrics
 
 **Immediate (Week 1)**:
+
 - [x] ADR-003 written and accepted
 - [ ] Sprint 6 docs consolidated into docs/sprints/sprint-6/
 - [ ] Sprint directory template created
 - [ ] Migration script tested on Sprint 4 docs
 
 **Short-term (Month 1)**:
+
 - [ ] 100% of new sprint docs created in correct location
 - [ ] Sprint 4-5 docs properly archived with dates
 - [ ] Zero sprint docs in project root or scattered locations
 - [ ] Developer survey: 90%+ understand sprint doc lifecycle
 
 **Long-term (Quarter 1)**:
+
 - [ ] Sprint 7, 8, 9 follow consistent structure
 - [ ] Sprints >90 days old successfully archived
 - [ ] Zero confusion about where to find sprint documentation
@@ -728,6 +786,7 @@ Sprint completed?
 ### Test Scenarios
 
 **Scenario 1: Starting Sprint 7**
+
 ```
 Action: Developer creates Sprint 7 plan
 Expected: docs/sprints/sprint-7/SPRINT_7_PLAN.md
@@ -735,6 +794,7 @@ Verify: File created in correct location with correct naming
 ```
 
 **Scenario 2: Sprint 6 Completes (Feb 10, 2026 - 90 days)**
+
 ```
 Action: Archive script runs on Sprint 6 docs
 Expected: All Sprint 6 docs move to docs/archive/2025-11/sprints/
@@ -743,6 +803,7 @@ Verify: docs/sprints/sprint-6/ empty or has redirect README
 ```
 
 **Scenario 3: Looking for Sprint 4 Context**
+
 ```
 Action: Developer needs Sprint 4 decisions
 Expected: Check docs/archive/2025-10/sprints/2025-10-25-sprint-4-*
@@ -750,6 +811,7 @@ Verify: All Sprint 4 docs found in single archive location
 ```
 
 **Scenario 4: AI Session Report**
+
 ```
 Action: Claude Code creates session summary for Sprint 7
 Expected: .claude/SPRINT_7_SESSION_REPORT.md created
@@ -771,11 +833,13 @@ On sprint completion: Move to docs/archive/YYYY-MM/sprints/
 ## Follow-up
 
 **Open Questions**:
+
 - [ ] Should we create a sprint retrospective template? (Answer: Yes, add to Phase 1)
 - [ ] How to handle cancelled sprints? (Answer: Archive immediately with cancellation note)
 - [ ] What if sprint runs beyond 90 days? (Answer: Archive 90 days after actual completion, not planned)
 
 **Next Actions**:
+
 - [ ] Create sprint directory template (docs/sprints/SPRINT_DIRECTORY_TEMPLATE.md)
 - [ ] Write migration script (scripts/migrate-sprint-docs.sh)
 - [ ] Consolidate Sprint 6 docs into docs/sprints/sprint-6/
@@ -792,6 +856,7 @@ On sprint completion: Move to docs/archive/YYYY-MM/sprints/
 
 **Q: What if sprint has sub-phases (6.1, 6.2, 6.3)?**
 A: Use subdirectories, not sprint numbering:
+
 ```
 docs/sprints/sprint-6/
 ├── phase-1/
@@ -804,6 +869,7 @@ A: Use relative links where possible. Document external references in SPRINT_N_P
 
 **Q: What if we run multiple sprints in parallel?**
 A: Create separate directories:
+
 ```
 docs/sprints/
 ├── sprint-6-backend/
@@ -821,11 +887,13 @@ A: Use `sprint-N` (kebab-case) for directory names per ADR-002. Use `SPRINT_N` (
 ## Lessons Learned (To Be Updated Quarterly)
 
 ### From Sprint 4-6 Scatter
+
 1. **No designated location = scatter**: Intuitive placement leads to 5+ different locations
 2. **No lifecycle rules = clutter**: Without archive triggers, completed work lingers indefinitely
 3. **AI workflows need clear paths**: Claude Code sessions need explicit directory guidance
 
 ### From Rebuild 6.0
+
 1. **90-day window optimal**: Balances accessibility with archive hygiene
 2. **Single directory per sprint scales**: Handles 15+ sprints without confusion
 3. **Date-based archives enable research**: Chronological organization supports historical analysis
@@ -835,12 +903,14 @@ A: Use `sprint-N` (kebab-case) for directory names per ADR-002. Use `SPRINT_N` (
 ## Approval
 
 This ADR addresses systematic sprint documentation scatter identified through:
+
 - Git analysis: Sprint 4-6 docs found in 5+ locations (root, .claude, docs/sprints, server)
 - Developer feedback: "Can't find sprint status docs" reported by 3+ developers
 - AI agent confusion: Claude Code references old sprint plans as current work
 - Search inefficiency: grep "sprint 6" returns 30+ results across scattered locations
 
 **Decision validated through**:
+
 - Rebuild 6.0's proven sprint directory structure (15+ sprints, zero scatter)
 - Industry practice: Time-bound projects require clear lifecycle management
 - Quantitative analysis: Single directory reduces search scope from 5+ locations to 1
@@ -850,4 +920,5 @@ This ADR addresses systematic sprint documentation scatter identified through:
 ---
 
 **Revision History**:
+
 - 2025-11-12: Initial version (v1.0) - Establishes sprint documentation location and lifecycle

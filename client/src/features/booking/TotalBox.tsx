@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
-import { useState, useEffect } from "react";
-import type { AddOnDto } from "@macon/contracts";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatCurrency } from '@/lib/utils';
+import { useState, useEffect } from 'react';
+import type { AddOnDto } from '@macon/contracts';
 
 interface TotalBoxProps {
   total: number;
@@ -54,7 +54,10 @@ export function TotalBox({ total, packagePrice, packageName, selectedAddOns = []
                 Add-Ons
               </p>
               {selectedAddOns.map((addOn) => (
-                <div key={addOn.id} className="flex justify-between items-center animate-in slide-in-from-top-2 duration-200">
+                <div
+                  key={addOn.id}
+                  className="flex justify-between items-center animate-in slide-in-from-top-2 duration-200"
+                >
                   <span className="text-sm text-neutral-600">{addOn.title}</span>
                   <span className="text-base font-semibold text-macon-orange">
                     +{formatCurrency(addOn.priceCents)}
@@ -87,16 +90,14 @@ export function TotalBox({ total, packagePrice, packageName, selectedAddOns = []
             </span>
             <span
               className={`text-4xl font-bold text-macon-navy tracking-tight transition-all duration-300 ${
-                isAnimating ? "scale-110" : "scale-100"
+                isAnimating ? 'scale-110' : 'scale-100'
               }`}
             >
               {formatCurrency(finalTotalCents)}
             </span>
           </div>
 
-          <p className="text-xs text-neutral-500 pt-2 text-center">
-            All-inclusive pricing
-          </p>
+          <p className="text-xs text-neutral-500 pt-2 text-center">All-inclusive pricing</p>
         </CardContent>
       </Card>
     </div>

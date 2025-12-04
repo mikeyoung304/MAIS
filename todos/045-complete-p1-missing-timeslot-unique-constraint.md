@@ -1,9 +1,9 @@
 ---
 status: complete
 priority: p1
-issue_id: "045"
+issue_id: '045'
 tags: [code-review, scheduling, data-integrity, database, double-booking, critical]
-dependencies: ["043"]
+dependencies: ['043']
 ---
 
 # CRITICAL: No Database Constraint Prevents TIMESLOT Double-Booking
@@ -37,9 +37,11 @@ model Booking {
 Current constraint: `@@unique([tenantId, date, bookingType])`
 
 This ONLY prevents:
+
 - Same tenant + same date + same booking type (e.g., two DATE bookings on same day)
 
 This DOES NOT prevent:
+
 - Two TIMESLOT bookings with different times on same date ✓ (correct)
 - Two TIMESLOT bookings with SAME times on same date ❌ (BUG!)
 
@@ -47,13 +49,13 @@ This DOES NOT prevent:
 
 Both bookings pass the unique constraint:
 
-| Field | Booking 1 | Booking 2 | Unique? |
-|-------|-----------|-----------|---------|
-| tenantId | "A" | "A" | Same |
-| date | 2025-06-15 | 2025-06-15 | Same |
-| bookingType | TIMESLOT | TIMESLOT | Same |
-| startTime | 14:00 | 14:00 | **Not checked!** |
-| endTime | 14:30 | 14:30 | **Not checked!** |
+| Field       | Booking 1  | Booking 2  | Unique?          |
+| ----------- | ---------- | ---------- | ---------------- |
+| tenantId    | "A"        | "A"        | Same             |
+| date        | 2025-06-15 | 2025-06-15 | Same             |
+| bookingType | TIMESLOT   | TIMESLOT   | Same             |
+| startTime   | 14:00      | 14:00      | **Not checked!** |
+| endTime     | 14:30      | 14:30      | **Not checked!** |
 
 Result: Both rows inserted - constraint doesn't prevent this.
 
@@ -67,6 +69,7 @@ Result: Both rows inserted - constraint doesn't prevent this.
 ## Proposed Solutions
 
 ### Option A: Composite Unique Constraint (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 Add unique constraint for TIMESLOT bookings on exact time match:
@@ -82,15 +85,18 @@ model Booking {
 ```
 
 **Pros:**
+
 - Database enforces uniqueness as last line of defense
 - Simple to implement
 - Prevents exact duplicates
 
 **Cons:**
+
 - Doesn't prevent overlapping (but different) time ranges
 - Requires migration
 
 ### Option B: PostgreSQL Exclusion Constraint (Best)
+
 **Effort:** Medium | **Risk:** Medium
 
 Use PostgreSQL's exclusion constraint for range overlap detection:
@@ -110,16 +116,19 @@ ALTER TABLE "Booking" ADD CONSTRAINT no_time_overlap
 ```
 
 **Pros:**
+
 - Prevents ANY overlapping time ranges (not just exact matches)
 - Database-level enforcement
 - Handles edge cases like partial overlaps
 
 **Cons:**
+
 - Requires btree_gist extension
 - More complex migration
 - Need to verify Prisma compatibility
 
 ### Option C: Application-Level Advisory Lock
+
 **Effort:** Medium | **Risk:** Medium
 
 Enhance booking creation with pessimistic locking:
@@ -152,9 +161,11 @@ await prisma.$transaction(async (tx) => {
 ```
 
 **Pros:**
+
 - Works without schema changes
 
 **Cons:**
+
 - Only as reliable as the application code
 - Lock hash collisions possible
 
@@ -186,6 +197,7 @@ WHERE "bookingType" = 'TIMESLOT';
 ```
 
 **Files to Update:**
+
 - `server/prisma/schema.prisma` - Add unique constraint
 - Create migration: `prisma migrate dev --name add_timeslot_unique_constraint`
 
@@ -199,9 +211,9 @@ WHERE "bookingType" = 'TIMESLOT';
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-27 | Created | Found during Data Integrity Guardian review - BLOCKS MERGE |
+| Date       | Action   | Notes                                                                                                                                                                                                                                                |
+| ---------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-11-27 | Created  | Found during Data Integrity Guardian review - BLOCKS MERGE                                                                                                                                                                                           |
 | 2025-12-01 | Complete | Already implemented in `07_add_scheduling_platform.sql` (lines 147-159): `CREATE UNIQUE INDEX IF NOT EXISTS "Booking_timeslot_unique" ON "Booking"("tenantId", "serviceId", "startTime") WHERE "startTime" IS NOT NULL AND "serviceId" IS NOT NULL;` |
 
 ## Resources

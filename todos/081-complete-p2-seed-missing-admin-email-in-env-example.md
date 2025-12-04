@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "081"
+issue_id: '081'
 tags: [dx, code-review, documentation, environment]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The `.env.example` documents `ADMIN_DEFAULT_PASSWORD` but is **missing `ADMIN_EMAIL`**, which is required by the platform seed. Developers copying `.env.example` get a runtime error.
 
 **Why it matters:**
+
 - Poor developer experience (undocumented required variable)
 - Runtime error when running `db:seed:production` or `db:seed:dev`
 - Violates "documentation as code" principle
@@ -24,6 +25,7 @@ The `.env.example` documents `ADMIN_DEFAULT_PASSWORD` but is **missing `ADMIN_EM
 Documents `ADMIN_DEFAULT_PASSWORD` but missing `ADMIN_EMAIL`.
 
 **Error when missing:**
+
 ```
 Error: ADMIN_EMAIL environment variable is required for platform seed.
 Set it to the platform admin email address.
@@ -32,12 +34,14 @@ Set it to the platform admin email address.
 ## Proposed Solutions
 
 ### Solution A: Add ADMIN_EMAIL to .env.example (Recommended)
+
 **Pros:** Simple, fixes the issue
 **Cons:** None
 **Effort:** Small (5 min)
 **Risk:** None
 
 Add to `.env.example`:
+
 ```bash
 # Platform Admin (required for db:seed:production and db:seed:dev)
 ADMIN_EMAIL=admin@example.com
@@ -52,6 +56,7 @@ ADMIN_NAME=Platform Admin
 ## Technical Details
 
 **Affected Files:**
+
 - `server/.env.example`
 
 ## Acceptance Criteria
@@ -63,8 +68,8 @@ ADMIN_NAME=Platform Admin
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                      |
+| ---------- | ------------------------ | ------------------------------ |
 | 2025-11-29 | Created from code review | Document all required env vars |
 
 ## Resources

@@ -12,6 +12,7 @@
 After implementing ADR-008 (pessimistic locking with `SELECT FOR UPDATE`), we encountered P2034 deadlock errors in production-like concurrency scenarios:
 
 **Original Implementation Issues:**
+
 - Used `SERIALIZABLE` isolation level with `SELECT FOR UPDATE NOWAIT`
 - Attempted to lock non-existent rows (new booking dates)
 - Created predicate locks that conflicted even for different dates
@@ -23,6 +24,7 @@ After implementing ADR-008 (pessimistic locking with `SELECT FOR UPDATE`), we en
   - Cancellation flow commission reversal
 
 **Root Cause:**
+
 ```typescript
 // Problematic: Locking non-existent row with NOWAIT
 const lockQuery = `
@@ -33,6 +35,7 @@ const lockQuery = `
 ```
 
 This approach:
+
 1. Tries to lock a row that doesn't exist yet (new booking)
 2. In SERIALIZABLE mode, acquires predicate lock to prevent phantom reads
 3. Concurrent transactions conflict on predicate locks, even for different dates
@@ -85,6 +88,7 @@ async create(tenantId: string, booking: Booking): Promise<Booking> {
 ## Consequences
 
 **Positive:**
+
 - ✅ **Zero P2034 deadlocks:** All 27 failing tests now pass (100% success rate)
 - ✅ **Better concurrency:** Different dates don't block each other (no predicate locks)
 - ✅ **Simpler code:** No complex lock error handling or retry logic needed
@@ -93,11 +97,13 @@ async create(tenantId: string, booking: Booking): Promise<Booking> {
 - ✅ **No phantom reads:** Explicit serialization per tenant+date combination
 
 **Negative:**
+
 - **Hash collisions:** Theoretical possibility of different tenant+date pairs hashing to same lock ID (extremely rare with FNV-1a)
 - **Less explicit:** Advisory locks less obvious than row-level locks (requires documentation)
 - **Database-specific:** PostgreSQL-only feature (migration to other DBs requires different approach)
 
 **Risk Mitigation:**
+
 - FNV-1a hash algorithm chosen for low collision rate
 - Unique constraint on `(tenantId, date)` as final safety net
 - Extensive integration tests verify correctness
@@ -105,17 +111,20 @@ async create(tenantId: string, booking: Booking): Promise<Booking> {
 ## Test Results
 
 **Before Fix:**
+
 - Test pass rate: 97.4% (747/767)
 - 5 tests failing with P2034 errors
 - Tests: webhook-race-conditions (3), payment-flow (1), cancellation-flow (1)
 
 **After Fix (Initial):**
+
 - Test pass rate: 97.8% (750/767)
 - 0 tests failing with P2034 errors
 - All 27 originally failing tests now pass
 - Remaining failures were encryption test and race condition detection
 
 **Final Status (Sprint 10 Phase 2):**
+
 - Test pass rate: 100% (752/752 passing, 3 skipped, 12 todo)
 - All P2034 errors resolved
 - All test failures fixed
@@ -127,6 +136,7 @@ async create(tenantId: string, booking: Booking): Promise<Booking> {
 **Approach:** Change to `SELECT FOR UPDATE` (blocking) instead of `NOWAIT`.
 
 **Why Rejected:**
+
 - Still locks non-existent rows (predicate locks in SERIALIZABLE)
 - Transactions would queue/wait instead of failing fast
 - Doesn't solve different-date conflicts in SERIALIZABLE mode
@@ -137,6 +147,7 @@ async create(tenantId: string, booking: Booking): Promise<Booking> {
 **Approach:** Remove explicit locking, rely only on database unique constraint.
 
 **Why Rejected:**
+
 - Poor error handling: P2002 errors are less informative
 - Less control: Can't detect conflict before attempting insert
 - Still need retry logic for P2002 violations
@@ -147,6 +158,7 @@ async create(tenantId: string, booking: Booking): Promise<Booking> {
 **Approach:** Change isolation level to READ COMMITTED, remove locking.
 
 **Why Rejected:**
+
 - Race conditions still possible between check and insert
 - Unique constraint would catch it, but with unclear errors
 - No explicit serialization guarantee
@@ -155,6 +167,7 @@ async create(tenantId: string, booking: Booking): Promise<Booking> {
 ## Implementation Details
 
 **Files Modified:**
+
 - `server/src/adapters/prisma/booking.repository.ts` (lines 13-240)
   - Added `hashTenantDate()` function
   - Replaced `SELECT FOR UPDATE NOWAIT` with `pg_advisory_xact_lock()`
@@ -164,6 +177,7 @@ async create(tenantId: string, booking: Booking): Promise<Booking> {
   - Removed temporary debug logging
 
 **Testing:**
+
 ```bash
 # Verify all webhook tests pass
 npm test -- test/integration/webhook-race-conditions.spec.ts
@@ -179,6 +193,7 @@ npm test -- test/integration/cancellation-flow.integration.spec.ts
 ```
 
 **Performance Impact:**
+
 - Advisory locks are lightweight (in-memory integers)
 - No performance degradation observed
 - Actually faster than SERIALIZABLE (fewer conflicts)
@@ -186,12 +201,14 @@ npm test -- test/integration/cancellation-flow.integration.spec.ts
 ## Migration Notes
 
 **Deployment:**
+
 - Zero-downtime deployment (no schema changes)
 - No data migration required
 - Fully backward compatible
 
 **Rollback Plan:**
 If advisory locks cause issues:
+
 1. Revert `booking.repository.ts` to previous version
 2. Accept P2034 errors and add more aggressive retry logic
 3. Consider Alternative 2 (unique constraint only)

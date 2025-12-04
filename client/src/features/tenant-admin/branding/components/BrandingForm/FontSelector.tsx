@@ -4,14 +4,14 @@
  * Font family selection dropdown
  */
 
-import { Label } from "@/components/ui/label";
+import { Label } from '@/components/ui/label';
 
 const FONT_OPTIONS = [
-  { value: "Inter", label: "Inter (Sans-serif)" },
-  { value: "Playfair Display", label: "Playfair Display (Serif)" },
-  { value: "Lora", label: "Lora (Serif)" },
-  { value: "Montserrat", label: "Montserrat (Sans-serif)" },
-  { value: "Roboto", label: "Roboto (Sans-serif)" },
+  { value: 'Inter', label: 'Inter (Sans-serif)' },
+  { value: 'Playfair Display', label: 'Playfair Display (Serif)' },
+  { value: 'Lora', label: 'Lora (Serif)' },
+  { value: 'Montserrat', label: 'Montserrat (Sans-serif)' },
+  { value: 'Roboto', label: 'Roboto (Sans-serif)' },
 ];
 
 interface FontSelectorProps {

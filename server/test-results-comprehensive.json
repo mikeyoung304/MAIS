@@ -39,27 +39,93 @@
     }
   },
   "results": [
-    {"category":"authentication","test":"Upload without auth token","expected":401,"actual":401,"status":"PASS","details":"Should reject unauthorized requests"}
-,
-    {"category":"authentication","test":"Upload with invalid token","expected":401,"actual":401,"status":"PASS","details":"Should reject malformed/invalid tokens"}
-,
-    {"category":"validation","test":"Upload without file","expected":400,"actual":400,"status":"PASS","details":"Should return 400 with 'No photo uploaded' message"}
-,
-    {"category":"validation","test":"Upload non-image file","expected":400,"actual":404,"status":"FAIL","details":"Should reject text files with validation error"}
-,
-    {"category":"validation","test":"Upload 1-byte file","expected":400,"actual":404,"status":"FAIL","details":"Unexpected error response"}
-,
-    {"category":"validation","test":"Upload 6th photo (exceeds max 5)","expected":400,"actual":404,"status":"FAIL","details":"Should enforce 5 photo per package limit"}
-,
-    {"category":"validation","test":"Upload with special characters in filename","expected":201,"actual":404,"status":"FAIL","details":"Failed to handle special characters"}
-,
-    {"category":"notFound","test":"Upload to non-existent package","expected":404,"actual":404,"status":"PASS","details":"Should return 404 for missing package"}
-,
-    {"category":"notFound","test":"Delete non-existent photo","expected":404,"actual":404,"status":"PASS","details":"Should return 404 for missing photo"}
-,
-    {"category":"fileSize","test":"Upload 4MB file (within limit)","expected":201,"actual":404,"status":"FAIL","details":"Should accept files under 5MB limit"}
-,
-    {"category":"fileSize","test":"Upload 6MB file (over limit)","expected":413,"actual":413,"status":"PASS","details":"File over 5MB limit correctly rejected (413 or 400)"}
-
+    {
+      "category": "authentication",
+      "test": "Upload without auth token",
+      "expected": 401,
+      "actual": 401,
+      "status": "PASS",
+      "details": "Should reject unauthorized requests"
+    },
+    {
+      "category": "authentication",
+      "test": "Upload with invalid token",
+      "expected": 401,
+      "actual": 401,
+      "status": "PASS",
+      "details": "Should reject malformed/invalid tokens"
+    },
+    {
+      "category": "validation",
+      "test": "Upload without file",
+      "expected": 400,
+      "actual": 400,
+      "status": "PASS",
+      "details": "Should return 400 with 'No photo uploaded' message"
+    },
+    {
+      "category": "validation",
+      "test": "Upload non-image file",
+      "expected": 400,
+      "actual": 404,
+      "status": "FAIL",
+      "details": "Should reject text files with validation error"
+    },
+    {
+      "category": "validation",
+      "test": "Upload 1-byte file",
+      "expected": 400,
+      "actual": 404,
+      "status": "FAIL",
+      "details": "Unexpected error response"
+    },
+    {
+      "category": "validation",
+      "test": "Upload 6th photo (exceeds max 5)",
+      "expected": 400,
+      "actual": 404,
+      "status": "FAIL",
+      "details": "Should enforce 5 photo per package limit"
+    },
+    {
+      "category": "validation",
+      "test": "Upload with special characters in filename",
+      "expected": 201,
+      "actual": 404,
+      "status": "FAIL",
+      "details": "Failed to handle special characters"
+    },
+    {
+      "category": "notFound",
+      "test": "Upload to non-existent package",
+      "expected": 404,
+      "actual": 404,
+      "status": "PASS",
+      "details": "Should return 404 for missing package"
+    },
+    {
+      "category": "notFound",
+      "test": "Delete non-existent photo",
+      "expected": 404,
+      "actual": 404,
+      "status": "PASS",
+      "details": "Should return 404 for missing photo"
+    },
+    {
+      "category": "fileSize",
+      "test": "Upload 4MB file (within limit)",
+      "expected": 201,
+      "actual": 404,
+      "status": "FAIL",
+      "details": "Should accept files under 5MB limit"
+    },
+    {
+      "category": "fileSize",
+      "test": "Upload 6MB file (over limit)",
+      "expected": 413,
+      "actual": 413,
+      "status": "PASS",
+      "details": "File over 5MB limit correctly rejected (413 or 400)"
+    }
   ]
 }

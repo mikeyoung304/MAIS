@@ -39,6 +39,7 @@ import { getAuthToken } from '@/lib/auth';
 ## Rule 3: Use Type-Safe API Calls
 
 ### For JSON Endpoints
+
 ```typescript
 // ✅ PREFERRED: ts-rest client
 import { api } from '@/lib/api';
@@ -53,6 +54,7 @@ const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` 
 ```
 
 ### For Multipart/Form-Data
+
 ```typescript
 // ✅ PREFERRED: ts-rest client (if endpoint defined)
 const { status, body } = await api.tenantAdmin.uploadPhoto({ body: formData });
@@ -95,13 +97,13 @@ const token = getAuthToken(); // Returns admin token if impersonating
 ```typescript
 // ❌ WRONG: This breaks if impersonation state changes
 const headers = {
-  'Authorization': `Bearer ${localStorage.getItem('tenantToken')}`,
+  Authorization: `Bearer ${localStorage.getItem('tenantToken')}`,
 };
 
 // ✅ CORRECT: Use getAuthToken() which handles all cases
 import { getAuthToken } from '@/lib/auth';
 const headers = {
-  'Authorization': `Bearer ${getAuthToken()}`,
+  Authorization: `Bearer ${getAuthToken()}`,
 };
 ```
 
@@ -109,15 +111,15 @@ const headers = {
 
 ## File Map: Where to Find Auth Code
 
-| Task | File | Function |
-|------|------|----------|
-| Get auth token | `client/src/lib/auth.ts` | `getAuthToken()` |
-| Make authenticated fetch | `client/src/lib/fetch-client.ts` | `authenticatedFetch()` |
-| Use type-safe client | `client/src/lib/api.ts` | `api.*` |
-| Decode/validate token | `client/src/lib/auth.ts` | `decodeJWT()`, `isTokenExpired()` |
-| Store/retrieve token | `client/src/lib/auth.ts` | `storeToken()`, `getToken()` |
-| Get user info | `client/src/lib/auth.ts` | `payloadToUser()` |
-| Handle auth flow | `client/src/contexts/AuthContext/services.ts` | `authenticateUser()`, `signupTenant()` |
+| Task                     | File                                          | Function                               |
+| ------------------------ | --------------------------------------------- | -------------------------------------- |
+| Get auth token           | `client/src/lib/auth.ts`                      | `getAuthToken()`                       |
+| Make authenticated fetch | `client/src/lib/fetch-client.ts`              | `authenticatedFetch()`                 |
+| Use type-safe client     | `client/src/lib/api.ts`                       | `api.*`                                |
+| Decode/validate token    | `client/src/lib/auth.ts`                      | `decodeJWT()`, `isTokenExpired()`      |
+| Store/retrieve token     | `client/src/lib/auth.ts`                      | `storeToken()`, `getToken()`           |
+| Get user info            | `client/src/lib/auth.ts`                      | `payloadToUser()`                      |
+| Handle auth flow         | `client/src/contexts/AuthContext/services.ts` | `authenticateUser()`, `signupTenant()` |
 
 ---
 
@@ -161,14 +163,11 @@ import { authenticatedFetch } from '@/lib/fetch-client';
 
 export async function updateTenantSettings(settings: any) {
   try {
-    const { status, body } = await authenticatedFetch(
-      '/v1/tenant-admin/settings',
-      {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
-      }
-    );
+    const { status, body } = await authenticatedFetch('/v1/tenant-admin/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    });
 
     if (status !== 200) {
       throw new Error('Failed to update settings');
@@ -198,9 +197,7 @@ export function usePackageData(packageId: string) {
     setError(null);
 
     try {
-      const { status, body } = await authenticatedFetch(
-        `/v1/tenant-admin/packages/${packageId}`
-      );
+      const { status, body } = await authenticatedFetch(`/v1/tenant-admin/packages/${packageId}`);
 
       if (status !== 200) {
         throw new Error('Failed to fetch package');
@@ -309,18 +306,21 @@ const { status, body } = await authenticatedFetch(url);
 **Checklist:**
 
 1. **Is `impersonationTenantKey` set?**
+
    ```typescript
-   localStorage.getItem('impersonationTenantKey') // Should be 'pk_live_...'
+   localStorage.getItem('impersonationTenantKey'); // Should be 'pk_live_...'
    ```
 
 2. **Is `adminToken` available?**
+
    ```typescript
-   localStorage.getItem('adminToken') // Should be JWT token
+   localStorage.getItem('adminToken'); // Should be JWT token
    ```
 
 3. **Does `getAuthToken()` return admin token?**
+
    ```typescript
-   getAuthToken() // During impersonation should return adminToken
+   getAuthToken(); // During impersonation should return adminToken
    ```
 
 4. **Is Authorization header being set?**
@@ -331,7 +331,7 @@ const { status, body } = await authenticatedFetch(url);
 5. **Is the token expired?**
    ```typescript
    import { isTokenExpired } from '@/lib/auth';
-   isTokenExpired(token) // Should be false
+   isTokenExpired(token); // Should be false
    ```
 
 ---

@@ -5,8 +5,8 @@
  * DO NOT import this file in production code - it's for reference only.
  */
 
-import { useState } from "react";
-import { TimeSlotPicker } from "./TimeSlotPicker";
+import { useState } from 'react';
+import { TimeSlotPicker } from './TimeSlotPicker';
 
 export function BookingFlowExample() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -16,11 +16,11 @@ export function BookingFlowExample() {
   }>();
 
   // This would come from your service selection step
-  const serviceId = "service_123";
+  const serviceId = 'service_123';
 
   const handleSlotSelect = (slot: { startTime: Date; endTime: Date }) => {
     setSelectedSlot(slot);
-    console.log("Selected slot:", {
+    console.log('Selected slot:', {
       start: slot.startTime.toISOString(),
       end: slot.endTime.toISOString(),
     });
@@ -34,9 +34,7 @@ export function BookingFlowExample() {
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">Step 1: Select a Date</h2>
         {/* DatePicker component would go here */}
-        <p className="text-neutral-600">
-          Current date: {selectedDate.toLocaleDateString()}
-        </p>
+        <p className="text-neutral-600">Current date: {selectedDate.toLocaleDateString()}</p>
       </div>
 
       {/* Step 2: Time Slot Selection */}
@@ -56,13 +54,13 @@ export function BookingFlowExample() {
           <h2 className="text-xl font-semibold mb-4">Your Selection</h2>
           <div className="space-y-2">
             <p>
-              <strong>Date:</strong> {selectedDate.toLocaleDateString("en-US")}
+              <strong>Date:</strong> {selectedDate.toLocaleDateString('en-US')}
             </p>
             <p>
-              <strong>Time:</strong>{" "}
-              {selectedSlot.startTime.toLocaleTimeString("en-US", {
-                hour: "numeric",
-                minute: "2-digit",
+              <strong>Time:</strong>{' '}
+              {selectedSlot.startTime.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
                 hour12: true,
               })}
             </p>

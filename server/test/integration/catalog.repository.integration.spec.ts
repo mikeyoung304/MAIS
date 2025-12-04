@@ -129,9 +129,9 @@ describe.sequential('PrismaCatalogRepository - Integration Tests', () => {
       const packages = await repository.getAllPackages(testTenantId);
 
       expect(packages).toHaveLength(3);
-      expect(packages.map(p => p.slug)).toContain('package-1');
-      expect(packages.map(p => p.slug)).toContain('package-2');
-      expect(packages.map(p => p.slug)).toContain('package-3');
+      expect(packages.map((p) => p.slug)).toContain('package-1');
+      expect(packages.map((p) => p.slug)).toContain('package-2');
+      expect(packages.map((p) => p.slug)).toContain('package-3');
     });
 
     it('should update package', async () => {
@@ -208,9 +208,9 @@ describe.sequential('PrismaCatalogRepository - Integration Tests', () => {
     });
 
     it('should throw error when deleting non-existent package', async () => {
-      await expect(
-        repository.deletePackage(testTenantId, 'non-existent-id')
-      ).rejects.toThrow(DomainError);
+      await expect(repository.deletePackage(testTenantId, 'non-existent-id')).rejects.toThrow(
+        DomainError
+      );
     });
   });
 
@@ -268,8 +268,8 @@ describe.sequential('PrismaCatalogRepository - Integration Tests', () => {
       const addOns = await repository.getAddOnsByPackageId(testTenantId, testPackageId);
 
       expect(addOns).toHaveLength(2);
-      expect(addOns.map(a => a.title)).toContain('Add-On 1');
-      expect(addOns.map(a => a.title)).toContain('Add-On 2');
+      expect(addOns.map((a) => a.title)).toContain('Add-On 1');
+      expect(addOns.map((a) => a.title)).toContain('Add-On 2');
     });
 
     it('should return empty array for package with no add-ons', async () => {
@@ -318,9 +318,9 @@ describe.sequential('PrismaCatalogRepository - Integration Tests', () => {
 
     it('should throw error when deleting non-existent add-on', async () => {
       // RE-ENABLED (Sprint 6 - Phase 3): Was FK cleanup issue, now using integration helpers
-      await expect(
-        repository.deleteAddOn(testTenantId, 'non-existent-id')
-      ).rejects.toThrow(DomainError);
+      await expect(repository.deleteAddOn(testTenantId, 'non-existent-id')).rejects.toThrow(
+        DomainError
+      );
     });
   });
 
@@ -370,10 +370,10 @@ describe.sequential('PrismaCatalogRepository - Integration Tests', () => {
       // See: SPRINT_6_STABILIZATION_PLAN.md § Catalog Repository Tests (Performance #1)
       expect(packages.length).toBeGreaterThanOrEqual(2);
 
-      const package1 = packages.find(p => p.slug === 'query-opt-1');
+      const package1 = packages.find((p) => p.slug === 'query-opt-1');
       expect(package1?.addOns).toHaveLength(2);
 
-      const package2 = packages.find(p => p.slug === 'query-opt-2');
+      const package2 = packages.find((p) => p.slug === 'query-opt-2');
       expect(package2?.addOns).toHaveLength(1);
 
       // FIXED (Sprint 6 - Phase 1): Removed performance timing assertion
@@ -424,7 +424,7 @@ describe.sequential('PrismaCatalogRepository - Integration Tests', () => {
       const duration = Date.now() - startTime;
 
       expect(addOns).toHaveLength(2);
-      expect(addOns.every(a => a.packageId === pkg1.id)).toBe(true);
+      expect(addOns.every((a) => a.packageId === pkg1.id)).toBe(true);
 
       // FIXED (Sprint 6 - Phase 1): Removed performance timing assertion
       // Was: expect(duration).toBeLessThan(50) - failed under variable system load
@@ -549,7 +549,7 @@ describe.sequential('PrismaCatalogRepository - Integration Tests', () => {
         priceCents: 5000,
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10)); // Small delay to ensure different timestamp
+      await new Promise((resolve) => setTimeout(resolve, 10)); // Small delay to ensure different timestamp
 
       const addOn2 = await repository.createAddOn(testTenantId, {
         packageId: pkg.id,
@@ -644,7 +644,7 @@ describe.sequential('PrismaCatalogRepository - Integration Tests', () => {
 
       // Create all concurrently - FIXED: Added testTenantId parameter
       const results = await Promise.all(
-        packages.map(p => repository.createPackage(testTenantId, p))
+        packages.map((p) => repository.createPackage(testTenantId, p))
       );
 
       expect(results).toHaveLength(5);
@@ -660,9 +660,7 @@ describe.sequential('PrismaCatalogRepository - Integration Tests', () => {
       expect(allPackages.length).toBeGreaterThanOrEqual(5);
 
       // Verify all concurrent packages are present
-      const concurrentPackages = allPackages.filter(p =>
-        p.slug.startsWith('concurrent-')
-      );
+      const concurrentPackages = allPackages.filter((p) => p.slug.startsWith('concurrent-'));
       expect(concurrentPackages).toHaveLength(5);
     });
 
@@ -682,7 +680,7 @@ describe.sequential('PrismaCatalogRepository - Integration Tests', () => {
       ]);
 
       // All should succeed (last write wins)
-      const succeeded = results.filter(r => r.status === 'fulfilled');
+      const succeeded = results.filter((r) => r.status === 'fulfilled');
       expect(succeeded.length).toBeGreaterThan(0);
 
       // Verify package still exists
@@ -702,7 +700,7 @@ describe.sequential('PrismaCatalogRepository - Integration Tests', () => {
         priceCents: 100000,
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       const pkg2 = await repository.createPackage(testTenantId, {
         slug: 'second',
@@ -711,7 +709,7 @@ describe.sequential('PrismaCatalogRepository - Integration Tests', () => {
         priceCents: 200000,
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       const pkg3 = await repository.createPackage(testTenantId, {
         slug: 'third',
@@ -723,7 +721,7 @@ describe.sequential('PrismaCatalogRepository - Integration Tests', () => {
       const packages = await repository.getAllPackages(testTenantId);
 
       // Should be ordered by creation time (oldest first)
-      const slugs = packages.map(p => p.slug);
+      const slugs = packages.map((p) => p.slug);
       const firstIndex = slugs.indexOf('first');
       const secondIndex = slugs.indexOf('second');
       const thirdIndex = slugs.indexOf('third');
@@ -746,7 +744,7 @@ describe.sequential('PrismaCatalogRepository - Integration Tests', () => {
         priceCents: 5000,
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       const addOn2 = await repository.createAddOn(testTenantId, {
         packageId: pkg.id,

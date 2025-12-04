@@ -29,9 +29,10 @@ export class WidgetMessenger {
     if (!window.parent) return;
 
     // ✅ SECURE: Explicit target origin (never '*' in production)
-    const targetOrigin = this.parentOrigin === '*'
-      ? '*'  // Only for development
-      : this.parentOrigin;
+    const targetOrigin =
+      this.parentOrigin === '*'
+        ? '*' // Only for development
+        : this.parentOrigin;
 
     window.parent.postMessage(
       {

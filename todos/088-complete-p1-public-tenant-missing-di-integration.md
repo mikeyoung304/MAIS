@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "088"
+issue_id: '088'
 tags: [todo]
 dependencies: []
 ---
@@ -18,6 +18,7 @@ dependencies: []
 The `public-tenant.routes.ts` file directly imports PrismaClient instead of using the DI container and repository pattern. This breaks the established architecture pattern and makes testing harder.
 
 Current:
+
 ```typescript
 export function createPublicTenantRoutes(prisma: PrismaClient): Router {
   // Uses raw prisma.tenant.findUnique()
@@ -25,6 +26,7 @@ export function createPublicTenantRoutes(prisma: PrismaClient): Router {
 ```
 
 Should use:
+
 ```typescript
 export function createPublicTenantRoutes(tenantRepository: TenantRepository): Router {
   // Uses tenantRepository.findBySlug()

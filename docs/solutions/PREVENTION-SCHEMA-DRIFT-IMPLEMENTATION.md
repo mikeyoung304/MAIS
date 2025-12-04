@@ -14,6 +14,7 @@ This document tracks the implementation of comprehensive prevention strategies f
 ## What Was Implemented
 
 ### 1. ✅ Core Prevention Document (COMPLETED)
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/docs/solutions/SCHEMA_DRIFT_PREVENTION.md`
 - **Contents:**
   - Executive summary of the problem and root causes
@@ -26,6 +27,7 @@ This document tracks the implementation of comprehensive prevention strategies f
   - Quick reference checklist
 
 ### 2. ✅ Pre-Commit Hook Integration (COMPLETED)
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/.claude/hooks/validate-patterns.sh` (existing hook enhanced)
 - **Changes Made:**
   - Added Check 6: Schema Drift Detection
@@ -34,6 +36,7 @@ This document tracks the implementation of comprehensive prevention strategies f
   - Prevents commits that violate schema consistency
 
 **How It Works:**
+
 ```bash
 git add server/prisma/schema.prisma  # Modified without migration
 git commit -m "add new field"        # Hook triggers
@@ -43,6 +46,7 @@ git commit -m "add new field"        # Hook triggers
 ```
 
 ### 3. ✅ CLAUDE.md Documentation (COMPLETED)
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/CLAUDE.md`
 - **Updates:**
   - "When Modifying Database Schema" section with hybrid migration system explained
@@ -53,6 +57,7 @@ git commit -m "add new field"        # Hook triggers
   - Reference to comprehensive SCHEMA_DRIFT_PREVENTION.md
 
 ### 4. ✅ Schema Consistency Tests (COMPLETED)
+
 - **File:** `/Users/mikeyoung/CODING/MAIS/server/test/schema-consistency.test.ts`
 - **Tests Include:**
   - Schema files exist and have content
@@ -65,6 +70,7 @@ git commit -m "add new field"        # Hook triggers
   - Critical tables are present
 
 **Run Tests:**
+
 ```bash
 npm test -- server/test/schema-consistency.test.ts
 ```
@@ -78,6 +84,7 @@ npm test -- server/test/schema-consistency.test.ts
 Used for table and column changes that Prisma can express.
 
 **Format:**
+
 ```
 server/prisma/migrations/
   └── 20251016140827_initial_schema/
@@ -85,6 +92,7 @@ server/prisma/migrations/
 ```
 
 **When to Use:**
+
 - Add/remove columns
 - Add/remove tables
 - Add unique constraints (@@unique)
@@ -92,6 +100,7 @@ server/prisma/migrations/
 - Modify column types
 
 **Command:**
+
 ```bash
 npm exec prisma migrate dev --name your_change_name
 # Prisma auto-generates migration.sql from schema.prisma changes
@@ -105,6 +114,7 @@ npm exec prisma migrate dev --name your_change_name
 Used for PostgreSQL-specific features that Prisma can't generate.
 
 **Format:**
+
 ```
 server/prisma/migrations/
   ├── 01_add_webhook_events.sql
@@ -117,6 +127,7 @@ server/prisma/migrations/
 ```
 
 **When to Use:**
+
 - Create or drop enums
 - Add or remove indexes
 - Add Row-Level Security (RLS) policies
@@ -125,6 +136,7 @@ server/prisma/migrations/
 - Advisory locks or other PostgreSQL-specific features
 
 **How to Create:**
+
 ```bash
 # 1. Find next number
 ls server/prisma/migrations/ | grep '^[0-9]' | tail -1
@@ -152,6 +164,7 @@ npm test
 ```
 
 **Critical Rule:** All manual SQL MUST be idempotent - safe to run multiple times:
+
 - Use `IF EXISTS`, `IF NOT EXISTS`
 - Use `DO $$ ... END $$` blocks for conditionals
 - Never use destructive operations without checks
@@ -191,11 +204,13 @@ Prisma Migrate        Manual SQL
 ### Installation (Already Active)
 
 The hook is already installed via:
+
 ```
 .git/hooks/pre-commit → ../../.claude/hooks/validate-patterns.sh
 ```
 
 When you run `git commit`, it automatically runs 6 validation checks:
+
 1. Repository interfaces have tenantId
 2. Commission calculations use Math.ceil
 3. Cache keys include tenantId
@@ -236,6 +251,7 @@ git commit --no-verify
 While not yet implemented in GitHub Actions, the comprehensive SCHEMA_DRIFT_PREVENTION.md document includes a complete `.github/workflows/schema-validation.yml` template that can be added to catch drift before it reaches main branch.
 
 **What the proposed CI gates would do:**
+
 - Check for schema changes without migrations
 - Validate Prisma schema syntax
 - Verify migrations can be applied
@@ -248,6 +264,7 @@ While not yet implemented in GitHub Actions, the comprehensive SCHEMA_DRIFT_PREV
 ## Safe Database Operations for AI Agents
 
 ### SAFE (Read-only, can run anytime):
+
 ```bash
 npm exec prisma migrate status      # Check migration state
 npm exec prisma studio             # View data
@@ -258,6 +275,7 @@ npm run typecheck                   # TypeScript check
 ```
 
 ### UNSAFE (Should propose, not execute):
+
 ```bash
 npm exec prisma migrate dev         # Creates and applies migration
 npm exec prisma migrate deploy      # Applies migrations to production
@@ -267,6 +285,7 @@ npm exec prisma db seed             # Inserts data
 ```
 
 ### Rule for AI Agents:
+
 > If you detect schema.prisma has changed but no migrations exist, **NEVER** run destructive commands. Instead, propose a migration to the user and ask them to run it. Always err on the side of caution.
 
 ---
@@ -274,6 +293,7 @@ npm exec prisma db seed             # Inserts data
 ## Testing Schema Consistency
 
 ### Run Consistency Tests
+
 ```bash
 npm test -- server/test/schema-consistency.test.ts
 
@@ -290,6 +310,7 @@ npm test -- server/test/schema-consistency.test.ts
 ```
 
 ### What Tests Verify
+
 - Schema files exist and have content
 - All critical models are defined
 - All critical enums are defined
@@ -304,6 +325,7 @@ npm test -- server/test/schema-consistency.test.ts
 ## Documentation Files Created/Modified
 
 ### New Files
+
 1. **`/Users/mikeyoung/CODING/MAIS/docs/solutions/SCHEMA_DRIFT_PREVENTION.md`**
    - Comprehensive 600+ line prevention strategy guide
    - Decision trees, migration patterns, test cases
@@ -321,6 +343,7 @@ npm test -- server/test/schema-consistency.test.ts
    - Reference documentation
 
 ### Modified Files
+
 1. **`/Users/mikeyoung/CODING/MAIS/.claude/hooks/validate-patterns.sh`**
    - Added Check 6: Schema Drift Detection
    - Detects schema.prisma without migrations
@@ -339,6 +362,7 @@ npm test -- server/test/schema-consistency.test.ts
 ### For Developers
 
 **When adding a column to a table:**
+
 ```bash
 1. Edit server/prisma/schema.prisma
    model Package {
@@ -357,6 +381,7 @@ npm test -- server/test/schema-consistency.test.ts
 ```
 
 **When creating an enum:**
+
 ```bash
 1. Edit server/prisma/schema.prisma
    enum PackageStatus {
@@ -388,6 +413,7 @@ npm test -- server/test/schema-consistency.test.ts
 ### For AI Agents
 
 **When you detect schema drift:**
+
 ```
 🔍 Check: Is schema.prisma modified?
    git diff --name-only | grep schema.prisma
@@ -416,14 +442,17 @@ npm test -- server/test/schema-consistency.test.ts
 ## Monitoring and Validation
 
 ### Pre-Commit Hook Validation
+
 Automatically runs on every `git commit` - catches drift immediately.
 
 ### Test Suite Validation
+
 ```bash
 npm test -- server/test/schema-consistency.test.ts
 ```
 
 ### Manual Validation (Anytime)
+
 ```bash
 # Check if migrations are applied
 npm exec prisma migrate status
@@ -442,13 +471,13 @@ npm exec prisma studio
 
 ## Prevention Measures Summary
 
-| Layer | Mechanism | Prevents |
-|-------|-----------|----------|
-| Pre-Commit | Git hook validates migrations exist | Schema drift commits |
+| Layer         | Mechanism                              | Prevents                |
+| ------------- | -------------------------------------- | ----------------------- |
+| Pre-Commit    | Git hook validates migrations exist    | Schema drift commits    |
 | Documentation | CLAUDE.md + SCHEMA_DRIFT_PREVENTION.md | Wrong migration pattern |
-| Testing | schema-consistency.test.ts | Subtle schema issues |
-| Process | Decision tree guidance | Analysis paralysis |
-| AI Safety | Safe command rules | Destructive operations |
+| Testing       | schema-consistency.test.ts             | Subtle schema issues    |
+| Process       | Decision tree guidance                 | Analysis paralysis      |
+| AI Safety     | Safe command rules                     | Destructive operations  |
 
 ---
 

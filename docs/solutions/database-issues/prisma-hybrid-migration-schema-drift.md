@@ -1,5 +1,5 @@
 ---
-title: "Database Schema Drift: Prisma vs Manual Migrations"
+title: 'Database Schema Drift: Prisma vs Manual Migrations'
 category: database-issues
 tags:
   - prisma
@@ -10,16 +10,16 @@ tags:
 severity: high
 component: prisma-migrations
 status: resolved
-date_resolved: "2025-11-28"
+date_resolved: '2025-11-28'
 symptoms:
   - "42 integration tests failing with 'column Booking.bookingType does not exist'"
-  - "Prisma schema contains scheduling platform features missing from database"
-  - "Schema modifications made without generating corresponding migrations"
-  - "Prisma detects massive drift between local schema and actual database state"
+  - 'Prisma schema contains scheduling platform features missing from database'
+  - 'Schema modifications made without generating corresponding migrations'
+  - 'Prisma detects massive drift between local schema and actual database state'
 related_errors:
-  - "database error: column Booking.bookingType does not exist"
-  - "Prisma migration history out of sync with manual SQL migrations"
-  - "Risk of data loss if destructive migrate reset executed"
+  - 'database error: column Booking.bookingType does not exist'
+  - 'Prisma migration history out of sync with manual SQL migrations'
+  - 'Risk of data loss if destructive migrate reset executed'
 ---
 
 # Database Schema Drift: Prisma vs Manual Migrations
@@ -27,6 +27,7 @@ related_errors:
 ## Problem Summary
 
 Scheduling platform changes (commit `862a324`) modified `schema.prisma` without generating a migration. The database was missing:
+
 - `BookingType` enum
 - New Booking columns: `bookingType`, `serviceId`, `clientTimezone`, `googleEventId`, `cancelledAt`
 - `Service` table
@@ -41,10 +42,10 @@ Scheduling platform changes (commit `862a324`) modified `schema.prisma` without 
 
 MAIS uses a **hybrid migration approach** that wasn't documented:
 
-| Migration Type | Tracked by Prisma | Applied Via | Files |
-|----------------|-------------------|-------------|-------|
-| Manual SQL (00-06) | NO | psql directly | `NN_name.sql` |
-| Prisma-generated | YES | `prisma migrate dev` | `YYYYMMDD_name/migration.sql` |
+| Migration Type     | Tracked by Prisma | Applied Via          | Files                         |
+| ------------------ | ----------------- | -------------------- | ----------------------------- |
+| Manual SQL (00-06) | NO                | psql directly        | `NN_name.sql`                 |
+| Prisma-generated   | YES               | `prisma migrate dev` | `YYYYMMDD_name/migration.sql` |
 
 ### Why `prisma migrate dev` Was Dangerous
 
@@ -148,13 +149,13 @@ npm test
 
 ## Results
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Tests passing | 729 | 773 |
-| Tests failing | 42 | 3 |
-| `bookingType` column | Missing | Present (default: `DATE`) |
-| `Service` table | Missing | Present |
-| `AvailabilityRule` table | Missing | Present |
+| Metric                   | Before  | After                     |
+| ------------------------ | ------- | ------------------------- |
+| Tests passing            | 729     | 773                       |
+| Tests failing            | 42      | 3                         |
+| `bookingType` column     | Missing | Present (default: `DATE`) |
+| `Service` table          | Missing | Present                   |
+| `AvailabilityRule` table | Missing | Present                   |
 
 The remaining 3 failures are pre-existing test isolation issues (duplicate test data), unrelated to the migration.
 
@@ -170,11 +171,13 @@ Added to `CLAUDE.md`:
 MAIS uses a **hybrid migration system** with two patterns:
 
 **Pattern A: Prisma Migrations** (for tables/columns)
+
 1. Edit server/prisma/schema.prisma
 2. npm exec prisma migrate dev --name descriptive_name
 3. Prisma auto-generates migration.sql and applies it
 
 **Pattern B: Manual Raw SQL** (for enums, indexes, extensions, RLS)
+
 1. Edit server/prisma/schema.prisma
 2. Create: server/prisma/migrations/NN_name.sql (idempotent SQL)
 3. Apply: psql $DATABASE_URL < migrations/NN_name.sql
@@ -183,14 +186,14 @@ MAIS uses a **hybrid migration system** with two patterns:
 
 ### 2. Decision Guide
 
-| Change | Pattern | Why |
-|--------|---------|-----|
-| Add column | A | Prisma handles ALTER TABLE |
-| Add table | A | Prisma handles CREATE TABLE |
-| Create enum | B | PostgreSQL-specific syntax |
-| Add index | B | More control over index type |
-| Add constraint | A | Prisma handles constraints |
-| RLS policy | B | PostgreSQL-specific |
+| Change         | Pattern | Why                          |
+| -------------- | ------- | ---------------------------- |
+| Add column     | A       | Prisma handles ALTER TABLE   |
+| Add table      | A       | Prisma handles CREATE TABLE  |
+| Create enum    | B       | PostgreSQL-specific syntax   |
+| Add index      | B       | More control over index type |
+| Add constraint | A       | Prisma handles constraints   |
+| RLS policy     | B       | PostgreSQL-specific          |
 
 ### 3. Critical Rules
 

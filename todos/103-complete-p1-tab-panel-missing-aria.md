@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "103"
+issue_id: '103'
 tags: [code-review, accessibility, wcag, ui-redesign]
 dependencies: []
 ---
@@ -23,22 +23,25 @@ Tab content sections in TenantDashboard don't have `role="tabpanel"`, `aria-labe
 **WCAG Criterion:** 4.1.2 Name, Role, Value (Level A)
 
 **Current code:**
+
 ```tsx
-<div className="animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-  {activeTab === "packages" && (
+<div className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+  {activeTab === 'packages' && (
     <TenantPackagesManager packages={packages} onPackagesChange={loadPackages} />
   )}
-  {activeTab === "segments" && <SegmentsManager />}
+  {activeTab === 'segments' && <SegmentsManager />}
   {/* etc. */}
 </div>
 ```
 
 **Also affected:**
+
 - `TabNavigation.tsx` - Tab buttons missing `id` attributes
 
 ## Proposed Solutions
 
 ### Solution 1: Add Proper Tab Panel ARIA (Recommended)
+
 **Pros:** Fully accessible, follows WAI-ARIA pattern
 **Cons:** Requires coordination between TabNavigation and content
 **Effort:** Small (1 hour)
@@ -74,6 +77,7 @@ Implement Solution 1.
 ## Technical Details
 
 **Affected files:**
+
 - `client/src/features/tenant-admin/TenantDashboard/index.tsx`
 - `client/src/features/tenant-admin/TenantDashboard/TabNavigation.tsx`
 
@@ -87,8 +91,8 @@ Implement Solution 1.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings            |
+| ---------- | ------------------------ | -------------------- |
 | 2025-11-30 | Created from code review | WCAG 4.1.2 violation |
 
 ## Resources

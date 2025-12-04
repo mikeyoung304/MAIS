@@ -9,13 +9,13 @@
  * - Max 5 photos limit
  */
 
-import { useState, useCallback, useRef, useMemo, useEffect } from "react";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { X, Upload, GripVertical } from "lucide-react";
-import { packagePhotoApi } from "@/lib/package-photo-api";
-import { logger } from "@/lib/logger";
-import type { PackagePhoto } from "../hooks/useVisualEditor";
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { X, Upload, GripVertical } from 'lucide-react';
+import { packagePhotoApi } from '@/lib/package-photo-api';
+import { logger } from '@/lib/logger';
+import type { PackagePhoto } from '../hooks/useVisualEditor';
 
 interface PhotoDropZoneProps {
   packageId: string;
@@ -26,7 +26,7 @@ interface PhotoDropZoneProps {
 }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export function PhotoDropZone({
   packageId,
@@ -73,10 +73,10 @@ export function PhotoDropZone({
    */
   const validateFile = useCallback((file: File): string | null => {
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return "Invalid file type. Please use JPEG, PNG, or WebP.";
+      return 'Invalid file type. Please use JPEG, PNG, or WebP.';
     }
     if (file.size > MAX_FILE_SIZE) {
-      return "File too large. Maximum size is 5MB.";
+      return 'File too large. Maximum size is 5MB.';
     }
     return null;
   }, []);
@@ -84,148 +84,171 @@ export function PhotoDropZone({
   /**
    * Upload a single photo
    */
-  const uploadPhoto = useCallback(async (file: File) => {
-    const error = validateFile(file);
-    if (error) {
-      toast.error(error);
-      return null;
-    }
+  const uploadPhoto = useCallback(
+    async (file: File) => {
+      const error = validateFile(file);
+      if (error) {
+        toast.error(error);
+        return null;
+      }
 
-    try {
-      const result = await packagePhotoApi.uploadPhoto(packageId, file);
-      return {
-        url: result.url,
-        filename: result.filename,
-        size: result.size,
-        order: photos.length,
-      };
-    } catch (err) {
-      logger.error("Failed to upload photo", {
-        component: "PhotoDropZone",
-        packageId,
-        error: err,
-      });
-      toast.error("Failed to upload photo", {
-        description: err instanceof Error ? err.message : "Please try again.",
-      });
-      return null;
-    }
-  }, [packageId, photos.length, validateFile]);
+      try {
+        const result = await packagePhotoApi.uploadPhoto(packageId, file);
+        return {
+          url: result.url,
+          filename: result.filename,
+          size: result.size,
+          order: photos.length,
+        };
+      } catch (err) {
+        logger.error('Failed to upload photo', {
+          component: 'PhotoDropZone',
+          packageId,
+          error: err,
+        });
+        toast.error('Failed to upload photo', {
+          description: err instanceof Error ? err.message : 'Please try again.',
+        });
+        return null;
+      }
+    },
+    [packageId, photos.length, validateFile]
+  );
 
   /**
    * Handle file selection (from input or drop)
    * Note: Calculate canAddMore inside callback to avoid stale closure during async uploads
    */
-  const handleFiles = useCallback(async (files: FileList) => {
-    // Calculate fresh value to avoid stale closure (photos may change during async uploads)
-    const currentCanAddMore = photos.length < maxPhotos;
-    if (disabled || !currentCanAddMore) return;
+  const handleFiles = useCallback(
+    async (files: FileList) => {
+      // Calculate fresh value to avoid stale closure (photos may change during async uploads)
+      const currentCanAddMore = photos.length < maxPhotos;
+      if (disabled || !currentCanAddMore) return;
 
-    const remainingSlots = maxPhotos - photos.length;
-    const filesToUpload = Array.from(files).slice(0, remainingSlots);
+      const remainingSlots = maxPhotos - photos.length;
+      const filesToUpload = Array.from(files).slice(0, remainingSlots);
 
-    if (filesToUpload.length === 0) {
-      toast.error(`Maximum ${maxPhotos} photos allowed`);
-      return;
-    }
+      if (filesToUpload.length === 0) {
+        toast.error(`Maximum ${maxPhotos} photos allowed`);
+        return;
+      }
 
-    setIsUploading(true);
+      setIsUploading(true);
 
-    try {
-      const uploadedPhotos: PackagePhoto[] = [];
+      try {
+        const uploadedPhotos: PackagePhoto[] = [];
 
-      for (const file of filesToUpload) {
-        const uploaded = await uploadPhoto(file);
-        if (uploaded) {
-          uploadedPhotos.push(uploaded);
+        for (const file of filesToUpload) {
+          const uploaded = await uploadPhoto(file);
+          if (uploaded) {
+            uploadedPhotos.push(uploaded);
+          }
         }
-      }
 
-      if (uploadedPhotos.length > 0) {
-        onPhotosChange([...photos, ...uploadedPhotos]);
-        toast.success(`Uploaded ${uploadedPhotos.length} photo${uploadedPhotos.length !== 1 ? "s" : ""}`);
+        if (uploadedPhotos.length > 0) {
+          onPhotosChange([...photos, ...uploadedPhotos]);
+          toast.success(
+            `Uploaded ${uploadedPhotos.length} photo${uploadedPhotos.length !== 1 ? 's' : ''}`
+          );
+        }
+      } finally {
+        setIsUploading(false);
       }
-    } finally {
-      setIsUploading(false);
-    }
-  }, [disabled, maxPhotos, photos, uploadPhoto, onPhotosChange]);
+    },
+    [disabled, maxPhotos, photos, uploadPhoto, onPhotosChange]
+  );
 
   /**
    * Handle file input change
    */
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      handleFiles(e.target.files);
-      // Reset input so same file can be selected again
-      e.target.value = "";
-    }
-  }, [handleFiles]);
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files) {
+        handleFiles(e.target.files);
+        // Reset input so same file can be selected again
+        e.target.value = '';
+      }
+    },
+    [handleFiles]
+  );
 
   /**
    * Handle drag events
    */
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (!disabled && canAddMore) {
-      setIsDragging(true);
-    }
-  }, [disabled, canAddMore]);
+  const handleDragOver = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      if (!disabled && canAddMore) {
+        setIsDragging(true);
+      }
+    },
+    [disabled, canAddMore]
+  );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
 
-    if (e.dataTransfer.files?.length) {
-      handleFiles(e.dataTransfer.files);
-    }
-  }, [handleFiles]);
+      if (e.dataTransfer.files?.length) {
+        handleFiles(e.dataTransfer.files);
+      }
+    },
+    [handleFiles]
+  );
 
   /**
    * Handle delete photo
    */
-  const handleDelete = useCallback(async (index: number) => {
-    const photo = photos[index];
-    if (!photo?.filename) return;
+  const handleDelete = useCallback(
+    async (index: number) => {
+      const photo = photos[index];
+      if (!photo?.filename) return;
 
-    try {
-      await packagePhotoApi.deletePhoto(packageId, photo.filename);
-      const newPhotos = photos.filter((_, i) => i !== index);
-      onPhotosChange(newPhotos);
-      toast.success("Photo deleted");
-    } catch (err) {
-      logger.error("Failed to delete photo", {
-        component: "PhotoDropZone",
-        packageId,
-        filename: photo.filename,
-        error: err,
-      });
-      toast.error("Failed to delete photo");
-    }
-  }, [packageId, photos, onPhotosChange]);
+      try {
+        await packagePhotoApi.deletePhoto(packageId, photo.filename);
+        const newPhotos = photos.filter((_, i) => i !== index);
+        onPhotosChange(newPhotos);
+        toast.success('Photo deleted');
+      } catch (err) {
+        logger.error('Failed to delete photo', {
+          component: 'PhotoDropZone',
+          packageId,
+          filename: photo.filename,
+          error: err,
+        });
+        toast.error('Failed to delete photo');
+      }
+    },
+    [packageId, photos, onPhotosChange]
+  );
 
   /**
    * Handle photo reordering via drag
    */
-  const handlePhotoReorder = useCallback((fromIndex: number, toIndex: number) => {
-    if (fromIndex === toIndex) return;
+  const handlePhotoReorder = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (fromIndex === toIndex) return;
 
-    const newPhotos = [...photos];
-    const [removed] = newPhotos.splice(fromIndex, 1);
-    newPhotos.splice(toIndex, 0, removed);
+      const newPhotos = [...photos];
+      const [removed] = newPhotos.splice(fromIndex, 1);
+      newPhotos.splice(toIndex, 0, removed);
 
-    // Update order values
-    const reorderedPhotos = newPhotos.map((photo, i) => ({
-      ...photo,
-      order: i,
-    }));
+      // Update order values
+      const reorderedPhotos = newPhotos.map((photo, i) => ({
+        ...photo,
+        order: i,
+      }));
 
-    onPhotosChange(reorderedPhotos);
-  }, [photos, onPhotosChange]);
+      onPhotosChange(reorderedPhotos);
+    },
+    [photos, onPhotosChange]
+  );
 
   return (
     <div className="space-y-3">
@@ -269,11 +292,13 @@ export function PhotoDropZone({
                 setDropTargetIndex(null);
               }}
               className={cn(
-                "relative aspect-square rounded-lg overflow-hidden border",
-                "group cursor-move transition-transform",
-                draggedIndex === index && "opacity-50 scale-95",
+                'relative aspect-square rounded-lg overflow-hidden border',
+                'group cursor-move transition-transform',
+                draggedIndex === index && 'opacity-50 scale-95',
                 // Visual indicator for drop target
-                dropTargetIndex === index && draggedIndex !== index && "ring-2 ring-primary ring-offset-2"
+                dropTargetIndex === index &&
+                  draggedIndex !== index &&
+                  'ring-2 ring-primary ring-offset-2'
               )}
             >
               <img
@@ -287,8 +312,8 @@ export function PhotoDropZone({
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors">
                   <GripVertical
                     className={cn(
-                      "absolute top-1 left-1 h-4 w-4 text-white opacity-0",
-                      "group-hover:opacity-100 transition-opacity drop-shadow-md"
+                      'absolute top-1 left-1 h-4 w-4 text-white opacity-0',
+                      'group-hover:opacity-100 transition-opacity drop-shadow-md'
                     )}
                   />
                 </div>
@@ -300,9 +325,9 @@ export function PhotoDropZone({
                   type="button"
                   onClick={() => handleDelete(index)}
                   className={cn(
-                    "absolute top-1 right-1 p-1 rounded-full",
-                    "bg-red-500 text-white opacity-0 group-hover:opacity-100",
-                    "hover:bg-red-600 transition-all"
+                    'absolute top-1 right-1 p-1 rounded-full',
+                    'bg-red-500 text-white opacity-0 group-hover:opacity-100',
+                    'hover:bg-red-600 transition-all'
                   )}
                   aria-label={`Delete photo ${index + 1}`}
                 >
@@ -322,16 +347,16 @@ export function PhotoDropZone({
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
           className={cn(
-            "border-2 border-dashed rounded-lg p-4 text-center cursor-pointer",
-            "transition-colors hover:border-primary hover:bg-primary/5",
-            isDragging && "border-primary bg-primary/10",
-            isUploading && "opacity-50 cursor-wait"
+            'border-2 border-dashed rounded-lg p-4 text-center cursor-pointer',
+            'transition-colors hover:border-primary hover:bg-primary/5',
+            isDragging && 'border-primary bg-primary/10',
+            isUploading && 'opacity-50 cursor-wait'
           )}
         >
           <input
             ref={fileInputRef}
             type="file"
-            accept={ALLOWED_TYPES.join(",")}
+            accept={ALLOWED_TYPES.join(',')}
             multiple
             onChange={handleInputChange}
             className="hidden"
@@ -349,7 +374,7 @@ export function PhotoDropZone({
                 <Upload className="h-8 w-8" />
                 <span>
                   {isDragging
-                    ? "Drop photos here"
+                    ? 'Drop photos here'
                     : `Drag & drop or click to upload (${photos.length}/${maxPhotos})`}
                 </span>
                 <span className="text-xs">JPEG, PNG, WebP up to 5MB</span>

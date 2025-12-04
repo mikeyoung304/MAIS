@@ -10,29 +10,29 @@
  * - Subtle animations and elegant cards
  */
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowUpRight, Sparkles, Pencil } from "lucide-react";
-import { TenantPackagesManager } from "../TenantPackagesManager";
-import { BlackoutsManager } from "../BlackoutsManager";
-import { TenantBookingList } from "../TenantBookingList";
-import { BrandingEditor } from "../BrandingEditor";
-import { StripeConnectCard } from "./StripeConnectCard";
-import { AdminLayout } from "../../../layouts/AdminLayout";
-import { MetricsCards } from "./MetricsCards";
-import { TabNavigation, type DashboardTab } from "./TabNavigation";
-import { useDashboardData } from "./useDashboardData";
-import { ImpersonationBanner } from "../../admin/dashboard/components/ImpersonationBanner";
-import { useAuth } from "../../../contexts/AuthContext";
-import type { TenantDto } from "./types";
-import { ANIMATION_TRANSITION, ANIMATION_DURATION } from "../../../lib/animation-constants";
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowUpRight, Sparkles, Pencil } from 'lucide-react';
+import { TenantPackagesManager } from '../TenantPackagesManager';
+import { BlackoutsManager } from '../BlackoutsManager';
+import { TenantBookingList } from '../TenantBookingList';
+import { BrandingEditor } from '../BrandingEditor';
+import { StripeConnectCard } from './StripeConnectCard';
+import { AdminLayout } from '../../../layouts/AdminLayout';
+import { MetricsCards } from './MetricsCards';
+import { TabNavigation, type DashboardTab } from './TabNavigation';
+import { useDashboardData } from './useDashboardData';
+import { ImpersonationBanner } from '../../admin/dashboard/components/ImpersonationBanner';
+import { useAuth } from '../../../contexts/AuthContext';
+import type { TenantDto } from './types';
+import { ANIMATION_TRANSITION, ANIMATION_DURATION } from '../../../lib/animation-constants';
 
 interface TenantDashboardProps {
   tenantInfo?: TenantDto;
 }
 
 export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
-  const [activeTab, setActiveTab] = useState<DashboardTab>("packages");
+  const [activeTab, setActiveTab] = useState<DashboardTab>('packages');
   const { isImpersonating, impersonation } = useAuth();
 
   const {
@@ -51,7 +51,7 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
   } = useDashboardData(activeTab);
 
   return (
-    <AdminLayout breadcrumbs={[{ label: "Dashboard" }]}>
+    <AdminLayout breadcrumbs={[{ label: 'Dashboard' }]}>
       <div className="min-h-screen bg-surface">
         <div className="max-w-6xl mx-auto px-6 py-8 space-y-10">
           {/* Impersonation Banner */}
@@ -68,7 +68,7 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
           {/* Header - Apple-minimal style */}
           <header
             className="animate-fade-in-up"
-            style={{ animationDelay: "0.1s", animationFillMode: "backwards" }}
+            style={{ animationDelay: '0.1s', animationFillMode: 'backwards' }}
           >
             <div className="flex items-start justify-between gap-6">
               <div className="space-y-2">
@@ -81,9 +81,7 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
                   </h1>
                 </div>
                 {tenantInfo && (
-                  <p className="text-text-muted text-lg pl-[52px]">
-                    {tenantInfo.name}
-                  </p>
+                  <p className="text-text-muted text-lg pl-[52px]">{tenantInfo.name}</p>
                 )}
               </div>
 
@@ -100,7 +98,10 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
                   className={`group inline-flex items-center gap-2 px-5 py-2.5 bg-sage hover:bg-sage-hover text-white text-sm font-medium rounded-full ${ANIMATION_TRANSITION.HOVER} shadow-soft hover:shadow-medium`}
                 >
                   View Storefront
-                  <ArrowUpRight className={`w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${ANIMATION_TRANSITION.TRANSFORM}`} aria-hidden="true" />
+                  <ArrowUpRight
+                    className={`w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${ANIMATION_TRANSITION.TRANSFORM}`}
+                    aria-hidden="true"
+                  />
                 </Link>
               </div>
             </div>
@@ -109,7 +110,7 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
           {/* Metrics Cards */}
           <section
             className="animate-fade-in-up"
-            style={{ animationDelay: "0.2s", animationFillMode: "backwards" }}
+            style={{ animationDelay: '0.2s', animationFillMode: 'backwards' }}
           >
             <MetricsCards
               packagesCount={packages.length}
@@ -122,7 +123,7 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
           {/* Tab Navigation */}
           <section
             className="animate-fade-in-up"
-            style={{ animationDelay: "0.3s", animationFillMode: "backwards" }}
+            style={{ animationDelay: '0.3s', animationFillMode: 'backwards' }}
           >
             <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
           </section>
@@ -134,9 +135,9 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
             aria-labelledby={`${activeTab}-tab`}
             tabIndex={0}
             className="animate-fade-in-up focus:outline-none"
-            style={{ animationDelay: "0.4s", animationFillMode: "backwards" }}
+            style={{ animationDelay: '0.4s', animationFillMode: 'backwards' }}
           >
-            {activeTab === "packages" && (
+            {activeTab === 'packages' && (
               <TenantPackagesManager
                 packages={packages}
                 segments={segments}
@@ -147,7 +148,7 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
               />
             )}
 
-            {activeTab === "blackouts" && (
+            {activeTab === 'blackouts' && (
               <BlackoutsManager
                 blackouts={blackouts}
                 isLoading={isLoading}
@@ -155,11 +156,11 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
               />
             )}
 
-            {activeTab === "bookings" && (
+            {activeTab === 'bookings' && (
               <TenantBookingList bookings={bookings} isLoading={isLoading} />
             )}
 
-            {activeTab === "branding" && (
+            {activeTab === 'branding' && (
               <BrandingEditor
                 branding={branding}
                 isLoading={isLoading}
@@ -167,9 +168,7 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
               />
             )}
 
-            {activeTab === "payments" && (
-              <StripeConnectCard />
-            )}
+            {activeTab === 'payments' && <StripeConnectCard />}
           </section>
         </div>
       </div>

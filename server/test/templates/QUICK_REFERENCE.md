@@ -18,30 +18,34 @@ cp server/test/templates/webhook.test.template.ts server/test/controllers/my-web
 
 ## Template Selection Guide
 
-| What are you testing? | Use this template | Location |
-|----------------------|-------------------|----------|
-| Business logic in service layer | `service.test.template.ts` | 566 lines, comprehensive |
-| Data access / queries | `repository.test.template.ts` | 649 lines, concurrency |
-| HTTP endpoints / REST API | `controller.test.template.ts` | 702 lines, HTTP testing |
-| Webhook handlers | `webhook.test.template.ts` | 818 lines, idempotency |
+| What are you testing?           | Use this template             | Location                 |
+| ------------------------------- | ----------------------------- | ------------------------ |
+| Business logic in service layer | `service.test.template.ts`    | 566 lines, comprehensive |
+| Data access / queries           | `repository.test.template.ts` | 649 lines, concurrency   |
+| HTTP endpoints / REST API       | `controller.test.template.ts` | 702 lines, HTTP testing  |
+| Webhook handlers                | `webhook.test.template.ts`    | 818 lines, idempotency   |
 
 ## Placeholders to Replace
 
 ### Service Template
+
 - `[ServiceName]` → Your service name (e.g., `Booking`)
 - `[service-name]` → Filename (e.g., `booking`)
 - `[Repository]` → Repository name (e.g., `Booking`)
 - `[Entity]` → Entity builder (e.g., `Booking`)
 
 ### Repository Template
+
 - `[RepositoryName]` → Repository name (e.g., `Booking`)
 - `[Entity]` → Entity builder (e.g., `Booking`)
 - `[DomainError]` → Error type (e.g., `BookingConflictError`)
 
 ### Controller Template
+
 - `[resource]` → API resource path (e.g., `bookings`)
 
 ### Webhook Template
+
 - `[WebhookName]` → Webhook type (e.g., `Stripe`)
 - `[webhook-name]` → Filename (e.g., `stripe-webhook`)
 - `[ExternalSDK]` → SDK type (e.g., `Stripe`)
@@ -50,6 +54,7 @@ cp server/test/templates/webhook.test.template.ts server/test/controllers/my-web
 ## Essential Patterns
 
 ### Multi-Tenancy (ALWAYS)
+
 ```typescript
 // ALWAYS pass tenantId as first parameter
 await service.getAll('test-tenant');
@@ -57,10 +62,13 @@ await repository.findAll('test-tenant');
 ```
 
 ### AAA Pattern
+
 ```typescript
 it('does something', async () => {
   // Arrange: Setup
-  const data = { /* ... */ };
+  const data = {
+    /* ... */
+  };
 
   // Act: Execute
   const result = await service.method('test-tenant', data);
@@ -71,6 +79,7 @@ it('does something', async () => {
 ```
 
 ### Builder Pattern
+
 ```typescript
 // Use builders for test data
 const booking = buildBooking({ id: 'test_1', eventDate: '2025-06-15' });
@@ -79,18 +88,18 @@ const addon = buildAddOn({ packageId: 'pkg_1', priceCents: 5000 });
 ```
 
 ### Error Testing
+
 ```typescript
 // Test error type and message
-await expect(
-  service.method('test-tenant', 'bad-id')
-).rejects.toThrow(NotFoundError);
+await expect(service.method('test-tenant', 'bad-id')).rejects.toThrow(NotFoundError);
 
-await expect(
-  service.method('test-tenant', 'bad-id')
-).rejects.toThrow('Entity with id "bad-id" not found');
+await expect(service.method('test-tenant', 'bad-id')).rejects.toThrow(
+  'Entity with id "bad-id" not found'
+);
 ```
 
 ### Concurrency Testing
+
 ```typescript
 // Use Promise.allSettled for concurrent ops
 const results = await Promise.allSettled([
@@ -98,11 +107,12 @@ const results = await Promise.allSettled([
   repository.create('test-tenant', entity2),
 ]);
 
-const successes = results.filter(r => r.status === 'fulfilled');
-const failures = results.filter(r => r.status === 'rejected');
+const successes = results.filter((r) => r.status === 'fulfilled');
+const failures = results.filter((r) => r.status === 'rejected');
 ```
 
 ### HTTP Testing
+
 ```typescript
 // Supertest chaining
 const res = await request(app)
@@ -211,13 +221,13 @@ npm test -- repositories/
 
 ## Troubleshooting Quick Fixes
 
-| Problem | Solution |
-|---------|----------|
-| "tenantId is required" | Pass tenantId as first param: `service.method('test-tenant', ...)` |
-| Tests interfere | Use `beforeEach` not `beforeAll` |
-| Async timeout | Add `await` or increase timeout: `it('test', async () => {...}, 10000)` |
-| Mock not called | Verify you're testing mocked instance, use `vi.fn()` |
-| HTTP 404 | Check route, method, tenant key, path |
+| Problem                | Solution                                                                |
+| ---------------------- | ----------------------------------------------------------------------- |
+| "tenantId is required" | Pass tenantId as first param: `service.method('test-tenant', ...)`      |
+| Tests interfere        | Use `beforeEach` not `beforeAll`                                        |
+| Async timeout          | Add `await` or increase timeout: `it('test', async () => {...}, 10000)` |
+| Mock not called        | Verify you're testing mocked instance, use `vi.fn()`                    |
+| HTTP 404               | Check route, method, tenant key, path                                   |
 
 ## File Locations
 
@@ -233,6 +243,7 @@ npm test -- repositories/
 ## Template Features at a Glance
 
 ### service.test.template.ts
+
 - ✓ CRUD operations
 - ✓ Validation patterns
 - ✓ Error handling
@@ -241,6 +252,7 @@ npm test -- repositories/
 - ✓ Dependency mocking
 
 ### repository.test.template.ts
+
 - ✓ CRUD operations
 - ✓ Concurrency tests
 - ✓ Query methods
@@ -249,6 +261,7 @@ npm test -- repositories/
 - ✓ Edge cases
 
 ### controller.test.template.ts
+
 - ✓ HTTP methods (GET/POST/PATCH/DELETE)
 - ✓ Authentication
 - ✓ Authorization
@@ -258,6 +271,7 @@ npm test -- repositories/
 - ✓ Tenant isolation
 
 ### webhook.test.template.ts
+
 - ✓ Signature verification
 - ✓ Idempotency
 - ✓ Event validation

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "023"
+issue_id: '023'
 tags: [code-review, security, webhooks, data-integrity]
 dependencies: []
 ---
@@ -45,6 +45,7 @@ const isDupe = await this.webhookRepo.isDuplicate(tenantId, event.id);
 ## Proposed Solutions
 
 ### Option A: Fail Fast on Missing TenantId (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 ```typescript
@@ -58,26 +59,32 @@ const isDupe = await this.webhookRepo.isDuplicate(tenantId, event.id);
 ```
 
 **Pros:**
+
 - Eliminates "unknown" bucket entirely
 - Forces proper error handling for malformed webhooks
 - Stripe will retry webhook automatically
 
 **Cons:**
+
 - Webhooks with missing metadata will fail (correct behavior)
 
 ### Option B: Use Event ID as Primary Key (Alternative)
+
 **Effort:** Medium | **Risk:** Medium
 
 Change idempotency to use Stripe event.id globally (it's already unique):
+
 ```typescript
 const isDupe = await this.webhookRepo.isDuplicateByEventId(event.id);
 ```
 
 **Pros:**
+
 - Stripe event IDs are globally unique
 - Simpler idempotency logic
 
 **Cons:**
+
 - Loses tenant-scoped idempotency for auditing
 - Changes database schema
 
@@ -88,9 +95,11 @@ Implement **Option A** - Fail fast if tenantId cannot be extracted.
 ## Technical Details
 
 **Files to Update:**
+
 - `server/src/routes/webhooks.routes.ts:126-140`
 
 **Changes:**
+
 1. Move tenantId extraction validation before idempotency check
 2. Log error with event details for debugging
 3. Return 400 instead of silently accepting with "unknown"
@@ -105,8 +114,8 @@ Implement **Option A** - Fail fast if tenantId cannot be extracted.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                  |
+| ---------- | ------- | -------------------------------------- |
 | 2025-11-27 | Created | Found during comprehensive code review |
 
 ## Resources

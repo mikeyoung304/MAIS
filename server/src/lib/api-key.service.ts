@@ -54,9 +54,7 @@ export class ApiKeyService {
   generatePublicKey(tenantSlug: string): string {
     this.validateTenantSlug(tenantSlug);
 
-    const random = crypto
-      .randomBytes(this.publicKeyRandomLength / 2)
-      .toString('hex');
+    const random = crypto.randomBytes(this.publicKeyRandomLength / 2).toString('hex');
 
     return `${this.publicKeyPrefix}${tenantSlug}_${random}`;
   }
@@ -78,9 +76,7 @@ export class ApiKeyService {
   generateSecretKey(tenantSlug: string): string {
     this.validateTenantSlug(tenantSlug);
 
-    const random = crypto
-      .randomBytes(this.secretKeyRandomLength / 2)
-      .toString('hex');
+    const random = crypto.randomBytes(this.secretKeyRandomLength / 2).toString('hex');
 
     return `${this.secretKeyPrefix}${tenantSlug}_${random}`;
   }
@@ -175,10 +171,7 @@ export class ApiKeyService {
 
     // Constant-time comparison to prevent timing attacks
     try {
-      return crypto.timingSafeEqual(
-        Buffer.from(inputHash, 'hex'),
-        Buffer.from(hash, 'hex')
-      );
+      return crypto.timingSafeEqual(Buffer.from(inputHash, 'hex'), Buffer.from(hash, 'hex'));
     } catch (error) {
       // Hashes are different lengths (invalid)
       return false;
@@ -208,7 +201,7 @@ export class ApiKeyService {
     if (!/^[a-z][a-z0-9-]*[a-z0-9]$/.test(slug)) {
       throw new Error(
         'Tenant slug must start with letter, contain only lowercase letters, ' +
-        'numbers, and hyphens, and cannot end with hyphen'
+          'numbers, and hyphens, and cannot end with hyphen'
       );
     }
 

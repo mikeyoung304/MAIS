@@ -63,7 +63,9 @@ test.describe('Password Reset Flow', () => {
     const forgotData = await forgotResponse.json();
     expect(forgotData.message).toBe('If an account exists, a reset link has been sent');
 
-    console.log('✅ Email enumeration protection working (no distinction between valid/invalid emails)');
+    console.log(
+      '✅ Email enumeration protection working (no distinction between valid/invalid emails)'
+    );
   });
 
   test('should reject password reset request without email', async ({ request }) => {
@@ -232,8 +234,8 @@ test.describe('Password Reset Flow', () => {
     const responses = await Promise.all(requests);
 
     // First 5 should succeed (signupLimiter allows 5 requests per 15 min)
-    const successCount = responses.filter(r => r.status() === 200).length;
-    const rateLimitCount = responses.filter(r => r.status() === 429).length;
+    const successCount = responses.filter((r) => r.status() === 200).length;
+    const rateLimitCount = responses.filter((r) => r.status() === 429).length;
 
     // Note: Rate limiting behavior depends on the signupLimiter configuration
     // In the routes, forgot-password uses signupLimiter (5 req/15min)
@@ -241,7 +243,7 @@ test.describe('Password Reset Flow', () => {
 
     // At least one should be rate-limited if we exceed the limit
     if (rateLimitCount > 0) {
-      const rateLimitedResponse = responses.find(r => r.status() === 429);
+      const rateLimitedResponse = responses.find((r) => r.status() === 429);
       expect(rateLimitedResponse).toBeDefined();
       console.log('✅ Rate limiting is active');
     }

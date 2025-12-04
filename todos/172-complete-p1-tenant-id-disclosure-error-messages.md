@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "172"
+issue_id: '172'
 tags: [code-review, security, information-disclosure, public-routes]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 Internal tenant IDs are exposed in public route error responses when a tenant is not found. This enables enumeration attacks and violates information disclosure best practices.
 
 **Why it matters:**
+
 - Attackers can probe for valid tenant IDs
 - Internal identifiers should never be exposed publicly
 - OWASP A01:2021 - Broken Access Control
@@ -22,25 +23,29 @@ Internal tenant IDs are exposed in public route error responses when a tenant is
 **Source:** Security Sentinel agent code review
 
 **Files Affected:**
+
 - `server/src/services/booking.service.ts` (lines ~116, ~241)
 - `server/src/lib/public-route-error-handler.ts` (lines 129-135)
 
 **Current code (booking.service.ts):**
+
 ```typescript
 throw new NotFoundError(`Tenant ${tenantId} not found`);
 ```
 
 **Error handler passes message unfiltered:**
+
 ```typescript
 if (error instanceof NotFoundError) {
   return res.status(404).json({
     error: 'NOT_FOUND',
-    message: error.message,  // EXPOSES TENANT ID
+    message: error.message, // EXPOSES TENANT ID
   });
 }
 ```
 
 **Attack scenario:**
+
 1. Attacker sends request to public balance payment route
 2. Token validates but references non-existent tenant
 3. Error response: `{"error": "NOT_FOUND", "message": "Tenant cus_abc123xyz not found"}`
@@ -49,6 +54,7 @@ if (error instanceof NotFoundError) {
 ## Proposed Solutions
 
 ### Option A: Generic Message in Error Handler (Recommended)
+
 **Pros:** Quick fix, single location
 **Cons:** Less specific for debugging
 **Effort:** Small (15 minutes)
@@ -67,6 +73,7 @@ if (error instanceof NotFoundError) {
 ```
 
 ### Option B: Sanitize at Service Layer
+
 **Pros:** Comprehensive fix
 **Cons:** More changes required
 **Effort:** Medium (30 minutes)
@@ -81,6 +88,7 @@ if (!tenant) {
 ```
 
 ### Option C: Context-Aware Error Handler
+
 **Pros:** Best practice, detailed for authenticated routes
 **Cons:** More complex
 **Effort:** Large (1 hour)
@@ -93,6 +101,7 @@ Implement Option A immediately as hotfix, then Option C for comprehensive soluti
 ## Technical Details
 
 **Affected Routes:**
+
 - `public-balance-payment.routes.ts` (line 88)
 - `public-booking-management.routes.ts` (lines 196, 241, 277)
 
@@ -105,9 +114,9 @@ Implement Option A immediately as hotfix, then Option C for comprehensive soluti
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-12-02 | Created | From security review of commit d9ceb40 |
+| Date       | Action    | Notes                                                                                                              |
+| ---------- | --------- | ------------------------------------------------------------------------------------------------------------------ |
+| 2025-12-02 | Created   | From security review of commit d9ceb40                                                                             |
 | 2025-12-02 | Completed | Implemented hybrid Option A + B: Error handler returns generic message AND service layer logs tenant ID internally |
 
 ## Resources

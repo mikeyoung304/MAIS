@@ -12,6 +12,7 @@
 The application has **CONFIRMED tenant data leakage** through HTTP-level caching. Two tenants with different API keys receive identical cached responses because cache keys do not include `tenantId`. This is a **critical security vulnerability** that violates multi-tenant data isolation.
 
 **Quick Facts:**
+
 - ❌ HTTP cache keys: `GET:/v1/packages:{}` (NO tenant context)
 - ✅ App cache keys: `catalog:${tenantId}:all-packages` (HAS tenant context)
 - 🔥 Tenant B receives Tenant A's cached data
@@ -29,13 +30,16 @@ The application has **CONFIRMED tenant data leakage** through HTTP-level caching
 **Location:** `/src/middleware/cache.ts` (lines 40-45)
 
 ```typescript
-const keyGenerator = options.keyGenerator || ((req: Request) => {
-  // ❌ NO tenantId in key!
-  return `${req.method}:${req.path}:${JSON.stringify(req.query)}`;
-});
+const keyGenerator =
+  options.keyGenerator ||
+  ((req: Request) => {
+    // ❌ NO tenantId in key!
+    return `${req.method}:${req.path}:${JSON.stringify(req.query)}`;
+  });
 ```
 
 **Generated Keys:**
+
 - `GET:/v1/packages:{}` ← ALL tenants share this key
 - `GET:/v1/packages/intimate:{}` ← ALL tenants share this key
 - `GET:/v1/availability:{"date":"2025-12-25"}` ← ALL tenants share this key
@@ -50,6 +54,7 @@ const cacheKey = `catalog:${tenantId}:package:${slug}`; // ✅ Includes tenantId
 ```
 
 **Generated Keys:**
+
 - `catalog:tenant_alice:all-packages` ← Unique per tenant
 - `catalog:tenant_bob:all-packages` ← Different key
 - `catalog:tenant_alice:package:intimate` ← Unique per tenant
@@ -57,13 +62,15 @@ const cacheKey = `catalog:${tenantId}:package:${slug}`; // ✅ Includes tenantId
 ### 2. Cache Usage Locations
 
 **HTTP Cache Applied:**
+
 ```typescript
 // src/app.ts, lines 83, 86
-app.use('/v1/packages', cacheMiddleware({ ttl: 300 }));        // 5 minutes
-app.use('/v1/availability', cacheMiddleware({ ttl: 120 }));    // 2 minutes
+app.use('/v1/packages', cacheMiddleware({ ttl: 300 })); // 5 minutes
+app.use('/v1/availability', cacheMiddleware({ ttl: 120 })); // 2 minutes
 ```
 
 **Application Cache Applied:**
+
 ```typescript
 // src/di.ts, line 56
 const cacheService = new CacheService(900); // 15 minutes
@@ -174,6 +181,7 @@ Tenant B (Bob's Weddings, API Key: pk_live_bob)
 ### Severity Assessment
 
 **CVSS Score:** 8.5 (High)
+
 - **Attack Vector:** Network (remote)
 - **Attack Complexity:** Low (just make HTTP requests)
 - **Privileges Required:** Low (valid tenant API key)
@@ -184,12 +192,12 @@ Tenant B (Bob's Weddings, API Key: pk_live_bob)
 
 ### Affected Endpoints
 
-| Endpoint | Cache TTL | Data Exposed |
-|----------|-----------|--------------|
-| `GET /v1/packages` | 5 minutes | All packages, pricing, descriptions |
-| `GET /v1/packages/:slug` | 5 minutes | Package details, add-ons, pricing |
-| `GET /v1/availability?date=X` | 2 minutes | Date availability status |
-| `GET /v1/availability/unavailable?...` | 2 minutes | Blackout dates, booked dates |
+| Endpoint                               | Cache TTL | Data Exposed                        |
+| -------------------------------------- | --------- | ----------------------------------- |
+| `GET /v1/packages`                     | 5 minutes | All packages, pricing, descriptions |
+| `GET /v1/packages/:slug`               | 5 minutes | Package details, add-ons, pricing   |
+| `GET /v1/availability?date=X`          | 2 minutes | Date availability status            |
+| `GET /v1/availability/unavailable?...` | 2 minutes | Blackout dates, booked dates        |
 
 ### Business Impact
 
@@ -219,6 +227,7 @@ Tenant B (Bob's Weddings, API Key: pk_live_bob)
 The application has **TWO caching layers** operating simultaneously:
 
 ### Layer 1: HTTP Cache (Middleware)
+
 - **File:** `/src/middleware/cache.ts`
 - **Storage:** In-memory (NodeCache) - GLOBAL instance
 - **Keys:** `GET:/v1/packages:{}` (NO tenant isolation)
@@ -228,6 +237,7 @@ The application has **TWO caching layers** operating simultaneously:
 - **Problem:** ❌ Cache keys don't include tenantId
 
 ### Layer 2: Application Cache (Service)
+
 - **File:** `/src/lib/cache.ts`
 - **Storage:** In-memory (NodeCache) - Singleton instance
 - **Keys:** `catalog:${tenantId}:all-packages` (HAS tenant isolation)
@@ -239,6 +249,7 @@ The application has **TWO caching layers** operating simultaneously:
 ### Why Two Layers?
 
 Looking at the code history, it appears:
+
 1. Application cache was implemented first (tenant-aware)
 2. HTTP cache was added later for performance (not tenant-aware)
 3. Nobody noticed HTTP cache doesn't respect tenant isolation
@@ -246,6 +257,7 @@ Looking at the code history, it appears:
 ### Is Two Layers Necessary?
 
 **NO.** The application cache is sufficient:
+
 - ✅ Prevents redundant database queries
 - ✅ Respects tenant isolation
 - ✅ Provides cache statistics
@@ -274,6 +286,7 @@ Looking at the code history, it appears:
 ```
 
 **Verification:**
+
 ```bash
 curl -I -H "X-Tenant-Key: test" http://localhost:3000/v1/packages
 
@@ -295,16 +308,19 @@ X-Cache: MISS
 **Test File:** `/test-cache-isolation.ts`
 
 **Expected Behavior:**
+
 1. Tenant A fetches packages → Cache MISS → Returns Tenant A's data
 2. Tenant A fetches again → Cache HIT → Returns Tenant A's data (correct)
 3. Tenant B fetches packages → Cache MISS → Returns Tenant B's data
 
 **Actual Behavior (with bug):**
+
 1. Tenant A fetches packages → Cache MISS → Returns Tenant A's data ✅
 2. Tenant A fetches again → Cache HIT → Returns Tenant A's data ✅
 3. Tenant B fetches packages → Cache HIT → Returns Tenant A's data ❌ BUG!
 
 **How to Run:**
+
 ```bash
 # Terminal 1: Start server
 npm run dev
@@ -314,6 +330,7 @@ npx ts-node test-cache-isolation.ts
 ```
 
 **Expected Output (with bug):**
+
 ```
 🔥 CRITICAL BUG DETECTED:
    Tenant B received Tenant A's cached data!
@@ -331,12 +348,14 @@ npx ts-node test-cache-isolation.ts
 ### Option 1: Remove HTTP Cache (RECOMMENDED)
 
 **Why:**
+
 - Eliminates vulnerability completely
 - Simplifies architecture (one cache layer instead of two)
 - Application cache already provides performance benefits
 - No risk of future bugs from duplicate caching
 
 **Implementation:**
+
 ```typescript
 // src/app.ts
 
@@ -354,24 +373,30 @@ app.use('/v1/availability', cacheMiddleware({ ttl: 120 }));
 ### Option 2: Fix HTTP Cache (NOT RECOMMENDED)
 
 **Why:**
+
 - Keeps duplicate caching
 - More complex cache invalidation
 - HTTP cache provides minimal benefit over app cache
 
 **Implementation:**
+
 ```typescript
 // src/app.ts
 
-app.use('/v1/packages', cacheMiddleware({
-  ttl: 300,
-  keyGenerator: (req: Request) => {
-    const tenantKey = req.headers['x-tenant-key'] || 'no-tenant';
-    return `${req.method}:${req.path}:${JSON.stringify(req.query)}:${tenantKey}`;
-  }
-}));
+app.use(
+  '/v1/packages',
+  cacheMiddleware({
+    ttl: 300,
+    keyGenerator: (req: Request) => {
+      const tenantKey = req.headers['x-tenant-key'] || 'no-tenant';
+      return `${req.method}:${req.path}:${JSON.stringify(req.query)}:${tenantKey}`;
+    },
+  })
+);
 ```
 
 **Problems:**
+
 - Cache keys include full API key (security concern)
 - Tenant middleware still runs (HTTP cache saves nothing)
 - Duplicate cache invalidation logic needed
@@ -384,18 +409,23 @@ app.use('/v1/packages', cacheMiddleware({
 After applying the fix:
 
 ### 1. Run Test Script
+
 ```bash
 npx ts-node test-cache-isolation.ts
 ```
+
 **Expected:** ✅ Cache isolation working correctly
 
 ### 2. Check Response Headers
+
 ```bash
 curl -I -H "X-Tenant-Key: pk_live_test" http://localhost:3000/v1/packages
 ```
+
 **Expected:** NO `X-Cache` header in response
 
 ### 3. Verify Application Cache
+
 ```bash
 # Check server logs for:
 # "Cache HIT" - Application cache working
@@ -404,6 +434,7 @@ curl -I -H "X-Tenant-Key: pk_live_test" http://localhost:3000/v1/packages
 ```
 
 ### 4. Performance Test
+
 ```bash
 # First request (should be ~100ms - DB query)
 time curl -H "X-Tenant-Key: pk_live_test" http://localhost:3000/v1/packages
@@ -413,6 +444,7 @@ time curl -H "X-Tenant-Key: pk_live_test" http://localhost:3000/v1/packages
 ```
 
 ### 5. Multi-Tenant Test
+
 ```bash
 # Tenant A
 curl -H "X-Tenant-Key: pk_live_alice" http://localhost:3000/v1/packages
@@ -426,17 +458,21 @@ curl -H "X-Tenant-Key: pk_live_bob" http://localhost:3000/v1/packages
 ## Files Delivered
 
 ### Investigation Files
+
 1. **CACHE_ISOLATION_REPORT.md** - Comprehensive security analysis
 2. **cache-key-analysis.md** - Detailed cache key generation analysis
 3. **CACHE_INVESTIGATION_SUMMARY.md** - This file (executive summary)
 
 ### Test Files
+
 4. **test-cache-isolation.ts** - Automated test to verify cache isolation
 
 ### Fix Files
+
 5. **CACHE_FIX.patch** - Patch file with exact changes needed
 
 ### Code Evidence
+
 - `/src/middleware/cache.ts` - HTTP cache implementation (vulnerable)
 - `/src/lib/cache.ts` - Application cache implementation (secure)
 - `/src/services/catalog.service.ts` - Cache usage (secure)
@@ -451,6 +487,7 @@ curl -H "X-Tenant-Key: pk_live_bob" http://localhost:3000/v1/packages
 **Risk:** NONE
 
 **Steps:**
+
 1. Open `/src/app.ts`
 2. Delete line 18: `import { cacheMiddleware } from './middleware/cache';`
 3. Delete lines 81-86: Cache middleware application
@@ -481,10 +518,12 @@ curl -H "X-Tenant-Key: pk_live_bob" http://localhost:3000/v1/packages
 This investigation **confirms tenant data leakage** through HTTP-level caching. The fix is **simple and low-risk**: remove the HTTP cache middleware and rely on the existing application-level cache, which already implements correct tenant isolation.
 
 **Bottom Line:**
+
 - ❌ HTTP cache: Insecure, unnecessary, should be removed
 - ✅ Application cache: Secure, sufficient, keep as-is
 
 **Next Steps:**
+
 1. Apply the recommended fix
 2. Run verification tests
 3. Deploy to production

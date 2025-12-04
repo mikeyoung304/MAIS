@@ -133,16 +133,19 @@ export class AuditService {
         agentId: input.agentId ?? null,
         email: input.email,
         role: input.role,
-        beforeSnapshot: input.beforeSnapshot !== undefined && input.beforeSnapshot !== null
-          ? (input.beforeSnapshot as Prisma.InputJsonValue)
-          : Prisma.JsonNull,
-        afterSnapshot: input.afterSnapshot !== undefined && input.afterSnapshot !== null
-          ? (input.afterSnapshot as Prisma.InputJsonValue)
-          : Prisma.JsonNull,
+        beforeSnapshot:
+          input.beforeSnapshot !== undefined && input.beforeSnapshot !== null
+            ? (input.beforeSnapshot as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
+        afterSnapshot:
+          input.afterSnapshot !== undefined && input.afterSnapshot !== null
+            ? (input.afterSnapshot as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
         reason: input.reason ?? null,
-        metadata: input.metadata !== undefined && input.metadata !== null
-          ? (input.metadata as Prisma.InputJsonValue)
-          : Prisma.JsonNull,
+        metadata:
+          input.metadata !== undefined && input.metadata !== null
+            ? (input.metadata as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
       },
     });
   }
@@ -183,16 +186,19 @@ export class AuditService {
         agentId: null, // Legacy operations don't have agents
         email: input.email,
         role: input.role,
-        beforeSnapshot: input.beforeSnapshot !== undefined && input.beforeSnapshot !== null
-          ? (input.beforeSnapshot as Prisma.InputJsonValue)
-          : Prisma.JsonNull,
-        afterSnapshot: input.afterSnapshot !== undefined && input.afterSnapshot !== null
-          ? (input.afterSnapshot as Prisma.InputJsonValue)
-          : Prisma.JsonNull,
+        beforeSnapshot:
+          input.beforeSnapshot !== undefined && input.beforeSnapshot !== null
+            ? (input.beforeSnapshot as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
+        afterSnapshot:
+          input.afterSnapshot !== undefined && input.afterSnapshot !== null
+            ? (input.afterSnapshot as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
         reason: input.reason ?? null,
-        metadata: input.metadata !== undefined && input.metadata !== null
-          ? (input.metadata as Prisma.InputJsonValue)
-          : Prisma.JsonNull,
+        metadata:
+          input.metadata !== undefined && input.metadata !== null
+            ? (input.metadata as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
       },
     });
   }

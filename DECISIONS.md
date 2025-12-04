@@ -5,6 +5,7 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 ## Active ADRs
 
 ### Documentation & Process (ADR-001 to ADR-005)
+
 - [ADR-001: Adopt Diataxis Framework](docs/adrs/ADR-001-adopt-diataxis-framework.md) - Documentation framework and structure
 - [ADR-002: Documentation Naming Standards](docs/adrs/ADR-002-documentation-naming-standards.md) - File naming conventions and organization
 - [ADR-003: Sprint Documentation Lifecycle](docs/adrs/ADR-003-sprint-documentation-lifecycle.md) - Documentation lifecycle management
@@ -12,57 +13,65 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 - [ADR-005: Documentation Security Review](docs/adrs/ADR-005-documentation-security-review.md) - Security review process for docs
 
 ### Architecture & Design (ADR-006 to ADR-007)
+
 - [ADR-006: Modular Monolith Architecture](docs/adrs/ADR-006-modular-monolith-architecture.md) - Core architectural pattern (ports/adapters)
 - [ADR-007: Mock-First Development](docs/adrs/ADR-007-mock-first-development.md) - Development workflow and adapter strategy
 
 ### Concurrency & Reliability (ADR-008, ADR-009, ADR-013)
+
 - [ADR-008: Pessimistic Locking for Booking Race Conditions](docs/adrs/ADR-008-pessimistic-locking-booking-race-conditions.md) - **SUPERSEDED by ADR-013**
 - [ADR-009: Database-Based Webhook Dead Letter Queue](docs/adrs/ADR-009-database-webhook-dead-letter-queue.md) - Webhook reliability and idempotency
 - [ADR-013: PostgreSQL Advisory Locks](docs/adrs/ADR-013-postgresql-advisory-locks.md) - **ACTIVE** Double-booking prevention (supersedes ADR-008)
 
 ### Security (ADR-010)
+
 - [ADR-010: Git History Rewrite for Secret Removal](docs/adrs/ADR-010-git-history-rewrite-secret-removal.md) - Secret management and git history cleanup
 
 ### Integration & Testing (ADR-011, ADR-012)
+
 - [ADR-011: PaymentProvider Interface](docs/adrs/ADR-011-payment-provider-interface.md) - Payment abstraction layer (Stripe)
 - [ADR-012: Full Test Coverage for Webhook Handler](docs/adrs/ADR-012-full-test-coverage-webhook-handler.md) - Testing standards for critical paths
 
 ## Quick Reference by Category
 
 ### Architecture Patterns
+
 - **Modular Monolith:** ADR-006
 - **Ports & Adapters:** ADR-006, ADR-011
 - **Mock-First:** ADR-007
 
 ### Concurrency Control
+
 - **Double-Booking Prevention:** ADR-013 (active), ADR-008 (superseded)
 - **Webhook Idempotency:** ADR-009
 
 ### Testing & Quality
+
 - **Test Coverage:** ADR-012
 - **Mock Adapters:** ADR-007
 
 ### Security
+
 - **Secret Management:** ADR-010
 - **Documentation Security:** ADR-005
 
 ## Decision Summary Table
 
-| ADR | Decision | Status | Priority | Category |
-|-----|----------|--------|----------|----------|
-| ADR-001 | Adopt Diataxis Framework | Accepted | P1 | Documentation |
-| ADR-002 | Documentation Naming Standards | Accepted | P1 | Documentation |
-| ADR-003 | Sprint Documentation Lifecycle | Accepted | P1 | Documentation |
-| ADR-004 | Time-Based Archive Strategy | Accepted | P1 | Documentation |
-| ADR-005 | Documentation Security Review | Accepted | P1 | Documentation |
-| ADR-006 | Modular Monolith Architecture | Accepted | P0 | Architecture |
-| ADR-007 | Mock-First Development | Accepted | P0 | Development |
-| ADR-008 | Pessimistic Locking | Superseded | - | Concurrency |
-| ADR-009 | Webhook Dead Letter Queue | Accepted | P0 | Reliability |
-| ADR-010 | Git History Rewrite | Pending | P1 | Security |
-| ADR-011 | PaymentProvider Interface | Accepted | P1 | Architecture |
-| ADR-012 | Full Test Coverage (Webhooks) | Accepted | P0 | Testing |
-| ADR-013 | PostgreSQL Advisory Locks | Accepted | P0 | Concurrency |
+| ADR     | Decision                       | Status     | Priority | Category      |
+| ------- | ------------------------------ | ---------- | -------- | ------------- |
+| ADR-001 | Adopt Diataxis Framework       | Accepted   | P1       | Documentation |
+| ADR-002 | Documentation Naming Standards | Accepted   | P1       | Documentation |
+| ADR-003 | Sprint Documentation Lifecycle | Accepted   | P1       | Documentation |
+| ADR-004 | Time-Based Archive Strategy    | Accepted   | P1       | Documentation |
+| ADR-005 | Documentation Security Review  | Accepted   | P1       | Documentation |
+| ADR-006 | Modular Monolith Architecture  | Accepted   | P0       | Architecture  |
+| ADR-007 | Mock-First Development         | Accepted   | P0       | Development   |
+| ADR-008 | Pessimistic Locking            | Superseded | -        | Concurrency   |
+| ADR-009 | Webhook Dead Letter Queue      | Accepted   | P0       | Reliability   |
+| ADR-010 | Git History Rewrite            | Pending    | P1       | Security      |
+| ADR-011 | PaymentProvider Interface      | Accepted   | P1       | Architecture  |
+| ADR-012 | Full Test Coverage (Webhooks)  | Accepted   | P0       | Testing       |
+| ADR-013 | PostgreSQL Advisory Locks      | Accepted   | P0       | Concurrency   |
 
 ## Decision Process
 
@@ -98,6 +107,7 @@ When creating a new ADR:
 **Important:** ADRs are immutable once accepted.
 
 If a decision needs to change:
+
 1. Create a new ADR that supersedes the old one
 2. Mark the old ADR with `Status: Superseded by ADR-XXX`
 3. Reference the old ADR in the new ADR's "Related ADRs" section
@@ -114,6 +124,7 @@ If a decision needs to change:
 ## Migration Notes
 
 **2025-12-02:** Consolidated ADRs from multiple locations:
+
 - Moved minimal ADRs from `/DECISIONS/` to comprehensive docs in `docs/adrs/`
 - Extracted ADRs from root `DECISIONS.md` into separate files
 - Renumbered to avoid conflicts (documentation ADRs: 001-005, technical ADRs: 006-013)

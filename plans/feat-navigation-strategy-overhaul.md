@@ -7,6 +7,7 @@ The current header navigation has critical misalignments between the business mo
 ## Problem Statement
 
 ### Current Navigation State
+
 ```
 Header: "How It Works" | "Pricing" | "Log In" | [Get Started]
                 ↓              ↓                      ↓
@@ -42,12 +43,12 @@ Header: "How It Works" | "Results" | "Our Approach" | "Log In" | [Book Discovery
 
 ### Key Changes
 
-| Current | Proposed | Rationale |
-|---------|----------|-----------|
-| "How It Works" → broken anchor | "How It Works" → `#storefront` | Fix broken link, scroll to existing section |
-| "Pricing" → /packages | "Results" → /results (new) | Replace transactional with trust-building |
-| [Get Started] → /packages | [Book Discovery Call] → /contact | Align CTA with actual conversion goal |
-| No about page | "Our Approach" → /approach (new) | B2B trust signal without exposing company size |
+| Current                        | Proposed                         | Rationale                                      |
+| ------------------------------ | -------------------------------- | ---------------------------------------------- |
+| "How It Works" → broken anchor | "How It Works" → `#storefront`   | Fix broken link, scroll to existing section    |
+| "Pricing" → /packages          | "Results" → /results (new)       | Replace transactional with trust-building      |
+| [Get Started] → /packages      | [Book Discovery Call] → /contact | Align CTA with actual conversion goal          |
+| No about page                  | "Our Approach" → /approach (new) | B2B trust signal without exposing company size |
 
 ## Strategic Rationale
 
@@ -64,6 +65,7 @@ Header: "How It Works" | "Results" | "Our Approach" | "Log In" | [Book Discovery
 ### Positioning Guidance
 
 Per the brand strategy analysis:
+
 - **DO**: Use "we/collective" language, focus on methodology and results
 - **DON'T**: Create traditional "About" page with team size, use "Meet the Founders"
 - **"Approach" not "About"**: Positions expertise over scale
@@ -126,6 +128,7 @@ Header: "How It Works" | "Partnership Model" | "Log In" | [Book Discovery Call]
 ```
 
 **Changes:**
+
 - Fix anchor link
 - Remove "Pricing" entirely
 - Change CTA button text and destination
@@ -143,6 +146,7 @@ Header: "How It Works" | "Results" | "Our Approach" | "Log In" | [Book Discovery
 ```
 
 **New Pages:**
+
 1. `/approach` - Methodology page
 2. `/results` - Case studies page
 
@@ -162,18 +166,21 @@ Full overhaul plus content and SEO optimization:
 ## Recommended Approach: Option B
 
 ### Phase 1: Navigation Cleanup (30 min)
+
 1. Fix "How It Works" anchor → `#storefront`
 2. Change "Get Started" → "Book Discovery Call" → `/contact`
 3. Remove "Pricing" link from desktop nav
 4. Update mobile menu to match
 
 ### Phase 2: New Pages (3-4 hours)
+
 1. Create `/approach` page with methodology content
 2. Create `/results` page with case study placeholders
 3. Add routes to router
 4. Add "Results" and "Our Approach" to navigation
 
 ### Phase 3: Footer Update (30 min)
+
 1. Change "About Us" → "Our Approach" → `/approach`
 2. Verify all footer links functional
 
@@ -196,12 +203,14 @@ Full overhaul plus content and SEO optimization:
 ## References
 
 ### Internal Files
+
 - `client/src/app/AppShell.tsx:52-76` - Current header navigation
 - `client/src/pages/Home/index.tsx` - Homepage section structure
 - `client/src/pages/Contact.tsx` - Discovery call booking page
 - `client/src/pages/PackageCatalog.tsx` - Current packages page
 
 ### Agent Analysis Sources
+
 - UX Design Agent: Identified broken anchor, redundant CTAs, business model mismatch
 - Marketing Conversion Agent: Recommended discovery-first funnel, lead quality focus
 - Brand Positioning Agent: Recommended methodology-first positioning, "Approach" over "About"
@@ -210,10 +219,10 @@ Full overhaul plus content and SEO optimization:
 
 ## Summary of Agent Recommendations
 
-| Agent | Primary Recommendation | Key Insight |
-|-------|----------------------|-------------|
-| UX Design | Discovery-First Navigation | "Your navigation problem is actually a business model clarity problem" |
-| Marketing | Remove Pricing, Single CTA | "Lead quality ↑ 300-400%, close rate ↑ 2-3x with discovery-first" |
-| Positioning | Methodology-First, No Traditional About | "Lead with systems and results, not team size" |
+| Agent       | Primary Recommendation                  | Key Insight                                                            |
+| ----------- | --------------------------------------- | ---------------------------------------------------------------------- |
+| UX Design   | Discovery-First Navigation              | "Your navigation problem is actually a business model clarity problem" |
+| Marketing   | Remove Pricing, Single CTA              | "Lead quality ↑ 300-400%, close rate ↑ 2-3x with discovery-first"      |
+| Positioning | Methodology-First, No Traditional About | "Lead with systems and results, not team size"                         |
 
 **Consensus**: All three specialists independently recommended removing "Pricing" from navigation and focusing on a single, clear CTA to book discovery calls.

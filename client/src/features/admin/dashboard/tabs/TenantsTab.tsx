@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { Users, LogIn, XCircle, CheckCircle } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
+import { useState } from 'react';
+import { Users, LogIn, XCircle, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api';
 
 type Tenant = {
   id: string;
@@ -47,18 +47,18 @@ export function TenantsTab({ tenants, isLoading, onRefresh }: TenantsTabProps) {
         window.location.reload();
       } else {
         if (import.meta.env.DEV) {
-          console.error("Impersonation failed:", result.status);
+          console.error('Impersonation failed:', result.status);
         }
-        toast.error("Failed to impersonate tenant", {
-          description: "Please try again or contact support.",
+        toast.error('Failed to impersonate tenant', {
+          description: 'Please try again or contact support.',
         });
       }
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.error("Impersonation error:", error);
+        console.error('Impersonation error:', error);
       }
-      toast.error("An error occurred while impersonating tenant", {
-        description: "Please try again or contact support.",
+      toast.error('An error occurred while impersonating tenant', {
+        description: 'Please try again or contact support.',
       });
     } finally {
       setImpersonating(null);
@@ -78,9 +78,7 @@ export function TenantsTab({ tenants, isLoading, onRefresh }: TenantsTabProps) {
       <div className="bg-macon-navy-900 rounded-lg p-8 text-center">
         <Users className="w-12 h-12 text-macon-navy-600 mx-auto mb-4" />
         <p className="text-white/60 text-lg">No tenants found</p>
-        <p className="text-white0 text-sm mt-2">
-          Create a new tenant to get started
-        </p>
+        <p className="text-white0 text-sm mt-2">Create a new tenant to get started</p>
       </div>
     );
   }
@@ -88,9 +86,7 @@ export function TenantsTab({ tenants, isLoading, onRefresh }: TenantsTabProps) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold text-white">
-          Tenants ({tenants.length})
-        </h2>
+        <h2 className="text-2xl font-semibold text-white">Tenants ({tenants.length})</h2>
         <Button
           onClick={onRefresh}
           variant="outline"
@@ -109,9 +105,7 @@ export function TenantsTab({ tenants, isLoading, onRefresh }: TenantsTabProps) {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-xl font-semibold text-white">
-                    {tenant.name}
-                  </h3>
+                  <h3 className="text-xl font-semibold text-white">{tenant.name}</h3>
                   {!tenant.isActive && (
                     <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-900/50 text-red-300 text-xs rounded">
                       <XCircle className="h-3 w-3" aria-hidden="true" />
@@ -131,11 +125,10 @@ export function TenantsTab({ tenants, isLoading, onRefresh }: TenantsTabProps) {
                     <span className="font-medium">Slug:</span> {tenant.slug}
                   </p>
                   <p>
-                    <span className="font-medium">Commission:</span>{" "}
-                    {tenant.commissionPercent}%
+                    <span className="font-medium">Commission:</span> {tenant.commissionPercent}%
                   </p>
                   <p>
-                    <span className="font-medium">API Key:</span>{" "}
+                    <span className="font-medium">API Key:</span>{' '}
                     <code className="bg-macon-navy-950 px-2 py-0.5 rounded text-xs">
                       {tenant.apiKeyPublic}
                     </code>

@@ -81,17 +81,17 @@ TOTAL: 17-20 hours (2-3 days of actual work)
 
 ## What Gets Cut
 
-| Feature | Original | Ruthless | Reason |
-|---------|----------|----------|--------|
-| **5-step wizard** | 12h | 0h | Over-engineered. Replace with 3-screen form. |
-| **Analytics** | 12h | Defer | Stripe dashboard sufficient. Add week 3. |
-| **Settings page** | 10h | Defer | Password changes rare. Nice-to-have. |
-| **Email templates** | Included | Defer | File-sink works. Add Postmark week 2. |
-| **Segment UI** | Included | Cut | Backend done. Launch without. |
-| **Photo upload fix** | 4h | Skip | Not blocking customer bookings. Fix week 2. |
-| **Webhook HTTP tests** | 12h | Skip | Endpoint works. Tests are nice-to-have. |
-| **Custom domains** | Planned | Cut | Everyone uses maconaisolutions.com/{slug} |
-| **White-label** | Planned | Cut | Future, not MVP. |
+| Feature                | Original | Ruthless | Reason                                       |
+| ---------------------- | -------- | -------- | -------------------------------------------- |
+| **5-step wizard**      | 12h      | 0h       | Over-engineered. Replace with 3-screen form. |
+| **Analytics**          | 12h      | Defer    | Stripe dashboard sufficient. Add week 3.     |
+| **Settings page**      | 10h      | Defer    | Password changes rare. Nice-to-have.         |
+| **Email templates**    | Included | Defer    | File-sink works. Add Postmark week 2.        |
+| **Segment UI**         | Included | Cut      | Backend done. Launch without.                |
+| **Photo upload fix**   | 4h       | Skip     | Not blocking customer bookings. Fix week 2.  |
+| **Webhook HTTP tests** | 12h      | Skip     | Endpoint works. Tests are nice-to-have.      |
+| **Custom domains**     | Planned  | Cut      | Everyone uses maconaisolutions.com/{slug}    |
+| **White-label**        | Planned  | Cut      | Future, not MVP.                             |
 
 **Hours saved: 50 hours (over 70% reduction)**
 
@@ -99,22 +99,23 @@ TOTAL: 17-20 hours (2-3 days of actual work)
 
 ## What Gets KEPT
 
-| Feature | Status | Effort |
-|---------|--------|--------|
-| **Booking form** | ✅ 95% done | 0h |
-| **Stripe payment** | ✅ 100% done | 0h |
-| **Commission auto-split** | ✅ 100% done | 0h |
-| **Multi-tenant isolation** | ✅ 95% done | 0h |
-| **Tenant signup** | ❌ 0% done | 2h |
-| **Signup form** | ❌ 0% done | 1h |
-| **Admin dashboard** | ✅ 100% done | 0h |
-| **Package CRUD** | ✅ 100% done | 0h |
+| Feature                    | Status       | Effort |
+| -------------------------- | ------------ | ------ |
+| **Booking form**           | ✅ 95% done  | 0h     |
+| **Stripe payment**         | ✅ 100% done | 0h     |
+| **Commission auto-split**  | ✅ 100% done | 0h     |
+| **Multi-tenant isolation** | ✅ 95% done  | 0h     |
+| **Tenant signup**          | ❌ 0% done   | 2h     |
+| **Signup form**            | ❌ 0% done   | 1h     |
+| **Admin dashboard**        | ✅ 100% done | 0h     |
+| **Package CRUD**           | ✅ 100% done | 0h     |
 
 ---
 
 ## The Critical Difference
 
 ### Original Plan Assumes:
+
 - MVP = Complete product
 - Every feature must be polished
 - 5-step onboarding with previews
@@ -123,6 +124,7 @@ TOTAL: 17-20 hours (2-3 days of actual work)
 - Email templates customized per tenant
 
 ### Ruthless Plan Assumes:
+
 - MVP = Working revenue loop
 - Minimum viable is minimum
 - 3-field signup form
@@ -156,6 +158,7 @@ Parallel work (user responsibility):
 ## Risk Comparison
 
 ### Original Plan Risks
+
 - Scope creep (5-step wizard is complex)
 - Analytics adds database queries (perf impact?)
 - Settings page adds security surface
@@ -163,6 +166,7 @@ Parallel work (user responsibility):
 - Easy to get stuck on perfection
 
 ### Ruthless Plan Risks
+
 - Photo upload tests still broken (low risk: low-priority feature)
 - No analytics on day 1 (low risk: Stripe dashboard exists)
 - No email delivery (low risk: file-sink works for testing)
@@ -200,12 +204,14 @@ Week 5+ (Future):
 ## Cost-Benefit Analysis
 
 ### Original Plan
+
 - **Cost:** 70 hours engineering time
 - **Benefit:** Feature-complete platform
 - **Risk:** High scope, perfect product
 - **Time to customer:** 6 weeks
 
 ### Ruthless Plan
+
 - **Cost:** 17-20 hours engineering time
 - **Benefit:** Working revenue loop
 - **Risk:** Low scope, minimalist product
@@ -290,6 +296,7 @@ TOTAL: 17-20 engineering hours = 2-3 focused business days
 ## Your Decision
 
 ### Option A: Safe Path (6 weeks)
+
 - Build everything in the original plan
 - Polish before shipping
 - Lower risk of bugs
@@ -297,6 +304,7 @@ TOTAL: 17-20 engineering hours = 2-3 focused business days
 - More engineering time
 
 ### Option B: Ruthless Path (2 weeks)
+
 - Build only what's critical
 - Ship with known gaps
 - Higher MVP quality, lower product polish
@@ -310,5 +318,5 @@ Why? Because first customer feedback > second-guessing features.
 
 ---
 
-*This analysis is tied to real code review of your codebase.*
-*File paths are accurate as of Nov 25, 2025.*
+_This analysis is tied to real code review of your codebase._
+_File paths are accurate as of Nov 25, 2025._

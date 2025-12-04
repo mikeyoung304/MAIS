@@ -267,6 +267,7 @@
 ## 3. Dependency Graph: Current vs. Proposed
 
 ### Current (Problematic)
+
 ```
             ┌──────────────────────┐
             │   BookingService     │
@@ -289,6 +290,7 @@ Result: Multiple hardcoded Stripe dependencies
 ```
 
 ### Proposed (Flexible)
+
 ```
             ┌──────────────────────┐
             │   BookingService     │
@@ -313,12 +315,13 @@ Result: Single provider interface, pluggable adapters
 ## 4. Type Dependency Evolution
 
 ### Current
+
 ```typescript
 // Stripe types leak everywhere
 import Stripe from 'stripe';
 
 interface PaymentProvider {
-  verifyWebhook(): Promise<Stripe.Event>;  // ← Stripe type
+  verifyWebhook(): Promise<Stripe.Event>; // ← Stripe type
 }
 
 // WebhooksController
@@ -326,6 +329,7 @@ const event: Stripe.Event = await provider.verifyWebhook();
 ```
 
 ### Proposed
+
 ```typescript
 // Provider-agnostic types
 export interface PaymentEvent {
@@ -336,7 +340,7 @@ export interface PaymentEvent {
 }
 
 interface PaymentProvider {
-  verifyWebhook(): Promise<PaymentEvent>;  // ← Generic type
+  verifyWebhook(): Promise<PaymentEvent>; // ← Generic type
 }
 
 // WebhooksController
@@ -346,6 +350,7 @@ const event: PaymentEvent = await provider.verifyWebhook();
 ## 5. Webhook Event Flow Comparison
 
 ### Current (Stripe-Specific)
+
 ```
 Stripe Webhook
     ↓
@@ -367,6 +372,7 @@ Create booking
 ```
 
 ### Proposed (Provider-Agnostic)
+
 ```
 Provider Webhook (Stripe/PayPal/Square)
     ↓
@@ -391,6 +397,7 @@ Create booking
 ## 6. Configuration Flow
 
 ### Current
+
 ```
 .env
   STRIPE_SECRET_KEY ─────┐
@@ -403,6 +410,7 @@ Problem: Only Stripe supported
 ```
 
 ### Proposed
+
 ```
 .env
   PAYMENT_PROVIDER = 'stripe' | 'paypal' | 'square'
@@ -412,12 +420,12 @@ Problem: Only Stripe supported
     STRIPE_WEBHOOK_SECRET ───┤
     STRIPE_SUCCESS_URL ──────┤
     STRIPE_CANCEL_URL ───────┘
-  
+
   ELSE IF paypal:
     PAYPAL_CLIENT_ID ────┬─→ di.ts ─→ new PayPalPaymentAdapter()
     PAYPAL_CLIENT_SECRET ┤
     PAYPAL_MODE ────────┘
-  
+
   ELSE IF square:
     SQUARE_ACCESS_TOKEN ┬─→ di.ts ─→ new SquarePaymentAdapter()
     SQUARE_ENVIRONMENT ─┘
@@ -427,12 +435,11 @@ Result: Dynamic provider selection
 
 ## Summary of Changes
 
-| Aspect | Current | Proposed | Impact |
-|--------|---------|----------|--------|
-| Event Type | `Stripe.Event` | `PaymentEvent` | Type safety + flexibility |
-| Webhook Route | `/v1/webhooks/stripe` | `/v1/webhooks` | Provider-agnostic |
-| Schema Validation | Hardcoded Stripe schema | Generic validator | Extensible |
-| Connect Service | `StripeConnectService` | `ProviderConnectService` | Multi-provider support |
-| Configuration | Hardcoded Stripe | Dynamic selection | Environment-based |
-| Adapter Selection | Hardcoded in DI | Config-driven | Flexible deployment |
-
+| Aspect            | Current                 | Proposed                 | Impact                    |
+| ----------------- | ----------------------- | ------------------------ | ------------------------- |
+| Event Type        | `Stripe.Event`          | `PaymentEvent`           | Type safety + flexibility |
+| Webhook Route     | `/v1/webhooks/stripe`   | `/v1/webhooks`           | Provider-agnostic         |
+| Schema Validation | Hardcoded Stripe schema | Generic validator        | Extensible                |
+| Connect Service   | `StripeConnectService`  | `ProviderConnectService` | Multi-provider support    |
+| Configuration     | Hardcoded Stripe        | Dynamic selection        | Environment-based         |
+| Adapter Selection | Hardcoded in DI         | Config-driven            | Flexible deployment       |

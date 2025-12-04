@@ -1,9 +1,9 @@
 ---
 status: complete
 priority: p2
-issue_id: "072"
+issue_id: '072'
 tags: [code-review, architecture, api-client, technical-debt]
-dependencies: ["071"]
+dependencies: ['071']
 resolution_date: 2025-12-02
 ---
 
@@ -14,12 +14,14 @@ resolution_date: 2025-12-02
 **Status:** RESOLVED - Investigation complete. Most direct fetch() calls are **justified and necessary**.
 
 After comprehensive investigation, found that:
+
 1. **AppointmentsView.tsx** - ✅ Already using API client (RESOLVED)
 2. **File upload components** - ✅ Direct fetch is necessary (FormData limitations)
 3. **Public booking endpoints** - ✅ Direct fetch is appropriate (no auth required)
 4. **Admin tenant management** - ⚠️ Could use API client (low priority)
 
 **Acceptance Criteria Met:**
+
 - ✅ TypeScript passes (`npm run typecheck`)
 - ✅ Primary concern (AppointmentsView) resolved
 - ✅ File uploads documented as necessary pattern
@@ -27,6 +29,7 @@ After comprehensive investigation, found that:
 ## Problem Statement
 
 Multiple components use direct `fetch()` calls to tenant-admin endpoints instead of the centralized ts-rest API client (`client/src/lib/api.ts`). This bypasses:
+
 - Centralized authentication handling
 - Type-safe request/response contracts
 - Consistent error handling
@@ -92,10 +95,10 @@ Multiple components use direct `fetch()` calls to tenant-admin endpoints instead
 
 ```typescript
 // client/src/lib/api.ts lines 138-154
-if (path.includes("/v1/tenant-admin")) {
-  const isImpersonating = localStorage.getItem("impersonationTenantKey");
+if (path.includes('/v1/tenant-admin')) {
+  const isImpersonating = localStorage.getItem('impersonationTenantKey');
   if (isImpersonating) {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem('adminToken');
     // ... handles auth automatically
   }
 }
@@ -108,12 +111,14 @@ if (path.includes("/v1/tenant-admin")) {
 **Description:** Update ts-rest contracts to properly support FormData uploads.
 
 **Pros:**
+
 - Type-safe file uploads
 - Uses centralized auth
 - Follows established patterns
 - Better DX with proper types
 
 **Cons:**
+
 - Requires contract changes
 - Need to test ts-rest FormData support
 
@@ -136,10 +141,12 @@ tenantAdminUploadPackagePhoto: {
 **Description:** Wrap file uploads in a utility that leverages the API client's auth handling.
 
 **Pros:**
+
 - Centralized auth without contract changes
 - Incremental migration
 
 **Cons:**
+
 - Still some duplication
 - Two patterns for API calls
 
@@ -151,10 +158,12 @@ tenantAdminUploadPackagePhoto: {
 **Description:** Add contracts for appointments, services, customers endpoints. Keep file uploads as-is.
 
 **Pros:**
+
 - Reduces direct fetch usage by 60%
 - Lower risk than changing upload handling
 
 **Cons:**
+
 - File upload problem remains
 - Still two patterns
 
@@ -168,6 +177,7 @@ tenantAdminUploadPackagePhoto: {
 ## Technical Details
 
 ### Missing Contracts to Add
+
 ```typescript
 // Appointments with filters
 tenantAdminGetAppointments: {
@@ -215,20 +225,22 @@ All file upload components correctly use `getAuthToken()` helper, which provides
 ## Recommendations
 
 ### No Action Required
+
 The current architecture is sound. File uploads inherently require direct fetch due to FormData handling.
 
 ### Optional Future Improvements (Low Priority)
+
 1. Migrate `tenantApi.ts` (admin tenant management) to use API client
 2. Consider creating a `useApiClient` hook for public booking endpoints
 3. Document the "file upload pattern" in CLAUDE.md for future reference
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-29 | Created | Found during code review |
-| 2025-12-02 | Investigated | Comprehensive review of all direct fetch usage |
-| 2025-12-02 | Resolved | Confirmed most usage is justified and necessary |
+| Date       | Action       | Notes                                           |
+| ---------- | ------------ | ----------------------------------------------- |
+| 2025-11-29 | Created      | Found during code review                        |
+| 2025-12-02 | Investigated | Comprehensive review of all direct fetch usage  |
+| 2025-12-02 | Resolved     | Confirmed most usage is justified and necessary |
 
 ## Resources
 

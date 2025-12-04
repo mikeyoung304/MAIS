@@ -1,5 +1,5 @@
 ---
-title: "ESM/CJS Module Compatibility - Best Practices Guide"
+title: 'ESM/CJS Module Compatibility - Best Practices Guide'
 slug: esm-cjs-best-practices
 category: prevention
 tags: [modules, esm, cjs, patterns, architecture, best-practices]
@@ -13,6 +13,7 @@ created: 2025-11-29
 This guide provides implementation patterns for handling both ESM and CJS packages in our pure ESM environment (Node.js 25, tsx runtime).
 
 **Project Configuration:**
+
 - `"type": "module"` in server/package.json
 - Runtime: tsx (treats all `.ts` files as ESM)
 - All imports are ESM-style by default
@@ -38,7 +39,9 @@ import type { ZodSchema } from 'zod';
 
 // Usage
 const client = new PrismaClient();
-const priceData: Price = { /* ... */ };
+const priceData: Price = {
+  /* ... */
+};
 ```
 
 ### When to Use
@@ -68,7 +71,7 @@ describe('stripe integration', () => {
     const price = await stripe.prices.create({
       currency: 'usd',
       unit_amount: 1000,
-      recurring: { interval: 'month' }
+      recurring: { interval: 'month' },
     });
 
     expect(price.id).toBeDefined();
@@ -88,7 +91,7 @@ export class BookingService {
   async createPayment(bookingId: string) {
     const price = await stripe.prices.create({
       currency: 'usd',
-      unit_amount: 5000
+      unit_amount: 5000,
     });
 
     return price;
@@ -141,26 +144,31 @@ const detected = await fileType.fromBuffer(buffer);
 ### Setup Steps
 
 **Step 1: Import createRequire**
+
 ```typescript
 import { createRequire } from 'module';
 ```
 
 **Step 2: Create require function**
+
 ```typescript
 const require = createRequire(import.meta.url);
 ```
 
 **Step 3: Require the package**
+
 ```typescript
 const fileType = require('file-type');
 ```
 
 **Step 4: Add type assertion**
+
 ```typescript
 const fileType = require('file-type') as typeof import('file-type');
 ```
 
 **Step 5: Add explanatory comment**
+
 ```typescript
 // file-type v16 is CommonJS-only
 // See: https://github.com/sindresorhus/file-type
@@ -228,7 +236,7 @@ describe('file-type CJS import', () => {
 
   it('should detect JPEG files', async () => {
     // JPEG magic bytes
-    const jpegBuffer = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]);
+    const jpegBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
 
     const result = await fileType.fromBuffer(jpegBuffer);
 
@@ -256,7 +264,7 @@ import { createRequire } from 'module';
 // See: https://github.com/sindresorhus/file-type/releases
 const require = createRequire(import.meta.url);
 const fileType = require('file-type') as {
-  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>
+  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>;
 };
 
 export class UploadService {
@@ -285,17 +293,14 @@ import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
 const fileType = require('file-type') as {
-  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>
+  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>;
 };
 
 export async function detectFileType(buffer: Buffer) {
   return await fileType.fromBuffer(buffer);
 }
 
-export async function isValidMimeType(
-  buffer: Buffer,
-  allowedTypes: string[]
-): Promise<boolean> {
+export async function isValidMimeType(buffer: Buffer, allowedTypes: string[]): Promise<boolean> {
   const detected = await fileType.fromBuffer(buffer);
   return detected ? allowedTypes.includes(detected.mime) : false;
 }
@@ -321,6 +326,7 @@ export class UploadService {
 ```
 
 **Advantages of adapter pattern:**
+
 - ✅ Hides CJS complexity from service layer
 - ✅ Single place to maintain the type assertion
 - ✅ Easier testing (can mock the adapter)
@@ -403,11 +409,10 @@ import { describe, it, expect, vi } from 'vitest';
 
 describe('dynamic imports', () => {
   it('should lazy-load file-type when needed', async () => {
-    const buffer = Buffer.from([0xFF, 0xD8, 0xFF]);
+    const buffer = Buffer.from([0xff, 0xd8, 0xff]);
 
     // Module is imported on-demand
-    const result = await import('file-type')
-      .then(m => m.fromBuffer(buffer));
+    const result = await import('file-type').then((m) => m.fromBuffer(buffer));
 
     expect(result).toBeDefined();
   });
@@ -632,10 +637,7 @@ export class UploadService {
   async validateFile(file: UploadedFile): Promise<void> {
     // Validate size
     if (file.size > this.maxSize) {
-      throw new FileValidationError(
-        'File too large',
-        'INVALID_SIZE'
-      );
+      throw new FileValidationError('File too large', 'INVALID_SIZE');
     }
 
     // Validate type
@@ -643,17 +645,11 @@ export class UploadService {
       const detected = await fileType.fromBuffer(file.buffer);
 
       if (!detected) {
-        throw new FileValidationError(
-          'Unable to verify file type',
-          'INVALID_TYPE'
-        );
+        throw new FileValidationError('Unable to verify file type', 'INVALID_TYPE');
       }
 
       if (!this.allowedTypes.includes(detected.mime)) {
-        throw new FileValidationError(
-          `File type ${detected.mime} not allowed`,
-          'INVALID_TYPE'
-        );
+        throw new FileValidationError(`File type ${detected.mime} not allowed`, 'INVALID_TYPE');
       }
     } catch (error) {
       if (error instanceof FileValidationError) {
@@ -662,10 +658,7 @@ export class UploadService {
 
       // Unexpected error
       logger.error({ error, file }, 'Unexpected error during file validation');
-      throw new FileValidationError(
-        'File validation failed',
-        'INVALID_TYPE'
-      );
+      throw new FileValidationError('File validation failed', 'INVALID_TYPE');
     }
   }
 }
@@ -680,10 +673,7 @@ async function detectFileType(buffer: Buffer) {
     const { fromBuffer } = await import('file-type');
     return await fromBuffer(buffer);
   } catch (error) {
-    logger.warn(
-      { error },
-      'file-type unavailable, using filename-based detection'
-    );
+    logger.warn({ error }, 'file-type unavailable, using filename-based detection');
 
     // Fallback: Use basic magic byte detection
     return detectMagicBytes(buffer);
@@ -692,7 +682,7 @@ async function detectFileType(buffer: Buffer) {
 
 function detectMagicBytes(buffer: Buffer) {
   // Minimal magic byte detection as fallback
-  if (buffer[0] === 0xFF && buffer[1] === 0xD8) {
+  if (buffer[0] === 0xff && buffer[1] === 0xd8) {
     return { mime: 'image/jpeg', ext: 'jpg' };
   }
   if (buffer[0] === 0x89 && buffer[1] === 0x50) {
@@ -758,12 +748,12 @@ async function process(buffer: Buffer) {
 
 ## Testing Patterns Summary
 
-| Pattern | Unit Test | Integration | E2E | Notes |
-|---------|-----------|-------------|-----|-------|
-| Direct Import | ✅ Easy | ✅ Easy | ✅ Works | Preferred |
-| createRequire | ✅ Works | ✅ Works | ✅ Works | Use adapter for cleaner tests |
-| Dynamic Import | ✅ With async | ✅ Works | ✅ Works | Test error cases |
-| Conditional | ⚠️ Complex | ✅ Works | ✅ Works | Test both branches |
+| Pattern        | Unit Test     | Integration | E2E      | Notes                         |
+| -------------- | ------------- | ----------- | -------- | ----------------------------- |
+| Direct Import  | ✅ Easy       | ✅ Easy     | ✅ Works | Preferred                     |
+| createRequire  | ✅ Works      | ✅ Works    | ✅ Works | Use adapter for cleaner tests |
+| Dynamic Import | ✅ With async | ✅ Works    | ✅ Works | Test error cases              |
+| Conditional    | ⚠️ Complex    | ✅ Works    | ✅ Works | Test both branches            |
 
 ---
 

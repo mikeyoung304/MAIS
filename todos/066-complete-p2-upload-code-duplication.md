@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "066"
+issue_id: '066'
 tags: [code-review, code-quality, dry, refactor]
 dependencies: []
 resolution_date: 2025-12-02
@@ -14,6 +14,7 @@ resolution_date: 2025-12-02
 The UploadService has three nearly identical upload methods (`uploadLogo`, `uploadPackagePhoto`, `uploadSegmentImage`) that follow the exact same pattern: validate → generate filename → upload (real vs mock). This violates DRY principle and makes maintenance harder.
 
 **Why This Matters:**
+
 - 60+ lines of duplicated code
 - Bug fixes need to be applied in 3 places
 - Adding new upload types requires copy-paste
@@ -22,6 +23,7 @@ The UploadService has three nearly identical upload methods (`uploadLogo`, `uplo
 ## Resolution Summary
 
 Implemented **Option B** (hybrid approach) - created a private unified `upload()` method with category-based configuration while preserving public wrapper methods for backward compatibility. This solution provides the best of both worlds:
+
 - Eliminates 60+ lines of duplication
 - Maintains existing API contracts (no breaking changes)
 - Single point of change for core upload logic
@@ -32,6 +34,7 @@ Implemented **Option B** (hybrid approach) - created a private unified `upload()
 ### Evidence from Code Review
 
 **Current Duplication:**
+
 ```typescript
 async uploadLogo(file: UploadedFile, tenantId: string): Promise<UploadResult> {
   this.validateFile(file);
@@ -56,6 +59,7 @@ async uploadSegmentImage(file: UploadedFile, tenantId: string): Promise<UploadRe
 ```
 
 ### Code Simplicity Reviewer Assessment
+
 - 95% identical code across 3 methods
 - Only differences: directory path, size limit, filename prefix
 - Could be one parameterized method
@@ -67,11 +71,13 @@ async uploadSegmentImage(file: UploadedFile, tenantId: string): Promise<UploadRe
 **Description:** One `upload()` method that accepts upload type as parameter.
 
 **Pros:**
+
 - Eliminates 60+ lines
 - Single point of change
 - Clear, simple API
 
 **Cons:**
+
 - Breaking change for callers
 - Less explicit method names
 
@@ -123,11 +129,13 @@ async uploadLogo(file: UploadedFile, tenantId: string) {
 **Description:** Keep public methods, extract shared logic to private method.
 
 **Pros:**
+
 - No breaking changes
 - Preserves explicit API
 - Still reduces duplication
 
 **Cons:**
+
 - More indirection
 - Still 3 public methods to maintain
 
@@ -141,6 +149,7 @@ async uploadLogo(file: UploadedFile, tenantId: string) {
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/services/upload.service.ts` - Consolidate methods
 - `server/src/routes/tenant-admin.routes.ts` - Update calls if API changes
 - `server/test/services/upload.service.test.ts` - Update tests
@@ -167,6 +176,7 @@ private async upload(
 ```
 
 **Key Features:**
+
 - Category-based routing (logos/packages/segments)
 - Configurable size limits per category via options
 - Optional log/error context for enhanced debugging
@@ -175,6 +185,7 @@ private async upload(
 - Automatic filename prefix generation from category
 
 **Preserved Public API:**
+
 - `uploadLogo(file, tenantId)` - Wrapper for logos (2MB limit)
 - `uploadPackagePhoto(file, packageId, tenantId?)` - Wrapper for packages (5MB limit)
 - `uploadSegmentImage(file, tenantId)` - Wrapper for segments (5MB limit)
@@ -196,9 +207,9 @@ private async upload(
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-29 | Created | Found during code review - Code Simplicity Reviewer |
+| Date       | Action   | Notes                                                                     |
+| ---------- | -------- | ------------------------------------------------------------------------- |
+| 2025-11-29 | Created  | Found during code review - Code Simplicity Reviewer                       |
 | 2025-12-02 | Resolved | Implemented hybrid approach with private unified method + public wrappers |
 
 ## Resources

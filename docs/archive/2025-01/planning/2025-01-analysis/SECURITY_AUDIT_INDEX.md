@@ -11,9 +11,11 @@ This directory contains a comprehensive security audit of the Elope application,
 ## Documents Included
 
 ### 1. SECURITY_FINDINGS_SUMMARY.md (RECOMMENDED START)
+
 **Quick Reference Guide - 370 lines, 9.3KB**
 
 Start here for:
+
 - Executive summary and quick score (7.3/10)
 - Top 5 security strengths
 - Critical issues (2) that need immediate attention
@@ -24,6 +26,7 @@ Start here for:
 - File-by-file vulnerability list
 
 **Key Takeaways:**
+
 - Audit logging is completely missing (compliance blocker)
 - CORS is too permissive in production
 - Strong multi-layer tenant isolation (excellent)
@@ -32,11 +35,13 @@ Start here for:
 ---
 
 ### 2. SECURITY_AUDIT.md (COMPREHENSIVE ANALYSIS)
+
 **Complete Technical Report - 939 lines, 25KB**
 
 Detailed analysis including:
 
 #### Section 1: Authentication & Authorization (1.1-1.5)
+
 - JWT token management (secure algorithm specification)
 - Dual authentication system (platform admin + tenant admin)
 - Token type validation (prevents privilege escalation)
@@ -44,6 +49,7 @@ Detailed analysis including:
 - Token payload validation gaps
 
 #### Section 2: Tenant Isolation (2.1-2.5)
+
 - Multi-layer enforcement (4 layers analyzed)
 - API key authentication (format validation, constant-time comparison)
 - Tenant-admin authorization checks
@@ -51,6 +57,7 @@ Detailed analysis including:
 - Cache poisoning prevention
 
 #### Section 3: API Validation (3.1-3.7)
+
 - Price validation (prevents negative, but no upper bound)
 - Zod schema validation (strong, webhook payloads protected)
 - Slug format validation (good)
@@ -59,6 +66,7 @@ Detailed analysis including:
 - Array length validation gaps
 
 #### Section 4: Audit Logging (4.1-4.3)
+
 - Current request logging (basic infrastructure present)
 - Login event logging (good)
 - CRITICAL GAP: No audit trail for business operations
@@ -66,6 +74,7 @@ Detailed analysis including:
 - Compliance impact (PCI-DSS, HIPAA, GDPR, SOC 2)
 
 #### Section 5: Rate Limiting & Security Middleware (5.1-5.6)
+
 - Differentiated rate limiting (excellent)
 - Health check bypass
 - Helmet security headers (good)
@@ -74,6 +83,7 @@ Detailed analysis including:
 - CORS too permissive in production (critical issue)
 
 #### Section 6: Permission Model (6.1-6.6)
+
 - Role types (PLATFORM_ADMIN, TENANT_ADMIN)
 - Platform admin routes
 - Tenant admin routes (properly scoped)
@@ -82,6 +92,7 @@ Detailed analysis including:
 - No session management (acceptable for stateless JWT)
 
 #### Section 7: Additional Security Findings (7.1-7.5)
+
 - Webhook signature verification (excellent)
 - Cache poisoning prevention (good)
 - SQL injection prevention via Prisma (excellent)
@@ -89,21 +100,23 @@ Detailed analysis including:
 - Error message information disclosure (acceptable)
 
 #### Security Score Breakdown
-| Category | Score | Status |
-|----------|-------|--------|
-| Authentication | 8/10 | STRONG |
-| Authorization | 7/10 | GOOD |
-| Tenant Isolation | 9/10 | EXCELLENT |
-| Input Validation | 6/10 | MODERATE |
-| Audit Logging | 3/10 | WEAK |
-| Rate Limiting | 8/10 | STRONG |
-| CORS/Headers | 6/10 | NEEDS WORK |
-| Database | 9/10 | EXCELLENT |
-| API Keys | 8/10 | STRONG |
-| Webhooks | 9/10 | EXCELLENT |
-| **Overall** | **7.3/10** | **MODERATE** |
+
+| Category         | Score      | Status       |
+| ---------------- | ---------- | ------------ |
+| Authentication   | 8/10       | STRONG       |
+| Authorization    | 7/10       | GOOD         |
+| Tenant Isolation | 9/10       | EXCELLENT    |
+| Input Validation | 6/10       | MODERATE     |
+| Audit Logging    | 3/10       | WEAK         |
+| Rate Limiting    | 8/10       | STRONG       |
+| CORS/Headers     | 6/10       | NEEDS WORK   |
+| Database         | 9/10       | EXCELLENT    |
+| API Keys         | 8/10       | STRONG       |
+| Webhooks         | 9/10       | EXCELLENT    |
+| **Overall**      | **7.3/10** | **MODERATE** |
 
 #### Compliance Readiness
+
 - PCI-DSS: ⚠️ PARTIAL (Audit logging blocker)
 - HIPAA: ⚠️ PARTIAL (Audit logging blocker)
 - GDPR: ⚠️ PARTIAL (Audit logging needed)
@@ -115,12 +128,14 @@ Detailed analysis including:
 ## Critical Findings Summary
 
 ### Issue #1: Missing Audit Logging (🔴 CRITICAL)
+
 **Files affected**: ALL admin routes
 **Impact**: Compliance violations, no fraud detection
 **Fix time**: 8-10 hours
 **Blocks**: Production release, compliance certification
 
 No audit trail for:
+
 - Package create/update/delete
 - Price changes (CRITICAL for compliance)
 - Add-on modifications
@@ -132,6 +147,7 @@ No audit trail for:
 **Example violation**: Admin changes price $500→$50, no log created
 
 **Recommendation**: Create AuditLog table with:
+
 ```
 - tenantId, userId, action, entityType, entityId
 - changes.before and changes.after values
@@ -139,12 +155,14 @@ No audit trail for:
 ```
 
 ### Issue #2: CORS Too Permissive (🔴 CRITICAL)
+
 **File**: server/src/app.ts (lines 40-51)
 **Impact**: Malicious widget embedding, customer data exposure
 **Fix time**: 1 hour
 **Blocks**: Production deployment
 
 Current code:
+
 ```typescript
 if (process.env.NODE_ENV === 'production' && origin.startsWith('https://')) {
   callback(null, true); // ✓ ALLOWS ANY HTTPS ORIGIN
@@ -152,6 +170,7 @@ if (process.env.NODE_ENV === 'production' && origin.startsWith('https://')) {
 ```
 
 **Recommendation**: Use explicit whitelist
+
 ```typescript
 const allowedOrigins = ['https://example.com', ...partners];
 ```
@@ -161,11 +180,14 @@ const allowedOrigins = ['https://example.com', ...partners];
 ## High Priority Issues (⚠️ HIGH)
 
 ### Issue #3: Missing Validation Upper Bounds
+
 **Files affected**:
+
 - server/src/lib/validation.ts
 - server/src/validation/tenant-admin.schemas.ts
 
 **Problems**:
+
 - No max price ($999,999.99 possible)
 - No string length limits (100k character title accepted)
 - No array size limits (100 photos possible)
@@ -173,11 +195,13 @@ const allowedOrigins = ['https://example.com', ...partners];
 **Fix time**: 4-6 hours
 
 ### Issue #4: No Service-Layer Permission Checks
+
 **File**: server/src/services/catalog.service.ts
 **Problem**: Relies entirely on middleware; if misconfigured → data leak
 **Fix time**: 2-3 hours
 
 ### Issue #5: Token Format Not Validated
+
 **File**: server/src/middleware/tenant-auth.ts
 **Problem**: Checks presence but not format of tenantId/slug
 **Fix time**: 1-2 hours
@@ -187,6 +211,7 @@ const allowedOrigins = ['https://example.com', ...partners];
 ## Implementation Timeline
 
 ### Phase 1 (THIS SPRINT - CRITICAL)
+
 - [ ] Add AuditLog table
 - [ ] Implement audit logging service
 - [ ] Log all business operations
@@ -195,6 +220,7 @@ const allowedOrigins = ['https://example.com', ...partners];
 - **Status**: BLOCKING production release
 
 ### Phase 2 (NEXT SPRINT)
+
 - [ ] Add validation upper bounds
 - [ ] Add service-layer permission checks
 - [ ] Add token format validation
@@ -202,6 +228,7 @@ const allowedOrigins = ['https://example.com', ...partners];
 - **Time**: 6-8 hours
 
 ### Phase 3 (BEFORE GA)
+
 - [ ] Switch to Redis rate limiting
 - [ ] Add session management
 - [ ] Improve email validation
@@ -213,26 +240,31 @@ const allowedOrigins = ['https://example.com', ...partners];
 ## Security Strengths to Leverage
 
 ✅ **Multi-Layer Tenant Isolation**
+
 - 4-layer enforcement prevents cross-tenant access
 - Composite unique constraints (tenantId + slug)
 - Cache keys include tenantId
 
 ✅ **Strong JWT Implementation**
+
 - Explicit HS256 algorithm (prevents confusion attacks)
 - Only accepts HS256, rejects other algorithms
 - 7-day expiration
 
 ✅ **Excellent Webhook Security**
+
 - Stripe signature verification
 - Idempotency protection (prevents double-charging)
 - Zod-based payload validation
 
 ✅ **Database Protection**
+
 - Prisma ORM prevents SQL injection
 - Type-safe query building
 - Parameterized statements
 
 ✅ **Smart Rate Limiting**
+
 - Differentiated by endpoint type
 - Only counts failed login attempts
 - Health check bypass included
@@ -258,6 +290,7 @@ const allowedOrigins = ['https://example.com', ...partners];
 ## Files Analyzed
 
 **Authentication/Authorization:**
+
 - server/src/services/identity.service.ts
 - server/src/services/tenant-auth.service.ts
 - server/src/middleware/auth.ts
@@ -266,28 +299,33 @@ const allowedOrigins = ['https://example.com', ...partners];
 - server/src/routes/tenant-auth.routes.ts
 
 **Validation:**
+
 - server/src/lib/validation.ts
 - server/src/validation/tenant-admin.schemas.ts
 - server/src/routes/webhooks.routes.ts
 
 **Tenant Isolation:**
+
 - server/src/middleware/tenant.ts
 - server/src/adapters/prisma/catalog.repository.ts
 - server/src/adapters/prisma/tenant.repository.ts
 - server/src/lib/api-key.service.ts
 
 **Rate Limiting & Security:**
+
 - server/src/middleware/rateLimiter.ts
 - server/src/middleware/error-handler.ts
 - server/src/middleware/request-logger.ts
 - server/src/app.ts
 
 **Services & Controllers:**
+
 - server/src/services/catalog.service.ts
 - server/src/routes/tenant-admin.routes.ts
 - server/src/routes/bookings.routes.ts
 
 **Database:**
+
 - server/prisma/schema.prisma
 
 **Total**: 45+ TypeScript files analyzed
@@ -315,4 +353,3 @@ const allowedOrigins = ['https://example.com', ...partners];
 ---
 
 **Questions or clarifications?** Refer to the detailed analysis in SECURITY_AUDIT.md.
-

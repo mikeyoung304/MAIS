@@ -1,7 +1,7 @@
 ---
 status: pending
 priority: p3
-issue_id: "220"
+issue_id: '220'
 tags: [documentation, storybook, components, landing-page]
 dependencies: []
 ---
@@ -17,6 +17,7 @@ dependencies: []
 Storybook is not configured in this project. No `.storybook/` directory or `@storybook/*` dependencies found in `client/package.json` or root `package.json`.
 
 To implement this TODO, first configure Storybook by:
+
 1. Installing Storybook dependencies: `npx storybook@latest init`
 2. Configuring `.storybook/main.ts` and `.storybook/preview.ts`
 3. Adding Storybook scripts to `client/package.json`
@@ -74,7 +75,8 @@ export const LongContent: Story = {
   args: {
     config: {
       headline: 'This is a very long headline that might wrap to multiple lines on smaller screens',
-      subheadline: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.',
+      subheadline:
+        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.',
       ctaText: 'Learn More About Us',
     },
   },
@@ -103,7 +105,11 @@ export const Default: Story = {
       subtitle: 'Find answers to common questions',
       faqs: [
         { id: '1', question: 'What are your hours?', answer: 'We are open 9am-5pm daily.' },
-        { id: '2', question: 'Do you accept credit cards?', answer: 'Yes, we accept all major credit cards.' },
+        {
+          id: '2',
+          question: 'Do you accept credit cards?',
+          answer: 'Yes, we accept all major credit cards.',
+        },
       ],
     },
   },

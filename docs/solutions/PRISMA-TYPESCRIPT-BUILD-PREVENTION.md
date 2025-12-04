@@ -6,8 +6,8 @@ priority: P1
 severity: critical
 date_created: 2025-12-01
 related_issues:
-  - "Render deployment TypeScript compilation failure"
-  - "Prisma JsonValue vs InputJsonValue type incompatibility"
+  - 'Render deployment TypeScript compilation failure'
+  - 'Prisma JsonValue vs InputJsonValue type incompatibility'
 applies_to:
   - server/src/adapters/prisma/**
   - server/src/services/*.service.ts
@@ -27,12 +27,14 @@ TS1205: Re-exporting a type when the '--isolatedModules' flag is provided requir
 ```
 
 **Root Causes:**
+
 1. Using `import type` for modules that need runtime values (`Prisma.JsonNull`)
 2. Object spread including optional properties that become `undefined` instead of `null`
 3. Prisma `JsonValue` vs `InputJsonValue` type incompatibility in update operations
 4. Type assertions bypassing JSON field type safety
 
 **Impact:**
+
 - Production deployments blocked
 - CI/CD pipeline failures
 - Unable to release features with JSON field updates
@@ -103,6 +105,7 @@ grep -r "\.\.\." server/src --include="*.ts" -A 2 | grep "undefined"
 #### 1. Import Statements
 
 **Problem Pattern:**
+
 ```typescript
 // ❌ WRONG - Using import type for Prisma
 import type { Prisma } from '../../generated/prisma';
@@ -112,6 +115,7 @@ import type { Prisma } from '../../generated/prisma';
 ```
 
 **Correct Pattern:**
+
 ```typescript
 // ✅ CORRECT - Import Prisma as value, types with 'type'
 import { Prisma, type PrismaClient } from '../../generated/prisma';
@@ -120,6 +124,7 @@ import { Prisma, type PrismaClient } from '../../generated/prisma';
 ```
 
 **Reviewer Checklist:**
+
 - [ ] Files using `Prisma.JsonNull` import `Prisma` without `type` keyword
 - [ ] Type-only imports use `type` keyword for TypeScript types
 - [ ] Mixed imports follow: `import { Prisma, type PrismaClient }`
@@ -127,11 +132,12 @@ import { Prisma, type PrismaClient } from '../../generated/prisma';
 #### 2. JSON Field Updates
 
 **Problem Pattern:**
+
 ```typescript
 // ❌ WRONG - Object spread with optional undefined values
 const update = {
   ...(data.title !== undefined && { title: data.title }),
-  ...(data.metadata !== undefined && { metadata: data.metadata }),  // JSON field!
+  ...(data.metadata !== undefined && { metadata: data.metadata }), // JSON field!
 };
 
 await prisma.resource.update({
@@ -142,6 +148,7 @@ await prisma.resource.update({
 ```
 
 **Correct Pattern:**
+
 ```typescript
 // ✅ CORRECT - Explicit null handling for JSON fields
 const update = {
@@ -165,6 +172,7 @@ await prisma.resource.update({
 ```
 
 **Reviewer Checklist:**
+
 - [ ] JSON fields use `as Prisma.InputJsonValue` cast
 - [ ] Null values use `Prisma.JsonNull`, not `null`
 - [ ] Object spreads with optional properties don't mix types
@@ -173,28 +181,31 @@ await prisma.resource.update({
 #### 3. Null Value Handling
 
 **Problem Pattern:**
+
 ```typescript
 // ❌ WRONG - Null values not properly handled
 const data = {
   draftTitle: null,
-  draftPhotos: null,  // JSON field
+  draftPhotos: null, // JSON field
 };
 
 // JSON fields should use Prisma.JsonNull
 ```
 
 **Correct Pattern:**
+
 ```typescript
 // ✅ CORRECT - Explicit JsonNull for JSON fields
 const data = {
   draftTitle: null,
-  draftPhotos: Prisma.JsonNull,  // JSON field
+  draftPhotos: Prisma.JsonNull, // JSON field
   hasDraft: false,
   draftUpdatedAt: null,
 };
 ```
 
 **Reference Implementation:**
+
 ```typescript
 // From catalog.repository.ts - exemplar
 async discardDrafts(tenantId: string, packageIds?: string[]): Promise<number> {
@@ -215,6 +226,7 @@ async discardDrafts(tenantId: string, packageIds?: string[]): Promise<number> {
 ```
 
 **Reviewer Checklist:**
+
 - [ ] JSON field resets use `Prisma.JsonNull`
 - [ ] String/number fields use `null` directly
 - [ ] Array fields use `Prisma.JsonNull` for empty arrays
@@ -223,6 +235,7 @@ async discardDrafts(tenantId: string, packageIds?: string[]): Promise<number> {
 #### 4. Type Assertions
 
 **Problem Pattern:**
+
 ```typescript
 // ❌ WRONG - Using as any
 const photos = pkg.photos as any;
@@ -232,6 +245,7 @@ const data = { photos: photos };
 ```
 
 **Correct Pattern:**
+
 ```typescript
 // ✅ CORRECT - Use proper Prisma types
 import type { PackagePhoto } from '../types/prisma-json';
@@ -247,6 +261,7 @@ const data = {
 ```
 
 **Reviewer Checklist:**
+
 - [ ] No `as any` assertions for JSON fields
 - [ ] JSON reads use `as Prisma.JsonValue`
 - [ ] JSON writes use `as Prisma.InputJsonValue`
@@ -255,12 +270,13 @@ const data = {
 #### 5. Property Spread Handling
 
 **Problem Pattern:**
+
 ```typescript
 // ❌ WRONG - Spreads mix optional and required
 const update = {
   ...(draft.title !== undefined && { title: draft.title }),
-  ...(draft.photos !== undefined && { photos: draft.photos }),  // JSON field
-  ...(draft.extra !== undefined && { extra: draft.extra }),      // JSON field
+  ...(draft.photos !== undefined && { photos: draft.photos }), // JSON field
+  ...(draft.extra !== undefined && { extra: draft.extra }), // JSON field
 };
 
 // If draft.photos is undefined, it's not in the spread
@@ -268,31 +284,29 @@ const update = {
 ```
 
 **Correct Pattern:**
+
 ```typescript
 // ✅ CORRECT - Explicit handling per field
 const data = {
   ...(draft.title !== undefined && { title: draft.title }),
   ...(draft.photos !== undefined && {
-    photos: draft.photos as Prisma.InputJsonValue
+    photos: draft.photos as Prisma.InputJsonValue,
   }),
   ...(draft.extra !== undefined && {
-    extra: draft.extra as Prisma.InputJsonValue
+    extra: draft.extra as Prisma.InputJsonValue,
   }),
 };
 
 // Alternative - Conditional field assignment:
 const data: Prisma.PackageUpdateInput = {
   title: draft.title,
-  photos: draft.photos !== undefined
-    ? (draft.photos as Prisma.InputJsonValue)
-    : undefined,
-  extra: draft.extra !== undefined
-    ? (draft.extra as Prisma.InputJsonValue)
-    : undefined,
+  photos: draft.photos !== undefined ? (draft.photos as Prisma.InputJsonValue) : undefined,
+  extra: draft.extra !== undefined ? (draft.extra as Prisma.InputJsonValue) : undefined,
 };
 ```
 
 **Reviewer Checklist:**
+
 - [ ] Object spreads explicitly cast JSON fields
 - [ ] Conditional spreads preserve type information
 - [ ] Undefined/null distinction preserved for JSON fields
@@ -314,7 +328,7 @@ describe('JSON Field Updates', () => {
     });
 
     expect(result.draftPhotos).toEqual([
-      { url: 'https://...', filename: 'photo.jpg', size: 1024, order: 0 }
+      { url: 'https://...', filename: 'photo.jpg', size: 1024, order: 0 },
     ]);
   });
 
@@ -495,14 +509,11 @@ class CatalogRepository {
         basePrice: data.priceCents,
 
         // JSON fields - MUST cast to Prisma.InputJsonValue
-        photos: data.photos
-          ? (data.photos as Prisma.InputJsonValue)
-          : undefined,  // Leave undefined to not update this field
+        photos: data.photos ? (data.photos as Prisma.InputJsonValue) : undefined, // Leave undefined to not update this field
 
         // Complex conditional JSON field updates
-        branding: data.branding !== undefined
-          ? (data.branding as Prisma.InputJsonValue)
-          : undefined,
+        branding:
+          data.branding !== undefined ? (data.branding as Prisma.InputJsonValue) : undefined,
       },
     });
 
@@ -642,19 +653,22 @@ class AuditService {
         role: input.role,
 
         // ✅ Proper handling of optional JSON fields
-        beforeSnapshot: input.beforeSnapshot !== undefined && input.beforeSnapshot !== null
-          ? (input.beforeSnapshot as Prisma.InputJsonValue)
-          : Prisma.JsonNull,
+        beforeSnapshot:
+          input.beforeSnapshot !== undefined && input.beforeSnapshot !== null
+            ? (input.beforeSnapshot as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
 
-        afterSnapshot: input.afterSnapshot !== undefined && input.afterSnapshot !== null
-          ? (input.afterSnapshot as Prisma.InputJsonValue)
-          : Prisma.JsonNull,
+        afterSnapshot:
+          input.afterSnapshot !== undefined && input.afterSnapshot !== null
+            ? (input.afterSnapshot as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
 
         reason: input.reason ?? null,
 
-        metadata: input.metadata !== undefined && input.metadata !== null
-          ? (input.metadata as Prisma.InputJsonValue)
-          : Prisma.JsonNull,
+        metadata:
+          input.metadata !== undefined && input.metadata !== null
+            ? (input.metadata as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
       },
     });
   }
@@ -676,7 +690,7 @@ class AuditService {
     "moduleResolution": "bundler",
     "lib": ["ES2020"],
     "strict": true,
-    "isolatedModules": true,  // ← Required for build systems
+    "isolatedModules": true, // ← Required for build systems
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -685,9 +699,9 @@ class AuditService {
     "skipLibCheck": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "noImplicitAny": true,     // ← Prevents type-safety bypasses
+    "noImplicitAny": true, // ← Prevents type-safety bypasses
     "noImplicitThis": true,
-    "strictNullChecks": true,   // ← Required for JSON field safety
+    "strictNullChecks": true, // ← Required for JSON field safety
     "strictFunctionTypes": true,
     "paths": {
       "@macon/*": ["../packages/*/src"]
@@ -717,7 +731,7 @@ jobs:
           cache: 'npm'
 
       - run: npm ci
-      - run: npm run typecheck  # Fails if JSON types are wrong
+      - run: npm run typecheck # Fails if JSON types are wrong
       - run: npm run build
 ```
 
@@ -762,7 +776,7 @@ data: {
 const photos = [...newPhotos];
 await prisma.package.update({
   where: { id },
-  data: { photos },  // Type error!
+  data: { photos }, // Type error!
 });
 
 // ✅ CORRECT
@@ -783,7 +797,7 @@ const update = {
 // If spread is empty, photos field has undefined type
 await prisma.package.update({
   where: { id },
-  data: update,  // Type error
+  data: update, // Type error
 });
 
 // ✅ CORRECT
@@ -807,7 +821,7 @@ const updates = packages.map((pkg) =>
   prisma.package.update({
     where: { id: pkg.id },
     data: {
-      draftPhotos: null,  // ← Should be Prisma.JsonNull
+      draftPhotos: null, // ← Should be Prisma.JsonNull
     },
   })
 );
@@ -885,12 +899,14 @@ echo "✅ All pre-deployment checks passed"
 ## Part 8: Documentation References
 
 **Key Files:**
+
 - `/server/src/types/prisma-json.ts` - Type definitions for JSON fields
 - `/server/src/adapters/prisma/catalog.repository.ts` - Reference implementation
 - `/server/src/services/audit.service.ts` - Audit with JSON field handling
 - `/server/src/generated/prisma/index.d.ts` - Generated Prisma types
 
 **Related Docs:**
+
 - [Prisma JSON Field Documentation](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#json)
 - [TypeScript Strict Mode Guide](https://www.typescriptlang.org/docs/handbook/2/narrowing.html)
 - [Render Deployment Guide](../../setup/RENDER.md)

@@ -18,6 +18,7 @@ Use this checklist when reviewing PRs that contain role-based UI, authentication
 ### 1. Impersonation State Awareness
 
 **What to check:**
+
 ```typescript
 // ✅ Component imports isImpersonating
 const { user, isImpersonating } = useAuth();
@@ -27,10 +28,12 @@ const { user } = useAuth();
 ```
 
 **Questions for author:**
+
 - [ ] Does the component check `isImpersonating()` state?
 - [ ] Is there a logical reason NOT to check impersonation state? (If so, document it)
 
 **What to do if missing:**
+
 - Request author add `isImpersonating()` check
 - Ask: "What should happen when a platform admin is impersonating a tenant?"
 
@@ -39,6 +42,7 @@ const { user } = useAuth();
 ### 2. Effective Role Calculation
 
 **What to check:**
+
 ```typescript
 // ✅ Component calculates effective role
 const effectiveRole = isImpersonating() ? 'TENANT_ADMIN' : user.role;
@@ -49,11 +53,13 @@ if (user.role === 'PLATFORM_ADMIN') { ... }  // Ignores impersonation
 ```
 
 **Questions for author:**
+
 - [ ] Is there a single point where effective role is calculated?
 - [ ] Are all role checks using effective role, not raw role?
 - [ ] Is the effective role calculation clear and documented?
 
 **What to do if missing:**
+
 - Request author add effective role calculation
 - Look for every instance of `user.role` and ask: "Should this check impersonation?"
 
@@ -65,23 +71,24 @@ if (user.role === 'PLATFORM_ADMIN') { ... }  // Ignores impersonation
 
 ```typescript
 // ✅ Navigation matches effective role
-const navItems = effectiveRole === 'PLATFORM_ADMIN'
-  ? adminNavigation
-  : tenantNavigation;
+const navItems = effectiveRole === 'PLATFORM_ADMIN' ? adminNavigation : tenantNavigation;
 
 // ❌ Navigation shows admin items even when impersonating
-const navItems = user.role === 'PLATFORM_ADMIN'
-  ? adminNavigation  // Wrong! Shows admin nav while impersonating
-  : tenantNavigation;
+const navItems =
+  user.role === 'PLATFORM_ADMIN'
+    ? adminNavigation // Wrong! Shows admin nav while impersonating
+    : tenantNavigation;
 ```
 
 **Checks:**
+
 - [ ] Navigation items list matches the role being displayed
 - [ ] Admin-specific nav items (e.g., "Manage Tenants") are hidden when impersonating
 - [ ] Tenant nav is always used when `isImpersonating() === true`
 - [ ] Navigation changes immediately when impersonation state changes
 
 **What to look for:**
+
 - Navigate impersonating to each nav item - should work within tenant context
 - Navigate to `/admin/dashboard` while impersonating - should redirect to `/tenant/dashboard`
 
@@ -104,12 +111,14 @@ if (user.role === 'PLATFORM_ADMIN') {
 ```
 
 **Checks:**
+
 - [ ] Admin-only buttons (Create Tenant, Edit Settings, etc.) are not visible when impersonating
 - [ ] Admin controls that appear are safe to use in tenant context
 - [ ] The component explicitly hides controls rather than relying on permissions
 - [ ] Any dangerous operations require double-check that impersonation is off
 
 **Red flags:**
+
 - "Add Tenant" button visible while impersonating
 - "Change Commission" control visible while impersonating
 - Admin panel accessible while impersonating
@@ -140,12 +149,14 @@ const isAdmin = user.role === 'PLATFORM_ADMIN';  // Doesn't check impersonation
 ```
 
 **Checks:**
+
 - [ ] Routes allowed by effective role, not actual role
 - [ ] Admin routes have explicit check to redirect impersonating users
 - [ ] Tenant routes allow impersonating admins (treated as tenant)
 - [ ] All route transitions tested with impersonation active
 
 **Test scenario:**
+
 ```
 1. Admin logs in
 2. Admin impersonates tenant
@@ -173,6 +184,7 @@ const isAdmin = user.role === 'PLATFORM_ADMIN';  // Doesn't check impersonation
 ```
 
 **Checks:**
+
 - [ ] If impersonation is possible, ImpersonationBanner is always visible
 - [ ] Banner shows tenant name/slug
 - [ ] Banner has exit button
@@ -187,22 +199,23 @@ const isAdmin = user.role === 'PLATFORM_ADMIN';  // Doesn't check impersonation
 
 ```typescript
 // ✅ Type-safe impersonation checks
-const isImpersonating = useAuth().isImpersonating();  // Returns boolean
-const impersonation = useAuth().impersonation;        // Typed as ImpersonationData | null
+const isImpersonating = useAuth().isImpersonating(); // Returns boolean
+const impersonation = useAuth().impersonation; // Typed as ImpersonationData | null
 
 // ✅ Types prevent logic errors
-type EffectiveRole = 'PLATFORM_ADMIN' | 'TENANT_ADMIN';  // Exhaustive
+type EffectiveRole = 'PLATFORM_ADMIN' | 'TENANT_ADMIN'; // Exhaustive
 
 // ❌ Type-unsafe
 const token = localStorage.getItem('token');
 const payload = JSON.parse(atob(token?.split('.')[1]));
-const isImpersonating = !!payload.impersonating;  // Fragile
+const isImpersonating = !!payload.impersonating; // Fragile
 
 // ❌ Missing types
-const role: any = useAuth().role;  // Can't verify at compile time
+const role: any = useAuth().role; // Can't verify at compile time
 ```
 
 **Checks:**
+
 - [ ] Component uses `useAuth()` context, not direct token parsing (unless display-only)
 - [ ] Impersonation state has proper TypeScript types
 - [ ] Role values are exhaustive enums, not strings
@@ -228,6 +241,7 @@ describe('RoleBasedNav', () => {
 ```
 
 **Checks:**
+
 - [ ] Tests include scenario where `isImpersonating() === true`
 - [ ] Tests include scenario where `isImpersonating() === false`
 - [ ] Tests verify correct nav/controls show in each scenario
@@ -235,6 +249,7 @@ describe('RoleBasedNav', () => {
 - [ ] Tests use proper mock setup, not token parsing
 
 **Test scenarios to verify exist:**
+
 - [ ] Admin user WITHOUT impersonation shows admin nav
 - [ ] Admin user WITH impersonation shows tenant nav
 - [ ] Regular tenant user always shows tenant nav
@@ -259,6 +274,7 @@ const effectiveRole = isImpersonating() ? 'TENANT_ADMIN' : user.role;
 ```
 
 **Checks:**
+
 - [ ] Component has comment explaining how it handles impersonation
 - [ ] If skipping impersonation check, there's a comment explaining why
 - [ ] Complex impersonation logic has clear variable names
@@ -296,6 +312,7 @@ Record these when found (helps identify patterns):
 > I noticed this component checks `user.role` but doesn't account for impersonation state. When a platform admin is impersonating a tenant, they should be treated as `TENANT_ADMIN` for UI purposes.
 >
 > Suggested fix:
+>
 > ```typescript
 > const effectiveRole = isImpersonating() ? 'TENANT_ADMIN' : user.role;
 > // Use effectiveRole instead of user.role

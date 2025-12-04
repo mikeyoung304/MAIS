@@ -18,6 +18,7 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 ## 📋 Quick Start (Choose Your Role)
 
 ### I'm a Code Reviewer
+
 **Time: 5 minutes to set up, use ongoing**
 
 1. Open: [REACT-COMPONENT-REVIEW-QUICK-REF.md](./REACT-COMPONENT-REVIEW-QUICK-REF.md)
@@ -26,12 +27,14 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 4. Reference the red flags table when needed
 
 **Files to Read:**
+
 - ✅ REACT-COMPONENT-REVIEW-QUICK-REF.md (5 min, must-read)
 - 📖 code-review-patterns/storefront-component-refactoring-review.md (30 min, reference)
 
 ---
 
 ### I'm Building New Components
+
 **Time: 30 minutes to learn, reference during development**
 
 1. Read: [COMPONENT-DUPLICATION-PREVENTION.md](./COMPONENT-DUPLICATION-PREVENTION.md)
@@ -40,6 +43,7 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 4. Review: Compare with quick reference before PR
 
 **Files to Read:**
+
 - ✅ COMPONENT-DUPLICATION-PREVENTION.md (20 min, must-read)
 - ✅ REACT-COMPONENT-REVIEW-QUICK-REF.md (5 min, quick-ref)
 - 📖 COMPONENT-TEST-STRATEGIES.md (30 min, when writing tests)
@@ -48,6 +52,7 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 ---
 
 ### I'm Setting Up CI/CD Automation
+
 **Time: 1-2 hours to implement, then automated**
 
 1. Read: [ESLINT-DUPLICATION-DETECTION-RULES.md](./ESLINT-DUPLICATION-DETECTION-RULES.md)
@@ -56,12 +61,14 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 4. Test: Run locally, then in CI
 
 **Files to Read:**
+
 - ✅ ESLINT-DUPLICATION-DETECTION-RULES.md (45 min, must-read)
 - 📖 code-review-patterns/storefront-component-refactoring-review.md (15 min, understand why)
 
 ---
 
 ### I'm a Team Lead or Architect
+
 **Time: 1-2 hours to understand, 15 min/month to monitor**
 
 1. Read: [STOREFRONT-REFACTORING-SUMMARY.md](./STOREFRONT-REFACTORING-SUMMARY.md)
@@ -70,6 +77,7 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 4. Monitor: Monthly metrics
 
 **Files to Read:**
+
 - ✅ STOREFRONT-REFACTORING-SUMMARY.md (20 min, must-read)
 - ✅ code-review-patterns/storefront-component-refactoring-review.md (45 min, complete reference)
 - 📖 COMPONENT-DUPLICATION-PREVENTION.md (15 min, understand developer workflow)
@@ -79,6 +87,7 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 ---
 
 ### I'm a Test Engineer
+
 **Time: 45 minutes to learn, reference during testing**
 
 1. Read: [COMPONENT-TEST-STRATEGIES.md](./COMPONENT-TEST-STRATEGIES.md)
@@ -87,6 +96,7 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 4. Measure: Performance improvements
 
 **Files to Read:**
+
 - ✅ COMPONENT-TEST-STRATEGIES.md (45 min, must-read)
 - 📖 COMPONENT-DUPLICATION-PREVENTION.md (15 min, understand what gets extracted)
 - 📖 code-review-patterns/storefront-component-refactoring-review.md (20 min, learn before/after)
@@ -96,6 +106,7 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 ## 📚 Complete Documentation Map
 
 ### 1. [REACT-COMPONENT-REVIEW-QUICK-REF.md](./REACT-COMPONENT-REVIEW-QUICK-REF.md)
+
 **Quick reference cheat sheet - PRINT AND PIN**
 
 - **Size:** ~1,500 lines
@@ -112,6 +123,7 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 ---
 
 ### 2. [COMPONENT-DUPLICATION-PREVENTION.md](./COMPONENT-DUPLICATION-PREVENTION.md)
+
 **Implementation checklist for developers**
 
 - **Size:** ~2,500 lines
@@ -128,6 +140,7 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 ---
 
 ### 3. [code-review-patterns/storefront-component-refactoring-review.md](./code-review-patterns/storefront-component-refactoring-review.md)
+
 **Complete analysis and reference guide**
 
 - **Size:** ~4,500 lines
@@ -148,6 +161,7 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 ---
 
 ### 4. [ESLINT-DUPLICATION-DETECTION-RULES.md](./ESLINT-DUPLICATION-DETECTION-RULES.md)
+
 **Custom ESLint rules for automated detection**
 
 - **Size:** ~2,000 lines
@@ -168,6 +182,7 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 ---
 
 ### 5. [COMPONENT-TEST-STRATEGIES.md](./COMPONENT-TEST-STRATEGIES.md)
+
 **Comprehensive testing patterns and examples**
 
 - **Size:** ~2,500 lines
@@ -188,6 +203,7 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 ---
 
 ### 6. [STOREFRONT-REFACTORING-SUMMARY.md](./STOREFRONT-REFACTORING-SUMMARY.md)
+
 **Executive summary and implementation roadmap**
 
 - **Size:** ~1,800 lines
@@ -209,6 +225,7 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 ## 🎯 Key Takeaways
 
 ### The Problem (Before Refactoring)
+
 ```
 - SegmentCard and TierCard: 40 lines of identical JSX
 - getTierDisplayName() function: Defined in 3 files
@@ -219,6 +236,7 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 ```
 
 ### The Solution (After Refactoring)
+
 ```
 ✅ Extracted ChoiceCardBase: Single source of truth for card JSX
 ✅ Centralized utils.ts: One location for constants and functions
@@ -228,6 +246,7 @@ Time to Review: 2-3 hours (complete), 15 min (quick start)
 ```
 
 ### The Prevention Strategy
+
 ```
 Rule 1: Extract at 2 occurrences (not 3)
 Rule 2: Add memo to wrapper components with object props
@@ -240,27 +259,29 @@ Rule 5: Make props explicit (no ...rest)
 
 ## 📊 Documentation Statistics
 
-| Document | Lines | Time | Audience | Type |
-|----------|-------|------|----------|------|
-| Quick Reference | 1,500 | 5 min | All | Cheatsheet |
-| Duplication Prevention | 2,500 | 30 min | Developers | Checklist |
-| Complete Reference | 4,500 | 60 min | Architects | Analysis |
-| ESLint Rules | 2,000 | 45 min | DevOps | Implementation |
-| Test Strategies | 2,500 | 45 min | QA/Testers | Patterns |
-| Summary & Roadmap | 1,800 | 20 min | Leaders | Overview |
-| **Total** | **14,800** | **3 hrs** | **All** | **Package** |
+| Document               | Lines      | Time      | Audience   | Type           |
+| ---------------------- | ---------- | --------- | ---------- | -------------- |
+| Quick Reference        | 1,500      | 5 min     | All        | Cheatsheet     |
+| Duplication Prevention | 2,500      | 30 min    | Developers | Checklist      |
+| Complete Reference     | 4,500      | 60 min    | Architects | Analysis       |
+| ESLint Rules           | 2,000      | 45 min    | DevOps     | Implementation |
+| Test Strategies        | 2,500      | 45 min    | QA/Testers | Patterns       |
+| Summary & Roadmap      | 1,800      | 20 min    | Leaders    | Overview       |
+| **Total**              | **14,800** | **3 hrs** | **All**    | **Package**    |
 
 ---
 
 ## 🚀 Implementation Timeline
 
 ### Week 1: Understanding
+
 - [ ] Read: Complete reference
 - [ ] Review: Before/after code
 - [ ] Understand: Why extraction matters
 - [ ] Time: 1-2 hours
 
 ### Week 2: Adoption
+
 - [ ] Print: Quick reference
 - [ ] Share: With team
 - [ ] Train: Code reviewers
@@ -268,6 +289,7 @@ Rule 5: Make props explicit (no ...rest)
 - [ ] Time: 2-3 hours
 
 ### Week 3: Automation
+
 - [ ] Copy: ESLint rules
 - [ ] Setup: Rules in .eslint/
 - [ ] Configure: .eslintrc.js
@@ -275,6 +297,7 @@ Rule 5: Make props explicit (no ...rest)
 - [ ] Time: 1-2 hours
 
 ### Week 4: Testing
+
 - [ ] Review: Test strategies
 - [ ] Implement: Test patterns
 - [ ] Verify: Memo tests pass
@@ -282,6 +305,7 @@ Rule 5: Make props explicit (no ...rest)
 - [ ] Time: 2-3 hours
 
 ### Week 5+: Enforcement
+
 - [ ] Monitor: PR metrics
 - [ ] Enforce: Rules in CI/CD
 - [ ] Track: Success metrics
@@ -293,6 +317,7 @@ Rule 5: Make props explicit (no ...rest)
 ## 🎓 Learning Paths
 
 ### Path 1: Quick Learner (1 hour)
+
 ```
 1. Read: REACT-COMPONENT-REVIEW-QUICK-REF.md (5 min)
 2. Skim: STOREFRONT-REFACTORING-SUMMARY.md (15 min)
@@ -301,6 +326,7 @@ Rule 5: Make props explicit (no ...rest)
 ```
 
 ### Path 2: Developer (2 hours)
+
 ```
 1. Read: COMPONENT-DUPLICATION-PREVENTION.md (30 min)
 2. Read: REACT-COMPONENT-REVIEW-QUICK-REF.md (10 min)
@@ -309,6 +335,7 @@ Rule 5: Make props explicit (no ...rest)
 ```
 
 ### Path 3: Comprehensive (3+ hours)
+
 ```
 1. Read: All documents in order
 2. Study: Complete reference (code-review-patterns)
@@ -317,6 +344,7 @@ Rule 5: Make props explicit (no ...rest)
 ```
 
 ### Path 4: Leadership (1-2 hours)
+
 ```
 1. Read: STOREFRONT-REFACTORING-SUMMARY.md (20 min)
 2. Read: Complete reference (45 min)
@@ -364,11 +392,13 @@ docs/solutions/
 ## 🔗 Related Documentation
 
 **In this repository:**
+
 - [COMPREHENSIVE-PREVENTION-STRATEGIES.md](./COMPREHENSIVE-PREVENTION-STRATEGIES.md) - General code review prevention
 - [PREVENTION-QUICK-REFERENCE.md](./PREVENTION-QUICK-REFERENCE.md) - Multi-tenant and security quick ref
 - [CLAUDE.md](../../../CLAUDE.md) - Project configuration and patterns
 
 **For the refactored code:**
+
 - [client/src/features/storefront/ChoiceCardBase.tsx](../../../client/src/features/storefront/ChoiceCardBase.tsx)
 - [client/src/features/storefront/SegmentCard.tsx](../../../client/src/features/storefront/SegmentCard.tsx)
 - [client/src/features/storefront/TierCard.tsx](../../../client/src/features/storefront/TierCard.tsx)
@@ -380,6 +410,7 @@ docs/solutions/
 
 **Q: Which document should I read first?**
 A: Your role determines it:
+
 - Reviewer: Quick Reference
 - Developer: Duplication Prevention
 - DevOps: ESLint Rules

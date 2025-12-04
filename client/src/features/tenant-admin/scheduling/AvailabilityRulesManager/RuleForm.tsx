@@ -1,18 +1,18 @@
-import { Loader2, X, AlertCircle } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Loader2, X, AlertCircle } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import type { RuleFormData, ServiceDto } from "./types";
-import { DAYS_OF_WEEK } from "./types";
-import { formatTime, generateTimeOptions } from "./utils";
+} from '@/components/ui/select';
+import type { RuleFormData, ServiceDto } from './types';
+import { DAYS_OF_WEEK } from './types';
+import { formatTime, generateTimeOptions } from './utils';
 
 interface RuleFormProps {
   ruleForm: RuleFormData;
@@ -71,9 +71,9 @@ export function RuleForm({
             Service (optional)
           </Label>
           <Select
-            value={ruleForm.serviceId ?? "all"}
+            value={ruleForm.serviceId ?? 'all'}
             onValueChange={(value) =>
-              onFormChange({ ...ruleForm, serviceId: value === "all" ? null : value })
+              onFormChange({ ...ruleForm, serviceId: value === 'all' ? null : value })
             }
             disabled={isSaving}
           >
@@ -103,9 +103,7 @@ export function RuleForm({
           </Label>
           <Select
             value={ruleForm.dayOfWeek.toString()}
-            onValueChange={(value) =>
-              onFormChange({ ...ruleForm, dayOfWeek: parseInt(value, 10) })
-            }
+            onValueChange={(value) => onFormChange({ ...ruleForm, dayOfWeek: parseInt(value, 10) })}
             disabled={isSaving}
           >
             <SelectTrigger className="bg-macon-navy-900 border-white/20 text-white focus:border-white/30 h-11">
@@ -180,7 +178,7 @@ export function RuleForm({
             <Input
               id="effectiveFrom"
               type="date"
-              value={ruleForm.effectiveFrom || ""}
+              value={ruleForm.effectiveFrom || ''}
               onChange={(e) => onFormChange({ ...ruleForm, effectiveFrom: e.target.value })}
               className="bg-macon-navy-900 border-white/20 text-white focus:border-white/30 h-11"
               disabled={isSaving}
@@ -195,10 +193,8 @@ export function RuleForm({
             <Input
               id="effectiveTo"
               type="date"
-              value={ruleForm.effectiveTo || ""}
-              onChange={(e) =>
-                onFormChange({ ...ruleForm, effectiveTo: e.target.value || null })
-              }
+              value={ruleForm.effectiveTo || ''}
+              onChange={(e) => onFormChange({ ...ruleForm, effectiveTo: e.target.value || null })}
               className="bg-macon-navy-900 border-white/20 text-white focus:border-white/30 h-11"
               placeholder="Leave blank for indefinite"
               disabled={isSaving}
@@ -215,7 +211,7 @@ export function RuleForm({
             disabled={isSaving}
           >
             {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {isSaving ? "Creating..." : "Create Rule"}
+            {isSaving ? 'Creating...' : 'Create Rule'}
           </Button>
         </div>
       </form>

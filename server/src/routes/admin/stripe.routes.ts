@@ -86,10 +86,10 @@ export function createAdminStripeRoutes(prisma: PrismaClient): Router {
         }
 
         // Create connected account
-        const account = await stripeConnectService.createConnectedAccount(
-          tenantId,
-          { country, email }
-        );
+        const account = await stripeConnectService.createConnectedAccount(tenantId, {
+          country,
+          email,
+        });
 
         res.status(201).json(account);
       } catch (error) {
@@ -190,9 +190,7 @@ export function createAdminStripeRoutes(prisma: PrismaClient): Router {
 
         // Require Stripe account to exist
         if (!tenant.stripeAccountId) {
-          throw new ValidationError(
-            `Tenant ${tenantId} does not have a Stripe Connect account`
-          );
+          throw new ValidationError(`Tenant ${tenantId} does not have a Stripe Connect account`);
         }
 
         // Get account status

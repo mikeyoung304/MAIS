@@ -12,11 +12,13 @@
 This runbook provides step-by-step incident response procedures for the MAIS business growth platform. Each section contains symptom identification, diagnostic steps, and resolution procedures.
 
 **Emergency Contacts:**
+
 - On-call Engineer: [Your on-call rotation]
 - Database Admin: [Supabase support or internal DBA]
 - Payment Provider: Stripe Support (https://support.stripe.com)
 
 **Key Resources:**
+
 - Production Dashboard: Supabase Dashboard (credentials in password manager)
 - Stripe Dashboard: https://dashboard.stripe.com
 - Application Logs: [Your logging service URL]
@@ -38,12 +40,14 @@ This runbook provides step-by-step incident response procedures for the MAIS bus
 ## 1. API Down / 500 Errors
 
 ### Symptoms
+
 - Health check endpoint (`/health`) returns non-200 status
 - Client applications receiving 500 Internal Server Error
 - Increased error rate in monitoring dashboards
 - Customer reports of booking failures
 
 ### Severity Levels
+
 - **P0 (Critical):** Complete API outage, no requests succeeding
 - **P1 (High):** >50% error rate, partial functionality impaired
 - **P2 (Medium):** <50% error rate, isolated endpoint failures
@@ -51,6 +55,7 @@ This runbook provides step-by-step incident response procedures for the MAIS bus
 ### Diagnostic Steps
 
 #### Step 1: Verify Service Status
+
 ```bash
 # Check if API is responding
 curl https://api.elope.example.com/health
@@ -62,6 +67,7 @@ curl https://api.elope.example.com/ready
 ```
 
 #### Step 2: Check Application Logs
+
 ```bash
 # View recent errors (adjust path to your deployment)
 tail -n 100 /var/log/elope/api.log | grep ERROR
@@ -73,12 +79,14 @@ grep "UnhandledPromiseRejection" /var/log/elope/api.log
 ```
 
 **Common Error Patterns:**
+
 - `ECONNREFUSED` → Database connection failure (see Section 3)
 - `Stripe API error` → Payment provider issue
 - `P2002` (Prisma) → Database constraint violation
 - `ENOMEM` → Out of memory (see Section 5)
 
 #### Step 3: Check Database Health
+
 ```bash
 # Test database connection
 psql $DATABASE_URL -c "SELECT 1;"
@@ -88,11 +96,13 @@ psql $DATABASE_URL -c "SELECT count(*) FROM pg_stat_activity;"
 ```
 
 Or via Supabase Dashboard:
+
 1. Go to https://supabase.com/dashboard/project/gpyvdknhmevcfdbgtqir
 2. Navigate to **Database** → **Monitoring**
 3. Check active connections and query performance
 
 #### Step 4: Check External Services
+
 ```bash
 # Test Stripe API connectivity
 curl https://api.stripe.com/v1/charges -u $STRIPE_SECRET_KEY:
@@ -106,6 +116,7 @@ nslookup db.gpyvdknhmevcfdbgtqir.supabase.co
 ### Resolution Steps
 
 #### Resolution 1: Service Restart (Quick Fix)
+
 ```bash
 # For systemd-based deployments
 sudo systemctl restart elope-api
@@ -121,6 +132,7 @@ curl https://api.elope.example.com/health
 ```
 
 #### Resolution 2: Check Environment Variables
+
 ```bash
 # Verify all required variables are set
 cd /path/to/elope/server
@@ -134,6 +146,7 @@ echo $JWT_SECRET
 ```
 
 If variables are missing:
+
 ```bash
 # Restore from backup or secrets manager
 cp /backup/.env.production /path/to/elope/server/.env
@@ -143,6 +156,7 @@ sudo systemctl restart elope-api
 ```
 
 #### Resolution 3: Check Disk Space
+
 ```bash
 # Check available disk space
 df -h
@@ -153,7 +167,9 @@ rm /var/log/elope/*.log.old
 ```
 
 #### Resolution 4: Scale Resources
+
 If under heavy load:
+
 ```bash
 # Increase process count (PM2)
 pm2 scale elope-api +2
@@ -167,7 +183,9 @@ sudo systemctl restart elope-api
 ```
 
 ### Rollback Procedure
+
 If recent deployment caused the issue:
+
 ```bash
 # Revert to previous Docker image
 docker pull elope/api:v1.2.3  # Previous stable version
@@ -184,6 +202,7 @@ npm run start
 See [Section 6: Rollback Procedures](#6-rollback-procedures) for detailed steps.
 
 ### Prevention
+
 - Set up automated health checks (every 60 seconds)
 - Configure alerting for >5% error rate
 - Implement circuit breakers for external API calls
@@ -194,18 +213,21 @@ See [Section 6: Rollback Procedures](#6-rollback-procedures) for detailed steps.
 ## 2. Failed Webhooks from Stripe
 
 ### Symptoms
+
 - Customers report payment succeeded but no booking confirmation
 - Stripe dashboard shows failed webhook deliveries
 - `WebhookEvent` table has rows with `status='FAILED'`
 - Application logs show webhook processing errors
 
 ### Severity Levels
+
 - **P1 (High):** Payment collected but booking not created (revenue at risk)
 - **P2 (Medium):** Webhook failures with successful retries
 
 ### Diagnostic Steps
 
 #### Step 1: Check Stripe Dashboard
+
 1. Go to https://dashboard.stripe.com
 2. Navigate to **Developers** → **Webhooks**
 3. Click on your webhook endpoint
@@ -213,6 +235,7 @@ See [Section 6: Rollback Procedures](#6-rollback-procedures) for detailed steps.
 5. Note the Event IDs that failed
 
 #### Step 2: Query WebhookEvent Table
+
 ```sql
 -- Connect to database
 psql $DATABASE_URL
@@ -236,6 +259,7 @@ WHERE "eventId" = 'evt_1234567890';
 ```
 
 #### Step 3: Check Application Logs
+
 ```bash
 # Search for webhook errors
 grep "Webhook processing failed" /var/log/elope/api.log
@@ -247,6 +271,7 @@ grep "DatabaseError" /var/log/elope/api.log  # Database issues
 ```
 
 #### Step 4: Verify Webhook Signature Secret
+
 ```bash
 # Check if webhook secret is set correctly
 echo $STRIPE_WEBHOOK_SECRET
@@ -259,7 +284,9 @@ stripe listen --forward-to localhost:3001/v1/webhooks/stripe
 ### Resolution Steps
 
 #### Resolution 1: Manual Webhook Replay (Stripe Dashboard)
+
 For recent failed webhooks (within 7 days):
+
 1. Go to Stripe Dashboard → **Developers** → **Webhooks**
 2. Find the failed webhook event
 3. Click **Send test webhook**
@@ -267,6 +294,7 @@ For recent failed webhooks (within 7 days):
 5. Verify booking was created in database
 
 #### Resolution 2: Manual Webhook Replay (Stripe CLI)
+
 ```bash
 # Install Stripe CLI if not present
 brew install stripe/stripe-cli/stripe
@@ -280,6 +308,7 @@ stripe listen --forward-to https://api.elope.example.com/v1/webhooks/stripe
 ```
 
 #### Resolution 3: Process Stuck Booking Manually
+
 If webhook cannot be replayed, create booking manually:
 
 ```sql
@@ -355,7 +384,9 @@ WHERE "eventId" = 'evt_1234567890';
 ```
 
 #### Resolution 4: Send Confirmation Email Manually
+
 If booking was created but email failed:
+
 ```bash
 # Method 1: Trigger email via API (if available)
 curl -X POST https://api.elope.example.com/v1/admin/bookings/booking_abc123/resend-confirmation \
@@ -367,12 +398,14 @@ curl -X POST https://api.elope.example.com/v1/admin/bookings/booking_abc123/rese
 ```
 
 Or via Postmark dashboard:
+
 1. Go to Postmark dashboard
 2. Navigate to **Templates**
 3. Find booking confirmation template
 4. Send test with customer data
 
 ### Prevention
+
 - Monitor webhook failure rate in Stripe dashboard
 - Set up alerts for >5 failed webhooks per hour
 - Implement automatic retry mechanism (Stripe retries up to 3 days)
@@ -380,6 +413,7 @@ Or via Postmark dashboard:
 - Log all webhook payloads for debugging
 
 ### Customer Communication Template
+
 See [Section 7: Communication Templates](#customer-booking-manual-recovery)
 
 ---
@@ -387,12 +421,14 @@ See [Section 7: Communication Templates](#customer-booking-manual-recovery)
 ## 3. Database Connection Loss
 
 ### Symptoms
+
 - Application logs show `ECONNREFUSED` or `ETIMEDOUT` errors
 - Health check passes but readiness fails
 - Intermittent 500 errors during database queries
 - Prisma logs: "Can't reach database server"
 
 ### Severity Levels
+
 - **P0 (Critical):** Complete database connectivity loss
 - **P1 (High):** Intermittent connection failures >20%
 - **P2 (Medium):** Connection pool exhaustion
@@ -400,6 +436,7 @@ See [Section 7: Communication Templates](#customer-booking-manual-recovery)
 ### Diagnostic Steps
 
 #### Step 1: Check Database Reachability
+
 ```bash
 # Test basic connectivity
 psql $DATABASE_URL -c "SELECT 1;"
@@ -416,6 +453,7 @@ nslookup db.gpyvdknhmevcfdbgtqir.supabase.co
 ```
 
 #### Step 2: Check Connection Pool Status
+
 ```sql
 -- View active connections
 SELECT
@@ -446,6 +484,7 @@ ORDER BY duration DESC;
 ```
 
 #### Step 3: Check Application Connection Pool
+
 ```bash
 # Check Prisma connection pool settings in logs
 grep "Prisma" /var/log/elope/api.log | grep "connection"
@@ -456,6 +495,7 @@ echo $DATABASE_URL | grep "connection_limit"
 ```
 
 #### Step 4: Check Supabase Dashboard
+
 1. Go to https://supabase.com/dashboard/project/gpyvdknhmevcfdbgtqir
 2. Navigate to **Database** → **Monitoring**
 3. Check:
@@ -467,6 +507,7 @@ echo $DATABASE_URL | grep "connection_limit"
 ### Resolution Steps
 
 #### Resolution 1: Restart Application (Connection Pool Reset)
+
 ```bash
 # Restart application to reset connection pool
 sudo systemctl restart elope-api
@@ -479,6 +520,7 @@ psql $DATABASE_URL -c "SELECT count(*) FROM pg_stat_activity WHERE application_n
 ```
 
 #### Resolution 2: Kill Idle Connections
+
 ```sql
 -- Identify idle connections older than 30 minutes
 SELECT pg_terminate_backend(pid)
@@ -492,6 +534,7 @@ SELECT count(*) FROM pg_stat_activity;
 ```
 
 #### Resolution 3: Resume Supabase Project (If Paused)
+
 1. Go to Supabase Dashboard
 2. Click **Resume Project** if paused
 3. Wait 2-3 minutes for database to come online
@@ -499,6 +542,7 @@ SELECT count(*) FROM pg_stat_activity;
 5. Restart application
 
 #### Resolution 4: Increase Connection Pool Limit
+
 ```bash
 # Edit DATABASE_URL to increase connection limit
 # Before: postgresql://...?connection_limit=10
@@ -515,13 +559,16 @@ sudo systemctl restart elope-api
 ```
 
 #### Resolution 5: Scale Database (Supabase)
+
 If free tier limits are hit:
+
 1. Go to Supabase Dashboard → **Settings** → **Billing**
 2. Upgrade to Pro plan (100 → 500 connection limit)
 3. Adjust connection pool settings in DATABASE_URL
 4. Restart application
 
 ### Connection Pool Exhaustion Recovery
+
 ```bash
 # 1. Force disconnect all application connections
 psql $DATABASE_URL -c "
@@ -543,6 +590,7 @@ watch -n 5 'psql $DATABASE_URL -c "SELECT count(*) FROM pg_stat_activity;"'
 ```
 
 ### Prevention
+
 - Set connection pool limit appropriate for database tier (5-10 for free tier)
 - Implement connection pool monitoring
 - Set alerts for >80% connection pool usage
@@ -555,12 +603,14 @@ watch -n 5 'psql $DATABASE_URL -c "SELECT count(*) FROM pg_stat_activity;"'
 ## 4. Double-Booking Incident
 
 ### Symptoms
+
 - Two bookings exist for the same date
 - Customer A reports receiving confirmation for a date
 - Customer B also reports booking the same date
 - Database shows duplicate `Booking.date` values (violates UNIQUE constraint)
 
 ### Severity Levels
+
 - **P0 (Critical):** Confirmed double-booking with paying customers
 - **P1 (High):** Suspected race condition, needs immediate verification
 
@@ -569,6 +619,7 @@ watch -n 5 'psql $DATABASE_URL -c "SELECT count(*) FROM pg_stat_activity;"'
 ### Diagnostic Steps
 
 #### Step 1: Verify Double-Booking
+
 ```sql
 -- Check for duplicate dates
 SELECT date, count(*) as booking_count
@@ -595,6 +646,7 @@ ORDER BY b."createdAt";
 ```
 
 #### Step 2: Investigation - Check Race Condition Logs
+
 ```bash
 # Search for concurrent booking attempts
 grep "2025-12-20" /var/log/elope/api.log | grep "checkout"
@@ -610,6 +662,7 @@ grep "Booking created successfully" /var/log/elope/api.log | grep "2025-12-20"
 ```
 
 #### Step 3: Check Database Constraint Status
+
 ```sql
 -- Verify UNIQUE constraint exists on Booking.date
 SELECT
@@ -624,6 +677,7 @@ WHERE conrelid = 'Booking'::regclass
 ```
 
 If constraint is missing:
+
 ```sql
 -- This is critical - constraint should exist!
 -- Check if it was accidentally dropped:
@@ -631,6 +685,7 @@ SELECT * FROM pg_constraint WHERE conname LIKE '%Booking%date%';
 ```
 
 #### Step 4: Check Payment Records
+
 ```sql
 -- Verify both customers paid
 SELECT
@@ -650,6 +705,7 @@ ORDER BY p."createdAt";
 ### Resolution Steps
 
 #### Resolution 1: Immediate Customer Communication
+
 **DO THIS FIRST before technical resolution**
 
 1. Identify which booking came second
@@ -661,7 +717,9 @@ ORDER BY p."createdAt";
 Use template: [Customer Double-Booking Apology](#customer-double-booking-apology)
 
 #### Resolution 2: Determine Which Booking to Keep
+
 Decision criteria (in order):
+
 1. **First payment completed** (check `Payment.createdAt`)
 2. **First booking created** (check `Booking.createdAt`)
 3. **Customer preference** (if timestamps are within seconds)
@@ -685,6 +743,7 @@ LIMIT 1;
 ```
 
 #### Resolution 3: Cancel Second Booking
+
 ```sql
 -- Start transaction for safety
 BEGIN;
@@ -708,6 +767,7 @@ COMMIT;
 ```
 
 #### Resolution 4: Issue Refund via Stripe
+
 ```bash
 # Option 1: Via Stripe Dashboard
 # 1. Go to https://dashboard.stripe.com/payments
@@ -729,13 +789,16 @@ curl -X POST https://api.elope.example.com/v1/admin/payments/payment_id/refund \
 ```
 
 #### Resolution 5: Offer Compensation
+
 For affected customer:
+
 - Full refund (processed above)
 - $500 discount on rescheduled date
 - Complimentary add-on (e.g., photographer, bouquet)
 - Gift certificate for related services
 
 Document compensation in:
+
 ```sql
 UPDATE "Booking"
 SET notes = 'CANCELED - double-booking error. Customer offered: full refund + $500 credit + free photographer. Follow-up: 2025-10-31'
@@ -745,6 +808,7 @@ WHERE id = 'booking_second_id';
 ### Root Cause Analysis
 
 #### Investigate Race Condition
+
 1. Check application logs for concurrent webhook processing
 2. Verify pessimistic locking is enabled (see `ARCHITECTURE.md` ADR-001)
 3. Check database transaction isolation level
@@ -756,13 +820,16 @@ SHOW default_transaction_isolation;
 ```
 
 #### Code Review Checklist
+
 Verify the following in `server/src/services/booking.service.ts`:
+
 - [ ] Transaction wraps availability check + booking creation
 - [ ] `SELECT ... FOR UPDATE` lock is used
 - [ ] Constraint violation is caught (P2002 error)
 - [ ] Lock timeout is configured (prevent deadlocks)
 
 #### Review in `server/src/adapters/prisma/booking.repository.ts`:
+
 ```typescript
 // Verify this pattern exists:
 await prisma.$transaction(async (tx) => {
@@ -783,12 +850,14 @@ await prisma.$transaction(async (tx) => {
 ### Prevention
 
 #### Immediate Actions
+
 1. Verify UNIQUE constraint exists on `Booking.date`
 2. Verify pessimistic locking code is deployed
 3. Add integration test for race condition
 4. Enable detailed webhook logging
 
 #### Short-term Improvements
+
 ```sql
 -- Add additional constraint for safety
 ALTER TABLE "Booking"
@@ -801,6 +870,7 @@ WHERE (status != 'CANCELED');
 ```
 
 #### Long-term Improvements
+
 - Implement distributed locking (Redis) for multi-server deployments
 - Add real-time availability check before payment
 - Implement booking reservation system (hold date for 15 min)
@@ -812,6 +882,7 @@ WHERE (status != 'CANCELED');
 ## 5. Memory Leaks / Performance Degradation
 
 ### Symptoms
+
 - Gradually increasing response times over hours/days
 - API becomes unresponsive
 - Server memory usage climbing continuously
@@ -819,12 +890,14 @@ WHERE (status != 'CANCELED');
 - Process crashes with OOM (Out of Memory) killer
 
 ### Severity Levels
+
 - **P1 (High):** Service degradation, response times >5 seconds
 - **P2 (Medium):** Memory usage >80%, pre-emptive action needed
 
 ### Diagnostic Steps
 
 #### Step 1: Check Current Memory Usage
+
 ```bash
 # Check process memory
 ps aux | grep node | grep elope
@@ -840,6 +913,7 @@ curl https://api.elope.example.com/metrics
 ```
 
 #### Step 2: Capture Heap Snapshot (Node.js)
+
 ```bash
 # Send SIGUSR2 to trigger heap dump (if configured)
 kill -USR2 $(pgrep -f "node.*elope")
@@ -853,6 +927,7 @@ npm install heapdump
 ```
 
 #### Step 3: Check for Resource Leaks
+
 ```bash
 # Check open file descriptors
 lsof -p $(pgrep -f "node.*elope") | wc -l
@@ -870,6 +945,7 @@ grep "MaxListenersExceeded" /var/log/elope/api.log
 ```
 
 #### Step 4: Review Recent Code Changes
+
 ```bash
 # Check recent deployments
 git log --oneline -10
@@ -884,6 +960,7 @@ git log --oneline -10
 ### Resolution Steps
 
 #### Resolution 1: Immediate Service Restart
+
 ```bash
 # Quick fix to restore service
 sudo systemctl restart elope-api
@@ -896,6 +973,7 @@ watch -n 5 'ps aux | grep node | grep elope'
 ```
 
 #### Resolution 2: Increase Memory Limit (Temporary)
+
 ```bash
 # For Node.js process (systemd)
 sudo systemctl edit elope-api
@@ -911,6 +989,7 @@ sudo systemctl restart elope-api
 ```
 
 #### Resolution 3: Enable Garbage Collection Logging
+
 ```bash
 # Start with GC logging to diagnose
 node --expose-gc --trace-gc dist/index.js > gc.log 2>&1
@@ -920,6 +999,7 @@ Environment="NODE_OPTIONS=--trace-gc --trace-gc-verbose"
 ```
 
 #### Resolution 4: Implement Graceful Restarts
+
 ```bash
 # Setup automated restart when memory threshold hit (PM2)
 pm2 start dist/index.js --name elope-api --max-memory-restart 1G
@@ -935,10 +1015,11 @@ RestartSec=10s
 #### Common Causes in MAIS Codebase
 
 **1. Database Connection Leaks**
+
 ```typescript
 // BAD - connection leak
 async function badQuery() {
-  const prisma = new PrismaClient();  // New client every time!
+  const prisma = new PrismaClient(); // New client every time!
   return await prisma.booking.findMany();
   // Missing: prisma.$disconnect()
 }
@@ -951,6 +1032,7 @@ async function goodQuery() {
 ```
 
 **2. Event Listener Leaks**
+
 ```typescript
 // BAD - listener never removed
 eventEmitter.on('BookingPaid', handler);
@@ -963,12 +1045,13 @@ eventEmitter.removeListener('BookingPaid', listener);
 ```
 
 **3. Global Cache Growth**
+
 ```typescript
 // BAD - cache grows unbounded
 const cache: Record<string, any> = {};
 function getCached(key: string) {
   if (!cache[key]) {
-    cache[key] = expensiveOperation();  // Never evicted!
+    cache[key] = expensiveOperation(); // Never evicted!
   }
   return cache[key];
 }
@@ -979,6 +1062,7 @@ const cache = new LRU({ max: 500 });
 ```
 
 #### Analysis Steps
+
 ```bash
 # 1. Take heap snapshot at startup
 curl http://localhost:9229/json/list
@@ -1003,6 +1087,7 @@ artillery quick --count 100 --num 10 https://api.elope.example.com/v1/packages
 ### Performance Monitoring Setup
 
 #### Metrics to Track
+
 ```bash
 # Create monitoring script: /opt/elope/monitor-memory.sh
 #!/bin/bash
@@ -1015,13 +1100,16 @@ done >> /var/log/elope/memory.log
 ```
 
 #### Set Up Alerts
+
 Configure alerts for:
+
 - Memory usage >1GB (warning)
 - Memory usage >1.5GB (critical)
 - Response time >3 seconds (warning)
 - Error rate >5% (critical)
 
 ### Prevention
+
 - Code review checklist: Check for resource cleanup
 - Add memory usage tests in CI/CD
 - Implement health check with memory metrics
@@ -1034,6 +1122,7 @@ Configure alerts for:
 ## 6. Rollback Procedures
 
 ### When to Rollback
+
 - New deployment causes P0/P1 incident
 - Error rate >20% after deployment
 - Data corruption detected
@@ -1044,6 +1133,7 @@ Configure alerts for:
 #### A. Application Code Rollback
 
 **Method 1: Docker Image Rollback**
+
 ```bash
 # 1. Identify current and previous versions
 docker images elope/api
@@ -1067,6 +1157,7 @@ docker logs -f elope-api-container
 ```
 
 **Method 2: Git Revert**
+
 ```bash
 # 1. Identify problematic commit
 git log --oneline -10
@@ -1087,6 +1178,7 @@ curl https://api.elope.example.com/ready
 ```
 
 **Method 3: Symbolic Link Switch (Zero-Downtime)**
+
 ```bash
 # Setup:
 # /opt/elope/releases/v1.2.3/
@@ -1105,6 +1197,7 @@ curl https://api.elope.example.com/health
 #### B. Database Migration Rollback
 
 **Method 1: Prisma Migrate Rollback**
+
 ```bash
 # WARNING: This can cause data loss!
 # Always backup first
@@ -1134,6 +1227,7 @@ psql $DATABASE_URL -c "
 ```
 
 **Method 2: Manual SQL Rollback**
+
 ```bash
 # 1. Backup database (CRITICAL)
 pg_dump $DATABASE_URL > backup_before_rollback.sql
@@ -1162,6 +1256,7 @@ curl https://api.elope.example.com/health
 ```
 
 **Method 3: Restore from Backup**
+
 ```bash
 # NUCLEAR OPTION - Use when migrations are severely broken
 
@@ -1215,6 +1310,7 @@ curl https://api.elope.example.com/ready
 #### D. External Service Rollback
 
 **Stripe API Version Rollback**
+
 ```bash
 # Stripe API versions are pinned in code
 # Rollback by reverting code to previous version
@@ -1232,6 +1328,7 @@ sudo systemctl restart elope-api
 ```
 
 **Webhook Endpoint Rollback**
+
 ```bash
 # If webhook changes broke processing
 
@@ -1248,6 +1345,7 @@ sudo systemctl restart elope-api
 ### Rollback Verification Checklist
 
 After ANY rollback:
+
 - [ ] `/health` endpoint returns 200 OK
 - [ ] `/ready` endpoint returns `{"ok":true}`
 - [ ] Test booking flow end-to-end
@@ -1433,6 +1531,7 @@ Incident Commander: [Name]
 ### Status Page Update (If Available)
 
 **Investigating:**
+
 ```
 We are investigating reports of intermittent issues with booking checkout.
 Payments are not being processed during this time.
@@ -1440,6 +1539,7 @@ Posted: Oct 31, 14:32 UTC
 ```
 
 **Identified:**
+
 ```
 We have identified a database connectivity issue affecting booking creation.
 Our engineering team is working on a fix.
@@ -1447,6 +1547,7 @@ Posted: Oct 31, 14:45 UTC
 ```
 
 **Monitoring:**
+
 ```
 A fix has been deployed. We are monitoring the system for stability.
 Booking functionality has been restored.
@@ -1454,6 +1555,7 @@ Posted: Oct 31, 15:10 UTC
 ```
 
 **Resolved:**
+
 ```
 The issue has been fully resolved. All systems are operating normally.
 Total duration: 38 minutes.
@@ -1513,13 +1615,13 @@ cat /path/to/.env | grep -v "^#"        # Show config (hide comments)
 
 ### Escalation Contacts
 
-| Role | Contact | Responsibility |
-|------|---------|----------------|
-| On-Call Engineer | [Phone/Slack] | First responder |
-| Engineering Lead | [Phone/Slack] | P0/P1 escalation |
-| Database Admin | [Contact] | Database issues |
-| Product Owner | [Contact] | Customer communication |
-| CEO/Founder | [Contact] | Business decisions (double-booking) |
+| Role             | Contact       | Responsibility                      |
+| ---------------- | ------------- | ----------------------------------- |
+| On-Call Engineer | [Phone/Slack] | First responder                     |
+| Engineering Lead | [Phone/Slack] | P0/P1 escalation                    |
+| Database Admin   | [Contact]     | Database issues                     |
+| Product Owner    | [Contact]     | Customer communication              |
+| CEO/Founder      | [Contact]     | Business decisions (double-booking) |
 
 ---
 
@@ -1528,6 +1630,7 @@ cat /path/to/.env | grep -v "^#"        # Show config (hide comments)
 After resolving a P0/P1 incident, complete this template:
 
 ### Incident Summary
+
 - **Date:** 2025-10-31
 - **Duration:** 38 minutes
 - **Severity:** P0
@@ -1536,6 +1639,7 @@ After resolving a P0/P1 incident, complete this template:
 - **Time to Resolve:** 33 minutes
 
 ### Timeline
+
 ```
 14:32 UTC - Customer reports checkout failing
 14:35 UTC - Monitoring alert fired (error rate >10%)
@@ -1548,34 +1652,40 @@ After resolving a P0/P1 incident, complete this template:
 ```
 
 ### Root Cause
+
 [Technical explanation of what caused the incident]
 
 ### Resolution
+
 [What actions were taken to resolve the incident]
 
 ### Impact
+
 - **Customers Affected:** ~50
 - **Revenue Impact:** ~$15,000 in delayed bookings
 - **Data Loss:** None
 - **SLA Breach:** Yes (99.9% uptime target)
 
 ### What Went Well
+
 - Fast detection via monitoring
 - Clear runbook procedures followed
 - Effective communication with customers
 
 ### What Went Wrong
+
 - Connection pool limit too low
 - No alerting for connection pool usage
 - Delayed customer notification (15 min)
 
 ### Action Items
-| Action | Owner | Due Date | Priority |
-|--------|-------|----------|----------|
-| Increase connection pool limit to 20 | Engineering | 2025-11-01 | P0 |
-| Add connection pool usage alerts | DevOps | 2025-11-03 | P1 |
-| Update customer communication SLA | Support | 2025-11-05 | P2 |
-| Load test with 2x traffic | QA | 2025-11-07 | P2 |
+
+| Action                               | Owner       | Due Date   | Priority |
+| ------------------------------------ | ----------- | ---------- | -------- |
+| Increase connection pool limit to 20 | Engineering | 2025-11-01 | P0       |
+| Add connection pool usage alerts     | DevOps      | 2025-11-03 | P1       |
+| Update customer communication SLA    | Support     | 2025-11-05 | P2       |
+| Load test with 2x traffic            | QA          | 2025-11-07 | P2       |
 
 ---
 

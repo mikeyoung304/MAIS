@@ -7,11 +7,13 @@ This repository contains exposed production credentials in `/server/.env`. While
 ## Current Status
 
 ### Good News
+
 - `.env` is properly listed in `.gitignore`
 - `.env` has **NEVER been committed** to git history (verified)
 - No git history cleanup needed
 
 ### Action Required
+
 All secrets in `/server/.env` must be rotated because they were potentially exposed during development.
 
 ---
@@ -26,16 +28,19 @@ All secrets in `/server/.env` must be rotated because they were potentially expo
 **Rotation Steps:**
 
 1. Generate a new secret:
+
    ```bash
    openssl rand -hex 32
    ```
 
 2. Update `/server/.env`:
+
    ```bash
    JWT_SECRET=<new-64-char-hex-string>
    ```
 
 3. Restart the server:
+
    ```bash
    cd server
    npm run dev
@@ -44,6 +49,7 @@ All secrets in `/server/.env` must be rotated because they were potentially expo
 4. **Important:** This will invalidate all existing user sessions - users will need to log in again
 
 **New Value Generated:**
+
 ```
 911b49e08b8639af2b47572ccb34b0b84ae4fab64b6e124287407ea9e26c5734
 ```
@@ -60,12 +66,14 @@ All secrets in `/server/.env` must be rotated because they were potentially expo
 **Rotation Steps:**
 
 1. **Backup Current Database First:**
+
    ```bash
    # Create a full database backup before proceeding
    pg_dump <database-url> > backup_$(date +%Y%m%d_%H%M%S).sql
    ```
 
 2. Generate a new encryption key:
+
    ```bash
    openssl rand -hex 32
    ```
@@ -85,6 +93,7 @@ All secrets in `/server/.env` must be rotated because they were potentially expo
    - Remove the old key after successful migration
 
 **New Value Generated:**
+
 ```
 307e73f2de1661253885027e135079212782f573c6efde1fb0857c943b27d1e7
 ```
@@ -110,6 +119,7 @@ All secrets in `/server/.env` must be rotated because they were potentially expo
    - Copy the new `sk_test_...` key
 
 3. **Update `/server/.env`:**
+
    ```bash
    STRIPE_SECRET_KEY=sk_test_<new-key>
    ```
@@ -133,6 +143,7 @@ All secrets in `/server/.env` must be rotated because they were potentially expo
 **Rotation Steps:**
 
 #### Development Environment:
+
 1. Stop the current Stripe CLI listener
 2. Restart with:
    ```bash
@@ -145,6 +156,7 @@ All secrets in `/server/.env` must be rotated because they were potentially expo
    ```
 
 #### Production Environment:
+
 1. **Navigate to Stripe Dashboard:**
    - https://dashboard.stripe.com/webhooks
 
@@ -154,6 +166,7 @@ All secrets in `/server/.env` must be rotated because they were potentially expo
    - Copy the new secret
 
 3. **Update Production Environment Variables:**
+
    ```bash
    STRIPE_WEBHOOK_SECRET=whsec_<new-secret>
    ```
@@ -188,6 +201,7 @@ All secrets in `/server/.env` must be rotated because they were potentially expo
    - Remember to URL-encode special characters (e.g., `@` becomes `%40`)
 
 4. **Update Connection Format:**
+
    ```bash
    DATABASE_URL="postgresql://postgres:<URL-ENCODED-PASSWORD>@db.gpyvdknhmevcfdbgtqir.supabase.co:5432/postgres"
    DIRECT_URL="postgresql://postgres:<URL-ENCODED-PASSWORD>@db.gpyvdknhmevcfdbgtqir.supabase.co:5432/postgres"
@@ -239,6 +253,7 @@ All secrets in `/server/.env` must be rotated because they were potentially expo
 ## Post-Rotation Verification
 
 ### 1. Environment Variables Check
+
 ```bash
 cd server
 # Ensure .env is not tracked
@@ -249,6 +264,7 @@ cat .env | grep -E "JWT_SECRET|STRIPE_SECRET_KEY|DATABASE_URL"
 ```
 
 ### 2. Application Health Check
+
 ```bash
 # Start the server
 cd server
@@ -261,6 +277,7 @@ npm run dev
 ```
 
 ### 3. Integration Tests
+
 ```bash
 # Test authentication flow
 # - User login should work
@@ -282,6 +299,7 @@ npm run dev
 ### 1. Environment Variable Management
 
 **Do:**
+
 - Use `.env` for local development only
 - Use environment-specific secrets (dev/staging/prod)
 - Store production secrets in secure vault (AWS Secrets Manager, HashiCorp Vault, etc.)
@@ -289,6 +307,7 @@ npm run dev
 - Use different secrets across environments
 
 **Don't:**
+
 - Commit `.env` to version control
 - Share secrets via email/Slack
 - Reuse secrets across projects
@@ -371,6 +390,7 @@ Each tenant should rotate their own Stripe keys through the admin UI:
 4. Follow the in-app wizard
 
 **Database Storage:**
+
 - Tenant Stripe keys are encrypted using `TENANT_SECRETS_ENCRYPTION_KEY`
 - Keys are stored in the `tenants` table
 - Only accessible to that tenant's admin users
@@ -380,17 +400,20 @@ Each tenant should rotate their own Stripe keys through the admin UI:
 ## Additional Resources
 
 ### Documentation
+
 - [Stripe API Keys](https://stripe.com/docs/keys)
 - [Stripe Webhooks](https://stripe.com/docs/webhooks)
 - [Supabase Database](https://supabase.com/docs/guides/database)
 - [JWT Best Practices](https://tools.ietf.org/html/rfc8725)
 
 ### Tools
+
 - [Stripe CLI](https://stripe.com/docs/stripe-cli)
 - [Supabase CLI](https://supabase.com/docs/guides/cli)
 - [OpenSSL](https://www.openssl.org/)
 
 ### Security References
+
 - [OWASP Secrets Management](https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html)
 - [NIST Password Guidelines](https://pages.nist.gov/800-63-3/)
 
@@ -437,13 +460,13 @@ echo "5. Verify all integrations"
 
 Track all secret rotations in this table:
 
-| Secret | Last Rotation | Next Rotation | Rotated By | Notes |
-|--------|---------------|---------------|------------|-------|
-| JWT_SECRET | 2025-10-29 | 2026-01-29 (90 days) | Agent 2 | Security audit baseline |
-| Stripe Test Keys | Pending | ASAP | - | User action required |
-| Stripe Prod Keys | N/A | Before prod | - | Not yet in use |
-| Database Password | N/A | Optional | - | Protected by .env |
-| Supabase Keys | N/A | On compromise | - | Anon key safe client-side |
+| Secret            | Last Rotation | Next Rotation        | Rotated By | Notes                     |
+| ----------------- | ------------- | -------------------- | ---------- | ------------------------- |
+| JWT_SECRET        | 2025-10-29    | 2026-01-29 (90 days) | Agent 2    | Security audit baseline   |
+| Stripe Test Keys  | Pending       | ASAP                 | -          | User action required      |
+| Stripe Prod Keys  | N/A           | Before prod          | -          | Not yet in use            |
+| Database Password | N/A           | Optional             | -          | Protected by .env         |
+| Supabase Keys     | N/A           | On compromise        | -          | Anon key safe client-side |
 
 **Note:** NEVER record actual secret values in this document. Track only metadata.
 
@@ -456,6 +479,7 @@ Track all secret rotations in this table:
 **Status:** `.env` never committed to git ✅
 
 **Files Checked:**
+
 - `server/.env` - Never in git history
 - `apps/api/.env` - Never in git history
 - `.env.example` - Only placeholders
@@ -469,6 +493,7 @@ Track all secret rotations in this table:
 ## Questions?
 
 If you have questions about secret rotation or security practices, consult:
+
 - Security team lead
 - DevOps engineer
 - Refer to company security policy documentation

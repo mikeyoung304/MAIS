@@ -10,9 +10,9 @@ components:
   - dependency-injection
   - integration-tests
 symptoms:
-  - "Array length mismatch in race condition test (expected 3, got 2)"
+  - 'Array length mismatch in race condition test (expected 3, got 2)'
   - "Cannot read properties of undefined (reading '$disconnect')"
-  - "Test timed out in 5000ms for bulk add-on operations"
+  - 'Test timed out in 5000ms for bulk add-on operations'
 root_cause: |
   Three distinct issues: (1) Webhook race condition test used concurrent Promise.allSettled
   causing transaction contention, (2) DI container returned undefined prisma client in mock
@@ -58,6 +58,7 @@ Three distinct test failures were discovered in the MAIS codebase after resolvin
 **Root Cause:** The test used `Promise.allSettled()` to process 3 webhook events concurrently. This caused multiple database transactions to attempt acquiring locks simultaneously, leading to transaction timeouts in PostgreSQL.
 
 **Technical Details:**
+
 - Concurrent webhook processing triggered simultaneous `SELECT FOR UPDATE` queries
 - PostgreSQL's pessimistic locking caused transaction queue buildup
 - Only 2 of 3 webhooks would succeed before timeout (5s default)
@@ -68,6 +69,7 @@ Three distinct test failures were discovered in the MAIS codebase after resolvin
 **Root Cause:** The dependency injection container's mock mode preset returned `prisma: undefined` instead of the mock Prisma instance. This caused the test's `afterAll` cleanup to crash when calling `prisma.$disconnect()`.
 
 **Technical Details:**
+
 - Mock mode created `mockPrisma` instance but didn't export it
 - Test assumed `prisma` would always be defined
 - No defensive check in cleanup code for undefined prisma instance
@@ -77,6 +79,7 @@ Three distinct test failures were discovered in the MAIS codebase after resolvin
 **Root Cause:** The test created 50 add-on records with concurrent `prisma.addOn.create()` calls. While efficient, the 5-second default Vitest timeout was insufficient for this volume of operations.
 
 **Technical Details:**
+
 - 50 concurrent inserts with foreign key relationships
 - Each insert includes validation, constraint checking, and index updates
 - Operation typically completes in 6-8 seconds (exceeding 5s default)
@@ -96,7 +99,7 @@ const results = await Promise.allSettled(
     return webhooksController.handleStripeWebhook(rawBody, signature);
   })
 );
-const succeeded = results.filter(r => r.status === 'fulfilled');
+const succeeded = results.filter((r) => r.status === 'fulfilled');
 expect(succeeded).toHaveLength(3);
 
 // After (sequential - avoids transaction contention)
@@ -108,6 +111,7 @@ for (const { stripeEvent } of events) {
 ```
 
 **Rationale:**
+
 - Webhook processing in production is inherently sequential (Stripe sends one at a time)
 - The test validates idempotency logic, not concurrent transaction stress
 - Sequential processing eliminates race conditions while maintaining test validity
@@ -118,10 +122,24 @@ for (const { stripeEvent } of events) {
 
 ```typescript
 // Before
-return { controllers, services, repositories, mailProvider: undefined, cacheAdapter, prisma: undefined };
+return {
+  controllers,
+  services,
+  repositories,
+  mailProvider: undefined,
+  cacheAdapter,
+  prisma: undefined,
+};
 
 // After
-return { controllers, services, repositories, mailProvider: undefined, cacheAdapter, prisma: mockPrisma };
+return {
+  controllers,
+  services,
+  repositories,
+  mailProvider: undefined,
+  cacheAdapter,
+  prisma: mockPrisma,
+};
 ```
 
 **File 2:** `server/test/http/password-reset.http.spec.ts:49-60`
@@ -137,7 +155,7 @@ afterAll(async () => {
 
 // After
 afterAll(async () => {
-  if (!prisma) return;  // Guard against undefined
+  if (!prisma) return; // Guard against undefined
   if (testTenantId) {
     await prisma.tenant.delete({ where: { id: testTenantId } }).catch(() => {});
   }
@@ -146,6 +164,7 @@ afterAll(async () => {
 ```
 
 **Rationale:**
+
 - Mock mode tests need access to mock Prisma for cleanup
 - Defensive coding prevents crashes when container configuration changes
 
@@ -168,6 +187,7 @@ it('should handle large number of add-ons efficiently', async () => {
 ```
 
 **Rationale:**
+
 - 15 seconds provides 3x buffer over observed completion time (6-8s)
 - Timeout extension preferable to reducing test coverage
 
@@ -184,11 +204,11 @@ Test Files  45 passed | 1 skipped (46)
 
 ### 1. Concurrent Test Pattern Guidelines
 
-| Scenario | Pattern | Reason |
-|----------|---------|--------|
-| Correctness tests | Sequential `await` | Avoids transaction contention |
-| Stress/load tests | `Promise.allSettled` | Explicitly tests concurrency |
-| Read-only operations | `Promise.all` | No lock contention |
+| Scenario             | Pattern              | Reason                        |
+| -------------------- | -------------------- | ----------------------------- |
+| Correctness tests    | Sequential `await`   | Avoids transaction contention |
+| Stress/load tests    | `Promise.allSettled` | Explicitly tests concurrency  |
+| Read-only operations | `Promise.all`        | No lock contention            |
 
 ```typescript
 // Decision tree
@@ -206,7 +226,7 @@ Test Files  45 passed | 1 skipped (46)
 return {
   controllers,
   services,
-  prisma: mockPrisma,  // Always export, never undefined
+  prisma: mockPrisma, // Always export, never undefined
   // ...
 };
 ```
@@ -226,12 +246,12 @@ it('should export all required dependencies in mock mode', () => {
 
 ### 3. Bulk Operation Timeout Standards
 
-| Operation Count | Recommended Timeout |
-|-----------------|---------------------|
-| < 10 records | 5s (default) |
-| 10-50 records | 15s |
-| 50-100 records | 30s |
-| > 100 records | 60s + batch operations |
+| Operation Count | Recommended Timeout    |
+| --------------- | ---------------------- |
+| < 10 records    | 5s (default)           |
+| 10-50 records   | 15s                    |
+| 50-100 records  | 30s                    |
+| > 100 records   | 60s + batch operations |
 
 **Formula:** `timeout = 5000 + (recordCount * 200)`
 
@@ -274,9 +294,9 @@ When reviewing integration tests, verify:
 
 ## Files Modified
 
-| File | Lines | Change |
-|------|-------|--------|
-| `server/test/integration/webhook-race-conditions.spec.ts` | 426-476 | Sequential processing |
-| `server/src/di.ts` | 199 | Export mockPrisma |
-| `server/test/http/password-reset.http.spec.ts` | 49-60 | Guard + catch |
-| `server/test/integration/catalog.repository.integration.spec.ts` | 466 | Timeout extension |
+| File                                                             | Lines   | Change                |
+| ---------------------------------------------------------------- | ------- | --------------------- |
+| `server/test/integration/webhook-race-conditions.spec.ts`        | 426-476 | Sequential processing |
+| `server/src/di.ts`                                               | 199     | Export mockPrisma     |
+| `server/test/http/password-reset.http.spec.ts`                   | 49-60   | Guard + catch         |
+| `server/test/integration/catalog.repository.integration.spec.ts` | 466     | Timeout extension     |

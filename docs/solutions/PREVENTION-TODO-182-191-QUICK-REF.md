@@ -19,9 +19,9 @@ last_updated: 2025-12-03
 ```typescript
 // ❌ WRONG
 const metrics = {
-  version: process.env.npm_package_version,  // Version leak!
-  environment: process.env.NODE_ENV,         // Environment leak!
-  nodeVersion: process.version,               // System info leak!
+  version: process.env.npm_package_version, // Version leak!
+  environment: process.env.NODE_ENV, // Environment leak!
+  nodeVersion: process.version, // System info leak!
 };
 
 // ✅ RIGHT
@@ -30,7 +30,7 @@ const metrics = {
   uptime_seconds: process.uptime(),
   memory_usage: process.memoryUsage(),
   cpu_usage: process.cpuUsage(),
-  service: 'mais-api'
+  service: 'mais-api',
 };
 ```
 
@@ -54,12 +54,15 @@ await prisma.$transaction(async (tx) => {
 logger.warn(`Secret Key: ${secretKey}`);
 
 // ✅ RIGHT - Everything inside transaction
-await prisma.$transaction(async (tx) => {
-  const secretKey = `sk_live_${SLUG}_${crypto.randomBytes(16).toString('hex')}`;
-  await tx.tenant.create({ data: { apiKeySecret: secretKey } });
-  // Store for logging after commit
-  return secretKey;
-}, { timeout: 60000 });
+await prisma.$transaction(
+  async (tx) => {
+    const secretKey = `sk_live_${SLUG}_${crypto.randomBytes(16).toString('hex')}`;
+    await tx.tenant.create({ data: { apiKeySecret: secretKey } });
+    // Store for logging after commit
+    return secretKey;
+  },
+  { timeout: 60000 }
+);
 // Log only after commit succeeds
 if (secretKey) logger.warn(`Secret Key: ${secretKey}`);
 ```
@@ -111,7 +114,15 @@ unsub(); // Clean removal
 export type BookingStatus = 'PENDING' | 'PAID' | 'CONFIRMED' | 'CANCELED';
 
 // From contract
-status: z.enum(['PENDING', 'DEPOSIT_PAID', 'PAID', 'CONFIRMED', 'CANCELED', 'REFUNDED', 'FULFILLED'])
+status: z.enum([
+  'PENDING',
+  'DEPOSIT_PAID',
+  'PAID',
+  'CONFIRMED',
+  'CANCELED',
+  'REFUNDED',
+  'FULFILLED',
+]);
 
 // ✅ RIGHT - Derived from schema
 import { BookingDtoSchema } from '@macon/contracts';
@@ -132,8 +143,10 @@ export type BookingStatus = z.infer<typeof BookingDtoSchema>['status'];
 // ❌ WRONG - Missing exhaustiveness check
 function getStatusVariant(status: BookingStatus) {
   switch (status) {
-    case 'PENDING': return 'outline';
-    case 'PAID': return 'secondary';
+    case 'PENDING':
+      return 'outline';
+    case 'PAID':
+      return 'secondary';
     // Missing case: CONFIRMED, CANCELED, etc.
   }
   // Silent return undefined if new status added!
@@ -142,11 +155,13 @@ function getStatusVariant(status: BookingStatus) {
 // ✅ RIGHT - Compile-time guarantee
 function getStatusVariant(status: BookingStatus): string {
   switch (status) {
-    case 'PENDING': return 'outline';
-    case 'PAID': return 'secondary';
+    case 'PENDING':
+      return 'outline';
+    case 'PAID':
+      return 'secondary';
     // ... all cases
     default: {
-      const _: never = status;  // ← TypeScript errors if case missing!
+      const _: never = status; // ← TypeScript errors if case missing!
       return 'outline';
     }
   }
@@ -174,10 +189,10 @@ private readonly advisoryLockId = 42424242; // See docs/reference/ADVISORY_LOCKS
 **Registry file:** `docs/reference/ADVISORY_LOCKS.md`
 
 ```markdown
-| Lock ID | Component | Purpose | Scope |
-|---------|-----------|---------|-------|
-| 42424242 | IdempotencyService | Cleanup scheduling | Global |
-| FNV-1a | BookingRepository | Race prevention | Per booking |
+| Lock ID  | Component          | Purpose            | Scope       |
+| -------- | ------------------ | ------------------ | ----------- |
+| 42424242 | IdempotencyService | Cleanup scheduling | Global      |
+| FNV-1a   | BookingRepository  | Race prevention    | Per booking |
 ```
 
 **Test:** Verify all lock IDs in code appear in registry, no duplicates
@@ -231,6 +246,7 @@ server/test/type-safety-verification.ts (this is documentation, not a test!)
 ```
 
 **Test checklist:**
+
 - [ ] Error isolation (one handler error doesn't crash emitter)
 - [ ] Multiple handlers for same event
 - [ ] Async handler execution
@@ -246,22 +262,31 @@ server/test/type-safety-verification.ts (this is documentation, not a test!)
 
 ```typescript
 // ❌ WRONG - No visibility
-await prisma.$transaction(async (tx) => {
-  // ... 16 operations
-}, { timeout: 60000 });
+await prisma.$transaction(
+  async (tx) => {
+    // ... 16 operations
+  },
+  { timeout: 60000 }
+);
 
 // ✅ RIGHT - Full observability
 logger.info({ slug: DEMO_SLUG, operations: 16 }, 'Starting seed transaction');
 const startTime = Date.now();
 
-await prisma.$transaction(async (tx) => {
-  // ... 16 operations
-}, { timeout: 60000 });
+await prisma.$transaction(
+  async (tx) => {
+    // ... 16 operations
+  },
+  { timeout: 60000 }
+);
 
-logger.info({
-  slug: DEMO_SLUG,
-  durationMs: Date.now() - startTime
-}, 'Seed transaction committed successfully');
+logger.info(
+  {
+    slug: DEMO_SLUG,
+    durationMs: Date.now() - startTime,
+  },
+  'Seed transaction committed successfully'
+);
 ```
 
 **Test:** Parse logs and verify start log exists, duration tracked
@@ -287,6 +312,7 @@ logger.info({
 ```
 
 **Check:**
+
 - [ ] Moved `server/test/type-safety-verification.ts` → `docs/examples/event-emitter-type-safety.ts`
 - [ ] Updated file header comments
 - [ ] No broken references
@@ -329,7 +355,7 @@ describe('TODO 182-191 Prevention', () => {
   it('switch statements should have never type', () => {
     const code = readFileSync('client/src/lib/utils.ts', 'utf8');
     const switches = code.match(/switch\s*\([^)]+\)/g);
-    switches?.forEach(s => {
+    switches?.forEach((s) => {
       const startIdx = code.indexOf(s);
       const endIdx = code.indexOf('}', startIdx);
       const switchBlock = code.substring(startIdx, endIdx);
@@ -378,51 +404,61 @@ describe('TODO 182-191 Prevention', () => {
 ## TODO 182-191 Prevention Checks
 
 ### 182: Information Disclosure
+
 - [ ] No version exposure in public endpoints
 - [ ] No environment exposure in /metrics
 - [ ] No system info (Node.js version, arch, PID)
 
 ### 183: Transaction Atomicity
+
 - [ ] Resource generation inside transactions
 - [ ] Sensitive data logged after commit only
 - [ ] 60+ second timeout for bulk operations
 
 ### 184: Memory Leak - Events
+
 - [ ] subscribe() returns unsubscribe function
 - [ ] Handlers can be individually removed
 - [ ] Tests verify handler removal
 
 ### 185: Type DRY
+
 - [ ] No type unions manually duplicated from contracts
 - [ ] Types derived with z.infer
 - [ ] Contract changes auto-propagate
 
 ### 186: Exhaustiveness
+
 - [ ] All switch statements have exhaustiveness checks
 - [ ] Default case assigns to never type
 - [ ] TypeScript errors on missing cases
 
 ### 187: Documentation
+
 - [ ] All magic numbers documented
 - [ ] Advisory lock IDs registered
 - [ ] Registry has no duplicates
 
 ### 188: React Cleanup
+
 - [ ] useRef with Promise/function has cleanup
 - [ ] useEffect runs on unmount
 - [ ] Pending promises resolved on unmount
 
 ### 189: Test Coverage
+
 - [ ] Infrastructure code has unit tests
 - [ ] Not just integration test coverage
 - [ ] Error isolation tested
 
 ### 190: Observability
+
 - [ ] Transaction start logged
 - [ ] Transaction completion logged
 - [ ] Duration tracked
 
 ### 191: File Organization
+
 - [ ] Tests in test/ with describe/it
 - [ ] Documentation in docs/
 - [ ] Examples in docs/examples/
@@ -433,60 +469,70 @@ describe('TODO 182-191 Prevention', () => {
 ## Common Violations
 
 ### 182: Info Disclosure
+
 ```bash
 # Check for version exposure
 rg 'npm_package_version' server/src/routes
 ```
 
 ### 183: Transaction Atomicity
+
 ```bash
 # Find secrets generated before transaction
 rg 'crypto\.randomBytes' server/src/prisma/seeds -B 5 | grep -v '\$transaction'
 ```
 
 ### 184: Memory Leak
+
 ```bash
 # Find subscribe without unsubscribe
 rg '\.subscribe\(' server/src -A 3 | grep -v 'return\|unsub\|off('
 ```
 
 ### 185: Type DRY
+
 ```bash
 # Find manually defined unions
 rg "export type \w+ = '[A-Z_]+'.*\|" client/src
 ```
 
 ### 186: Exhaustiveness
+
 ```bash
 # Find switch without default
 rg 'switch.*status' client/src -A 20 | grep -v 'default:'
 ```
 
 ### 187: Documentation
+
 ```bash
 # Find undocumented lock IDs
 rg 'advisoryLock.*=.*\d+' server/src | grep -v '//'
 ```
 
 ### 188: React Cleanup
+
 ```bash
 # Find useRef without cleanup
 rg 'useRef<.*function|Promise' client/src | grep -v 'useEffect'
 ```
 
 ### 189: Test Coverage
+
 ```bash
 # Find infrastructure without tests
 ls server/src/lib/core/*.ts | while read f; do [ ! -f "server/test/lib/$(basename $f .ts).test.ts" ] && echo $f; done
 ```
 
 ### 190: Observability
+
 ```bash
 # Find transactions without logging
 rg '\$transaction' server/src/prisma/seeds -A 2 | grep -v logger
 ```
 
 ### 191: File Organization
+
 ```bash
 # Find docs in test directory
 find server/test -name "*.ts" -exec grep -l "Example\|Documentation" {} \;

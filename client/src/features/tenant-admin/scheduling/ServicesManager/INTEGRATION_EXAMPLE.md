@@ -6,16 +6,14 @@
 
 ```tsx
 // In your tenant admin scheduling page (e.g., TenantSchedulingPage.tsx)
-import { ServicesManager } from "@/features/tenant-admin/scheduling/ServicesManager";
+import { ServicesManager } from '@/features/tenant-admin/scheduling/ServicesManager';
 
 export function TenantSchedulingPage() {
   return (
     <div className="p-6 space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-white mb-2">Scheduling Services</h1>
-        <p className="text-white/70">
-          Manage your appointment types, durations, and pricing.
-        </p>
+        <p className="text-white/70">Manage your appointment types, durations, and pricing.</p>
       </div>
 
       <ServicesManager />
@@ -41,10 +39,7 @@ import { TenantSchedulingPage } from "@/features/tenant-admin/scheduling/TenantS
 
 ```tsx
 // In your tenant admin navigation/sidebar
-<Link
-  to="/tenant/scheduling/services"
-  className="nav-link"
->
+<Link to="/tenant/scheduling/services" className="nav-link">
   <Calendar className="w-5 h-5" />
   Services
 </Link>
@@ -53,8 +48,8 @@ import { TenantSchedulingPage } from "@/features/tenant-admin/scheduling/TenantS
 ## Complete Page Example
 
 ```tsx
-import { ServicesManager } from "@/features/tenant-admin/scheduling/ServicesManager";
-import { Calendar } from "lucide-react";
+import { ServicesManager } from '@/features/tenant-admin/scheduling/ServicesManager';
+import { Calendar } from 'lucide-react';
 
 export function TenantSchedulingPage() {
   return (
@@ -64,9 +59,7 @@ export function TenantSchedulingPage() {
         <div className="container mx-auto px-6 py-8">
           <div className="flex items-center gap-3 mb-2">
             <Calendar className="w-8 h-8 text-macon-orange" />
-            <h1 className="text-3xl font-bold text-white">
-              Scheduling Services
-            </h1>
+            <h1 className="text-3xl font-bold text-white">Scheduling Services</h1>
           </div>
           <p className="text-white/70 text-lg">
             Create and manage appointment types for your business.
@@ -86,11 +79,11 @@ export function TenantSchedulingPage() {
 ## With Tabs (Multiple Sections)
 
 ```tsx
-import { useState } from "react";
-import { ServicesManager } from "@/features/tenant-admin/scheduling/ServicesManager";
-import { AvailabilityManager } from "@/features/tenant-admin/scheduling/AvailabilityManager";
-import { AppointmentsManager } from "@/features/tenant-admin/scheduling/AppointmentsManager";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from 'react';
+import { ServicesManager } from '@/features/tenant-admin/scheduling/ServicesManager';
+import { AvailabilityManager } from '@/features/tenant-admin/scheduling/AvailabilityManager';
+import { AppointmentsManager } from '@/features/tenant-admin/scheduling/AppointmentsManager';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export function TenantSchedulingPage() {
   return (
@@ -131,8 +124,8 @@ The component expects a tenant JWT token in localStorage (key: `tenantToken`). M
 
 ```tsx
 // Example: Protect the route
-import { Navigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 export function ProtectedTenantSchedulingPage() {
   const { tenantToken } = useAuth();
@@ -156,7 +149,7 @@ export function ProtectedTenantSchedulingPage() {
 export function CustomServicesManager() {
   const handleChange = () => {
     // Custom logic after services change
-    console.log("Services updated!");
+    console.log('Services updated!');
   };
 
   return <ServicesManager onServicesChange={handleChange} />;
@@ -193,7 +186,7 @@ The component uses the MAIS design system classes. To customize:
 
 ```tsx
 // Mock the API client for testing
-import { api } from "@/lib/api";
+import { api } from '@/lib/api';
 
 // Before tests
 const originalGetServices = api.tenantAdminGetServices;
@@ -201,9 +194,9 @@ api.tenantAdminGetServices = async () => ({
   status: 200,
   body: [
     {
-      id: "1",
-      slug: "strategy-session",
-      name: "Strategy Session",
+      id: '1',
+      slug: 'strategy-session',
+      name: 'Strategy Session',
       // ... other fields
     },
   ],
@@ -216,15 +209,18 @@ api.tenantAdminGetServices = originalGetServices;
 ## Common Issues
 
 ### 401 Unauthorized
+
 - Ensure tenant is logged in
 - Check localStorage for `tenantToken`
 - Verify token is not expired
 
 ### Slug Already Exists (409 Conflict)
+
 - Auto-generated slug may conflict with existing service
 - User must manually modify the slug
 
 ### Services Not Loading
+
 - Check browser console for API errors
 - Verify backend is running
 - Check network tab in DevTools

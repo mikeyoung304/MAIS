@@ -9,12 +9,14 @@
 ## Context
 
 The webhook handler (`WebhooksController.handleStripeWebhook`) is the most critical code path in our application:
+
 - Handles payment → booking link
 - Failure results in customer charged but no booking
 - No manual intervention possible if webhook processing is broken
 - Errors are difficult to reproduce (require real Stripe webhooks)
 
 **Current Test Coverage:**
+
 - Webhook handler: **0% coverage** (no tests written yet)
 - Booking service: 95% coverage
 - Payment adapter: 0% coverage (stub only)
@@ -44,6 +46,7 @@ We have decided to require **100% test coverage** for webhook handler and relate
    - Detect breaking changes in Stripe API
 
 **Test Coverage Targets:**
+
 - `WebhooksController`: 100% line coverage, 100% branch coverage
 - `BookingService.onPaymentCompleted()`: 100% coverage
 - `StripePaymentAdapter.verifyWebhook()`: 100% coverage
@@ -51,6 +54,7 @@ We have decided to require **100% test coverage** for webhook handler and relate
 ## Consequences
 
 **Positive:**
+
 - **Confidence:** Can deploy webhook changes without fear
 - **Regression prevention:** Tests catch breaking changes
 - **Documentation:** Tests serve as executable documentation
@@ -58,11 +62,13 @@ We have decided to require **100% test coverage** for webhook handler and relate
 - **Quality gate:** CI blocks deploy if tests fail
 
 **Negative:**
+
 - **Initial effort:** Writing tests takes 4-6 hours
 - **Maintenance:** Tests must be updated when webhook logic changes
 - **Complexity:** Mocking Stripe signatures requires setup
 
 **Justification for 100% Target:**
+
 - Wedding bookings are mission-critical (reputation risk)
 - Webhook failures are expensive (manual reconciliation)
 - Errors are hard to reproduce in production
@@ -75,6 +81,7 @@ We have decided to require **100% test coverage** for webhook handler and relate
 **Approach:** Aim for 80% coverage (industry standard), skip edge cases.
 
 **Why Rejected:**
+
 - Webhook handler is too critical for "good enough" testing
 - Edge cases (signature errors, malformed metadata) are exactly what we need to test
 - 80% coverage means 20% of code is untested (unacceptable for payment flows)
@@ -84,6 +91,7 @@ We have decided to require **100% test coverage** for webhook handler and relate
 **Approach:** Test webhook handler manually with Stripe CLI before each deploy.
 
 **Why Rejected:**
+
 - Manual testing is error-prone (humans forget steps)
 - Can't test concurrent webhooks or race conditions
 - No regression detection (changes can break old functionality)
@@ -94,6 +102,7 @@ We have decided to require **100% test coverage** for webhook handler and relate
 **Approach:** Only write end-to-end tests, skip unit-level tests.
 
 **Why Rejected:**
+
 - Integration tests are slower (run full app + database)
 - Harder to test error scenarios (requires complex mocking)
 - Less precise (don't pinpoint which line failed)
@@ -102,17 +111,20 @@ We have decided to require **100% test coverage** for webhook handler and relate
 ## Implementation Details
 
 **Test Files:**
+
 - `server/test/routes/webhooks.controller.spec.ts` - Unit tests
 - `server/test/integration/webhook-flow.test.ts` - Integration tests
 - `server/test/adapters/stripe.adapter.spec.ts` - Payment adapter tests
 
 **Testing Tools:**
+
 - Vitest (test runner)
 - Stripe Mock (for signature generation)
 - Supertest (HTTP testing)
 - Test database (isolated from development)
 
 **Example Test:**
+
 ```typescript
 describe('WebhooksController', () => {
   describe('handleStripeWebhook', () => {
@@ -152,7 +164,8 @@ describe('WebhooksController', () => {
 
     it('returns 500 on booking creation failure', async () => {
       // Mock booking service to fail
-      jest.spyOn(bookingService, 'onPaymentCompleted')
+      jest
+        .spyOn(bookingService, 'onPaymentCompleted')
         .mockRejectedValueOnce(new Error('Database error'));
 
       const response = await request(app)
@@ -168,6 +181,7 @@ describe('WebhooksController', () => {
 ```
 
 **CI/CD Integration:**
+
 ```yaml
 # .github/workflows/test.yml
 - name: Run tests
@@ -187,6 +201,7 @@ describe('WebhooksController', () => {
 
 **Rollback Plan:**
 If 100% coverage proves too burdensome:
+
 1. Reduce to 90% coverage for non-critical paths
 2. Maintain 100% coverage for signature verification and idempotency
 3. Add manual testing checklist for deploys

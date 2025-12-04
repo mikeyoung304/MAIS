@@ -9,6 +9,7 @@
 ## The Brutal Truth
 
 Your current codebase is **production-ready right now** for the core value:
+
 - Booking system works ✅
 - Stripe integration works ✅
 - Multi-tenant isolation works ✅
@@ -23,9 +24,11 @@ The 6-week plan adds things that don't matter for **FIRST PAYING CUSTOMER**.
 ### Week 1: Fix What's Broken (4 days)
 
 #### Day 1-2: Test Suite Recovery (High Priority)
+
 **Current Problem:** 83 integration tests failing (webhook race conditions, photo upload endpoints return 404)
 
 **What to fix:**
+
 1. **Webhook race condition tests** (13 tests) - CRITICAL for payment verification
    - Root cause: Not refactored to modern test helpers
    - Time: 3-4 hours
@@ -44,6 +47,7 @@ The 6-week plan adds things that don't matter for **FIRST PAYING CUSTOMER**.
 **Ship with:** 752 passing tests (keep photo/webhook HTTP tests as skipped)
 
 #### Day 3-4: Verify Production Setup (2 days)
+
 - **Test Little Bit Farm end-to-end:** Can someone actually book and pay? (2 hours)
 - **Stripe test mode verification:** Does webhook fire? Does commission calculate? (2 hours)
 - **Cloud storage quick fix:** Move from local filesystem to Supabase Storage (3 hours)
@@ -57,9 +61,11 @@ The 6-week plan adds things that don't matter for **FIRST PAYING CUSTOMER**.
 ### Week 2: Minimal Self-Service (3 days)
 
 #### What You MUST Build
+
 **Post this after Week 1, not before testing is done**
 
 **Option A (MINIMUM - 3 days):**
+
 ```
 Day 1: POST /v1/tenants/signup endpoint only
   - Input: { email, password, businessName, slug }
@@ -75,6 +81,7 @@ Day 3: Buffer + testing
 ```
 
 **What this looks like:**
+
 - New tenant fills form
 - Gets API key immediately
 - Redirected to blank admin dashboard
@@ -86,6 +93,7 @@ Day 3: Buffer + testing
 
 **Option B (BETTER - 5 days, still less than planned):**
 Add lightweight onboarding:
+
 ```
 Week 2 Day 1-2: Signup form + endpoint (as above)
 Week 2 Day 3: Simple 3-step wizard
@@ -102,9 +110,11 @@ This is 80% of the value with 20% more effort.
 ## What You CUT (Actually Delete)
 
 ### ❌ Cut Entirely: 5-Step Onboarding Wizard
+
 **Reason:** Over-engineered. Stripe's hosted flow is already a wizard.
 
 What you planned:
+
 1. Account created
 2. Add your first package
 3. Connect Stripe
@@ -112,6 +122,7 @@ What you planned:
 5. You're live!
 
 What it should be:
+
 1. Create account
 2. Create package (one form, simplified)
 3. Redirect to Stripe (they do the UI)
@@ -119,55 +130,63 @@ What it should be:
 Remove all the preview step, progress bars, guided tours. **Just forms and redirects.**
 
 ### ❌ Cut for Now: Analytics Dashboard
+
 **Reason:** Not needed for day 1. Platform collects commission automatically.
 
 What do they need to know on day 1?
+
 - "I got bookings" ✅ (notification email suffices)
 - "How much commission?" ✅ (Stripe dashboard shows it)
 - "Revenue graph" ❌ (Can add week 3)
 
 **Post-launch Phase 1 (add in week 3):**
+
 - Simple card: "You've made $X this month"
 - Booking list (already works)
 - Nothing fancy
 
 ### ❌ Cut: Settings Page
+
 **Reason:** Not urgent. Password changes are rare.
 
 **What to keep:** Just admin login. Change password later.
 
 ### ❌ Cut: Email Templates
+
 **Reason:** File sink exists. Nobody reads booking confirmation emails on day 1.
 
 **What to do:** Leave file-sink fallback. Tell tenant: "Check /tmp/emails/ for now"
 **Post-launch week 2:** Wire up Postmark
 
 ### ❌ Cut: Segment Navigation UI
+
 **Reason:** Backend complete, frontend doesn't matter for MVP.
 
 One tenant = one storefront. Multiple segments are future.
 
 ### ❌ Cut: Add-ons Integration
+
 **Reason:** Prices already work without add-ons. Feature, not must-have.
 
 ### ❌ Cut: Custom Domains
+
 **Reason:** Everyone uses `maconaisolutions.com/tenant/{slug}` for MVP.
 
 ---
 
 ## What You KEEP (Critical Path)
 
-| Feature | MVP Essential? | Current State | Effort |
-|---------|---|---|---|
-| Booking form | ✅ YES | 95% working | Skip remaining |
-| Stripe payment | ✅ YES | 100% working | 0 hours |
-| Commission auto-split | ✅ YES | 100% working | 0 hours |
-| Tenant signup endpoint | ✅ YES | 0% | 2 hours |
-| Signup form | ✅ YES | 0% | 1 hour |
-| Stripe Connect button | ✅ YES | Exists, wire it up | 1 hour |
-| Admin dashboard | ✅ YES | Already exists | 0 hours |
-| Package CRUD | ✅ YES | Already works | 0 hours |
-| Multi-tenant isolation | ✅ YES | 95% done | Skip remaining |
+| Feature                | MVP Essential? | Current State      | Effort         |
+| ---------------------- | -------------- | ------------------ | -------------- |
+| Booking form           | ✅ YES         | 95% working        | Skip remaining |
+| Stripe payment         | ✅ YES         | 100% working       | 0 hours        |
+| Commission auto-split  | ✅ YES         | 100% working       | 0 hours        |
+| Tenant signup endpoint | ✅ YES         | 0%                 | 2 hours        |
+| Signup form            | ✅ YES         | 0%                 | 1 hour         |
+| Stripe Connect button  | ✅ YES         | Exists, wire it up | 1 hour         |
+| Admin dashboard        | ✅ YES         | Already exists     | 0 hours        |
+| Package CRUD           | ✅ YES         | Already works      | 0 hours        |
+| Multi-tenant isolation | ✅ YES         | 95% done           | Skip remaining |
 
 ---
 
@@ -176,18 +195,21 @@ One tenant = one storefront. Multiple segments are future.
 ### Week 1 (5 days)
 
 **Day 1-2: Test Stabilization** (8 hours)
+
 - Fix webhook race condition integration tests ONLY
 - Skip photo upload tests (not blocking customer experience)
 - Skip webhook HTTP tests (endpoint works, tests are nice-to-have)
 - **Deliverable:** 752 passing tests, webhook handling verified
 
 **Day 3-4: Verification** (8 hours)
+
 - E2E: Customer books and pays with Little Bit Farm test data
 - Verify: Webhook fires, commission calculates, booking appears in admin
 - Setup: Supabase Storage for image persistence
 - **Deliverable:** One full booking cycle verified, images persist
 
 **Day 5: Buffer + Documentation** (4 hours)
+
 - Any test flakiness fixes
 - Document what's broken that we're shipping with
 - **Deliverable:** Ready for production
@@ -195,6 +217,7 @@ One tenant = one storefront. Multiple segments are future.
 ### Week 2 (3 days)
 
 **Day 1-2: Self-Service Signup** (8 hours)
+
 ```typescript
 // New file: server/src/routes/tenant-signup.routes.ts
 POST /v1/tenants/signup
@@ -213,6 +236,7 @@ POST /v1/tenants/signup
 ```
 
 **Day 3: Polish + Deploy** (4 hours)
+
 - Verify signup flow end-to-end
 - Make sure Stripe Connect button works from new admin
 - Deploy to production
@@ -223,11 +247,13 @@ POST /v1/tenants/signup
 ## How to Get First Customer in 2 Weeks
 
 **Timeline:**
+
 - **Week 1 Fri EOD:** Platform is ready (tests pass, verified)
 - **Week 2 Wed EOD:** Signup form live (anyone can sign up)
 - **Week 2 Fri EOD:** First paying customer on platform
 
 **Go-To-Market:**
+
 - Day 1 (Week 2 Wed): Email Little Bit Farm signup link
 - Day 2: They create account, add packages, connect Stripe
 - Day 3: First real customer books (yours, external, whatever)
@@ -241,6 +267,7 @@ POST /v1/tenants/signup
 The existing roadmap is **good architecture design**, but it's treating MVP as "complete product."
 
 **Phases to rework (POST-LAUNCH):**
+
 - **Phase 3 (Week 3):** Add basic analytics (revenue card only)
 - **Phase 4 (Week 4):** Segment UI + email templates
 - **Phase 5 (Week 5):** Settings page + advanced features
@@ -274,6 +301,7 @@ The existing roadmap is **good architecture design**, but it's treating MVP as "
 **Yes. Kill it.**
 
 Replace with:
+
 ```
 1. Signup form → Create account
 2. Blank admin dashboard
@@ -287,6 +315,7 @@ Total: 3 screens, not 5 wizards.
 ### 4. Do tenants need analytics at MVP or is that a distraction?
 
 **Distraction.** They care about:
+
 - "Can I book?" ✅ (Stripe dashboard shows it)
 - "How much did I make?" ✅ (Stripe shows commission)
 - "Pretty graphs" ❌ (Add week 3 post-launch)
@@ -300,6 +329,7 @@ Total: 3 screens, not 5 wizards.
 ## The Actual MVP Scope
 
 ### KEEP (Critical for First Customer)
+
 - [x] Booking form (95% done)
 - [x] Stripe payments (100% done)
 - [x] Commission split (100% done)
@@ -309,12 +339,14 @@ Total: 3 screens, not 5 wizards.
 - [x] Multi-tenant isolation (done)
 
 ### DEFER (Launch Week 2)
+
 - [ ] Analytics (basic revenue card)
 - [ ] Email templates (Postmark integration)
 - [ ] Settings page
 - [ ] Segment UI
 
 ### CUT (Never For MVP)
+
 - [ ] 5-step wizard (replace with 3-screen flow)
 - [ ] Custom domains
 - [ ] Advanced analytics
@@ -359,13 +391,13 @@ Total: 8-10 engineering hours = 2 business days of focused work
 
 ## Risk Mitigation
 
-| Risk | Mitigation |
-|------|-----------|
-| Webhook tests still failing | Fix only integration tests, add HTTP tests post-launch |
-| Photo upload broken | Mark as known issue, document workaround, fix week 3 |
-| Stripe onboarding unclear | Use Stripe's hosted flow (they do the UI) |
-| No analytics on day 1 | Show Stripe dashboard link ("Check your earnings here") |
-| First tenant has no email confirmations | Log to file, add email week 2 post-launch |
+| Risk                                    | Mitigation                                              |
+| --------------------------------------- | ------------------------------------------------------- |
+| Webhook tests still failing             | Fix only integration tests, add HTTP tests post-launch  |
+| Photo upload broken                     | Mark as known issue, document workaround, fix week 3    |
+| Stripe onboarding unclear               | Use Stripe's hosted flow (they do the UI)               |
+| No analytics on day 1                   | Show Stripe dashboard link ("Check your earnings here") |
+| First tenant has no email confirmations | Log to file, add email week 2 post-launch               |
 
 ---
 

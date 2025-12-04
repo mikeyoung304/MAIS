@@ -74,22 +74,19 @@ export function CancelDialog({
             Cancel Your Booking
           </DialogTitle>
           <DialogDescription className="text-white/60">
-            This action cannot be undone. Your booking will be cancelled and a
-            refund will be processed.
+            This action cannot be undone. Your booking will be cancelled and a refund will be
+            processed.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           {/* Warning Box */}
           <div className="bg-red-900/20 rounded-lg p-4 border border-red-500/30">
-            <h4 className="font-medium text-red-300 mb-2">
-              What happens when you cancel:
-            </h4>
+            <h4 className="font-medium text-red-300 mb-2">What happens when you cancel:</h4>
             <ul className="text-sm text-red-200/80 space-y-1 list-disc list-inside">
               <li>Your booking will be permanently cancelled</li>
               <li>
-                A refund of {formatCurrency(totalCents)} will be processed within
-                5-10 business days
+                A refund of {formatCurrency(totalCents)} will be processed within 5-10 business days
               </li>
               <li>Your date will be released for other bookings</li>
               <li>You will receive a confirmation email</li>
@@ -109,16 +106,13 @@ export function CancelDialog({
               className="bg-macon-navy-700 border-white/20 text-white min-h-[80px]"
               maxLength={500}
             />
-            <p className="text-xs text-white/40">
-              {reason.length}/500 characters
-            </p>
+            <p className="text-xs text-white/40">{reason.length}/500 characters</p>
           </div>
 
           {/* Confirmation Input */}
           <div className="space-y-2">
             <Label htmlFor="confirm" className="text-white">
-              Type <span className="font-mono text-red-400">cancel</span> to
-              confirm
+              Type <span className="font-mono text-red-400">cancel</span> to confirm
             </Label>
             <input
               id="confirm"

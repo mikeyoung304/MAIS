@@ -57,6 +57,7 @@ Based on the marketing homepage (`/Users/mikeyoung/CODING/MAIS/client/src/pages/
 3. **Professional Website:** Design, launch, and maintain digital presence without dev skills
 
 **Social Proof:**
+
 - 50+ businesses using the platform
 - $2M+ revenue managed through the system
 - 4.9/5 member rating
@@ -94,6 +95,7 @@ Based on the marketing homepage (`/Users/mikeyoung/CODING/MAIS/client/src/pages/
 **Status:** ✅ **IMPLEMENTED**
 
 **What Exists:**
+
 - Full marketing homepage with club positioning
 - Three-pillar value proposition (growth, bookings, website)
 - Testimonials from existing members
@@ -104,6 +106,7 @@ Based on the marketing homepage (`/Users/mikeyoung/CODING/MAIS/client/src/pages/
 `/Users/mikeyoung/CODING/MAIS/client/src/pages/Home.tsx` (lines 1-477)
 
 **Key Sections:**
+
 - Hero section with gradient background and animated orbs (lines 14-63)
 - "Club Advantage" three-pillar feature cards (lines 66-135)
 - "Who Is This For?" persona targeting (lines 138-219)
@@ -113,11 +116,13 @@ Based on the marketing homepage (`/Users/mikeyoung/CODING/MAIS/client/src/pages/
 - Final CTA with application promise (lines 434-473)
 
 **User Actions:**
+
 - Read marketing content
 - Click "Browse Packages" → redirects to `/packages`
 - Click "Apply" or "Learn More" → no specific endpoint (generic email link)
 
 **Gaps:**
+
 - No dedicated "Apply Now" landing page
 - No lead capture form for warm leads
 - Email link (`mailto:support@maconai.com`) requires manual follow-up
@@ -129,17 +134,20 @@ Based on the marketing homepage (`/Users/mikeyoung/CODING/MAIS/client/src/pages/
 **Status:** ✅ **PARTIALLY IMPLEMENTED**
 
 **What Exists:**
+
 - Public package catalog browsing (no authentication required)
 - Segment-based package organization (e.g., "Wellness Retreat", "Micro-Wedding")
 - Package details with photos, pricing, descriptions
 - Widget embeddable on tenant websites (for end-customer bookings)
 
 **Code Locations:**
+
 - Package catalog grid: `/Users/mikeyoung/CODING/MAIS/client/src/features/catalog/CatalogGrid.tsx`
 - Package detail page: `/Users/mikeyoung/CODING/MAIS/client/src/features/catalog/PackagePage.tsx`
 - API contracts: `/Users/mikeyoung/CODING/MAIS/packages/contracts/`
 
 **What's Missing:**
+
 - No "membership packages" or "club tier" pricing page
 - Prospects see service packages (for end-customers), not membership plans
 - No clear differentiation between B2B (tenant signup) vs B2C (customer bookings)
@@ -151,12 +159,14 @@ Based on the marketing homepage (`/Users/mikeyoung/CODING/MAIS/client/src/pages/
 **Status:** ❌ **NOT IMPLEMENTED**
 
 **Current Reality:**
+
 - Homepage mentions "5-minute application" and "24-hour review"
 - No application form exists in the codebase
 - CTAs lead to generic email or package browsing
 - No lead capture/tracking system
 
 **Expected Flow (Not Built):**
+
 1. Prospect clicks "Apply to Join" CTA
 2. Fills out application form:
    - Business name
@@ -186,11 +196,13 @@ Platform administrators manually create tenants using CLI scripts after sales ap
 **File:** `/Users/mikeyoung/CODING/MAIS/server/scripts/create-tenant.ts`
 
 **Command:**
+
 ```bash
 pnpm create-tenant --slug=bellaweddings --name="Bella Weddings" --commission=10.0
 ```
 
 **What It Does:**
+
 1. Validates slug availability (lines 109-117)
 2. Generates API key pair (lines 120-125)
    - Public key: `pk_live_bellaweddings_a3f8c9d2e1b4f7g8` (client-safe)
@@ -199,6 +211,7 @@ pnpm create-tenant --slug=bellaweddings --name="Bella Weddings" --commission=10.
 4. Outputs tenant ID, API keys, commission rate (lines 140-171)
 
 **Security:**
+
 - Secret key hashed with SHA-256 before storage (never plaintext)
 - Uses `apiKeyService` for secure key generation
 - File: `/Users/mikeyoung/CODING/MAIS/server/src/lib/api-key.service.ts`
@@ -208,6 +221,7 @@ pnpm create-tenant --slug=bellaweddings --name="Bella Weddings" --commission=10.
 **File:** `/Users/mikeyoung/CODING/MAIS/server/scripts/create-tenant-with-stripe.ts`
 
 **Command:**
+
 ```bash
 pnpm create-tenant-with-stripe \
   --slug=bellaweddings \
@@ -220,6 +234,7 @@ pnpm create-tenant-with-stripe \
 ```
 
 **What It Does:**
+
 1. All steps from Tool 1 (tenant + API keys)
 2. Creates Stripe Connect Express account (lines 228-234)
    - Uses `StripeConnectService.createConnectedAccount()`
@@ -231,6 +246,7 @@ pnpm create-tenant-with-stripe \
 5. Optionally sets tenant admin password (line 312)
 
 **Stripe Connect Architecture:**
+
 - **Account Type:** Stripe Express (Stripe handles compliance, payouts)
 - **Payment Flow:** Customer pays → Tenant receives funds → Platform takes commission via `application_fee_amount`
 - **File:** `/Users/mikeyoung/CODING/MAIS/server/src/services/stripe-connect.service.ts` (lines 56-112)
@@ -241,25 +257,26 @@ pnpm create-tenant-with-stripe \
 
 Protected routes (require admin authentication):
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| `GET` | `/api/v1/admin/tenants` | List all tenants with stats (lines 27-73) |
-| `POST` | `/api/v1/admin/tenants` | Create new tenant (returns secret key ONCE) (lines 89-136) |
-| `GET` | `/api/v1/admin/tenants/:id` | Get tenant details (lines 142-187) |
-| `PUT` | `/api/v1/admin/tenants/:id` | Update tenant settings (lines 200-234) |
-| `DELETE` | `/api/v1/admin/tenants/:id` | Deactivate tenant (lines 240-249) |
+| Method   | Endpoint                    | Purpose                                                    |
+| -------- | --------------------------- | ---------------------------------------------------------- |
+| `GET`    | `/api/v1/admin/tenants`     | List all tenants with stats (lines 27-73)                  |
+| `POST`   | `/api/v1/admin/tenants`     | Create new tenant (returns secret key ONCE) (lines 89-136) |
+| `GET`    | `/api/v1/admin/tenants/:id` | Get tenant details (lines 142-187)                         |
+| `PUT`    | `/api/v1/admin/tenants/:id` | Update tenant settings (lines 200-234)                     |
+| `DELETE` | `/api/v1/admin/tenants/:id` | Deactivate tenant (lines 240-249)                          |
 
 **Stripe-Specific Admin Routes:**
 
 **File:** `/Users/mikeyoung/CODING/MAIS/server/src/routes/admin/stripe.routes.ts`
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| `POST` | `/api/v1/admin/tenants/:id/stripe/connect` | Create Stripe Connect account (lines 55-95) |
-| `POST` | `/api/v1/admin/tenants/:id/stripe/onboarding` | Generate onboarding link (lines 109-150) |
-| `GET` | `/api/v1/admin/tenants/:id/stripe/status` | Check Stripe account status (lines 166-202) |
+| Method | Endpoint                                      | Purpose                                     |
+| ------ | --------------------------------------------- | ------------------------------------------- |
+| `POST` | `/api/v1/admin/tenants/:id/stripe/connect`    | Create Stripe Connect account (lines 55-95) |
+| `POST` | `/api/v1/admin/tenants/:id/stripe/onboarding` | Generate onboarding link (lines 109-150)    |
+| `GET`  | `/api/v1/admin/tenants/:id/stripe/status`     | Check Stripe account status (lines 166-202) |
 
 **What Happens:**
+
 1. Admin creates tenant (CLI or API)
 2. Tenant receives email with:
    - Public API key (for widget embedding)
@@ -276,6 +293,7 @@ Protected routes (require admin authentication):
 #### 5A. Stripe Connect Onboarding
 
 **What Happens:**
+
 1. Tenant clicks Stripe onboarding link (from admin)
 2. Stripe-hosted flow collects:
    - Business details (name, address, EIN)
@@ -286,12 +304,14 @@ Protected routes (require admin authentication):
 4. Platform checks onboarding status via API
 
 **Code:**
+
 - Service: `/Users/mikeyoung/CODING/MAIS/server/src/services/stripe-connect.service.ts`
   - `createOnboardingLink()` (lines 124-151)
   - `checkOnboardingStatus()` (lines 160-196)
 - Database: `stripeOnboarded` boolean flag on `Tenant` model (line 67 of schema)
 
 **Status Checks:**
+
 - `chargesEnabled: true` → Can accept payments
 - `payoutsEnabled: true` → Can receive payouts
 - `detailsSubmitted: true` → KYC complete
@@ -303,11 +323,13 @@ Protected routes (require admin authentication):
 Tenants log in to manage their business settings.
 
 **Authentication:**
+
 - **Login Endpoint:** `POST /v1/tenant-auth/login`
 - **File:** `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-auth.routes.ts` (lines 69-93)
 - **Credentials:** Email + password (set during provisioning or via admin)
 
 **Login Flow:**
+
 1. Tenant submits email + password
 2. `TenantAuthService.login()` validates credentials (lines 26-63 in service file)
 3. JWT token generated with payload:
@@ -323,6 +345,7 @@ Tenants log in to manage their business settings.
 5. All subsequent requests use `Authorization: Bearer <token>` header
 
 **Protected by Rate Limiting:**
+
 - 5 login attempts per 15 minutes per IP
 - Middleware: `/Users/mikeyoung/CODING/MAIS/server/src/middleware/rateLimiter.ts`
 
@@ -331,6 +354,7 @@ Tenants log in to manage their business settings.
 **What Tenants Can Configure:**
 
 **Branding/Theme:**
+
 - Primary color (hex)
 - Secondary color (hex)
 - Accent color (hex)
@@ -339,6 +363,7 @@ Tenants log in to manage their business settings.
 - Logo upload
 
 **Database Schema:**
+
 ```prisma
 model Tenant {
   primaryColor    String @default("#1a365d") // Macon Navy
@@ -348,9 +373,11 @@ model Tenant {
   branding        Json   @default("{}") // {fontFamily, logo}
 }
 ```
+
 **File:** `/Users/mikeyoung/CODING/MAIS/server/prisma/schema.prisma` (lines 58-64)
 
 **Business Segments:**
+
 - Create customer-facing "routes" (e.g., "Wellness Retreats", "Micro-Weddings")
 - Each segment has its own landing page, hero image, packages
 - **Example:** Little Bit Farm might have:
@@ -359,20 +386,24 @@ model Tenant {
   - Segment 3: "Micro-Weddings" (intimate ceremony packages)
 
 **Packages:**
+
 - Create/edit service packages (name, price, description)
 - Upload up to 5 photos per package
 - Assign packages to segments
 - Set active/inactive status
 
 **Add-Ons:**
+
 - Create optional extras (e.g., "Photography +$500", "Catering +$1200")
 - Link add-ons to specific packages or make global
 
 **Blackout Dates:**
+
 - Mark dates unavailable for bookings
 - Prevents double-bookings on holidays/maintenance days
 
 **Dashboard UI:**
+
 - File: `/Users/mikeyoung/CODING/MAIS/client/src/pages/tenant/TenantAdminDashboard.tsx`
 - Features:
   - Revenue metrics
@@ -397,18 +428,20 @@ Tenants embed the booking widget on their existing website using a JavaScript sn
   MaisWidget.init({
     apiKey: 'pk_live_bellaweddings_a3f8c9d2e1b4f7g8',
     target: '#booking-widget',
-    theme: 'auto' // Fetches tenant branding from API
+    theme: 'auto', // Fetches tenant branding from API
   });
 </script>
 ```
 
 **Widget Architecture:**
+
 - **Loader:** JavaScript SDK (`/Users/mikeyoung/CODING/MAIS/client/src/widget-main.tsx`)
 - **Container:** Sandboxed iframe with PostMessage communication
 - **Branding:** Dynamically fetched via API using public key
 - **Security:** CSP headers, origin validation, CORS restrictions
 
 **Customer Booking Flow:**
+
 1. Customer browses packages on tenant's website (via widget)
 2. Selects package, date, add-ons
 3. Enters contact info (name, email, phone)
@@ -419,6 +452,7 @@ Tenants embed the booking widget on their existing website using a JavaScript sn
 **File:** `/Users/mikeyoung/CODING/MAIS/server/src/services/booking.service.ts`
 
 **Key Features:**
+
 - **Double-Booking Prevention:** Three-layer defense (database constraint, pessimistic locking, graceful errors)
 - **Transaction Safety:** `SELECT FOR UPDATE` within Prisma transactions (lines 89-121)
 - **Availability Checking:** Real-time query against `Booking` and `BlackoutDate` tables
@@ -427,12 +461,14 @@ Tenants embed the booking widget on their existing website using a JavaScript sn
 **File:** `/Users/mikeyoung/CODING/MAIS/server/src/adapters/stripe.adapter.ts`
 
 **Flow:**
+
 1. Create Stripe PaymentIntent with `application_fee_amount` (platform commission)
 2. Customer completes payment via Stripe Checkout
 3. Webhook updates booking status to `CONFIRMED`
 4. Funds transferred: Customer → Tenant (direct) → Platform (commission)
 
 **Commission Calculation:**
+
 ```typescript
 const tenantAmount = totalPrice;
 const commissionAmount = Math.round(totalPrice * (commissionPercent / 100));
@@ -440,6 +476,7 @@ const platformReceives = commissionAmount;
 ```
 
 **Stored in Database:**
+
 ```prisma
 model Booking {
   totalPrice        Int     // $500.00 = 50000 cents
@@ -455,11 +492,13 @@ model Booking {
 **Status:** ⚠️ **PARTIALLY IMPLEMENTED**
 
 **What's Built:**
+
 - Revenue metrics on tenant dashboard
 - Booking history and trends
 - Package performance analytics
 
 **What's Missing:**
+
 - AI-powered insights (mentioned in marketing, not built)
 - Proactive recommendations from "AI strategist"
 - A/B testing for package descriptions
@@ -468,17 +507,18 @@ model Booking {
 
 **Marketing Claims vs Reality:**
 
-| Marketing Promise | Implementation Status |
-|-------------------|----------------------|
-| "AI consulting" | ❌ Not implemented (no agent proposals, no automation) |
-| "Dedicated AI strategist" | ❌ No AI agent system exists |
-| "Marketing automation" | ⚠️ Partial (email confirmations only) |
-| "Sales-driven strategies" | ❌ No CRM, lead nurturing, or sales tools |
-| "Website builds" | ⚠️ Tenant can embed widget, but platform doesn't build full sites |
+| Marketing Promise         | Implementation Status                                             |
+| ------------------------- | ----------------------------------------------------------------- |
+| "AI consulting"           | ❌ Not implemented (no agent proposals, no automation)            |
+| "Dedicated AI strategist" | ❌ No AI agent system exists                                      |
+| "Marketing automation"    | ⚠️ Partial (email confirmations only)                             |
+| "Sales-driven strategies" | ❌ No CRM, lead nurturing, or sales tools                         |
+| "Website builds"          | ⚠️ Tenant can embed widget, but platform doesn't build full sites |
 
 **Future Vision (from Architecture Docs):**
 
 **Config-Driven Architecture** (planned for 2025):
+
 - AI agents propose configuration changes (e.g., "Feature 'Wellness Retreat' package this month")
 - Tenant reviews and approves agent proposals via dashboard
 - All changes versioned with audit trail
@@ -487,6 +527,7 @@ model Booking {
 **File:** `/Users/mikeyoung/CODING/MAIS/ARCHITECTURE.md` (lines 36-100)
 
 **Database Models (Not Yet Created):**
+
 ```prisma
 model ConfigVersion {
   id              String   @id @default(cuid())
@@ -516,12 +557,14 @@ model AgentProposal {
 **Status:** ✅ **FULLY IMPLEMENTED**
 
 **Revenue-Sharing Model:**
+
 - **No Monthly Fees:** Tenants pay nothing upfront or as a subscription
 - **Commission-Based:** Platform takes X% of each booking (default 10%)
 - **Configurable:** Each tenant can have custom commission rate
 - **Transparent:** Commission shown on every booking record
 
 **Database:**
+
 ```prisma
 model Tenant {
   commissionPercent Decimal @default(10.0) @db.Decimal(5, 2)
@@ -535,17 +578,20 @@ model Booking {
 ```
 
 **Payout Flow:**
+
 1. Customer pays $500 for booking
 2. Stripe routes $450 to tenant's bank account (90%)
 3. Stripe routes $50 to platform (10% commission)
 4. Tenant receives payout within 2-7 business days (Stripe standard)
 
 **Platform Revenue Tracking:**
+
 - Sum all `commissionAmount` across all bookings
 - Filter by date range, tenant, status (`CONFIRMED` only)
 - No separate billing/invoicing system needed
 
 **Tenant Dashboard:**
+
 - Shows gross revenue (total bookings)
 - Shows net revenue (after commission)
 - Transparency builds trust
@@ -557,10 +603,12 @@ model Booking {
 **Status:** ❌ **NOT IMPLEMENTED**
 
 **Marketing Promise:**
+
 - Testimonials showcase happy members
 - Social proof on homepage
 
 **What's Missing:**
+
 - No referral program or incentives
 - No affiliate tracking system
 - No case studies or detailed success stories
@@ -568,6 +616,7 @@ model Booking {
 - No automated review requests post-booking
 
 **Opportunity:**
+
 - Implement referral codes (e.g., `bellaweddings-referral`)
 - Track signups from referral links
 - Reward referring tenants (e.g., 1 month reduced commission)
@@ -582,6 +631,7 @@ model Booking {
 **Critical Pattern:** ALL database queries MUST filter by `tenantId` to prevent cross-tenant data leakage.
 
 **Prisma Schema:**
+
 ```prisma
 model Package {
   id       String @id @default(cuid())
@@ -610,6 +660,7 @@ interface CatalogRepository {
 ```
 
 **Security Rules:**
+
 1. ✅ **Correct:** `prisma.package.findMany({ where: { tenantId, active: true } })`
 2. ❌ **WRONG:** `prisma.package.findMany({ where: { active: true } })` (returns ALL tenants' packages)
 
@@ -643,6 +694,7 @@ Client Request
 ### API Key Security
 
 **Format:**
+
 - Public Key: `pk_live_{tenant_slug}_{random_16_chars}`
 - Secret Key: `sk_live_{tenant_slug}_{random_32_chars}`
 
@@ -650,14 +702,17 @@ Client Request
 **File:** `/Users/mikeyoung/CODING/MAIS/server/src/lib/api-key.service.ts` (lines 36-86)
 
 **Storage:**
+
 - Public key: Stored in plaintext (safe to expose)
 - Secret key: SHA-256 hashed before storage (never plaintext in DB)
 
 **Usage:**
+
 - Public key: Widget embedding, catalog API, booking creation (read-only)
 - Secret key: Admin operations (create packages, update settings, manage blackouts)
 
 **Validation:**
+
 ```typescript
 // Format check (regex)
 isValidPublicKeyFormat(key: string): boolean {
@@ -679,12 +734,14 @@ verifySecretKey(secretKey: string, hash: string): boolean {
 **Architecture Decision:** Express Connected Accounts
 
 **Why Express?**
+
 - Stripe handles KYC, compliance, tax reporting
 - Tenant receives funds directly (not held by platform)
 - Platform automatically receives commission via `application_fee_amount`
 - Simplified onboarding flow (Stripe-hosted)
 
 **Account Creation:**
+
 ```typescript
 const account = await stripe.accounts.create({
   type: 'express',
@@ -705,6 +762,7 @@ const account = await stripe.accounts.create({
 **File:** `/Users/mikeyoung/CODING/MAIS/server/src/services/stripe-connect.service.ts` (lines 82-95)
 
 **Payment Intent with Commission:**
+
 ```typescript
 const paymentIntent = await stripe.paymentIntents.create({
   amount: 50000, // $500.00 in cents
@@ -755,10 +813,12 @@ await cache.set(key, packages);
 ```
 
 **Cache Adapter:**
+
 - **Mock Mode:** In-memory Map (development)
 - **Real Mode:** Redis with TTL and key namespacing
 
 **Performance Impact:**
+
 - Cache hit response time: ~5ms
 - Database query time: ~200ms
 - **97.5% faster** with caching enabled
@@ -778,12 +838,14 @@ await cache.set(key, packages);
 **Implementation Plan:**
 
 **Phase 1: Lead Capture (Week 1-2)**
+
 - Create `/apply` landing page
 - Build application form with validation
 - Store applications in new `Application` model
 - Send confirmation email + admin notification
 
 **Database Schema:**
+
 ```prisma
 model Application {
   id              String   @id @default(cuid())
@@ -809,11 +871,13 @@ enum ApplicationStatus {
 ```
 
 **Phase 2: Admin Review Dashboard (Week 3-4)**
+
 - Build admin UI to review applications
 - One-click "Approve" → triggers tenant creation flow
 - Automated email to approved prospects with next steps
 
 **Phase 3: Self-Service Onboarding (Week 5-8)**
+
 - Approved prospects receive onboarding link
 - Multi-step wizard:
   1. Choose slug + business details
@@ -824,6 +888,7 @@ enum ApplicationStatus {
 - Automated email with API keys (shown once)
 
 **Files to Create:**
+
 - `client/src/pages/Apply.tsx` (application form)
 - `server/src/routes/applications.routes.ts` (application API)
 - `server/prisma/migrations/add_application_model.sql`
@@ -839,22 +904,26 @@ enum ApplicationStatus {
 **File:** `/Users/mikeyoung/CODING/MAIS/ARCHITECTURE.md` (lines 36-100)
 
 **Sprint 2: Foundation (Week 1-4)**
+
 - Build `ConfigChangeLog` table with full audit trail
 - Remove all `as any` casts, add Zod schemas
 - Core test suite (70% coverage)
 
 **Sprint 3: Versioning (Week 5-8)**
+
 - Create `ConfigVersion` schema (draft/published states)
 - Build versioning API (create, publish, rollback)
 - Widget config hydration via PostMessage
 
 **Sprint 4: Agent Interface (Week 9-12)**
+
 - Create `AgentProposal` table
 - Build agent API with rate limiting
 - Admin proposal review UI with diff view
 - Display rules configuration
 
 **Example Agent Proposal:**
+
 ```json
 {
   "proposalType": "seasonal_promotion",
@@ -873,6 +942,7 @@ enum ApplicationStatus {
 ```
 
 **Admin Reviews:**
+
 - View proposal in dashboard
 - See side-by-side diff
 - Click "Approve" or "Reject" with notes
@@ -884,6 +954,7 @@ enum ApplicationStatus {
 **Target State:** Full marketing funnel
 
 **Features to Build:**
+
 - Lead nurturing sequences (email drip campaigns)
 - Automated follow-ups for abandoned applications
 - Post-booking review requests (NPS tracking)
@@ -892,6 +963,7 @@ enum ApplicationStatus {
 - Analytics dashboard with conversion funnels
 
 **Integration Points:**
+
 - Email provider: Postmark (already integrated)
 - Analytics: Segment or Mixpanel
 - A/B testing: Custom implementation or LaunchDarkly
@@ -902,6 +974,7 @@ enum ApplicationStatus {
 **Target State:** Viral growth loop
 
 **Implementation:**
+
 - Referral code generation (e.g., `BELLA15`)
 - Tracking: `signups.referralCode = 'BELLA15'`
 - Rewards: 1 month reduced commission for successful referrals
@@ -909,6 +982,7 @@ enum ApplicationStatus {
 - Shareable referral links
 
 **Database:**
+
 ```prisma
 model Tenant {
   referralCode       String?  @unique
@@ -924,6 +998,7 @@ model Tenant {
 ### Key Files for Tenant Journey
 
 **Frontend (Client):**
+
 ```
 /Users/mikeyoung/CODING/MAIS/client/src/
 ├── pages/
@@ -944,6 +1019,7 @@ model Tenant {
 ```
 
 **Backend (Server):**
+
 ```
 /Users/mikeyoung/CODING/MAIS/server/
 ├── scripts/
@@ -977,6 +1053,7 @@ model Tenant {
 ```
 
 **Documentation:**
+
 ```
 /Users/mikeyoung/CODING/MAIS/
 ├── ARCHITECTURE.md                            # System overview (lines 1-100)
@@ -1014,24 +1091,28 @@ model Tenant {
 ### Recommended Next Steps
 
 **Phase 1 (Immediate - 4 weeks):**
+
 1. Build lead capture form on `/apply` page
 2. Create `Application` database model
 3. Admin review dashboard for applications
 4. Automated email flow for approved prospects
 
 **Phase 2 (Short Term - 8 weeks):**
+
 1. Self-service onboarding wizard for approved prospects
 2. Automated Stripe Connect OAuth flow
 3. First-package creation wizard
 4. Email drip campaigns for new tenants
 
 **Phase 3 (Medium Term - 12 weeks):**
+
 1. Build agent proposal system (if AI positioning continues)
 2. Implement config versioning
 3. Create agent API with rate limiting
 4. Admin review UI for agent proposals
 
 **Phase 4 (Long Term - 16+ weeks):**
+
 1. Full marketing automation suite
 2. Referral program with tracking
 3. Advanced analytics dashboard

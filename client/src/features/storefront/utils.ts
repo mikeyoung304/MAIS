@@ -31,9 +31,7 @@ export function getTierDisplayName(tierLevel: TierLevel): string {
  * Returns an object with budget, middle, luxury keys
  * Accepts 'popular' as an alias for 'middle' tier
  */
-export function extractTiers(
-  packages: PackageDto[]
-): Record<TierLevel, PackageDto | undefined> {
+export function extractTiers(packages: PackageDto[]): Record<TierLevel, PackageDto | undefined> {
   const tiers: Record<TierLevel, PackageDto | undefined> = {
     budget: undefined,
     middle: undefined,

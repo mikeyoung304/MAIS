@@ -130,7 +130,12 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
       Availability: {
         type: 'object',
         properties: {
-          date: { type: 'string', format: 'date', example: '2024-06-15', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+          date: {
+            type: 'string',
+            format: 'date',
+            example: '2024-06-15',
+            pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+          },
           available: { type: 'boolean', example: true },
           reason: { type: 'string', enum: ['booked', 'blackout', 'calendar'], example: 'booked' },
         },
@@ -144,19 +149,39 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
           coupleName: { type: 'string', example: 'John & Jane Doe' },
           email: { type: 'string', format: 'email', example: 'john@example.com' },
           phone: { type: 'string', example: '+1-555-123-4567' },
-          eventDate: { type: 'string', format: 'date', example: '2024-06-15', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+          eventDate: {
+            type: 'string',
+            format: 'date',
+            example: '2024-06-15',
+            pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+          },
           addOnIds: { type: 'array', items: { type: 'string' } },
           totalCents: { type: 'integer', example: 200000, description: 'Total price in cents' },
           status: { type: 'string', enum: ['PAID', 'REFUNDED', 'CANCELED'], example: 'PAID' },
           createdAt: { type: 'string', format: 'date-time', example: '2024-01-15T10:30:00Z' },
         },
-        required: ['id', 'packageId', 'coupleName', 'email', 'eventDate', 'addOnIds', 'totalCents', 'status', 'createdAt'],
+        required: [
+          'id',
+          'packageId',
+          'coupleName',
+          'email',
+          'eventDate',
+          'addOnIds',
+          'totalCents',
+          'status',
+          'createdAt',
+        ],
       },
       CreateCheckoutRequest: {
         type: 'object',
         properties: {
           packageId: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174001' },
-          eventDate: { type: 'string', format: 'date', example: '2024-06-15', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+          eventDate: {
+            type: 'string',
+            format: 'date',
+            example: '2024-06-15',
+            pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+          },
           coupleName: { type: 'string', example: 'John & Jane Doe' },
           email: { type: 'string', format: 'email', example: 'john@example.com' },
           addOnIds: { type: 'array', items: { type: 'string' } },
@@ -166,7 +191,11 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
       CheckoutResponse: {
         type: 'object',
         properties: {
-          checkoutUrl: { type: 'string', format: 'uri', example: 'https://checkout.stripe.com/pay/cs_test_...' },
+          checkoutUrl: {
+            type: 'string',
+            format: 'uri',
+            example: 'https://checkout.stripe.com/pay/cs_test_...',
+          },
         },
         required: ['checkoutUrl'],
       },
@@ -188,7 +217,12 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
       Blackout: {
         type: 'object',
         properties: {
-          date: { type: 'string', format: 'date', example: '2024-12-25', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+          date: {
+            type: 'string',
+            format: 'date',
+            example: '2024-12-25',
+            pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+          },
           reason: { type: 'string', example: 'Holiday closure' },
         },
         required: ['date'],
@@ -198,7 +232,11 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
         properties: {
           slug: { type: 'string', example: 'intimate-ceremony', minLength: 1 },
           title: { type: 'string', example: 'Intimate Ceremony', minLength: 1 },
-          description: { type: 'string', example: 'A beautiful intimate wedding ceremony', minLength: 1 },
+          description: {
+            type: 'string',
+            example: 'A beautiful intimate wedding ceremony',
+            minLength: 1,
+          },
           priceCents: { type: 'integer', example: 150000, minimum: 0 },
           photoUrl: { type: 'string', format: 'uri', example: 'https://example.com/photo.jpg' },
         },
@@ -209,7 +247,11 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
         properties: {
           slug: { type: 'string', example: 'intimate-ceremony', minLength: 1 },
           title: { type: 'string', example: 'Intimate Ceremony', minLength: 1 },
-          description: { type: 'string', example: 'A beautiful intimate wedding ceremony', minLength: 1 },
+          description: {
+            type: 'string',
+            example: 'A beautiful intimate wedding ceremony',
+            minLength: 1,
+          },
           priceCents: { type: 'integer', example: 150000, minimum: 0 },
           photoUrl: { type: 'string', format: 'uri', example: 'https://example.com/photo.jpg' },
         },
@@ -229,7 +271,11 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
       CreateAddOnRequest: {
         type: 'object',
         properties: {
-          packageId: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174001', minLength: 1 },
+          packageId: {
+            type: 'string',
+            example: '123e4567-e89b-12d3-a456-426614174001',
+            minLength: 1,
+          },
           title: { type: 'string', example: 'Professional Photography', minLength: 1 },
           priceCents: { type: 'integer', example: 50000, minimum: 0 },
           photoUrl: { type: 'string', format: 'uri', example: 'https://example.com/photo.jpg' },
@@ -239,7 +285,11 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
       UpdateAddOnRequest: {
         type: 'object',
         properties: {
-          packageId: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174001', minLength: 1 },
+          packageId: {
+            type: 'string',
+            example: '123e4567-e89b-12d3-a456-426614174001',
+            minLength: 1,
+          },
           title: { type: 'string', example: 'Professional Photography', minLength: 1 },
           priceCents: { type: 'integer', example: 50000, minimum: 0 },
           photoUrl: { type: 'string', format: 'uri', example: 'https://example.com/photo.jpg' },
@@ -462,7 +512,8 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
         operationId: 'stripeWebhook',
         summary: 'Handle Stripe webhook',
         tags: ['Webhooks'],
-        description: 'Endpoint for Stripe payment events. Requires raw body and Stripe signature validation.',
+        description:
+          'Endpoint for Stripe payment events. Requires raw body and Stripe signature validation.',
         requestBody: {
           required: true,
           content: {

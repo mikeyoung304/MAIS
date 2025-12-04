@@ -15,13 +15,13 @@ This directory contains comprehensive documentation of all user journeys through
 
 ## Quick Navigation
 
-| Document | User Type | Size | Status | Priority |
-|----------|-----------|------|--------|----------|
-| **[COMPLETE_USER_FLOW_ANALYSIS.md](./COMPLETE_USER_FLOW_ANALYSIS.md)** | **All Users (Synthesis)** | 52KB | ✅ Complete | 🔴 **START HERE** |
-| [FOUNDER_JOURNEY.md](./FOUNDER_JOURNEY.md) | Platform Admin | 43KB | ✅ Complete | 🟢 Reference |
-| [POTENTIAL_TENANT_JOURNEY.md](./POTENTIAL_TENANT_JOURNEY.md) | Prospect | 35KB | ⚠️ 40% Implemented | 🟡 Critical Gap |
-| [TENANT_JOURNEY.md](./TENANT_JOURNEY.md) | Member | 55KB | ✅ 95% Complete | 🟢 Reference |
-| [CUSTOMER_JOURNEY.md](./CUSTOMER_JOURNEY.md) | End User | 72KB | ✅ Complete | 🟢 Reference |
+| Document                                                               | User Type                 | Size | Status             | Priority          |
+| ---------------------------------------------------------------------- | ------------------------- | ---- | ------------------ | ----------------- |
+| **[COMPLETE_USER_FLOW_ANALYSIS.md](./COMPLETE_USER_FLOW_ANALYSIS.md)** | **All Users (Synthesis)** | 52KB | ✅ Complete        | 🔴 **START HERE** |
+| [FOUNDER_JOURNEY.md](./FOUNDER_JOURNEY.md)                             | Platform Admin            | 43KB | ✅ Complete        | 🟢 Reference      |
+| [POTENTIAL_TENANT_JOURNEY.md](./POTENTIAL_TENANT_JOURNEY.md)           | Prospect                  | 35KB | ⚠️ 40% Implemented | 🟡 Critical Gap   |
+| [TENANT_JOURNEY.md](./TENANT_JOURNEY.md)                               | Member                    | 55KB | ✅ 95% Complete    | 🟢 Reference      |
+| [CUSTOMER_JOURNEY.md](./CUSTOMER_JOURNEY.md)                           | End User                  | 72KB | ✅ Complete        | 🟢 Reference      |
 
 ---
 
@@ -32,6 +32,7 @@ This directory contains comprehensive documentation of all user journeys through
 **🔴 START HERE** - This document synthesizes all 4 user journeys into a cohesive platform overview.
 
 **Contents:**
+
 - Executive summary of all user types
 - User flow comparison matrix (shows interactions between users)
 - System touchpoint map (which APIs each user type uses)
@@ -42,6 +43,7 @@ This directory contains comprehensive documentation of all user journeys through
 - Strategic insights (marketing-reality alignment, growth blockers)
 
 **When to Read:**
+
 - First time understanding the platform
 - Planning new features that affect multiple user types
 - Strategic decisions about platform direction
@@ -54,6 +56,7 @@ This directory contains comprehensive documentation of all user journeys through
 **User Type:** Founder/Platform Administrator managing all tenants
 
 **Journey Phases:**
+
 1. Platform initialization (environment setup, database migrations)
 2. Tenant onboarding (CLI tools, API key generation)
 3. Platform operations (monitoring, health checks)
@@ -61,6 +64,7 @@ This directory contains comprehensive documentation of all user journeys through
 5. Advanced operations (secret rotation, incident response)
 
 **Key Capabilities:**
+
 - Create and manage all tenants
 - Generate API keys (public/secret pairs)
 - Setup Stripe Connect accounts
@@ -74,6 +78,7 @@ This directory contains comprehensive documentation of all user journeys through
 **Primary Tools:** CLI scripts (`create-tenant`, `prisma migrate`), admin API endpoints
 
 **When to Read:**
+
 - Setting up the platform for the first time
 - Creating new tenants manually
 - Debugging multi-tenant issues
@@ -87,6 +92,7 @@ This directory contains comprehensive documentation of all user journeys through
 **User Type:** Business owner interested in joining MAIS platform
 
 **Journey Stages:**
+
 1. Awareness (marketing homepage, value propositions)
 2. Consideration (research, competitor comparison)
 3. Application (❌ **NOT IMPLEMENTED** - manual email only)
@@ -98,6 +104,7 @@ This directory contains comprehensive documentation of all user journeys through
 9. Advocacy (❌ **NOT IMPLEMENTED** - no referral program)
 
 **Critical Gaps:**
+
 - ❌ No self-service signup form (marketing promises "5-minute application")
 - ❌ AI agent consultation not implemented (despite marketing focus)
 - ❌ No lead nurturing or drip campaigns
@@ -108,6 +115,7 @@ This directory contains comprehensive documentation of all user journeys through
 **Marketing-Reality Mismatch:** High (promises not yet implemented)
 
 **When to Read:**
+
 - Planning growth and acquisition strategy
 - Understanding why tenant onboarding is manual
 - Prioritizing self-service signup features
@@ -121,6 +129,7 @@ This directory contains comprehensive documentation of all user journeys through
 **User Type:** Business owner managing their services on MAIS
 
 **Journey Phases:**
+
 1. Onboarding (platform admin creates account)
 2. Initial setup (first login, dashboard, branding)
 3. Service configuration (packages, add-ons, photos, segments, availability)
@@ -129,6 +138,7 @@ This directory contains comprehensive documentation of all user journeys through
 6. Growth & analytics (⚠️ basic metrics only)
 
 **Key Features:**
+
 - ✅ Complete branding customization (logo, 4 colors, 8 fonts)
 - ✅ Full package management (CRUD, 5 photos per package)
 - ✅ Segment-based catalog organization (Sprint 9)
@@ -147,6 +157,7 @@ This directory contains comprehensive documentation of all user journeys through
 **Primary Interface:** Admin dashboard UI (`/tenant/dashboard`)
 
 **When to Read:**
+
 - Understanding tenant admin capabilities
 - Planning new tenant-facing features
 - Debugging tenant dashboard issues
@@ -160,6 +171,7 @@ This directory contains comprehensive documentation of all user journeys through
 **User Type:** Individual booking a service through tenant's catalog
 
 **Journey Stages:**
+
 1. Discovery (homepage, segments, widget embedding)
 2. Browse catalog (package cards, photo galleries)
 3. Package selection (detailed view, add-ons preview)
@@ -172,6 +184,7 @@ This directory contains comprehensive documentation of all user journeys through
 10. Success page (polling, booking details)
 
 **Key Features:**
+
 - ✅ Tenant-scoped catalog (multi-tenant isolation)
 - ✅ Segment-based organization (Sprint 9)
 - ✅ Real-time availability (pessimistic locking)
@@ -192,6 +205,7 @@ This directory contains comprehensive documentation of all user journeys through
 **Business Impact:** PRIMARY revenue generation flow (100% commission dependency)
 
 **When to Read:**
+
 - Understanding the core business flow
 - Debugging booking or payment issues
 - Optimizing conversion funnel
@@ -205,21 +219,21 @@ This directory contains comprehensive documentation of all user journeys through
 
 ### Who Can Do What?
 
-| Action | Founder | Prospect | Tenant | Customer |
-|--------|---------|----------|--------|----------|
-| **Create Tenants** | ✅ Yes | ❌ No | ❌ No | ❌ No |
-| **Login to Dashboard** | ✅ Platform admin | ❌ No | ✅ Tenant admin | ❌ No |
-| **Manage Packages** | ✅ All tenants | ❌ No | ✅ Own tenant | ❌ No (view only) |
-| **Upload Photos** | ⚠️ Via admin | ❌ No | ✅ Yes | ❌ No |
-| **Set Availability** | ⚠️ Via admin | ❌ No | ✅ Yes | ❌ No |
-| **Book Services** | ✅ Via admin | ❌ No | ⚠️ Limited | ✅ Primary flow |
-| **View Bookings** | ✅ All tenants | ❌ No | ✅ Own tenant | ❌ No (view own only) |
-| **Receive Payments** | ❌ No (commission) | ❌ No | ✅ Via Stripe | ❌ No |
-| **Access Database** | ✅ Direct (Prisma) | ❌ No | ⚠️ API only | ⚠️ API only |
-| **Run Migrations** | ✅ Yes | ❌ No | ❌ No | ❌ No |
-| **Generate API Keys** | ✅ For tenants | ❌ No | ❌ No | ❌ No |
-| **Setup Stripe Connect** | ✅ For tenants | ❌ No | ✅ Self-onboard | ❌ No |
-| **See Platform Metrics** | ✅ System-wide | ❌ No | ⚠️ Own metrics | ❌ No |
+| Action                   | Founder            | Prospect | Tenant          | Customer              |
+| ------------------------ | ------------------ | -------- | --------------- | --------------------- |
+| **Create Tenants**       | ✅ Yes             | ❌ No    | ❌ No           | ❌ No                 |
+| **Login to Dashboard**   | ✅ Platform admin  | ❌ No    | ✅ Tenant admin | ❌ No                 |
+| **Manage Packages**      | ✅ All tenants     | ❌ No    | ✅ Own tenant   | ❌ No (view only)     |
+| **Upload Photos**        | ⚠️ Via admin       | ❌ No    | ✅ Yes          | ❌ No                 |
+| **Set Availability**     | ⚠️ Via admin       | ❌ No    | ✅ Yes          | ❌ No                 |
+| **Book Services**        | ✅ Via admin       | ❌ No    | ⚠️ Limited      | ✅ Primary flow       |
+| **View Bookings**        | ✅ All tenants     | ❌ No    | ✅ Own tenant   | ❌ No (view own only) |
+| **Receive Payments**     | ❌ No (commission) | ❌ No    | ✅ Via Stripe   | ❌ No                 |
+| **Access Database**      | ✅ Direct (Prisma) | ❌ No    | ⚠️ API only     | ⚠️ API only           |
+| **Run Migrations**       | ✅ Yes             | ❌ No    | ❌ No           | ❌ No                 |
+| **Generate API Keys**    | ✅ For tenants     | ❌ No    | ❌ No           | ❌ No                 |
+| **Setup Stripe Connect** | ✅ For tenants     | ❌ No    | ✅ Self-onboard | ❌ No                 |
+| **See Platform Metrics** | ✅ System-wide     | ❌ No    | ⚠️ Own metrics  | ❌ No                 |
 
 ---
 
@@ -228,6 +242,7 @@ This directory contains comprehensive documentation of all user journeys through
 ### Use Case 1: "I want to understand the complete platform"
 
 **Read in this order:**
+
 1. **[COMPLETE_USER_FLOW_ANALYSIS.md](./COMPLETE_USER_FLOW_ANALYSIS.md)** - 30-minute overview
 2. **[CUSTOMER_JOURNEY.md](./CUSTOMER_JOURNEY.md)** - Understand the core business flow
 3. **[TENANT_JOURNEY.md](./TENANT_JOURNEY.md)** - See how tenants manage their business
@@ -238,11 +253,13 @@ This directory contains comprehensive documentation of all user journeys through
 ### Use Case 2: "I need to onboard a new tenant (manually)"
 
 **Read:**
+
 - **[FOUNDER_JOURNEY.md](./FOUNDER_JOURNEY.md)** → Phase 2: Tenant Onboarding
   - Specific section: "Creating Tenants via CLI" (lines 200-350)
   - Checklist: Lines 400-450
 
 **Quick Commands:**
+
 ```bash
 # Create tenant with Stripe Connect
 cd server
@@ -257,6 +274,7 @@ npm run create-tenant
 ### Use Case 3: "Why isn't there a signup form for prospects?"
 
 **Read:**
+
 - **[POTENTIAL_TENANT_JOURNEY.md](./POTENTIAL_TENANT_JOURNEY.md)** → Stage 3: Application
   - Critical Gaps section (lines 150-250)
 - **[COMPLETE_USER_FLOW_ANALYSIS.md](./COMPLETE_USER_FLOW_ANALYSIS.md)** → Gap 1: Self-Service Tenant Signup
@@ -269,11 +287,13 @@ npm run create-tenant
 ### Use Case 4: "Customer reports they can't book a date"
 
 **Debug using:**
+
 - **[CUSTOMER_JOURNEY.md](./CUSTOMER_JOURNEY.md)** → Stage 4: Date Selection
   - Availability checking logic (lines 400-500)
   - Common errors and fixes (lines 1200-1400)
 
 **Common causes:**
+
 1. Tenant set blackout date for that day
 2. Another booking already confirmed (double-booking prevention)
 3. Date is in the past
@@ -284,6 +304,7 @@ npm run create-tenant
 ### Use Case 5: "Tenant says they're not getting paid"
 
 **Debug using:**
+
 - **[CUSTOMER_JOURNEY.md](./CUSTOMER_JOURNEY.md)** → Stage 7: Payment Flow
   - Commission split explanation (lines 600-700)
   - Stripe Connect payout timeline (lines 750-850)
@@ -291,6 +312,7 @@ npm run create-tenant
   - Stripe Connect onboarding verification (lines 500-600)
 
 **Common causes:**
+
 1. Stripe Connect onboarding not completed (check `tenant.stripeOnboardingCompleted`)
 2. Payout is pending (Stripe holds for 2-7 days for new accounts)
 3. Bank account not added to Stripe Connect
@@ -301,11 +323,13 @@ npm run create-tenant
 ### Use Case 6: "How does multi-tenant isolation work?"
 
 **Read:**
+
 - **[COMPLETE_USER_FLOW_ANALYSIS.md](./COMPLETE_USER_FLOW_ANALYSIS.md)** → Multi-Tenant Architecture Flow
   - Tenant context resolution (lines 600-750)
   - Security guarantees (lines 800-900)
 
 **Key Files to Review:**
+
 - `/server/src/middleware/tenant.ts` - Tenant resolution middleware
 - `/server/src/lib/ports.ts` - Repository interfaces (all require tenantId)
 
@@ -316,11 +340,13 @@ npm run create-tenant
 ### Use Case 7: "Planning a new feature - which users does it affect?"
 
 **Read:**
+
 - **[COMPLETE_USER_FLOW_ANALYSIS.md](./COMPLETE_USER_FLOW_ANALYSIS.md)** → User Flow Comparison Matrix
   - See which user types have access to what (lines 200-350)
   - Cross-reference map shows cascade effects (lines 1000-1200)
 
 **Example:** Adding "Package Templates"
+
 - ✅ **Founder** can create platform-wide templates
 - ✅ **Tenant** can use templates to speed up package creation
 - ❌ **Customer** doesn't see templates (only final packages)
@@ -333,58 +359,68 @@ npm run create-tenant
 These user flow documents include detailed analysis of:
 
 ### 1. Multi-Tenant Data Isolation
+
 - Row-level security with `tenantId` foreign keys
 - Tenant middleware resolution pattern
 - Repository interfaces requiring tenant context
 - Cache key scoping by tenant
 
 **Example Files:**
+
 - `/server/src/middleware/tenant.ts`
 - `/server/src/lib/ports.ts`
 
 ---
 
 ### 2. Double-Booking Prevention
+
 - Three-layer defense:
   1. Database constraint: `@@unique([tenantId, date])`
   2. Pessimistic locking: `SELECT FOR UPDATE` in transactions
   3. Graceful error handling: Catch unique violation
 
 **Example Files:**
+
 - `/server/src/services/booking.service.ts`
 - `/server/src/services/availability.service.ts`
 
 ---
 
 ### 3. Commission Calculation
+
 - Server-side commission calculation (not client-side)
 - Per-tenant commission rates (10-15%, default 12%)
 - Always rounds UP (platform-favorable)
 - Stripe Connect application fee
 
 **Example Files:**
+
 - `/server/src/services/commission.service.ts`
 - `/server/src/adapters/stripe.adapter.ts`
 
 ---
 
 ### 4. Webhook Idempotency
+
 - Database-backed deduplication
 - Unique constraint on `eventId` prevents replay attacks
 - Status tracking: `pending` → `processing` → `processed` → `failed`
 
 **Example Files:**
+
 - `/server/src/routes/webhooks.routes.ts`
 - `/server/prisma/schema.prisma` (WebhookEvent model)
 
 ---
 
 ### 5. Event-Driven Architecture
+
 - In-process EventEmitter for cross-service communication
 - Async handlers for emails and calendar events
 - Graceful degradation on handler failures
 
 **Example Files:**
+
 - `/server/src/lib/core/events.ts`
 - `/server/src/services/notification.service.ts`
 
@@ -392,18 +428,19 @@ These user flow documents include detailed analysis of:
 
 ## Implementation Status Heatmap
 
-| Component | Founder | Prospect | Tenant | Customer |
-|-----------|---------|----------|--------|----------|
-| **Authentication** | ✅ 100% | ❌ N/A | ✅ 100% | ❌ N/A |
-| **Dashboard UI** | ⚠️ 30% | ❌ 0% | ✅ 95% | ✅ 100% |
-| **CRUD Operations** | ✅ 100% | ❌ N/A | ✅ 100% | ⚠️ Read only |
-| **Payment Integration** | ✅ 100% | ❌ N/A | ✅ 100% | ✅ 100% |
-| **Email Notifications** | ⚠️ 50% | ❌ 0% | ⚠️ 70% | ✅ 100% |
-| **Analytics** | ⚠️ 40% | ❌ N/A | ⚠️ 30% | ❌ N/A |
-| **Multi-Tenant Isolation** | ✅ 100% | ❌ N/A | ✅ 100% | ✅ 100% |
-| **Mobile Responsive** | ⚠️ N/A | ✅ 100% | ⚠️ 60% | ✅ 100% |
+| Component                  | Founder | Prospect | Tenant  | Customer     |
+| -------------------------- | ------- | -------- | ------- | ------------ |
+| **Authentication**         | ✅ 100% | ❌ N/A   | ✅ 100% | ❌ N/A       |
+| **Dashboard UI**           | ⚠️ 30%  | ❌ 0%    | ✅ 95%  | ✅ 100%      |
+| **CRUD Operations**        | ✅ 100% | ❌ N/A   | ✅ 100% | ⚠️ Read only |
+| **Payment Integration**    | ✅ 100% | ❌ N/A   | ✅ 100% | ✅ 100%      |
+| **Email Notifications**    | ⚠️ 50%  | ❌ 0%    | ⚠️ 70%  | ✅ 100%      |
+| **Analytics**              | ⚠️ 40%  | ❌ N/A   | ⚠️ 30%  | ❌ N/A       |
+| **Multi-Tenant Isolation** | ✅ 100% | ❌ N/A   | ✅ 100% | ✅ 100%      |
+| **Mobile Responsive**      | ⚠️ N/A  | ✅ 100%  | ⚠️ 60%  | ✅ 100%      |
 
 **Legend:**
+
 - ✅ **100%** - Fully implemented, production-ready
 - ⚠️ **30-70%** - Partially implemented, has gaps
 - ❌ **0%** or **N/A** - Not implemented or not applicable

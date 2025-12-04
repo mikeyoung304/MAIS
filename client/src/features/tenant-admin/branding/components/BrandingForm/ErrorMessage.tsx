@@ -4,7 +4,7 @@
  * Displays form error messages
  */
 
-import { AlertCircle } from "lucide-react";
+import { AlertCircle } from 'lucide-react';
 
 interface ErrorMessageProps {
   error: string | null;

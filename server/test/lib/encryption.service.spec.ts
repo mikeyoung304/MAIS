@@ -43,7 +43,8 @@ describe('EncryptionService', () => {
     });
 
     it('should throw if key is not valid hex', () => {
-      process.env.TENANT_SECRETS_ENCRYPTION_KEY = 'g123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+      process.env.TENANT_SECRETS_ENCRYPTION_KEY =
+        'g123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
       expect(() => new EncryptionService()).toThrow(
         'TENANT_SECRETS_ENCRYPTION_KEY must be a valid hex string'
@@ -63,7 +64,8 @@ describe('EncryptionService', () => {
     });
 
     it('should accept valid 64-char hex key (mixed case)', () => {
-      process.env.TENANT_SECRETS_ENCRYPTION_KEY = '0123456789ABCDEF0123456789abcdef0123456789ABCDEF0123456789abcdef';
+      process.env.TENANT_SECRETS_ENCRYPTION_KEY =
+        '0123456789ABCDEF0123456789abcdef0123456789ABCDEF0123456789abcdef';
 
       expect(() => new EncryptionService()).not.toThrow();
     });
@@ -212,7 +214,8 @@ describe('EncryptionService', () => {
     });
 
     it('should reject invalid Stripe key format (wrong prefix)', () => {
-      const invalidKey = 'pk_test_51ABC123DEF456GHI789JKL012MNO345PQR678STU901VWX234YZA567BCD890EFG';
+      const invalidKey =
+        'pk_test_51ABC123DEF456GHI789JKL012MNO345PQR678STU901VWX234YZA567BCD890EFG';
 
       expect(() => service.encryptStripeSecret(invalidKey)).toThrow(
         'Invalid Stripe secret key format'
@@ -220,9 +223,7 @@ describe('EncryptionService', () => {
     });
 
     it('should reject invalid Stripe key format (empty string)', () => {
-      expect(() => service.encryptStripeSecret('')).toThrow(
-        'Invalid Stripe secret key format'
-      );
+      expect(() => service.encryptStripeSecret('')).toThrow('Invalid Stripe secret key format');
     });
 
     it('should validate decrypted Stripe key format', () => {
@@ -406,7 +407,7 @@ describe('EncryptionService', () => {
       }
 
       // All IVs should be 32 hex characters (16 bytes)
-      ivs.forEach(iv => {
+      ivs.forEach((iv) => {
         expect(iv).toMatch(/^[0-9a-f]{32}$/);
       });
 
@@ -462,7 +463,8 @@ describe('EncryptionService', () => {
       const encrypted = service1.encrypt('test');
 
       // Different key
-      process.env.TENANT_SECRETS_ENCRYPTION_KEY = 'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210';
+      process.env.TENANT_SECRETS_ENCRYPTION_KEY =
+        'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210';
       const service2 = new EncryptionService();
 
       expect(() => service2.decrypt(encrypted)).toThrow();
@@ -474,7 +476,8 @@ describe('EncryptionService', () => {
       const encrypted = service.encrypt('test');
 
       // Change environment key (service still has old key)
-      process.env.TENANT_SECRETS_ENCRYPTION_KEY = 'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210';
+      process.env.TENANT_SECRETS_ENCRYPTION_KEY =
+        'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210';
 
       // Old service should still work (uses cached key)
       const decrypted = service.decrypt(encrypted);

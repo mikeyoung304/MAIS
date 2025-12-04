@@ -1,4 +1,4 @@
-import { Edit, Trash2, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Edit, Trash2, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -6,10 +6,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import type { ServicesListProps } from "./types";
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import type { ServicesListProps } from './types';
 
 export function ServicesList({
   services,
@@ -64,12 +64,8 @@ export function ServicesList({
           {!isLoading &&
             services.map((service) => (
               <TableRow key={service.id} className="border-white/20 hover:bg-macon-navy-700">
-                <TableCell className="font-medium text-white text-base">
-                  {service.name}
-                </TableCell>
-                <TableCell className="text-white/70 text-base font-mono">
-                  {service.slug}
-                </TableCell>
+                <TableCell className="font-medium text-white text-base">{service.name}</TableCell>
+                <TableCell className="text-white/70 text-base font-mono">{service.slug}</TableCell>
                 <TableCell className="text-white/70 text-base">
                   {formatDuration(service.durationMinutes)}
                 </TableCell>
@@ -91,16 +87,17 @@ export function ServicesList({
                         Active
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="gap-1.5 bg-macon-navy-700 text-white/70 border-white/20 hover:bg-macon-navy-600">
+                      <Badge
+                        variant="secondary"
+                        className="gap-1.5 bg-macon-navy-700 text-white/70 border-white/20 hover:bg-macon-navy-600"
+                      >
                         <XCircle className="h-3 w-3" aria-hidden="true" />
                         Inactive
                       </Badge>
                     )}
                   </button>
                 </TableCell>
-                <TableCell className="text-white/70 text-base">
-                  {service.sortOrder}
-                </TableCell>
+                <TableCell className="text-white/70 text-base">{service.sortOrder}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     <Button

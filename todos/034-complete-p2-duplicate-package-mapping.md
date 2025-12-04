@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "034"
+issue_id: '034'
 tags: [code-review, code-quality, dry]
 dependencies: []
 ---
@@ -21,6 +21,7 @@ dependencies: []
 **Location:** `server/src/routes/packages.routes.ts:11-37` and `:40-66`
 
 Both functions contain identical mapping:
+
 ```typescript
 return packages.map((pkg) => ({
   id: pkg.id, slug: pkg.slug, title: pkg.title, ...
@@ -32,6 +33,7 @@ return packages.map((pkg) => ({
 ## Proposed Solutions
 
 ### Option A: Extract Helper Function (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 ```typescript
@@ -57,16 +59,19 @@ return packages.map(mapPackageToDto);
 ## Resolution
 
 Created `server/src/lib/mappers/package.mapper.ts` with:
+
 - `mapPackageToDto()` - Maps single package with add-ons to PackageDto
 - `mapPackagesToDto()` - Convenience method for mapping arrays
 - Helper functions `mapPackagePhoto()` and `mapAddOn()` for clarity
 
 Updated `server/src/routes/packages.routes.ts`:
+
 - Removed 44 lines of duplicate mapping logic
 - Reduced controller from 69 lines to 22 lines (68% reduction)
 - Both `getPackages()` and `getPackageBySlug()` now use shared mappers
 
 **Benefits:**
+
 - Single source of truth for Package-to-DTO mapping
 - Future changes only need to be made in one place
 - Improved maintainability and consistency
@@ -74,7 +79,7 @@ Updated `server/src/routes/packages.routes.ts`:
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-27 | Created | Found during code quality review |
+| Date       | Action   | Notes                                             |
+| ---------- | -------- | ------------------------------------------------- |
+| 2025-11-27 | Created  | Found during code quality review                  |
 | 2025-11-30 | Resolved | Created shared mapper, updated routes, tests pass |

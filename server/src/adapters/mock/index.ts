@@ -7,11 +7,7 @@ import type { Package, AddOn } from '../lib/entities';
 import type { CatalogRepository, PackageWithDraft, UpdatePackageDraftInput } from '../lib/ports';
 import type { Booking } from '../lib/entities';
 import type { BookingRepository, TimeslotBooking, AppointmentDto } from '../lib/ports';
-import type {
-  BlackoutRepository,
-  CalendarProvider,
-  WebhookRepository,
-} from '../lib/ports';
+import type { BlackoutRepository, CalendarProvider, WebhookRepository } from '../lib/ports';
 import type { PaymentProvider, CheckoutSession } from '../lib/ports';
 import type { EmailProvider } from '../lib/ports';
 import type { User, UserRepository } from '../lib/ports';
@@ -31,11 +27,14 @@ const bookingsByDate = new Map<string, string>(); // date -> booking ID
 const blackouts = new Map<string, { date: string; reason?: string }>();
 const calendarBusyDates = new Set<string>();
 const users = new Map<string, User>();
-const webhookEvents = new Map<string, {
-  eventId: string;
-  eventType: string;
-  status: 'PENDING' | 'PROCESSED' | 'FAILED' | 'DUPLICATE';
-}>();
+const webhookEvents = new Map<
+  string,
+  {
+    eventId: string;
+    eventType: string;
+    status: 'PENDING' | 'PROCESSED' | 'FAILED' | 'DUPLICATE';
+  }
+>();
 
 // Seed data on module load
 function seedData(): void {
@@ -77,7 +76,8 @@ function seedData(): void {
     tenantId: DEFAULT_TENANT,
     slug: 'garden-romance',
     title: 'Garden Romance',
-    description: 'Outdoor garden ceremony with floral arch, photography, and reception for up to 20 guests',
+    description:
+      'Outdoor garden ceremony with floral arch, photography, and reception for up to 20 guests',
     priceCents: 449900, // $4,499
     photoUrl: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800&h=600&fit=crop',
     photos: [],
@@ -92,7 +92,8 @@ function seedData(): void {
     tenantId: DEFAULT_TENANT,
     slug: 'luxury-escape',
     title: 'Luxury Escape',
-    description: 'Premium all-inclusive experience with venue, catering, photography, videography, and coordinator',
+    description:
+      'Premium all-inclusive experience with venue, catering, photography, videography, and coordinator',
     priceCents: 899900, // $8,999
     photoUrl: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&h=600&fit=crop',
     photos: [],
@@ -107,7 +108,8 @@ function seedData(): void {
     tenantId: DEFAULT_TENANT,
     slug: 'destination-bliss',
     title: 'Destination Bliss',
-    description: 'Beachfront or mountain ceremony with travel coordination, photography, and celebration dinner',
+    description:
+      'Beachfront or mountain ceremony with travel coordination, photography, and celebration dinner',
     priceCents: 599900, // $5,999
     photoUrl: 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=800&h=600&fit=crop',
     photos: [],
@@ -122,7 +124,8 @@ function seedData(): void {
     tenantId: DEFAULT_TENANT,
     slug: 'courthouse-chic',
     title: 'Courthouse Chic',
-    description: 'Stylish courthouse wedding with photography, marriage license assistance, and celebration lunch',
+    description:
+      'Stylish courthouse wedding with photography, marriage license assistance, and celebration lunch',
     priceCents: 79900, // $799
     photoUrl: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=800&h=600&fit=crop',
     photos: [],
@@ -250,13 +253,16 @@ export class MockCatalogRepository implements CatalogRepository {
     return addOns.get(id) || null;
   }
 
-  async createPackage(tenantId: string, data: {
-    slug: string;
-    title: string;
-    description: string;
-    priceCents: number;
-    photoUrl?: string;
-  }): Promise<Package> {
+  async createPackage(
+    tenantId: string,
+    data: {
+      slug: string;
+      title: string;
+      description: string;
+      priceCents: number;
+      photoUrl?: string;
+    }
+  ): Promise<Package> {
     // Check slug uniqueness
     const existing = await this.getPackageBySlug(tenantId, data.slug);
     if (existing) {
@@ -313,20 +319,21 @@ export class MockCatalogRepository implements CatalogRepository {
     }
 
     // Also delete associated add-ons
-    const packageAddOns = Array.from(addOns.values()).filter(
-      (a) => a.packageId === id
-    );
+    const packageAddOns = Array.from(addOns.values()).filter((a) => a.packageId === id);
     packageAddOns.forEach((addOn) => addOns.delete(addOn.id));
 
     packages.delete(id);
   }
 
-  async createAddOn(tenantId: string, data: {
-    packageId: string;
-    title: string;
-    priceCents: number;
-    photoUrl?: string;
-  }): Promise<AddOn> {
+  async createAddOn(
+    tenantId: string,
+    data: {
+      packageId: string;
+      title: string;
+      priceCents: number;
+      photoUrl?: string;
+    }
+  ): Promise<AddOn> {
     // Verify package exists
     const pkg = packages.get(data.packageId);
     if (!pkg) {
@@ -387,7 +394,10 @@ export class MockCatalogRepository implements CatalogRepository {
     return Array.from(packages.values()).filter((p) => p.segmentId === segmentId);
   }
 
-  async getPackagesBySegmentWithAddOns(tenantId: string, segmentId: string): Promise<Array<Package & { addOns: AddOn[] }>> {
+  async getPackagesBySegmentWithAddOns(
+    tenantId: string,
+    segmentId: string
+  ): Promise<Array<Package & { addOns: AddOn[] }>> {
     // Mock mode: Return packages with their add-ons
     const segmentPackages = await this.getPackagesBySegment(tenantId, segmentId);
     return segmentPackages.map((pkg) => ({
@@ -504,12 +514,15 @@ export class MockBookingRepository implements BookingRepository {
     // P2 #037: In mock mode, we just log payment data
     // Real Prisma implementation creates Payment record atomically
     if (paymentData) {
-      logger.debug({
-        bookingId: booking.id,
-        amount: paymentData.amount / 100,
-        processor: paymentData.processor,
-        processorId: paymentData.processorId,
-      }, 'Mock payment recorded for booking');
+      logger.debug(
+        {
+          bookingId: booking.id,
+          amount: paymentData.amount / 100,
+          processor: paymentData.processor,
+          processorId: paymentData.processorId,
+        },
+        'Mock payment recorded for booking'
+      );
     }
 
     return booking;
@@ -542,9 +555,7 @@ export class MockBookingRepository implements BookingRepository {
       const bookingDate = new Date(booking.eventDate);
 
       // Check if booking is within date range and not canceled/refunded
-      if (bookingDate >= start &&
-          bookingDate <= end &&
-          booking.status === 'PAID') {
+      if (bookingDate >= start && bookingDate <= end && booking.status === 'PAID') {
         unavailable.push(bookingDate);
       }
     }
@@ -553,7 +564,11 @@ export class MockBookingRepository implements BookingRepository {
     return unavailable.sort((a, b) => a.getTime() - b.getTime());
   }
 
-  async updateGoogleEventId(tenantId: string, bookingId: string, googleEventId: string): Promise<void> {
+  async updateGoogleEventId(
+    tenantId: string,
+    bookingId: string,
+    googleEventId: string
+  ): Promise<void> {
     // Mock mode: Ignore tenantId
     const booking = bookings.get(bookingId);
     if (booking) {
@@ -654,10 +669,13 @@ export class MockBookingRepository implements BookingRepository {
     // Only set if the event is more than 7 days away
     const eventDate = new Date(newDate + 'T00:00:00Z');
     const now = new Date();
-    const daysUntilEvent = Math.floor((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    (booking as any).reminderDueDate = daysUntilEvent > 7
-      ? new Date(eventDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-      : undefined;
+    const daysUntilEvent = Math.floor(
+      (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    (booking as any).reminderDueDate =
+      daysUntilEvent > 7
+        ? new Date(eventDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        : undefined;
 
     // TODO-154 FIX: Reset reminderSentAt so new reminder will be sent
     (booking as any).reminderSentAt = undefined;
@@ -674,7 +692,10 @@ export class MockBookingRepository implements BookingRepository {
     // Mock mode: Return empty array for now
     // Real TIMESLOT bookings would need to be stored with startTime/endTime
     // This mock implementation is sufficient for basic testing
-    logger.debug({ date: date.toISOString(), serviceId: serviceId || 'all' }, 'findTimeslotBookings called');
+    logger.debug(
+      { date: date.toISOString(), serviceId: serviceId || 'all' },
+      'findTimeslotBookings called'
+    );
     return [];
   }
 
@@ -687,11 +708,14 @@ export class MockBookingRepository implements BookingRepository {
     // Mock mode: Return empty array for now
     // Real TIMESLOT bookings would need to be stored with startTime/endTime
     // This mock implementation is sufficient for basic testing
-    logger.debug({
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      serviceId: serviceId || 'all'
-    }, 'findTimeslotBookingsInRange called');
+    logger.debug(
+      {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        serviceId: serviceId || 'all',
+      },
+      'findTimeslotBookingsInRange called'
+    );
     return [];
   }
 
@@ -806,7 +830,10 @@ export class MockBlackoutRepository implements BlackoutRepository {
     blackouts.delete(dateKey);
   }
 
-  async findBlackoutById(tenantId: string, id: string): Promise<{ id: string; date: string; reason?: string } | null> {
+  async findBlackoutById(
+    tenantId: string,
+    id: string
+  ): Promise<{ id: string; date: string; reason?: string } | null> {
     // Mock mode: Ignore tenantId, use date as ID
     const dateKey = toUtcMidnight(id);
     const blackout = blackouts.get(dateKey);
@@ -820,13 +847,16 @@ export class MockBlackoutRepository implements BlackoutRepository {
 
 // Mock Calendar Provider
 export class MockCalendarProvider implements CalendarProvider {
-  private mockEvents = new Map<string, {
-    eventId: string;
-    summary: string;
-    startTime: Date;
-    endTime: Date;
-    tenantId: string;
-  }>();
+  private mockEvents = new Map<
+    string,
+    {
+      eventId: string;
+      summary: string;
+      startTime: Date;
+      endTime: Date;
+      tenantId: string;
+    }
+  >();
 
   async isDateAvailable(date: string): Promise<boolean> {
     const dateKey = toUtcMidnight(date);
@@ -861,13 +891,16 @@ export class MockCalendarProvider implements CalendarProvider {
       tenantId: input.tenantId,
     });
 
-    logger.debug({
-      eventId,
-      summary: input.summary,
-      startTime: input.startTime.toISOString(),
-      endTime: input.endTime.toISOString(),
-      attendees: input.attendees?.map(a => a.email).join(', '),
-    }, 'Mock Google Calendar event created');
+    logger.debug(
+      {
+        eventId,
+        summary: input.summary,
+        startTime: input.startTime.toISOString(),
+        endTime: input.endTime.toISOString(),
+        attendees: input.attendees?.map((a) => a.email).join(', '),
+      },
+      'Mock Google Calendar event created'
+    );
 
     return { eventId };
   }
@@ -884,10 +917,13 @@ export class MockCalendarProvider implements CalendarProvider {
     }
 
     this.mockEvents.delete(eventId);
-    logger.debug({
-      eventId,
-      summary: event.summary,
-    }, 'Mock Google Calendar event deleted');
+    logger.debug(
+      {
+        eventId,
+        summary: event.summary,
+      },
+      'Mock Google Calendar event deleted'
+    );
 
     return true;
   }
@@ -936,10 +972,7 @@ export class MockPaymentProvider implements PaymentProvider {
     };
   }
 
-  async verifyWebhook(
-    _payload: string,
-    _signature: string
-  ): Promise<Stripe.Event> {
+  async verifyWebhook(_payload: string, _signature: string): Promise<Stripe.Event> {
     // Mock webhook verification - always succeeds
     return {
       id: 'evt_mock_123',
@@ -979,16 +1012,15 @@ export class MockPaymentProvider implements PaymentProvider {
 
 // Mock Email Provider
 export class MockEmailProvider implements EmailProvider {
-  async sendEmail(input: {
-    to: string;
-    subject: string;
-    html: string;
-  }): Promise<void> {
-    logger.debug({
-      to: input.to,
-      subject: input.subject,
-      bodyPreview: input.html.substring(0, 100),
-    }, 'Mock email sent');
+  async sendEmail(input: { to: string; subject: string; html: string }): Promise<void> {
+    logger.debug(
+      {
+        to: input.to,
+        subject: input.subject,
+        bodyPreview: input.html.substring(0, 100),
+      },
+      'Mock email sent'
+    );
   }
 }
 

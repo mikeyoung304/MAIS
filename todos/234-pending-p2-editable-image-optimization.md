@@ -1,10 +1,10 @@
 ---
 status: pending
 priority: p2
-issue_id: "234"
+issue_id: '234'
 tags: [performance, code-review, landing-page, images]
 dependencies: []
-source: "code-review-landing-page-visual-editor"
+source: 'code-review-landing-page-visual-editor'
 ---
 
 # TODO-234: Define EditableImage Component with Optimization
@@ -20,6 +20,7 @@ source: "code-review-landing-page-visual-editor"
 The plan references `EditableImage` component (line 429) but doesn't define it. Without image optimization, 5MB background images could freeze the editor during upload and preview.
 
 **Why It Matters:**
+
 - Hero background + Gallery could load 10-15MB unoptimized
 - Editor frozen during large image uploads
 - Mobile users severely impacted
@@ -27,6 +28,7 @@ The plan references `EditableImage` component (line 429) but doesn't define it. 
 ## Findings
 
 **Evidence:**
+
 - Plan mentions `EditableImage` but no implementation details
 - PhotoDropZone accepts 5MB files
 - No mention of image compression or WebP conversion
@@ -35,6 +37,7 @@ The plan references `EditableImage` component (line 429) but doesn't define it. 
 ## Proposed Solutions
 
 ### Option A: Simple Input + Existing Upload (Recommended for MVP)
+
 Use native file input with existing photo upload infrastructure.
 
 **Pros:** Simple, fast to implement
@@ -54,6 +57,7 @@ Use native file input with existing photo upload infrastructure.
 ```
 
 ### Option B: Full ImageUploadOptimizer
+
 Create utility with compression, WebP conversion, thumbnails.
 
 **Pros:** Best performance
@@ -74,8 +78,8 @@ Create utility with compression, WebP conversion, thumbnails.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                                 |
+| ---------- | ------- | ----------------------------------------------------- |
 | 2025-12-04 | Created | Performance review of landing page visual editor plan |
 
 ## Tags

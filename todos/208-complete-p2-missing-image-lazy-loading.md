@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "208"
+issue_id: '208'
 tags: [performance, images, lazy-loading, landing-page]
 dependencies: []
 ---
@@ -62,13 +62,13 @@ For hero/above-the-fold images, use eager loading (or fetchpriority):
 
 ## Recommended Approach by Section
 
-| Section | Loading Strategy |
-|---------|-----------------|
-| Hero | Eager (fetchpriority="high") |
-| About | Lazy |
-| Testimonials | Lazy |
-| Accommodation | Lazy |
-| Gallery | Lazy (with intersection observer for better UX) |
+| Section       | Loading Strategy                                |
+| ------------- | ----------------------------------------------- |
+| Hero          | Eager (fetchpriority="high")                    |
+| About         | Lazy                                            |
+| Testimonials  | Lazy                                            |
+| Accommodation | Lazy                                            |
+| Gallery       | Lazy (with intersection observer for better UX) |
 
 ## Advanced: Gallery with Intersection Observer
 
@@ -117,6 +117,7 @@ function GalleryImage({ src, alt }: { src: string; alt: string }) {
 All four section components already include the required attributes:
 
 **AboutSection.tsx** (Lines 72-73, 100-101):
+
 ```tsx
 <img
   src={safeImageUrl}
@@ -128,6 +129,7 @@ All four section components already include the required attributes:
 ```
 
 **TestimonialsSection.tsx** (Lines 65-66):
+
 ```tsx
 <img
   src={safeImageUrl}
@@ -139,6 +141,7 @@ All four section components already include the required attributes:
 ```
 
 **AccommodationSection.tsx** (Lines 122-123):
+
 ```tsx
 <img
   src={safeImageUrl}
@@ -150,6 +153,7 @@ All four section components already include the required attributes:
 ```
 
 **GallerySection.tsx** (Lines 145-146):
+
 ```tsx
 <img
   src={image.url}

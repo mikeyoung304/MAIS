@@ -104,7 +104,11 @@ export class BookingCannotBeRescheduledError extends BookingError {
  * Payment-specific errors
  */
 export class PaymentError extends AppError {
-  constructor(message: string, code?: string, public readonly originalError?: Error) {
+  constructor(
+    message: string,
+    code?: string,
+    public readonly originalError?: Error
+  ) {
     super(message, code || 'PAYMENT_ERROR', 402, true);
     this.name = 'PaymentError';
     if (originalError) {
@@ -127,7 +131,10 @@ export class PaymentAlreadyProcessedError extends PaymentError {
  * Payment failed
  */
 export class PaymentFailedError extends PaymentError {
-  constructor(message: string, public readonly reason?: string) {
+  constructor(
+    message: string,
+    public readonly reason?: string
+  ) {
     super(message, 'PAYMENT_FAILED');
     this.name = 'PaymentFailedError';
   }

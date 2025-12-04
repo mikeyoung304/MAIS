@@ -1,34 +1,37 @@
 # Wave 2 - God Components Identification
 
 ## Search Results
+
 Date: 2025-11-14
 Subagent: 2A - God Component Refactoring
 
 ## Components Over 300 Lines
 
-| Rank | File | Lines | Priority | Complexity |
-|------|------|-------|----------|------------|
-| 1 | client/src/components/PackagePhotoUploader.tsx | 462 | HIGH | Photo upload, grid display, delete, state management |
-| 2 | client/src/features/tenant-admin/TenantPackagesManager.tsx | 425 | HIGH | Package CRUD, form handling, list display |
-| 3 | client/src/features/admin/PackagesManager.tsx | 411 | MEDIUM | Admin package management |
-| 4 | client/src/pages/Success.tsx | 351 | LOW | Success page, less critical |
-| 5 | client/src/features/admin/Dashboard.tsx | 343 | HIGH | Tab management, multiple views |
-| 6 | client/src/features/tenant-admin/BrandingEditor.tsx | 317 | MEDIUM | Branding customization |
-| 7 | client/src/contexts/AuthContext.tsx | 303 | LOW | Context provider, shouldn't split |
+| Rank | File                                                       | Lines | Priority | Complexity                                           |
+| ---- | ---------------------------------------------------------- | ----- | -------- | ---------------------------------------------------- |
+| 1    | client/src/components/PackagePhotoUploader.tsx             | 462   | HIGH     | Photo upload, grid display, delete, state management |
+| 2    | client/src/features/tenant-admin/TenantPackagesManager.tsx | 425   | HIGH     | Package CRUD, form handling, list display            |
+| 3    | client/src/features/admin/PackagesManager.tsx              | 411   | MEDIUM   | Admin package management                             |
+| 4    | client/src/pages/Success.tsx                               | 351   | LOW      | Success page, less critical                          |
+| 5    | client/src/features/admin/Dashboard.tsx                    | 343   | HIGH     | Tab management, multiple views                       |
+| 6    | client/src/features/tenant-admin/BrandingEditor.tsx        | 317   | MEDIUM   | Branding customization                               |
+| 7    | client/src/contexts/AuthContext.tsx                        | 303   | LOW      | Context provider, shouldn't split                    |
 
 ## Components 200-300 Lines (Watch List)
 
-| File | Lines | Notes |
-|------|-------|-------|
-| client/src/pages/admin/PlatformAdminDashboard.tsx | 295 | Close to threshold |
-| client/src/features/tenant-admin/TenantDashboard.tsx | 276 | Monitor for growth |
-| client/src/features/tenant-admin/TenantBookingList.tsx | 251 | Potential future target |
+| File                                                   | Lines | Notes                   |
+| ------------------------------------------------------ | ----- | ----------------------- |
+| client/src/pages/admin/PlatformAdminDashboard.tsx      | 295   | Close to threshold      |
+| client/src/features/tenant-admin/TenantDashboard.tsx   | 276   | Monitor for growth      |
+| client/src/features/tenant-admin/TenantBookingList.tsx | 251   | Potential future target |
 
 ## Selected for Refactoring (Top 3)
 
 ### 1. PackagePhotoUploader.tsx (462 lines)
+
 **Priority**: CRITICAL
 **Responsibilities**:
+
 - Photo upload functionality
 - Photo grid display
 - Delete confirmation
@@ -36,6 +39,7 @@ Subagent: 2A - God Component Refactoring
 - Error handling
 
 **Proposed structure**:
+
 ```
 client/src/features/photos/
 ├── PhotoUploader.tsx (main component)
@@ -47,8 +51,10 @@ client/src/features/photos/
 ```
 
 ### 2. TenantPackagesManager.tsx (425 lines)
+
 **Priority**: CRITICAL
 **Responsibilities**:
+
 - Package list display
 - Package form (create/edit)
 - Package deletion
@@ -56,6 +62,7 @@ client/src/features/photos/
 - API integration
 
 **Proposed structure**:
+
 ```
 client/src/features/tenant-admin/packages/
 ├── TenantPackagesManager.tsx (layout)
@@ -67,8 +74,10 @@ client/src/features/tenant-admin/packages/
 ```
 
 ### 3. Dashboard.tsx (343 lines)
+
 **Priority**: HIGH
 **Responsibilities**:
+
 - Tab navigation
 - Bookings view
 - Blackouts view
@@ -76,6 +85,7 @@ client/src/features/tenant-admin/packages/
 - Tab state management
 
 **Proposed structure**:
+
 ```
 client/src/features/admin/dashboard/
 ├── DashboardLayout.tsx (main)

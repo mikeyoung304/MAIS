@@ -1,8 +1,8 @@
-import { Plus, Loader2, CalendarPlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ANIMATION_TRANSITION } from "@/lib/animation-constants";
+import { Plus, Loader2, CalendarPlus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ANIMATION_TRANSITION } from '@/lib/animation-constants';
 
 interface BlackoutFormProps {
   newBlackoutDate: string;
@@ -25,7 +25,7 @@ export function BlackoutForm({
   newBlackoutReason,
   setNewBlackoutReason,
   isAdding,
-  onSubmit
+  onSubmit,
 }: BlackoutFormProps) {
   return (
     <div className="bg-surface-alt rounded-2xl border border-sage-light/20 p-6">

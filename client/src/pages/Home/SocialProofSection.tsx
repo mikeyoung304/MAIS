@@ -1,4 +1,4 @@
-import { Container } from "@/ui/Container";
+import { Container } from '@/ui/Container';
 
 /**
  * SocialProofSection - Trust indicators
@@ -9,19 +9,19 @@ import { Container } from "@/ui/Container";
 
 const testimonials = [
   {
-    quote: "I went from chasing deposits to fully booked in six weeks.",
-    author: "Sarah Chen",
-    role: "Wedding Photographer, Portland",
+    quote: 'I went from chasing deposits to fully booked in six weeks.',
+    author: 'Sarah Chen',
+    role: 'Wedding Photographer, Portland',
   },
   {
-    quote: "My clients love how simple it is. I love that I never think about invoicing anymore.",
-    author: "Marcus Rivera",
-    role: "Event Planner, Austin",
+    quote: 'My clients love how simple it is. I love that I never think about invoicing anymore.',
+    author: 'Marcus Rivera',
+    role: 'Event Planner, Austin',
   },
   {
     quote: "It's like having an assistant who never sleeps.",
-    author: "Priya Patel",
-    role: "Portrait Photographer, Brooklyn",
+    author: 'Priya Patel',
+    role: 'Portrait Photographer, Brooklyn',
   },
 ];
 
@@ -65,12 +65,8 @@ export function SocialProofSection() {
                   </span>
                 </div>
                 <cite className="not-italic">
-                  <div className="font-semibold text-text-primary">
-                    {testimonial.author}
-                  </div>
-                  <div className="text-sm text-text-muted">
-                    {testimonial.role}
-                  </div>
+                  <div className="font-semibold text-text-primary">{testimonial.author}</div>
+                  <div className="text-sm text-text-muted">{testimonial.role}</div>
                 </cite>
               </figcaption>
             </figure>

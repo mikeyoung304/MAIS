@@ -1,10 +1,10 @@
 ---
 status: complete
 priority: p2
-issue_id: "157"
+issue_id: '157'
 tags: [code-review, quality, mvp-gaps, duplication]
 dependencies: []
-resolved_at: "2025-12-02"
+resolved_at: '2025-12-02'
 ---
 
 # Error Handling Duplicated in Public Routes
@@ -14,6 +14,7 @@ resolved_at: "2025-12-02"
 Each public route handler has 30-50 lines of duplicated error handling with repeated string matching patterns.
 
 **Why This Matters:**
+
 - 120+ lines of duplicated error handling
 - String matching is fragile
 - Inconsistent error messages across routes
@@ -23,26 +24,35 @@ Each public route handler has 30-50 lines of duplicated error handling with repe
 ### Agent: code-simplicity-reviewer
 
 **Location:**
+
 - `server/src/routes/public-booking-management.routes.ts` (lines 203-235, 281-339, 377-417)
 - `server/src/routes/public-balance-payment.routes.ts` (lines 90-148)
 
 **Evidence:**
+
 ```typescript
 // Pattern repeated 4 times
 if (error.message.includes('Token validation failed')) {
   if (error.message.includes('expired')) {
-    return res.status(401).json({ /* ... */ });
+    return res.status(401).json({
+      /* ... */
+    });
   }
-  return res.status(401).json({ /* ... */ });
+  return res.status(401).json({
+    /* ... */
+  });
 }
 if (error instanceof NotFoundError) {
-  return res.status(404).json({ /* ... */ });
+  return res.status(404).json({
+    /* ... */
+  });
 }
 ```
 
 ## Proposed Solutions
 
 ### Option A: Centralized Error Handler (Recommended)
+
 **Pros:** Single source of truth, consistent errors
 **Cons:** Requires new middleware
 **Effort:** Small (2-3 hours)
@@ -60,6 +70,7 @@ function handlePublicApiError(error: Error, res: Response) {
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/routes/public-booking-management.routes.ts`
 - `server/src/routes/public-balance-payment.routes.ts`
 - `server/src/middleware/error-handler.ts`
@@ -94,6 +105,7 @@ function handlePublicApiError(error: Error, res: Response) {
    - Reduced file from ~153 lines to 93 lines (39% reduction)
 
 **Impact:**
+
 - **Lines removed:** ~180 lines of duplicated error handling code
 - **Code reduction:** 38% reduction in public route files
 - **Maintainability:** Single source of truth for error responses
@@ -101,11 +113,13 @@ function handlePublicApiError(error: Error, res: Response) {
 - **TypeScript:** No new compilation errors introduced
 
 **Files Modified:**
+
 - `server/src/lib/public-route-error-handler.ts` (NEW - 143 lines)
 - `server/src/routes/public-booking-management.routes.ts` (reduced 138 lines)
 - `server/src/routes/public-balance-payment.routes.ts` (reduced 60 lines)
 
 **Testing:**
+
 - Pre-existing TypeScript errors remain (unrelated to this change)
 - No new errors introduced
 - Error handler follows existing error middleware patterns

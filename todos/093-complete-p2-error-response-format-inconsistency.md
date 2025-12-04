@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "093"
+issue_id: '093'
 tags: [todo]
 dependencies: []
 ---
@@ -18,6 +18,7 @@ dependencies: []
 The `public-tenant.routes.ts` uses a different error response format than other routes in the codebase:
 
 **Current (public-tenant):**
+
 ```typescript
 res.status(404).json({
   status: 'error',
@@ -28,6 +29,7 @@ res.status(404).json({
 ```
 
 **Standard pattern (other routes):**
+
 ```typescript
 res.status(404).json({
   error: 'Tenant not found',
@@ -35,6 +37,7 @@ res.status(404).json({
 ```
 
 Also, the rate limiter response format differs from loginLimiter:
+
 ```typescript
 // publicTenantLookupLimiter
 { status: 'error', statusCode: 429, error: 'RATE_LIMIT_EXCEEDED', message: '...' }
@@ -73,6 +76,7 @@ return res.status(404).json({
 ```
 
 For rate limiter, match the existing loginLimiter pattern:
+
 ```typescript
 handler: (_req: Request, res: Response) =>
   res.status(429).json({

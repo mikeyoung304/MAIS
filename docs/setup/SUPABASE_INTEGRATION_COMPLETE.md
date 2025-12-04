@@ -17,6 +17,7 @@ Successfully integrated Supabase as the production database for the MAIS wedding
 ### 1. ✅ Database Schema Deployment
 
 **Deployed Schema Includes:**
+
 - 11 tables (User, Customer, Package, AddOn, Booking, Payment, Venue, BlackoutDate, WebhookEvent, + join tables)
 - 3 enums (UserRole, BookingStatus, PaymentStatus)
 - **Critical Constraints:**
@@ -31,6 +32,7 @@ Successfully integrated Supabase as the production database for the MAIS wedding
   - `WebhookEvent.status, createdAt` index for DLQ queries
 
 **Deployment Method:**
+
 - Manual via Supabase SQL Editor (CLI access blocked by network)
 - Migration file: `server/prisma/migrations/00_supabase_reset.sql`
 
@@ -48,6 +50,7 @@ Successfully integrated Supabase as the production database for the MAIS wedding
 | Blackout Dates | 1 | Christmas 2025 |
 
 **Deployment Method:**
+
 - Manual via Supabase SQL Editor
 - Seed file: `server/prisma/seed.sql`
 
@@ -58,6 +61,7 @@ Successfully integrated Supabase as the production database for the MAIS wedding
 **File:** `server/prisma/schema.prisma`
 
 **Changes:**
+
 ```prisma
 datasource db {
   provider  = "postgresql"
@@ -87,6 +91,7 @@ model BlackoutDate {
 **File:** `server/.env`
 
 **Added Variables:**
+
 ```bash
 # Supabase Database
 DATABASE_URL="postgresql://postgres:%40Orangegoat11@db.gpyvdknhmevcfdbgtqir.supabase.co:5432/postgres"
@@ -99,6 +104,7 @@ SUPABASE_SERVICE_ROLE_KEY="eyJhbGc..."
 ```
 
 **Key Details:**
+
 - Password URL-encoded (@ = %40)
 - Using port 5432 (transaction mode pooler)
 - Both URLs identical (Supabase handles pooling internally)
@@ -108,6 +114,7 @@ SUPABASE_SERVICE_ROLE_KEY="eyJhbGc..."
 ### 5. ✅ Documentation Updates
 
 **New Documents:**
+
 - ✅ `SUPABASE.md` - Comprehensive integration guide (278 lines)
   - Configuration details
   - Schema deployment instructions
@@ -116,6 +123,7 @@ SUPABASE_SERVICE_ROLE_KEY="eyJhbGc..."
   - Future enhancements roadmap
 
 **Updated Documents:**
+
 - ✅ `README.md` - Updated Quick Start to use Supabase instead of local PostgreSQL
 - ✅ `ENVIRONMENT.md` - Added Supabase environment variables with examples
 - ✅ `ARCHITECTURE.md` - Updated backing services section + added Phase 2B to migration history
@@ -127,11 +135,13 @@ SUPABASE_SERVICE_ROLE_KEY="eyJhbGc..."
 ### Database Integrity
 
 **Before:** No unique constraint on booking dates
+
 ```prisma
 date DateTime  // ❌ Multiple bookings per date possible
 ```
 
 **After:** Database-level double-booking prevention
+
 ```prisma
 date DateTime @unique  // ✅ Only one booking per date
 ```
@@ -143,11 +153,13 @@ date DateTime @unique  // ✅ Only one booking per date
 ### Webhook Idempotency
 
 **Before:** No protection against duplicate webhooks
+
 ```prisma
 processorId String?  // ❌ Stripe can retry webhooks
 ```
 
 **After:** Database-level duplicate prevention
+
 ```prisma
 processorId String? @unique  // ✅ Prevents duplicate processing
 ```
@@ -159,6 +171,7 @@ processorId String? @unique  // ✅ Prevents duplicate processing
 ### Performance Optimization
 
 **Added Indexes:**
+
 1. `Booking.date` - Fast availability checks (O(log n) instead of O(n))
 2. `Payment.processorId` - Fast Stripe webhook lookups
 3. `BlackoutDate.date` - Fast blackout date checking
@@ -170,6 +183,7 @@ processorId String? @unique  // ✅ Prevents duplicate processing
 ## Connection Details
 
 **Supabase Project:**
+
 - **Project Ref:** `gpyvdknhmevcfdbgtqir`
 - **Region:** US East (N. Virginia)
 - **Database:** PostgreSQL 15
@@ -190,6 +204,7 @@ processorId String? @unique  // ✅ Prevents duplicate processing
 **Issue:** Cannot connect to Supabase from local machine via Prisma CLI
 
 **Symptoms:**
+
 ```
 Error: P1001: Can't reach database server at db.gpyvdknhmevcfdbgtqir.supabase.co:5432
 ```
@@ -205,6 +220,7 @@ Error: P1001: Can't reach database server at db.gpyvdknhmevcfdbgtqir.supabase.co
 ### 2. Prisma Migrate Commands
 
 **Affected Commands:**
+
 - ❌ `npx prisma migrate dev` - Fails (can't connect)
 - ❌ `npx prisma migrate deploy` - Fails (can't connect)
 - ❌ `npx prisma db push` - Fails (can't connect)
@@ -218,6 +234,7 @@ Error: P1001: Can't reach database server at db.gpyvdknhmevcfdbgtqir.supabase.co
 ## Files Created/Modified
 
 ### Created
+
 1. ✅ `SUPABASE.md` - Complete integration guide
 2. ✅ `server/prisma/migrations/00_supabase_reset.sql` - Schema deployment
 3. ✅ `server/prisma/seed.sql` - Database seeding
@@ -225,6 +242,7 @@ Error: P1001: Can't reach database server at db.gpyvdknhmevcfdbgtqir.supabase.co
 5. ✅ `SUPABASE_INTEGRATION_COMPLETE.md` - This document
 
 ### Modified
+
 1. ✅ `server/prisma/schema.prisma` - Added directUrl, unique constraints, indexes
 2. ✅ `server/.env` - Added Supabase credentials
 3. ✅ `README.md` - Updated setup instructions
@@ -236,18 +254,21 @@ Error: P1001: Can't reach database server at db.gpyvdknhmevcfdbgtqir.supabase.co
 ## Next Steps (Updated - Phase 2B Complete)
 
 ### Immediate (P0) - Phase 2B Completed (2025-10-29)
+
 1. ✅ Fix TypeScript compilation error (`tsconfig.json` references old path)
 2. ⚠️ Rotate exposed secrets (JWT_SECRET, STRIPE keys in git history) - **Documented, Not Executed**
 3. ✅ Implement webhook error handling (now includes DLQ, retry logic, idempotency)
 4. ✅ Implement race condition handling (SELECT FOR UPDATE with transactions)
 
 ### High Priority (P1)
+
 5. ❌ Add Docker containerization
 6. ❌ Fix CI/CD pipelines (reference old paths)
 7. ❌ Add monitoring/error tracking (Sentry)
 8. ❌ Implement refund functionality (Stripe adapter stub)
 
 ### Medium Priority (P2)
+
 9. ✅ Complete testing coverage (webhooks have 100% coverage, adapters partially covered)
 10. ❌ Fix N+1 query in CatalogService
 11. ❌ Configure Postmark token (currently using file-sink fallback)
@@ -258,6 +279,7 @@ Error: P1001: Can't reach database server at db.gpyvdknhmevcfdbgtqir.supabase.co
 ## Verification Checklist
 
 ### Database Deployment
+
 - [x] Schema deployed successfully
 - [x] All 10 tables created
 - [x] All 3 enums created
@@ -266,6 +288,7 @@ Error: P1001: Can't reach database server at db.gpyvdknhmevcfdbgtqir.supabase.co
 - [x] Foreign keys established
 
 ### Data Seeding
+
 - [x] Admin user created
 - [x] Can login with admin@example.com / admin
 - [x] 3 packages visible in database
@@ -274,6 +297,7 @@ Error: P1001: Can't reach database server at db.gpyvdknhmevcfdbgtqir.supabase.co
 - [x] Blackout date created
 
 ### Configuration
+
 - [x] DATABASE_URL configured
 - [x] DIRECT_URL configured
 - [x] Password URL-encoded correctly
@@ -281,6 +305,7 @@ Error: P1001: Can't reach database server at db.gpyvdknhmevcfdbgtqir.supabase.co
 - [x] Prisma can generate client
 
 ### Documentation
+
 - [x] SUPABASE.md created
 - [x] README.md updated
 - [x] ENVIRONMENT.md updated
@@ -293,22 +318,23 @@ Error: P1001: Can't reach database server at db.gpyvdknhmevcfdbgtqir.supabase.co
 
 **Current Status: 95% Production Ready** (up from 82% at Phase 2A)
 
-| Category | Phase 2A | Phase 2B | Status |
-|----------|----------|----------|--------|
-| Database | ✅ Supabase | ✅ Supabase | Complete |
-| Schema Constraints | ✅ Added | ✅ Enhanced (WebhookEvent) | Complete |
-| Connection Pooling | ✅ Built-in | ✅ Built-in | Complete |
-| Backups | ✅ Automatic | ✅ Automatic | Complete |
-| Payment Integration | ⚠️ Partial | ✅ Complete | Complete |
-| Webhook Handling | ❌ No Error Handling | ✅ DLQ + Idempotency | Complete |
-| Concurrency Control | ⚠️ Basic | ✅ Pessimistic Locking | Complete |
-| Test Coverage | ⚠️ Service Layer Only | ✅ Webhooks 100% | Complete |
-| Documentation | ✅ Comprehensive | ✅ ADRs Added | Complete |
-| Monitoring | ⚠️ Basic | ⚠️ Basic | Partial |
-| CLI Access | ❌ Blocked | ❌ Blocked | Workaround |
-| **Overall** | **82%** | **95%** | **+13%** |
+| Category            | Phase 2A              | Phase 2B                   | Status     |
+| ------------------- | --------------------- | -------------------------- | ---------- |
+| Database            | ✅ Supabase           | ✅ Supabase                | Complete   |
+| Schema Constraints  | ✅ Added              | ✅ Enhanced (WebhookEvent) | Complete   |
+| Connection Pooling  | ✅ Built-in           | ✅ Built-in                | Complete   |
+| Backups             | ✅ Automatic          | ✅ Automatic               | Complete   |
+| Payment Integration | ⚠️ Partial            | ✅ Complete                | Complete   |
+| Webhook Handling    | ❌ No Error Handling  | ✅ DLQ + Idempotency       | Complete   |
+| Concurrency Control | ⚠️ Basic              | ✅ Pessimistic Locking     | Complete   |
+| Test Coverage       | ⚠️ Service Layer Only | ✅ Webhooks 100%           | Complete   |
+| Documentation       | ✅ Comprehensive      | ✅ ADRs Added              | Complete   |
+| Monitoring          | ⚠️ Basic              | ⚠️ Basic                   | Partial    |
+| CLI Access          | ❌ Blocked            | ❌ Blocked                 | Workaround |
+| **Overall**         | **82%**               | **95%**                    | **+13%**   |
 
 **Remaining 5% Gaps:**
+
 - Secret rotation not executed (documented only)
 - Monitoring/error tracking not configured (Sentry)
 - CI/CD pipelines not updated
@@ -319,21 +345,25 @@ Error: P1001: Can't reach database server at db.gpyvdknhmevcfdbgtqir.supabase.co
 ## Lessons Learned
 
 ### 1. Password URL Encoding
+
 **Issue:** Special characters in passwords break connection strings
 **Solution:** Always URL-encode passwords (@ = %40, ! = %21, etc.)
 **Documentation:** Added to SUPABASE.md troubleshooting section
 
 ### 2. Supabase Port Configuration
+
 **Issue:** Port 6543 (session pooler) doesn't work for all operations
 **Solution:** Use port 5432 (transaction pooler) for everything
 **Documentation:** Explained in SUPABASE.md connection section
 
 ### 3. Migration Strategy
+
 **Issue:** Prisma can't always connect directly
 **Solution:** Manual migrations via SQL Editor are reliable
 **Documentation:** Two-method approach documented in SUPABASE.md
 
 ### 4. Schema Evolution
+
 **Issue:** Old schema missing new fields (passwordHash)
 **Solution:** Always regenerate complete schema instead of incremental fixes
 **Documentation:** Best practices added to SUPABASE.md
@@ -354,18 +384,21 @@ Error: P1001: Can't reach database server at db.gpyvdknhmevcfdbgtqir.supabase.co
 ## Team Handoff Notes
 
 ### For Developers
+
 1. **Local development still works in mock mode** - No Supabase needed for coding
 2. **Real mode now requires Supabase** - See SUPABASE.md for setup
 3. **Migrations are manual** - Use SQL Editor until CLI access fixed
 4. **Seed data is idempotent** - Safe to run multiple times
 
 ### For DevOps
+
 1. **Production deployment requires DATABASE_URL** - Supabase credentials required
 2. **No additional infrastructure needed** - Supabase handles pooling, backups, SSL
 3. **Monitor via Supabase dashboard** - Built-in metrics available
 4. **Backups are automatic** - 7-day point-in-time recovery on free tier
 
 ### For QA
+
 1. **Test data is seeded** - admin@example.com / admin works
 2. **3 packages available** - Classic, Garden, Luxury
 3. **Unique constraints enforced** - Cannot create duplicate bookings on same date

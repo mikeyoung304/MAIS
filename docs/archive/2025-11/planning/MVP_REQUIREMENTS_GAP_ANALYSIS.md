@@ -13,16 +13,16 @@ MAIS is **architecturally production-ready** with a mature multi-tenant platform
 
 ### Key Findings
 
-| Category | Status | Blocker? | Impact |
-|----------|--------|----------|--------|
-| **Architecture** | ✅ Excellent (95% multi-tenant) | No | High |
-| **Core Features** | ✅ Complete (booking, catalog, payments) | No | High |
-| **Test Coverage** | ⚠️ Regressed (83 integration tests failing) | Yes | Critical |
-| **Tenant Onboarding** | ❌ Incomplete | Yes | High |
-| **Email/Notifications** | ⚠️ Optional (mock fallback exists) | No | Medium |
-| **Production Data** | ❌ Missing (no real tenants configured) | Yes | High |
-| **Security Hardening** | ⚠️ 70% OWASP compliance | No | Medium |
-| **Documentation** | ⚠️ Fragmented (multiple docs, some stale) | No | Low |
+| Category                | Status                                      | Blocker? | Impact   |
+| ----------------------- | ------------------------------------------- | -------- | -------- |
+| **Architecture**        | ✅ Excellent (95% multi-tenant)             | No       | High     |
+| **Core Features**       | ✅ Complete (booking, catalog, payments)    | No       | High     |
+| **Test Coverage**       | ⚠️ Regressed (83 integration tests failing) | Yes      | Critical |
+| **Tenant Onboarding**   | ❌ Incomplete                               | Yes      | High     |
+| **Email/Notifications** | ⚠️ Optional (mock fallback exists)          | No       | Medium   |
+| **Production Data**     | ❌ Missing (no real tenants configured)     | Yes      | High     |
+| **Security Hardening**  | ⚠️ 70% OWASP compliance                     | No       | Medium   |
+| **Documentation**       | ⚠️ Fragmented (multiple docs, some stale)   | No       | Low      |
 
 ### MVP Launch Blockers (3 Critical)
 
@@ -36,41 +36,41 @@ MAIS is **architecturally production-ready** with a mature multi-tenant platform
 
 ### What's Complete ✅
 
-| Component | Status | Coverage |
-|-----------|--------|----------|
-| **Multi-Tenant Isolation** | 95% complete | All queries scoped by tenantId |
-| **Booking System** | Complete | Full race condition protection, transaction safety |
-| **Stripe Integration** | Complete | Webhook handling, Connect onboarding infrastructure |
-| **Commission System** | Complete | Server-side calculation, application fee routing |
-| **Package Catalog** | Complete | CRUD, photo uploads (local storage), pricing tiers |
-| **Authentication** | Complete | Tenant auth + platform admin separate flows |
-| **API Contracts** | Complete | 100% ts-rest + Zod validation |
-| **Database Schema** | Complete | 13 migrations, Prisma ORM, PostgreSQL |
+| Component                  | Status       | Coverage                                            |
+| -------------------------- | ------------ | --------------------------------------------------- |
+| **Multi-Tenant Isolation** | 95% complete | All queries scoped by tenantId                      |
+| **Booking System**         | Complete     | Full race condition protection, transaction safety  |
+| **Stripe Integration**     | Complete     | Webhook handling, Connect onboarding infrastructure |
+| **Commission System**      | Complete     | Server-side calculation, application fee routing    |
+| **Package Catalog**        | Complete     | CRUD, photo uploads (local storage), pricing tiers  |
+| **Authentication**         | Complete     | Tenant auth + platform admin separate flows         |
+| **API Contracts**          | Complete     | 100% ts-rest + Zod validation                       |
+| **Database Schema**        | Complete     | 13 migrations, Prisma ORM, PostgreSQL               |
 
 ### What's Partially Complete ⚠️
 
-| Component | Status | Gap |
-|-----------|--------|-----|
-| **Test Infrastructure** | 752/752 pass rate in Sprint 10, now 83 failing | Integration test suite regressed |
-| **Email System** | Mock + Postmark adapter ready | Optional, has file-sink fallback |
-| **Cloud Storage** | Local filesystem only | Photo persistence issue on redeploy |
-| **Branding System** | Schema ready, endpoints exist | Brand colors not persisted to config |
-| **Segment Navigation** | Backend complete, frontend missing | `/segments/:slug` routes not implemented |
-| **Add-ons System** | Schema + CRUD ready | Not fully integrated in booking flow |
-| **Admin Dashboard** | Core features working | Missing real data visualization |
+| Component               | Status                                         | Gap                                      |
+| ----------------------- | ---------------------------------------------- | ---------------------------------------- |
+| **Test Infrastructure** | 752/752 pass rate in Sprint 10, now 83 failing | Integration test suite regressed         |
+| **Email System**        | Mock + Postmark adapter ready                  | Optional, has file-sink fallback         |
+| **Cloud Storage**       | Local filesystem only                          | Photo persistence issue on redeploy      |
+| **Branding System**     | Schema ready, endpoints exist                  | Brand colors not persisted to config     |
+| **Segment Navigation**  | Backend complete, frontend missing             | `/segments/:slug` routes not implemented |
+| **Add-ons System**      | Schema + CRUD ready                            | Not fully integrated in booking flow     |
+| **Admin Dashboard**     | Core features working                          | Missing real data visualization          |
 
 ### What's Missing ❌
 
-| Component | Status | Impact |
-|-----------|--------|--------|
-| **Production Tenants** | Zero real business accounts | Cannot demo revenue-sharing |
-| **Little Bit Farm Setup** | Shell tenant, no real data | No E2E booking verification |
-| **Image CDN** | Local filesystem only | Images lost on production redeploy |
-| **Postmark Integration** | Optional, fallback to file-sink | Email notifications optional |
-| **Webhook Tests** | 12 todo tests not implemented | 60% webhook endpoint coverage |
-| **Segment Frontend** | Pages not routed | Customer journey feature incomplete |
-| **Add-on UI** | Backend ready, frontend not integrated | Users cannot select add-ons in booking |
-| **Square Payment Support** | Not implemented | Only Stripe available (user uncertainty) |
+| Component                  | Status                                 | Impact                                   |
+| -------------------------- | -------------------------------------- | ---------------------------------------- |
+| **Production Tenants**     | Zero real business accounts            | Cannot demo revenue-sharing              |
+| **Little Bit Farm Setup**  | Shell tenant, no real data             | No E2E booking verification              |
+| **Image CDN**              | Local filesystem only                  | Images lost on production redeploy       |
+| **Postmark Integration**   | Optional, fallback to file-sink        | Email notifications optional             |
+| **Webhook Tests**          | 12 todo tests not implemented          | 60% webhook endpoint coverage            |
+| **Segment Frontend**       | Pages not routed                       | Customer journey feature incomplete      |
+| **Add-on UI**              | Backend ready, frontend not integrated | Users cannot select add-ons in booking   |
+| **Square Payment Support** | Not implemented                        | Only Stripe available (user uncertainty) |
 
 ---
 
@@ -92,17 +92,20 @@ Critical Issue: 14 test files failing, mostly integration suite
 ### Regression Root Causes
 
 **File: `webhook-race-conditions.spec.ts`** - Entire suite failing
+
 - Not refactored to use modern integration test helpers
 - Manual PrismaClient initialization instead of helper-managed
 - Missing proper cleanup patterns
 - 13 of 14 tests consistently failing
 
 **File: `webhook-repository.integration.spec.ts`** - Concurrency bugs
+
 - `markFailed()` trying to update non-existent records (P2025 error)
 - Race condition in duplicate detection (concurrent checks)
 - Status not properly marked as 'DUPLICATE'
 
 **File: `booking-repository.integration.spec.ts`** - Multiple failures
+
 - Lock acquisition timing issues
 - Concurrent booking race conditions not properly serialized
 
@@ -111,24 +114,29 @@ Critical Issue: 14 test files failing, mostly integration suite
 Located in `server/test/http/webhooks.http.spec.ts` - **All 12 tests not implemented:**
 
 **Signature Verification (3 tests):**
+
 - Should reject webhook without signature header
 - Should reject webhook with invalid signature
 - Should accept webhook with valid signature
 
 **Idempotency & Duplicate Handling (2 tests):**
+
 - Should return 200 for duplicate webhook
 - Should not process duplicate webhook
 
 **Error Handling (3 tests):**
+
 - Should return 400 for invalid JSON
 - Should return 422 for missing required fields
 - Should return 500 for internal server errors
 
 **Event Type Handling (2 tests):**
+
 - Should handle checkout.session.completed events
 - Should ignore unsupported event types
 
 **Webhook Recording & Audit Trail (2 tests):**
+
 - Should record all webhook events in database
 - Should mark failed webhooks in database
 
@@ -137,6 +145,7 @@ Located in `server/test/http/webhooks.http.spec.ts` - **All 12 tests not impleme
 ### MVP Blocker: Test Suite Must Pass
 
 **Action Required Before Launch:**
+
 1. Fix webhook integration test suite (3-4 hours)
 2. Implement 12 webhook HTTP tests (3-4 hours)
 3. Refactor webhook-race-conditions to modern helpers (2-3 hours)
@@ -159,14 +168,14 @@ Located in `server/test/http/webhooks.http.spec.ts` - **All 12 tests not impleme
 
 ### What's Missing ❌
 
-| Item | Current State | Required for MVP |
-|------|---------------|------------------|
-| **Real Tenants** | None configured | At least 1 demo tenant (Little Bit Farm) |
-| **Stripe Onboarding Flow** | Code exists, not tested E2E | Manual verification required |
-| **Commission Verification** | Code review only | Live test with real payment |
-| **Payout Webhook** | Not implemented | Optional for MVP (manual payout verification) |
-| **Revenue Dashboard** | Not built | Not critical for MVP |
-| **Tax Reporting** | Not implemented | Not critical for MVP |
+| Item                        | Current State               | Required for MVP                              |
+| --------------------------- | --------------------------- | --------------------------------------------- |
+| **Real Tenants**            | None configured             | At least 1 demo tenant (Little Bit Farm)      |
+| **Stripe Onboarding Flow**  | Code exists, not tested E2E | Manual verification required                  |
+| **Commission Verification** | Code review only            | Live test with real payment                   |
+| **Payout Webhook**          | Not implemented             | Optional for MVP (manual payout verification) |
+| **Revenue Dashboard**       | Not built                   | Not critical for MVP                          |
+| **Tax Reporting**           | Not implemented             | Not critical for MVP                          |
 
 ### Revenue-Sharing Setup Checklist
 
@@ -185,6 +194,7 @@ Located in `server/test/http/webhooks.http.spec.ts` - **All 12 tests not impleme
 ### Current Status: Shell Tenant Only
 
 **What Exists:**
+
 - Tenant record in database (id: `tenant_...`)
 - Admin user created
 - API keys generated
@@ -192,25 +202,27 @@ Located in `server/test/http/webhooks.http.spec.ts` - **All 12 tests not impleme
 
 **What's Missing:**
 
-| Item | Status | Blocker? | Effort |
-|------|--------|----------|--------|
-| **Professional Photos** | Not uploaded | Yes - UX | 1-2h (user must provide) |
-| **Real Package Content** | Mock data only | Yes - UX | 1h (user must provide) |
-| **Branding (logo/colors)** | Defaults | Yes - UX | 30m (user must provide) |
-| **Segment Configuration** | Not created | No | 30m |
-| **Stripe Connect Onboarding** | Not started | Yes | 1h (user must complete) |
-| **Cloud Image Storage** | Local filesystem | Yes - Production | 2-3h (Supabase or S3) |
-| **E2E Booking Verification** | Not tested | Yes | 1h (Playwright test) |
+| Item                          | Status           | Blocker?         | Effort                   |
+| ----------------------------- | ---------------- | ---------------- | ------------------------ |
+| **Professional Photos**       | Not uploaded     | Yes - UX         | 1-2h (user must provide) |
+| **Real Package Content**      | Mock data only   | Yes - UX         | 1h (user must provide)   |
+| **Branding (logo/colors)**    | Defaults         | Yes - UX         | 30m (user must provide)  |
+| **Segment Configuration**     | Not created      | No               | 30m                      |
+| **Stripe Connect Onboarding** | Not started      | Yes              | 1h (user must complete)  |
+| **Cloud Image Storage**       | Local filesystem | Yes - Production | 2-3h (Supabase or S3)    |
+| **E2E Booking Verification**  | Not tested       | Yes              | 1h (Playwright test)     |
 
 ### Data Foundation Phase
 
 **Phase 1: Collect User Content**
+
 - [ ] Receive professional photos (3-5 per package)
 - [ ] Confirm package pricing and descriptions
 - [ ] Get logo file (PNG/SVG recommended)
 - [ ] Get brand color palette
 
 **Phase 2: Configure Platform**
+
 - [ ] Upload photos via admin dashboard API
 - [ ] Create 3 packages with real pricing
 - [ ] Create 5 add-ons with real pricing
@@ -218,17 +230,20 @@ Located in `server/test/http/webhooks.http.spec.ts` - **All 12 tests not impleme
 - [ ] Create segment (optional but recommended)
 
 **Phase 3: Infrastructure Setup**
+
 - [ ] Configure cloud storage (Supabase Storage or AWS S3)
 - [ ] Update environment variables
 - [ ] Test image upload and CDN delivery
 - [ ] Verify images persist across deployments
 
 **Phase 4: Payment Setup**
+
 - [ ] Complete Stripe Connect onboarding
 - [ ] Verify test mode works
 - [ ] Test webhook processing
 
 **Phase 5: E2E Verification**
+
 - [ ] Run full booking flow E2E test
 - [ ] Test admin dashboard functions
 - [ ] Mobile responsiveness check
@@ -243,6 +258,7 @@ Located in `server/test/http/webhooks.http.spec.ts` - **All 12 tests not impleme
 **Status:** Stripe only, production-ready code
 
 **What Works:**
+
 - ✅ Stripe test mode integration
 - ✅ Stripe Connect account linking
 - ✅ PaymentIntent creation with application fee
@@ -251,6 +267,7 @@ Located in `server/test/http/webhooks.http.spec.ts` - **All 12 tests not impleme
 - ✅ Error handling and retry logic
 
 **What's Untested:**
+
 - ⚠️ Webhook HTTP tests (12 todo tests)
 - ⚠️ Stripe Connect real onboarding (code exists, not E2E tested)
 - ⚠️ Payout webhook processing (optional)
@@ -258,9 +275,11 @@ Located in `server/test/http/webhooks.http.spec.ts` - **All 12 tests not impleme
 ### Critical Issue: Square vs Stripe Confusion
 
 **From Production Setup Plan:**
+
 > "User mentioned 'Square sandbox' but codebase is Stripe-only. Clarification needed."
 
 **Options:**
+
 1. **Use Stripe test mode** (ready now, 0 hours)
    - Fully implemented and tested
    - Perfect for MVP
@@ -280,12 +299,14 @@ Located in `server/test/http/webhooks.http.spec.ts` - **All 12 tests not impleme
 ### Current Status
 
 **What's Ready:**
+
 - ✅ Postmark adapter implemented
 - ✅ Email service with template system
 - ✅ Booking confirmation emails
 - ✅ Configuration via environment variables
 
 **What's Optional:**
+
 - Email delivery not required for MVP
 - File-sink fallback logs emails to `/tmp/emails/`
 - Perfect for demo mode (no email infrastructure needed)
@@ -310,17 +331,18 @@ POSTMARK_FROM_EMAIL=bookings@maconaisolutions.com
 ### Critical Issue: Local Filesystem Not Production-Safe
 
 **Current State:**
+
 - Photos stored in `/uploads/` (local filesystem)
 - Lost on every production redeploy
 - Works for development/testing only
 
 **Options:**
 
-| Option | Setup Time | Cost | Recommendation |
-|--------|-----------|------|-----------------|
-| **Supabase Storage** | 1-2 hours | $5-25/mo | ✅ Best for MVP (same provider as DB) |
-| **AWS S3** | 2-3 hours | $1-10/mo | Good if AWS already used |
-| **Cloudinary** | 1-2 hours | $20-100/mo | Good with built-in image transforms |
+| Option               | Setup Time | Cost       | Recommendation                        |
+| -------------------- | ---------- | ---------- | ------------------------------------- |
+| **Supabase Storage** | 1-2 hours  | $5-25/mo   | ✅ Best for MVP (same provider as DB) |
+| **AWS S3**           | 2-3 hours  | $1-10/mo   | Good if AWS already used              |
+| **Cloudinary**       | 1-2 hours  | $20-100/mo | Good with built-in image transforms   |
 
 **For MVP, use Supabase Storage:**
 
@@ -331,6 +353,7 @@ SUPABASE_STORAGE_BUCKET=tenant-assets
 ```
 
 **Setup Steps:**
+
 1. Create bucket in Supabase dashboard
 2. Add environment variables
 3. Update upload service code (mostly ready)
@@ -345,26 +368,26 @@ SUPABASE_STORAGE_BUCKET=tenant-assets
 
 ### Completed ✅
 
-| Item | Status | Coverage |
-|------|--------|----------|
-| **A01:2021 – Broken Access Control** | ✅ Complete | Multi-tenant isolation tested |
-| **A02:2021 – Cryptographic Failures** | ✅ Complete | Encrypted tenant secrets, HTTPS enforced |
-| **A03:2021 – Injection** | ✅ Complete | Parameterized queries via Prisma |
-| **A04:2021 – Insecure Design** | ✅ Complete | Threat modeling done, ADRs documented |
-| **A05:2021 – Security Misconfiguration** | ✅ Complete | Config validation via Zod schemas |
-| **A07:2021 – Identification & Auth** | ✅ Complete | JWT + tenant key validation |
-| **A08:2021 – Data Integrity Failures** | ✅ Complete | Webhook idempotency tested |
-| **A09:2021 – Logging & Monitoring** | ✅ Complete | Audit service logging all changes |
+| Item                                     | Status      | Coverage                                 |
+| ---------------------------------------- | ----------- | ---------------------------------------- |
+| **A01:2021 – Broken Access Control**     | ✅ Complete | Multi-tenant isolation tested            |
+| **A02:2021 – Cryptographic Failures**    | ✅ Complete | Encrypted tenant secrets, HTTPS enforced |
+| **A03:2021 – Injection**                 | ✅ Complete | Parameterized queries via Prisma         |
+| **A04:2021 – Insecure Design**           | ✅ Complete | Threat modeling done, ADRs documented    |
+| **A05:2021 – Security Misconfiguration** | ✅ Complete | Config validation via Zod schemas        |
+| **A07:2021 – Identification & Auth**     | ✅ Complete | JWT + tenant key validation              |
+| **A08:2021 – Data Integrity Failures**   | ✅ Complete | Webhook idempotency tested               |
+| **A09:2021 – Logging & Monitoring**      | ✅ Complete | Audit service logging all changes        |
 
 ### Gaps (30%) ⚠️
 
-| Item | Status | Effort | MVP Critical? |
-|------|--------|--------|---------------|
-| **A06:2021 – Vulnerable Components** | Partial | 1h | No |
-| **A10:2021 – SSRF** | Not implemented | 2h | No |
-| **Rate Limiting (Auth)** | Configured, not tested | 2h | No |
-| **CSP Headers** | Custom policy, needs review | 1h | No |
-| **Secrets Scanning in CI/CD** | Not automated | 2h | No |
+| Item                                 | Status                      | Effort | MVP Critical? |
+| ------------------------------------ | --------------------------- | ------ | ------------- |
+| **A06:2021 – Vulnerable Components** | Partial                     | 1h     | No            |
+| **A10:2021 – SSRF**                  | Not implemented             | 2h     | No            |
+| **Rate Limiting (Auth)**             | Configured, not tested      | 2h     | No            |
+| **CSP Headers**                      | Custom policy, needs review | 1h     | No            |
+| **Secrets Scanning in CI/CD**        | Not automated               | 2h     | No            |
 
 **For MVP:** Security posture is acceptable (70%). Prioritize test fixes over security hardening.
 
@@ -375,6 +398,7 @@ SUPABASE_STORAGE_BUCKET=tenant-assets
 ### From Sprint 10 Documentation
 
 **Identified Issues:**
+
 1. **3 flaky tests** - Pass in isolation, fail under full suite resource contention
    - Resource cleanup timing issues
    - Require test isolation improvements
@@ -425,12 +449,14 @@ SUPABASE_STORAGE_BUCKET=tenant-assets
 ### Current Status: Backend Complete, Frontend Missing
 
 **What's Done:**
+
 - ✅ Segment schema (with heroTitle, metaDescription, SEO fields)
 - ✅ Segment service and repository
 - ✅ Tenant admin segment CRUD
 - ✅ Public segment API endpoints
 
 **What's Missing:**
+
 - ❌ `/segments/:slug` client routes
 - ❌ Segment landing page component
 - ❌ Home page segment selector cards
@@ -447,11 +473,13 @@ SUPABASE_STORAGE_BUCKET=tenant-assets
 ### Current Status: Backend Complete, Frontend Partial
 
 **What's Done:**
+
 - ✅ AddOn schema in database
 - ✅ CRUD endpoints in admin API
 - ✅ Pricing calculation
 
 **What's Missing:**
+
 - ⚠️ Add-on selector in booking form (requires frontend UI work)
 - ⚠️ Price update when add-ons selected
 - ⚠️ Add-on quantity handling
@@ -467,6 +495,7 @@ SUPABASE_STORAGE_BUCKET=tenant-assets
 ### Pre-Launch (Must Have)
 
 #### Code Quality
+
 - [ ] **Test Suite Passes:** 100% pass rate on full suite (currently 86.6%, 83 failing)
 - [ ] **Webhook Tests:** Implement 12 todo tests
 - [ ] **Integration Tests:** Fix webhook race condition suite
@@ -475,6 +504,7 @@ SUPABASE_STORAGE_BUCKET=tenant-assets
 - [ ] **Type Safety:** No `as any` casts in production code
 
 #### Infrastructure
+
 - [ ] **Database:** PostgreSQL running, all 13 migrations applied
 - [ ] **Image Storage:** Cloud storage configured (Supabase/S3)
 - [ ] **API Server:** Can start with `npm run dev:api` in real mode
@@ -482,6 +512,7 @@ SUPABASE_STORAGE_BUCKET=tenant-assets
 - [ ] **Environment:** All required env vars documented
 
 #### Security
+
 - [ ] **Secrets Management:** No hardcoded secrets in code
 - [ ] **Tenant Isolation:** Verified via integration tests
 - [ ] **API Key Validation:** Format and rotation checked
@@ -489,6 +520,7 @@ SUPABASE_STORAGE_BUCKET=tenant-assets
 - [ ] **CORS:** Configured for production domain
 
 #### First Tenant (Little Bit Farm)
+
 - [ ] **Tenant Record:** Created with real data
 - [ ] **Admin User:** Email + password working
 - [ ] **API Keys:** Generated and tested
@@ -499,6 +531,7 @@ SUPABASE_STORAGE_BUCKET=tenant-assets
 - [ ] **E2E Test:** Full booking flow passes
 
 #### Documentation
+
 - [ ] **Go-Live Checklist:** Signed off
 - [ ] **Deployment Runbook:** Tested
 - [ ] **Incident Response:** Documented
@@ -531,14 +564,14 @@ SUPABASE_STORAGE_BUCKET=tenant-assets
 
 ### Critical Path (Must Complete)
 
-| Task | Duration | Blocker? | Owner |
-|------|----------|----------|-------|
-| Fix test suite (integration tests + webhooks) | 8-11h | YES | Engineering |
-| Set up Little Bit Farm data | 3-4h | YES | User + Engineering |
-| Configure cloud storage | 2-3h | YES | Engineering |
-| Verify Stripe integration E2E | 2h | YES | Engineering |
-| Final security audit | 2h | NO | Engineering |
-| Production deployment | 1h | NO | DevOps |
+| Task                                          | Duration | Blocker? | Owner              |
+| --------------------------------------------- | -------- | -------- | ------------------ |
+| Fix test suite (integration tests + webhooks) | 8-11h    | YES      | Engineering        |
+| Set up Little Bit Farm data                   | 3-4h     | YES      | User + Engineering |
+| Configure cloud storage                       | 2-3h     | YES      | Engineering        |
+| Verify Stripe integration E2E                 | 2h       | YES      | Engineering        |
+| Final security audit                          | 2h       | NO       | Engineering        |
+| Production deployment                         | 1h       | NO       | DevOps             |
 
 **Total Critical Path:** 18-21 hours  
 **Timeline:** 2-3 business days of focused work
@@ -555,6 +588,7 @@ SUPABASE_STORAGE_BUCKET=tenant-assets
 ## 15. MVP Success Metrics
 
 ### Functional Requirements
+
 - [ ] Little Bit Farm homepage loads in < 2s
 - [ ] All 3 packages display with photos
 - [ ] Date picker shows availability correctly
@@ -566,6 +600,7 @@ SUPABASE_STORAGE_BUCKET=tenant-assets
 - [ ] Commission correctly calculated
 
 ### Non-Functional Requirements
+
 - [ ] Page load time: < 2s (Lighthouse score)
 - [ ] Images served from CDN (not local)
 - [ ] Mobile responsive on iOS/Android
@@ -574,6 +609,7 @@ SUPABASE_STORAGE_BUCKET=tenant-assets
 - [ ] 99.9% uptime SLA possible (with monitoring)
 
 ### Revenue Metrics
+
 - [ ] Commission rate: 5-10% per tenant agreement
 - [ ] Payout calculation: Verified via Stripe dashboard
 - [ ] Zero lost bookings due to technical issues
@@ -653,12 +689,14 @@ SUPABASE_STORAGE_BUCKET=tenant-assets
 3. **Cloud Storage Not Configured** - Images won't persist
 
 **With focused 2-3 day effort:**
+
 - Fix test suite
 - Set up Little Bit Farm
 - Configure cloud storage
 - Verify Stripe integration
 
 **Then: Ready for MVP launch with:**
+
 - 1 production tenant (Little Bit Farm)
 - Full booking flow working
 - Revenue-sharing verified
@@ -670,4 +708,3 @@ SUPABASE_STORAGE_BUCKET=tenant-assets
 
 **Report Generated:** November 25, 2025  
 **Based on:** 752 passing tests (Sprint 10 baseline), 13 migrations, comprehensive architecture review
-

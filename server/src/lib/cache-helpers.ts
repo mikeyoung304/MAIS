@@ -98,11 +98,14 @@ export function buildCacheKey(prefix: string, tenantId: string, ...parts: string
  * @param cache - Cache service instance
  * @param keys - Array of cache keys to invalidate
  */
-export async function invalidateCacheKeys(cache: CacheServicePort | undefined, keys: string[]): Promise<void> {
+export async function invalidateCacheKeys(
+  cache: CacheServicePort | undefined,
+  keys: string[]
+): Promise<void> {
   if (!cache) return;
 
   // Invalidate all keys in parallel
-  await Promise.all(keys.map(key => cache.del(key)));
+  await Promise.all(keys.map((key) => cache.del(key)));
 }
 
 /**
@@ -167,10 +170,7 @@ export function getSegmentInvalidationKeys(tenantId: string, slug?: string): str
  * @param segmentId - Segment ID
  * @returns Array of cache keys to invalidate
  */
-export function getSegmentCatalogInvalidationKeys(
-  tenantId: string,
-  segmentId: string
-): string[] {
+export function getSegmentCatalogInvalidationKeys(tenantId: string, segmentId: string): string[] {
   return [
     buildCacheKey('catalog', tenantId, 'segment', segmentId, 'packages'),
     buildCacheKey('catalog', tenantId, 'segment', segmentId, 'packages-with-addons'),

@@ -4,22 +4,24 @@ This directory contains unit tests for critical Elope server services.
 
 ## Test Files
 
-| File | Tests | Service | Description |
-|------|-------|---------|-------------|
-| `commission.service.spec.ts` | 12 | CommissionService | Commission calculation, booking totals, refunds |
-| `idempotency.service.spec.ts` | 10 | IdempotencyService | Key generation, deduplication, race conditions |
-| `stripe-connect.service.spec.ts` | 6 | StripeConnectService | Account creation, onboarding, management |
+| File                             | Tests | Service              | Description                                     |
+| -------------------------------- | ----- | -------------------- | ----------------------------------------------- |
+| `commission.service.spec.ts`     | 12    | CommissionService    | Commission calculation, booking totals, refunds |
+| `idempotency.service.spec.ts`    | 10    | IdempotencyService   | Key generation, deduplication, race conditions  |
+| `stripe-connect.service.spec.ts` | 6     | StripeConnectService | Account creation, onboarding, management        |
 
 **Total**: 28 tests
 
 ## Running Tests
 
 ### Run All Service Tests
+
 ```bash
 npm test -- test/services/
 ```
 
 ### Run Individual Test Files
+
 ```bash
 # Commission tests (12 tests)
 npm test -- test/services/commission.service.spec.ts
@@ -32,11 +34,13 @@ npm test -- test/services/stripe-connect.service.spec.ts
 ```
 
 ### Run with Coverage
+
 ```bash
 npm test -- --coverage test/services/
 ```
 
 ### Run in Watch Mode
+
 ```bash
 npm test -- --watch test/services/commission.service.spec.ts
 ```
@@ -80,6 +84,7 @@ it('should calculate commission with standard rate', async () => {
 ## Mocking Strategy
 
 ### Prisma Client
+
 ```typescript
 mockPrisma = {
   tenant: {
@@ -91,6 +96,7 @@ mockPrisma = {
 ```
 
 ### Stripe SDK
+
 ```typescript
 mockStripe = {
   accounts: {
@@ -102,6 +108,7 @@ mockStripe = {
 ```
 
 ### Encryption Service
+
 ```typescript
 vi.mock('../../src/lib/encryption.service', () => ({
   encryptionService: {
@@ -114,6 +121,7 @@ vi.mock('../../src/lib/encryption.service', () => ({
 ## Test Coverage
 
 ### CommissionService (12 tests)
+
 - ✅ Basic calculation with standard rates
 - ✅ Tenant lookup and commission retrieval
 - ✅ Rounding behavior (always rounds up)
@@ -123,6 +131,7 @@ vi.mock('../../src/lib/encryption.service', () => ({
 - ✅ Refund commission calculation
 
 ### IdempotencyService (10 tests)
+
 - ✅ Deterministic SHA-256 key generation
 - ✅ Duplicate key detection
 - ✅ Race condition handling (P2002 errors)
@@ -131,6 +140,7 @@ vi.mock('../../src/lib/encryption.service', () => ({
 - ✅ Timestamp rounding for checkout keys
 
 ### StripeConnectService (6 tests)
+
 - ✅ Express account creation
 - ✅ Duplicate account prevention
 - ✅ Onboarding link generation
@@ -140,25 +150,33 @@ vi.mock('../../src/lib/encryption.service', () => ({
 ## Troubleshooting
 
 ### Tests Fail with "STRIPE_SECRET_KEY is required"
+
 Set the environment variable:
+
 ```bash
 export STRIPE_SECRET_KEY=sk_test_your_key_here
 ```
 
 ### Tests Fail with "TENANT_SECRETS_ENCRYPTION_KEY is required"
+
 Generate and set the encryption key:
+
 ```bash
 export TENANT_SECRETS_ENCRYPTION_KEY=$(openssl rand -hex 32)
 ```
 
 ### Prisma Client Not Found
+
 Generate Prisma Client:
+
 ```bash
 npm run prisma:generate
 ```
 
 ### Watch Mode Not Working
+
 Install vitest:
+
 ```bash
 npm install -D vitest
 ```

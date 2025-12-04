@@ -1,5 +1,5 @@
-import { useEffect, useCallback, useRef } from "react";
-import { useBlocker } from "react-router-dom";
+import { useEffect, useCallback, useRef } from 'react';
+import { useBlocker } from 'react-router-dom';
 
 interface UseUnsavedChangesOptions {
   /**
@@ -60,7 +60,7 @@ interface UseUnsavedChangesOptions {
  */
 export function useUnsavedChanges({
   isDirty,
-  message = "You have unsaved changes. Are you sure you want to leave?",
+  message = 'You have unsaved changes. Are you sure you want to leave?',
   enabled = true,
   confirmFn,
 }: UseUnsavedChangesOptions) {
@@ -93,7 +93,7 @@ export function useUnsavedChanges({
    * Show confirmation dialog when blocker is triggered
    */
   useEffect(() => {
-    if (blocker.state === "blocked") {
+    if (blocker.state === 'blocked') {
       const handleConfirm = async () => {
         let shouldProceed: boolean;
 
@@ -132,10 +132,10 @@ export function useUnsavedChanges({
       return messageRef.current;
     };
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [enabled, isDirty]);
 

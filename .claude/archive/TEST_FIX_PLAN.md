@@ -12,11 +12,13 @@
 You're working on the Elope Wedding Platform. The MVP is functional and ready to launch, but the test suite needs maintenance after recent refactoring. This plan provides a systematic approach to fix all test issues.
 
 ### Current Test Status
+
 - **Integration Tests**: ✅ 98% passing (1 flaky timeout)
 - **Unit Tests**: ❌ 69% passing (50 failures due to outdated mocks)
 - **E2E Tests**: ❌ Cannot run (Playwright not installed)
 
 ### Project Structure
+
 ```
 /Users/mikeyoung/CODING/Elope/
 ├── server/          # Backend (Node.js, Express, Prisma)
@@ -35,7 +37,9 @@ You're working on the Elope Wedding Platform. The MVP is functional and ready to
 ## PHASE 1: FIX UNIT TESTS (1.5 hours)
 
 ### Problem
+
 50 unit tests failing in `/server/test/` due to:
+
 1. Service method signatures changed (now require `tenantId`)
 2. Mock repository methods returning wrong shapes
 3. Test fixtures using old data structures
@@ -43,6 +47,7 @@ You're working on the Elope Wedding Platform. The MVP is functional and ready to
 ### Step-by-Step Fix
 
 #### 1.1 Fix Catalog Service Tests
+
 ```bash
 cd /Users/mikeyoung/CODING/Elope/server
 ```
@@ -50,11 +55,13 @@ cd /Users/mikeyoung/CODING/Elope/server
 **File**: `test/catalog.service.spec.ts`
 
 **Issues to Fix**:
+
 - All service methods now require `tenantId` as first parameter
 - Mock repository methods need proper return shapes
 - Package creation now returns different structure
 
 **Fix Pattern**:
+
 ```typescript
 // OLD (failing)
 await catalogService.getPackageBySlug('test-slug');
@@ -63,25 +70,28 @@ await catalogService.getPackageBySlug('test-slug');
 await catalogService.getPackageBySlug('test-tenant', 'test-slug');
 
 // OLD mock
-getPackageBySlug: vi.fn().mockResolvedValue(mockPackage)
+getPackageBySlug: vi.fn().mockResolvedValue(mockPackage);
 
 // NEW mock
 getPackageBySlug: vi.fn().mockResolvedValue({
   ...mockPackage,
   tenantId: 'test-tenant',
-  addOns: []
-})
+  addOns: [],
+});
 ```
 
 #### 1.2 Fix Booking Service Tests
+
 **File**: `test/booking.service.spec.ts`
 
 **Issues**:
+
 - Missing `tenantId` in service calls
 - `createCheckout` expects different parameters
 - Mock stripe client not returning proper session shape
 
 **Fix Pattern**:
+
 ```typescript
 // Update all service calls to include tenantId
 await bookingService.createCheckout('test-tenant', {
@@ -92,22 +102,26 @@ await bookingService.createCheckout('test-tenant', {
 ```
 
 #### 1.3 Fix Availability Service Tests
+
 **File**: `test/availability.service.spec.ts`
 
 **Issue**: Date parameter not being passed correctly
 
 **Fix**:
+
 ```typescript
 // The service expects (tenantId, date) but tests are passing (date) only
 // Update all calls to include tenantId
 ```
 
 #### 1.4 Fix Webhook Controller Tests
+
 **File**: `test/controllers/webhooks.controller.spec.ts`
 
 **Issue**: Stripe session validation too strict
 
 **Fix**:
+
 ```typescript
 // Mock needs complete Stripe session structure
 const mockStripeSession = {
@@ -119,13 +133,14 @@ const mockStripeSession = {
     bookingDate: '2025-07-01',
     coupleName: 'Test Couple',
     coupleEmail: 'test@example.com',
-    addOnIds: JSON.stringify([])
+    addOnIds: JSON.stringify([]),
   },
-  amount_total: 50000
+  amount_total: 50000,
 };
 ```
 
 ### Verification
+
 ```bash
 # Run only unit tests (not integration)
 npm test -- --run --exclude="test/integration/**"
@@ -138,13 +153,16 @@ npm test -- --run --exclude="test/integration/**"
 ## PHASE 2: FIX FLAKY INTEGRATION TEST (30 min)
 
 ### Problem
+
 One integration test intermittently times out:
+
 - `test/integration/catalog.repository.integration.spec.ts`
 - Test: "should handle empty descriptions"
 
 ### Fix
 
 #### 2.1 Add Explicit Timeout
+
 ```typescript
 // In catalog.repository.integration.spec.ts
 describe('Data Integrity', () => {
@@ -159,11 +177,12 @@ describe('Data Integrity', () => {
 ```
 
 #### 2.2 Ensure Proper Cleanup
+
 ```typescript
 afterEach(async () => {
   // Clean up test data first
   await prisma.package.deleteMany({
-    where: { tenantId: testTenantId }
+    where: { tenantId: testTenantId },
   });
 
   // Then disconnect
@@ -172,6 +191,7 @@ afterEach(async () => {
 ```
 
 ### Verification
+
 ```bash
 # Run integration tests 3 times to verify no flakiness
 npm run test:integration
@@ -186,6 +206,7 @@ npm run test:integration
 ## PHASE 3: SET UP PLAYWRIGHT (45 min)
 
 ### 3.1 Install Playwright
+
 ```bash
 cd /Users/mikeyoung/CODING/Elope
 
@@ -198,6 +219,7 @@ npx playwright --version
 ```
 
 ### 3.2 Create Missing Client .env
+
 ```bash
 cd client
 cat > .env << 'EOF'
@@ -208,9 +230,11 @@ EOF
 ```
 
 ### 3.3 Fix Playwright Config
+
 **File**: `e2e/playwright.config.ts`
 
 Check and fix:
+
 1. Correct `webServer` command
 2. Proper environment variables
 3. Correct base URLs
@@ -225,6 +249,7 @@ webServer: {
 ```
 
 ### 3.4 Run E2E Tests
+
 ```bash
 # From root directory
 npm run test:e2e
@@ -238,16 +263,18 @@ npm run test:e2e:ui
 Common issues and fixes:
 
 **Selector Problems**:
+
 ```typescript
 // If selectors changed, update them
 // OLD
-await page.getByRole('button', { name: /View Packages/i })
+await page.getByRole('button', { name: /View Packages/i });
 
 // NEW (if button text changed)
-await page.getByRole('button', { name: /Browse Packages/i })
+await page.getByRole('button', { name: /Browse Packages/i });
 ```
 
 **Timing Issues**:
+
 ```typescript
 // Add explicit waits where needed
 await page.waitForLoadState('networkidle');
@@ -255,6 +282,7 @@ await page.waitForSelector('.package-card', { timeout: 10000 });
 ```
 
 **Mock vs Real Mode**:
+
 ```typescript
 // Ensure tests work in both modes
 const isRealMode = process.env.VITE_APP_MODE === 'real';
@@ -268,7 +296,8 @@ if (isRealMode) {
 ## PHASE 4: CREATE TEST DOCUMENTATION (30 min)
 
 ### 4.1 Create Test README
-```bash
+
+````bash
 cat > /Users/mikeyoung/CODING/Elope/TEST_README.md << 'EOF'
 # Elope Platform - Test Guide
 
@@ -287,21 +316,24 @@ npm run test:e2e
 
 # Everything
 npm test && npm run test:integration && npm run test:e2e
-```
+````
 
 ## Test Structure
 
 ### Unit Tests (`/server/test/*.spec.ts`)
+
 - Test business logic in isolation
 - Mock all external dependencies
 - Fast execution (<1 second per test)
 
 ### Integration Tests (`/server/test/integration/*.spec.ts`)
+
 - Test database operations
 - Use real Prisma client with test database
 - Test transactions and concurrency
 
 ### E2E Tests (`/e2e/tests/*.spec.ts`)
+
 - Test complete user journeys
 - Run against real browser
 - Test both customer and admin flows
@@ -309,20 +341,25 @@ npm test && npm run test:integration && npm run test:e2e
 ## Common Issues & Solutions
 
 ### Issue: Tests fail with "tenantId" errors
+
 **Solution**: All service methods now require tenantId as first parameter
 
 ### Issue: Playwright tests won't run
+
 **Solution**: Install browsers: `npx playwright install chromium`
 
 ### Issue: Integration tests timeout
+
 **Solution**: Ensure test database is running: `docker-compose up -d postgres`
 
 ### Issue: Mock data not loading
+
 **Solution**: Check ADAPTERS_PRESET=mock in server/.env
 
 ## Continuous Integration
 
 Add to `.github/workflows/test.yml`:
+
 ```yaml
 - name: Run tests
   run: |
@@ -331,8 +368,10 @@ Add to `.github/workflows/test.yml`:
     npx playwright install chromium
     npm run test:e2e
 ```
+
 EOF
-```
+
+````
 
 ### 4.2 Update Package.json Scripts
 ```json
@@ -343,13 +382,14 @@ EOF
     "test:fix": "vitest run --reporter=verbose --no-coverage"
   }
 }
-```
+````
 
 ---
 
 ## PHASE 5: VERIFICATION CHECKLIST
 
 ### Final Test Run
+
 ```bash
 cd /Users/mikeyoung/CODING/Elope
 
@@ -375,6 +415,7 @@ cd server && npm run coverage
 ```
 
 ### Success Criteria
+
 - [ ] All unit tests passing (0 failures)
 - [ ] All integration tests passing (0 flaky)
 - [ ] All E2E tests passing in both mock and real mode
@@ -386,16 +427,19 @@ cd server && npm run coverage
 ## TROUBLESHOOTING
 
 ### If Unit Tests Still Fail
+
 1. Check if any database migrations were run recently
 2. Verify mock data matches current schema: `server/prisma/schema.prisma`
 3. Run tests individually to isolate issues: `npm test -- availability.service.spec.ts`
 
 ### If Integration Tests Fail
+
 1. Ensure test database is clean: `npm run prisma:reset`
 2. Check DATABASE_URL_TEST in `.env.test`
 3. Look for connection pool issues in logs
 
 ### If E2E Tests Fail
+
 1. Ensure services are running: `npm run dev:all`
 2. Check browser console for errors: `npm run test:e2e:headed`
 3. Take screenshots on failure for debugging
@@ -428,6 +472,7 @@ If time is limited, fix in this order:
 ## SUCCESS METRIC
 
 You'll know you're done when:
+
 ```bash
 npm run test:all  # Shows 0 failures across all test suites
 ```

@@ -5,89 +5,93 @@
 ### 1. Business Decisions (Due: This Week)
 
 #### A. Define Your Three Segments
+
 Fill out this template and save as `segment-definitions.yaml`:
 
 ```yaml
 segments:
   budget:
-    name: "Essential"  # Your name choice
-    tagline: "Beautiful Simplicity"
-    price_range: "$_____ - $_____"
-    target_customer: "Description of ideal customer"
-    value_proposition: "Why choose this segment"
+    name: 'Essential' # Your name choice
+    tagline: 'Beautiful Simplicity'
+    price_range: '$_____ - $_____'
+    target_customer: 'Description of ideal customer'
+    value_proposition: 'Why choose this segment'
 
   premium:
-    name: "Signature"  # Your name choice
-    tagline: "Timeless Elegance"
-    price_range: "$_____ - $_____"
-    target_customer: "Description of ideal customer"
-    value_proposition: "Why choose this segment"
+    name: 'Signature' # Your name choice
+    tagline: 'Timeless Elegance'
+    price_range: '$_____ - $_____'
+    target_customer: 'Description of ideal customer'
+    value_proposition: 'Why choose this segment'
 
   luxury:
-    name: "Luxury"  # Your name choice
-    tagline: "Extraordinary Experiences"
-    price_range: "$_____ - $_____"
-    target_customer: "Description of ideal customer"
-    value_proposition: "Why choose this segment"
+    name: 'Luxury' # Your name choice
+    tagline: 'Extraordinary Experiences'
+    price_range: '$_____ - $_____'
+    target_customer: 'Description of ideal customer'
+    value_proposition: 'Why choose this segment'
 ```
 
 #### B. Create Your 3×3 Tier Matrix
+
 Complete this pricing/feature matrix:
 
-| Segment | Tier 1 (Base) | Tier 2 (Popular) | Tier 3 (Premium) |
-|---------|---------------|------------------|------------------|
-| **Essential** | | | |
-| Name | "Essentials" | "Essentials Plus" | "Essentials Complete" |
-| Price | $_____ | $_____ | $_____ |
-| Guests | ___ | ___ | ___ |
-| Hours | ___ | ___ | ___ |
-| Photos | ___ | ___ | ___ |
-| Features | • ___<br>• ___<br>• ___ | • ___<br>• ___<br>• ___ | • ___<br>• ___<br>• ___ |
-| **Signature** | | | |
-| Name | _____ | _____ | _____ |
-| Price | $_____ | $_____ | $_____ |
-| Guests | ___ | ___ | ___ |
-| Hours | ___ | ___ | ___ |
-| Photos | ___ | ___ | ___ |
-| Features | • ___<br>• ___<br>• ___ | • ___<br>• ___<br>• ___ | • ___<br>• ___<br>• ___ |
-| **Luxury** | | | |
-| Name | _____ | _____ | _____ |
-| Price | $_____ | $_____ | $_____ |
-| Guests | ___ | ___ | ___ |
-| Hours | ___ | ___ | ___ |
-| Photos | ___ | ___ | ___ |
-| Features | • ___<br>• ___<br>• ___ | • ___<br>• ___<br>• ___ | • ___<br>• ___<br>• ___ |
+| Segment       | Tier 1 (Base)              | Tier 2 (Popular)           | Tier 3 (Premium)           |
+| ------------- | -------------------------- | -------------------------- | -------------------------- |
+| **Essential** |                            |                            |                            |
+| Name          | "Essentials"               | "Essentials Plus"          | "Essentials Complete"      |
+| Price         | $**\_**                    | $**\_**                    | $**\_**                    |
+| Guests        | \_\_\_                     | \_\_\_                     | \_\_\_                     |
+| Hours         | \_\_\_                     | \_\_\_                     | \_\_\_                     |
+| Photos        | \_\_\_                     | \_\_\_                     | \_\_\_                     |
+| Features      | • **_<br>• _**<br>• \_\_\_ | • **_<br>• _**<br>• \_\_\_ | • **_<br>• _**<br>• \_\_\_ |
+| **Signature** |                            |                            |                            |
+| Name          | **\_**                     | **\_**                     | **\_**                     |
+| Price         | $**\_**                    | $**\_**                    | $**\_**                    |
+| Guests        | \_\_\_                     | \_\_\_                     | \_\_\_                     |
+| Hours         | \_\_\_                     | \_\_\_                     | \_\_\_                     |
+| Photos        | \_\_\_                     | \_\_\_                     | \_\_\_                     |
+| Features      | • **_<br>• _**<br>• \_\_\_ | • **_<br>• _**<br>• \_\_\_ | • **_<br>• _**<br>• \_\_\_ |
+| **Luxury**    |                            |                            |                            |
+| Name          | **\_**                     | **\_**                     | **\_**                     |
+| Price         | $**\_**                    | $**\_**                    | $**\_**                    |
+| Guests        | \_\_\_                     | \_\_\_                     | \_\_\_                     |
+| Hours         | \_\_\_                     | \_\_\_                     | \_\_\_                     |
+| Photos        | \_\_\_                     | \_\_\_                     | \_\_\_                     |
+| Features      | • **_<br>• _**<br>• \_\_\_ | • **_<br>• _**<br>• \_\_\_ | • **_<br>• _**<br>• \_\_\_ |
 
 #### C. Set Commission Rates
+
 ```yaml
 commission_structure:
-  platform_default: ___%  # Current: 10%
+  platform_default: ___% # Current: 10%
 
   by_segment:
-    Essential: ___%  # Suggested: 8%
-    Signature: ___%  # Suggested: 10%
-    Luxury: ___%     # Suggested: 12%
+    Essential: ___% # Suggested: 8%
+    Signature: ___% # Suggested: 10%
+    Luxury: ___% # Suggested: 12%
 
-  by_volume:  # Optional
+  by_volume: # Optional
     bookings_0_10: ___%
     bookings_11_50: ___%
     bookings_51_plus: ___%
 ```
 
 #### D. Define Upsell Rules
+
 ```yaml
 upsell_triggers:
-  - when: "User views Tier 1"
-    show: "Tier 2 value proposition"
-    incentive: "5% off if upgraded now"
+  - when: 'User views Tier 1'
+    show: 'Tier 2 value proposition'
+    incentive: '5% off if upgraded now'
 
-  - when: "User adds 2+ add-ons"
-    show: "Next tier includes these add-ons"
-    incentive: "Save $X with tier upgrade"
+  - when: 'User adds 2+ add-ons'
+    show: 'Next tier includes these add-ons'
+    incentive: 'Save $X with tier upgrade'
 
-  - when: "Peak date selected"
-    show: "Only X spots left at this tier"
-    incentive: "Lock in this rate now"
+  - when: 'Peak date selected'
+    show: 'Only X spots left at this tier'
+    incentive: 'Lock in this rate now'
 ```
 
 ---
@@ -95,6 +99,7 @@ upsell_triggers:
 ### 2. Stripe Setup (Due: Before Phase 1)
 
 #### A. Stripe Dashboard Configuration
+
 1. **Log into Stripe Dashboard** → [dashboard.stripe.com](https://dashboard.stripe.com)
 
 2. **Enable Connect** (if not already):
@@ -103,6 +108,7 @@ upsell_triggers:
    - Configure onboarding settings
 
 3. **Set Webhook Endpoints**:
+
    ```
    Endpoint URL: https://your-domain.com/v1/webhooks/stripe
    Events to listen for:
@@ -123,7 +129,9 @@ upsell_triggers:
    ```
 
 #### B. Test Environment Setup
+
 1. **Create Test Mode Webhooks**:
+
    ```
    Test Endpoint: https://staging.your-domain.com/v1/webhooks/stripe
    Use same events as production
@@ -140,6 +148,7 @@ upsell_triggers:
 ### 3. Design Assets (Due: Before Phase 4)
 
 #### A. Create Mockups/Wireframes
+
 Use Figma, Sketch, or even paper sketches for:
 
 1. **Segment Selector Page**
@@ -164,7 +173,9 @@ Use Figma, Sketch, or even paper sketches for:
    - Simplified upsell
 
 #### B. Prepare Visual Assets
+
 Gather or create:
+
 ```
 /assets/
   /segments/
@@ -186,7 +197,9 @@ Gather or create:
 ### 4. Content Creation (Due: Before Phase 4)
 
 #### A. Write Segment Descriptions
+
 **Template**:
+
 ```markdown
 ## [Segment Name]
 
@@ -195,19 +208,24 @@ Gather or create:
 **Description**: 2-3 sentences about who this is for and why they'd choose it.
 
 **Perfect For**:
+
 - Couples who...
 - Those looking for...
 - Anyone wanting...
 ```
 
 #### B. Create Feature Lists
+
 For each tier, write:
+
 - 5-8 key features (bullet points)
 - 1-2 exclusive benefits
 - What's NOT included (manage expectations)
 
 #### C. Craft Upsell Copy
+
 Write variations for A/B testing:
+
 ```
 Version A: Value Focus
 "Upgrade to [Tier] and save $X on these included features..."
@@ -224,30 +242,34 @@ Version C: Social Proof
 ### 5. Analytics Setup (Due: Before Phase 6)
 
 #### A. Google Analytics 4
+
 1. Create GA4 property if not exists
 2. Get Measurement ID: `G-XXXXXXXXXX`
 3. Define custom events:
+
    ```javascript
    // Events to track
    gtag('event', 'segment_selected', {
      segment_name: 'Signature',
-     segment_index: 2
+     segment_index: 2,
    });
 
    gtag('event', 'tier_compared', {
      tiers_viewed: ['tier1', 'tier2', 'tier3'],
-     time_spent: 45
+     time_spent: 45,
    });
 
    gtag('event', 'upsell_shown', {
      from_tier: 'Essential',
      to_tier: 'Essential Plus',
-     price_difference: 500
+     price_difference: 500,
    });
    ```
 
 #### B. Conversion Goals
+
 Define in GA4:
+
 - Segment selection → Tier view: Target 80%
 - Tier view → Add-on selection: Target 60%
 - Upsell shown → Accepted: Target 15%
@@ -258,6 +280,7 @@ Define in GA4:
 ### 6. Infrastructure (Due: Before Testing)
 
 #### A. Staging Environment
+
 ```bash
 # Set up staging subdomain
 staging.your-domain.com
@@ -269,7 +292,9 @@ STRIPE_SECRET_KEY=sk_test_...
 ```
 
 #### B. CDN Configuration
+
 For images/assets:
+
 1. CloudFlare or AWS CloudFront
 2. Configure cache rules:
    - Images: 30 days
@@ -277,12 +302,14 @@ For images/assets:
    - API responses: No cache
 
 #### C. Error Tracking
+
 Set up Sentry or Rollbar:
+
 ```javascript
 Sentry.init({
-  dsn: "YOUR_SENTRY_DSN",
-  environment: "production",
-  tracesSampleRate: 0.1
+  dsn: 'YOUR_SENTRY_DSN',
+  environment: 'production',
+  tracesSampleRate: 0.1,
 });
 ```
 
@@ -291,7 +318,9 @@ Sentry.init({
 ### 7. Test Data Preparation (Due: Before Phase 1)
 
 #### A. Create Test Tenants
+
 In your staging database:
+
 ```sql
 -- Tenant 1: Budget-focused
 INSERT INTO "Tenant" (slug, name, commissionPercent)
@@ -307,7 +336,9 @@ VALUES ('luxury-ceremonies', 'Luxury Ceremonies', 12.0);
 ```
 
 #### B. Sample Packages Data
+
 Create 9 test packages (3 segments × 3 tiers) with:
+
 - Realistic pricing
 - Varied features
 - Test images
@@ -318,12 +349,14 @@ Create 9 test packages (3 segments × 3 tiers) with:
 ### 8. Team Preparation (Due: Before Phase 1)
 
 #### A. Schedule Stakeholder Meetings
+
 - [ ] Review segment/tier structure (30 min)
 - [ ] Approve pricing matrix (30 min)
 - [ ] Confirm upsell strategy (30 min)
 - [ ] Sign off on mockups (1 hour)
 
 #### B. Create Documentation
+
 - [ ] Admin training guide
 - [ ] Segment FAQ for support team
 - [ ] API documentation updates
@@ -334,18 +367,21 @@ Create 9 test packages (3 segments × 3 tiers) with:
 ## Quick Start Checklist
 
 ### This Week - Business Critical
+
 - [ ] Define 3 segments with names/descriptions
 - [ ] Create 3×3 tier pricing matrix
 - [ ] Set commission rates per segment
 - [ ] Write upsell rules
 
 ### Next Week - Technical Setup
+
 - [ ] Configure Stripe Connect
 - [ ] Set up staging environment
 - [ ] Create test data
 - [ ] Set up analytics
 
 ### Before Frontend Work - Creative
+
 - [ ] Design mockups approved
 - [ ] Content written
 - [ ] Images gathered/created
@@ -371,6 +407,7 @@ Before you proceed, make sure you can answer:
 ## Resources & Tools
 
 ### Recommended Tools
+
 - **Mockups**: Figma (free), Whimsical, Balsamiq
 - **Analytics**: Google Analytics 4, Mixpanel, Amplitude
 - **Feature Flags**: LaunchDarkly, Unleash, GrowthBook
@@ -378,6 +415,7 @@ Before you proceed, make sure you can answer:
 - **Load Testing**: k6, Artillery, Gatling
 
 ### Helpful Templates
+
 - [Figma Pricing Table Templates](https://www.figma.com/community/search?model_type=hub_files&q=pricing%20table)
 - [GA4 Event Tracking Guide](https://developers.google.com/analytics/devguides/collection/ga4/events)
 - [Stripe Connect Best Practices](https://stripe.com/docs/connect/best-practices)
@@ -397,4 +435,4 @@ Remember: The technical implementation is straightforward because your architect
 
 ---
 
-*Save this document and use it as your working checklist. Update it as you complete each item, and bring the filled-out templates to our next session.*
+_Save this document and use it as your working checklist. Update it as you complete each item, and bring the filled-out templates to our next session._

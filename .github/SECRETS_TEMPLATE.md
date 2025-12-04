@@ -20,6 +20,7 @@ Use this checklist when setting up a new environment.
 - [ ] `TENANT_SECRETS_ENCRYPTION_KEY` - Tenant data encryption (64-character hex)
 
 **Generate with:**
+
 ```bash
 openssl rand -hex 32
 ```
@@ -33,6 +34,7 @@ openssl rand -hex 32
 - [ ] `SUPABASE_PROJECT_ID` - Supabase project identifier
 
 **Format:**
+
 ```bash
 # Transaction mode (for app runtime)
 DATABASE_URL=postgresql://postgres:PASSWORD@HOST:5432/postgres?sslmode=require&pgbouncer=true
@@ -47,6 +49,7 @@ DIRECT_URL=postgresql://postgres:PASSWORD@HOST:6543/postgres?sslmode=require
 ```
 
 **Get from Supabase:**
+
 1. Navigate to: Project Settings → Database
 2. Connection String → Transaction Mode (port 5432)
 3. Connection String → Direct Connection (port 6543)
@@ -60,6 +63,7 @@ DIRECT_URL=postgresql://postgres:PASSWORD@HOST:6543/postgres?sslmode=require
 - [ ] `VERCEL_PROJECT_ID` - Vercel project ID
 
 **How to get:**
+
 ```bash
 # 1. Install Vercel CLI
 npm install -g vercel
@@ -88,6 +92,7 @@ cat .vercel/project.json
 - [ ] `RENDER_PRODUCTION_API_DEPLOY_HOOK` - Production deploy webhook
 
 **How to get:**
+
 ```bash
 # 1. Navigate to Render Dashboard
 # 2. Select your service
@@ -104,6 +109,7 @@ cat .vercel/project.json
 - [ ] `PRODUCTION_CLIENT_URL` - Production frontend URL
 
 **Examples:**
+
 ```bash
 STAGING_API_URL=https://staging-api.mais.app
 STAGING_CLIENT_URL=https://staging.mais.app
@@ -119,6 +125,7 @@ PRODUCTION_CLIENT_URL=https://mais.app
 - [ ] `DISCORD_WEBHOOK_URL` - Alternative notifications
 
 **Codecov Token:**
+
 ```bash
 # 1. Sign up at https://codecov.io
 # 2. Add your GitHub repository
@@ -127,6 +134,7 @@ PRODUCTION_CLIENT_URL=https://mais.app
 ```
 
 **Snyk Token:**
+
 ```bash
 # 1. Sign up at https://snyk.io
 # 2. Account Settings → API Token
@@ -527,7 +535,7 @@ name: Secret Monitoring
 
 on:
   schedule:
-    - cron: '0 0 * * 0'  # Weekly
+    - cron: '0 0 * * 0' # Weekly
 
 jobs:
   check-secrets:
@@ -549,6 +557,7 @@ jobs:
 **Cause:** Secret name mismatch or not set
 
 **Solution:**
+
 ```bash
 # List all secrets
 gh secret list
@@ -565,6 +574,7 @@ gh secret set SECRET_NAME
 **Cause:** Incorrect format or encoding
 
 **Solution:**
+
 ```bash
 # Check format requirements:
 # - Database URL: Must start with postgresql://
@@ -579,10 +589,11 @@ gh secret set SECRET_NAME
 **Cause:** Job not using correct environment
 
 **Solution:**
+
 ```yaml
 jobs:
   deploy:
-    environment: production  # Must match environment name
+    environment: production # Must match environment name
     steps:
       - name: Use secret
         run: echo "Using production database"

@@ -5,16 +5,16 @@
  * Shows draft values with visual indicators when different from live.
  */
 
-import { useState, useCallback, useMemo } from "react";
-import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Image, Pencil, AlertCircle } from "lucide-react";
-import { EditableText } from "./EditableText";
-import { EditablePrice } from "./EditablePrice";
-import { PhotoDropZone } from "./PhotoDropZone";
-import type { PackageWithDraft, PackagePhoto, DraftUpdate } from "../hooks/useVisualEditor";
+import { useState, useCallback, useMemo } from 'react';
+import { cn } from '@/lib/utils';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ChevronDown, ChevronUp, Image, Pencil, AlertCircle } from 'lucide-react';
+import { EditableText } from './EditableText';
+import { EditablePrice } from './EditablePrice';
+import { PhotoDropZone } from './PhotoDropZone';
+import type { PackageWithDraft, PackagePhoto, DraftUpdate } from '../hooks/useVisualEditor';
 
 interface EditablePackageCardProps {
   package: PackageWithDraft;
@@ -32,57 +32,82 @@ export function EditablePackageCard({
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Memoize effective values to prevent recalculation on every render
-  const effectiveValues = useMemo(() => ({
-    title: pkg.draftTitle ?? pkg.title,
-    description: pkg.draftDescription ?? pkg.description ?? "",
-    priceCents: pkg.draftPriceCents ?? pkg.priceCents,
-    photos: pkg.draftPhotos ?? pkg.photos ?? [],
-  }), [
-    pkg.draftTitle, pkg.title,
-    pkg.draftDescription, pkg.description,
-    pkg.draftPriceCents, pkg.priceCents,
-    pkg.draftPhotos, pkg.photos
-  ]);
+  const effectiveValues = useMemo(
+    () => ({
+      title: pkg.draftTitle ?? pkg.title,
+      description: pkg.draftDescription ?? pkg.description ?? '',
+      priceCents: pkg.draftPriceCents ?? pkg.priceCents,
+      photos: pkg.draftPhotos ?? pkg.photos ?? [],
+    }),
+    [
+      pkg.draftTitle,
+      pkg.title,
+      pkg.draftDescription,
+      pkg.description,
+      pkg.draftPriceCents,
+      pkg.priceCents,
+      pkg.draftPhotos,
+      pkg.photos,
+    ]
+  );
 
   // Memoize draft flags to prevent recalculation on every render
-  const draftFlags = useMemo(() => ({
-    hasTitle: pkg.draftTitle !== null && pkg.draftTitle !== pkg.title,
-    hasDescription: pkg.draftDescription !== null && pkg.draftDescription !== pkg.description,
-    hasPrice: pkg.draftPriceCents !== null && pkg.draftPriceCents !== pkg.priceCents,
-    hasPhotos: pkg.draftPhotos !== null,
-  }), [
-    pkg.draftTitle, pkg.title,
-    pkg.draftDescription, pkg.description,
-    pkg.draftPriceCents, pkg.priceCents,
-    pkg.draftPhotos
-  ]);
+  const draftFlags = useMemo(
+    () => ({
+      hasTitle: pkg.draftTitle !== null && pkg.draftTitle !== pkg.title,
+      hasDescription: pkg.draftDescription !== null && pkg.draftDescription !== pkg.description,
+      hasPrice: pkg.draftPriceCents !== null && pkg.draftPriceCents !== pkg.priceCents,
+      hasPhotos: pkg.draftPhotos !== null,
+    }),
+    [
+      pkg.draftTitle,
+      pkg.title,
+      pkg.draftDescription,
+      pkg.description,
+      pkg.draftPriceCents,
+      pkg.priceCents,
+      pkg.draftPhotos,
+    ]
+  );
 
   // Get primary photo for card display
   const primaryPhoto = effectiveValues.photos[0]?.url || pkg.photoUrl;
 
-  const handleTitleChange = useCallback((title: string) => {
-    onUpdate({ title });
-  }, [onUpdate]);
+  const handleTitleChange = useCallback(
+    (title: string) => {
+      onUpdate({ title });
+    },
+    [onUpdate]
+  );
 
-  const handleDescriptionChange = useCallback((description: string) => {
-    onUpdate({ description });
-  }, [onUpdate]);
+  const handleDescriptionChange = useCallback(
+    (description: string) => {
+      onUpdate({ description });
+    },
+    [onUpdate]
+  );
 
-  const handlePriceChange = useCallback((priceCents: number) => {
-    onUpdate({ priceCents });
-  }, [onUpdate]);
+  const handlePriceChange = useCallback(
+    (priceCents: number) => {
+      onUpdate({ priceCents });
+    },
+    [onUpdate]
+  );
 
-  const handlePhotosUpdate = useCallback((photos: PackagePhoto[]) => {
-    onUpdate({ photos });
-    onPhotosChange(photos);
-  }, [onUpdate, onPhotosChange]);
+  const handlePhotosUpdate = useCallback(
+    (photos: PackagePhoto[]) => {
+      onUpdate({ photos });
+      onPhotosChange(photos);
+    },
+    [onUpdate, onPhotosChange]
+  );
 
   return (
     <Card
       className={cn(
-        "relative overflow-hidden transition-all",
-        pkg.hasDraft && "ring-2 ring-amber-400",
-        !pkg.active && "opacity-60"
+        'relative overflow-hidden transition-all',
+        pkg.hasDraft && 'ring-2 ring-amber-400',
+        !pkg.active && 'opacity-60'
       )}
     >
       {/* Draft indicator badge */}
@@ -98,10 +123,7 @@ export function EditablePackageCard({
 
       {/* Inactive indicator */}
       {!pkg.active && (
-        <Badge
-          variant="secondary"
-          className="absolute top-2 left-2 z-10"
-        >
+        <Badge variant="secondary" className="absolute top-2 left-2 z-10">
           Inactive
         </Badge>
       )}
@@ -158,10 +180,7 @@ export function EditablePackageCard({
           value={effectiveValues.description}
           onChange={handleDescriptionChange}
           placeholder="Package description"
-          className={cn(
-            "text-sm text-muted-foreground",
-            !isExpanded && "line-clamp-2"
-          )}
+          className={cn('text-sm text-muted-foreground', !isExpanded && 'line-clamp-2')}
           inputClassName="text-sm"
           maxLength={500}
           multiline
@@ -178,7 +197,7 @@ export function EditablePackageCard({
           className="w-full"
           onClick={() => setIsExpanded(!isExpanded)}
           aria-expanded={isExpanded}
-          aria-label={isExpanded ? "Collapse details" : "Expand details"}
+          aria-label={isExpanded ? 'Collapse details' : 'Expand details'}
         >
           {isExpanded ? (
             <>

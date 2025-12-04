@@ -1,11 +1,11 @@
 ---
-title: "ADR-014: AddOn Entity Optional Description Field"
-status: "DECIDED"
-date: "2025-12-03"
-deciders: "Team"
-category: "Type Safety & Data Modeling"
-problem_id: "RENDER_BUILD_CASCADE"
-related_issues: ["182-191"]
+title: 'ADR-014: AddOn Entity Optional Description Field'
+status: 'DECIDED'
+date: '2025-12-03'
+deciders: 'Team'
+category: 'Type Safety & Data Modeling'
+problem_id: 'RENDER_BUILD_CASCADE'
+related_issues: ['182-191']
 ---
 
 ## Summary
@@ -17,12 +17,14 @@ Made `description` field optional with nullable type in AddOn entity (`descripti
 Render build failed with cascading TypeScript errors after updating the AddOn entity interface:
 
 ### Error Messages
+
 1. `Property 'description' is missing in type 'AddOn'` - in mock adapter (6 fixtures)
 2. `Property 'description' is missing in type` - in Prisma catalog repository mapper
 3. `Type 'string | null | undefined' is not assignable to type 'string | undefined'` - photoUrl type mismatch
 4. Errors in tenant-admin.routes.ts, package.mapper.ts, admin-packages.routes.ts
 
 ### Affected Files
+
 - **server/src/lib/entities.ts** - AddOn interface definition
 - **server/src/adapters/mock/index.ts** - 6 AddOn fixture definitions
 - **server/src/adapters/prisma/catalog.repository.ts** - toDomainAddOn mapper
@@ -33,27 +35,30 @@ Render build failed with cascading TypeScript errors after updating the AddOn en
 ## Decision
 
 ### Type Definition
+
 ```typescript
 // server/src/lib/entities.ts (Line 37)
 export interface AddOn {
   id: string;
   packageId: string;
   title: string;
-  description?: string | null;  // Optional, can be null
+  description?: string | null; // Optional, can be null
   priceCents: number;
-  photoUrl?: string;            // Optional string only (not nullable)
+  photoUrl?: string; // Optional string only (not nullable)
 }
 ```
 
 ### Rationale
 
 **Why optional with nullable type?**
+
 - Database can store `NULL` values
 - AddOns created without description should not error
 - Mapper can pass `null` to indicate "no description provided"
 - Frontend can safely handle `null` using nullish coalescing (`??`)
 
 **Why photoUrl is NOT nullable?**
+
 - Should be either present or absent, not "present but null"
 - Consistent with Package entity pattern
 - Prevents confusion between "no photo" (undefined) and "null photo" (null)
@@ -62,18 +67,20 @@ export interface AddOn {
 ## Implementation Details
 
 ### 1. Entity Definition (/server/src/lib/entities.ts)
+
 ```typescript
 export interface AddOn {
   id: string;
   packageId: string;
   title: string;
-  description?: string | null;  // Added optional nullable description
+  description?: string | null; // Added optional nullable description
   priceCents: number;
-  photoUrl?: string;             // Kept as optional string only
+  photoUrl?: string; // Kept as optional string only
 }
 ```
 
 ### 2. Mock Adapter (/server/src/adapters/mock/index.ts)
+
 All 6 mock AddOn fixtures updated with description field:
 
 ```typescript
@@ -92,6 +99,7 @@ All 6 mock AddOn fixtures updated with description field:
 ```
 
 ### 3. Prisma Repository Mapper (/server/src/adapters/prisma/catalog.repository.ts)
+
 ```typescript
 private toDomainAddOn(addOn: {
   id: string;
@@ -111,12 +119,13 @@ private toDomainAddOn(addOn: {
 ```
 
 ### 4. Route DTO Mapper (/server/src/routes/tenant-admin.routes.ts)
+
 ```typescript
 const mapAddOnToDto = (addOn: AddOn) => ({
   id: addOn.id,
   packageId: addOn.packageId,
   title: addOn.title,
-  description: addOn.description ?? null,  // Use nullish coalescing
+  description: addOn.description ?? null, // Use nullish coalescing
   priceCents: addOn.priceCents,
   photoUrl: addOn.photoUrl,
 });
@@ -127,6 +136,7 @@ const mapAddOnToDto = (addOn: AddOn) => ({
 ### Difference: Optional vs Optional Nullable
 
 **Optional String Only** (`photoUrl?: string`)
+
 ```typescript
 // ✅ Valid
 const addon1: AddOn = { ..., photoUrl: 'https://...' };
@@ -138,6 +148,7 @@ const addon4: AddOn = { ..., photoUrl: null };  // Cannot assign null
 ```
 
 **Optional Nullable String** (`description?: string | null`)
+
 ```typescript
 // ✅ Valid
 const addon1: AddOn = { ..., description: 'A description' };
@@ -170,6 +181,7 @@ When adding new fields to AddOn or similar entities:
 ## Impact
 
 ### Files Modified
+
 - ✅ /server/src/lib/entities.ts (1 line)
 - ✅ /server/src/adapters/mock/index.ts (6 fixtures + seedData log)
 - ✅ /server/src/adapters/prisma/catalog.repository.ts (mapper function)
@@ -177,11 +189,13 @@ When adding new fields to AddOn or similar entities:
 - ✅ Build passes (all TypeScript errors resolved)
 
 ### Backward Compatibility
+
 - No breaking changes - optional field is backward compatible
 - Existing code that doesn't provide description works fine
 - Null values gracefully handled in DTO mapping
 
 ### Test Coverage
+
 - All 771 server tests pass
 - 21 E2E tests pass
 - No regression in existing functionality

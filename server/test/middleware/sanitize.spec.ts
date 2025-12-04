@@ -287,10 +287,7 @@ describe('Sanitization Utilities', () => {
 
     it('should sanitize arrays of objects', () => {
       const input = {
-        users: [
-          { name: '<script>evil</script>Alice' },
-          { name: '<img onerror=alert(1)>Bob' },
-        ],
+        users: [{ name: '<script>evil</script>Alice' }, { name: '<img onerror=alert(1)>Bob' }],
       };
       const result = sanitizeObject(input);
 
@@ -457,9 +454,7 @@ describe('Sanitization Middleware', () => {
         res.json(req.query);
       });
 
-      const response = await request(app)
-        .get('/test')
-        .query({ search: '<script>evil</script>' });
+      const response = await request(app).get('/test').query({ search: '<script>evil</script>' });
 
       expect(response.body.search).not.toContain('<script>');
     });
@@ -490,12 +485,10 @@ describe('Sanitization Middleware', () => {
         res.json(req.body);
       });
 
-      const response = await request(app)
-        .post('/test')
-        .send({
-          name: '<b>Bold</b>',
-          description: '<p>Hello <strong>world</strong></p>',
-        });
+      const response = await request(app).post('/test').send({
+        name: '<b>Bold</b>',
+        description: '<p>Hello <strong>world</strong></p>',
+      });
 
       // name should be plain text (HTML stripped)
       expect(response.body.name).not.toContain('<b>');
@@ -625,12 +618,10 @@ describe('Sanitization Middleware', () => {
         res.json(req.body);
       });
 
-      const response = await request(app)
-        .post('/webhook')
-        .send({
-          raw: '<script>alert(1)</script>',
-          email: 'TEST@EXAMPLE.COM',
-        });
+      const response = await request(app).post('/webhook').send({
+        raw: '<script>alert(1)</script>',
+        email: 'TEST@EXAMPLE.COM',
+      });
 
       // Should NOT sanitize
       expect(response.body.raw).toBe('<script>alert(1)</script>');
@@ -655,9 +646,7 @@ describe('Sanitization Middleware', () => {
         .post('/webhooks/stripe')
         .send({ data: '<raw>payload</raw>' });
 
-      const apiResponse = await request(app)
-        .post('/api/users')
-        .send({ name: '<b>John</b>' });
+      const apiResponse = await request(app).post('/api/users').send({ name: '<b>John</b>' });
 
       // Webhook should preserve raw data
       expect(webhookResponse.body.data).toBe('<raw>payload</raw>');

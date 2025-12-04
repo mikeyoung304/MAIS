@@ -30,11 +30,14 @@ export class DevController {
     coupleName: string;
     addOnIds?: string[];
   }): Promise<{ bookingId: string }> {
-    logger.info({
-      sessionId: input.sessionId,
-      packageId: input.packageId,
-      eventDate: input.eventDate,
-    }, '🧪 Simulating checkout completion');
+    logger.info(
+      {
+        sessionId: input.sessionId,
+        packageId: input.packageId,
+        eventDate: input.eventDate,
+      },
+      '🧪 Simulating checkout completion'
+    );
 
     // Normalize date
     const normalizedDate = toUtcMidnight(input.eventDate);
@@ -93,7 +96,17 @@ export class DevController {
     bookingId: string;
     action?: BookingTokenAction;
     expiresInDays?: number;
-  }): Promise<{ token: string; url: string; booking: { id: string; email: string; coupleName: string; eventDate: string; status: string } | null }> {
+  }): Promise<{
+    token: string;
+    url: string;
+    booking: {
+      id: string;
+      email: string;
+      coupleName: string;
+      eventDate: string;
+      status: string;
+    } | null;
+  }> {
     const action = input.action || 'manage';
     const expiresInDays = input.expiresInDays || 7;
 
@@ -107,7 +120,7 @@ export class DevController {
           email: bookingData.email,
           coupleName: bookingData.coupleName,
           eventDate: bookingData.eventDate,
-          status: bookingData.status
+          status: bookingData.status,
         };
       }
     }
@@ -135,7 +148,7 @@ export class DevController {
     const sessionId = `mock_session_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
     const { bookingId } = await this.simulateCheckoutCompleted({
       sessionId,
-      ...input
+      ...input,
     });
 
     // Generate a management token for it

@@ -11,6 +11,6 @@
  * New: import { PhotoUploader } from "@/features/photos"
  */
 
-export { PhotoUploader as PackagePhotoUploader } from "@/features/photos/PhotoUploader";
-export type { PackagePhoto } from "@/features/photos/hooks/usePhotoUpload";
-export type { PhotoUploaderProps as PackagePhotoUploaderProps } from "@/features/photos/PhotoUploader";
+export { PhotoUploader as PackagePhotoUploader } from '@/features/photos/PhotoUploader';
+export type { PackagePhoto } from '@/features/photos/hooks/usePhotoUpload';
+export type { PhotoUploaderProps as PackagePhotoUploaderProps } from '@/features/photos/PhotoUploader';

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "070"
+issue_id: '070'
 tags: [code-review, bug, critical, authentication]
 dependencies: []
 ---
@@ -21,12 +21,14 @@ The `package-photo-api.ts` file uses incorrect route paths `/v1/tenant/admin/` i
 **File:** `client/src/lib/package-photo-api.ts`
 
 Wrong paths (4 instances):
+
 - Line 168: `${baseUrl}/v1/tenant/admin/packages/${packageId}/photos`
 - Line 222: `${baseUrl}/v1/tenant/admin/packages/${packageId}/photos/${filename}`
 - Line 269: `${baseUrl}/v1/tenant/admin/packages/${packageId}`
 - Line 315: `${baseUrl}/v1/tenant/admin/packages`
 
 Correct paths (from `usePhotoUpload.ts` and server):
+
 - `${baseUrl}/v1/tenant-admin/packages/${packageId}/photos`
 - `${baseUrl}/v1/tenant-admin/packages/${packageId}/photos/${filename}`
 - `${baseUrl}/v1/tenant-admin/packages/${packageId}`
@@ -45,11 +47,13 @@ Correct paths (from `usePhotoUpload.ts` and server):
 **Description:** Replace `/v1/tenant/admin/` with `/v1/tenant-admin/` in all 4 locations.
 
 **Pros:**
+
 - Immediate fix
 - 2-minute change
 - No architectural changes
 
 **Cons:**
+
 - None
 
 **Effort:** Small (5 minutes)
@@ -66,11 +70,13 @@ Correct paths (from `usePhotoUpload.ts` and server):
 **Description:** Remove the file and use ts-rest client instead.
 
 **Pros:**
+
 - Eliminates root cause of divergence
 - Better type safety
 - Centralized auth handling
 
 **Cons:**
+
 - Larger refactor
 - Risk of breaking other functionality
 
@@ -84,6 +90,7 @@ Correct paths (from `usePhotoUpload.ts` and server):
 ## Technical Details
 
 ### Affected Files
+
 - `client/src/lib/package-photo-api.ts` (4 route paths)
 - `client/src/lib/PACKAGE_PHOTO_API_README.md` (documentation)
 - `client/src/lib/package-photo-api.quickref.md` (documentation)
@@ -98,9 +105,9 @@ Correct paths (from `usePhotoUpload.ts` and server):
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-29 | Created | Found during code review of auth fix |
+| Date       | Action    | Notes                                                                     |
+| ---------- | --------- | ------------------------------------------------------------------------- |
+| 2025-11-29 | Created   | Found during code review of auth fix                                      |
 | 2025-11-29 | **FIXED** | Changed all 4 route paths from `/v1/tenant/admin/` to `/v1/tenant-admin/` |
 
 ## Resources

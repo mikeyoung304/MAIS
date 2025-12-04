@@ -39,7 +39,10 @@ export class PrismaBlackoutRepository implements BlackoutRepository {
     });
   }
 
-  async findBlackoutById(tenantId: string, id: string): Promise<{ id: string; date: string; reason?: string } | null> {
+  async findBlackoutById(
+    tenantId: string,
+    id: string
+  ): Promise<{ id: string; date: string; reason?: string } | null> {
     const blackout = await this.prisma.blackoutDate.findFirst({
       where: { id, tenantId },
     });

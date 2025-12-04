@@ -25,23 +25,25 @@ await webhookRepo.markFailed(tenantId, eventId, 'Validation failed');
 
 ### Where PII Leaks Can Happen
 
-| Location | Safe? | Why |
-|----------|-------|-----|
-| `logger.error()` | ✅ YES | Server logs are ephemeral |
-| `DB lastError column` | ❌ NO | Persists forever, accessible |
-| `metrics/monitoring` | ❌ NO | Likely logged or archived |
-| `API response` | ❌ NO | Visible to client/network |
-| Stack traces in DB | ❌ NO | Contains implementation details |
+| Location              | Safe?  | Why                             |
+| --------------------- | ------ | ------------------------------- |
+| `logger.error()`      | ✅ YES | Server logs are ephemeral       |
+| `DB lastError column` | ❌ NO  | Persists forever, accessible    |
+| `metrics/monitoring`  | ❌ NO  | Likely logged or archived       |
+| `API response`        | ❌ NO  | Visible to client/network       |
+| Stack traces in DB    | ❌ NO  | Contains implementation details |
 
 ### What Can Go In DB Error Fields
 
 ✅ **Abstract error types:**
+
 - "Validation failed"
 - "Invalid metadata"
 - "Processing failed"
 - "Payment failed"
 
 ❌ **NOT allowed:**
+
 - "email is not valid"
 - "tenantId field missing"
 - `error.flatten()` output
@@ -129,17 +131,20 @@ Before committing code that handles errors:
 Run these to find risky patterns:
 
 ### Find Zod flatten() in DB context
+
 ```bash
 grep -rn "markFailed\|lastError.*flatten\|error.*flatten" server/src --include="*.ts"
 ```
 
 ### Find raw error storage
+
 ```bash
 grep -rn "lastError.*error\." server/src --include="*.ts"
 grep -rn "update.*error.*message" server/src --include="*.ts"
 ```
 
 ### Find email patterns that might leak
+
 ```bash
 grep -rn "safeParse.*email\|validate.*email" server/src --include="*.ts" -B 5 -A 5
 ```
@@ -172,15 +177,19 @@ it('should not expose email in webhook error', async () => {
 ## File Paths to Review
 
 **Webhook Implementation:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/routes/webhooks.routes.ts` (lines 183-189, 197-204)
 
 **Repository Layer:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/adapters/prisma/webhook.repository.ts` (lines 190-206)
 
 **Schema:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/prisma/schema.prisma` (model WebhookEvent, line 461: `lastError`)
 
 **Error Classes:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/lib/errors/business.ts` (WebhookValidationError, WebhookProcessingError)
 
 ---
@@ -212,11 +221,13 @@ Ask these questions:
 If you find a PII leak in error storage:
 
 **Old (Leaky):**
+
 ```typescript
 await webhookRepo.markFailed(tenantId, eventId, result.error.flatten());
 ```
 
 **New (Fixed):**
+
 ```typescript
 logger.error({ errors: result.error.flatten() }, 'Validation failed');
 await webhookRepo.markFailed(tenantId, eventId, 'Invalid metadata - validation failed');
@@ -236,4 +247,3 @@ await webhookRepo.markFailed(tenantId, eventId, 'Invalid metadata - validation f
 **Last Updated:** 2025-11-28
 **Priority:** P0 - Security Critical
 **Contact:** Review with Platform Security Lead
-

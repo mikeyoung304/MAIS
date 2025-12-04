@@ -25,6 +25,7 @@ npm run test:coverage:report
 ## Current Coverage Baseline
 
 **As of 2025-11-14:**
+
 - Lines: 42.35% → Target: 80%
 - Branches: 77.45% → Target: 75% ✓
 - Functions: 36.94% → Target: 80%
@@ -33,6 +34,7 @@ npm run test:coverage:report
 ## Coverage Reports
 
 Reports are generated in multiple formats:
+
 - **HTML:** `server/coverage/index.html` (interactive browser report)
 - **LCOV:** `server/coverage/lcov.info` (for CI/CD)
 - **JSON:** `server/coverage/coverage-final.json` (machine-readable)
@@ -41,6 +43,7 @@ Reports are generated in multiple formats:
 ## Coverage Thresholds
 
 Configured in `server/vitest.config.ts`:
+
 - Lines: 40% (current baseline)
 - Branches: 75% (passing)
 - Functions: 35% (current baseline)
@@ -50,13 +53,13 @@ Tests will fail if coverage drops below these thresholds.
 
 ## What's Excluded
 
-- Test files (*.spec.ts, *.test.ts)
-- Test directories (test/**)
+- Test files (_.spec.ts, _.test.ts)
+- Test directories (test/\*\*)
 - Build artifacts (dist/, coverage/)
-- Config files (*.config.ts)
-- Scripts (scripts/**)
-- Prisma schema (prisma/**)
-- Type definitions (*.d.ts)
+- Config files (\*.config.ts)
+- Scripts (scripts/\*\*)
+- Prisma schema (prisma/\*\*)
+- Type definitions (\*.d.ts)
 - Index files (index.ts)
 
 ## Priority Coverage Gaps

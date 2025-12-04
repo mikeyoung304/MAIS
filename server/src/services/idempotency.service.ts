@@ -68,9 +68,12 @@ export class IdempotencyService {
     }
 
     // Run cleanup every 24 hours (86400000 ms)
-    this.cleanupInterval = setInterval(() => {
-      void this.runCleanupWithLock();
-    }, 24 * 60 * 60 * 1000);
+    this.cleanupInterval = setInterval(
+      () => {
+        void this.runCleanupWithLock();
+      },
+      24 * 60 * 60 * 1000
+    );
 
     // Also run once at startup after delay to ensure server is fully initialized
     setTimeout(() => {
@@ -176,10 +179,7 @@ export class IdempotencyService {
     const combined = parts.join('|');
 
     // Create deterministic hash
-    const hash = createHash('sha256')
-      .update(combined)
-      .digest('hex')
-      .substring(0, 32); // Use first 32 chars for readability
+    const hash = createHash('sha256').update(combined).digest('hex').substring(0, 32); // Use first 32 chars for readability
 
     return `${prefix}_${hash}`;
   }

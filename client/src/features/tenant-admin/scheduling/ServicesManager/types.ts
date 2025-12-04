@@ -1,4 +1,4 @@
-import type { ServiceDto } from "@macon/contracts";
+import type { ServiceDto } from '@macon/contracts';
 
 export interface ServiceFormData {
   slug: string;

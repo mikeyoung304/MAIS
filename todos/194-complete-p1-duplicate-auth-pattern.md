@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "194"
+issue_id: '194'
 tags: [code-review, dry, refactoring]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The tenant authentication check is copy-pasted ~24 times in tenant-admin.routes.ts instead of using middleware. This violates DRY principles and increases maintenance burden.
 
 ### Why It Matters
+
 - ~144 lines of duplicated boilerplate (6 lines × 24 endpoints)
 - Changes to error messages require updates in multiple places
 - Inconsistency risk as patterns drift over time
@@ -23,6 +24,7 @@ The tenant authentication check is copy-pasted ~24 times in tenant-admin.routes.
 **Source:** DHH Review, Code Quality Review
 
 **Evidence:**
+
 ```typescript
 // Lines 1021-1028 (GET /addons) - Repeated 24+ times
 const tenantAuth = res.locals.tenantAuth;
@@ -38,12 +40,14 @@ const tenantId = tenantAuth.tenantId;
 ## Proposed Solutions
 
 ### Option A: Extract to Middleware (Recommended)
+
 **Pros:** Clean, follows Express patterns, single source of truth
 **Cons:** Requires refactoring all routes
 **Effort:** Medium (30 minutes)
 **Risk:** Low
 
 Create middleware:
+
 ```typescript
 // middleware/require-tenant-auth.ts
 export function requireTenantAuth(req: Request, res: Response, next: NextFunction) {
@@ -56,19 +60,22 @@ export function requireTenantAuth(req: Request, res: Response, next: NextFunctio
 ```
 
 Apply to router:
+
 ```typescript
-router.use(requireTenantAuth);  // All routes now have tenantAuth
+router.use(requireTenantAuth); // All routes now have tenantAuth
 ```
 
 Routes become:
+
 ```typescript
 router.get('/addons', async (req, res, next) => {
-  const tenantId = res.locals.tenantAuth.tenantId;  // Guaranteed to exist
+  const tenantId = res.locals.tenantAuth.tenantId; // Guaranteed to exist
   // ...
 });
 ```
 
 ### Option B: Higher-Order Function
+
 **Pros:** Less global, explicit per-route
 **Cons:** More boilerplate than middleware
 **Effort:** Medium (30 minutes)
@@ -95,6 +102,7 @@ Option A - Middleware is cleaner and follows established patterns.
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/routes/tenant-admin.routes.ts`
 - New: `server/src/middleware/require-tenant-auth.ts`
 
@@ -110,8 +118,8 @@ Option A - Middleware is cleaner and follows established patterns.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                 |
+| ---------- | ------------------------ | ----------------------------------------- |
 | 2025-12-03 | Created from code review | Use middleware for cross-cutting concerns |
 
 ## Resources

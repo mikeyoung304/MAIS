@@ -1,7 +1,9 @@
 # ELOPE MULTI-TENANCY IMPLEMENTATION PLAN
+
 **Optimized 6-Month Phased Rollout**
 
 **Business Context:**
+
 - Starting scale: 2 tenants immediately
 - Year 1 target: ~10 tenants (including owner's 4 businesses)
 - Max scale: 50 tenants (lifetime)
@@ -32,6 +34,7 @@ Phase 6: Polish & Scale to 50              [Weeks 19-24]
 ```
 
 **Key Milestones:**
+
 - Week 3: First 2 paying tenants live ✅
 - Week 6: Commission-based revenue model live ✅
 - Week 14: All 10 target tenants onboarded ✅
@@ -40,34 +43,40 @@ Phase 6: Polish & Scale to 50              [Weeks 19-24]
 ---
 
 ## PHASE 0: PLANNING & SETUP
+
 **Duration:** Week 0 (5 days)
 **Goal:** Lock down technical decisions and set up development workflow
 
 ### Technical Decisions to Finalize
 
 **Decision 1: Subdomain Pattern**
+
 - Primary: `{tenant-slug}.elope.com`
 - Example: `acme-weddings.elope.com`
 - DNS: Wildcard A record (`*.elope.com → server IP`)
 - SSL: Wildcard certificate or Cloudflare proxy
 
 **Decision 2: Tenant Slug Format**
+
 - Format: `lowercase-with-hyphens`
 - Validation: `/^[a-z0-9-]{3,50}$/`
 - Reserved: `www`, `api`, `admin`, `app`, `staging`, `demo`
 
 **Decision 3: Database Migration Strategy**
+
 - Approach: Online migration (zero downtime)
 - Steps: Add nullable → backfill → make NOT NULL
 - Default tenant: Create "legacy" tenant for existing data
 
 **Decision 4: Stripe Connect Account Type**
+
 - Type: **Standard Accounts** (recommended)
 - Why: Tenant manages own Stripe dashboard
 - Platform fee: Set application_fee_percent in checkout
 - Alternative: Express Accounts (if you want simpler onboarding)
 
 **Decision 5: Development Workflow**
+
 - Branch strategy: `multi-tenancy/phase-N` branches
 - Testing: Staging environment with 3 test tenants
 - Local dev: Use `tenant1.localhost`, `tenant2.localhost`
@@ -92,12 +101,14 @@ Phase 6: Polish & Scale to 50              [Weeks 19-24]
 ---
 
 ## PHASE 1: MVP - 2 TENANTS LIVE
+
 **Duration:** Weeks 1-3 (3 weeks)
 **Goal:** Get 2 paying tenants live on multi-tenant platform
 
 ### Scope: MINIMUM VIABLE MULTI-TENANCY
 
 **What's INCLUDED:**
+
 - ✅ Database schema with `tenantId`
 - ✅ Tenant resolution from subdomain
 - ✅ Backend tenant filtering (all queries scoped)
@@ -106,6 +117,7 @@ Phase 6: Polish & Scale to 50              [Weeks 19-24]
 - ✅ Security: Row-level isolation
 
 **What's EXCLUDED (for now):**
+
 - ❌ Stripe Connect (use existing single Stripe account)
 - ❌ Rich theming (just logo + colors)
 - ❌ Custom content (hero, features, etc.)
@@ -153,6 +165,7 @@ model Tenant {
 ```
 
 **Commands:**
+
 ```bash
 # Generate migration
 npx prisma migrate dev --name add_tenant_model --create-only
@@ -168,6 +181,7 @@ npx prisma migrate dev
 **Models to update:** Package, AddOn, Booking, Customer, User, Venue, BlackoutDate, Payment
 
 **Example (Booking):**
+
 ```prisma
 model Booking {
   id         String   @id @default(cuid())
@@ -184,6 +198,7 @@ model Booking {
 ```
 
 **Critical Changes:**
+
 - `Booking.date`: `@unique` → `@@unique([tenantId, date])`
 - `Package.slug`: `@unique` → `@@unique([tenantId, slug])`
 - `Customer.email`: `@unique` → `@@unique([tenantId, email])`
@@ -251,10 +266,13 @@ async function main() {
   console.log('✅ Migration successful!');
 }
 
-main().catch(console.error).finally(() => prisma.$disconnect());
+main()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());
 ```
 
 **Run migration:**
+
 ```bash
 npx tsx server/scripts/migrate-to-multi-tenant.ts
 ```
@@ -419,13 +437,10 @@ export abstract class TenantScopedRepository {
 ```typescript
 import { TenantScopedRepository } from './base-repository';
 
-export class PrismaCatalogRepository
-  extends TenantScopedRepository
-  implements CatalogRepository
-{
+export class PrismaCatalogRepository extends TenantScopedRepository implements CatalogRepository {
   async getAllPackages(): Promise<Package[]> {
     const packages = await this.prisma.package.findMany({
-      where: this.getTenantFilter(),  // Auto-adds tenantId
+      where: this.getTenantFilter(), // Auto-adds tenantId
       include: {
         addOns: {
           include: { addOn: true },
@@ -439,7 +454,7 @@ export class PrismaCatalogRepository
 
   async getPackageBySlug(slug: string): Promise<Package | null> {
     const pkg = await this.prisma.package.findFirst({
-      where: this.getTenantFilterWhere({ slug }),  // Scoped to tenant
+      where: this.getTenantFilterWhere({ slug }), // Scoped to tenant
       include: {
         addOns: {
           include: { addOn: true },
@@ -455,6 +470,7 @@ export class PrismaCatalogRepository
 ```
 
 **Repeat for:**
+
 - `booking.repository.ts`
 - `blackout.repository.ts`
 - `user.repository.ts`
@@ -511,7 +527,9 @@ export interface TenantServices {
 }
 
 export function buildContainer(config: Config): Container {
-  const prisma = new PrismaClient({ /* ... */ });
+  const prisma = new PrismaClient({
+    /* ... */
+  });
   const eventEmitter = new InProcessEventEmitter();
   const cacheService = new CacheService(900);
 
@@ -795,7 +813,7 @@ async function main() {
   const contactEmail = await prompt('Contact email: ');
   const contactPhone = await prompt('Contact phone (optional): ');
   const logoUrl = await prompt('Logo URL (optional): ');
-  const primaryColor = await prompt('Primary color (hex, default #8770B7): ') || '#8770B7';
+  const primaryColor = (await prompt('Primary color (hex, default #8770B7): ')) || '#8770B7';
 
   console.log('\nCreating tenant...');
 
@@ -820,10 +838,13 @@ async function main() {
   rl.close();
 }
 
-main().catch(console.error).finally(() => prisma.$disconnect());
+main()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());
 ```
 
 **Usage:**
+
 ```bash
 npx tsx server/scripts/provision-tenant.ts
 ```
@@ -831,6 +852,7 @@ npx tsx server/scripts/provision-tenant.ts
 ### Phase 1 Deliverables
 
 **Database:**
+
 - [x] Tenant table created
 - [x] tenantId added to 8 models
 - [x] Unique constraints updated to composite keys
@@ -838,6 +860,7 @@ npx tsx server/scripts/provision-tenant.ts
 - [x] Default tenant created and data migrated
 
 **Backend:**
+
 - [x] Tenant resolver middleware
 - [x] Repository base class with tenant filtering
 - [x] All repositories refactored
@@ -845,17 +868,20 @@ npx tsx server/scripts/provision-tenant.ts
 - [x] All routes use tenant context
 
 **Frontend:**
+
 - [x] Tenant context provider
 - [x] CSS variables for colors
 - [x] AppShell uses dynamic branding
 - [x] Tailwind config uses CSS variables
 
 **Provisioning:**
+
 - [x] Manual tenant provisioning script
 
 ### Phase 1 Testing
 
 **Test tenant 1:**
+
 ```bash
 npx tsx server/scripts/provision-tenant.ts
 # slug: test-venue-1
@@ -864,6 +890,7 @@ npx tsx server/scripts/provision-tenant.ts
 ```
 
 **Test tenant 2:**
+
 ```bash
 npx tsx server/scripts/provision-tenant.ts
 # slug: test-venue-2
@@ -872,6 +899,7 @@ npx tsx server/scripts/provision-tenant.ts
 ```
 
 **Manual testing:**
+
 1. Visit `test-venue-1.localhost:5173`
 2. Verify logo/branding shows "Test Venue One"
 3. Create a booking for 2025-12-01
@@ -893,6 +921,7 @@ npx tsx server/scripts/provision-tenant.ts
 ---
 
 ## PHASE 2: STRIPE CONNECT INTEGRATION
+
 **Duration:** Weeks 4-6 (3 weeks)
 **Goal:** Enable commission-based revenue model
 
@@ -901,12 +930,14 @@ npx tsx server/scripts/provision-tenant.ts
 **Your requirement:** "Take % of sales through infrastructure"
 
 **Stripe Connect enables:**
+
 - Each tenant gets their own Stripe account
 - Revenue goes directly to tenant's bank account
 - Platform automatically takes commission
 - Platform never touches money directly (compliance benefit)
 
 **Account Type:** Standard Accounts (recommended)
+
 - Tenant creates their own Stripe account
 - Platform connects via OAuth
 - Tenant sees full dashboard
@@ -924,6 +955,7 @@ npx tsx server/scripts/provision-tenant.ts
 6. Get platform client ID
 
 **Save to .env:**
+
 ```bash
 STRIPE_CONNECT_CLIENT_ID=ca_...
 STRIPE_SECRET_KEY=sk_live_...  # Your platform account
@@ -971,7 +1003,7 @@ export class StripeConnectService {
       response_type: 'code',
       client_id: process.env.STRIPE_CONNECT_CLIENT_ID!,
       scope: 'read_write',
-      state: tenantId,  // Pass tenant ID to track in callback
+      state: tenantId, // Pass tenant ID to track in callback
       redirect_uri: redirectUrl,
     });
 
@@ -987,7 +1019,7 @@ export class StripeConnectService {
       code,
     });
 
-    return response.stripe_user_id;  // Connected account ID
+    return response.stripe_user_id; // Connected account ID
   }
 
   /**
@@ -1002,9 +1034,7 @@ export class StripeConnectService {
     successUrl: string;
     cancelUrl: string;
   }): Promise<{ sessionId: string; url: string }> {
-    const platformFeeCents = Math.round(
-      (params.amountCents * params.platformFeePercent) / 100
-    );
+    const platformFeeCents = Math.round((params.amountCents * params.platformFeePercent) / 100);
 
     const session = await this.stripe.checkout.sessions.create(
       {
@@ -1023,14 +1053,14 @@ export class StripeConnectService {
           },
         ],
         payment_intent_data: {
-          application_fee_amount: platformFeeCents,  // Platform commission
+          application_fee_amount: platformFeeCents, // Platform commission
         },
         metadata: params.metadata,
         success_url: params.successUrl,
         cancel_url: params.cancelUrl,
       },
       {
-        stripeAccount: params.stripeAccountId,  // Charge to tenant's account
+        stripeAccount: params.stripeAccountId, // Charge to tenant's account
       }
     );
 
@@ -1193,6 +1223,7 @@ export function createWebhooksRouter(container: Container) {
 
 **Configure webhooks in Stripe:**
 For each connected account, set webhook endpoint:
+
 ```
 https://api.elope.com/v1/webhooks/stripe/{tenantId}
 ```
@@ -1257,6 +1288,7 @@ export function StripeConnectSettings() {
 #### Task 6.2: Update Admin Onboarding Flow (Day 25)
 
 **Create tenant onboarding checklist:**
+
 1. ✅ Tenant created (admin provisioning)
 2. ⬜ Admin user created and logged in
 3. ⬜ Stripe account connected
@@ -1276,6 +1308,7 @@ export function StripeConnectSettings() {
 ### Phase 2 Testing
 
 **Test with Stripe test mode:**
+
 1. Create test tenant
 2. Connect test Stripe account
 3. Create booking and complete checkout
@@ -1296,6 +1329,7 @@ export function StripeConnectSettings() {
 ---
 
 ## PHASE 3: RICH THEMING & CUSTOMIZATION
+
 **Duration:** Weeks 7-10 (4 weeks)
 **Goal:** Enable full branding customization per tenant
 
@@ -1303,6 +1337,7 @@ export function StripeConnectSettings() {
 
 **Phase 1 had:** Logo + 3 colors
 **Phase 3 adds:**
+
 - Custom fonts
 - Hero headline/subheadline
 - Features section (4 cards)
@@ -1346,6 +1381,7 @@ model Tenant {
 ```
 
 **Defaults:**
+
 ```typescript
 // Default stats
 {
@@ -1378,6 +1414,7 @@ model Tenant {
 #### Task 7.2: Image Upload Service (Days 27-28)
 
 **Options:**
+
 1. **AWS S3** (most common)
 2. **Cloudflare R2** (S3-compatible, cheaper)
 3. **Supabase Storage** (already using Supabase)
@@ -1393,10 +1430,7 @@ export class ImageUploadService {
   private supabase;
 
   constructor() {
-    this.supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_KEY!
-    );
+    this.supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
   }
 
   async uploadTenantImage(
@@ -1419,9 +1453,7 @@ export class ImageUploadService {
     }
 
     // Get public URL
-    const { data: urlData } = this.supabase.storage
-      .from('tenant-assets')
-      .getPublicUrl(filePath);
+    const { data: urlData } = this.supabase.storage.from('tenant-assets').getPublicUrl(filePath);
 
     return urlData.publicUrl;
   }
@@ -1621,6 +1653,7 @@ export function ThemeEditor() {
 ```
 
 **Components:**
+
 - `BrandingEditor` - Logo upload, color pickers, font selectors
 - `HeroEditor` - Text inputs for headline/subheadline, image upload
 - `FeaturesEditor` - 4 feature cards (icon, title, description)
@@ -1709,6 +1742,7 @@ export function Home() {
 ---
 
 ## PHASE 4: SCALE TO 10 TENANTS
+
 **Duration:** Weeks 11-14 (4 weeks)
 **Goal:** Onboard user's 4 businesses + 6 clients
 
@@ -1812,6 +1846,7 @@ export function SuperAdminDashboard() {
 For each of your 4 businesses:
 
 **Day 1: Provision Tenant**
+
 1. Create tenant via super admin UI
 2. Generate admin login credentials
 3. Send onboarding email with:
@@ -1820,22 +1855,26 @@ For each of your 4 businesses:
    - Setup checklist
 
 **Day 2: Stripe Setup**
+
 1. Guide through Stripe Connect OAuth
 2. Verify test payment works
 3. Set platform fee percentage (10% default)
 
 **Day 3: Branding**
+
 1. Upload logo
 2. Set brand colors
 3. Customize hero headline
 4. Add 2-3 testimonials
 
 **Day 4: Packages**
+
 1. Create 3 wedding packages
 2. Add 3-5 add-ons
 3. Set pricing
 
 **Day 5: Testing**
+
 1. Complete test booking end-to-end
 2. Verify email notifications
 3. Verify admin can see booking
@@ -1849,6 +1888,7 @@ For each of your 4 businesses:
 # Tenant Onboarding Guide
 
 ## Pre-Requisites
+
 - [ ] Business name
 - [ ] Logo (PNG, 500x500px recommended)
 - [ ] Brand colors (primary, secondary, accent)
@@ -1858,18 +1898,21 @@ For each of your 4 businesses:
 ## Week 1: Setup
 
 ### Day 1: Access
+
 1. Receive welcome email from platform
 2. Click login link: https://{your-slug}.elope.com/admin/login
 3. Login with temporary password
 4. Change password to secure one
 
 ### Day 2: Payment Setup
+
 1. Go to Settings → Payments
 2. Click "Connect Stripe"
 3. Complete Stripe onboarding
 4. Verify connection successful
 
 ### Day 3: Branding
+
 1. Go to Settings → Theme Editor
 2. Upload logo
 3. Select brand colors using color picker
@@ -1877,6 +1920,7 @@ For each of your 4 businesses:
 5. Preview changes
 
 ### Day 4: Packages
+
 1. Go to Packages
 2. Create first package:
    - Name: e.g., "Intimate Garden Ceremony"
@@ -1887,6 +1931,7 @@ For each of your 4 businesses:
 4. Add add-ons (photography, flowers, etc.)
 
 ### Day 5: Test Booking
+
 1. Visit your storefront: https://{your-slug}.elope.com
 2. Select a package
 3. Pick a date
@@ -1895,23 +1940,27 @@ For each of your 4 businesses:
 6. Verify booking appears in admin
 
 ## Week 2: Launch
+
 - [ ] Remove test bookings
 - [ ] Share URL with potential customers
 - [ ] Monitor first real bookings
 - [ ] Adjust pricing/packages as needed
 
 ## Support
+
 Email: support@elope.com
 ```
 
 ### Week 14: Client Onboarding (6 tenants)
 
 **Target clients:**
+
 1. Wedding photographers (3 tenants)
 2. Micro wedding venues (2 tenants)
 3. Elopement planners (1 tenant)
 
 **Acquisition strategy:**
+
 - Reach out to network
 - Offer first month free
 - Provide white-glove onboarding
@@ -1939,6 +1988,7 @@ Email: support@elope.com
 ---
 
 ## PHASE 5: PRODUCTION HARDENING
+
 **Duration:** Weeks 15-18 (4 weeks)
 **Goal:** Ensure rock-solid security and reliability
 
@@ -2009,22 +2059,20 @@ describe('Tenant Isolation Security', () => {
       .set('Host', `tenant-a.elope.com`);
 
     // Should still only return Tenant A's bookings
-    expect(response.body.every(b => b.tenantId === tenantA.id)).toBe(true);
+    expect(response.body.every((b) => b.tenantId === tenantA.id)).toBe(true);
   });
 
   it('validates tenant slug format', async () => {
     const maliciousSlugs = [
       "'; DROP TABLE Booking; --",
       "<script>alert('xss')</script>",
-      "../../etc/passwd",
-      "acme..weddings",
-      "ACME",  // uppercase
+      '../../etc/passwd',
+      'acme..weddings',
+      'ACME', // uppercase
     ];
 
     for (const slug of maliciousSlugs) {
-      await expect(
-        createTestTenant({ slug })
-      ).rejects.toThrow('Invalid slug format');
+      await expect(createTestTenant({ slug })).rejects.toThrow('Invalid slug format');
     }
   });
 });
@@ -2079,7 +2127,7 @@ const cacheKey = `tenant:${tenantId}:packages`;
 const cached = await redis.get(cacheKey);
 if (!cached) {
   const packages = await catalogService.getAllPackages();
-  await redis.set(cacheKey, JSON.stringify(packages), 'EX', 900);  // 15 min
+  await redis.set(cacheKey, JSON.stringify(packages), 'EX', 900); // 15 min
 }
 ```
 
@@ -2207,12 +2255,13 @@ export function createMetricsRouter() {
 
 **Create file:** `docs/PRODUCTION_RUNBOOK.md`
 
-```markdown
+````markdown
 # Production Operations Runbook
 
 ## Deployment
 
 ### Standard Deployment
+
 ```bash
 # 1. Run tests
 npm run test
@@ -2226,8 +2275,10 @@ npx prisma migrate deploy
 # 4. Deploy to production (e.g., Railway, Render, Fly.io)
 git push production main
 ```
+````
 
 ### Rollback Procedure
+
 ```bash
 # 1. Revert to previous commit
 git revert HEAD
@@ -2242,6 +2293,7 @@ npx prisma migrate resolve --rolled-back [migration-name]
 ## Common Operations
 
 ### Provision New Tenant
+
 ```bash
 # Via super admin UI (recommended)
 Visit: https://admin.elope.com/tenants/new
@@ -2251,11 +2303,13 @@ npx tsx server/scripts/provision-tenant.ts
 ```
 
 ### Deactivate Tenant
+
 ```sql
 UPDATE "Tenant" SET "active" = false WHERE "id" = '{tenant-id}';
 ```
 
 ### Backup Database
+
 ```bash
 # Automated: Daily backups via Supabase
 # Manual backup:
@@ -2265,17 +2319,20 @@ pg_dump $DATABASE_URL > backup-$(date +%Y%m%d).sql
 ## Troubleshooting
 
 ### "Tenant Not Found" Error
+
 1. Check DNS resolution: `nslookup {tenant}.elope.com`
 2. Verify tenant exists: `SELECT * FROM "Tenant" WHERE slug = '{tenant}'`
 3. Check tenant is active: `active = true`
 
 ### Stripe Webhook Failures
+
 1. Check webhook secret is correct for tenant
 2. Verify endpoint URL: `https://api.elope.com/v1/webhooks/stripe/{tenantId}`
 3. Check webhook logs in Stripe dashboard
 4. Replay failed webhooks if needed
 
 ### Performance Issues
+
 1. Check slow queries: See Week 16 Task 16.1
 2. Check Redis cache hit rate
 3. Check database connection pool
@@ -2284,17 +2341,20 @@ pg_dump $DATABASE_URL > backup-$(date +%Y%m%d).sql
 ## Monitoring
 
 ### Key Metrics
+
 - **Uptime:** https://status.elope.com
 - **Error rate:** Sentry dashboard
 - **Response time:** APM (e.g., New Relic, Datadog)
 - **Database:** Supabase dashboard
 
 ### Alerts
+
 - Error rate > 1%: Page on-call
 - Response time > 2s: Investigate
 - Database CPU > 80%: Scale up
 - Tenant webhook failures: Email tenant admin
-```
+
+````
 
 #### Task 18.2: API Documentation (Day 57)
 
@@ -2327,7 +2387,7 @@ const openApiDocument = generateOpenApi(
 app.get('/api/docs/openapi.json', (req, res) => {
   res.json(openApiDocument);
 });
-```
+````
 
 ### Phase 5 Deliverables
 
@@ -2350,6 +2410,7 @@ app.get('/api/docs/openapi.json', (req, res) => {
 ---
 
 ## PHASE 6: POLISH & SCALE TO 50
+
 **Duration:** Weeks 19-24 (6 weeks)
 **Goal:** Prepare for growth to 50 tenants
 
@@ -2415,7 +2476,7 @@ export class DomainVerificationService {
     const resolver = new Resolver();
     const txtRecords = await resolver.resolveTxt(domain);
 
-    const verified = txtRecords.some(record =>
+    const verified = txtRecords.some((record) =>
       record.join('').includes(`_elope-verify=${record.verificationToken}`)
     );
 
@@ -2436,6 +2497,7 @@ export class DomainVerificationService {
 #### Task 21.1: Visual Theme Builder (Days 61-65)
 
 **Features:**
+
 - Drag-and-drop section reordering
 - Live preview (iframe)
 - Pre-made theme templates
@@ -2493,6 +2555,7 @@ export function VisualThemeBuilder() {
 #### Task 22.1: Tenant Analytics (Days 66-68)
 
 **Features:**
+
 - Booking trends (daily, weekly, monthly)
 - Revenue chart
 - Package popularity
@@ -2557,8 +2620,8 @@ export class TenantHealthService {
       stripeConnected: await this.isStripeConnected(tenantId),
       hasPackages: await this.hasAtLeastOnePackage(tenantId),
       hasBranding: await this.hasCustomBranding(tenantId),
-      hasBookings: await this.hasRecentBookings(tenantId, 30),  // 30 days
-      activeAdmin: await this.hasActiveAdmin(tenantId, 7),  // 7 days
+      hasBookings: await this.hasRecentBookings(tenantId, 30), // 30 days
+      activeAdmin: await this.hasActiveAdmin(tenantId, 7), // 7 days
     };
 
     const score = Object.values(checks).filter(Boolean).length / Object.keys(checks).length;
@@ -2626,6 +2689,7 @@ npm install -D @axe-core/react
 ```
 
 **Fix common issues:**
+
 - [ ] All images have alt text
 - [ ] Forms have labels
 - [ ] Focus states visible
@@ -2636,6 +2700,7 @@ npm install -D @axe-core/react
 #### Task 24.2: Performance Budget (Day 74)
 
 **Set targets:**
+
 - First Contentful Paint: < 1.5s
 - Largest Contentful Paint: < 2.5s
 - Time to Interactive: < 3.5s
@@ -2697,15 +2762,15 @@ onTTFB(sendToAnalytics);
 
 ## TIMELINE SUMMARY
 
-| Phase | Weeks | Key Milestone |
-|-------|-------|---------------|
-| 0. Planning | Week 0 | Technical decisions finalized |
-| 1. MVP | Weeks 1-3 | **2 tenants live** |
-| 2. Stripe Connect | Weeks 4-6 | **Commission model live** |
-| 3. Rich Theming | Weeks 7-10 | Full customization enabled |
-| 4. Scale to 10 | Weeks 11-14 | **10 tenants live** |
-| 5. Hardening | Weeks 15-18 | Production-ready |
-| 6. Polish | Weeks 19-24 | Ready for 50 tenants |
+| Phase             | Weeks       | Key Milestone                 |
+| ----------------- | ----------- | ----------------------------- |
+| 0. Planning       | Week 0      | Technical decisions finalized |
+| 1. MVP            | Weeks 1-3   | **2 tenants live**            |
+| 2. Stripe Connect | Weeks 4-6   | **Commission model live**     |
+| 3. Rich Theming   | Weeks 7-10  | Full customization enabled    |
+| 4. Scale to 10    | Weeks 11-14 | **10 tenants live**           |
+| 5. Hardening      | Weeks 15-18 | Production-ready              |
+| 6. Polish         | Weeks 19-24 | Ready for 50 tenants          |
 
 **Total: 24 weeks (6 months)**
 
@@ -2716,18 +2781,22 @@ onTTFB(sendToAnalytics);
 ### Business Metrics
 
 **Month 1 (Week 4):**
+
 - ✅ 2 paying tenants
 - ✅ $X in bookings processed
 
 **Month 2 (Week 8):**
+
 - ✅ Commission-based revenue model live
 - ✅ $X in platform fees collected
 
 **Month 3 (Week 12):**
+
 - ✅ 10 tenants onboarded
 - ✅ User's 4 businesses live
 
 **Month 6 (Week 24):**
+
 - ✅ Platform stable and scalable
 - ✅ Ready for 50 tenants
 - ✅ Profitable (revenue > costs)
@@ -2754,26 +2823,31 @@ onTTFB(sendToAnalytics);
 ### Top 5 Risks
 
 **1. Stripe Connect Integration Complexity**
+
 - **Risk:** Webhooks, OAuth, platform fees tricky to get right
 - **Mitigation:** Extensive testing in Stripe test mode, phased rollout
 - **Contingency:** Start with single Stripe account, add Connect later
 
 **2. Data Isolation Bugs**
+
 - **Risk:** Cross-tenant data leak would be catastrophic
 - **Mitigation:** 4-layer defense (RLS + middleware + service + repo)
 - **Contingency:** Comprehensive security testing before Phase 4
 
 **3. Performance Degradation**
+
 - **Risk:** 50 tenants may strain single database
 - **Mitigation:** Proper indexing, caching, monitoring
 - **Contingency:** Scale up database, add read replicas
 
 **4. Tenant Onboarding Friction**
+
 - **Risk:** Complex setup deters new tenants
 - **Mitigation:** White-glove onboarding, clear documentation
 - **Contingency:** Offer setup service ($500 one-time fee)
 
 **5. Timeline Slippage**
+
 - **Risk:** 6 months is aggressive for this scope
 - **Mitigation:** Phased approach allows flexibility
 - **Contingency:** Can pause after Phase 4 (10 tenants) if needed
@@ -2785,34 +2859,37 @@ onTTFB(sendToAnalytics);
 ### Development Costs
 
 **If hiring 2 developers:**
+
 - 2 developers × 6 months × $12,500/month = **$150,000**
 
 **If you're doing it yourself:**
+
 - Opportunity cost: 6 months full-time
 - Value: ~$75,000 (if consultant rate $125/hr × 600 hours)
 
 ### Infrastructure Costs (6 months)
 
-| Service | Monthly | 6 Months |
-|---------|---------|----------|
-| Supabase (Pro) | $25 | $150 |
-| Domain + SSL | $20 | $120 |
-| Sentry (monitoring) | $26 | $156 |
-| Cloudflare (optional) | $20 | $120 |
-| **Total** | **$91/month** | **$546** |
+| Service               | Monthly       | 6 Months |
+| --------------------- | ------------- | -------- |
+| Supabase (Pro)        | $25           | $150     |
+| Domain + SSL          | $20           | $120     |
+| Sentry (monitoring)   | $26           | $156     |
+| Cloudflare (optional) | $20           | $120     |
+| **Total**             | **$91/month** | **$546** |
 
 ### Recurring Costs (after launch)
 
-| Service | Cost per Month |
-|---------|----------------|
-| Infrastructure | $91/month |
-| Stripe fees | 2.9% + 30¢ per transaction |
-| Platform commission | 10% of booking value |
-| Support/maintenance | ~10 hours/month |
+| Service             | Cost per Month             |
+| ------------------- | -------------------------- |
+| Infrastructure      | $91/month                  |
+| Stripe fees         | 2.9% + 30¢ per transaction |
+| Platform commission | 10% of booking value       |
+| Support/maintenance | ~10 hours/month            |
 
 **Break-Even Analysis:**
 
 Assumptions:
+
 - Average booking value: $2,500
 - Platform commission: 10% = $250
 - Stripe fees: ~$75
@@ -2821,11 +2898,13 @@ Assumptions:
 **Break-even:** $91/month ÷ $175/booking = **0.5 bookings/month across all tenants**
 
 With 10 tenants averaging 2 bookings/month each:
+
 - 20 bookings × $175 = **$3,500/month revenue**
 - Minus infrastructure: $91/month
 - **Net profit: $3,409/month** ($40,908/year)
 
 **ROI:** If self-developed ($75K opportunity cost):
+
 - Break-even: 22 months
 - With 20 tenants: 11 months
 
@@ -2836,30 +2915,35 @@ With 10 tenants averaging 2 bookings/month each:
 ### Immediate Actions (This Week)
 
 **Day 1 (Monday):**
+
 1. Review this plan and approve/adjust
 2. Finalize technical decisions (subdomain pattern, Stripe Connect type)
 3. Register domain (if not done)
 4. Set up Stripe Connect platform account
 
 **Day 2 (Tuesday):**
+
 1. Configure wildcard DNS (`*.elope.com`)
 2. Set up wildcard SSL certificate
 3. Create staging environment
 4. Set up local development (hosts file)
 
 **Day 3 (Wednesday):**
+
 1. Create git branch: `multi-tenancy/phase-1`
 2. Set up project management (e.g., Linear, GitHub Projects)
 3. Break down Phase 1 into tickets
 4. Schedule daily standup (15 min)
 
 **Day 4 (Thursday):**
+
 1. Create database backup
 2. Write Phase 1 database migration (no apply yet)
 3. Review migration with fresh eyes
 4. Plan rollback procedure
 
 **Day 5 (Friday):**
+
 1. Begin Phase 1 Week 1 implementation
 2. Create `Tenant` model migration
 3. Apply migration to local dev database
@@ -2881,12 +2965,14 @@ With 10 tenants averaging 2 bookings/month each:
 ### Appendix A: Tenant Provisioning Checklist
 
 **Super Admin Actions:**
+
 1. [ ] Create tenant via admin UI or script
 2. [ ] Generate admin credentials
 3. [ ] Send onboarding email
 4. [ ] Schedule onboarding call (30 min)
 
 **Tenant Actions:**
+
 1. [ ] Login and change password
 2. [ ] Connect Stripe account
 3. [ ] Upload logo
@@ -2900,21 +2986,25 @@ With 10 tenants averaging 2 bookings/month each:
 ### Appendix B: Testing Strategy
 
 **Unit Tests:**
+
 - Repository layer (tenant filtering)
 - Service layer (business logic)
 - Middleware (tenant resolution)
 
 **Integration Tests:**
+
 - API endpoints (tenant-scoped)
 - Stripe Connect flow
 - Webhook processing
 
 **E2E Tests:**
+
 - Full booking flow per tenant
 - Admin CRUD operations
 - Theme editor
 
 **Security Tests:**
+
 - Cross-tenant access attempts
 - SQL injection attempts
 - Session fixation attempts
@@ -2922,6 +3012,7 @@ With 10 tenants averaging 2 bookings/month each:
 ### Appendix C: Deployment Checklist
 
 **Pre-Deploy:**
+
 - [ ] All tests passing
 - [ ] Database migration dry-run successful
 - [ ] Rollback procedure documented
@@ -2929,6 +3020,7 @@ With 10 tenants averaging 2 bookings/month each:
 - [ ] Backup created
 
 **Deploy:**
+
 - [ ] Run database migration
 - [ ] Deploy backend
 - [ ] Deploy frontend
@@ -2936,6 +3028,7 @@ With 10 tenants averaging 2 bookings/month each:
 - [ ] Verify no errors in Sentry
 
 **Post-Deploy:**
+
 - [ ] Monitor error rates (30 min)
 - [ ] Verify tenant logins work
 - [ ] Verify bookings process

@@ -5,11 +5,13 @@ This document shows expected output from the Phase 3 testing scripts.
 ## Commission Calculation Test
 
 **Command:**
+
 ```bash
 npm run test:commission
 ```
 
 **Expected Output:**
+
 ```
 🧪 Testing Commission Calculation Service
 
@@ -51,6 +53,7 @@ Test 4: Full booking calculation (Tenant B)
 ```
 
 **Interpretation:**
+
 - ✅ All commission rates calculate correctly
 - ✅ Rounding strategy works (ceiling for platform)
 - ✅ Booking breakdown accurate
@@ -61,11 +64,13 @@ Test 4: Full booking calculation (Tenant B)
 ## Stripe Connect Integration Test
 
 **Command:**
+
 ```bash
 npm run test:stripe-connect
 ```
 
 **Expected Output:**
+
 ```
 🧪 Testing Stripe Connect Integration
 
@@ -172,18 +177,20 @@ Next steps:
 ```
 
 **Interpretation:**
+
 - ✅ Tenant created successfully
 - ✅ Stripe Connected Account created
 - ✅ Commission calculated correctly
 - ✅ PaymentIntent created with application fee
 - ✅ Refund calculations accurate
-- ⚠️  Account onboarding needed for production (expected)
+- ⚠️ Account onboarding needed for production (expected)
 
 ---
 
 ## Webhook Testing
 
 **Command:**
+
 ```bash
 # Terminal 1
 npm run dev
@@ -194,6 +201,7 @@ stripe trigger payment_intent.succeeded
 ```
 
 **Expected Output (Terminal 2):**
+
 ```
 > Ready! Your webhook signing secret is whsec_ABC123DEF456GHI789 (^C to quit)
 2024-11-06 12:34:56   --> payment_intent.succeeded [evt_ABC123]
@@ -201,6 +209,7 @@ stripe trigger payment_intent.succeeded
 ```
 
 **Expected Output (Server logs):**
+
 ```json
 {
   "level": "info",
@@ -220,12 +229,14 @@ stripe trigger payment_intent.succeeded
 ```
 
 **Database Verification:**
+
 ```sql
 SELECT * FROM "WebhookEvent"
 WHERE "eventId" = 'evt_ABC123';
 ```
 
 **Expected Result:**
+
 ```
 id    | eventId   | eventType                    | status    | attempts | processedAt
 ------+-----------+------------------------------+-----------+----------+-------------
@@ -239,12 +250,14 @@ uuid  | evt_ABC123| payment_intent.succeeded     | PROCESSED | 1        | 2024-1
 ### Missing Stripe Key
 
 **Command:**
+
 ```bash
 # Remove STRIPE_SECRET_KEY from .env
 npm run test:stripe-connect
 ```
 
 **Expected Output:**
+
 ```
 ❌ STRIPE_SECRET_KEY not found in environment variables
 Please add your Stripe test key to .env:
@@ -254,6 +267,7 @@ STRIPE_SECRET_KEY=sk_test_...
 ### Invalid Webhook Signature
 
 **Server logs:**
+
 ```json
 {
   "level": "error",
@@ -264,6 +278,7 @@ STRIPE_SECRET_KEY=sk_test_...
 ```
 
 **Response:**
+
 ```
 HTTP 400 Bad Request
 {
@@ -274,6 +289,7 @@ HTTP 400 Bad Request
 ### Commission Rate Too High
 
 **Command:**
+
 ```sql
 -- Set commission to 60% (above Stripe limit)
 UPDATE "Tenant"
@@ -283,6 +299,7 @@ WHERE slug = 'test-tenant';
 
 **Expected Behavior:**
 Service logs warning and adjusts to maximum (50%):
+
 ```json
 {
   "level": "warn",
@@ -347,6 +364,7 @@ commission.service.ts         |   100   |   100    |   100   |   100
 ```
 
 **Covered scenarios:**
+
 - ✅ Standard commission rates (10%, 12.5%, 15%)
 - ✅ Edge case: 0.5% (minimum)
 - ✅ Edge case: 50% (maximum)
@@ -366,6 +384,7 @@ webhooks.routes.ts            |   95    |   90     |   100   |   95
 ```
 
 **Covered scenarios:**
+
 - ✅ Valid webhook signature
 - ✅ Invalid webhook signature
 - ✅ Duplicate event (idempotency)
@@ -415,6 +434,7 @@ Use this checklist when performing manual QA:
   FROM "Booking"
   WHERE id = 'booking_id';
   ```
+
   - [ ] Values match expected amounts
 
 ### Refund Testing
@@ -438,6 +458,7 @@ Use this checklist when performing manual QA:
 **Cause:** Connected account not fully onboarded
 
 **Solution:**
+
 ```typescript
 // Create account link for onboarding
 const accountLink = await stripe.accountLinks.create({
@@ -454,6 +475,7 @@ const accountLink = await stripe.accountLinks.create({
 **Cause:** Commission exceeds 50% of booking total
 
 **Solution:**
+
 ```sql
 -- Check commission rate
 SELECT "commissionPercent" FROM "Tenant" WHERE id = '...';
@@ -467,6 +489,7 @@ WHERE id = '...';
 ### Issue: Webhook not processing
 
 **Checklist:**
+
 - [ ] `stripe listen` running?
 - [ ] Correct webhook URL?
 - [ ] `STRIPE_WEBHOOK_SECRET` in `.env`?
@@ -474,6 +497,7 @@ WHERE id = '...';
 - [ ] Server logs show signature error?
 
 **Debug:**
+
 ```bash
 # Check webhook secret
 echo $STRIPE_WEBHOOK_SECRET

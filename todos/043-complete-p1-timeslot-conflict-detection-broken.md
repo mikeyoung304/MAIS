@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "043"
+issue_id: '043'
 tags: [code-review, scheduling, data-integrity, double-booking, critical]
 dependencies: []
 ---
@@ -61,14 +61,17 @@ private async getTimeslotBookings(
 ## Proposed Solutions
 
 ### Option A: Implement Repository Method (Recommended)
+
 **Effort:** Medium | **Risk:** Low
 
 1. Add method to `BookingRepository` interface in `ports.ts`:
+
 ```typescript
 findTimeslotBookings(tenantId: string, date: Date): Promise<TimeSlotBooking[]>;
 ```
 
 2. Implement in `PrismaBookingRepository`:
+
 ```typescript
 async findTimeslotBookings(tenantId: string, date: Date): Promise<TimeSlotBooking[]> {
   const bookings = await this.prisma.booking.findMany({
@@ -99,14 +102,17 @@ async findTimeslotBookings(tenantId: string, date: Date): Promise<TimeSlotBookin
 3. Update `getTimeslotBookings()` to call repository method
 
 **Pros:**
+
 - Follows existing repository pattern
 - Type-safe implementation
 - Testable
 
 **Cons:**
+
 - Need to handle nullable fields from Prisma
 
 ### Option B: Direct Prisma Query in Service
+
 **Effort:** Small | **Risk:** Medium
 
 Query directly in the service method (bypasses repository pattern):
@@ -121,9 +127,11 @@ private async getTimeslotBookings(tenantId: string, date: Date): Promise<TimeSlo
 ```
 
 **Pros:**
+
 - Quick fix
 
 **Cons:**
+
 - Violates layered architecture
 - Requires injecting PrismaClient into service
 
@@ -134,11 +142,13 @@ Implement **Option A** - add `findTimeslotBookings()` to BookingRepository inter
 ## Technical Details
 
 **Files to Update:**
+
 - `server/src/lib/ports.ts` - Add interface method
 - `server/src/adapters/prisma/booking.repository.ts` - Implement method
 - `server/src/services/scheduling-availability.service.ts` - Call repository method
 
 **Database Index Needed:**
+
 ```prisma
 @@index([tenantId, date, bookingType])
 ```
@@ -154,8 +164,8 @@ Implement **Option A** - add `findTimeslotBookings()` to BookingRepository inter
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                                       |
+| ---------- | ------- | ----------------------------------------------------------- |
 | 2025-11-27 | Created | Found during scheduling platform code review - BLOCKS MERGE |
 
 ## Resources

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "058"
+issue_id: '058'
 tags: [code-review, scheduling, validation, performance]
 dependencies: []
 ---
@@ -44,6 +44,6 @@ if (daysDiff > 90) {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                 |
+| ---------- | ------- | ------------------------------------- |
 | 2025-11-27 | Created | Found during Security Sentinel review |

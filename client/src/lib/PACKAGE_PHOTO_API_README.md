@@ -141,10 +141,10 @@ function validateBeforeUpload(file: File, currentPhotoCount: number) {
 
 ```typescript
 interface PackagePhoto {
-  url: string;        // "http://localhost:3001/uploads/packages/package-123.jpg"
-  filename: string;   // "package-123.jpg"
-  size: number;       // 245678 (bytes)
-  order: number;      // 0-4 (max 5 photos)
+  url: string; // "http://localhost:3001/uploads/packages/package-123.jpg"
+  filename: string; // "package-123.jpg"
+  size: number; // 245678 (bytes)
+  order: number; // 0-4 (max 5 photos)
 }
 ```
 
@@ -166,13 +166,13 @@ interface PackageWithPhotos {
 
 ### HTTP Status Codes
 
-| Code | Message | Cause |
-|------|---------|-------|
-| 401 | "Authentication required. Please log in again." | No/invalid JWT token |
-| 403 | "You don't have permission to perform this action." | Package belongs to different tenant |
-| 404 | "Package not found." | Invalid package ID |
-| 413 | "File too large (maximum 5MB allowed)." | File exceeds 5MB limit |
-| 400 | Various | Invalid file type, max photos reached, etc. |
+| Code | Message                                             | Cause                                       |
+| ---- | --------------------------------------------------- | ------------------------------------------- |
+| 401  | "Authentication required. Please log in again."     | No/invalid JWT token                        |
+| 403  | "You don't have permission to perform this action." | Package belongs to different tenant         |
+| 404  | "Package not found."                                | Invalid package ID                          |
+| 413  | "File too large (maximum 5MB allowed)."             | File exceeds 5MB limit                      |
+| 400  | Various                                             | Invalid file type, max photos reached, etc. |
 
 ### Error Example
 
@@ -183,7 +183,7 @@ try {
   if (error instanceof ApiError) {
     console.error('Status:', error.statusCode);
     console.error('Message:', error.message); // User-friendly
-    console.error('Code:', error.code);       // Original error
+    console.error('Code:', error.code); // Original error
   }
 }
 ```
@@ -199,9 +199,9 @@ try {
 ### Validation Constants
 
 ```typescript
-photoValidation.MAX_FILE_SIZE           // 5 * 1024 * 1024 bytes
-photoValidation.MAX_PHOTOS_PER_PACKAGE  // 5
-photoValidation.ALLOWED_MIME_TYPES      // ['image/jpeg', 'image/png', ...]
+photoValidation.MAX_FILE_SIZE; // 5 * 1024 * 1024 bytes
+photoValidation.MAX_PHOTOS_PER_PACKAGE; // 5
+photoValidation.ALLOWED_MIME_TYPES; // ['image/jpeg', 'image/png', ...]
 ```
 
 ## FormData Handling
@@ -214,12 +214,12 @@ photoValidation.ALLOWED_MIME_TYPES      // ['image/jpeg', 'image/png', ...]
 
 ```typescript
 const formData = new FormData();
-formData.append('photo', file);  // ← field name MUST be 'photo'
+formData.append('photo', file); // ← field name MUST be 'photo'
 
 fetch(url, {
   method: 'POST',
   headers: {
-    'Authorization': `Bearer ${token}`,
+    Authorization: `Bearer ${token}`,
     // NO 'Content-Type' header - browser adds it
   },
   body: formData,

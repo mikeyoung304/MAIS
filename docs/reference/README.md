@@ -5,6 +5,7 @@ This directory contains technical reference documentation following the Diátaxi
 ## What is Reference Documentation?
 
 Reference documentation provides:
+
 - Technical specifications and details
 - API contracts and schemas
 - Configuration options and environment variables
@@ -17,14 +18,15 @@ Reference docs are dry, focused on facts, and organized for easy lookup.
 
 ### Technology & Platform References
 
-| Document | Purpose |
-|----------|---------|
-| [ADVISORY_LOCKS.md](./ADVISORY_LOCKS.md) | PostgreSQL advisory lock IDs registry and usage guidelines |
+| Document                                                                                   | Purpose                                                       |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| [ADVISORY_LOCKS.md](./ADVISORY_LOCKS.md)                                                   | PostgreSQL advisory lock IDs registry and usage guidelines    |
 | [SCHEDULING-PLATFORM-TECH-REFERENCE-2025.md](./SCHEDULING-PLATFORM-TECH-REFERENCE-2025.md) | Comprehensive scheduling platform technology reference (2025) |
 
 ### API References
 
 See [../api/](../api/) for API-specific reference documentation:
+
 - API contracts (Zod schemas + ts-rest endpoints)
 - Endpoint specifications
 - Request/response formats
@@ -33,12 +35,14 @@ See [../api/](../api/) for API-specific reference documentation:
 ### Configuration References
 
 See [../setup/](../setup/) for configuration references:
+
 - [Environment Variables](../setup/ENVIRONMENT.md) - Complete env var reference
 - [Supabase Configuration](../setup/SUPABASE.md) - Database configuration reference
 
 ### Architecture References
 
 See [../architecture/](../architecture/) and [../adrs/](../adrs/) for:
+
 - Architectural Decision Records (ADRs)
 - System design specifications
 - Multi-tenant architecture details

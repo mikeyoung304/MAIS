@@ -1,9 +1,9 @@
-import { Link } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 interface LogoProps {
-  size?: "sm" | "md" | "lg" | "xl";
-  variant?: "full" | "icon" | "transparent";
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  variant?: 'full' | 'icon' | 'transparent';
   className?: string;
   linkTo?: string;
   clickable?: boolean;
@@ -29,19 +29,17 @@ const sizeMap = {
  * @param clickable - Whether logo should be clickable (defaults to true)
  */
 export function Logo({
-  size = "md",
-  variant = "full",
+  size = 'md',
+  variant = 'full',
   className,
-  linkTo = "/",
+  linkTo = '/',
   clickable = true,
 }: LogoProps) {
   const dimensions = sizeMap[size];
 
   // Select appropriate logo source based on variant
-  const logoSrc =
-    variant === "transparent" ? "/transparent.png" : "/macon-logo.webp";
-  const fallbackSrc =
-    variant === "transparent" ? "/transparent.png" : "/macon-logo.png";
+  const logoSrc = variant === 'transparent' ? '/transparent.png' : '/macon-logo.webp';
+  const fallbackSrc = variant === 'transparent' ? '/transparent.png' : '/macon-logo.png';
 
   const logoImage = (
     <picture>
@@ -51,7 +49,7 @@ export function Logo({
         alt="MACON AI Solutions"
         width={dimensions.width}
         height={dimensions.height}
-        className={cn("object-contain", className)}
+        className={cn('object-contain', className)}
       />
     </picture>
   );

@@ -10,9 +10,9 @@
  * - Visual indicator for unsaved changes
  */
 
-import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react";
-import { cn } from "@/lib/utils";
-import { Pencil } from "lucide-react";
+import { useState, useRef, useEffect, useCallback, KeyboardEvent } from 'react';
+import { cn } from '@/lib/utils';
+import { Pencil } from 'lucide-react';
 
 interface EditableTextProps {
   value: string;
@@ -25,13 +25,13 @@ interface EditableTextProps {
   rows?: number;
   hasDraft?: boolean;
   disabled?: boolean;
-  "aria-label"?: string;
+  'aria-label'?: string;
 }
 
 export function EditableText({
   value,
   onChange,
-  placeholder = "Click to edit",
+  placeholder = 'Click to edit',
   className,
   inputClassName,
   maxLength,
@@ -39,7 +39,7 @@ export function EditableText({
   rows = 3,
   hasDraft = false,
   disabled = false,
-  "aria-label": ariaLabel,
+  'aria-label': ariaLabel,
 }: EditableTextProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
@@ -82,13 +82,13 @@ export function EditableText({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      if (e.key === "Enter" && !multiline) {
+      if (e.key === 'Enter' && !multiline) {
         e.preventDefault();
         setIsEditing(false);
         if (editValue !== value) {
           onChange(editValue);
         }
-      } else if (e.key === "Escape") {
+      } else if (e.key === 'Escape') {
         e.preventDefault();
         setEditValue(value);
         setIsEditing(false);
@@ -102,27 +102,25 @@ export function EditableText({
     return (
       <div
         onClick={handleClick}
-        onKeyDown={(e) => e.key === "Enter" && handleClick()}
+        onKeyDown={(e) => e.key === 'Enter' && handleClick()}
         role="button"
         tabIndex={disabled ? -1 : 0}
         aria-label={ariaLabel || `Edit ${placeholder}`}
         className={cn(
-          "group relative cursor-pointer rounded px-2 py-1 transition-colors",
-          "hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-          hasDraft && "ring-1 ring-amber-400/50 bg-amber-50/30",
-          disabled && "cursor-not-allowed opacity-60",
+          'group relative cursor-pointer rounded px-2 py-1 transition-colors',
+          'hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+          hasDraft && 'ring-1 ring-amber-400/50 bg-amber-50/30',
+          disabled && 'cursor-not-allowed opacity-60',
           className
         )}
       >
-        <span className={cn(!value && "text-muted-foreground italic")}>
-          {value || placeholder}
-        </span>
+        <span className={cn(!value && 'text-muted-foreground italic')}>{value || placeholder}</span>
         {!disabled && (
           <Pencil
             className={cn(
-              "absolute right-1 top-1/2 -translate-y-1/2 h-3 w-3",
-              "text-muted-foreground opacity-0 transition-opacity",
-              "group-hover:opacity-100 group-focus:opacity-100"
+              'absolute right-1 top-1/2 -translate-y-1/2 h-3 w-3',
+              'text-muted-foreground opacity-0 transition-opacity',
+              'group-hover:opacity-100 group-focus:opacity-100'
             )}
             aria-hidden="true"
           />
@@ -133,8 +131,8 @@ export function EditableText({
 
   // Edit mode - shared props without ref (ref is added per-element for type safety)
   const sharedClassName = cn(
-    "w-full rounded border border-input bg-background px-2 py-1",
-    "focus:outline-none focus:ring-2 focus:ring-ring",
+    'w-full rounded border border-input bg-background px-2 py-1',
+    'focus:outline-none focus:ring-2 focus:ring-ring',
     inputClassName
   );
 

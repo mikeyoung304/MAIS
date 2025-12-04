@@ -20,6 +20,7 @@ Production-ready React component for uploading and managing package photos in th
 ## Installation
 
 The component is already available in the codebase at:
+
 ```
 /client/src/components/PackagePhotoUploader.tsx
 ```
@@ -29,14 +30,14 @@ The component is already available in the codebase at:
 ### Basic Usage
 
 ```tsx
-import { PackagePhotoUploader } from "@/components/PackagePhotoUploader";
+import { PackagePhotoUploader } from '@/components/PackagePhotoUploader';
 
 function MyComponent() {
   return (
     <PackagePhotoUploader
       packageId="pkg-123"
       initialPhotos={[]}
-      onPhotosChange={(photos) => console.log("Photos updated:", photos)}
+      onPhotosChange={(photos) => console.log('Photos updated:', photos)}
     />
   );
 }
@@ -47,10 +48,10 @@ function MyComponent() {
 ```tsx
 const initialPhotos = [
   {
-    url: "http://localhost:5000/uploads/packages/package-1234-abc.jpg",
-    filename: "package-1234-abc.jpg",
+    url: 'http://localhost:5000/uploads/packages/package-1234-abc.jpg',
+    filename: 'package-1234-abc.jpg',
     size: 1024000, // bytes
-    order: 0
+    order: 0,
   },
   // ... more photos
 ];
@@ -59,7 +60,7 @@ const initialPhotos = [
   packageId="pkg-123"
   initialPhotos={initialPhotos}
   onPhotosChange={handlePhotosChange}
-/>
+/>;
 ```
 
 ### With Custom Token
@@ -75,12 +76,12 @@ const initialPhotos = [
 
 ## Props
 
-| Prop | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| `packageId` | `string` | Yes | - | The ID of the package to manage photos for |
-| `initialPhotos` | `PackagePhoto[]` | No | `[]` | Initial photos to display |
-| `onPhotosChange` | `(photos: PackagePhoto[]) => void` | No | - | Callback when photos are added/removed |
-| `tenantToken` | `string` | No | - | JWT token (falls back to localStorage) |
+| Prop             | Type                               | Required | Default | Description                                |
+| ---------------- | ---------------------------------- | -------- | ------- | ------------------------------------------ |
+| `packageId`      | `string`                           | Yes      | -       | The ID of the package to manage photos for |
+| `initialPhotos`  | `PackagePhoto[]`                   | No       | `[]`    | Initial photos to display                  |
+| `onPhotosChange` | `(photos: PackagePhoto[]) => void` | No       | -       | Callback when photos are added/removed     |
+| `tenantToken`    | `string`                           | No       | -       | JWT token (falls back to localStorage)     |
 
 ## Types
 
@@ -88,10 +89,10 @@ const initialPhotos = [
 
 ```typescript
 interface PackagePhoto {
-  url: string;        // Full URL to the photo
-  filename: string;   // Filename on server
-  size: number;       // Size in bytes
-  order: number;      // Display order (0-4)
+  url: string; // Full URL to the photo
+  filename: string; // Filename on server
+  size: number; // Size in bytes
+  order: number; // Display order (0-4)
 }
 ```
 
@@ -100,6 +101,7 @@ interface PackagePhoto {
 The component uses the following API endpoints:
 
 ### Upload Photo
+
 ```
 POST /v1/tenant/admin/packages/:id/photos
 Content-Type: multipart/form-data
@@ -125,6 +127,7 @@ Error Responses:
 ```
 
 ### Delete Photo
+
 ```
 DELETE /v1/tenant/admin/packages/:id/photos/:filename
 Authorization: Bearer <token>
@@ -141,14 +144,17 @@ Error Responses:
 ## Validation Rules
 
 ### File Size
+
 - Maximum: 5MB (5,242,880 bytes)
 - Error message: "File size exceeds maximum of 5MB (file is X.XX MB)"
 
 ### File Type
+
 - Allowed: `image/jpeg`, `image/jpg`, `image/png`, `image/webp`, `image/svg+xml`
 - Error message: "Invalid file type. Allowed types: JPG, PNG, WebP, SVG"
 
 ### Photo Count
+
 - Maximum: 5 photos per package
 - Error message: "Maximum 5 photos per package"
 - Upload button is disabled when limit is reached
@@ -157,14 +163,14 @@ Error Responses:
 
 The component handles all API error responses gracefully:
 
-| Error Code | User Message |
-|------------|--------------|
-| 400 | Specific validation error from API |
-| 401 | "Unauthorized: Please log in again" |
-| 403 | "Forbidden: You do not have permission..." |
-| 404 | "Package not found" or "Photo not found" |
-| 413 | "File too large (maximum 5MB)" |
-| Other | Generic error message |
+| Error Code | User Message                               |
+| ---------- | ------------------------------------------ |
+| 400        | Specific validation error from API         |
+| 401        | "Unauthorized: Please log in again"        |
+| 403        | "Forbidden: You do not have permission..." |
+| 404        | "Package not found" or "Photo not found"   |
+| 413        | "File too large (maximum 5MB)"             |
+| Other      | Generic error message                      |
 
 ## UI Components Used
 
@@ -176,6 +182,7 @@ The component handles all API error responses gracefully:
 ## Styling
 
 The component uses Tailwind CSS with the project's color scheme:
+
 - Navy background (`bg-navy-800`, `bg-navy-700`)
 - Lavender accents (`text-lavender-50`, `border-lavender-600`)
 - Red for delete actions (`bg-red-600`)
@@ -202,6 +209,7 @@ The component uses Tailwind CSS with the project's color scheme:
 ## Integration Example
 
 See `PackagePhotoUploader.example.tsx` for complete integration examples including:
+
 - Basic usage in package edit form
 - Standalone photo manager
 - Custom token handling
@@ -237,16 +245,19 @@ To test the component:
 ## Troubleshooting
 
 ### Photos not uploading
+
 - Check that `tenantToken` is valid or exists in `localStorage`
 - Verify the API server is running
 - Check browser console for detailed error messages
 
 ### Photos not displaying
+
 - Verify `initialPhotos` prop has correct structure
 - Check that photo URLs are accessible
 - Ensure CORS is configured correctly on the server
 
 ### Delete not working
+
 - Verify the filename in the URL matches exactly
 - Check server logs for file system errors
 - Ensure package ownership matches the authenticated tenant

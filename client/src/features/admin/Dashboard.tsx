@@ -1,17 +1,17 @@
-import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { LogOut } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { api } from "../../lib/api";
-import type { BookingDto, PackageDto } from "@macon/contracts";
-import { PackagesManager } from "./packages";
-import { BookingList } from "./BookingList";
-import { DashboardMetrics } from "./dashboard/components/DashboardMetrics";
-import { TabNavigation } from "./dashboard/components/TabNavigation";
-import { BlackoutsTab } from "./dashboard/tabs/BlackoutsTab";
-import { TenantsTab } from "./dashboard/tabs/TenantsTab";
-import { ImpersonationBanner } from "./dashboard/components/ImpersonationBanner";
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { api } from '../../lib/api';
+import type { BookingDto, PackageDto } from '@macon/contracts';
+import { PackagesManager } from './packages';
+import { BookingList } from './BookingList';
+import { DashboardMetrics } from './dashboard/components/DashboardMetrics';
+import { TabNavigation } from './dashboard/components/TabNavigation';
+import { BlackoutsTab } from './dashboard/tabs/BlackoutsTab';
+import { TenantsTab } from './dashboard/tabs/TenantsTab';
+import { ImpersonationBanner } from './dashboard/components/ImpersonationBanner';
 
 type Blackout = {
   date: string;
@@ -44,7 +44,9 @@ type Tenant = {
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"bookings" | "blackouts" | "packages" | "tenants">("tenants");
+  const [activeTab, setActiveTab] = useState<'bookings' | 'blackouts' | 'packages' | 'tenants'>(
+    'tenants'
+  );
   const [bookings, setBookings] = useState<BookingDto[]>([]);
   const [blackouts, setBlackouts] = useState<Blackout[]>([]);
   const [packages, setPackages] = useState<PackageDto[]>([]);
@@ -58,7 +60,7 @@ export function Dashboard() {
 
   // Check if admin is impersonating on mount
   useEffect(() => {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem('adminToken');
     if (token) {
       try {
         // Decode JWT to check for impersonation data (simple base64 decode, no verification)
@@ -72,20 +74,20 @@ export function Dashboard() {
         }
       } catch (error) {
         if (import.meta.env.DEV) {
-          console.error("Failed to decode JWT:", error);
+          console.error('Failed to decode JWT:', error);
         }
       }
     }
   }, []);
 
   useEffect(() => {
-    if (activeTab === "bookings") {
+    if (activeTab === 'bookings') {
       loadBookings();
-    } else if (activeTab === "blackouts") {
+    } else if (activeTab === 'blackouts') {
       loadBlackouts();
-    } else if (activeTab === "packages") {
+    } else if (activeTab === 'packages') {
       loadPackages();
-    } else if (activeTab === "tenants") {
+    } else if (activeTab === 'tenants') {
       loadTenants();
     }
   }, [activeTab]);
@@ -99,10 +101,10 @@ export function Dashboard() {
       }
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.error("Failed to load bookings:", error);
+        console.error('Failed to load bookings:', error);
       }
-      toast.error("Failed to load bookings", {
-        description: "Please refresh the page or contact support.",
+      toast.error('Failed to load bookings', {
+        description: 'Please refresh the page or contact support.',
       });
     } finally {
       setIsLoading(false);
@@ -118,10 +120,10 @@ export function Dashboard() {
       }
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.error("Failed to load blackouts:", error);
+        console.error('Failed to load blackouts:', error);
       }
-      toast.error("Failed to load blackout dates", {
-        description: "Please refresh the page or contact support.",
+      toast.error('Failed to load blackout dates', {
+        description: 'Please refresh the page or contact support.',
       });
     } finally {
       setIsLoading(false);
@@ -137,10 +139,10 @@ export function Dashboard() {
       }
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.error("Failed to load packages:", error);
+        console.error('Failed to load packages:', error);
       }
-      toast.error("Failed to load packages", {
-        description: "Please refresh the page or contact support.",
+      toast.error('Failed to load packages', {
+        description: 'Please refresh the page or contact support.',
       });
     } finally {
       setIsLoading(false);
@@ -156,10 +158,10 @@ export function Dashboard() {
       }
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.error("Failed to load tenants:", error);
+        console.error('Failed to load tenants:', error);
       }
-      toast.error("Failed to load tenants", {
-        description: "Please refresh the page or contact support.",
+      toast.error('Failed to load tenants', {
+        description: 'Please refresh the page or contact support.',
       });
     } finally {
       setIsLoading(false);
@@ -177,14 +179,14 @@ export function Dashboard() {
 
       if (result.status === 200) {
         loadBlackouts();
-        toast.success("Blackout date added successfully");
+        toast.success('Blackout date added successfully');
       }
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.error("Failed to create blackout:", error);
+        console.error('Failed to create blackout:', error);
       }
-      toast.error("Failed to create blackout date", {
-        description: "Please try again or contact support.",
+      toast.error('Failed to create blackout date', {
+        description: 'Please try again or contact support.',
       });
     }
   };
@@ -192,7 +194,7 @@ export function Dashboard() {
   const exportToCSV = () => {
     if (bookings.length === 0) return;
 
-    const headers = ["Couple", "Email", "Date", "Package ID", "Total"];
+    const headers = ['Couple', 'Email', 'Date', 'Package ID', 'Total'];
     const rows = bookings.map((b) => [
       b.coupleName,
       b.email,
@@ -201,19 +203,19 @@ export function Dashboard() {
       `$${(b.totalCents / 100).toFixed(2)}`,
     ]);
 
-    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
+    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
-    a.download = `bookings-${new Date().toISOString().split("T")[0]}.csv`;
+    a.download = `bookings-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("adminToken");
-    navigate("/login");
+    localStorage.removeItem('adminToken');
+    navigate('/login');
   };
 
   // Calculate metrics with useMemo
@@ -261,12 +263,12 @@ export function Dashboard() {
       <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Bookings Tab */}
-      {activeTab === "bookings" && (
+      {activeTab === 'bookings' && (
         <BookingList bookings={bookings} isLoading={isLoading} onExportCSV={exportToCSV} />
       )}
 
       {/* Blackouts Tab */}
-      {activeTab === "blackouts" && (
+      {activeTab === 'blackouts' && (
         <BlackoutsTab
           blackouts={blackouts}
           isLoading={isLoading}
@@ -275,12 +277,12 @@ export function Dashboard() {
       )}
 
       {/* Packages Tab */}
-      {activeTab === "packages" && (
+      {activeTab === 'packages' && (
         <PackagesManager packages={packages} onPackagesChange={loadPackages} />
       )}
 
       {/* Tenants Tab */}
-      {activeTab === "tenants" && (
+      {activeTab === 'tenants' && (
         <TenantsTab tenants={tenants} isLoading={isLoading} onRefresh={loadTenants} />
       )}
     </div>

@@ -12,18 +12,21 @@
 ### Overall Impact
 
 **Error Reduction:**
+
 - **Starting State:** 913 ESLint errors
 - **Current State:** 426 ESLint errors
 - **Total Reduction:** 487 errors eliminated (53.3% reduction)
 - **Production Safety:** HIGH RISK → LOW RISK
 
 **Critical Safety Improvements:**
+
 1. **Error Handling Infrastructure** - Type-safe error guards in `@elope/shared`
 2. **Promise Safety** - Eliminated floating promises in critical paths
 3. **API Type Safety** - Comprehensive response validation patterns
 4. **Express Handler Safety** - Type-safe async middleware patterns
 
 **Timeline:**
+
 - **Phase 1:** Initial setup (2 hours) - Config fixes: 913 → 931 → 694 errors
 - **Phase 2A:** Error handling infrastructure (4 hours) - 694 → 566 errors
 - **Phase 2B:** Promise safety (3 hours) - 566 → 566 (quality fixes, no count change)
@@ -54,6 +57,7 @@ Instead of fixing errors sequentially, we deployed a **parallel sub-agent archit
 ### Key Learning
 
 The most impactful phase was **Phase 2A** (error handling infrastructure), which:
+
 - Created reusable utilities (`error-guards.ts`)
 - Established team-wide patterns
 - Enabled faster fixes in subsequent phases
@@ -67,12 +71,14 @@ The most impactful phase was **Phase 2A** (error handling infrastructure), which
 **Objective:** Stabilize ESLint configuration and fix critical type errors
 
 **Actions:**
+
 1. Updated ESLint configuration to stricter TypeScript rules
 2. Fixed configuration conflicts (913 → 931 temporary increase)
 3. Resolved critical type errors in core domain models
 4. Fixed import/export issues in shared packages
 
 **Results:**
+
 - **Errors:** 913 → 694 (219 errors eliminated)
 - **Files Modified:** 12 core files
 - **Key Fixes:**
@@ -94,15 +100,15 @@ The most impactful phase was **Phase 2A** (error handling infrastructure), which
 
 ```typescript
 // Core type guards
-export function isApiError(error: unknown): error is ApiError
-export function hasStatusCode(error: unknown): error is ErrorWithStatus
-export function hasMessage(error: unknown): error is ErrorWithMessage
-export function isError(error: unknown): error is Error
-export function isRecord(value: unknown): value is Record<string, unknown>
+export function isApiError(error: unknown): error is ApiError;
+export function hasStatusCode(error: unknown): error is ErrorWithStatus;
+export function hasMessage(error: unknown): error is ErrorWithMessage;
+export function isError(error: unknown): error is Error;
+export function isRecord(value: unknown): value is Record<string, unknown>;
 
 // Helper functions
-export function getErrorMessage(error: unknown): string
-export function getErrorStatus(error: unknown): number | undefined
+export function getErrorMessage(error: unknown): string;
+export function getErrorStatus(error: unknown): number | undefined;
 ```
 
 **Pattern Established:**
@@ -124,6 +130,7 @@ catch (error: unknown) {
 ```
 
 **Results:**
+
 - **Errors:** 694 → 566 (128 errors eliminated)
 - **Files Modified:** 24 service and adapter files
 - **Errors Fixed:**
@@ -161,6 +168,7 @@ app.post('/endpoint', async (req, res, next) => {
 ```
 
 **Results:**
+
 - **Errors:** 566 → 566 (0 count change, but quality improved)
 - **Files Modified:** 18 route handlers and components
 - **Errors Fixed:**
@@ -187,14 +195,13 @@ export function calculateCommission(
 }
 
 // Async function return types
-export async function fetchBookings(
-  tenantId: string
-): Promise<Booking[]> {
+export async function fetchBookings(tenantId: string): Promise<Booking[]> {
   // Implementation
 }
 ```
 
 **Results:**
+
 - **Errors:** 566 → 426 (140 errors eliminated)
 - **Files Modified:** 31 service and utility files
 - **Errors Fixed:**
@@ -210,36 +217,36 @@ export async function fetchBookings(
 
 ### Errors Completely Eliminated (100%)
 
-| Error Type | Before | After | Status |
-|------------|--------|-------|--------|
-| `@typescript-eslint/no-floating-promises` | 15 | 0 | ✅ DONE |
-| `@typescript-eslint/no-unsafe-enum-comparison` | 8 | 0 | ✅ DONE |
-| `@typescript-eslint/no-base-to-string` | 6 | 0 | ✅ DONE |
+| Error Type                                     | Before | After | Status  |
+| ---------------------------------------------- | ------ | ----- | ------- |
+| `@typescript-eslint/no-floating-promises`      | 15     | 0     | ✅ DONE |
+| `@typescript-eslint/no-unsafe-enum-comparison` | 8      | 0     | ✅ DONE |
+| `@typescript-eslint/no-base-to-string`         | 6      | 0     | ✅ DONE |
 
 ### Errors Mostly Resolved (>70% reduction)
 
-| Error Type | Before | After | Reduction | Status |
-|------------|--------|-------|-----------|--------|
-| `@typescript-eslint/no-unsafe-member-access` | 247 | 58 | 76% | 🟢 GOOD |
-| `@typescript-eslint/no-unsafe-assignment` | 189 | 39 | 79% | 🟢 GOOD |
-| `@typescript-eslint/no-unsafe-call` | 134 | 27 | 80% | 🟢 GOOD |
-| `@typescript-eslint/explicit-function-return-type` | 156 | 35 | 78% | 🟢 GOOD |
+| Error Type                                         | Before | After | Reduction | Status  |
+| -------------------------------------------------- | ------ | ----- | --------- | ------- |
+| `@typescript-eslint/no-unsafe-member-access`       | 247    | 58    | 76%       | 🟢 GOOD |
+| `@typescript-eslint/no-unsafe-assignment`          | 189    | 39    | 79%       | 🟢 GOOD |
+| `@typescript-eslint/no-unsafe-call`                | 134    | 27    | 80%       | 🟢 GOOD |
+| `@typescript-eslint/explicit-function-return-type` | 156    | 35    | 78%       | 🟢 GOOD |
 
 ### Errors Partially Resolved (40-70% reduction)
 
-| Error Type | Before | After | Reduction | Status |
-|------------|--------|-------|-----------|--------|
-| `@typescript-eslint/prefer-nullish-coalescing` | 143 | 76 | 47% | 🟡 IN PROGRESS |
-| `@typescript-eslint/restrict-template-expressions` | 67 | 29 | 57% | 🟡 IN PROGRESS |
-| `@typescript-eslint/no-unnecessary-condition` | 58 | 25 | 57% | 🟡 IN PROGRESS |
+| Error Type                                         | Before | After | Reduction | Status         |
+| -------------------------------------------------- | ------ | ----- | --------- | -------------- |
+| `@typescript-eslint/prefer-nullish-coalescing`     | 143    | 76    | 47%       | 🟡 IN PROGRESS |
+| `@typescript-eslint/restrict-template-expressions` | 67     | 29    | 57%       | 🟡 IN PROGRESS |
+| `@typescript-eslint/no-unnecessary-condition`      | 58     | 25    | 57%       | 🟡 IN PROGRESS |
 
 ### Remaining Issues (<40% reduction)
 
-| Error Type | Before | After | Reduction | Status |
-|------------|--------|-------|-----------|--------|
-| `@typescript-eslint/require-await` | 52 | 38 | 27% | 🔴 NEEDS WORK |
-| `@typescript-eslint/no-unused-vars` | 45 | 31 | 31% | 🔴 NEEDS WORK |
-| `@typescript-eslint/no-unsafe-argument` | 18 | 10 | 44% | 🔴 NEEDS WORK |
+| Error Type                              | Before | After | Reduction | Status        |
+| --------------------------------------- | ------ | ----- | --------- | ------------- |
+| `@typescript-eslint/require-await`      | 52     | 38    | 27%       | 🔴 NEEDS WORK |
+| `@typescript-eslint/no-unused-vars`     | 45     | 31    | 31%       | 🔴 NEEDS WORK |
+| `@typescript-eslint/no-unsafe-argument` | 18     | 10    | 44%       | 🔴 NEEDS WORK |
 
 ---
 
@@ -250,6 +257,7 @@ export async function fetchBookings(
 **Location:** `/packages/shared/src/error-guards.ts`
 
 **Usage Pattern:**
+
 ```typescript
 import { hasStatusCode, getErrorMessage } from '@elope/shared';
 
@@ -274,6 +282,7 @@ try {
 ### 2. Catch Block Pattern
 
 **Standard Pattern:**
+
 ```typescript
 // ✅ CORRECT: Type-safe catch
 catch (error: unknown) {
@@ -287,6 +296,7 @@ catch (error: unknown) {
 ```
 
 **Anti-pattern:**
+
 ```typescript
 // ❌ WRONG: Unsafe catch
 catch (error) {
@@ -301,20 +311,23 @@ catch (error) {
 ### 3. Promise Handling Pattern
 
 **Pattern 1: Event Handlers**
+
 ```typescript
 // ✅ CORRECT: Explicit void
 <button onClick={() => void handleSubmit()}>Submit</button>
 ```
 
 **Pattern 2: Fire-and-forget**
+
 ```typescript
 // ✅ CORRECT: Explicit error handling
-void apiCall().catch(error => {
+void apiCall().catch((error) => {
   logger.error({ error }, 'Background operation failed');
 });
 ```
 
 **Pattern 3: Express Routes**
+
 ```typescript
 // ✅ CORRECT: Async middleware
 app.post('/endpoint', async (req, res, next) => {
@@ -334,6 +347,7 @@ app.post('/endpoint', async (req, res, next) => {
 ### 4. API Response Validation Pattern
 
 **Client-side Pattern:**
+
 ```typescript
 export async function fetchBookings(tenantId: string): Promise<Booking[]> {
   try {
@@ -355,6 +369,7 @@ export async function fetchBookings(tenantId: string): Promise<Booking[]> {
 ### 5. Type-Safe Express Handlers
 
 **Pattern:**
+
 ```typescript
 import { Request, Response, NextFunction } from 'express';
 
@@ -392,21 +407,25 @@ export async function createBooking(
 ### Files Modified by Phase
 
 **Phase 1: Initial Setup** (12 files)
+
 - Core domain models
 - Shared package configuration
 - API contracts
 
 **Phase 2A: Error Handling** (24 files)
+
 - `server/src/services/*.ts` (8 files)
 - `server/src/adapters/prisma/*.ts` (6 files)
 - `server/src/routes/*.ts` (5 files)
 - `server/src/lib/*.ts` (5 files)
 
 **Phase 2B: Promise Safety** (18 files)
+
 - Route handlers (8 files)
 - React components (10 files)
 
 **Phase 2C: Return Types** (31 files)
+
 - Service layer (12 files)
 - Adapter layer (9 files)
 - Utility functions (10 files)
@@ -430,6 +449,7 @@ export async function createBooking(
 ### Before Campaign (HIGH RISK)
 
 **Risk Factors:**
+
 - ❌ 247 unsafe member accesses (potential runtime crashes)
 - ❌ 189 unsafe assignments (type safety violations)
 - ❌ 134 unsafe function calls (runtime errors likely)
@@ -437,6 +457,7 @@ export async function createBooking(
 - ❌ 156 missing return types (API contract unclear)
 
 **Estimated Production Impact:**
+
 - High probability of runtime errors in error paths
 - Risk of unhandled promise rejections crashing Node.js
 - Type mismatches could cause data corruption
@@ -445,6 +466,7 @@ export async function createBooking(
 ### After Campaign (LOW RISK)
 
 **Improvements:**
+
 - ✅ 80% reduction in unsafe member accesses (247 → 58)
 - ✅ 79% reduction in unsafe assignments (189 → 39)
 - ✅ 80% reduction in unsafe calls (134 → 27)
@@ -459,6 +481,7 @@ export async function createBooking(
 4. **API Contracts:** 78% of functions now have explicit return types
 
 **Risk Assessment:**
+
 - **Critical Errors Remaining:** 140 (mostly in client code)
 - **Risk Level:** LOW (remaining errors are mostly style/quality issues)
 - **Recommended Action:** Safe to deploy, fix remaining in next sprint
@@ -473,49 +496,51 @@ export async function createBooking(
 
 These should be fixed before next major feature deployment:
 
-| Error Type | Count | Location | Priority |
-|------------|-------|----------|----------|
-| `@typescript-eslint/prefer-nullish-coalescing` | 76 | Client components | MEDIUM |
-| `@typescript-eslint/no-unsafe-member-access` | 58 | Client API calls | HIGH |
-| `@typescript-eslint/require-await` | 38 | Services | MEDIUM |
-| `@typescript-eslint/no-unsafe-assignment` | 39 | Client state | HIGH |
-| `@typescript-eslint/explicit-function-return-type` | 35 | Various | LOW |
+| Error Type                                         | Count | Location          | Priority |
+| -------------------------------------------------- | ----- | ----------------- | -------- |
+| `@typescript-eslint/prefer-nullish-coalescing`     | 76    | Client components | MEDIUM   |
+| `@typescript-eslint/no-unsafe-member-access`       | 58    | Client API calls  | HIGH     |
+| `@typescript-eslint/require-await`                 | 38    | Services          | MEDIUM   |
+| `@typescript-eslint/no-unsafe-assignment`          | 39    | Client state      | HIGH     |
+| `@typescript-eslint/explicit-function-return-type` | 35    | Various           | LOW      |
 
 **Category 2: Quality Improvements (286 errors)**
 
 These can be fixed incrementally:
 
-| Error Type | Count | Location | Priority |
-|------------|-------|----------|----------|
-| `@typescript-eslint/restrict-template-expressions` | 29 | UI strings | LOW |
-| `@typescript-eslint/no-unsafe-call` | 27 | API clients | MEDIUM |
-| `@typescript-eslint/no-unused-vars` | 31 | Various | LOW |
-| `@typescript-eslint/no-unnecessary-condition` | 25 | Logic paths | LOW |
-| Other minor issues | 174 | Various | LOW |
+| Error Type                                         | Count | Location    | Priority |
+| -------------------------------------------------- | ----- | ----------- | -------- |
+| `@typescript-eslint/restrict-template-expressions` | 29    | UI strings  | LOW      |
+| `@typescript-eslint/no-unsafe-call`                | 27    | API clients | MEDIUM   |
+| `@typescript-eslint/no-unused-vars`                | 31    | Various     | LOW      |
+| `@typescript-eslint/no-unnecessary-condition`      | 25    | Logic paths | LOW      |
+| Other minor issues                                 | 174   | Various     | LOW      |
 
 ### File Breakdown (Top 10 Files with Errors)
 
-| File | Errors | Type | Next Action |
-|------|--------|------|-------------|
-| `client/src/contexts/AuthContext.tsx` | 19 | Client | Apply error guards pattern |
-| `client/src/features/admin/PackagesManager.tsx` | 17 | Client | Apply API validation pattern |
-| `client/src/features/admin/Dashboard.tsx` | 21 | Client | Apply error guards pattern |
-| `client/src/features/tenant-admin/TenantDashboard.tsx` | 15 | Client | Apply error guards pattern |
-| `client/src/features/booking/DatePicker.tsx` | 12 | Client | Apply error guards pattern |
-| `client/src/lib/api.ts` | 11 | Client | Add response type validation |
-| `server/src/adapters/prisma/tenant.repository.ts` | 8 | Server | Add return types |
-| `server/src/services/booking.service.ts` | 3 | Server | Add explicit types |
-| `client/src/components/PackagePhotoUploader.tsx` | 6 | Client | Template expression fixes |
-| `server/src/lib/core/stripe.ts` | 1 | Server | Minor cleanup |
+| File                                                   | Errors | Type   | Next Action                  |
+| ------------------------------------------------------ | ------ | ------ | ---------------------------- |
+| `client/src/contexts/AuthContext.tsx`                  | 19     | Client | Apply error guards pattern   |
+| `client/src/features/admin/PackagesManager.tsx`        | 17     | Client | Apply API validation pattern |
+| `client/src/features/admin/Dashboard.tsx`              | 21     | Client | Apply error guards pattern   |
+| `client/src/features/tenant-admin/TenantDashboard.tsx` | 15     | Client | Apply error guards pattern   |
+| `client/src/features/booking/DatePicker.tsx`           | 12     | Client | Apply error guards pattern   |
+| `client/src/lib/api.ts`                                | 11     | Client | Add response type validation |
+| `server/src/adapters/prisma/tenant.repository.ts`      | 8      | Server | Add return types             |
+| `server/src/services/booking.service.ts`               | 3      | Server | Add explicit types           |
+| `client/src/components/PackagePhotoUploader.tsx`       | 6      | Client | Template expression fixes    |
+| `server/src/lib/core/stripe.ts`                        | 1      | Server | Minor cleanup                |
 
 ### Estimated Effort
 
 **Category 1 (Critical): ~8 hours**
+
 - Apply existing patterns to client code
 - Most errors are in 5 core files
 - Patterns already established, just need application
 
 **Category 2 (Quality): ~12 hours**
+
 - Template expression improvements
 - Unused variable cleanup
 - Unnecessary condition removal
@@ -530,20 +555,24 @@ These can be fixed incrementally:
 ### 1. When to Fix Remaining Issues
 
 **Immediate (Before Next Deploy):**
+
 - ❌ None - current codebase is production-safe
 
 **Next Sprint (Priority 1):**
+
 - Apply error-guards pattern to client code (8 hours)
 - Focus on AuthContext, Dashboard, and PackagesManager
 - Target: Reduce errors to <250
 
 **Following Sprints (Priority 2):**
+
 - Template expression improvements (4 hours)
 - Unused variable cleanup (3 hours)
 - Unnecessary condition removal (5 hours)
 - Target: Reduce errors to <100
 
 **Long-term (Priority 3):**
+
 - Achieve zero ESLint errors
 - Enable `--max-warnings 0` in CI/CD
 - Prevent regression with pre-commit hooks
@@ -649,38 +678,38 @@ fi
 
 ### Campaign Results
 
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| **Total Errors** | 913 | 426 | -487 (-53%) |
-| **Critical Safety** | 247 | 58 | -189 (-76%) |
-| **Unsafe Assignments** | 189 | 39 | -150 (-79%) |
-| **Unsafe Calls** | 134 | 27 | -107 (-80%) |
-| **Floating Promises** | 15 | 0 | -15 (-100%) |
-| **Missing Return Types** | 156 | 35 | -121 (-78%) |
-| **Production Risk** | HIGH | LOW | ✅ SAFE |
+| Metric                   | Before | After | Change      |
+| ------------------------ | ------ | ----- | ----------- |
+| **Total Errors**         | 913    | 426   | -487 (-53%) |
+| **Critical Safety**      | 247    | 58    | -189 (-76%) |
+| **Unsafe Assignments**   | 189    | 39    | -150 (-79%) |
+| **Unsafe Calls**         | 134    | 27    | -107 (-80%) |
+| **Floating Promises**    | 15     | 0     | -15 (-100%) |
+| **Missing Return Types** | 156    | 35    | -121 (-78%) |
+| **Production Risk**      | HIGH   | LOW   | ✅ SAFE     |
 
 ### Code Quality Improvements
 
-| Metric | Value |
-|--------|-------|
-| **Files Modified** | 85 (0.4% of codebase) |
-| **New Utilities Created** | 2 files, 150 lines |
-| **Patterns Established** | 5 core patterns |
-| **Team Velocity Impact** | +40% (estimated) |
-| **Onboarding Time Reduction** | -30% (estimated) |
-| **Documentation Created** | 13 markdown files |
+| Metric                        | Value                 |
+| ----------------------------- | --------------------- |
+| **Files Modified**            | 85 (0.4% of codebase) |
+| **New Utilities Created**     | 2 files, 150 lines    |
+| **Patterns Established**      | 5 core patterns       |
+| **Team Velocity Impact**      | +40% (estimated)      |
+| **Onboarding Time Reduction** | -30% (estimated)      |
+| **Documentation Created**     | 13 markdown files     |
 
 ### Time Investment
 
-| Phase | Hours | Error Reduction | Efficiency |
-|-------|-------|-----------------|------------|
-| Phase 1: Setup | 2h | -219 errors | 109 errors/hour |
-| Phase 2A: Error Guards | 4h | -128 errors | 32 errors/hour |
-| Phase 2B: Promises | 3h | 0 errors* | N/A (quality) |
-| Phase 2C: Return Types | 5h | -140 errors | 28 errors/hour |
-| **Total** | **14h** | **-487 errors** | **35 errors/hour** |
+| Phase                  | Hours   | Error Reduction | Efficiency         |
+| ---------------------- | ------- | --------------- | ------------------ |
+| Phase 1: Setup         | 2h      | -219 errors     | 109 errors/hour    |
+| Phase 2A: Error Guards | 4h      | -128 errors     | 32 errors/hour     |
+| Phase 2B: Promises     | 3h      | 0 errors\*      | N/A (quality)      |
+| Phase 2C: Return Types | 5h      | -140 errors     | 28 errors/hour     |
+| **Total**              | **14h** | **-487 errors** | **35 errors/hour** |
 
-*Phase 2B improved quality without reducing error count
+\*Phase 2B improved quality without reducing error count
 
 ---
 
@@ -698,6 +727,7 @@ fi
 ### Innovation
 
 The **parallel sub-agent methodology** proved highly effective:
+
 - 3-4x faster than sequential fixes
 - Consistent pattern application
 - Scalable to larger codebases
@@ -711,12 +741,14 @@ The **parallel sub-agent methodology** proved highly effective:
 ### Business Value
 
 **Before Campaign:**
+
 - High risk of runtime errors in production
 - Poor type safety leading to potential data issues
 - Unclear API contracts hampering development
 - Estimated 10-20 production bugs per month from type errors
 
 **After Campaign:**
+
 - Low risk - remaining errors are mostly style issues
 - Strong type safety foundation established
 - Clear patterns for new development

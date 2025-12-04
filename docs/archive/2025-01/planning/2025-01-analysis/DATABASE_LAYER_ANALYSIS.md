@@ -3,8 +3,9 @@
 ## Executive Summary
 
 Elope demonstrates **strong architectural separation** between business logic and persistence layers through:
+
 - **Port-based architecture** (interfaces define contracts before Prisma)
-- **Domain entities** separate from persistence models  
+- **Domain entities** separate from persistence models
 - **Comprehensive tenant isolation** via composite unique constraints and middleware
 - **Explicit tenantId scoping** in all repository queries
 - **Branding as structured JSON** in Tenant model, separate from business data
@@ -17,16 +18,17 @@ Elope demonstrates **strong architectural separation** between business logic an
 ### 1.1 Clear Separation Pattern
 
 **Business Logic Models** (in `lib/entities.ts`):
+
 ```typescript
 export interface Package {
   id: string;
-  tenantId: string;     // Multi-tenant isolation
+  tenantId: string; // Multi-tenant isolation
   slug: string;
   title: string;
   description: string;
   priceCents: number;
   photoUrl?: string;
-  photos?: any;          // Photo gallery
+  photos?: any; // Photo gallery
 }
 
 export interface Booking {
@@ -46,16 +48,17 @@ export interface Booking {
 ```
 
 **Presentation Config** (in Tenant model):
+
 ```prisma
 model Tenant {
   // ... auth and business fields ...
-  
+
   // Branding Configuration for embeddable widget
   // Structure: {primaryColor, secondaryColor, fontFamily, logo}
-  // Example: {"primaryColor": "#8B7355", "secondaryColor": "#D4A574", 
+  // Example: {"primaryColor": "#8B7355", "secondaryColor": "#D4A574",
   //          "fontFamily": "Inter", "logo": "https://..."}
   branding Json @default("{}")  // Widget branding settings
-  
+
   // ... stripe and commission ...
 }
 ```
@@ -65,6 +68,7 @@ model Tenant {
 **Location**: `Tenant.branding` (JSONB field)
 
 **Structure**:
+
 ```json
 {
   "primaryColor": "#8B7355",
@@ -75,12 +79,14 @@ model Tenant {
 ```
 
 **Why JSONB?**
+
 - Schema-flexible: No migration needed when adding new branding properties
 - Tenant-specific: Each tenant has independent branding without separate tables
 - Query-optimized: JSONB indexes enable efficient filtering
 - Version-compatible: Old tenants with partial config work alongside new ones
 
 **Integration Point**: Client retrieves via `useBranding()` hook which:
+
 1. Calls `api.getTenantBranding()` (scoped by API key)
 2. Applies colors as CSS variables: `--color-primary`, `--color-secondary`
 3. Dynamically loads Google Fonts based on fontFamily
@@ -89,21 +95,23 @@ model Tenant {
 ### 1.3 Booking Price Logic Separation
 
 **Domain entities separate pricing concerns**:
+
 ```typescript
 // Domain entity - contains business values
 export interface Booking {
-  totalCents: number;           // Total amount (package + add-ons)
-  commissionAmount?: number;    // Platform's cut (calculated server-side)
-  commissionPercent?: number;   // Tenant's commission rate (snapshot)
+  totalCents: number; // Total amount (package + add-ons)
+  commissionAmount?: number; // Platform's cut (calculated server-side)
+  commissionPercent?: number; // Tenant's commission rate (snapshot)
 }
 ```
 
 **Stored in Prisma model**:
+
 ```prisma
 model Booking {
   // Core business
   totalPrice Int
-  
+
   // Multi-tenant commission tracking
   commissionAmount  Int     @default(0)  // In cents
   commissionPercent Decimal @default(0) @db.Decimal(5, 2)
@@ -111,6 +119,7 @@ model Booking {
 ```
 
 **Commission Calculation** (server-side only, not exposed to frontend):
+
 - Uses `TenantRepository.getStats()` to fetch tenant commission rate
 - Calculated in `CommissionService` during booking creation
 - Snapshot stored with booking for audit trail
@@ -130,33 +139,33 @@ model Tenant {
   id String @id @default(cuid())
   slug String @unique                    // URL-safe identifier
   name String                           // Display name
-  
+
   // Tenant Admin Authentication
   email String? @unique
   passwordHash String?
-  
+
   // API Authentication (public key format)
   apiKeyPublic String @unique           // pk_live_tenant_xyz
   apiKeySecret String                   // Hashed
-  
+
   // Commission Settings
   commissionPercent Decimal @default(10.0) @db.Decimal(5, 2)
-  
+
   // Presentation Configuration
   branding Json @default("{}")
-  
+
   // Stripe Connect Integration
   stripeAccountId String? @unique
   stripeOnboarded Boolean @default(false)
-  
+
   // Encrypted Secrets
   secrets Json @default("{}")
-  
+
   // Status
   isActive Boolean @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   // Relations - all cascade delete
   users User[]
   packages Package[]
@@ -164,7 +173,7 @@ model Tenant {
   bookings Booking[]
   blackoutDates BlackoutDate[]
   webhookEvents WebhookEvent[]
-  
+
   @@index([slug])
   @@index([apiKeyPublic])
   @@index([isActive])
@@ -174,6 +183,7 @@ model Tenant {
 ### 2.2 Business Models with Tenant Isolation
 
 **Package Model** - Catalog Item:
+
 ```prisma
 model Package {
   id String @id @default(cuid())
@@ -183,19 +193,19 @@ model Package {
   description String?
   basePrice Int                         // In cents
   active Boolean @default(true)
-  
+
   // Photo Gallery - Array of photo objects
   // Structure: [{url, filename, size, order}]
   // Max 5 photos per package
   photos Json @default("[]")
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   addOns PackageAddOn[]
   bookings Booking[]
-  
+
   @@unique([tenantId, slug])            // Tenant + slug unique
   @@index([tenantId, active])           // Optimize tenant queries
   @@index([tenantId])
@@ -203,6 +213,7 @@ model Package {
 ```
 
 **AddOn Model** - Optional Service:
+
 ```prisma
 model AddOn {
   id String @id @default(cuid())
@@ -212,14 +223,14 @@ model AddOn {
   description String?
   price Int                             // In cents
   active Boolean @default(true)
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   packages PackageAddOn[]
   bookingRefs BookingAddOn[]
-  
+
   @@unique([tenantId, slug])            // Tenant + slug unique
   @@index([tenantId, active])
   @@index([tenantId])
@@ -227,6 +238,7 @@ model AddOn {
 ```
 
 **Booking Model** - Order Record:
+
 ```prisma
 model Booking {
   id String @id @default(cuid())
@@ -240,25 +252,25 @@ model Booking {
   status BookingStatus @default(PENDING)
   totalPrice Int
   notes String?
-  
+
   // Platform Commission (Multi-tenant)
   commissionAmount Int @default(0)
   commissionPercent Decimal @default(0) @db.Decimal(5, 2)
-  
+
   // Stripe Payment
   stripePaymentIntentId String? @unique
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   confirmedAt DateTime?
-  
+
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   customer Customer @relation(fields: [customerId], references: [id])
   package Package @relation(fields: [packageId], references: [id])
   venue Venue? @relation(fields: [venueId], references: [id])
   addOns BookingAddOn[]
   payments Payment[]
-  
+
   @@unique([tenantId, date])            // One booking per date per tenant
   @@index([tenantId, status])
   @@index([tenantId, date])
@@ -271,6 +283,7 @@ model Booking {
 ```
 
 **BlackoutDate Model** - Unavailable Dates:
+
 ```prisma
 model BlackoutDate {
   id String @id @default(cuid())
@@ -278,9 +291,9 @@ model BlackoutDate {
   date DateTime @db.Date
   reason String?
   createdAt DateTime @default(now())
-  
+
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+
   @@unique([tenantId, date])            // One blackout per date per tenant
   @@index([tenantId, date])
   @@index([tenantId])
@@ -288,6 +301,7 @@ model BlackoutDate {
 ```
 
 **WebhookEvent Model** - Event Tracking:
+
 ```prisma
 model WebhookEvent {
   id String @id @default(uuid())
@@ -300,9 +314,9 @@ model WebhookEvent {
   lastError String? @db.Text
   processedAt DateTime?
   createdAt DateTime @default(now())
-  
+
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+
   @@index([tenantId, status])
   @@index([tenantId, createdAt])
   @@index([tenantId])
@@ -315,6 +329,7 @@ model WebhookEvent {
 ### 2.3 Composite Unique Constraints Pattern
 
 **Critical Uniqueness Rules**:
+
 1. **Package**: `(tenantId, slug)` unique → Each tenant has unique package names
 2. **AddOn**: `(tenantId, slug)` unique → Each tenant has unique add-on names
 3. **Booking**: `(tenantId, date)` unique → **One booking per date per tenant** (mission-critical)
@@ -329,6 +344,7 @@ These composite constraints **prevent cross-tenant data collisions** at the data
 ### 3.1 Separation: Ports (Interfaces) → Adapters (Implementation)
 
 **Port Definition** (`lib/ports.ts`):
+
 ```typescript
 export interface CatalogRepository {
   getAllPackages(tenantId: string): Promise<Package[]>;
@@ -345,6 +361,7 @@ export interface CatalogRepository {
 ```
 
 **Key Design**:
+
 - **All methods include `tenantId` parameter** (enforces scoping)
 - Methods return **domain entities** (not Prisma models)
 - **No business logic** in interface definition
@@ -359,7 +376,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
 
   async getPackageBySlug(tenantId: string, slug: string): Promise<Package | null> {
     const pkg = await this.prisma.package.findUnique({
-      where: { tenantId_slug: { tenantId, slug } },  // Composite unique constraint
+      where: { tenantId_slug: { tenantId, slug } }, // Composite unique constraint
     });
     return pkg ? this.toDomainPackage(pkg) : null;
   }
@@ -376,7 +393,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
 
     const pkg = await this.prisma.package.create({
       data: {
-        tenantId,                    // Required for isolation
+        tenantId, // Required for isolation
         slug: data.slug,
         name: data.title,
         description: data.description,
@@ -412,6 +429,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
 ```
 
 **Key Patterns**:
+
 1. **tenantId parameter** enforced on all queries
 2. **Composite unique key queries**: `{ tenantId, slug }`
 3. **Tenant isolation checks** before updates
@@ -502,12 +520,13 @@ async getUnavailableDates(tenantId: string, startDate: Date, endDate: Date): Pro
     select: { date: true },
     orderBy: { date: 'asc' },
   });
-  
+
   return bookings.map(b => b.date);
 }
 ```
 
 **Three-Layer Defense Against Double-Booking**:
+
 1. **Database Level**: `@@unique([tenantId, date])` constraint
 2. **Transaction Level**: `FOR UPDATE NOWAIT` pessimistic lock with SERIALIZABLE isolation
 3. **Application Level**: Check existing booking after lock acquired
@@ -560,6 +579,7 @@ export function resolveTenant(prisma: PrismaClient) {
 ```
 
 **Key Security Features**:
+
 - **API key format validation** (before DB query)
 - **Tenant lookup by public key** (not ID - prevents enumeration)
 - **Active status check** (prevents access to disabled tenants)
@@ -568,6 +588,7 @@ export function resolveTenant(prisma: PrismaClient) {
 ### 4.2 Tenant Isolation Patterns in Repositories
 
 **Scoped Queries** - All repository methods receive `tenantId`:
+
 ```typescript
 // ✓ CORRECT - tenantId scoped
 async findAll(tenantId: string): Promise<Booking[]> {
@@ -586,6 +607,7 @@ async getPackageBySlug(tenantId: string, slug: string) {
 ```
 
 **Foreign Key Cascade** - Prevents orphaned data:
+
 ```prisma
 model Package {
   tenantId String
@@ -605,11 +627,11 @@ export interface TenantRequest extends Request {
     slug: string;
     name: string;
     commissionPercent: number;
-    branding: any;                      // Presentation config
+    branding: any; // Presentation config
     stripeAccountId: string | null;
     stripeOnboarded: boolean;
   };
-  tenantId?: string;                    // Shortcut for common case
+  tenantId?: string; // Shortcut for common case
 }
 
 // Helpers for type-safe extraction
@@ -726,6 +748,7 @@ CREATE INDEX "Booking_tenantId_status_idx" ON "Booking"("tenantId", "status");
 ### 6.1 Storage Architecture
 
 **Database Storage**:
+
 ```prisma
 model Tenant {
   branding Json @default("{}")  // JSONB field in PostgreSQL
@@ -733,12 +756,13 @@ model Tenant {
 ```
 
 **Config Structure**:
+
 ```json
 {
-  "primaryColor": "#8B7355",      // Brand primary color
-  "secondaryColor": "#D4A574",    // Brand secondary color
+  "primaryColor": "#8B7355", // Brand primary color
+  "secondaryColor": "#D4A574", // Brand secondary color
   "fontFamily": "Playfair Display", // Google Font name
-  "logo": "https://cdn.example.com/logo.png"  // Logo URL
+  "logo": "https://cdn.example.com/logo.png" // Logo URL
 }
 ```
 
@@ -767,19 +791,13 @@ async updateBranding(req: TenantRequest, data: UpdateBrandingInput) {
 const { data: branding } = await useQuery({
   queryKey: ['tenant', 'branding'],
   queryFn: () => api.getTenantBranding(),
-  staleTime: 5 * 60 * 1000,  // Cache 5 minutes
+  staleTime: 5 * 60 * 1000, // Cache 5 minutes
 });
 
 // 2. Apply CSS variables
 if (branding) {
-  document.documentElement.style.setProperty(
-    '--color-primary',
-    branding.primaryColor
-  );
-  document.documentElement.style.setProperty(
-    '--color-secondary',
-    branding.secondaryColor
-  );
+  document.documentElement.style.setProperty('--color-primary', branding.primaryColor);
+  document.documentElement.style.setProperty('--color-secondary', branding.secondaryColor);
 }
 
 // 3. Load Google Font dynamically
@@ -789,6 +807,7 @@ loadGoogleFont(branding.fontFamily);
 ### 6.3 Why JSONB vs. Separate Tables?
 
 **JSONB Approach** (Current):
+
 - ✓ No schema migration for new properties
 - ✓ Tenant-scoped (one config per tenant)
 - ✓ Query-efficient (JSONB indexes available)
@@ -809,12 +828,14 @@ loadGoogleFont(branding.fontFamily);
 ### 7.1 Clean Separation Points
 
 **STRONG SEPARATION**:
+
 1. **Entities (lib/entities.ts)** ← Domain models (no Prisma references)
 2. **Ports (lib/ports.ts)** ← Interface contracts (no implementation)
 3. **Adapters (adapters/prisma/)** ← Prisma implementations (no business logic)
 4. **Services (services/)** ← Orchestration (uses ports, not adapters directly)
 
 **Example Flow**:
+
 ```
 API Request
   ↓
@@ -832,6 +853,7 @@ Database Query (scoped by tenantId)
 ### 7.2 Potential Coupling Issues
 
 **Minor - Booking Add-Ons**:
+
 ```typescript
 // Domain entity doesn't include full AddOn details
 export interface Booking {
@@ -848,6 +870,7 @@ async getUnavailableDates(tenantId, startDate, endDate) {
 This is intentional - keeps Booking model lightweight.
 
 **Minor - Customer Model Not in Domain**:
+
 ```typescript
 // Booking stores customerEmail/coupleName, not Customer relation
 export interface Booking {
@@ -872,16 +895,19 @@ This keeps domain model simple (email + name vs. separate entity).
 ### 7.3 Strong Coupling Avoidance
 
 **Middleware ↔ Domain Entities**:
+
 - ✓ TenantRequest is Express-specific (only in middleware layer)
 - ✓ Services don't import from Express
 - ✓ Tenant data passed as plain `tenantId` parameter
 
 **Prisma ↔ Domain Logic**:
+
 - ✓ Services never import from Prisma directly
 - ✓ Mappers translate Prisma models to domain entities
 - ✓ Database errors caught and converted to domain errors
 
 **Presentation ↔ Business Logic**:
+
 - ✓ Branding stored separately in Tenant model
 - ✓ Business calculations (pricing, commission) never depend on branding
 - ✓ Client fetches branding independently via API
@@ -900,6 +926,7 @@ This keeps domain model simple (email + name vs. separate entity).
 ```
 
 **Why This Works**:
+
 - Prevents cross-tenant ID collisions naturally
 - Database-enforced (no application logic needed)
 - Enables efficient queries with tenant scoping
@@ -947,10 +974,10 @@ await prisma.$transaction(
     await tx.$queryRawUnsafe(
       'SELECT 1 FROM "Booking" WHERE "tenantId" = $1 AND date = $2 FOR UPDATE NOWAIT'
     );
-    
+
     // Check after lock acquired
     const existing = await tx.booking.findFirst({ ... });
-    
+
     // Create in same transaction
     await tx.booking.create({ ... });
   },
@@ -959,6 +986,7 @@ await prisma.$transaction(
 ```
 
 Three-layer defense:
+
 1. Lock prevents concurrent access
 2. Check before creation
 3. Unique constraint as ultimate safeguard
@@ -970,6 +998,7 @@ Three-layer defense:
 ### 9.1 Database Connection
 
 **Prisma Configuration**:
+
 ```prisma
 datasource db {
   provider  = "postgresql"
@@ -979,6 +1008,7 @@ datasource db {
 ```
 
 **Why Two URLs?**
+
 - `DATABASE_URL`: Used by application (can be connection pool)
 - `DIRECT_URL`: Used by migrations (direct connection needed)
 
@@ -1004,7 +1034,7 @@ Type-safe client generated to `/Users/mikeyoung/CODING/Elope/server/src/generate
 ✓ **Multi-layer race condition prevention**: Lock + check + constraint  
 ✓ **Presentation separation**: JSONB branding decoupled from business logic  
 ✓ **Type safety**: Prisma generates types, domain entities separate  
-✓ **Audit trail**: Commission snapshot stored with booking  
+✓ **Audit trail**: Commission snapshot stored with booking
 
 ### 10.2 Areas for Enhancement
 
@@ -1029,6 +1059,7 @@ Type-safe client generated to `/Users/mikeyoung/CODING/Elope/server/src/generate
 ## Conclusion
 
 Elope demonstrates **production-grade database architecture** with:
+
 - Clear business logic separation via ports and domain entities
 - Robust multi-tenant isolation at database, middleware, and service layers
 - Flexible presentation configuration (JSONB branding) independent of core models

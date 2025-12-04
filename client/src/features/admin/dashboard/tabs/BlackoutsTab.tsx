@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -12,7 +12,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 
 type Blackout = {
   date: string;
@@ -31,16 +31,16 @@ interface BlackoutsTabProps {
  * Manages blackout dates in the admin dashboard
  */
 export function BlackoutsTab({ blackouts, isLoading, onAddBlackout }: BlackoutsTabProps) {
-  const [newBlackoutDate, setNewBlackoutDate] = useState("");
-  const [newBlackoutReason, setNewBlackoutReason] = useState("");
+  const [newBlackoutDate, setNewBlackoutDate] = useState('');
+  const [newBlackoutReason, setNewBlackoutReason] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBlackoutDate) return;
 
     await onAddBlackout(newBlackoutDate, newBlackoutReason);
-    setNewBlackoutDate("");
-    setNewBlackoutReason("");
+    setNewBlackoutDate('');
+    setNewBlackoutReason('');
   };
 
   return (
@@ -75,7 +75,10 @@ export function BlackoutsTab({ blackouts, isLoading, onAddBlackout }: BlackoutsT
             />
           </div>
           <div className="flex items-end">
-            <Button type="submit" className="bg-macon-navy hover:bg-macon-navy-dark text-lg h-12 px-6">
+            <Button
+              type="submit"
+              className="bg-macon-navy hover:bg-macon-navy-dark text-lg h-12 px-6"
+            >
               Add
             </Button>
           </div>
@@ -115,9 +118,7 @@ export function BlackoutsTab({ blackouts, isLoading, onAddBlackout }: BlackoutsT
                       {blackout.date}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-white/90 text-base">
-                    {blackout.reason || ""}
-                  </TableCell>
+                  <TableCell className="text-white/90 text-base">{blackout.reason || ''}</TableCell>
                 </TableRow>
               ))
             )}

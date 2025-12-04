@@ -5,9 +5,11 @@
 ## Documents Overview
 
 ### 1. ADVANCED-FEATURES-SUMMARY.md (15 KB)
+
 **Start here for quick overview**
 
 Quick reference table with all recommendations, tech stack, and timeline. Perfect for:
+
 - Understanding which approach to use for each feature
 - Library comparisons and justifications
 - High-level architecture decisions
@@ -15,6 +17,7 @@ Quick reference table with all recommendations, tech stack, and timeline. Perfec
 - MAIS-specific integration points
 
 **Key sections:**
+
 - Quick reference table (all 5 features)
 - Feature breakdown (current state + recommended approach)
 - Technology stack summary
@@ -25,9 +28,11 @@ Quick reference table with all recommendations, tech stack, and timeline. Perfec
 ---
 
 ### 2. ADVANCED-FEATURES-BEST-PRACTICES.md (45 KB)
+
 **Comprehensive technical guide with code examples**
 
 Deep dive into each feature with:
+
 - Architectural patterns and decision trees
 - Complete code examples ready to adapt
 - Database schema additions
@@ -36,6 +41,7 @@ Deep dive into each feature with:
 - Testing patterns
 
 **Key sections:**
+
 1. Secure Token Systems
 2. Reminder Systems
 3. Deposit/Partial Payments
@@ -47,9 +53,11 @@ Deep dive into each feature with:
 ---
 
 ### 3. ADVANCED-FEATURES-QUICK-START.md (15 KB)
+
 **Developer quick reference for rapid implementation**
 
 Condensed implementation guide with:
+
 - TL;DR recommendation table
 - Feature-by-feature quick setup
 - Local development setup
@@ -62,9 +70,11 @@ Condensed implementation guide with:
 ---
 
 ### 4. ADVANCED-FEATURES-MAIS-PATTERNS.md (27 KB)
+
 **MAIS-specific implementation patterns**
 
 Shows how to implement each feature using MAIS' existing architecture:
+
 - Layered architecture (Routes → Services → Adapters)
 - Dependency injection setup
 - Multi-tenant isolation enforcement
@@ -78,19 +88,25 @@ Shows how to implement each feature using MAIS' existing architecture:
 ## Reading Guide
 
 ### I'm new to Node.js/Express/Prisma
+
 **Recommended order:**
+
 1. ADVANCED-FEATURES-SUMMARY.md (understand "what")
 2. ADVANCED-FEATURES-BEST-PRACTICES.md (understand "why")
 3. ADVANCED-FEATURES-MAIS-PATTERNS.md (understand "how")
 
 ### I'm familiar with MAIS architecture
+
 **Recommended order:**
+
 1. ADVANCED-FEATURES-QUICK-START.md (feature status)
 2. ADVANCED-FEATURES-MAIS-PATTERNS.md (implementation)
 3. ADVANCED-FEATURES-BEST-PRACTICES.md (deep dive reference)
 
 ### I just want to implement a specific feature
+
 **Use as reference:**
+
 1. ADVANCED-FEATURES-QUICK-START.md - Find feature section
 2. Jump to relevant section in ADVANCED-FEATURES-BEST-PRACTICES.md
 3. Use ADVANCED-FEATURES-MAIS-PATTERNS.md for code pattern
@@ -99,27 +115,30 @@ Shows how to implement each feature using MAIS' existing architecture:
 
 ## Feature Summary Table
 
-| Feature | Status | Complexity | Phase | Read |
-|---------|--------|-----------|-------|------|
-| **Secure Tokens** | Partial | Low | 1 | BEST-PRACTICES §1 |
-| **Reminders** | Not implemented | Medium | 2 | BEST-PRACTICES §2 |
-| **Deposits** | Not implemented | Medium | 2 | BEST-PRACTICES §3 |
-| **Refunds** | Basic | High | 3 | BEST-PRACTICES §4 |
-| **Invoices** | Not implemented | Medium | 1 | BEST-PRACTICES §5 |
+| Feature           | Status          | Complexity | Phase | Read              |
+| ----------------- | --------------- | ---------- | ----- | ----------------- |
+| **Secure Tokens** | Partial         | Low        | 1     | BEST-PRACTICES §1 |
+| **Reminders**     | Not implemented | Medium     | 2     | BEST-PRACTICES §2 |
+| **Deposits**      | Not implemented | Medium     | 2     | BEST-PRACTICES §3 |
+| **Refunds**       | Basic           | High       | 3     | BEST-PRACTICES §4 |
+| **Invoices**      | Not implemented | Medium     | 1     | BEST-PRACTICES §5 |
 
 ---
 
 ## Implementation Timeline
 
 ### Phase 1 (Weeks 1-2)
+
 - Booking action tokens (MAIS-PATTERNS: Secure Tokens)
 - Invoice generation (MAIS-PATTERNS: Invoices)
 
 ### Phase 2 (Weeks 3-4)
+
 - Reminder system (MAIS-PATTERNS: Reminders)
 - Deposit payments (MAIS-PATTERNS: Deposits)
 
 ### Phase 3 (Weeks 5-6)
+
 - Refund handling (MAIS-PATTERNS: Refunds)
 
 ---
@@ -127,15 +146,19 @@ Shows how to implement each feature using MAIS' existing architecture:
 ## Key Concepts
 
 ### Multi-Tenant Isolation (CRITICAL)
+
 Every query must include `tenantId`. See all documents for pattern.
 
 ### Idempotency
+
 Use stable keys for operations that might retry (refunds, invoices). See BEST-PRACTICES §4.3.
 
 ### Async Processing
+
 Queue jobs with Bull for reminders and refunds. See BEST-PRACTICES §2.3.
 
 ### Error Handling
+
 Domain errors in services, HTTP mapping in routes. See MAIS-PATTERNS.
 
 ---
@@ -143,12 +166,14 @@ Domain errors in services, HTTP mapping in routes. See MAIS-PATTERNS.
 ## Technology Stack
 
 ### Required Libraries
+
 ```bash
 npm install bull redis ioredis luxon puppeteer handlebars
 npm install --save-dev @types/bull @types/luxon
 ```
 
 ### Infrastructure
+
 - Redis: `docker run -d redis:7`
 - PostgreSQL: Already in MAIS
 - Stripe: Already configured

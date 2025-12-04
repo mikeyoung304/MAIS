@@ -19,14 +19,17 @@ This document tracks minor test issues that do not block merge or production dep
 **Issue:** Domain error codes changed from messages to codes
 
 **Tests Affected:**
+
 1. "should enforce unique slug constraint"
 2. "should throw error when updating non-existent package"
 
 **Current Behavior:**
+
 - Expecting: `'already exists'` / `'not found'`
 - Receiving: `'DUPLICATE_SLUG'` / `'NOT_FOUND'`
 
 **Fix Required:**
+
 ```typescript
 // Update test assertions
 await expect(...).rejects.toThrow('DUPLICATE_SLUG');
@@ -42,6 +45,7 @@ await expect(...).rejects.toThrow('NOT_FOUND');
 **Issue:** Tests need investigation - may require tenantId in specific query patterns
 
 **Tests Affected:**
+
 1. "should fetch all packages with add-ons in single query"
 2. "should efficiently query add-ons with package filter"
 3. "should handle large number of add-ons efficiently"
@@ -49,6 +53,7 @@ await expect(...).rejects.toThrow('NOT_FOUND');
 **Current Status:** All failing - need investigation
 
 **Possible Causes:**
+
 - Missing tenantId in eager loading queries
 - N+1 query detection needs updating for multi-tenant patterns
 - Test expectations need adjustment for new query structure
@@ -62,14 +67,17 @@ await expect(...).rejects.toThrow('NOT_FOUND');
 ### 3. Edge Case Tests (2 tests)
 
 **Tests Affected:**
+
 1. "should maintain referential integrity on package deletion"
 2. "should handle concurrent package creation"
 
 **Issue 1: Referential Integrity**
+
 - May need to verify cascade delete behavior with tenantId
 - Possible foreign key constraint issue
 
 **Issue 2: Concurrent Creation**
+
 - Likely timing-dependent race condition test
 - Similar to other flaky race condition tests
 
@@ -85,21 +93,23 @@ These tests are **timing-dependent** and test actual race conditions in concurre
 
 ### Distribution
 
-| File | Flaky Tests | Category |
-|------|------------|----------|
-| booking-race-conditions.spec.ts | 4 | Concurrent booking prevention |
-| webhook-race-conditions.spec.ts | 3 | Duplicate webhook processing |
-| catalog.repository.integration.spec.ts | 1 | Concurrent package creation |
-| booking.service.spec.ts | 2 | Service layer race conditions |
+| File                                   | Flaky Tests | Category                      |
+| -------------------------------------- | ----------- | ----------------------------- |
+| booking-race-conditions.spec.ts        | 4           | Concurrent booking prevention |
+| webhook-race-conditions.spec.ts        | 3           | Duplicate webhook processing  |
+| catalog.repository.integration.spec.ts | 1           | Concurrent package creation   |
+| booking.service.spec.ts                | 2           | Service layer race conditions |
 
 ### Why These Are Flaky (Not Bugs)
 
 **Production Code Is Correct:**
+
 - Webhook repository handles P2002 errors gracefully
 - Booking repository uses pessimistic locking (FOR UPDATE NOWAIT)
 - Transaction isolation levels are properly configured
 
 **Tests Are Timing-Sensitive:**
+
 - Race conditions occur at exact same millisecond
 - Error propagation timing varies by test run
 - Database lock acquisition timing is non-deterministic
@@ -107,6 +117,7 @@ These tests are **timing-dependent** and test actual race conditions in concurre
 ### Recommendations
 
 **Option 1: Mark as Skip (Recommended)**
+
 ```typescript
 it.skip('should prevent duplicate webhook processing', async () => {
   // Timing-dependent test - see SPRINT_3_KNOWN_ISSUES.md
@@ -115,14 +126,16 @@ it.skip('should prevent duplicate webhook processing', async () => {
 ```
 
 **Option 2: Add Retry Logic**
+
 ```typescript
-test.retry(3)
+test.retry(3);
 it('should prevent duplicate webhook processing', async () => {
   // Will retry up to 3 times
 });
 ```
 
 **Option 3: Accept as Known Flaky**
+
 - Document in test file comments
 - Run multiple times in CI to catch real regressions
 - Accept occasional failures as normal
@@ -145,13 +158,13 @@ it('should prevent duplicate webhook processing', async () => {
 
 ### Test Coverage: 75.1% (Target: 70%) ✅
 
-| Category | Status | Pass Rate |
-|----------|--------|-----------|
-| Unit Tests | ✅ Complete | 100% (124/124) |
-| Type Safety | ✅ Complete | 100% (9/9) |
-| Integration - Basic Ops | ✅ Excellent | 93% (53/57) |
-| Integration - Race Cond | ⚠️ Flaky | 73% (19/26) |
-| Integration - Edge Cases | ✅ Excellent | 91% (50/55) |
+| Category                 | Status       | Pass Rate      |
+| ------------------------ | ------------ | -------------- |
+| Unit Tests               | ✅ Complete  | 100% (124/124) |
+| Type Safety              | ✅ Complete  | 100% (9/9)     |
+| Integration - Basic Ops  | ✅ Excellent | 93% (53/57)    |
+| Integration - Race Cond  | ⚠️ Flaky     | 73% (19/26)    |
+| Integration - Edge Cases | ✅ Excellent | 91% (50/55)    |
 
 ### Deployment Blockers: None
 
@@ -193,13 +206,13 @@ All identified issues are test refinements, not functionality bugs.
 
 ## 📊 Issue Summary
 
-| Issue Type | Count | Blocking | Priority | ETA |
-|------------|-------|----------|----------|-----|
-| Error message assertions | 2 | No | Low | 5 min |
-| Query optimization | 3 | No | Low | 20 min |
-| Edge cases | 2 | No | Low | 35 min |
-| Flaky race conditions | 10 | No | Very Low | Skip recommended |
-| **Total** | **17** | **0** | - | **60 min or skip** |
+| Issue Type               | Count  | Blocking | Priority | ETA                |
+| ------------------------ | ------ | -------- | -------- | ------------------ |
+| Error message assertions | 2      | No       | Low      | 5 min              |
+| Query optimization       | 3      | No       | Low      | 20 min             |
+| Edge cases               | 2      | No       | Low      | 35 min             |
+| Flaky race conditions    | 10     | No       | Very Low | Skip recommended   |
+| **Total**                | **17** | **0**    | -        | **60 min or skip** |
 
 ---
 

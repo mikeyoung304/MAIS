@@ -3,13 +3,13 @@
  * Customer-facing component for browsing and selecting services
  */
 
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api";
-import { formatCurrency } from "@/lib/utils";
-import { cn } from "@/lib/utils";
-import type { ServiceDto } from "@macon/contracts";
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { api } from '@/lib/api';
+import { formatCurrency } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import type { ServiceDto } from '@macon/contracts';
 
 interface ServiceSelectorProps {
   onSelect: (service: ServiceDto) => void;
@@ -54,7 +54,11 @@ function formatDuration(minutes: number): string {
 }
 
 export function ServiceSelector({ onSelect, selectedServiceId }: ServiceSelectorProps) {
-  const { data: services, isLoading, error } = useQuery({
+  const {
+    data: services,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['scheduling', 'services'],
     queryFn: async () => {
       const response = await api.getServices();
@@ -87,12 +91,8 @@ export function ServiceSelector({ onSelect, selectedServiceId }: ServiceSelector
   if (!services || services.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-neutral-700 text-lg font-semibold mb-2">
-          No services available
-        </p>
-        <p className="text-neutral-600">
-          Please check back later or contact us for assistance.
-        </p>
+        <p className="text-neutral-700 text-lg font-semibold mb-2">No services available</p>
+        <p className="text-neutral-600">Please check back later or contact us for assistance.</p>
       </div>
     );
   }
@@ -107,10 +107,10 @@ export function ServiceSelector({ onSelect, selectedServiceId }: ServiceSelector
             key={service.id}
             onClick={() => onSelect(service)}
             className={cn(
-              "cursor-pointer transition-all duration-300 hover:shadow-elevation-3 hover:-translate-y-1",
+              'cursor-pointer transition-all duration-300 hover:shadow-elevation-3 hover:-translate-y-1',
               isSelected
-                ? "border-macon-orange border-2 shadow-elevation-2 bg-macon-orange/5"
-                : "border-neutral-200 hover:border-macon-orange/30 shadow-elevation-1 bg-white"
+                ? 'border-macon-orange border-2 shadow-elevation-2 bg-macon-orange/5'
+                : 'border-neutral-200 hover:border-macon-orange/30 shadow-elevation-1 bg-white'
             )}
             data-testid={`service-card-${service.slug}`}
           >

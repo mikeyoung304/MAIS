@@ -7,9 +7,11 @@ This directory contains comprehensive framework documentation for implementing t
 ## Documents at a Glance
 
 ### 1. README.md (Read This First!)
+
 **Purpose:** Navigation hub and quick start guide
 **Length:** 332 lines
 **Contains:**
+
 - Document overview and navigation
 - Quick start path (6-10 hours to production)
 - Key patterns summary
@@ -22,9 +24,11 @@ This directory contains comprehensive framework documentation for implementing t
 ---
 
 ### 2. TENANT_SCOPED_ROUTING.md (Foundation)
+
 **Purpose:** Core concepts and architectural patterns
 **Length:** 860 lines
 **Contains:**
+
 - React Router patterns (nested routes, params)
 - Tenant Context Provider pattern
 - API client configuration with tenant headers
@@ -40,6 +44,7 @@ This directory contains comprehensive framework documentation for implementing t
 **Best for:** Understanding the "why" and overall architecture
 
 **Topics covered:**
+
 - Nested route params (`:tenantSlug/:segmentSlug`)
 - Layout routes for tenant context
 - Route loaders for tenant data fetching
@@ -51,9 +56,11 @@ This directory contains comprehensive framework documentation for implementing t
 ---
 
 ### 3. REACT_ROUTER_V7_PATTERNS.md (Implementation)
+
 **Purpose:** Framework-specific patterns and React Router v7 features
 **Length:** 771 lines
 **Contains:**
+
 - Route Loaders (pre-load data before render)
 - ErrorElement for route-level error boundaries
 - Lazy route components with code splitting
@@ -67,6 +74,7 @@ This directory contains comprehensive framework documentation for implementing t
 **Best for:** Learning React Router v7 specific features
 
 **Key patterns:**
+
 - `loader: tenantLoader` on routes
 - `useLoaderData() as TenantLoadedData`
 - `errorElement: <TenantErrorBoundary />`
@@ -76,9 +84,11 @@ This directory contains comprehensive framework documentation for implementing t
 ---
 
 ### 4. VERCEL_MULTI_TENANT_DEPLOYMENT.md (Deployment)
+
 **Purpose:** Complete deployment guide with three routing strategies
 **Length:** 724 lines
 **Contains:**
+
 - Path-based routing (`/t/:slug`)
   - Pros: No DNS setup, simplest
   - Cons: Shared domain, less white-label
@@ -100,6 +110,7 @@ This directory contains comprehensive framework documentation for implementing t
 **Best for:** Preparing for deployment and choosing a routing strategy
 
 **Sections:**
+
 - Strategy comparison table
 - Step-by-step DNS configuration
 - Vercel configuration examples
@@ -110,9 +121,11 @@ This directory contains comprehensive framework documentation for implementing t
 ---
 
 ### 5. IMPLEMENTATION_EXAMPLES.md (Code)
+
 **Purpose:** Production-ready code you can copy-paste
 **Length:** 824 lines
 **Contains:**
+
 1. Complete router setup with tenant routes
 2. Route loaders (tenant config + segment)
 3. TenantLayout component
@@ -130,6 +143,7 @@ This directory contains comprehensive framework documentation for implementing t
 **Best for:** While coding - copy snippets directly
 
 **All examples include:**
+
 - Full TypeScript support
 - Comments explaining each section
 - Usage examples
@@ -139,9 +153,11 @@ This directory contains comprehensive framework documentation for implementing t
 ---
 
 ### 6. QUICK_REFERENCE.md (Cheat Sheet)
+
 **Purpose:** One-page quick lookup for common patterns
 **Length:** 420 lines
 **Contains:**
+
 - Router structure diagram
 - How to access tenant slug
 - How to get pre-loaded data
@@ -166,9 +182,11 @@ This directory contains comprehensive framework documentation for implementing t
 ---
 
 ### 7. ARCHITECTURE_DIAGRAM.md (Visualization)
+
 **Purpose:** Visual diagrams of data flow and architecture
 **Length:** 530+ lines
 **Contains:**
+
 - Overall system architecture (ASCII diagram)
 - Route navigation data flow (step-by-step)
 - Context provider tree structure
@@ -181,6 +199,7 @@ This directory contains comprehensive framework documentation for implementing t
 **Best for:** Understanding how pieces fit together
 
 **Diagrams included:**
+
 - Complete architecture flow
 - Navigation sequence diagram
 - Context provider hierarchy
@@ -193,6 +212,7 @@ This directory contains comprehensive framework documentation for implementing t
 ## How to Use This Documentation
 
 ### For Learning (First Time)
+
 1. Read **README.md** (overview, 10 min)
 2. Read **TENANT_SCOPED_ROUTING.md** (concepts, 30 min)
 3. Study **REACT_ROUTER_V7_PATTERNS.md** (details, 30 min)
@@ -202,18 +222,21 @@ This directory contains comprehensive framework documentation for implementing t
 **Total: ~2 hours to understand the full system**
 
 ### For Implementation (Coding)
+
 1. Copy code from **IMPLEMENTATION_EXAMPLES.md**
 2. Reference **QUICK_REFERENCE.md** while coding
 3. Check **TENANT_SCOPED_ROUTING.md** for architectural questions
 4. Use **ARCHITECTURE_DIAGRAM.md** if confused about flow
 
 ### For Deployment
+
 1. Read **VERCEL_MULTI_TENANT_DEPLOYMENT.md** (choose strategy)
 2. Follow the deployment checklist
 3. Reference DNS setup sections
 4. Test using provided URL patterns
 
 ### For Troubleshooting
+
 1. Check **README.md** "Troubleshooting Guide"
 2. Review **QUICK_REFERENCE.md** "Common Mistakes"
 3. Check **VERCEL_MULTI_TENANT_DEPLOYMENT.md** "Troubleshooting"
@@ -242,39 +265,43 @@ README.md (start here)
 
 ## Key Topics Cross-Reference
 
-| Topic | Primary | Secondary |
-|-------|---------|-----------|
-| Route structure | Router v7 | TENANT_SCOPED |
-| Pre-loading data | Router v7 | IMPLEMENTATION |
-| Context providers | TENANT_SCOPED | IMPLEMENTATION |
-| API configuration | TENANT_SCOPED | IMPLEMENTATION |
-| Cache isolation | TENANT_SCOPED | ARCHITECTURE |
-| Deployment | VERCEL | IMPLEMENTATION |
-| CSS variables | TENANT_SCOPED | IMPLEMENTATION |
-| Error handling | TENANT_SCOPED | IMPLEMENTATION |
-| Type definitions | IMPLEMENTATION | TENANT_SCOPED |
-| Navigation | Router v7 | QUICK_REFERENCE |
+| Topic             | Primary        | Secondary       |
+| ----------------- | -------------- | --------------- |
+| Route structure   | Router v7      | TENANT_SCOPED   |
+| Pre-loading data  | Router v7      | IMPLEMENTATION  |
+| Context providers | TENANT_SCOPED  | IMPLEMENTATION  |
+| API configuration | TENANT_SCOPED  | IMPLEMENTATION  |
+| Cache isolation   | TENANT_SCOPED  | ARCHITECTURE    |
+| Deployment        | VERCEL         | IMPLEMENTATION  |
+| CSS variables     | TENANT_SCOPED  | IMPLEMENTATION  |
+| Error handling    | TENANT_SCOPED  | IMPLEMENTATION  |
+| Type definitions  | IMPLEMENTATION | TENANT_SCOPED   |
+| Navigation        | Router v7      | QUICK_REFERENCE |
 
 ## Implementation Phases
 
 ### Phase 1: Local Routes (2-3 hours)
+
 - Read: TENANT_SCOPED_ROUTING.md + REACT_ROUTER_V7_PATTERNS.md
 - Code: Copy router setup from IMPLEMENTATION_EXAMPLES.md
 - Test: http://localhost:5173/t/demo-tenant
 
 ### Phase 2: Tenant Infrastructure (2-3 hours)
+
 - Create tenant API endpoints
 - Implement TenantContext
 - Update API client
 - Test data loading
 
 ### Phase 3: Branding (1-2 hours)
+
 - Implement TenantBrandingContext
 - Add CSS variables to Tailwind
 - Apply logos and colors
 - Test theme switching
 
 ### Phase 4: Deployment (1-2 hours)
+
 - Read: VERCEL_MULTI_TENANT_DEPLOYMENT.md
 - Choose: path-based, subdomain, or custom
 - Configure: vercel.json and DNS
@@ -284,30 +311,35 @@ README.md (start here)
 ## Features Covered
 
 ### Routing
+
 - Path-based tenant routes (`/t/:slug`)
 - Nested segment/package routes
 - Admin route protection
 - Error boundaries per route
 
 ### Data Management
+
 - Route loaders for pre-loading
 - TenantContext for component access
 - React Query with tenant-scoped cache keys
 - API client tenant header injection
 
 ### Branding
+
 - Dynamic CSS variables per tenant
 - Tailwind integration
 - Logo and color per tenant
 - Dynamic page titles
 
 ### Deployment
+
 - Path-based (MVP, 1 hour)
 - Subdomain-based (2 hours)
 - Custom domains (3+ hours)
 - Hybrid support
 
 ### Security
+
 - Tenant isolation at URL level
 - API header validation
 - Cache key isolation
@@ -316,6 +348,7 @@ README.md (start here)
 - Error boundary protection
 
 ### Performance
+
 - Code splitting by route
 - Route prefetching
 - Tenant config caching (15 min)
@@ -347,6 +380,7 @@ README.md (start here)
 ## Support
 
 All code is production-ready and follows MAIS conventions:
+
 - Multi-tenant isolation enforced
 - TypeScript strict mode
 - Type-safe API contracts

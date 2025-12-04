@@ -3,14 +3,17 @@
 ## Status: ✅ COMPLETE
 
 ## Summary
+
 Implemented full Stripe refund functionality supporting both full and partial refunds for regular and Stripe Connect payments.
 
 ## Changes
 
 ### 1. Updated PaymentProvider Interface
+
 **File**: `server/src/lib/ports.ts:105-113`
 
 Added `refund` method to interface:
+
 ```typescript
 refund(input: {
   paymentIntentId: string;
@@ -24,9 +27,11 @@ refund(input: {
 ```
 
 ### 2. Implemented Stripe Refund Method
+
 **File**: `server/src/adapters/stripe.adapter.ts:155-199`
 
 **Features:**
+
 - ✅ Full refunds (omit `amountCents`)
 - ✅ Partial refunds (specify `amountCents`)
 - ✅ Reason tracking (`duplicate`, `fraudulent`, `requested_by_customer`)
@@ -38,6 +43,7 @@ refund(input: {
 ## API Usage
 
 ### Full Refund
+
 ```typescript
 const result = await stripeAdapter.refund({
   paymentIntentId: 'pi_xxx',
@@ -46,6 +52,7 @@ const result = await stripeAdapter.refund({
 ```
 
 ### Partial Refund
+
 ```typescript
 const result = await stripeAdapter.refund({
   paymentIntentId: 'pi_xxx',
@@ -55,6 +62,7 @@ const result = await stripeAdapter.refund({
 ```
 
 ### Refund with Reason
+
 ```typescript
 const result = await stripeAdapter.refund({
   paymentIntentId: 'pi_xxx',
@@ -66,6 +74,7 @@ const result = await stripeAdapter.refund({
 ## Stripe Connect Behavior
 
 For Stripe Connect payments (destination charges):
+
 1. **Refund source**: Deducted from connected account (tenant)
 2. **Application fee**: Automatically reversed (refunded to platform)
 3. **Responsibility**: Connected account bears refund cost
@@ -82,6 +91,7 @@ This matches our payment flow where funds go directly to tenants.
 ## Validation
 
 **Refund Reasons** (optional):
+
 - `duplicate` - Duplicate charge
 - `fraudulent` - Fraudulent charge
 - `requested_by_customer` - Customer requested refund

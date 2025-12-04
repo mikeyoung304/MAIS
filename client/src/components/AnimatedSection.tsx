@@ -1,8 +1,8 @@
-import { ReactNode } from "react";
-import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-import { cn } from "@/lib/utils";
+import { ReactNode } from 'react';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
+import { cn } from '@/lib/utils';
 
-type AnimationType = "fade-in-up" | "fade-in" | "scale-in";
+type AnimationType = 'fade-in-up' | 'fade-in' | 'scale-in';
 
 interface AnimatedSectionProps {
   children: ReactNode;
@@ -16,26 +16,22 @@ interface AnimatedSectionProps {
  */
 export function AnimatedSection({
   children,
-  animation = "fade-in-up",
+  animation = 'fade-in-up',
   delay = 0,
   className,
 }: AnimatedSectionProps) {
   const { ref, isVisible } = useScrollAnimation();
 
   const animationClass = {
-    "fade-in-up": "animate-fade-in-up",
-    "fade-in": "animate-fade-in",
-    "scale-in": "animate-scale-in",
+    'fade-in-up': 'animate-fade-in-up',
+    'fade-in': 'animate-fade-in',
+    'scale-in': 'animate-scale-in',
   }[animation];
 
   return (
     <div
       ref={ref}
-      className={cn(
-        "opacity-0",
-        isVisible && animationClass,
-        className
-      )}
+      className={cn('opacity-0', isVisible && animationClass, className)}
       style={{ animationDelay: `${delay}ms` }}
     >
       {children}

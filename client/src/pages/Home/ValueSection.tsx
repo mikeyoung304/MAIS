@@ -1,5 +1,5 @@
-import { Container } from "@/ui/Container";
-import { Calendar, TrendingUp, Clock } from "lucide-react";
+import { Container } from '@/ui/Container';
+import { Calendar, TrendingUp, Clock } from 'lucide-react';
 
 /**
  * ValueSection - Stories That Stick "Value Story" Pattern
@@ -11,22 +11,22 @@ export function ValueSection() {
   const values = [
     {
       icon: Clock,
-      before: "15+ hours/week on admin",
-      after: "Your weekends back",
+      before: '15+ hours/week on admin',
+      after: 'Your weekends back',
       description:
-        "AI handles scheduling, invoicing, and follow-ups automatically. You show up and do your work.",
+        'AI handles scheduling, invoicing, and follow-ups automatically. You show up and do your work.',
     },
     {
       icon: Calendar,
-      before: "Feast or famine bookings",
-      after: "Consistent pipeline",
+      before: 'Feast or famine bookings',
+      after: 'Consistent pipeline',
       description:
-        "AI-driven marketing that learns and improves while you sleep. No more scrambling for clients.",
+        'AI-driven marketing that learns and improves while you sleep. No more scrambling for clients.',
     },
     {
       icon: TrendingUp,
-      before: "Guessing what works",
-      after: "Data-driven growth",
+      before: 'Guessing what works',
+      after: 'Data-driven growth',
       description:
         "Our AI tracks what's working and doubles down—automatically. Average partner sees 30% revenue increase.",
     },

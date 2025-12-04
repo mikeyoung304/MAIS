@@ -1,12 +1,12 @@
 ---
 status: complete
 priority: p1
-issue_id: "237"
+issue_id: '237'
 tags: [security, data-integrity, landing-page, race-condition]
 dependencies: []
-source: "code-review-pr-14"
-resolved_at: "2025-12-04"
-resolved_by: "claude-code"
+source: 'code-review-pr-14'
+resolved_at: '2025-12-04'
+resolved_by: 'claude-code'
 ---
 
 # TODO-237: Wrap saveLandingPageDraft in Transaction
@@ -22,6 +22,7 @@ resolved_by: "claude-code"
 The `saveLandingPageDraft` method in `tenant.repository.ts` reads the tenant, modifies the draft, and writes back without a transaction. This creates a TOCTOU (time-of-check-to-time-of-use) race condition where concurrent saves could lose data.
 
 **Why It Matters:**
+
 - Two auto-saves from different tabs could interleave and lose edits
 - User expects their changes to persist reliably
 - publishLandingPageDraft uses transaction, but saveLandingPageDraft does not
@@ -29,6 +30,7 @@ The `saveLandingPageDraft` method in `tenant.repository.ts` reads the tenant, mo
 ## Findings
 
 **Attack Scenario:**
+
 1. Tab A reads draft config (headline: "Welcome")
 2. Tab B reads draft config (headline: "Welcome")
 3. Tab A updates headline to "Hello" and saves
@@ -36,6 +38,7 @@ The `saveLandingPageDraft` method in `tenant.repository.ts` reads the tenant, mo
 5. Tab B saves, overwriting Tab A's "Hello" change
 
 **Evidence:**
+
 - `tenant.repository.ts:588-633`: saveLandingPageDraft not wrapped in transaction
 - `tenant.repository.ts:635-670`: publishLandingPageDraft correctly uses `$transaction`
 
@@ -89,9 +92,9 @@ async saveLandingPageDraft(
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-12-04 | Created | Code review of PR #14 |
+| Date       | Action   | Notes                                                                                                          |
+| ---------- | -------- | -------------------------------------------------------------------------------------------------------------- |
+| 2025-12-04 | Created  | Code review of PR #14                                                                                          |
 | 2025-12-04 | Resolved | Wrapped saveLandingPageDraft in Prisma $transaction. URL validation kept outside transaction for fast failure. |
 
 ## Tags

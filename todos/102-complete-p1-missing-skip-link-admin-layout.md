@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "102"
+issue_id: '102'
 tags: [code-review, accessibility, wcag, ui-redesign]
 dependencies: []
 ---
@@ -22,19 +22,19 @@ AdminLayout does not include a skip link while AppShell does. This creates an in
 **WCAG Criterion:** 2.4.1 Bypass Blocks (Level A)
 
 **Issues:**
+
 1. No skip link present in AdminLayout
 2. `<main>` element exists but has no `id` for skip link to target
 3. Inconsistent with AppShell which does have a skip link
 
 **Current state:**
+
 ```tsx
 return (
   <div className="min-h-screen bg-gray-50">
     {/* No skip link */}
     <nav>...</nav>
-    <main className="p-6">
-      {children}
-    </main>
+    <main className="p-6">{children}</main>
   </div>
 );
 ```
@@ -42,6 +42,7 @@ return (
 ## Proposed Solutions
 
 ### Solution 1: Add Skip Link to AdminLayout (Recommended)
+
 **Pros:** WCAG compliant, consistent with AppShell
 **Cons:** Minor CSS needed
 **Effort:** Small (30 min)
@@ -73,6 +74,7 @@ Implement Solution 1 immediately.
 ## Technical Details
 
 **Affected files:**
+
 - `client/src/layouts/AdminLayout.tsx`
 
 ## Acceptance Criteria
@@ -85,8 +87,8 @@ Implement Solution 1 immediately.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings              |
+| ---------- | ------------------------ | ---------------------- |
 | 2025-11-30 | Created from code review | WCAG Level A violation |
 
 ## Resources

@@ -20,42 +20,50 @@ const FONT_OPTIONS: FontOption[] = [
   {
     name: 'Inter',
     displayName: 'Inter (Modern Sans-Serif)',
-    googleFontUrl: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
+    googleFontUrl:
+      'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
   },
   {
     name: 'Playfair Display',
     displayName: 'Playfair Display (Elegant Serif)',
-    googleFontUrl: 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap',
+    googleFontUrl:
+      'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap',
   },
   {
     name: 'Lora',
     displayName: 'Lora (Classic Serif)',
-    googleFontUrl: 'https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap',
+    googleFontUrl:
+      'https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap',
   },
   {
     name: 'Montserrat',
     displayName: 'Montserrat (Clean Sans-Serif)',
-    googleFontUrl: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap',
+    googleFontUrl:
+      'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap',
   },
   {
     name: 'Cormorant Garamond',
     displayName: 'Cormorant Garamond (Romantic Serif)',
-    googleFontUrl: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap',
+    googleFontUrl:
+      'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap',
   },
   {
     name: 'Raleway',
     displayName: 'Raleway (Refined Sans-Serif)',
-    googleFontUrl: 'https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap',
+    googleFontUrl:
+      'https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap',
   },
   {
     name: 'Crimson Text',
     displayName: 'Crimson Text (Traditional Serif)',
-    googleFontUrl: 'https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&display=swap',
+    googleFontUrl:
+      'https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&display=swap',
   },
   {
     name: 'Poppins',
     displayName: 'Poppins (Friendly Sans-Serif)',
-    googleFontUrl: 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap',
+    googleFontUrl:
+      'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap',
   },
 ];
 
@@ -130,7 +138,12 @@ export function FontSelector({ value = 'Inter', onChange, className = '' }: Font
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </span>
         </button>
@@ -158,11 +171,7 @@ export function FontSelector({ value = 'Inter', onChange, className = '' }: Font
                     <div className="flex items-center justify-between">
                       <span className="block truncate">{option.displayName}</span>
                       {option.name === selectedFont && (
-                        <svg
-                          className="w-5 h-5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                           <path
                             fillRule="evenodd"
                             d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -196,12 +205,8 @@ export function FontSelector({ value = 'Inter', onChange, className = '' }: Font
         style={{ fontFamily: selectedOption.name }}
       >
         <p className="text-white/90 text-lg mb-2">Preview:</p>
-        <h3 className="text-2xl font-semibold text-white mb-1">
-          Your Business Package
-        </h3>
-        <p className="text-white/70">
-          Experience growth with our professional service packages.
-        </p>
+        <h3 className="text-2xl font-semibold text-white mb-1">Your Business Package</h3>
+        <p className="text-white/70">Experience growth with our professional service packages.</p>
       </div>
     </div>
   );

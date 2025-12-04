@@ -74,7 +74,10 @@ test.describe('Admin Flow', () => {
     // 3. Fill package form
     await page.fill('#slug', 'e2e-test-package');
     await page.fill('#title', 'E2E Test Package');
-    await page.fill('textarea#description', 'This is a test package created by E2E automation tests');
+    await page.fill(
+      'textarea#description',
+      'This is a test package created by E2E automation tests'
+    );
     await page.fill('#priceCents', '50000'); // $500.00
 
     // 4. Click "Create Package" button (submit form)
@@ -135,7 +138,7 @@ test.describe('Admin Flow', () => {
     await finalPackageCard.getByRole('button', { name: 'Delete' }).click();
 
     // Confirm deletion in dialog
-    page.on('dialog', dialog => dialog.accept());
+    page.on('dialog', (dialog) => dialog.accept());
     await page.waitForTimeout(500); // Wait for dialog to appear
 
     // Click delete again (dialog handler already set)

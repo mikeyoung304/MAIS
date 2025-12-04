@@ -349,6 +349,7 @@ Platform Admin Nav               Tenant Admin Nav
 ## Request/Response Example
 
 ### Platform Admin Request
+
 ```
 ┌──────────────────────────────────────┐
 │  CLIENT                              │
@@ -384,6 +385,7 @@ Platform Admin Nav               Tenant Admin Nav
 ```
 
 ### Tenant Admin Request
+
 ```
 ┌──────────────────────────────────────┐
 │  CLIENT                              │

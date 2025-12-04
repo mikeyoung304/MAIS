@@ -1,5 +1,5 @@
 ---
-title: "ESM/CJS Module Compatibility - Testing Recommendations"
+title: 'ESM/CJS Module Compatibility - Testing Recommendations'
 slug: esm-cjs-testing-recommendations
 category: prevention
 tags: [testing, esm, cjs, unit-tests, integration-tests, e2e-tests, vitest, playwright]
@@ -13,6 +13,7 @@ created: 2025-11-29
 Testing is critical for catching module compatibility issues before they reach production. This guide covers unit, integration, and E2E testing strategies for ESM/CJS packages.
 
 **Testing Stack in MAIS:**
+
 - Unit/Integration: Vitest (runs in Node.js, pure ESM)
 - E2E: Playwright (real browser, real tsx runtime)
 - Coverage Target: 70% (current: 100%)
@@ -41,22 +42,20 @@ describe('BookingService with stripe', () => {
     const booking = await service.createBooking({
       tenantId: 'tenant-1',
       date: new Date(),
-      duration: 60
+      duration: 60,
     });
 
     expect(booking.id).toBeDefined();
   });
 
   it('should handle stripe errors gracefully', async () => {
-    vi.mocked(stripe.charges.create).mockRejectedValueOnce(
-      new Error('Stripe API error')
-    );
+    vi.mocked(stripe.charges.create).mockRejectedValueOnce(new Error('Stripe API error'));
 
     await expect(
       service.createBooking({
         tenantId: 'tenant-1',
         date: new Date(),
-        duration: 60
+        duration: 60,
       })
     ).rejects.toThrow('Payment failed');
   });
@@ -76,7 +75,7 @@ describe('FileTypeAdapter (CJS via createRequire)', () => {
   describe('detectFileType', () => {
     it('should detect JPEG files from magic bytes', async () => {
       // JPEG magic bytes: FF D8 FF E0
-      const jpegBuffer = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10]);
+      const jpegBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
 
       const result = await detectFileType(jpegBuffer);
 
@@ -87,9 +86,7 @@ describe('FileTypeAdapter (CJS via createRequire)', () => {
 
     it('should detect PNG files from magic bytes', async () => {
       // PNG magic bytes: 89 50 4E 47 0D 0A 1A 0A
-      const pngBuffer = Buffer.from([
-        0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
-      ]);
+      const pngBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
       const result = await detectFileType(pngBuffer);
 
@@ -108,10 +105,10 @@ describe('FileTypeAdapter (CJS via createRequire)', () => {
 
     it('should handle large buffers', async () => {
       const largeBuffer = Buffer.alloc(10_000_000); // 10MB
-      largeBuffer[0] = 0xFF;
-      largeBuffer[1] = 0xD8;
-      largeBuffer[2] = 0xFF;
-      largeBuffer[3] = 0xE0;
+      largeBuffer[0] = 0xff;
+      largeBuffer[1] = 0xd8;
+      largeBuffer[2] = 0xff;
+      largeBuffer[3] = 0xe0;
 
       const result = await detectFileType(largeBuffer);
 
@@ -121,7 +118,7 @@ describe('FileTypeAdapter (CJS via createRequire)', () => {
 
   describe('isValidMimeType', () => {
     it('should validate JPEG files', async () => {
-      const jpegBuffer = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]);
+      const jpegBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
 
       const isValid = await isValidMimeType(jpegBuffer, ['image/jpeg']);
 
@@ -129,7 +126,7 @@ describe('FileTypeAdapter (CJS via createRequire)', () => {
     });
 
     it('should reject non-allowed MIME types', async () => {
-      const jpegBuffer = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]);
+      const jpegBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
 
       const isValid = await isValidMimeType(jpegBuffer, ['image/png']);
 
@@ -148,6 +145,7 @@ describe('FileTypeAdapter (CJS via createRequire)', () => {
 ```
 
 **Key Points:**
+
 - Test the adapter, not the CJS import directly
 - Use real magic bytes for file types
 - Test both success and error cases
@@ -161,7 +159,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 
 describe('ProcessorService with dynamic import', () => {
   it('should lazy-load file-type module', async () => {
-    const buffer = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]);
+    const buffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
 
     // Simulate lazy loading
     const fileTypeModule = await import('file-type');
@@ -219,7 +217,7 @@ describe('UploadService (Integration)', () => {
   });
 
   it('should validate file before uploading', async () => {
-    const jpegBuffer = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]);
+    const jpegBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
     const file = {
       fieldname: 'image',
       originalname: 'test.jpg',
@@ -229,7 +227,7 @@ describe('UploadService (Integration)', () => {
       size: jpegBuffer.length,
       destination: 'uploads/',
       filename: 'test.jpg',
-      path: 'uploads/test.jpg'
+      path: 'uploads/test.jpg',
     };
 
     // Should not throw
@@ -240,7 +238,7 @@ describe('UploadService (Integration)', () => {
   });
 
   it('should reject files with mismatched MIME types', async () => {
-    const jpegBuffer = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]);
+    const jpegBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
     const file = {
       fieldname: 'image',
       originalname: 'test.jpg',
@@ -250,16 +248,17 @@ describe('UploadService (Integration)', () => {
       size: jpegBuffer.length,
       destination: 'uploads/',
       filename: 'test.jpg',
-      path: 'uploads/test.jpg'
+      path: 'uploads/test.jpg',
     };
 
     // Should throw validation error
-    await expect(uploadService.upload(tenantId, 'segments', file))
-      .rejects.toThrow('File validation failed');
+    await expect(uploadService.upload(tenantId, 'segments', file)).rejects.toThrow(
+      'File validation failed'
+    );
   });
 
   it('should store uploaded file in database', async () => {
-    const jpegBuffer = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]);
+    const jpegBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
     const file = {
       fieldname: 'image',
       originalname: 'test.jpg',
@@ -269,14 +268,14 @@ describe('UploadService (Integration)', () => {
       size: jpegBuffer.length,
       destination: 'uploads/',
       filename: 'test.jpg',
-      path: 'uploads/test.jpg'
+      path: 'uploads/test.jpg',
     };
 
     const result = await uploadService.upload(tenantId, 'segments', file);
 
     // Verify file stored in database
     const segment = await prisma.segment.findUnique({
-      where: { id: result.segmentId }
+      where: { id: result.segmentId },
     });
 
     expect(segment?.imageUrl).toBeDefined();
@@ -284,7 +283,7 @@ describe('UploadService (Integration)', () => {
   });
 
   it('should reject duplicate filenames with unique suffix', async () => {
-    const jpegBuffer = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]);
+    const jpegBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
     const file = {
       fieldname: 'image',
       originalname: 'test.jpg',
@@ -294,7 +293,7 @@ describe('UploadService (Integration)', () => {
       size: jpegBuffer.length,
       destination: 'uploads/',
       filename: 'test.jpg',
-      path: 'uploads/test.jpg'
+      path: 'uploads/test.jpg',
     };
 
     // Upload first file
@@ -312,6 +311,7 @@ describe('UploadService (Integration)', () => {
 ```
 
 **Key Points:**
+
 - Use `createTestTenant()` helper for isolation
 - Test with real database and real CJS imports
 - Test file validation with magic bytes
@@ -346,15 +346,13 @@ test.describe('File Upload E2E', () => {
     await page.goto('http://localhost:5173/admin/segments');
 
     // Create a test JPEG file
-    const jpegBuffer = Buffer.from([
-      0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46
-    ]);
+    const jpegBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
 
     // Upload file
     await page.locator('input[type="file"]').setInputFiles({
       name: 'test.jpg',
       mimeType: 'image/jpeg',
-      buffer: jpegBuffer
+      buffer: jpegBuffer,
     });
 
     // Click upload button
@@ -378,21 +376,24 @@ test.describe('File Upload E2E', () => {
 
     // Create a file with PNG extension but JPEG magic bytes
     const fakeBuffer = Buffer.from([
-      0xFF, 0xD8, 0xFF, 0xE0 // JPEG magic bytes
+      0xff,
+      0xd8,
+      0xff,
+      0xe0, // JPEG magic bytes
     ]);
 
     // Try to upload as PNG
     await page.locator('input[type="file"]').setInputFiles({
       name: 'test.png',
       mimeType: 'image/png', // Wrong!
-      buffer: fakeBuffer
+      buffer: fakeBuffer,
     });
 
     await page.click('button:has-text("Upload Image")');
 
     // Should show error
     await page.waitForSelector('[role="alert"]:has-text("validation failed")', {
-      timeout: 5000
+      timeout: 5000,
     });
 
     const alert = await page.locator('[role="alert"]');
@@ -404,22 +405,22 @@ test.describe('File Upload E2E', () => {
 
     // Create large buffer (over size limit)
     const largeBuffer = Buffer.alloc(20_000_000); // 20MB
-    largeBuffer[0] = 0xFF;
-    largeBuffer[1] = 0xD8;
-    largeBuffer[2] = 0xFF;
-    largeBuffer[3] = 0xE0;
+    largeBuffer[0] = 0xff;
+    largeBuffer[1] = 0xd8;
+    largeBuffer[2] = 0xff;
+    largeBuffer[3] = 0xe0;
 
     await page.locator('input[type="file"]').setInputFiles({
       name: 'huge.jpg',
       mimeType: 'image/jpeg',
-      buffer: largeBuffer
+      buffer: largeBuffer,
     });
 
     await page.click('button:has-text("Upload Image")');
 
     // Should show size error
     await page.waitForSelector('[role="alert"]:has-text("too large")', {
-      timeout: 5000
+      timeout: 5000,
     });
   });
 
@@ -427,11 +428,11 @@ test.describe('File Upload E2E', () => {
     await page.goto('http://localhost:5173/admin/segments');
 
     // Upload image
-    const jpegBuffer = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]);
+    const jpegBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
     await page.locator('input[type="file"]').setInputFiles({
       name: 'test.jpg',
       mimeType: 'image/jpeg',
-      buffer: jpegBuffer
+      buffer: jpegBuffer,
     });
 
     await page.click('button:has-text("Upload Image")');
@@ -449,6 +450,7 @@ test.describe('File Upload E2E', () => {
 ```
 
 **Key Points:**
+
 - Tests actual browser file upload
 - Uses real tsx runtime (not mocked)
 - Verifies UI behavior and database state
@@ -483,6 +485,7 @@ echo "Build verification passed!"
 ```
 
 Run in CI:
+
 ```json
 {
   "scripts": {
@@ -513,14 +516,12 @@ describe('Module Compatibility', () => {
     }
 
     // Import as CJS via adapter
-    const { detectFileType } = await import(
-      '../src/adapters/file-type.adapter'
-    );
+    const { detectFileType } = await import('../src/adapters/file-type.adapter');
 
     // If both exist, they should be same instance
     if (esmVersion && typeof detectFileType === 'function') {
       // Verify no state mismatch
-      const buffer = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]);
+      const buffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
 
       const result = await detectFileType(buffer);
       expect(result).toBeDefined();
@@ -531,11 +532,9 @@ describe('Module Compatibility', () => {
   it('should have correct TypeScript definitions', async () => {
     // This test verifies TypeScript compilation succeeds
     // (if it compiles, the types are correct)
-    const { detectFileType } = await import(
-      '../src/adapters/file-type.adapter'
-    );
+    const { detectFileType } = await import('../src/adapters/file-type.adapter');
 
-    const result = await detectFileType(Buffer.from([0xFF, 0xD8]));
+    const result = await detectFileType(Buffer.from([0xff, 0xd8]));
 
     // TypeScript knows the return type
     expect(result === undefined || result?.mime).toBeDefined();
@@ -594,30 +593,35 @@ jobs:
 Before committing code with CJS imports:
 
 ### Unit Tests
+
 - [ ] Tests for adapter functions
 - [ ] Tests for both success and error cases
 - [ ] Edge case tests (large files, unusual inputs)
 - [ ] All tests pass: `npm test`
 
 ### Integration Tests
+
 - [ ] Tests with real database
 - [ ] Tests with actual CJS package
 - [ ] Tests verify database state changes
 - [ ] All tests pass: `npm run test:integration`
 
 ### E2E Tests
+
 - [ ] Tests for complete user workflows
 - [ ] Tests run in real tsx runtime
 - [ ] Tests verify UI and database state
 - [ ] All tests pass: `npm run test:e2e`
 
 ### Build Verification
+
 - [ ] TypeScript compilation passes: `npm run typecheck`
 - [ ] Production build succeeds: `npm run build`
 - [ ] Built code can start: `npm start`
 - [ ] No module resolution errors
 
 ### Module Compatibility
+
 - [ ] No "Cannot find module" errors
 - [ ] No dual package hazard
 - [ ] Type assertions present and correct
@@ -631,6 +635,7 @@ Before committing code with CJS imports:
 
 **Cause:** createRequire not working in test
 **Solution:**
+
 ```typescript
 // In test setup file
 import { createRequire } from 'module';
@@ -645,6 +650,7 @@ const require = createRequire(import.meta.url);
 
 **Cause:** Incorrect export accessed
 **Solution:**
+
 ```typescript
 // ❌ Wrong
 const fileType = require('file-type');
@@ -665,6 +671,7 @@ fileType.fromBuffer(buffer);
 
 **Cause:** Import not awaited properly
 **Solution:**
+
 ```typescript
 // ❌ Wrong
 const fileType = import('file-type'); // Missing await
@@ -691,6 +698,7 @@ npm test -- --reporter=verbose
 ```
 
 If tests are slow:
+
 1. Check for unnecessary async operations
 2. Verify no redundant module imports
 3. Check database query performance

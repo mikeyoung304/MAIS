@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "006"
+issue_id: '006'
 tags: [documentation, archive, phases]
 dependencies: []
 resolved_date: 2025-11-12
@@ -17,6 +17,7 @@ The `docs/phases/` and `docs/sprints/` directories contain 24+ files documenting
 ## Findings
 
 **docs/phases/ - 14 files to archive:**
+
 1. PHASE_1_COMPLETION_REPORT.md (UI/UX, Nov 17)
 2. PHASE_2_COMPLETION_REPORT.md (Booking flow, Nov 17)
 3. PHASE_3_COMPONENTS_GUIDE.md
@@ -33,6 +34,7 @@ The `docs/phases/` and `docs/sprints/` directories contain 24+ files documenting
 14. PHASE2_PRODUCTION_INFRASTRUCTURE.md
 
 **docs/sprints/ - 11 files to archive:**
+
 1. SPRINT_10_COMPLETION_REPORT.md (Nov 21)
 2. SPRINT_10_FINAL_SUMMARY.md (Nov 24)
 3. sprint-7/CHANGELOG_SPRINT_7.md
@@ -48,12 +50,14 @@ The `docs/phases/` and `docs/sprints/` directories contain 24+ files documenting
 ## Proposed Solutions
 
 ### Solution 1: Archive to docs/archive/2025-11/ (Recommended)
+
 - Move all to existing archive structure
 - Effort: Medium (1 hour)
 - Risk: Low
 - Pros: Follows ADR-004, centralized history
 
 ### Solution 2: Create docs/completed/ Directory
+
 - New directory for completed work
 - Effort: Medium (1 hour)
 - Risk: Low
@@ -67,12 +71,14 @@ Solution 1 - Archive to existing structure per ADR-004.
 ## Technical Details
 
 **Archive destinations:**
+
 ```
 docs/archive/2025-11/phases/  (14 files)
 docs/archive/2025-11/sprints/ (11 files)
 ```
 
 **Commands:**
+
 ```bash
 mkdir -p docs/archive/2025-11/phases-ui-ux
 mkdir -p docs/archive/2025-11/sprints
@@ -99,10 +105,10 @@ git mv docs/sprints/sprint-9/ docs/archive/2025-11/sprints/
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-24 | Created | 25 completion reports identified |
-| 2025-11-12 | Resolved | Archive migration completed in commit f650a6b |
+| Date       | Action   | Notes                                                      |
+| ---------- | -------- | ---------------------------------------------------------- |
+| 2025-11-24 | Created  | 25 completion reports identified                           |
+| 2025-11-12 | Resolved | Archive migration completed in commit f650a6b              |
 | 2025-12-02 | Verified | Confirmed all files archived, original directories removed |
 
 ## Resolution Summary
@@ -110,6 +116,7 @@ git mv docs/sprints/sprint-9/ docs/archive/2025-11/sprints/
 This TODO was already resolved on November 12, 2025 as part of commit f650a6b9db ("docs: Complete Phase 3 archive migration - ISO 8601 consolidation").
 
 **What was done:**
+
 - All phase documents (22 files) moved to `docs/archive/2025-11/phases/`
 - All sprint documents (31 files) moved to `docs/archive/2025-11/sprints/`
 - Original `docs/phases/` and `docs/sprints/` directories completely removed
@@ -118,6 +125,7 @@ This TODO was already resolved on November 12, 2025 as part of commit f650a6b9db
 - Total: 53 files archived (exceeded original estimate of 25)
 
 **Current status:**
+
 - No `docs/phases/` directory exists
 - No `docs/sprints/` directory exists
 - All historical documents properly archived in `docs/archive/2025-11/`

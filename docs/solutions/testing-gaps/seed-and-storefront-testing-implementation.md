@@ -1,5 +1,5 @@
 ---
-title: "Seed Function and Storefront E2E Testing Implementation"
+title: 'Seed Function and Storefront E2E Testing Implementation'
 category: testing-gaps
 severity: p2-high
 components:
@@ -11,17 +11,17 @@ components:
   - client/src/features/storefront/TierCard.tsx
   - e2e/tests/storefront.spec.ts
 symptoms:
-  - "771 server tests but zero tests for seed functions"
-  - "Storefront refactoring had no E2E test coverage"
-  - "Seed breakage only discovered in production"
-  - "No verification of idempotency patterns"
-  - "No testing of error paths in seeds"
-root_cause: "Seed functions were treated as deployment scripts rather than testable code; storefront refactoring prioritized implementation over test coverage"
+  - '771 server tests but zero tests for seed functions'
+  - 'Storefront refactoring had no E2E test coverage'
+  - 'Seed breakage only discovered in production'
+  - 'No verification of idempotency patterns'
+  - 'No testing of error paths in seeds'
+root_cause: 'Seed functions were treated as deployment scripts rather than testable code; storefront refactoring prioritized implementation over test coverage'
 resolution_type: new-implementation
 created: 2025-11-30
 status: resolved
-phase: "Phase 9 Testing Fixes"
-commit: "5cfbff7"
+phase: 'Phase 9 Testing Fixes'
+commit: '5cfbff7'
 test_count: 90
 ---
 
@@ -36,24 +36,24 @@ The MAIS codebase had **771 passing server tests** but critical gaps in test cov
 
 ### Why This Mattered
 
-| Risk | Impact |
-|------|--------|
-| Seed breakage | Discovered only in production deployment |
-| Production guard bypass | Fixed E2E keys could leak to production |
-| Idempotency failures | Seeds fail on re-run, blocking deployments |
-| Storefront regressions | UI bugs in customer-facing booking flow |
+| Risk                    | Impact                                     |
+| ----------------------- | ------------------------------------------ |
+| Seed breakage           | Discovered only in production deployment   |
+| Production guard bypass | Fixed E2E keys could leak to production    |
+| Idempotency failures    | Seeds fail on re-run, blocking deployments |
+| Storefront regressions  | UI bugs in customer-facing booking flow    |
 
 ## Solution Overview
 
 ### Phase 9 Deliverables
 
-| Issue | Priority | Resolution |
-|-------|----------|------------|
-| 075: E2E seed missing from CI | P1 | Already fixed (`main-pipeline.yml:409-413`) |
-| 077: Production deploy missing seed | P1 | Already fixed (`deploy-production.yml:332-337`) |
-| 078: E2E seed production guard | P2 | Already fixed (`e2e.ts:19-26`) |
-| **083: Seed functions missing tests** | **P3** | **66 new unit tests** |
-| **087: Storefront E2E tests missing** | **P2** | **24 new E2E tests** |
+| Issue                                 | Priority | Resolution                                      |
+| ------------------------------------- | -------- | ----------------------------------------------- |
+| 075: E2E seed missing from CI         | P1       | Already fixed (`main-pipeline.yml:409-413`)     |
+| 077: Production deploy missing seed   | P1       | Already fixed (`deploy-production.yml:332-337`) |
+| 078: E2E seed production guard        | P2       | Already fixed (`e2e.ts:19-26`)                  |
+| **083: Seed functions missing tests** | **P3**   | **66 new unit tests**                           |
+| **087: Storefront E2E tests missing** | **P2**   | **24 new E2E tests**                            |
 
 ## Implementation Details
 
@@ -84,6 +84,7 @@ describe('SEED_MODE explicit settings', () => {
 ```
 
 **Coverage:**
+
 - SEED_MODE explicit settings (production, e2e, demo, dev, all)
 - NODE_ENV fallback behavior
 - Invalid mode handling
@@ -110,6 +111,7 @@ describe('Production Environment Guard', () => {
 ```
 
 **Coverage:**
+
 - Production environment guard (throws if NODE_ENV=production)
 - Fixed API key format validation
 - Tenant and package creation
@@ -140,6 +142,7 @@ describe('Idempotency - Existing Admin Handling', () => {
 ```
 
 **Coverage:**
+
 - Required env vars (ADMIN_EMAIL, ADMIN_DEFAULT_PASSWORD)
 - Password length validation (min 12 chars)
 - New admin creation with bcrypt hashing
@@ -167,6 +170,7 @@ describe('Random Key Generation (Security)', () => {
 ```
 
 **Coverage:**
+
 - Random key generation (crypto.randomBytes)
 - Tenant creation with demo slug/email
 - Package creation (starter, growth, enterprise)
@@ -206,15 +210,15 @@ test.describe('Segment Navigation Logic', () => {
 
 **Test Suites:**
 
-| Suite | Tests | Coverage |
-|-------|-------|----------|
-| Segment Navigation | 4 | 0/1/2+ segment routing |
-| Tenant Storefront Routes | 3 | /t/:slug white-label |
-| Tier Display | 4 | Cards, prices, CTAs |
-| Loading States | 2 | Spinner, API errors |
-| Tier Detail Page | 5 | Details, calendar, form |
-| Responsive Layout | 4 | Mobile/tablet/desktop |
-| Image Handling | 2 | Fallbacks, broken URLs |
+| Suite                    | Tests | Coverage                |
+| ------------------------ | ----- | ----------------------- |
+| Segment Navigation       | 4     | 0/1/2+ segment routing  |
+| Tenant Storefront Routes | 3     | /t/:slug white-label    |
+| Tier Display             | 4     | Cards, prices, CTAs     |
+| Loading States           | 2     | Spinner, API errors     |
+| Tier Detail Page         | 5     | Details, calendar, form |
+| Responsive Layout        | 4     | Mobile/tablet/desktop   |
+| Image Handling           | 2     | Fallbacks, broken URLs  |
 
 ## Testing Patterns
 
@@ -329,6 +333,7 @@ fi
 ### Code Review Checklist
 
 For seed changes:
+
 - [ ] Are all environment variables validated with helpful error messages?
 - [ ] Is idempotency tested (safe to run multiple times)?
 - [ ] Are error paths tested (missing env vars, constraint violations)?
@@ -336,6 +341,7 @@ For seed changes:
 - [ ] Are security-sensitive operations tested (password hashing, key generation)?
 
 For storefront changes:
+
 - [ ] Are navigation flows tested (routing logic)?
 - [ ] Are responsive breakpoints tested (mobile/tablet/desktop)?
 - [ ] Are error states tested (API failures, invalid data)?
@@ -367,14 +373,14 @@ seed-tests:
 
 ## Files Created
 
-| File | Lines | Tests |
-|------|-------|-------|
-| `server/test/seeds/seed-orchestrator.test.ts` | 165 | 11 |
-| `server/test/seeds/e2e-seed.test.ts` | 212 | 16 |
-| `server/test/seeds/platform-seed.test.ts` | 248 | 22 |
-| `server/test/seeds/demo-seed.test.ts` | 210 | 17 |
-| `e2e/tests/storefront.spec.ts` | 307 | 24 |
-| **Total** | **1142** | **90** |
+| File                                          | Lines    | Tests  |
+| --------------------------------------------- | -------- | ------ |
+| `server/test/seeds/seed-orchestrator.test.ts` | 165      | 11     |
+| `server/test/seeds/e2e-seed.test.ts`          | 212      | 16     |
+| `server/test/seeds/platform-seed.test.ts`     | 248      | 22     |
+| `server/test/seeds/demo-seed.test.ts`         | 210      | 17     |
+| `e2e/tests/storefront.spec.ts`                | 307      | 24     |
+| **Total**                                     | **1142** | **90** |
 
 ## Lessons Learned
 

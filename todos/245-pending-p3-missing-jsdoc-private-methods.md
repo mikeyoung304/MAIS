@@ -1,10 +1,10 @@
 ---
 status: complete
 priority: p3
-issue_id: "245"
+issue_id: '245'
 tags: [documentation, landing-page, code-quality]
 dependencies: []
-source: "code-review-pr-14"
+source: 'code-review-pr-14'
 ---
 
 # TODO-245: Add JSDoc to Private Repository Methods
@@ -73,9 +73,9 @@ Note: The code review TODO said there was "no documentation" but JSDoc was alrea
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-12-04 | Created | Code review of PR #14 |
+| Date       | Action   | Notes                                |
+| ---------- | -------- | ------------------------------------ |
+| 2025-12-04 | Created  | Code review of PR #14                |
 | 2025-12-04 | Resolved | Enhanced JSDoc with @remarks section |
 
 ## Tags

@@ -14,6 +14,7 @@ This solution addresses the problem of E2E tests for the visual editor continuou
 ### The Problem Scenario
 
 When running Playwright E2E tests for the visual editor, the test suite would fail at the signup stage with 429 errors:
+
 - Each test needs to sign up a unique user to get auth tokens
 - Multiple tests running in parallel each trigger signup requests
 - The signup rate limiter `signupLimiter` enforces a hard limit of 5 signups per hour per IP
@@ -44,6 +45,7 @@ The `loginLimiter` had a test environment check (`NODE_ENV === 'test'`), but `si
 ## Solution Overview
 
 Implement an environment-aware rate limiter that:
+
 1. Detects both unit test (`NODE_ENV=test`) and E2E test (`E2E_TEST=1`) environments
 2. Increases limits only during testing
 3. Maintains production security defaults
@@ -74,6 +76,7 @@ export const signupLimiter = rateLimit({
 ```
 
 **Key Changes:**
+
 - Line 64: Added environment detection logic
 - Line 69: Changed from hardcoded `5` to conditional `isTestEnvironment ? 100 : 5`
 - Maintains backward compatibility - production unchanged (still 5/hour)
@@ -94,6 +97,7 @@ webServer: {
 ```
 
 **Key Addition:**
+
 - `E2E_TEST=1` environment variable passed to the webServer command (line 71)
 - This signals the API server that it's running in E2E test mode
 - Only set during test execution, never in production
@@ -136,7 +140,7 @@ async function ensureLoggedIn(page: Page): Promise<void> {
 
     // Wait for response and check for rate limit
     const responsePromise = page.waitForResponse(
-      response => response.url().includes('/v1/auth/signup'),
+      (response) => response.url().includes('/v1/auth/signup'),
       { timeout: 30000 }
     );
     await page.getByRole('button', { name: /Create Account/i }).click();
@@ -167,6 +171,7 @@ async function ensureLoggedIn(page: Page): Promise<void> {
 ```
 
 **Design Patterns:**
+
 1. **Serial Execution:** Tests run sequentially (`mode: 'serial'`)
 2. **Single Signup:** Only one signup per test run via `ensureLoggedIn()`
 3. **Token Caching:** Auth token cached in memory and restored for each test
@@ -273,12 +278,12 @@ npm run test:e2e -- e2e/tests/visual-editor.spec.ts
 
 ### Environment Variables
 
-| Variable | Value | Purpose |
-|----------|-------|---------|
-| `E2E_TEST` | `1` | Signal API server that E2E tests are running |
-| `NODE_ENV` | `test` | Set by Vitest for unit tests |
-| `ADAPTERS_PRESET` | `real` | Use real adapters (Prisma, not mock) |
-| `VITE_E2E` | `1` | Signal frontend about E2E test mode |
+| Variable          | Value  | Purpose                                      |
+| ----------------- | ------ | -------------------------------------------- |
+| `E2E_TEST`        | `1`    | Signal API server that E2E tests are running |
+| `NODE_ENV`        | `test` | Set by Vitest for unit tests                 |
+| `ADAPTERS_PRESET` | `real` | Use real adapters (Prisma, not mock)         |
+| `VITE_E2E`        | `1`    | Signal frontend about E2E test mode          |
 
 ### Rate Limiter Settings
 
@@ -298,13 +303,13 @@ const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.E2E_TES
 
 ## Related Files
 
-| File | Purpose |
-|------|---------|
-| `/server/src/middleware/rateLimiter.ts` | Rate limiter configuration with environment detection |
-| `/e2e/playwright.config.ts` | Playwright config setting E2E_TEST=1 |
-| `/e2e/tests/visual-editor.spec.ts` | 9 E2E test cases with auth caching |
-| `/client/src/features/tenant-admin/visual-editor/VisualEditorDashboard.tsx` | Component under test |
-| `/server/src/routes/auth.routes.ts` | Signup endpoint using signupLimiter |
+| File                                                                        | Purpose                                               |
+| --------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `/server/src/middleware/rateLimiter.ts`                                     | Rate limiter configuration with environment detection |
+| `/e2e/playwright.config.ts`                                                 | Playwright config setting E2E_TEST=1                  |
+| `/e2e/tests/visual-editor.spec.ts`                                          | 9 E2E test cases with auth caching                    |
+| `/client/src/features/tenant-admin/visual-editor/VisualEditorDashboard.tsx` | Component under test                                  |
+| `/server/src/routes/auth.routes.ts`                                         | Signup endpoint using signupLimiter                   |
 
 ## Key Design Decisions
 
@@ -322,6 +327,7 @@ const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.E2E_TES
 ### 2. Why Serial Execution Instead of Parallel?
 
 Visual editor tests modify packages and create drafts. Serial execution ensures:
+
 - No race conditions between tests
 - Single signup satisfies all tests
 - Deterministic test order

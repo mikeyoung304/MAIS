@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "153"
+issue_id: '153'
 tags: [code-review, performance, mvp-gaps, database]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The `findBookingsNeedingReminders` query filters by `reminderDueDate` and `reminderSentAt` but there's no composite index for these fields, causing full table scans.
 
 **Why This Matters:**
+
 - Query performance degrades with booking count
 - At 10,000 CONFIRMED bookings: full table scan after tenant filter
 
@@ -23,11 +24,13 @@ The `findBookingsNeedingReminders` query filters by `reminderDueDate` and `remin
 **Location:** `server/prisma/schema.prisma:322-345`
 
 **Evidence:**
+
 ```sql
 WHERE tenantId = ? AND reminderDueDate <= ? AND reminderSentAt IS NULL AND status = 'CONFIRMED'
 ```
 
 **Current Indexes:**
+
 - `@@index([tenantId, status])` ✅
 - `@@index([tenantId, status, date])` ✅
 - **MISSING**: `[tenantId, reminderDueDate, reminderSentAt, status]`
@@ -35,6 +38,7 @@ WHERE tenantId = ? AND reminderDueDate <= ? AND reminderSentAt IS NULL AND statu
 ## Proposed Solutions
 
 ### Option A: Add Composite Index (Recommended)
+
 **Pros:** Optimal query performance
 **Cons:** Slight write overhead
 **Effort:** Small (1 hour)
@@ -47,6 +51,7 @@ WHERE tenantId = ? AND reminderDueDate <= ? AND reminderSentAt IS NULL AND statu
 ## Technical Details
 
 **Affected Files:**
+
 - `server/prisma/schema.prisma`
 
 ## Acceptance Criteria
@@ -62,6 +67,7 @@ WHERE tenantId = ? AND reminderDueDate <= ? AND reminderSentAt IS NULL AND statu
 The reminder index has been fully implemented and deployed:
 
 1. **Partial Index in Database:** Migration `08_add_booking_management_fields.sql` created a partial index:
+
    ```sql
    CREATE INDEX IF NOT EXISTS "idx_booking_reminder_due"
    ON "Booking" ("tenantId", "reminderDueDate")
@@ -69,6 +75,7 @@ The reminder index has been fully implemented and deployed:
    ```
 
 2. **Prisma Schema Index:** Added composite index at line 358 of `schema.prisma`:
+
    ```prisma
    @@index([tenantId, reminderDueDate, reminderSentAt, status])
    ```
@@ -78,11 +85,13 @@ The reminder index has been fully implemented and deployed:
    - Index covers all WHERE clause columns for optimal performance
 
 **Performance Impact:**
+
 - Partial index is highly selective (only bookings needing reminders)
 - Avoids full table scans on large booking tables
 - Minimal write overhead due to WHERE clause restriction
 
 **Verification:**
+
 - Prisma Client regenerated successfully
 - TypeScript compilation passes
 - Migration status: Database schema is up to date

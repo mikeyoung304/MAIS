@@ -15,25 +15,32 @@ This directory contains comprehensive prevention strategies for the ts-rest `any
 ### For Different Roles
 
 #### I'm a Developer
+
 Start here: **[PREVENTION-ANY-TYPES-QUICK-REF.md](PREVENTION-ANY-TYPES-QUICK-REF.md)**
+
 - 30-second decision tree
 - Checklist of what to remove and what to keep
 - Copy-paste quick answers
 
 Then read: **[PREVENTION-TS-REST-ANY-TYPE.md](PREVENTION-TS-REST-ANY-TYPE.md)**
+
 - Why ts-rest needs `any` types
 - How to properly document limitations
 - Pattern recognition tips
 
 #### I'm Reviewing Code
+
 Use: **[CODE-REVIEW-ANY-TYPE-CHECKLIST.md](CODE-REVIEW-ANY-TYPE-CHECKLIST.md)**
+
 - Step-by-step review process
 - Decision matrix
 - Copy-paste review comments
 - Red flags and green lights
 
 #### I'm a Team Lead
+
 Read: **[INCIDENT-REPORT-TODO-035.md](INCIDENT-REPORT-TODO-035.md)**
+
 - What happened and why
 - Timeline of events
 - Prevention strategies implemented
@@ -45,37 +52,40 @@ Read: **[INCIDENT-REPORT-TODO-035.md](INCIDENT-REPORT-TODO-035.md)**
 
 ### Core Prevention Documents
 
-| File | Size | Purpose | Read Time |
-|------|------|---------|-----------|
-| **[PREVENTION-TS-REST-ANY-TYPE.md](PREVENTION-TS-REST-ANY-TYPE.md)** | 12KB | Comprehensive guide to ts-rest limitation, when `any` is acceptable, patterns to follow | 15 min |
-| **[PREVENTION-ANY-TYPES-QUICK-REF.md](PREVENTION-ANY-TYPES-QUICK-REF.md)** | 4KB | Quick decision tree, checklist, and rules | 3 min |
-| **[CODE-REVIEW-ANY-TYPE-CHECKLIST.md](CODE-REVIEW-ANY-TYPE-CHECKLIST.md)** | 9KB | Step-by-step code review process with examples | 8 min |
-| **[INCIDENT-REPORT-TODO-035.md](INCIDENT-REPORT-TODO-035.md)** | 8KB | What happened, why, and what we learned | 10 min |
+| File                                                                       | Size | Purpose                                                                                 | Read Time |
+| -------------------------------------------------------------------------- | ---- | --------------------------------------------------------------------------------------- | --------- |
+| **[PREVENTION-TS-REST-ANY-TYPE.md](PREVENTION-TS-REST-ANY-TYPE.md)**       | 12KB | Comprehensive guide to ts-rest limitation, when `any` is acceptable, patterns to follow | 15 min    |
+| **[PREVENTION-ANY-TYPES-QUICK-REF.md](PREVENTION-ANY-TYPES-QUICK-REF.md)** | 4KB  | Quick decision tree, checklist, and rules                                               | 3 min     |
+| **[CODE-REVIEW-ANY-TYPE-CHECKLIST.md](CODE-REVIEW-ANY-TYPE-CHECKLIST.md)** | 9KB  | Step-by-step code review process with examples                                          | 8 min     |
+| **[INCIDENT-REPORT-TODO-035.md](INCIDENT-REPORT-TODO-035.md)**             | 8KB  | What happened, why, and what we learned                                                 | 10 min    |
 
 ### Supporting Materials
 
-| File | Purpose |
-|------|---------|
-| `scripts/pre-push-type-check.sh` | Automated prevention - runs before git push |
-| `CLAUDE.md` (updated) | Team guidelines updated with prevention strategies |
+| File                             | Purpose                                            |
+| -------------------------------- | -------------------------------------------------- |
+| `scripts/pre-push-type-check.sh` | Automated prevention - runs before git push        |
+| `CLAUDE.md` (updated)            | Team guidelines updated with prevention strategies |
 
 ---
 
 ## The 60-Second Summary
 
 **The Problem:**
+
 - ts-rest v3 has type compatibility issues with Express 4.x/5.x
 - Route handlers require `{ req: any }` due to middleware signature mismatch
 - Code quality tools flag this as a "type safety issue"
 - Attempting to replace `any` with `Request` causes TS2345 build errors
 
 **The Solution:**
+
 - Keep the `any` - it's required, not a bug
 - Document why it exists (library limitation)
 - Add type assertions after extraction for safety
 - Create prevention strategies to stop future attempts
 
 **What This Prevents:**
+
 1. Build failures from removing required `any` types
 2. Wasted time investigating "phantom type bugs"
 3. Repeated attempts to "fix" the same issue
@@ -86,6 +96,7 @@ Read: **[INCIDENT-REPORT-TODO-035.md](INCIDENT-REPORT-TODO-035.md)**
 ## Three Layers of Prevention
 
 ### Layer 1: Inline Documentation
+
 **Location:** `server/src/routes/index.ts`
 
 ```typescript
@@ -100,9 +111,11 @@ createExpressEndpoints(Contracts, s.router(Contracts, {
 **Purpose:** Explains limitation directly in the code where it exists
 
 ### Layer 2: Code Review Checklist
+
 **Location:** `docs/solutions/CODE-REVIEW-ANY-TYPE-CHECKLIST.md`
 
 When reviewing type changes:
+
 1. Check if it's in ts-rest handlers
 2. Verify library types exist before removal
 3. Ensure validation follows `any` type
@@ -111,9 +124,11 @@ When reviewing type changes:
 **Purpose:** Empowers reviewers to catch issues during review
 
 ### Layer 3: Automated Pre-Push Check
+
 **Location:** `scripts/pre-push-type-check.sh`
 
 Runs automatically before `git push`:
+
 1. Detects ts-rest `req: any` removals
 2. Warns about unsafe assertions
 3. Runs TypeScript build check
@@ -135,6 +150,7 @@ Runs automatically before `git push`:
 ### When Removing an `any` Type
 
 Use the decision tree from [PREVENTION-ANY-TYPES-QUICK-REF.md](PREVENTION-ANY-TYPES-QUICK-REF.md):
+
 1. Is it in ts-rest? → Don't remove
 2. Is it validated by schema? → Safe to remove
 3. Can TS infer it? → Safe to remove
@@ -162,10 +178,10 @@ Use the decision tree from [PREVENTION-ANY-TYPES-QUICK-REF.md](PREVENTION-ANY-TY
 
 ```typescript
 // BAD: Unnecessarily loose type
-const result: any = someFunction();  // Can be properly typed
+const result: any = someFunction(); // Can be properly typed
 
 // REQUIRED: Library limitation
-const { req }: { req: any } = handler;  // ts-rest needs this
+const { req }: { req: any } = handler; // ts-rest needs this
 ```
 
 ### 2. Library Limitations Are Constraints
@@ -193,15 +209,19 @@ Without Prevention                With Prevention
 ## Common Questions
 
 ### Q: Why not just upgrade ts-rest?
+
 **A:** ts-rest v3 is the latest, and this is a known limitation with Express middleware typing. Upgrading to v4 would require testing entire API suite.
 
 ### Q: Can't we just type-ignore it?
+
 **A:** We already handle it properly with type assertions after extraction. Documentation is better than ignoring.
 
 ### Q: What if TypeScript changes?
+
 **A:** The approach (document + prevent attempts) works regardless. If TS changes and the `any` becomes removable, we'll know because the pre-push script will report success.
 
 ### Q: Should we open a GitHub issue with ts-rest?
+
 **A:** One likely exists already. Check [ts-rest/ts-rest issues](https://github.com/ts-rest/ts-rest/issues) for "Express type" or similar.
 
 ---
@@ -209,19 +229,23 @@ Without Prevention                With Prevention
 ## Maintenance & Updates
 
 ### When to Review These Documents
+
 - After TypeScript updates
 - When ts-rest releases new version
 - When new `any` types are proposed
 - During architecture review
 
 ### How to Update
+
 1. Update the specific prevention document
 2. Update inline code comments if relevant
 3. Update CLAUDE.md if guidance changes
 4. Update this README with link if creating new doc
 
 ### Deprecation
+
 If ts-rest fixes the issue:
+
 1. Test removing `any` types
 2. Document the change
 3. Update PREVENTION-TS-REST-ANY-TYPE.md to reflect history
@@ -232,10 +256,12 @@ If ts-rest fixes the issue:
 ## References
 
 ### External
+
 - **ts-rest GitHub:** [https://github.com/ts-rest/ts-rest](https://github.com/ts-rest/ts-rest)
 - **Express Types:** [@types/express](https://npmjs.com/package/@types/express)
 
 ### Internal (MAIS)
+
 - **CLAUDE.md:** Team guidelines with links to prevention strategies
 - **server/src/routes/index.ts:** Route handlers with documented `any` types
 - **scripts/pre-push-type-check.sh:** Automated prevention script
@@ -249,6 +275,7 @@ This is comprehensive documentation for a single, clear principle:
 **Some `any` types are library limitations, not code quality issues. Removing them breaks the build. Instead, document why they exist and prevent future attempts to remove them.**
 
 Use these documents to:
+
 1. Understand why `any` exists in ts-rest handlers
 2. Prevent accidental removal of required `any` types
 3. Distinguish real type safety issues from library constraints

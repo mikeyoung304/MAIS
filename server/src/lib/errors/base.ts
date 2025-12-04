@@ -41,11 +41,7 @@ export class AppError extends Error {
  * @deprecated Use AppError instead
  */
 export class DomainError extends AppError {
-  constructor(
-    message: string,
-    code: string,
-    statusCode: number = 500
-  ) {
+  constructor(message: string, code: string, statusCode: number = 500) {
     super(message, code, statusCode, true);
     this.name = 'DomainError';
   }
@@ -59,7 +55,10 @@ export class DomainError extends AppError {
  * Database error - for issues with database operations
  */
 export class DatabaseError extends AppError {
-  constructor(message: string, public readonly originalError?: Error) {
+  constructor(
+    message: string,
+    public readonly originalError?: Error
+  ) {
     super(message, 'DATABASE_ERROR', 500, true);
     this.name = 'DatabaseError';
     if (originalError) {
@@ -99,7 +98,10 @@ export class ConfigurationError extends AppError {
  * File system error - for issues with file operations
  */
 export class FileSystemError extends AppError {
-  constructor(message: string, public readonly originalError?: Error) {
+  constructor(
+    message: string,
+    public readonly originalError?: Error
+  ) {
     super(message, 'FILESYSTEM_ERROR', 500, true);
     this.name = 'FileSystemError';
     if (originalError) {
@@ -116,7 +118,10 @@ export class FileSystemError extends AppError {
  * Network error - for network-related issues
  */
 export class NetworkError extends AppError {
-  constructor(message: string, public readonly originalError?: Error) {
+  constructor(
+    message: string,
+    public readonly originalError?: Error
+  ) {
     super(message, 'NETWORK_ERROR', 503, true);
     this.name = 'NetworkError';
     if (originalError) {
@@ -129,7 +134,10 @@ export class NetworkError extends AppError {
  * Timeout error - for operations that exceed time limits
  */
 export class TimeoutError extends AppError {
-  constructor(message: string, public readonly timeoutMs?: number) {
+  constructor(
+    message: string,
+    public readonly timeoutMs?: number
+  ) {
     super(message, 'TIMEOUT_ERROR', 504, true);
     this.name = 'TimeoutError';
   }

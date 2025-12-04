@@ -1,17 +1,17 @@
-import { useState, FormEvent } from "react";
-import { Container } from "@/ui/Container";
-import { Button } from "@/components/ui/button";
-import { BookOpen, CheckCircle } from "lucide-react";
+import { useState, FormEvent } from 'react';
+import { Container } from '@/ui/Container';
+import { Button } from '@/components/ui/button';
+import { BookOpen, CheckCircle } from 'lucide-react';
 
 export function LeadMagnetSection() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
-    setStatus("loading");
+    setStatus('loading');
 
     // Simulate API call - replace with actual email service integration
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -19,8 +19,8 @@ export function LeadMagnetSection() {
     // TODO: Integrate with email service (Postmark, ConvertKit, etc.)
     // await subscribeToNewsletter(email);
 
-    setStatus("success");
-    setEmail("");
+    setStatus('success');
+    setEmail('');
   };
 
   return (
@@ -41,16 +41,13 @@ export function LeadMagnetSection() {
             5 Systems Every Small Business Needs
           </p>
           <p className="text-lg text-neutral-600 mb-8">
-            Get our step-by-step guide to automating your business—even if
-            you're not tech-savvy.
+            Get our step-by-step guide to automating your business—even if you're not tech-savvy.
           </p>
 
-          {status === "success" ? (
+          {status === 'success' ? (
             <div className="flex items-center justify-center gap-3 p-6 bg-green-50 border border-green-200 rounded-xl">
               <CheckCircle className="w-6 h-6 text-green-600" />
-              <p className="text-lg text-green-700 font-medium">
-                Check your email for the guide!
-              </p>
+              <p className="text-lg text-green-700 font-medium">Check your email for the guide!</p>
             </div>
           ) : (
             <form
@@ -67,17 +64,15 @@ export function LeadMagnetSection() {
               />
               <Button
                 type="submit"
-                disabled={status === "loading"}
+                disabled={status === 'loading'}
                 className="bg-macon-orange hover:bg-macon-orange-dark text-white font-semibold px-8 py-4 text-lg rounded-xl"
               >
-                {status === "loading" ? "Sending..." : "Get the Guide"}
+                {status === 'loading' ? 'Sending...' : 'Get the Guide'}
               </Button>
             </form>
           )}
 
-          <p className="text-sm text-neutral-500 mt-4">
-            No spam. Unsubscribe anytime.
-          </p>
+          <p className="text-sm text-neutral-500 mt-4">No spam. Unsubscribe anytime.</p>
         </div>
       </Container>
     </section>

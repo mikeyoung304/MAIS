@@ -15,6 +15,7 @@ status: active
 The webhook idempotency race condition occurs when two concurrent requests both pass a duplicate "existence check" before either creates the record. This document provides comprehensive prevention strategies to ensure all webhook and async operation handlers are resilient against concurrent access.
 
 **Root Cause Pattern:**
+
 ```
 Request A: Check exists? No ──┐
                                ├─ Both pass check
@@ -23,6 +24,7 @@ Request B: Check exists? No ──┤
 ```
 
 **Solution Pattern:**
+
 ```
 Request A: Check exists atomically (with constraint) ─────┐
                                                            ├─ Only one succeeds
@@ -35,11 +37,13 @@ Request B: Check exists atomically (with constraint) ─────┤
 ## 1. Design Pattern: Atomic Record-and-Check
 
 ### Problem
+
 Separating the "check if exists" logic from "create if not exists" creates a window where concurrent requests both pass the check.
 
 ### Solution: Use Database Constraints as Source of Truth
 
 **Why it works:**
+
 - Database unique constraints are atomic (enforced at SQL level)
 - All concurrency is serialized through the database
 - No race condition window possible
@@ -59,7 +63,7 @@ async function recordWebhook(eventId: string, metadata: any) {
   // Concurrent request can also pass the check above
   // and both try to create
   await db.webhookEvent.create({
-    data: { eventId, metadata }
+    data: { eventId, metadata },
   });
   // Window closes here
   return true;
@@ -70,12 +74,13 @@ async function recordWebhook(eventId: string, metadata: any) {
   try {
     // Atomically create with unique constraint on eventId
     await db.webhookEvent.create({
-      data: { eventId, metadata }
+      data: { eventId, metadata },
     });
     return true; // New record created
   } catch (error) {
     // If unique constraint violated, duplicate was detected
-    if (error.code === 'P2002') { // Prisma unique constraint error
+    if (error.code === 'P2002') {
+      // Prisma unique constraint error
       logger.info('Webhook duplicate detected');
       return false;
     }
@@ -113,6 +118,7 @@ model IdempotencyKey {
 ```
 
 **Why NOT separate checks:**
+
 ```typescript
 // ❌ WRONG - Never do this in concurrent scenarios
 const isNew = await isDuplicate(eventId);
@@ -126,6 +132,7 @@ const created = await create(eventId); // Both requests reach here!
 ## 2. Interface Design: Return Success/Failure, Never Leave It Ambiguous
 
 ### Problem
+
 If a method doesn't clearly communicate whether an operation was new or duplicate, callers can't handle race conditions properly.
 
 ### Solution: Explicit Return Values and Exception Handling
@@ -196,9 +203,7 @@ try {
 
 ```typescript
 // ✅ CORRECT - Type-safe result object
-type WebhookRecordResult =
-  | { success: true; isNew: boolean }
-  | { success: false; error: Error };
+type WebhookRecordResult = { success: true; isNew: boolean } | { success: false; error: Error };
 
 async function recordWebhook(eventId: string): Promise<WebhookRecordResult> {
   try {
@@ -234,6 +239,7 @@ await processWebhook(event);
 ## 3. Test Strategy: Concurrent Operations Testing
 
 ### Problem
+
 Synchronous tests don't reveal race conditions. You must test with actual concurrency.
 
 ### Solution: Promise.allSettled for Concurrent Testing
@@ -244,7 +250,9 @@ Synchronous tests don't reveal race conditions. You must test with actual concur
 describe('Webhook Idempotency', () => {
   it('should prevent duplicate webhook processing', async () => {
     const eventId = 'evt_test_001';
-    const eventData = { /* webhook data */ };
+    const eventData = {
+      /* webhook data */
+    };
 
     // Act: Process same webhook twice CONCURRENTLY
     // (not sequentially!)
@@ -259,7 +267,7 @@ describe('Webhook Idempotency', () => {
 
     // Verify exactly ONE record was created
     const records = await db.webhookEvent.findMany({
-      where: { eventId }
+      where: { eventId },
     });
     expect(records).toHaveLength(1); // ← CRITICAL: Must be exactly 1
 
@@ -269,26 +277,26 @@ describe('Webhook Idempotency', () => {
 
   it('should handle high-concurrency (10+ simultaneous requests)', async () => {
     const eventId = 'evt_burst_001';
-    const eventData = { /* webhook data */ };
+    const eventData = {
+      /* webhook data */
+    };
 
     // Fire 10 requests simultaneously
-    const requests = Array.from({ length: 10 }, () =>
-      webhookHandler(eventId, eventData)
-    );
+    const requests = Array.from({ length: 10 }, () => webhookHandler(eventId, eventData));
 
     const results = await Promise.allSettled(requests);
 
     // Assert: All should complete (no crashes/timeouts)
-    expect(results.every(r => r.status === 'fulfilled')).toBe(true);
+    expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
 
     // Verify exactly ONE record was created
     const records = await db.webhookEvent.findMany({
-      where: { eventId }
+      where: { eventId },
     });
     expect(records).toHaveLength(1); // ← CRITICAL
 
     // Log success rate for monitoring
-    const successCount = results.filter(r => r.status === 'fulfilled').length;
+    const successCount = results.filter((r) => r.status === 'fulfilled').length;
     console.log(`Success rate: ${successCount}/10`);
   });
 
@@ -300,8 +308,8 @@ describe('Webhook Idempotency', () => {
     // Act: Process same event ID for different tenants concurrently
     // (multi-tenant system should NOT treat as duplicate)
     const results = await Promise.allSettled([
-      webhookHandler(sameEventId, { tenantId: tenantA, /* ... */ }),
-      webhookHandler(sameEventId, { tenantId: tenantB, /* ... */ }),
+      webhookHandler(sameEventId, { tenantId: tenantA /* ... */ }),
+      webhookHandler(sameEventId, { tenantId: tenantB /* ... */ }),
     ]);
 
     // Both should succeed
@@ -310,24 +318,26 @@ describe('Webhook Idempotency', () => {
 
     // Verify TWO records were created (different tenants, same event ID)
     const recordsA = await db.webhookEvent.findMany({
-      where: { tenantId: tenantA, eventId: sameEventId }
+      where: { tenantId: tenantA, eventId: sameEventId },
     });
     const recordsB = await db.webhookEvent.findMany({
-      where: { tenantId: tenantB, eventId: sameEventId }
+      where: { tenantId: tenantB, eventId: sameEventId },
     });
     expect(recordsA).toHaveLength(1);
     expect(recordsB).toHaveLength(1);
 
     // But not more
     const totalRecords = await db.webhookEvent.findMany({
-      where: { eventId: sameEventId }
+      where: { eventId: sameEventId },
     });
     expect(totalRecords).toHaveLength(2);
   });
 
   it('should handle cascade race conditions (recording + processing)', async () => {
     const eventId = 'evt_cascade_001';
-    const eventData = { /* webhook data */ };
+    const eventData = {
+      /* webhook data */
+    };
 
     // Simulate: Record webhook + Process booking both race
     const results = await Promise.allSettled([
@@ -336,17 +346,19 @@ describe('Webhook Idempotency', () => {
     ]);
 
     // Both should succeed
-    expect(results.every(r => r.status === 'fulfilled')).toBe(true);
+    expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
 
     // Exactly one webhook record
     const webhookRecords = await db.webhookEvent.findMany({
-      where: { eventId }
+      where: { eventId },
     });
     expect(webhookRecords).toHaveLength(1);
 
     // Exactly one booking created
     const bookings = await db.booking.findMany({
-      where: { /* filter by event data */ }
+      where: {
+        /* filter by event data */
+      },
     });
     expect(bookings).toHaveLength(1);
   });
@@ -359,28 +371,28 @@ describe('Webhook Idempotency', () => {
 describe('Webhook Under Load', () => {
   it('should handle 50 rapid concurrent webhooks for same event', async () => {
     const eventId = 'evt_stress_001';
-    const eventData = { /* webhook data */ };
+    const eventData = {
+      /* webhook data */
+    };
 
     const startTime = Date.now();
 
     // Fire 50 requests as fast as possible
-    const requests = Array.from({ length: 50 }, () =>
-      webhookHandler(eventId, eventData)
-    );
+    const requests = Array.from({ length: 50 }, () => webhookHandler(eventId, eventData));
 
     const results = await Promise.allSettled(requests);
     const duration = Date.now() - startTime;
 
     // Success metrics
-    const fulfilled = results.filter(r => r.status === 'fulfilled').length;
-    const rejected = results.filter(r => r.status === 'rejected').length;
+    const fulfilled = results.filter((r) => r.status === 'fulfilled').length;
+    const rejected = results.filter((r) => r.status === 'rejected').length;
 
     expect(fulfilled).toBeGreaterThan(0); // At least some succeeded
     expect(rejected + fulfilled).toBe(50); // All completed
 
     // Data integrity
     const records = await db.webhookEvent.findMany({
-      where: { eventId }
+      where: { eventId },
     });
     expect(records).toHaveLength(1); // ← CRITICAL: Still exactly 1
 
@@ -390,13 +402,14 @@ describe('Webhook Under Load', () => {
 
     console.log(
       `Handled 50 concurrent requests in ${duration}ms ` +
-      `(${fulfilled} succeeded, ${rejected} failed)`
+        `(${fulfilled} succeeded, ${rejected} failed)`
     );
   });
 });
 ```
 
 **What to Verify:**
+
 1. ✅ Both concurrent calls complete (no deadlock/timeout)
 2. ✅ Exactly one record created (data integrity)
 3. ✅ Both calls return "success" to Stripe (idempotency)
@@ -443,6 +456,7 @@ When implementing any webhook or async handler, use this checklist:
 ## Webhook/Async Handler Code Review
 
 ### Idempotency Design
+
 - [ ] Unique constraint exists in database for deduplication
 - [ ] Create operation uses constraint (not separate check)
 - [ ] Error handling catches unique constraint violation
@@ -450,6 +464,7 @@ When implementing any webhook or async handler, use this checklist:
 - [ ] tenantId NEVER defaults to magic strings like "unknown"
 
 ### Concurrency Safety
+
 - [ ] No race condition window between check and create
 - [ ] All database operations are atomic
 - [ ] No callback/setTimeout/Promise chains that unsync operations
@@ -457,6 +472,7 @@ When implementing any webhook or async handler, use this checklist:
 - [ ] Stress tested (10+ simultaneous requests)
 
 ### Tenant Isolation
+
 - [ ] tenantId extracted BEFORE idempotency check
 - [ ] tenantId validated (not optional/nullable)
 - [ ] tenantId required for checkout.session.completed events
@@ -464,12 +480,14 @@ When implementing any webhook or async handler, use this checklist:
 - [ ] Tested: Same event ID, different tenants = both processed
 
 ### Error Handling
+
 - [ ] Duplicate detection doesn't throw (returns 200 to Stripe)
 - [ ] Validation errors throw (return 400 to Stripe)
 - [ ] Unhandled errors logged with full context
 - [ ] No PII leaked in error messages
 
 ### Testing
+
 - [ ] Concurrent webhook test (2 simultaneous calls)
 - [ ] High-concurrency test (10+ simultaneous calls)
 - [ ] Stress test (50+ burst requests)
@@ -477,6 +495,7 @@ When implementing any webhook or async handler, use this checklist:
 - [ ] Integration test (recording + processing combined)
 
 ### Monitoring & Observability
+
 - [ ] Duplicate detection logged (INFO level)
 - [ ] Success logged with tenant context
 - [ ] Failures logged with full error details
@@ -510,10 +529,7 @@ it('handles duplicate webhooks', async () => {
   await handler(event1); // Sequential, not concurrent!
 });
 // FIX: Use Promise.allSettled
-const results = await Promise.allSettled([
-  handler(event1),
-  handler(event1),
-]);
+const results = await Promise.allSettled([handler(event1), handler(event1)]);
 
 // 🚩 RED FLAG 4: Doesn't verify exactly 1 record
 expect(records.length).toBeGreaterThan(0); // Too loose!
@@ -521,7 +537,7 @@ expect(records.length).toBeGreaterThan(0); // Too loose!
 expect(records).toHaveLength(1);
 
 // 🚩 RED FLAG 5: Magic strings in database logic
-const namespace = "unknown";
+const namespace = 'unknown';
 const isDupe = await db.find({ namespace, eventId });
 // FIX: Use actual tenantId or proper constants
 const isDupe = await db.find({ tenantId, eventId });
@@ -580,6 +596,7 @@ async handleStripeWebhook(eventId: string, event: StripeEvent) {
 ```
 
 **Database Schema:**
+
 ```prisma
 model WebhookEvent {
   id        String   @id @default(cuid())
@@ -651,6 +668,7 @@ async createCheckoutSession(
 ```
 
 **Database Schema:**
+
 ```prisma
 model IdempotencyKey {
   id        String   @id @default(cuid())
@@ -715,6 +733,7 @@ async createBooking(
 ```
 
 **Database Schema:**
+
 ```prisma
 model Booking {
   id          String   @id @default(cuid())
@@ -742,7 +761,7 @@ metrics.counter('webhook.duplicates', {
   tags: {
     event_type: event.type,
     tenant_id: tenantId,
-  }
+  },
 });
 
 // 2. Race Condition Detections
@@ -750,7 +769,7 @@ metrics.counter('webhook.duplicates', {
 metrics.counter('webhook.race_conditions_prevented', {
   tags: {
     operation: 'webhook_recording', // or 'booking_creation'
-  }
+  },
 });
 
 // 3. Processing Time
@@ -758,14 +777,14 @@ metrics.histogram('webhook.processing_time_ms', duration, {
   tags: {
     event_type: event.type,
     status: 'success', // or 'failed'
-  }
+  },
 });
 
 // 4. Idempotency Cache Hit Rate
 metrics.gauge('idempotency.cache_hit_rate', hitRate, {
   tags: {
     operation: 'checkout_session_creation',
-  }
+  },
 });
 ```
 
@@ -773,10 +792,7 @@ metrics.gauge('idempotency.cache_hit_rate', hitRate, {
 
 ```typescript
 // DUPLICATE DETECTION
-logger.info(
-  { eventId, tenantId, eventType },
-  'Duplicate webhook detected'
-);
+logger.info({ eventId, tenantId, eventType }, 'Duplicate webhook detected');
 
 // RACE CONDITION DETECTED
 logger.info(
@@ -785,17 +801,11 @@ logger.info(
 );
 
 // PROCESSING ERROR
-logger.error(
-  { eventId, tenantId, error, errorCode: error.code },
-  'Webhook processing failed'
-);
+logger.error({ eventId, tenantId, error, errorCode: error.code }, 'Webhook processing failed');
 
 // PERFORMANCE WARNING
 if (duration > 2000) {
-  logger.warn(
-    { eventId, tenantId, duration },
-    'Webhook processing took longer than expected'
-  );
+  logger.warn({ eventId, tenantId, duration }, 'Webhook processing took longer than expected');
 }
 ```
 
@@ -824,7 +834,7 @@ const session = await stripeApi.verifySession(sessionId);
 // Stripe can retry webhook between here and next line
 
 const booking = await db.booking.create({
-  data: { sessionId, date: session.date }
+  data: { sessionId, date: session.date },
 });
 // Two webhooks can create bookings for same session
 ```
@@ -950,12 +960,9 @@ async handleWebhook(event: StripeEvent) {
 
 ```typescript
 it('prevents duplicate webhooks under concurrency', async () => {
-  const results = await Promise.allSettled([
-    handler(event),
-    handler(event),
-  ]);
+  const results = await Promise.allSettled([handler(event), handler(event)]);
 
-  expect(results.every(r => r.status === 'fulfilled')).toBe(true);
+  expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
 
   const records = await db.find({ eventId: event.id });
   expect(records).toHaveLength(1); // ← CRITICAL
@@ -990,12 +997,14 @@ npm run build && npm run test
 ## Before Submitting PR with Webhook/Async Handler
 
 ### Database Design
+
 - [ ] Unique constraint exists for idempotency key
 - [ ] Constraint is composite (includes tenantId)
 - [ ] Database creates table/constraint (not just comments)
 - [ ] Migration is idempotent (uses IF NOT EXISTS)
 
 ### Code Implementation
+
 - [ ] Handler uses database constraint (not application check)
 - [ ] Catches unique violation error (P2002)
 - [ ] Returns 200 OK on duplicate (idempotent)
@@ -1003,6 +1012,7 @@ npm run build && npm run test
 - [ ] tenantId validated (fail fast if missing)
 
 ### Testing
+
 - [ ] Concurrent test (2 simultaneous requests)
 - [ ] High-concurrency test (10+ simultaneous)
 - [ ] Stress test (50+ burst requests)
@@ -1010,6 +1020,7 @@ npm run build && npm run test
 - [ ] Test passes with npm test
 
 ### Code Review
+
 - [ ] No race condition window visible in code
 - [ ] All database operations atomic
 - [ ] Error handling specific (checks error code)
@@ -1017,6 +1028,7 @@ npm run build && npm run test
 - [ ] No magic strings like "unknown"
 
 ### Deployment
+
 - [ ] Database migration applied
 - [ ] Code deployed after migration
 - [ ] Monitoring verified (metrics showing duplicates)
@@ -1029,20 +1041,24 @@ npm run build && npm run test
 ## 10. References & Further Reading
 
 ### Database Patterns
+
 - [Postgres Unique Constraints](https://www.postgresql.org/docs/current/sql-createtable.html#SQL-CREATETABLE-UNIQUE)
 - [Prisma Unique Constraints](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#unique)
 - [Transactions & Locking](https://www.postgresql.org/docs/current/tutorial-transactions.html)
 
 ### Concurrency Testing
+
 - [Promise.allSettled Documentation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled)
 - [Race Condition Testing](https://github.com/nodejs/node/blob/master/test/parallel/test-http-max-sockets.js)
 
 ### Webhook Best Practices
+
 - [Stripe Webhook Idempotency](https://stripe.com/docs/webhooks#best-practices)
 - [Webhook Idempotent REST APIs](https://restfulapi.net/idempotent-rest-apis/)
 - [Event Sourcing Patterns](https://martinfowler.com/eaaDev/EventSourcing.html)
 
 ### Project-Specific
+
 - [IDEMPOTENCY_IMPLEMENTATION.md](../../../server/IDEMPOTENCY_IMPLEMENTATION.md) - Current implementation details
 - [CLAUDE.md](../../../CLAUDE.md) - Project patterns and conventions
 - [webhook-race-conditions.spec.ts](../../../server/test/integration/webhook-race-conditions.spec.ts) - Test examples
@@ -1055,6 +1071,7 @@ npm run build && npm run test
 **The core principle:** Don't check then create. Let the database enforce uniqueness. This automatically handles all race conditions.
 
 **Key patterns:**
+
 1. ✅ Atomic database constraints (unique key)
 2. ✅ Catch and handle unique violations gracefully
 3. ✅ Test with concurrent requests (Promise.allSettled)
@@ -1062,6 +1079,7 @@ npm run build && npm run test
 5. ✅ Log duplicates and race conditions for monitoring
 
 **Prevention at a glance:**
+
 - Race condition? → Use database constraint
 - Duplicate? → Return 200 OK (idempotency)
 - Missing tenantId? → Fail fast (throw error)

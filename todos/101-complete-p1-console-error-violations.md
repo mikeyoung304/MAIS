@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "101"
+issue_id: '101'
 tags: [code-review, logging, ui-redesign]
 dependencies: []
 ---
@@ -19,6 +19,7 @@ Direct `console.error()` usage across tenant-admin features violates the critica
 ### From architecture-strategist and code-quality agents:
 
 **Files with violations:**
+
 - `client/src/features/tenant-admin/BrandingEditor.tsx` (line 104)
 - `client/src/features/tenant-admin/TenantDashboard/useDashboardData.ts` (lines 46, 60, 74, 88)
 - `client/src/features/tenant-admin/TenantDashboard/StripeConnectCard.tsx` (lines 55, 105, 137, 157)
@@ -26,20 +27,22 @@ Direct `console.error()` usage across tenant-admin features violates the critica
 - And ~14 more instances
 
 **Example violations:**
+
 ```typescript
 // BrandingEditor.tsx:104
-console.error("Failed to save branding:", err);
+console.error('Failed to save branding:', err);
 
 // useDashboardData.ts:46
-console.error("Failed to load packages:", error);
+console.error('Failed to load packages:', error);
 
 // StripeConnectCard.tsx:55
-console.error("Failed to check Stripe status:", err);
+console.error('Failed to check Stripe status:', err);
 ```
 
 ## Proposed Solutions
 
 ### Solution 1: Create/Import Frontend Logger (Recommended)
+
 **Pros:** Consistent with backend pattern, enables error tracking
 **Cons:** Need to create logger if doesn't exist
 **Effort:** Medium (2 hours for all 24 instances)
@@ -72,6 +75,7 @@ export { logger };
 ```
 
 ### Solution 2: ESLint Rule + Batch Replace
+
 **Pros:** Prevents future violations
 **Cons:** Still need to do the replacement
 **Effort:** Medium
@@ -97,8 +101,8 @@ Implement both solutions: Create logger, replace all instances, add ESLint rule.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                |
+| ---------- | ------------------------ | ------------------------ |
 | 2025-11-30 | Created from code review | Logging violations found |
 
 ## Resources

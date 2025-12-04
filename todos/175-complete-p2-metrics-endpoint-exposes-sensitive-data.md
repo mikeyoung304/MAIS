@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "175"
+issue_id: '175'
 tags: [todo]
 dependencies: []
 ---
@@ -43,6 +43,7 @@ body: {
 ## Recommendation
 
 1. **Option A**: Remove sensitive fields entirely, keep only operational metrics:
+
    ```typescript
    body: {
      uptime: process.uptime(),
@@ -54,6 +55,7 @@ body: {
    ```
 
 2. **Option B**: Require authentication for full metrics (admin-only):
+
    ```typescript
    // Public: minimal metrics
    // Authenticated admin: full metrics including system info

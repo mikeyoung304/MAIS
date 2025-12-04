@@ -20,14 +20,14 @@ export async function seedPlatform(prisma: PrismaClient): Promise<void> {
   if (!adminEmail) {
     throw new Error(
       'ADMIN_EMAIL environment variable is required for platform seed.\n' +
-      'Set it to the platform admin email address.'
+        'Set it to the platform admin email address.'
     );
   }
 
   if (!adminPassword) {
     throw new Error(
       'ADMIN_DEFAULT_PASSWORD environment variable is required for platform seed.\n' +
-      'Generate a secure password: openssl rand -base64 32'
+        'Generate a secure password: openssl rand -base64 32'
     );
   }
 
@@ -37,43 +37,49 @@ export async function seedPlatform(prisma: PrismaClient): Promise<void> {
 
   // Check if admin user already exists (outside transaction for read-only check)
   const existingAdmin = await prisma.user.findUnique({
-    where: { email: adminEmail }
+    where: { email: adminEmail },
   });
 
   // Wrap seed operations in a transaction to prevent partial data on failure
   logger.info({ type: 'platform', operations: 1 }, 'Starting seed transaction');
   const startTime = Date.now();
 
-  await prisma.$transaction(async (tx) => {
-    if (existingAdmin) {
-      // User exists - only update role and name, NEVER password
-      const admin = await tx.user.update({
-        where: { email: adminEmail },
-        data: {
-          role: 'PLATFORM_ADMIN',
-          name: adminName
-        }
-      });
-      logger.info(`Platform admin already exists (password NOT updated): ${admin.email}`);
-    } else {
-      // User does not exist - create with password
-      const passwordHash = await bcrypt.hash(adminPassword, BCRYPT_ROUNDS);
-      const admin = await tx.user.create({
-        data: {
-          email: adminEmail,
-          name: adminName,
-          role: 'PLATFORM_ADMIN',
-          passwordHash
-        }
-      });
-      logger.info(`Platform admin created with new password: ${admin.email}`);
-    }
-  }, { timeout: 30000 }); // 30 second timeout (simpler operation than demo/e2e)
+  await prisma.$transaction(
+    async (tx) => {
+      if (existingAdmin) {
+        // User exists - only update role and name, NEVER password
+        const admin = await tx.user.update({
+          where: { email: adminEmail },
+          data: {
+            role: 'PLATFORM_ADMIN',
+            name: adminName,
+          },
+        });
+        logger.info(`Platform admin already exists (password NOT updated): ${admin.email}`);
+      } else {
+        // User does not exist - create with password
+        const passwordHash = await bcrypt.hash(adminPassword, BCRYPT_ROUNDS);
+        const admin = await tx.user.create({
+          data: {
+            email: adminEmail,
+            name: adminName,
+            role: 'PLATFORM_ADMIN',
+            passwordHash,
+          },
+        });
+        logger.info(`Platform admin created with new password: ${admin.email}`);
+      }
+    },
+    { timeout: 30000 }
+  ); // 30 second timeout (simpler operation than demo/e2e)
 
-  logger.info({
-    type: 'platform',
-    durationMs: Date.now() - startTime
-  }, 'Seed transaction committed successfully');
+  logger.info(
+    {
+      type: 'platform',
+      durationMs: Date.now() - startTime,
+    },
+    'Seed transaction committed successfully'
+  );
 
   logger.info('Platform seed completed successfully');
 }

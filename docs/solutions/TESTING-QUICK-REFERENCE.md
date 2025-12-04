@@ -7,6 +7,7 @@ Print and pin this card to your desk!
 ## When to Write Tests
 
 ### ALWAYS Write Tests For:
+
 - [ ] New seed functions (`server/prisma/seeds/*.ts`)
 - [ ] Critical UI routes (`client/src/features/storefront/`, `/signup`, `/booking`)
 - [ ] Service business logic (`server/src/services/`)
@@ -15,13 +16,13 @@ Print and pin this card to your desk!
 
 ### Test Types by Module:
 
-| Module | Unit Test | Integration | E2E | Coverage |
-|--------|-----------|-------------|-----|----------|
-| Seed function | ✅ | ✅ | - | 80%+ |
-| Service layer | ✅ | ✅ | - | 75%+ |
-| UI component | ✅ | - | ✅ | 70%+ |
-| API route | - | ✅ | ✅ | 75%+ |
-| Middleware | ✅ | ✅ | - | 80%+ |
+| Module        | Unit Test | Integration | E2E | Coverage |
+| ------------- | --------- | ----------- | --- | -------- |
+| Seed function | ✅        | ✅          | -   | 80%+     |
+| Service layer | ✅        | ✅          | -   | 75%+     |
+| UI component  | ✅        | -           | ✅  | 70%+     |
+| API route     | -         | ✅          | ✅  | 75%+     |
+| Middleware    | ✅        | ✅          | -   | 80%+     |
 
 ---
 
@@ -42,6 +43,7 @@ npm run db:seed:production  # Should not error
 ```
 
 **Test file must have:**
+
 - [x] Environment variable validation tests
 - [x] Idempotency tests (running twice = no duplicates)
 - [x] Error handling tests
@@ -61,6 +63,7 @@ npm run test:e2e:headed  # See browser
 ```
 
 **Test file must have:**
+
 - [x] Happy path (data loads, user completes action)
 - [x] Error states (network error, 404, 500)
 - [x] Responsive layout (mobile, tablet, desktop)
@@ -80,6 +83,7 @@ npm run test:coverage -- src/services/{name}.service.ts
 ```
 
 **Tests must verify:**
+
 - [x] Happy path works
 - [x] Error paths throw custom domain errors
 - [x] Multi-tenant queries scoped by `tenantId`
@@ -107,6 +111,7 @@ npm run db:seed:dev            # Should not error
 ```
 
 **Pre-commit gates:**
+
 - [ ] Unit tests passing
 - [ ] TypeScript errors fixed
 - [ ] Documentation validated
@@ -118,6 +123,7 @@ npm run db:seed:dev            # Should not error
 ## Test Patterns
 
 ### Seed Test Pattern
+
 ```typescript
 describe('Seed Function', () => {
   describe('Environment Variables') {
@@ -148,6 +154,7 @@ describe('Seed Function', () => {
 ```
 
 ### Service Test Pattern
+
 ```typescript
 describe('MyService', () => {
   describe('Happy Path', () => {
@@ -172,6 +179,7 @@ describe('MyService', () => {
 ```
 
 ### E2E Test Pattern
+
 ```typescript
 test.describe('Feature', () => {
   test.describe('Happy Path', () => {
@@ -272,24 +280,31 @@ npm exec prisma migrate deploy
 ### Watch For:
 
 ❌ **No tests for new code**
+
 - Require tests for new seeds, services, routes, UI
 
 ❌ **Seed without idempotency tests**
+
 - Seeds MUST use upsert and have idempotency tests
 
 ❌ **UI changes without E2E tests**
+
 - Critical paths must have E2E coverage
 
 ❌ **Missing `tenantId` filter in queries**
+
 - All queries must be scoped by `tenantId`
 
 ❌ **Tests that only mock**
+
 - Unit tests can mock, but integration tests should use real DB
 
 ❌ **No error path testing**
+
 - Test both happy path AND what can go wrong
 
 ❌ **Hardcoded values in seeds**
+
 - Use environment variables or sensible defaults
 
 ---
@@ -297,6 +312,7 @@ npm exec prisma migrate deploy
 ## CI Pipeline
 
 Current jobs (all must pass):
+
 1. ✅ Documentation validation
 2. ✅ Multi-tenant pattern validation
 3. ✅ Linting & formatting
@@ -358,14 +374,15 @@ npm run db:seed:dev  # Should not error on 2nd run
 
 ## Coverage Targets
 
-| Metric | Current | Target |
-|--------|---------|--------|
-| Lines | 42% | 80% |
-| Branches | 77% | 75% ✅ |
-| Functions | 37% | 80% |
-| Statements | 42% | 80% |
+| Metric     | Current | Target |
+| ---------- | ------- | ------ |
+| Lines      | 42%     | 80%    |
+| Branches   | 77%     | 75% ✅ |
+| Functions  | 37%     | 80%    |
+| Statements | 42%     | 80%    |
 
 **Critical modules (must be 80%+):**
+
 - `server/src/middleware/tenant.ts` - Multi-tenant scoping
 - `server/src/services/booking.service.ts` - Double-booking prevention
 - `server/prisma/seeds/` - Database initialization
@@ -376,6 +393,7 @@ npm run db:seed:dev  # Should not error on 2nd run
 ## Key Documents
 
 For full details, see:
+
 - `docs/solutions/TESTING-PREVENTION-STRATEGIES.md` - Comprehensive strategies
 - `docs/solutions/TESTING-IMPLEMENTATION-GUIDE.md` - Step-by-step implementation
 - `docs/TESTING.md` - Testing guide
@@ -386,6 +404,7 @@ For full details, see:
 ## Quick Start
 
 **Just added a new seed?**
+
 ```bash
 # 1. Create test file
 touch server/test/seeds/my-seed.test.ts
@@ -400,6 +419,7 @@ npm run db:seed:dev && npm run db:seed:dev
 ```
 
 **Just modified UI?**
+
 ```bash
 # 1. Create/update E2E test
 touch e2e/tests/my-feature.spec.ts
@@ -414,6 +434,7 @@ npm run test:e2e:headed
 ```
 
 **Ready to commit?**
+
 ```bash
 # Run pre-commit checks
 npm run test:unit && npm run typecheck

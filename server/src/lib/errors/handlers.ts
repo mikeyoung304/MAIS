@@ -3,13 +3,7 @@
  * Converts third-party errors to AppError instances
  */
 
-import {
-  AppError,
-  DatabaseError,
-  ExternalServiceError,
-  NetworkError,
-  TimeoutError,
-} from './base';
+import { AppError, DatabaseError, ExternalServiceError, NetworkError, TimeoutError } from './base';
 import {
   ConflictError,
   NotFoundError,
@@ -51,9 +45,7 @@ export function handlePrismaError(error: unknown): AppError {
   if (error.code === 'P2002') {
     const fields = (error.meta?.target as string[]) || [];
     const fieldList = fields.join(', ');
-    return new ConflictError(
-      `A record with the same ${fieldList} already exists`
-    );
+    return new ConflictError(`A record with the same ${fieldList} already exists`);
   }
 
   // P2025: Record not found
@@ -64,16 +56,12 @@ export function handlePrismaError(error: unknown): AppError {
   // P2003: Foreign key constraint violation
   if (error.code === 'P2003') {
     const field = error.meta?.field_name as string;
-    return new ValidationError(
-      `Invalid reference: ${field || 'related record'} does not exist`
-    );
+    return new ValidationError(`Invalid reference: ${field || 'related record'} does not exist`);
   }
 
   // P2014: Relation violation
   if (error.code === 'P2014') {
-    return new ConflictError(
-      'Cannot delete record due to existing related records'
-    );
+    return new ConflictError('Cannot delete record due to existing related records');
   }
 
   // P2015: Related record not found
@@ -122,10 +110,7 @@ export function handlePrismaError(error: unknown): AppError {
   }
 
   // Default: Generic database error
-  return new DatabaseError(
-    error.message || 'Database operation failed',
-    error as unknown as Error
-  );
+  return new DatabaseError(error.message || 'Database operation failed', error as unknown as Error);
 }
 
 /**
@@ -178,18 +163,16 @@ export function handleStripeError(error: unknown): AppError {
         return new ValidationError('Incorrect card number');
 
       default:
-        return new PaymentFailedError(
-          stripeError.message || 'Card error',
-          stripeError.code
-        );
+        return new PaymentFailedError(stripeError.message || 'Card error', stripeError.code);
     }
   }
 
   // Invalid request errors
-  if (stripeError.type === 'invalid_request_error' || stripeError.type === 'StripeInvalidRequestError') {
-    return new ValidationError(
-      stripeError.message || 'Invalid payment request'
-    );
+  if (
+    stripeError.type === 'invalid_request_error' ||
+    stripeError.type === 'StripeInvalidRequestError'
+  ) {
+    return new ValidationError(stripeError.message || 'Invalid payment request');
   }
 
   // API errors
@@ -203,18 +186,15 @@ export function handleStripeError(error: unknown): AppError {
 
   // Connection errors
   if (stripeError.type === 'api_connection_error' || stripeError.type === 'StripeConnectionError') {
-    return new NetworkError(
-      'Unable to connect to payment processor',
-      error as unknown as Error
-    );
+    return new NetworkError('Unable to connect to payment processor', error as unknown as Error);
   }
 
   // Authentication errors
-  if (stripeError.type === 'authentication_error' || stripeError.type === 'StripeAuthenticationError') {
-    return new InternalServerError(
-      'Payment configuration error',
-      error as unknown as Error
-    );
+  if (
+    stripeError.type === 'authentication_error' ||
+    stripeError.type === 'StripeAuthenticationError'
+  ) {
+    return new InternalServerError('Payment configuration error', error as unknown as Error);
   }
 
   // Rate limit errors

@@ -15,12 +15,14 @@ Use this checklist to implement the 10 prevention strategies in your team.
 ## Phase 0: Preparation (Today - 30 minutes)
 
 ### Team Communication
+
 - [ ] Share [PREVENTION-TODO-182-191-SUMMARY.md](./PREVENTION-TODO-182-191-SUMMARY.md) with team
 - [ ] Schedule 1-hour team training session
 - [ ] Create #prevention-strategies Slack channel (optional)
 - [ ] Add calendar event: "Prevention Strategies Review" (weekly)
 
 ### Documentation Review
+
 - [ ] Tech lead reads all 4 documents (2 hours)
 - [ ] Tech lead summarizes findings for team
 - [ ] Tech lead identifies top 3 priority categories
@@ -61,10 +63,12 @@ Use this checklist to implement the 10 prevention strategies in your team.
 - [ ] Train reviewers on new checklist
 
 **File:** `.github/pull_request_template.md`
+
 ```markdown
 ## TODO 182-191 Prevention Checks
 
 ### 182: Information Disclosure
+
 - [ ] ...
 ```
 
@@ -87,6 +91,7 @@ Each category owner completes their tasks:
 ## Category [XXX]: [Name]
 
 ### Code Review Checklist
+
 - [ ] Read COMPREHENSIVE.md [Section XX]
 - [ ] Understand all checklist items
 - [ ] Create summary for team
@@ -94,24 +99,28 @@ Each category owner completes their tasks:
 - [ ] Document findings
 
 ### Grep Verification
+
 - [ ] Run grep command to find violations
 - [ ] Document violations found
 - [ ] Categorize by severity
 - [ ] Plan fixes
 
 ### Test Pattern Review
+
 - [ ] Read test patterns section
 - [ ] Create test template
 - [ ] Verify tests work
 - [ ] Add to test helpers
 
 ### Documentation
+
 - [ ] Create category-specific guide (if needed)
 - [ ] Add examples
 - [ ] Cross-reference CLAUDE.md
 - [ ] Get tech lead review
 
 ### Status Update
+
 - [ ] Report findings to team
 - [ ] Propose ESLint rule (if applicable)
 - [ ] Timeline for full implementation
@@ -502,30 +511,35 @@ server/test/templates/prevention-182-191/
 ## Success Criteria
 
 ### Week 1
+
 - [ ] All engineers read documents
 - [ ] PR template updated with checklist
 - [ ] Team training completed
 - [ ] **Target:** 100% code review coverage of all 10 categories
 
 ### Week 2
+
 - [ ] ESLint rules created and tested
 - [ ] Test templates available
 - [ ] No regressions on resolved categories
 - [ ] **Target:** 0 new violations per category
 
 ### Week 3
+
 - [ ] Full documentation integrated
 - [ ] Team feedback collected
 - [ ] Monitoring dashboard active
 - [ ] **Target:** All rules in place, collecting data
 
 ### Month 1
+
 - [ ] Metrics baseline established
 - [ ] ESLint rules escalated to errors (security categories)
 - [ ] 70%+ team adoption in PRs
 - [ ] **Target:** <1 violation per PR category
 
 ### Month 3
+
 - [ ] All rules enforced via CI/CD
 - [ ] 100% team adoption
 - [ ] Zero violations per category in new code
@@ -538,24 +552,25 @@ server/test/templates/prevention-182-191/
 
 Use this to assign responsibility:
 
-| Category | Owner | Reviewer | Status | Notes |
-|----------|-------|----------|--------|-------|
-| 182 | [Name] | [Name] | [ ] Pending | Information Disclosure - Security priority |
-| 183 | [Name] | [Name] | [ ] Pending | Transaction Atomicity |
-| 184 | [Name] | [Name] | [ ] Pending | Memory Leak - Events |
-| 185 | [Name] | [Name] | [ ] Pending | Type DRY Principle |
-| 186 | [Name] | [Name] | [ ] Pending | Exhaustiveness - Type safety |
-| 187 | [Name] | [Name] | [ ] Pending | Documentation Requirements |
-| 188 | [Name] | [Name] | [ ] Pending | React Hook Cleanup |
-| 189 | [Name] | [Name] | [ ] Pending | Test Coverage |
-| 190 | [Name] | [Name] | [ ] Pending | Observability Logging |
-| 191 | [Name] | [Name] | [ ] Pending | File Organization |
+| Category | Owner  | Reviewer | Status      | Notes                                      |
+| -------- | ------ | -------- | ----------- | ------------------------------------------ |
+| 182      | [Name] | [Name]   | [ ] Pending | Information Disclosure - Security priority |
+| 183      | [Name] | [Name]   | [ ] Pending | Transaction Atomicity                      |
+| 184      | [Name] | [Name]   | [ ] Pending | Memory Leak - Events                       |
+| 185      | [Name] | [Name]   | [ ] Pending | Type DRY Principle                         |
+| 186      | [Name] | [Name]   | [ ] Pending | Exhaustiveness - Type safety               |
+| 187      | [Name] | [Name]   | [ ] Pending | Documentation Requirements                 |
+| 188      | [Name] | [Name]   | [ ] Pending | React Hook Cleanup                         |
+| 189      | [Name] | [Name]   | [ ] Pending | Test Coverage                              |
+| 190      | [Name] | [Name]   | [ ] Pending | Observability Logging                      |
+| 191      | [Name] | [Name]   | [ ] Pending | File Organization                          |
 
 ---
 
 ## Communication Plan
 
 ### Day 1: Announcement
+
 ```
 Subject: Introducing 10 Prevention Strategies (TODO Categories 182-191)
 
@@ -572,6 +587,7 @@ Questions? #prevention-strategies channel
 ```
 
 ### Day 2: Training
+
 ```
 Subject: Prevention Strategies Team Training - [TIME]
 
@@ -586,6 +602,7 @@ Questions: Reply to this thread
 ```
 
 ### Weekly: Progress Update
+
 ```
 Subject: Prevention Strategies Progress - Week [X]
 
@@ -606,28 +623,36 @@ Dashboard: [LINK]
 ## Troubleshooting
 
 ### "The ESLint rule has false positives"
+
 **Solution:**
+
 1. Document specific cases
 2. Create exception list in rule config
 3. File issue for review
 4. Adjust rule logic
 
 ### "Test pattern doesn't fit my code"
+
 **Solution:**
+
 1. Adapt pattern to your context
 2. Verify test still validates the prevention
 3. Document deviation
 4. Share with team
 
 ### "I'm not sure which category applies"
+
 **Solution:**
+
 1. Review the 10 categories overview
 2. Check "Quick Decision Trees" in QUICK-REF
 3. Ask in #prevention-strategies
 4. Tech lead will clarify
 
 ### "We need to exempt this code from a rule"
+
 **Solution:**
+
 1. Add eslint-disable comment with reason
 2. Document in category-specific guide
 3. Create issue to review exemption
@@ -658,4 +683,4 @@ Dashboard: [LINK]
 **Created:** 2025-12-03
 **Last Updated:** 2025-12-03
 
-*Print this checklist and track progress weekly!*
+_Print this checklist and track progress weekly!_

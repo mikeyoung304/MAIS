@@ -4,8 +4,8 @@
  * Provides WYSIWYG editing for packages with the TenantDashboardLayout.
  */
 
-import { TenantDashboardLayout } from "@/features/tenant-admin/TenantDashboard/TenantDashboardLayout";
-import { VisualEditorDashboard } from "@/features/tenant-admin/visual-editor";
+import { TenantDashboardLayout } from '@/features/tenant-admin/TenantDashboard/TenantDashboardLayout';
+import { VisualEditorDashboard } from '@/features/tenant-admin/visual-editor';
 
 export function TenantVisualEditorPage() {
   return (

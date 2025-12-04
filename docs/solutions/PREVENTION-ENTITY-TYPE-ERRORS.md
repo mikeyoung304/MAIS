@@ -44,6 +44,7 @@ Services: Factory calls
 ```
 
 **Failure modes:**
+
 - Forget one mock package → TypeScript error
 - Forget mapper field → null/undefined at runtime
 - Forget service factory → incomplete entity
@@ -102,6 +103,7 @@ describe('Entity Invariants', () => {
 ```
 
 **Why it works:**
+
 - Catches missing fields at test-time before production
 - TypeScript strict mode forces all creations to match interface
 - Single source of truth for required fields
@@ -137,12 +139,14 @@ private toDomainPackage(pkg: {
 ```
 
 **Best practice checklist:**
+
 - ✅ Input type explicitly lists all Prisma fields
 - ✅ Return type is strict `Package` (not `Partial<Package>`)
 - ✅ Each field mapped individually (not spread operator alone)
 - ✅ Optional fields checked with if guards
 
 **Anti-pattern to avoid:**
+
 ```typescript
 // BAD - Incomplete mapping not caught at compile time
 private toDomainPackage(pkg: any): Package {
@@ -181,6 +185,7 @@ Verify BOTH implementations match:
 ```
 
 **When to run:**
+
 - In code review checklist (especially entity-related PRs)
 - During refactoring sprints
 - When adding new entity types
@@ -234,6 +239,7 @@ private toDomainBooking(booking: {...}): Booking {
 ```
 
 **Benefits:**
+
 - Compile-time error if mapper is missing any required field
 - `satisfies` keyword allows exact type shape validation
 - Self-documenting code (clearly shows what's required vs optional)
@@ -319,6 +325,7 @@ const pkg = new PackageBuilder()
 ```
 
 **Benefits:**
+
 - Build-time error if required field not set
 - Self-documenting API (chain methods show what's needed)
 - Reusable across tests and mock data
@@ -348,7 +355,7 @@ When modifying an entity interface:
   - [ ] Repository method returns
 - [ ] Updated Prisma repository mapper (`adapters/prisma/*.repository.ts`)
   - [ ] Input type includes all DB fields
-  - [ ] toDomain* mapper returns complete entity
+  - [ ] toDomain\* mapper returns complete entity
   - [ ] New optional fields use guards
 - [ ] Updated any service factory methods (`services/*.ts`)
 - [ ] Updated routes DTO mapping if applicable (`routes/*.routes.ts`)
@@ -359,41 +366,49 @@ When modifying an entity interface:
 
 ### Code Review Checklist (Reviewer)
 
-```markdown
+````markdown
 ## Entity Change Review
 
 When reviewing PRs with entity modifications:
 
 **Interface Changes (entities.ts)**
+
 - [ ] Required field? Check it's defined (not optional)
 - [ ] Optional field? Should have `?` or `| null`
 
 **API Contracts**
+
 - [ ] Does contract include new field?
 - [ ] Is Zod schema updated if validation needed?
 
 **Mock Implementation**
+
 - [ ] Are all seed data objects updated?
 - [ ] Do methods return complete entities?
 - [ ] Is type annotation strict (not `any`)?
 
 **Prisma Repository**
+
 - [ ] Input type in mapper includes field?
 - [ ] Field properly mapped (conversion, null handling)?
 - [ ] Optional fields wrapped in guards?
 
 **Tests**
+
 - [ ] Do entity invariant tests pass?
 - [ ] Do integration tests cover new field?
 - [ ] Is mock/real mode both tested?
 
 **Run locally:**
+
 ```bash
 npm run typecheck  # Catches type errors
 npm test           # Catches missing mappers/fields
 npm run build      # Full build verification
 ```
-```
+````
+
+````
 
 ---
 
@@ -415,7 +430,7 @@ npm run build      # Full build verification
     "noImplicitReturns": true
   }
 }
-```
+````
 
 **Prevents:** Many optional field bugs, implicit any types
 
@@ -425,7 +440,7 @@ Add to CI pipeline:
 
 ```yaml
 # .github/workflows/test.yml (example)
-- name: "Test: Entity Invariants"
+- name: 'Test: Entity Invariants'
   run: |
     npm run test -- --grep "Entity Invariants"
 ```
@@ -439,6 +454,7 @@ npm run typecheck
 ```
 
 **Why this matters:**
+
 - TypeScript catches ~60% of entity mapping errors
 - Tests catch the remaining ~40% (runtime issues like null fields)
 - Both together = nearly 100% prevention
@@ -533,12 +549,14 @@ interface Package {
 ```
 
 **Why this prevents errors:**
+
 - Database schema is source of truth for persistence
 - Domain entities are source of truth for business logic
 - One-directional flow (Prisma → Domain) is easier to maintain
 - If Prisma schema changes, TypeScript catches missing mapper updates
 
 **To strengthen this:**
+
 1. Keep Prisma schema as complete as possible (no "hidden" fields)
 2. Document which Prisma fields map to which domain fields
 3. Generate type stubs from Prisma schema automatically
@@ -563,11 +581,11 @@ export interface Booking {
   packageId: string;
   coupleName: string;
   email: string;
-  phone?: string;                    // Optional - not always provided
-  startTime?: string;                // Optional - only for TIMESLOT bookings
-  googleEventId?: string | null;     // Optional - added later
-  reminderDueDate?: string;          // Optional - Phase 2 feature
-  depositPaidAmount?: number;        // Optional - Phase 4 feature
+  phone?: string; // Optional - not always provided
+  startTime?: string; // Optional - only for TIMESLOT bookings
+  googleEventId?: string | null; // Optional - added later
+  reminderDueDate?: string; // Optional - Phase 2 feature
+  depositPaidAmount?: number; // Optional - Phase 4 feature
   // ... many optional fields
 }
 ```
@@ -610,6 +628,7 @@ export interface Booking {
 ```
 
 **Benefits:**
+
 - Clear which fields to map for each phase
 - Easier to search: find all "Phase 2" fields
 - Reduces cognitive load when adding new features
@@ -620,16 +639,19 @@ export interface Booking {
 ## Implementation Roadmap
 
 ### Week 1: Immediate Actions
+
 - [ ] Add entity invariant tests (Strategy 1)
 - [ ] Create entity change checklist (Strategy 6)
 - [ ] Update CLAUDE.md with mapping patterns (Strategy 8)
 
 ### Week 2-3: Architectural Improvements
+
 - [ ] Create test helper builders (Strategy 5)
 - [ ] Document Prisma → Domain mapping flow (Strategy 9)
 - [ ] Update CI/CD with entity invariant requirement (Strategy 7)
 
 ### Ongoing
+
 - [ ] Apply checklist to all entity-related PRs (Strategy 6)
 - [ ] Conduct quarterly audits (Strategy 3)
 - [ ] Document new phase fields (Strategy 10)
@@ -670,13 +692,13 @@ npm test -- --grep "toDomain"
 
 ## Quick Reference: Common Entity Errors & Fixes
 
-| Error | Location | Fix |
-|-------|----------|-----|
-| "Property X does not exist on type Package" | toDomainPackage() | Add field to return object |
-| "Booking is not assignable to Booking[]" | Mock seeding | Ensure all required fields set |
-| "Cannot read property X of undefined" | Runtime | Check mapper includes field from Prisma |
-| "Type 'any' is not assignable to type Package" | Routes | Use strict type for mapping output |
-| "Missing required property" at build time | Any creation | Run `npm run typecheck` before commit |
+| Error                                          | Location          | Fix                                     |
+| ---------------------------------------------- | ----------------- | --------------------------------------- |
+| "Property X does not exist on type Package"    | toDomainPackage() | Add field to return object              |
+| "Booking is not assignable to Booking[]"       | Mock seeding      | Ensure all required fields set          |
+| "Cannot read property X of undefined"          | Runtime           | Check mapper includes field from Prisma |
+| "Type 'any' is not assignable to type Package" | Routes            | Use strict type for mapping output      |
+| "Missing required property" at build time      | Any creation      | Run `npm run typecheck` before commit   |
 
 ---
 
@@ -689,4 +711,3 @@ Track prevention strategy effectiveness:
 - [ ] Entity-related PRs include checklist (target: 90%+ of PRs)
 - [ ] Code review time for entity changes reduced by 50%
 - [ ] New entities added with 0 mapper bugs (requires builder pattern)
-

@@ -24,15 +24,15 @@ This document provides a phased rollout plan for implementing the comprehensive 
 
 ### Issues Found During Review
 
-| Issue | Severity | Impact | Instances |
-|-------|----------|--------|-----------|
-| Customer email not normalized | P1 | Duplicate accounts | 1 |
-| Webhook tenantId="unknown" race | P1 | Data integrity | 1 |
-| Password reset UI missing | P1 | Feature incomplete | 1 |
-| Multiple PrismaClient instances | P1 | Connection pool exhaustion | 5+ |
-| N+1 query patterns | P2 | Performance degradation | 3+ |
-| Browser prompt() usage | P2 | Poor UX | 2 |
-| console.log in production | P2 | No proper logging | 12+ |
+| Issue                           | Severity | Impact                     | Instances |
+| ------------------------------- | -------- | -------------------------- | --------- |
+| Customer email not normalized   | P1       | Duplicate accounts         | 1         |
+| Webhook tenantId="unknown" race | P1       | Data integrity             | 1         |
+| Password reset UI missing       | P1       | Feature incomplete         | 1         |
+| Multiple PrismaClient instances | P1       | Connection pool exhaustion | 5+        |
+| N+1 query patterns              | P2       | Performance degradation    | 3+        |
+| Browser prompt() usage          | P2       | Poor UX                    | 2         |
+| console.log in production       | P2       | No proper logging          | 12+       |
 
 ### Technical Debt Summary
 
@@ -53,6 +53,7 @@ This document provides a phased rollout plan for implementing the comprehensive 
 **Priority:** P0
 
 **Tasks:**
+
 - [ ] Add `no-console` rule to block console.log
 - [ ] Add `no-restricted-syntax` for PrismaClient
 - [ ] Add `no-restricted-globals` for prompt/alert/confirm
@@ -62,6 +63,7 @@ This document provides a phased rollout plan for implementing the comprehensive 
 **Deliverable:** `.eslintrc.json` updated, CI passes
 
 **Acceptance:**
+
 ```bash
 npm run lint # Should fail on console.log, new PrismaClient(), prompt()
 ```
@@ -72,6 +74,7 @@ npm run lint # Should fail on console.log, new PrismaClient(), prompt()
 **Priority:** P0
 
 **Tasks:**
+
 - [ ] Add multi-tenant security checklist
 - [ ] Add feature completeness checklist
 - [ ] Add database performance checklist
@@ -84,6 +87,7 @@ npm run lint # Should fail on console.log, new PrismaClient(), prompt()
 **Owner:** Multiple Engineers
 
 **Tasks:**
+
 - [ ] Fix email normalization (Issue #1)
 - [ ] Fix webhook tenantId race (Issue #2)
 - [ ] Fix multiple PrismaClient (Issue #4)
@@ -103,6 +107,7 @@ npm run lint # Should fail on console.log, new PrismaClient(), prompt()
 **Priority:** P1
 
 **Tasks:**
+
 - [ ] Create tenant isolation test template
 - [ ] Create input normalization test template
 - [ ] Create idempotency test template
@@ -117,6 +122,7 @@ npm run lint # Should fail on console.log, new PrismaClient(), prompt()
 **Priority:** P1
 
 **Tasks:**
+
 - [ ] Create `createTestTenant()` helper
 - [ ] Create `createIsolatedTestData()` helper
 - [ ] Create `queryCountTracker()` for N+1 detection
@@ -130,6 +136,7 @@ npm run lint # Should fail on console.log, new PrismaClient(), prompt()
 **Priority:** P1
 
 **Tasks:**
+
 - [ ] Add coverage threshold check to CI
 - [ ] Require 100% coverage for webhook handlers
 - [ ] Require 90% coverage for repositories
@@ -149,6 +156,7 @@ npm run lint # Should fail on console.log, new PrismaClient(), prompt()
 **Priority:** P0
 
 **Tasks:**
+
 - [ ] Create `.github/scripts/validate-patterns.sh`
 - [ ] Check for queries without tenantId
 - [ ] Check for new PrismaClient() in routes
@@ -164,6 +172,7 @@ npm run lint # Should fail on console.log, new PrismaClient(), prompt()
 **Priority:** P1
 
 **Tasks:**
+
 - [ ] Create `require-tenant-id` ESLint rule
 - [ ] Validate repository methods have tenantId parameter
 - [ ] Add tests for ESLint rule
@@ -183,6 +192,7 @@ npm run lint # Should fail on console.log, new PrismaClient(), prompt()
 **Priority:** P1
 
 **Tasks:**
+
 - [x] Create comprehensive prevention strategies doc
 - [x] Create quick reference guide
 - [ ] Update CLAUDE.md with new patterns
@@ -197,6 +207,7 @@ npm run lint # Should fail on console.log, new PrismaClient(), prompt()
 **Priority:** P1
 
 **Schedule:**
+
 - [ ] Session 1: Multi-tenant security patterns (1 hour)
 - [ ] Session 2: Database performance patterns (1 hour)
 - [ ] Session 3: Testing patterns (1 hour)
@@ -210,6 +221,7 @@ npm run lint # Should fail on console.log, new PrismaClient(), prompt()
 **Priority:** P2
 
 **Tasks:**
+
 - [ ] Create VS Code snippets for common patterns
 - [ ] Add pre-commit hooks for pattern validation
 - [ ] Create GitHub PR bot for automated feedback
@@ -229,6 +241,7 @@ npm run lint # Should fail on console.log, new PrismaClient(), prompt()
 **Priority:** P2
 
 **Tasks:**
+
 - [ ] Set up code quality metrics (coverage, lint violations)
 - [ ] Set up security metrics (multi-tenant issues)
 - [ ] Set up performance metrics (N+1 queries, connection pools)
@@ -242,6 +255,7 @@ npm run lint # Should fail on console.log, new PrismaClient(), prompt()
 **Priority:** P1
 
 **Tasks:**
+
 - [ ] Create incident report template
 - [ ] Define post-incident review process
 - [ ] Schedule monthly incident review meetings
@@ -288,19 +302,20 @@ Week 5: Monitoring & Metrics
 
 ### Key Performance Indicators
 
-| Metric | Baseline | Week 2 | Week 4 | Week 8 | Target |
-|--------|----------|--------|--------|--------|--------|
-| P1 issues/sprint | 7 | 4 | 2 | 0 | 0 |
-| Security vulns | 3 | 1 | 0 | 0 | 0 |
-| Test coverage | 85% | 87% | 90% | 92% | 90% |
-| Feature completeness | 60% | 75% | 90% | 100% | 100% |
-| PrismaClient instances | 5+ | 1 | 1 | 1 | 1 |
-| Console.log usage | 12+ | 6 | 0 | 0 | 0 |
-| N+1 queries | 3+ | 2 | 1 | 0 | 0 |
+| Metric                 | Baseline | Week 2 | Week 4 | Week 8 | Target |
+| ---------------------- | -------- | ------ | ------ | ------ | ------ |
+| P1 issues/sprint       | 7        | 4      | 2      | 0      | 0      |
+| Security vulns         | 3        | 1      | 0      | 0      | 0      |
+| Test coverage          | 85%      | 87%    | 90%    | 92%    | 90%    |
+| Feature completeness   | 60%      | 75%    | 90%    | 100%   | 100%   |
+| PrismaClient instances | 5+       | 1      | 1      | 1      | 1      |
+| Console.log usage      | 12+      | 6      | 0      | 0      | 0      |
+| N+1 queries            | 3+       | 2      | 1      | 0      | 0      |
 
 ### Weekly Review Checklist
 
 Every Friday at 3pm:
+
 - [ ] Review metrics dashboard
 - [ ] Count new P1 issues this week
 - [ ] Review PRs for pattern compliance
@@ -316,6 +331,7 @@ Every Friday at 3pm:
 **Concern:** "Too many rules slow us down"
 
 **Mitigation:**
+
 - Start with high-impact rules only
 - Provide clear examples in documentation
 - Automate fixes where possible (ESLint auto-fix)
@@ -326,6 +342,7 @@ Every Friday at 3pm:
 **Concern:** ESLint rules block valid patterns
 
 **Mitigation:**
+
 - Add escape hatches for rare cases
 - Document when to use `eslint-disable`
 - Review all disabled rules monthly
@@ -336,6 +353,7 @@ Every Friday at 3pm:
 **Concern:** Training takes time from feature work
 
 **Mitigation:**
+
 - Make training sessions optional but incentivized
 - Record sessions for async viewing
 - Integrate into onboarding (new hires only)
@@ -346,6 +364,7 @@ Every Friday at 3pm:
 **Concern:** Some phases don't complete on time
 
 **Mitigation:**
+
 - Phase 1 (Quick Wins) is non-negotiable
 - Phases 2-5 can extend if needed
 - Prioritize security over convenience
@@ -357,14 +376,14 @@ Every Friday at 3pm:
 
 ### Engineering Time
 
-| Phase | Hours | Engineers | Total Hours |
-|-------|-------|-----------|-------------|
-| Phase 1 | 13 | 2 | 26 |
-| Phase 2 | 14 | 2 | 28 |
-| Phase 3 | 16 | 2 | 32 |
-| Phase 4 | 14 | 3 | 42 |
-| Phase 5 | 12 | 2 | 24 |
-| **Total** | **69** | **2-3** | **152** |
+| Phase     | Hours  | Engineers | Total Hours |
+| --------- | ------ | --------- | ----------- |
+| Phase 1   | 13     | 2         | 26          |
+| Phase 2   | 14     | 2         | 28          |
+| Phase 3   | 16     | 2         | 32          |
+| Phase 4   | 14     | 3         | 42          |
+| Phase 5   | 12     | 2         | 24          |
+| **Total** | **69** | **2-3**   | **152**     |
 
 **Estimated:** 3-4 weeks with 2 engineers full-time
 
@@ -380,6 +399,7 @@ Every Friday at 3pm:
 ## 📋 Action Items by Role
 
 ### Tech Lead
+
 - [ ] Prioritize Phase 1 (Quick Wins) immediately
 - [ ] Assign engineers to each phase
 - [ ] Schedule weekly review meetings
@@ -387,6 +407,7 @@ Every Friday at 3pm:
 - [ ] Run training sessions
 
 ### Senior Engineer
+
 - [ ] Implement ESLint rules (Phase 1)
 - [ ] Create custom ESLint plugin (Phase 3)
 - [ ] Create test templates (Phase 2)
@@ -394,6 +415,7 @@ Every Friday at 3pm:
 - [ ] Pair program with junior engineers
 
 ### QA Engineer
+
 - [ ] Create test templates (Phase 2)
 - [ ] Create test helpers (Phase 2)
 - [ ] Test all prevention strategies
@@ -401,6 +423,7 @@ Every Friday at 3pm:
 - [ ] Document testing patterns
 
 ### DevOps Engineer
+
 - [ ] Implement pattern validation script (Phase 3)
 - [ ] Update CI/CD pipelines
 - [ ] Create metrics dashboard (Phase 5)
@@ -408,6 +431,7 @@ Every Friday at 3pm:
 - [ ] Create VS Code snippets (Phase 4)
 
 ### All Engineers
+
 - [ ] Read comprehensive prevention strategies doc
 - [ ] Complete multi-tenant security quiz
 - [ ] Attend training sessions
@@ -428,24 +452,28 @@ Every Friday at 3pm:
 ### Training Sessions (Week 4)
 
 **Session 1: Multi-Tenant Security Patterns**
+
 - Why multi-tenant isolation matters
 - Common pitfalls (missing tenantId)
 - How to validate ownership
 - Q&A
 
 **Session 2: Database Performance Patterns**
+
 - N+1 query detection
 - PrismaClient singleton pattern
 - Index optimization
 - Q&A
 
 **Session 3: Testing Patterns**
+
 - Tenant isolation tests
 - Input normalization tests
 - Idempotency tests
 - Q&A
 
 **Session 4: Case Studies**
+
 - Review actual production incidents
 - Walk through prevention strategy
 - Update strategies based on learnings

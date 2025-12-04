@@ -8,6 +8,7 @@ priority: P1
 # PR #12 Prevention Strategies - React Hooks & Accessibility Issues
 
 **Issues Found in PR #12:**
+
 1. Missing `useCallback` for callbacks passed to memoized components
 2. Missing `useEffect` dependencies
 3. Missing keyboard focus indicators (WCAG 2.4.7)
@@ -23,6 +24,7 @@ priority: P1
 When passing function callbacks to memoized components (or components wrapped in `React.memo`), those functions must be wrapped in `useCallback`. Otherwise, the function gets a new reference on every render, defeating the memoization and causing unnecessary re-renders.
 
 **Impact:**
+
 - Performance degradation (child components re-render unnecessarily)
 - Memoization becomes ineffective
 - May cause infinite render loops with dependency arrays
@@ -54,6 +56,7 @@ function TenantPackagesManager({ onPackagesChange }: Props) {
 ### Detection Rules
 
 **ESLint Rule to Enable:**
+
 ```json
 {
   "rules": {
@@ -64,6 +67,7 @@ function TenantPackagesManager({ onPackagesChange }: Props) {
 ```
 
 **Grep Command for Self-Review:**
+
 ```bash
 # Find function declarations inside component that should be memoized
 rg 'const \w+ = (async )?\(.+\) => \{' client/src/features --type ts -A 3 | \
@@ -123,16 +127,22 @@ function MyComponent({ onSubmit }) {
 
 ```typescript
 // Lines 60-63: handleEdit wrapped in useCallback
-const handleEdit = useCallback(async (pkg: PackageDto) => {
-  packageForm.loadPackage(pkg);
-  await packageManager.handleEdit(pkg);
-}, [packageForm.loadPackage, packageManager.handleEdit]);
+const handleEdit = useCallback(
+  async (pkg: PackageDto) => {
+    packageForm.loadPackage(pkg);
+    await packageManager.handleEdit(pkg);
+  },
+  [packageForm.loadPackage, packageManager.handleEdit]
+);
 
 // Lines 66-69: handleSubmit wrapped in useCallback
-const handleSubmit = useCallback(async (e: React.FormEvent) => {
-  e.preventDefault();
-  await packageForm.submitForm(packageManager.editingPackageId);
-}, [packageForm.submitForm, packageManager.editingPackageId]);
+const handleSubmit = useCallback(
+  async (e: React.FormEvent) => {
+    e.preventDefault();
+    await packageForm.submitForm(packageManager.editingPackageId);
+  },
+  [packageForm.submitForm, packageManager.editingPackageId]
+);
 ```
 
 ---
@@ -144,6 +154,7 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
 When `useEffect` calls functions that change reference on every render (are not wrapped in `useCallback`), those functions should be in the dependency array. If the dependency array is incomplete, ESLint's `exhaustive-deps` rule will fail, and you risk stale closures.
 
 **Impact:**
+
 - ESLint `exhaustive-deps` warnings/errors
 - Stale closures (effect uses old state/props)
 - Potential infinite loops
@@ -154,22 +165,23 @@ When `useEffect` calls functions that change reference on every render (are not 
 ```typescript
 // ❌ ANTI-PATTERN: Missing functions in dependency array
 useEffect(() => {
-  if (activeTab === "packages") {
-    loadPackagesAndSegments();  // New reference every render!
+  if (activeTab === 'packages') {
+    loadPackagesAndSegments(); // New reference every render!
   }
-}, [activeTab]);  // Missing dependency!
+}, [activeTab]); // Missing dependency!
 
 // ✅ CORRECT: All dependencies included
 useEffect(() => {
-  if (activeTab === "packages") {
+  if (activeTab === 'packages') {
     loadPackagesAndSegments();
   }
-}, [activeTab, loadPackagesAndSegments]);  // Complete array
+}, [activeTab, loadPackagesAndSegments]); // Complete array
 ```
 
 ### Detection Rules
 
 **ESLint Configuration:**
+
 ```json
 {
   "plugins": ["react-hooks"],
@@ -180,6 +192,7 @@ useEffect(() => {
 ```
 
 **Grep Command for Self-Review:**
+
 ```bash
 # Find useEffect calls
 rg 'useEffect\(' client/src --type ts -A 10 | \
@@ -218,8 +231,8 @@ import { useEffect, useCallback } from 'react';
 
 // BEFORE: Missing dependency
 useEffect(() => {
-  loadData();  // Function reference changes every render
-}, []);  // ESLint warning!
+  loadData(); // Function reference changes every render
+}, []); // ESLint warning!
 
 // AFTER: Fix with useCallback
 const loadData = useCallback(async () => {
@@ -228,7 +241,7 @@ const loadData = useCallback(async () => {
 
 useEffect(() => {
   loadData();
-}, [loadData]);  // Now ESLint is satisfied
+}, [loadData]); // Now ESLint is satisfied
 ```
 
 ### Real Examples from PR #12
@@ -265,6 +278,7 @@ useEffect(() => {
 Interactive elements must have a visible focus indicator for keyboard navigation. Without it, users relying on keyboard navigation (Tab key) cannot see which element is currently focused. This violates WCAG 2.1 Success Criterion 2.4.7 (Focus Visible - Level AA).
 
 **Impact:**
+
 - WCAG AA compliance violation
 - Excludes ~15-20% of users (keyboard-only, screen reader users)
 - Difficult to use for power users
@@ -316,11 +330,13 @@ focus:ring-blue-500
 ### Detection Rules
 
 **ESLint Plugin (to install):**
+
 ```bash
 npm install --save-dev eslint-plugin-jsx-a11y
 ```
 
 **ESLint Configuration:**
+
 ```json
 {
   "plugins": ["jsx-a11y"],
@@ -333,6 +349,7 @@ npm install --save-dev eslint-plugin-jsx-a11y
 ```
 
 **Grep Command for Self-Review:**
+
 ```bash
 # Find interactive elements without focus indicators
 rg '<(button|a|summary|input|select)' client/src/features --type tsx | \
@@ -395,6 +412,7 @@ npm run lint
 ```
 
 Key additions:
+
 - `focus:outline-none` - Remove default browser outline
 - `focus-visible:ring-2` - Add 2px ring
 - `focus-visible:ring-sage` - Use sage color from design system
@@ -407,6 +425,7 @@ Key additions:
 **Requirement:** Any keyboard operable user interface component must have a mode of operation where the keyboard focus indicator is visible.
 
 **Tests:**
+
 1. Tab to each interactive element
 2. Verify visual focus indicator is visible
 3. Check focus indicator meets 3:1 contrast ratio with adjacent colors
@@ -420,6 +439,7 @@ Key additions:
 Interactive elements (especially accordions) must have visual indicators showing their state (open/closed, expanded/collapsed). Without state indicators, users cannot distinguish between expanded and collapsed sections, violating WCAG 1.3.1 (Info and Relationships).
 
 **Impact:**
+
 - WCAG A compliance violation
 - Confusing UX when multiple accordions exist
 - Users don't know if section is expanded/collapsed
@@ -465,6 +485,7 @@ Interactive elements (especially accordions) must have visual indicators showing
 ### Icon Selection
 
 **Recommended Icons (from lucide-react):**
+
 - `ChevronRight` - Standard, clear indicator (RECOMMENDED)
 - `ChevronDown` - Alternative, points to expanded state
 - `Plus` - For add/expand sections
@@ -479,6 +500,7 @@ import { ChevronRight } from 'lucide-react';
 ### Detection Rules
 
 **ESLint Plugin Configuration:**
+
 ```json
 {
   "plugins": ["jsx-a11y"],
@@ -489,6 +511,7 @@ import { ChevronRight } from 'lucide-react';
 ```
 
 **Grep Command for Self-Review:**
+
 ```bash
 # Find <details> elements without visual indicators
 rg '<details' client/src/features --type tsx -A 3 | \
@@ -557,6 +580,7 @@ import { ChevronRight } from 'lucide-react';
 ```
 
 Key elements:
+
 - `ChevronRight` icon imported from lucide-react
 - `w-5 h-5` - Standard icon size (20px)
 - `text-sage` - Uses design system color
@@ -571,6 +595,7 @@ Key elements:
 **Requirement:** Information, structure, and relationships conveyed through presentation must also be available in text.
 
 **Tests:**
+
 1. Expand accordion - verify visual indicator shows open state
 2. Collapse accordion - verify visual indicator shows closed state
 3. Test with screen reader - state should be conveyed by both icon and HTML structure
@@ -584,6 +609,7 @@ Key elements:
 When interactive elements (buttons, links) are placed inside other interactive elements (like `<summary>`), clicks on inner elements propagate to outer elements, causing unexpected behavior. For example, clicking a button inside an accordion summary both triggers the button AND toggles the accordion.
 
 **Impact:**
+
 - Confusing UX (unexpected accordion toggle)
 - User frustration (tried to add item, accordion collapsed)
 - Standard UX violation
@@ -626,11 +652,13 @@ When interactive elements (buttons, links) are placed inside other interactive e
 ```
 
 **Pros:**
+
 - Single location to manage
 - Clear intent
 - Easy to maintain
 
 **Cons:**
+
 - Affects all children
 
 ---
@@ -648,16 +676,19 @@ When interactive elements (buttons, links) are placed inside other interactive e
 ```
 
 **Pros:**
+
 - Explicit per-button
 - More control
 
 **Cons:**
+
 - Repetitive
 - Easy to forget on new buttons
 
 ### Detection Rules
 
 **ESLint Plugin Configuration:**
+
 ```json
 {
   "plugins": ["jsx-a11y"],
@@ -669,6 +700,7 @@ When interactive elements (buttons, links) are placed inside other interactive e
 ```
 
 **Grep Command for Self-Review:**
+
 ```bash
 # Find <summary> or <details> with nested buttons
 rg '<summary' client/src/features --type tsx -A 10 | \
@@ -749,6 +781,7 @@ rg 'onClick=' client/src/features --type tsx | \
 ```
 
 Key element:
+
 - `onClick={e => e.stopPropagation()}` on container div
 - All buttons inside are unaffected by summary's click behavior
 - Buttons have proper `aria-label` for accessibility
@@ -763,6 +796,7 @@ Key element:
 ## React Hooks & Accessibility Checklist
 
 ### Hooks
+
 - [ ] All callbacks passed to children wrapped in `useCallback`
 - [ ] All `useCallback` have complete dependency array
 - [ ] All functions called in `useEffect` are in dependency array
@@ -770,6 +804,7 @@ Key element:
 - [ ] `npm run lint` passes
 
 ### Accessibility (WCAG)
+
 - [ ] All interactive elements have focus indicators (WCAG 2.4.7)
   - Test with Tab key
   - Focus ring is visible
@@ -782,6 +817,7 @@ Key element:
   - All buttons have `stopPropagation`
 
 ### Testing
+
 - [ ] Component renders without errors
 - [ ] All functionality works with keyboard only
 - [ ] Tab key navigates through all interactive elements
@@ -814,10 +850,7 @@ Add to `.eslintrc.cjs` or `client/.eslintrc.json`:
 
 ```json
 {
-  "extends": [
-    "plugin:react-hooks/recommended",
-    "plugin:jsx-a11y/recommended"
-  ],
+  "extends": ["plugin:react-hooks/recommended", "plugin:jsx-a11y/recommended"],
   "plugins": ["react-hooks", "jsx-a11y"],
   "rules": {
     "react-hooks/rules-of-hooks": "error",
@@ -986,7 +1019,7 @@ test('should navigate with keyboard and show focus', async ({ page }) => {
   // Focus ring should be visible
   const summary = page.locator('summary');
   await expect(summary).toBeFocused();
-  const styles = await summary.evaluate(el => window.getComputedStyle(el));
+  const styles = await summary.evaluate((el) => window.getComputedStyle(el));
   expect(styles.outline).not.toBe('none');
 
   // Space should toggle accordion
@@ -1010,6 +1043,7 @@ const handleClick = useCallback(() => {
 ```
 
 **Fix:**
+
 ```typescript
 // CORRECT: Proper dependency array
 const handleClick = useCallback(() => {
@@ -1027,6 +1061,7 @@ useEffect(() => {
 ```
 
 **Fix:**
+
 ```typescript
 // CORRECT: All dependencies included
 useEffect(() => {
@@ -1042,6 +1077,7 @@ useEffect(() => {
 ```
 
 **Fix:**
+
 ```typescript
 // CORRECT: Focus ring on keyboard focus
 <button className="hover:ring-2 focus-visible:ring-2" />
@@ -1057,6 +1093,7 @@ useEffect(() => {
 ```
 
 **Fix:**
+
 ```typescript
 // CORRECT: Icon shows state
 <details className="group">
@@ -1077,6 +1114,7 @@ useEffect(() => {
 ```
 
 **Fix:**
+
 ```typescript
 // CORRECT: stopPropagation prevents toggle
 <summary>
@@ -1091,6 +1129,7 @@ useEffect(() => {
 ## Resources
 
 ### Documentation
+
 - [React Hooks Documentation](https://react.dev/reference/react)
 - [React useCallback Hook](https://react.dev/reference/react/useCallback)
 - [React useEffect Hook](https://react.dev/reference/react/useEffect)
@@ -1098,12 +1137,14 @@ useEffect(() => {
 - [WCAG 1.3.1 Info and Relationships](https://www.w3.org/WAI/WCAG21/Understanding/info-and-relationships.html)
 
 ### Tools
+
 - [WCAG Contrast Checker](https://webaim.org/resources/contrastchecker/)
 - [Accessibility Inspector (Firefox DevTools)](https://firefox-source-docs.mozilla.org/devtools-user/accessibility_inspector/index.html)
 - [WAVE Browser Extension](https://wave.webaim.org/extension/)
 - [Screen Reader (NVDA, JAWS, VoiceOver)](https://www.nvaccess.org/)
 
 ### Related Prevention Docs
+
 - [Component Duplication Prevention](./COMPONENT-DUPLICATION-PREVENTION.md)
 - [Comprehensive Prevention Strategies](./COMPREHENSIVE-PREVENTION-STRATEGIES.md)
 - [Prevention Quick Reference](./PREVENTION-QUICK-REFERENCE.md)
@@ -1124,13 +1165,13 @@ useEffect(() => {
 
 ## Summary Table
 
-| Issue | Detection | Prevention | Effort |
-|-------|-----------|-----------|--------|
-| Missing useCallback | ESLint `react-hooks` | Wrap in useCallback | 5 min |
-| Missing useEffect deps | ESLint `exhaustive-deps` | Add to dependency array | 5 min |
-| No focus indicator | Manual keyboard test | Add `focus-visible:ring` | 5 min |
-| No state indicator | Visual inspection | Add rotating icon | 10 min |
-| Event propagation | Functional test | Add `stopPropagation` | 5 min |
+| Issue                  | Detection                | Prevention               | Effort |
+| ---------------------- | ------------------------ | ------------------------ | ------ |
+| Missing useCallback    | ESLint `react-hooks`     | Wrap in useCallback      | 5 min  |
+| Missing useEffect deps | ESLint `exhaustive-deps` | Add to dependency array  | 5 min  |
+| No focus indicator     | Manual keyboard test     | Add `focus-visible:ring` | 5 min  |
+| No state indicator     | Visual inspection        | Add rotating icon        | 10 min |
+| Event propagation      | Functional test          | Add `stopPropagation`    | 5 min  |
 
 ---
 

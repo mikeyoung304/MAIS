@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "141"
+issue_id: '141'
 tags: [code-review, visual-editor, accessibility, ux]
 dependencies: []
 ---
@@ -17,15 +17,17 @@ The useVisualEditor hook uses `window.confirm()` for the discard confirmation. T
 ## Findings
 
 ### Discovery Source
+
 Code Quality Review Agent - Code Review
 
 ### Evidence
+
 Location: `client/src/features/tenant-admin/visual-editor/hooks/useVisualEditor.ts` line 253
 
 ```typescript
 const discardAll = useCallback(async () => {
   if (!window.confirm(`Are you sure you want to discard all ${draftCount} unsaved changes?`)) {
-    return;  // User cancelled
+    return; // User cancelled
   }
   // ... proceed with discard
 }, [draftCount]);
@@ -34,6 +36,7 @@ const discardAll = useCallback(async () => {
 ## Proposed Solutions
 
 ### Option 1: Use AlertDialog from shadcn/ui (Recommended)
+
 Replace with the existing AlertDialog component.
 
 ```typescript
@@ -65,6 +68,7 @@ const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 **Risk**: Low
 
 ### Option 2: Create Confirmation Hook
+
 Create a reusable confirmation hook.
 
 ```typescript
@@ -96,6 +100,7 @@ return (
 **Risk**: Low
 
 ### Option 3: Accept Current Implementation
+
 Leave as-is for MVP, document for future improvement.
 
 **Pros**: No work required
@@ -104,22 +109,27 @@ Leave as-is for MVP, document for future improvement.
 **Risk**: Low
 
 ## Recommended Action
+
 <!-- Filled during triage -->
 
 ## Technical Details
 
 ### Affected Files
+
 - `client/src/features/tenant-admin/visual-editor/hooks/useVisualEditor.ts`
 - `client/src/features/tenant-admin/visual-editor/VisualEditorDashboard.tsx`
 
 ### Affected Components
+
 - Discard confirmation flow
 - Any future confirmation dialogs
 
 ### Database Changes Required
+
 None
 
 ## Acceptance Criteria
+
 - [ ] Discard confirmation uses styled modal dialog
 - [ ] Dialog is keyboard accessible (Escape to close, Tab to navigate)
 - [ ] Focus is trapped within dialog when open
@@ -128,10 +138,11 @@ None
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                       |
+| ---------- | ------- | ------------------------------------------- |
 | 2025-12-01 | Created | Identified during visual editor code review |
 
 ## Resources
+
 - PR: feat(visual-editor) commit 0327dee
 - shadcn/ui AlertDialog: https://ui.shadcn.com/docs/components/alert-dialog

@@ -1,5 +1,5 @@
-import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export interface Step {
   label: string;
@@ -14,7 +14,7 @@ export interface ProgressStepsProps {
 
 export function ProgressSteps({ steps, currentStep, className }: ProgressStepsProps) {
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn('w-full', className)}>
       <div className="flex items-center justify-between">
         {steps.map((step, index) => {
           const isCompleted = index < currentStep;
@@ -27,21 +27,15 @@ export function ProgressSteps({ steps, currentStep, className }: ProgressStepsPr
               <div className="flex flex-col items-center">
                 <div
                   className={cn(
-                    "relative flex items-center justify-center rounded-full transition-all duration-300",
-                    isCompleted && "w-10 h-10 bg-success-500 text-white",
-                    isCurrent && "w-12 h-12 bg-macon-orange text-white animate-pulse",
-                    isFuture && "w-10 h-10 bg-neutral-200 text-neutral-400"
+                    'relative flex items-center justify-center rounded-full transition-all duration-300',
+                    isCompleted && 'w-10 h-10 bg-success-500 text-white',
+                    isCurrent && 'w-12 h-12 bg-macon-orange text-white animate-pulse',
+                    isFuture && 'w-10 h-10 bg-neutral-200 text-neutral-400'
                   )}
                 >
-                  {isCompleted && (
-                    <Check className="h-5 w-5 animate-in zoom-in-50 duration-200" />
-                  )}
-                  {isCurrent && (
-                    <span className="text-lg font-bold">{index + 1}</span>
-                  )}
-                  {isFuture && (
-                    <span className="text-base font-medium">{index + 1}</span>
-                  )}
+                  {isCompleted && <Check className="h-5 w-5 animate-in zoom-in-50 duration-200" />}
+                  {isCurrent && <span className="text-lg font-bold">{index + 1}</span>}
+                  {isFuture && <span className="text-base font-medium">{index + 1}</span>}
 
                   {/* Pulse ring for current step */}
                   {isCurrent && (
@@ -53,10 +47,10 @@ export function ProgressSteps({ steps, currentStep, className }: ProgressStepsPr
                 <div className="mt-3 text-center">
                   <p
                     className={cn(
-                      "text-sm font-semibold transition-colors",
-                      isCompleted && "text-success-600",
-                      isCurrent && "text-macon-orange",
-                      isFuture && "text-neutral-400"
+                      'text-sm font-semibold transition-colors',
+                      isCompleted && 'text-success-600',
+                      isCurrent && 'text-macon-orange',
+                      isFuture && 'text-neutral-400'
                     )}
                   >
                     {step.label}
@@ -64,10 +58,10 @@ export function ProgressSteps({ steps, currentStep, className }: ProgressStepsPr
                   {step.description && (
                     <p
                       className={cn(
-                        "text-xs mt-1 transition-colors",
-                        isCompleted && "text-success-500",
-                        isCurrent && "text-neutral-600",
-                        isFuture && "text-neutral-300"
+                        'text-xs mt-1 transition-colors',
+                        isCompleted && 'text-success-500',
+                        isCurrent && 'text-neutral-600',
+                        isFuture && 'text-neutral-300'
                       )}
                     >
                       {step.description}
@@ -85,10 +79,10 @@ export function ProgressSteps({ steps, currentStep, className }: ProgressStepsPr
                   {/* Progress line with gradient */}
                   <div
                     className={cn(
-                      "absolute inset-0 rounded-full transition-all duration-500",
-                      isCompleted && "bg-gradient-to-r from-success-500 to-success-400 w-full",
-                      isCurrent && "bg-gradient-to-r from-macon-orange to-transparent w-1/2",
-                      isFuture && "w-0"
+                      'absolute inset-0 rounded-full transition-all duration-500',
+                      isCompleted && 'bg-gradient-to-r from-success-500 to-success-400 w-full',
+                      isCurrent && 'bg-gradient-to-r from-macon-orange to-transparent w-1/2',
+                      isFuture && 'w-0'
                     )}
                   />
                 </div>
@@ -104,7 +98,7 @@ export function ProgressSteps({ steps, currentStep, className }: ProgressStepsPr
 // Compact version for mobile
 export function ProgressStepsCompact({ steps, currentStep, className }: ProgressStepsProps) {
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn('w-full', className)}>
       {/* Progress bar */}
       <div className="relative h-2 bg-neutral-200 rounded-full overflow-hidden">
         <div
@@ -116,13 +110,9 @@ export function ProgressStepsCompact({ steps, currentStep, className }: Progress
       {/* Current step indicator */}
       <div className="mt-4 flex justify-between items-center">
         <div>
-          <p className="text-sm font-semibold text-neutral-900">
-            {steps[currentStep]?.label}
-          </p>
+          <p className="text-sm font-semibold text-neutral-900">{steps[currentStep]?.label}</p>
           {steps[currentStep]?.description && (
-            <p className="text-xs text-neutral-500 mt-1">
-              {steps[currentStep].description}
-            </p>
+            <p className="text-xs text-neutral-500 mt-1">{steps[currentStep].description}</p>
           )}
         </div>
         <div className="text-xs font-medium text-neutral-500">

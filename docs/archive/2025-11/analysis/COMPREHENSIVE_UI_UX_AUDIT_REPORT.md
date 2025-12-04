@@ -1,4 +1,5 @@
 # COMPREHENSIVE UI/UX AUDIT REPORT
+
 ## MAIS Platform - Multi-Tenant Business Growth Platform
 
 **Audit Date:** November 19, 2025
@@ -12,12 +13,14 @@
 The MAIS platform demonstrates **strong foundational UI/UX work** with a well-implemented design system, modern component library, and clear brand identity. However, there are **significant inconsistencies** between the marketing-facing pages and the admin interfaces that create a disjointed user experience across different user personas.
 
 ### Key Findings Snapshot:
+
 - **Design System Maturity:** 7/10 (Well-structured but inconsistently applied)
 - **Brand Consistency:** 6/10 (Strong marketing presence, weak admin interface branding)
 - **Accessibility:** 7/10 (Good component patterns, missing some ARIA enhancements)
 - **User Experience:** 6.5/10 (Clear flows, but jarring transitions between contexts)
 
 ### Critical Issues Identified:
+
 1. **Dramatic visual disconnect** between marketing pages and admin interfaces
 2. **Inconsistent color palette application** (marketing uses vibrant Macon colors, admin uses muted navy/gray)
 3. **Typography hierarchy breaks** between public and admin pages
@@ -33,24 +36,28 @@ The MAIS platform demonstrates **strong foundational UI/UX work** with a well-im
 #### Findings:
 
 **Marketing Home Page (`/`):**
+
 - **Primary Colors:** Macon Navy (#1a365d), Macon Orange (#fb923c), Macon Teal (#38b2ac)
 - **Implementation:** Rich gradients, vibrant backgrounds, high-energy visual presentation
 - **Emotion:** Exciting, innovative, trustworthy, professional
 - **Pattern:** Extensive use of gradient overlays, backdrop blur effects, glow shadows
 
 **Login Page (`/login`):**
+
 - **Primary Colors:** Macon Navy variants (navy-800, navy-900)
 - **Implementation:** Dark theme with muted tones, floating label inputs with orange accents
 - **Emotion:** Secure, professional, focused
 - **Pattern:** Dark card on light background, orange floating labels on focus
 
 **Platform Admin Dashboard:**
+
 - **Primary Colors:** Navy-900, Navy-800, Navy-700 (very dark, almost grayscale)
 - **Implementation:** Monochromatic dark theme with minimal color accents
 - **Emotion:** Technical, system-level, data-focused
 - **Pattern:** Gradient background (`from-navy-900 via-navy-800 to-navy-900`), light text on dark
 
 **Tenant Admin Dashboard:**
+
 - **Primary Colors:** Same navy-900/800/700 palette as Platform Admin
 - **Implementation:** Identical to Platform Admin (no differentiation)
 - **Emotion:** Technical, system-level
@@ -82,6 +89,7 @@ The MAIS platform demonstrates **strong foundational UI/UX work** with a well-im
 #### Findings:
 
 **Typography Scale (from tailwind.config.js):**
+
 ```javascript
 'hero': ['72px', { lineHeight: '1.15', fontWeight: '700' }]
 'h1': ['60px', { lineHeight: '1.2', fontWeight: '700' }]
@@ -92,6 +100,7 @@ The MAIS platform demonstrates **strong foundational UI/UX work** with a well-im
 ```
 
 **Marketing Home Page:**
+
 - **Headline:** `text-5xl sm:text-6xl md:text-7xl lg:text-8xl` (Responsive, 48px → 96px)
 - **Subheadline:** `text-xl sm:text-2xl md:text-3xl` (20px → 30px)
 - **Section Headers:** `text-5xl md:text-6xl lg:text-7xl` (48px → 72px)
@@ -100,6 +109,7 @@ The MAIS platform demonstrates **strong foundational UI/UX work** with a well-im
 - **Pattern:** Very large, bold typography with dramatic size changes
 
 **Platform Admin Dashboard:**
+
 - **Page Title:** `text-4xl` (36px) - **60% smaller** than marketing h1
 - **Section Headers:** `text-2xl` (24px)
 - **Metric Labels:** `text-base` (16px)
@@ -109,6 +119,7 @@ The MAIS platform demonstrates **strong foundational UI/UX work** with a well-im
 - **Pattern:** Conservative sizing, more compact hierarchy
 
 **Tenant Admin Dashboard:**
+
 - **Identical to Platform Admin**
 
 #### Issues Identified:
@@ -138,12 +149,14 @@ The MAIS platform demonstrates **strong foundational UI/UX work** with a well-im
 #### Button Component Analysis:
 
 **Strengths:**
+
 - Well-structured variant system (default, destructive, outline, secondary, ghost, link, teal, success)
 - Excellent micro-interactions (hover scale, active scale, transition timing)
 - Accessibility-friendly (focus rings, disabled states, aria attributes)
 - Loading state built-in with spinner
 
 **Issues:**
+
 1. **Marketing Page Button Styles:**
    - Uses custom classes that bypass the Button component variants
    - Example: `className="bg-macon-orange hover:bg-macon-orange-dark text-white font-bold text-xl px-12 py-7 shadow-2xl hover:shadow-[0_0_40px_rgba(255,107,53,0.6)]"`
@@ -161,12 +174,14 @@ The MAIS platform demonstrates **strong foundational UI/UX work** with a well-im
 #### Card Component Analysis:
 
 **Strengths:**
+
 - Multiple color schemes (default, navy, orange, teal, purple, sage)
 - Smooth transitions and hover effects
 - Elevation system for depth
 - Flexible content layout (CardHeader, CardContent, CardFooter)
 
 **Issues:**
+
 1. **Inconsistent Card Usage:**
    - Marketing: Uses Card with extensive custom styling and gradient overlays
    - Admin: Uses Card with `bg-macon-navy-800 border-macon-navy-600` (hardcoded dark theme)
@@ -184,6 +199,7 @@ The MAIS platform demonstrates **strong foundational UI/UX work** with a well-im
 #### Input Component Analysis:
 
 **Strengths (InputEnhanced):**
+
 - Floating label animation (excellent UX)
 - Left/right icon support
 - Character count display
@@ -192,6 +208,7 @@ The MAIS platform demonstrates **strong foundational UI/UX work** with a well-im
 - Excellent accessibility (ARIA attributes, focus management)
 
 **Issues:**
+
 1. **Not Used Everywhere:**
    - Login page uses InputEnhanced (good)
    - Admin search inputs use basic Input component (inconsistent)
@@ -207,18 +224,21 @@ The MAIS platform demonstrates **strong foundational UI/UX work** with a well-im
 #### Findings:
 
 **Marketing Page:**
+
 - Section padding: `py-16 md:py-24` (64px → 96px)
 - Container: `max-w-5xl` or `max-w-4xl` (varies by section)
 - Card gaps: `gap-6 md:gap-8` (24px → 32px)
 - Generous whitespace, breathing room
 
 **Admin Dashboards:**
+
 - Page padding: `p-6` (24px - much tighter)
 - Container: `max-w-7xl` (wider than marketing)
 - Card gaps: `gap-4` or `gap-6` (16px → 24px)
 - More compact, data-dense layout
 
 **Login Page:**
+
 - Centered layout with `min-h-screen flex items-center justify-center`
 - Card: `max-w-md` (448px)
 - Form spacing: `space-y-6` (24px)
@@ -250,17 +270,20 @@ The MAIS platform demonstrates **strong foundational UI/UX work** with a well-im
 #### Current State:
 
 **Marketing Home Page:**
+
 - **No visible navigation bar** in the code provided
 - Only in-page anchor links (`#features`, `#how-it-works`)
 - "Apply to Join" buttons throughout (unclear where they lead)
 - "Log In" and "Contact Support" likely in a header (not in Home.tsx component)
 
 **Login Page:**
+
 - **No navigation** (just centered login form)
 - No breadcrumbs or way to return to home
 - No indication of which admin type user is logging into until after authentication
 
 **Platform Admin Dashboard:**
+
 - **No navigation bar** (only logout button)
 - No way to navigate to other admin sections
 - Header shows: "Platform Admin Dashboard" and user email
@@ -268,6 +291,7 @@ The MAIS platform demonstrates **strong foundational UI/UX work** with a well-im
 - **No sidebar or menu** for additional features
 
 **Tenant Admin Dashboard:**
+
 - **No navigation bar** (only logout button)
 - Tab-based navigation for: Packages, Blackouts, Bookings, Branding
 - Identical header structure to Platform Admin
@@ -344,6 +368,7 @@ Login Page (/login)
 #### Marketing Home Page:
 
 **Structure:**
+
 1. Hero Section (Gradient background with value prop)
 2. Trust Badges (3 items: "No credit card", "Setup in 5 min", "Dedicated AI strategist")
 3. The Club Advantage (3 pillars with cards)
@@ -355,12 +380,14 @@ Login Page (/login)
 9. Final CTA (Call to action)
 
 **Strengths:**
+
 - Clear storytelling arc (problem → solution → proof → action)
 - F-pattern layout (left-to-right, top-to-bottom scanning)
 - Repetition of CTAs at key decision points
 - Social proof strategically placed mid-page
 
 **Issues:**
+
 1. **Too Many CTAs:**
    - "Apply to Join the Club" appears 3+ times
    - "See How It Works" appears twice
@@ -380,6 +407,7 @@ Login Page (/login)
 #### Platform Admin Dashboard:
 
 **Structure:**
+
 1. Header (Title, user email, logout)
 2. System Metrics (5 cards: Tenants, Segments, Bookings, Revenue, Commission)
 3. All Tenants Section
@@ -388,11 +416,13 @@ Login Page (/login)
    - Table (Tenant, Slug, Email, Packages, Bookings, Commission, Status, Actions)
 
 **Strengths:**
+
 - Metrics-first approach (data at a glance)
 - Search functionality for large tenant lists
 - Action buttons clearly labeled
 
 **Issues:**
+
 1. **Overwhelming Metric Count:**
    - 5 metric cards creates cognitive load
    - Could group related metrics (e.g., Tenants + Segments in one card)
@@ -412,17 +442,20 @@ Login Page (/login)
 #### Tenant Admin Dashboard:
 
 **Structure:**
+
 1. Header (Title, tenant name/slug, logout)
 2. Metrics (4 cards: Packages, Blackouts, Bookings, Branding status)
 3. Tab Navigation (Packages, Blackouts, Bookings, Branding)
 4. Tab Content (varies by tab)
 
 **Strengths:**
+
 - Tab navigation groups related features
 - Metrics align with tab categories
 - Clear ownership (tenant name in header)
 
 **Issues:**
+
 1. **Tab Overload:**
    - 4 tabs may grow to 6+ as features added
    - No grouping or hierarchy
@@ -442,6 +475,7 @@ Login Page (/login)
 #### Marketing Page CTAs:
 
 **Primary CTA: "Apply to Join the Club"**
+
 - **Placements:**
   1. Hero section (large, orange button with glow effect)
   2. End of "How It Works" section (secondary button)
@@ -450,6 +484,7 @@ Login Page (/login)
 - **Effectiveness:** High visibility, but unclear destination
 
 **Secondary CTA: "See How It Works"**
+
 - **Placements:**
   1. Hero section (outline button)
   2. Anchor link to #how-it-works
@@ -457,10 +492,12 @@ Login Page (/login)
 - **Effectiveness:** Good progressive disclosure
 
 **Tertiary CTAs:**
+
 - "Chat with us" (in "Who Is This For?" section)
 - Various section scroll links
 
 **Issues:**
+
 1. **No Form or Modal:**
    - "Apply to Join" button doesn't show a form or modal
    - Likely leads to external page or broken link
@@ -478,16 +515,19 @@ Login Page (/login)
 #### Admin Dashboard CTAs:
 
 **Platform Admin:**
+
 - "Add Tenant" (primary action)
 - "View Details" (per-tenant action)
 - "Logout" (exit action)
 
 **Tenant Admin:**
+
 - Tab navigation (feature access)
 - "Logout" (exit action)
 - Plus various action buttons in tab content (not visible in dashboard component)
 
 **Issues:**
+
 1. **Missing Key Actions:**
    - No "Invite Team Member" CTA
    - No "Get Help" or "Documentation" link
@@ -506,6 +546,7 @@ Login Page (/login)
 #### InputEnhanced Component (Login Page):
 
 **Strengths:**
+
 - Floating label pattern (excellent for visual hierarchy)
 - Left icon for visual scanning (Mail, Lock icons)
 - Focus states with ring and color change
@@ -515,6 +556,7 @@ Login Page (/login)
 - Clear button functionality
 
 **Issues:**
+
 1. **Focus Ring Color:**
    - Uses `focus-visible:ring-2 focus-visible:ring-macon-orange/20`
    - 20% opacity may be too subtle for accessibility
@@ -537,6 +579,7 @@ Login Page (/login)
 #### Search Inputs (Admin Dashboards):
 
 **Code:**
+
 ```tsx
 <Input
   type="search"
@@ -546,6 +589,7 @@ Login Page (/login)
 ```
 
 **Issues:**
+
 1. **Using Basic Input Instead of InputEnhanced:**
    - Missing floating label
    - Missing error handling
@@ -566,19 +610,23 @@ Login Page (/login)
 #### Login Page Error Handling:
 
 ```tsx
-{error && (
-  <div className="mb-6 p-3 bg-macon-navy-700 border border-red-500 text-red-100 rounded text-lg">
-    {error}
-  </div>
-)}
+{
+  error && (
+    <div className="mb-6 p-3 bg-macon-navy-700 border border-red-500 text-red-100 rounded text-lg">
+      {error}
+    </div>
+  );
+}
 ```
 
 **Strengths:**
+
 - Error displayed above form (visible)
 - Red border for urgency
 - Rounded corners for consistency
 
 **Issues:**
+
 1. **Generic Error Message:**
    - "Invalid credentials. Please check your email and password."
    - Doesn't indicate which field is wrong
@@ -596,12 +644,14 @@ Login Page (/login)
 #### Admin Dashboard Error Handling:
 
 **No visible error handling in dashboard components:**
+
 - API calls wrapped in try/catch but only console.error
 - No user-facing error messages
 - No retry mechanisms
 - No offline state handling
 
 **Missing Error Scenarios:**
+
 1. Failed to load tenants → Shows loading spinner forever
 2. Network error → Silent failure, blank dashboard
 3. Unauthorized → No clear messaging
@@ -612,21 +662,19 @@ Login Page (/login)
 #### Login Page Loading State:
 
 ```tsx
-<Button
-  type="submit"
-  isLoading={isLoading}
-  loadingText="Logging in..."
->
+<Button type="submit" isLoading={isLoading} loadingText="Logging in...">
   Login
 </Button>
 ```
 
 **Strengths:**
+
 - Built-in loading state in Button component
 - Spinner + text
 - Disabled while loading
 
 **Issues:**
+
 1. **No Form Disable:**
    - Inputs have `disabled={isLoading}` (good)
    - But could be more obvious visually
@@ -645,6 +693,7 @@ Login Page (/login)
 ```
 
 **Issues:**
+
 1. **Only Spinner, No Text:**
    - Just spinning icon, no "Loading tenants..." message
    - Users don't know what's loading
@@ -668,6 +717,7 @@ Login Page (/login)
 #### Marketing Page Responsive Design:
 
 **Strengths:**
+
 - Extensive breakpoint usage (`sm:`, `md:`, `lg:`)
 - Typography scales: `text-5xl sm:text-6xl md:text-7xl lg:text-8xl`
 - Grid adjusts: `grid-cols-1 md:grid-cols-3`
@@ -675,6 +725,7 @@ Login Page (/login)
 - Button stacking: `flex-col sm:flex-row`
 
 **Issues:**
+
 1. **Very Large Typography on Mobile:**
    - Hero text is `text-5xl` (48px) on mobile
    - May be too large for small screens (320px width)
@@ -691,11 +742,13 @@ Login Page (/login)
 #### Login Page Responsive Design:
 
 **Strengths:**
+
 - Centered card layout works on all sizes
 - `min-h-screen` ensures full viewport usage
 - Card has `max-w-md` (doesn't get too wide)
 
 **Issues:**
+
 1. **No Breakpoint Adjustments:**
    - Same padding on mobile and desktop
    - Could use more padding on desktop, less on mobile
@@ -786,6 +839,7 @@ Login Page (/login)
    - **Issue:** Extended table reading may be difficult
 
 **Recommendations:**
+
 1. Use contrast checker tool to validate all text/background combinations
 2. Increase contrast in admin dashboards (use navy-50 or white for all primary text)
 3. Avoid using orange/teal for small body text
@@ -798,11 +852,13 @@ Login Page (/login)
 ### 4.1 Marketing Page Brand Representation
 
 **Brand Colors:**
+
 - **Macon Navy:** Authority, trust, professionalism
 - **Macon Orange:** Energy, innovation, action
 - **Macon Teal:** Growth, balance, technology
 
 **Design Language:**
+
 - Gradient backgrounds with radial overlays
 - Large, bold typography (confidence)
 - Generous whitespace (breathing room, premium feel)
@@ -810,23 +866,27 @@ Login Page (/login)
 - Shadow elevation system (depth, layering)
 
 **Messaging Tone:**
+
 - Direct, action-oriented ("Unlock Your Business Potential")
 - Partnership-focused ("We're your team behind the scenes")
 - Outcome-driven ("Increase revenue, land more clients, scale smarter")
 - Conversational but professional
 
 **Visual Hierarchy:**
+
 - Hero-first approach (immediate value prop)
 - Social proof early (trust badges)
 - Repetition of CTAs (conversion-focused)
 
 **Strengths:**
+
 - Strong, memorable brand identity
 - Consistent use of brand colors in hero and CTAs
 - Professional yet approachable tone
 - Clear positioning (business growth partner, not just software)
 
 **Issues:**
+
 1. **Brand Name Confusion:**
    - Hero mentions "Macon AI Club"
    - About section says "Macon AI Solutions"
@@ -847,12 +907,14 @@ Login Page (/login)
 **Platform Admin Dashboard:**
 
 **Brand Elements Present:**
+
 - Uses macon-navy color family
 - Uses Inter font (consistent with marketing)
 - Uses elevation shadows
 - Uses border-radius (rounded-xl)
 
 **Brand Elements Missing:**
+
 - No macon-orange (only used in focus states)
 - No macon-teal
 - No gradients (solid dark backgrounds instead)
@@ -860,15 +922,18 @@ Login Page (/login)
 - No connection to marketing aesthetic
 
 **Feels Like:**
+
 - Generic SaaS admin dashboard
 - Could be any B2B product
 - Dark theme is trendy but not distinctly "Macon"
 
 **Tenant Admin Dashboard:**
+
 - Identical to Platform Admin
 - Same lack of brand presence
 
 **Recommendations:**
+
 1. Add Macon logo to dashboard header
 2. Use macon-orange for primary CTAs ("Add Tenant" button)
 3. Use subtle gradient backgrounds (navy-900 to navy-800 is good, but add orange/teal accents)
@@ -880,12 +945,14 @@ Login Page (/login)
 #### Prospective Club Members (Marketing Page):
 
 **Target Audience:**
+
 - Entrepreneurs, small business owners
 - 30-55 years old
 - Tech-savvy but not developers
 - Looking for growth, overwhelmed by tools
 
 **Design Effectiveness:**
+
 - **9/10** - Very professional, modern, trustworthy
 - Large typography conveys confidence
 - Social proof and testimonials build credibility
@@ -893,6 +960,7 @@ Login Page (/login)
 - "Club" framing creates exclusivity
 
 **Areas for Improvement:**
+
 - Add more visual diversity (photos of real team/clients)
 - Show product screenshots (what does the platform look like?)
 - More specific about pricing/commitment
@@ -900,18 +968,21 @@ Login Page (/login)
 #### Platform Administrators (Platform Admin Dashboard):
 
 **Target Audience:**
+
 - Internal Macon AI staff
 - Technical proficiency
 - Need system-level visibility
 - Data-driven decision making
 
 **Design Effectiveness:**
+
 - **7/10** - Functional but generic
 - Dark theme is appropriate for data work
 - Clear metrics and tables
 - Good information density
 
 **Areas for Improvement:**
+
 - Add brand touches (logo, accent colors)
 - More visual differentiation from Tenant Admin
 - Data visualization (charts, graphs, trends)
@@ -920,18 +991,21 @@ Login Page (/login)
 #### Tenant Admins (Business Owners Dashboard):
 
 **Target Audience:**
+
 - Business owners (clients of Macon AI)
 - Variable tech proficiency
 - Need simple, clear management tools
 - Results-focused
 
 **Design Effectiveness:**
+
 - **6/10** - Functional but may be too technical
 - Dark theme may not appeal to all business owners
 - Tab navigation is clear
 - Metrics are helpful
 
 **Areas for Improvement:**
+
 - **Critical:** Provide light theme option
 - More guidance and onboarding
 - Contextual help and tooltips
@@ -949,11 +1023,13 @@ Login Page (/login)
 **Location:** Throughout the application
 
 **Issue:**
+
 - Marketing page uses custom button classes that bypass the Button component
 - Admin dashboards use Button component but with custom className overrides
 - No consistent use of variant system
 
 **Example:**
+
 ```tsx
 // Marketing (bypasses variants)
 <Button className="bg-macon-orange hover:bg-macon-orange-dark text-white font-bold text-xl px-12 py-7 shadow-2xl hover:shadow-[0_0_40px_rgba(255,107,53,0.6)]">
@@ -974,11 +1050,13 @@ Login Page (/login)
 **Location:** All pages
 
 **Issue:**
+
 - Some components use semantic tokens (`bg-primary`)
 - Most use direct color names (`bg-macon-navy-800`)
 - Creates inconsistency and hard-to-maintain code
 
 **Example:**
+
 ```tsx
 // Inconsistent
 <Card className="bg-macon-navy-800 border-macon-navy-600">
@@ -989,6 +1067,7 @@ Login Page (/login)
 **Impact:** High - Makes theme switching impossible, hard to maintain brand consistency
 
 **Recommendation:**
+
 1. Define semantic color tokens for all contexts (surface, surface-variant, on-surface, etc.)
 2. Use semantic tokens in all components
 3. Only use direct color names in Tailwind config
@@ -998,6 +1077,7 @@ Login Page (/login)
 **Location:** All pages
 
 **Issue:**
+
 - Defined custom typography scale in config (hero, h1, h2, subtitle, body)
 - Components don't use these classes
 - Instead use utility classes (text-4xl, text-2xl, etc.)
@@ -1005,11 +1085,18 @@ Login Page (/login)
 **Impact:** Medium - Inconsistent hierarchy, harder to maintain
 
 **Recommendation:**
+
 1. Create CSS classes for each typography level:
+
 ```css
-.text-hero { @apply text-[72px] leading-[1.15] font-bold; }
-.text-h1 { @apply text-[60px] leading-[1.2] font-bold; }
+.text-hero {
+  @apply text-[72px] leading-[1.15] font-bold;
+}
+.text-h1 {
+  @apply text-[60px] leading-[1.2] font-bold;
+}
 ```
+
 2. Use semantic classes in components
 3. Update responsive breakpoints to use these classes
 
@@ -1018,11 +1105,13 @@ Login Page (/login)
 **Location:** Admin dashboards
 
 **Issue:**
+
 - Platform Admin shows "No tenants yet" as plain table cell text
 - Tenant Admin likely has similar empty states
 - EmptyState component exists but isn't used
 
 **Example:**
+
 ```tsx
 // Current
 <TableCell colSpan={8}>No tenants yet</TableCell>
@@ -1045,6 +1134,7 @@ Login Page (/login)
 **Location:** All pages
 
 **Issue:**
+
 - Card has colorScheme variants but rarely used
 - Most cards override with custom className
 - Defeats purpose of variant system
@@ -1058,6 +1148,7 @@ Login Page (/login)
 #### 1. Navigation System
 
 **Missing:**
+
 - Global navigation bar for admin interfaces
 - Breadcrumbs for multi-level navigation
 - User profile menu
@@ -1067,6 +1158,7 @@ Login Page (/login)
 
 **Recommendation:**
 Implement a navigation system:
+
 ```tsx
 <AdminNav>
   <NavLogo />
@@ -1087,6 +1179,7 @@ Implement a navigation system:
 #### 2. Toast Notifications
 
 **Missing:**
+
 - Success notifications (e.g., "Tenant created successfully")
 - Error notifications (e.g., "Failed to load data")
 - Info notifications (e.g., "Syncing with Stripe...")
@@ -1094,6 +1187,7 @@ Implement a navigation system:
 **Impact:** High - No feedback for user actions
 
 **Recommendation:**
+
 - Toaster component exists in codebase
 - Integrate into all mutation operations
 - Use for API errors and successes
@@ -1101,12 +1195,14 @@ Implement a navigation system:
 #### 3. Modal Dialogs
 
 **Missing:**
+
 - Confirmation dialogs (e.g., "Delete tenant?")
 - Form modals (e.g., "Add tenant" could be a modal instead of new page)
 
 **Impact:** Medium - Less fluid user experience
 
 **Recommendation:**
+
 - AlertDialog component exists in codebase
 - Use for destructive actions
 - Consider modal forms for quick actions
@@ -1114,6 +1210,7 @@ Implement a navigation system:
 #### 4. Data Visualization
 
 **Missing:**
+
 - Charts and graphs for trends
 - Visual metrics (progress bars, donut charts)
 - Timeline views
@@ -1121,6 +1218,7 @@ Implement a navigation system:
 **Impact:** Medium - Admin dashboards are data-heavy but text-only
 
 **Recommendation:**
+
 - Add charting library (Recharts or Chart.js)
 - Show trends over time (bookings per month, revenue growth)
 - Visual KPIs for metrics
@@ -1128,6 +1226,7 @@ Implement a navigation system:
 #### 5. Search and Filter UI
 
 **Missing:**
+
 - Advanced filters (dropdowns, date ranges)
 - Sort controls (ascending/descending)
 - Saved searches/views
@@ -1135,6 +1234,7 @@ Implement a navigation system:
 **Impact:** Medium - Hard to manage large datasets
 
 **Recommendation:**
+
 - Add filter dropdowns above table
 - Add sort icons to table headers
 - Persist filter state in URL params
@@ -1142,6 +1242,7 @@ Implement a navigation system:
 #### 6. Pagination
 
 **Missing:**
+
 - Table pagination
 - "Load more" buttons
 - Virtual scrolling
@@ -1149,6 +1250,7 @@ Implement a navigation system:
 **Impact:** High - Tables will break with 100+ items
 
 **Recommendation:**
+
 - Implement server-side pagination
 - Show page size selector (25, 50, 100)
 - Add "jump to page" input
@@ -1156,18 +1258,21 @@ Implement a navigation system:
 #### 7. Bulk Actions
 
 **Missing:**
+
 - Multi-select in tables
 - Bulk operations (e.g., "Activate 5 tenants")
 
 **Impact:** Low - Nice-to-have for efficiency
 
 **Recommendation:**
+
 - Add checkbox column to tables
 - Add bulk action bar when items selected
 
 #### 8. Contextual Help
 
 **Missing:**
+
 - Tooltips for icons and labels
 - Inline help text
 - Onboarding tours
@@ -1175,6 +1280,7 @@ Implement a navigation system:
 **Impact:** Medium - Unclear interface for new users
 
 **Recommendation:**
+
 - Add Tooltip component to all icon buttons
 - Add help text below complex form fields
 - Consider onboarding library (e.g., react-joyride)
@@ -1182,6 +1288,7 @@ Implement a navigation system:
 #### 9. Settings Panel
 
 **Missing:**
+
 - Theme toggle (light/dark)
 - Notification preferences
 - Account settings
@@ -1189,6 +1296,7 @@ Implement a navigation system:
 **Impact:** Medium - Limited customization
 
 **Recommendation:**
+
 - Create Settings page
 - Add theme toggle to user menu
 - Persist preferences in localStorage
@@ -1196,17 +1304,18 @@ Implement a navigation system:
 #### 10. Role Indicator
 
 **Missing:**
+
 - Visual badge or label showing current role
 - Colored accent to differentiate Platform Admin vs Tenant Admin
 
 **Impact:** High - Confusion about current context
 
 **Recommendation:**
+
 ```tsx
 <Header>
   <RoleBadge role={role} />
-  // Platform Admin: Orange badge
-  // Tenant Admin: Teal badge
+  // Platform Admin: Orange badge // Tenant Admin: Teal badge
 </Header>
 ```
 
@@ -1215,16 +1324,19 @@ Implement a navigation system:
 #### 1. No Progressive Disclosure
 
 **Issue:**
+
 - All admin dashboard content loaded at once
 - No expandable sections or accordions
 - Information overload
 
 **Best Practice:**
+
 - Show summary, reveal details on demand
 - Use accordions for complex sections
 - "Show more" for long lists
 
 **Recommendation:**
+
 - Tenant table: Show 5 rows, "Load more" button
 - Metrics: Expandable detail panels
 - Settings: Accordion sections
@@ -1232,21 +1344,25 @@ Implement a navigation system:
 #### 2. No Optimistic UI Updates
 
 **Issue:**
+
 - All actions wait for server response
 - Slow perceived performance
 - No immediate feedback
 
 **Best Practice:**
+
 - Update UI immediately, rollback on error
 - Show loading state only for actual delays
 
 **Example:**
+
 ```tsx
 // Current: Click "Add Tenant" → Wait for API → Navigate
 // Better: Click "Add Tenant" → Immediately add to list with skeleton → Update on API response
 ```
 
 **Recommendation:**
+
 - Use optimistic updates for mutations
 - Show inline loading states
 - Rollback on error with toast notification
@@ -1254,16 +1370,19 @@ Implement a navigation system:
 #### 3. No Skeleton Screens
 
 **Issue:**
+
 - Loading states show spinner only
 - Blank screen during initial load
 - Poor perceived performance
 
 **Best Practice:**
+
 - Show skeleton of final layout while loading
 - Matches actual content structure
 - Feels faster
 
 **Recommendation:**
+
 - Use Skeleton component (already exists)
 - Create skeleton versions of metric cards, table rows
 - Match skeleton to real component shape
@@ -1271,17 +1390,20 @@ Implement a navigation system:
 #### 4. No Micro-Interactions
 
 **Issue:**
+
 - Limited animation and feedback
 - Buttons have hover states but minimal else
 - Feels static
 
 **Best Practice:**
+
 - Subtle animations on state changes
 - Success checkmarks
 - Loading spinners inline with text
 - Smooth transitions
 
 **Recommendation:**
+
 - Add success animation when form submits
 - Animate metric value changes
 - Smooth tab transitions
@@ -1290,15 +1412,18 @@ Implement a navigation system:
 #### 5. No Empty State Illustrations
 
 **Issue:**
+
 - Empty states are text-only
 - Boring, unclear
 
 **Best Practice:**
+
 - Custom illustrations or icons
 - Helpful messaging
 - Clear next action
 
 **Recommendation:**
+
 - Add illustrations to EmptyState component
 - Contextual messaging (e.g., "No tenants yet! Add your first tenant to get started.")
 - Primary CTA button
@@ -1306,15 +1431,18 @@ Implement a navigation system:
 #### 6. No Error Boundaries
 
 **Issue:**
+
 - JavaScript errors crash entire page
 - No fallback UI
 
 **Best Practice:**
+
 - Error boundaries catch render errors
 - Show friendly error message
 - Offer recovery actions
 
 **Recommendation:**
+
 - Wrap admin dashboards in ErrorBoundary
 - Show "Something went wrong" message
 - Offer "Retry" and "Go to Dashboard" buttons
@@ -1322,15 +1450,18 @@ Implement a navigation system:
 #### 7. No Loading State Orchestration
 
 **Issue:**
+
 - Multiple API calls show multiple loading spinners
 - Jarring sequential loading
 
 **Best Practice:**
+
 - Coordinate loading states
 - Show single loading state for related data
 - Use Suspense (if using React 18 features)
 
 **Recommendation:**
+
 - Show dashboard skeleton until all critical data loaded
 - Lazy load non-critical sections
 - Use React Query for coordinated loading states
@@ -1338,16 +1469,19 @@ Implement a navigation system:
 #### 8. No Keyboard Navigation
 
 **Issue:**
+
 - Tab navigation works (native browser)
 - But no keyboard shortcuts
 - No focus management
 
 **Best Practice:**
+
 - Keyboard shortcuts for common actions (e.g., "/" for search)
 - Modal focus trapping
 - Skip to content links
 
 **Recommendation:**
+
 - Add keyboard shortcut overlay (press "?" to see shortcuts)
 - Implement focus trapping in modals
 - Test all interactions with keyboard only
@@ -1355,15 +1489,18 @@ Implement a navigation system:
 #### 9. No Session Persistence
 
 **Issue:**
+
 - Unclear if form state persists on page refresh
 - Likely loses unsaved changes
 
 **Best Practice:**
+
 - Auto-save drafts to localStorage
 - Warn before navigating away from unsaved form
 - Restore scroll position on back navigation
 
 **Recommendation:**
+
 - Add useLocalStorage hook for form state
 - Add beforeunload warning for dirty forms
 - Use sessionStorage for temporary state
@@ -1371,16 +1508,19 @@ Implement a navigation system:
 #### 10. No Performance Optimization
 
 **Issue:**
+
 - No code splitting visible
 - No lazy loading of components
 - All routes loaded upfront
 
 **Best Practice:**
+
 - Code split by route
 - Lazy load heavy components
 - Preload critical routes
 
 **Recommendation:**
+
 ```tsx
 const PlatformAdminDashboard = lazy(() => import('./pages/admin/PlatformAdminDashboard'));
 const TenantAdminDashboard = lazy(() => import('./pages/tenant/TenantAdminDashboard'));
@@ -1393,18 +1533,22 @@ const TenantAdminDashboard = lazy(() => import('./pages/tenant/TenantAdminDashbo
 **Location:** All dashboard components
 
 **Issue:**
+
 ```tsx
 const result = await (api as any).platformGetAllTenants();
 ```
 
 **Problems:**
+
 - Using `as any` bypasses type safety
 - API logic mixed with UI logic
 - Hard to test, hard to reuse
 
 **Recommendation:**
+
 - Create custom hooks for data fetching
 - Use React Query or SWR for caching and state management
+
 ```tsx
 const { data: tenants, isLoading, error } = useTenants();
 ```
@@ -1414,19 +1558,25 @@ const { data: tenants, isLoading, error } = useTenants();
 **Location:** Marketing page especially
 
 **Issue:**
+
 ```tsx
-className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl"
+className = 'text-5xl sm:text-6xl md:text-7xl lg:text-8xl';
 ```
 
 **Problems:**
+
 - Hard to maintain consistent sizing
 - No single source of truth
 - Typography scale not enforced
 
 **Recommendation:**
+
 - Create typography component variants
+
 ```tsx
-<Heading level={1} responsive>Hero Text</Heading>
+<Heading level={1} responsive>
+  Hero Text
+</Heading>
 // Automatically applies correct responsive sizing
 ```
 
@@ -1435,20 +1585,24 @@ className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl"
 **Location:** All pages
 
 **Issue:**
+
 ```tsx
-className="bg-macon-navy-800 border-macon-navy-600"
+className = 'bg-macon-navy-800 border-macon-navy-600';
 ```
 
 **Problems:**
+
 - Can't switch themes
 - Brand update requires global find/replace
 - Inconsistent application
 
 **Recommendation:**
+
 - Use semantic tokens
 - Create theme context
+
 ```tsx
-className="bg-surface border-outline"
+className = 'bg-surface border-outline';
 ```
 
 #### 4. Duplicate Component Logic
@@ -1456,13 +1610,16 @@ className="bg-surface border-outline"
 **Location:** Platform Admin and Tenant Admin dashboards
 
 **Issue:**
+
 - Both dashboards have nearly identical header structure
 - Both have similar metric card layouts
 - Code duplication
 
 **Recommendation:**
+
 - Create shared DashboardLayout component
 - Create MetricCard component
+
 ```tsx
 <DashboardLayout
   title="Platform Admin Dashboard"
@@ -1479,12 +1636,15 @@ className="bg-surface border-outline"
 **Location:** All components
 
 **Issue:**
+
 - No JSDoc comments
 - No prop descriptions
 - No usage examples
 
 **Recommendation:**
+
 - Add JSDoc to all components
+
 ```tsx
 /**
  * Enhanced input component with floating labels, icons, and validation.
@@ -1509,12 +1669,15 @@ className="bg-surface border-outline"
 **Location:** All components (assumption based on code structure)
 
 **Issue:**
+
 - No test files visible
 - Likely no unit tests for components
 
 **Recommendation:**
+
 - Add test files for all components
 - Test all variants and states
+
 ```tsx
 // Button.test.tsx
 describe('Button', () => {
@@ -1529,11 +1692,13 @@ describe('Button', () => {
 **Location:** Dashboard components
 
 **Issue:**
+
 - Some state in useState
 - Some derived from props
 - No clear data flow
 
 **Recommendation:**
+
 - Use React Query for server state
 - Use Context for shared UI state
 - Keep local state minimal
@@ -1543,10 +1708,12 @@ describe('Button', () => {
 **Location:** App level
 
 **Issue:**
+
 - No error boundary components
 - Errors crash entire app
 
 **Recommendation:**
+
 ```tsx
 <ErrorBoundary fallback={<ErrorPage />}>
   <App />
@@ -1558,11 +1725,13 @@ describe('Button', () => {
 **Location:** Interactive components
 
 **Issue:**
+
 - Some aria attributes present
 - But incomplete coverage
 - No aria-live for dynamic content
 
 **Recommendation:**
+
 - Audit all interactive components for ARIA
 - Add aria-live to loading states
 - Add aria-label to icon buttons
@@ -1572,12 +1741,15 @@ describe('Button', () => {
 **Location:** Tailwind config
 
 **Issue:**
+
 - Colors and spacing defined directly
 - No central design tokens file
 - Hard to maintain design system
 
 **Recommendation:**
+
 - Create design tokens file
+
 ```ts
 // tokens.ts
 export const tokens = {
@@ -1590,8 +1762,8 @@ export const tokens = {
     semantic: {
       primary: 'var(--color-brand-navy)',
       secondary: 'var(--color-brand-orange)',
-    }
-  }
+    },
+  },
 };
 ```
 
@@ -1602,66 +1774,78 @@ export const tokens = {
 ### HIGH PRIORITY (Critical UX Issues)
 
 #### 1. Create Unified Navigation System
+
 **Impact:** Critical - Users can't navigate admin interfaces effectively
 **Effort:** High (2-3 days)
 **ROI:** Very High
 
 **Tasks:**
+
 - Design navigation bar for admin interfaces
 - Implement NavBar component with logo, links, user menu
 - Add breadcrumb navigation
 - Differentiate Platform Admin vs Tenant Admin visually
 
 #### 2. Implement Consistent Error Handling
+
 **Impact:** Critical - Silent failures confuse users
 **Effort:** Medium (1-2 days)
 **ROI:** High
 
 **Tasks:**
+
 - Add error states to all API calls
 - Show toast notifications for errors
 - Add retry mechanisms
 - Implement error boundaries
 
 #### 3. Add Loading States and Skeletons
+
 **Impact:** High - Poor perceived performance
 **Effort:** Medium (1-2 days)
 **ROI:** High
 
 **Tasks:**
+
 - Create skeleton versions of metric cards and table rows
 - Replace spinner-only loading with skeletons
 - Add loading text ("Loading tenants...")
 - Implement optimistic UI updates
 
 #### 4. Unify Color Palette Application
+
 **Impact:** High - Brand inconsistency
 **Effort:** Medium (2 days)
 **ROI:** High
 
 **Tasks:**
+
 - Define semantic color tokens (surface, primary, secondary, etc.)
 - Refactor all components to use semantic tokens
 - Add brand colors to admin interfaces (orange CTAs, teal accents)
 - Ensure WCAG AA contrast compliance
 
 #### 5. Fix Mobile Responsiveness in Admin Dashboards
+
 **Impact:** Critical - Admin dashboards unusable on mobile
 **Effort:** High (2-3 days)
 **ROI:** Very High
 
 **Tasks:**
+
 - Make tables horizontally scrollable
 - Adjust metric card grid for mobile (1-2 columns max)
 - Stack header elements vertically on small screens
 - Test all pages on mobile devices
 
 #### 6. Add Empty State Components
+
 **Impact:** High - Poor first-time user experience
 **Effort:** Low (4-6 hours)
 **ROI:** High
 
 **Tasks:**
+
 - Use EmptyState component for all zero-data scenarios
 - Add illustrations or icons
 - Add helpful messaging and CTAs
@@ -1670,65 +1854,77 @@ export const tokens = {
 ### MEDIUM PRIORITY (Important Improvements)
 
 #### 7. Refactor to Use Component Variant System
+
 **Impact:** Medium - Code maintainability
 **Effort:** Medium (2 days)
 **ROI:** Medium
 
 **Tasks:**
+
 - Remove custom className overrides on Button
 - Remove custom className overrides on Card
 - Use colorScheme and variant props consistently
 - Add new variants if needed (e.g., Button size="hero")
 
 #### 8. Implement Typography Scale System
+
 **Impact:** Medium - Visual consistency
 **Effort:** Low (1 day)
 **ROI:** Medium
 
 **Tasks:**
+
 - Create CSS classes for typography levels (text-hero, text-h1, etc.)
 - Replace utility classes with semantic classes
 - Document typography system in design guide
 
 #### 9. Add Data Visualization
+
 **Impact:** Medium - Better insights for admins
 **Effort:** High (3-4 days)
 **ROI:** Medium
 
 **Tasks:**
+
 - Add charting library (Recharts)
 - Create chart components for trends
 - Add charts to admin dashboards (bookings over time, revenue growth)
 - Make charts responsive
 
 #### 10. Implement Table Enhancements
+
 **Impact:** Medium - Better data management
 **Effort:** Medium (2 days)
 **ROI:** Medium
 
 **Tasks:**
+
 - Add pagination
 - Add sorting (click column headers)
 - Add filtering dropdowns
 - Add bulk actions (multi-select)
 
 #### 11. Add Theme Toggle (Light/Dark)
+
 **Impact:** Medium - User preference
 **Effort:** High (2-3 days)
 **ROI:** Medium
 
 **Tasks:**
+
 - Create theme context
 - Add light theme styles to all components
 - Add theme toggle in user menu
 - Persist preference in localStorage
 
 #### 12. Improve Form Validation
+
 **Impact:** Medium - Better user experience
 **Effort:** Low (1 day)
 **ROI:** Medium
 
 **Tasks:**
+
 - Add client-side validation (email format, required fields)
 - Show field-level errors
 - Add password strength indicator
@@ -1737,44 +1933,52 @@ export const tokens = {
 ### LOW PRIORITY (Nice-to-Have)
 
 #### 13. Add Keyboard Shortcuts
+
 **Impact:** Low - Power user feature
 **Effort:** Medium (1-2 days)
 **ROI:** Low
 
 **Tasks:**
+
 - Implement keyboard shortcut system
 - Add "/" for search focus
 - Add "?" for shortcut overlay
 - Add cmd/ctrl+k for command palette
 
 #### 14. Add Micro-Interactions
+
 **Impact:** Low - Polish
 **Effort:** Medium (1-2 days)
 **ROI:** Low
 
 **Tasks:**
+
 - Add success animations
 - Add ripple effects to buttons
 - Smooth tab transitions
 - Animate metric value changes
 
 #### 15. Implement Onboarding Tour
+
 **Impact:** Low - First-time user experience
 **Effort:** High (3 days)
 **ROI:** Low
 
 **Tasks:**
+
 - Add onboarding library (react-joyride)
 - Create tours for each dashboard
 - Add skip/complete tracking
 - Highlight key features
 
 #### 16. Add Contextual Help
+
 **Impact:** Low - Reduced support burden
 **Effort:** Medium (2 days)
 **ROI:** Low
 
 **Tasks:**
+
 - Add Tooltip component to all icon buttons
 - Add help text to complex form fields
 - Add "?" icons with explanations
@@ -1785,10 +1989,12 @@ export const tokens = {
 ## 7. QUICK WINS (Easy Improvements with High Impact)
 
 ### 1. Add Brand Logo to Admin Headers
+
 **Effort:** 1 hour
 **Impact:** High (brand consistency)
 
 **Task:**
+
 ```tsx
 <div className="flex items-center gap-4">
   <img src="/logo.svg" alt="Macon AI" className="h-8" />
@@ -1797,10 +2003,12 @@ export const tokens = {
 ```
 
 ### 2. Use Orange for Primary CTAs in Admin
+
 **Effort:** 30 minutes
 **Impact:** High (brand consistency)
 
 **Task:**
+
 ```tsx
 // Change from:
 <Button className="bg-macon-navy">Add Tenant</Button>
@@ -1809,10 +2017,12 @@ export const tokens = {
 ```
 
 ### 3. Add Role Badge to Dashboard Header
+
 **Effort:** 2 hours
 **Impact:** High (user clarity)
 
 **Task:**
+
 ```tsx
 <Badge className="bg-macon-orange text-white">
   {role === 'PLATFORM_ADMIN' ? 'Platform Admin' : 'Tenant Admin'}
@@ -1820,10 +2030,12 @@ export const tokens = {
 ```
 
 ### 4. Replace Table Loading Spinner with Skeleton
+
 **Effort:** 1 hour
 **Impact:** Medium (perceived performance)
 
 **Task:**
+
 ```tsx
 {isLoading ? (
   <>
@@ -1841,10 +2053,12 @@ export const tokens = {
 ```
 
 ### 5. Add Toast Notifications
+
 **Effort:** 2 hours
 **Impact:** High (user feedback)
 
 **Task:**
+
 ```tsx
 // Install and configure Toaster
 import { useToast } from '@/components/ui/toaster';
@@ -1859,19 +2073,23 @@ toast.error('Failed to create tenant');
 ```
 
 ### 6. Make Search Bar Autofocus
+
 **Effort:** 5 minutes
 **Impact:** Low (UX polish)
 
 **Task:**
+
 ```tsx
 <Input autoFocus type="search" ... />
 ```
 
 ### 7. Add Loading Text to Buttons
+
 **Effort:** 30 minutes
 **Impact:** Low (clarity)
 
 **Task:**
+
 ```tsx
 <Button isLoading={isLoading} loadingText="Creating tenant...">
   Add Tenant
@@ -1879,10 +2097,12 @@ toast.error('Failed to create tenant');
 ```
 
 ### 8. Increase Metric Text Contrast
+
 **Effort:** 15 minutes
 **Impact:** Medium (readability)
 
 **Task:**
+
 ```tsx
 // Change from:
 <div className="text-4xl font-bold text-macon-navy-300">
@@ -1891,10 +2111,12 @@ toast.error('Failed to create tenant');
 ```
 
 ### 9. Add Horizontal Scroll to Table
+
 **Effort:** 10 minutes
 **Impact:** Critical (mobile usability)
 
 **Task:**
+
 ```tsx
 <div className="overflow-x-auto">
   <Table>...</Table>
@@ -1902,10 +2124,12 @@ toast.error('Failed to create tenant');
 ```
 
 ### 10. Add "Show Password" Toggle
+
 **Effort:** 1 hour
 **Impact:** Medium (UX)
 
 **Task:**
+
 ```tsx
 const [showPassword, setShowPassword] = useState(false);
 
@@ -1916,7 +2140,7 @@ const [showPassword, setShowPassword] = useState(false);
       {showPassword ? <EyeOff /> : <Eye />}
     </button>
   }
-/>
+/>;
 ```
 
 ---
@@ -2189,12 +2413,14 @@ const [showPassword, setShowPassword] = useState(false);
 ## APPENDIX A: DESIGN SYSTEM GAPS
 
 ### Colors Missing from System:
+
 - Success green (defined but underused)
 - Warning yellow (defined but underused)
 - Info blue (not defined)
 - Surface colors (background, surface-variant, etc.)
 
 ### Components Missing:
+
 - Badge (exists but limited usage)
 - Tooltip (exists but not integrated)
 - Popover (not visible)
@@ -2210,6 +2436,7 @@ const [showPassword, setShowPassword] = useState(false);
 - Switch/Toggle (not visible)
 
 ### Patterns Missing:
+
 - Loading states (partial implementation)
 - Error states (partial implementation)
 - Empty states (component exists but underused)
@@ -2225,6 +2452,7 @@ const [showPassword, setShowPassword] = useState(false);
 ## APPENDIX B: WCAG COMPLIANCE CHECKLIST
 
 ### Perceivable
+
 - [ ] Text alternatives for non-text content
 - [ ] Captions for videos
 - [ ] Content adaptable to different presentations
@@ -2232,6 +2460,7 @@ const [showPassword, setShowPassword] = useState(false);
 - [ ] Text resizable without loss of functionality
 
 ### Operable
+
 - [x] Keyboard accessible (basic)
 - [ ] No keyboard traps (needs testing)
 - [ ] Adjustable time limits
@@ -2244,6 +2473,7 @@ const [showPassword, setShowPassword] = useState(false);
 - [ ] Multiple navigation methods
 
 ### Understandable
+
 - [x] Language identified (HTML lang attribute)
 - [x] Predictable navigation (mostly consistent)
 - [ ] Input error identification
@@ -2251,6 +2481,7 @@ const [showPassword, setShowPassword] = useState(false);
 - [ ] Error suggestions
 
 ### Robust
+
 - [x] Valid HTML (React JSX)
 - [ ] Name, role, value for UI components
 - [ ] Status messages
@@ -2262,6 +2493,7 @@ const [showPassword, setShowPassword] = useState(false);
 ## APPENDIX C: BROWSER & DEVICE TESTING MATRIX
 
 ### Browsers to Test:
+
 - [ ] Chrome (latest)
 - [ ] Firefox (latest)
 - [ ] Safari (latest)
@@ -2270,6 +2502,7 @@ const [showPassword, setShowPassword] = useState(false);
 - [ ] Chrome Mobile (Android 11+)
 
 ### Devices to Test:
+
 - [ ] Desktop (1920x1080, 2560x1440)
 - [ ] Laptop (1366x768, 1440x900)
 - [ ] Tablet (iPad, iPad Pro)
@@ -2277,6 +2510,7 @@ const [showPassword, setShowPassword] = useState(false);
 - [ ] Small mobile (iPhone SE)
 
 ### Screen Readers to Test:
+
 - [ ] NVDA (Windows)
 - [ ] JAWS (Windows)
 - [ ] VoiceOver (macOS/iOS)

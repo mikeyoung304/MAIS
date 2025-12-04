@@ -131,7 +131,9 @@ function loadEnvFile(): Record<string, string> {
 
   if (!fs.existsSync(envPath)) {
     console.log(color('\n⚠️  .env file not found at server/.env', colors.yellow));
-    console.log(color('   Copy server/.env.example to server/.env to get started.\n', colors.yellow));
+    console.log(
+      color('   Copy server/.env.example to server/.env to get started.\n', colors.yellow)
+    );
     return {};
   }
 
@@ -184,7 +186,8 @@ function printGroup(title: string, results: CheckResult[]): void {
 
   for (const result of results) {
     const icon = result.status === 'ok' ? '✓' : result.required ? '✗' : '⚠';
-    const iconColor = result.status === 'ok' ? colors.green : result.required ? colors.red : colors.yellow;
+    const iconColor =
+      result.status === 'ok' ? colors.green : result.required ? colors.red : colors.yellow;
     const label = result.required ? ' [REQUIRED]' : ' [optional]';
     const labelColor = result.required ? colors.red : colors.yellow;
 
@@ -206,7 +209,9 @@ function main() {
   const env = loadEnvFile();
 
   if (Object.keys(env).length === 0) {
-    console.log(color('No environment variables found. Create server/.env to continue.\n', colors.yellow));
+    console.log(
+      color('No environment variables found. Create server/.env to continue.\n', colors.yellow)
+    );
     process.exit(1);
   }
 
@@ -229,7 +234,12 @@ function main() {
     printGroup('Email (Postmark)', postmarkResults);
     printGroup('Calendar Integration (Google Calendar)', gcalResults);
   } else {
-    console.log(color('\n📝 Mock mode active - database, Stripe, Postmark, and Google Calendar not required', colors.cyan));
+    console.log(
+      color(
+        '\n📝 Mock mode active - database, Stripe, Postmark, and Google Calendar not required',
+        colors.cyan
+      )
+    );
   }
 
   // Collect all results
@@ -242,13 +252,18 @@ function main() {
   ];
 
   // Count issues
-  const requiredMissing = allResults.filter(r => r.required && r.status !== 'ok');
-  const optionalMissing = allResults.filter(r => !r.required && r.status !== 'ok');
+  const requiredMissing = allResults.filter((r) => r.required && r.status !== 'ok');
+  const optionalMissing = allResults.filter((r) => !r.required && r.status !== 'ok');
 
   console.log(color('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', colors.cyan));
 
   if (requiredMissing.length > 0) {
-    console.log(color(`\n❌ ${requiredMissing.length} required variable(s) missing:`, colors.bold + colors.red));
+    console.log(
+      color(
+        `\n❌ ${requiredMissing.length} required variable(s) missing:`,
+        colors.bold + colors.red
+      )
+    );
     for (const result of requiredMissing) {
       console.log(color(`   - ${result.key}`, colors.red));
     }
@@ -263,7 +278,12 @@ function main() {
   }
 
   if (optionalMissing.length > 0) {
-    console.log(color(`\n⚠️  ${optionalMissing.length} optional variable(s) missing (graceful fallbacks active):`, colors.yellow));
+    console.log(
+      color(
+        `\n⚠️  ${optionalMissing.length} optional variable(s) missing (graceful fallbacks active):`,
+        colors.yellow
+      )
+    );
     for (const result of optionalMissing) {
       console.log(color(`   - ${result.key}`, colors.yellow));
     }

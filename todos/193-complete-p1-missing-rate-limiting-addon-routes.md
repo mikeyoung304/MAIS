@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "193"
+issue_id: '193'
 tags: [code-review, security, rate-limiting]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 All 5 add-on routes lack rate limiting, exposing the application to abuse. The existing patterns show that photo upload routes use `uploadLimiterIP` and `uploadLimiterTenant`, and draft autosave uses `draftAutosaveLimiter`.
 
 ### Why It Matters
+
 - **Resource Exhaustion:** Attacker creates 10,000+ add-ons rapidly, filling database
 - **DoS via Database Queries:** Rapid GET requests overwhelm database connection pool
 - **Cache Poisoning Amplification:** Repeated updates force cache invalidation storms
@@ -23,6 +24,7 @@ All 5 add-on routes lack rate limiting, exposing the application to abuse. The e
 **Source:** Security Review
 
 **Evidence:**
+
 - Line 32 imports rate limiters but they're not applied to add-on routes
 - Other tenant-admin routes apply rate limiting (pattern established)
 - No rate limiter middleware visible in lines 1021-1189
@@ -32,6 +34,7 @@ All 5 add-on routes lack rate limiting, exposing the application to abuse. The e
 ## Proposed Solutions
 
 ### Option A: Add New Rate Limiters (Recommended)
+
 **Pros:** Precise control, follows existing patterns
 **Cons:** Requires new rate limiter definitions
 **Effort:** Small (15 minutes)
@@ -58,6 +61,7 @@ export const addonWriteLimiter = rateLimit({
 ```
 
 2. Apply to routes:
+
 ```typescript
 router.get('/addons', addonReadLimiter, async (...) => { ... });
 router.get('/addons/:id', addonReadLimiter, async (...) => { ... });
@@ -67,6 +71,7 @@ router.delete('/addons/:id', addonWriteLimiter, async (...) => { ... });
 ```
 
 ### Option B: Reuse Existing Limiters
+
 **Pros:** No new code
 **Cons:** May not be appropriate limits for add-on operations
 **Effort:** Small (5 minutes)
@@ -81,6 +86,7 @@ Option A - Create specific rate limiters for add-on operations.
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/middleware/rateLimiter.ts`
 - `server/src/routes/tenant-admin.routes.ts`
 
@@ -95,8 +101,8 @@ Option A - Create specific rate limiters for add-on operations.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                   |
+| ---------- | ------------------------ | ------------------------------------------- |
 | 2025-12-03 | Created from code review | Always add rate limiting to new CRUD routes |
 
 ## Resources

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "036"
+issue_id: '036'
 tags: [code-review, dependencies, bloat]
 dependencies: []
 ---
@@ -38,6 +38,7 @@ Several declared dependencies are not used in the codebase, adding unnecessary b
 ## Proposed Solutions
 
 ### Option A: Remove All Unused (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 ```bash
@@ -57,6 +58,6 @@ rm test-redesign.js  # Legacy script
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                         |
+| ---------- | ------- | ----------------------------- |
 | 2025-11-27 | Created | Found during dependency audit |

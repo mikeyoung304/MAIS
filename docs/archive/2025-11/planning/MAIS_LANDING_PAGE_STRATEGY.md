@@ -1,4 +1,5 @@
 # MAIS Landing Page Design Strategy
+
 ## Comprehensive UX + SaaS Marketing Blueprint
 
 **Project:** MAIS AI-Powered Tenant Management Platform
@@ -14,6 +15,7 @@
 This document provides a complete landing page strategy for MAIS, combining senior UX design principles with proven SaaS marketing best practices. The strategy is grounded in extensive research of the wedding industry's pain points, competitive analysis of leading event management platforms, and conversion optimization principles specific to B2B SaaS.
 
 **Key Insights:**
+
 - Wedding venues waste **62+ hours/month** on manual processes
 - **Fear of double-booking** is the #1 objection to trying new systems
 - **Video testimonials** and **specific metrics** build trust faster than generic claims
@@ -69,6 +71,7 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
 **Purpose:** Capture attention in 3 seconds, communicate core value proposition, drive immediate CTA engagement.
 
 **Content Focus:**
+
 - **Headline:** Outcome-focused (what they'll achieve, not what you do)
 - **Subheadline:** Specificity beats generality (use numbers, time savings)
 - **Primary CTA:** Low-friction action (demo > free trial > contact)
@@ -76,11 +79,13 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
 - **Visual:** Professional context (venue owner using software, clean dashboard screenshot)
 
 **Layout:**
+
 - 60/40 split: 60% headline/copy (left), 40% visual (right) on desktop
 - Stack vertically on mobile (copy first, visual second)
 - White space: Generous padding (80px top/bottom minimum)
 
 **Key Elements:**
+
 - Trust badge (e.g., "Trusted by 200+ venues")
 - Benefit bullets (3 max): "No credit card required", "Setup in 5 minutes", "Cancel anytime"
 - Above-the-fold guarantee: Everything visible without scrolling on 1400x900 viewport
@@ -92,11 +97,13 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
 **Purpose:** Establish immediate credibility through logos, stats, and review aggregation.
 
 **Content Focus:**
+
 - **Client logos:** 6-10 recognizable venue brands (grayscale for visual consistency)
 - **Aggregate stats:** "200+ venues", "10,000+ weddings managed", "4.8★ on Capterra"
 - **Media mentions:** If applicable (e.g., "Featured in Bridal Guide", "WeddingWire Partner")
 
 **Layout:**
+
 - Horizontal logo strip with subtle scroll animation
 - Stats displayed as inline text or small cards
 - Light background (warm gray #F5F5F0) to separate from hero
@@ -110,6 +117,7 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
 **Purpose:** Resonate with target audience's daily frustrations to build emotional connection.
 
 **Content Focus:**
+
 - **Headline:** "Managing a Wedding Venue Shouldn't Feel This Hard"
 - **Pain points:** 4-6 specific frustrations (not generic problems)
   - "Spreadsheet chaos" (lead tracking in Excel)
@@ -120,6 +128,7 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
   - "After-hours inquiries" (can't respond immediately)
 
 **Layout:**
+
 - Two-column grid (3 pain points per column)
 - Icon + headline + 1 sentence description per pain point
 - Optional: Before/after comparison ("62 hours/month wasted → 4 hours/month")
@@ -133,6 +142,7 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
 **Purpose:** Show simplicity through 3-step process to reduce adoption anxiety.
 
 **Content Focus:**
+
 - **Headline:** "From Inquiry to Booking in Minutes, Not Hours"
 - **3 Steps:**
   1. **Capture:** "Leads land in one beautiful dashboard (no more missed emails)"
@@ -140,11 +150,13 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
   3. **Delight:** "Automated reminders, packages, and reviews keep clients happy"
 
 **Layout:**
+
 - Horizontal step flow (1 → 2 → 3) with connecting line/arrow
 - Each step: Icon + headline + 2 sentences + screenshot thumbnail
 - Use actual software screenshots (annotated for clarity)
 
 **Visual Treatment:**
+
 - Soft navy (#2C3E50) background to create visual break
 - White text with dusty rose (#D4A5A5) accents for step numbers
 
@@ -157,54 +169,63 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
 **Content Focus (Recommended Features):**
 
 **A. Unified Lead Dashboard**
+
 - Headline: "All Inquiries in One Place"
 - Description: "See every lead, their status, and next action—no more digging through email threads."
 - Icon: Dashboard/grid icon
 - Visual: Screenshot of lead pipeline view
 
 **B. Smart Calendar Management**
+
 - Headline: "Say Goodbye to Double-Bookings"
 - Description: "Real-time availability, automated holds, and instant confirmation—zero conflicts guaranteed."
 - Icon: Calendar icon
 - Visual: Calendar interface showing blocked dates
 
 **C. Instant Payment Processing**
+
 - Headline: "Get Paid Faster"
 - Description: "Send payment links in seconds. Accept cards, track balances, automate reminders."
 - Icon: Credit card/dollar sign
 - Visual: Payment link generation screen
 
 **D. Customizable Packages**
+
 - Headline: "Sell More with Smart Packages"
 - Description: "Create tiered offerings, optional add-ons, and seasonal pricing—update in real-time."
 - Icon: Package/box icon
 - Visual: Package builder interface
 
 **E. Automated Follow-Ups**
+
 - Headline: "Never Miss a Follow-Up Again"
 - Description: "Scheduled reminders, contract notifications, and review requests—all on autopilot."
 - Icon: Bell/notification icon
 - Visual: Automation workflow diagram
 
 **F. Detailed Reporting**
+
 - Headline: "Know Your Numbers at a Glance"
 - Description: "Revenue tracking, booking trends, and lead conversion rates—data that drives decisions."
 - Icon: Chart/graph icon
 - Visual: Dashboard with analytics
 
 **G. Client Portal**
+
 - Headline: "Delight Clients with Self-Service"
 - Description: "Branded portal for contract signing, payments, and event details—reduce support burden."
 - Icon: User/profile icon
 - Visual: Client-facing portal view
 
 **H. Mobile-Friendly**
+
 - Headline: "Manage on the Go"
 - Description: "Full functionality on your phone—respond to inquiries from anywhere, anytime."
 - Icon: Mobile phone icon
 - Visual: Mobile app screenshot
 
 **Layout:**
+
 - Alternating left/right layout (feature + screenshot)
 - Feature 1: Text left, image right
 - Feature 2: Text right, image left
@@ -218,10 +239,12 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
 **Purpose:** Provide concrete proof of ROI through real customer outcomes.
 
 **Content Focus:**
+
 - **Headline:** "Real Venues, Real Results"
 - **3 Case Studies** (mini format, 150-200 words each):
 
 **Case Study 1: The Vineyard Estate**
+
 - **Challenge:** Lost 30% of inquiries due to slow email response times
 - **Solution:** Implemented MAIS's automated inquiry capture + instant responses
 - **Results:**
@@ -231,6 +254,7 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
 - **Quote:** "We used to lose leads every weekend. Now they're all captured automatically—even at 2am." —Sarah M., Owner
 
 **Case Study 2: Urban Loft Weddings**
+
 - **Challenge:** Double-booked 3 weddings in one season (nightmare scenario)
 - **Solution:** Switched to MAIS's smart calendar with real-time syncing
 - **Results:**
@@ -240,6 +264,7 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
 - **Quote:** "The fear of double-booking kept me up at night. MAIS eliminated that stress completely." —Marcus T., Venue Manager
 
 **Case Study 3: Garden Oasis Venue**
+
 - **Challenge:** Manual invoicing and payment follow-ups consumed 20+ hours/month
 - **Solution:** Automated payment links + reminders via MAIS
 - **Results:**
@@ -249,11 +274,13 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
 - **Quote:** "I used to dread chasing payments. Now it's 100% automated. Game-changer." —Linda K., Owner
 
 **Layout:**
+
 - Three-column grid on desktop (one case study per column)
 - Each case study: Logo (if available), challenge/solution/results, pull quote, photo
 - White cards with subtle shadow on light background
 
 **Visual Treatment:**
+
 - Before/after metrics displayed prominently (large numbers, contrasting colors)
 - Customer photos (professional headshots, not candid)
 - Optional: Video testimonial links embedded
@@ -265,6 +292,7 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
 **Purpose:** Build trust through authentic voice-of-customer social proof.
 
 **Content Focus:**
+
 - **Headline:** "Loved by Wedding Professionals Like You"
 - **6-9 Testimonials** in carousel or grid format
 - **Mix of formats:**
@@ -273,6 +301,7 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
   - Review platform pull-ins (Capterra stars, WeddingWire ratings)
 
 **Testimonial Structure:**
+
 - **Quote:** Specific, outcome-focused (not "great product!")
 - **Attribution:** Full name + title + venue name + photo
 - **Context:** What problem did MAIS solve for them?
@@ -280,30 +309,38 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
 **Example Testimonials:**
 
 **1. Sarah Mitchell, Owner, The Vineyard Estate**
+
 > "Before MAIS, we were drowning in spreadsheets and missed 30% of weekend inquiries. Now everything's automated—leads captured instantly, calendar synced perfectly, payments tracked automatically. We've booked 40% more weddings this year without hiring extra staff. Worth every penny."
 
 **2. Marcus Thompson, Venue Manager, Urban Loft Weddings**
+
 > "I was terrified of double-booking after it happened to us twice. MAIS's smart calendar eliminated that fear entirely. Real-time availability, automated holds, instant confirmations—zero conflicts in 18 months. My stress levels dropped, and our reputation recovered. Can't recommend enough."
 
 **3. Linda Kim, Owner, Garden Oasis Venue**
+
 > "The payment automation alone saved me 20 hours a month. No more chasing invoices or tracking spreadsheets. MAIS sends payment links, tracks balances, and reminds clients automatically. I focus on hospitality now, not paperwork. Simple as that."
 
 **4. David Rodriguez, Planner, Elegant Events Co.**
+
 > "As a planner working with multiple venues, MAIS makes coordination seamless. I can see real-time availability, send payment links to clients, and track everything in one dashboard. Beats juggling 10 different systems. Saves me hours every week."
 
 **5. Jennifer Lee, Owner, Historic Barn Venue**
+
 > "Setup took 15 minutes. I imported my calendar, customized my packages, and had my first booking through MAIS that same day. The simplicity is unreal—my 70-year-old husband manages it without any training. If he can use it, anyone can."
 
 **6. Amanda Foster, Coordinator, Seaside Celebrations**
+
 > "My favorite feature? The client portal. Couples can sign contracts, make payments, and view event details on their own—no more 'Did you get my check?' emails. Reduces my support load by half and makes us look super professional."
 
 **Layout:**
+
 - Carousel (3 visible at a time) with auto-rotate and manual controls
 - Each testimonial: Large quote, attribution below, headshot photo (circular crop)
 - Star rating displayed if from review platform
 - "Read More Reviews →" CTA link to dedicated testimonial page or review platform
 
 **Visual Treatment:**
+
 - White cards on warm gray background
 - Dusty rose accent for quotation marks or star ratings
 - Video testimonials: Thumbnail with play button overlay
@@ -315,6 +352,7 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
 **Purpose:** Provide depth for engaged prospects who've scrolled this far (high intent).
 
 **Content Focus:**
+
 - **Headline:** "Everything You Need in One Platform"
 - **6-8 Additional Features** (shorter descriptions than primary features):
   1. **Customizable Contracts:** Pre-built templates, e-signature integration, automatic reminders
@@ -327,11 +365,13 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
   8. **Regular Updates:** New features added monthly based on customer feedback
 
 **Layout:**
+
 - Four-column grid on desktop, two-column on tablet, single-column on mobile
 - Each feature: Icon + headline + 1 sentence description
 - Subtle hover effect (card lift + shadow increase)
 
 **Visual Treatment:**
+
 - Light background, no heavy imagery (keeps page load fast)
 - Icons: Line-style icons in soft navy (#2C3E50)
 
@@ -342,6 +382,7 @@ The landing page follows a proven B2B SaaS conversion funnel optimized for weddi
 **Purpose:** Proactively address objections and reduce friction before CTA.
 
 **Content Focus:**
+
 - **Headline:** "Common Questions About MAIS"
 - **8-10 FAQs** (expandable accordion format):
 
@@ -373,14 +414,16 @@ A: Bank-level security. All data encrypted in transit and at rest, nightly backu
 A: Yes, no contracts or cancellation fees. Cancel with one click from your dashboard. Export all your data (leads, bookings, contracts) before you go—it's yours, not ours.
 
 **Q10: What makes MAIS different from [competitor]?**
-A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* for wedding venues. Every feature solves a real venue problem—we don't waste your time with unnecessary complexity. Plus, our support team actually understands your business (many of us have worked in the wedding industry).
+A: Unlike generic CRMs or bloated event software, MAIS is built _specifically_ for wedding venues. Every feature solves a real venue problem—we don't waste your time with unnecessary complexity. Plus, our support team actually understands your business (many of us have worked in the wedding industry).
 
 **Layout:**
+
 - Single-column accordion (click to expand)
 - Questions always visible, answers expand on click
 - "Still have questions? Contact us →" CTA at bottom
 
 **Visual Treatment:**
+
 - Soft navy (#2C3E50) question text, gray body text
 - Subtle arrow/chevron indicating expandable state
 
@@ -391,12 +434,14 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Purpose:** Demonstrate transparent value and drive conversion with risk-reversal.
 
 **Content Focus:**
+
 - **Headline:** "Simple Pricing, Powerful Results"
 - **Subheadline:** "Choose the plan that fits your venue. Upgrade or downgrade anytime."
 
 **Pricing Tiers (Recommended Structure):**
 
 **Tier 1: Starter**
+
 - **$79/month** (billed annually) or $99/month (month-to-month)
 - **Best for:** Single venue, up to 50 bookings/year
 - **Includes:**
@@ -409,6 +454,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 - **CTA:** "Start Free 30-Day Trial"
 
 **Tier 2: Professional** ⭐ MOST POPULAR
+
 - **$149/month** (billed annually) or $179/month (month-to-month)
 - **Best for:** Single venue, 50-150 bookings/year
 - **Everything in Starter, plus:**
@@ -420,6 +466,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 - **CTA:** "Start Free 30-Day Trial"
 
 **Tier 3: Enterprise**
+
 - **Custom pricing** (starting at $299/month)
 - **Best for:** Multi-property venues, planners, high-volume operators
 - **Everything in Professional, plus:**
@@ -432,6 +479,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 - **CTA:** "Schedule Demo"
 
 **Visual Treatment:**
+
 - Three-column grid on desktop (cards side-by-side)
 - "Most Popular" tier elevated slightly with subtle shadow/highlight
 - Price displayed prominently at top of each card
@@ -439,11 +487,13 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 - CTA button at bottom of each card (different colors for hierarchy)
 
 **Risk Reversal:**
+
 - 30-day free trial (no credit card required)
 - Money-back guarantee: "If MAIS doesn't save you 10+ hours in your first month, we'll refund your first payment—no questions asked."
 - No contracts, cancel anytime
 
 **ROI Calculator (Optional Interactive Element):**
+
 - Input fields: "Average booking value", "Bookings per year", "Hours spent on admin"
 - Output: "MAIS could save you $X and Y hours this year"
 - Drives home value proposition with personalized data
@@ -455,6 +505,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Purpose:** Last conversion opportunity for high-intent visitors who've scrolled to bottom.
 
 **Content Focus:**
+
 - **Headline:** "Ready to Save 60+ Hours a Month?"
 - **Subheadline:** "Join 200+ venues managing weddings the smarter way."
 - **Primary CTA:** "Start Free 30-Day Trial" (large, prominent button)
@@ -466,12 +517,14 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
   - Icons: Credit card (crossed out), clock (15 min), checkmark (no commitment)
 
 **Layout:**
+
 - Centered, full-width section
 - Generous padding (100px top/bottom)
 - Contrasting background (soft navy #2C3E50) with white text
 - Large CTA button (primary) with secondary CTA below
 
 **Visual Treatment:**
+
 - Dusty rose (#D4A5A5) primary CTA button (stands out from navy background)
 - White text, clean typography
 - Minimal distractions—focus entirely on conversion
@@ -483,18 +536,21 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 ### Hero Section Copy Options
 
 **Option 1: Outcome-Focused**
+
 - **Headline:** "Stop Losing Leads. Start Booking More Weddings."
 - **Subheadline:** "All-in-one wedding venue management that saves 60+ hours monthly. Capture inquiries, prevent double-bookings, and get paid faster—all in one beautiful dashboard."
 - **Primary CTA:** "See MAIS In Action"
 - **Secondary CTA:** "Watch 2-Minute Demo →"
 
 **Option 2: Pain-Point First**
+
 - **Headline:** "Managing a Wedding Venue Shouldn't Mean Drowning in Spreadsheets"
 - **Subheadline:** "Replace email chaos and manual calendars with smart automation. MAIS turns inquiry-to-booking from 7 days into 7 minutes."
 - **Primary CTA:** "Start Free 30-Day Trial"
 - **Secondary CTA:** "See How It Works →"
 
 **Option 3: Aspirational**
+
 - **Headline:** "Run Your Wedding Venue Like the $1M Business It Could Be"
 - **Subheadline:** "Professional tools for lead tracking, calendar management, and payments—without the enterprise complexity (or price tag)."
 - **Primary CTA:** "Try Free for 30 Days"
@@ -507,12 +563,15 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 ### Social Proof Strip Copy
 
 **Option 1:**
+
 > "Trusted by 200+ wedding venues across North America | ⭐⭐⭐⭐⭐ 4.8 on Capterra | 10,000+ weddings managed"
 
 **Option 2:**
+
 > "Join venues like [Logo] [Logo] [Logo] [Logo] in managing weddings the smarter way"
 
 **Option 3:**
+
 > "Rated #1 Wedding Venue Software by Event Professionals | 200+ 5-Star Reviews"
 
 ---
@@ -526,6 +585,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 "If you're spending more time on admin than actual hospitality, you're not alone. Here's what we hear from venue owners every day:"
 
 **Pain Point Callouts:**
+
 1. **📧 Email Overload:** "Lost leads in endless inbox threads. Weekend inquiries go unanswered until Monday."
 2. **📅 Calendar Chaos:** "Double-booking nightmares. Manual calendar updates. Constant 'Is that date available?' texts."
 3. **💳 Payment Stress:** "Chasing invoices for weeks. Spreadsheet tracking. Late payments killing cash flow."
@@ -544,14 +604,17 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 "MAIS automates the busywork so you can focus on what you do best: creating unforgettable wedding experiences."
 
 **Step 1: Capture**
+
 - **Headline:** "Never Miss Another Lead"
 - **Body:** "Inquiries land in one beautiful dashboard—no more digging through email. Auto-responses keep leads warm while you sleep. Instant notifications when high-value inquiries arrive."
 
 **Step 2: Convert**
+
 - **Headline:** "Book Faster with Smart Automation"
 - **Body:** "Smart calendar shows real-time availability. Send payment links in seconds. E-signatures, deposits, and confirmations—all in one click. Average time to book: 7 minutes."
 
 **Step 3: Delight**
+
 - **Headline:** "Keep Clients Happy on Autopilot"
 - **Body:** "Automated reminders, contract milestones, and review requests. Branded client portal for self-service. Five-star experiences without the manual effort."
 
@@ -573,22 +636,27 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 ### Testimonial Pull Quotes
 
 **Quote 1:**
+
 > "We used to lose leads every weekend. Now they're all captured automatically—even at 2am. MAIS paid for itself in the first month."
 > —Sarah M., Owner, The Vineyard Estate
 
 **Quote 2:**
+
 > "The fear of double-booking kept me up at night. MAIS eliminated that stress completely. Worth it for the peace of mind alone."
 > —Marcus T., Venue Manager, Urban Loft Weddings
 
 **Quote 3:**
+
 > "I used to dread chasing payments. Now it's 100% automated. I'll never go back to spreadsheets. Game-changer."
 > —Linda K., Owner, Garden Oasis Venue
 
 **Quote 4:**
+
 > "Setup took 15 minutes. Had my first booking through MAIS the same day. If my 70-year-old husband can use it, anyone can."
 > —Jennifer L., Owner, Historic Barn Venue
 
 **Quote 5:**
+
 > "MAIS saves me 20 hours a month. That's time I can spend on sales calls and site tours—the work that actually grows my business."
 > —David R., Planner, Elegant Events Co.
 
@@ -597,14 +665,17 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 ### FAQ Copy Snippets
 
 **Security Question:**
+
 > **Q: How secure is my data?**
 > A: Bank-level security. All data encrypted in transit and at rest, nightly backups, GDPR-compliant, SOC 2 certified. Your venue's data (and your clients' data) is rigorously protected.
 
 **Ease-of-Use Question:**
+
 > **Q: What if my clients aren't tech-savvy?**
 > A: MAIS is designed for simplicity. Clients only see a clean, branded portal—no complex software. They click a link, view details, sign contracts, and pay. Just like Amazon checkout.
 
 **ROI Question:**
+
 > **Q: How quickly will I see ROI?**
 > A: Most venues recoup their investment in the first month. Between time saved (average 60+ hours/month) and increased bookings (22% average lift), MAIS pays for itself fast.
 
@@ -625,6 +696,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 "Schedule a Live Demo"
 
 **Trust Reinforcement Icons:**
+
 - ✅ No credit card required
 - ✅ Setup in 15 minutes
 - ✅ Cancel anytime
@@ -638,12 +710,14 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Primary Colors:**
 
 **1. Warm Gray**
+
 - **Hex:** `#F5F5F0`
 - **Usage:** Backgrounds, section dividers, subtle highlights
 - **Psychology:** Professional, calming, sophisticated (not sterile)
 - **Example:** Social proof strip background, alternating section backgrounds
 
 **2. Soft Navy**
+
 - **Hex:** `#2C3E50`
 - **Usage:** Headlines, body text, primary UI elements
 - **Psychology:** Trust, stability, professionalism
@@ -652,12 +726,14 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Accent Colors:**
 
 **3. Dusty Rose**
+
 - **Hex:** `#D4A5A5`
 - **Usage:** CTAs, hover states, highlights
 - **Psychology:** Elegant, approachable, wedding context without being overly romantic
 - **Example:** Primary CTA buttons, icon accents, link hover states
 
 **4. Muted Gold**
+
 - **Hex:** `#C9A961`
 - **Usage:** Secondary accents, success states, premium indicators
 - **Psychology:** Quality, value, aspiration
@@ -666,22 +742,26 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Supporting Colors:**
 
 **5. White**
+
 - **Hex:** `#FFFFFF`
 - **Usage:** Card backgrounds, text on dark backgrounds
 - **Example:** Feature cards, testimonial cards, final CTA text
 
 **6. Charcoal**
+
 - **Hex:** `#333333`
 - **Usage:** Body text, secondary headlines
 - **Example:** Feature descriptions, FAQ answers
 
 **Color Contrast Ratios (WCAG AA+ Compliant):**
+
 - Soft Navy (#2C3E50) on White (#FFFFFF): **12.6:1** ✅
 - Charcoal (#333333) on White (#FFFFFF): **12.6:1** ✅
 - Dusty Rose (#D4A5A5) on Soft Navy (#2C3E50): **4.8:1** ✅
 - White (#FFFFFF) on Soft Navy (#2C3E50): **12.6:1** ✅
 
 **Color Usage Guidelines:**
+
 - **80/20 Rule:** 80% neutral (warm gray, white, soft navy), 20% accent (dusty rose, muted gold)
 - **CTA Hierarchy:** Primary CTAs always dusty rose (#D4A5A5), secondary CTAs soft navy outline
 - **Backgrounds:** Alternate between white and warm gray for section separation (no harsh white-on-white stacking)
@@ -693,6 +773,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Headline Font:**
 
 **DM Sans**
+
 - **Why:** Modern, geometric sans-serif with clean lines and excellent readability
 - **Weights:** Bold (700) for H1/H2, SemiBold (600) for H3/H4
 - **Usage:** Hero headline, section headlines, card titles
@@ -707,6 +788,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Body Font:**
 
 **Inter**
+
 - **Why:** Highly readable, designed for screens, wide character set
 - **Weights:** Regular (400) for body text, Medium (500) for emphasis
 - **Usage:** Paragraphs, feature descriptions, testimonials, FAQs
@@ -720,6 +802,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Accent Font (Minimal Use):**
 
 **Cormorant Garamond (Italic)**
+
 - **Why:** Elegant serif adds wedding context without being overly decorative
 - **Weights:** Italic (400)
 - **Usage:** Pull quotes, testimonial emphasis, decorative subheadlines (use sparingly!)
@@ -728,17 +811,18 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 
 **Typography System (Responsive):**
 
-| Element | Desktop | Tablet | Mobile |
-|---------|---------|--------|--------|
-| H1 (Hero) | 72px / Bold | 56px / Bold | 48px / Bold |
-| H2 (Section) | 48px / Bold | 40px / Bold | 36px / Bold |
-| H3 (Card) | 28px / SemiBold | 26px / SemiBold | 24px / SemiBold |
+| Element      | Desktop         | Tablet          | Mobile          |
+| ------------ | --------------- | --------------- | --------------- |
+| H1 (Hero)    | 72px / Bold     | 56px / Bold     | 48px / Bold     |
+| H2 (Section) | 48px / Bold     | 40px / Bold     | 36px / Bold     |
+| H3 (Card)    | 28px / SemiBold | 26px / SemiBold | 24px / SemiBold |
 | H4 (Subhead) | 20px / SemiBold | 20px / SemiBold | 18px / SemiBold |
-| Body Large | 22px / Regular | 20px / Regular | 18px / Regular |
-| Body | 18px / Regular | 17px / Regular | 16px / Regular |
-| Body Small | 14px / Regular | 14px / Regular | 14px / Regular |
+| Body Large   | 22px / Regular  | 20px / Regular  | 18px / Regular  |
+| Body         | 18px / Regular  | 17px / Regular  | 16px / Regular  |
+| Body Small   | 14px / Regular  | 14px / Regular  | 14px / Regular  |
 
 **Font Loading Strategy:**
+
 - **Method:** Google Fonts with `font-display: swap` (prevent FOIT/FOUT)
 - **Preconnect:** `<link rel="preconnect" href="https://fonts.googleapis.com">`
 - **Subset:** Latin character set only (reduce file size)
@@ -751,12 +835,14 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 ### Visual Style Guidelines
 
 **Overall Aesthetic:**
+
 - **80% Professional, 20% Wedding Context**
 - **Elevated professionalism** (not corporate sterile, not whimsical romantic)
 - **Clean, modern, approachable** (think Apple, not Adobe)
 - **Data-driven** (charts, metrics, specificity build trust)
 
 **Design Principles:**
+
 1. **Generous White Space:** 80-100px vertical padding between sections
 2. **Subtle Animations:** Hover states, scroll-triggered entrances (not distracting)
 3. **Visual Hierarchy:** Clear heading structure, F-pattern layout
@@ -764,6 +850,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 5. **Mobile-First:** Touch-friendly targets (48px min), readable text (16px min)
 
 **Micro-Interactions:**
+
 - **Card Hover:** Slight lift (-4px translate) + shadow increase + border color change
 - **Button Hover:** Dusty rose → darker dusty rose (#C89494) + subtle scale (1.02x)
 - **Icon Animations:** Rotate 5° on hover (feature icons), scale 1.1x
@@ -778,6 +865,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Primary Focus: Professional B2B Context (NOT couple-focused romantic imagery)**
 
 **Do's:**
+
 - ✅ Venue owners/managers working on laptops (behind-the-scenes professionalism)
 - ✅ Empty venue spaces (corporate photography style: well-lit, architectural)
 - ✅ Professional headshots (venue owners for testimonials: confident, approachable)
@@ -786,6 +874,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 - ✅ Team collaboration (staff reviewing calendar, discussing leads)
 
 **Don'ts:**
+
 - ❌ Couple-focused romantic shots (confuses B2B positioning)
 - ❌ Wedding ceremony imagery (save for customer case studies only)
 - ❌ Stock photos that scream "stock photo" (overly posed, cheesy smiles)
@@ -794,6 +883,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Specific Asset Needs:**
 
 **1. Hero Section Visual (1)**
+
 - **Type:** Split-screen or dashboard mockup
 - **Option A:** Venue owner (30s-50s, professional attire) reviewing MAIS dashboard on laptop at venue desk (natural light, shallow depth of field)
 - **Option B:** Clean software dashboard screenshot (lead pipeline view, annotated with callouts: "62 hours saved", "Zero double-bookings", "+40% bookings")
@@ -801,6 +891,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 - **Style:** Bright, clean, professional—convey simplicity and control
 
 **2. Solution Section Screenshots (3)**
+
 - **Screenshot 1 (Capture):** Lead dashboard view showing inbox-style layout with lead cards
 - **Screenshot 2 (Convert):** Calendar interface with availability, booking form, payment link generation
 - **Screenshot 3 (Delight):** Automation workflow diagram or client portal view
@@ -808,22 +899,26 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 - **Treatment:** Browser frame mockup, subtle shadow, annotated with arrows/highlights
 
 **3. Feature Highlight Screenshots (6-8)**
+
 - One screenshot per feature (unified lead dashboard, smart calendar, payment processing, packages, automation, reporting, client portal, mobile app)
 - **Dimensions:** 1000x750px each
 - **Treatment:** Clean UI screenshots with contextual annotations, consistent styling
 
 **4. Case Study Photos (3)**
+
 - **Type:** Professional headshots of venue owners (Sarah M., Marcus T., Linda K.)
 - **Style:** Outdoor or venue setting, natural light, approachable smile, professional attire
 - **Dimensions:** 400x400px (square crop for testimonial cards)
 - **Bonus:** Optional video testimonial thumbnails (play button overlay)
 
 **5. Testimonial Showcase Photos (6-9)**
+
 - **Type:** Mix of headshots + venue logos (if available)
 - **Dimensions:** 300x300px headshots, variable logo sizes
 - **Style:** Circular crop for headshots, grayscale logos for visual consistency
 
 **6. Visual Icons (30-40)**
+
 - **Type:** Line-style icons (consistent stroke weight: 2px)
 - **Categories:** Features, pain points, benefits, trust badges
 - **Style:** Soft navy (#2C3E50) stroke, transparent fill, rounded corners
@@ -831,11 +926,13 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 - **Source:** Heroicons, Lucide Icons, or custom illustrations
 
 **7. Background Textures (Optional, 2-3)**
+
 - **Type:** Subtle patterns for section backgrounds (avoid distraction)
 - **Examples:** Faint grid pattern, soft gradient overlay, organic shapes (blurred)
 - **Opacity:** 5-10% (barely visible, adds depth without competing with content)
 
 **8. Trust Badges/Logos (10-15)**
+
 - **Security Badges:** SSL certificate, PCI compliance, GDPR compliant, SOC 2 certified
 - **Review Platforms:** Capterra stars, WeddingWire partner badge, G2 ratings
 - **Client Logos:** 6-10 recognizable venue brands (grayscale for consistency)
@@ -846,18 +943,21 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 ### Video Assets (Recommended)
 
 **1. Hero Section Demo Video (2 minutes)**
+
 - **Content:** Quick walkthrough of MAIS (lead capture → calendar booking → payment)
 - **Style:** Screen recording with voiceover (professional, upbeat female or male voice)
 - **Treatment:** Embedded video player (play button overlay, auto-play muted on scroll)
 - **CTA Endpoint:** "Start your free trial at elope3.com"
 
 **2. Customer Testimonial Videos (3x 60-90 seconds)**
+
 - **Format:** Interview-style (venue owner in their space, B-roll of venue)
 - **Questions:** What was your biggest challenge? How did MAIS help? What results did you see?
 - **Treatment:** Subtitled (critical for accessibility and silent autoplay), branded lower-thirds
 - **Placement:** Testimonial section (carousel or grid)
 
 **3. Feature Deep-Dives (Optional, 6x 30-60 seconds)**
+
 - **Content:** One feature per video (e.g., "How Smart Calendar Prevents Double-Bookings")
 - **Style:** Animated screen recordings with text overlays
 - **Placement:** Feature section (embedded thumbnails with play button)
@@ -871,6 +971,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Why:** Reduce anxiety about data security and payment safety (critical for B2B SaaS).
 
 **Implementation:**
+
 - Display in footer (always visible) and near payment/pricing sections
 - Badges to include:
   - **SSL Certificate** (lock icon + "256-bit encryption")
@@ -881,6 +982,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 - Link each badge to explanation page or certificate (transparency builds trust)
 
 **Visual Treatment:**
+
 - Grayscale logos (consistent styling)
 - Small size (80x60px each)
 - Horizontal row with equal spacing
@@ -893,6 +995,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Why:** "Others like you trust us" reduces perceived risk.
 
 **Implementation:**
+
 - Display in social proof strip (below hero) and above final CTA
 - **6-10 logos** of recognizable wedding venues/brands
 - **Headline:** "Trusted by 200+ venues including..."
@@ -902,6 +1005,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
   - Clickable to case study (if available)
 
 **Visual Treatment:**
+
 - Horizontal scrolling carousel (mobile)
 - Static grid (desktop)
 - Subtle opacity: 60% resting, 100% on hover
@@ -913,6 +1017,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Why:** Third-party validation is 4x more trusted than self-reported claims.
 
 **Implementation:**
+
 - Display in social proof strip, testimonial section header, footer
 - **Platforms to showcase:**
   - Capterra: "⭐⭐⭐⭐⭐ 4.8 out of 5 (200+ reviews)"
@@ -922,6 +1027,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 - Link to review platform profiles (build credibility through transparency)
 
 **Visual Treatment:**
+
 - Star rating icon (muted gold #C9A961)
 - Rating number + review count displayed inline
 - Platform logo next to rating
@@ -933,6 +1039,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Why:** Vague claims ("save time") are weak. Specific numbers build credibility.
 
 **Implementation:**
+
 - Use throughout landing page (hero, case studies, testimonials, FAQ)
 - **Examples:**
   - "Save 62+ hours/month on admin work"
@@ -943,6 +1050,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 - Source data from actual customer results (anonymized if needed)
 
 **Visual Treatment:**
+
 - Large, bold numbers (DM Sans Bold, 48px+)
 - Gradient text effect (optional, dusty rose to muted gold)
 - Context below number ("hours saved monthly", "booking increase")
@@ -954,6 +1062,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Why:** Stories are 22x more memorable than facts alone. Before/after creates tangible proof.
 
 **Implementation:**
+
 - Three full case studies in dedicated section (150-200 words each)
 - Structure:
   1. **Context:** Venue name, size, location, challenge
@@ -964,6 +1073,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 - Optional: Link to full case study PDF or video
 
 **Visual Treatment:**
+
 - Three-column grid (desktop), single-column stack (mobile)
 - White cards with subtle shadow
 - Before/after metrics displayed prominently (red → green, or gray → dusty rose)
@@ -975,6 +1085,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Why:** Video is 5x more engaging than text. Seeing real people builds emotional connection.
 
 **Implementation:**
+
 - Embed 2-3 video testimonials in testimonial section
 - **Format:** 60-90 second interviews with venue owners
 - **Content:** What was your challenge? How did MAIS help? What results did you see?
@@ -982,6 +1093,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 - **Accessibility:** Subtitles required (critical for silent autoplay and accessibility)
 
 **Visual Treatment:**
+
 - Thumbnail with play button overlay
 - Auto-play muted on scroll (stops when off-screen)
 - Full-screen modal on click (for focused viewing)
@@ -993,6 +1105,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Why:** Knowing help is available reduces purchase anxiety.
 
 **Implementation:**
+
 - **Live Chat Widget:** Bottom-right corner, always visible (Intercom, Drift, or similar)
   - Greeting: "Have questions? We're here to help!"
   - Response time: <2hr during business hours
@@ -1001,6 +1114,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 - **Knowledge Base Link:** "Help Center" in navigation (self-service option)
 
 **Visual Treatment:**
+
 - Chat widget: Dusty rose (#D4A5A5) bubble with white icon
 - Hover: Expand to show greeting message
 - Mobile: Fixed position (doesn't interfere with scrolling)
@@ -1012,6 +1126,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Why:** Removes financial risk from decision-making process.
 
 **Implementation:**
+
 - **30-Day Free Trial** (no credit card required)
   - Headline: "Try every feature free for 30 days—no credit card, no commitment"
   - CTA: "Start Free Trial" (not "Sign Up")
@@ -1021,6 +1136,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
   - "Cancel anytime with one click. No cancellation fees, no hassle. Export your data and go."
 
 **Visual Treatment:**
+
 - Display near pricing and final CTA sections
 - Use checkmark icons (✓) for trust reinforcement
 - Light background (warm gray) to separate from surrounding content
@@ -1032,12 +1148,14 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Why:** Humanizes brand, explains motivation, builds connection.
 
 **Implementation:**
+
 - Short section (100-150 words) above final CTA or in footer
 - **Content:**
   - "We built MAIS because we've been there. After managing a wedding venue for 5 years, we knew there had to be a better way than spreadsheets and email chaos. So we built the tool we wished we had—and now we're sharing it with venue owners like you."
 - **Visual:** Photo of founder(s) at venue or with laptop (authentic, not stock photo)
 
 **Visual Treatment:**
+
 - Two-column layout: Photo left, text right (desktop)
 - Stack vertically on mobile
 - Soft navy background with white text
@@ -1049,6 +1167,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 **Why:** Shows commitment to product improvement and customer success.
 
 **Implementation:**
+
 - **Recent Updates Section (Footer or About):**
   - "New features added this month: Email templates, QuickBooks integration, mobile app dark mode"
 - **Public Roadmap Link:**
@@ -1057,6 +1176,7 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
   - "We build what our customers need. Request a feature anytime—we listen."
 
 **Visual Treatment:**
+
 - Small section in footer or dedicated "What's New" modal
 - Icon: Rocket or sparkle (suggests innovation)
 
@@ -1070,17 +1190,20 @@ A: Unlike generic CRMs or bloated event software, MAIS is built *specifically* f
 Using romantic wedding photography (couples kissing, ceremony moments, bridal portraits) as primary imagery.
 
 **Why It's a Problem:**
+
 - **Target audience is venue owners/planners, not couples getting married**
 - Creates confusion: "Is this a tool for couples or for venue managers?"
 - Undermines professional positioning (looks like B2C wedding planning app)
 - Emotional wedding imagery distracts from efficiency/ROI messaging
 
 **Fix:**
+
 - Use **behind-the-scenes professional imagery**: venue owners working, empty venue spaces, software dashboards
 - Reserve wedding imagery for customer case studies only (and even then, focus on venue owner testimonials, not couples)
 - **80/20 Rule:** 80% professional/business context, 20% wedding context (subtle touches like dusty rose color, elegant typography)
 
 **Example:**
+
 - ❌ Hero image: Bride and groom walking down aisle
 - ✅ Hero image: Venue manager reviewing MAIS dashboard on laptop at venue desk
 
@@ -1092,19 +1215,23 @@ Using romantic wedding photography (couples kissing, ceremony moments, bridal po
 Leading with technical features instead of customer outcomes.
 
 **Bad Example:**
+
 > "MAIS features an advanced CRM with Zapier integration, RESTful API access, and multi-tenant architecture with role-based permissions."
 
 **Why It's a Problem:**
+
 - Venue owners care about **results** (time saved, bookings increased), not technical specs
 - Jargon creates cognitive load ("What is a RESTful API?" → bounce)
 - Sounds complicated, contradicts "simplicity" positioning
 
 **Fix:**
+
 - Lead with **outcomes**, support with **how**
 - Translate features into benefits: "Advanced CRM" → "Never lose a lead again"
 - Use plain language: "Connects with your favorite tools" instead of "Zapier integration"
 
 **Better Example:**
+
 > "MAIS captures every inquiry, prevents double-bookings, and automates payment collection—saving venue owners 60+ hours monthly."
 
 **Rule:** Every feature mention must answer "So what? What does this mean for me?"
@@ -1117,27 +1244,32 @@ Leading with technical features instead of customer outcomes.
 Presenting too many calls-to-action with no clear hierarchy.
 
 **Bad Example:**
+
 ```
 [Start Free Trial] [Request Demo] [View Pricing] [Download Whitepaper] [Contact Sales]
 ```
 
 **Why It's a Problem:**
+
 - **Choice paralysis:** More options = lower conversion (proven by Hick's Law)
 - No clear next step → visitor bounces
 - Dilutes focus of landing page
 
 **Fix:**
+
 - **One primary CTA** per section (repeated throughout page)
 - **One secondary CTA** (complementary, not competing)
 - Clear visual hierarchy: Primary CTA bold/colored, secondary CTA ghost/outline
 
 **Better Example:**
+
 ```
 [Start Free 30-Day Trial] ← Primary (dusty rose button)
 Watch 2-Minute Demo → ← Secondary (text link with arrow)
 ```
 
 **CTA Strategy:**
+
 - Hero: Primary = "Start Free Trial", Secondary = "Watch Demo"
 - Features: Primary = "Start Free Trial", Secondary = "Learn More →"
 - Pricing: Primary = "Start Free Trial", Secondary = "Schedule Demo" (for Enterprise tier only)
@@ -1151,19 +1283,23 @@ Watch 2-Minute Demo → ← Secondary (text link with arrow)
 Requiring demo request or sales call to see pricing.
 
 **Example:**
+
 > "Contact us for pricing" or "Request a quote"
 
 **Why It's a Problem:**
+
 - Creates friction and distrust ("What are they hiding?")
 - Self-service buyers bounce (80% of B2B buyers prefer to research independently)
 - Competitors with transparent pricing win by default
 
 **Fix:**
+
 - Display **clear, transparent pricing** on landing page (even if it's a range)
 - For custom/enterprise tiers: "Starting at $299/month" (gives ballpark)
 - Use risk-reversal to reduce price anxiety: "30-day free trial", "No credit card required", "Cancel anytime"
 
 **Better Example:**
+
 ```
 Starter: $79/month
 Professional: $149/month (Most Popular)
@@ -1180,20 +1316,24 @@ Enterprise: Starting at $299/month (Schedule Demo)
 Making claims without third-party validation.
 
 **Bad Example:**
+
 > "MAIS is the best wedding venue software. Our platform is amazing. You'll love it."
 
 **Why It's a Problem:**
+
 - Self-serving claims are ignored (everyone says they're the best)
 - No credibility without proof
 - Visitors need external validation (reviews, case studies, logos)
 
 **Fix:**
+
 - **Lead with social proof:** Customer logos, review ratings, specific metrics
 - **Use third-party validation:** Capterra stars, WeddingWire ratings, media mentions
 - **Quantify results:** "200+ venues", "10,000+ weddings managed", "4.8★ rating"
 - **Include testimonials** throughout page (not just one section)
 
 **Better Example:**
+
 > "Trusted by 200+ wedding venues | ⭐⭐⭐⭐⭐ 4.8 on Capterra (150+ reviews) | 10,000+ weddings managed"
 
 ---
@@ -1204,21 +1344,25 @@ Making claims without third-party validation.
 Using overly polished, obviously fake stock photos.
 
 **Example:**
+
 - Diverse group of 20-somethings high-fiving in modern office
 - Business person in suit pointing at tablet with exaggerated smile
 - Generic "teamwork" imagery with no context
 
 **Why It's a Problem:**
+
 - Screams "stock photo" → reduces credibility
 - No connection to wedding industry context
 - Looks lazy (didn't invest in custom photography)
 
 **Fix:**
+
 - Use **custom photography** of actual venue spaces, real customers (with permission)
 - If using stock: Choose realistic, contextual images (venue owner at desk, empty venue space)
 - Prioritize **software screenshots** over people photos (shows actual product)
 
 **Better Example:**
+
 - Real photo of Garden Oasis Venue (customer) with owner testimonial
 - Clean screenshot of MAIS dashboard (annotated)
 - Behind-the-scenes photo of venue manager using laptop (natural, not posed)
@@ -1231,11 +1375,13 @@ Using overly polished, obviously fake stock photos.
 Dense paragraphs with no headings, bullets, or white space.
 
 **Why It's a Problem:**
+
 - Visitors scan, not read (F-pattern eye tracking)
 - Cognitive overload → bounce
 - Key information buried in text
 
 **Fix:**
+
 - Break up text with **clear headings** (H2, H3 structure)
 - Use **bullet points** for lists (not paragraphs)
 - **Bold key phrases** within paragraphs for scanning
@@ -1243,6 +1389,7 @@ Dense paragraphs with no headings, bullets, or white space.
 - **Visual hierarchy:** Large headlines → subheadlines → body text
 
 **Better Example:**
+
 ```
 ## Save 60+ Hours Every Month
 
@@ -1262,6 +1409,7 @@ Stop drowning in spreadsheets and email chaos. MAIS automates:
 ### Leading SaaS Event/Booking Platforms (Reference, Don't Copy)
 
 **1. HoneyBook (https://www.honeybook.com)**
+
 - **What They Do Well:**
   - Clear outcome-focused hero headline
   - Beautiful testimonial video showcase
@@ -1273,6 +1421,7 @@ Stop drowning in spreadsheets and email chaos. MAIS automates:
   - Borrow their "See how it works" video approach
 
 **2. 17hats (https://www.17hats.com)**
+
 - **What They Do Well:**
   - Specific time-savings claims ("Save 20+ hours/week")
   - ROI calculator (personalized value demonstration)
@@ -1284,6 +1433,7 @@ Stop drowning in spreadsheets and email chaos. MAIS automates:
   - Adopt their warm, helpful tone in copy
 
 **3. Planning Pod (https://www.planningpod.com)**
+
 - **What They Do Well:**
   - Industry-specific positioning (event management)
   - Feature-rich without overwhelming (clean UI screenshots)
@@ -1295,6 +1445,7 @@ Stop drowning in spreadsheets and email chaos. MAIS automates:
   - Offer live demo as secondary CTA (not primary)
 
 **4. Bookeo (https://www.bookeo.com)**
+
 - **What They Do Well:**
   - Simple 3-step process explanation (reduces complexity anxiety)
   - Generous white space (clean, modern aesthetic)
@@ -1306,6 +1457,7 @@ Stop drowning in spreadsheets and email chaos. MAIS automates:
   - Ensure similar white space generosity
 
 **5. Acuity Scheduling (https://acuityscheduling.com)**
+
 - **What They Do Well:**
   - Outcome-focused subheadlines (not feature lists)
   - Social proof strip with impressive numbers ("10M+ appointments")
@@ -1321,18 +1473,22 @@ Stop drowning in spreadsheets and email chaos. MAIS automates:
 ### What to Avoid from Competitors
 
 **1. Overly Generic Positioning**
+
 - Many tools position as "event management for everyone" (conferences, parties, meetings)
 - MAIS should be **laser-focused on wedding venues** (specificity builds trust)
 
 **2. Feature Overload**
+
 - Some platforms list 50+ features on landing page (overwhelming)
 - MAIS should prioritize **6-8 core features** with depth on feature pages
 
 **3. Corporate Sterile Design**
+
 - Some B2B tools look cold and uninviting (gray, blue, no personality)
 - MAIS should balance professionalism with warmth (dusty rose accents, friendly copy)
 
 **4. Buried CTAs**
+
 - Some sites require scrolling 3+ screens before seeing CTA
 - MAIS should have **primary CTA above fold** and repeated every 2-3 sections
 
@@ -1421,6 +1577,7 @@ Stop drowning in spreadsheets and email chaos. MAIS automates:
 ## Success Metrics (30 Days Post-Launch)
 
 **Primary KPIs:**
+
 - **Conversion Rate:** Target 5-8% (visitor → free trial signup)
 - **Demo Requests:** Target 2-3% (visitor → demo request)
 - **Bounce Rate:** Target <40% (industry benchmark: 45-55%)
@@ -1428,6 +1585,7 @@ Stop drowning in spreadsheets and email chaos. MAIS automates:
 - **Scroll Depth:** Target 70%+ scroll to final CTA
 
 **Secondary Metrics:**
+
 - **Traffic Sources:** Organic vs. paid vs. referral performance
 - **Mobile vs. Desktop:** Conversion rate by device
 - **CTA Click-Through Rate:** Primary vs. secondary CTA performance
@@ -1435,6 +1593,7 @@ Stop drowning in spreadsheets and email chaos. MAIS automates:
 - **Form Abandonment:** % who start but don't complete trial signup
 
 **Optimization Opportunities:**
+
 - If bounce rate >50%: Test hero headline variations, reduce page load time
 - If scroll depth <50%: Shorten page, increase visual interest, add sticky CTA bar
 - If demo requests >trial signups: Consider making demo secondary CTA (push self-service trial)
@@ -1596,6 +1755,7 @@ Stop drowning in spreadsheets and email chaos. MAIS automates:
 ## Final Notes
 
 **This document is designed to be:**
+
 - ✅ **Actionable:** Ready for immediate handoff to design/development
 - ✅ **Comprehensive:** Covers all aspects (content, design, copy, assets, trust elements)
 - ✅ **Data-Driven:** Based on extensive wedding industry research and SaaS conversion best practices
@@ -1603,6 +1763,7 @@ Stop drowning in spreadsheets and email chaos. MAIS automates:
 - ✅ **B2B-Focused:** Explicitly avoids B2C romantic positioning
 
 **Next Steps:**
+
 1. Review this document with stakeholders (founders, marketing, sales)
 2. Prioritize sections (MVP launch vs. post-launch additions)
 3. Assign owners to each phase (content writer, designer, developer)

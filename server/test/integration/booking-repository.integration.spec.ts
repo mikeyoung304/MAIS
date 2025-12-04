@@ -32,7 +32,9 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
     });
 
     // Create test package using catalog repository
-    const { PrismaCatalogRepository } = await import('../../src/adapters/prisma/catalog.repository');
+    const { PrismaCatalogRepository } = await import(
+      '../../src/adapters/prisma/catalog.repository'
+    );
     const catalogRepo = new PrismaCatalogRepository(ctx.prisma);
 
     const pkg = ctx.factories.package.create({ title: 'Test Package', priceCents: 250000 });
@@ -40,8 +42,15 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
     testPackageId = createdPkg.id;
 
     // Create test add-on
-    const addOn = ctx.factories.addOn.create({ title: 'Test Add-On', priceCents: 5000, packageId: testPackageId });
-    const createdAddOn = await catalogRepo.createAddOn(testTenantId, { ...addOn, packageId: testPackageId });
+    const addOn = ctx.factories.addOn.create({
+      title: 'Test Add-On',
+      priceCents: 5000,
+      packageId: testPackageId,
+    });
+    const createdAddOn = await catalogRepo.createAddOn(testTenantId, {
+      ...addOn,
+      packageId: testPackageId,
+    });
     testAddOnId = createdAddOn.id;
   });
 
@@ -101,9 +110,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
         coupleName: 'Second Couple',
       };
 
-      await expect(repository.create(testTenantId, booking2))
-        .rejects
-        .toThrow(BookingConflictError);
+      await expect(repository.create(testTenantId, booking2)).rejects.toThrow(BookingConflictError);
     });
 
     // SKIPPED: This test is flaky due to timing-dependent race conditions in database transactions
@@ -137,8 +144,8 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
       ]);
 
       // One should succeed, one should fail
-      const succeeded = results.filter(r => r.status === 'fulfilled');
-      const failed = results.filter(r => r.status === 'rejected');
+      const succeeded = results.filter((r) => r.status === 'fulfilled');
+      const failed = results.filter((r) => r.status === 'rejected');
 
       expect(succeeded.length).toBe(1);
       expect(failed.length).toBe(1);
@@ -147,7 +154,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
       const rejection = failed[0] as PromiseRejectedResult;
       expect(
         rejection.reason instanceof BookingConflictError ||
-        rejection.reason instanceof BookingLockTimeoutError
+          rejection.reason instanceof BookingLockTimeoutError
       ).toBe(true);
     });
 
@@ -231,7 +238,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
     it('should rollback on error (no partial data)', async () => {
       const booking: Booking = {
         id: 'rollback-test',
-        packageId: 'invalid-package',  // Will cause FK constraint error
+        packageId: 'invalid-package', // Will cause FK constraint error
         coupleName: 'Rollback Test',
         email: 'rollback@test.com',
         eventDate: '2026-02-14',
@@ -483,7 +490,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
       for (const booking of bookings) {
         await repository.create(testTenantId, booking);
         // Small delay to ensure different creation times
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       }
 
       const all = await repository.findAll(testTenantId);

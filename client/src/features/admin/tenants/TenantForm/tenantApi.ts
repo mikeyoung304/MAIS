@@ -1,17 +1,17 @@
-import { baseUrl } from "@/lib/api";
-import type { TenantFormData } from "./types";
+import { baseUrl } from '@/lib/api';
+import type { TenantFormData } from './types';
 
 export const tenantApi = {
   async loadTenant(id: string) {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem('adminToken');
     const response = await fetch(`${baseUrl}/v1/admin/tenants/${id}`, {
       headers: {
-        "Authorization": `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
     if (!response.ok) {
-      throw new Error("Failed to load tenant");
+      throw new Error('Failed to load tenant');
     }
 
     const data = await response.json();
@@ -20,21 +20,21 @@ export const tenantApi = {
     return {
       name: tenant.name,
       slug: tenant.slug,
-      email: tenant.email || "",
-      phone: tenant.phone || "",
+      email: tenant.email || '',
+      phone: tenant.phone || '',
       commissionRate: Number(tenant.commissionPercent || 10),
-      stripeAccountId: tenant.stripeAccountId || "",
+      stripeAccountId: tenant.stripeAccountId || '',
       isActive: tenant.isActive !== false,
     } as TenantFormData;
   },
 
   async createTenant(formData: TenantFormData) {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem('adminToken');
     const response = await fetch(`${baseUrl}/v1/admin/tenants`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         slug: formData.slug,
@@ -45,20 +45,20 @@ export const tenantApi = {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: "Failed to create tenant" }));
-      throw new Error(error.error || "Failed to create tenant");
+      const error = await response.json().catch(() => ({ error: 'Failed to create tenant' }));
+      throw new Error(error.error || 'Failed to create tenant');
     }
 
     return response.json();
   },
 
   async updateTenant(id: string, formData: TenantFormData) {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem('adminToken');
     const response = await fetch(`${baseUrl}/v1/admin/tenants/${id}`, {
-      method: "PUT",
+      method: 'PUT',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         name: formData.name,
@@ -72,8 +72,8 @@ export const tenantApi = {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: "Failed to update tenant" }));
-      throw new Error(error.error || "Failed to update tenant");
+      const error = await response.json().catch(() => ({ error: 'Failed to update tenant' }));
+      throw new Error(error.error || 'Failed to update tenant');
     }
 
     return response.json();

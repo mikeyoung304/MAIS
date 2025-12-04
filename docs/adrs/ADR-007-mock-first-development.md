@@ -19,6 +19,7 @@ External API integrations (Stripe, Postmark, Google Calendar) create friction in
 - **External state:** Hard to reset test data between test runs
 
 We needed a development workflow that:
+
 1. Allows rapid iteration without external dependencies
 2. Enables testing without real API keys
 3. Works offline
@@ -41,6 +42,7 @@ We have adopted a **mock-first development** approach where:
    - Services don't know the difference
 
 3. **Environment variable controls mode:**
+
    ```bash
    # Mock mode (default for development)
    ADAPTERS_PRESET=mock npm run dev:api
@@ -50,6 +52,7 @@ We have adopted a **mock-first development** approach where:
    ```
 
 **Architecture:**
+
 ```typescript
 // All services depend on interfaces
 interface CatalogRepository {
@@ -69,15 +72,14 @@ class MockCatalogRepository implements CatalogRepository {
 class PrismaCatalogRepository implements CatalogRepository {
   async getPackages(tenantId: string) {
     return await this.prisma.package.findMany({
-      where: { tenantId }
+      where: { tenantId },
     });
   }
 }
 
 // Dependency injection swaps implementations
-const catalogRepo = config.mode === 'mock'
-  ? new MockCatalogRepository()
-  : new PrismaCatalogRepository(prisma);
+const catalogRepo =
+  config.mode === 'mock' ? new MockCatalogRepository() : new PrismaCatalogRepository(prisma);
 ```
 
 ## Consequences
@@ -113,6 +115,7 @@ const catalogRepo = config.mode === 'mock'
 ### Mock Adapters Implemented
 
 **1. Mock Catalog Repository** (`adapters/mock/catalog.mock.ts`)
+
 ```typescript
 class MockCatalogRepository implements CatalogRepository {
   private packages: Map<string, Package[]> = new Map();
@@ -120,7 +123,7 @@ class MockCatalogRepository implements CatalogRepository {
 
   async getActivePackages(tenantId: string): Promise<Package[]> {
     const pkgs = this.packages.get(tenantId) || [];
-    return pkgs.filter(p => p.active);
+    return pkgs.filter((p) => p.active);
   }
 
   async createPackage(tenantId: string, pkg: CreatePackageDto): Promise<Package> {
@@ -133,6 +136,7 @@ class MockCatalogRepository implements CatalogRepository {
 ```
 
 **2. Mock Payment Provider** (`adapters/mock/payment.mock.ts`)
+
 ```typescript
 class MockPaymentProvider implements PaymentProvider {
   async createCheckoutSession(params: {
@@ -154,23 +158,17 @@ class MockPaymentProvider implements PaymentProvider {
 ```
 
 **3. Mock Email Provider** (`adapters/mock/email.mock.ts`)
+
 ```typescript
 class MockEmailProvider implements EmailProvider {
   private sentEmails: Email[] = [];
 
-  async sendEmail(params: {
-    to: string;
-    subject: string;
-    html: string;
-  }): Promise<void> {
+  async sendEmail(params: { to: string; subject: string; html: string }): Promise<void> {
     console.log(`[MOCK EMAIL] To: ${params.to}, Subject: ${params.subject}`);
     this.sentEmails.push(params);
 
     // Optional: Write to file for inspection
-    await fs.writeFile(
-      `tmp/emails/${Date.now()}.json`,
-      JSON.stringify(params, null, 2)
-    );
+    await fs.writeFile(`tmp/emails/${Date.now()}.json`, JSON.stringify(params, null, 2));
   }
 
   getSentEmails(): Email[] {
@@ -180,6 +178,7 @@ class MockEmailProvider implements EmailProvider {
 ```
 
 **4. Mock Calendar Provider** (`adapters/mock/calendar.mock.ts`)
+
 ```typescript
 class MockCalendarProvider implements CalendarProvider {
   private events: Map<string, CalendarEvent[]> = new Map();
@@ -206,31 +205,27 @@ class MockCalendarProvider implements CalendarProvider {
 ### Dependency Injection Configuration
 
 **File:** `server/src/di.ts`
+
 ```typescript
 export function createContainer(config: Config): Container {
   const mode = config.adapters.preset; // 'mock' | 'real'
 
   // Repositories
-  const catalogRepo = mode === 'real'
-    ? new PrismaCatalogRepository(prisma)
-    : new MockCatalogRepository();
+  const catalogRepo =
+    mode === 'real' ? new PrismaCatalogRepository(prisma) : new MockCatalogRepository();
 
-  const bookingRepo = mode === 'real'
-    ? new PrismaBookingRepository(prisma)
-    : new MockBookingRepository();
+  const bookingRepo =
+    mode === 'real' ? new PrismaBookingRepository(prisma) : new MockBookingRepository();
 
   // Providers
-  const paymentProvider = mode === 'real'
-    ? new StripePaymentAdapter(stripe, config.stripe)
-    : new MockPaymentProvider();
+  const paymentProvider =
+    mode === 'real' ? new StripePaymentAdapter(stripe, config.stripe) : new MockPaymentProvider();
 
-  const emailProvider = mode === 'real'
-    ? new PostmarkEmailAdapter(postmarkClient)
-    : new MockEmailProvider();
+  const emailProvider =
+    mode === 'real' ? new PostmarkEmailAdapter(postmarkClient) : new MockEmailProvider();
 
-  const calendarProvider = mode === 'real'
-    ? new GoogleCalendarAdapter(googleClient)
-    : new MockCalendarProvider();
+  const calendarProvider =
+    mode === 'real' ? new GoogleCalendarAdapter(googleClient) : new MockCalendarProvider();
 
   // Services (same regardless of mode)
   const catalogService = new CatalogService(catalogRepo);
@@ -250,6 +245,7 @@ export function createContainer(config: Config): Container {
 ### Environment Configuration
 
 **File:** `server/.env.example`
+
 ```bash
 # Adapter mode: 'mock' (in-memory, no external APIs) or 'real' (PostgreSQL, Stripe, etc.)
 ADAPTERS_PRESET=mock
@@ -266,6 +262,7 @@ GOOGLE_CALENDAR_ID=...
 ### Testing with Mock Adapters
 
 **E2E Test Example:**
+
 ```typescript
 // e2e/tests/booking-mock.spec.ts
 import { test, expect } from '@playwright/test';
@@ -301,6 +298,7 @@ test.describe('Booking Flow (Mock Mode)', () => {
 ### Development Workflow (Mock Mode)
 
 1. **Start API in mock mode:**
+
    ```bash
    ADAPTERS_PRESET=mock npm run dev:api
    ```
@@ -311,11 +309,13 @@ test.describe('Booking Flow (Mock Mode)', () => {
    - Iterate quickly
 
 3. **Run E2E tests (mock mode):**
+
    ```bash
    npm run test:e2e
    ```
 
 4. **Switch to real mode for integration testing:**
+
    ```bash
    ADAPTERS_PRESET=real npm run dev:api
    ```
@@ -345,6 +345,7 @@ test.describe('Booking Flow (Mock Mode)', () => {
 **Approach:** Always use real external APIs, even in development.
 
 **Why Rejected:**
+
 - ❌ Slow iteration (network latency)
 - ❌ Requires API keys for all developers
 - ❌ Can't develop offline
@@ -356,12 +357,14 @@ test.describe('Booking Flow (Mock Mode)', () => {
 **Approach:** Run Stripe CLI, Mailhog, etc. in Docker for local development.
 
 **Why Rejected:**
+
 - ❌ Complex setup (Docker Compose file, multiple services)
 - ❌ Still requires network calls (slower than in-memory)
 - ❌ Not all services have local alternatives (Google Calendar)
 - ❌ More infrastructure to maintain
 
 **When Appropriate:**
+
 - Integration testing before production deploy
 - Reproducing production bugs locally
 
@@ -370,12 +373,14 @@ test.describe('Booking Flow (Mock Mode)', () => {
 **Approach:** Record real API responses, replay in tests.
 
 **Why Rejected:**
+
 - ❌ Requires initial real API setup
 - ❌ Recorded responses go stale
 - ❌ Hard to simulate error scenarios
 - ❌ Complex for mutating operations (POST, DELETE)
 
 **When Appropriate:**
+
 - Contract testing (verify API shape hasn't changed)
 - Regression testing
 

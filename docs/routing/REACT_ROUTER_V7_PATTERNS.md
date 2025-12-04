@@ -183,14 +183,14 @@ const router = createBrowserRouter([
       {
         index: true,
         lazy: () =>
-          import('./pages/TenantHome').then(m => ({
+          import('./pages/TenantHome').then((m) => ({
             Component: m.TenantHome,
           })),
       },
       {
         path: 'packages',
         lazy: () =>
-          import('./pages/TenantCatalog').then(m => ({
+          import('./pages/TenantCatalog').then((m) => ({
             Component: m.TenantCatalog,
           })),
       },
@@ -539,7 +539,7 @@ export function usePrefetchRoute() {
 ```typescript
 // router.tsx
 const TenantLayout = lazy(() =>
-  import('./app/TenantLayout').then(m => ({
+  import('./app/TenantLayout').then((m) => ({
     Component: m.TenantLayout,
   }))
 );
@@ -553,7 +553,7 @@ const router = createBrowserRouter([
       {
         index: true,
         lazy: () =>
-          import('./pages/TenantHome').then(m => ({
+          import('./pages/TenantHome').then((m) => ({
             Component: m.TenantHome,
           })),
       },

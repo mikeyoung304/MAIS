@@ -43,9 +43,7 @@ export function initSentry(config?: SentryConfig): void {
       profilesSampleRate: config?.profilesSampleRate || 0.1,
 
       // Performance monitoring
-      integrations: [
-        nodeProfilingIntegration(),
-      ],
+      integrations: [nodeProfilingIntegration()],
 
       // Error filtering
       beforeSend(event, hint) {
@@ -55,8 +53,10 @@ export function initSentry(config?: SentryConfig): void {
         }
 
         // Filter out 404 and 429 responses (operational noise)
-        if (event.contexts?.response?.status_code === 404 ||
-            event.contexts?.response?.status_code === 429) {
+        if (
+          event.contexts?.response?.status_code === 404 ||
+          event.contexts?.response?.status_code === 429
+        ) {
           return null;
         }
 
@@ -73,7 +73,10 @@ export function initSentry(config?: SentryConfig): void {
       beforeBreadcrumb(breadcrumb) {
         // Remove sensitive query parameters
         if (breadcrumb.data?.url) {
-          breadcrumb.data.url = breadcrumb.data.url.replace(/([?&])(password|token|key|secret)=[^&]*/gi, '$1$2=***');
+          breadcrumb.data.url = breadcrumb.data.url.replace(
+            /([?&])(password|token|key|secret)=[^&]*/gi,
+            '$1$2=***'
+          );
         }
         return breadcrumb;
       },
@@ -198,7 +201,8 @@ export function sentryRequestHandler() {
  */
 export function sentryErrorHandler() {
   if (!sentryInitialized) {
-    return (_err: unknown, _req: unknown, _res: unknown, next: (err?: unknown) => void) => next(_err);
+    return (_err: unknown, _req: unknown, _res: unknown, next: (err?: unknown) => void) =>
+      next(_err);
   }
 
   // Return a middleware that captures errors to Sentry

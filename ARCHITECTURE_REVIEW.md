@@ -1,4 +1,5 @@
 # Architectural Review: DRY & Type Safety Analysis
+
 **Date:** December 2, 2025
 **Scope:** Visual Editor Draft System Architecture
 **Status:** ✅ PASSED - Excellent Implementation
@@ -10,6 +11,7 @@
 The architectural refactoring to centralize types in `@macon/contracts` is **well-executed with excellent DRY compliance**. All duplicate definitions have been eliminated, schemas are properly exported, and type safety is maintained throughout the stack.
 
 **Key Results:**
+
 - ✅ **Zero duplicate type definitions** across frontend/backend/contracts
 - ✅ **Type re-export pattern is correct** - prevents type drift
 - ✅ **Schema imports are canonical** - single source of truth
@@ -25,13 +27,14 @@ The architectural refactoring to centralize types in `@macon/contracts` is **wel
 
 Comprehensive search across all source files found zero duplicate type definitions:
 
-| Type | Location | Status |
-|------|----------|--------|
-| `PackageWithDraftDto` | `@macon/contracts/src/dto.ts:334` | ✅ Single source |
-| `UpdatePackageDraftDto` | `@macon/contracts/src/dto.ts:344` | ✅ Single source |
+| Type                      | Location                          | Status           |
+| ------------------------- | --------------------------------- | ---------------- |
+| `PackageWithDraftDto`     | `@macon/contracts/src/dto.ts:334` | ✅ Single source |
+| `UpdatePackageDraftDto`   | `@macon/contracts/src/dto.ts:344` | ✅ Single source |
 | `UpdateBrandingDtoSchema` | `@macon/contracts/src/dto.ts:261` | ✅ Single source |
 
 **Files Searched:**
+
 - ✅ Client hook: `client/src/features/tenant-admin/visual-editor/hooks/useVisualEditor.ts`
 - ✅ Backend routes: `server/src/routes/tenant-admin.routes.ts`
 - ✅ Backend ports: `server/src/lib/ports.ts`
@@ -39,6 +42,7 @@ Comprehensive search across all source files found zero duplicate type definitio
 - ✅ API definitions: `packages/contracts/src/api.v1.ts`
 
 **Key Findings:**
+
 - All types imported from `@macon/contracts` - never duplicated locally
 - No stale or orphaned type definitions
 - Port interfaces properly separated from DTOs (domain model vs API contract)
@@ -55,7 +59,7 @@ Comprehensive search across all source files found zero duplicate type definitio
 // Lines 22-36: CORRECT PATTERN
 
 // Import from canonical source
-import type { PackageWithDraftDto, UpdatePackageDraftDto } from "@macon/contracts";
+import type { PackageWithDraftDto, UpdatePackageDraftDto } from '@macon/contracts';
 
 // Re-export with aliasing for local convenience
 export type PackageWithDraft = PackageWithDraftDto;
@@ -70,13 +74,14 @@ export interface PackagePhoto {
 }
 
 export interface UseVisualEditorReturn {
-  packages: PackageWithDraft[];  // Uses re-exported type
-  updateDraft: (packageId: string, update: DraftUpdate) => void;  // Uses re-exported type
+  packages: PackageWithDraft[]; // Uses re-exported type
+  updateDraft: (packageId: string, update: DraftUpdate) => void; // Uses re-exported type
   // ...
 }
 ```
 
 **Pattern Assessment:**
+
 - ✅ **Single import source** - All types from `@macon/contracts`
 - ✅ **Type aliasing** - `PackageWithDraft` clearly aliases `PackageWithDraftDto`
 - ✅ **No duplicate definitions** - Never manually typing packages
@@ -85,6 +90,7 @@ export interface UseVisualEditorReturn {
 - ✅ **Type safety** - Changes to contracts cause compile errors
 
 **Risk Mitigation:**
+
 - If `PackageWithDraftDto` is modified in contracts → compile error in frontend ✅
 - If `UpdatePackageDraftDto` schema changes → compile error when calling API ✅
 - Local aliases don't prevent propagation of contract changes ✅
@@ -120,6 +126,7 @@ catch (error) {
 ```
 
 **Pattern Assessment:**
+
 - ✅ **Schema from canonical source** - Always `@macon/contracts`
 - ✅ **Runtime validation** - All requests validated against schema
 - ✅ **Error handling** - ZodError caught and returned as 400
@@ -127,6 +134,7 @@ catch (error) {
 - ✅ **Type safety** - Schema enforces exact validation rules
 
 **Validation Chain:**
+
 1. Frontend has type error if not matching schema ✅
 2. Backend validates all requests with schema ✅
 3. Invalid requests return 400 with details ✅
@@ -145,6 +153,7 @@ This section analyzes what happens when contract definitions change.
 #### Scenario 1: Required Field is Removed
 
 **Contract Change:**
+
 ```typescript
 // Before
 UpdatePackageDraftDtoSchema = z.object({
@@ -159,6 +168,7 @@ UpdatePackageDraftDtoSchema = z.object({
 ```
 
 **Frontend Impact:**
+
 ```typescript
 // Frontend code unchanged
 const body = { title: "New Title", photos: [...] };
@@ -167,6 +177,7 @@ await api.tenantAdminUpdatePackageDraft({ body });
 ```
 
 **Backend Impact:**
+
 ```typescript
 // Request body: { title: "...", photos: [...] }
 UpdatePackageDraftDtoSchema.parse(req.body);
@@ -174,6 +185,7 @@ UpdatePackageDraftDtoSchema.parse(req.body);
 ```
 
 **Result:** NOT SILENT ✅
+
 - Frontend: TypeScript compile error
 - Backend: 400 validation error
 - User sees: Build failure (frontend) or validation error (backend)
@@ -183,15 +195,17 @@ UpdatePackageDraftDtoSchema.parse(req.body);
 #### Scenario 2: Optional Field Becomes Required
 
 **Contract Change:**
+
 ```typescript
 // Before
-title: z.string().max(100).optional()
+title: z.string().max(100).optional();
 
 // After
-title: z.string().max(100)  // Now required
+title: z.string().max(100); // Now required
 ```
 
 **Frontend Impact:**
+
 ```typescript
 // Frontend code sends optional title
 const body = { priceCents: 5000 };
@@ -200,6 +214,7 @@ await api.tenantAdminUpdatePackageDraft({ body });
 ```
 
 **Backend Impact:**
+
 ```typescript
 // Request body: { priceCents: 5000 }
 UpdatePackageDraftDtoSchema.parse(req.body);
@@ -207,6 +222,7 @@ UpdatePackageDraftDtoSchema.parse(req.body);
 ```
 
 **Result:** NOT SILENT ✅
+
 - Frontend: TypeScript compile error (impossible to build)
 - Backend: 400 validation error (even if sent)
 
@@ -215,22 +231,25 @@ UpdatePackageDraftDtoSchema.parse(req.body);
 #### Scenario 3: New Optional Field Added
 
 **Contract Change:**
+
 ```typescript
 UpdatePackageDraftDtoSchema = z.object({
   title: z.string().max(100).optional(),
-  notes: z.string().max(500).optional(),  // ← NEW
+  notes: z.string().max(500).optional(), // ← NEW
 });
 ```
 
 **Frontend Impact:**
+
 ```typescript
 // Frontend code unchanged
-const body = { title: "New Title" };
+const body = { title: 'New Title' };
 await api.tenantAdminUpdatePackageDraft({ body });
 // ✅ NO ERROR: notes is optional, not provided
 ```
 
 **Backend Impact:**
+
 ```typescript
 // Request body: { title: "..." }
 UpdatePackageDraftDtoSchema.parse(req.body);
@@ -238,6 +257,7 @@ UpdatePackageDraftDtoSchema.parse(req.body);
 ```
 
 **Result:** GRACEFUL DEGRADATION ✅
+
 - No compile error (optional field not required)
 - Request accepted
 - New feature not used yet but system works
@@ -248,24 +268,27 @@ UpdatePackageDraftDtoSchema.parse(req.body);
 #### Scenario 4: Validation Constraint Tightened (HIGHEST RISK)
 
 **Contract Change:**
+
 ```typescript
 // Before
-title: z.string().max(100)
+title: z.string().max(100);
 
 // After
-title: z.string().max(50)  // Shorter limit
+title: z.string().max(50); // Shorter limit
 ```
 
 **Frontend Impact:**
+
 ```typescript
 // TypeScript type is still "string", not "string max 50"
-const title = "This is a very long title that exceeds 50 characters";
+const title = 'This is a very long title that exceeds 50 characters';
 await api.tenantAdminUpdatePackageDraft({ body: { title } });
 // ✅ NO COMPILE ERROR (type is correct, constraint not enforceable at compile time)
 // ❌ RUNTIME VALIDATION ERROR from backend
 ```
 
 **Backend Impact:**
+
 ```typescript
 // Request body: { title: "Very long title..." }
 UpdatePackageDraftDtoSchema.parse(req.body);
@@ -273,12 +296,14 @@ UpdatePackageDraftDtoSchema.parse(req.body);
 ```
 
 **Result:** CAUGHT AT RUNTIME ⚠️
+
 - No compile error (type unchanged)
 - Request rejected with 400 (caught immediately)
 - NOT SILENT - user sees error
 - User data not corrupted
 
 **Mitigation in useVisualEditor:**
+
 ```typescript
 // Lines 145-172: Error handling
 catch (err) {
@@ -292,22 +317,25 @@ catch (err) {
 #### Scenario 5: New Required Field Added (CRITICAL IF NOT HANDLED)
 
 **Contract Change:**
+
 ```typescript
 UpdatePackageDraftDtoSchema = z.object({
   title: z.string().max(100).optional(),
-  tenantId: z.string(),  // ← NEW REQUIRED FIELD
+  tenantId: z.string(), // ← NEW REQUIRED FIELD
 });
 ```
 
 **Frontend Impact:**
+
 ```typescript
-const body = { title: "New" };
+const body = { title: 'New' };
 await api.tenantAdminUpdatePackageDraft({ body });
 // ❌ COMPILE ERROR: tenantId is required
 // Build fails - cannot proceed without updating code
 ```
 
 **Backend Impact:**
+
 ```typescript
 // Request body: { title: "..." } - missing tenantId
 UpdatePackageDraftDtoSchema.parse(req.body);
@@ -315,6 +343,7 @@ UpdatePackageDraftDtoSchema.parse(req.body);
 ```
 
 **Result:** NOT SILENT ✅
+
 - Frontend: Mandatory code update required
 - Backend: 400 error if somehow sent
 - Developer immediately notified via build failure
@@ -323,15 +352,15 @@ UpdatePackageDraftDtoSchema.parse(req.body);
 
 ### Summary: Breaking Change Safety
 
-| Change Type | TypeScript Check | Runtime Check | Silent? |
-|-------------|------------------|---------------|---------|
-| Field removed | ✅ Catches | ✅ Catches | NO |
-| Type changed | ✅ Catches | ✅ Catches | NO |
-| Required added | ✅ Catches | ✅ Catches | NO |
-| Optional added | ✅ OK | ✅ OK | NO |
-| Constraint tightened | ⚠️ Miss* | ✅ Catches | NO |
+| Change Type          | TypeScript Check | Runtime Check | Silent? |
+| -------------------- | ---------------- | ------------- | ------- |
+| Field removed        | ✅ Catches       | ✅ Catches    | NO      |
+| Type changed         | ✅ Catches       | ✅ Catches    | NO      |
+| Required added       | ✅ Catches       | ✅ Catches    | NO      |
+| Optional added       | ✅ OK            | ✅ OK         | NO      |
+| Constraint tightened | ⚠️ Miss\*        | ✅ Catches    | NO      |
 
-*Constraint tightening (max length, min value) isn't caught at compile time because TypeScript doesn't enforce Zod constraints. However, it's caught immediately at runtime with 400 error.
+\*Constraint tightening (max length, min value) isn't caught at compile time because TypeScript doesn't enforce Zod constraints. However, it's caught immediately at runtime with 400 error.
 
 ### Mitigation Strategies Already In Place:
 
@@ -361,6 +390,7 @@ All breaking changes surface clearly - either at compile time or runtime with cl
 ### ✅ PackageWithDraftDto
 
 **Definition in contracts** (dto.ts lines 325-334):
+
 ```typescript
 export const PackageWithDraftDtoSchema = PackageDtoSchema.extend({
   draftTitle: z.string().nullable(),
@@ -375,6 +405,7 @@ export type PackageWithDraftDto = z.infer<typeof PackageWithDraftDtoSchema>;
 ```
 
 **Verification Checklist:**
+
 - ✅ Type uses `z.infer<typeof Schema>` - guaranteed to match schema
 - ✅ All fields properly nullable where needed
 - ✅ `hasDraft` is boolean (not nullable)
@@ -389,6 +420,7 @@ export type PackageWithDraftDto = z.infer<typeof PackageWithDraftDtoSchema>;
 ### ✅ UpdatePackageDraftDto
 
 **Definition in contracts** (dto.ts lines 337-344):
+
 ```typescript
 export const UpdatePackageDraftDtoSchema = z.object({
   title: z.string().max(100).optional(),
@@ -401,6 +433,7 @@ export type UpdatePackageDraftDto = z.infer<typeof UpdatePackageDraftDtoSchema>;
 ```
 
 **Verification Checklist:**
+
 - ✅ Type uses `z.infer<typeof Schema>` - guaranteed sync
 - ✅ All fields are `.optional()` - correct for PATCH
 - ✅ Validation rules present: `max(100)`, `max(500)`, `min(0)`
@@ -415,6 +448,7 @@ export type UpdatePackageDraftDto = z.infer<typeof UpdatePackageDraftDtoSchema>;
 ### Cross-Check: Frontend Usage vs Schema
 
 **Frontend sends** (useVisualEditor.ts lines 209-213):
+
 ```typescript
 {
   draftTitle: update.title,           // ← title field
@@ -425,6 +459,7 @@ export type UpdatePackageDraftDto = z.infer<typeof UpdatePackageDraftDtoSchema>;
 ```
 
 **Schema expects** (dto.ts lines 337-342):
+
 ```typescript
 {
   title: z.string().optional(),           // ✅ Receives title
@@ -445,13 +480,14 @@ export type UpdatePackageDraftDto = z.infer<typeof UpdatePackageDraftDtoSchema>;
 The backend uses a different structure internally than it returns to clients:
 
 **Backend Domain Model** (ports.ts lines 454-475):
+
 ```typescript
 export interface PackageWithDraft {
   id: string;
   slug: string;
-  name: string;              // ← Internal: "name"
+  name: string; // ← Internal: "name"
   description: string | null;
-  basePrice: number;         // ← Internal: "basePrice"
+  basePrice: number; // ← Internal: "basePrice"
   active: boolean;
   segmentId: string | null;
   grouping: string | null;
@@ -462,28 +498,29 @@ export interface PackageWithDraft {
   draftPriceCents: number | null;
   draftPhotos: PackagePhoto[] | null;
   hasDraft: boolean;
-  draftUpdatedAt: Date | null;  // ← Internal: Date object
+  draftUpdatedAt: Date | null; // ← Internal: Date object
   createdAt: Date;
   updatedAt: Date;
 }
 ```
 
 **API Contract** (dto.ts lines 325-332):
+
 ```typescript
 export type PackageWithDraftDto = {
   id: string;
   slug: string;
-  title: string;            // ← API: "title"
+  title: string; // ← API: "title"
   description: string;
-  priceCents: number;       // ← API: "priceCents"
+  priceCents: number; // ← API: "priceCents"
   // ... other fields from PackageDto
   draftTitle: string | null;
   draftDescription: string | null;
   draftPriceCents: number | null;
   draftPhotos: PackagePhotoDto[] | null;
   hasDraft: boolean;
-  draftUpdatedAt: string | null;  // ← API: ISO datetime string
-}
+  draftUpdatedAt: string | null; // ← API: ISO datetime string
+};
 ```
 
 ### Mapping in Route Handler (tenant-admin.routes.ts lines 667-686)
@@ -492,9 +529,9 @@ export type PackageWithDraftDto = {
 const packagesDto = packagesWithDrafts.map((pkg) => ({
   id: pkg.id,
   slug: pkg.slug,
-  title: pkg.name,              // ✅ Maps name → title
+  title: pkg.name, // ✅ Maps name → title
   description: pkg.description,
-  priceCents: pkg.basePrice,    // ✅ Maps basePrice → priceCents
+  priceCents: pkg.basePrice, // ✅ Maps basePrice → priceCents
   photoUrl: pkg.photos?.[0]?.url,
   photos: pkg.photos,
   segmentId: pkg.segmentId,
@@ -506,11 +543,12 @@ const packagesDto = packagesWithDrafts.map((pkg) => ({
   draftPriceCents: pkg.draftPriceCents,
   draftPhotos: pkg.draftPhotos,
   hasDraft: pkg.hasDraft,
-  draftUpdatedAt: pkg.draftUpdatedAt?.toISOString() ?? null,  // ✅ Date → ISO string
+  draftUpdatedAt: pkg.draftUpdatedAt?.toISOString() ?? null, // ✅ Date → ISO string
 }));
 ```
 
 **Assessment:**
+
 - ✅ **Explicit mapping** - Field name changes documented
 - ✅ **Type conversions** - `Date` → ISO string handled
 - ✅ **No corruption** - Field values correctly transformed
@@ -533,6 +571,7 @@ const packagesDto = packagesWithDrafts.map((pkg) => ({
 ### API Endpoint Type Safety
 
 **Contract Definition** (api.v1.ts lines 456-473):
+
 ```typescript
 tenantAdminUpdatePackageDraft: {
   method: 'PATCH',
@@ -549,14 +588,16 @@ tenantAdminUpdatePackageDraft: {
 ```
 
 **Frontend Usage** (useVisualEditor.ts lines 131-134):
+
 ```typescript
 const { status, body } = await api.tenantAdminUpdatePackageDraft({
   params: { id: packageId },
-  body: mergedUpdate,  // ← Type-checked against contract
+  body: mergedUpdate, // ← Type-checked against contract
 });
 ```
 
 **Flow:**
+
 1. Frontend: `mergedUpdate` type-checked against `UpdatePackageDraftDto` ✅
 2. Backend: Request validated against same schema ✅
 3. Response: `body` type-checked against `PackageWithDraftDto` ✅
@@ -569,16 +610,16 @@ const { status, body } = await api.tenantAdminUpdatePackageDraft({
 
 ### Overall Assessment: ✅ EXCELLENT
 
-| Aspect | Status | Confidence |
-|--------|--------|-----------|
-| Duplicate definitions | ✅ CLEAN | 100% |
-| Type re-export pattern | ✅ CORRECT | 100% |
-| Schema import in routes | ✅ CORRECT | 100% |
-| Silent breaking changes | ✅ PROTECTED | 100% |
-| Schema-type alignment | ✅ SAFE | 100% |
-| Domain model mapping | ✅ EXPLICIT | 100% |
-| Frontend-backend sync | ✅ VERIFIED | 100% |
-| **Overall DRY Compliance** | **✅ EXCELLENT** | **100%** |
+| Aspect                     | Status           | Confidence |
+| -------------------------- | ---------------- | ---------- |
+| Duplicate definitions      | ✅ CLEAN         | 100%       |
+| Type re-export pattern     | ✅ CORRECT       | 100%       |
+| Schema import in routes    | ✅ CORRECT       | 100%       |
+| Silent breaking changes    | ✅ PROTECTED     | 100%       |
+| Schema-type alignment      | ✅ SAFE          | 100%       |
+| Domain model mapping       | ✅ EXPLICIT      | 100%       |
+| Frontend-backend sync      | ✅ VERIFIED      | 100%       |
+| **Overall DRY Compliance** | **✅ EXCELLENT** | **100%**   |
 
 ### What's Working Well
 
@@ -629,13 +670,13 @@ const { status, body } = await api.tenantAdminUpdatePackageDraft({
 
 ## Appendix: Files Reviewed
 
-| File | Purpose | Status |
-|------|---------|--------|
-| `/Users/mikeyoung/CODING/MAIS/client/src/features/tenant-admin/visual-editor/hooks/useVisualEditor.ts` | Frontend hook using draft types | ✅ Correct |
-| `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin.routes.ts` | Backend routes with schema validation | ✅ Correct |
-| `/Users/mikeyoung/CODING/MAIS/packages/contracts/src/dto.ts` | Type and schema definitions | ✅ Correct |
-| `/Users/mikeyoung/CODING/MAIS/packages/contracts/src/api.v1.ts` | API contract definitions | ✅ Correct |
-| `/Users/mikeyoung/CODING/MAIS/server/src/lib/ports.ts` | Backend domain model interfaces | ✅ Correct |
+| File                                                                                                   | Purpose                               | Status     |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------- | ---------- |
+| `/Users/mikeyoung/CODING/MAIS/client/src/features/tenant-admin/visual-editor/hooks/useVisualEditor.ts` | Frontend hook using draft types       | ✅ Correct |
+| `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin.routes.ts`                                | Backend routes with schema validation | ✅ Correct |
+| `/Users/mikeyoung/CODING/MAIS/packages/contracts/src/dto.ts`                                           | Type and schema definitions           | ✅ Correct |
+| `/Users/mikeyoung/CODING/MAIS/packages/contracts/src/api.v1.ts`                                        | API contract definitions              | ✅ Correct |
+| `/Users/mikeyoung/CODING/MAIS/server/src/lib/ports.ts`                                                 | Backend domain model interfaces       | ✅ Correct |
 
 ---
 
@@ -649,4 +690,4 @@ The visual editor draft system architecture demonstrates excellent DRY principle
 
 ---
 
-*Review completed: December 2, 2025*
+_Review completed: December 2, 2025_

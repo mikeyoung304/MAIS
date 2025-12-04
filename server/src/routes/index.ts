@@ -21,10 +21,19 @@ import type { TenantAuthService } from '../services/tenant-auth.service';
 import type { CatalogService } from '../services/catalog.service';
 import type { BookingService } from '../services/booking.service';
 import type { SegmentService } from '../services/segment.service';
-import { resolveTenant, requireTenant, getTenantId, type TenantRequest } from '../middleware/tenant';
+import {
+  resolveTenant,
+  requireTenant,
+  getTenantId,
+  type TenantRequest,
+} from '../middleware/tenant';
 import { PrismaClient } from '../generated/prisma';
 import { PrismaTenantRepository, PrismaBlackoutRepository } from '../adapters/prisma';
-import type { ServiceRepository, AvailabilityRuleRepository, BookingRepository } from '../lib/ports';
+import type {
+  ServiceRepository,
+  AvailabilityRuleRepository,
+  BookingRepository,
+} from '../lib/ports';
 import type { Request } from 'express';
 import { createAdminTenantsRoutes } from './admin/tenants.routes';
 import { createAdminStripeRoutes } from './admin/stripe.routes';
@@ -100,7 +109,9 @@ export function createV1Router(
   identityService: IdentityService,
   app: Application,
   services?: Services,
-  mailProvider?: { sendPasswordReset: (to: string, resetToken: string, resetUrl: string) => Promise<void> },
+  mailProvider?: {
+    sendPasswordReset: (to: string, resetToken: string, resetUrl: string) => Promise<void>;
+  },
   prisma?: PrismaClient,
   repositories?: Repositories
 ): void {
@@ -122,215 +133,301 @@ export function createV1Router(
   // The `any` type for req is required - ts-rest internally handles request typing
   // Attempting to use `Request` type causes TS2345 errors due to middleware signature mismatch
   // See: https://github.com/ts-rest/ts-rest/issues
-  createExpressEndpoints(Contracts, s.router(Contracts, {
-    getPackages: async ({ req }: { req: any }) => {
-      const tenantId = getTenantId(req as TenantRequest);
-      const data = await controllers.packages.getPackages(tenantId);
-      return { status: 200 as const, body: data };
-    },
-
-    getPackageBySlug: async ({ req, params }: { req: any; params: { slug: string } }) => {
-      const tenantId = getTenantId(req as TenantRequest);
-      const data = await controllers.packages.getPackageBySlug(tenantId, params.slug);
-      return { status: 200 as const, body: data };
-    },
-
-    getAvailability: async ({ req, query }: { req: any; query: { date: string } }) => {
-      const tenantId = getTenantId(req as TenantRequest);
-      const data = await controllers.availability.getAvailability(tenantId, query.date);
-      return { status: 200 as const, body: data };
-    },
-
-    getUnavailableDates: async ({ req, query }: { req: any; query: { startDate: string; endDate: string } }) => {
-      const tenantId = getTenantId(req as TenantRequest);
-      const data = await controllers.availability.getUnavailableDates(tenantId, query.startDate, query.endDate);
-      return { status: 200 as const, body: data };
-    },
-
-    createCheckout: async ({ req, body }: { req: any; body: { packageId: string; eventDate: string; coupleName: string; email: string; addOnIds?: string[] } }) => {
-      const tenantId = getTenantId(req as TenantRequest);
-      const data = await controllers.bookings.createCheckout(tenantId, body);
-      return { status: 200 as const, body: data };
-    },
-
-    getBookingById: async ({ req, params }: { req: any; params: { id: string } }) => {
-      const tenantId = getTenantId(req as TenantRequest);
-      const data = await controllers.bookings.getBookingById(tenantId, params.id);
-      return { status: 200 as const, body: data };
-    },
-
-    getTenantBranding: async ({ req }: { req: any }) => {
-      const tenantId = getTenantId(req as TenantRequest);
-      const data = await controllers.tenant.getBranding(tenantId);
-      return { status: 200 as const, body: data };
-    },
-
-    stripeWebhook: async ({ req }: { req: any }) => {
-      // Extract raw body (Buffer) and Stripe signature header
-      const rawBody = req.body ? req.body.toString('utf8') : '';
-      const signatureHeader = req.headers['stripe-signature'];
-      const signature = Array.isArray(signatureHeader) ? signatureHeader[0] : (signatureHeader || '');
-
-      await controllers.webhooks.handleStripeWebhook(rawBody, signature);
-      return { status: 204 as const, body: undefined };
-    },
-
-    adminLogin: async ({ req, body }: { req: any; body: { email: string; password: string } }) => {
-      const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
-      try {
-        const data = await controllers.admin.login(body);
+  createExpressEndpoints(
+    Contracts,
+    s.router(Contracts, {
+      getPackages: async ({ req }: { req: any }) => {
+        const tenantId = getTenantId(req as TenantRequest);
+        const data = await controllers.packages.getPackages(tenantId);
         return { status: 200 as const, body: data };
-      } catch (error) {
-        // Log failed admin login attempts
-        logger.warn({
-          event: 'admin_login_failed',
-          endpoint: '/v1/admin/login',
-          email: body.email,
-          ipAddress,
-          timestamp: new Date().toISOString(),
-          error: error instanceof Error ? error.message : 'Unknown error',
-        }, 'Failed admin login attempt');
-        throw error;
-      }
-    },
+      },
 
-    tenantLogin: async ({ req, body }: { req: any; body: { email: string; password: string } }) => {
-      const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
-      try {
-        if (!services) {
-          throw new Error('Tenant auth service not available');
-        }
-        const data = await services.tenantAuth.login(body.email, body.password);
+      getPackageBySlug: async ({ req, params }: { req: any; params: { slug: string } }) => {
+        const tenantId = getTenantId(req as TenantRequest);
+        const data = await controllers.packages.getPackageBySlug(tenantId, params.slug);
         return { status: 200 as const, body: data };
-      } catch (error) {
-        logger.warn({
-          event: 'tenant_login_failed',
-          endpoint: '/v1/tenant-auth/login',
-          email: body.email,
-          ipAddress,
-        }, 'Failed tenant login attempt');
-        throw error;
-      }
-    },
+      },
 
-    platformGetAllTenants: async () => {
-      // Auth middleware applied via app.use('/v1/admin/tenants', authMiddleware)
-      const data = await controllers.platformAdmin.getAllTenants();
-      return { status: 200 as const, body: data };
-    },
+      getAvailability: async ({ req, query }: { req: any; query: { date: string } }) => {
+        const tenantId = getTenantId(req as TenantRequest);
+        const data = await controllers.availability.getAvailability(tenantId, query.date);
+        return { status: 200 as const, body: data };
+      },
 
-    platformCreateTenant: async ({ body }: { body: unknown }) => {
-      // Note: Actual tenant creation is handled by the Express route
-      // This is just a placeholder for ts-rest contract compliance
-      // See /server/src/routes/admin/tenants.routes.ts
-      throw new Error('Use Express route /api/v1/admin/tenants directly');
-    },
+      getUnavailableDates: async ({
+        req,
+        query,
+      }: {
+        req: any;
+        query: { startDate: string; endDate: string };
+      }) => {
+        const tenantId = getTenantId(req as TenantRequest);
+        const data = await controllers.availability.getUnavailableDates(
+          tenantId,
+          query.startDate,
+          query.endDate
+        );
+        return { status: 200 as const, body: data };
+      },
 
-    platformGetTenant: async ({ params }: { params: { id: string } }) => {
-      // Note: Actual implementation in Express routes
-      throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
-    },
+      createCheckout: async ({
+        req,
+        body,
+      }: {
+        req: any;
+        body: {
+          packageId: string;
+          eventDate: string;
+          coupleName: string;
+          email: string;
+          addOnIds?: string[];
+        };
+      }) => {
+        const tenantId = getTenantId(req as TenantRequest);
+        const data = await controllers.bookings.createCheckout(tenantId, body);
+        return { status: 200 as const, body: data };
+      },
 
-    platformUpdateTenant: async ({ params, body }: { params: { id: string }; body: unknown }) => {
-      // Note: Actual implementation in Express routes
-      throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
-    },
+      getBookingById: async ({ req, params }: { req: any; params: { id: string } }) => {
+        const tenantId = getTenantId(req as TenantRequest);
+        const data = await controllers.bookings.getBookingById(tenantId, params.id);
+        return { status: 200 as const, body: data };
+      },
 
-    platformDeleteTenant: async ({ params }: { params: { id: string } }) => {
-      // Note: Actual implementation in Express routes
-      throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
-    },
+      getTenantBranding: async ({ req }: { req: any }) => {
+        const tenantId = getTenantId(req as TenantRequest);
+        const data = await controllers.tenant.getBranding(tenantId);
+        return { status: 200 as const, body: data };
+      },
 
-    platformGetStats: async () => {
-      // Auth middleware applied via app.use('/v1/admin/stats', authMiddleware)
-      const data = await controllers.platformAdmin.getStats();
-      return { status: 200 as const, body: data };
-    },
+      stripeWebhook: async ({ req }: { req: any }) => {
+        // Extract raw body (Buffer) and Stripe signature header
+        const rawBody = req.body ? req.body.toString('utf8') : '';
+        const signatureHeader = req.headers['stripe-signature'];
+        const signature = Array.isArray(signatureHeader)
+          ? signatureHeader[0]
+          : signatureHeader || '';
 
-    adminGetBookings: async () => {
-      // Auth middleware applied via app.use('/v1/admin/bookings', authMiddleware)
-      const data = await controllers.admin.getBookings();
-      return { status: 200 as const, body: data };
-    },
+        await controllers.webhooks.handleStripeWebhook(rawBody, signature);
+        return { status: 204 as const, body: undefined };
+      },
 
-    adminGetBlackouts: async () => {
-      // Auth middleware applied via app.use('/v1/admin/blackouts', authMiddleware)
-      const data = await controllers.blackouts.getBlackouts();
-      return { status: 200 as const, body: data };
-    },
-
-    adminCreateBlackout: async ({ body }: { body: { date: string; reason?: string } }) => {
-      // Auth middleware applied via app.use('/v1/admin/blackouts', authMiddleware)
-      const data = await controllers.blackouts.createBlackout(body);
-      return { status: 200 as const, body: data };
-    },
-
-    adminCreatePackage: async ({ body }: { body: { slug: string; title: string; description: string; priceCents: number; photoUrl?: string } }) => {
-      // Auth middleware applied via app.use('/v1/admin/packages', authMiddleware)
-      const data = await controllers.adminPackages.createPackage(body);
-      return { status: 200 as const, body: data };
-    },
-
-    adminUpdatePackage: async ({ params, body }: { params: { id: string }; body: { slug?: string; title?: string; description?: string; priceCents?: number; photoUrl?: string } }) => {
-      // Auth middleware applied via app.use('/v1/admin/packages', authMiddleware)
-      const data = await controllers.adminPackages.updatePackage(params.id, body);
-      return { status: 200 as const, body: data };
-    },
-
-    adminDeletePackage: async ({ params }: { params: { id: string } }) => {
-      // Auth middleware applied via app.use('/v1/admin/packages', authMiddleware)
-      await controllers.adminPackages.deletePackage(params.id);
-      return { status: 204 as const, body: undefined };
-    },
-
-    adminCreateAddOn: async ({ params, body }: { params: { packageId: string }; body: { packageId: string; title: string; priceCents: number; photoUrl?: string } }) => {
-      // Auth middleware applied via app.use('/v1/admin/packages', authMiddleware)
-      const data = await controllers.adminPackages.createAddOn(params.packageId, body);
-      return { status: 200 as const, body: data };
-    },
-
-    adminUpdateAddOn: async ({ params, body }: { params: { id: string }; body: { packageId?: string; title?: string; priceCents?: number; photoUrl?: string } }) => {
-      // Auth middleware applied via app.use('/v1/admin/addons', authMiddleware)
-      const data = await controllers.adminPackages.updateAddOn(params.id, body);
-      return { status: 200 as const, body: data };
-    },
-
-    adminDeleteAddOn: async ({ params }: { params: { id: string } }) => {
-      // Auth middleware applied via app.use('/v1/admin/addons', authMiddleware)
-      await controllers.adminPackages.deleteAddOn(params.id);
-      return { status: 204 as const, body: undefined };
-    },
-  } as any), app, {
-    // Apply middleware based on route path
-    globalMiddleware: [
-      (req, res, next) => {
-        // Apply strict rate limiting to login endpoints
-        if ((req.path === '/v1/admin/login' || req.path === '/v1/tenant-auth/login') && req.method === 'POST') {
-          return loginLimiter(req, res, next);
+      adminLogin: async ({
+        req,
+        body,
+      }: {
+        req: any;
+        body: { email: string; password: string };
+      }) => {
+        const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
+        try {
+          const data = await controllers.admin.login(body);
+          return { status: 200 as const, body: data };
+        } catch (error) {
+          // Log failed admin login attempts
+          logger.warn(
+            {
+              event: 'admin_login_failed',
+              endpoint: '/v1/admin/login',
+              email: body.email,
+              ipAddress,
+              timestamp: new Date().toISOString(),
+              error: error instanceof Error ? error.message : 'Unknown error',
+            },
+            'Failed admin login attempt'
+          );
+          throw error;
         }
-        // Public API routes (packages, bookings, availability, tenant) require tenant
-        if (req.path.startsWith('/v1/packages') ||
+      },
+
+      tenantLogin: async ({
+        req,
+        body,
+      }: {
+        req: any;
+        body: { email: string; password: string };
+      }) => {
+        const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
+        try {
+          if (!services) {
+            throw new Error('Tenant auth service not available');
+          }
+          const data = await services.tenantAuth.login(body.email, body.password);
+          return { status: 200 as const, body: data };
+        } catch (error) {
+          logger.warn(
+            {
+              event: 'tenant_login_failed',
+              endpoint: '/v1/tenant-auth/login',
+              email: body.email,
+              ipAddress,
+            },
+            'Failed tenant login attempt'
+          );
+          throw error;
+        }
+      },
+
+      platformGetAllTenants: async () => {
+        // Auth middleware applied via app.use('/v1/admin/tenants', authMiddleware)
+        const data = await controllers.platformAdmin.getAllTenants();
+        return { status: 200 as const, body: data };
+      },
+
+      platformCreateTenant: async ({ body }: { body: unknown }) => {
+        // Note: Actual tenant creation is handled by the Express route
+        // This is just a placeholder for ts-rest contract compliance
+        // See /server/src/routes/admin/tenants.routes.ts
+        throw new Error('Use Express route /api/v1/admin/tenants directly');
+      },
+
+      platformGetTenant: async ({ params }: { params: { id: string } }) => {
+        // Note: Actual implementation in Express routes
+        throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
+      },
+
+      platformUpdateTenant: async ({ params, body }: { params: { id: string }; body: unknown }) => {
+        // Note: Actual implementation in Express routes
+        throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
+      },
+
+      platformDeleteTenant: async ({ params }: { params: { id: string } }) => {
+        // Note: Actual implementation in Express routes
+        throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
+      },
+
+      platformGetStats: async () => {
+        // Auth middleware applied via app.use('/v1/admin/stats', authMiddleware)
+        const data = await controllers.platformAdmin.getStats();
+        return { status: 200 as const, body: data };
+      },
+
+      adminGetBookings: async () => {
+        // Auth middleware applied via app.use('/v1/admin/bookings', authMiddleware)
+        const data = await controllers.admin.getBookings();
+        return { status: 200 as const, body: data };
+      },
+
+      adminGetBlackouts: async () => {
+        // Auth middleware applied via app.use('/v1/admin/blackouts', authMiddleware)
+        const data = await controllers.blackouts.getBlackouts();
+        return { status: 200 as const, body: data };
+      },
+
+      adminCreateBlackout: async ({ body }: { body: { date: string; reason?: string } }) => {
+        // Auth middleware applied via app.use('/v1/admin/blackouts', authMiddleware)
+        const data = await controllers.blackouts.createBlackout(body);
+        return { status: 200 as const, body: data };
+      },
+
+      adminCreatePackage: async ({
+        body,
+      }: {
+        body: {
+          slug: string;
+          title: string;
+          description: string;
+          priceCents: number;
+          photoUrl?: string;
+        };
+      }) => {
+        // Auth middleware applied via app.use('/v1/admin/packages', authMiddleware)
+        const data = await controllers.adminPackages.createPackage(body);
+        return { status: 200 as const, body: data };
+      },
+
+      adminUpdatePackage: async ({
+        params,
+        body,
+      }: {
+        params: { id: string };
+        body: {
+          slug?: string;
+          title?: string;
+          description?: string;
+          priceCents?: number;
+          photoUrl?: string;
+        };
+      }) => {
+        // Auth middleware applied via app.use('/v1/admin/packages', authMiddleware)
+        const data = await controllers.adminPackages.updatePackage(params.id, body);
+        return { status: 200 as const, body: data };
+      },
+
+      adminDeletePackage: async ({ params }: { params: { id: string } }) => {
+        // Auth middleware applied via app.use('/v1/admin/packages', authMiddleware)
+        await controllers.adminPackages.deletePackage(params.id);
+        return { status: 204 as const, body: undefined };
+      },
+
+      adminCreateAddOn: async ({
+        params,
+        body,
+      }: {
+        params: { packageId: string };
+        body: { packageId: string; title: string; priceCents: number; photoUrl?: string };
+      }) => {
+        // Auth middleware applied via app.use('/v1/admin/packages', authMiddleware)
+        const data = await controllers.adminPackages.createAddOn(params.packageId, body);
+        return { status: 200 as const, body: data };
+      },
+
+      adminUpdateAddOn: async ({
+        params,
+        body,
+      }: {
+        params: { id: string };
+        body: { packageId?: string; title?: string; priceCents?: number; photoUrl?: string };
+      }) => {
+        // Auth middleware applied via app.use('/v1/admin/addons', authMiddleware)
+        const data = await controllers.adminPackages.updateAddOn(params.id, body);
+        return { status: 200 as const, body: data };
+      },
+
+      adminDeleteAddOn: async ({ params }: { params: { id: string } }) => {
+        // Auth middleware applied via app.use('/v1/admin/addons', authMiddleware)
+        await controllers.adminPackages.deleteAddOn(params.id);
+        return { status: 204 as const, body: undefined };
+      },
+    } as any),
+    app,
+    {
+      // Apply middleware based on route path
+      globalMiddleware: [
+        (req, res, next) => {
+          // Apply strict rate limiting to login endpoints
+          if (
+            (req.path === '/v1/admin/login' || req.path === '/v1/tenant-auth/login') &&
+            req.method === 'POST'
+          ) {
+            return loginLimiter(req, res, next);
+          }
+          // Public API routes (packages, bookings, availability, tenant) require tenant
+          if (
+            req.path.startsWith('/v1/packages') ||
             req.path.startsWith('/v1/bookings') ||
             req.path.startsWith('/v1/availability') ||
-            req.path.startsWith('/v1/tenant')) {
-          // Chain tenant middleware with requireTenant
-          tenantMiddleware(req as TenantRequest, res, (err?: unknown) => {
-            if (err) return next(err);
-            if (res.headersSent) return; // Middleware already sent response
-            requireTenant(req as TenantRequest, res, next);
-          });
-        }
-        // Admin routes require authentication
-        else if (req.path.startsWith('/v1/admin/') && !req.path.startsWith('/v1/admin/login')) {
-          authMiddleware(req, res, next);
-        }
-        // Webhooks and other routes pass through
-        else {
-          next();
-        }
-      }
-    ]
-  });
+            req.path.startsWith('/v1/tenant')
+          ) {
+            // Chain tenant middleware with requireTenant
+            tenantMiddleware(req as TenantRequest, res, (err?: unknown) => {
+              if (err) return next(err);
+              if (res.headersSent) return; // Middleware already sent response
+              requireTenant(req as TenantRequest, res, next);
+            });
+          }
+          // Admin routes require authentication
+          else if (req.path.startsWith('/v1/admin/') && !req.path.startsWith('/v1/admin/login')) {
+            authMiddleware(req, res, next);
+          }
+          // Webhooks and other routes pass through
+          else {
+            next();
+          }
+        },
+      ],
+    }
+  );
 
   // Register admin tenant management routes (Express router, not ts-rest)
   // Use factory function with shared prisma instance to avoid connection pool exhaustion
@@ -401,14 +498,14 @@ export function createV1Router(
     );
     // P1-145 FIX: Apply rate limiting to prevent token brute-force and DoS
     app.use('/v1/public/bookings', publicBookingActionsLimiter, publicBookingManagementRouter);
-    logger.info('✅ Public booking management routes mounted at /v1/public/bookings (rate limited)');
+    logger.info(
+      '✅ Public booking management routes mounted at /v1/public/bookings (rate limited)'
+    );
 
     // Register public balance payment routes (for deposit payment flow)
     // NO authentication required - uses JWT tokens in query params for access
     // Allows customers to pay remaining balance via links in confirmation emails
-    const publicBalancePaymentController = new PublicBalancePaymentController(
-      services.booking
-    );
+    const publicBalancePaymentController = new PublicBalancePaymentController(services.booking);
     const publicBalancePaymentRouter = createPublicBalancePaymentRouter(
       publicBalancePaymentController
     );
@@ -454,7 +551,9 @@ export function createV1Router(
     // Requires tenant admin authentication
     const tenantAdminDepositRoutes = createTenantAdminDepositRoutes(tenantRepo);
     app.use('/v1/tenant-admin', tenantAuthMiddleware, tenantAdminDepositRoutes);
-    logger.info('✅ Tenant admin deposit settings routes mounted at /v1/tenant-admin/settings/deposits');
+    logger.info(
+      '✅ Tenant admin deposit settings routes mounted at /v1/tenant-admin/settings/deposits'
+    );
 
     // Register tenant admin landing page routes (for landing page configuration)
     // Requires tenant admin authentication

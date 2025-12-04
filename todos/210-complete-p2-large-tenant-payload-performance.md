@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "210"
+issue_id: '210'
 tags: [performance, api, payload, landing-page]
 dependencies: []
 ---
@@ -38,6 +38,7 @@ Implemented response compression middleware (Option B - short-term solution). Se
 ### Future Improvements
 
 Long-term solution (Option A - lazy load landing page config) can be implemented later if needed:
+
 - Split into two endpoints: minimal tenant info + landing page config
 - Lazy load landing page config only when needed
 - Further reduce initial page load payload
@@ -45,6 +46,7 @@ Long-term solution (Option A - lazy load landing page config) can be implemented
 ## Description
 
 The `TenantPublicDto` response includes full landing page configuration (~34KB when populated). This is fetched on every storefront visit and could impact:
+
 1. Initial page load time on slow connections
 2. Mobile data usage
 3. React Query cache size
@@ -96,13 +98,15 @@ Add gzip/brotli compression for JSON responses:
 // server/src/app.ts
 import compression from 'compression';
 
-app.use(compression({
-  filter: (req, res) => {
-    if (req.headers['x-no-compression']) return false;
-    return compression.filter(req, res);
-  },
-  threshold: 1024, // Only compress > 1KB
-}));
+app.use(
+  compression({
+    filter: (req, res) => {
+      if (req.headers['x-no-compression']) return false;
+      return compression.filter(req, res);
+    },
+    threshold: 1024, // Only compress > 1KB
+  })
+);
 ```
 
 ### Option C: Partial Response with Fields Parameter

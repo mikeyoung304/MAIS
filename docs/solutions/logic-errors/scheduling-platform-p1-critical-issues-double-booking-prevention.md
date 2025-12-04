@@ -46,14 +46,14 @@ The scheduling platform was implemented in a single large commit (71 files, 12,9
 
 Each issue traced back to **bypassing established architectural patterns**:
 
-| Issue | Pattern Bypassed | Consequence |
-|-------|-----------------|-------------|
-| Empty getTimeslotBookings() | Complete implementations | Silent failure |
-| Duplicate interfaces | Single source of truth (ports.ts) | Type mismatches |
-| Missing DB constraint | Database-level validation | Race condition vulnerability |
-| Client-side filtering | Repository pattern | Performance + type safety |
-| Missing API contract | Contract-first development | No type safety |
-| Array index as key | React best practices | UI bugs |
+| Issue                       | Pattern Bypassed                  | Consequence                  |
+| --------------------------- | --------------------------------- | ---------------------------- |
+| Empty getTimeslotBookings() | Complete implementations          | Silent failure               |
+| Duplicate interfaces        | Single source of truth (ports.ts) | Type mismatches              |
+| Missing DB constraint       | Database-level validation         | Race condition vulnerability |
+| Client-side filtering       | Repository pattern                | Performance + type safety    |
+| Missing API contract        | Contract-first development        | No type safety               |
+| Array index as key          | React best practices              | UI bugs                      |
 
 ### Step 3: Fix Implementation
 
@@ -74,6 +74,7 @@ All 6 issues were fixed in a single commit (`ff5e7eb`) following the execution p
 **Solution**:
 
 1. **Added `findTimeslotBookings()` to BookingRepository interface** (`ports.ts:58-72`):
+
 ```typescript
 findTimeslotBookings(
   tenantId: string,
@@ -83,6 +84,7 @@ findTimeslotBookings(
 ```
 
 2. **Implemented repository method** (`booking.repository.ts:422-474`):
+
 ```typescript
 async findTimeslotBookings(
   tenantId: string,
@@ -112,6 +114,7 @@ async findTimeslotBookings(
 ```
 
 3. **Wired into SchedulingAvailabilityService**:
+
 ```typescript
 private async getTimeslotBookings(tenantId: string, date: Date): Promise<TimeSlotBooking[]> {
   return this.bookingRepo.findTimeslotBookings(tenantId, date);
@@ -125,6 +128,7 @@ private async getTimeslotBookings(tenantId: string, date: Date): Promise<TimeSlo
 **Problem**: The service defined duplicate local interfaces instead of importing from `ports.ts`, causing type inconsistencies.
 
 **Before**:
+
 ```typescript
 // Duplicate local interfaces (WRONG)
 interface ServiceRepository {
@@ -133,6 +137,7 @@ interface ServiceRepository {
 ```
 
 **After**:
+
 ```typescript
 import type {
   BookingRepository,
@@ -166,6 +171,7 @@ WHERE "bookingType" = 'TIMESLOT';
 ```
 
 **Defense-in-Depth**:
+
 1. **Database constraint** (this fix) - PostgreSQL enforces uniqueness
 2. **Transaction locks** (already implemented) - Advisory locks prevent concurrent writes
 3. **Application logic** (already implemented) - Explicit availability check
@@ -177,12 +183,14 @@ WHERE "bookingType" = 'TIMESLOT';
 **Problem**: Fetched ALL bookings and filtered in JavaScript with `as any`.
 
 **Before**:
+
 ```typescript
 let bookings = await bookingService.getAllBookings(tenantId);
 bookings = bookings.filter((b: any) => b.bookingType === 'TIMESLOT');
 ```
 
 **After**:
+
 ```typescript
 const appointments = await bookingRepo.findAppointments(tenantId, {
   status: typeof status === 'string' ? status : undefined,
@@ -201,6 +209,7 @@ Also added date range validation (max 90 days).
 **Problem**: No API contract for `POST /v1/public/appointments/checkout`.
 
 **Solution**: Added to `packages/contracts/src/api.v1.ts`:
+
 ```typescript
 createAppointmentCheckout: {
   method: 'POST',
@@ -225,6 +234,7 @@ createAppointmentCheckout: {
 **Problem**: TimeSlotPicker used `key={index}` instead of stable identifier.
 
 **Before**:
+
 ```typescript
 {data.slots.map((slot: TimeSlotDto, index: number) => (
   <button key={index} ...>
@@ -232,6 +242,7 @@ createAppointmentCheckout: {
 ```
 
 **After**:
+
 ```typescript
 {data.slots.map((slot: TimeSlotDto) => (
   <button key={slot.startTime} ...>  {/* ISO datetime is unique */}
@@ -251,10 +262,11 @@ createAppointmentCheckout: {
 throw new Error('Not implemented: getTimeslotBookings');
 
 // ❌ WRONG - Fails silently
-return [];  // TODO: implement
+return []; // TODO: implement
 ```
 
 **ESLint Rule**:
+
 ```json
 { "no-warning-comments": ["error", { "terms": ["TODO", "FIXME"] }] }
 ```
@@ -285,10 +297,10 @@ interface SchedulingRepository { ... }  // Duplicate!
 
 ```typescript
 // ✅ CORRECT - SQL WHERE clause
-findMany({ where: { tenantId, active: true } })
+findMany({ where: { tenantId, active: true } });
 
 // ❌ WRONG - JavaScript filter
-data.filter(x => x.active)
+data.filter((x) => x.active);
 ```
 
 ### 5. API Contracts
@@ -335,6 +347,7 @@ Before approving scheduling-related PRs:
 ## Related Documentation
 
 ### Issue Tracking
+
 - [#043 - Timeslot Conflict Detection Broken](../../../todos/043-pending-p1-timeslot-conflict-detection-broken.md)
 - [#044 - Interface Mismatch](../../../todos/044-pending-p1-interface-mismatch-scheduling-service.md)
 - [#045 - Missing Unique Constraint](../../../todos/045-pending-p1-missing-timeslot-unique-constraint.md)
@@ -343,27 +356,30 @@ Before approving scheduling-related PRs:
 - [#048 - React Key Issue](../../../todos/048-pending-p1-react-key-timeslot-picker.md)
 
 ### Architecture
+
 - [Multi-Tenant Implementation Guide](../../multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md)
 - [Prevention Strategies Index](../PREVENTION-STRATEGIES-INDEX.md)
 - [Prevention Quick Reference](../PREVENTION-QUICK-REFERENCE.md)
 
 ### Plans
+
 - [Fix Scheduling Platform P1 Issues](../../../plans/fix-scheduling-platform-p1-critical-issues.md)
 
 ---
 
 ## Commits
 
-| Commit | Description |
-|--------|-------------|
+| Commit    | Description                                           |
+| --------- | ----------------------------------------------------- |
 | `862a324` | feat(scheduling): add Acuity-like scheduling platform |
-| `ff5e7eb` | fix(scheduling): resolve 6 P1 critical issues |
+| `ff5e7eb` | fix(scheduling): resolve 6 P1 critical issues         |
 
 ---
 
 ## Verification
 
 All fixes verified:
+
 - TypeScript compiles without errors
 - 512/512 unit tests pass
 - Integration tests require DB migration (pending on prod DB)

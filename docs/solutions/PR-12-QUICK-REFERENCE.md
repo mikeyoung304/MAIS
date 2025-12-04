@@ -13,13 +13,13 @@ priority: P0
 
 ## The 5 Issues (At a Glance)
 
-| Issue | Pattern | Fix | Time |
-|-------|---------|-----|------|
-| Missing `useCallback` | Callbacks passed to children unwrapped | Wrap in `useCallback` | 5 min |
-| Missing `useEffect` deps | Functions called but not in array | Add to dependency array | 5 min |
-| No focus indicators | Tab through → nothing visible | Add `focus-visible:ring-*` | 5 min |
-| No state indicators | Accordion looks same when open/closed | Add rotating `ChevronRight` icon | 10 min |
-| Event propagation | Button click toggles accordion | Wrap in `div onClick={e => e.stopPropagation()}` | 5 min |
+| Issue                    | Pattern                                | Fix                                              | Time   |
+| ------------------------ | -------------------------------------- | ------------------------------------------------ | ------ |
+| Missing `useCallback`    | Callbacks passed to children unwrapped | Wrap in `useCallback`                            | 5 min  |
+| Missing `useEffect` deps | Functions called but not in array      | Add to dependency array                          | 5 min  |
+| No focus indicators      | Tab through → nothing visible          | Add `focus-visible:ring-*`                       | 5 min  |
+| No state indicators      | Accordion looks same when open/closed  | Add rotating `ChevronRight` icon                 | 10 min |
+| Event propagation        | Button click toggles accordion         | Wrap in `div onClick={e => e.stopPropagation()}` | 5 min  |
 
 ---
 
@@ -49,18 +49,19 @@ const handleEdit = useCallback(async (pkg) => {
 ```typescript
 // ❌ WRONG
 useEffect(() => {
-  loadData();  // Function reference changes!
-}, []);  // ESLint will complain
+  loadData(); // Function reference changes!
+}, []); // ESLint will complain
 
 // ✅ RIGHT
 useEffect(() => {
   loadData();
-}, [loadData]);  // Include all functions used
+}, [loadData]); // Include all functions used
 ```
 
 **Key Rule:** Every function called in `useEffect` must be in the dependency array.
 
 **How to fix:**
+
 1. Wrap function in `useCallback` (see #1)
 2. Add function to `useEffect` dependency array
 
@@ -79,6 +80,7 @@ useEffect(() => {
 ```
 
 **Key Classes:**
+
 - `focus:outline-none` - Remove default browser outline
 - `focus-visible:ring-2` - 2px focus ring
 - `focus-visible:ring-sage` - Use design system color
@@ -108,6 +110,7 @@ useEffect(() => {
 ```
 
 **Key Elements:**
+
 - `ChevronRight` icon from lucide-react
 - `group` class on `<details>` (enables `group-open:`)
 - `group-open:rotate-90` - Rotates 90° when open
@@ -136,9 +139,11 @@ useEffect(() => {
 ```
 
 **Key Element:**
+
 - `onClick={e => e.stopPropagation()}` on container
 
 **Test:**
+
 - Click button → button action only
 - Click accordion header → accordion toggles
 - Never both together
@@ -149,6 +154,7 @@ useEffect(() => {
 
 ```markdown
 ## Hooks & Accessibility
+
 - [ ] All callbacks wrapped in `useCallback`
 - [ ] All `useEffect` dependencies complete
 - [ ] ESLint passes: `npm run lint`
@@ -163,17 +169,24 @@ useEffect(() => {
 ## Quick Fixes
 
 ### Fix 1: Wrap Callback
+
 ```typescript
 // Add useCallback import
 import { useCallback } from 'react';
 
 // Wrap existing callback
-const handleEdit = useCallback(async (pkg) => {
-  // ... existing code
-}, [/* dependencies */]);
+const handleEdit = useCallback(
+  async (pkg) => {
+    // ... existing code
+  },
+  [
+    /* dependencies */
+  ]
+);
 ```
 
 ### Fix 2: Add Dependencies
+
 ```typescript
 // Find useEffect
 useEffect(() => {
@@ -185,6 +198,7 @@ useEffect(() => {
 ```
 
 ### Fix 3: Add Focus Ring
+
 ```typescript
 // Find interactive element
 <button className="hover:bg-gray-100">
@@ -194,6 +208,7 @@ useEffect(() => {
 ```
 
 ### Fix 4: Add Chevron Icon
+
 ```typescript
 // Import icon
 import { ChevronRight } from 'lucide-react';
@@ -203,6 +218,7 @@ import { ChevronRight } from 'lucide-react';
 ```
 
 ### Fix 5: Stop Propagation
+
 ```typescript
 // Wrap button container
 <div onClick={e => e.stopPropagation()}>
@@ -215,17 +231,16 @@ import { ChevronRight } from 'lucide-react';
 ## ESLint Rules
 
 **Install:**
+
 ```bash
 npm install --save-dev eslint-plugin-react-hooks eslint-plugin-jsx-a11y
 ```
 
 **Add to `.eslintrc.cjs`:**
+
 ```json
 {
-  "extends": [
-    "plugin:react-hooks/recommended",
-    "plugin:jsx-a11y/recommended"
-  ],
+  "extends": ["plugin:react-hooks/recommended", "plugin:jsx-a11y/recommended"],
   "rules": {
     "react-hooks/exhaustive-deps": "error",
     "jsx-a11y/interactive-supports-focus": "warn"
@@ -238,18 +253,21 @@ npm install --save-dev eslint-plugin-react-hooks eslint-plugin-jsx-a11y
 ## Testing Checklist
 
 ### Keyboard Navigation
+
 - [ ] Tab through component
 - [ ] Every interactive element has visible focus ring
 - [ ] Tab order is logical
 - [ ] Can use Space/Enter on buttons without mouse
 
 ### Accordion Interaction
+
 - [ ] Click header text → accordion toggles
 - [ ] Click button in summary → button action only, NO toggle
 - [ ] Icon rotates smoothly when toggling
 - [ ] State is always visually clear
 
 ### Browser Compatibility
+
 - [ ] Works in Chrome
 - [ ] Works in Firefox
 - [ ] Works in Safari
@@ -370,18 +388,23 @@ useEffect(() => {
 ## When to Apply
 
 ### Write new code that passes callbacks to children
+
 → Use `useCallback` immediately (5 seconds extra)
 
 ### Write new `useEffect` hooks
+
 → Include all dependencies in array (5 seconds extra)
 
 ### Create interactive elements
+
 → Add focus indicators (30 seconds)
 
 ### Create accordion/collapsible
+
 → Add state indicator icon (30 seconds)
 
 ### Put interactive elements inside other interactive elements
+
 → Add `stopPropagation` (30 seconds)
 
 ---

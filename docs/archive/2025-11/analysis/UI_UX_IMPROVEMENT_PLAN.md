@@ -12,6 +12,7 @@
 This plan transforms MAIS's UI from a functional but inconsistent interface into a polished, professional wedding booking platform. Inspired by analysis of the July25 Restaurant OS reference application and comprehensive audit of MAIS's current codebase.
 
 ### Key Problems Identified
+
 1. **Inconsistent theme usage** - Light/dark themes randomly applied
 2. **Weak booking flow** - DatePicker not branded, basic add-on selection
 3. **Minimal micro-interactions** - Static forms, no animations
@@ -19,6 +20,7 @@ This plan transforms MAIS's UI from a functional but inconsistent interface into
 5. **Missing feedback systems** - No toasts, confirmations, loading states
 
 ### Solution Approach
+
 5-phase implementation plan with 20+ specific improvements prioritized by user impact.
 
 ---
@@ -28,6 +30,7 @@ This plan transforms MAIS's UI from a functional but inconsistent interface into
 ### July25 Restaurant OS - Key Design Patterns
 
 **Visual Excellence:**
+
 - Large, colorful workspace cards (400px wide)
 - Vibrant color palette per function:
   - Navy (#2C3E50) - Server
@@ -38,6 +41,7 @@ This plan transforms MAIS's UI from a functional but inconsistent interface into
   - Peach (#FFB380) - Expo
 
 **Modal/Dialog Design:**
+
 - Professional authentication modal with backdrop blur
 - Clean form hierarchy: label above input
 - Blue info banner for demo mode
@@ -47,6 +51,7 @@ This plan transforms MAIS's UI from a functional but inconsistent interface into
 - Proper close button
 
 **Typography & Spacing:**
+
 - Clear visual hierarchy
 - Generous padding (p-12 on cards)
 - Large icons (64px)
@@ -60,12 +65,14 @@ This plan transforms MAIS's UI from a functional but inconsistent interface into
 ### Strengths (Keep & Enhance)
 
 **1. Design Token System (8/10)**
+
 - 249 tokens defined in `design-tokens.css`
 - Macon brand colors (Navy #1a365d, Orange #fb923c, Teal #38b2ac)
 - Comprehensive documentation
 - File: `client/src/styles/design-tokens.css`
 
 **2. Button Component (8.5/10)**
+
 - 7 variants with rich interactions
 - Scale transforms, shadow elevation
 - Spring easing animations
@@ -73,6 +80,7 @@ This plan transforms MAIS's UI from a functional but inconsistent interface into
 - File: `client/src/components/ui/button.tsx`
 
 **3. Home Page (8/10)**
+
 - Professional marketing landing
 - Playfair Display typography
 - Feature sections with icons
@@ -80,6 +88,7 @@ This plan transforms MAIS's UI from a functional but inconsistent interface into
 - File: `client/src/pages/Home.tsx`
 
 **4. Card Component (7.5/10)**
+
 - Hover effects, elevation system
 - Subtle gradient overlays
 - Smooth transitions
@@ -88,11 +97,13 @@ This plan transforms MAIS's UI from a functional but inconsistent interface into
 ### Weaknesses (Priority Fixes)
 
 **1. Inconsistent Theme Usage (4/10)**
+
 - **Problem**: Home uses light, admin uses dark, packages mixed
 - **Files Affected**: Multiple pages across `client/src/pages/`
 - **Impact**: Jarring user experience, unprofessional feel
 
 **2. Weak Booking Flow (5/10)**
+
 - **Problems**:
   - DatePicker uses default react-day-picker styles (not branded)
   - Add-on selection is basic checkbox list
@@ -104,6 +115,7 @@ This plan transforms MAIS's UI from a functional but inconsistent interface into
   - `client/src/features/booking/TotalBox.tsx`
 
 **3. Basic Admin Interfaces (5.5/10)**
+
 - **Problems**:
   - Plain text tabs without polish
   - Generic forms
@@ -113,10 +125,12 @@ This plan transforms MAIS's UI from a functional but inconsistent interface into
   - `client/src/features/tenant-admin/TenantDashboard.tsx`
 
 **4. Minimal Modal/Dialog (3/10)**
+
 - **Problem**: No polished modal component
 - **Impact**: Login feels basic, no professional auth flow
 
 **5. Missing Micro-interactions (4/10)**
+
 - No toast notifications
 - No confirmation dialogs
 - No loading skeletons
@@ -135,6 +149,7 @@ This plan transforms MAIS's UI from a functional but inconsistent interface into
 **Create**: `client/src/styles/theme-zones.md`
 
 **Define Zones:**
+
 ```
 Customer-Facing (Light Theme):
 ✓ Home page (already good)
@@ -150,6 +165,7 @@ Admin-Facing (Dark Theme):
 ```
 
 **Action Items:**
+
 - [ ] Update `PackagePage.tsx` from dark navy-800 to light theme
 - [ ] Update `CatalogGrid.tsx` to light theme with white cards
 - [ ] Ensure booking flow uses consistent light theme
@@ -162,6 +178,7 @@ Admin-Facing (Dark Theme):
 **Create/Upgrade**: `client/src/components/ui/dialog.tsx`
 
 **Features:**
+
 - Backdrop blur effect (`backdrop-blur-md`)
 - Smooth slide-in animation
 - Close button (X in corner)
@@ -169,6 +186,7 @@ Admin-Facing (Dark Theme):
 - Max width variants (sm, md, lg, xl)
 
 **Code Structure:**
+
 ```tsx
 // dialog.tsx
 <Dialog>
@@ -186,6 +204,7 @@ Admin-Facing (Dark Theme):
 ```
 
 **Usage Examples:**
+
 - Login modal
 - Package delete confirmation
 - Add-on editor
@@ -196,6 +215,7 @@ Admin-Facing (Dark Theme):
 **Add to**: `client/src/components/ui/card.tsx`
 
 **New Variants:**
+
 ```tsx
 variants: {
   colorScheme: {
@@ -210,6 +230,7 @@ variants: {
 ```
 
 **Use Cases:**
+
 - Workspace selection cards (like July25)
 - Package tier differentiation
 - Dashboard metric cards
@@ -228,13 +249,11 @@ variants: {
 **Create**: `client/src/pages/admin/SelectWorkspace.tsx`
 
 **Design:**
+
 ```tsx
 // 3-column grid of large colorful cards
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-8">
-  <Card
-    colorScheme="navy"
-    className="cursor-pointer hover:scale-102 transition-transform p-12"
-  >
+  <Card colorScheme="navy" className="cursor-pointer hover:scale-102 transition-transform p-12">
     <Users className="w-16 h-16 mx-auto mb-4" />
     <h3 className="text-2xl font-bold text-center">Platform Admin</h3>
     <p className="text-white/80 text-center mt-2">Manage all tenants</p>
@@ -255,6 +274,7 @@ variants: {
 ```
 
 **Features:**
+
 - Large icons (Lucide, 64px)
 - Generous padding (p-12)
 - Rounded corners (rounded-2xl)
@@ -266,6 +286,7 @@ variants: {
 **Upgrade**: `client/src/components/ui/input.tsx`
 
 **New Features:**
+
 - Floating label animation
 - Icon support (left/right slots)
 - Dark variant for dark backgrounds
@@ -274,6 +295,7 @@ variants: {
 - Clear button (X icon)
 
 **Code Structure:**
+
 ```tsx
 <Input
   label="Email address"
@@ -288,6 +310,7 @@ variants: {
 ```
 
 **Create**: `client/src/components/ui/textarea.tsx`
+
 - Auto-resize as you type
 - Character counter with limit
 - Markdown preview toggle
@@ -303,6 +326,7 @@ variants: {
 **Create**: `client/src/features/booking/DatePicker.module.css`
 
 **Features:**
+
 - Macon Navy for selected dates
 - Macon Orange for today indicator
 - Teal for hover states
@@ -311,6 +335,7 @@ variants: {
 - Loading skeleton during availability check
 
 **CSS Classes:**
+
 ```css
 .maconDatePicker {
   --rdp-accent-color: #1a365d; /* Macon Navy */
@@ -339,24 +364,25 @@ variants: {
 **Transform to**: Card-based selection with animations
 
 **Design:**
+
 ```tsx
 <AddOnCard
   selected={selected}
   onClick={() => toggleAddOn(id)}
   className={cn(
-    "cursor-pointer transition-all duration-300 border-2 rounded-lg p-4",
-    selected && "border-macon-orange bg-macon-orange/5 scale-[1.02]"
+    'cursor-pointer transition-all duration-300 border-2 rounded-lg p-4',
+    selected && 'border-macon-orange bg-macon-orange/5 scale-[1.02]'
   )}
 >
   <div className="flex items-start gap-4">
     {/* Animated checkbox */}
-    <div className={cn(
-      "w-6 h-6 border-2 rounded-md flex items-center justify-center transition-all",
-      selected ? "bg-macon-orange border-macon-orange" : "border-gray-300"
-    )}>
-      {selected && (
-        <Check className="w-4 h-4 text-white animate-in zoom-in duration-200" />
+    <div
+      className={cn(
+        'w-6 h-6 border-2 rounded-md flex items-center justify-center transition-all',
+        selected ? 'bg-macon-orange border-macon-orange' : 'border-gray-300'
       )}
+    >
+      {selected && <Check className="w-4 h-4 text-white animate-in zoom-in duration-200" />}
     </div>
 
     {/* Content */}
@@ -366,10 +392,7 @@ variants: {
     </div>
 
     {/* Price badge with animation */}
-    <Badge
-      variant="secondary"
-      className="animate-in fade-in slide-in-from-right duration-300"
-    >
+    <Badge variant="secondary" className="animate-in fade-in slide-in-from-right duration-300">
       {formatCurrency(price)}
     </Badge>
   </div>
@@ -377,6 +400,7 @@ variants: {
 ```
 
 **Features:**
+
 - Border + background change on selection
 - Checkmark animation (zoom-in)
 - Price badge slide-in
@@ -390,19 +414,21 @@ variants: {
 **For**: Booking flow
 
 **Steps:**
+
 1. Select Package
 2. Choose Date
 3. Add Extras
 4. Checkout
 
 **Design:**
+
 ```tsx
 <ProgressSteps
   steps={[
     { label: 'Package', icon: <Package /> },
     { label: 'Date', icon: <Calendar /> },
     { label: 'Extras', icon: <Plus /> },
-    { label: 'Checkout', icon: <CreditCard /> }
+    { label: 'Checkout', icon: <CreditCard /> },
   ]}
   currentStep={2}
   className="mb-8"
@@ -410,6 +436,7 @@ variants: {
 ```
 
 **Visual Design:**
+
 - Completed steps: Green checkmark, solid line
 - Current step: Orange dot with pulse animation
 - Future steps: Gray circle, dashed line
@@ -426,6 +453,7 @@ npm install sonner
 **Setup**: `client/src/components/ui/toaster.tsx`
 
 **Usage:**
+
 ```tsx
 import { toast } from 'sonner';
 
@@ -439,14 +467,11 @@ toast.error('Failed to save changes');
 toast.loading('Uploading photo...');
 
 // Promise
-toast.promise(
-  createPackage(),
-  {
-    loading: 'Creating package...',
-    success: 'Package created!',
-    error: 'Failed to create package'
-  }
-);
+toast.promise(createPackage(), {
+  loading: 'Creating package...',
+  success: 'Package created!',
+  error: 'Failed to create package',
+});
 ```
 
 **Add to**: Every form submission, delete action, API call
@@ -462,6 +487,7 @@ toast.promise(
 **Upgrade**: All admin dashboard tabs
 
 **Files:**
+
 - `client/src/features/admin/Dashboard.tsx`
 - `client/src/features/tenant-admin/TenantDashboard.tsx`
 
@@ -473,9 +499,9 @@ toast.promise(
     <TabsTrigger
       value="overview"
       className={cn(
-        "data-[state=active]:bg-macon-orange",
-        "data-[state=active]:text-white",
-        "transition-all duration-200"
+        'data-[state=active]:bg-macon-orange',
+        'data-[state=active]:text-white',
+        'transition-all duration-200'
       )}
     >
       <LayoutDashboard className="w-4 h-4 mr-2" />
@@ -484,16 +510,14 @@ toast.promise(
     {/* More tabs... */}
   </TabsList>
 
-  <TabsContent
-    value="overview"
-    className="animate-in fade-in slide-in-from-bottom-2 duration-300"
-  >
+  <TabsContent value="overview" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
     {/* Content */}
   </TabsContent>
 </Tabs>
 ```
 
 **Features:**
+
 - Active tab: Orange background
 - Icons for each tab
 - Content fade-in when switching
@@ -505,6 +529,7 @@ toast.promise(
 **Create**: `client/src/components/ui/skeleton.tsx`
 
 **Components:**
+
 ```tsx
 // Generic skeleton
 <Skeleton className="h-4 w-[250px]" />
@@ -517,6 +542,7 @@ toast.promise(
 ```
 
 **Features:**
+
 - Shimmer animation (pulse + gradient)
 - Matches real component dimensions
 - Accessible (aria-busy, aria-live)
@@ -528,6 +554,7 @@ toast.promise(
 **Create**: `client/src/components/ui/empty-state.tsx`
 
 **Design:**
+
 ```tsx
 <EmptyState
   icon={<Package className="w-16 h-16 text-gray-400" />}
@@ -543,6 +570,7 @@ toast.promise(
 ```
 
 **Use in:**
+
 - Package list (no packages)
 - Booking list (no bookings)
 - Blackout dates (none set)
@@ -567,17 +595,14 @@ toast.promise(
     <AlertDialogHeader>
       <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
       <AlertDialogDescription>
-        This action cannot be undone. This will permanently delete the package
-        "{packageName}" and remove it from your catalog.
+        This action cannot be undone. This will permanently delete the package "{packageName}" and
+        remove it from your catalog.
       </AlertDialogDescription>
     </AlertDialogHeader>
 
     <AlertDialogFooter>
       <AlertDialogCancel>Cancel</AlertDialogCancel>
-      <AlertDialogAction
-        onClick={onDelete}
-        className="bg-red-600 hover:bg-red-700"
-      >
+      <AlertDialogAction onClick={onDelete} className="bg-red-600 hover:bg-red-700">
         <Trash2 className="w-4 h-4 mr-2" />
         Delete
       </AlertDialogAction>
@@ -587,6 +612,7 @@ toast.promise(
 ```
 
 **Add to:**
+
 - Delete package
 - Delete add-on
 - Delete tenant
@@ -598,6 +624,7 @@ toast.promise(
 **Upgrade**: `client/src/pages/success/Success.tsx`
 
 **Add Animations:**
+
 ```tsx
 import confetti from 'canvas-confetti';
 
@@ -606,36 +633,30 @@ useEffect(() => {
   confetti({
     particleCount: 100,
     spread: 70,
-    origin: { y: 0.6 }
+    origin: { y: 0.6 },
   });
 }, []);
 
 // UI
 <div className="text-center">
   <div className="relative inline-block">
-    <CheckCircle
-      className={cn(
-        "w-24 h-24 text-green-500",
-        "animate-in zoom-in duration-700"
-      )}
-    />
+    <CheckCircle className={cn('w-24 h-24 text-green-500', 'animate-in zoom-in duration-700')} />
   </div>
 
-  <h1 className={cn(
-    "text-4xl font-bold mt-6",
-    "animate-in fade-in slide-in-from-bottom-4",
-    "delay-200"
-  )}>
+  <h1
+    className={cn(
+      'text-4xl font-bold mt-6',
+      'animate-in fade-in slide-in-from-bottom-4',
+      'delay-200'
+    )}
+  >
     Booking Confirmed!
   </h1>
 
-  <p className={cn(
-    "text-lg text-gray-600 mt-2",
-    "animate-in fade-in delay-300"
-  )}>
+  <p className={cn('text-lg text-gray-600 mt-2', 'animate-in fade-in delay-300')}>
     We've sent a confirmation to {email}
   </p>
-</div>
+</div>;
 ```
 
 **Alternative**: Use `react-confetti` or CSS-only animations
@@ -653,6 +674,7 @@ useEffect(() => {
 **Create**: `client/src/components/ui/tooltip.tsx`
 
 **Usage:**
+
 ```tsx
 <Tooltip>
   <TooltipTrigger>
@@ -665,6 +687,7 @@ useEffect(() => {
 ```
 
 **Add to:**
+
 - Commission percentage fields
 - Complex form fields
 - Icon-only buttons
@@ -676,6 +699,7 @@ useEffect(() => {
 **Upgrade**: All form inputs with react-hook-form
 
 **Pattern:**
+
 ```tsx
 <Input
   {...register('email', {
@@ -692,6 +716,7 @@ useEffect(() => {
 ```
 
 **Features:**
+
 - Real-time validation
 - Visual feedback (red border for error, green for success)
 - Icon changes based on state
@@ -702,19 +727,21 @@ useEffect(() => {
 **Upgrade**: `client/src/components/ui/button.tsx`
 
 **Add Loading Variant:**
+
 ```tsx
 // button.tsx
-{isLoading && (
-  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-)}
+{
+  isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />;
+}
 
 // Usage
 <Button isLoading={isSubmitting} disabled={isSubmitting}>
   {isSubmitting ? 'Creating...' : 'Create Package'}
-</Button>
+</Button>;
 ```
 
 **Apply to:**
+
 - All form submit buttons
 - Delete buttons
 - API action buttons
@@ -727,9 +754,7 @@ useEffect(() => {
 
 ```tsx
 <PageTransition>
-  <Routes>
-    {/* All routes */}
-  </Routes>
+  <Routes>{/* All routes */}</Routes>
 </PageTransition>
 ```
 
@@ -752,6 +777,7 @@ npm install recharts
 **Create**: `client/src/components/charts/`
 
 **Components:**
+
 - `LineChart.tsx` - Booking trends over time
 - `BarChart.tsx` - Revenue by package
 - `PieChart.tsx` - Booking status distribution
@@ -763,6 +789,7 @@ npm install recharts
 **Upgrade**: `client/src/features/photos/PhotoUploader.tsx`
 
 **Features:**
+
 - Drag-and-drop reordering (use `dnd-kit`)
 - Lightbox view on click (use `yet-another-react-lightbox`)
 - Upload progress bars
@@ -776,6 +803,7 @@ npm install recharts
 **Create**: `client/src/components/ui/command-palette.tsx`
 
 **Features:**
+
 - Cmd+K / Ctrl+K to open
 - Search packages, bookings, customers
 - Quick navigation
@@ -788,6 +816,7 @@ npm install recharts
 **Upgrade**: All admin tables
 
 **Add:**
+
 - Column sorting
 - Column filtering
 - Search across all columns
@@ -884,30 +913,33 @@ client/src/
 
 ### Before → After
 
-| Component | Before | After | Improvement |
-|-----------|--------|-------|-------------|
-| **Overall UI Maturity** | 6.5/10 | 9/10 | +2.5 |
-| Modal/Dialog | 3/10 | 9/10 | +6 |
-| Booking Flow | 5/10 | 9/10 | +4 |
-| Admin Interfaces | 5.5/10 | 8.5/10 | +3 |
-| Form Components | 6/10 | 9/10 | +3 |
-| Micro-interactions | 4/10 | 8.5/10 | +4.5 |
-| Theme Consistency | 4/10 | 9/10 | +5 |
-| Loading States | 2/10 | 9/10 | +7 |
+| Component               | Before | After  | Improvement |
+| ----------------------- | ------ | ------ | ----------- |
+| **Overall UI Maturity** | 6.5/10 | 9/10   | +2.5        |
+| Modal/Dialog            | 3/10   | 9/10   | +6          |
+| Booking Flow            | 5/10   | 9/10   | +4          |
+| Admin Interfaces        | 5.5/10 | 8.5/10 | +3          |
+| Form Components         | 6/10   | 9/10   | +3          |
+| Micro-interactions      | 4/10   | 8.5/10 | +4.5        |
+| Theme Consistency       | 4/10   | 9/10   | +5          |
+| Loading States          | 2/10   | 9/10   | +7          |
 
 ### User Experience Improvements
 
 **Customer (Wedding Couple):**
+
 - Clear progress through booking flow (+40% completion rate expected)
 - Professional, trustworthy interface (+30% conversion)
 - Smooth animations make experience delightful
 
 **Tenant Admin:**
+
 - Faster task completion with better visual hierarchy (-30% time on task)
 - Reduced errors with better form validation (-50% form errors)
 - Professional interface increases confidence in platform
 
 **Platform Admin:**
+
 - Quicker navigation with color-coded sections (-25% time to find)
 - Better data visibility with charts and filters
 - Professional appearance for demos/sales
@@ -917,6 +949,7 @@ client/src/
 ## Implementation Timeline
 
 ### Sprint 1 (Week 1-2): Foundation
+
 - [ ] Define theme zones (light vs dark)
 - [ ] Create/upgrade Dialog component
 - [ ] Add color-coded card variants
@@ -925,6 +958,7 @@ client/src/
 **Deliverable**: Theme consistency established, professional modals
 
 ### Sprint 2 (Week 3-4): Booking Flow
+
 - [ ] Custom DatePicker styling
 - [ ] Card-based add-on selection
 - [ ] Progress indicator component
@@ -933,6 +967,7 @@ client/src/
 **Deliverable**: Professional, branded booking flow
 
 ### Sprint 3 (Week 5-6): Admin Polish
+
 - [ ] Professional tab navigation
 - [ ] Loading skeleton components
 - [ ] Empty state components
@@ -941,6 +976,7 @@ client/src/
 **Deliverable**: Polished admin interfaces
 
 ### Sprint 4 (Week 7-8): Micro-interactions
+
 - [ ] Hover tooltips
 - [ ] Form validation feedback
 - [ ] Button loading states
@@ -949,6 +985,7 @@ client/src/
 **Deliverable**: Delightful micro-interactions throughout
 
 ### Sprint 5 (Week 9-12): Advanced (Optional)
+
 - [ ] Dashboard charts
 - [ ] Photo gallery enhancements
 - [ ] Command palette
@@ -986,6 +1023,7 @@ npm install @tanstack/react-table    # Advanced tables
 After each phase, verify:
 
 ### Visual Testing
+
 - [ ] All breakpoints (mobile, tablet, desktop)
 - [ ] Light and dark themes
 - [ ] Hover states
@@ -995,6 +1033,7 @@ After each phase, verify:
 - [ ] Error states
 
 ### Interaction Testing
+
 - [ ] Animations are smooth (60fps)
 - [ ] Transitions are not jarring
 - [ ] Buttons provide feedback
@@ -1003,6 +1042,7 @@ After each phase, verify:
 - [ ] Modals open/close smoothly
 
 ### Accessibility Testing
+
 - [ ] Keyboard navigation works
 - [ ] Screen reader support (ARIA labels)
 - [ ] Color contrast meets WCAG AA
@@ -1010,6 +1050,7 @@ After each phase, verify:
 - [ ] Touch targets ≥44px
 
 ### Performance Testing
+
 - [ ] Page load times <2s
 - [ ] Smooth scrolling
 - [ ] No layout shifts (CLS)
@@ -1020,6 +1061,7 @@ After each phase, verify:
 ## Notes & Considerations
 
 ### Browser Support
+
 - Chrome/Edge (latest 2 versions)
 - Firefox (latest 2 versions)
 - Safari (latest 2 versions)
@@ -1027,12 +1069,14 @@ After each phase, verify:
 - Mobile Chrome (Android 11+)
 
 ### Performance Budget
+
 - First Contentful Paint (FCP): <1.8s
 - Largest Contentful Paint (LCP): <2.5s
 - Cumulative Layout Shift (CLS): <0.1
 - First Input Delay (FID): <100ms
 
 ### Accessibility Goals
+
 - WCAG 2.1 Level AA compliance
 - Keyboard navigation for all interactions
 - Screen reader compatibility
@@ -1046,6 +1090,7 @@ After each phase, verify:
 This comprehensive plan transforms MAIS from a functional platform (6.5/10) to a polished, professional wedding booking experience (9/10). The phased approach allows for incremental improvements while maintaining a stable application.
 
 **Key Success Factors:**
+
 1. Consistent theme strategy (light for customers, dark for admin)
 2. Professional component library (modals, inputs, cards)
 3. Rich micro-interactions (animations, feedback, loading states)

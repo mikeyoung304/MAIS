@@ -25,7 +25,7 @@ export class TenantController {
 
     // Colors come from dedicated database columns
     // fontFamily and logo still come from branding JSON
-    const branding = tenant.branding as any || {};
+    const branding = (tenant.branding as any) || {};
 
     return {
       primaryColor: tenant.primaryColor,

@@ -3,6 +3,7 @@
 ## Overview
 
 Implement URL-based tenant routing so end customers can access tenant storefronts via:
+
 - **Path-based:** `maconaisolutions.com/t/little-bit-farm` (MVP)
 - **Custom domains:** `little-bit-farm.com` (future - deferred)
 
@@ -11,6 +12,7 @@ The storefront serves as both landing page and booking flow, creating a white-la
 ## Problem Statement
 
 Currently, there's no way for end customers to view a tenant's storefront. The existing routes:
+
 - `/storefront` - requires `X-Tenant-Key` header (not URL-accessible)
 - `/s/:slug` - segment slug, not tenant slug
 - `/tiers` - no tenant context
@@ -73,15 +75,17 @@ export const TenantPublicDtoSchema = z.object({
   id: z.string().uuid(),
   slug: z.string(),
   name: z.string(),
-  apiKeyPublic: z.string(),  // Needed to set X-Tenant-Key for subsequent API calls
-  branding: z.object({
-    primaryColor: z.string().optional(),
-    secondaryColor: z.string().optional(),
-    accentColor: z.string().optional(),
-    backgroundColor: z.string().optional(),
-    fontFamily: z.string().optional(),
-    logoUrl: z.string().optional(),
-  }).optional(),
+  apiKeyPublic: z.string(), // Needed to set X-Tenant-Key for subsequent API calls
+  branding: z
+    .object({
+      primaryColor: z.string().optional(),
+      secondaryColor: z.string().optional(),
+      accentColor: z.string().optional(),
+      backgroundColor: z.string().optional(),
+      fontFamily: z.string().optional(),
+      logoUrl: z.string().optional(),
+    })
+    .optional(),
 });
 
 // SECURITY: Never expose in TenantPublicDto:
@@ -292,15 +296,17 @@ const TenantStorefrontLayout = lazy(() =>
 ### 1. TenantPublicDto Field Allowlist (BLOCKING)
 
 **NEVER expose in public endpoint:**
-- `apiKeySecret` (sk_live_*) - Would allow write operations
+
+- `apiKeySecret` (sk*live*\*) - Would allow write operations
 - `stripeAccountId` - Financial data
 - `encryptedSecrets` - Internal secrets
 - `email`, `adminEmail` - PII
 - `commissionPercent` - Business sensitive
 
 **SAFE to expose:**
+
 - `id`, `slug`, `name` - Public identifiers
-- `apiKeyPublic` (pk_live_*) - Read-only API key
+- `apiKeyPublic` (pk*live*\*) - Read-only API key
 - `branding` - Visual customization only
 
 ### 2. Rate Limiting on Tenant Lookup
@@ -338,6 +344,7 @@ logger.info({ tenantId: tenant.id, slug: tenant.slug }, 'Public tenant lookup');
 ### 5. DNS Rebinding Protection (Future - for custom domains)
 
 When implementing custom domains:
+
 - Validate Host header against allowlist
 - Use strict CORS for API endpoints
 - Validate domain ownership before allowing custom domain
@@ -370,19 +377,19 @@ When implementing custom domains:
 
 ### New Files
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `client/src/app/TenantStorefrontLayout.tsx` | ~80 | Layout with tenant resolution |
-| `server/src/routes/public.routes.ts` | ~40 | Public tenant lookup endpoint |
+| File                                        | Lines | Purpose                       |
+| ------------------------------------------- | ----- | ----------------------------- |
+| `client/src/app/TenantStorefrontLayout.tsx` | ~80   | Layout with tenant resolution |
+| `server/src/routes/public.routes.ts`        | ~40   | Public tenant lookup endpoint |
 
 ### Modified Files
 
-| File | Changes |
-|------|---------|
-| `client/src/router.tsx` | Add `/t/:tenantSlug/*` routes (~15 lines) |
-| `packages/contracts/src/api.v1.ts` | Add `getTenantPublic` contract (~10 lines) |
-| `packages/contracts/src/dto.ts` | Add `TenantPublicDtoSchema` (~15 lines) |
-| `server/src/routes/index.ts` | Mount public routes + rate limiter (~5 lines) |
+| File                               | Changes                                       |
+| ---------------------------------- | --------------------------------------------- |
+| `client/src/router.tsx`            | Add `/t/:tenantSlug/*` routes (~15 lines)     |
+| `packages/contracts/src/api.v1.ts` | Add `getTenantPublic` contract (~10 lines)    |
+| `packages/contracts/src/dto.ts`    | Add `TenantPublicDtoSchema` (~15 lines)       |
+| `server/src/routes/index.ts`       | Mount public routes + rate limiter (~5 lines) |
 
 **Total new code:** ~165 lines
 
@@ -402,15 +409,18 @@ When implementing custom domains:
 ## Testing Strategy
 
 ### Unit Tests
+
 - `TenantStorefrontLayout` renders loading, error, and success states
 - API key is set/cleared correctly on mount/unmount
 
 ### Integration Tests
+
 - `GET /v1/public/tenants/:slug` returns correct fields
 - Invalid slug returns 404
 - Rate limiting blocks excessive requests
 
 ### E2E Tests
+
 - Full journey: `/t/slug` → segment → tier → booking
 - Invalid tenant slug shows error page
 - Branding colors applied correctly
@@ -419,26 +429,28 @@ When implementing custom domains:
 
 ## Estimated Effort
 
-| Task | Time |
-|------|------|
-| Backend endpoint + contract | 30 min |
-| TenantStorefrontLayout | 30 min |
-| Router updates | 15 min |
-| Rate limiting | 10 min |
-| Testing | 30 min |
-| **Total** | **~2 hours** |
+| Task                        | Time         |
+| --------------------------- | ------------ |
+| Backend endpoint + contract | 30 min       |
+| TenantStorefrontLayout      | 30 min       |
+| Router updates              | 15 min       |
+| Rate limiting               | 10 min       |
+| Testing                     | 30 min       |
+| **Total**                   | **~2 hours** |
 
 ---
 
 ## Review Feedback Summary
 
 ### DHH-style Reviewer
+
 - ✅ Simplified from 11 hours to ~2 hours
 - ✅ Removed unnecessary TenantStorefrontContext (useBranding pattern reused)
 - ✅ Removed separate header/footer components (inline in layout)
 - ✅ Deferred custom domains and landing customization
 
 ### Security Reviewer
+
 - ✅ Explicit TenantPublicDto allowlist defined
 - ✅ Rate limiting on public endpoint
 - ✅ Cache key isolation documented
@@ -446,6 +458,7 @@ When implementing custom domains:
 - ⏸️ DNS rebinding - deferred to custom domains phase
 
 ### Code Simplicity Reviewer
+
 - ✅ Single new component (~80 lines)
 - ✅ Reuses existing StorefrontHome, SegmentTiers, etc.
 - ✅ No new context needed
@@ -456,10 +469,12 @@ When implementing custom domains:
 ## References
 
 ### Internal
+
 - `client/src/router.tsx` - Current routing structure
 - `client/src/hooks/useBranding.ts` - Existing branding hook (pattern reference)
 - `server/src/middleware/tenant.ts` - Existing tenant resolution
 - `client/src/lib/api.ts` - API client with `setTenantKey()`
 
 ### External
+
 - [React Router Nested Routes](https://reactrouter.com/en/main/start/tutorial#nested-routes)

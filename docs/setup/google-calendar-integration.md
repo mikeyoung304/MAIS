@@ -102,26 +102,19 @@ export class TimeSlotBookingService {
 
     // 2. Sync to Google Calendar (one-way)
     // This is OPTIONAL and gracefully degrades if calendar not configured
-    const calendarResult = await this.googleCalendarService.createAppointmentEvent(
-      tenantId,
-      {
-        id: booking.id,
-        serviceName: input.serviceName,
-        clientName: input.clientName,
-        clientEmail: input.clientEmail,
-        startTime: input.startTime,
-        endTime: input.endTime,
-        notes: input.notes,
-      }
-    );
+    const calendarResult = await this.googleCalendarService.createAppointmentEvent(tenantId, {
+      id: booking.id,
+      serviceName: input.serviceName,
+      clientName: input.clientName,
+      clientEmail: input.clientEmail,
+      startTime: input.startTime,
+      endTime: input.endTime,
+      notes: input.notes,
+    });
 
     // 3. Store Google event ID for future cancellation
     if (calendarResult) {
-      await this.bookingRepo.updateGoogleEventId(
-        tenantId,
-        booking.id,
-        calendarResult.eventId
-      );
+      await this.bookingRepo.updateGoogleEventId(tenantId, booking.id, calendarResult.eventId);
 
       logger.info(
         {
@@ -145,10 +138,7 @@ export class TimeSlotBookingService {
   /**
    * Cancel a booking and remove from Google Calendar
    */
-  async cancelBooking(
-    tenantId: string,
-    bookingId: string
-  ): Promise<void> {
+  async cancelBooking(tenantId: string, bookingId: string): Promise<void> {
     // 1. Get booking to retrieve Google event ID
     const booking = await this.bookingRepo.findById(tenantId, bookingId);
     if (!booking) {
@@ -205,25 +195,18 @@ eventEmitter.emit('AppointmentBooked', {
 
 // In your DI container (di.ts)
 eventEmitter.subscribe('AppointmentBooked', async (payload) => {
-  const result = await googleCalendarService.createAppointmentEvent(
-    payload.tenantId,
-    {
-      id: payload.bookingId,
-      serviceName: payload.serviceName,
-      clientName: payload.clientName,
-      clientEmail: payload.clientEmail,
-      startTime: payload.startTime,
-      endTime: payload.endTime,
-      notes: payload.notes,
-    }
-  );
+  const result = await googleCalendarService.createAppointmentEvent(payload.tenantId, {
+    id: payload.bookingId,
+    serviceName: payload.serviceName,
+    clientName: payload.clientName,
+    clientEmail: payload.clientEmail,
+    startTime: payload.startTime,
+    endTime: payload.endTime,
+    notes: payload.notes,
+  });
 
   if (result) {
-    await bookingRepo.updateGoogleEventId(
-      payload.tenantId,
-      payload.bookingId,
-      result.eventId
-    );
+    await bookingRepo.updateGoogleEventId(payload.tenantId, payload.bookingId, result.eventId);
   }
 });
 ```

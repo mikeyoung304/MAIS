@@ -15,10 +15,7 @@ import {
   buildPackage,
 } from '../helpers/fakes';
 import { BookingService } from '../../src/services/booking.service';
-import {
-  WebhookDuplicateError,
-  WebhookValidationError
-} from '../../src/lib/errors';
+import { WebhookDuplicateError, WebhookValidationError } from '../../src/lib/errors';
 import type Stripe from 'stripe';
 
 describe('WebhooksController', () => {
@@ -41,7 +38,9 @@ describe('WebhooksController', () => {
 
     // Create simple mocks for multi-tenancy dependencies
     commissionService = {
-      calculateCommission: vi.fn().mockReturnValue({ platformFeeCents: 500, vendorPayoutCents: 99500 }),
+      calculateCommission: vi
+        .fn()
+        .mockReturnValue({ platformFeeCents: 500, vendorPayoutCents: 99500 }),
       calculateBookingTotal: vi.fn().mockResolvedValue({
         basePrice: 100000,
         addOnsTotal: 0,
@@ -50,8 +49,8 @@ describe('WebhooksController', () => {
         vendorPayoutCents: 95000,
         customerTotalCents: 100000,
         commissionAmount: 5000,
-        commissionPercent: 5.0
-      })
+        commissionPercent: 5.0,
+      }),
     };
 
     tenantRepo = {
@@ -59,11 +58,18 @@ describe('WebhooksController', () => {
         id: 'test-tenant',
         stripeAccountId: 'acct_test123',
         stripeOnboarded: true,
-        name: 'Test Tenant'
-      })
+        name: 'Test Tenant',
+      }),
     };
 
-    bookingService = new BookingService(bookingRepo, catalogRepo, eventEmitter, paymentProvider, commissionService, tenantRepo);
+    bookingService = new BookingService(
+      bookingRepo,
+      catalogRepo,
+      eventEmitter,
+      paymentProvider,
+      commissionService,
+      tenantRepo
+    );
     controller = new WebhooksController(paymentProvider, bookingService, webhookRepo);
   });
 
@@ -175,13 +181,13 @@ describe('WebhooksController', () => {
       const rawBody = JSON.stringify({ id: 'evt_test', type: 'checkout.session.completed' });
 
       // Act & Assert
-      await expect(
-        controller.handleStripeWebhook(rawBody, 'invalid_signature')
-      ).rejects.toThrow(WebhookValidationError);
+      await expect(controller.handleStripeWebhook(rawBody, 'invalid_signature')).rejects.toThrow(
+        WebhookValidationError
+      );
 
-      await expect(
-        controller.handleStripeWebhook(rawBody, 'invalid_signature')
-      ).rejects.toThrow('Invalid webhook signature');
+      await expect(controller.handleStripeWebhook(rawBody, 'invalid_signature')).rejects.toThrow(
+        'Invalid webhook signature'
+      );
     });
 
     it('should handle malformed metadata gracefully', async () => {
@@ -212,9 +218,9 @@ describe('WebhooksController', () => {
       const rawBody = JSON.stringify(stripeEvent);
 
       // Act & Assert: Should throw validation error
-      await expect(
-        controller.handleStripeWebhook(rawBody, 'valid_signature')
-      ).rejects.toThrow(WebhookValidationError);
+      await expect(controller.handleStripeWebhook(rawBody, 'valid_signature')).rejects.toThrow(
+        WebhookValidationError
+      );
 
       // Webhook should be recorded but marked as FAILED (validation error)
       expect(webhookRepo.events.length).toBe(1);
@@ -260,9 +266,9 @@ describe('WebhooksController', () => {
       const rawBody = JSON.stringify(stripeEvent);
 
       // Act & Assert: Should throw WebhookProcessingError
-      await expect(
-        controller.handleStripeWebhook(rawBody, 'valid_signature')
-      ).rejects.toThrow('Webhook processing failed');
+      await expect(controller.handleStripeWebhook(rawBody, 'valid_signature')).rejects.toThrow(
+        'Webhook processing failed'
+      );
 
       // Webhook should be marked as failed
       expect(webhookRepo.events.length).toBe(1);
@@ -301,13 +307,17 @@ describe('WebhooksController', () => {
 
     it('should process webhook with add-ons correctly', async () => {
       // Arrange
-      const pkg = buildPackage({ id: 'pkg_addon_test', slug: 'pkg_addon_test', priceCents: 100000 });
+      const pkg = buildPackage({
+        id: 'pkg_addon_test',
+        slug: 'pkg_addon_test',
+        priceCents: 100000,
+      });
       catalogRepo.addPackage(pkg);
       catalogRepo.addAddOn({
         id: 'addon_1',
         packageId: 'pkg_addon_test',
         title: 'Extra Hour',
-        priceCents: 20000
+        priceCents: 20000,
       });
 
       const stripeEvent: Stripe.Event = {
@@ -350,7 +360,12 @@ describe('WebhooksController', () => {
 
     it('should emit BookingPaid event after successful processing', async () => {
       // Arrange
-      const pkg = buildPackage({ id: 'pkg_event_test', slug: 'pkg_event_test', priceCents: 100000, title: 'Basic Package' });
+      const pkg = buildPackage({
+        id: 'pkg_event_test',
+        slug: 'pkg_event_test',
+        priceCents: 100000,
+        title: 'Basic Package',
+      });
       catalogRepo.addPackage(pkg);
 
       const stripeEvent: Stripe.Event = {

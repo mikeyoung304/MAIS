@@ -13,6 +13,7 @@ This document outlines the tactical execution plan for completing Phase 5: Self-
 ## Current Status (Nov 7, 2024, End of Day)
 
 ### Completed Today ✅
+
 - **Phase 5.1 Backend:** Package photo upload API (35 minutes of focused work)
 - **Documentation:** Comprehensive roadmap and implementation specs
 - **Database:** Photos JSON column added to Package model
@@ -21,6 +22,7 @@ This document outlines the tactical execution plan for completing Phase 5: Self-
 - **Commits:** 2 commits (docs + backend implementation)
 
 ### Today's Commit Details
+
 ```
 feat(phase-5.1): Implement package photo upload backend
 
@@ -42,6 +44,7 @@ Stats: +243 lines, -23 lines
 ```
 
 ### Metrics
+
 - **Maturity Score:** 6.5/10 (up from 6/10)
 - **Phase 5 Progress:** 17% complete (1 of 6 components)
 - **Development Velocity:** High (backend feature in 35 min)
@@ -50,12 +53,14 @@ Stats: +243 lines, -23 lines
 ### What's Left to Complete Phase 5
 
 **Feature 5.1: Package Photo Upload (50% complete)**
+
 - [x] Backend API (completed today)
 - [ ] Frontend component with drag-and-drop
 - [ ] Dashboard integration
 - [ ] Manual testing and polish
 
 **Feature 5.2: Add-On Management (0% complete)**
+
 - [ ] Backend API endpoints (4 CRUD routes)
 - [ ] Frontend manager component
 - [ ] Form validation
@@ -63,6 +68,7 @@ Stats: +243 lines, -23 lines
 - [ ] Manual testing
 
 **Feature 5.3: Email Template Customization (0% complete)**
+
 - [ ] Database model and migration
 - [ ] Template service layer
 - [ ] Default templates (3 types)
@@ -84,11 +90,13 @@ Stats: +243 lines, -23 lines
 Launch 3 agents simultaneously to work on independent pieces:
 
 #### Agent 1: Package Photo Component Builder
+
 **Type:** general-purpose
 **Task:** Create PackagePhotoUploader.tsx component
 **Deliverable:** Complete drag-and-drop photo uploader
 
 **Instructions:**
+
 ```
 Create /Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/PackagePhotoUploader.tsx
 
@@ -125,6 +133,7 @@ Requirements:
 **Location:** `/Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/PackagePhotoUploader.tsx`
 
 **Success Criteria:**
+
 - [x] Component renders without errors
 - [x] Drag-and-drop accepts image files
 - [x] Upload triggers API call with FormData
@@ -138,11 +147,13 @@ Requirements:
 ---
 
 #### Agent 2: API Client Integration
+
 **Type:** general-purpose
 **Task:** Add package photo methods to client API helper
 **Deliverable:** TypeScript API client methods
 
 **Instructions:**
+
 ```
 Add to /Users/mikeyoung/CODING/Elope/client/src/lib/api.ts (or create if doesn't exist)
 
@@ -190,6 +201,7 @@ Export both methods.
 **Location:** `/Users/mikeyoung/CODING/Elope/client/src/lib/api.ts`
 
 **Success Criteria:**
+
 - [x] Methods compile without TypeScript errors
 - [x] Proper error handling
 - [x] FormData construction correct
@@ -200,11 +212,13 @@ Export both methods.
 ---
 
 #### Agent 3: Dashboard Integration Prep
+
 **Type:** general-purpose
 **Task:** Locate and understand TenantPackagesManager component for integration
 **Deliverable:** Integration plan and component location
 
 **Instructions:**
+
 ```
 1. Find TenantPackagesManager component (likely in /Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/)
 2. Read the component to understand:
@@ -223,6 +237,7 @@ Output a markdown comment block at the top of the integration plan.
 **Location:** Research task (no file creation)
 
 **Success Criteria:**
+
 - [x] TenantPackagesManager component located
 - [x] Integration point identified
 - [x] Props mapping documented
@@ -232,6 +247,7 @@ Output a markdown comment block at the top of the integration plan.
 ---
 
 **Sequential Dependency Chain:**
+
 ```
 Agent 1 (Component) ──┐
                       ├──> Agent 4 (Integration)
@@ -243,11 +259,13 @@ Agent 3 (Research) ───┘
 After Agents 1-3 complete, launch:
 
 #### Agent 4: Wire Up Integration
+
 **Type:** general-purpose
 **Task:** Integrate PackagePhotoUploader into TenantPackagesManager
 **Deliverable:** Working photo upload in package editor
 
 **Instructions:**
+
 ```
 Based on Agent 3's research:
 
@@ -270,6 +288,7 @@ Test:
 ```
 
 **Success Criteria:**
+
 - [x] Photo uploader appears in edit package UI
 - [x] Upload works end-to-end
 - [x] Delete works end-to-end
@@ -282,6 +301,7 @@ Test:
 **Total Day 1 Time:** 4 hours (2 hours if agents run in parallel)
 
 **Manual Testing Checklist (End of Day 1):**
+
 ```bash
 # Start both servers
 cd /Users/mikeyoung/CODING/Elope/server && npm run dev
@@ -306,6 +326,7 @@ cd /Users/mikeyoung/CODING/Elope/client && npm run dev
 ```
 
 **Blockers & Solutions:**
+
 - **Blocker:** React dependencies not installed
   **Solution:** `npm install react-dropzone react-beautiful-dnd @types/react-beautiful-dnd`
 
@@ -324,11 +345,13 @@ cd /Users/mikeyoung/CODING/Elope/client && npm run dev
 **Single Agent Execution:**
 
 #### Agent: QA & Polish Specialist
+
 **Type:** general-purpose
 **Task:** Polish UI, add loading states, test edge cases
 **Deliverable:** Production-ready photo upload feature
 
 **Instructions:**
+
 ```
 Polish tasks:
 
@@ -368,6 +391,7 @@ Polish tasks:
 **Estimated Time:** 2-3 hours
 
 **Manual Testing Checklist:**
+
 - [ ] Upload valid image (JPG, PNG, WebP) - success
 - [ ] Upload oversized image (>5MB) - error shown
 - [ ] Upload non-image file (PDF, TXT) - error shown
@@ -379,6 +403,7 @@ Polish tasks:
 - [ ] Refresh page after upload - photos still there
 
 **Edge Cases to Test:**
+
 - [ ] Rapid consecutive uploads (5 photos quickly) - all succeed
 - [ ] Network error during upload - error shown, retry works
 - [ ] Delete photo that doesn't exist - graceful error
@@ -447,17 +472,20 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 **Purpose:** Catch up if Days 1-2 took longer, or get ahead on Add-On Management
 
 **If ahead of schedule:**
+
 - Start researching Add-On Management requirements
 - Read existing AddOn model in schema.prisma
 - Check if CatalogService already has add-on methods
 - Draft component wireframes for TenantAddOnsManager
 
 **If behind schedule:**
+
 - Finish photo upload feature
 - Fix any bugs found in testing
 - Improve documentation
 
 **If on schedule:**
+
 - Update PHASE_5_IMPLEMENTATION_SPEC.md with completion notes
 - Update MULTI_TENANT_ROADMAP.md progress tracker
 - Write user-facing documentation for photo upload feature
@@ -476,11 +504,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 Launch 3 agents simultaneously:
 
 #### Agent 1: Add-On Database Review
+
 **Type:** general-purpose
 **Task:** Review AddOn model and plan any schema changes
 **Deliverable:** Migration plan (if needed)
 
 **Instructions:**
+
 ```
 1. Read /Users/mikeyoung/CODING/Elope/server/prisma/schema.prisma
 2. Find AddOn model (should already exist)
@@ -502,11 +532,13 @@ Launch 3 agents simultaneously:
 ---
 
 #### Agent 2: Add-On Validation Schemas
+
 **Type:** general-purpose
 **Task:** Create Zod validation schemas for add-on CRUD
 **Deliverable:** Validation exports in tenant-admin.schemas.ts
 
 **Instructions:**
+
 ```
 Add to /Users/mikeyoung/CODING/Elope/server/src/validation/tenant-admin.schemas.ts
 
@@ -562,6 +594,7 @@ Export both schemas.
 **Location:** `/Users/mikeyoung/CODING/Elope/server/src/validation/tenant-admin.schemas.ts`
 
 **Success Criteria:**
+
 - [x] Schemas compile without TypeScript errors
 - [x] Validation rules enforce constraints
 - [x] Error messages are clear
@@ -571,11 +604,13 @@ Export both schemas.
 ---
 
 #### Agent 3: Add-On Service Layer Methods
+
 **Type:** general-purpose
 **Task:** Check if CatalogService has add-on methods, extend if needed
 **Deliverable:** Service methods for add-on CRUD
 
 **Instructions:**
+
 ```
 1. Read /Users/mikeyoung/CODING/Elope/server/src/services/catalog.service.ts
 2. Check if these methods exist:
@@ -686,6 +721,7 @@ async deleteAddOn(tenantId: string, addOnId: string): Promise<void> {
 **Location:** `/Users/mikeyoung/CODING/Elope/server/src/services/catalog.service.ts`
 
 **Success Criteria:**
+
 - [x] All CRUD methods implemented
 - [x] Tenant scoping enforced (WHERE tenantId)
 - [x] Ownership verification on update/delete
@@ -699,11 +735,13 @@ async deleteAddOn(tenantId: string, addOnId: string): Promise<void> {
 **Sequential Agent (after parallel agents complete):**
 
 #### Agent 4: Add-On API Routes
+
 **Type:** general-purpose
 **Task:** Add 4 CRUD endpoints to tenant-admin routes
 **Deliverable:** Working API endpoints
 
 **Instructions:**
+
 ```
 Add to /Users/mikeyoung/CODING/Elope/server/src/routes/tenant-admin.routes.ts
 
@@ -849,6 +887,7 @@ import { createAddOnSchema, updateAddOnSchema } from '../validation/tenant-admin
 ```
 
 **Success Criteria:**
+
 - [x] 4 endpoints compile without errors
 - [x] Validation schemas applied
 - [x] Tenant auth checked on all routes
@@ -930,11 +969,13 @@ curl http://localhost:3001/v1/tenant-admin/add-ons?isActive=false \
 Launch 2 agents simultaneously:
 
 #### Agent 1: Add-On Manager Component
+
 **Type:** general-purpose
 **Task:** Create TenantAddOnsManager.tsx main UI
 **Deliverable:** Full CRUD interface
 
 **Instructions:**
+
 ```
 Create /Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/TenantAddOnsManager.tsx
 
@@ -986,6 +1027,7 @@ API client methods (add to api.ts):
 **Location:** `/Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/TenantAddOnsManager.tsx`
 
 **Success Criteria:**
+
 - [x] Component renders add-on grid
 - [x] Create button opens modal
 - [x] Edit button opens modal with data
@@ -998,11 +1040,13 @@ API client methods (add to api.ts):
 ---
 
 #### Agent 2: Add-On Form Component
+
 **Type:** general-purpose
 **Task:** Create AddOnForm.tsx reusable form
 **Deliverable:** Form for create/edit operations
 
 **Instructions:**
+
 ```
 Create /Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/AddOnForm.tsx
 
@@ -1054,6 +1098,7 @@ Requirements:
 **Location:** `/Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/AddOnForm.tsx`
 
 **Success Criteria:**
+
 - [x] Form validates all fields
 - [x] Pre-fills data when editing
 - [x] Converts price dollars ↔ cents correctly
@@ -1067,11 +1112,13 @@ Requirements:
 **Sequential Agent (after Agents 1-2 complete):**
 
 #### Agent 3: Dashboard Integration
+
 **Type:** general-purpose
 **Task:** Add Add-Ons tab to TenantDashboard
 **Deliverable:** Integrated add-on manager in dashboard
 
 **Instructions:**
+
 ```
 Find /Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/TenantDashboard.tsx
 
@@ -1106,6 +1153,7 @@ Example tab structure:
 ```
 
 **Success Criteria:**
+
 - [x] Add-Ons tab appears in dashboard
 - [x] Clicking tab shows TenantAddOnsManager
 - [x] Tab styling matches other tabs
@@ -1154,14 +1202,17 @@ Example tab structure:
 **Features to implement:**
 
 #### Feature 1: Associate Add-Ons with Packages
+
 **Why:** Add-ons should be tied to specific packages (e.g., "Photo Album" add-on only available with "Full Day Wedding" package)
 
 **Backend:**
+
 - Already exists: PackageAddOn junction table
 - Endpoint: PUT /v1/tenant-admin/packages/:id/add-ons
 - Body: { addOnIds: ['addon1', 'addon2'] }
 
 **Frontend:**
+
 - Add multi-select in package form
 - Show associated add-ons in package card
 - Allow editing associations
@@ -1171,13 +1222,16 @@ Example tab structure:
 ---
 
 #### Feature 2: Bulk Operations
+
 **Why:** Enable/disable multiple add-ons at once (e.g., seasonal add-ons)
 
 **Backend:**
+
 - Endpoint: PUT /v1/tenant-admin/add-ons/bulk
 - Body: { addOnIds: ['id1', 'id2'], isActive: false }
 
 **Frontend:**
+
 - Checkboxes on add-on cards
 - "Bulk Actions" dropdown (Enable Selected, Disable Selected)
 - Select All / Deselect All
@@ -1187,9 +1241,11 @@ Example tab structure:
 ---
 
 #### Feature 3: Add-On Display in Booking Widget
+
 **Why:** Customers need to see add-ons when booking
 
 **Frontend (Widget):**
+
 - Fetch add-ons for selected package
 - Display as checkboxes in booking flow
 - Add to cart with price calculation
@@ -1247,12 +1303,14 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 **Purpose:** Catch up, polish, documentation
 
 **Tasks if ahead:**
+
 - Write add-on management user guide
 - Record demo video
 - Update API documentation
 - Start researching email template requirements
 
 **Tasks if behind:**
+
 - Finish add-on features
 - Fix bugs
 - Complete manual testing
@@ -1270,11 +1328,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 Launch 4 agents simultaneously:
 
 #### Agent 1: Email Template Database Model
+
 **Type:** general-purpose
 **Task:** Create EmailTemplate Prisma model and migration
 **Deliverable:** Database schema and migration
 
 **Instructions:**
+
 ```
 Add to /Users/mikeyoung/CODING/Elope/server/prisma/schema.prisma
 
@@ -1306,6 +1366,7 @@ npx prisma db push
 ```
 
 **Success Criteria:**
+
 - [x] Model created in schema
 - [x] Migration successful
 - [x] Unique constraint on tenantId + type
@@ -1315,11 +1376,13 @@ npx prisma db push
 ---
 
 #### Agent 2: Email Template Service
+
 **Type:** general-purpose
 **Task:** Create EmailTemplateService with CRUD methods
 **Deliverable:** Service layer for template management
 
 **Instructions:**
+
 ```
 Create /Users/mikeyoung/CODING/Elope/server/src/services/email-template.service.ts
 
@@ -1425,6 +1488,7 @@ interface UpsertTemplateDto {
 **Location:** `/Users/mikeyoung/CODING/Elope/server/src/services/email-template.service.ts`
 
 **Success Criteria:**
+
 - [x] All CRUD methods implemented
 - [x] Template rendering works
 - [x] Default fallback implemented
@@ -1435,11 +1499,13 @@ interface UpsertTemplateDto {
 ---
 
 #### Agent 3: Default Email Templates
+
 **Type:** general-purpose
 **Task:** Create 3 default HTML email templates
 **Deliverable:** Template constants file
 
 **Instructions:**
+
 ```
 Create /Users/mikeyoung/CODING/Elope/server/src/constants/email-templates.ts
 
@@ -1562,6 +1628,7 @@ If you have any questions, feel free to reply to this email.
 **Location:** `/Users/mikeyoung/CODING/Elope/server/src/constants/email-templates.ts`
 
 **Success Criteria:**
+
 - [x] 3 templates created
 - [x] HTML is email-client compatible
 - [x] Plain text fallback provided
@@ -1572,11 +1639,13 @@ If you have any questions, feel free to reply to this email.
 ---
 
 #### Agent 4: Email Template API Endpoints
+
 **Type:** general-purpose
 **Task:** Add template endpoints to tenant-admin routes
 **Deliverable:** 4 API endpoints
 
 **Instructions:**
+
 ```
 Add to /Users/mikeyoung/CODING/Elope/server/src/routes/tenant-admin.routes.ts
 
@@ -1733,6 +1802,7 @@ export const upsertEmailTemplateSchema = z.object({
 ```
 
 **Success Criteria:**
+
 - [x] 5 endpoints added (list, get, put, delete, preview)
 - [x] Validation schema applied
 - [x] Default templates returned if not customized
@@ -1803,11 +1873,13 @@ curl -X DELETE http://localhost:3001/v1/tenant-admin/email-templates/booking_con
 Launch 3 agents simultaneously:
 
 #### Agent 1: Email Template Editor Component
+
 **Type:** general-purpose
 **Task:** Create EmailTemplateEditor.tsx with rich text editor
 **Deliverable:** Template editing UI
 
 **Instructions:**
+
 ```
 Create /Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/EmailTemplateEditor.tsx
 
@@ -1856,6 +1928,7 @@ Requirements:
 **Location:** `/Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/EmailTemplateEditor.tsx`
 
 **Success Criteria:**
+
 - [x] Template loads from API
 - [x] Rich text editor works
 - [x] Variable insertion works
@@ -1868,11 +1941,13 @@ Requirements:
 ---
 
 #### Agent 2: Email Preview Component
+
 **Type:** general-purpose
 **Task:** Create EmailTemplatePreview.tsx
 **Deliverable:** Live preview with sample data
 
 **Instructions:**
+
 ```
 Create /Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/EmailTemplatePreview.tsx
 
@@ -1919,6 +1994,7 @@ Requirements:
 **Location:** `/Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/EmailTemplatePreview.tsx`
 
 **Success Criteria:**
+
 - [x] Preview renders HTML in iframe
 - [x] Variables replaced with sample data
 - [x] Desktop/mobile views work
@@ -1930,11 +2006,13 @@ Requirements:
 ---
 
 #### Agent 3: Email Template List Component
+
 **Type:** general-purpose
 **Task:** Create EmailTemplateList.tsx navigation
 **Deliverable:** Template selector UI
 
 **Instructions:**
+
 ```
 Create /Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/EmailTemplateList.tsx
 
@@ -1974,6 +2052,7 @@ Requirements:
 **Location:** `/Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/EmailTemplateList.tsx`
 
 **Success Criteria:**
+
 - [x] Lists 3 template types
 - [x] Shows custom/default status
 - [x] Click opens editor
@@ -1986,11 +2065,13 @@ Requirements:
 **Sequential Agent (after Agents 1-3 complete):**
 
 #### Agent 4: Dashboard Integration
+
 **Type:** general-purpose
 **Task:** Add Emails tab to TenantDashboard
 **Deliverable:** Integrated email template manager
 
 **Instructions:**
+
 ```
 Add to /Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/TenantDashboard.tsx
 
@@ -2017,6 +2098,7 @@ Flow:
 ```
 
 **Success Criteria:**
+
 - [x] Emails tab appears
 - [x] List → Editor → Preview flow works
 - [x] Save returns to list
@@ -2059,6 +2141,7 @@ Flow:
 **Testing Strategy:**
 
 #### Email Client Testing
+
 Use [Litmus](https://litmus.com/) or [Email on Acid](https://www.emailonacid.com/) (free trials) to test rendering in:
 
 - Gmail (web, mobile)
@@ -2068,6 +2151,7 @@ Use [Litmus](https://litmus.com/) or [Email on Acid](https://www.emailonacid.com
 - Thunderbird
 
 **Test checklist:**
+
 - [ ] Subject line renders correctly
 - [ ] Logo displays
 - [ ] Colors match tenant branding
@@ -2081,6 +2165,7 @@ Use [Litmus](https://litmus.com/) or [Email on Acid](https://www.emailonacid.com
 #### Polish Tasks
 
 **UI Improvements:**
+
 - [ ] Add tooltips to variable buttons ("Click to insert")
 - [ ] Syntax highlighting in HTML editor (optional)
 - [ ] Auto-save draft every 30 seconds
@@ -2089,12 +2174,14 @@ Use [Litmus](https://litmus.com/) or [Email on Acid](https://www.emailonacid.com
 - [ ] HTML validation (check for broken tags)
 
 **UX Improvements:**
+
 - [ ] Show preview automatically on edit (live preview)
 - [ ] Add "Send Test Email" button (email to tenant admin)
 - [ ] Template comparison (show default vs custom side-by-side)
 - [ ] Copy template to clipboard (export HTML)
 
 **Error Handling:**
+
 - [ ] Handle missing variables gracefully
 - [ ] Validate HTML structure
 - [ ] Show warnings for email compatibility issues
@@ -2163,11 +2250,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 Launch 3 test agents simultaneously:
 
 #### Agent 1: Package Photo Testing Suite
+
 **Type:** general-purpose
 **Task:** Test all package photo flows
 **Deliverable:** Bug report and fixes
 
 **Test scenarios:**
+
 1. Upload photos to new package
 2. Upload photos to existing package
 3. Reorder photos
@@ -2189,11 +2278,13 @@ Launch 3 test agents simultaneously:
 ---
 
 #### Agent 2: Add-On Testing Suite
+
 **Type:** general-purpose
 **Task:** Test all add-on CRUD operations
 **Deliverable:** Bug report and fixes
 
 **Test scenarios:**
+
 1. Create add-on with all fields
 2. Create add-on with minimal fields
 3. Edit add-on
@@ -2215,11 +2306,13 @@ Launch 3 test agents simultaneously:
 ---
 
 #### Agent 3: Email Template Testing Suite
+
 **Type:** general-purpose
 **Task:** Test template rendering and emails
 **Deliverable:** Bug report and fixes
 
 **Test scenarios:**
+
 1. Customize booking confirmation template
 2. Customize reminder template
 3. Customize cancellation template
@@ -2243,6 +2336,7 @@ Launch 3 test agents simultaneously:
 **Day 16-20 Total Time:** 9 hours
 
 **Bugs found → Fix immediately:**
+
 - Document bugs in GitHub Issues or markdown file
 - Prioritize critical bugs (P0: blocks usage, P1: breaks feature, P2: minor issue)
 - Fix P0 and P1 bugs before moving to documentation
@@ -2256,11 +2350,13 @@ Launch 3 test agents simultaneously:
 **Parallel Documentation Agents:**
 
 #### Agent 1: User Guide Writer
+
 **Type:** general-purpose
 **Task:** Create tenant admin user guide for Phase 5 features
 **Deliverable:** Comprehensive user guide with screenshots
 
 **Instructions:**
+
 ```
 Create /Users/mikeyoung/CODING/Elope/TENANT_ADMIN_PHASE_5_USER_GUIDE.md
 
@@ -2386,6 +2482,7 @@ Include screenshots for each step.
 **Location:** `/Users/mikeyoung/CODING/Elope/TENANT_ADMIN_PHASE_5_USER_GUIDE.md`
 
 **Success Criteria:**
+
 - [x] Covers all 3 features
 - [x] Step-by-step instructions
 - [x] Screenshots included
@@ -2397,11 +2494,13 @@ Include screenshots for each step.
 ---
 
 #### Agent 2: API Documentation Updater
+
 **Type:** general-purpose
 **Task:** Update API docs with Phase 5 endpoints
 **Deliverable:** Updated API documentation
 
 **Instructions:**
+
 ```
 Update API documentation with new endpoints:
 
@@ -2438,11 +2537,13 @@ For each endpoint:
 ---
 
 #### Agent 3: Migration Guide Writer
+
 **Type:** general-purpose
 **Task:** Write migration notes for existing tenants
 **Deliverable:** Migration guide
 
 **Instructions:**
+
 ```
 Create /Users/mikeyoung/CODING/Elope/PHASE_5_MIGRATION_GUIDE.md
 
@@ -2506,12 +2607,14 @@ Contact support@elope.com if you need help.
 Tasks that don't depend on each other's outputs can run simultaneously.
 
 **Examples:**
+
 - Database schema + validation schemas + service layer (no dependencies)
 - Multiple UI components that don't interact
 - Documentation for different features
 - Testing different features
 
 **Launch Pattern:**
+
 ```bash
 # Example: 3 agents working in parallel
 Agent 1: Database migration
@@ -2522,6 +2625,7 @@ Agent 3: Type definitions
 ```
 
 **Time Savings:**
+
 - Sequential: 1 + 1 + 1 = 3 hours
 - Parallel: max(1, 1, 1) = 1 hour
 - **Savings: 66%**
@@ -2534,11 +2638,13 @@ Agent 3: Type definitions
 Tasks where one depends on another's output must run sequentially.
 
 **Examples:**
+
 - API methods must exist before UI can call them
 - Component must be built before integration
 - Database must be migrated before service layer uses new fields
 
 **Launch Pattern:**
+
 ```bash
 # Example: Sequential dependency chain
 Agent 1: Build component
@@ -2558,48 +2664,61 @@ Identify the longest chain of dependencies and optimize around it.
 **For each feature, follow this 4-phase pattern:**
 
 #### Phase 1: Foundation (Parallel)
+
 Launch 2-3 agents simultaneously:
+
 ```
 Agent 1: Database migration
 Agent 2: Validation schemas
 Agent 3: Type definitions
 ```
+
 **Time:** 30-60 minutes
 
 ---
 
 #### Phase 2: Backend (Sequential)
+
 One agent after Phase 1:
+
 ```
 Agent 4: Service layer methods (uses Phase 1 outputs)
   ↓
 Agent 5: API endpoints (uses service methods)
 ```
+
 **Time:** 1-2 hours
 
 ---
 
 #### Phase 3: Frontend (Parallel)
+
 Launch 2-3 agents after Phase 2:
+
 ```
 Agent 6: UI component
 Agent 7: API client methods
 Agent 8: Dashboard integration prep
 ```
+
 **Time:** 2-3 hours
 
 ---
 
 #### Phase 4: Polish (Single)
+
 One agent for final touches:
+
 ```
 Agent 9: Error handling, loading states, edge cases, manual testing
 ```
+
 **Time:** 1-2 hours
 
 ---
 
 **Total Time:**
+
 - Sequential: 8-12 hours
 - Optimized Parallel: 5-8 hours
 - **Savings: 30-40%**
@@ -2611,6 +2730,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ### Morning Session (2-3 hours)
 
 **1. Plan (5 min)**
+
 ```
 - Review yesterday's progress
 - Choose feature to build today
@@ -2619,6 +2739,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ```
 
 **2. Launch Agents (10 min)**
+
 ```
 - Start 2-4 agents on independent tasks
 - Provide clear, specific instructions
@@ -2627,6 +2748,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ```
 
 **3. Monitor Progress (30 min)**
+
 ```
 - Check agent outputs every 15 minutes
 - Answer clarification questions
@@ -2635,6 +2757,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ```
 
 **4. Integrate (60-90 min)**
+
 ```
 - Combine agent outputs
 - Resolve any conflicts (e.g., naming, imports)
@@ -2643,6 +2766,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ```
 
 **5. Manual Test (30 min)**
+
 ```
 - Use the feature yourself (dogfooding)
 - Test happy path + 5 edge cases
@@ -2655,6 +2779,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ### Afternoon Session (2-3 hours)
 
 **6. Polish (60-90 min)**
+
 ```
 - Improve UX based on testing
 - Add loading states and error messages
@@ -2663,6 +2788,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ```
 
 **7. Commit (10 min)**
+
 ```
 - Review all changes: git diff
 - Write descriptive commit message
@@ -2672,6 +2798,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ```
 
 **8. Document (30-60 min)**
+
 ```
 - Update progress tracker (README, roadmap)
 - Add inline code comments
@@ -2680,6 +2807,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ```
 
 **9. Plan Tomorrow (10 min)**
+
 ```
 - Review what's left
 - Identify tomorrow's parallel tasks
@@ -2692,6 +2820,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ### End of Week Review (30 min)
 
 **Friday afternoon:**
+
 ```
 1. Update maturity score (track progress)
 2. Review completed features (what worked well)
@@ -2707,6 +2836,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ### Phase 5 Complete When:
 
 **Technical Checklist:**
+
 - [x] All 3 features fully functional
 - [x] TypeScript compiles with 0 errors
 - [x] No console errors in browser
@@ -2715,6 +2845,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 - [x] Multi-tenant isolation verified (Tenant A can't access Tenant B data)
 
 **User Experience Checklist:**
+
 - [x] Tenant can upload 5 package photos via dashboard
 - [x] Tenant can create/edit/delete add-ons
 - [x] Tenant can customize 3 email templates
@@ -2723,6 +2854,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 - [x] Accessible (keyboard nav, screen reader friendly)
 
 **Documentation Checklist:**
+
 - [x] User guide published
 - [x] API docs updated with new endpoints
 - [x] Migration guide complete (for existing tenants)
@@ -2730,6 +2862,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 - [x] Roadmap shows Phase 5 ✅
 
 **Performance Checklist:**
+
 - [x] Photo upload completes in < 3 seconds
 - [x] Dashboard loads in < 2 seconds
 - [x] API responses in < 500ms (95th percentile)
@@ -2743,69 +2876,85 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ### Common Blockers & Solutions
 
 #### Blocker 1: Agents Produce Conflicting Code
+
 **Symptoms:**
+
 - Import statements conflict
 - Function names overlap
 - TypeScript errors after merging
 
 **Solution:**
+
 - Launch dependent tasks sequentially, not parallel
 - Provide clear naming conventions in instructions
 - Review Agent 1 output before launching Agent 2
 
 **Prevention:**
+
 - Map out dependencies before launching agents
 - Use unique prefixes (e.g., PackagePhoto vs AddOn)
 
 ---
 
 #### Blocker 2: TypeScript Errors After Agent Work
+
 **Symptoms:**
+
 - Red squigglies in VSCode
 - `npm run typecheck` fails
 - Build errors
 
 **Solution:**
+
 - Always run `npm run typecheck` before committing
 - Fix type errors immediately (don't accumulate)
 - Use `any` sparingly (prefer proper types)
 
 **Prevention:**
+
 - Include TypeScript compilation in agent success criteria
 - Test compile after each agent completes
 
 ---
 
 #### Blocker 3: Complex Drag-and-Drop Not Working
+
 **Symptoms:**
+
 - Drag events not firing
 - Order not updating
 - Browser compatibility issues
 
 **Solution:**
+
 - Start with simple list, add DnD later
 - Use well-tested library (react-beautiful-dnd)
 - Test in Chrome first, then other browsers
 
 **Prevention:**
+
 - Break feature into: MVP (list) → Enhancement (DnD)
 - Ship working version first, polish later
 
 ---
 
 #### Blocker 4: Email Rendering Broken in Some Clients
+
 **Symptoms:**
+
 - Emails look good in Gmail, broken in Outlook
 - Layout shifts on mobile
 - Images don't load
 
 **Solution:**
+
 - Use tested email template framework (MJML)
 - Test in Litmus or Email on Acid
 - Inline all CSS (email clients strip <style> tags)
 - Use tables for layout (not flexbox/grid)
 
 **Prevention:**
+
 - Start with proven template (Foundation for Emails)
 - Test early and often in multiple clients
 - Provide plain text fallback
@@ -2813,17 +2962,21 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ---
 
 #### Blocker 5: Lost Momentum Midweek
+
 **Symptoms:**
+
 - Features taking longer than estimated
 - Feeling overwhelmed
 - Context switching frequently
 
 **Solution:**
+
 - Ship smallest working version first, polish later
 - Take breaks (Pomodoro technique: 25 min focus, 5 min break)
 - Ask for help if stuck > 30 minutes
 
 **Prevention:**
+
 - Set realistic daily goals (1-2 features max)
 - Celebrate small wins (commit often)
 - Keep scope tight (defer nice-to-haves)
@@ -2833,6 +2986,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ## Phase 5 Completion Checklist
 
 ### Week 1: Package Photos ✅
+
 - [x] Backend API (completed Nov 7)
 - [ ] Frontend component (Day 1)
 - [ ] Dashboard integration (Day 1)
@@ -2840,6 +2994,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 - [ ] Polish and commit (Day 2)
 
 ### Week 2: Add-Ons
+
 - [ ] Database review (Day 4)
 - [ ] Validation schemas (Day 4)
 - [ ] Service layer methods (Day 4)
@@ -2851,6 +3006,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 - [ ] Manual testing and commit (Day 7)
 
 ### Week 3-4: Email Templates
+
 - [ ] Database model and migration (Day 9)
 - [ ] Template service layer (Day 9)
 - [ ] Default templates (Day 10)
@@ -2863,6 +3019,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 - [ ] Polish and commit (Day 15)
 
 ### Week 5-6: Integration & Launch
+
 - [ ] End-to-end testing (Day 16-20)
 - [ ] User guide (Day 21-22)
 - [ ] API documentation (Day 23)
@@ -2876,6 +3033,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ## Next Steps (After This Document)
 
 ### Immediate (Today - Nov 7)
+
 1. ✅ Review and approve this execution plan
 2. Schedule Week 1 work sessions (Nov 8-10)
 3. Prepare development environment:
@@ -2885,6 +3043,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
    ```
 
 ### Tomorrow (Day 1 - Nov 8)
+
 1. Launch 3 parallel agents for PackagePhotoUploader:
    - Agent 1: Build component
    - Agent 2: Add API client methods
@@ -2894,24 +3053,28 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 4. Note any issues for Day 2
 
 ### This Week (Nov 8-10)
+
 1. Complete package photo feature end-to-end ✅
 2. Polish and commit (Day 2)
 3. Buffer day (Day 3)
 4. Celebrate first Phase 5 feature complete! 🎉
 
 ### Next Week (Nov 11-15)
+
 1. Add-On Management backend (Day 4-5)
 2. Add-On Management frontend (Day 5-7)
 3. Advanced features (Day 6-7)
 4. Commit and celebrate 🎉
 
 ### Weeks 3-4 (Nov 16-30)
+
 1. Email Template backend (Day 9-10)
 2. Email Template frontend (Day 11-13)
 3. Testing and polish (Day 14-15)
 4. Commit and celebrate 🎉
 
 ### Weeks 5-6 (Dec 1-19)
+
 1. Integration testing (Day 16-20)
 2. Documentation (Day 21-25)
 3. Production deployment (Day 26)
@@ -2924,29 +3087,34 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ### Estimated vs. Actual Time
 
 **Week 1: Package Photos**
+
 - Estimated: 12 hours
-- Actual: __ hours
-- Variance: __ hours
+- Actual: \_\_ hours
+- Variance: \_\_ hours
 
 **Week 2: Add-Ons**
+
 - Estimated: 20 hours
-- Actual: __ hours
-- Variance: __ hours
+- Actual: \_\_ hours
+- Variance: \_\_ hours
 
 **Week 3-4: Email Templates**
+
 - Estimated: 28 hours
-- Actual: __ hours
-- Variance: __ hours
+- Actual: \_\_ hours
+- Variance: \_\_ hours
 
 **Week 5-6: Testing & Docs**
+
 - Estimated: 20 hours
-- Actual: __ hours
-- Variance: __ hours
+- Actual: \_\_ hours
+- Variance: \_\_ hours
 
 **Total Phase 5:**
+
 - Estimated: 80 hours (4-6 weeks @ 15-20 hrs/week)
-- Actual: __ hours
-- Variance: __ hours
+- Actual: \_\_ hours
+- Variance: \_\_ hours
 
 **Learnings:**
 (Update as you go to improve future estimates)
@@ -2964,6 +3132,7 @@ Agent 9: Error handling, loading states, edge cases, manual testing
 ---
 
 **Related Documents:**
+
 - `/Users/mikeyoung/CODING/Elope/MULTI_TENANT_ROADMAP.md` - Overall roadmap
 - `/Users/mikeyoung/CODING/Elope/PHASE_5_IMPLEMENTATION_SPEC.md` - Technical specs
 - `/Users/mikeyoung/CODING/Elope/README.md` - Project overview

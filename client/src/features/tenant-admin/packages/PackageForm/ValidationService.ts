@@ -1,5 +1,5 @@
-import type { FormError } from "@/components/ui/ErrorSummary";
-import type { PackageFormData } from "../hooks/usePackageForm";
+import type { FormError } from '@/components/ui/ErrorSummary';
+import type { PackageFormData } from '../hooks/usePackageForm';
 
 /**
  * ValidationService

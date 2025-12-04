@@ -4,8 +4,8 @@
  * Submit and cancel buttons for segment form
  */
 
-import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface FormActionsProps {
   isEditing: boolean;
@@ -13,11 +13,7 @@ interface FormActionsProps {
   onCancel: () => void;
 }
 
-export function FormActions({
-  isEditing,
-  isSaving,
-  onCancel,
-}: FormActionsProps) {
+export function FormActions({ isEditing, isSaving, onCancel }: FormActionsProps) {
   return (
     <div className="flex gap-3 pt-2">
       <Button
@@ -28,11 +24,11 @@ export function FormActions({
         {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
         {isSaving
           ? isEditing
-            ? "Updating..."
-            : "Creating..."
+            ? 'Updating...'
+            : 'Creating...'
           : isEditing
-          ? "Update Segment"
-          : "Create Segment"}
+            ? 'Update Segment'
+            : 'Create Segment'}
       </Button>
       <Button
         type="button"

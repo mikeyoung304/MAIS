@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import type { AddOnDto } from "@macon/contracts";
+import { useMemo } from 'react';
+import type { AddOnDto } from '@macon/contracts';
 
 export function useBookingTotal(
   basePriceCents: number,

@@ -1,12 +1,12 @@
-import type { PackageDto } from "@macon/contracts";
-import { PackageForm } from "../PackageForm";
-import { SuccessMessage } from "./SuccessMessage";
-import { CreatePackageButton } from "./CreatePackageButton";
-import { PackagesList } from "./PackagesList";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { useSuccessMessage } from "./hooks/useSuccessMessage";
-import { usePackageManager } from "./hooks/usePackageManager";
-import { useAddOnManager } from "./hooks/useAddOnManager";
+import type { PackageDto } from '@macon/contracts';
+import { PackageForm } from '../PackageForm';
+import { SuccessMessage } from './SuccessMessage';
+import { CreatePackageButton } from './CreatePackageButton';
+import { PackagesList } from './PackagesList';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useSuccessMessage } from './hooks/useSuccessMessage';
+import { usePackageManager } from './hooks/usePackageManager';
+import { useAddOnManager } from './hooks/useAddOnManager';
 
 interface PackagesManagerProps {
   packages: PackageDto[];

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "190"
+issue_id: '190'
 tags: [code-review, observability, seeds]
 dependencies: []
 ---
@@ -17,19 +17,25 @@ Seed transactions have 60-second timeouts but no logging when they start or comp
 **Location:** `server/prisma/seeds/demo.ts`, `e2e.ts`, `platform.ts`
 
 **Current Code:**
+
 ```typescript
-await prisma.$transaction(async (tx) => {
-  // ... operations with no timing visibility
-}, { timeout: 60000 });
+await prisma.$transaction(
+  async (tx) => {
+    // ... operations with no timing visibility
+  },
+  { timeout: 60000 }
+);
 ```
 
 **Risk Assessment:**
+
 - Impact: Low (seeds run infrequently)
 - Likelihood: Low (failures are rare)
 
 ## Proposed Solutions
 
 ### Solution 1: Add start/commit logging (Recommended)
+
 - Log before and after transaction
 - Include duration on completion
 - **Pros:** Better observability
@@ -44,18 +50,25 @@ Implement **Solution 1** for operational visibility.
 ## Technical Details
 
 **Proposed Change:**
+
 ```typescript
 logger.info({ slug: DEMO_SLUG, operations: 16 }, 'Starting seed transaction');
 const startTime = Date.now();
 
-await prisma.$transaction(async (tx) => {
-  // ... operations
-}, { timeout: 60000 });
+await prisma.$transaction(
+  async (tx) => {
+    // ... operations
+  },
+  { timeout: 60000 }
+);
 
-logger.info({
-  slug: DEMO_SLUG,
-  durationMs: Date.now() - startTime
-}, 'Seed transaction committed successfully');
+logger.info(
+  {
+    slug: DEMO_SLUG,
+    durationMs: Date.now() - startTime,
+  },
+  'Seed transaction committed successfully'
+);
 ```
 
 ## Acceptance Criteria
@@ -66,8 +79,8 @@ logger.info({
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                      |
+| ---------- | ------- | ------------------------------------------ |
 | 2025-12-03 | Created | Found during code review of commit 45024e6 |
 
 ## Resources

@@ -1,9 +1,9 @@
 ---
 status: complete
 priority: p3
-issue_id: "060"
+issue_id: '060'
 tags: [code-review, scheduling, performance, caching]
-dependencies: ["053"]
+dependencies: ['053']
 ---
 
 # Add Caching for Service and Availability Rules - DEFERRED
@@ -23,12 +23,14 @@ While caching would reduce database queries, this P3 optimization is appropriate
 ## Analysis
 
 ### Current State
+
 - SchedulingAvailabilityService queries:
   - Service by ID (via `serviceRepo.getById()`)
   - Availability rules (via `availabilityRuleRepo.getEffectiveRules()`)
 - Cache NOT currently injected into service
 
 ### Implementation Pattern (For Future)
+
 ```typescript
 // 1. Add cache to service constructor
 constructor(
@@ -67,12 +69,14 @@ await invalidateCacheKeys(this.cache, [
 ```
 
 ### Files Involved (When Implemented)
+
 - `server/src/services/scheduling-availability.service.ts` - Add cache parameter and cachedOperation calls
 - `server/src/di.ts` - Pass cacheAdapter to service constructor
 - `server/src/routes/services.routes.ts` - Add cache invalidation on update
 - `server/src/routes/availability-rules.routes.ts` - Add cache invalidation on update
 
 ### Helper Functions Ready
+
 - `cachedOperation()` - Get-or-fetch with automatic caching
 - `buildCacheKey()` - Tenant-scoped key builder
 - `invalidateCacheKeys()` - Batch invalidation
@@ -81,7 +85,7 @@ All located in `server/src/lib/cache-helpers.ts`
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-27 | Created | Found during Performance Oracle review |
+| Date       | Action   | Notes                                                   |
+| ---------- | -------- | ------------------------------------------------------- |
+| 2025-11-27 | Created  | Found during Performance Oracle review                  |
 | 2025-12-03 | Decision | Deferred - documented pattern for future implementation |

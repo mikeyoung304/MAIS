@@ -9,12 +9,14 @@ Enable drag-drop image uploads with cloud storage via Supabase Storage for the M
 ## Problem Statement / Motivation
 
 Currently, the MAIS platform only supports image URLs pasted manually:
+
 - Tenants cannot upload images directly from their devices
 - No drag-drop or click-to-browse functionality
 - Poor mobile experience for business owners on the go
 - Backend stores files locally (not scalable for production)
 
 This feature enables:
+
 - Enterprise-grade image upload UX
 - Cloud storage via Supabase Storage CDN
 - Tenant-isolated file organization
@@ -25,12 +27,14 @@ This feature enables:
 ### Architecture Decision
 
 **Proxy uploads through API** (not signed URLs):
+
 - Simpler implementation - works with existing JWT auth
 - Single `images` bucket with tenant-scoped paths: `{tenantId}/logos/`, `{tenantId}/packages/`, `{tenantId}/segments/`
 - Mock mode continues using local filesystem
 - Real mode uses Supabase Storage with service role key (bypasses RLS)
 
 ### File Structure in Supabase Storage
+
 ```
 images/
 ├── {tenantId}/
@@ -45,17 +49,19 @@ images/
 ## Files to Modify
 
 ### Backend
-| File | Change |
-|------|--------|
-| `server/src/services/upload.service.ts` | Add Supabase upload methods alongside filesystem |
-| `server/src/di.ts` | Inject Supabase client into UploadService in real mode |
-| `server/src/routes/tenant-admin.routes.ts` | Add `/segment-image` endpoint |
+
+| File                                       | Change                                                 |
+| ------------------------------------------ | ------------------------------------------------------ |
+| `server/src/services/upload.service.ts`    | Add Supabase upload methods alongside filesystem       |
+| `server/src/di.ts`                         | Inject Supabase client into UploadService in real mode |
+| `server/src/routes/tenant-admin.routes.ts` | Add `/segment-image` endpoint                          |
 
 ### Frontend
-| File | Change |
-|------|--------|
-| `client/src/components/ImageUploadField.tsx` | **NEW:** Reusable drag-drop upload component |
-| `client/src/features/admin/segments/SegmentForm/HeroFields.tsx` | Replace URL input with ImageUploadField |
+
+| File                                                            | Change                                       |
+| --------------------------------------------------------------- | -------------------------------------------- |
+| `client/src/components/ImageUploadField.tsx`                    | **NEW:** Reusable drag-drop upload component |
+| `client/src/features/admin/segments/SegmentForm/HeroFields.tsx` | Replace URL input with ImageUploadField      |
 
 ---
 
@@ -217,7 +223,7 @@ const supabaseClient = getSupabaseClient(); // Service role client (bypasses RLS
 const uploadService = new UploadService(
   {
     ADAPTERS_PRESET: 'real',
-    API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3001'
+    API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3001',
   },
   supabaseClient
 );
@@ -226,7 +232,7 @@ const uploadService = new UploadService(
 const uploadService = new UploadService(
   {
     ADAPTERS_PRESET: 'mock',
-    API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3001'
+    API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3001',
   }
   // No Supabase client - uses filesystem
 );
@@ -250,7 +256,7 @@ Add new endpoint for segment hero images (reuse existing multer config pattern):
 // Add new multer config for segment images (5MB limit like package photos)
 const uploadSegmentImage = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 // Add route after existing upload routes
@@ -279,7 +285,7 @@ router.post(
     } catch (error) {
       logger.error('Segment image upload failed', {
         tenantId: tenantAuth.tenantId,
-        error
+        error,
       });
       res.status(500).json({ error: 'Failed to upload image' });
     }
@@ -320,7 +326,7 @@ export function ImageUploadField({
   uploadEndpoint,
   disabled = false,
   maxSizeMB = 5,
-  className = ''
+  className = '',
 }: ImageUploadFieldProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -337,75 +343,87 @@ export function ImageUploadField({
     return null;
   };
 
-  const uploadFile = useCallback(async (file: File) => {
-    const validationError = validateFile(file);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
-    setError(null);
-    setIsUploading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const token = localStorage.getItem('tenantToken');
-      const response = await fetch(uploadEndpoint, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Upload failed (${response.status})`);
+  const uploadFile = useCallback(
+    async (file: File) => {
+      const validationError = validateFile(file);
+      if (validationError) {
+        setError(validationError);
+        return;
       }
 
-      const data = await response.json();
-      onChange(data.url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
-    } finally {
-      setIsUploading(false);
-    }
-  }, [uploadEndpoint, onChange, maxSizeMB]);
+      setError(null);
+      setIsUploading(true);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (!disabled && !isUploading) {
-      setIsDragging(true);
-    }
-  }, [disabled, isUploading]);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const token = localStorage.getItem('tenantToken');
+        const response = await fetch(uploadEndpoint, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Upload failed (${response.status})`);
+        }
+
+        const data = await response.json();
+        onChange(data.url);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Upload failed');
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [uploadEndpoint, onChange, maxSizeMB]
+  );
+
+  const handleDragOver = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      if (!disabled && !isUploading) {
+        setIsDragging(true);
+      }
+    },
+    [disabled, isUploading]
+  );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
 
-    if (disabled || isUploading) return;
+      if (disabled || isUploading) return;
 
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      uploadFile(file);
-    }
-  }, [disabled, isUploading, uploadFile]);
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        uploadFile(file);
+      }
+    },
+    [disabled, isUploading, uploadFile]
+  );
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      uploadFile(file);
-    }
-    // Reset input so same file can be selected again
-    e.target.value = '';
-  }, [uploadFile]);
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        uploadFile(file);
+      }
+      // Reset input so same file can be selected again
+      e.target.value = '';
+    },
+    [uploadFile]
+  );
 
   const handleRemove = useCallback(() => {
     onChange('');
@@ -463,9 +481,10 @@ export function ImageUploadField({
             flex flex-col items-center justify-center gap-2 p-6
             border-2 border-dashed rounded-lg cursor-pointer
             transition-colors duration-200
-            ${isDragging
-              ? 'border-macon-orange bg-macon-orange/10'
-              : 'border-white/20 hover:border-white/40'
+            ${
+              isDragging
+                ? 'border-macon-orange bg-macon-orange/10'
+                : 'border-white/20 hover:border-white/40'
             }
             ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}
           `}
@@ -478,12 +497,8 @@ export function ImageUploadField({
           ) : (
             <>
               <Upload className="h-8 w-8 text-white/60" />
-              <span className="text-sm text-white/60">
-                Drag & drop or click to upload
-              </span>
-              <span className="text-xs text-white/40">
-                Max {maxSizeMB}MB - JPG, PNG, WebP, SVG
-              </span>
+              <span className="text-sm text-white/60">Drag & drop or click to upload</span>
+              <span className="text-xs text-white/40">Max {maxSizeMB}MB - JPG, PNG, WebP, SVG</span>
             </>
           )}
         </div>
@@ -521,7 +536,7 @@ import { baseUrl } from '@/lib/api';
   uploadEndpoint={`${baseUrl}/v1/tenant-admin/segment-image`}
   disabled={disabled}
   maxSizeMB={5}
-/>
+/>;
 ```
 
 ---
@@ -531,6 +546,7 @@ import { baseUrl } from '@/lib/api';
 #### 6.1 Create Storage Bucket
 
 In Supabase Dashboard → Storage:
+
 1. Click "New bucket"
 2. Name: `images`
 3. Public bucket: **Yes** (toggle on)
@@ -538,6 +554,7 @@ In Supabase Dashboard → Storage:
 5. Click "Create bucket"
 
 Or via SQL:
+
 ```sql
 INSERT INTO storage.buckets (id, name, public, file_size_limit)
 VALUES ('images', 'images', true, 5242880);
@@ -562,6 +579,7 @@ USING (bucket_id = 'images');
 ## Acceptance Criteria
 
 ### Functional Requirements
+
 - [ ] Drag-drop upload works on desktop browsers
 - [ ] Click-to-browse works as fallback
 - [ ] Upload works on mobile devices (iOS Safari, Android Chrome)
@@ -573,12 +591,14 @@ USING (bucket_id = 'images');
 - [ ] Real mode uploads to Supabase Storage
 
 ### Non-Functional Requirements
+
 - [ ] Upload completes in < 3 seconds for typical images (< 2MB)
 - [ ] Component is accessible (keyboard navigation, screen reader support)
 - [ ] Visual feedback during upload (loading spinner)
 - [ ] Graceful error handling with user-friendly messages
 
 ### Quality Gates
+
 - [ ] All existing tests pass (`npm test`)
 - [ ] TypeScript compiles without errors (`npm run typecheck`)
 - [ ] E2E tests pass in mock mode
@@ -598,26 +618,29 @@ USING (bucket_id = 'images');
 
 ## Risk Analysis
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| Supabase rate limits | Low | Medium | Use service role key, implement retry logic |
-| Large file uploads timeout | Medium | Low | Enforce 5MB limit, show clear errors |
-| CDN cache staleness | Low | Low | Use unique filenames with timestamps |
-| Cross-tenant file access | Low | High | Always scope paths by tenantId, verify in routes |
+| Risk                       | Likelihood | Impact | Mitigation                                       |
+| -------------------------- | ---------- | ------ | ------------------------------------------------ |
+| Supabase rate limits       | Low        | Medium | Use service role key, implement retry logic      |
+| Large file uploads timeout | Medium     | Low    | Enforce 5MB limit, show clear errors             |
+| CDN cache staleness        | Low        | Low    | Use unique filenames with timestamps             |
+| Cross-tenant file access   | Low        | High   | Always scope paths by tenantId, verify in routes |
 
 ---
 
 ## Testing Strategy
 
 ### Unit Tests
+
 - `upload.service.test.ts`: Test both filesystem and Supabase paths
 - Mock Supabase client for isolated testing
 
 ### Integration Tests
+
 - Test actual uploads to Supabase in CI with test bucket
 - Verify tenant isolation (tenant A can't access tenant B's files)
 
 ### E2E Tests
+
 - Add `segment-image-upload.spec.ts`:
   - Upload valid image → verify preview appears
   - Upload oversized file → verify error message
@@ -629,14 +652,17 @@ USING (bucket_id = 'images');
 ## Dependencies
 
 ### Backend
+
 - `@supabase/supabase-js` - Already installed (v2.84.0)
 - `multer` - Already installed (v2.0.2)
 
 ### Frontend
+
 - No new dependencies needed
 - Uses existing: `lucide-react`, Button, Label components
 
 ### Environment Variables
+
 ```bash
 # Required for real mode (already configured)
 SUPABASE_URL=https://xxx.supabase.co
@@ -651,6 +677,7 @@ API_BASE_URL=http://localhost:3001
 ## References
 
 ### Internal
+
 - Current upload service: `server/src/services/upload.service.ts`
 - DI container: `server/src/di.ts`
 - Tenant-admin routes: `server/src/routes/tenant-admin.routes.ts`
@@ -659,6 +686,7 @@ API_BASE_URL=http://localhost:3001
 - Supabase client config: `server/src/config/database.ts`
 
 ### External
+
 - [Supabase Storage Quickstart](https://supabase.com/docs/guides/storage/quickstart)
 - [Supabase Storage Access Control](https://supabase.com/docs/guides/storage/security/access-control)
 - [Supabase getPublicUrl API](https://supabase.com/docs/reference/javascript/storage-from-getpublicurl)

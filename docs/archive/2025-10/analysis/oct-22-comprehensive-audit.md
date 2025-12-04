@@ -1,4 +1,5 @@
 # 🏛️ ELOPE APPLICATION - COMPREHENSIVE ARCHITECTURAL AUDIT
+
 **Master Report - End-to-End System Analysis**
 
 **Date:** October 21, 2025
@@ -15,17 +16,18 @@ The Elope application is a **modern, well-architected wedding booking platform**
 
 ### Overall Production Readiness: **76/100** ⚠️
 
-| Domain | Score | Status |
-|--------|-------|--------|
-| **Frontend/UI** | 85/100 | ✅ Production-ready with minor polish |
-| **Backend/API** | 75/100 | ⚠️ Needs performance fixes & monitoring |
-| **Database/Data** | 65/100 | 🔴 Critical schema mismatches to fix |
+| Domain             | Score  | Status                                   |
+| ------------------ | ------ | ---------------------------------------- |
+| **Frontend/UI**    | 85/100 | ✅ Production-ready with minor polish    |
+| **Backend/API**    | 75/100 | ⚠️ Needs performance fixes & monitoring  |
+| **Database/Data**  | 65/100 | 🔴 Critical schema mismatches to fix     |
 | **Infrastructure** | 45/100 | 🔴 Missing containerization & deployment |
-| **Documentation** | 78/100 | ⚠️ Inconsistencies must be resolved |
+| **Documentation**  | 78/100 | ⚠️ Inconsistencies must be resolved      |
 
 ### Critical Findings
 
 **🎉 Major Strengths:**
+
 - ✅ **Type-Safe Architecture**: Full TypeScript with contract-first API design
 - ✅ **Comprehensive Testing**: 44 unit tests + 9 E2E scenarios (all passing)
 - ✅ **Mock-First Development**: Dual-mode architecture enables rapid iteration
@@ -35,6 +37,7 @@ The Elope application is a **modern, well-architected wedding booking platform**
 - ✅ **Clean Code**: Hexagonal architecture, dependency injection, domain-driven design
 
 **🔴 Critical Blockers (Must Fix Before Production):**
+
 1. **Database Repository Schema Mismatches** - BookingRepository will crash on first real booking
 2. **N+1 Query Performance Issues** - Catalog queries need optimization (fix exists but not wired)
 3. **No Containerization** - Missing Docker/Kubernetes configuration
@@ -43,6 +46,7 @@ The Elope application is a **modern, well-architected wedding booking platform**
 6. **Documentation Discrepancies** - ARCHITECTURE.md field names don't match Prisma schema
 
 **⚠️ High Priority Gaps:**
+
 - Missing database indexes on foreign keys
 - CORS default port mismatch (5173 vs 3000)
 - 10 undocumented API endpoints
@@ -94,6 +98,7 @@ The Elope application is a **modern, well-architected wedding booking platform**
 **E2E Test Coverage:** ✅ 100% (2 test suites, 4 scenarios)
 
 **Files Referenced:**
+
 - Home: `apps/web/src/pages/Home.tsx:1-161`
 - Package: `apps/web/src/features/catalog/PackagePage.tsx:1-185`
 - Success: `apps/web/src/pages/Success.tsx:1-294`
@@ -153,6 +158,7 @@ The Elope application is a **modern, well-architected wedding booking platform**
 **E2E Test Coverage:** ✅ 100% (1 test suite, 5 scenarios)
 
 **Files Referenced:**
+
 - Login: `apps/web/src/pages/AdminLogin.tsx:1-41`
 - Dashboard: `apps/web/src/features/admin/Dashboard.tsx:1-351`
 - Package Manager: `apps/web/src/features/admin/PackagesManager.tsx:1-668`
@@ -189,6 +195,7 @@ The Elope application is a **modern, well-architected wedding booking platform**
 **E2E Test Coverage:** ✅ Mock simulator tested
 
 **Files Referenced:**
+
 - Webhook: `apps/api/src/http/v1/webhooks.http.ts:1-78`
 - Handler: `apps/api/src/domains/booking/webhook-handler.service.ts:1-71`
 - Notifier: `apps/api/src/domains/notifications/notifier.service.ts:1-51`
@@ -200,30 +207,35 @@ The Elope application is a **modern, well-architected wedding booking platform**
 ### Strengths for Long-Term Stability
 
 **1. Clean Hexagonal Architecture** ✅
+
 - **Ports/Adapters Pattern:** Business logic isolated from infrastructure
 - **Domain-Driven Design:** Clear bounded contexts (booking, catalog, identity, availability)
 - **Dependency Injection:** Manual DI container enables easy testing and swapping
 - **Location:** `apps/api/src/di.ts:1-189`
 
 **2. Contract-First API** ✅
+
 - **ts-rest:** Type-safe contracts prevent FE/BE drift
 - **Zod Validation:** Runtime type checking at API boundaries
 - **Shared Schemas:** `packages/contracts/` used by both frontend and backend
 - **Benefits:** Refactoring safety, auto-complete in IDE, compile-time errors
 
 **3. Mock-First Adapters** ✅
+
 - **Dual Mode:** `ADAPTERS_PRESET=mock|real` enables development without dependencies
 - **In-Memory Repositories:** Fast tests, no database setup required
 - **Mock Implementations:** Stripe, Postmark, Google Calendar all have mocks
 - **Doctor Script:** Validates configuration before startup
 
 **4. Comprehensive Testing** ✅
+
 - **Unit Tests:** 44 passing (services, middleware)
 - **Integration Tests:** HTTP contract tests with Supertest
 - **E2E Tests:** 9 Playwright scenarios covering critical paths
 - **CI/CD:** GitHub Actions runs tests on all PRs
 
 **5. Security Layered Approach** ✅
+
 - **Input Validation:** Zod schemas + business rule checks
 - **Authentication:** JWT with bcrypt password hashing
 - **Authorization:** Middleware-based route protection
@@ -234,6 +246,7 @@ The Elope application is a **modern, well-architected wedding booking platform**
 ### Weaknesses for Long-Term Stability
 
 **1. Database Schema Mismatch** 🔴 CRITICAL
+
 - **Issue:** Domain entities use different field names than Prisma schema
   - Domain: `title`, `priceCents`, `eventDate`, `totalCents`
   - Prisma: `name`, `basePrice`/`price`, `date`, `totalPrice`
@@ -242,6 +255,7 @@ The Elope application is a **modern, well-architected wedding booking platform**
 - **Risk:** Breaking changes during refactoring, confusing for new developers
 
 **2. BookingRepository Will Crash** 🔴 CRITICAL
+
 - **Issue:** Attempts to insert fields that don't exist in Prisma schema
   - Tries to insert `coupleName`, `email`, `phone`, `eventDate`, `addOnIds[]`
   - Prisma expects `customerId` FK, `date`, and `BookingAddOn` join table
@@ -250,6 +264,7 @@ The Elope application is a **modern, well-architected wedding booking platform**
 - **Fix Required:** 16+ hours to rewrite with normalized schema
 
 **3. N+1 Query Performance** 🔴 HIGH
+
 - **Issue:** `getAllPackages()` makes 1 query for packages + N queries for add-ons
 - **Location:** `apps/api/src/domains/catalog/service.ts:22-30`
 - **Impact:** Poor performance with many packages (currently 6, but scales badly)
@@ -257,17 +272,20 @@ The Elope application is a **modern, well-architected wedding booking platform**
 - **Effort:** 2 hours to wire in optimization
 
 **4. No Database Indexes** ⚠️ HIGH
+
 - **Current:** Only auto-generated unique indexes
 - **Missing:** Foreign key indexes on `customerId`, `packageId`, `venueId`, `bookingId`, etc.
 - **Impact:** Slow joins, table scans on filtered queries
 - **Fix:** Add `@@index([customerId])` etc. to Prisma schema
 
 **5. In-Memory Rate Limiting** ⚠️ MEDIUM
+
 - **Issue:** Rate limiter uses in-memory store
 - **Impact:** Won't work with horizontal scaling (multiple instances)
 - **Solution:** Requires Redis for distributed rate limiting
 
 **6. No Observability** 🔴 HIGH
+
 - **Missing:** APM, error tracking (Sentry), metrics (Prometheus), log aggregation
 - **Current:** Structured JSON logs with Pino (good foundation)
 - **Impact:** Can't debug production issues, no alerting on errors
@@ -297,6 +315,7 @@ The Elope application is a **modern, well-architected wedding booking platform**
    - Test performance improvement
 
 3. **Add Database Indexes** (2 hours)
+
    ```prisma
    @@index([customerId])
    @@index([packageId])
@@ -431,14 +450,14 @@ The Elope application is a **modern, well-architected wedding booking platform**
 
 ### Timeline Summary
 
-| Phase | Duration | Status | Blocker |
-|-------|----------|--------|---------|
-| Critical Fixes | 3 days | 🔴 Required | Production blocker |
-| Infrastructure | 3.5 days | 🔴 Required | Deployment blocker |
-| Monitoring | 2 days | 🔴 Required | Operations blocker |
-| Security | 2.5 days | 🟠 High Priority | Security risk |
-| Performance | 3 days | 🟡 Recommended | Scaling blocker |
-| **TOTAL** | **14 days** | - | - |
+| Phase          | Duration    | Status           | Blocker            |
+| -------------- | ----------- | ---------------- | ------------------ |
+| Critical Fixes | 3 days      | 🔴 Required      | Production blocker |
+| Infrastructure | 3.5 days    | 🔴 Required      | Deployment blocker |
+| Monitoring     | 2 days      | 🔴 Required      | Operations blocker |
+| Security       | 2.5 days    | 🟠 High Priority | Security risk      |
+| Performance    | 3 days      | 🟡 Recommended   | Scaling blocker    |
+| **TOTAL**      | **14 days** | -                | -                  |
 
 **With dedicated focus:** 4 weeks
 **With part-time effort:** 6-8 weeks
@@ -553,12 +572,14 @@ The Elope application is a **modern, well-architected wedding booking platform**
 ### Critical Discrepancies
 
 **1. Data Model Field Names** 🔴
+
 - **ARCHITECTURE.md:56-60** documents `title`, `priceCents`, `eventDate`
 - **Prisma schema** uses `name`, `basePrice`/`price`, `date`
 - **Impact:** Developers will write incorrect queries
 - **Fix:** Update ARCHITECTURE.md or rename Prisma fields (breaking change)
 
 **2. CORS Default Port Mismatch** 🔴
+
 - **Config default:** `:5173` (Vite default)
 - **Documentation:** `:3000` (actual usage)
 - **Actual web server:** `:3000`
@@ -566,6 +587,7 @@ The Elope application is a **modern, well-architected wedding booking platform**
 - **Fix:** Change config.ts:13 to `http://localhost:3000`
 
 **3. Undocumented API Endpoints** 🔴
+
 - **ARCHITECTURE.md** lists 8 endpoints
 - **Actual implementation** has 18 endpoints (10 missing from docs)
 - **Missing:** Package CRUD (7 endpoints), booking retrieval, 3 dev endpoints
@@ -573,12 +595,14 @@ The Elope application is a **modern, well-architected wedding booking platform**
 - **Fix:** Document all endpoints in ARCHITECTURE.md
 
 **4. Extra Prisma Models** 🟠
+
 - **Documented:** 5 models (Package, AddOn, Booking, BlackoutDate, AdminUser)
 - **Actual schema:** 10 models (+ Customer, Venue, Payment, 2 join tables)
 - **Impact:** Data model understanding incomplete
 - **Fix:** Document full schema or explain abstraction
 
 **5. Booking Entity Structure Mismatch** 🟠
+
 - **Domain:** Embedded data (`coupleName`, `email`, `addOnIds[]`)
 - **Prisma:** Normalized (`customerId` FK, `BookingAddOn` join table)
 - **Impact:** Complex mapper logic, maintenance burden
@@ -586,15 +610,15 @@ The Elope application is a **modern, well-architected wedding booking platform**
 
 ### Full Discrepancy Matrix
 
-| Issue | Documented | Actual | Severity | Files |
-|-------|-----------|--------|----------|-------|
-| Package.title | `title` | `name` | 🔴 HIGH | ARCHITECTURE.md:56 vs schema.prisma:54 |
-| Package.priceCents | `priceCents` | `basePrice` | 🔴 HIGH | ARCHITECTURE.md:56 vs schema.prisma:56 |
-| CORS_ORIGIN default | `:3000` | `:5173` | 🔴 HIGH | .env.example:6 vs config.ts:13 |
-| API endpoint count | 8 listed | 18 exist | 🔴 HIGH | ARCHITECTURE.md:40 vs router.ts |
-| Prisma model count | 5 documented | 10 exist | 🟠 MEDIUM | ARCHITECTURE.md:54 vs schema.prisma |
-| Booking structure | Embedded | Normalized | 🟠 MEDIUM | entities.ts vs schema.prisma:86 |
-| ENVIRONMENT.md vs SECRETS.md | Duplicate | Redundant | 🟡 LOW | Both files overlap |
+| Issue                        | Documented   | Actual      | Severity  | Files                                  |
+| ---------------------------- | ------------ | ----------- | --------- | -------------------------------------- |
+| Package.title                | `title`      | `name`      | 🔴 HIGH   | ARCHITECTURE.md:56 vs schema.prisma:54 |
+| Package.priceCents           | `priceCents` | `basePrice` | 🔴 HIGH   | ARCHITECTURE.md:56 vs schema.prisma:56 |
+| CORS_ORIGIN default          | `:3000`      | `:5173`     | 🔴 HIGH   | .env.example:6 vs config.ts:13         |
+| API endpoint count           | 8 listed     | 18 exist    | 🔴 HIGH   | ARCHITECTURE.md:40 vs router.ts        |
+| Prisma model count           | 5 documented | 10 exist    | 🟠 MEDIUM | ARCHITECTURE.md:54 vs schema.prisma    |
+| Booking structure            | Embedded     | Normalized  | 🟠 MEDIUM | entities.ts vs schema.prisma:86        |
+| ENVIRONMENT.md vs SECRETS.md | Duplicate    | Redundant   | 🟡 LOW    | Both files overlap                     |
 
 ---
 
@@ -602,34 +626,37 @@ The Elope application is a **modern, well-architected wedding booking platform**
 
 ### Overall: 76/100 ⚠️ CONDITIONAL GO
 
-| Category | Score | Assessment |
-|----------|-------|------------|
-| **Code Quality** | 95/100 | ✅ Excellent - Type-safe, clean architecture |
-| **Feature Completeness** | 90/100 | ✅ MVP complete, tested end-to-end |
-| **Testing** | 85/100 | ✅ Strong coverage (unit + E2E) |
-| **Security** | 75/100 | ⚠️ Good foundation, needs hardening |
-| **Performance** | 60/100 | ⚠️ N+1 issues, missing indexes |
-| **Database** | 65/100 | 🔴 Schema mismatches blocking |
-| **Infrastructure** | 45/100 | 🔴 Missing containers, deployment |
-| **Monitoring** | 40/100 | 🔴 No APM, error tracking, metrics |
-| **Documentation** | 78/100 | ⚠️ Excellent but inconsistent |
-| **Scalability** | 55/100 | ⚠️ Works for MVP, needs optimization |
+| Category                 | Score  | Assessment                                   |
+| ------------------------ | ------ | -------------------------------------------- |
+| **Code Quality**         | 95/100 | ✅ Excellent - Type-safe, clean architecture |
+| **Feature Completeness** | 90/100 | ✅ MVP complete, tested end-to-end           |
+| **Testing**              | 85/100 | ✅ Strong coverage (unit + E2E)              |
+| **Security**             | 75/100 | ⚠️ Good foundation, needs hardening          |
+| **Performance**          | 60/100 | ⚠️ N+1 issues, missing indexes               |
+| **Database**             | 65/100 | 🔴 Schema mismatches blocking                |
+| **Infrastructure**       | 45/100 | 🔴 Missing containers, deployment            |
+| **Monitoring**           | 40/100 | 🔴 No APM, error tracking, metrics           |
+| **Documentation**        | 78/100 | ⚠️ Excellent but inconsistent                |
+| **Scalability**          | 55/100 | ⚠️ Works for MVP, needs optimization         |
 
 ### Risk Assessment
 
 **High Risk Areas** 🔴:
+
 - BookingRepository will crash (100% failure rate on real bookings)
 - No production deployment configured
 - No monitoring (blind to production issues)
 - Performance degradation under load (N+1 queries)
 
 **Medium Risk Areas** 🟠:
+
 - Database lacks indexes (slow as data grows)
 - JWT in localStorage (XSS vulnerability)
 - No distributed rate limiting (horizontal scaling issue)
 - Documentation mismatches (developer confusion)
 
 **Low Risk Areas** 🟢:
+
 - Type safety prevents many runtime errors
 - Comprehensive E2E tests catch regressions
 - Mock mode enables safe development
@@ -642,6 +669,7 @@ The Elope application is a **modern, well-architected wedding booking platform**
 ### Can We Deploy to Production? **NOT YET** 🔴
 
 **Blockers:**
+
 1. Fix BookingRepository schema mismatch (16 hours)
 2. Add database indexes (2 hours)
 3. Set up deployment infrastructure (24 hours)
@@ -654,36 +682,42 @@ The Elope application is a **modern, well-architected wedding booking platform**
 ### Suggested Launch Strategy
 
 **Week 1: Critical Fixes**
+
 - Fix booking repository
 - Add database indexes
 - Wire catalog optimization
 - Update documentation
 
 **Week 2: Infrastructure**
+
 - Containerize application
 - Deploy to staging
 - Set up production environment
 - Configure backups
 
 **Week 3: Monitoring**
+
 - Integrate Sentry
 - Set up log aggregation
 - Configure uptime monitoring
 - Create dashboards
 
 **Week 4: Security & Testing**
+
 - Secrets management
 - Security scanning
 - Load testing
 - Final QA
 
 **Week 5: Soft Launch**
+
 - Deploy to production
 - Limited user testing
 - Monitor closely
 - Fix issues quickly
 
 **Week 6+: Scale**
+
 - Redis caching
 - CDN setup
 - Performance optimization
@@ -696,6 +730,7 @@ The Elope application is a **modern, well-architected wedding booking platform**
 The Elope application is **architecturally sound** with **excellent code quality** and **comprehensive testing**. The engineering team has demonstrated strong discipline with clean architecture patterns, security consciousness, and thorough documentation.
 
 **However**, the application is **not production-ready** due to:
+
 - Critical database schema mismatches that will cause crashes
 - Missing operational infrastructure (containers, deployment, monitoring)
 - Performance optimization opportunities not yet implemented
@@ -707,6 +742,7 @@ The Elope application is **architecturally sound** with **excellent code quality
 ---
 
 **Report compiled from 5 specialized agent audits:**
+
 - Frontend/UI Architecture (85/100)
 - Backend/API Architecture (75/100)
 - Database/Data Architecture (65/100)
@@ -719,4 +755,4 @@ The Elope application is **architecturally sound** with **excellent code quality
 
 ---
 
-*End of Master Audit Report*
+_End of Master Audit Report_

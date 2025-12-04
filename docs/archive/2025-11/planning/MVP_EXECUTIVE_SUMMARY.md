@@ -9,6 +9,7 @@
 Your current codebase **already handles 95% of what you need for first customer**. The 6-week plan treats MVP as "product complete." Real MVP is "revenue flows."
 
 ### What's Already Working
+
 - Customers can book (95% done) ✅
 - Stripe charges them (100% done) ✅
 - Platform takes commission (100% done) ✅
@@ -16,6 +17,7 @@ Your current codebase **already handles 95% of what you need for first customer*
 - All critical paths tested (752 tests pass) ✅
 
 ### What's Missing for First Customer
+
 - Tenant self-service signup (2 hours to build) ❌
 
 ### That's It
@@ -25,7 +27,9 @@ Your current codebase **already handles 95% of what you need for first customer*
 ## Two Options
 
 ### Option 1: Safe Path (6 weeks)
+
 Build the whole plan:
+
 - 5-step onboarding wizard
 - Analytics dashboard
 - Settings page
@@ -37,7 +41,9 @@ Build the whole plan:
 **Risk:** Feature creep, perfectionism
 
 ### Option 2: Ruthless Path (2 weeks)
+
 Build only what matters:
+
 - Fix webhook tests (so payments work)
 - Add signup form (3 fields: email, password, name)
 - Deploy
@@ -51,7 +57,9 @@ Build only what matters:
 ## Week-by-Week Breakdown (Ruthless Path)
 
 ### Week 1: Stabilize
+
 **What to do:**
+
 1. Fix webhook race condition tests (3-4 hours)
    - 83 integration tests failing
    - Real blocker for payment verification
@@ -73,8 +81,11 @@ Build only what matters:
 ---
 
 ### Week 2: Launch
+
 **What to do:**
+
 1. Build signup endpoint (2 hours)
+
    ```typescript
    POST /v1/tenants/signup
    { email, password, businessName, slug }
@@ -83,13 +94,10 @@ Build only what matters:
    ```
 
 2. Build signup form (1 hour)
+
    ```tsx
    <form onSubmit={handleSignup}>
-     Email input
-     Password input
-     Business name input
-     Slug input
-     Submit button
+     Email input Password input Business name input Slug input Submit button
    </form>
    ```
 
@@ -107,21 +115,25 @@ Build only what matters:
 ## What You Actually Need to Decide
 
 ### Question 1: "Do I need a 5-step wizard or just a signup form?"
+
 **Answer:** Just a form. 4 fields. Submit button. Done.
 
 The wizard adds 12 hours for what could be a form. Stripe handles the "connecting bank account" step.
 
 ### Question 2: "What about the analytics dashboard?"
+
 **Answer:** Ship without it. Use Stripe's dashboard instead.
 
 On day 1, the tenant just wants to know: "Did anyone book?" The answer is already in their email (booking notification) and Stripe dashboard (payment received). Add pretty charts in week 3.
 
 ### Question 3: "Do I need email templates?"
+
 **Answer:** No. Booking notification emails are optional for MVP.
 
 Log to file for now. Add email week 2 post-launch. Customers don't need fancy emails, they need working payments.
 
 ### Question 4: "What about settings page?"
+
 **Answer:** Don't build it. Nobody changes password on day 1.
 
 If they ask: "Coming soon." Defer to week 3.
@@ -130,16 +142,16 @@ If they ask: "Coming soon." Defer to week 3.
 
 ## The Real Cost Comparison
 
-| Item | Original | Ruthless | Savings |
-|------|----------|----------|---------|
-| Signup | 8h | 3h | 5h |
-| Stripe wizard | 12h | 0h | 12h |
-| Analytics | 12h | Defer | 12h |
-| Settings page | 10h | Defer | 10h |
-| Email templates | Included | Defer | 5h |
-| Test fixes | 20h | 14h | 6h |
-| Deployment | 8h | 2h | 6h |
-| **Total** | **70h** | **19h** | **51h (73% less)** |
+| Item            | Original | Ruthless | Savings            |
+| --------------- | -------- | -------- | ------------------ |
+| Signup          | 8h       | 3h       | 5h                 |
+| Stripe wizard   | 12h      | 0h       | 12h                |
+| Analytics       | 12h      | Defer    | 12h                |
+| Settings page   | 10h      | Defer    | 10h                |
+| Email templates | Included | Defer    | 5h                 |
+| Test fixes      | 20h      | 14h      | 6h                 |
+| Deployment      | 8h       | 2h       | 6h                 |
+| **Total**       | **70h**  | **19h**  | **51h (73% less)** |
 
 **Same platform ships 4 weeks faster.**
 
@@ -150,16 +162,19 @@ If they ask: "Coming soon." Defer to week 3.
 Once the platform is live with your first customer:
 
 **Week 3:**
+
 - Fix photo upload tests (was skipped in MVP)
 - Add simple analytics ("You made $X this month")
 - Wire up Postmark email
 
 **Week 4:**
+
 - Settings page
 - Email templates
 - Advanced analytics
 
 **Week 5+:**
+
 - Segment navigation UI
 - Custom domains
 - Multi-user accounts
@@ -171,12 +186,14 @@ Once the platform is live with your first customer:
 ## Risk Analysis
 
 ### Risks of Original Plan
+
 - Perfectionism delays launch
 - 6 weeks = more time for new blockers to emerge
 - Complex wizard = more bugs
 - 5-step flow = higher bounce rate
 
 ### Risks of Ruthless Plan
+
 - Some tests still skip (photo upload) — **ACCEPTABLE** (doesn't block customers)
 - No analytics day 1 — **ACCEPTABLE** (Stripe dashboard exists)
 - No email templates — **ACCEPTABLE** (customers see booking in admin immediately)
@@ -292,4 +309,3 @@ Your codebase is **production-ready RIGHT NOW** for the core value proposition. 
 **Generated:** November 25, 2025
 **Based on:** Codebase review + 752 existing tests + real infrastructure assessment
 **Recommendation:** Launch in 2 weeks, iterate in public
-

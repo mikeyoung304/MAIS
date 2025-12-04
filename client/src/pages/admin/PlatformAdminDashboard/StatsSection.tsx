@@ -1,13 +1,8 @@
-import {
-  Building2,
-  DollarSign,
-  Calendar,
-  Layers
-} from "lucide-react";
-import { Card } from "../../../components/ui/card";
-import { MetricCardSkeleton } from "../../../components/ui/skeleton";
-import { formatCurrency } from "../../../lib/utils";
-import type { SystemStats } from "./types";
+import { Building2, DollarSign, Calendar, Layers } from 'lucide-react';
+import { Card } from '../../../components/ui/card';
+import { MetricCardSkeleton } from '../../../components/ui/skeleton';
+import { formatCurrency } from '../../../lib/utils';
+import type { SystemStats } from './types';
 
 interface StatsSectionProps {
   stats: SystemStats;

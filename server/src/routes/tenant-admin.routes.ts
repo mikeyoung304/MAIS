@@ -8,8 +8,17 @@ import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
 import { ZodError } from 'zod';
-import { UpdateBrandingDtoSchema, UpdatePackageDraftDtoSchema, CreateAddOnDtoSchema, UpdateAddOnDtoSchema } from '@macon/contracts';
-import { uploadService, checkUploadConcurrency, releaseUploadConcurrency } from '../services/upload.service';
+import {
+  UpdateBrandingDtoSchema,
+  UpdatePackageDraftDtoSchema,
+  CreateAddOnDtoSchema,
+  UpdateAddOnDtoSchema,
+} from '@macon/contracts';
+import {
+  uploadService,
+  checkUploadConcurrency,
+  releaseUploadConcurrency,
+} from '../services/upload.service';
 import { logger } from '../lib/core/logger';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import type { CatalogService } from '../services/catalog.service';
@@ -30,7 +39,13 @@ import {
   TooManyRequestsError,
 } from '../lib/errors';
 import type { AddOn } from '../lib/entities';
-import { uploadLimiterIP, uploadLimiterTenant, draftAutosaveLimiter, addonReadLimiter, addonWriteLimiter } from '../middleware/rateLimiter';
+import {
+  uploadLimiterIP,
+  uploadLimiterTenant,
+  draftAutosaveLimiter,
+  addonReadLimiter,
+  addonWriteLimiter,
+} from '../middleware/rateLimiter';
 
 // Configure multer for memory storage
 const upload = multer({
@@ -52,12 +67,7 @@ const uploadPackagePhoto = multer({
  * Multer error handler middleware
  * Converts multer-specific errors (file size, field count, etc.) to proper HTTP status codes
  */
-function handleMulterError(
-  error: unknown,
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
+function handleMulterError(error: unknown, req: Request, res: Response, next: NextFunction): void {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
       res.status(413).json({ error: 'File too large (max 5MB)' });
@@ -118,10 +128,7 @@ export class TenantAdminController {
         branding: updatedBranding,
       });
 
-      logger.info(
-        { tenantId, logoUrl: result.url },
-        'Tenant logo uploaded and branding updated'
-      );
+      logger.info({ tenantId, logoUrl: result.url }, 'Tenant logo uploaded and branding updated');
 
       releaseUploadConcurrency(tenantId);
       res.status(200).json(result);
@@ -326,123 +333,141 @@ export function createTenantAdminRoutes(
    * GET /v1/tenant-admin/packages/drafts
    * Get all packages with draft fields for visual editor
    */
-  router.get('/packages/drafts', draftAutosaveLimiter, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
+  router.get(
+    '/packages/drafts',
+    draftAutosaveLimiter,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantAuth = res.locals.tenantAuth;
+        if (!tenantAuth) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
+        const tenantId = tenantAuth.tenantId;
+
+        if (!packageDraftService) {
+          res.status(501).json({ error: 'Package draft service not available' });
+          return;
+        }
+
+        const packagesWithDrafts = await packageDraftService.getAllPackagesWithDrafts(tenantId);
+
+        // Map to DTO format
+        const packagesDto = packagesWithDrafts.map((pkg) => ({
+          id: pkg.id,
+          slug: pkg.slug,
+          title: pkg.name, // Map name to title for frontend compatibility
+          description: pkg.description,
+          priceCents: pkg.basePrice, // Map basePrice to priceCents for frontend compatibility
+          photoUrl: pkg.photos?.[0]?.url,
+          photos: pkg.photos,
+          segmentId: pkg.segmentId,
+          grouping: pkg.grouping,
+          groupingOrder: pkg.groupingOrder,
+          active: pkg.active,
+          // Draft fields
+          draftTitle: pkg.draftTitle,
+          draftDescription: pkg.draftDescription,
+          draftPriceCents: pkg.draftPriceCents,
+          draftPhotos: pkg.draftPhotos,
+          hasDraft: pkg.hasDraft,
+          draftUpdatedAt: pkg.draftUpdatedAt?.toISOString() ?? null,
+        }));
+
+        res.json(packagesDto);
+      } catch (error) {
+        next(error);
       }
-      const tenantId = tenantAuth.tenantId;
-
-      if (!packageDraftService) {
-        res.status(501).json({ error: 'Package draft service not available' });
-        return;
-      }
-
-      const packagesWithDrafts = await packageDraftService.getAllPackagesWithDrafts(tenantId);
-
-      // Map to DTO format
-      const packagesDto = packagesWithDrafts.map((pkg) => ({
-        id: pkg.id,
-        slug: pkg.slug,
-        title: pkg.name, // Map name to title for frontend compatibility
-        description: pkg.description,
-        priceCents: pkg.basePrice, // Map basePrice to priceCents for frontend compatibility
-        photoUrl: pkg.photos?.[0]?.url,
-        photos: pkg.photos,
-        segmentId: pkg.segmentId,
-        grouping: pkg.grouping,
-        groupingOrder: pkg.groupingOrder,
-        active: pkg.active,
-        // Draft fields
-        draftTitle: pkg.draftTitle,
-        draftDescription: pkg.draftDescription,
-        draftPriceCents: pkg.draftPriceCents,
-        draftPhotos: pkg.draftPhotos,
-        hasDraft: pkg.hasDraft,
-        draftUpdatedAt: pkg.draftUpdatedAt?.toISOString() ?? null,
-      }));
-
-      res.json(packagesDto);
-    } catch (error) {
-      next(error);
     }
-  });
+  );
 
   /**
    * POST /v1/tenant-admin/packages/publish
    * Publish all package drafts to live
    */
-  router.post('/packages/publish', draftAutosaveLimiter, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
+  router.post(
+    '/packages/publish',
+    draftAutosaveLimiter,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantAuth = res.locals.tenantAuth;
+        if (!tenantAuth) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
+        const tenantId = tenantAuth.tenantId;
+
+        if (!packageDraftService) {
+          res.status(501).json({ error: 'Package draft service not available' });
+          return;
+        }
+
+        // Optional: filter to specific packages
+        const { packageIds } = req.body || {};
+        const validatedPackageIds =
+          packageIds && Array.isArray(packageIds)
+            ? packageIds.filter((id: unknown) => typeof id === 'string')
+            : undefined;
+
+        const result = await packageDraftService.publishDrafts(tenantId, validatedPackageIds);
+
+        // Map to DTO format
+        const packagesDto = result.packages.map((pkg) => ({
+          id: pkg.id,
+          slug: pkg.slug,
+          title: pkg.title,
+          description: pkg.description,
+          priceCents: pkg.priceCents,
+          photoUrl: pkg.photoUrl,
+          photos: pkg.photos,
+        }));
+
+        res.json({
+          published: result.published,
+          packages: packagesDto,
+        });
+      } catch (error) {
+        next(error);
       }
-      const tenantId = tenantAuth.tenantId;
-
-      if (!packageDraftService) {
-        res.status(501).json({ error: 'Package draft service not available' });
-        return;
-      }
-
-      // Optional: filter to specific packages
-      const { packageIds } = req.body || {};
-      const validatedPackageIds = packageIds && Array.isArray(packageIds) ? packageIds.filter((id: unknown) => typeof id === 'string') : undefined;
-
-      const result = await packageDraftService.publishDrafts(tenantId, validatedPackageIds);
-
-      // Map to DTO format
-      const packagesDto = result.packages.map((pkg) => ({
-        id: pkg.id,
-        slug: pkg.slug,
-        title: pkg.title,
-        description: pkg.description,
-        priceCents: pkg.priceCents,
-        photoUrl: pkg.photoUrl,
-        photos: pkg.photos,
-      }));
-
-      res.json({
-        published: result.published,
-        packages: packagesDto,
-      });
-    } catch (error) {
-      next(error);
     }
-  });
+  );
 
   /**
    * DELETE /v1/tenant-admin/packages/drafts
    * Discard all package drafts
    */
-  router.delete('/packages/drafts', draftAutosaveLimiter, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
+  router.delete(
+    '/packages/drafts',
+    draftAutosaveLimiter,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantAuth = res.locals.tenantAuth;
+        if (!tenantAuth) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
+        const tenantId = tenantAuth.tenantId;
+
+        if (!packageDraftService) {
+          res.status(501).json({ error: 'Package draft service not available' });
+          return;
+        }
+
+        // Optional: filter to specific packages
+        const { packageIds } = req.body || {};
+        const validatedPackageIds =
+          packageIds && Array.isArray(packageIds)
+            ? packageIds.filter((id: unknown) => typeof id === 'string')
+            : undefined;
+
+        const result = await packageDraftService.discardDrafts(tenantId, validatedPackageIds);
+
+        res.json({ discarded: result.discarded });
+      } catch (error) {
+        next(error);
       }
-      const tenantId = tenantAuth.tenantId;
-
-      if (!packageDraftService) {
-        res.status(501).json({ error: 'Package draft service not available' });
-        return;
-      }
-
-      // Optional: filter to specific packages
-      const { packageIds } = req.body || {};
-      const validatedPackageIds = packageIds && Array.isArray(packageIds) ? packageIds.filter((id: unknown) => typeof id === 'string') : undefined;
-
-      const result = await packageDraftService.discardDrafts(tenantId, validatedPackageIds);
-
-      res.json({ discarded: result.discarded });
-    } catch (error) {
-      next(error);
     }
-  });
+  );
 
   // ============================================================================
   // Package CRUD Endpoints (parameterized routes must come after static routes)
@@ -503,7 +528,11 @@ export function createTenantAdminRoutes(
         try {
           await segmentService.getSegmentById(tenantId, data.segmentId);
         } catch {
-          res.status(404).json({ error: 'Invalid segment: segment not found or does not belong to this tenant' });
+          res
+            .status(404)
+            .json({
+              error: 'Invalid segment: segment not found or does not belong to this tenant',
+            });
           return;
         }
       }
@@ -551,7 +580,11 @@ export function createTenantAdminRoutes(
         try {
           await segmentService.getSegmentById(tenantId, data.segmentId);
         } catch {
-          res.status(404).json({ error: 'Invalid segment: segment not found or does not belong to this tenant' });
+          res
+            .status(404)
+            .json({
+              error: 'Invalid segment: segment not found or does not belong to this tenant',
+            });
           return;
         }
       }
@@ -652,7 +685,9 @@ export function createTenantAdminRoutes(
         }
 
         // Check photo count (max 5)
-        const currentPhotos = (pkg.photos as Array<{ url: string; filename: string; size: number; order: number }>) || [];
+        const currentPhotos =
+          (pkg.photos as Array<{ url: string; filename: string; size: number; order: number }>) ||
+          [];
         if (currentPhotos.length >= 5) {
           releaseUploadConcurrency(tenantId);
           res.status(400).json({ error: 'Maximum 5 photos per package' });
@@ -660,7 +695,11 @@ export function createTenantAdminRoutes(
         }
 
         // Upload photo (pass tenantId for Supabase storage path)
-        const uploadResult = await uploadService.uploadPackagePhoto(req.file as Express.Multer.File, packageId, tenantId);
+        const uploadResult = await uploadService.uploadPackagePhoto(
+          req.file as Express.Multer.File,
+          packageId,
+          tenantId
+        );
 
         // Add photo to package photos array
         const newPhoto = {
@@ -755,7 +794,9 @@ export function createTenantAdminRoutes(
         }
 
         // Verify photo exists in package photos array
-        const currentPhotos = (pkg.photos as Array<{ url: string; filename: string; size: number; order: number }>) || [];
+        const currentPhotos =
+          (pkg.photos as Array<{ url: string; filename: string; size: number; order: number }>) ||
+          [];
         const updatedPhotos = currentPhotos.filter((p) => p.filename !== filename);
 
         if (updatedPhotos.length === currentPhotos.length) {
@@ -786,61 +827,65 @@ export function createTenantAdminRoutes(
    * PATCH /v1/tenant-admin/packages/:id/draft
    * Update package draft (autosave target)
    */
-  router.patch('/packages/:id/draft', draftAutosaveLimiter, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
-      }
-      const tenantId = tenantAuth.tenantId;
-      const { id: packageId } = req.params;
+  router.patch(
+    '/packages/:id/draft',
+    draftAutosaveLimiter,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantAuth = res.locals.tenantAuth;
+        if (!tenantAuth) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
+        const tenantId = tenantAuth.tenantId;
+        const { id: packageId } = req.params;
 
-      if (!packageDraftService) {
-        res.status(501).json({ error: 'Package draft service not available' });
-        return;
-      }
+        if (!packageDraftService) {
+          res.status(501).json({ error: 'Package draft service not available' });
+          return;
+        }
 
-      // Validate request body using canonical schema from contracts
-      const data = UpdatePackageDraftDtoSchema.parse(req.body);
+        // Validate request body using canonical schema from contracts
+        const data = UpdatePackageDraftDtoSchema.parse(req.body);
 
-      const updatedPackage = await packageDraftService.saveDraft(tenantId, packageId, data);
+        const updatedPackage = await packageDraftService.saveDraft(tenantId, packageId, data);
 
-      // Map to DTO format
-      res.json({
-        id: updatedPackage.id,
-        slug: updatedPackage.slug,
-        title: updatedPackage.name,
-        description: updatedPackage.description,
-        priceCents: updatedPackage.basePrice,
-        photoUrl: updatedPackage.photos?.[0]?.url,
-        photos: updatedPackage.photos,
-        segmentId: updatedPackage.segmentId,
-        grouping: updatedPackage.grouping,
-        groupingOrder: updatedPackage.groupingOrder,
-        active: updatedPackage.active,
-        draftTitle: updatedPackage.draftTitle,
-        draftDescription: updatedPackage.draftDescription,
-        draftPriceCents: updatedPackage.draftPriceCents,
-        draftPhotos: updatedPackage.draftPhotos,
-        hasDraft: updatedPackage.hasDraft,
-        draftUpdatedAt: updatedPackage.draftUpdatedAt?.toISOString() ?? null,
-      });
-    } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
+        // Map to DTO format
+        res.json({
+          id: updatedPackage.id,
+          slug: updatedPackage.slug,
+          title: updatedPackage.name,
+          description: updatedPackage.description,
+          priceCents: updatedPackage.basePrice,
+          photoUrl: updatedPackage.photos?.[0]?.url,
+          photos: updatedPackage.photos,
+          segmentId: updatedPackage.segmentId,
+          grouping: updatedPackage.grouping,
+          groupingOrder: updatedPackage.groupingOrder,
+          active: updatedPackage.active,
+          draftTitle: updatedPackage.draftTitle,
+          draftDescription: updatedPackage.draftDescription,
+          draftPriceCents: updatedPackage.draftPriceCents,
+          draftPhotos: updatedPackage.draftPhotos,
+          hasDraft: updatedPackage.hasDraft,
+          draftUpdatedAt: updatedPackage.draftUpdatedAt?.toISOString() ?? null,
         });
-        return;
+      } catch (error) {
+        if (error instanceof ZodError) {
+          res.status(400).json({
+            error: 'Validation error',
+            details: error.issues,
+          });
+          return;
+        }
+        if (error instanceof NotFoundError) {
+          res.status(404).json({ error: error.message });
+          return;
+        }
+        next(error);
       }
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
-      next(error);
     }
-  });
+  );
 
   // ============================================================================
   // Blackout Management Endpoints
@@ -1041,140 +1086,168 @@ export function createTenantAdminRoutes(
    * GET /v1/tenant-admin/addons
    * List all add-ons for authenticated tenant
    */
-  router.get('/addons', addonReadLimiter, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantId = getTenantId(res);
-      if (!tenantId) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
-      }
+  router.get(
+    '/addons',
+    addonReadLimiter,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantId = getTenantId(res);
+        if (!tenantId) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
 
-      const addOns = await catalogService.getAllAddOns(tenantId);
-      res.json(addOns.map(mapAddOnToDto));
-    } catch (error) {
-      next(error);
+        const addOns = await catalogService.getAllAddOns(tenantId);
+        res.json(addOns.map(mapAddOnToDto));
+      } catch (error) {
+        next(error);
+      }
     }
-  });
+  );
 
   /**
    * GET /v1/tenant-admin/addons/:id
    * Get single add-on by ID (verifies ownership)
    */
-  router.get('/addons/:id', addonReadLimiter, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantId = getTenantId(res);
-      if (!tenantId) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
-      }
+  router.get(
+    '/addons/:id',
+    addonReadLimiter,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantId = getTenantId(res);
+        if (!tenantId) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
 
-      const addOn = await catalogService.getAddOnById(tenantId, req.params.id);
-      if (!addOn) {
-        res.status(404).json({ error: 'Add-on not found' });
-        return;
-      }
+        const addOn = await catalogService.getAddOnById(tenantId, req.params.id);
+        if (!addOn) {
+          res.status(404).json({ error: 'Add-on not found' });
+          return;
+        }
 
-      res.json(mapAddOnToDto(addOn));
-    } catch (error) {
-      next(error);
+        res.json(mapAddOnToDto(addOn));
+      } catch (error) {
+        next(error);
+      }
     }
-  });
+  );
 
   /**
    * POST /v1/tenant-admin/addons
    * Create new add-on for authenticated tenant
    */
-  router.post('/addons', addonWriteLimiter, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantId = getTenantId(res);
-      if (!tenantId) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
-      }
+  router.post(
+    '/addons',
+    addonWriteLimiter,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantId = getTenantId(res);
+        if (!tenantId) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
 
-      const data = CreateAddOnDtoSchema.parse(req.body);
+        const data = CreateAddOnDtoSchema.parse(req.body);
 
-      // SECURITY: Validate package ownership - ensure packageId belongs to tenant
-      const pkg = await catalogService.getPackageById(tenantId, data.packageId);
-      if (!pkg) {
-        res.status(404).json({ error: 'Invalid package: package not found or does not belong to this tenant' });
-        return;
-      }
+        // SECURITY: Validate package ownership - ensure packageId belongs to tenant
+        const pkg = await catalogService.getPackageById(tenantId, data.packageId);
+        if (!pkg) {
+          res
+            .status(404)
+            .json({
+              error: 'Invalid package: package not found or does not belong to this tenant',
+            });
+          return;
+        }
 
-      const addOn = await catalogService.createAddOn(tenantId, data);
-      res.status(201).json(mapAddOnToDto(addOn));
-    } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({ error: 'Validation error', details: error.issues });
-        return;
+        const addOn = await catalogService.createAddOn(tenantId, data);
+        res.status(201).json(mapAddOnToDto(addOn));
+      } catch (error) {
+        if (error instanceof ZodError) {
+          res.status(400).json({ error: 'Validation error', details: error.issues });
+          return;
+        }
+        next(error);
       }
-      next(error);
     }
-  });
+  );
 
   /**
    * PUT /v1/tenant-admin/addons/:id
    * Update add-on (verifies ownership)
    */
-  router.put('/addons/:id', addonWriteLimiter, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantId = getTenantId(res);
-      if (!tenantId) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
-      }
-
-      const { id } = req.params;
-      const data = UpdateAddOnDtoSchema.parse(req.body);
-
-      // SECURITY: If updating packageId, validate it belongs to tenant
-      if (data.packageId) {
-        const pkg = await catalogService.getPackageById(tenantId, data.packageId);
-        if (!pkg) {
-          res.status(404).json({ error: 'Invalid package: package not found or does not belong to this tenant' });
+  router.put(
+    '/addons/:id',
+    addonWriteLimiter,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantId = getTenantId(res);
+        if (!tenantId) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
           return;
         }
-      }
 
-      const addOn = await catalogService.updateAddOn(tenantId, id, data);
-      res.json(mapAddOnToDto(addOn));
-    } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({ error: 'Validation error', details: error.issues });
-        return;
+        const { id } = req.params;
+        const data = UpdateAddOnDtoSchema.parse(req.body);
+
+        // SECURITY: If updating packageId, validate it belongs to tenant
+        if (data.packageId) {
+          const pkg = await catalogService.getPackageById(tenantId, data.packageId);
+          if (!pkg) {
+            res
+              .status(404)
+              .json({
+                error: 'Invalid package: package not found or does not belong to this tenant',
+              });
+            return;
+          }
+        }
+
+        const addOn = await catalogService.updateAddOn(tenantId, id, data);
+        res.json(mapAddOnToDto(addOn));
+      } catch (error) {
+        if (error instanceof ZodError) {
+          res.status(400).json({ error: 'Validation error', details: error.issues });
+          return;
+        }
+        // TODO-196 FIX: Explicit NotFoundError handling
+        if (error instanceof NotFoundError) {
+          res.status(404).json({ error: error.message });
+          return;
+        }
+        next(error);
       }
-      // TODO-196 FIX: Explicit NotFoundError handling
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
-      next(error);
     }
-  });
+  );
 
   /**
    * DELETE /v1/tenant-admin/addons/:id
    * Delete add-on (verifies ownership)
    */
-  router.delete('/addons/:id', addonWriteLimiter, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantId = getTenantId(res);
-      if (!tenantId) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
-      }
+  router.delete(
+    '/addons/:id',
+    addonWriteLimiter,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantId = getTenantId(res);
+        if (!tenantId) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
 
-      await catalogService.deleteAddOn(tenantId, req.params.id);
-      res.status(204).send();
-    } catch (error) {
-      // TODO-196 FIX: Explicit NotFoundError handling
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
+        await catalogService.deleteAddOn(tenantId, req.params.id);
+        res.status(204).send();
+      } catch (error) {
+        // TODO-196 FIX: Explicit NotFoundError handling
+        if (error instanceof NotFoundError) {
+          res.status(404).json({ error: error.message });
+          return;
+        }
+        next(error);
       }
-      next(error);
     }
-  });
+  );
 
   // ============================================================================
   // Segment Image Upload Endpoint
@@ -1217,12 +1290,12 @@ export function createTenantAdminRoutes(
         }
 
         // Upload segment image
-        const uploadResult = await uploadService.uploadSegmentImage(req.file as Express.Multer.File, tenantId);
-
-        logger.info(
-          { tenantId, filename: uploadResult.filename },
-          'Segment image uploaded'
+        const uploadResult = await uploadService.uploadSegmentImage(
+          req.file as Express.Multer.File,
+          tenantId
         );
+
+        logger.info({ tenantId, filename: uploadResult.filename }, 'Segment image uploaded');
 
         releaseUploadConcurrency(tenantId);
         res.status(201).json(uploadResult);

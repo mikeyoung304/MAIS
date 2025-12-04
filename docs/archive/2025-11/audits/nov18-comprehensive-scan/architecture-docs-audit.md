@@ -20,12 +20,14 @@ This audit examines all architecture documentation for accuracy against the curr
 ### Key Findings
 
 ✅ **Strengths:**
+
 - ARCHITECTURE.md is current and accurate (last updated Nov 10)
 - Multi-tenant documentation is comprehensive and matches implementation
 - Design system documentation is complete and current
 - Git history narrative provides excellent context
 
 ⚠️ **Issues Found:**
+
 - DECISIONS.md uses old file paths (pre-Oct 23 refactoring)
 - Some documents reference "hexagonal" without acknowledging the Oct 23 simplification
 - Missing ADRs for critical decisions (pnpm→npm, React 19→18 downgrade)
@@ -33,6 +35,7 @@ This audit examines all architecture documentation for accuracy against the curr
 - Test infrastructure improvements (6 sprints) not documented in ADRs
 
 ❌ **Critical Gaps:**
+
 - No ADR documenting October 23 "Great Refactoring"
 - Repository pattern implementation not documented in any ADR
 - Mock vs Real adapter strategy mentioned but no formal decision record
@@ -52,6 +55,7 @@ This audit examines all architecture documentation for accuracy against the curr
 #### What's Correct
 
 ✅ **Multi-tenant architecture** (lines 256-363)
+
 - Tenant resolution middleware accurately described
 - Row-level data isolation pattern matches implementation
 - API key format documentation is accurate
@@ -59,16 +63,19 @@ This audit examines all architecture documentation for accuracy against the curr
 - Commission calculation correctly documented
 
 ✅ **Service map** (lines 103-111)
+
 - All services listed match current implementation
 - Repository pattern correctly described
 - Tenant scoping documented for all services
 
 ✅ **Concurrency control** (lines 113-255)
+
 - Double-booking prevention accurately described
 - Pessimistic locking implementation matches code
 - Webhook idempotency correctly documented
 
 ✅ **Data model** (lines 392-402)
+
 - All entities match current Prisma schema
 - Composite unique constraints accurately listed
 - Multi-tenant fields correctly documented
@@ -77,29 +84,34 @@ This audit examines all architecture documentation for accuracy against the curr
 
 ❌ **Missing: October 23 Refactoring Context** (lines 415-439)
 The "Migration History" section mentions "Phase 1 (2025-10-23)" but doesn't explain:
+
 - **WHY** hexagonal → layered (149 files changed)
 - **IMPACT** on developer experience
 - **REASONING** for downgrading React 19→18, Express 5→4
 - **DECISION** to switch pnpm→npm
 
 **Current Text** (line 430):
+
 ```markdown
 **Phase 1 (2025-10-23)**: Migrated from hexagonal to layered architecture:
+
 - apps/api → server
 - apps/web → client
 - domains/ → services/
 ```
 
 **Recommended Addition**:
+
 ```markdown
 **Phase 1 (2025-10-23) - "The Great Refactoring"**:
+
 - **Scope**: 149 files changed, 16,312 lines modified
 - **Driver**: Pragmatism over architectural purity
 - **Changes**:
   - apps/api → server
   - apps/web → client
   - domains/ → services/ (flattened domain structure)
-  - http/v1/*.http.ts → routes/*.routes.ts
+  - http/v1/_.http.ts → routes/_.routes.ts
   - pnpm → npm (CI/CD compatibility)
   - Express 5 → 4, React 19 → 18 (stability)
 - **Result**: Simpler structure, stable dependencies, faster onboarding
@@ -108,15 +120,18 @@ The "Migration History" section mentions "Phase 1 (2025-10-23)" but doesn't expl
 
 ❌ **Missing: Design System Implementation** (NEW - Nov 18)
 The document doesn't mention the recently added design system:
+
 - 249 design tokens defined
 - Complete token system covering colors, typography, spacing, shadows, animations
 - Design token files: `client/src/styles/design-tokens.css`
 
 **Recommended Addition** (after line 102):
+
 ```markdown
 ### Design System (client/src/styles)
 
 **249 Design Tokens** covering all visual aspects:
+
 - Colors: 93 tokens (brand colors, surfaces, text, interactive states, semantic)
 - Typography: 31 tokens (font families, sizes, weights, line heights, letter spacing)
 - Spacing: 20 tokens (4px base unit system)
@@ -130,18 +145,22 @@ The document doesn't mention the recently added design system:
 
 ❌ **Incomplete: DI Container Description** (line 93)
 The document mentions "di.ts — composition root" but doesn't explain:
+
 - Adapter preset system (mock vs real)
 - How services are wired together
 - Environment-based switching logic
 
 **Current Text**:
+
 ```markdown
 **di.ts** — composition root: choose mock vs real adapters via env and wire services
 ```
 
 **Recommended Expansion**:
+
 ```markdown
 **di.ts** — Dependency injection container with environment-based adapter selection:
+
 - `ADAPTERS_PRESET=mock`: In-memory repositories, console emails, fake payments
 - `ADAPTERS_PRESET=real`: Prisma, Stripe, Postmark, Google Calendar
 - **Pattern**: Ports & Adapters (hexagonal architecture)
@@ -153,9 +172,11 @@ The document mentions "di.ts — composition root" but doesn't explain:
 #### Specific Line-by-Line Issues
 
 **Line 7**: References "Sprint 2 (January 2025)" - this is future-dated
+
 ```markdown
 Starting Sprint 2 (January 2025), Elope is transitioning to a **config-driven, agent-powered platform**
 ```
+
 **Issue**: This appears to be planning documentation, not current state. Should be moved to a planning document or clearly marked as "Planned Feature".
 
 **Lines 52-75**: Config-driven pivot section describes future architecture
@@ -180,6 +201,7 @@ Starting Sprint 2 (January 2025), Elope is transitioning to a **config-driven, a
 
 ⚠️ **Missing: Design System Components** (lines 191-223)
 The component hierarchy doesn't include the new design system components added Nov 18:
+
 - EmptyState
 - Skeletons (loading placeholders)
 - AlertDialog
@@ -187,6 +209,7 @@ The component hierarchy doesn't include the new design system components added N
 - Enhanced Card variants (3 variants)
 
 **Recommendation**: Add section after line 223:
+
 ```markdown
                       └─ Design System Components (Nov 2025)
                           ├─ EmptyState (zero-data patterns)
@@ -218,11 +241,13 @@ Document says: "Email service not integrated into booking webhook handler"
 **Current Status**: Email integration WAS completed post-audit. The PostmarkMailAdapter exists and is wired into the DI container.
 
 **Evidence**:
+
 ```typescript
 // server/src/di.ts
-const emailProvider = config.ADAPTERS_PRESET === 'real'
-  ? new PostmarkMailAdapter(config.POSTMARK_SERVER_TOKEN)
-  : new MockEmailProvider();
+const emailProvider =
+  config.ADAPTERS_PRESET === 'real'
+    ? new PostmarkMailAdapter(config.POSTMARK_SERVER_TOKEN)
+    : new MockEmailProvider();
 ```
 
 **Recommendation**: Update status to "✅ 100% Complete" or verify current implementation state.
@@ -231,6 +256,7 @@ const emailProvider = config.ADAPTERS_PRESET === 'real'
 Document says: "Package photo upload endpoint NOT integrated in admin UI"
 
 **Current Status**: Package photo upload was implemented in Phase 5.1 (Nov 7, 2025) with:
+
 - Backend API endpoint (multipart/form-data)
 - `PackagePhotoUploader` React component
 - Photo thumbnails in package list view
@@ -260,10 +286,12 @@ Document says: "Package photo upload endpoint NOT integrated in admin UI"
 ⚠️ **Line 340**: "Hexagonal (Ports & Adapters)" - should acknowledge the Oct 23 simplification
 **Current**: Just states "Hexagonal architecture"
 **Better**:
+
 ```markdown
 ### 3.1 Architecture Pattern: Hexagonal (Ports & Adapters) - Refined
 
 The application follows **refined hexagonal architecture** after the Oct 23, 2025 simplification:
+
 - Previously: Nested domains/ structure
 - Currently: Flat services/ structure with clear port definitions
 - Pattern: Business logic → Ports (interfaces) → Adapters (implementations)
@@ -289,21 +317,27 @@ The application follows **refined hexagonal architecture** after the Oct 23, 202
 ❌ **Outdated File Paths Throughout** - All ADRs reference pre-Oct 23 file structure
 
 **ADR-001** (lines 112-116):
+
 ```markdown
 **Files Modified:**
+
 - `server/src/services/availability.service.ts` ✅ Current path
 - `server/src/services/booking.service.ts` ✅ Current path
 - `server/src/adapters/prisma/booking.repository.ts` ✅ Current path
 ```
+
 **Status**: Actually correct! Files were updated during refactoring.
 
 **ADR-005** (lines 685-856):
+
 ```markdown
 **Files Created:**
+
 - `server/src/lib/ports.ts` - PaymentProvider interface ✅ Current
 - `server/src/adapters/stripe.adapter.ts` - Real implementation ✅ Current
 - `server/src/adapters/mock/payment.mock.ts` - Mock implementation ✅ Current
 ```
+
 **Status**: Paths are correct.
 
 **SURPRISING FINDING**: The file paths in DECISIONS.md are actually CURRENT, despite being written before the refactoring. This suggests the ADRs were written AFTER the Oct 23 refactoring, not before.
@@ -318,6 +352,7 @@ The application follows **refined hexagonal architecture** after the Oct 23, 202
 The following major decisions have **no ADRs**:
 
 ❌ **ADR-006: October 23 Architectural Refactoring** (CRITICAL MISSING)
+
 - Decision: Hexagonal → Layered → Refined Hexagonal
 - Scope: 149 files, 16,312 lines
 - Rationale: Pragmatism over purity
@@ -325,18 +360,21 @@ The following major decisions have **no ADRs**:
 - Consequences: Simpler onboarding, flatter imports, stable dependencies
 
 ❌ **ADR-007: Package Manager Change (pnpm → npm)** (MISSING)
+
 - Decision: Switch from pnpm to npm workspaces
 - Rationale: CI/CD compatibility, deployment stability
 - Alternatives: Keep pnpm (rejected for CI issues), Yarn (not evaluated)
 - Consequences: Slower installs, better ecosystem compatibility
 
 ❌ **ADR-008: Dependency Downgrade Strategy** (MISSING)
+
 - Decision: Downgrade Express 5→4, React 19→18
 - Rationale: Production stability over bleeding-edge features
 - Alternatives: Keep latest versions (rejected for ecosystem compatibility)
 - Consequences: Mature ecosystem, fewer breaking changes
 
 ❌ **ADR-009: Multi-Tenant Architecture** (CRITICAL MISSING)
+
 - Decision: Implement row-level multi-tenancy with tenant isolation
 - Scope: Added tenantId to all tables, 3-layer isolation
 - Critical Security Fix: HTTP cache leak (cross-tenant data exposure)
@@ -344,18 +382,21 @@ The following major decisions have **no ADRs**:
 - Consequences: Support 50 tenants, variable commission rates
 
 ❌ **ADR-010: Repository Pattern Implementation** (MISSING)
+
 - Decision: Use repository pattern for data access
 - Rationale: Abstract Prisma, enable testing with mocks
 - Alternatives: Active Record (rejected), Direct Prisma calls (rejected)
 - Consequences: Testability, migration path from Prisma if needed
 
 ❌ **ADR-011: Type-Safe API Contracts (ts-rest)** (MISSING)
+
 - Decision: Use ts-rest for compile-time API type safety
 - Rationale: Single source of truth, client/server type sync
 - Alternatives: OpenAPI codegen (rejected), Manual typing (rejected)
 - Consequences: No request/response mismatches, automatic docs
 
 ❌ **ADR-012: Design System Implementation** (MISSING)
+
 - Decision: Implement comprehensive design token system
 - Scope: 249 tokens across 10 categories
 - Rationale: Consistent UI, tenant customization, professional polish
@@ -398,6 +439,7 @@ The following major decisions have **no ADRs**:
 
 ❌ **Phase 2-6 Progress** (lines 574-642)
 The guide shows phases 2-6 as "🎯 NEXT" but several were completed:
+
 - **Phase 2**: Widget SDK - Status unclear (may be in progress)
 - **Phase 3**: Stripe Connect - Implemented (StripeConnectService exists)
 - **Phase 4**: Admin Tools - Implemented (PlatformAdminDashboard exists)
@@ -408,6 +450,7 @@ The guide shows phases 2-6 as "🎯 NEXT" but several were completed:
 
 ❌ **Segment Implementation** (NEW - Nov 15)
 The guide doesn't mention the segment implementation completed Nov 15:
+
 - Customer segmentation for targeted marketing
 - Package visibility rules
 - Segment-based analytics
@@ -442,11 +485,13 @@ The guide doesn't mention the segment implementation completed Nov 15:
 #### 1. Prisma Schema vs Documentation
 
 ✅ **ARCHITECTURE.md Data Model** (lines 392-402) matches Prisma schema exactly:
+
 - All entities listed
 - Composite unique constraints match
 - Multi-tenant fields accurate
 
 ✅ **Multi-tenant fields** match schema:
+
 - `tenantId` on all scoped tables ✓
 - `@@unique([tenantId, slug])` on Package ✓
 - `@@unique([tenantId, date])` on BlackoutDate ✓
@@ -457,10 +502,12 @@ The guide doesn't mention the segment implementation completed Nov 15:
 ⚠️ **ARCHITECTURE.md** (line 93) mentions DI container but doesn't detail the adapter selection logic
 
 **Actual Implementation** (`server/src/di.ts`):
+
 ```typescript
-const adapters = config.ADAPTERS_PRESET === 'mock'
-  ? buildMockAdapters()
-  : buildRealAdapters(prisma, stripe, postmark, gcal);
+const adapters =
+  config.ADAPTERS_PRESET === 'mock'
+    ? buildMockAdapters()
+    : buildRealAdapters(prisma, stripe, postmark, gcal);
 ```
 
 **Recommendation**: Add detailed DI container section to ARCHITECTURE.md explaining the adapter factory pattern.
@@ -468,6 +515,7 @@ const adapters = config.ADAPTERS_PRESET === 'mock'
 #### 3. Route Files vs Documentation
 
 ✅ **nov18scan/architecture-overview.md** (lines 154-169) lists all 16 route files accurately:
+
 - All route files exist
 - Descriptions match actual implementations
 - No missing or extra routes
@@ -475,6 +523,7 @@ const adapters = config.ADAPTERS_PRESET === 'mock'
 #### 4. Service Layer vs Documentation
 
 ✅ **ARCHITECTURE.md** (lines 103-111) accurately lists all services:
+
 - Catalog ✓
 - Availability ✓
 - Booking ✓
@@ -506,6 +555,7 @@ docs/adrs/ADR-012-design-system-implementation.md
 ```
 
 **Template for ADR-006** (most critical):
+
 ```markdown
 # ADR-006: October 23 Architectural Refactoring
 
@@ -517,6 +567,7 @@ docs/adrs/ADR-012-design-system-implementation.md
 ### Context
 
 The initial hexagonal architecture (apps/api/src/domains/) created:
+
 - Deep import paths (../../../domains/booking/service)
 - Harder onboarding (unfamiliar nested structure)
 - Abstraction overhead not justified by project complexity
@@ -524,6 +575,7 @@ The initial hexagonal architecture (apps/api/src/domains/) created:
 ### Decision
 
 Flatten to layered architecture with explicit service layer:
+
 - apps/api → server
 - apps/web → client
 - domains/ → services/ (flat)
@@ -534,17 +586,20 @@ Flatten to layered architecture with explicit service layer:
 ### Consequences
 
 **Positive:**
+
 - Shorter import paths
 - Faster developer onboarding
 - Stable dependency versions
 - Better CI/CD compatibility
 
 **Negative:**
+
 - Less formal separation of concerns
 - 149 files changed (high risk)
 - All tests temporarily broken
 
 **Mitigation:**
+
 - TypeScript caught most errors during refactoring
 - Systematic fixing over 3 commits (a5e2cc1, 8429114, 2cdfa48)
 - All functionality restored by Oct 29
@@ -555,12 +610,14 @@ Flatten to layered architecture with explicit service layer:
 **Add these sections:**
 
 **Section 1: Design System** (after line 102)
+
 ```markdown
 ## Design System
 
 The platform implements a comprehensive design token system with **249 tokens** covering:
 
 ### Token Categories
+
 - **Colors** (93): Brand colors, surfaces, text, interactive states, semantic
 - **Typography** (31): Font families, sizes, weights, line heights, letter spacing
 - **Spacing** (20): 4px base unit system for consistent spacing
@@ -569,12 +626,15 @@ The platform implements a comprehensive design token system with **249 tokens** 
 - **Transitions** (13): Durations, easings, combined transitions
 
 ### Implementation
+
 - **Location:** `client/src/styles/design-tokens.css`
 - **Documentation:** `DESIGN_SYSTEM_IMPLEMENTATION.md`
 - **Accessibility:** WCAG AA compliant (all color combinations tested)
 
 ### Usage
+
 All components use CSS custom properties:
+
 - `var(--color-primary)` for brand colors
 - `var(--spacing-4)` for consistent spacing
 - `var(--shadow-elevation-2)` for card elevation
@@ -608,6 +668,7 @@ docs/adrs/INDEX.md
 # Architecture Decision Records (ADRs)
 
 ## Active Decisions
+
 - [ADR-001: Pessimistic Locking for Booking Race Conditions](ADR-001-...)
 - [ADR-002: Database-Based Webhook Dead Letter Queue](ADR-002-...)
 - [ADR-004: Full Test Coverage for Webhooks](ADR-004-...)
@@ -621,6 +682,7 @@ docs/adrs/INDEX.md
 - [ADR-012: Design System Implementation](ADR-012-...) **NEW**
 
 ## Deferred/Rejected
+
 - [ADR-003: Git History Rewrite](ADR-003-...) **Status: Deferred**
 ```
 
@@ -634,17 +696,20 @@ docs/ARCHITECTURE_INDEX.md
 # Architecture Documentation Index
 
 ## Core Documents
+
 1. **ARCHITECTURE.md** - Primary architecture reference (current state)
 2. **ARCHITECTURE_DIAGRAM.md** - Visual diagrams (authentication, routing, data flow)
 3. **DECISIONS.md** - Architecture Decision Records (ADR-001 through ADR-005)
 
 ## Specialized Guides
+
 4. **docs/multi-tenant/** - Multi-tenant implementation guide
 5. **DESIGN_SYSTEM_IMPLEMENTATION.md** - Design token system (249 tokens)
 6. **nov18scan/architecture-overview.md** - Comprehensive deep-dive (most current)
 7. **nov18scan/git-history-narrative.md** - Historical context and evolution
 
 ## Analysis Reports
+
 8. **ARCHITECTURE_COMPLETENESS_AUDIT.md** - Feature completeness (Nov 16)
 9. **CODE_HEALTH_ASSESSMENT.md** - Code quality metrics
 10. **COMPREHENSIVE_CODEBASE_ANALYSIS.md** - Full codebase analysis
@@ -652,18 +717,21 @@ docs/ARCHITECTURE_INDEX.md
 ## Recommended Reading Order
 
 **For New Developers:**
+
 1. nov18scan/architecture-overview.md (comprehensive overview)
 2. ARCHITECTURE.md (core patterns)
 3. DESIGN_SYSTEM_IMPLEMENTATION.md (UI development)
 4. docs/multi-tenant/ (multi-tenant patterns)
 
 **For Architects:**
+
 1. DECISIONS.md (architectural decisions)
 2. nov18scan/git-history-narrative.md (evolution context)
 3. ARCHITECTURE_COMPLETENESS_AUDIT.md (gaps and TODOs)
 4. ARCHITECTURE.md (current implementation)
 
 **For Debugging:**
+
 1. ARCHITECTURE_DIAGRAM.md (request flow diagrams)
 2. ARCHITECTURE.md (middleware chain, service layer)
 3. docs/multi-tenant/ (tenant isolation patterns)
@@ -674,16 +742,19 @@ docs/ARCHITECTURE_INDEX.md
 #### 1. Establish Documentation Review Process
 
 **Add to CONTRIBUTING.md**:
+
 ```markdown
 ## Documentation Requirements
 
 All architectural changes require:
+
 1. **Update ARCHITECTURE.md** if changing core patterns
 2. **Create ADR** for major decisions (use docs/architecture/ADR-TEMPLATE.md)
 3. **Update CHANGELOG.md** with architecture changes
 4. **Cross-reference** in ARCHITECTURE_INDEX.md
 
 ### What Requires an ADR?
+
 - New architectural patterns (repository, service, adapter)
 - Technology stack changes (dependency upgrades, new libraries)
 - Database schema changes (new models, indices)
@@ -694,18 +765,21 @@ All architectural changes require:
 #### 2. Schedule Quarterly Architecture Reviews
 
 **Create docs/architecture/REVIEW_SCHEDULE.md**:
+
 ```markdown
 # Architecture Documentation Review Schedule
 
 ## Quarterly Review (every 3 months)
 
 **Documents to Review:**
+
 - [ ] ARCHITECTURE.md - Update for new patterns
 - [ ] DECISIONS.md - Add new ADRs
 - [ ] Architecture diagrams - Update for new flows
 - [ ] Multi-tenant guide - Update for new features
 
 **Review Checklist:**
+
 - [ ] File paths accurate?
 - [ ] Code examples still work?
 - [ ] Dependencies up to date?
@@ -723,16 +797,16 @@ All architectural changes require:
 
 ### Documents by Accuracy
 
-| Document | Accuracy | Last Updated | Priority |
-|----------|----------|--------------|----------|
-| nov18scan/architecture-overview.md | ✅ 98% | Nov 18, 2025 | Use as primary reference |
-| DESIGN_SYSTEM_IMPLEMENTATION.md | ✅ 100% | Nov 16, 2025 | Perfect, no changes needed |
-| nov18scan/git-history-narrative.md | ✅ 100% | Nov 18, 2025 | Historical gold standard |
-| ARCHITECTURE.md | ✅ 85% | Nov 10, 2025 | Update with design system + refactoring context |
-| ARCHITECTURE_DIAGRAM.md | ✅ 95% | Nov 10, 2025 | Add design system components |
-| DECISIONS.md | ⚠️ 60% | Oct 29, 2025 | Add 7 missing ADRs |
-| ARCHITECTURE_COMPLETENESS_AUDIT.md | ⚠️ 70% | Nov 16, 2025 | Update feature statuses |
-| MULTI_TENANT_IMPLEMENTATION_GUIDE.md | ⚠️ 85% | Nov 6, 2025 | Update phase progress |
+| Document                             | Accuracy | Last Updated | Priority                                        |
+| ------------------------------------ | -------- | ------------ | ----------------------------------------------- |
+| nov18scan/architecture-overview.md   | ✅ 98%   | Nov 18, 2025 | Use as primary reference                        |
+| DESIGN_SYSTEM_IMPLEMENTATION.md      | ✅ 100%  | Nov 16, 2025 | Perfect, no changes needed                      |
+| nov18scan/git-history-narrative.md   | ✅ 100%  | Nov 18, 2025 | Historical gold standard                        |
+| ARCHITECTURE.md                      | ✅ 85%   | Nov 10, 2025 | Update with design system + refactoring context |
+| ARCHITECTURE_DIAGRAM.md              | ✅ 95%   | Nov 10, 2025 | Add design system components                    |
+| DECISIONS.md                         | ⚠️ 60%   | Oct 29, 2025 | Add 7 missing ADRs                              |
+| ARCHITECTURE_COMPLETENESS_AUDIT.md   | ⚠️ 70%   | Nov 16, 2025 | Update feature statuses                         |
+| MULTI_TENANT_IMPLEMENTATION_GUIDE.md | ⚠️ 85%   | Nov 6, 2025  | Update phase progress                           |
 
 ### Critical Gaps Identified
 

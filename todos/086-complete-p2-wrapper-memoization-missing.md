@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "086"
+issue_id: '086'
 tags:
   - code-review
   - performance
@@ -19,6 +19,7 @@ dependencies: []
 ## Findings
 
 ### Discovery
+
 Performance review identified that wrappers re-render on every parent update:
 
 ```typescript
@@ -33,11 +34,13 @@ export function TierCard({ package: pkg, ... }: TierCardProps) { ... }
 ```
 
 ### Impact
+
 - When StorefrontHome or TierSelector re-renders, all wrapper components re-render
 - ChoiceCardBase memo only prevents re-renders if its props haven't changed
 - The wrapper function execution still happens on every parent render
 
 ### Severity
+
 LOW-MEDIUM - Wrappers are simple prop mappers, but pattern is incorrect for optimal performance.
 
 ## Proposed Solutions
@@ -57,11 +60,13 @@ export const TierCard = memo(function TierCard({ ... }: TierCardProps) {
 ```
 
 **Pros:**
+
 - Consistent with ChoiceCardBase pattern
 - Prevents unnecessary re-renders
 - Minimal code change
 
 **Cons:**
+
 - Adds shallow comparison overhead (negligible)
 
 **Effort:** Small (5 min)
@@ -72,10 +77,12 @@ export const TierCard = memo(function TierCard({ ... }: TierCardProps) {
 If performance is acceptable, document why memoization was intentionally omitted.
 
 **Pros:**
+
 - No code changes
 - Simpler mental model
 
 **Cons:**
+
 - Pattern inconsistency
 - Future performance issues as component grows
 
@@ -89,14 +96,17 @@ If performance is acceptable, document why memoization was intentionally omitted
 ## Technical Details
 
 ### Affected Files
+
 - `client/src/features/storefront/SegmentCard.tsx`
 - `client/src/features/storefront/TierCard.tsx`
 
 ### Components
+
 - SegmentCard
 - TierCard
 
 ### Database Changes
+
 None
 
 ## Acceptance Criteria
@@ -108,8 +118,8 @@ None
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                     | Learnings                                     |
+| ---------- | -------------------------- | --------------------------------------------- |
 | 2025-11-29 | Created during code review | Performance review identified memoization gap |
 
 ## Resources

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "176"
+issue_id: '176'
 tags: [todo]
 dependencies: []
 ---

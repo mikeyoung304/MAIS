@@ -14,6 +14,7 @@ This index helps you find the right prevention strategy documentation based on y
 ## 🚀 Quick Start
 
 **New to the project?**
+
 1. Read [Prevention Quick Reference](./PREVENTION-QUICK-REFERENCE.md) (5 min)
 2. Complete multi-tenant security quiz (10 min)
 3. Review [Implementation Roadmap](./PREVENTION-IMPLEMENTATION-ROADMAP.md) (10 min)
@@ -31,12 +32,14 @@ This index helps you find the right prevention strategy documentation based on y
 ### 1. Overview Documents
 
 #### [Comprehensive Prevention Strategies](./COMPREHENSIVE-PREVENTION-STRATEGIES.md)
+
 **Purpose:** Complete guide to preventing critical issues
 **Length:** ~8,000 words
 **Audience:** All engineers
 **When to read:** During onboarding, when implementing new features
 
 **Contains:**
+
 - Code review checklist enhancements
 - ESLint rules to enforce
 - Required test patterns
@@ -47,12 +50,14 @@ This index helps you find the right prevention strategy documentation based on y
 - Success metrics
 
 #### [Prevention Quick Reference](./PREVENTION-QUICK-REFERENCE.md)
+
 **Purpose:** Cheat sheet for daily development
 **Length:** ~1,500 words
 **Audience:** All engineers
 **When to read:** Before every commit, keep printed on desk
 
 **Contains:**
+
 - Multi-tenant security patterns
 - Input normalization patterns
 - Database patterns
@@ -64,12 +69,14 @@ This index helps you find the right prevention strategy documentation based on y
 - Grep commands for self-review
 
 #### [Prevention Implementation Roadmap](./PREVENTION-IMPLEMENTATION-ROADMAP.md)
+
 **Purpose:** Rollout plan for prevention strategies
 **Length:** ~3,000 words
 **Audience:** Tech leads, project managers
 **When to read:** Planning sprints, tracking progress
 
 **Contains:**
+
 - 5-phase implementation plan
 - Timeline (4 weeks)
 - Resource requirements
@@ -83,21 +90,25 @@ This index helps you find the right prevention strategy documentation based on y
 ### 2. Specific Prevention Guides
 
 #### [Email Case-Sensitivity Prevention](./security-issues/PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md)
+
 **Purpose:** Prevent duplicate accounts from case variations
 **Audience:** Engineers working on authentication
 **Key Pattern:** Always normalize email to lowercase
 
 **Quick Rule:**
+
 ```typescript
 const email = inputEmail.toLowerCase().trim();
 ```
 
 #### [Missing Input Validation Prevention](./security-issues/missing-input-validation-cross-tenant-exposure.md)
+
 **Purpose:** Prevent cross-tenant data access
 **Audience:** Engineers working on multi-tenant features
 **Key Pattern:** Validate foreign key ownership
 
 **Quick Rule:**
+
 ```typescript
 if (data.segmentId) {
   await segmentService.getById(tenantId, data.segmentId);
@@ -106,11 +117,13 @@ if (data.segmentId) {
 ```
 
 #### [Webhook Error Logging PII Exposure](./security-issues/webhook-error-logging-pii-exposure.md)
+
 **Purpose:** Prevent customer PII from being stored in error logs
 **Audience:** Engineers working on webhook handlers or error logging
 **Key Pattern:** Separate logging layers - detailed logs for server, sanitized for database
 
 **Quick Rule:**
+
 ```typescript
 // Log details to server (ephemeral)
 logger.error({ errors: result.error.flatten() }, 'Validation failed');
@@ -119,11 +132,13 @@ await repo.markFailed(tenantId, id, 'Validation failed');
 ```
 
 #### [Test Failure Prevention Strategies](./TEST-FAILURE-PREVENTION-STRATEGIES.md)
+
 **Purpose:** Prevent flaky and non-deterministic test failures
 **Audience:** All engineers writing integration tests
 **Key Patterns:** Sequential execution, DI completeness, timeout configuration
 
 **Quick Rules:**
+
 ```typescript
 // Sequential for correctness
 await create(); await create(); await create();
@@ -136,23 +151,26 @@ it('bulk test', async () => { ... }, 30000);
 ```
 
 #### [Prisma TypeScript Build Failure Prevention](./PRISMA-TYPESCRIPT-BUILD-PREVENTION.md)
+
 **Purpose:** Prevent TypeScript compilation failures with Prisma JSON types
 **Audience:** Engineers working with Prisma JSON fields
 **Key Patterns:** Proper imports, `Prisma.InputJsonValue` casting, `Prisma.JsonNull` for nullification
 
 **Quick Rules:**
+
 ```typescript
 // ✅ Correct imports
 import { Prisma, type PrismaClient } from '../../generated/prisma';
 
 // ✅ JSON field updates
-photos: data.photos as Prisma.InputJsonValue
+photos: data.photos as Prisma.InputJsonValue;
 
 // ✅ Clearing JSON fields
-draftPhotos: Prisma.JsonNull
+draftPhotos: Prisma.JsonNull;
 ```
 
 #### [Entity Type Error Prevention](./PREVENTION-ENTITY-TYPE-ERRORS.md)
+
 **Purpose:** Prevent cascading entity type errors when modifying entity interfaces
 **Audience:** All backend engineers, especially those adding/modifying entities
 **Companion Docs:** [Quick Ref](./ENTITY-ERRORS-QUICK-REF.md) | [Code Review](./ENTITY-CHANGE-CODE-REVIEW.md)
@@ -160,6 +178,7 @@ draftPhotos: Prisma.JsonNull
 **Key Patterns:** 10 prevention strategies, 5-7 required update locations, entity invariant testing
 
 **Issues Prevented:**
+
 - Build failures from missing entity field mappings
 - Runtime errors from undefined fields
 - Incomplete object creation across 5+ code paths
@@ -167,6 +186,7 @@ draftPhotos: Prisma.JsonNull
 - Inconsistent optional field handling
 
 **Quick Rules:**
+
 ```typescript
 // 1. Entity Invariant Tests
 describe('Entity Invariants', () => {
@@ -201,17 +221,20 @@ private toDomainPackage(pkg: {
 ```
 
 **When to Use:**
+
 - Adding any field to an entity (Package, Booking, Service, AddOn)
 - Modifying entity required/optional status
 - Creating new entity types
 - Code reviewing entity-related PRs
 
 #### [Visual Editor E2E Testing Rate Limit Solution](./visual-editor-e2e-testing.md)
+
 **Purpose:** Prevent E2E tests from hitting signup rate limits (429 errors)
 **Audience:** Engineers running E2E tests, test infrastructure maintainers
 **Key Patterns:** Environment-aware rate limiter, token caching, serial test execution
 
 **Quick Rules:**
+
 ```typescript
 // ✅ Rate limiter with test environment detection
 const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.E2E_TEST === '1';
@@ -238,12 +261,14 @@ async function ensureLoggedIn(page) {
 ```
 
 #### [CRUD Routes Implementation Checklist](./PREVENTION-CRUD-ROUTE-CHECKLIST.md)
+
 **Purpose:** Prevent common mistakes when adding/modifying CRUD endpoints
 **Audience:** Engineers implementing Create/Read/Update/Delete routes
 **Length:** ~5,000 words
 **Key Patterns:** API contracts, rate limiting, auth checks, DTO mapping, error handling
 
 **Issues Prevented:**
+
 - Missing API contracts for endpoints
 - No rate limiting on CRUD operations
 - Duplicated auth checks (24x duplication)
@@ -258,11 +283,13 @@ async function ensureLoggedIn(page) {
 ### 2.5. Code Review Pattern Guides
 
 #### [React UI Patterns & Audit Logging Review](./code-review-patterns/react-ui-patterns-audit-logging-review.md)
+
 **Purpose:** Prevent UI anti-patterns and missing audit trails
 **Audience:** Engineers working on React components and backend services
 **Key Patterns:** AlertDialog vs window.confirm, useMemo for performance, structured logging
 
 **Quick Rules:**
+
 ```typescript
 // ✅ Use AlertDialog (not window.confirm)
 <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
@@ -284,19 +311,24 @@ logger.info({
 ```
 
 #### [React Hooks Performance & WCAG Review](./code-review-patterns/react-hooks-performance-wcag-review.md)
+
 **Purpose:** Prevent performance issues and accessibility violations
 **Audience:** Engineers working on React components
 **Key Patterns:** useCallback for stability, WCAG focus indicators, event handler memoization
 
 **Quick Rules:**
+
 ```typescript
 // ✅ useCallback for event handlers
-const handleEdit = useCallback(async (pkg: PackageDto) => {
-  await manager.edit(pkg);
-}, [manager.edit]);
+const handleEdit = useCallback(
+  async (pkg: PackageDto) => {
+    await manager.edit(pkg);
+  },
+  [manager.edit]
+);
 
 // ✅ WCAG 2.4.7 focus indicator
-className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage"
+className = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-sage';
 ```
 
 ---
@@ -304,24 +336,29 @@ className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage"
 ### 3. Testing Guides
 
 #### Test Templates
+
 **Location:** `server/test/templates/`
 
 **Available templates:**
+
 - Tenant isolation test template
 - Input normalization test template
 - Idempotency test template
 - N+1 query test template
 
 **Usage:**
+
 ```bash
 cp server/test/templates/tenant-isolation.test.ts \
    server/test/integration/my-feature.test.ts
 ```
 
 #### Test Helpers
+
 **Location:** `server/test/helpers/`
 
 **Available helpers:**
+
 - `createTestTenant()` - Isolated tenant for testing
 - `createIsolatedTestData()` - Test data with cleanup
 - `queryCountTracker()` - Detect N+1 queries
@@ -329,9 +366,11 @@ cp server/test/templates/tenant-isolation.test.ts \
 - `calculateTimeout()` - Dynamic timeout calculation for bulk operations
 
 #### Test Failure Prevention
+
 **Location:** `docs/solutions/TEST-FAILURE-PREVENTION-STRATEGIES.md`
 
 **Covers three critical patterns:**
+
 1. **Concurrent Transaction Contention** - Sequential vs parallel execution
 2. **Undefined Dependencies in Mock Mode** - DI container completeness
 3. **Insufficient Timeouts for Bulk Operations** - Timeout configuration
@@ -345,18 +384,22 @@ cp server/test/templates/tenant-isolation.test.ts \
 ### 4. Code Quality Automation
 
 #### ESLint Configuration
+
 **Location:** `.eslintrc.json`, `server/.eslintrc.json`
 
 **Custom rules:**
+
 - `no-console` - Block console.log in production
 - `no-restricted-syntax` - Block new PrismaClient()
 - `no-restricted-globals` - Block prompt/alert/confirm
 - `custom/require-tenant-id` - Enforce tenant isolation
 
 #### Pattern Validation Script
+
 **Location:** `.github/scripts/validate-patterns.sh`
 
 **Checks:**
+
 - Queries without tenantId filtering
 - Direct PrismaClient instantiation
 - console.log usage
@@ -364,6 +407,7 @@ cp server/test/templates/tenant-isolation.test.ts \
 - Magic strings in tenantId
 
 **Usage:**
+
 ```bash
 ./.github/scripts/validate-patterns.sh
 ```
@@ -375,16 +419,19 @@ cp server/test/templates/tenant-isolation.test.ts \
 ### "I'm adding a new database query"
 
 **Read:**
+
 1. [Quick Reference - Database Patterns](./PREVENTION-QUICK-REFERENCE.md#database-patterns-critical)
 2. [Comprehensive Guide - Repository Pattern](./COMPREHENSIVE-PREVENTION-STRATEGIES.md#62-repository-pattern-enforcement)
 
 **Checklist:**
+
 - [ ] Filters by tenantId
 - [ ] Uses repository pattern (not direct Prisma)
 - [ ] No N+1 query pattern
 - [ ] Indexes exist for WHERE clauses
 
 **Test:**
+
 - [ ] Tenant isolation test
 - [ ] N+1 query test
 
@@ -393,10 +440,12 @@ cp server/test/templates/tenant-isolation.test.ts \
 ### "I'm adding a new API endpoint (CRUD)"
 
 **Read:**
+
 1. [CRUD Routes Quick Reference](./CRUD-QUICK-REFERENCE.md) (5 min)
 2. [Full CRUD Implementation Checklist](./PREVENTION-CRUD-ROUTE-CHECKLIST.md) (20 min)
 
 **Planning (Before Coding):**
+
 - [ ] API contract defined in `packages/contracts/src/api.v1.ts`
 - [ ] Response DTOs in `packages/contracts/src/dto.ts`
 - [ ] Rate limiter chosen and imported
@@ -404,6 +453,7 @@ cp server/test/templates/tenant-isolation.test.ts \
 - [ ] Helper functions planned (getTenantId, mapXxxToDto)
 
 **Implementation:**
+
 - [ ] All queries filter by tenantId
 - [ ] Foreign keys validate ownership
 - [ ] Auth check uses getTenantId() helper (not duplicated)
@@ -413,6 +463,7 @@ cp server/test/templates/tenant-isolation.test.ts \
 - [ ] Logging added for mutations
 
 **Testing:**
+
 - [ ] Happy path: 200/201 response
 - [ ] Validation: 400 on invalid input
 - [ ] Not found: 404 for missing resource
@@ -425,16 +476,19 @@ cp server/test/templates/tenant-isolation.test.ts \
 ### "I'm adding a new API endpoint (Non-CRUD)"
 
 **Read:**
+
 1. [Quick Reference - Multi-Tenant Security](./PREVENTION-QUICK-REFERENCE.md#-multi-tenant-security-critical)
 2. [Comprehensive Guide - Code Review Checklist](./COMPREHENSIVE-PREVENTION-STRATEGIES.md#11-multi-tenant-security-checklist)
 
 **Checklist:**
+
 - [ ] All queries filter by tenantId
 - [ ] Foreign keys validate ownership
 - [ ] Error messages don't leak tenant info
 - [ ] Tests cover tenant isolation
 
 **Test:**
+
 - [ ] Tenant isolation test
 - [ ] Ownership validation test
 
@@ -443,16 +497,19 @@ cp server/test/templates/tenant-isolation.test.ts \
 ### "I'm adding authentication/user input"
 
 **Read:**
+
 1. [Email Case-Sensitivity Prevention](./security-issues/PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md)
 2. [Quick Reference - Input Normalization](./PREVENTION-QUICK-REFERENCE.md#input-normalization-critical)
 
 **Checklist:**
+
 - [ ] Input normalized before storage
 - [ ] Input normalized before queries
 - [ ] Tests cover case variations
 - [ ] Whitespace trimmed
 
 **Test:**
+
 - [ ] Input normalization test (all cases)
 - [ ] Duplicate prevention test
 
@@ -461,16 +518,19 @@ cp server/test/templates/tenant-isolation.test.ts \
 ### "I'm adding a webhook handler"
 
 **Read:**
+
 1. [Comprehensive Guide - Test Patterns](./COMPREHENSIVE-PREVENTION-STRATEGIES.md#33-idempotency-tests-required)
 2. [Quick Reference - Required Test Patterns](./PREVENTION-QUICK-REFERENCE.md#-required-test-patterns)
 
 **Checklist:**
+
 - [ ] Idempotency check (tenant-scoped)
 - [ ] Early tenant extraction
 - [ ] Error handling and retries
 - [ ] Tests cover duplicates
 
 **Test:**
+
 - [ ] Idempotency test
 - [ ] Race condition test
 - [ ] Tenant isolation test
@@ -480,10 +540,12 @@ cp server/test/templates/tenant-isolation.test.ts \
 ### "I'm adding React UI components"
 
 **Read:**
+
 1. [React UI Patterns & Audit Logging Review](./code-review-patterns/react-ui-patterns-audit-logging-review.md)
 2. [React Hooks Performance & WCAG Review](./code-review-patterns/react-hooks-performance-wcag-review.md)
 
 **Checklist:**
+
 - [ ] No window.confirm/alert/prompt (use AlertDialog)
 - [ ] Derived values wrapped in useMemo()
 - [ ] Event handlers wrapped in useCallback()
@@ -491,6 +553,7 @@ cp server/test/templates/tenant-isolation.test.ts \
 - [ ] Keyboard accessible (Escape, Tab navigation)
 
 **Test:**
+
 - [ ] Accessibility test
 - [ ] Performance test (React DevTools Profiler)
 
@@ -499,10 +562,12 @@ cp server/test/templates/tenant-isolation.test.ts \
 ### "I'm adding backend service methods"
 
 **Read:**
+
 1. [React UI Patterns & Audit Logging Review - Pattern 3](./code-review-patterns/react-ui-patterns-audit-logging-review.md#pattern-3-audit-logging-for-important-operations)
 2. [Quick Reference - Logging & Debugging](./PREVENTION-QUICK-REFERENCE.md#logging--debugging)
 
 **Checklist:**
+
 - [ ] All mutations have audit logs (logger.info)
 - [ ] Logs include: action, tenantId, resourceId, changedFields
 - [ ] No console.log usage
@@ -510,6 +575,7 @@ cp server/test/templates/tenant-isolation.test.ts \
 - [ ] No PII in logs
 
 **Test:**
+
 - [ ] Verify logs are created (test suite)
 - [ ] Verify structured format
 
@@ -518,10 +584,12 @@ cp server/test/templates/tenant-isolation.test.ts \
 ### "I'm fixing a production issue"
 
 **Read:**
+
 1. [Comprehensive Guide - Post-Incident Reviews](./COMPREHENSIVE-PREVENTION-STRATEGIES.md#9-post-incident-reviews)
 2. [Implementation Roadmap - Incident Response](./PREVENTION-IMPLEMENTATION-ROADMAP.md#52-incident-response-process-day-4-5-4-hours)
 
 **Process:**
+
 1. Create incident report: `docs/incidents/YYYY-MM-DD-issue.md`
 2. Identify root cause category
 3. Check if prevention strategy exists
@@ -534,10 +602,12 @@ cp server/test/templates/tenant-isolation.test.ts \
 ### "I'm running E2E tests that are failing with 429 rate limit errors"
 
 **Read:**
+
 1. [Visual Editor E2E Testing Rate Limit Solution](./visual-editor-e2e-testing.md)
 2. [Quick Reference - E2E Testing Setup](./visual-editor-e2e-quick-reference.md)
 
 **Checklist:**
+
 - [ ] Verify E2E_TEST=1 is in playwright.config.ts webServer command
 - [ ] Check rate limiter has environment detection (`NODE_ENV === 'test' || E2E_TEST === '1'`)
 - [ ] Implement auth token caching in test helpers
@@ -545,6 +615,7 @@ cp server/test/templates/tenant-isolation.test.ts \
 - [ ] Tests pass locally and in CI
 
 **Implementation Pattern:**
+
 ```typescript
 // playwright.config.ts
 webServer: {
@@ -577,11 +648,13 @@ async function ensureLoggedIn(page) {
 ### Multi-Tenant Security Issues
 
 **Prevention docs:**
+
 - [Comprehensive Guide - Multi-Tenant Security Checklist](./COMPREHENSIVE-PREVENTION-STRATEGIES.md#11-multi-tenant-security-checklist)
 - [Missing Input Validation](./security-issues/missing-input-validation-cross-tenant-exposure.md)
 - [Quick Reference - Multi-Tenant Security](./PREVENTION-QUICK-REFERENCE.md#-multi-tenant-security-critical)
 
 **Key patterns:**
+
 - Always filter by tenantId
 - Validate foreign key ownership
 - Use tenant-scoped cache keys
@@ -591,10 +664,12 @@ async function ensureLoggedIn(page) {
 ### Input Validation Issues
 
 **Prevention docs:**
+
 - [Email Case-Sensitivity Prevention](./security-issues/PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md)
 - [Quick Reference - Input Normalization](./PREVENTION-QUICK-REFERENCE.md#input-normalization-critical)
 
 **Key patterns:**
+
 - Normalize email to lowercase
 - Trim whitespace
 - Test all case variations
@@ -604,10 +679,12 @@ async function ensureLoggedIn(page) {
 ### Performance Issues
 
 **Prevention docs:**
+
 - [Comprehensive Guide - Database Performance Checklist](./COMPREHENSIVE-PREVENTION-STRATEGIES.md#13-database-performance-checklist)
 - [Quick Reference - Database Patterns](./PREVENTION-QUICK-REFERENCE.md#database-patterns-critical)
 
 **Key patterns:**
+
 - No N+1 queries (use includes)
 - Single PrismaClient instance
 - Add indexes for WHERE clauses
@@ -618,10 +695,12 @@ async function ensureLoggedIn(page) {
 ### Code Quality Issues
 
 **Prevention docs:**
+
 - [Comprehensive Guide - ESLint Rules](./COMPREHENSIVE-PREVENTION-STRATEGIES.md#2-eslint-rules-to-enforce)
 - [Quick Reference - ESLint Quick Fixes](./PREVENTION-QUICK-REFERENCE.md#-eslint-quick-fixes)
 
 **Key patterns:**
+
 - Use logger (not console.log)
 - Use React components (not prompt/alert)
 - Follow TypeScript strict mode
@@ -631,10 +710,12 @@ async function ensureLoggedIn(page) {
 ### React UI & Performance Issues
 
 **Prevention docs:**
+
 - [React UI Patterns & Audit Logging Review](./code-review-patterns/react-ui-patterns-audit-logging-review.md)
 - [React Hooks Performance & WCAG Review](./code-review-patterns/react-hooks-performance-wcag-review.md)
 
 **Key patterns:**
+
 - AlertDialog instead of window.confirm()
 - useMemo() for derived values
 - useCallback() for event handlers
@@ -646,9 +727,11 @@ async function ensureLoggedIn(page) {
 ### TypeScript & Build Issues
 
 **Prevention docs:**
+
 - [Prisma TypeScript Build Failure Prevention](./PRISMA-TYPESCRIPT-BUILD-PREVENTION.md)
 
 **Key patterns:**
+
 - Correct Prisma imports (value, not type-only)
 - JSON field casting with `Prisma.InputJsonValue`
 - Null handling with `Prisma.JsonNull`
@@ -689,12 +772,12 @@ async function ensureLoggedIn(page) {
 
 ### Validation Scripts
 
-| Script | Purpose | Usage |
-|--------|---------|-------|
+| Script                 | Purpose                      | Usage                                  |
+| ---------------------- | ---------------------------- | -------------------------------------- |
 | `validate-patterns.sh` | Check code for anti-patterns | `.github/scripts/validate-patterns.sh` |
-| `check-indexes.js` | Verify database indexes | `node scripts/check-indexes.js` |
-| `npm run lint` | ESLint validation | `npm run lint` |
-| `npm test` | Run all tests | `npm test` |
+| `check-indexes.js`     | Verify database indexes      | `node scripts/check-indexes.js`        |
+| `npm run lint`         | ESLint validation            | `npm run lint`                         |
+| `npm test`             | Run all tests                | `npm test`                             |
 
 ### Grep Commands
 
@@ -737,14 +820,14 @@ grep -A 20 "export.*function.*Component" client/src/**/*.tsx | grep -E "(const .
 
 ### Key Metrics
 
-| Metric | Target | Current | Status |
-|--------|--------|---------|--------|
-| P1 issues/sprint | 0 | 7 | 🔴 |
-| Test coverage | 90% | 85% | 🟡 |
-| Security vulns | 0 | 3 | 🔴 |
-| Feature completeness | 100% | 60% | 🔴 |
-| PrismaClient instances | 1 | 5+ | 🔴 |
-| Console.log usage | 0 | 12+ | 🔴 |
+| Metric                 | Target | Current | Status |
+| ---------------------- | ------ | ------- | ------ |
+| P1 issues/sprint       | 0      | 7       | 🔴     |
+| Test coverage          | 90%    | 85%     | 🟡     |
+| Security vulns         | 0      | 3       | 🔴     |
+| Feature completeness   | 100%   | 60%     | 🔴     |
+| PrismaClient instances | 1      | 5+      | 🔴     |
+| Console.log usage      | 0      | 12+     | 🔴     |
 
 **Updated:** 2025-11-27
 
@@ -852,16 +935,19 @@ Prevention Strategies Index (you are here)
 ## ✅ Next Steps
 
 **For engineers:**
+
 1. Read [Prevention Quick Reference](./PREVENTION-QUICK-REFERENCE.md)
 2. Complete multi-tenant security quiz
 3. Apply checklist to next PR
 
 **For tech leads:**
+
 1. Read [Implementation Roadmap](./PREVENTION-IMPLEMENTATION-ROADMAP.md)
 2. Assign engineers to Phase 1
 3. Schedule weekly review meetings
 
 **For the team:**
+
 1. Schedule training sessions
 2. Set up metrics dashboard
 3. Begin Phase 1 implementation

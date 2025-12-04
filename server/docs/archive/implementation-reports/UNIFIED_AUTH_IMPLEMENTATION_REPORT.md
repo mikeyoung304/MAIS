@@ -24,17 +24,17 @@ Successfully audited and implemented a **unified authentication system** for the
 
 ### Existing Endpoints (Before Unified Implementation)
 
-| Endpoint | Method | Purpose | User Type | JWT Role Field |
-|----------|--------|---------|-----------|----------------|
-| `/v1/admin/login` | POST | Platform admin login | Platform Admin | `role: 'admin'` |
-| `/v1/tenant-auth/login` | POST | Tenant admin login | Tenant Admin | `type: 'tenant'` |
+| Endpoint                | Method | Purpose              | User Type      | JWT Role Field   |
+| ----------------------- | ------ | -------------------- | -------------- | ---------------- |
+| `/v1/admin/login`       | POST   | Platform admin login | Platform Admin | `role: 'admin'`  |
+| `/v1/tenant-auth/login` | POST   | Tenant admin login   | Tenant Admin   | `type: 'tenant'` |
 
 ### New Unified Endpoint (Recommended)
 
-| Endpoint | Method | Purpose | User Type | JWT Role Field |
-|----------|--------|---------|-----------|----------------|
-| `/v1/auth/login` | POST | **Universal login** | Both | `role: 'PLATFORM_ADMIN' \| 'TENANT_ADMIN'` |
-| `/v1/auth/verify` | GET | Token verification | Both | Returns role + user info |
+| Endpoint          | Method | Purpose             | User Type | JWT Role Field                             |
+| ----------------- | ------ | ------------------- | --------- | ------------------------------------------ |
+| `/v1/auth/login`  | POST   | **Universal login** | Both      | `role: 'PLATFORM_ADMIN' \| 'TENANT_ADMIN'` |
+| `/v1/auth/verify` | GET    | Token verification  | Both      | Returns role + user info                   |
 
 ---
 
@@ -46,15 +46,16 @@ Successfully audited and implemented a **unified authentication system** for the
 
 ```typescript
 interface TokenPayload {
-  userId: string;      // Platform admin user ID
-  email: string;       // admin@example.com
-  role: 'admin';       // Legacy role format
-  iat: number;         // Issued at timestamp
-  exp: number;         // Expiration timestamp (7 days)
+  userId: string; // Platform admin user ID
+  email: string; // admin@example.com
+  role: 'admin'; // Legacy role format
+  iat: number; // Issued at timestamp
+  exp: number; // Expiration timestamp (7 days)
 }
 ```
 
 **Example:**
+
 ```json
 {
   "userId": "user_admin",
@@ -71,16 +72,17 @@ interface TokenPayload {
 
 ```typescript
 interface TenantTokenPayload {
-  tenantId: string;    // Tenant ID
-  slug: string;        // Tenant slug (URL-safe identifier)
-  email: string;       // tenant@example.com
-  type: 'tenant';      // Type discriminator
-  iat: number;         // Issued at timestamp
-  exp: number;         // Expiration timestamp (7 days)
+  tenantId: string; // Tenant ID
+  slug: string; // Tenant slug (URL-safe identifier)
+  email: string; // tenant@example.com
+  type: 'tenant'; // Type discriminator
+  iat: number; // Issued at timestamp
+  exp: number; // Expiration timestamp (7 days)
 }
 ```
 
 **Example:**
+
 ```json
 {
   "tenantId": "cmhp91lct0000p0i3hi347g0v",
@@ -98,8 +100,8 @@ interface TenantTokenPayload {
 
 ```typescript
 interface UnifiedTokenPayload {
-  email: string;                        // Common: User email
-  role: 'PLATFORM_ADMIN' | 'TENANT_ADMIN';  // Standardized role
+  email: string; // Common: User email
+  role: 'PLATFORM_ADMIN' | 'TENANT_ADMIN'; // Standardized role
 
   // Platform admin specific (when role = PLATFORM_ADMIN)
   userId?: string;
@@ -115,6 +117,7 @@ interface UnifiedTokenPayload {
 ```
 
 **Example - Platform Admin:**
+
 ```json
 {
   "email": "admin@elope.com",
@@ -126,6 +129,7 @@ interface UnifiedTokenPayload {
 ```
 
 **Example - Tenant Admin:**
+
 ```json
 {
   "email": "test-tenant@example.com",
@@ -214,6 +218,7 @@ interface UnifiedTokenPayload {
 ### MOCK Adapter (Development/Testing)
 
 **Platform Admin:**
+
 ```bash
 Email:    admin@elope.com
 Password: admin123
@@ -221,6 +226,7 @@ Role:     PLATFORM_ADMIN
 ```
 
 **Database:**
+
 ```typescript
 // Mock adapter seed data (server/src/adapters/mock/index.ts)
 {
@@ -234,6 +240,7 @@ Role:     PLATFORM_ADMIN
 ### Database Mode (Prisma/PostgreSQL)
 
 **Platform Admin:**
+
 ```bash
 Email:    admin@example.com
 Password: <set via ADMIN_DEFAULT_PASSWORD env var>
@@ -242,6 +249,7 @@ Role:     PLATFORM_ADMIN (User.role = 'ADMIN')
 ```
 
 **Tenant Admin (Test Tenant):**
+
 ```bash
 Email:    test-tenant@example.com
 Password: Test123456
@@ -281,6 +289,7 @@ curl -X POST http://localhost:3001/v1/auth/login \
 ```
 
 **Response:**
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -302,6 +311,7 @@ curl -X POST http://localhost:3001/v1/auth/login \
 ```
 
 **Response:**
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -322,6 +332,7 @@ curl -X GET http://localhost:3001/v1/auth/verify \
 ```
 
 **Response (Platform Admin):**
+
 ```json
 {
   "role": "PLATFORM_ADMIN",
@@ -331,6 +342,7 @@ curl -X GET http://localhost:3001/v1/auth/verify \
 ```
 
 **Response (Tenant Admin):**
+
 ```json
 {
   "role": "TENANT_ADMIN",
@@ -354,6 +366,7 @@ curl -X POST http://localhost:3001/v1/admin/login \
 ```
 
 **Response:**
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -361,6 +374,7 @@ curl -X POST http://localhost:3001/v1/admin/login \
 ```
 
 **JWT Payload:**
+
 ```json
 {
   "userId": "user_admin",
@@ -383,6 +397,7 @@ curl -X POST http://localhost:3001/v1/tenant-auth/login \
 ```
 
 **Response:**
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -390,6 +405,7 @@ curl -X POST http://localhost:3001/v1/tenant-auth/login \
 ```
 
 **JWT Payload:**
+
 ```json
 {
   "tenantId": "cmhp91lct0000p0i3hi347g0v",
@@ -412,6 +428,7 @@ curl -X POST http://localhost:3001/v1/tenant-auth/login \
 **Purpose:** Unified authentication route handler
 
 **Features:**
+
 - `UnifiedAuthController` class
 - `POST /login` - Universal login endpoint
 - `GET /verify` - Token verification endpoint
@@ -420,6 +437,7 @@ curl -X POST http://localhost:3001/v1/tenant-auth/login \
 - Role-based response formatting
 
 **Key Functions:**
+
 ```typescript
 async login(input: UnifiedLoginDto): Promise<UnifiedLoginResponse>
 async verifyToken(token: string): Promise<UserInfo>
@@ -430,23 +448,22 @@ async verifyToken(token: string): Promise<UserInfo>
 #### `/server/src/routes/index.ts`
 
 **Changes:**
+
 - Added import for `createUnifiedAuthRoutes`
 - Mounted unified auth routes at `/v1/auth`
 - Added comprehensive comments explaining the new endpoint
 
 **Code Added:**
+
 ```typescript
-const unifiedAuthRoutes = createUnifiedAuthRoutes(
-  identityService,
-  services.tenantAuth,
-  tenantRepo
-);
+const unifiedAuthRoutes = createUnifiedAuthRoutes(identityService, services.tenantAuth, tenantRepo);
 app.use('/v1/auth', unifiedAuthRoutes);
 ```
 
 #### `/server/src/lib/ports.ts`
 
 **Changes:**
+
 - Added `UserRole` type: `'PLATFORM_ADMIN' | 'TENANT_ADMIN'`
 - Added `UnifiedTokenPayload` interface for standardized JWT structure
 - Preserved legacy `TokenPayload` and `TenantTokenPayload` for backward compatibility
@@ -458,6 +475,7 @@ app.use('/v1/auth', unifiedAuthRoutes);
 ### Rate Limiting
 
 All login endpoints protected by `loginLimiter`:
+
 - **Max attempts:** 5 per 15 minutes
 - **Scope:** Per IP address
 - **Endpoints:** `/v1/auth/login`, `/v1/admin/login`, `/v1/tenant-auth/login`
@@ -478,11 +496,13 @@ All login endpoints protected by `loginLimiter`:
 ### Logging
 
 All authentication events logged:
+
 - **Success:** Login attempts with role, email, IP
 - **Failure:** Failed attempts with email, IP, error reason
 - **Format:** Structured JSON logging via Pino
 
 **Example Log (Success):**
+
 ```json
 {
   "level": "info",
@@ -497,6 +517,7 @@ All authentication events logged:
 ```
 
 **Example Log (Failure):**
+
 ```json
 {
   "level": "warn",
@@ -522,13 +543,13 @@ All authentication events logged:
 // Platform admin login
 const adminResult = await fetch('/v1/admin/login', {
   method: 'POST',
-  body: JSON.stringify({ email, password })
+  body: JSON.stringify({ email, password }),
 });
 
 // Tenant admin login
 const tenantResult = await fetch('/v1/tenant-auth/login', {
   method: 'POST',
-  body: JSON.stringify({ email, password })
+  body: JSON.stringify({ email, password }),
 });
 ```
 
@@ -539,7 +560,7 @@ const tenantResult = await fetch('/v1/tenant-auth/login', {
 const result = await fetch('/v1/auth/login', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email, password })
+  body: JSON.stringify({ email, password }),
 });
 
 const data = await result.json();
@@ -564,11 +585,13 @@ localStorage.setItem('authToken', data.token);
 ### Backward Compatibility
 
 **No Breaking Changes:**
+
 - Legacy endpoints (`/v1/admin/login`, `/v1/tenant-auth/login`) remain functional
 - Existing JWT tokens continue to work with their respective middleware
 - Existing authentication middleware unchanged
 
 **Migration Path:**
+
 1. **Phase 1:** Deploy unified endpoint (✅ Complete)
 2. **Phase 2:** Update frontend to use `/v1/auth/login` (Optional)
 3. **Phase 3:** Deprecate legacy endpoints (Future - not urgent)
@@ -713,6 +736,7 @@ echo -e "\n✅ All tests passed!"
 **Cause:** Tenant doesn't exist or email is incorrect
 
 **Solution:**
+
 ```bash
 # Check if tenant exists in database
 psql $DATABASE_URL -c "SELECT id, slug, email FROM \"Tenant\" WHERE email = 'test-tenant@example.com';"
@@ -727,6 +751,7 @@ pnpm tsx scripts/create-tenant.ts --slug=test-tenant --name="Test Tenant"
 **Cause:** Tenant exists but `passwordHash` is null
 
 **Solution:**
+
 ```sql
 -- Set password for tenant via SQL (not recommended for production)
 UPDATE "Tenant"
@@ -741,6 +766,7 @@ WHERE email = 'test-tenant@example.com';
 **Cause:** Token expired (7 days) or JWT_SECRET changed
 
 **Solution:**
+
 - Login again to get new token
 - Check `JWT_SECRET` environment variable is consistent
 
@@ -749,6 +775,7 @@ WHERE email = 'test-tenant@example.com';
 **Cause:** Too many login attempts (5 in 15 minutes)
 
 **Solution:**
+
 - Wait 15 minutes
 - Check for brute force attempts in logs
 - Consider implementing CAPTCHA for repeated failures
@@ -791,6 +818,7 @@ WHERE email = 'test-tenant@example.com';
 ### Summary
 
 ✅ **Successfully implemented unified authentication system** with:
+
 - Single login endpoint supporting both platform admins and tenant admins
 - Role-based JWT structure with clear distinction between user types
 - Backward compatible with existing authentication flows
@@ -809,6 +837,7 @@ WHERE email = 'test-tenant@example.com';
 ### No Breaking Changes
 
 The implementation is **100% backward compatible**:
+
 - Legacy endpoints continue to work
 - Existing JWT tokens remain valid
 - No database schema changes required
@@ -820,23 +849,24 @@ The implementation is **100% backward compatible**:
 
 ### Endpoints
 
-| Endpoint | Method | Purpose | Auth Required |
-|----------|--------|---------|---------------|
-| `/v1/auth/login` | POST | Unified login | No |
-| `/v1/auth/verify` | GET | Verify token | Yes (Bearer token) |
-| `/v1/admin/login` | POST | Legacy platform admin login | No |
-| `/v1/tenant-auth/login` | POST | Legacy tenant admin login | No |
+| Endpoint                | Method | Purpose                     | Auth Required      |
+| ----------------------- | ------ | --------------------------- | ------------------ |
+| `/v1/auth/login`        | POST   | Unified login               | No                 |
+| `/v1/auth/verify`       | GET    | Verify token                | Yes (Bearer token) |
+| `/v1/admin/login`       | POST   | Legacy platform admin login | No                 |
+| `/v1/tenant-auth/login` | POST   | Legacy tenant admin login   | No                 |
 
 ### Test Credentials
 
-| User Type | Email | Password | Role |
-|-----------|-------|----------|------|
-| Platform Admin | `admin@elope.com` | `admin123` | `PLATFORM_ADMIN` |
-| Tenant Admin | `test-tenant@example.com` | `Test123456` | `TENANT_ADMIN` |
+| User Type      | Email                     | Password     | Role             |
+| -------------- | ------------------------- | ------------ | ---------------- |
+| Platform Admin | `admin@elope.com`         | `admin123`   | `PLATFORM_ADMIN` |
+| Tenant Admin   | `test-tenant@example.com` | `Test123456` | `TENANT_ADMIN`   |
 
 ### Response Structure
 
 **Unified Login Response:**
+
 ```typescript
 {
   token: string;
@@ -850,12 +880,12 @@ The implementation is **100% backward compatible**:
 
 ### Error Codes
 
-| Code | Message | Cause |
-|------|---------|-------|
-| 400 | Email and password are required | Missing request fields |
-| 401 | Invalid credentials | Wrong email/password |
-| 401 | Invalid or expired token | Token verification failed |
-| 429 | Too Many Requests | Rate limit exceeded (5/15min) |
+| Code | Message                         | Cause                         |
+| ---- | ------------------------------- | ----------------------------- |
+| 400  | Email and password are required | Missing request fields        |
+| 401  | Invalid credentials             | Wrong email/password          |
+| 401  | Invalid or expired token        | Token verification failed     |
+| 429  | Too Many Requests               | Rate limit exceeded (5/15min) |
 
 ---
 

@@ -68,11 +68,13 @@ Is it older than 90 days or superseded?
 ### 1.1 Four Standard Patterns
 
 #### Pattern 1: UPPERCASE_UNDERSCORE
+
 **When to use:** Reports, audits, assessments, summaries, completion documents
 
 **Format:** `{TYPE}_{SUBJECT}_{QUALIFIER}.md`
 
 **Examples:**
+
 - `SPRINT_6_COMPLETION_REPORT.md`
 - `SECURITY_AUDIT_PHASE_2B.md`
 - `TEST_STABILIZATION_SUMMARY.md`
@@ -80,17 +82,20 @@ Is it older than 90 days or superseded?
 - `PRODUCTION_READINESS_ASSESSMENT.md`
 
 **Rules:**
+
 - Start with document TYPE (SPRINT, AUDIT, REPORT, SUMMARY, ASSESSMENT, GUIDE)
 - Use descriptive SUBJECT (what it's about)
 - Optional QUALIFIER for specificity (phase numbers, versions)
 - Maximum 4 segments (TYPE_SUBJECT_QUALIFIER_VERSION)
 
 #### Pattern 2: kebab-case
+
 **When to use:** Guides, tutorials, how-to documents, reference docs
 
 **Format:** `{purpose}-{subject}.md`
 
 **Examples:**
+
 - `deployment-guide.md`
 - `quick-start-tutorial.md`
 - `api-integration-guide.md`
@@ -98,39 +103,46 @@ Is it older than 90 days or superseded?
 - `secret-rotation-procedure.md`
 
 **Rules:**
+
 - All lowercase
 - Hyphens between words
 - Action-oriented naming (what it helps you do)
 - Keep to 2-4 words maximum
 
 #### Pattern 3: YYYY-MM-DD Timestamps
+
 **When to use:** Time-specific reports, incident logs, meeting notes, changelogs
 
 **Format:** `YYYY-MM-DD-{description}.md`
 
 **Examples:**
+
 - `2025-11-12-incident-response.md`
 - `2025-11-07-sprint-planning.md`
 - `2025-10-22-security-review.md`
 
 **Rules:**
+
 - Always use ISO 8601 date format (YYYY-MM-DD)
 - Date comes FIRST (enables chronological sorting)
 - Follow with kebab-case description
 - Use for events, not evergreen content
 
 #### Pattern 4: ADR-### Format
+
 **When to use:** Architectural Decision Records ONLY
 
 **Format:** `ADR-{NNN}-{decision-title}.md`
 
 **Examples:**
+
 - `ADR-001-adopt-diataxis-framework.md`
 - `ADR-002-documentation-naming-standards.md`
 - `ADR-003-sprint-documentation-location.md`
 - `ADR-004-archive-strategy.md`
 
 **Rules:**
+
 - Zero-padded 3-digit number (001, 002, etc.)
 - Sequential numbering (never reuse numbers)
 - Kebab-case title after number
@@ -140,15 +152,18 @@ Is it older than 90 days or superseded?
 ### 1.2 Special Cases
 
 #### Directory Names
+
 - Use **kebab-case** for all directories
 - Examples: `sprint-5-6`, `multi-tenant`, `october-2025-analysis`
 
 #### README Files
+
 - Every directory MUST have a `README.md`
 - Explains the directory's purpose and contents
 - Lists key documents with brief descriptions
 
 #### Index Files
+
 - Use `INDEX.md` for navigation hubs only
 - Not the same as README (README explains, INDEX navigates)
 
@@ -158,25 +173,27 @@ Is it older than 90 days or superseded?
 
 ### 2.1 Primary Directories
 
-| Directory | Purpose | When to Use | Examples |
-|-----------|---------|-------------|----------|
-| `/docs/sprints/sprint-{N}/` | Active sprint work | Sprint reports, progress updates, blockers, session notes | `SPRINT_6_COMPLETION_REPORT.md` |
-| `/docs/operations/` | Production operations | Runbooks, incident response, deployment guides, monitoring | `deployment-guide.md`, `RUNBOOK.md` |
-| `/docs/api/` | API documentation | API guides, endpoint references, integration docs | `API_DOCS_QUICKSTART.md` |
-| `/docs/security/` | Security documentation | Security procedures, audits, secret management | `SECRET_ROTATION_GUIDE.md` |
-| `/docs/setup/` | Setup & configuration | Environment setup, service configuration, local dev | `ENVIRONMENT.md`, `SUPABASE.md` |
-| `/docs/architecture/` | Architecture & design | ADRs, design docs, system architecture, patterns | `ADR-001-framework.md` |
-| `/docs/roadmaps/` | Feature roadmaps | Implementation plans, feature specs, product roadmaps | `EMBEDDABLE_MULTI_TENANT_IMPLEMENTATION_PLAN.md` |
-| `/docs/multi-tenant/` | Multi-tenant features | Tenant-specific guides, implementation details | `MULTI_TENANT_IMPLEMENTATION_GUIDE.md` |
-| `/docs/phases/` | Phase reports | Completed phase reports, historical milestones | `PHASE_4_TENANT_ADMIN_COMPLETION_REPORT.md` |
-| `/docs/archive/` | Historical docs | Superseded docs, old sprints, deprecated guides | `archive/sprints/sprint-1-3/` |
+| Directory                   | Purpose                | When to Use                                                | Examples                                         |
+| --------------------------- | ---------------------- | ---------------------------------------------------------- | ------------------------------------------------ |
+| `/docs/sprints/sprint-{N}/` | Active sprint work     | Sprint reports, progress updates, blockers, session notes  | `SPRINT_6_COMPLETION_REPORT.md`                  |
+| `/docs/operations/`         | Production operations  | Runbooks, incident response, deployment guides, monitoring | `deployment-guide.md`, `RUNBOOK.md`              |
+| `/docs/api/`                | API documentation      | API guides, endpoint references, integration docs          | `API_DOCS_QUICKSTART.md`                         |
+| `/docs/security/`           | Security documentation | Security procedures, audits, secret management             | `SECRET_ROTATION_GUIDE.md`                       |
+| `/docs/setup/`              | Setup & configuration  | Environment setup, service configuration, local dev        | `ENVIRONMENT.md`, `SUPABASE.md`                  |
+| `/docs/architecture/`       | Architecture & design  | ADRs, design docs, system architecture, patterns           | `ADR-001-framework.md`                           |
+| `/docs/roadmaps/`           | Feature roadmaps       | Implementation plans, feature specs, product roadmaps      | `EMBEDDABLE_MULTI_TENANT_IMPLEMENTATION_PLAN.md` |
+| `/docs/multi-tenant/`       | Multi-tenant features  | Tenant-specific guides, implementation details             | `MULTI_TENANT_IMPLEMENTATION_GUIDE.md`           |
+| `/docs/phases/`             | Phase reports          | Completed phase reports, historical milestones             | `PHASE_4_TENANT_ADMIN_COMPLETION_REPORT.md`      |
+| `/docs/archive/`            | Historical docs        | Superseded docs, old sprints, deprecated guides            | `archive/sprints/sprint-1-3/`                    |
 
 ### 2.2 Detailed Placement Rules
 
 #### Sprint Documentation
+
 **Location:** `/docs/sprints/sprint-{N}/`
 
 **What goes here:**
+
 - Sprint completion reports
 - Progress updates and session handoffs
 - Sprint-specific blockers and known issues
@@ -184,6 +201,7 @@ Is it older than 90 days or superseded?
 - Session notes and work logs
 
 **Structure:**
+
 ```
 /docs/sprints/
 ├── sprint-4/
@@ -200,9 +218,11 @@ Is it older than 90 days or superseded?
 **Archive rule:** Move to `/docs/archive/sprints/sprint-{N}/` 90 days after sprint completion
 
 #### Security Documentation
+
 **Location:** `/docs/security/`
 
 **What goes here:**
+
 - Security procedures and best practices
 - Secret management guides
 - Security audit reports
@@ -210,49 +230,59 @@ Is it older than 90 days or superseded?
 - Vulnerability assessments
 
 **Special rules:**
+
 - NEVER commit actual secrets/passwords
 - Security audits older than 90 days → archive
 - Active procedures stay in main directory
 - Review security docs every 90 days
 
 #### Architecture Documentation
+
 **Location:** `/docs/architecture/`
 
 **What goes here:**
+
 - Architectural Decision Records (ADRs)
 - System architecture diagrams
 - Design patterns and principles
 - Technical design documents
 
 **Special rules:**
+
 - ADRs NEVER get archived (they're historical by nature)
 - Use ADR-### naming for all decision records
 - Architecture diagrams should be version-controlled
 
 #### API Documentation
+
 **Location:** `/docs/api/`
 
 **What goes here:**
+
 - API integration guides
 - Endpoint documentation
 - API quickstart guides
 - OpenAPI/Swagger specs
 
 **Special rules:**
+
 - Generated API docs (from code) → `.gitignore`
 - Manual API guides stay in this directory
 - Link to contracts in `/packages/contracts/`
 
 #### Operations Documentation
+
 **Location:** `/docs/operations/`
 
 **What goes here:**
+
 - Runbooks for production issues
 - Deployment guides and procedures
 - Incident response playbooks
 - Monitoring and alerting setup
 
 **Special rules:**
+
 - Keep procedures up-to-date (monthly review)
 - Incident-specific docs → timestamped files
 - Old incident logs → archive after 180 days
@@ -260,19 +290,24 @@ Is it older than 90 days or superseded?
 ### 2.3 Edge Cases
 
 #### Agent/AI Session Reports
+
 **Current:** Scattered in `.claude/` and root
 **Target:** `/docs/sprints/sprint-{N}/sessions/`
 **Rationale:** Session reports are sprint context, should be organized with sprint docs
 
 #### Analysis Reports
+
 **Current:** Multiple locations
 **Target:**
+
 - Active analysis → `/docs/sprints/sprint-{N}/`
 - Historical analysis → `/docs/archive/planning/{YYYY-MM}/`
 
 #### Work Logs
+
 **Current:** `work-log.md` in archive
 **Target:**
+
 - Active work log → `/docs/sprints/sprint-{N}/work-log.md`
 - Completed sprint logs → archive with sprint
 
@@ -305,41 +340,45 @@ Every documentation file MUST include this frontmatter:
 
 ### 3.2 Status Values
 
-| Status | Meaning | Action Required |
-|--------|---------|-----------------|
-| **Draft** | Work in progress, not reviewed | Review before making Active |
-| **Active** | Current, authoritative documentation | Keep up-to-date |
-| **Deprecated** | Superseded by another document | Add "Superseded by: [link]" |
-| **Archived** | Historical, no longer relevant | Move to archive/ |
+| Status         | Meaning                              | Action Required             |
+| -------------- | ------------------------------------ | --------------------------- |
+| **Draft**      | Work in progress, not reviewed       | Review before making Active |
+| **Active**     | Current, authoritative documentation | Keep up-to-date             |
+| **Deprecated** | Superseded by another document       | Add "Superseded by: [link]" |
+| **Archived**   | Historical, no longer relevant       | Move to archive/            |
 
 ### 3.3 Version Tracking
 
 **Semantic versioning for docs:**
+
 - **Major version (1.0 → 2.0):** Significant restructuring or complete rewrite
 - **Minor version (1.0 → 1.1):** New sections or substantial additions
 - **Patch version (1.1 → 1.1.1):** Minor corrections, typo fixes
 
 **Version history:**
 Include at bottom of document:
+
 ```markdown
 ---
 
 ## Version History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.1 | 2025-11-15 | Jane Doe | Added section on error handling |
-| 1.0 | 2025-11-12 | John Smith | Initial version |
+| Version | Date       | Author     | Changes                         |
+| ------- | ---------- | ---------- | ------------------------------- |
+| 1.1     | 2025-11-15 | Jane Doe   | Added section on error handling |
+| 1.0     | 2025-11-12 | John Smith | Initial version                 |
 ```
 
 ### 3.4 Cross-References
 
 **Always use:**
+
 - Relative links for internal docs: `[Guide](../setup/deployment-guide.md)`
 - Absolute URLs for external resources
 - Link to source of truth, never duplicate content
 
 **Maintain a link registry:**
+
 - When moving documents, search for references: `grep -r "old-filename.md" docs/`
 - Update INDEX.md when adding major documents
 
@@ -357,6 +396,7 @@ Before committing ANY documentation:
 - [ ] **Audit trail review:** Security audits should be reviewed by security lead
 
 **Tools:**
+
 ```bash
 # Scan for potential secrets before commit
 grep -r -E '(password|api_key|secret|token)[:=]' docs/
@@ -374,6 +414,7 @@ Before creating new documentation:
 - [ ] **Consolidate if possible:** Update existing doc rather than creating new
 
 **Detection:**
+
 ```bash
 # Find similar files by name
 find docs/ -name "*{keyword}*"
@@ -402,6 +443,7 @@ Architectural Decision Records require:
 - [ ] **Consequences documented:** What are the tradeoffs?
 
 **ADR Template:**
+
 ```markdown
 # ADR-{NNN}: {Decision Title}
 
@@ -428,14 +470,17 @@ Architectural Decision Records require:
 ## Consequences
 
 ### Positive
+
 - [Benefit 1]
 - [Benefit 2]
 
 ### Negative
+
 - [Tradeoff 1]
 - [Tradeoff 2]
 
 ### Neutral
+
 - [Impact 1]
 - [Impact 2]
 
@@ -478,6 +523,7 @@ Archive documentation when:
 ```
 
 **Structure rules:**
+
 - Use `{category}/{YYYY-MM}/` for time-based archives
 - Use `{category}/{descriptor}/` for topic-based archives
 - Always include archive README explaining what's archived and why
@@ -487,22 +533,26 @@ Archive documentation when:
 **Step-by-step:**
 
 1. **Identify candidates:**
+
    ```bash
    # Find files older than 90 days
    find docs/ -name "*.md" -mtime +90
    ```
 
 2. **Create archive directory:**
+
    ```bash
    mkdir -p docs/archive/{category}/{YYYY-MM}
    ```
 
 3. **Move files:**
+
    ```bash
    git mv docs/sprints/sprint-4/ docs/archive/sprints/sprint-4/
    ```
 
 4. **Update links:**
+
    ```bash
    # Search for references
    grep -r "sprint-4" docs/
@@ -510,6 +560,7 @@ Archive documentation when:
    ```
 
 5. **Add archive README:**
+
    ```markdown
    # Sprint 4 Archive
 
@@ -537,14 +588,14 @@ Archive documentation when:
 
 ### 6.1 Roles and Responsibilities
 
-| Role | Responsibilities | Authority |
-|------|------------------|-----------|
-| **Technical Lead** | Documentation structure, standards enforcement, dispute resolution | Final say on placement and standards |
-| **Sprint Contributors** | Sprint-specific docs, session reports, progress updates | Own their sprint directory |
-| **Security Lead** | Security docs review, audit approval | Veto security doc changes |
-| **API Owner** | API documentation accuracy, contract sync | Approve API doc changes |
-| **Operations Lead** | Runbooks, deployment guides, incident procedures | Approve operational doc changes |
-| **All Developers** | Follow standards, update docs with code changes | Create docs per standards |
+| Role                    | Responsibilities                                                   | Authority                            |
+| ----------------------- | ------------------------------------------------------------------ | ------------------------------------ |
+| **Technical Lead**      | Documentation structure, standards enforcement, dispute resolution | Final say on placement and standards |
+| **Sprint Contributors** | Sprint-specific docs, session reports, progress updates            | Own their sprint directory           |
+| **Security Lead**       | Security docs review, audit approval                               | Veto security doc changes            |
+| **API Owner**           | API documentation accuracy, contract sync                          | Approve API doc changes              |
+| **Operations Lead**     | Runbooks, deployment guides, incident procedures                   | Approve operational doc changes      |
+| **All Developers**      | Follow standards, update docs with code changes                    | Create docs per standards            |
 
 ### 6.2 PR Review Process
 
@@ -568,6 +619,7 @@ Archive documentation when:
    - Approve if standards met
 
 **Approval criteria:**
+
 - [ ] Correct directory placement
 - [ ] Correct naming convention
 - [ ] Metadata headers present
@@ -585,20 +637,21 @@ Archive documentation when:
 4. **Emergency:** Security Lead can override for security concerns
 
 **Response SLAs:**
+
 - Simple placement questions: Same day
 - Complex structural questions: 2 business days
 - ADR decisions: 1 week
 
 ### 6.4 Maintenance Schedule
 
-| Task | Frequency | Owner |
-|------|-----------|-------|
-| Archive sprint docs | 90 days after completion | Sprint contributor |
-| Review security docs | Quarterly | Security Lead |
-| Update operational procedures | Monthly | Operations Lead |
-| Scan for broken links | Monthly | Technical Lead |
-| Audit documentation health | Quarterly | Technical Lead |
-| Review archive candidates | Monthly | Technical Lead |
+| Task                          | Frequency                | Owner              |
+| ----------------------------- | ------------------------ | ------------------ |
+| Archive sprint docs           | 90 days after completion | Sprint contributor |
+| Review security docs          | Quarterly                | Security Lead      |
+| Update operational procedures | Monthly                  | Operations Lead    |
+| Scan for broken links         | Monthly                  | Technical Lead     |
+| Audit documentation health    | Quarterly                | Technical Lead     |
+| Review archive candidates     | Monthly                  | Technical Lead     |
 
 ---
 
@@ -641,6 +694,7 @@ jobs:
 ### 7.2 Documentation Health Dashboard
 
 **Metrics to track:**
+
 - Total file count by directory
 - Files missing metadata
 - Files older than 90 days (archive candidates)
@@ -651,6 +705,7 @@ jobs:
 ### 7.3 Auto-archival
 
 **Future script:**
+
 ```bash
 #!/bin/bash
 # scripts/auto-archive.sh
@@ -681,11 +736,13 @@ jobs:
 ### 8.2 Backward Compatibility
 
 **Grace period (30 days):**
+
 - Old naming conventions still acceptable
 - Old placement still discoverable
 - Links to old locations will redirect
 
 **After grace period:**
+
 - New docs MUST follow standards
 - PRs touching docs should fix non-compliance
 - Quarterly cleanup sprints to migrate remaining docs
@@ -725,12 +782,15 @@ jobs:
 ### 10.1 Common Scenarios
 
 #### Scenario 1: Sprint Progress Report
+
 **Question:** "I'm writing a report on Sprint 7 progress. What do I name it and where does it go?"
 
 **Answer:**
+
 - **Name:** `SPRINT_7_PROGRESS_REPORT.md` (Pattern 1: UPPERCASE_UNDERSCORE)
 - **Location:** `/docs/sprints/sprint-7/`
 - **Metadata:**
+
   ```markdown
   # Sprint 7 Progress Report
 
@@ -741,34 +801,42 @@ jobs:
   ```
 
 #### Scenario 2: New Deployment Procedure
+
 **Question:** "I wrote a guide for deploying with Docker. Where does it go?"
 
 **Answer:**
+
 - **Name:** `docker-deployment-guide.md` (Pattern 2: kebab-case)
 - **Location:** `/docs/operations/`
 - **Also update:** `/docs/INDEX.md` to link new guide
 
 #### Scenario 3: Security Incident Log
+
 **Question:** "We had a security incident today. How do I document it?"
 
 **Answer:**
+
 - **Name:** `2025-11-12-auth-bypass-incident.md` (Pattern 3: Timestamp)
 - **Location:** `/docs/security/incidents/` (create if needed)
 - **Archive:** Move to `/docs/archive/security/incidents/2025-11/` after 180 days
 
 #### Scenario 4: Architecture Decision
+
 **Question:** "We decided to use Prisma instead of raw SQL. How do I document this?"
 
 **Answer:**
+
 - **Name:** `ADR-005-prisma-orm-adoption.md` (Pattern 4: ADR format)
 - **Location:** `/docs/architecture/`
 - **Template:** Use ADR template (Section 4.4)
 - **Never archive:** ADRs are permanent historical records
 
 #### Scenario 5: One-Time Analysis
+
 **Question:** "I ran an analysis on test coverage. It's done, where does the report go?"
 
 **Answer:**
+
 - **Name:** `TEST_COVERAGE_ANALYSIS.md` (Pattern 1: UPPERCASE_UNDERSCORE)
 - **Location:** `/docs/sprints/sprint-{current}/` during sprint
 - **After sprint:** Move to `/docs/archive/test-reports/{YYYY-MM}/`
@@ -776,6 +844,7 @@ jobs:
 ### 10.2 Before and After
 
 #### Before Standards (Problematic)
+
 ```
 /
 ├── SPRINT_4_HANDOFF.md        # Wrong: Sprint doc in root
@@ -791,6 +860,7 @@ jobs:
 ```
 
 #### After Standards (Correct)
+
 ```
 /
 ├── .claude/                    # Agent context only
@@ -819,27 +889,35 @@ jobs:
 ## 11. FAQ
 
 ### Q: What if I'm not sure where a document goes?
+
 **A:** Use the decision tree in Section 1. If still unclear, ask in #documentation channel or tag the Technical Lead. Response within 1 business day.
 
 ### Q: Can I create a new top-level directory?
+
 **A:** No. Top-level directories are defined by these standards. If you believe a new category is needed, create an ADR proposing it and discuss with the team.
 
 ### Q: What if a document fits multiple categories?
+
 **A:** Choose the PRIMARY purpose. Use cross-references to link from other relevant docs. Example: A security deployment guide goes in `/docs/operations/` but is cross-referenced from `/docs/security/README.md`.
 
 ### Q: Do I need to update old docs to match new standards?
+
 **A:** Not immediately. Fix naming/placement when you update a document. Priority: security docs, then sprint docs, then everything else.
 
 ### Q: How do I handle generated documentation?
+
 **A:** Add to `.gitignore`. Generated docs (TypeDoc, API specs from code) should not be committed. Document the generation process in a guide instead.
 
 ### Q: What about diagrams and images?
+
 **A:** Store in `{directory}/assets/` subdirectory. Example: `/docs/architecture/assets/system-diagram.png`. Reference in markdown: `![Diagram](./assets/system-diagram.png)`
 
 ### Q: Can I abbreviate directory names?
+
 **A:** No. Use full, descriptive names. `multi-tenant` not `mt`, `operations` not `ops`.
 
 ### Q: What if I disagree with a placement decision?
+
 **A:** Follow escalation path (Section 6.3). Document your reasoning and propose alternative. Technical Lead will mediate.
 
 ---
@@ -849,11 +927,13 @@ jobs:
 ### 12.1 Validation
 
 **On every PR touching documentation:**
+
 1. Reviewer checks standards compliance
 2. PR description must explain placement decision if non-obvious
 3. PR cannot merge without standards compliance
 
 **GitHub Actions (when implemented):**
+
 - Automatic naming validation
 - Automatic security scanning
 - Automatic metadata check
@@ -862,12 +942,14 @@ jobs:
 ### 12.2 Non-Compliance
 
 **If non-compliant documentation is merged:**
+
 1. Create issue to fix within 7 days
 2. Assign to original author
 3. Tag Technical Lead
 4. Document as learning opportunity (not punitive)
 
 **Repeat violations:**
+
 - Discuss with team lead
 - Additional training on standards
 - Pair with experienced team member
@@ -879,23 +961,27 @@ jobs:
 ### 13.1 Standards Review
 
 **This document will be reviewed:**
+
 - Every 90 days (first review: 2026-02-12)
 - After major project changes
 - When team feedback suggests improvements
 
 **Version updates:**
+
 - Minor changes: Update "Last Updated" date
 - Major changes: Increment version, document in Version History
 
 ### 13.2 Continuous Improvement
 
 **Feedback channels:**
+
 - GitHub issues with `documentation` label
 - #documentation Slack channel
 - Quarterly retro discussions
 - Anonymous feedback form
 
 **Changes require:**
+
 - ADR for structural changes
 - Team discussion for process changes
 - Technical Lead approval for all changes
@@ -914,9 +1000,9 @@ jobs:
 
 ## 15. Version History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | 2025-11-12 | Documentation Systems Specialist | Initial version based on strategic audit findings |
+| Version | Date       | Author                           | Changes                                           |
+| ------- | ---------- | -------------------------------- | ------------------------------------------------- |
+| 1.0     | 2025-11-12 | Documentation Systems Specialist | Initial version based on strategic audit findings |
 
 ---
 

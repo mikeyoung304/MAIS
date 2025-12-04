@@ -17,13 +17,13 @@ The recent security hardening commit added an identical `getAuthToken()` helper 
 
 ## Files with Duplication
 
-| File | Lines | Added In |
-|------|-------|----------|
-| `client/src/components/ImageUploadField.tsx` | 34-40 (7 lines) | Upload handler component |
-| `client/src/features/tenant-admin/scheduling/AppointmentsView/index.tsx` | 18-24 (7 lines) | Query hook (3 usages) |
-| `client/src/features/tenant-admin/branding/components/LogoUploadButton.tsx` | 9-15 (7 lines) | Logo uploader component |
-| `client/src/features/photos/hooks/usePhotoUpload.ts` | 37-45 (9 lines) | Hook with `providedToken` param |
-| `client/src/lib/package-photo-api.ts` | 69-78 (10 lines) | API service module |
+| File                                                                        | Lines            | Added In                        |
+| --------------------------------------------------------------------------- | ---------------- | ------------------------------- |
+| `client/src/components/ImageUploadField.tsx`                                | 34-40 (7 lines)  | Upload handler component        |
+| `client/src/features/tenant-admin/scheduling/AppointmentsView/index.tsx`    | 18-24 (7 lines)  | Query hook (3 usages)           |
+| `client/src/features/tenant-admin/branding/components/LogoUploadButton.tsx` | 9-15 (7 lines)   | Logo uploader component         |
+| `client/src/features/photos/hooks/usePhotoUpload.ts`                        | 37-45 (9 lines)  | Hook with `providedToken` param |
+| `client/src/lib/package-photo-api.ts`                                       | 69-78 (10 lines) | API service module              |
 
 **Total Duplication:** ~40 lines across 5 files
 
@@ -43,6 +43,7 @@ function getAuthToken(providedToken?: string): string | null {
 ```
 
 **Variations:**
+
 - Most use the no-param version
 - `usePhotoUpload.ts` accepts optional `providedToken` parameter
 - All follow identical impersonation logic
@@ -54,6 +55,7 @@ function getAuthToken(providedToken?: string): string | null {
 ### Yes, partially.
 
 **Pros:**
+
 - ✅ Gets the feature working immediately
 - ✅ No refactoring needed to merge quickly
 - ✅ Isolated within files that use it
@@ -61,6 +63,7 @@ function getAuthToken(providedToken?: string): string | null {
 - ✅ Matches the commit's security focus (not refactoring)
 
 **Cons:**
+
 - ❌ Future maintenance burden if impersonation logic changes
 - ❌ 5 places to update if token key names change
 - ❌ Violates DRY principle
@@ -79,18 +82,18 @@ The function is already minimal (3-5 lines of logic). **No further simplificatio
 ### However, simpler solutions exist:
 
 **Option A: Smart import (RECOMMENDED)**
+
 ```typescript
 // client/src/lib/auth-helpers.ts (NEW FILE)
 export function getAuthToken(providedToken?: string): string | null {
   if (providedToken) return providedToken;
   const isImpersonating = localStorage.getItem('impersonationTenantKey');
-  return isImpersonating
-    ? localStorage.getItem('adminToken')
-    : localStorage.getItem('tenantToken');
+  return isImpersonating ? localStorage.getItem('adminToken') : localStorage.getItem('tenantToken');
 }
 ```
 
 Then import everywhere:
+
 ```typescript
 import { getAuthToken } from '@/lib/auth-helpers';
 ```
@@ -105,12 +108,14 @@ import { getAuthToken } from '@/lib/auth-helpers';
 ### Yes, for now. But with caveats.
 
 **Context matters:**
+
 - The commit is a **security hardening fix** (high priority)
 - Impersonation support was a recent addition
 - This pattern wasn't needed in earlier iterations
 - The repo is in MVP sprint (time pressure)
 
 **Acceptable because:**
+
 1. It's frontend code, not core business logic
 2. The logic is simple and stable
 3. File-scoped, so no risk of cross-module issues
@@ -118,6 +123,7 @@ import { getAuthToken } from '@/lib/auth-helpers';
 5. Used immediately (not left as technical debt)
 
 **Must refactor if:**
+
 - The impersonation logic becomes more complex
 - Another 2+ files need this function
 - Token key names change (now you edit 5+ files)
@@ -130,6 +136,7 @@ import { getAuthToken } from '@/lib/auth-helpers';
 ### No, quite the opposite.
 
 **This avoids over-engineering:**
+
 - ❌ NOT creating a complex AuthService class
 - ❌ NOT adding a React context for this
 - ❌ NOT creating a custom hook when it's simpler as a function
@@ -143,23 +150,25 @@ import { getAuthToken } from '@/lib/auth-helpers';
 
 ### Code Quality Impact: 🟡 Low-Medium
 
-| Aspect | Score | Reason |
-|--------|-------|--------|
-| Maintainability | 6/10 | Duplication increases maintenance cost |
-| Testability | 7/10 | Logic can be unit tested, but 5x |
-| Security | 10/10 | Correct impersonation handling |
-| Performance | 10/10 | Zero performance impact |
-| Scalability | 5/10 | Scales poorly if more files need this |
+| Aspect          | Score | Reason                                 |
+| --------------- | ----- | -------------------------------------- |
+| Maintainability | 6/10  | Duplication increases maintenance cost |
+| Testability     | 7/10  | Logic can be unit tested, but 5x       |
+| Security        | 10/10 | Correct impersonation handling         |
+| Performance     | 10/10 | Zero performance impact                |
+| Scalability     | 5/10  | Scales poorly if more files need this  |
 
 ### Technical Debt Score: 🟡 Medium
 
 **Why medium and not low?**
+
 - The pattern duplicates logic across 5 files
 - Token key changes require 5 edits
 - New team members might duplicate it again (7th file)
 - Tests can't verify centralized logic
 
 **Why not high?**
+
 - It's not blocking anything
 - Easy to refactor (file scope)
 - No architectural blocker
@@ -172,6 +181,7 @@ import { getAuthToken } from '@/lib/auth-helpers';
 ### Quick Fix vs. Proper Fix Trade-off Analysis
 
 **Context (as of commit 9c3f707):**
+
 - MVP sprint, Day 4 (aggressive timeline)
 - Security issue needed fixing immediately
 - Impersonation feature was complex enough
@@ -179,13 +189,13 @@ import { getAuthToken } from '@/lib/auth-helpers';
 
 **Decision Matrix:**
 
-| Factor | Weight | Quick Fix | Proper Fix |
-|--------|--------|-----------|-----------|
-| Time to implement | High | ✅ Now | ⚠️ 30 mins |
-| Risk of regression | High | ✅ Low | ✅ Very Low |
-| Merge friction | High | ✅ None | ⚠️ Possible |
-| Future maintenance | Medium | ⚠️ Cost | ✅ Benefit |
-| Test coverage | Medium | ⚠️ 5 files | ✅ 1 file |
+| Factor             | Weight | Quick Fix  | Proper Fix  |
+| ------------------ | ------ | ---------- | ----------- |
+| Time to implement  | High   | ✅ Now     | ⚠️ 30 mins  |
+| Risk of regression | High   | ✅ Low     | ✅ Very Low |
+| Merge friction     | High   | ✅ None    | ⚠️ Possible |
+| Future maintenance | Medium | ⚠️ Cost    | ✅ Benefit  |
+| Test coverage      | Medium | ⚠️ 5 files | ✅ 1 file   |
 
 **Verdict for commit 9c3f707:** ✅ Quick fix was correct choice at that moment
 
@@ -242,6 +252,7 @@ export function isImpersonating(): boolean {
 ```
 
 **Update all 5 files:**
+
 ```typescript
 // Before
 function getAuthToken(): string | null { ... }
@@ -265,11 +276,13 @@ After Phase 1 stabilizes, consider whether `auth-helpers.ts` should be merged in
 ## Test Coverage Impact
 
 ### Current State (Post-Fix)
+
 - `getAuthToken()` logic duplicated 5 times
 - Hard to test holistically
 - Each file would need its own test
 
 ### Post-Refactor State
+
 ```typescript
 // client/src/lib/auth-helpers.test.ts
 import { getAuthToken, isImpersonating } from './auth-helpers';
@@ -338,12 +351,14 @@ describe('isImpersonating', () => {
 ### Existing Infrastructure
 
 The codebase already has a strong auth module at `/client/src/lib/auth.ts` that handles:
+
 - JWT decoding and validation
 - Token expiration checks
 - Platform admin vs. tenant role detection
 - Token storage management
 
 **Why not use it for `getAuthToken()`?**
+
 - `auth.ts` functions require role parameter
 - `getAuthToken()` auto-detects role via impersonation check
 - Different concern (role-agnostic token resolution vs. JWT parsing)
@@ -352,6 +367,7 @@ The codebase already has a strong auth module at `/client/src/lib/auth.ts` that 
 ### Related Code Patterns
 
 The impersonation flow is already complex:
+
 - `/client/src/lib/api.ts` has similar logic (lines 138-154)
 - Both check `impersonationTenantKey` → use `adminToken`
 - Pattern is intentional and correct
@@ -360,15 +376,15 @@ The impersonation flow is already complex:
 
 ## Summary Table
 
-| Question | Answer | Severity |
-|----------|--------|----------|
-| Is this simplest solution? | Yes, for quick fix | N/A |
-| Could it be simplified? | No, already minimal | N/A |
-| Is duplication acceptable? | Yes, now, not later | Low |
-| Over-engineered? | No, well-engineered | N/A |
-| **Refactor required?** | **Yes, within 2 sprints** | **Medium** |
-| **Blocks shipping?** | No | N/A |
-| **Security concern?** | No, logic is correct | N/A |
+| Question                   | Answer                    | Severity   |
+| -------------------------- | ------------------------- | ---------- |
+| Is this simplest solution? | Yes, for quick fix        | N/A        |
+| Could it be simplified?    | No, already minimal       | N/A        |
+| Is duplication acceptable? | Yes, now, not later       | Low        |
+| Over-engineered?           | No, well-engineered       | N/A        |
+| **Refactor required?**     | **Yes, within 2 sprints** | **Medium** |
+| **Blocks shipping?**       | No                        | N/A        |
+| **Security concern?**      | No, logic is correct      | N/A        |
 
 ---
 
@@ -377,6 +393,7 @@ The impersonation flow is already complex:
 ### ✅ APPROVE as-is for current sprint
 
 The quick-fix approach was the right call given:
+
 - MVP sprint timeline (Day 4)
 - Security priority
 - Simple, isolated code
@@ -385,6 +402,7 @@ The quick-fix approach was the right call given:
 ### ⚠️ BACKLOG for next sprint
 
 **TODO for Team:**
+
 - [ ] Create `/client/src/lib/auth-helpers.ts` with centralized `getAuthToken()`
 - [ ] Update 5 files to import from helpers
 - [ ] Add unit tests for `auth-helpers.ts`
@@ -394,6 +412,7 @@ The quick-fix approach was the right call given:
 ### 📋 Prevention for Future
 
 Add to code review checklist:
+
 > "Check for duplicated localStorage token access patterns. Centralize via auth-helpers module."
 
 ---

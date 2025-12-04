@@ -13,7 +13,11 @@ import {
   CreateAvailabilityRuleDtoSchema,
   UpdateAvailabilityRuleDtoSchema,
 } from '@macon/contracts';
-import type { ServiceRepository, AvailabilityRuleRepository, BookingRepository } from '../lib/ports';
+import type {
+  ServiceRepository,
+  AvailabilityRuleRepository,
+  BookingRepository,
+} from '../lib/ports';
 import type { BookingService } from '../services/booking.service';
 import { logger } from '../lib/core/logger';
 import { NotFoundError, ValidationError } from '../lib/errors';
@@ -269,10 +273,7 @@ export function createTenantAdminSchedulingRoutes(
       // Delete service (cascades to availability rules via repository)
       await serviceRepo.delete(tenantId, id);
 
-      logger.info(
-        { tenantId, serviceId: id },
-        'Service deleted by tenant admin'
-      );
+      logger.info({ tenantId, serviceId: id }, 'Service deleted by tenant admin');
 
       res.status(204).send();
     } catch (error) {
@@ -533,44 +534,44 @@ export function createTenantAdminSchedulingRoutes(
    * @returns 404 - Rule not found or belongs to different tenant
    * @returns 500 - Internal server error
    */
-  router.delete('/availability-rules/:id', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
+  router.delete(
+    '/availability-rules/:id',
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantAuth = res.locals.tenantAuth;
+        if (!tenantAuth) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
+        const tenantId = tenantAuth.tenantId;
+
+        const { id } = req.params;
+
+        // Verify rule exists by attempting to fetch all and find the matching one
+        // (Repository doesn't have a getById method, so we verify via getAll)
+        const allRules = await availabilityRuleRepo.getAll(tenantId);
+        const ruleExists = allRules.some((rule) => rule.id === id);
+
+        if (!ruleExists) {
+          res.status(404).json({ error: 'Availability rule not found' });
+          return;
+        }
+
+        // Delete rule
+        await availabilityRuleRepo.delete(tenantId, id);
+
+        logger.info({ tenantId, ruleId: id }, 'Availability rule deleted by tenant admin');
+
+        res.status(204).send();
+      } catch (error) {
+        if (error instanceof NotFoundError) {
+          res.status(404).json({ error: error.message });
+          return;
+        }
+        next(error);
       }
-      const tenantId = tenantAuth.tenantId;
-
-      const { id } = req.params;
-
-      // Verify rule exists by attempting to fetch all and find the matching one
-      // (Repository doesn't have a getById method, so we verify via getAll)
-      const allRules = await availabilityRuleRepo.getAll(tenantId);
-      const ruleExists = allRules.some((rule) => rule.id === id);
-
-      if (!ruleExists) {
-        res.status(404).json({ error: 'Availability rule not found' });
-        return;
-      }
-
-      // Delete rule
-      await availabilityRuleRepo.delete(tenantId, id);
-
-      logger.info(
-        { tenantId, ruleId: id },
-        'Availability rule deleted by tenant admin'
-      );
-
-      res.status(204).send();
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
-      next(error);
     }
-  });
+  );
 
   // ============================================================================
   // Appointment View Endpoint (Read-Only)
@@ -630,7 +631,9 @@ export function createTenantAdminSchedulingRoutes(
       if (offset !== undefined) {
         parsedOffset = parseInt(offset as string, 10);
         if (isNaN(parsedOffset) || parsedOffset < 0) {
-          res.status(400).json({ error: 'Invalid offset parameter. Must be a non-negative integer' });
+          res
+            .status(400)
+            .json({ error: 'Invalid offset parameter. Must be a non-negative integer' });
           return;
         }
       }

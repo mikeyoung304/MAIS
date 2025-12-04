@@ -261,7 +261,11 @@ export class PrismaTenantRepository {
     if (!validationResult.success) {
       // Log warning if validation fails (for debugging malformed database data)
       logger.warn(
-        { tenantId: tenant.id, slug: tenant.slug, errorCount: validationResult.error.issues.length },
+        {
+          tenantId: tenant.id,
+          slug: tenant.slug,
+          errorCount: validationResult.error.issues.length,
+        },
         'Invalid tenant data during public lookup'
       );
 
@@ -483,7 +487,9 @@ export class PrismaTenantRepository {
       const result = SafeImageUrlSchema.safeParse(url);
       if (!result.success) {
         logger.warn({ path, url: url.substring(0, 100) }, 'Invalid image URL rejected');
-        throw new ValidationError(`Invalid image URL at ${path}: ${result.error.issues[0]?.message}`);
+        throw new ValidationError(
+          `Invalid image URL at ${path}: ${result.error.issues[0]?.message}`
+        );
       }
     }
   }

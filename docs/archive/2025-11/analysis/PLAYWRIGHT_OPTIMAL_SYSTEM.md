@@ -1,4 +1,5 @@
 # Optimal Playwright System Architecture for MAIS
+
 ## Research-Driven Design & Implementation Guide
 
 **Date:** November 19, 2025
@@ -12,6 +13,7 @@
 Based on extensive research from Playwright experts and 2025 best practices, this document outlines an optimal Playwright system for the MAIS project. The current system has a solid foundation but requires strategic enhancements to support concurrent browser operations, AI-driven testing workflows, and scale-ready architecture.
 
 **Key Findings:**
+
 - Current configuration is optimized for traditional E2E testing but lacks concurrent browser management
 - Default MCP configurations fail around 2,000 concurrent sessions without optimization
 - Modern Playwright architectures use browser contexts and pooling patterns for efficiency
@@ -40,6 +42,7 @@ Based on extensive research from Playwright experts and 2025 best practices, thi
 
 **Architecture Gap:**
 The current setup follows traditional Playwright E2E patterns but lacks:
+
 1. **Browser context pooling** for efficiency at scale
 2. **Connection management** for concurrent MCP sessions
 3. **Memory governance** for long-running automation
@@ -52,11 +55,13 @@ The current setup follows traditional Playwright E2E patterns but lacks:
 ### 1. Three-Tier Browser Management Strategy
 
 #### Tier 1: Traditional E2E Tests (Current)
+
 **Use Case:** Automated test suites, CI/CD pipelines
 **Pattern:** One browser per worker, sequential or parallel test execution
 **Configuration:** Existing `playwright.config.ts`
 
 #### Tier 2: Browser Context Pool (NEW)
+
 **Use Case:** Multiple isolated sessions within single browser
 **Pattern:** Reuse browser instances, create/destroy contexts
 **Benefits:** 10-30x faster than launching new browsers, lower memory footprint
@@ -96,6 +101,7 @@ class BrowserContextPool {
 ```
 
 #### Tier 3: Concurrent Browser Pool (NEW - AI/MCP Use Case)
+
 **Use Case:** Multiple concurrent browser instances for AI agents
 **Pattern:** Pool of browser instances with automatic lifecycle management
 **Benefits:** True parallelism, isolated processes, fault tolerance
@@ -103,16 +109,16 @@ class BrowserContextPool {
 ```typescript
 // Recommended pool configuration
 const browserPoolConfig = {
-  maxInstances: 20,              // Maximum concurrent browsers
-  instanceTimeout: 30 * 60000,   // 30 minutes before auto-cleanup
-  cleanupInterval: 5 * 60000,    // Check every 5 minutes
+  maxInstances: 20, // Maximum concurrent browsers
+  instanceTimeout: 30 * 60000, // 30 minutes before auto-cleanup
+  cleanupInterval: 5 * 60000, // Check every 5 minutes
   launchOptions: {
     headless: true,
     args: [
-      '--disable-dev-shm-usage',  // Prevent /dev/shm issues
-      '--no-sandbox',             // Required for some environments
+      '--disable-dev-shm-usage', // Prevent /dev/shm issues
+      '--no-sandbox', // Required for some environments
       '--disable-setuid-sandbox',
-      '--disable-gpu',            // GPU not needed for automation
+      '--disable-gpu', // GPU not needed for automation
     ],
   },
 };
@@ -132,21 +138,21 @@ export default defineConfig({
   testDir: './tests',
 
   // Development optimizations
-  timeout: 60 * 1000,  // Increased for AI-driven scenarios
+  timeout: 60 * 1000, // Increased for AI-driven scenarios
   fullyParallel: true,
-  forbidOnly: false,   // Allow test.only during development
-  retries: 0,          // No retries during development
+  forbidOnly: false, // Allow test.only during development
+  retries: 0, // No retries during development
 
   // Optimize for local development
-  workers: 4,          // Fixed worker count for predictability
+  workers: 4, // Fixed worker count for predictability
 
   reporter: [
-    ['list'],          // Real-time console output
-    ['html', { open: 'never' }],  // HTML report without auto-open
+    ['list'], // Real-time console output
+    ['html', { open: 'never' }], // HTML report without auto-open
   ],
 
   expect: {
-    timeout: 10000,    // Increased for complex assertions
+    timeout: 10000, // Increased for complex assertions
   },
 
   use: {
@@ -170,7 +176,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         // Development-specific overrides
-        headless: false,  // Visual feedback
+        headless: false, // Visual feedback
       },
     },
   ],
@@ -178,7 +184,7 @@ export default defineConfig({
   webServer: {
     command: 'ADAPTERS_PRESET=mock npm run dev:client',
     url: 'http://localhost:5173',
-    reuseExistingServer: true,  // Always reuse in development
+    reuseExistingServer: true, // Always reuse in development
     timeout: 120 * 1000,
   },
 });
@@ -196,14 +202,14 @@ export default defineConfig({
   // CI optimizations
   timeout: 45 * 1000,
   fullyParallel: true,
-  forbidOnly: true,    // Prevent accidental test.only commits
-  retries: 2,          // Retry flaky tests
+  forbidOnly: true, // Prevent accidental test.only commits
+  retries: 2, // Retry flaky tests
 
   // Parallel execution on CI (research shows 2-4 workers optimal for CI)
   workers: process.env.CI_WORKERS ? parseInt(process.env.CI_WORKERS) : 2,
 
   reporter: [
-    ['github'],        // GitHub Actions annotations
+    ['github'], // GitHub Actions annotations
     ['json', { outputFile: 'test-results.json' }],
     ['html', { open: 'never' }],
     ['junit', { outputFile: 'junit-results.xml' }],
@@ -243,9 +249,10 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'ADAPTERS_PRESET=real VITE_API_URL=http://localhost:3001 VITE_APP_MODE=mock VITE_E2E=1 npm run dev:e2e',
+    command:
+      'ADAPTERS_PRESET=real VITE_API_URL=http://localhost:3001 VITE_APP_MODE=mock VITE_E2E=1 npm run dev:e2e',
     url: 'http://localhost:5173',
-    reuseExistingServer: false,  // Always start fresh on CI
+    reuseExistingServer: false, // Always start fresh on CI
     timeout: 120 * 1000,
   },
 });
@@ -262,8 +269,8 @@ import { defineConfig } from '@playwright/test';
  */
 export default defineConfig({
   // MCP-specific settings
-  timeout: 120 * 1000,  // Longer timeout for AI decision-making
-  fullyParallel: false,  // Sequential for MCP to prevent race conditions
+  timeout: 120 * 1000, // Longer timeout for AI decision-making
+  fullyParallel: false, // Sequential for MCP to prevent race conditions
 
   // No retries - let AI agent handle failures
   retries: 0,
@@ -280,8 +287,8 @@ export default defineConfig({
     baseURL: 'http://localhost:5173',
 
     // MCP optimizations
-    navigationTimeout: 60000,  // AI may be slower to decide
-    actionTimeout: 30000,      // Allow time for complex actions
+    navigationTimeout: 60000, // AI may be slower to decide
+    actionTimeout: 30000, // Allow time for complex actions
 
     // Always capture for AI analysis
     trace: 'on',
@@ -290,11 +297,11 @@ export default defineConfig({
 
     // Browser context isolation for concurrent AI sessions
     launchOptions: {
-      headless: false,  // Visual feedback for MCP sessions
-      slowMo: 100,      // Slow down for observability
+      headless: false, // Visual feedback for MCP sessions
+      slowMo: 100, // Slow down for observability
       args: [
         '--disable-dev-shm-usage',
-        '--disable-blink-features=AutomationControlled',  // Avoid detection
+        '--disable-blink-features=AutomationControlled', // Avoid detection
       ],
     },
   },
@@ -463,9 +470,7 @@ export class BrowserPool {
       clearInterval(this.cleanupTimer);
     }
 
-    const closePromises = Array.from(this.instances.keys()).map(id =>
-      this.closeInstance(id)
-    );
+    const closePromises = Array.from(this.instances.keys()).map((id) => this.closeInstance(id));
 
     await Promise.all(closePromises);
     this.instances.clear();
@@ -493,9 +498,7 @@ export class BrowserPool {
 // Singleton instance
 let globalPool: BrowserPool | null = null;
 
-export function getGlobalBrowserPool(
-  config?: Partial<BrowserPoolConfig>
-): BrowserPool {
+export function getGlobalBrowserPool(config?: Partial<BrowserPoolConfig>): BrowserPool {
   if (!globalPool) {
     globalPool = new BrowserPool(config);
   }
@@ -559,17 +562,13 @@ export class MetricsCollector {
 
   getAverages(windowMinutes: number = 5): Partial<PerformanceMetrics> {
     const cutoff = Date.now() - windowMinutes * 60 * 1000;
-    const recent = this.metrics.filter(m => m.timestamp.getTime() > cutoff);
+    const recent = this.metrics.filter((m) => m.timestamp.getTime() > cutoff);
 
     if (recent.length === 0) return {};
 
     return {
-      browserCount: Math.round(
-        recent.reduce((sum, m) => sum + m.browserCount, 0) / recent.length
-      ),
-      contextCount: Math.round(
-        recent.reduce((sum, m) => sum + m.contextCount, 0) / recent.length
-      ),
+      browserCount: Math.round(recent.reduce((sum, m) => sum + m.browserCount, 0) / recent.length),
+      contextCount: Math.round(recent.reduce((sum, m) => sum + m.contextCount, 0) / recent.length),
       memoryUsageMB: Math.round(
         recent.reduce((sum, m) => sum + m.memoryUsageMB, 0) / recent.length
       ),
@@ -591,24 +590,28 @@ export class MetricsCollector {
 ## 5. Migration Plan
 
 ### Phase 1: Immediate Improvements (Week 1)
+
 - [ ] Create `playwright.dev.config.ts` and `playwright.ci.config.ts`
 - [ ] Update CI workers from 1 to 2-4 for parallel execution
 - [ ] Add performance monitoring to existing tests
 - [ ] Document browser pool pattern for future use
 
 ### Phase 2: Browser Pool Implementation (Week 2)
+
 - [ ] Implement `BrowserPool` class in `e2e/lib/browser-pool.ts`
 - [ ] Create unit tests for browser pool
 - [ ] Add metrics collection system
 - [ ] Create example usage documentation
 
 ### Phase 3: MCP Integration (Week 3)
+
 - [ ] Create `playwright.mcp.config.ts`
 - [ ] Integrate browser pool with MCP server
 - [ ] Test concurrent AI agent scenarios
 - [ ] Add retry logic and error handling
 
 ### Phase 4: Advanced Features (Week 4)
+
 - [ ] Implement priority queuing for requests
 - [ ] Add automatic scaling based on load
 - [ ] Create Grafana dashboard for metrics
@@ -641,11 +644,11 @@ export class MetricsCollector {
 5. **Optimize Launch Arguments**
    ```typescript
    args: [
-     '--disable-dev-shm-usage',     // Prevent memory issues
-     '--no-sandbox',                // Required for containers
-     '--disable-gpu',               // Not needed for automation
+     '--disable-dev-shm-usage', // Prevent memory issues
+     '--no-sandbox', // Required for containers
+     '--disable-gpu', // Not needed for automation
      '--disable-software-rasterizer',
-   ]
+   ];
    ```
 
 ### DON'Ts ❌
@@ -712,18 +715,23 @@ Enterprise: 100-1000 concurrent browsers (requires load balancing)
 Based on research from Playwright experts and 2025 best practices:
 
 ### For Traditional E2E Testing
+
 > "Stick to browser contexts within a single browser instance. This pattern is battle-tested and provides excellent isolation without the overhead of multiple browser processes."
 
 ### For AI-Driven Automation (MCP)
+
 > "Use accessibility tree mode (snapshot) as default. It's faster and more deterministic than pixel-based interaction. Only fall back to screenshots when absolutely necessary."
 
 ### For CI/CD Pipelines
+
 > "2-4 workers is the sweet spot for CI. More workers lead to resource contention and flaky tests. Invest in faster test execution through better test design, not just more parallelism."
 
 ### For Concurrent Operations
+
 > "Implement exponential backoff and priority queuing. Don't treat all requests equally - prioritize critical user flows and let background tasks wait."
 
 ### For Production Monitoring
+
 > "Monitor browser instance lifecycle closely. Leaked browsers are the #1 cause of memory issues in production automation systems."
 
 ---
@@ -731,6 +739,7 @@ Based on research from Playwright experts and 2025 best practices:
 ## 9. Implementation Checklist
 
 ### Immediate Actions
+
 - [x] Document current system
 - [x] Research best practices
 - [ ] Create separate configs (dev/ci/mcp)
@@ -738,18 +747,21 @@ Based on research from Playwright experts and 2025 best practices:
 - [ ] Add performance monitoring
 
 ### Short Term (1-2 weeks)
+
 - [ ] Migrate existing tests to new configs
 - [ ] Test browser pool with load scenarios
 - [ ] Set up metrics collection
 - [ ] Create dashboards for monitoring
 
 ### Medium Term (1 month)
+
 - [ ] Integrate with MCP server
 - [ ] Load test with 100+ concurrent operations
 - [ ] Optimize based on real-world metrics
 - [ ] Document lessons learned
 
 ### Long Term (Ongoing)
+
 - [ ] Monitor production metrics
 - [ ] Tune configuration based on usage patterns
 - [ ] Evaluate new Playwright features
@@ -760,16 +772,19 @@ Based on research from Playwright experts and 2025 best practices:
 ## 10. Resources & References
 
 ### Official Documentation
+
 - [Playwright Best Practices](https://playwright.dev/docs/best-practices)
 - [Browser Contexts](https://playwright.dev/docs/browser-contexts)
 - [Test Configuration](https://playwright.dev/docs/test-configuration)
 
 ### Research Sources
+
 - [Playwright MCP AI Agents Load Testing (2025)](https://markaicode.com/playwright-mcp-ai-agents-load-testing/)
 - [Concurrent Browser MCP Server](https://github.com/sailaoda/concurrent-browser-mcp)
 - [Building Scalable Browser Pools](https://medium.com/@devcriston/building-a-robust-browser-pool-for-web-automation-with-playwright-2c750eb0a8e7)
 
 ### Community Resources
+
 - Playwright Discord Server
 - GitHub Discussions
 - Stack Overflow [playwright] tag

@@ -16,10 +16,7 @@ export class PrismaAvailabilityRuleRepository implements AvailabilityRuleReposit
   async getAll(tenantId: string): Promise<AvailabilityRule[]> {
     const rules = await this.prisma.availabilityRule.findMany({
       where: { tenantId },
-      orderBy: [
-        { dayOfWeek: 'asc' },
-        { startTime: 'asc' },
-      ],
+      orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
     });
 
     return rules.map((rule) => this.mapToEntity(rule));
@@ -31,10 +28,7 @@ export class PrismaAvailabilityRuleRepository implements AvailabilityRuleReposit
         tenantId,
         serviceId,
       },
-      orderBy: [
-        { dayOfWeek: 'asc' },
-        { startTime: 'asc' },
-      ],
+      orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
     });
 
     return rules.map((rule) => this.mapToEntity(rule));
@@ -71,10 +65,7 @@ export class PrismaAvailabilityRuleRepository implements AvailabilityRuleReposit
     const where: any = {
       tenantId,
       effectiveFrom: { lte: date },
-      OR: [
-        { effectiveTo: null },
-        { effectiveTo: { gte: date } },
-      ],
+      OR: [{ effectiveTo: null }, { effectiveTo: { gte: date } }],
     };
 
     // If serviceId is provided (including null), filter by it
@@ -84,10 +75,7 @@ export class PrismaAvailabilityRuleRepository implements AvailabilityRuleReposit
 
     const rules = await this.prisma.availabilityRule.findMany({
       where,
-      orderBy: [
-        { dayOfWeek: 'asc' },
-        { startTime: 'asc' },
-      ],
+      orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
     });
 
     return rules.map((rule) => this.mapToEntity(rule));
@@ -109,7 +97,11 @@ export class PrismaAvailabilityRuleRepository implements AvailabilityRuleReposit
     return this.mapToEntity(rule);
   }
 
-  async update(tenantId: string, id: string, data: UpdateAvailabilityRuleData): Promise<AvailabilityRule> {
+  async update(
+    tenantId: string,
+    id: string,
+    data: UpdateAvailabilityRuleData
+  ): Promise<AvailabilityRule> {
     const updateData: any = {};
 
     if (data.serviceId !== undefined) updateData.serviceId = data.serviceId;

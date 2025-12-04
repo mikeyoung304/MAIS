@@ -13,7 +13,9 @@ Complete solution for preventing file upload security vulnerabilities in multi-t
 ## Documents
 
 ### 1. **SECURE_FILE_UPLOAD_DEFENSE_IN_DEPTH.md** (Main Reference)
+
 Comprehensive technical documentation covering:
+
 - Problem statement (what's vulnerable)
 - Defense-in-depth architecture (3 layers)
 - Detailed implementation of each layer
@@ -27,7 +29,9 @@ Comprehensive technical documentation covering:
 ---
 
 ### 2. **SECURE_UPLOAD_QUICK_REFERENCE.md** (Cheat Sheet)
+
 Quick lookup guide with:
+
 - Three-layer summary table
 - Installation instructions
 - Code patterns for each layer
@@ -41,7 +45,9 @@ Quick lookup guide with:
 ---
 
 ### 3. **UPLOAD_SECURITY_PATTERNS.md** (Implementation Guide)
+
 Detailed patterns showing:
+
 - Before/after code for each pattern
 - 5 core patterns with explanation
 - Security properties for each pattern
@@ -85,36 +91,38 @@ Detailed patterns showing:
 
 ## Key Implementation Files
 
-| File | Layer | Responsibility |
-|------|-------|-----------------|
-| `server/src/services/upload.service.ts` | 1, 2, 3 | All upload logic (496 lines) |
-| `server/src/services/segment.service.ts` | 3 | Cleanup integration (259-285) |
-| `server/test/services/upload.service.test.ts` | 1, 2, 3 | 841 tests (749-970) |
+| File                                          | Layer   | Responsibility                |
+| --------------------------------------------- | ------- | ----------------------------- |
+| `server/src/services/upload.service.ts`       | 1, 2, 3 | All upload logic (496 lines)  |
+| `server/src/services/segment.service.ts`      | 3       | Cleanup integration (259-285) |
+| `server/test/services/upload.service.test.ts` | 1, 2, 3 | 841 tests (749-970)           |
 
 ---
 
 ## Security Properties
 
-| Attack Vector | Prevention | Status |
-|---------------|-----------|--------|
-| PHP shell upload | Magic byte detection | ✅ BLOCKED |
-| MIME type spoofing | Declared vs detected mismatch | ✅ BLOCKED |
-| Direct URL enumeration | Signed URLs with tokens | ✅ BLOCKED |
-| Cross-tenant access | Private bucket + auth | ✅ BLOCKED |
-| Cross-tenant deletion | Path-based ownership check | ✅ BLOCKED |
-| Orphaned file storage | Automatic cleanup on delete | ✅ BLOCKED |
+| Attack Vector          | Prevention                    | Status     |
+| ---------------------- | ----------------------------- | ---------- |
+| PHP shell upload       | Magic byte detection          | ✅ BLOCKED |
+| MIME type spoofing     | Declared vs detected mismatch | ✅ BLOCKED |
+| Direct URL enumeration | Signed URLs with tokens       | ✅ BLOCKED |
+| Cross-tenant access    | Private bucket + auth         | ✅ BLOCKED |
+| Cross-tenant deletion  | Path-based ownership check    | ✅ BLOCKED |
+| Orphaned file storage  | Automatic cleanup on delete   | ✅ BLOCKED |
 
 ---
 
 ## Quick Start
 
 ### Installation
+
 ```bash
 npm install file-type@16
 npm test  # Verify: 841 tests passing
 ```
 
 ### Development
+
 ```bash
 # Mock mode (default)
 ADAPTERS_PRESET=mock npm run dev:api
@@ -141,21 +149,25 @@ ADAPTERS_PRESET=real STORAGE_MODE=supabase npm run dev:api
 ## Testing
 
 ### Run All Tests
+
 ```bash
 npm test
 ```
 
 ### Run Security Tests Only
+
 ```bash
 npm test -- --grep "Magic Byte|Cross-Tenant|MIME type spoofing"
 ```
 
 ### Run Specific File
+
 ```bash
 npm test -- test/services/upload.service.test.ts
 ```
 
 ### Watch Mode
+
 ```bash
 npm run test:watch -- test/services/upload.service.test.ts
 ```
@@ -165,6 +177,7 @@ npm run test:watch -- test/services/upload.service.test.ts
 ## Monitoring & Alerts
 
 ### Key Log Messages
+
 ```
 SECURITY: MIME type mismatch detected - possible spoofing attempt
 SECURITY: File claimed to be SVG but does not contain valid SVG content
@@ -172,6 +185,7 @@ SECURITY: Attempted cross-tenant file deletion blocked
 ```
 
 ### Alert Conditions
+
 - Multiple file validation failures from same IP/tenant
 - Cross-tenant deletion attempts
 - Cleanup failures (orphaned files indicator)
@@ -181,6 +195,7 @@ SECURITY: Attempted cross-tenant file deletion blocked
 ## Compliance
 
 Addresses:
+
 - **OWASP A4:2021** - Insecure Deserialization (Unrestricted Upload)
 - **CWE-434** - Unrestricted Upload of File with Dangerous Type
 - **CWE-284** - Improper Access Control (Multi-tenant)
@@ -191,36 +206,45 @@ Addresses:
 ## Common Questions
 
 ### Q: Why three layers instead of one?
+
 **A**: Defense-in-depth means if one layer fails, others still protect. Example: If signed URL generation fails, magic bytes still blocks uploads. If cleanup fails, previous layers prevent access.
 
 ### Q: Does this work in mock mode?
+
 **A**: Yes! All three layers work in both mock (filesystem) and real (Supabase) modes. Cleanup validation is mode-agnostic.
 
 ### Q: What's the performance impact?
+
 **A**: Negligible - magic byte detection <1ms, signed URL generation ~5ms, total overhead <10ms per upload.
 
 ### Q: How long do signed URLs last?
+
 **A**: 1 year (business requirement, configurable with `ONE_YEAR_SECONDS` constant).
 
 ### Q: Can users guess signed URLs?
+
 **A**: No - signed URLs include cryptographic tokens. Sharing a signed URL is same as sharing an image link (intended behavior).
 
 ---
 
 ## Troubleshooting
 
-### "File validation failed" 
+### "File validation failed"
+
 - Check: Is file actually an image? Is it corrupted?
 - Check: Does magic byte match declared MIME type?
 
 ### "Cannot find module 'file-type'"
+
 - Solution: `npm install file-type@16 && npm run --workspace=server build`
 
 ### "Cross-tenant deletion blocked"
+
 - Expected behavior - security feature working
 - Check: Is tenantId correct in request? Does image belong to different tenant?
 
 ### "Cleanup failed - file may already be deleted"
+
 - This is OK - safe log, file was already cleaned up or never existed
 
 ---
@@ -235,8 +259,8 @@ Addresses:
 
 ## Version History
 
-| Date | Changes |
-|------|---------|
+| Date       | Changes                                             |
+| ---------- | --------------------------------------------------- |
 | 2025-11-29 | Initial secure implementation - 3 layers, 841 tests |
 
 ---
@@ -254,6 +278,7 @@ Addresses:
 ## Support
 
 For questions or issues:
+
 1. Check the **SECURE_UPLOAD_QUICK_REFERENCE.md** for common issues
 2. Review **UPLOAD_SECURITY_PATTERNS.md** for implementation examples
 3. Consult **SECURE_FILE_UPLOAD_DEFENSE_IN_DEPTH.md** for technical details

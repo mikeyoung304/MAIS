@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "053"
+issue_id: '053'
 tags: [code-review, scheduling, performance, database]
 dependencies: []
 ---
@@ -41,6 +41,7 @@ async getNextAvailableSlot(
 ### Query Breakdown
 
 Per iteration:
+
 - 1× Service lookup (SAME service, should cache)
 - 1× Rules lookup (SAME rules, should cache)
 - 1× Bookings lookup (different date, necessary)
@@ -50,6 +51,7 @@ Per iteration:
 ## Proposed Solutions
 
 ### Option A: Cache Service & Rules Within Loop (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 ```typescript
@@ -66,6 +68,7 @@ async getNextAvailableSlot(...) {
 ```
 
 ### Option B: Batch Date Range Query
+
 **Effort:** Medium | **Risk:** Low
 
 Fetch all bookings for date range in one query:
@@ -87,6 +90,7 @@ Implement **Option A** first (quick win), then **Option B** for full optimizatio
 ## Technical Details
 
 **Files to Update:**
+
 - `server/src/services/booking.service.ts:483-510`
 - `server/src/services/scheduling-availability.service.ts` - Add method for cached slot generation
 
@@ -98,6 +102,6 @@ Implement **Option A** first (quick win), then **Option B** for full optimizatio
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                  |
+| ---------- | ------- | -------------------------------------- |
 | 2025-11-27 | Created | Found during Performance Oracle review |

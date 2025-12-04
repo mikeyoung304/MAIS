@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "064"
+issue_id: '064'
 tags: [code-review, data-integrity, storage, supabase]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 When a segment is deleted or its heroImage is updated, the old image file remains in Supabase Storage indefinitely. There is no cleanup mechanism, leading to storage bloat, cost leakage, and potential GDPR compliance issues (deleted content remains).
 
 **Why This Matters:**
+
 - Unlimited growth of orphaned files
 - Supabase Storage charges per GB (~$0.021/GB/month)
 - GDPR "right to erasure" may be violated
@@ -23,6 +24,7 @@ When a segment is deleted or its heroImage is updated, the old image file remain
 ### Evidence from Code Review
 
 **Segment deletion has no cleanup:**
+
 ```typescript
 // segment.service.ts - deleteSegment()
 // NO image cleanup logic exists
@@ -33,6 +35,7 @@ async deleteSegment(tenantId: string, id: string): Promise<void> {
 ```
 
 **No delete method in UploadService:**
+
 ```typescript
 // upload.service.ts
 // deleteSegmentImage() method does NOT exist
@@ -40,14 +43,16 @@ async deleteSegment(tenantId: string, id: string): Promise<void> {
 ```
 
 **Update scenario also orphans:**
+
 ```typescript
 // When heroImage is changed:
 await segmentService.updateSegment(tenantId, segmentId, {
-  heroImage: 'https://new-url.jpg' // Old image URL lost, file orphaned
+  heroImage: 'https://new-url.jpg', // Old image URL lost, file orphaned
 });
 ```
 
 ### Data Integrity Guardian Assessment
+
 - **Severity**: CRITICAL
 - **Impact**: Storage bloat, cost leak, compliance risk
 - Storage grows unbounded with no cleanup mechanism
@@ -59,11 +64,13 @@ await segmentService.updateSegment(tenantId, segmentId, {
 **Description:** Add cleanup logic to segment deletion flow.
 
 **Pros:**
+
 - Simple implementation
 - Handles primary use case
 - Immediate impact on new deletions
 
 **Cons:**
+
 - Doesn't handle update case
 - Doesn't clean existing orphans
 - If storage delete fails, segment still deleted
@@ -116,11 +123,13 @@ async deleteSegmentImage(url: string, tenantId: string): Promise<void> {
 **Description:** Periodic job that finds and deletes orphaned files.
 
 **Pros:**
+
 - Handles all orphan scenarios
 - Can clean existing orphans
 - Non-blocking to main flow
 
 **Cons:**
+
 - More complex implementation
 - Requires storage-to-DB reconciliation
 - May delete files "in use" if timing is wrong
@@ -133,11 +142,13 @@ async deleteSegmentImage(url: string, tenantId: string): Promise<void> {
 **Description:** Store all uploads in DB, mark as "in_use" when linked to entity.
 
 **Pros:**
+
 - Complete audit trail
 - Can track all orphans
 - Enables storage quotas
 
 **Cons:**
+
 - Schema change required
 - More complex upload flow
 - Needs migration for existing files
@@ -152,6 +163,7 @@ async deleteSegmentImage(url: string, tenantId: string): Promise<void> {
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/services/upload.service.ts` - Add `deleteSegmentImage()` method
 - `server/src/services/segment.service.ts` - Add cleanup to `deleteSegment()`
 - Inject uploadService into SegmentService (may need DI update)
@@ -169,9 +181,9 @@ async deleteSegmentImage(url: string, tenantId: string): Promise<void> {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-29 | Created | Found during code review - Data Integrity Guardian |
+| Date       | Action   | Notes                                                                                                                                                                                                                        |
+| ---------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-11-29 | Created  | Found during code review - Data Integrity Guardian                                                                                                                                                                           |
 | 2025-12-01 | Complete | Already implemented: `deleteSegmentImage()` in UploadAdapter (lines 306-344), cleanup in SegmentService.deleteSegment (lines 268-276). Includes tenant ownership verification, error logging, and graceful failure handling. |
 
 ## Resources

@@ -9,22 +9,27 @@ This document describes the admin API endpoints for Stripe Connect management (P
 ### 1. New Files Created
 
 #### `/Users/mikeyoung/CODING/Elope/server/src/routes/admin/stripe.routes.ts`
+
 Admin routes for Stripe Connect management. Protected with admin authentication middleware.
 
 **Endpoints:**
+
 - `POST /api/v1/admin/tenants/:tenantId/stripe/connect` - Create Stripe Connect account
 - `POST /api/v1/admin/tenants/:tenantId/stripe/onboarding` - Generate onboarding link
 - `GET /api/v1/admin/tenants/:tenantId/stripe/status` - Check account status
 
 **Dependencies:**
+
 - Requires `StripeConnectService` (to be created by another agent)
 - Uses Prisma for tenant validation
 - Returns appropriate errors if service not available
 
 #### `/Users/mikeyoung/CODING/Elope/server/scripts/create-tenant-with-stripe.ts`
+
 CLI tool for creating tenants with automatic Stripe Connect setup.
 
 **Features:**
+
 - Creates tenant in database
 - Generates API keys
 - Creates Stripe Connect account
@@ -34,6 +39,7 @@ CLI tool for creating tenants with automatic Stripe Connect setup.
 ### 2. Files Modified
 
 #### `/Users/mikeyoung/CODING/Elope/packages/contracts/src/dto.ts`
+
 Added three new DTOs for Stripe Connect:
 
 ```typescript
@@ -66,6 +72,7 @@ export const StripeAccountStatusDtoSchema = z.object({
 ```
 
 #### `/Users/mikeyoung/CODING/Elope/server/src/routes/index.ts`
+
 Wired the new Stripe routes into the main router:
 
 ```typescript
@@ -76,6 +83,7 @@ app.use('/v1/admin/tenants', authMiddleware, adminStripeRoutes);
 ```
 
 #### `/Users/mikeyoung/CODING/Elope/server/package.json`
+
 Added npm script for the new CLI tool:
 
 ```json
@@ -93,17 +101,20 @@ Creates a new Stripe Connect account for a tenant.
 **Authentication:** Required (Admin Bearer token)
 
 **Path Parameters:**
+
 - `tenantId` (string, required) - The tenant ID
 
 **Request Body:**
+
 ```json
 {
-  "country": "US",  // optional, default: "US"
-  "email": "owner@example.com"  // optional
+  "country": "US", // optional, default: "US"
+  "email": "owner@example.com" // optional
 }
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "accountId": "acct_1234567890",
@@ -114,6 +125,7 @@ Creates a new Stripe Connect account for a tenant.
 ```
 
 **Error Responses:**
+
 - `404 Not Found` - Tenant not found
 - `400 Bad Request` - Tenant already has Stripe account
 - `401 Unauthorized` - Missing or invalid authentication
@@ -128,17 +140,20 @@ Generates a Stripe Connect onboarding link for a tenant to complete their accoun
 **Authentication:** Required (Admin Bearer token)
 
 **Path Parameters:**
+
 - `tenantId` (string, required) - The tenant ID
 
 **Request Body:**
+
 ```json
 {
-  "refreshUrl": "https://admin.example.com/tenants/:id/stripe",  // optional
-  "returnUrl": "https://admin.example.com/tenants/:id/stripe/success"  // optional
+  "refreshUrl": "https://admin.example.com/tenants/:id/stripe", // optional
+  "returnUrl": "https://admin.example.com/tenants/:id/stripe/success" // optional
 }
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "url": "https://connect.stripe.com/setup/e/acct_1234567890/abc123...",
@@ -147,6 +162,7 @@ Generates a Stripe Connect onboarding link for a tenant to complete their accoun
 ```
 
 **Error Responses:**
+
 - `404 Not Found` - Tenant not found
 - `400 Bad Request` - Tenant does not have Stripe account (create one first)
 - `401 Unauthorized` - Missing or invalid authentication
@@ -161,9 +177,11 @@ Retrieves the current status of a tenant's Stripe Connect account, including any
 **Authentication:** Required (Admin Bearer token)
 
 **Path Parameters:**
+
 - `tenantId` (string, required) - The tenant ID
 
 **Response:** `200 OK`
+
 ```json
 {
   "accountId": "acct_1234567890",
@@ -179,6 +197,7 @@ Retrieves the current status of a tenant's Stripe Connect account, including any
 ```
 
 **Error Responses:**
+
 - `404 Not Found` - Tenant not found
 - `400 Bad Request` - Tenant does not have Stripe account
 - `401 Unauthorized` - Missing or invalid authentication
@@ -191,12 +210,14 @@ Retrieves the current status of a tenant's Stripe Connect account, including any
 The `create-tenant-with-stripe` script automates the entire tenant creation and Stripe setup process.
 
 **Usage:**
+
 ```bash
 cd server
 pnpm create-tenant-with-stripe --slug=<slug> --name=<name> [options]
 ```
 
 **Options:**
+
 - `--slug` (required) - URL-safe tenant identifier (3-50 chars, lowercase, letters/numbers/hyphens)
 - `--name` (required) - Display name for tenant
 - `--commission` (optional) - Platform commission percentage (0-100, default: 10.0)
@@ -227,6 +248,7 @@ pnpm create-tenant-with-stripe \
 **Output:**
 
 The script provides detailed output including:
+
 1. Tenant information (ID, slug, name, commission, status)
 2. API keys (public and secret - SECRET SHOWN ONCE)
 3. Stripe Connect account details
@@ -234,6 +256,7 @@ The script provides detailed output including:
 5. Next steps and verification commands
 
 **Important Notes:**
+
 - The secret API key is shown only once - save it immediately
 - The Stripe onboarding URL expires in 1 hour
 - Complete the Stripe onboarding to enable payment processing
@@ -255,6 +278,7 @@ curl -X POST http://localhost:5000/v1/admin/login \
 ```
 
 Response:
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -262,6 +286,7 @@ Response:
 ```
 
 Save the token:
+
 ```bash
 export ADMIN_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
@@ -279,6 +304,7 @@ curl -X POST http://localhost:5000/v1/admin/tenants/tenant_123/stripe/connect \
 ```
 
 Response:
+
 ```json
 {
   "accountId": "acct_1234567890",
@@ -301,6 +327,7 @@ curl -X POST http://localhost:5000/v1/admin/tenants/tenant_123/stripe/onboarding
 ```
 
 Response:
+
 ```json
 {
   "url": "https://connect.stripe.com/setup/e/acct_1234567890/abc123...",
@@ -319,6 +346,7 @@ curl -X GET http://localhost:5000/v1/admin/tenants/tenant_123/stripe/status \
 ```
 
 Response:
+
 ```json
 {
   "accountId": "acct_1234567890",
@@ -412,13 +440,12 @@ class StripeConnectService {
   ): Promise<StripeOnboardingLinkDto>;
 
   // Get the current status of a tenant's Stripe account
-  async getAccountStatus(
-    tenantId: string
-  ): Promise<StripeAccountStatusDto>;
+  async getAccountStatus(tenantId: string): Promise<StripeAccountStatusDto>;
 }
 ```
 
 **If the service is not yet created:**
+
 - The routes will return a helpful error message
 - The CLI script will exit with instructions
 - No runtime errors will occur
@@ -426,6 +453,7 @@ class StripeConnectService {
 ### Authentication
 
 All endpoints require admin authentication using the existing `authMiddleware`:
+
 - Bearer token in `Authorization` header
 - Token obtained via `/v1/admin/login`
 - Middleware applied automatically via route registration
@@ -433,6 +461,7 @@ All endpoints require admin authentication using the existing `authMiddleware`:
 ### Tenant Validation
 
 All endpoints validate that:
+
 1. The tenant exists in the database
 2. The tenant's Stripe account state is appropriate for the operation
 3. Returns clear error messages for invalid states
@@ -440,6 +469,7 @@ All endpoints validate that:
 ### Error Handling
 
 All endpoints use the existing error handling system:
+
 - `ValidationError` for invalid input or state
 - `NotFoundError` for missing tenants
 - Express error middleware handles formatting and status codes
@@ -447,6 +477,7 @@ All endpoints use the existing error handling system:
 ## Testing Checklist
 
 ### Prerequisites
+
 - [ ] StripeConnectService is implemented
 - [ ] Stripe API credentials are configured
 - [ ] Admin user exists in the system
@@ -455,10 +486,12 @@ All endpoints use the existing error handling system:
 ### Manual Testing Steps
 
 1. **Create Tenant with Stripe CLI**
+
    ```bash
    cd server
    pnpm create-tenant-with-stripe --slug=testcorp --name="Test Corp"
    ```
+
    - [ ] Verify tenant created
    - [ ] Verify API keys displayed
    - [ ] Verify Stripe account created
@@ -501,28 +534,34 @@ All endpoints use the existing error handling system:
 ## Troubleshooting
 
 ### "StripeConnectService not available"
+
 **Problem:** Service not yet created
 **Solution:** Wait for service implementation or create it following the interface above
 
 ### "Tenant already has Stripe account"
+
 **Problem:** Attempting to create duplicate account
 **Solution:** Use the status endpoint to check existing account, or generate new onboarding link
 
 ### "Tenant does not have Stripe account"
+
 **Problem:** Attempting to get status/onboarding for non-existent account
 **Solution:** Create Connect account first using the create endpoint
 
 ### Onboarding link expired
+
 **Problem:** Link not used within 1 hour
 **Solution:** Generate a new onboarding link using the onboarding endpoint
 
 ### "Charges not enabled" after onboarding
+
 **Problem:** Onboarding incomplete or additional requirements pending
 **Solution:** Check the requirements field in status response, complete pending requirements
 
 ## Summary
 
 This implementation provides:
+
 - ✅ Three admin API endpoints for Stripe Connect management
 - ✅ Type-safe DTOs using Zod schemas
 - ✅ CLI tool for automated tenant creation with Stripe

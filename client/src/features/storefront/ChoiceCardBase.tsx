@@ -58,10 +58,7 @@ export const ChoiceCardBase = memo(function ChoiceCardBase({
   return (
     <Link
       to={href}
-      className={clsx(
-        cardStyles.base,
-        highlighted ? cardStyles.highlighted : cardStyles.normal
-      )}
+      className={clsx(cardStyles.base, highlighted ? cardStyles.highlighted : cardStyles.normal)}
       data-testid={testId}
     >
       {/* "Most Popular" badge */}
@@ -98,9 +95,7 @@ export const ChoiceCardBase = memo(function ChoiceCardBase({
             aria-label={`${categoryLabel} category`}
             className="w-full h-full bg-gradient-to-br from-macon-navy to-macon-teal/80 flex items-center justify-center"
           >
-            <span className="text-white/60 text-lg font-medium">
-              {categoryLabel}
-            </span>
+            <span className="text-white/60 text-lg font-medium">{categoryLabel}</span>
           </div>
         )}
 

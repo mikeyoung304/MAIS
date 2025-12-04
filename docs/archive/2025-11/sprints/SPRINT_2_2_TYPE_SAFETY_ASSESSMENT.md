@@ -5,6 +5,7 @@
 **Goal:** Eliminate all explicit and implicit `any` types, improve TypeScript strictness, and ensure type safety for agent and admin mutation flows.
 
 **Current State:**
+
 - ✅ `strict: true` already enabled in tsconfig.json
 - ❌ 117 explicit `: any` type annotations (14 files)
 - ❌ 49 `as any` type casts (10 files)
@@ -12,6 +13,7 @@
 - ❌ `noUnusedParameters: false` (should be true)
 
 **Target State:**
+
 - ✅ All `any` types replaced with proper types
 - ✅ Stricter compiler options enabled
 - ✅ JSON fields properly typed (branding, photos, metadata)
@@ -26,23 +28,23 @@
 
 ### ✅ Good Settings (Already Enabled)
 
-| Setting | Value | Impact |
-|---------|-------|--------|
-| `strict` | true | Enables strictNullChecks, strictFunctionTypes, strictBindCallApply, etc. |
-| `noImplicitReturns` | true | Function return types must be explicit |
-| `noFallthroughCasesInSwitch` | true | Switch cases must have break/return |
-| `forceConsistentCasingInFileNames` | true | Case-sensitive imports |
+| Setting                            | Value | Impact                                                                   |
+| ---------------------------------- | ----- | ------------------------------------------------------------------------ |
+| `strict`                           | true  | Enables strictNullChecks, strictFunctionTypes, strictBindCallApply, etc. |
+| `noImplicitReturns`                | true  | Function return types must be explicit                                   |
+| `noFallthroughCasesInSwitch`       | true  | Switch cases must have break/return                                      |
+| `forceConsistentCasingInFileNames` | true  | Case-sensitive imports                                                   |
 
 ### ❌ Settings to Enable (Not Strict Enough)
 
-| Setting | Current | Recommended | Impact |
-|---------|---------|-------------|--------|
-| `noUnusedLocals` | false | **true** | Error on unused variables |
-| `noUnusedParameters` | false | **true** | Error on unused function parameters |
-| `exactOptionalPropertyTypes` | undefined | **true** | Stricter optional property handling |
-| `noUncheckedIndexedAccess` | undefined | **true** | Index signatures return `T \| undefined` |
-| `noImplicitAny` | true (via strict) | true | Already enforced via `strict: true` |
-| `strictNullChecks` | true (via strict) | true | Already enforced via `strict: true` |
+| Setting                      | Current           | Recommended | Impact                                   |
+| ---------------------------- | ----------------- | ----------- | ---------------------------------------- |
+| `noUnusedLocals`             | false             | **true**    | Error on unused variables                |
+| `noUnusedParameters`         | false             | **true**    | Error on unused function parameters      |
+| `exactOptionalPropertyTypes` | undefined         | **true**    | Stricter optional property handling      |
+| `noUncheckedIndexedAccess`   | undefined         | **true**    | Index signatures return `T \| undefined` |
+| `noImplicitAny`              | true (via strict) | true        | Already enforced via `strict: true`      |
+| `strictNullChecks`           | true (via strict) | true        | Already enforced via `strict: true`      |
 
 ---
 
@@ -50,24 +52,25 @@
 
 ### Explicit `: any` Annotations (117 occurrences, 14 files)
 
-| File | Count | Priority | Notes |
-|------|-------|----------|-------|
-| `generated/prisma/index.d.ts` | 44 | LOW | Generated file, ignore |
-| `generated/prisma/runtime/library.d.ts` | 44 | LOW | Generated file, ignore |
-| `routes/index.ts` | 11 | **HIGH** | Route handlers, critical for type safety |
-| `routes/tenant-admin.routes.ts` | 3 | **HIGH** | Tenant mutation routes |
-| `adapters/prisma/tenant.repository.ts` | 3 | **HIGH** | Repository layer |
-| `middleware/cache.ts` | 2 | MEDIUM | Cache middleware |
-| `adapters/prisma/catalog.repository.ts` | 1 | **HIGH** | Catalog repository |
-| `types/express.d.ts` | 1 | LOW | Intentional any for Express extension |
-| `middleware/tenant.ts` | 1 | MEDIUM | Tenant middleware |
-| `lib/ports.ts` | 1 | MEDIUM | Port definitions |
-| `controllers/tenant-admin.controller.ts` | 1 | **HIGH** | Admin controller |
-| `routes/admin/stripe.routes.ts` | 1 | MEDIUM | Stripe routes |
-| `lib/entities.ts` | 1 | MEDIUM | Entity definitions |
-| `generated/prisma/runtime/index-browser.d.ts` | 3 | LOW | Generated file, ignore |
+| File                                          | Count | Priority | Notes                                    |
+| --------------------------------------------- | ----- | -------- | ---------------------------------------- |
+| `generated/prisma/index.d.ts`                 | 44    | LOW      | Generated file, ignore                   |
+| `generated/prisma/runtime/library.d.ts`       | 44    | LOW      | Generated file, ignore                   |
+| `routes/index.ts`                             | 11    | **HIGH** | Route handlers, critical for type safety |
+| `routes/tenant-admin.routes.ts`               | 3     | **HIGH** | Tenant mutation routes                   |
+| `adapters/prisma/tenant.repository.ts`        | 3     | **HIGH** | Repository layer                         |
+| `middleware/cache.ts`                         | 2     | MEDIUM   | Cache middleware                         |
+| `adapters/prisma/catalog.repository.ts`       | 1     | **HIGH** | Catalog repository                       |
+| `types/express.d.ts`                          | 1     | LOW      | Intentional any for Express extension    |
+| `middleware/tenant.ts`                        | 1     | MEDIUM   | Tenant middleware                        |
+| `lib/ports.ts`                                | 1     | MEDIUM   | Port definitions                         |
+| `controllers/tenant-admin.controller.ts`      | 1     | **HIGH** | Admin controller                         |
+| `routes/admin/stripe.routes.ts`               | 1     | MEDIUM   | Stripe routes                            |
+| `lib/entities.ts`                             | 1     | MEDIUM   | Entity definitions                       |
+| `generated/prisma/runtime/index-browser.d.ts` | 3     | LOW      | Generated file, ignore                   |
 
 **High Priority Files (9 files, ~21 occurrences after excluding generated code):**
+
 - `routes/index.ts`
 - `routes/tenant-admin.routes.ts`
 - `adapters/prisma/tenant.repository.ts`
@@ -76,20 +79,21 @@
 
 ### `as any` Casts (49 occurrences, 10 files)
 
-| File | Count | Priority | Notes |
-|------|-------|----------|-------|
-| `services/audit.service.test.ts` | 27 | LOW | Test file, mocks (acceptable) |
-| `routes/tenant-admin.routes.ts` | 9 | **HIGH** | Route handlers casting Prisma results |
-| `controllers/tenant-admin.controller.ts` | 3 | **HIGH** | Controller casting branding JSON |
-| `routes/index.ts` | 3 | **HIGH** | ts-rest route compatibility |
-| `middleware/auth.ts` | 1 | MEDIUM | Auth middleware |
-| `services/stripe-connect.service.ts` | 2 | MEDIUM | Stripe integration |
-| `routes/webhooks.routes.ts` | 1 | MEDIUM | Webhook handler |
-| `routes/tenant.routes.ts` | 1 | MEDIUM | Tenant routes |
-| `routes/tenant-auth.routes.ts` | 1 | MEDIUM | Auth routes |
-| `adapters/prisma/booking.repository.ts` | 1 | **HIGH** | Repository layer |
+| File                                     | Count | Priority | Notes                                 |
+| ---------------------------------------- | ----- | -------- | ------------------------------------- |
+| `services/audit.service.test.ts`         | 27    | LOW      | Test file, mocks (acceptable)         |
+| `routes/tenant-admin.routes.ts`          | 9     | **HIGH** | Route handlers casting Prisma results |
+| `controllers/tenant-admin.controller.ts` | 3     | **HIGH** | Controller casting branding JSON      |
+| `routes/index.ts`                        | 3     | **HIGH** | ts-rest route compatibility           |
+| `middleware/auth.ts`                     | 1     | MEDIUM   | Auth middleware                       |
+| `services/stripe-connect.service.ts`     | 2     | MEDIUM   | Stripe integration                    |
+| `routes/webhooks.routes.ts`              | 1     | MEDIUM   | Webhook handler                       |
+| `routes/tenant.routes.ts`                | 1     | MEDIUM   | Tenant routes                         |
+| `routes/tenant-auth.routes.ts`           | 1     | MEDIUM   | Auth routes                           |
+| `adapters/prisma/booking.repository.ts`  | 1     | **HIGH** | Repository layer                      |
 
 **High Priority Files (5 files, ~22 occurrences after excluding test mocks):**
+
 - `routes/tenant-admin.routes.ts` (9 casts)
 - `controllers/tenant-admin.controller.ts` (3 casts)
 - `routes/index.ts` (3 casts)
@@ -102,11 +106,13 @@
 ### Why Do We Have So Many `any` Types?
 
 **1. Prisma JSON Fields (Primary Cause - ~30% of issues)**
+
 - Prisma represents JSON columns as `JsonValue` type
 - Converting `JsonValue` to structured types requires casting
 - Files affected: `tenant.repository.ts`, `tenant-admin.routes.ts`, `controllers/tenant-admin.controller.ts`
 
 **Example:**
+
 ```typescript
 // Current (uses any)
 const branding = (tenant.branding as any) || {};
@@ -116,29 +122,33 @@ const branding = tenant.branding as BrandingConfig | null;
 ```
 
 **2. ts-rest Express Integration (~20% of issues)**
+
 - ts-rest expects specific function signatures
 - Express middleware has different type structure
 - Files affected: `routes/index.ts`
 
 **Example:**
+
 ```typescript
 // Current (uses any)
 getPackages: async ({ req }: { req: any }) => {
   // ...
-}
+};
 
 // Should be (properly typed)
 getPackages: async ({ req }: { req: TenantRequest }) => {
   // ...
-}
+};
 ```
 
 **3. Express Middleware Type Extensions (~15% of issues)**
+
 - `res.locals.tenantAuth` not typed in Express
 - `req.file` from multer not typed
 - Files affected: `tenant-admin.routes.ts`, `middleware/*`
 
 **Example:**
+
 ```typescript
 // Current (uses any)
 await uploadService.uploadLogo(req.file as any, tenantId);
@@ -149,16 +159,18 @@ await uploadService.uploadLogo(req.file, tenantId);
 ```
 
 **4. Dynamic Object Manipulation (~10% of issues)**
+
 - Array filtering, JSON parsing, dynamic properties
 - Files affected: `routes/tenant-admin.routes.ts`
 
 **Example:**
+
 ```typescript
 // Current (uses any)
 const currentPhotos = (pkg.photos as any[]) || [];
 
 // Should be (properly typed)
-const currentPhotos = pkg.photos as PackagePhoto[] | null ?? [];
+const currentPhotos = (pkg.photos as PackagePhoto[] | null) ?? [];
 ```
 
 ---
@@ -170,11 +182,13 @@ const currentPhotos = pkg.photos as PackagePhoto[] | null ?? [];
 **Goal:** Enable stricter compiler options without breaking the build
 
 **Changes:**
+
 1. Enable `noUnusedLocals: true`
 2. Enable `noUnusedParameters: true`
 3. Fix any unused variable/parameter warnings
 
 **Acceptance Criteria:**
+
 - [ ] `npm run typecheck` passes with stricter settings
 - [ ] All unused locals removed or prefixed with `_` (convention for intentionally unused)
 - [ ] All unused parameters removed or prefixed with `_`
@@ -233,6 +247,7 @@ export type PrismaJson<T> = T | null;
 ```
 
 **Acceptance Criteria:**
+
 - [ ] All JSON field types defined in `types/prisma-json.ts`
 - [ ] Types exported and imported where needed
 - [ ] No `as any` casts for JSON field access
@@ -248,17 +263,19 @@ export type PrismaJson<T> = T | null;
 #### 3a. `routes/index.ts` (11 `: any`, 3 `as any`)
 
 **Current Issues:**
+
 - ts-rest route handlers use `{ req: any }`
 - Need proper `TenantRequest` type
 
 **Solution:**
+
 ```typescript
 import type { TenantRequest } from '../middleware/tenant';
 
 getPackages: async ({ req }: { req: TenantRequest }) => {
   const tenantId = getTenantId(req);
   // ...
-}
+};
 ```
 
 **Estimated Time:** 30 minutes
@@ -266,12 +283,14 @@ getPackages: async ({ req }: { req: TenantRequest }) => {
 #### 3b. `routes/tenant-admin.routes.ts` (3 `: any`, 9 `as any`)
 
 **Current Issues:**
+
 - `req.file as any` for multer
 - `pkg.photos as any[]` for JSON field
 - `tenant.branding as any` for JSON field
 - `currentPhotos as any[]` for array operations
 
 **Solution:**
+
 ```typescript
 import type { PackagePhoto, BrandingConfig } from '../types/prisma-json';
 import type { Express } from 'express';
@@ -280,8 +299,8 @@ import type { Express } from 'express';
 const file: Express.Multer.File = req.file!;
 
 // Use proper JSON types
-const currentPhotos: PackagePhoto[] = pkg.photos as PackagePhoto[] ?? [];
-const branding: BrandingConfig = tenant.branding as BrandingConfig ?? {};
+const currentPhotos: PackagePhoto[] = (pkg.photos as PackagePhoto[]) ?? [];
+const branding: BrandingConfig = (tenant.branding as BrandingConfig) ?? {};
 ```
 
 **Estimated Time:** 45 minutes
@@ -289,6 +308,7 @@ const branding: BrandingConfig = tenant.branding as BrandingConfig ?? {};
 #### 3c. `controllers/tenant-admin.controller.ts` (1 `: any`, 3 `as any`)
 
 **Current Issues:**
+
 - `tenant.branding as any` casts
 
 **Solution:** Same as 3b (use `BrandingConfig` type)
@@ -306,6 +326,7 @@ const branding: BrandingConfig = tenant.branding as BrandingConfig ?? {};
 #### 4a. `adapters/prisma/catalog.repository.ts` (1 `: any`)
 
 **Current Issue:**
+
 - Return type or parameter using `any`
 
 **Solution:** Use proper domain types from `lib/entities.ts`
@@ -315,6 +336,7 @@ const branding: BrandingConfig = tenant.branding as BrandingConfig ?? {};
 #### 4b. `adapters/prisma/tenant.repository.ts` (3 `: any`)
 
 **Current Issues:**
+
 - Branding update/create with `any`
 
 **Solution:** Use `BrandingConfig` type
@@ -324,6 +346,7 @@ const branding: BrandingConfig = tenant.branding as BrandingConfig ?? {};
 #### 4c. `adapters/prisma/booking.repository.ts` (1 `as any`)
 
 **Current Issue:**
+
 - Add-on IDs casting
 
 **Solution:** Use `BookingAddOnIds` type
@@ -359,6 +382,7 @@ const branding: BrandingConfig = tenant.branding as BrandingConfig ?? {};
 **Test Strategy:**
 
 1. **Run existing test suite:**
+
    ```bash
    npm test
    ```
@@ -369,6 +393,7 @@ const branding: BrandingConfig = tenant.branding as BrandingConfig ?? {};
    - Test repository layer type safety
 
 3. **Create type safety regression tests:**
+
    ```typescript
    // server/src/types/prisma-json.test.ts
    import { describe, it, expectTypeOf } from 'vitest';
@@ -398,6 +423,7 @@ const branding: BrandingConfig = tenant.branding as BrandingConfig ?? {};
    ```
 
 **Acceptance Criteria:**
+
 - [ ] All existing tests pass
 - [ ] Type-specific tests added
 - [ ] No regressions in functionality
@@ -408,12 +434,12 @@ const branding: BrandingConfig = tenant.branding as BrandingConfig ?? {};
 
 ### Quantitative Metrics
 
-| Metric | Before | Target | Measurement |
-|--------|--------|--------|-------------|
-| Explicit `: any` (non-generated) | ~73 | 0 | `grep -r ": any" --include="*.ts" \| wc -l` |
-| `as any` casts (non-test) | ~22 | 0 | `grep -r "as any" --include="*.ts" --exclude="*.test.ts" \| wc -l` |
-| TypeScript strictness score | 8/12 | 12/12 | Count of enabled strict options |
-| Type coverage | Unknown | >95% | Use `type-coverage` tool |
+| Metric                           | Before  | Target | Measurement                                                        |
+| -------------------------------- | ------- | ------ | ------------------------------------------------------------------ |
+| Explicit `: any` (non-generated) | ~73     | 0      | `grep -r ": any" --include="*.ts" \| wc -l`                        |
+| `as any` casts (non-test)        | ~22     | 0      | `grep -r "as any" --include="*.ts" --exclude="*.test.ts" \| wc -l` |
+| TypeScript strictness score      | 8/12    | 12/12  | Count of enabled strict options                                    |
+| Type coverage                    | Unknown | >95%   | Use `type-coverage` tool                                           |
 
 ### Qualitative Metrics
 
@@ -466,17 +492,18 @@ const branding: BrandingConfig = tenant.branding as BrandingConfig ?? {};
 
 ## Timeline Estimate
 
-| Phase | Effort | Dependencies |
-|-------|--------|--------------|
-| Phase 1: Compiler Strictness | 15 min | None |
-| Phase 2: Type Definitions | 30 min | None |
-| Phase 3: Route Files | 90 min | Phase 2 |
-| Phase 4: Repository Files | 40 min | Phase 2 |
-| Phase 5: Middleware/Services | 60 min | Phase 2 |
-| Phase 6: Test Coverage | 60 min | Phases 3-5 |
-| **Total** | **~5 hours** | Sequential |
+| Phase                        | Effort       | Dependencies |
+| ---------------------------- | ------------ | ------------ |
+| Phase 1: Compiler Strictness | 15 min       | None         |
+| Phase 2: Type Definitions    | 30 min       | None         |
+| Phase 3: Route Files         | 90 min       | Phase 2      |
+| Phase 4: Repository Files    | 40 min       | Phase 2      |
+| Phase 5: Middleware/Services | 60 min       | Phase 2      |
+| Phase 6: Test Coverage       | 60 min       | Phases 3-5   |
+| **Total**                    | **~5 hours** | Sequential   |
 
 **Suggested Schedule:**
+
 - Session 1 (1 hour): Phases 1-2
 - Session 2 (2 hours): Phase 3
 - Session 3 (1.5 hours): Phases 4-5

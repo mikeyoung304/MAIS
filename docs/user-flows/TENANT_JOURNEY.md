@@ -29,6 +29,7 @@
 The MAIS platform provides a complete business management solution for wedding and event professionals operating as independent tenants. Each tenant runs their own branded booking experience while leveraging the platform's infrastructure for payments, scheduling, and customer management.
 
 ### Key Differentiators
+
 - **Full Data Isolation**: Each tenant's data is completely segregated using multi-tenant architecture
 - **White-Label Ready**: Complete branding customization (logo, colors, fonts)
 - **Stripe Connect**: Direct payments to tenant bank accounts with platform commission
@@ -42,23 +43,27 @@ The MAIS platform provides a complete business management solution for wedding a
 ### Primary Profile: Small Business Wedding/Event Professional
 
 **Demographics:**
+
 - Business owners with 1-5 staff members
 - Offering 3-15 service packages
 - 10-100 bookings per year
 - $50k-$500k annual revenue
 
 **Business Models Supported:**
+
 - **MAISment Photographers**: Intimate ceremony packages with add-on services
 - **Micro-Wedding Venues**: Small venue rentals with catering/coordination packages
 - **Wellness Retreat Hosts**: Multi-day retreat packages with tiered pricing
 - **Event Coordinators**: Day-of coordination, full-service planning packages
 
 **Technical Skill Level:**
+
 - Comfortable with basic web interfaces
 - May need API documentation for advanced features
 - Prefers visual dashboards over command-line tools
 
 **Pain Points Solved:**
+
 - Manual booking calendar management
 - Payment collection and commission tracking
 - Double-booking prevention
@@ -146,11 +151,13 @@ Phase 6: GROWTH & ANALYTICS (Future)
 **Script Location:** `/Users/mikeyoung/CODING/MAIS/server/scripts/create-tenant.ts`
 
 **Command:**
+
 ```bash
 npm run create-tenant -- --slug=bellaweddings --name="Bella Weddings" --commission=10.0
 ```
 
 **What Happens:**
+
 1. **Slug Validation** (lines 110-119)
    - Checks if slug is available
    - Validates format (lowercase, alphanumeric, hyphens)
@@ -162,6 +169,7 @@ npm run create-tenant -- --slug=bellaweddings --name="Bella Weddings" --commissi
    - Keys hashed with bcrypt before storage
 
 3. **Database Record Creation** (lines 129-136)
+
    ```typescript
    await tenantRepo.create({
      slug: 'bellaweddings',
@@ -169,8 +177,8 @@ npm run create-tenant -- --slug=bellaweddings --name="Bella Weddings" --commissi
      apiKeyPublic: 'pk_live_bellaweddings_...',
      apiKeySecret: '<bcrypt_hash>',
      commissionPercent: 10.0,
-     branding: {}
-   })
+     branding: {},
+   });
    ```
 
 4. **Output Generated** (lines 141-172)
@@ -185,6 +193,7 @@ npm run create-tenant -- --slug=bellaweddings --name="Bella Weddings" --commissi
 **Option 1: Password-Based Login (Recommended)**
 
 Platform admin creates login credentials:
+
 ```bash
 npm run create-tenant-with-stripe -- \
   --slug=bellaweddings \
@@ -194,6 +203,7 @@ npm run create-tenant-with-stripe -- \
 ```
 
 **Option 2: API Key Authentication**
+
 - Tenant uses `X-Tenant-Key: pk_live_*` header for all requests
 - No login UI required (API-only access)
 
@@ -213,14 +223,15 @@ npm run create-tenant-with-stripe -- \
    - Auto-fill for development (admin@elope.com / admin123)
 
 2. **Submit Credentials** (lines 69-104)
+
    ```typescript
    // Unified login - tries both platform admin and tenant admin
    try {
      await login(email, password, 'PLATFORM_ADMIN');
-     navigate("/admin/dashboard");
+     navigate('/admin/dashboard');
    } catch (adminError) {
      await login(email, password, 'TENANT_ADMIN');
-     navigate("/tenant/dashboard");
+     navigate('/tenant/dashboard');
    }
    ```
 
@@ -229,17 +240,18 @@ npm run create-tenant-with-stripe -- \
    - **Route:** `/Users/mikeyoung/CODING/MAIS/server/src/routes/auth.routes.ts`
 
    **Token Generation** (tenant-auth.service.ts, lines 49-60):
+
    ```typescript
    const payload: TenantTokenPayload = {
      tenantId: tenant.id,
      slug: tenant.slug,
      email: tenant.email,
-     type: 'tenant'
+     type: 'tenant',
    };
 
    const token = jwt.sign(payload, jwtSecret, {
      algorithm: 'HS256',
-     expiresIn: '7d'  // 7-day session
+     expiresIn: '7d', // 7-day session
    });
    ```
 
@@ -248,6 +260,7 @@ npm run create-tenant-with-stripe -- \
    - All subsequent requests include `Authorization: Bearer <token>`
 
 **Security Features:**
+
 - Rate limiting: 5 attempts per 15 minutes (auth.routes.ts, line 166)
 - Bcrypt password hashing with salt rounds = 10
 - JWT with HS256 signing (prevents algorithm confusion attacks)
@@ -294,6 +307,7 @@ npm run create-tenant-with-stripe -- \
    - Drag-and-drop support (future enhancement)
 
 2. **Upload via API** (tenant-admin.routes.ts, lines 76-126)
+
    ```typescript
    POST /v1/tenant-admin/logo
    Headers:
@@ -307,6 +321,7 @@ npm run create-tenant-with-stripe -- \
    ```
 
 3. **Backend Processing** (upload.service.ts, lines 108-141)
+
    ```typescript
    // Generate unique filename
    const filename = `logo-${timestamp}-${randomStr}.png`;
@@ -320,18 +335,20 @@ npm run create-tenant-with-stripe -- \
    ```
 
 4. **Update Tenant Branding** (lines 95-109)
+
    ```typescript
    const updatedBranding = {
      ...currentBranding,
-     logo: result.url
+     logo: result.url,
    };
 
    await tenantRepository.update(tenantId, {
-     branding: updatedBranding
+     branding: updatedBranding,
    });
    ```
 
 **File Storage:**
+
 - **Current:** Local filesystem (`/uploads/logos/`)
 - **Future:** Cloud storage (Cloudinary, AWS S3)
 
@@ -341,23 +358,25 @@ npm run create-tenant-with-stripe -- \
 
 **4-Color System:**
 
-| Color Field | Purpose | Example |
-|-------------|---------|---------|
-| `primaryColor` | Main brand color (buttons, headers) | `#1a365d` (Macon Navy) |
-| `secondaryColor` | Accent color (CTAs, highlights) | `#fb923c` (Macon Orange) |
-| `accentColor` | Success/positive actions | `#38b2ac` (Macon Teal) |
-| `backgroundColor` | Page background | `#ffffff` (White) |
+| Color Field       | Purpose                             | Example                  |
+| ----------------- | ----------------------------------- | ------------------------ |
+| `primaryColor`    | Main brand color (buttons, headers) | `#1a365d` (Macon Navy)   |
+| `secondaryColor`  | Accent color (CTAs, highlights)     | `#fb923c` (Macon Orange) |
+| `accentColor`     | Success/positive actions            | `#38b2ac` (Macon Teal)   |
+| `backgroundColor` | Page background                     | `#ffffff` (White)        |
 
 **Validation** (BrandingEditor.tsx, lines 66-82):
+
 ```typescript
 const hexColorRegex = /^#[0-9A-F]{6}$/i;
 if (!hexColorRegex.test(primaryColor)) {
-  setError("Primary color must be a valid hex color (e.g., #1a365d)");
+  setError('Primary color must be a valid hex color (e.g., #1a365d)');
   return;
 }
 ```
 
 **API Call:**
+
 ```typescript
 PUT /v1/tenant-admin/branding
 Headers:
@@ -374,6 +393,7 @@ Body:
 **Backend Route:** tenant-admin.routes.ts, lines 132-189
 
 **Live Preview:**
+
 - Component: `/Users/mikeyoung/CODING/MAIS/client/src/features/tenant-admin/branding/components/BrandingPreview.tsx`
 - Shows real-time preview of colors on sample UI elements
 - Helps tenants visualize brand before saving
@@ -382,18 +402,19 @@ Body:
 
 **Available Fonts:**
 
-| Font Family | Style | Best For |
-|-------------|-------|----------|
-| Inter | Modern Sans-Serif | Clean, professional |
-| Playfair Display | Elegant Serif | Luxury weddings |
-| Lora | Classic Serif | Traditional events |
-| Montserrat | Clean Sans-Serif | Modern, minimalist |
-| Cormorant Garamond | Romantic Serif | Vintage weddings |
-| Raleway | Refined Sans-Serif | Contemporary |
-| Crimson Text | Traditional Serif | Formal events |
-| Poppins | Friendly Sans-Serif | Casual, approachable |
+| Font Family        | Style               | Best For             |
+| ------------------ | ------------------- | -------------------- |
+| Inter              | Modern Sans-Serif   | Clean, professional  |
+| Playfair Display   | Elegant Serif       | Luxury weddings      |
+| Lora               | Classic Serif       | Traditional events   |
+| Montserrat         | Clean Sans-Serif    | Modern, minimalist   |
+| Cormorant Garamond | Romantic Serif      | Vintage weddings     |
+| Raleway            | Refined Sans-Serif  | Contemporary         |
+| Crimson Text       | Traditional Serif   | Formal events        |
+| Poppins            | Friendly Sans-Serif | Casual, approachable |
 
 **Implementation:**
+
 - Fonts loaded via Google Fonts CDN
 - Applied dynamically using CSS variables
 - Fallback to system fonts if CDN unavailable
@@ -417,6 +438,7 @@ Body:
    - Price: In cents (e.g., 150000 = $1,500.00)
 
 3. **Submit Form** (usePackageForm hook)
+
    ```typescript
    POST /v1/tenant-admin/packages
    Headers:
@@ -431,6 +453,7 @@ Body:
    ```
 
 4. **Backend Validation** (catalog.service.ts, lines 147-184)
+
    ```typescript
    // Validate required fields
    validateRequiredFields(data, ['slug', 'title', 'description'], 'Package');
@@ -452,6 +475,7 @@ Body:
    ```
 
 **Database Record:**
+
 ```sql
 -- Prisma schema (lines 172-200)
 model Package {
@@ -480,6 +504,7 @@ model Package {
 
 1. **Select Photo File** (5MB max)
 2. **Upload via API** (tenant-admin.routes.ts, lines 390-480)
+
    ```typescript
    POST /v1/tenant-admin/packages/:id/photos
    Headers:
@@ -494,18 +519,19 @@ model Package {
    ```
 
 3. **Photo Metadata Storage** (lines 432-444)
+
    ```typescript
    const newPhoto = {
      url: uploadResult.url,
      filename: 'package-1234567890-abc.jpg',
      size: 2048576, // bytes
-     order: currentPhotos.length  // Append to end
+     order: currentPhotos.length, // Append to end
    };
 
    const updatedPhotos = [...currentPhotos, newPhoto];
 
    await catalogService.updatePackage(tenantId, packageId, {
-     photos: updatedPhotos
+     photos: updatedPhotos,
    });
    ```
 
@@ -515,6 +541,7 @@ model Package {
    - Set primary/featured photo (future enhancement)
 
 **Photo Storage:**
+
 - **Current:** Local filesystem (`/uploads/packages/`)
 - **Future:** Cloud CDN with image optimization
 
@@ -523,12 +550,14 @@ model Package {
 **UI:** Edit button in package list (PackageList.tsx)
 
 **Flow:**
+
 1. Click edit icon on package card
 2. Form pre-fills with existing data
 3. Modify fields (all fields optional)
 4. Submit update
 
 **API Call:**
+
 ```typescript
 PUT /v1/tenant-admin/packages/:id
 Headers:
@@ -541,6 +570,7 @@ Body:
 ```
 
 **Backend Validation** (catalog.service.ts, lines 186-237):
+
 - Verifies package exists for tenant
 - Validates slug uniqueness (if changed)
 - Updates only provided fields
@@ -551,11 +581,13 @@ Body:
 **UI:** Delete button with confirmation dialog
 
 **Safety Measures:**
+
 - Confirmation dialog (AlertDialog component)
 - Warning about permanent deletion
 - Note that existing bookings are NOT affected
 
 **API Call:**
+
 ```typescript
 DELETE /v1/tenant-admin/packages/:id
 Headers:
@@ -563,6 +595,7 @@ Headers:
 ```
 
 **Backend Logic** (catalog.service.ts, lines 239-271):
+
 - Soft delete (sets `active: false`) OR hard delete (removes record)
 - Current implementation: Hard delete
 - Existing bookings retain package data (denormalized)
@@ -576,12 +609,14 @@ Headers:
 **Routes:** `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin-segments.routes.ts`
 
 **Segment Concept:**
+
 - Represents distinct business lines (e.g., "Wellness Retreat", "Micro-Wedding")
 - Packages can be grouped by segment
 - Each segment has its own landing page with custom hero content
 - Enables multi-product business models on single platform
 
 **Segment Properties:**
+
 - **slug:** URL-safe identifier (e.g., "wellness-retreat")
 - **name:** Display name (e.g., "Wellness Retreats")
 - **heroTitle:** Landing page hero section title
@@ -624,11 +659,13 @@ Response: { packageCount, addOnCount }
 ```
 
 **Validation Logic** (segment.service.ts, lines 162-187):
+
 - Slug must be lowercase alphanumeric with hyphens
 - Checks slug uniqueness within tenant
 - Required fields: slug, name, heroTitle
 
 **Cache Strategy:**
+
 - 15-minute TTL for segment lists
 - Cache keys include tenantId AND segmentId
 - Invalidation on create/update/delete
@@ -682,11 +719,13 @@ DELETE /v1/tenant-admin/blackouts/:id
 ```
 
 **Backend Logic** (tenant-admin.routes.ts, lines 551-639):
+
 - Validates date format (YYYY-MM-DD)
 - Checks tenant ownership before delete
 - Returns full records with IDs (for deletion)
 
 **Integration with Booking Flow:**
+
 - Availability service checks blackouts before allowing booking
 - Repository: `/Users/mikeyoung/CODING/MAIS/server/src/adapters/prisma/blackout.repository.ts`
 
@@ -721,11 +760,13 @@ DELETE /v1/admin/addons/:id
 ```
 
 **Add-On Types:**
+
 - **Package-Specific:** Linked to single package (packageId set)
 - **Global:** Available across all packages (packageId null)
 - **Segment-Scoped:** Available within segment (segmentId set, Sprint 9)
 
 **Future Tenant Admin UI:**
+
 - Add-ons tab in dashboard
 - Package-level add-on management
 - Drag-and-drop ordering
@@ -743,12 +784,14 @@ DELETE /v1/admin/addons/:id
 #### Why Stripe Connect?
 
 **Benefits for Tenants:**
+
 - Direct payments to their bank account
 - Full control over refunds/disputes
 - Access to Stripe Express Dashboard
 - Professional payment processing
 
 **Benefits for Platform:**
+
 - Automated commission collection (application fee)
 - No PCI compliance burden
 - Integrated reporting
@@ -761,18 +804,18 @@ DELETE /v1/admin/addons/:id
 ```typescript
 // Platform admin creates account for tenant
 const account = await stripe.accounts.create({
-  type: 'express',  // Stripe handles onboarding/compliance
+  type: 'express', // Stripe handles onboarding/compliance
   country: 'US',
   email: tenant.email,
-  business_type: 'individual',  // or 'company'
+  business_type: 'individual', // or 'company'
   business_profile: {
     name: tenant.name,
-    product_description: 'Wedding and event booking services'
+    product_description: 'Wedding and event booking services',
   },
   capabilities: {
     card_payments: { requested: true },
-    transfers: { requested: true }
-  }
+    transfers: { requested: true },
+  },
 });
 
 // Store account ID
@@ -780,8 +823,8 @@ await prisma.tenant.update({
   where: { id: tenantId },
   data: {
     stripeAccountId: account.id,
-    stripeOnboarded: false  // Not onboarded yet
-  }
+    stripeOnboarded: false, // Not onboarded yet
+  },
 });
 ```
 
@@ -792,7 +835,7 @@ const accountLink = await stripe.accountLinks.create({
   account: tenant.stripeAccountId,
   refresh_url: 'https://yourplatform.com/onboarding/refresh',
   return_url: 'https://yourplatform.com/onboarding/complete',
-  type: 'account_onboarding'
+  type: 'account_onboarding',
 });
 
 // Link expires after 24 hours
@@ -802,6 +845,7 @@ const accountLink = await stripe.accountLinks.create({
 **Step 3: Complete Onboarding**
 
 Tenant completes in Stripe interface:
+
 1. Business details verification
 2. Bank account connection
 3. Identity verification (photo ID)
@@ -816,7 +860,7 @@ const isOnboarded = account.charges_enabled === true;
 
 await prisma.tenant.update({
   where: { id: tenantId },
-  data: { stripeOnboarded: isOnboarded }
+  data: { stripeOnboarded: isOnboarded },
 });
 ```
 
@@ -828,7 +872,7 @@ export function requireStripeOnboarded(req, res, next) {
   if (!req.tenant.stripeOnboarded || !req.tenant.stripeAccountId) {
     res.status(403).json({
       error: 'Stripe Connect onboarding not completed',
-      code: 'STRIPE_NOT_ONBOARDED'
+      code: 'STRIPE_NOT_ONBOARDED',
     });
     return;
   }
@@ -844,17 +888,17 @@ export function requireStripeOnboarded(req, res, next) {
 
 ```typescript
 // Example: $1,500 booking, 10% commission
-const packagePrice = 150000;  // cents
-const commission = 10.0;       // percent
+const packagePrice = 150000; // cents
+const commission = 10.0; // percent
 
 // Calculation
-const tenantRevenue = packagePrice;           // $1,500.00
-const platformFee = packagePrice * 0.10;      // $150.00
+const tenantRevenue = packagePrice; // $1,500.00
+const platformFee = packagePrice * 0.1; // $150.00
 const customerPays = tenantRevenue + platformFee; // $1,650.00
 
 // OR absorb fee model:
-const customerPays = packagePrice;            // $1,500.00
-const platformFee = packagePrice * 0.10;      // $150.00
+const customerPays = packagePrice; // $1,500.00
+const platformFee = packagePrice * 0.1; // $150.00
 const tenantRevenue = packagePrice - platformFee; // $1,350.00
 ```
 
@@ -865,9 +909,7 @@ const tenantRevenue = packagePrice - platformFee; // $1,350.00
 **Generate Login Link** (stripe-connect.service.ts, lines 304-322)
 
 ```typescript
-const loginLink = await stripe.accounts.createLoginLink(
-  tenant.stripeAccountId
-);
+const loginLink = await stripe.accounts.createLoginLink(tenant.stripeAccountId);
 
 // Link expires after 5 minutes
 // Tenant can view:
@@ -888,21 +930,21 @@ const loginLink = await stripe.accounts.createLoginLink(
 **View All Bookings:**
 
 ```typescript
-GET /v1/tenant-admin/bookings
+GET / v1 / tenant - admin / bookings;
 Response: [
   {
-    id: "bkg_abc123",
-    packageId: "pkg_xyz789",
-    coupleName: "Sarah & Alex",
-    email: "sarah@example.com",
-    phone: "+1234567890",
-    eventDate: "2025-06-15",
-    addOnIds: ["addon_123"],
+    id: 'bkg_abc123',
+    packageId: 'pkg_xyz789',
+    coupleName: 'Sarah & Alex',
+    email: 'sarah@example.com',
+    phone: '+1234567890',
+    eventDate: '2025-06-15',
+    addOnIds: ['addon_123'],
     totalCents: 175000,
-    status: "PAID",
-    createdAt: "2025-01-15T10:30:00Z"
-  }
-]
+    status: 'PAID',
+    createdAt: '2025-01-15T10:30:00Z',
+  },
+];
 ```
 
 **Filtering Options:**
@@ -919,11 +961,13 @@ GET /v1/tenant-admin/bookings?status=PAID&startDate=2025-06-01&endDate=2025-06-3
 ```
 
 **Status Values:**
+
 - `PAID`: Confirmed and paid
 - `REFUNDED`: Refunded (via Stripe Dashboard)
 - `CANCELED`: Canceled
 
 **Backend Logic** (tenant-admin.routes.ts, lines 650-700):
+
 - Validates query parameters with Zod
 - Filters bookings in-memory (future: database query)
 - Maps to DTO for consistent response shape
@@ -933,6 +977,7 @@ GET /v1/tenant-admin/bookings?status=PAID&startDate=2025-06-01&endDate=2025-06-3
 **Current:** Manual (via email/phone from booking data)
 
 **Future Enhancements:**
+
 - In-app messaging
 - Automated email reminders (1 week before event)
 - SMS notifications (via Twilio)
@@ -943,12 +988,14 @@ GET /v1/tenant-admin/bookings?status=PAID&startDate=2025-06-01&endDate=2025-06-3
 **Current:** Via Stripe Dashboard
 
 **Access Flow:**
+
 1. Tenant logs into MAIS dashboard
 2. Clicks "Stripe Dashboard" (future UI)
 3. Backend generates login link
 4. Redirects to Stripe Express Dashboard
 
 **Stripe Dashboard Features:**
+
 - Real-time transaction history
 - Automated payout schedule (daily/weekly/monthly)
 - Dispute management
@@ -960,12 +1007,14 @@ GET /v1/tenant-admin/bookings?status=PAID&startDate=2025-06-01&endDate=2025-06-3
 ### Package Updates
 
 **Seasonal Updates:**
+
 - Edit package descriptions
 - Update photos
 - Adjust pricing
 - Add/remove add-ons
 
 **A/B Testing Strategy (Future):**
+
 - Create duplicate packages with different pricing
 - Track conversion rates
 - Disable lower-performing packages
@@ -973,17 +1022,20 @@ GET /v1/tenant-admin/bookings?status=PAID&startDate=2025-06-01&endDate=2025-06-3
 ### Branding Updates
 
 **Update Colors:**
+
 - Access Branding tab
 - Modify color pickers
 - See live preview
 - Save changes
 
 **Replace Logo:**
+
 - Upload new logo file
 - Old logo deleted from filesystem
 - New logo URL saved to branding
 
 **Font Changes:**
+
 - Select from dropdown
 - Instant preview
 - Save changes
@@ -1025,6 +1077,7 @@ GET /v1/tenant-admin/bookings?status=PAID&startDate=2025-06-01&endDate=2025-06-3
    - Credentials enabled for JWT cookies (future)
 
 **Security Best Practices Implemented:**
+
 - Algorithm specification (`HS256` only) prevents JWT confusion attacks
 - Token expiration (7 days) forces periodic re-authentication
 - Bcrypt automatic salting prevents rainbow table attacks
@@ -1086,11 +1139,10 @@ GET /v1/tenant-admin/bookings?status=PAID&startDate=2025-06-01&endDate=2025-06-3
    - **Validation:** Price, required fields, slug uniqueness
 
 3. **Cache Strategy**
+
    ```typescript
    // Cache key format
-   `catalog:${tenantId}:all-packages`
-   `catalog:${tenantId}:package:${slug}`
-   `catalog:${tenantId}:segment:${segmentId}:packages`
+   `catalog:${tenantId}:all-packages``catalog:${tenantId}:package:${slug}``catalog:${tenantId}:segment:${segmentId}:packages`;
    ```
 
 4. **Photo Gallery**
@@ -1099,12 +1151,12 @@ GET /v1/tenant-admin/bookings?status=PAID&startDate=2025-06-01&endDate=2025-06-3
      ```typescript
      [
        {
-         url: "https://...",
-         filename: "package-123.jpg",
+         url: 'https://...',
+         filename: 'package-123.jpg',
          size: 2048576,
-         order: 0
-       }
-     ]
+         order: 0,
+       },
+     ];
      ```
    - **Max Photos:** 5 per package
 
@@ -1115,6 +1167,7 @@ GET /v1/tenant-admin/bookings?status=PAID&startDate=2025-06-01&endDate=2025-06-3
 **Critical Flow:**
 
 1. **Create Checkout Session** (lines 57-120)
+
    ```typescript
    // Validate package exists for tenant
    const pkg = await catalogRepo.getPackageBySlug(tenantId, packageSlug);
@@ -1204,6 +1257,7 @@ await prisma.$transaction(async (tx) => {
 ```
 
 **Race Condition Handling:**
+
 - Unique constraint catches simultaneous submissions
 - Graceful error message: "Date no longer available"
 - Customer redirected to calendar to select new date
@@ -1218,18 +1272,18 @@ await prisma.$transaction(async (tx) => {
 
 **Key Files:**
 
-| File | Purpose | Lines |
-|------|---------|-------|
-| `server/src/app.ts` | Express app setup, middleware, routes | All |
-| `server/src/di.ts` | Dependency injection container | All |
-| `server/src/routes/tenant-admin.routes.ts` | Tenant admin API endpoints | 1-704 |
-| `server/src/services/tenant-auth.service.ts` | JWT authentication | 1-102 |
-| `server/src/services/catalog.service.ts` | Package/add-on management | 1-501 |
-| `server/src/services/booking.service.ts` | Booking creation & checkout | 1-300+ |
-| `server/src/services/stripe-connect.service.ts` | Stripe account management | 1-361 |
-| `server/src/services/upload.service.ts` | File upload handling | 1-237 |
-| `server/src/middleware/tenant.ts` | Tenant resolution from API key | 1-256 |
-| `server/src/middleware/auth.ts` | JWT verification | 1-68 |
+| File                                            | Purpose                               | Lines  |
+| ----------------------------------------------- | ------------------------------------- | ------ |
+| `server/src/app.ts`                             | Express app setup, middleware, routes | All    |
+| `server/src/di.ts`                              | Dependency injection container        | All    |
+| `server/src/routes/tenant-admin.routes.ts`      | Tenant admin API endpoints            | 1-704  |
+| `server/src/services/tenant-auth.service.ts`    | JWT authentication                    | 1-102  |
+| `server/src/services/catalog.service.ts`        | Package/add-on management             | 1-501  |
+| `server/src/services/booking.service.ts`        | Booking creation & checkout           | 1-300+ |
+| `server/src/services/stripe-connect.service.ts` | Stripe account management             | 1-361  |
+| `server/src/services/upload.service.ts`         | File upload handling                  | 1-237  |
+| `server/src/middleware/tenant.ts`               | Tenant resolution from API key        | 1-256  |
+| `server/src/middleware/auth.ts`                 | JWT verification                      | 1-68   |
 
 ### Multi-Tenant Data Isolation
 
@@ -1240,12 +1294,12 @@ Every database query MUST filter by `tenantId`:
 ```typescript
 // ✅ CORRECT - Tenant-scoped
 const packages = await prisma.package.findMany({
-  where: { tenantId, active: true }
+  where: { tenantId, active: true },
 });
 
 // ❌ WRONG - Security vulnerability (cross-tenant data leak)
 const packages = await prisma.package.findMany({
-  where: { active: true }
+  where: { active: true },
 });
 ```
 
@@ -1282,14 +1336,14 @@ const packages = await prisma.package.findMany({
 
 **Key Directories:**
 
-| Directory | Purpose |
-|-----------|---------|
-| `client/src/pages/tenant/` | Top-level tenant admin pages |
-| `client/src/features/tenant-admin/` | Feature-specific components |
-| `client/src/features/tenant-admin/packages/` | Package management UI |
-| `client/src/features/tenant-admin/branding/` | Branding UI |
-| `client/src/contexts/AuthContext.tsx` | Authentication state |
-| `client/src/lib/api.ts` | Type-safe API client |
+| Directory                                    | Purpose                      |
+| -------------------------------------------- | ---------------------------- |
+| `client/src/pages/tenant/`                   | Top-level tenant admin pages |
+| `client/src/features/tenant-admin/`          | Feature-specific components  |
+| `client/src/features/tenant-admin/packages/` | Package management UI        |
+| `client/src/features/tenant-admin/branding/` | Branding UI                  |
+| `client/src/contexts/AuthContext.tsx`        | Authentication state         |
+| `client/src/lib/api.ts`                      | Type-safe API client         |
 
 **Component Architecture:**
 
@@ -1342,13 +1396,10 @@ export const tenantAdminGetPackages = {
 };
 
 // Backend implements contract
-const handler = tsRestExpress(
-  contract.tenantAdminGetPackages,
-  async (req) => {
-    const packages = await catalogService.getAllPackages(req.tenantId);
-    return { status: 200, body: packages };
-  }
-);
+const handler = tsRestExpress(contract.tenantAdminGetPackages, async (req) => {
+  const packages = await catalogService.getAllPackages(req.tenantId);
+  return { status: 200, body: packages };
+});
 
 // Frontend gets type-safe client
 const packages = await api.tenantAdminGetPackages();
@@ -1356,6 +1407,7 @@ const packages = await api.tenantAdminGetPackages();
 ```
 
 **Benefits:**
+
 - Single source of truth for API shape
 - Compile-time type checking
 - Runtime validation with Zod
@@ -1498,6 +1550,7 @@ enum BookingStatus {
    - Max 5 photos indicator
 
 **UI States:**
+
 - Loading: Spinner overlay
 - Success: Green checkmark message (3-second auto-dismiss)
 - Error: Red error banner
@@ -1549,6 +1602,7 @@ enum BookingStatus {
    - Call-to-action to share booking link
 
 **Future Enhancements:**
+
 - Booking details modal
 - Refund button (with Stripe integration)
 - Email customer button
@@ -1596,6 +1650,7 @@ enum BookingStatus {
    - Toggle between desktop/mobile view
 
 **Responsive Design:**
+
 - Desktop: Side-by-side (form left, preview right)
 - Mobile: Stacked (form on top, preview below)
 
@@ -1627,6 +1682,7 @@ enum BookingStatus {
    - Smooth scrolling
 
 **Accessibility:**
+
 - Keyboard navigation
 - ARIA labels
 - Focus indicators
@@ -1639,6 +1695,7 @@ enum BookingStatus {
 ### Fully Implemented Features
 
 #### Authentication & Security
+
 - ✅ JWT-based tenant admin authentication
 - ✅ Password hashing with bcrypt (10 salt rounds)
 - ✅ Rate limiting (5 attempts/15 min)
@@ -1647,6 +1704,7 @@ enum BookingStatus {
 - ✅ Token expiration (7 days)
 
 #### Branding Customization
+
 - ✅ Logo upload (2MB max, PNG/JPG/SVG/WebP)
 - ✅ 4-color customization system
 - ✅ 8 curated font families
@@ -1655,6 +1713,7 @@ enum BookingStatus {
 - ✅ Local file storage
 
 #### Package Management
+
 - ✅ Create packages (title, description, price, slug)
 - ✅ Update packages (all fields editable)
 - ✅ Delete packages (hard delete)
@@ -1664,6 +1723,7 @@ enum BookingStatus {
 - ✅ Price validation
 
 #### Segment Management (Sprint 9)
+
 - ✅ Create segments (slug, name, hero content)
 - ✅ Assign packages to segments
 - ✅ Segment landing pages
@@ -1673,6 +1733,7 @@ enum BookingStatus {
 - ✅ Segment statistics (package/add-on counts)
 
 #### Blackout Date Management
+
 - ✅ Add blackout dates
 - ✅ Delete blackout dates
 - ✅ Optional reason notes
@@ -1680,6 +1741,7 @@ enum BookingStatus {
 - ✅ Integration with booking availability
 
 #### Booking Management
+
 - ✅ View all bookings
 - ✅ Filter by status (PAID, REFUNDED, CANCELED)
 - ✅ Filter by date range
@@ -1687,6 +1749,7 @@ enum BookingStatus {
 - ✅ Show total revenue per booking
 
 #### Payment Processing
+
 - ✅ Stripe Connect account creation
 - ✅ Express onboarding link generation
 - ✅ Onboarding status verification
@@ -1695,12 +1758,14 @@ enum BookingStatus {
 - ✅ Direct bank payouts to tenant
 
 #### Availability System
+
 - ✅ Blackout date checking
 - ✅ Existing booking conflict detection
 - ✅ Double-booking prevention (unique constraint + pessimistic locking)
 - ✅ Real-time availability API
 
 #### Admin Dashboard UI
+
 - ✅ Login page
 - ✅ Dashboard overview with metrics
 - ✅ Tab-based navigation
@@ -1711,6 +1776,7 @@ enum BookingStatus {
 - ✅ Success/error feedback
 
 #### Developer Experience
+
 - ✅ CLI tenant creation tool
 - ✅ Type-safe API contracts
 - ✅ Zod validation schemas
@@ -1721,17 +1787,20 @@ enum BookingStatus {
 ### Partially Implemented Features
 
 #### Add-On Management
+
 - ✅ Backend API (create, update, delete)
 - ⚠️ Tenant admin UI (pending)
 - ✅ Global vs package-specific add-ons
 - ✅ Segment-scoped add-ons (Sprint 9)
 
 #### File Storage
+
 - ✅ Local filesystem storage
 - ⚠️ Cloud storage (planned: Cloudinary/S3)
 - ⚠️ CDN integration (future)
 
 #### Analytics & Reporting
+
 - ⚠️ Native revenue dashboard (use Stripe for now)
 - ⚠️ Booking trends
 - ⚠️ Package performance metrics
@@ -1746,6 +1815,7 @@ enum BookingStatus {
 #### Near-Term (Next 3 Sprints)
 
 **Sprint 10: Advanced Package Management**
+
 - Drag-and-drop photo reordering
 - Set primary/featured photo
 - Package duplication (clone existing package)
@@ -1753,6 +1823,7 @@ enum BookingStatus {
 - Package templates library
 
 **Sprint 11: Enhanced Booking Management**
+
 - Booking details modal
 - Direct refund button (Stripe API integration)
 - Email customer button (template-based)
@@ -1761,6 +1832,7 @@ enum BookingStatus {
 - Calendar view for bookings
 
 **Sprint 12: Customer Portal**
+
 - Customer login with booking ID + email
 - View booking details
 - Request date changes
@@ -1770,6 +1842,7 @@ enum BookingStatus {
 #### Mid-Term (4-6 Sprints)
 
 **Analytics Dashboard**
+
 - Revenue charts (monthly, quarterly, yearly)
 - Package performance metrics
 - Conversion funnel (views → bookings)
@@ -1777,6 +1850,7 @@ enum BookingStatus {
 - Seasonal trends
 
 **Marketing Tools**
+
 - Discount codes / promo codes
 - Seasonal pricing rules
 - Early bird discounts
@@ -1784,12 +1858,14 @@ enum BookingStatus {
 - Email marketing integration (Mailchimp, ConvertKit)
 
 **Advanced Availability**
+
 - Recurring blackout patterns (every Monday, holidays)
 - Partial availability (afternoon only, 2-hour slots)
 - Multiple resource booking (photographer + venue)
 - Buffer time between bookings
 
 **Multi-User Access**
+
 - Team member accounts (admin, staff, viewer roles)
 - Permission-based access control
 - Activity audit log
@@ -1798,6 +1874,7 @@ enum BookingStatus {
 #### Long-Term (6+ Sprints)
 
 **White-Label Website Builder**
+
 - Custom domain support (bellaweddings.com)
 - Page builder with drag-and-drop
 - Template library (10+ wedding business themes)
@@ -1805,6 +1882,7 @@ enum BookingStatus {
 - Blog/portfolio integration
 
 **Advanced Payments**
+
 - Payment plans (deposit + final payment)
 - Payment reminders
 - Automatic late fees
@@ -1812,6 +1890,7 @@ enum BookingStatus {
 - Gift cards / vouchers
 
 **CRM Integration**
+
 - Contact management
 - Email sequences
 - Task management
@@ -1819,6 +1898,7 @@ enum BookingStatus {
 - Zapier integration
 
 **Mobile Apps**
+
 - iOS native app (Swift)
 - Android native app (Kotlin)
 - Push notifications
@@ -1828,6 +1908,7 @@ enum BookingStatus {
 ### Technical Debt & Improvements
 
 **Security Enhancements**
+
 - HTTP-only cookies for JWT storage
 - CSRF protection
 - Content Security Policy (CSP) headers
@@ -1835,6 +1916,7 @@ enum BookingStatus {
 - API key rotation tools
 
 **Performance Optimizations**
+
 - Redis cache layer
 - Image optimization (WebP, lazy loading)
 - Database query optimization
@@ -1842,6 +1924,7 @@ enum BookingStatus {
 - Server-side rendering (SSR)
 
 **Developer Experience**
+
 - OpenAPI documentation auto-generation
 - Postman collection
 - Sandbox/staging environment
@@ -1849,6 +1932,7 @@ enum BookingStatus {
 - E2E test coverage (currently 0%)
 
 **Monitoring & Observability**
+
 - Application Performance Monitoring (APM)
 - Error tracking (Sentry)
 - Log aggregation (Loggly, Datadog)
@@ -1864,12 +1948,14 @@ enum BookingStatus {
 #### Backend (Express API)
 
 **Authentication:**
+
 - JWT Service: `/server/src/services/tenant-auth.service.ts`
   - Line 26-63: Login method with bcrypt validation
   - Line 72-90: Token verification
   - Line 98-100: Password hashing utility
 
 **Tenant Admin Routes:**
+
 - Main Router: `/server/src/routes/tenant-admin.routes.ts`
   - Line 76-126: Logo upload endpoint
   - Line 132-189: Branding update endpoint
@@ -1886,6 +1972,7 @@ enum BookingStatus {
   - Line 650-700: List bookings endpoint
 
 **Services:**
+
 - Catalog Service: `/server/src/services/catalog.service.ts`
   - Line 57-74: Get all packages with caching
   - Line 96-118: Get package by slug
@@ -1907,6 +1994,7 @@ enum BookingStatus {
   - Line 206-218: Delete package photo
 
 **Middleware:**
+
 - Tenant Resolution: `/server/src/middleware/tenant.ts`
   - Line 55-155: Resolve tenant from API key
   - Line 172-187: Require tenant middleware
@@ -1916,6 +2004,7 @@ enum BookingStatus {
   - Line 14-67: JWT verification middleware
 
 **Database:**
+
 - Prisma Schema: `/server/prisma/schema.prisma`
   - Line 37-92: Tenant model
   - Line 172-200: Package model
@@ -1925,12 +2014,14 @@ enum BookingStatus {
 #### Frontend (React Client)
 
 **Pages:**
+
 - Login: `/client/src/pages/Login.tsx`
   - Line 69-104: Login submission logic
 - Dashboard Wrapper: `/client/src/pages/tenant/TenantAdminDashboard.tsx`
   - Line 32-50: Fetch tenant info
 
 **Features:**
+
 - Tenant Dashboard: `/client/src/features/tenant-admin/TenantDashboard.tsx`
   - Line 68-80: Load packages
   - Line 82-94: Load blackouts
@@ -1949,6 +2040,7 @@ enum BookingStatus {
   - Line 107-132: Delete blackout
 
 **Utilities:**
+
 - API Client: `/client/src/lib/api.ts`
   - Auto-generated type-safe client from contracts
 
@@ -1959,6 +2051,7 @@ enum BookingStatus {
 The MAIS tenant journey provides a comprehensive business management solution for wedding and event professionals. The platform successfully implements:
 
 ### Core Strengths
+
 1. **Multi-Tenant Architecture**: Complete data isolation with tenant-scoped queries
 2. **White-Label Branding**: Full customization of colors, fonts, and logo
 3. **Stripe Connect Integration**: Direct payments with automated commission
@@ -1966,12 +2059,14 @@ The MAIS tenant journey provides a comprehensive business management solution fo
 5. **Type-Safe APIs**: Contract-first design with Zod validation
 
 ### Current State
+
 - **Backend**: 90% feature-complete
 - **Frontend UI**: 75% feature-complete
 - **Testing**: 60% pass rate (Sprint 6 complete)
 - **Documentation**: Comprehensive guides available
 
 ### Technical Excellence
+
 - JWT authentication with 7-day expiration
 - Bcrypt password hashing
 - Rate limiting on auth endpoints
@@ -1980,6 +2075,7 @@ The MAIS tenant journey provides a comprehensive business management solution fo
 - Idempotent webhook processing
 
 ### Growth Opportunities
+
 - Add-on management UI (backend complete)
 - Native analytics dashboard
 - Customer portal

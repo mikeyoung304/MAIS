@@ -1,7 +1,7 @@
-import { Link } from "react-router-dom";
-import { Container } from "@/ui/Container";
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { Link } from 'react-router-dom';
+import { Container } from '@/ui/Container';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 
 /**
  * CTASection - Clean, minimal call-to-action
@@ -21,8 +21,8 @@ export function CTASection() {
           </h2>
 
           <p className="text-xl text-neutral-600 mb-10">
-            Let's talk about what's keeping you up at night.
-            15 minutes. No sales pitch. Just clarity.
+            Let's talk about what's keeping you up at night. 15 minutes. No sales pitch. Just
+            clarity.
           </p>
 
           <Button
@@ -37,7 +37,7 @@ export function CTASection() {
           </Button>
 
           <p className="mt-6 text-sm text-neutral-400">
-            Or email us at{" "}
+            Or email us at{' '}
             <a
               href="mailto:hello@maconai.com"
               className="text-macon-navy hover:text-macon-orange transition-colors"

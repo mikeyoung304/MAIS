@@ -11,6 +11,7 @@ This guide provides comprehensive prevention strategies for file upload features
 Before implementing any file upload feature, review this checklist:
 
 ### Multi-Tenant Isolation
+
 - [ ] **Tenant Scoping Plan**: Document how files will be organized by tenant
   - Storage path must include `tenantId` (e.g., `{tenantId}/logos/filename`)
   - Supabase bucket must NOT be public (only signed URLs allowed)
@@ -26,6 +27,7 @@ Before implementing any file upload feature, review this checklist:
   - Use existing JWT auth in proxy pattern
 
 ### File Content Validation
+
 - [ ] **Content-Type Bypass Prevention**:
   - [ ] Plan to validate file content, not just MIME type header
   - [ ] List which formats will need magic byte verification (e.g., PNG, JPEG)
@@ -39,6 +41,7 @@ Before implementing any file upload feature, review this checklist:
   - [ ] For MVP: Document manual review process for suspicious uploads
 
 ### Dependency Injection & Architecture
+
 - [ ] **DI Container Integration**: Plan UploadService injection, not singleton usage
   - [ ] Identify all places that import `uploadService` singleton
   - [ ] Plan to inject via DI container instead
@@ -50,6 +53,7 @@ Before implementing any file upload feature, review this checklist:
   - [ ] Mock repository in tests
 
 ### Rate Limiting & Resource Protection
+
 - [ ] **Rate Limiting Strategy**:
   - [ ] Define limits per endpoint (e.g., 10 uploads/minute per tenant)
   - [ ] Plan token bucket or sliding window approach
@@ -62,6 +66,7 @@ Before implementing any file upload feature, review this checklist:
   - [ ] Test memory usage during concurrent uploads
 
 ### Lifecycle Management
+
 - [ ] **Cleanup Strategy**: Document file deletion flow
   - [ ] Plan cascade deletion when entity deleted (e.g., when package deleted)
   - [ ] Decide on orphaned file cleanup (cron job or lazy deletion)
@@ -73,6 +78,7 @@ Before implementing any file upload feature, review this checklist:
   - [ ] Implement background job for expired file cleanup
 
 ### Error Handling & Observability
+
 - [ ] **Error Strategy**:
   - [ ] Plan domain errors for different failure scenarios
   - [ ] Decide on user-facing error messages (generic vs. detailed)
@@ -83,6 +89,7 @@ Before implementing any file upload feature, review this checklist:
   - [ ] Add structured logging with tenant context
 
 ### Testing Approach
+
 - [ ] **Test Plan Review**:
   - [ ] Unit tests for validation logic and filename generation
   - [ ] Integration tests with mock Supabase for CRUD operations
@@ -99,7 +106,9 @@ When reviewing file upload code, ask these critical questions:
 ### Security Review
 
 #### Multi-Tenant Isolation
+
 - [ ] **Tenant Scoping**: Does every storage operation include `tenantId` in the path?
+
   ```typescript
   // ✅ CORRECT
   const path = `${tenantId}/logos/${filename}`;
@@ -107,6 +116,7 @@ When reviewing file upload code, ask these critical questions:
   // ❌ WRONG - Missing tenantId
   const path = `logos/${filename}`;
   ```
+
 - [ ] **RLS Policies**: Are row-level security policies enforced on storage metadata table?
   - Is bucket private (not public)?
   - Do policies prevent SELECT/INSERT/UPDATE/DELETE across tenant boundaries?
@@ -114,6 +124,7 @@ When reviewing file upload code, ask these critical questions:
   - Check for client-side environment variables leaking key
   - Verify key not in browser console logs
 - [ ] **Ownership Verification**: Before deleting a file, is tenant ownership verified?
+
   ```typescript
   // ✅ CORRECT
   const file = await db.file.findFirst({ where: { id, tenantId } });
@@ -124,9 +135,11 @@ When reviewing file upload code, ask these critical questions:
   ```
 
 #### File Content Validation
+
 - [ ] **Magic Byte Verification**: Is file content validated beyond MIME type header?
   - Does code check magic bytes (file signatures) to prevent MIME spoofing?
   - Example: PNG files start with `89 50 4E 47` (hex)
+
   ```typescript
   // ✅ CORRECT
   import fileType from 'file-type';
@@ -140,7 +153,9 @@ When reviewing file upload code, ask these critical questions:
     throw new Error('Invalid type');
   }
   ```
+
 - [ ] **Extension Whitelisting**: Are file extensions validated against whitelist?
+
   ```typescript
   // ✅ CORRECT
   const ext = path.extname(filename).toLowerCase();
@@ -151,12 +166,15 @@ When reviewing file upload code, ask these critical questions:
   // ❌ WRONG - All extensions accepted
   const ext = path.extname(filename);
   ```
+
 - [ ] **No Executable Formats**: Are executable formats (EXE, COM, BAT, etc.) rejected?
 - [ ] **SVG Restrictions**: If SVG allowed, is it validated to prevent XSS?
   - SVGs can contain JavaScript - do you parse and sanitize?
 
 #### Path Traversal Prevention
+
 - [ ] **Filename Sanitization**: Is user-supplied filename sanitized?
+
   ```typescript
   // ✅ CORRECT
   const ext = path.extname(originalname);
@@ -166,6 +184,7 @@ When reviewing file upload code, ask these critical questions:
   // ❌ WRONG - User input in path
   const filename = sanitizePath(originalname); // Still risky
   ```
+
 - [ ] **No Direct File Paths**: Does code construct storage paths directly from user input?
   ```typescript
   // ❌ WRONG - Vulnerable
@@ -173,7 +192,9 @@ When reviewing file upload code, ask these critical questions:
   ```
 
 #### Rate Limiting & Resource Protection
+
 - [ ] **Upload Limits**: Are file size limits enforced at multer AND validation layers?
+
   ```typescript
   // ✅ CORRECT - Two layers
   multer({ limits: { fileSize: 5 * 1024 * 1024 } })
@@ -183,6 +204,7 @@ When reviewing file upload code, ask these critical questions:
   // ❌ RISKY - Multer alone
   multer({ limits: { fileSize: 10 * 1024 * 1024 } }) // Too large
   ```
+
 - [ ] **Concurrent Upload Limits**: Are concurrent uploads limited per tenant?
   - Does rate limiter limit uploads per minute?
   - Does code prevent 100 concurrent 5MB uploads exhausting memory?
@@ -195,7 +217,9 @@ When reviewing file upload code, ask these critical questions:
   - [ ] Are large files split into chunks?
 
 #### Error Handling
+
 - [ ] **No Sensitive Data in Errors**: Are error messages safe for users?
+
   ```typescript
   // ✅ CORRECT
   throw new Error('File upload failed');
@@ -203,6 +227,7 @@ When reviewing file upload code, ask these critical questions:
   // ❌ WRONG - Leaks paths/internals
   throw new Error(`Failed to write to ${filepath}: ${err.message}`);
   ```
+
 - [ ] **Graceful Failure**: Does code handle storage service outages?
   - Does Supabase timeout trigger user-friendly error?
   - Is retry logic exponential backoff?
@@ -211,7 +236,9 @@ When reviewing file upload code, ask these critical questions:
 ### Architectural Review
 
 #### Dependency Injection
+
 - [ ] **DI Pattern**: Is UploadService injected, not imported as singleton?
+
   ```typescript
   // ✅ CORRECT
   constructor(private uploadService: UploadService) {}
@@ -220,7 +247,9 @@ When reviewing file upload code, ask these critical questions:
   import { uploadService } from '../../services';
   uploadService.uploadLogo(...);
   ```
+
 - [ ] **Testability**: Can service be mocked for testing?
+
   ```typescript
   // ✅ CORRECT
   const mockUploadService = { uploadLogo: vi.fn() };
@@ -228,15 +257,18 @@ When reviewing file upload code, ask these critical questions:
 
   // ❌ WRONG - Can't mock singleton
   ```
+
 - [ ] **Dual-Mode Support**: Does code work with both mock filesystem and real Supabase?
   - Is there conditional logic: `if (ADAPTERS_PRESET === 'real')`?
   - Are both paths tested?
 
 #### Code Organization
+
 - [ ] **Service Layer**: Is upload logic in service, not routes?
   - Routes only: validate request, call service, map response
   - Service contains: validation, Supabase/filesystem logic, error handling
 - [ ] **No Duplication**: Is upload logic repeated across routes?
+
   ```typescript
   // ❌ BAD - Duplicated in 3 routes
   // route 1: validate, upload, return
@@ -246,12 +278,14 @@ When reviewing file upload code, ask these critical questions:
   // ✅ GOOD - Single service method
   await uploadService.uploadLogo(file, tenantId);
   ```
+
 - [ ] **Single Responsibility**: Does each method do one thing?
   - uploadLogo: upload a logo
   - deletePackagePhoto: delete a package photo
   - (not: validate, upload, resize, cache, AND cleanup)
 
 #### Type Safety
+
 - [ ] **UploadedFile Interface**: Is multer file type properly defined?
   ```typescript
   interface UploadedFile {
@@ -268,7 +302,9 @@ When reviewing file upload code, ask these critical questions:
 - [ ] **No `any` Types**: Are there type assertions without reason?
 
 #### Repository Pattern
+
 - [ ] **Storage Interface**: Is there a StorageRepository interface?
+
   ```typescript
   interface StorageRepository {
     uploadLogo(tenantId: string, file: UploadedFile): Promise<UploadResult>;
@@ -280,7 +316,9 @@ When reviewing file upload code, ask these critical questions:
   // - SupabaseStorageRepository (real mode)
   // - FileSystemStorageRepository (mock mode)
   ```
+
 - [ ] **All Methods Require TenantId**:
+
   ```typescript
   // ✅ CORRECT
   async uploadLogo(tenantId: string, file: UploadedFile): Promise<UploadResult>
@@ -292,6 +330,7 @@ When reviewing file upload code, ask these critical questions:
 ### Contract & API Review
 
 #### API Endpoint
+
 - [ ] **Correct HTTP Method**: POST for uploads, DELETE for removal
 - [ ] **Proper Status Codes**: 201 Created, 400 Bad Request, 401 Unauthorized, 413 Payload Too Large, 429 Too Many Requests
 - [ ] **Response Format**: Consistent with API contracts
@@ -317,7 +356,9 @@ When reviewing file upload code, ask these critical questions:
   ```
 
 #### Frontend Integration
+
 - [ ] **File Input Attributes**: Does `<input>` have `accept` attribute?
+
   ```html
   <!-- ✅ CORRECT -->
   <input type="file" accept="image/jpeg,image/png,image/webp" />
@@ -325,7 +366,9 @@ When reviewing file upload code, ask these critical questions:
   <!-- ❌ WRONG -->
   <input type="file" />
   ```
+
 - [ ] **Preview Safety**: If showing image preview, is URL validated?
+
   ```typescript
   // ✅ CORRECT - Only from API response
   const response = await uploadFile();
@@ -344,6 +387,7 @@ Every file upload feature should have comprehensive tests covering these areas:
 ### Unit Tests (UploadService)
 
 #### Validation Tests
+
 ```typescript
 describe('File Validation', () => {
   // File size validation
@@ -375,6 +419,7 @@ describe('File Validation', () => {
 ```
 
 #### Filename Generation Tests
+
 ```typescript
 describe('Filename Generation', () => {
   // Path traversal prevention
@@ -392,13 +437,14 @@ describe('Filename Generation', () => {
       service.uploadLogo(mockFile, 'tenant_1'),
       service.uploadLogo(mockFile, 'tenant_1'),
     ]);
-    const filenames = results.map(r => r.filename);
+    const filenames = results.map((r) => r.filename);
     expect(new Set(filenames).size).toBe(3); // All unique
   });
 });
 ```
 
 #### Tenant Isolation Tests
+
 ```typescript
 describe('Multi-Tenant Isolation', () => {
   // Verify tenant scoping in Supabase paths
@@ -422,7 +468,7 @@ describe('Multi-Tenant Isolation', () => {
     await service.uploadLogo(mockFile, 'tenant_1');
     await service.uploadLogo(mockFile, 'tenant_2');
 
-    const paths = uploadSpy.mock.calls.map(call => call[0]);
+    const paths = uploadSpy.mock.calls.map((call) => call[0]);
     expect(paths[0]).toContain('tenant_1/');
     expect(paths[1]).toContain('tenant_2/');
     expect(paths[0]).not.toEqual(paths[1]);
@@ -433,6 +479,7 @@ describe('Multi-Tenant Isolation', () => {
 ### Integration Tests (with Database)
 
 #### File Lifecycle Tests
+
 ```typescript
 describe('File Lifecycle (Integration)', () => {
   // Upload, link to entity, cleanup
@@ -446,18 +493,15 @@ describe('File Lifecycle (Integration)', () => {
     // Link photo to package
     await db.package.update({
       where: { id: pkg.id },
-      data: { photoUrl: result.url, photoFilename: result.filename }
+      data: { photoUrl: result.url, photoFilename: result.filename },
     });
 
     // Delete package
     await db.package.delete({ where: { id: pkg.id } });
 
     // Verify file is deleted from Supabase
-    const { data } = await supabase.storage.from('images')
-      .list(`${tenantId}/packages/`);
-    expect(data).not.toContainEqual(
-      expect.objectContaining({ name: result.filename })
-    );
+    const { data } = await supabase.storage.from('images').list(`${tenantId}/packages/`);
+    expect(data).not.toContainEqual(expect.objectContaining({ name: result.filename }));
   });
 
   // Orphaned file detection
@@ -468,17 +512,14 @@ describe('File Lifecycle (Integration)', () => {
     // Don't link to any package
 
     // List files and check for orphans
-    const { data: files } = await supabase.storage.from('images')
-      .list(`${tenantId}/packages/`);
+    const { data: files } = await supabase.storage.from('images').list(`${tenantId}/packages/`);
 
     const linkedFiles = await db.package.findMany({
-      where: { photoFilename: { in: files.map(f => f.name) } },
-      select: { photoFilename: true }
+      where: { photoFilename: { in: files.map((f) => f.name) } },
+      select: { photoFilename: true },
     });
 
-    const orphans = files.filter(
-      f => !linkedFiles.some(p => p.photoFilename === f.name)
-    );
+    const orphans = files.filter((f) => !linkedFiles.some((p) => p.photoFilename === f.name));
 
     expect(orphans.length).toBeGreaterThan(0);
   });
@@ -488,6 +529,7 @@ describe('File Lifecycle (Integration)', () => {
 ### E2E Tests (Playwright)
 
 #### Upload Flow
+
 ```typescript
 test.describe('Image Upload E2E', () => {
   test('should upload logo via drag-drop and display preview', async ({ page }) => {
@@ -498,8 +540,8 @@ test.describe('Image Upload E2E', () => {
     await uploadZone.dragAndDropFiles('test-logo.png');
 
     // Wait for upload to complete
-    await page.waitForResponse(resp =>
-      resp.url().includes('/tenant-admin/logo') && resp.status() === 201
+    await page.waitForResponse(
+      (resp) => resp.url().includes('/tenant-admin/logo') && resp.status() === 201
     );
 
     // Verify preview appears
@@ -537,12 +579,19 @@ test.describe('Image Upload E2E', () => {
 ### Security Tests
 
 #### MIME Spoofing Prevention
+
 ```typescript
 describe('MIME Spoofing Prevention', () => {
   it('should reject file with PNG header but JPEG extension', async () => {
     const pngData = Buffer.from([
-      0x89, 0x50, 0x4e, 0x47, // PNG magic bytes
-      0x0d, 0x0a, 0x1a, 0x0a
+      0x89,
+      0x50,
+      0x4e,
+      0x47, // PNG magic bytes
+      0x0d,
+      0x0a,
+      0x1a,
+      0x0a,
     ]);
 
     const file = {
@@ -550,7 +599,7 @@ describe('MIME Spoofing Prevention', () => {
       originalname: 'fake.jpg',
       mimetype: 'image/jpeg',
       buffer: pngData,
-      size: pngData.length
+      size: pngData.length,
     };
 
     await expect(service.uploadLogo(file, 'tenant_1')).rejects.toThrow();
@@ -564,7 +613,7 @@ describe('MIME Spoofing Prevention', () => {
       originalname: 'archive.png',
       mimetype: 'image/png',
       buffer: zipData,
-      size: zipData.length
+      size: zipData.length,
     };
 
     await expect(service.uploadLogo(file, 'tenant_1')).rejects.toThrow();
@@ -573,6 +622,7 @@ describe('MIME Spoofing Prevention', () => {
 ```
 
 #### Path Traversal Prevention
+
 ```typescript
 describe('Path Traversal Prevention', () => {
   it('should safely handle malicious filenames', async () => {
@@ -580,14 +630,11 @@ describe('Path Traversal Prevention', () => {
       '../../etc/passwd.png',
       '../../../admin/secret.jpg',
       'normal/../../../evil.png',
-      'file.png/../../../escape.jpg'
+      'file.png/../../../escape.jpg',
     ];
 
     for (const name of maliciousNames) {
-      const result = await service.uploadLogo(
-        { ...mockFile, originalname: name },
-        'tenant_1'
-      );
+      const result = await service.uploadLogo({ ...mockFile, originalname: name }, 'tenant_1');
 
       // Should not contain parent directory traversal
       expect(result.filename).not.toContain('..');
@@ -599,18 +646,18 @@ describe('Path Traversal Prevention', () => {
 ```
 
 #### Multi-Tenant Isolation
+
 ```typescript
 describe('Multi-Tenant Isolation (Security)', () => {
-  it('should prevent accessing another tenant\'s files', async () => {
+  it("should prevent accessing another tenant's files", async () => {
     // Upload as tenant_1
     const result = await uploadService.uploadLogo(mockFile, 'tenant_1');
 
     // Try to access as tenant_2
-    const { data: files } = await supabase.storage.from('images')
-      .list('tenant_2/logos/');
+    const { data: files } = await supabase.storage.from('images').list('tenant_2/logos/');
 
     // Should not see tenant_1's file
-    expect(files.map(f => f.name)).not.toContain(result.filename);
+    expect(files.map((f) => f.name)).not.toContain(result.filename);
   });
 
   it('should verify tenant owns file before deletion', async () => {
@@ -618,9 +665,9 @@ describe('Multi-Tenant Isolation (Security)', () => {
     const result = await uploadService.uploadLogo(mockFile, 'tenant_1');
 
     // Try to delete as tenant_2
-    await expect(
-      uploadService.deleteLogoAsTenan('tenant_2', result.filename)
-    ).rejects.toThrow('File not found');
+    await expect(uploadService.deleteLogoAsTenan('tenant_2', result.filename)).rejects.toThrow(
+      'File not found'
+    );
   });
 });
 ```
@@ -628,6 +675,7 @@ describe('Multi-Tenant Isolation (Security)', () => {
 ### Load & Performance Tests
 
 #### Rate Limiting
+
 ```typescript
 describe('Rate Limiting', () => {
   it('should enforce per-tenant upload limits', async () => {
@@ -639,7 +687,7 @@ describe('Rate Limiting', () => {
     }
 
     const settled = await Promise.allSettled(results);
-    const failures = settled.filter(s => s.status === 'rejected');
+    const failures = settled.filter((s) => s.status === 'rejected');
 
     // At least 5 should be rate limited
     expect(failures.length).toBeGreaterThanOrEqual(5);
@@ -649,15 +697,16 @@ describe('Rate Limiting', () => {
 ```
 
 #### Memory Protection
+
 ```typescript
 describe('Memory Protection', () => {
   it('should handle concurrent uploads without memory exhaustion', async () => {
     const memBefore = process.memoryUsage().heapUsed;
 
     // 20 concurrent 5MB uploads
-    const promises = Array(20).fill(null).map(() =>
-      uploadService.uploadPackagePhoto(mockFile, 'package_1', 'tenant_1')
-    );
+    const promises = Array(20)
+      .fill(null)
+      .map(() => uploadService.uploadPackagePhoto(mockFile, 'package_1', 'tenant_1'));
 
     await Promise.all(promises);
 
@@ -700,7 +749,13 @@ export interface StorageRepository {
 export class UploadService {
   private readonly maxLogoSizeMB = 2;
   private readonly maxPhotSizeMB = 5;
-  private readonly allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml'];
+  private readonly allowedMimeTypes = [
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/svg+xml',
+  ];
 
   constructor(
     private readonly storageRepo: StorageRepository,
@@ -725,9 +780,7 @@ export class UploadService {
     // Magic byte validation (second layer - prevents MIME spoofing)
     const detected = this.fileTypeValidator.detect(file.buffer);
     if (!detected || !this.allowedMimeTypes.includes(detected.mimeType)) {
-      throw new InvalidFileContentError(
-        'File content does not match MIME type'
-      );
+      throw new InvalidFileContentError('File content does not match MIME type');
     }
 
     // Buffer validation
@@ -750,23 +803,17 @@ export class UploadService {
   /**
    * Upload logo (max 2MB)
    */
-  async uploadLogo(
-    tenantId: string,
-    file: UploadedFile
-  ): Promise<UploadResult> {
+  async uploadLogo(tenantId: string, file: UploadedFile): Promise<UploadResult> {
     try {
       this.validateFile(file, this.maxLogoSizeMB);
       const filename = this.generateFilename(file.originalname, 'logo');
 
       const result = await this.storageRepo.uploadLogo(tenantId, {
         ...file,
-        generatedFilename: filename
+        generatedFilename: filename,
       });
 
-      this.logger.info(
-        { tenantId, filename, size: file.size },
-        'Logo uploaded successfully'
-      );
+      this.logger.info({ tenantId, filename, size: file.size }, 'Logo uploaded successfully');
 
       return result;
     } catch (error) {
@@ -791,7 +838,7 @@ export class UploadService {
         tenantId,
         {
           ...file,
-          generatedFilename: filename
+          generatedFilename: filename,
         },
         packageId
       );
@@ -825,10 +872,7 @@ export class UploadService {
 
       await this.storageRepo.deleteFile(tenantId, folder, filename);
 
-      this.logger.info(
-        { tenantId, folder, filename },
-        'File deleted successfully'
-      );
+      this.logger.info({ tenantId, folder, filename }, 'File deleted successfully');
     } catch (error) {
       this.logger.error({ tenantId, folder, filename, error }, 'Delete failed');
       throw error;
@@ -849,8 +893,8 @@ export class UploadService {
       where: {
         tenantId,
         folder,
-        filename
-      }
+        filename,
+      },
     });
   }
 }
@@ -876,12 +920,10 @@ export class SupabaseStorageRepository implements StorageRepository {
   ): Promise<UploadResult> {
     const path = `${tenantId}/logos/${file.generatedFilename}`;
 
-    const { error } = await this.supabase.storage
-      .from('images')
-      .upload(path, file.buffer, {
-        contentType: file.mimetype,
-        upsert: false // Prevent overwriting
-      });
+    const { error } = await this.supabase.storage.from('images').upload(path, file.buffer, {
+      contentType: file.mimetype,
+      upsert: false, // Prevent overwriting
+    });
 
     if (error) {
       throw new UploadFailedError(error.message);
@@ -894,20 +936,14 @@ export class SupabaseStorageRepository implements StorageRepository {
       url: publicUrl,
       filename: file.generatedFilename,
       size: file.size,
-      mimetype: file.mimetype
+      mimetype: file.mimetype,
     };
   }
 
-  async getSignedUrl(
-    tenantId: string,
-    folder: string,
-    filename: string
-  ): Promise<string> {
+  async getSignedUrl(tenantId: string, folder: string, filename: string): Promise<string> {
     const path = `${tenantId}/${folder}/${filename}`;
 
-    const { data, error } = await this.supabase.storage
-      .from('images')
-      .createSignedUrl(path, 3600); // 1 hour expiry
+    const { data, error } = await this.supabase.storage.from('images').createSignedUrl(path, 3600); // 1 hour expiry
 
     if (error) {
       throw new UrlGenerationError(error.message);
@@ -916,16 +952,10 @@ export class SupabaseStorageRepository implements StorageRepository {
     return data.signedUrl;
   }
 
-  async deleteFile(
-    tenantId: string,
-    folder: string,
-    filename: string
-  ): Promise<void> {
+  async deleteFile(tenantId: string, folder: string, filename: string): Promise<void> {
     const path = `${tenantId}/${folder}/${filename}`;
 
-    const { error } = await this.supabase.storage
-      .from('images')
-      .remove([path]);
+    const { error } = await this.supabase.storage.from('images').remove([path]);
 
     if (error) {
       this.logger.warn({ path, error: error.message }, 'Delete failed');
@@ -940,7 +970,10 @@ export class SupabaseStorageRepository implements StorageRepository {
 export class FileSystemStorageRepository implements StorageRepository {
   private readonly baseDir: string;
 
-  constructor(baseDir: string, private readonly logger: Logger) {
+  constructor(
+    baseDir: string,
+    private readonly logger: Logger
+  ) {
     this.baseDir = baseDir;
     this.ensureDirectory();
   }
@@ -965,15 +998,11 @@ export class FileSystemStorageRepository implements StorageRepository {
       url: `/uploads/${tenantId}/logos/${file.generatedFilename}`,
       filename: file.generatedFilename,
       size: file.size,
-      mimetype: file.mimetype
+      mimetype: file.mimetype,
     };
   }
 
-  async deleteFile(
-    tenantId: string,
-    folder: string,
-    filename: string
-  ): Promise<void> {
+  async deleteFile(tenantId: string, folder: string, filename: string): Promise<void> {
     const filepath = path.join(this.baseDir, tenantId, folder, filename);
 
     if (fs.existsSync(filepath)) {
@@ -1004,9 +1033,9 @@ export const uploadRateLimiter = rateLimit({
   },
   handler: (req, res) => {
     res.status(429).json({
-      error: 'Upload rate limit exceeded. Please wait before uploading again.'
+      error: 'Upload rate limit exceeded. Please wait before uploading again.',
     });
-  }
+  },
 });
 
 // In routes:
@@ -1056,20 +1085,17 @@ router.post(
     } catch (error) {
       if (error instanceof FileSizeExceededError) {
         return res.status(413).json({
-          error: `File exceeds maximum size of ${error.maxSize}MB`
+          error: `File exceeds maximum size of ${error.maxSize}MB`,
         });
       }
 
       if (error instanceof InvalidMimeTypeError) {
         return res.status(400).json({
-          error: 'Invalid file type. Allowed: JPG, PNG, WebP, SVG'
+          error: 'Invalid file type. Allowed: JPG, PNG, WebP, SVG',
         });
       }
 
-      container.logger.error(
-        { tenantId: tenantAuth.tenantId, error },
-        'Logo upload failed'
-      );
+      container.logger.error({ tenantId: tenantAuth.tenantId, error }, 'Logo upload failed');
 
       return res.status(500).json({ error: 'Upload failed' });
     }
@@ -1095,6 +1121,7 @@ Watch for these warning signs during code review or testing:
    - Service role key exposed to frontend
 
 3. **MIME type validation only**
+
    ```typescript
    // RED FLAG - Only checks header
    if (!ALLOWED_TYPES.includes(file.mimetype)) { ... }
@@ -1105,12 +1132,14 @@ Watch for these warning signs during code review or testing:
    - Allows MIME spoofing (PNG content with JPEG header)
 
 5. **File path constructed from user input**
+
    ```typescript
    // RED FLAG
    const path = `uploads/${req.body.folder}/${req.body.filename}`;
    ```
 
 6. **No file size limit enforcement**
+
    ```typescript
    // RED FLAG - No size check
    const file = req.file;
@@ -1123,6 +1152,7 @@ Watch for these warning signs during code review or testing:
    - 100 concurrent 5MB uploads = 500MB memory spike
 
 8. **No tenant ownership verification before deletion**
+
    ```typescript
    // RED FLAG - Could delete another tenant's file
    await supabase.storage.from('images').remove([filename]);
@@ -1142,6 +1172,7 @@ Watch for these warning signs during code review or testing:
 ### Architectural Red Flags
 
 11. **Singleton import instead of DI**
+
     ```typescript
     // RED FLAG
     import { uploadService } from './services';
@@ -1149,6 +1180,7 @@ Watch for these warning signs during code review or testing:
     ```
 
 12. **Direct Supabase calls outside service layer**
+
     ```typescript
     // RED FLAG - Direct storage access in route
     await supabase.storage.from('images').upload(...);
@@ -1163,12 +1195,14 @@ Watch for these warning signs during code review or testing:
     - Hard to test validation independently
 
 15. **No TypeScript types for file uploads**
+
     ```typescript
     // RED FLAG
     async uploadLogo(file: any, tenantId?: string) { ... }
     ```
 
 16. **Optional tenantId parameter**
+
     ```typescript
     // RED FLAG
     async uploadPackagePhoto(file: UploadedFile, packageId: string, tenantId?: string)
@@ -1218,6 +1252,7 @@ Watch for these warning signs during code review or testing:
     - Can't track per-tenant usage
 
 26. **No logging with tenant context**
+
     ```typescript
     // RED FLAG - Hard to debug per-tenant issues
     logger.info(`File uploaded: ${filename}`);
@@ -1359,7 +1394,7 @@ router.post(
   '/logo',
   rateLimit({
     max: 10, // 10 per minute
-    keyGenerator: (req) => `uploads:${res.locals.tenantAuth.tenantId}`
+    keyGenerator: (req) => `uploads:${res.locals.tenantAuth.tenantId}`,
   }),
   async (req, res) => {
     // Limited to 10 uploads/minute per tenant
@@ -1374,6 +1409,7 @@ router.post(
 Print and post this quick reference for developers:
 
 ### Before Implementation
+
 - [ ] Identified all upload types (logos, photos, hero images)
 - [ ] Defined size limits per type
 - [ ] Planned tenant scoping strategy
@@ -1384,6 +1420,7 @@ Print and post this quick reference for developers:
 - [ ] Created tests for MIME spoofing, path traversal, memory exhaustion
 
 ### During Implementation
+
 - [ ] Used DI pattern (not singleton)
 - [ ] Created StorageRepository interface
 - [ ] Implemented dual-mode (mock + real)
@@ -1396,6 +1433,7 @@ Print and post this quick reference for developers:
 - [ ] Logged with tenant context
 
 ### Code Review
+
 - [ ] Is tenantId in all paths?
 - [ ] Is magic byte validation present?
 - [ ] Are MIME spoofing tests included?
@@ -1408,6 +1446,7 @@ Print and post this quick reference for developers:
 - [ ] Are load tests for rate limiting present?
 
 ### Before Deployment
+
 - [ ] All tests pass locally
 - [ ] TypeScript compilation succeeds
 - [ ] E2E tests pass in both mock and real modes

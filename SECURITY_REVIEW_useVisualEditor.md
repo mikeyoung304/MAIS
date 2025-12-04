@@ -11,6 +11,7 @@
 The `useVisualEditor` hook demonstrates **solid security architecture** with proper multi-tenant isolation, centralized authentication, and safe error handling patterns. The removal of manual token handling was a **positive security improvement** by delegating to the centralized API client.
 
 **Key Findings:**
+
 - ✅ Multi-tenant isolation properly implemented
 - ✅ No direct token manipulation vulnerabilities
 - ✅ Error messages do not leak sensitive data
@@ -32,17 +33,17 @@ The hook relies on the centralized API client (`/Users/mikeyoung/CODING/MAIS/cli
 
 ```typescript
 // File: client/src/lib/api.ts (lines 138-154)
-if (path.includes("/v1/tenant-admin")) {
-  const isImpersonating = localStorage.getItem("impersonationTenantKey");
+if (path.includes('/v1/tenant-admin')) {
+  const isImpersonating = localStorage.getItem('impersonationTenantKey');
   if (isImpersonating) {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem('adminToken');
     if (token) {
-      requestHeaders["Authorization"] = `Bearer ${token}`;
+      requestHeaders['Authorization'] = `Bearer ${token}`;
     }
   } else {
-    const token = tenantToken || localStorage.getItem("tenantToken");
+    const token = tenantToken || localStorage.getItem('tenantToken');
     if (token) {
-      requestHeaders["Authorization"] = `Bearer ${token}`;
+      requestHeaders['Authorization'] = `Bearer ${token}`;
     }
   }
 }
@@ -84,6 +85,7 @@ if (path.includes("/v1/tenant-admin")) {
 #### Assessment: ✅ SAFE - But with a caveat
 
 **Code Analysis:**
+
 ```typescript
 // Line 92: Load packages error handling
 if (status !== 200 || !body) {
@@ -92,7 +94,7 @@ if (status !== 200 || !body) {
 }
 
 // Lines 137, 252, 293: Similar pattern in flush/publish/discard
-const errorMessage = (body as { error?: string })?.error || "Failed to save draft";
+const errorMessage = (body as { error?: string })?.error || 'Failed to save draft';
 ```
 
 **Security Issues Found:** ❌ NONE for security, but code quality consideration:
@@ -127,6 +129,7 @@ const errorMessage = (body as { error?: string })?.error || "Failed to save draf
 **Frontend Data Isolation:**
 
 1. **No Cross-Tenant Data Fetching**
+
    ```typescript
    // Line 89: useVisualEditor hook
    const { status, body } = await api.tenantAdminGetPackagesWithDrafts();
@@ -141,6 +144,7 @@ const errorMessage = (body as { error?: string })?.error || "Failed to save draf
 **Backend Data Isolation:**
 
 1. **All Queries Scoped by tenantId** ✅
+
    ```typescript
    // File: server/src/services/package-draft.service.ts (lines 40-80)
    async getAllPackagesWithDrafts(tenantId: string): Promise<PackageWithDraft[]> {
@@ -154,6 +158,7 @@ const errorMessage = (body as { error?: string })?.error || "Failed to save draf
    ```
 
 2. **Ownership Verification**
+
    ```typescript
    // Lines 62-65: Verify package belongs to tenant before updating
    const existing = await this.repository.getPackageById(tenantId, packageId);
@@ -175,6 +180,7 @@ const errorMessage = (body as { error?: string })?.error || "Failed to save draf
 #### Assessment: ✅ SECURE
 
 **What's Stored:**
+
 ```typescript
 // Lines 71-73
 const pendingChanges = useRef<Map<string, DraftUpdate>>(new Map());
@@ -191,6 +197,7 @@ const saveInProgress = useRef<boolean>(false);
 
 2. **Memory Storage is Safe**
    - Refs are cleared on unmount (lines 317-326):
+
    ```typescript
    useEffect(() => {
      return () => {
@@ -222,22 +229,26 @@ const saveInProgress = useRef<boolean>(false);
 #### Assessment: ✅ WELL-DESIGNED
 
 **Debouncing Strategy:**
+
 ```typescript
 // Lines 184-224
-const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
-  if (saveTimeout.current) {
-    clearTimeout(saveTimeout.current); // ✅ Clear previous timeout
-  }
+const updateDraft = useCallback(
+  (packageId: string, update: DraftUpdate) => {
+    if (saveTimeout.current) {
+      clearTimeout(saveTimeout.current); // ✅ Clear previous timeout
+    }
 
-  // ✅ Accumulate changes
-  const existing = pendingChanges.current.get(packageId) || {};
-  pendingChanges.current.set(packageId, { ...existing, ...update });
+    // ✅ Accumulate changes
+    const existing = pendingChanges.current.get(packageId) || {};
+    pendingChanges.current.set(packageId, { ...existing, ...update });
 
-  // ✅ Schedule single flush after 1s
-  saveTimeout.current = setTimeout(() => {
-    flushPendingChanges();
-  }, 1000);
-}, [packages, flushPendingChanges]);
+    // ✅ Schedule single flush after 1s
+    saveTimeout.current = setTimeout(() => {
+      flushPendingChanges();
+    }, 1000);
+  },
+  [packages, flushPendingChanges]
+);
 ```
 
 **Race Condition Prevention Layers:**
@@ -247,6 +258,7 @@ const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
    - Prevents overlapping requests
 
 2. **Atomic Change Capture** ✅
+
    ```typescript
    // Lines 118-121
    const changesToSave = new Map(pendingChanges.current);
@@ -256,6 +268,7 @@ const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
    ```
 
 3. **Sequential Processing** ✅
+
    ```typescript
    // Lines 129-161
    for (const [packageId, mergedUpdate] of changesToSave) {
@@ -287,6 +300,7 @@ const updateDraft = useCallback((packageId: string, update: DraftUpdate) => {
 #### Assessment: ✅ SAFE
 
 **Error Handling Pattern:**
+
 ```typescript
 // Consistent pattern across all functions
 try {
@@ -337,19 +351,20 @@ try {
 #### Assessment: ✅ PROPERLY HANDLED
 
 **Impersonation Flow:**
+
 ```typescript
 // File: client/src/lib/api.ts (lines 138-147)
-if (path.includes("/v1/tenant-admin")) {
-  const isImpersonating = localStorage.getItem("impersonationTenantKey");
+if (path.includes('/v1/tenant-admin')) {
+  const isImpersonating = localStorage.getItem('impersonationTenantKey');
   if (isImpersonating) {
-    const token = localStorage.getItem("adminToken"); // ✅ Admin token with impersonation
+    const token = localStorage.getItem('adminToken'); // ✅ Admin token with impersonation
     if (token) {
-      requestHeaders["Authorization"] = `Bearer ${token}`;
+      requestHeaders['Authorization'] = `Bearer ${token}`;
     }
   } else {
-    const token = tenantToken || localStorage.getItem("tenantToken");
+    const token = tenantToken || localStorage.getItem('tenantToken');
     if (token) {
-      requestHeaders["Authorization"] = `Bearer ${token}`;
+      requestHeaders['Authorization'] = `Bearer ${token}`;
     }
   }
 }
@@ -358,6 +373,7 @@ if (path.includes("/v1/tenant-admin")) {
 **Impersonation Security:**
 
 1. **Backend Validation** ✅
+
    ```typescript
    // File: server/src/middleware/tenant-auth.ts (lines 44-76)
    const adminPayload = identityService.verifyToken(token);
@@ -382,18 +398,18 @@ if (path.includes("/v1/tenant-admin")) {
 
 ## Vulnerability Checklist
 
-| Issue | Status | Notes |
-|-------|--------|-------|
-| Auth bypass from token removal | ✅ SAFE | Centralized auth is more secure |
-| Type assertion data exposure | ✅ SAFE | Defensive pattern, no sensitive data |
-| Multi-tenant data leakage | ✅ SAFE | All backend queries scoped by tenantId |
-| Sensitive data in refs | ✅ SAFE | No secrets, properly cleared on unmount |
-| XSS from error messages | ✅ SAFE | Messages sanitized by Sonner toast library |
-| Race condition exploit | ✅ SAFE | Debouncing prevents overlapping requests |
-| State mutation vulnerability | ✅ SAFE | Mutations controlled through API responses |
-| Impersonation bypass | ✅ SAFE | Backend validates admin token with impersonation flag |
-| Cache key collision | ✅ SAFE | Cache keys include tenantId |
-| Token exposure in logs | ✅ SAFE | Logger doesn't output tokens (verify in production) |
+| Issue                          | Status  | Notes                                                 |
+| ------------------------------ | ------- | ----------------------------------------------------- |
+| Auth bypass from token removal | ✅ SAFE | Centralized auth is more secure                       |
+| Type assertion data exposure   | ✅ SAFE | Defensive pattern, no sensitive data                  |
+| Multi-tenant data leakage      | ✅ SAFE | All backend queries scoped by tenantId                |
+| Sensitive data in refs         | ✅ SAFE | No secrets, properly cleared on unmount               |
+| XSS from error messages        | ✅ SAFE | Messages sanitized by Sonner toast library            |
+| Race condition exploit         | ✅ SAFE | Debouncing prevents overlapping requests              |
+| State mutation vulnerability   | ✅ SAFE | Mutations controlled through API responses            |
+| Impersonation bypass           | ✅ SAFE | Backend validates admin token with impersonation flag |
+| Cache key collision            | ✅ SAFE | Cache keys include tenantId                           |
+| Token exposure in logs         | ✅ SAFE | Logger doesn't output tokens (verify in production)   |
 
 ---
 
@@ -402,15 +418,16 @@ if (path.includes("/v1/tenant-admin")) {
 ### 1. Code Quality (Non-Security)
 
 **Reduce Type Assertions:**
+
 ```typescript
 // Current (lines 92, 137, 252, 293):
-const errorMessage = (body as { error?: string })?.error || "Default";
+const errorMessage = (body as { error?: string })?.error || 'Default';
 
 // Better:
 const errorMessage =
   (typeof body === 'object' && body !== null && 'error' in body
     ? (body as any).error
-    : undefined) || "Default";
+    : undefined) || 'Default';
 
 // Or use type guard function:
 function getErrorMessage(body: unknown): string | undefined {
@@ -424,6 +441,7 @@ function getErrorMessage(body: unknown): string | undefined {
 ### 2. Audit Logging Enhancement
 
 **Add Frontend Logging:**
+
 ```typescript
 // In flushPendingChanges (around line 146)
 logger.info({
@@ -441,6 +459,7 @@ logger.info({
 **Current Issue:** If backend returns unexpected error structure, fallback message is used.
 
 **Improvement:** Document expected error response format in a constant:
+
 ```typescript
 // Add near top of file
 const EXPECTED_ERROR_RESPONSES = {
@@ -456,6 +475,7 @@ const EXPECTED_ERROR_RESPONSES = {
 **Current:** Refs are initialized but unused until first interaction.
 
 **Suggestion:** Add comment explaining why refs (not state):
+
 ```typescript
 // Line 71: Add explanation
 // Using refs instead of state because we intentionally DON'T
@@ -467,6 +487,7 @@ const pendingChanges = useRef<Map<string, DraftUpdate>>(new Map());
 ### 5. Production Logging Verification
 
 **Action Item:** Before deploying to production:
+
 ```bash
 # Verify logger doesn't output tokens
 grep -r "logger.*token\|token.*logger" \
@@ -477,30 +498,32 @@ grep -r "logger.*token\|token.*logger" \
 
 ## Security Best Practices Compliance
 
-| Practice | Status | Evidence |
-|----------|--------|----------|
-| **Centralized Auth** | ✅ YES | API client in `api.ts` |
-| **Token Isolation** | ✅ YES | No direct token manipulation |
-| **Tenant Scoping** | ✅ YES | All backend queries filtered |
-| **XSS Protection** | ✅ YES | Using Sonner toast library |
-| **CSRF Protection** | ✅ YES | Cookies + SameSite (Express middleware) |
-| **Error Handling** | ✅ YES | No sensitive data in messages |
-| **Audit Logging** | ✅ YES | Backend logs all mutations |
-| **Rate Limiting** | ✅ YES | `draftAutosaveLimiter` on all endpoints |
-| **Input Validation** | ✅ YES | Zod schemas on all endpoints |
-| **Dependency Security** | ⚠️ CHECK | See next section |
+| Practice                | Status   | Evidence                                |
+| ----------------------- | -------- | --------------------------------------- |
+| **Centralized Auth**    | ✅ YES   | API client in `api.ts`                  |
+| **Token Isolation**     | ✅ YES   | No direct token manipulation            |
+| **Tenant Scoping**      | ✅ YES   | All backend queries filtered            |
+| **XSS Protection**      | ✅ YES   | Using Sonner toast library              |
+| **CSRF Protection**     | ✅ YES   | Cookies + SameSite (Express middleware) |
+| **Error Handling**      | ✅ YES   | No sensitive data in messages           |
+| **Audit Logging**       | ✅ YES   | Backend logs all mutations              |
+| **Rate Limiting**       | ✅ YES   | `draftAutosaveLimiter` on all endpoints |
+| **Input Validation**    | ✅ YES   | Zod schemas on all endpoints            |
+| **Dependency Security** | ⚠️ CHECK | See next section                        |
 
 ---
 
 ## External Dependency Security
 
 **Libraries Used in Hook:**
+
 - `react` - ✅ Maintained, no known vulnerabilities
 - `sonner` (toast) - ✅ Lightweight, well-maintained
 - `@/lib/api` (internal) - ✅ Centralized auth
 - `@/lib/logger` (internal) - ✅ Custom logging
 
 **Recommendation:** Run `npm audit` regularly:
+
 ```bash
 npm audit --omit=dev
 ```

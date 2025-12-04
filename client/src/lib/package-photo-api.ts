@@ -149,18 +149,15 @@ export const packagePhotoApi = {
     formData.append('photo', file);
 
     try {
-      const response = await fetch(
-        `${baseUrl}/v1/tenant-admin/packages/${packageId}/photos`,
-        {
-          method: 'POST',
-          headers: {
-            // DO NOT set Content-Type header - browser sets it automatically
-            // with correct boundary for multipart/form-data
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
+      const response = await fetch(`${baseUrl}/v1/tenant-admin/packages/${packageId}/photos`, {
+        method: 'POST',
+        headers: {
+          // DO NOT set Content-Type header - browser sets it automatically
+          // with correct boundary for multipart/form-data
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
       if (!response.ok) {
         return handleErrorResponse(response);
@@ -208,7 +205,7 @@ export const packagePhotoApi = {
         {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -250,16 +247,13 @@ export const packagePhotoApi = {
     }
 
     try {
-      const response = await fetch(
-        `${baseUrl}/v1/tenant-admin/packages/${packageId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await fetch(`${baseUrl}/v1/tenant-admin/packages/${packageId}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (!response.ok) {
         return handleErrorResponse(response);
@@ -296,16 +290,13 @@ export const packagePhotoApi = {
     }
 
     try {
-      const response = await fetch(
-        `${baseUrl}/v1/tenant-admin/packages`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await fetch(`${baseUrl}/v1/tenant-admin/packages`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (!response.ok) {
         return handleErrorResponse(response);
@@ -365,7 +356,7 @@ export const photoValidation = {
     }
 
     // Check MIME type - type assertion is safe because we're checking against known MIME types
-    if (!this.ALLOWED_MIME_TYPES.includes(file.type as typeof this.ALLOWED_MIME_TYPES[number])) {
+    if (!this.ALLOWED_MIME_TYPES.includes(file.type as (typeof this.ALLOWED_MIME_TYPES)[number])) {
       return `Invalid file type (${file.type}). Allowed types: JPG, PNG, WebP, SVG.`;
     }
 

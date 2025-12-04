@@ -1,18 +1,11 @@
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Building2,
-  Plus,
-  Loader2,
-  Search,
-  LogIn,
-  Settings
-} from "lucide-react";
-import { api } from "../../../lib/api";
-import { logger } from "../../../lib/logger";
-import { Card } from "../../../components/ui/card";
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Building2, Plus, Loader2, Search, LogIn, Settings } from 'lucide-react';
+import { api } from '../../../lib/api';
+import { logger } from '../../../lib/logger';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
 import {
   Table,
   TableBody,
@@ -20,10 +13,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../../components/ui/table";
-import { Badge, StatusBadge } from "../../../components/ui/badge";
-import { EmptyState } from "../../../components/ui/empty-state";
-import type { TenantDto } from "./types";
+} from '../../../components/ui/table';
+import { Badge, StatusBadge } from '../../../components/ui/badge';
+import { EmptyState } from '../../../components/ui/empty-state';
+import type { TenantDto } from './types';
 
 interface TenantsTableSectionProps {
   tenants: TenantDto[];
@@ -37,7 +30,7 @@ interface TenantsTableSectionProps {
  */
 export function TenantsTableSection({ tenants, isLoading }: TenantsTableSectionProps) {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [impersonatingId, setImpersonatingId] = useState<string | null>(null);
 
   const handleImpersonate = async (tenantId: string) => {
@@ -48,12 +41,15 @@ export function TenantsTableSection({ tenants, isLoading }: TenantsTableSectionP
         // Token is stored by api.adminImpersonate, reload to reinitialize with impersonation context
         window.location.reload();
       } else {
-        logger.error("Impersonation failed", { status: result.status, component: "TenantsTableSection" });
-        alert("Failed to sign in as tenant. Please try again.");
+        logger.error('Impersonation failed', {
+          status: result.status,
+          component: 'TenantsTableSection',
+        });
+        alert('Failed to sign in as tenant. Please try again.');
       }
     } catch (error) {
-      logger.error("Impersonation error", { error, component: "TenantsTableSection" });
-      alert("An error occurred while signing in as tenant.");
+      logger.error('Impersonation error', { error, component: 'TenantsTableSection' });
+      alert('An error occurred while signing in as tenant.');
     } finally {
       setImpersonatingId(null);
     }
@@ -78,7 +74,7 @@ export function TenantsTableSection({ tenants, isLoading }: TenantsTableSectionP
         <h2 className="text-2xl font-semibold text-neutral-900">All Tenants</h2>
         <Button
           className="bg-macon-navy hover:bg-macon-navy-dark"
-          onClick={() => navigate("/admin/tenants/new")}
+          onClick={() => navigate('/admin/tenants/new')}
         >
           <Plus className="w-5 h-5 mr-2" />
           Add Tenant
@@ -135,8 +131,8 @@ export function TenantsTableSection({ tenants, isLoading }: TenantsTableSectionP
                     title="Ready to onboard your first client"
                     description="Add your first tenant to start managing their packages and bookings."
                     action={{
-                      label: "Add Tenant",
-                      onClick: () => navigate("/admin/tenants/new")
+                      label: 'Add Tenant',
+                      onClick: () => navigate('/admin/tenants/new'),
                     }}
                   />
                 )}
@@ -148,12 +144,8 @@ export function TenantsTableSection({ tenants, isLoading }: TenantsTableSectionP
                 key={tenant.id}
                 className="border-neutral-200 hover:bg-macon-navy-50/50 transition-colors duration-150"
               >
-                <TableCell className="font-semibold text-neutral-900">
-                  {tenant.name}
-                </TableCell>
-                <TableCell className="text-neutral-600 font-mono text-sm">
-                  {tenant.slug}
-                </TableCell>
+                <TableCell className="font-semibold text-neutral-900">{tenant.name}</TableCell>
+                <TableCell className="text-neutral-600 font-mono text-sm">{tenant.slug}</TableCell>
                 <TableCell className="text-neutral-600">
                   {tenant.email || <span className="text-neutral-400">Not set</span>}
                 </TableCell>
@@ -169,9 +161,7 @@ export function TenantsTableSection({ tenants, isLoading }: TenantsTableSectionP
                 <TableCell>
                   <div className="flex gap-2">
                     <StatusBadge status={tenant.isActive ? 'active' : 'inactive'} />
-                    {tenant.stripeOnboarded && (
-                      <Badge variant="info">Stripe</Badge>
-                    )}
+                    {tenant.stripeOnboarded && <Badge variant="info">Stripe</Badge>}
                   </div>
                 </TableCell>
                 <TableCell>

@@ -13,6 +13,7 @@ This index provides a comprehensive guide to understanding and preventing email 
 ## Documentation Structure
 
 ### 1. Quick Start (Start Here)
+
 **File:** `PREVENTION-STRATEGIES-QUICK-REFERENCE.md` (This Directory)
 
 - 5-minute overview
@@ -23,6 +24,7 @@ This index provides a comprehensive guide to understanding and preventing email 
 - Best for: Quick understanding before implementation
 
 ### 2. Comprehensive Prevention Strategy
+
 **File:** `security-issues/PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md`
 
 - Detailed explanation of the problem
@@ -35,6 +37,7 @@ This index provides a comprehensive guide to understanding and preventing email 
 - Best for: Developers implementing the fix
 
 ### 3. Complete Summary
+
 **File:** `security-issues/EMAIL-CASE-SENSITIVITY-SUMMARY.md`
 
 - Executive summary
@@ -49,6 +52,7 @@ This index provides a comprehensive guide to understanding and preventing email 
 - Best for: Understanding the full context
 
 ### 4. Original Issue Documentation
+
 **File:** `security-issues/login-invalid-credentials-email-case-sensitivity.md`
 
 - Original problem statement
@@ -64,24 +68,28 @@ This index provides a comprehensive guide to understanding and preventing email 
 ## How to Use This Documentation
 
 ### If You're Implementing a Fix
+
 1. Start with: `PREVENTION-STRATEGIES-QUICK-REFERENCE.md`
 2. Then read: `PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md`
 3. Use as checklist: Code sections for implementation
 4. Run tests: Verify with test cases provided
 
 ### If You're Reviewing Code
+
 1. Start with: `PREVENTION-STRATEGIES-QUICK-REFERENCE.md`
 2. Use: Code Review Checklist in the same file
 3. Reference: `PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md` for details
 4. Verify: Test cases in `server/test/integration/auth-prevention-tests.spec.ts`
 
 ### If You're Understanding the Problem
+
 1. Start with: `EMAIL-CASE-SENSITIVITY-SUMMARY.md`
 2. Deep dive: `PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md`
 3. Check tests: `server/test/integration/auth-prevention-tests.spec.ts`
 4. Review original: `login-invalid-credentials-email-case-sensitivity.md`
 
 ### If You're Teaching Others
+
 1. Explain: Use diagrams in `PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md`
 2. Show examples: Code snippets throughout all documents
 3. Practice: Have them implement the checklist
@@ -91,12 +99,12 @@ This index provides a comprehensive guide to understanding and preventing email 
 
 ## Key Documents
 
-| Document | Purpose | Location | Size | Best For |
-|----------|---------|----------|------|----------|
-| Quick Reference | 5-min overview | `/docs/solutions/` | 3KB | Quick understanding |
+| Document            | Purpose              | Location                           | Size | Best For             |
+| ------------------- | -------------------- | ---------------------------------- | ---- | -------------------- |
+| Quick Reference     | 5-min overview       | `/docs/solutions/`                 | 3KB  | Quick understanding  |
 | Prevention Strategy | Implementation guide | `/docs/solutions/security-issues/` | 21KB | Implementing the fix |
-| Summary | Complete context | `/docs/solutions/security-issues/` | 23KB | Full understanding |
-| Original Issue | Historical context | `/docs/solutions/security-issues/` | 6KB | Lessons learned |
+| Summary             | Complete context     | `/docs/solutions/security-issues/` | 23KB | Full understanding   |
+| Original Issue      | Historical context   | `/docs/solutions/security-issues/` | 6KB  | Lessons learned      |
 
 ---
 
@@ -131,6 +139,7 @@ Result: user@example.com and User@Example.com treated as same email
 ## Key Code Patterns
 
 ### Repository Layer (Most Critical)
+
 ```typescript
 async findByEmail(email: string): Promise<Tenant | null> {
   return await this.prisma.tenant.findUnique({
@@ -140,6 +149,7 @@ async findByEmail(email: string): Promise<Tenant | null> {
 ```
 
 ### Service Layer (Defense-in-Depth)
+
 ```typescript
 async login(email: string, password: string) {
   const tenant = await this.tenantRepo.findByEmail(email.toLowerCase());
@@ -147,6 +157,7 @@ async login(email: string, password: string) {
 ```
 
 ### Route Layer (Input Validation)
+
 ```typescript
 const normalizedEmail = email.toLowerCase().trim();
 ```
@@ -156,15 +167,18 @@ const normalizedEmail = email.toLowerCase().trim();
 ## Test Strategy
 
 ### Repository Tests
+
 - Find by uppercase email
 - Store email in lowercase
 - Prevent duplicates across cases
 
 ### Service Tests
+
 - Authenticate with mixed-case email
 - Handle normalization consistently
 
 ### API Tests
+
 - Prevent duplicate signup with different case
 - Allow login after signup with different case
 - Normalize in password reset flow
@@ -172,6 +186,7 @@ const normalizedEmail = email.toLowerCase().trim();
 **Test File:** `server/test/integration/auth-prevention-tests.spec.ts`
 
 **Run Tests:**
+
 ```bash
 npm test -- auth-prevention-tests.spec.ts
 ```
@@ -218,15 +233,18 @@ Documentation:
 ## Files Modified/Created
 
 ### Code Changes
+
 - `/server/src/adapters/prisma/tenant.repository.ts` - Email normalization
 - `/server/src/services/tenant-auth.service.ts` - Service layer normalization
 - `/server/src/routes/auth.routes.ts` - Route layer normalization
 - `/server/prisma/schema.prisma` - Schema comments
 
 ### Test Files
+
 - `/server/test/integration/auth-prevention-tests.spec.ts` - 40+ regression tests
 
 ### Documentation
+
 - `/docs/solutions/PREVENTION-STRATEGIES-QUICK-REFERENCE.md` - Quick guide
 - `/docs/solutions/security-issues/PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md` - Full strategy
 - `/docs/solutions/security-issues/EMAIL-CASE-SENSITIVITY-SUMMARY.md` - Complete summary
@@ -237,22 +255,26 @@ Documentation:
 ## Best Practices
 
 ### 1. Always Normalize
+
 ```typescript
-email.toLowerCase().trim()
+email.toLowerCase().trim();
 ```
 
 ### 2. Normalize at Multiple Layers
+
 - Route: Input validation
 - Service: Business logic
 - Repository: Database operations
 
 ### 3. Test Case Variations
+
 - lowercase: `user@example.com`
 - UPPERCASE: `USER@EXAMPLE.COM`
 - MixedCase: `User@Example.COM`
 - Whitespace: `  user@example.com  `
 
 ### 4. Document Why
+
 ```typescript
 /**
  * Email must be stored in lowercase.
@@ -261,30 +283,33 @@ email.toLowerCase().trim()
 ```
 
 ### 5. Use Defense-in-Depth
+
 If one layer misses normalization, others catch it.
 
 ---
 
 ## Common Issues & Solutions
 
-| Issue | Solution |
-|-------|----------|
-| Case-sensitive login | Normalize email to lowercase everywhere |
-| Duplicate emails of different case | Check unique constraint + normalization |
-| Tests only test lowercase | Add uppercase and mixed-case tests |
-| Whitespace in email | Use `.trim()` along with `.toLowerCase()` |
-| Inconsistent error messages | Use generic "Invalid credentials" |
+| Issue                              | Solution                                  |
+| ---------------------------------- | ----------------------------------------- |
+| Case-sensitive login               | Normalize email to lowercase everywhere   |
+| Duplicate emails of different case | Check unique constraint + normalization   |
+| Tests only test lowercase          | Add uppercase and mixed-case tests        |
+| Whitespace in email                | Use `.trim()` along with `.toLowerCase()` |
+| Inconsistent error messages        | Use generic "Invalid credentials"         |
 
 ---
 
 ## Testing
 
 ### Run All Tests
+
 ```bash
 npm test -- auth-prevention-tests.spec.ts
 ```
 
 ### Run Specific Category
+
 ```bash
 # Repository layer tests
 npm test -- auth-prevention-tests.spec.ts -t "Repository Layer"
@@ -297,6 +322,7 @@ npm test -- auth-prevention-tests.spec.ts -t "Route Layer"
 ```
 
 ### Expected Results
+
 - ✅ 40+ tests passing
 - ✅ 0 failures
 - ✅ 100% coverage of case-sensitivity scenarios
@@ -342,15 +368,18 @@ If any layer is missed, the next layer catches it.
 ## Related Documentation
 
 ### In This Repository
+
 - **CLAUDE.md** - Project conventions and patterns
 - **ARCHITECTURE.md** - System design and multi-tenant patterns
 - **server/docs/auth-best-practices-checklist.md** - Comprehensive auth checklist
 
 ### In Security Issues
+
 - **missing-input-validation-cross-tenant-exposure.md** - Multi-tenant validation
 - **AUTH-ISSUES-SUMMARY.md** - All 3 authentication issues fixed
 
 ### External References
+
 - OWASP Authentication Cheat Sheet
 - NIST 800-63-3 Password Guidelines
 - RFC 5321 (Email format standard)
@@ -360,12 +389,14 @@ If any layer is missed, the next layer catches it.
 ## Metrics
 
 ### Before Fix
+
 - ❌ Auth tests: Failing on case-sensitive lookups
 - ❌ Users blocked: Unable to login with mixed-case emails
 - ❌ Test coverage: Missing case variation tests
 - ❌ Documentation: No prevention strategy
 
 ### After Fix
+
 - ✅ Auth tests: 40+ passing
 - ✅ Users unblocked: Login works with any case
 - ✅ Test coverage: All variations covered
@@ -376,17 +407,20 @@ If any layer is missed, the next layer catches it.
 ## Quick Links
 
 ### For Developers
+
 1. **Implementing fix:** `PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md`
 2. **Code examples:** Sections in all documents
 3. **Test guide:** `server/test/integration/auth-prevention-tests.spec.ts`
 4. **Checklist:** `PREVENTION-STRATEGIES-QUICK-REFERENCE.md`
 
 ### For Code Reviewers
+
 1. **Review checklist:** `PREVENTION-STRATEGIES-QUICK-REFERENCE.md`
 2. **Full details:** `PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md`
 3. **Test verification:** `server/test/integration/auth-prevention-tests.spec.ts`
 
 ### For Project Managers
+
 1. **Summary:** `EMAIL-CASE-SENSITIVITY-SUMMARY.md`
 2. **Impact:** Sections on "Results" and "Metrics"
 3. **Status:** All issues fixed and tested
@@ -418,17 +452,21 @@ A: Test with uppercase, lowercase, mixed-case, and whitespace. See test file for
 ## Support
 
 ### Finding Issues
+
 Use grep to find normalization in codebase:
+
 ```bash
 grep -r "toLowerCase" server/src --include="*.ts"
 ```
 
 ### Running Tests
+
 ```bash
 npm test -- auth-prevention-tests.spec.ts
 ```
 
 ### Verifying Implementation
+
 ```bash
 # Check repository layer
 grep -A5 "findByEmail" server/src/adapters/prisma/tenant.repository.ts
@@ -450,6 +488,7 @@ grep -A2 "email" server/prisma/schema.prisma
 **Severity:** Critical (Auth Failure) - RESOLVED
 
 All issues have been:
+
 1. ✅ Root cause analyzed
 2. ✅ Fixed with comprehensive solutions
 3. ✅ Tested with extensive test suite

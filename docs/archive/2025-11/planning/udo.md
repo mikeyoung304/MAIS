@@ -11,6 +11,7 @@
 ### 1. EXTERNAL SERVICE SETUP (30 minutes)
 
 #### Email Service (CHOOSE ONE):
+
 ```bash
 # Option A: SendGrid (Recommended - best deliverability)
 Go to: https://sendgrid.com/
@@ -32,6 +33,7 @@ Go to: https://postmarkapp.com/
 ```
 
 #### Error Monitoring:
+
 ```bash
 # Sentry (Required for production)
 Go to: https://sentry.io/
@@ -42,6 +44,7 @@ Go to: https://sentry.io/
 ```
 
 #### Stripe Webhook:
+
 ```bash
 # Configure in Stripe Dashboard
 Go to: https://dashboard.stripe.com/
@@ -60,9 +63,11 @@ Go to: https://dashboard.stripe.com/
 ### 2. LEGAL CONTENT CREATION (2 hours)
 
 #### Terms of Service:
+
 ```markdown
 Create a file: /legal/terms-of-service.md
 Include:
+
 - Service description
 - User responsibilities
 - Payment terms
@@ -76,9 +81,11 @@ Use generator: https://www.termly.io/products/terms-and-conditions-generator/
 ```
 
 #### Privacy Policy:
+
 ```markdown
 Create a file: /legal/privacy-policy.md
 Include:
+
 - What data you collect
 - How you use it
 - Third parties (Stripe, SendGrid)
@@ -91,9 +98,11 @@ Use template: https://www.termly.io/resources/templates/privacy-policy-template/
 ```
 
 #### Refund Policy:
+
 ```markdown
 Create a file: /legal/refund-policy.md
 Decide:
+
 - Full refund period (e.g., 14 days before event)
 - Partial refund period (e.g., 7 days before)
 - No refund period (e.g., 48 hours before)
@@ -105,25 +114,28 @@ Decide:
 ### 3. BUSINESS DECISIONS (1 hour)
 
 #### Pricing Model:
+
 ```yaml
 # Edit: /config/business-rules.yaml (create this)
 commission:
-  percentage: 10  # What % do you take from each booking?
-  minimum: 500    # Minimum commission in cents ($5.00)
+  percentage: 10 # What % do you take from each booking?
+  minimum: 500 # Minimum commission in cents ($5.00)
 
 subscription:
-  enabled: false  # Enable monthly tenant fees?
-  monthly: 9900   # $99/month per tenant?
+  enabled: false # Enable monthly tenant fees?
+  monthly: 9900 # $99/month per tenant?
 
 limits:
-  free_tier_bookings: 10  # Bookings before payment required
+  free_tier_bookings: 10 # Bookings before payment required
   max_photos_per_package: 10
   max_packages_per_tenant: 100
 ```
 
 #### Email Templates Content:
+
 ```markdown
 # Provide content for these scenarios:
+
 1. Booking confirmation subject line
 2. Booking reminder (3 days before)
 3. Cancellation confirmation
@@ -136,6 +148,7 @@ limits:
 ### 4. DNS & DOMAIN SETUP (30 minutes)
 
 #### For Multi-Tenant Subdomains:
+
 ```bash
 # In your DNS provider (Cloudflare/Route53/etc):
 1. Add wildcard CNAME: *.yourdomain.com → your-server.com
@@ -146,6 +159,7 @@ limits:
 ```
 
 #### SSL Certificates:
+
 ```bash
 # If using Vercel/Netlify: Automatic
 # If self-hosting: Use Caddy or Certbot
@@ -157,6 +171,7 @@ sudo certbot certonly --webroot -w /var/www -d *.yourdomain.com
 ### 5. ENVIRONMENT VARIABLES (10 minutes)
 
 Create `.env.production`:
+
 ```bash
 # Copy from .env and update these:
 NODE_ENV=production
@@ -174,6 +189,7 @@ ADMIN_URL=https://admin.yourdomain.com
 ### 6. TEST ACCOUNTS & DATA (20 minutes)
 
 #### Create Test Tenants:
+
 ```sql
 -- Run after automation completes:
 INSERT INTO "Tenant" (name, slug, apiKey, stripeAccountId) VALUES
@@ -183,6 +199,7 @@ INSERT INTO "Tenant" (name, slug, apiKey, stripeAccountId) VALUES
 ```
 
 #### Stripe Test Cards:
+
 ```
 Success: 4242 4242 4242 4242
 Decline: 4000 0000 0000 0002
@@ -194,6 +211,7 @@ Decline: 4000 0000 0000 0002
 ## 🟡 AFTER AUTOMATION: Testing Checklist (1 hour)
 
 ### Critical Path Testing:
+
 - [ ] Book as customer with test card
 - [ ] Receive confirmation email
 - [ ] View booking in customer portal
@@ -204,6 +222,7 @@ Decline: 4000 0000 0000 0002
 - [ ] Branding applies correctly
 
 ### Security Testing:
+
 - [ ] Try accessing Tenant B data as Tenant A
 - [ ] Try SQL injection in forms
 - [ ] Try booking same date twice quickly
@@ -225,12 +244,14 @@ Decline: 4000 0000 0000 0002
 ## ⏱️ TIME BREAKDOWN
 
 **Your Required Time**: 4 hours
+
 - External services: 30 min
 - Legal content: 2 hours
 - Business decisions: 1 hour
 - Testing: 30 min
 
 **Automation Saves You**: ~120 hours (15 working days)
+
 - Database fixes: 16 hours → automated
 - Race condition fixes: 24 hours → automated
 - Feature development: 40 hours → automated
@@ -253,6 +274,7 @@ Decline: 4000 0000 0000 0002
 ## ✅ READY CONFIRMATION
 
 Before I start automation, ensure you have:
+
 - [ ] Chosen email provider (SendGrid/Resend/Postmark)
 - [ ] Decided on commission percentage
 - [ ] Have access to production database

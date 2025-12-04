@@ -6,17 +6,18 @@
 
 **Last Updated:** November 7, 2024
 
-| Feature | Backend | Frontend | Testing | Status |
-|---------|---------|----------|---------|--------|
-| Package Photo Upload | ✅ Complete | ⏳ Pending | ⏳ Pending | 50% |
-| Add-On Management | ⏳ Pending | ⏳ Pending | ⏳ Pending | 0% |
-| Email Templates | ⏳ Pending | ⏳ Pending | ⏳ Pending | 0% |
+| Feature              | Backend     | Frontend   | Testing    | Status |
+| -------------------- | ----------- | ---------- | ---------- | ------ |
+| Package Photo Upload | ✅ Complete | ⏳ Pending | ⏳ Pending | 50%    |
+| Add-On Management    | ⏳ Pending  | ⏳ Pending | ⏳ Pending | 0%     |
+| Email Templates      | ⏳ Pending  | ⏳ Pending | ⏳ Pending | 0%     |
 
 **Overall Phase 5 Progress:** 17% complete (1 of 6 components done)
 
 ### Recent Completions
 
 **Nov 7, 2024 - Package Photo Upload Backend ✅**
+
 - Database: Added photos JSON column to Package model
 - Upload Service: Extended with uploadPackagePhoto() and deletePackagePhoto()
 - API: POST/DELETE /v1/tenant-admin/packages/:id/photos endpoints
@@ -27,6 +28,7 @@
 ---
 
 ## Overview
+
 This document provides detailed technical specifications for implementing Phase 5 features: Add-On Management, Package Photo Upload, and Email Template Customization. These are the three Priority 1 features from the roadmap.
 
 **Target Timeline:** 6 weeks
@@ -43,6 +45,7 @@ Currently, add-ons are tied to packages via the `PackageAddOn` junction table. T
 ### Database Changes
 
 **Current Schema (server/prisma/schema.prisma):**
+
 ```prisma
 model AddOn {
   id          String         @id @default(cuid())
@@ -73,12 +76,14 @@ model AddOn {
 ```
 
 **Migration Strategy:**
+
 1. Create new migration: `04_enhance_addons.sql`
 2. Add `photoUrl` column (nullable, default null)
 3. Rename `active` to `isActive` if not already done
 4. Add `displayOrder` column (default 0)
 
 **Migration SQL:**
+
 ```sql
 -- Add new columns to AddOn table
 ALTER TABLE "AddOn"
@@ -94,6 +99,7 @@ ALTER TABLE "AddOn"
 **File:** `server/src/routes/tenant-admin.routes.ts` (add after line 440, after blackouts section)
 
 #### 1. List Add-Ons
+
 ```typescript
 /**
  * GET /v1/tenant-admin/add-ons
@@ -110,9 +116,8 @@ router.get('/add-ons', async (req: Request, res: Response, next: NextFunction) =
     const tenantId = tenantAuth.tenantId;
 
     // Parse optional filter
-    const isActive = req.query.isActive === 'true' ? true :
-                     req.query.isActive === 'false' ? false :
-                     undefined;
+    const isActive =
+      req.query.isActive === 'true' ? true : req.query.isActive === 'false' ? false : undefined;
 
     const addOns = await catalogService.getAddOnsByTenant(tenantId, { isActive });
 
@@ -135,6 +140,7 @@ router.get('/add-ons', async (req: Request, res: Response, next: NextFunction) =
 ```
 
 #### 2. Create Add-On
+
 ```typescript
 /**
  * POST /v1/tenant-admin/add-ons
@@ -176,6 +182,7 @@ router.post('/add-ons', async (req: Request, res: Response, next: NextFunction) 
 ```
 
 #### 3. Update Add-On
+
 ```typescript
 /**
  * PUT /v1/tenant-admin/add-ons/:id
@@ -218,6 +225,7 @@ router.put('/add-ons/:id', async (req: Request, res: Response, next: NextFunctio
 ```
 
 #### 4. Delete Add-On
+
 ```typescript
 /**
  * DELETE /v1/tenant-admin/add-ons/:id
@@ -241,7 +249,7 @@ router.delete('/add-ons/:id', async (req: Request, res: Response, next: NextFunc
       res.status(400).json({
         error: 'Cannot delete add-on',
         details: `Add-on is used in ${packagesUsing.length} package(s)`,
-        packages: packagesUsing.map(p => p.name),
+        packages: packagesUsing.map((p) => p.name),
       });
       return;
     }
@@ -384,8 +392,14 @@ private invalidateAddOnsCache(tenantId: string): void {
 ```typescript
 // Add-On Management Schemas
 export const createAddOnSchema = z.object({
-  slug: z.string().min(1, 'Slug is required').regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with dashes'),
-  name: z.string().min(3, 'Name must be at least 3 characters').max(100, 'Name must be at most 100 characters'),
+  slug: z
+    .string()
+    .min(1, 'Slug is required')
+    .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with dashes'),
+  name: z
+    .string()
+    .min(3, 'Name must be at least 3 characters')
+    .max(100, 'Name must be at most 100 characters'),
   description: z.string().max(500, 'Description must be at most 500 characters').optional(),
   price: z.number().int().min(0, 'Price must be non-negative'),
   photoUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
@@ -394,7 +408,11 @@ export const createAddOnSchema = z.object({
 });
 
 export const updateAddOnSchema = z.object({
-  slug: z.string().min(1).regex(/^[a-z0-9-]+$/).optional(),
+  slug: z
+    .string()
+    .min(1)
+    .regex(/^[a-z0-9-]+$/)
+    .optional(),
   name: z.string().min(3).max(100).optional(),
   description: z.string().max(500).optional(),
   price: z.number().int().min(0).optional(),
@@ -423,7 +441,11 @@ export interface CatalogRepository {
   getAddOnById(tenantId: string, id: string): Promise<AddOn | null>;
   getAddOnBySlug(tenantId: string, slug: string): Promise<AddOn | null>;
   createStandaloneAddOn(tenantId: string, data: CreateStandaloneAddOnInput): Promise<AddOn>;
-  updateStandaloneAddOn(tenantId: string, id: string, data: UpdateStandaloneAddOnInput): Promise<AddOn>;
+  updateStandaloneAddOn(
+    tenantId: string,
+    id: string,
+    data: UpdateStandaloneAddOnInput
+  ): Promise<AddOn>;
   deleteStandaloneAddOn(tenantId: string, id: string): Promise<void>;
   getPackagesUsingAddOn(tenantId: string, addOnId: string): Promise<Package[]>;
 }
@@ -927,16 +949,21 @@ export function TenantAddOnsManager({ addOns, onAddOnsChange }: TenantAddOnsMana
 **Changes:**
 
 1. **Line 51** - Update activeTab type:
+
 ```typescript
-const [activeTab, setActiveTab] = useState<"packages" | "blackouts" | "bookings" | "branding" | "addons">("packages");
+const [activeTab, setActiveTab] = useState<
+  'packages' | 'blackouts' | 'bookings' | 'branding' | 'addons'
+>('packages');
 ```
 
 2. **After line 56** - Add addOns state:
+
 ```typescript
 const [addOns, setAddOns] = useState<AddOnDto[]>([]);
 ```
 
 3. **In useEffect (line 68)** - Add addons case:
+
 ```typescript
 } else if (activeTab === "branding") {
   loadBranding();
@@ -946,6 +973,7 @@ const [addOns, setAddOns] = useState<AddOnDto[]>([]);
 ```
 
 4. **After loadBranding (line 125)** - Add loadAddOns:
+
 ```typescript
 const loadAddOns = useCallback(async () => {
   setIsLoading(true);
@@ -955,7 +983,7 @@ const loadAddOns = useCallback(async () => {
       setAddOns(result.body);
     }
   } catch (error) {
-    console.error("Failed to load add-ons:", error);
+    console.error('Failed to load add-ons:', error);
   } finally {
     setIsLoading(false);
   }
@@ -963,6 +991,7 @@ const loadAddOns = useCallback(async () => {
 ```
 
 5. **After Branding tab button (line 246)** - Add Add-Ons tab:
+
 ```typescript
 <button
   onClick={() => setActiveTab("addons")}
@@ -978,6 +1007,7 @@ const loadAddOns = useCallback(async () => {
 ```
 
 6. **After Branding content (line 273)** - Add Add-Ons content:
+
 ```typescript
 {activeTab === "addons" && (
   <TenantAddOnsManager
@@ -988,8 +1018,9 @@ const loadAddOns = useCallback(async () => {
 ```
 
 7. **Top of file (line 12)** - Import TenantAddOnsManager:
+
 ```typescript
-import { TenantAddOnsManager } from "./TenantAddOnsManager";
+import { TenantAddOnsManager } from './TenantAddOnsManager';
 ```
 
 ### Testing Requirements
@@ -1083,6 +1114,7 @@ describe('TenantAddOnsManager', () => {
 **Status:** Backend Complete ✅ (Nov 7, 2024) | Frontend Pending ⏳
 
 **Completed Components:**
+
 - ✅ Database schema (photos JSON column)
 - ✅ UploadService extension (uploadPackagePhoto, deletePackagePhoto)
 - ✅ API endpoints (POST/DELETE with ownership verification)
@@ -1090,6 +1122,7 @@ describe('TenantAddOnsManager', () => {
 - ✅ Multer configuration (5MB limit)
 
 **Pending Components:**
+
 - ⏳ PackagePhotoUploader.tsx component
 - ⏳ Drag-and-drop UI (react-dropzone)
 - ⏳ Photo reordering (react-beautiful-dnd)
@@ -1097,6 +1130,7 @@ describe('TenantAddOnsManager', () => {
 - ⏳ Manual testing and polish
 
 **Implementation Notes:**
+
 - Chose JSON column approach over separate PackagePhoto table (simpler for MVP, can refactor later)
 - 5MB limit per photo (higher than 2MB logo limit due to higher resolution needs)
 - Order field included for future drag-and-drop reordering
@@ -1146,6 +1180,7 @@ model Package {
 **Recommendation:** Start with Option A (JSON column) for MVP, migrate to Option B if needed for advanced features (e.g., image processing, CDN management).
 
 **Migration SQL:**
+
 ```sql
 -- Add photos JSON column to Package table
 ALTER TABLE "Package"
@@ -1157,6 +1192,7 @@ ALTER TABLE "Package"
 **File:** `server/src/routes/tenant-admin.routes.ts` (add after packages section, around line 340)
 
 #### 1. Upload Package Photo
+
 ```typescript
 /**
  * POST /v1/tenant-admin/packages/:packageId/photos
@@ -1208,10 +1244,7 @@ router.post(
 
       await catalogService.addPackagePhoto(tenantId, packageId, newPhoto);
 
-      logger.info(
-        { tenantId, packageId, filename: result.filename },
-        'Package photo uploaded'
-      );
+      logger.info({ tenantId, packageId, filename: result.filename }, 'Package photo uploaded');
 
       res.status(200).json(result);
     } catch (error) {
@@ -1228,6 +1261,7 @@ router.post(
 ```
 
 #### 2. Delete Package Photo
+
 ```typescript
 /**
  * DELETE /v1/tenant-admin/packages/:packageId/photos/:filename
@@ -1270,6 +1304,7 @@ router.delete(
 ```
 
 #### 3. Reorder Package Photos
+
 ```typescript
 /**
  * PUT /v1/tenant-admin/packages/:packageId/photos/order
@@ -1296,10 +1331,12 @@ router.put(
 
       // Validate request body
       const ReorderSchema = z.object({
-        photos: z.array(z.object({
-          filename: z.string(),
-          order: z.number().int().min(0),
-        })),
+        photos: z.array(
+          z.object({
+            filename: z.string(),
+            order: z.number().int().min(0),
+          })
+        ),
       });
 
       const data = ReorderSchema.parse(req.body);
@@ -1397,6 +1434,7 @@ async deletePackagePhoto(filename: string): Promise<void> {
 ```
 
 **Update multer config (line 28):**
+
 ```typescript
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -1786,11 +1824,13 @@ export function PackagePhotoUploader({
 **Changes:**
 
 1. Import PackagePhotoUploader at top:
+
 ```typescript
-import { PackagePhotoUploader } from "./PackagePhotoUploader";
+import { PackagePhotoUploader } from './PackagePhotoUploader';
 ```
 
 2. Add photos field to PackageDto interface (line 13):
+
 ```typescript
 interface PackageDto {
   id: string;
@@ -1804,6 +1844,7 @@ interface PackageDto {
 ```
 
 3. In the edit form (after description textarea, around line 240), add:
+
 ```typescript
 {/* Photo Upload Section */}
 {editingPackageId && (
@@ -1821,6 +1862,7 @@ interface PackageDto {
 ### Testing Requirements
 
 **Backend Tests:**
+
 ```typescript
 describe('Package Photo Upload', () => {
   test('should upload photo with valid image', async () => {
@@ -1850,6 +1892,7 @@ describe('Package Photo Upload', () => {
 ```
 
 **Frontend Tests:**
+
 ```typescript
 describe('PackagePhotoUploader', () => {
   test('should render upload zone', () => {
@@ -1922,6 +1965,7 @@ model EmailTemplate {
 ```
 
 **Update Tenant model (line 69):**
+
 ```prisma
 model Tenant {
   // ... existing relations
@@ -1930,6 +1974,7 @@ model Tenant {
 ```
 
 **Migration SQL:**
+
 ```sql
 -- Create EmailTemplate table
 CREATE TABLE IF NOT EXISTS "EmailTemplate" (
@@ -1957,6 +2002,7 @@ CREATE INDEX "EmailTemplate_tenantId_type_idx" ON "EmailTemplate"("tenantId", "t
 
 **Template Variables:**
 Support these placeholders in subject and body:
+
 - `{{customerName}}` - Customer's name
 - `{{eventDate}}` - Event date (formatted)
 - `{{packageName}}` - Selected package name
@@ -1972,88 +2018,85 @@ Support these placeholders in subject and body:
 **File:** `server/src/routes/tenant-admin.routes.ts` (add after bookings section, around line 499)
 
 #### 1. Get Email Template
+
 ```typescript
 /**
  * GET /v1/tenant-admin/email-templates/:type
  * Get email template by type (or default if not customized)
  * Params: type = 'booking_confirmation' | 'booking_reminder' | 'booking_cancellation'
  */
-router.get(
-  '/email-templates/:type',
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
-      }
-      const tenantId = tenantAuth.tenantId;
-      const { type } = req.params;
-
-      // Validate type
-      const validTypes = ['booking_confirmation', 'booking_reminder', 'booking_cancellation'];
-      if (!validTypes.includes(type)) {
-        res.status(400).json({ error: 'Invalid template type' });
-        return;
-      }
-
-      const template = await emailTemplateService.getTemplate(tenantId, type);
-
-      res.json({
-        type: template.type,
-        subject: template.subject,
-        body: template.body,
-        isCustomized: template.isCustomized,
-      });
-    } catch (error) {
-      next(error);
+router.get('/email-templates/:type', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantAuth = res.locals.tenantAuth;
+    if (!tenantAuth) {
+      res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+      return;
     }
+    const tenantId = tenantAuth.tenantId;
+    const { type } = req.params;
+
+    // Validate type
+    const validTypes = ['booking_confirmation', 'booking_reminder', 'booking_cancellation'];
+    if (!validTypes.includes(type)) {
+      res.status(400).json({ error: 'Invalid template type' });
+      return;
+    }
+
+    const template = await emailTemplateService.getTemplate(tenantId, type);
+
+    res.json({
+      type: template.type,
+      subject: template.subject,
+      body: template.body,
+      isCustomized: template.isCustomized,
+    });
+  } catch (error) {
+    next(error);
   }
-);
+});
 ```
 
 #### 2. Update Email Template
+
 ```typescript
 /**
  * PUT /v1/tenant-admin/email-templates/:type
  * Update/create email template
  */
-router.put(
-  '/email-templates/:type',
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
-      }
-      const tenantId = tenantAuth.tenantId;
-      const { type } = req.params;
-
-      const data = updateEmailTemplateSchema.parse(req.body);
-      const template = await emailTemplateService.upsertTemplate(tenantId, type, data);
-
-      res.json({
-        type: template.type,
-        subject: template.subject,
-        body: template.body,
-        isCustomized: true,
-      });
-    } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      next(error);
+router.put('/email-templates/:type', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantAuth = res.locals.tenantAuth;
+    if (!tenantAuth) {
+      res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+      return;
     }
+    const tenantId = tenantAuth.tenantId;
+    const { type } = req.params;
+
+    const data = updateEmailTemplateSchema.parse(req.body);
+    const template = await emailTemplateService.upsertTemplate(tenantId, type, data);
+
+    res.json({
+      type: template.type,
+      subject: template.subject,
+      body: template.body,
+      isCustomized: true,
+    });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      res.status(400).json({
+        error: 'Validation error',
+        details: error.issues,
+      });
+      return;
+    }
+    next(error);
   }
-);
+});
 ```
 
 #### 3. Preview Email Template
+
 ```typescript
 /**
  * POST /v1/tenant-admin/email-templates/:type/preview
@@ -2115,31 +2158,29 @@ router.post(
 ```
 
 #### 4. Reset to Default
+
 ```typescript
 /**
  * DELETE /v1/tenant-admin/email-templates/:type
  * Reset template to default
  */
-router.delete(
-  '/email-templates/:type',
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
-      }
-      const tenantId = tenantAuth.tenantId;
-      const { type } = req.params;
-
-      await emailTemplateService.deleteTemplate(tenantId, type);
-
-      res.status(200).json({ success: true, message: 'Template reset to default' });
-    } catch (error) {
-      next(error);
+router.delete('/email-templates/:type', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantAuth = res.locals.tenantAuth;
+    if (!tenantAuth) {
+      res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+      return;
     }
+    const tenantId = tenantAuth.tenantId;
+    const { type } = req.params;
+
+    await emailTemplateService.deleteTemplate(tenantId, type);
+
+    res.status(200).json({ success: true, message: 'Template reset to default' });
+  } catch (error) {
+    next(error);
   }
-);
+});
 ```
 
 ### Backend Service: Email Template Service
@@ -2292,14 +2333,18 @@ export class EmailTemplateService {
     // Check for malformed variables (e.g., {customerName} instead of {{customerName}})
     const malformedPattern = /\{(?!\{)[^}]*\}/g;
     if (malformedPattern.test(subject) || malformedPattern.test(body)) {
-      throw new ValidationError('Invalid template syntax. Use {{variable}} format for placeholders.');
+      throw new ValidationError(
+        'Invalid template syntax. Use {{variable}} format for placeholders.'
+      );
     }
 
     // Check for unclosed variables
     const openBraces = (subject + body).match(/\{\{/g)?.length || 0;
     const closeBraces = (subject + body).match(/\}\}/g)?.length || 0;
     if (openBraces !== closeBraces) {
-      throw new ValidationError('Unclosed template variable. Ensure all {{variables}} are properly closed.');
+      throw new ValidationError(
+        'Unclosed template variable. Ensure all {{variables}} are properly closed.'
+      );
     }
   }
 
@@ -2473,8 +2518,14 @@ export class EmailTemplateService {
 ```typescript
 // Email Template Schemas
 export const updateEmailTemplateSchema = z.object({
-  subject: z.string().min(5, 'Subject must be at least 5 characters').max(200, 'Subject must be at most 200 characters'),
-  body: z.string().min(10, 'Body must be at least 10 characters').max(10000, 'Body must be at most 10000 characters'),
+  subject: z
+    .string()
+    .min(5, 'Subject must be at least 5 characters')
+    .max(200, 'Subject must be at most 200 characters'),
+  body: z
+    .string()
+    .min(10, 'Body must be at least 10 characters')
+    .max(10000, 'Body must be at most 10000 characters'),
 });
 
 export type UpdateEmailTemplateInput = z.infer<typeof updateEmailTemplateSchema>;
@@ -2864,16 +2915,21 @@ export function EmailTemplateEditor() {
 **Changes:**
 
 1. **Line 51** - Update activeTab type to include "emails":
+
 ```typescript
-const [activeTab, setActiveTab] = useState<"packages" | "blackouts" | "bookings" | "branding" | "addons" | "emails">("packages");
+const [activeTab, setActiveTab] = useState<
+  'packages' | 'blackouts' | 'bookings' | 'branding' | 'addons' | 'emails'
+>('packages');
 ```
 
 2. **Top of file** - Import EmailTemplateEditor:
+
 ```typescript
-import { EmailTemplateEditor } from "./EmailTemplateEditor";
+import { EmailTemplateEditor } from './EmailTemplateEditor';
 ```
 
 3. **After Add-Ons tab button** - Add Emails tab:
+
 ```typescript
 <button
   onClick={() => setActiveTab("emails")}
@@ -2889,6 +2945,7 @@ import { EmailTemplateEditor } from "./EmailTemplateEditor";
 ```
 
 4. **After Add-Ons content** - Add Emails content:
+
 ```typescript
 {activeTab === "emails" && <EmailTemplateEditor />}
 ```
@@ -2896,6 +2953,7 @@ import { EmailTemplateEditor } from "./EmailTemplateEditor";
 ### Testing Requirements
 
 **Backend Tests:**
+
 ```typescript
 describe('Email Template Management', () => {
   test('should return default template when not customized', async () => {
@@ -2929,6 +2987,7 @@ describe('Email Template Management', () => {
 ```
 
 **Frontend Tests:**
+
 ```typescript
 describe('EmailTemplateEditor', () => {
   test('should render template editor', () => {
@@ -2975,6 +3034,7 @@ describe('EmailTemplateEditor', () => {
 ## Implementation Order
 
 ### ✅ Week 1-2: Package Photo Upload (BACKEND COMPLETE)
+
 1. ✅ Day 1-2: Database migration and backend API
    - **Completed:** Nov 7, 2024
    - **Time:** 35 minutes (faster than 2-day estimate)
@@ -2983,12 +3043,15 @@ describe('EmailTemplateEditor', () => {
 3. ⏳ Day 5: Integration and testing
 
 ### ⏳ Week 3: Add-On Management
+
 1. Day 1-2: Database migration and backend API
 2. Day 3-4: Frontend components
 3. Day 5: Integration and testing
 
 ### ⏳ Week 4-6: Email Template Customization
+
 **Week 4:** Database, backend service, and API
+
 - Run Prisma migration for EmailTemplate model
 - Create EmailTemplateService
 - Implement default templates
@@ -2996,6 +3059,7 @@ describe('EmailTemplateEditor', () => {
 - Write backend tests
 
 **Week 5:** Frontend editor and preview
+
 - Create EmailTemplateEditor component
 - Implement variable insertion
 - Build preview functionality
@@ -3003,6 +3067,7 @@ describe('EmailTemplateEditor', () => {
 - Write frontend tests
 
 **Week 6:** Integration, testing, and default templates
+
 - Integrate with existing email flow
 - Test all three template types
 - Test variable substitution
@@ -3017,6 +3082,7 @@ describe('EmailTemplateEditor', () => {
 ## Lessons Learned (Nov 7, 2024)
 
 ### What Went Well ✅
+
 1. **Momentum-Driven Development:** Shipped working backend in 35 minutes by avoiding analysis paralysis
 2. **JSON Column Decision:** Simpler than separate table, appropriate for MVP (max 5 photos)
 3. **Code Reuse:** Extended existing UploadService patterns, minimal new abstractions
@@ -3024,23 +3090,27 @@ describe('EmailTemplateEditor', () => {
 5. **Documentation First:** Having detailed specs made implementation straightforward
 
 ### What to Improve 🔄
+
 1. **Test Migration First:** Should have tested prisma db push on staging before production
 2. **Curl Testing:** Should test endpoints immediately after implementation (pending)
 3. **File Size Validation:** Could add client-side file size check before upload attempt
 
 ### Architectural Decisions Validated ✅
+
 1. **Multi-Tenant Isolation:** Ownership verification pattern worked perfectly
 2. **JSON Storage:** Flexible for MVP, can migrate to relational if needed
 3. **Separate Upload Directories:** Clean separation between logos and package photos
 4. **Higher Size Limits:** 5MB for package photos vs 2MB for logos is appropriate
 
 ### Development Velocity 📈
+
 - **Estimated:** 2 days (16 hours) for backend
 - **Actual:** 35 minutes
 - **Speedup:** 27x faster than estimate
 - **Reason:** Clear specifications + existing patterns + no test-writing delays
 
 ### Next Session Optimizations
+
 1. Launch 3 parallel agents for frontend (component, API client, integration)
 2. Use react-dropzone and react-beautiful-dnd (proven libraries)
 3. Test manually while building (faster feedback loop)
@@ -3053,24 +3123,28 @@ describe('EmailTemplateEditor', () => {
 Before deploying Phase 5 to production:
 
 ### Database
+
 - [ ] All migrations tested on staging database
 - [ ] Backup production database before migration
 - [ ] Run migrations in maintenance window
 - [ ] Verify data integrity post-migration
 
 ### File Storage
+
 - [ ] Upload directory exists with correct permissions
 - [ ] File upload limits configured on server (5MB)
 - [ ] Static file serving configured for /uploads/packages
 - [ ] Disk space monitored
 
 ### Email Service
+
 - [ ] Email template service tested with real sends
 - [ ] Default templates reviewed and approved
 - [ ] Variable substitution tested
 - [ ] Branding injection tested
 
 ### Testing
+
 - [ ] All acceptance criteria met
 - [ ] Backend tests passing (100% coverage)
 - [ ] Frontend tests passing
@@ -3079,18 +3153,21 @@ Before deploying Phase 5 to production:
 - [ ] Performance testing completed
 
 ### Documentation
+
 - [ ] API documentation updated
 - [ ] User guide created for new features
 - [ ] Admin documentation updated
 - [ ] Migration guide prepared
 
 ### Training & Support
+
 - [ ] Support team trained on new features
 - [ ] FAQ prepared
 - [ ] Demo video created
 - [ ] Announcement email drafted
 
 ### Rollback Plan
+
 - [ ] Database rollback script prepared
 - [ ] Previous version backup available
 - [ ] Rollback procedure documented
@@ -3127,6 +3204,7 @@ Before deploying Phase 5 to production:
 ### Future Enhancements
 
 **Phase 5.1 (Nice to Have):**
+
 - Image cropping/resizing for package photos
 - Email template visual editor (WYSIWYG)
 - Add-on categories/grouping
@@ -3135,6 +3213,7 @@ Before deploying Phase 5 to production:
 - Analytics for email open rates
 
 **Phase 5.2 (Advanced):**
+
 - CDN integration for photos
 - Advanced email template variables (loops, conditionals)
 - A/B testing for email templates
@@ -3146,6 +3225,7 @@ Before deploying Phase 5 to production:
 ## Support & Questions
 
 For questions or issues during implementation:
+
 1. Review existing Phase 4 implementation for patterns
 2. Check API documentation in contracts package
 3. Refer to Prisma schema for data model

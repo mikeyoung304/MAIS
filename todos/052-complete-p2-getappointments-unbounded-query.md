@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "052"
+issue_id: '052'
 tags: [code-review, scheduling, performance, memory]
 dependencies: []
 ---
@@ -40,16 +40,17 @@ async getAppointments(tenantId: string, filters?: GetAppointmentsFilters): Promi
 
 ### Scaling Impact
 
-| Bookings | Memory | Filter Time | Risk |
-|----------|--------|-------------|------|
-| 100 | ~1MB | <1ms | ✓ |
-| 1,000 | ~10MB | 5ms | ✓ |
-| 10,000 | ~100MB | 50ms | ⚠️ |
-| 100,000 | ~1GB | 500ms+ | ❌ crash |
+| Bookings | Memory | Filter Time | Risk     |
+| -------- | ------ | ----------- | -------- |
+| 100      | ~1MB   | <1ms        | ✓        |
+| 1,000    | ~10MB  | 5ms         | ✓        |
+| 10,000   | ~100MB | 50ms        | ⚠️       |
+| 100,000  | ~1GB   | 500ms+      | ❌ crash |
 
 ## Proposed Solutions
 
 ### Option A: Filter at Database Level (Recommended)
+
 **Effort:** Medium | **Risk:** Low
 
 ```typescript
@@ -73,6 +74,7 @@ async getAppointments(
 ```
 
 ### Option B: Add Pagination
+
 **Effort:** Medium | **Risk:** Low
 
 ```typescript
@@ -91,6 +93,7 @@ Implement **Option A** with pagination support.
 ## Technical Details
 
 **Files to Update:**
+
 - `server/src/services/booking.service.ts:666-704`
 - `server/src/lib/ports.ts` - Add findMany with filters to interface
 - `server/src/adapters/prisma/booking.repository.ts` - Implement filtered query
@@ -104,6 +107,6 @@ Implement **Option A** with pagination support.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                  |
+| ---------- | ------- | -------------------------------------- |
 | 2025-11-27 | Created | Found during Performance Oracle review |

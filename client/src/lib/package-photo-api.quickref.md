@@ -12,24 +12,28 @@ import { usePackagePhotos } from '@/hooks/usePackagePhotos';
 ## API Functions
 
 ### Upload Photo
+
 ```typescript
 const photo = await packagePhotoApi.uploadPhoto(packageId, file);
 // Returns: { url, filename, size, order }
 ```
 
 ### Delete Photo
+
 ```typescript
 await packagePhotoApi.deletePhoto(packageId, filename);
 // Returns: void (204 No Content)
 ```
 
 ### Get Package with Photos
+
 ```typescript
 const pkg = await packagePhotoApi.getPackageWithPhotos(packageId);
 // Returns: { id, slug, title, ..., photos: [...] }
 ```
 
 ### Get All Packages
+
 ```typescript
 const packages = await packagePhotoApi.getAllPackages();
 // Returns: PackageWithPhotos[]
@@ -40,6 +44,7 @@ const packages = await packagePhotoApi.getAllPackages();
 ## Validation
 
 ### Validate File
+
 ```typescript
 const error = photoValidation.validateFile(file);
 if (error) {
@@ -49,6 +54,7 @@ if (error) {
 ```
 
 ### Validate Photo Count
+
 ```typescript
 const error = photoValidation.validatePhotoCount(currentCount);
 if (error) {
@@ -58,10 +64,11 @@ if (error) {
 ```
 
 ### Constants
+
 ```typescript
-photoValidation.MAX_FILE_SIZE           // 5 * 1024 * 1024
-photoValidation.MAX_PHOTOS_PER_PACKAGE  // 5
-photoValidation.ALLOWED_MIME_TYPES      // ['image/jpeg', 'image/png', ...]
+photoValidation.MAX_FILE_SIZE; // 5 * 1024 * 1024
+photoValidation.MAX_PHOTOS_PER_PACKAGE; // 5
+photoValidation.ALLOWED_MIME_TYPES; // ['image/jpeg', 'image/png', ...]
 ```
 
 ---
@@ -69,19 +76,21 @@ photoValidation.ALLOWED_MIME_TYPES      // ['image/jpeg', 'image/png', ...]
 ## React Hook
 
 ### Basic Usage
+
 ```typescript
 const {
-  photos,      // PackagePhoto[]
-  loading,     // boolean
-  error,       // Error | null
+  photos, // PackagePhoto[]
+  loading, // boolean
+  error, // Error | null
   uploadPhoto, // (file: File) => Promise<PackagePhoto | null>
   deletePhoto, // (filename: string) => Promise<boolean>
-  uploading,   // boolean
-  deleting,    // string | null (filename being deleted)
+  uploading, // boolean
+  deleting, // string | null (filename being deleted)
 } = usePackagePhotos(packageId);
 ```
 
 ### Upload Example
+
 ```typescript
 const handleUpload = async (file: File) => {
   const photo = await uploadPhoto(file);
@@ -94,6 +103,7 @@ const handleUpload = async (file: File) => {
 ```
 
 ### Delete Example
+
 ```typescript
 const handleDelete = async (filename: string) => {
   const success = await deletePhoto(filename);
@@ -108,6 +118,7 @@ const handleDelete = async (filename: string) => {
 ## Error Handling
 
 ### Try-Catch Pattern
+
 ```typescript
 try {
   const photo = await packagePhotoApi.uploadPhoto(packageId, file);
@@ -119,13 +130,14 @@ try {
       case 403: // Show permission error
       case 413: // Show file size error
       case 404: // Show not found error
-      default:  // Show generic error
+      default: // Show generic error
     }
   }
 }
 ```
 
 ### Error Messages
+
 - **401:** "Authentication required. Please log in again."
 - **403:** "You don't have permission to perform this action."
 - **404:** "Package not found."
@@ -171,16 +183,18 @@ function PhotoManager({ packageId }: { packageId: string }) {
 ## FormData Details
 
 ### Critical: Field Name Must Be 'photo'
+
 ```typescript
 const formData = new FormData();
-formData.append('photo', file);  // ← MUST be 'photo'
+formData.append('photo', file); // ← MUST be 'photo'
 ```
 
 ### Critical: Don't Set Content-Type
+
 ```typescript
 fetch(url, {
   headers: {
-    'Authorization': `Bearer ${token}`,
+    Authorization: `Bearer ${token}`,
     // NO Content-Type header!
   },
   body: formData,
@@ -257,31 +271,37 @@ console.log(photo);
 ## Common Pitfalls
 
 ❌ **Wrong field name**
+
 ```typescript
 formData.append('file', file); // WRONG!
 ```
 
 ✅ **Correct field name**
+
 ```typescript
 formData.append('photo', file); // CORRECT!
 ```
 
 ❌ **Setting Content-Type**
+
 ```typescript
 headers: { 'Content-Type': 'multipart/form-data' } // WRONG!
 ```
 
 ✅ **Let browser set it**
+
 ```typescript
 headers: { 'Authorization': `Bearer ${token}` } // CORRECT!
 ```
 
 ❌ **Not validating first**
+
 ```typescript
 await uploadPhoto(file); // No validation
 ```
 
 ✅ **Validate before upload**
+
 ```typescript
 const error = photoValidation.validateFile(file);
 if (error) return;

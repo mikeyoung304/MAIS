@@ -4,13 +4,13 @@
 
 ## Quick Reference Table
 
-| Feature | Recommended Approach | Key Libraries | Complexity | Timeline |
-|---------|---------------------|--------|-----------|----------|
-| **Secure Tokens** | JWT + Single-use HMAC hashes | `crypto`, `jsonwebtoken`, `bcryptjs` | Low | Phase 1 |
-| **Reminders** | Bull queue + Luxon timezone | `bull`, `ioredis`, `luxon` | Medium | Phase 2 |
-| **Deposits** | Stripe Payment Intent API | `stripe` | Medium | Phase 2 |
-| **Refunds** | Async processing + Stripe webhooks | `stripe`, `bull` | High | Phase 3 |
-| **Invoices** | Puppeteer + Handlebars | `puppeteer`, `handlebars` | Medium | Phase 1 |
+| Feature           | Recommended Approach               | Key Libraries                        | Complexity | Timeline |
+| ----------------- | ---------------------------------- | ------------------------------------ | ---------- | -------- |
+| **Secure Tokens** | JWT + Single-use HMAC hashes       | `crypto`, `jsonwebtoken`, `bcryptjs` | Low        | Phase 1  |
+| **Reminders**     | Bull queue + Luxon timezone        | `bull`, `ioredis`, `luxon`           | Medium     | Phase 2  |
+| **Deposits**      | Stripe Payment Intent API          | `stripe`                             | Medium     | Phase 2  |
+| **Refunds**       | Async processing + Stripe webhooks | `stripe`, `bull`                     | High       | Phase 3  |
+| **Invoices**      | Puppeteer + Handlebars             | `puppeteer`, `handlebars`            | Medium     | Phase 1  |
 
 ---
 
@@ -19,6 +19,7 @@
 ### 1. Secure Token Systems
 
 **Current State in MAIS:** Partially implemented
+
 - ✅ JWT for tenant authentication (7-day expiration)
 - ✅ Password reset tokens with SHA-256 hashing
 - ✅ Rate limiting on auth endpoints
@@ -26,6 +27,7 @@
 - ❌ One-time setup links
 
 **Recommended Approach:**
+
 - **Stateless**: JWT for session authentication
 - **Stateful**: Single-use HMAC tokens for sensitive actions
   - Password reset: Store SHA-256 hash in DB
@@ -33,6 +35,7 @@
   - One-time use: Mark `usedAt` on verification
 
 **Key Implementation Patterns:**
+
 ```
 Token Generation:
   1. Generate: crypto.randomBytes(32).toString('hex')
@@ -49,6 +52,7 @@ Token Verification:
 ```
 
 **Best Practices:**
+
 - Never log tokens in error messages
 - Always include `tenantId` in validation (multi-tenant isolation)
 - Enforce single-use for sensitive operations
@@ -56,6 +60,7 @@ Token Verification:
 - Set reasonable expiration times (1 hour for password, 7 days for bookings)
 
 **Libraries:**
+
 - `crypto` (Node.js builtin) - HMAC & random generation
 - `jsonwebtoken` - JWT signing (already used in MAIS)
 - `bcryptjs` - Password hashing (already used in MAIS)
@@ -67,6 +72,7 @@ Token Verification:
 **Current State in MAIS:** Not implemented
 
 **The Challenge:**
+
 - Reminders must run at specific times (timezone-aware)
 - Must survive server restarts
 - Must retry on failure
@@ -75,12 +81,14 @@ Token Verification:
 **Recommended Approach: Bull Queue + Redis**
 
 Why Bull over alternatives:
+
 - **vs node-cron**: Node-cron loses jobs on restart (not production-ready)
 - **vs Agenda**: Heavier, designed for MongoDB (MAIS uses PostgreSQL)
 - **vs AWS EventBridge**: Vendor lock-in, higher cost
 - **✅ Bull**: Redis-backed, distributed, fault-tolerant, built for Node.js
 
 **Key Implementation Patterns:**
+
 ```
 Scheduling Flow:
   1. User books appointment → onPaymentCompleted()
@@ -101,15 +109,18 @@ Timezone Handling with Luxon:
 ```
 
 **Infrastructure Required:**
+
 - Redis (7 recommended): `docker run -d redis:7-alpine`
 - Connection pooling for production (ioredis handles this)
 
 **Key Libraries:**
+
 - `bull` (4.13+) - Job queue
 - `ioredis` (5.3+) - Redis client (dependency of Bull)
 - `luxon` (3.4+) - Timezone handling
 
 **Failure Recovery:**
+
 - Run nightly cleanup job: Delete expired reminders
 - Bull automatically retries with exponential backoff
 - Monitor queue health: `queue.on('failed', ...)` listener
@@ -122,6 +133,7 @@ Timezone Handling with Luxon:
 **Current State in MAIS:** Not implemented (uses full-payment Checkout Sessions)
 
 **The Challenge:**
+
 - Customers pay 50% upfront, 50% before event
 - Must support flexible payment scheduling
 - Must track payment stages and balances
@@ -130,10 +142,12 @@ Timezone Handling with Luxon:
 **Recommended Approach: Stripe Payment Intent API**
 
 Why Payment Intent vs Checkout Session:
+
 - **Checkout Session**: Full payment only, redirect-based
 - **Payment Intent**: Flexible amounts, split payments, more control
 
 **Key Implementation Patterns:**
+
 ```
 Deposit Flow:
   1. User initiates booking
@@ -158,10 +172,12 @@ Refunds:
 ```
 
 **Schema Additions:**
+
 - `BookingPaymentStage`: Track each payment phase
 - `Payment` model: Enhanced with `paymentType` (DEPOSIT, REMAINDER, FULL)
 
 **Key Libraries:**
+
 - `stripe` (15.0+) - Payment processing (already used in MAIS)
 - `stripe-js` - Browser-side Stripe.js for client
 
@@ -172,6 +188,7 @@ Refunds:
 **Current State in MAIS:** Basic refund endpoint exists, needs async processing
 
 **The Challenge:**
+
 - Refunds are async (Stripe processes them)
 - Network failures must be retried
 - Stripe webhooks are source of truth
@@ -181,6 +198,7 @@ Refunds:
 **Recommended Approach: Database-First, Async Processing**
 
 **Critical Pattern:**
+
 ```
 Never do this:
   1. Call Stripe immediately
@@ -196,6 +214,7 @@ Always do this:
 ```
 
 **Key Implementation Patterns:**
+
 ```
 Create Refund Flow:
   1. Check for existing refund (idempotency)
@@ -219,6 +238,7 @@ Webhook Handler:
 ```
 
 **Idempotency Key Pattern:**
+
 ```
 Generate: hash(tenantId + bookingId + reason)
 Store: In RefundRequest table
@@ -227,10 +247,12 @@ Result: Stripe returns same refund if called twice
 ```
 
 **Key Libraries:**
+
 - `stripe` (15.0+) - Refund API
 - `bull` (4.13+) - Async processing
 
 **Failure Recovery:**
+
 - Bull retries 5 times with exponential backoff
 - Monitor failed refunds: `queue.on('failed', ...)`
 - Webhook handler is idempotent (safe to retry)
@@ -243,6 +265,7 @@ Result: Stripe returns same refund if called twice
 **Current State in MAIS:** Not implemented
 
 **The Challenge:**
+
 - Must generate professional PDFs with custom branding
 - Must support complex layouts (tables, images, calculations)
 - Must regenerate on demand (not cached)
@@ -252,12 +275,14 @@ Result: Stripe returns same refund if called twice
 **Recommended Approach: Puppeteer + Handlebars**
 
 Why Puppeteer over alternatives:
+
 - **vs pdfkit**: Low-level, tedious layouts, limited CSS support
 - **vs html-pdf**: Outdated, no longer maintained
 - **vs wkhtmltopdf**: System binary, deployment issues
 - **✅ Puppeteer**: Renders HTML→PDF, excellent CSS support, headless Chrome
 
 **Key Implementation Patterns:**
+
 ```
 Generation Flow:
   1. Fetch booking, tenant, package data
@@ -282,22 +307,26 @@ Invoice Number Pattern:
 ```
 
 **Template Pattern (Handlebars):**
+
 - Uses HTML/CSS (familiar to developers)
 - Supports Handlebars helpers for formatting (currency, dates)
 - Responsive design automatically adapts
 - Can include images, company logos, tenant branding
 
 **Deployment Considerations:**
+
 - Puppeteer needs headless Chrome/Chromium
 - Docker: Install `chromium-browser` package
 - Use `--no-sandbox` flag in container environments
 - Timeout control: Set page load timeout to prevent hangs
 
 **Key Libraries:**
+
 - `puppeteer` (21.0+) - HTML→PDF conversion
 - `handlebars` (4.7+) - Template rendering
 
 **Storage Options:**
+
 - In-memory (for download): Not persisted
 - File system: Store in `uploads/invoices/`
 - S3/Cloud storage: For production (future)
@@ -331,12 +360,12 @@ Invoice Number Pattern:
 
 ### Infrastructure
 
-| Component | Purpose | Setup |
-|-----------|---------|-------|
-| **Redis** | Queue backend | `docker run -d redis:7` |
-| **PostgreSQL** | Primary DB | Already in MAIS ✅ |
-| **Stripe** | Payments | Already configured ✅ |
-| **Postmark** | Email | Already configured ✅ |
+| Component      | Purpose       | Setup                   |
+| -------------- | ------------- | ----------------------- |
+| **Redis**      | Queue backend | `docker run -d redis:7` |
+| **PostgreSQL** | Primary DB    | Already in MAIS ✅      |
+| **Stripe**     | Payments      | Already configured ✅   |
+| **Postmark**   | Email         | Already configured ✅   |
 
 ---
 
@@ -345,6 +374,7 @@ Invoice Number Pattern:
 All features must follow MAIS patterns:
 
 ### 1. Multi-Tenant Isolation (CRITICAL)
+
 ```typescript
 // Every query must include tenantId
 const refund = await refundRepo.findById(tenantId, refundId);
@@ -357,6 +387,7 @@ interface RefundRepository {
 ```
 
 ### 2. Layered Architecture
+
 ```
 Routes (HTTP)
   ↓
@@ -366,6 +397,7 @@ Adapters/Repositories (Data/External)
 ```
 
 ### 3. Dependency Injection
+
 ```typescript
 // di.ts
 const di = {
@@ -373,12 +405,13 @@ const di = {
     prismaAdapters.refundRepository,
     paymentProvider,
     refundQueue,
-    eventEmitter,
+    eventEmitter
   ),
 };
 ```
 
 ### 4. Error Handling
+
 ```typescript
 // Domain errors in services
 throw new RefundError('Refund amount exceeds payment amount');
@@ -392,6 +425,7 @@ catch (error) {
 ```
 
 ### 5. Event Emission
+
 ```typescript
 // Services emit domain events
 await eventEmitter.emit('RefundProcessed', {
@@ -409,17 +443,20 @@ eventEmitter.on('RefundProcessed', async (event) => {
 ## Implementation Timeline
 
 ### Phase 1 - MVP (Weeks 1-2)
+
 - Implement booking action tokens (reschedule, cancel)
 - Add invoice generation (Puppeteer + Handlebars)
 - Add invoice API routes and email sending
 
 ### Phase 2 - Core Features (Weeks 3-4)
+
 - Set up Redis locally
 - Implement reminder system (Bull + Luxon)
 - Add booking action token usage in UI
 - Implement deposit payments (Payment Intent API)
 
 ### Phase 3 - Advanced Features (Weeks 5-6)
+
 - Implement refund system with async processing
 - Add Stripe webhook handlers for refunds
 - Implement refund recovery jobs
@@ -429,19 +466,20 @@ eventEmitter.on('RefundProcessed', async (event) => {
 
 ## Risk Assessment
 
-| Feature | Risk Level | Mitigation |
-|---------|-----------|-----------|
-| Secure Tokens | Low | Use established crypto libraries, follow password reset pattern |
-| Reminders | Medium | Test timezone handling thoroughly, monitor queue health |
-| Deposits | Medium | Use Stripe's API docs, test payment flows, handle race conditions |
-| Refunds | High | Use idempotency keys, test webhook handling, implement retry logic |
-| Invoices | Low | Use Puppeteer's headless mode, cache templates, test layouts |
+| Feature       | Risk Level | Mitigation                                                         |
+| ------------- | ---------- | ------------------------------------------------------------------ |
+| Secure Tokens | Low        | Use established crypto libraries, follow password reset pattern    |
+| Reminders     | Medium     | Test timezone handling thoroughly, monitor queue health            |
+| Deposits      | Medium     | Use Stripe's API docs, test payment flows, handle race conditions  |
+| Refunds       | High       | Use idempotency keys, test webhook handling, implement retry logic |
+| Invoices      | Low        | Use Puppeteer's headless mode, cache templates, test layouts       |
 
 ---
 
 ## Testing Strategy
 
 Each feature requires:
+
 - **Unit tests**: Service methods with mock repositories (no HTTP/network)
 - **Integration tests**: Database-backed with test tenant isolation
 - **E2E tests**: Full workflow tests (Playwright)

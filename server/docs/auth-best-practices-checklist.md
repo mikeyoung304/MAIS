@@ -9,6 +9,7 @@ Quick reference guide for implementing and maintaining authentication features s
 Before implementing any authentication feature:
 
 ### Email Handling
+
 - [ ] **Normalize emails to lowercase** at every layer (repository, service, route)
 - [ ] **Include `.toLowerCase().trim()`** on all email input
 - [ ] **Document email normalization** in code comments
@@ -17,6 +18,7 @@ Before implementing any authentication feature:
 - [ ] **Verify Prisma schema** has email as `@unique`
 
 ### Password Management
+
 - [ ] **Use centralized credential configuration** (`config/dev-credentials.ts`)
 - [ ] **Never hardcode passwords** in code or tests
 - [ ] **Use bcryptjs** with minimum 10 rounds (OWASP 2024 recommendation)
@@ -25,6 +27,7 @@ Before implementing any authentication feature:
 - [ ] **Validate password length** minimum 8 characters
 
 ### Credential Synchronization
+
 - [ ] **Single source of truth** for dev credentials
 - [ ] **Import from shared config** in all places
 - [ ] **Generate frontend credentials** from backend config
@@ -33,6 +36,7 @@ Before implementing any authentication feature:
 - [ ] **Document how to update** dev credentials
 
 ### Security
+
 - [ ] **Prevent timing attacks** by using consistent error messages
 - [ ] **Rate limit** authentication endpoints (5 attempts/15 min recommended)
 - [ ] **Log auth attempts** for security monitoring
@@ -47,6 +51,7 @@ Before implementing any authentication feature:
 When reviewing authentication code:
 
 ### Email Operations
+
 ```typescript
 // ✅ GOOD: Normalize email
 const normalized = email.toLowerCase().trim();
@@ -63,6 +68,7 @@ const tenant = await repo.findByEmail(email); // Case sensitive!
 - [ ] Unique constraint verified in schema
 
 ### Password Hashing
+
 ```typescript
 // ✅ GOOD: Hash password
 const hash = await bcrypt.hash(password, 12);
@@ -79,6 +85,7 @@ await repo.update({ password: password }); // SECURITY ISSUE!
 - [ ] No password in error messages
 
 ### Credential Configuration
+
 ```typescript
 // ✅ GOOD: Centralized credentials
 import { DEV_CREDENTIALS } from '../config/dev-credentials';
@@ -95,11 +102,12 @@ const email = 'admin@test.com'; // Different value elsewhere
 - [ ] No hardcoded credentials in code
 
 ### JWT Handling
+
 ```typescript
 // ✅ GOOD: Explicit algorithm
 const token = jwt.sign(payload, secret, {
   algorithm: 'HS256',
-  expiresIn: '7d'
+  expiresIn: '7d',
 });
 
 // ❌ BAD: Forgetting algorithm validation
@@ -113,6 +121,7 @@ const payload = jwt.verify(token, secret); // Could accept 'none' algorithm
 - [ ] Sensitive data not in JWT payload
 
 ### Error Handling
+
 ```typescript
 // ✅ GOOD: Generic error messages
 throw new UnauthorizedError('Invalid credentials');
@@ -128,6 +137,7 @@ throw new Error('User not found'); // Reveals if email exists
 - [ ] User-friendly error messages
 
 ### Testing
+
 ```typescript
 // ✅ GOOD: Test case variations
 it('should login with mixed-case email', async () => {
@@ -160,6 +170,7 @@ it('should login', async () => {
 When implementing authentication features:
 
 ### Step 1: Define Credentials
+
 ```typescript
 // File: server/config/dev-credentials.ts
 export const DEV_CREDENTIALS = {
@@ -168,7 +179,7 @@ export const DEV_CREDENTIALS = {
     password: 'NewPassword123!',
     name: 'New User',
     description: 'Description of user',
-  }
+  },
 } as const;
 ```
 
@@ -179,6 +190,7 @@ export const DEV_CREDENTIALS = {
 - [ ] Export as const for type safety
 
 ### Step 2: Update Seed Script
+
 ```typescript
 // File: server/prisma/seed.ts
 import { DEV_CREDENTIALS } from '../config/dev-credentials';
@@ -192,7 +204,7 @@ await prisma.tenant.create({
     passwordHash,
     name: cred.name,
     // ... other fields
-  }
+  },
 });
 ```
 
@@ -203,6 +215,7 @@ await prisma.tenant.create({
 - [ ] Log success message
 
 ### Step 3: Create Test Fixtures
+
 ```typescript
 // File: server/test/helpers/dev-credentials.ts
 import { DEV_CREDENTIALS } from '../../config/dev-credentials';
@@ -226,6 +239,7 @@ export async function loginAsNewUser(request: any) {
 - [ ] Use in test files
 
 ### Step 4: Write Integration Tests
+
 ```typescript
 // File: server/test/integration/new-feature.spec.ts
 import { getNewUserCredentials } from '../helpers/dev-credentials';
@@ -246,7 +260,7 @@ describe('New Feature', () => {
       .post('/v1/auth/login')
       .send({
         email: cred.email.toUpperCase(),
-        password: cred.password
+        password: cred.password,
       })
       .expect(200);
 
@@ -262,6 +276,7 @@ describe('New Feature', () => {
 - [ ] Test error messages are generic
 
 ### Step 5: Update Seed Data
+
 ```bash
 # Run to create/update seed data
 npm run seed
@@ -276,6 +291,7 @@ npm test -- auth-prevention-tests.spec.ts
 - [ ] All tests pass
 
 ### Step 6: Generate Frontend Credentials
+
 ```bash
 # Run build to regenerate frontend credentials
 npm run build
@@ -295,6 +311,7 @@ npm run dev:api
 For each authentication feature:
 
 ### Unit Tests
+
 ```typescript
 describe('AuthService', () => {
   it('should hash password with bcrypt', async () => {
@@ -320,6 +337,7 @@ describe('AuthService', () => {
 - [ ] Test token verification
 
 ### Integration Tests
+
 ```typescript
 describe('Auth API', () => {
   it('should signup with mixed-case email', async () => {
@@ -328,7 +346,7 @@ describe('Auth API', () => {
       .send({
         email: 'User@Example.COM',
         password: 'password123',
-        businessName: 'Test'
+        businessName: 'Test',
       })
       .expect(201);
   });
@@ -356,6 +374,7 @@ describe('Auth API', () => {
 - [ ] Token verification
 
 ### E2E Tests
+
 ```typescript
 test('should complete auth flow', async ({ page }) => {
   // Navigate to signup
@@ -384,23 +403,27 @@ test('should complete auth flow', async ({ page }) => {
 Regular maintenance tasks:
 
 ### Weekly
+
 - [ ] Review auth-related logs for failures
 - [ ] Check for unusual login patterns
 - [ ] Verify rate limiting is working
 
 ### Monthly
+
 - [ ] Review password requirements
 - [ ] Audit JWT expiration times
 - [ ] Check for deprecated auth libraries
 - [ ] Review OWASP guidance for updates
 
 ### Quarterly
+
 - [ ] Update bcrypt rounds if needed
 - [ ] Review token expiration policies
 - [ ] Audit test coverage
 - [ ] Security audit of auth code
 
 ### On Dependency Update
+
 - [ ] Check for auth-related security patches
 - [ ] Update bcryptjs version
 - [ ] Update jsonwebtoken version
@@ -408,6 +431,7 @@ Regular maintenance tasks:
 - [ ] Run full auth test suite
 
 ### When Changing Dev Credentials
+
 - [ ] Update `config/dev-credentials.ts`
 - [ ] Run `npm run seed`
 - [ ] Run `npm run build` (to regenerate frontend)
@@ -422,6 +446,7 @@ Regular maintenance tasks:
 Perform before deploying auth changes:
 
 ### Cryptography
+
 - [ ] Password hashing uses bcryptjs
 - [ ] JWT signing uses HS256
 - [ ] Random token generation uses crypto.randomBytes
@@ -429,6 +454,7 @@ Perform before deploying auth changes:
 - [ ] Secrets use environment variables
 
 ### Input Validation
+
 - [ ] Email format validated
 - [ ] Email normalized to lowercase
 - [ ] Email whitespace trimmed
@@ -438,6 +464,7 @@ Perform before deploying auth changes:
 - [ ] No XSS in error messages
 
 ### Output Encoding
+
 - [ ] No passwords in logs
 - [ ] No tokens in logs (except hashed)
 - [ ] Error messages generic
@@ -445,6 +472,7 @@ Perform before deploying auth changes:
 - [ ] JSON responses properly typed
 
 ### Access Control
+
 - [ ] JWT verification mandatory
 - [ ] Algorithm explicitly checked
 - [ ] Token type verified
@@ -453,6 +481,7 @@ Perform before deploying auth changes:
 - [ ] Inactive users rejected
 
 ### Data Protection
+
 - [ ] Passwords hashed
 - [ ] Reset tokens hashed
 - [ ] API keys hashed
@@ -461,6 +490,7 @@ Perform before deploying auth changes:
 - [ ] No cross-tenant data access
 
 ### Monitoring
+
 - [ ] Failed logins logged
 - [ ] Failed password resets logged
 - [ ] Unusual patterns detectable
@@ -473,33 +503,36 @@ Perform before deploying auth changes:
 ## Common Mistakes and Fixes
 
 ### Mistake 1: Case-Sensitive Email Lookup
+
 ```typescript
 // ❌ BAD
 const tenant = await db.findUnique({
-  where: { email: email } // Case sensitive!
+  where: { email: email }, // Case sensitive!
 });
 
 // ✅ GOOD
 const tenant = await db.findUnique({
-  where: { email: email.toLowerCase() } // Case insensitive
+  where: { email: email.toLowerCase() }, // Case insensitive
 });
 ```
 
 ### Mistake 2: Storing Plaintext Password
+
 ```typescript
 // ❌ BAD
 await db.update({
-  password: password // NEVER!
+  password: password, // NEVER!
 });
 
 // ✅ GOOD
 const hash = await bcrypt.hash(password, 12);
 await db.update({
-  passwordHash: hash
+  passwordHash: hash,
 });
 ```
 
 ### Mistake 3: Hardcoded Credentials in Tests
+
 ```typescript
 // ❌ BAD
 const email = 'admin@test.com';
@@ -512,6 +545,7 @@ const { email, password } = DEV_CREDENTIALS.platformAdmin;
 ```
 
 ### Mistake 4: Revealing User Information in Errors
+
 ```typescript
 // ❌ BAD
 if (!user) throw new Error('User not found'); // Reveals email exists
@@ -521,20 +555,23 @@ throw new UnauthorizedError('Invalid credentials'); // Generic message
 ```
 
 ### Mistake 5: Accepting 'none' Algorithm in JWT
+
 ```typescript
 // ❌ BAD
 const payload = jwt.verify(token, secret);
 
 // ✅ GOOD
 const payload = jwt.verify(token, secret, {
-  algorithms: ['HS256'] // Only allow specific algorithm
+  algorithms: ['HS256'], // Only allow specific algorithm
 });
 ```
 
 ### Mistake 6: Not Validating Email Format
+
 ```typescript
 // ❌ BAD
-if (email && password) { // Only checks existence
+if (email && password) {
+  // Only checks existence
   // Login
 }
 
@@ -550,6 +587,7 @@ if (!emailRegex.test(email)) {
 ## Troubleshooting Guide
 
 ### Issue: Login fails with correct credentials
+
 1. Check if email is stored in lowercase
 2. Check if password hash was created with bcryptjs
 3. Verify `bcrypt.compare()` is being used
@@ -557,6 +595,7 @@ if (!emailRegex.test(email)) {
 5. Verify database contains the user
 
 ### Issue: Signup fails with "Email already exists"
+
 1. Check email case normalization
 2. Check for whitespace in email
 3. Verify unique constraint in schema
@@ -564,6 +603,7 @@ if (!emailRegex.test(email)) {
 5. Confirm email lookup normalizes input
 
 ### Issue: Tests use different credentials than seed
+
 1. Check credentials defined in `config/dev-credentials.ts`
 2. Verify seed script imports from config
 3. Verify tests import from config
@@ -571,6 +611,7 @@ if (!emailRegex.test(email)) {
 5. Run tests: `npm test`
 
 ### Issue: Frontend autofill shows wrong credentials
+
 1. Check if build script generates credentials
 2. Verify frontend imports generated file
 3. Check `node_modules` for generated file
@@ -578,6 +619,7 @@ if (!emailRegex.test(email)) {
 5. Verify `.env` doesn't override credentials
 
 ### Issue: Mixed-case email login fails
+
 1. Check email normalized in service layer
 2. Check email normalized in repository layer
 3. Check email normalized in route layer
@@ -637,6 +679,6 @@ Use this checklist as a template for pull request reviews:
 - [ ] All tests passing
 - [ ] Security audit completed
 
-**Reviewed by:** _______________
-**Date:** _______________
+**Reviewed by:** ******\_\_\_******
+**Date:** ******\_\_\_******
 **Status:** ✅ Ready to merge / ❌ Needs changes

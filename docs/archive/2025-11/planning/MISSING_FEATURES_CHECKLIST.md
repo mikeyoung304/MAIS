@@ -84,7 +84,7 @@
   - [ ] CSV/PDF export functionality
   - Estimated: 2-3 days | ~1,000 lines code
 
-- [ ] **SMS NOTIFICATIONS** 
+- [ ] **SMS NOTIFICATIONS**
   - [ ] Add SMS provider abstraction
   - [ ] Implement Twilio adapter
   - [ ] Send SMS confirmations
@@ -148,12 +148,14 @@ LOW IMPACT (POST-LAUNCH)
 ## Implementation Effort Estimate
 
 ### Quick Wins (Can finish this week)
+
 - Email Notifications: 1-2 days
 - Logo Upload UI: 0.5-1 day
 - Stripe Status Widget: 0.5-1 day
 - **Total: 2-4 days for 3 features**
 
 ### Core Features (Next week)
+
 - Refund UI: 1.5-2 days
 - Package Photos: 1-2 days
 - Tenant Package CRUD: 1-2 days
@@ -161,6 +163,7 @@ LOW IMPACT (POST-LAUNCH)
 - **Total: 5-8 days for 4 features**
 
 ### Larger Features (2-3 weeks)
+
 - Google Calendar: 1-2 weeks (biggest effort)
 - Analytics: 2-3 days
 - SMS: 1-2 days
@@ -170,6 +173,7 @@ LOW IMPACT (POST-LAUNCH)
 ## Backend vs Frontend Status
 
 ### 100% Backend Complete (Just Needs UI)
+
 - Logo upload
 - Package photo upload
 - Email notifications
@@ -177,6 +181,7 @@ LOW IMPACT (POST-LAUNCH)
 - Stripe Connect onboarding
 
 ### 100% Complete End-to-End
+
 - Multi-tenant isolation
 - Booking workflow
 - Commission calculation
@@ -185,11 +190,13 @@ LOW IMPACT (POST-LAUNCH)
 - Segment management
 
 ### Partially Implemented
+
 - Authentication (missing password reset)
 - Availability (missing calendar sync)
 - Audit logging (missing viewer UI)
 
 ### Not Started
+
 - Google Calendar
 - SMS notifications
 - Document uploads
@@ -200,17 +207,20 @@ LOW IMPACT (POST-LAUNCH)
 ## Risk Assessment
 
 ### LOW RISK (Can start immediately)
+
 - Email notifications (adapter ready)
 - Logo upload (upload service ready)
 - Refund UI (Stripe integration ready)
 - Password reset (JWT ready)
 
 ### MEDIUM RISK (Need design/planning)
+
 - Google Calendar (complex OAuth flow)
 - Package photos (gallery UX)
 - Analytics (schema queries)
 
 ### HIGH RISK (Dependencies)
+
 - SMS (requires provider account)
 - 2FA (requires TOTP library)
 
@@ -219,12 +229,14 @@ LOW IMPACT (POST-LAUNCH)
 ## Testing Checklist
 
 ### Email Notifications
+
 - [ ] Test with real Postmark token
 - [ ] Test file sink in dev
 - [ ] Test email delivery on booking
 - [ ] Test email template rendering
 
 ### Booking Refunds
+
 - [ ] Test full refund flow
 - [ ] Test partial refunds
 - [ ] Test refund reason tracking
@@ -232,6 +244,7 @@ LOW IMPACT (POST-LAUNCH)
 - [ ] Test Stripe webhook for refund_created event
 
 ### Logo Upload
+
 - [ ] Test file size validation
 - [ ] Test mime type validation
 - [ ] Test logo display in widget
@@ -239,6 +252,7 @@ LOW IMPACT (POST-LAUNCH)
 - [ ] Test logo replacement
 
 ### Google Calendar
+
 - [ ] Test OAuth flow
 - [ ] Test event creation
 - [ ] Test event updates
@@ -254,4 +268,3 @@ LOW IMPACT (POST-LAUNCH)
 **Logo Upload**: 100% tenant branding capability
 **Google Calendar**: 20% reduction in double-booking
 **Package Photos**: +25% conversion rate (estimated)
-

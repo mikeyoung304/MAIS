@@ -9,18 +9,21 @@
 ## Executive Summary
 
 This document prevents a critical issue where schema changes were made without corresponding migrations, creating the risk of:
+
 - Destructive database resets via `migrate reset` on production-like databases
 - AI agents incorrectly assuming schema state
 - Data corruption from schema/code mismatches
 - Loss of trust in automated tooling
 
 **Root Causes:**
+
 1. Hybrid migration system (manual SQL + Prisma) wasn't documented
 2. No pre-commit checks to detect schema drift
 3. AI agents given unsafe database operations without safety gates
 4. Missing CI/CD validation of schema consistency
 
 **Key Prevention Strategies:**
+
 - Detect which migration pattern to use (manual SQL vs Prisma)
 - Pre-commit hooks to catch schema drift
 - CI/CD gates to prevent unsafe operations
@@ -48,6 +51,7 @@ server/prisma/migrations/
 **Two Migration Patterns Exist:**
 
 #### Pattern A: Prisma Migrations (Version-based)
+
 - Directory format: `{timestamp}_{description}/migration.sql`
 - Uses `prisma migrate` commands
 - Tracked in `_prisma_migrations` table
@@ -55,18 +59,21 @@ server/prisma/migrations/
 - Stored in versioned directories
 
 **Example:**
+
 ```
 server/prisma/migrations/20251016140827_initial_schema/migration.sql
 ```
 
 #### Pattern B: Manual SQL (Sequential)
-- File format: `{number}_{description}.sql` (01_, 02_, etc.)
+
+- File format: `{number}_{description}.sql` (01*, 02*, etc.)
 - Applied manually via `psql` or database tools
 - NOT tracked by Prisma migrations system
 - Must be applied in order
 - Direct SQL without Prisma translation
 
 **Example:**
+
 ```
 server/prisma/migrations/07_add_scheduling_platform.sql
 ```
@@ -118,18 +125,18 @@ server/prisma/migrations/07_add_scheduling_platform.sql
 
 ### Decision Guide Table
 
-| Scenario | Pattern | Reason | Example |
-|----------|---------|--------|---------|
-| Add column to Booking table | A | Prisma supports columns | `ADD COLUMN bookingType TEXT` |
-| Add enum type (BookingType) | B | Prisma can't create enums in-place | `CREATE TYPE BookingType AS ENUM` |
-| Create new table (Service) | A | Prisma supports new tables | `CREATE TABLE Service` |
-| Add PostgreSQL extension | B | Not supported by Prisma | `CREATE EXTENSION IF NOT EXISTS` |
-| Add performance index | B | Custom indexes outside Prisma | `CREATE INDEX on Booking(tenantId)` |
-| Add RLS policies | B | Not supported by Prisma | `ALTER TABLE ... ENABLE ROW SECURITY` |
-| Add unique constraint | A | Prisma supports via @@unique | `@@unique([tenantId, slug])` |
-| Advisory locks usage | B | Database-specific feature | `SELECT pg_advisory_xact_lock()` |
-| Add foreign key | A | Prisma supports @relation | `@relation(fields: [tenantId])` |
-| Complex data migration | B | Requires procedural SQL | `UPDATE ... WHERE ... CASE WHEN` |
+| Scenario                    | Pattern | Reason                             | Example                               |
+| --------------------------- | ------- | ---------------------------------- | ------------------------------------- |
+| Add column to Booking table | A       | Prisma supports columns            | `ADD COLUMN bookingType TEXT`         |
+| Add enum type (BookingType) | B       | Prisma can't create enums in-place | `CREATE TYPE BookingType AS ENUM`     |
+| Create new table (Service)  | A       | Prisma supports new tables         | `CREATE TABLE Service`                |
+| Add PostgreSQL extension    | B       | Not supported by Prisma            | `CREATE EXTENSION IF NOT EXISTS`      |
+| Add performance index       | B       | Custom indexes outside Prisma      | `CREATE INDEX on Booking(tenantId)`   |
+| Add RLS policies            | B       | Not supported by Prisma            | `ALTER TABLE ... ENABLE ROW SECURITY` |
+| Add unique constraint       | A       | Prisma supports via @@unique       | `@@unique([tenantId, slug])`          |
+| Advisory locks usage        | B       | Database-specific feature          | `SELECT pg_advisory_xact_lock()`      |
+| Add foreign key             | A       | Prisma supports @relation          | `@relation(fields: [tenantId])`       |
+| Complex data migration      | B       | Requires procedural SQL            | `UPDATE ... WHERE ... CASE WHEN`      |
 
 ---
 
@@ -220,11 +227,13 @@ git commit -m "test: trigger hook"  # Should fail with schema drift message
 ### What the Hook Catches
 
 ✅ **Will Prevent:**
+
 - `schema.prisma` modified without migrations
 - Committing schema changes without safety net
 - AI agents accidentally skipping migrations
 
 ❌ **Will Allow:**
+
 - Schema changes with Prisma migrations
 - Schema changes with manual SQL migrations
 - Non-schema files being committed
@@ -255,7 +264,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Full history for comparison
+          fetch-depth: 0 # Full history for comparison
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -398,6 +407,7 @@ jobs:
 ### What These Gates Catch
 
 ✅ **Will Prevent:**
+
 - Schema changes without migrations
 - Malformed Prisma schema syntax
 - Migrations that can't be applied
@@ -405,6 +415,7 @@ jobs:
 - Dangerous destructive SQL
 
 ❌ **Will Allow:**
+
 - Valid schema + migration pairs
 - Proper Prisma formatting
 - Backward-compatible changes
@@ -416,6 +427,7 @@ jobs:
 ### Safety Rule: Never Run Destructive Commands Without User Consent
 
 AI agents should NEVER run these commands:
+
 - ❌ `prisma migrate reset` (destructive - drops database)
 - ❌ `prisma db push --force-reset` (destructive)
 - ❌ DROP TABLE, DROP DATABASE, TRUNCATE (destructive)
@@ -424,6 +436,7 @@ AI agents should NEVER run these commands:
 ### Safe Database Operations for AI
 
 **SAFE Operations:**
+
 ```bash
 ✅ npm exec prisma migrate status      # Read-only: check migration status
 ✅ npm exec prisma studio             # Read-only: view data
@@ -434,6 +447,7 @@ AI agents should NEVER run these commands:
 ```
 
 **UNSAFE Operations (AI should propose, not execute):**
+
 ```bash
 ❌ npm exec prisma migrate dev         # Creates migration and applies it
 ❌ npm exec prisma migrate deploy      # Applies migrations to production
@@ -455,9 +469,11 @@ If schema.prisma has been modified but no migrations exist:
 
 **DO NOT RUN:**
 ```
-npm exec prisma migrate reset         # ❌ DESTRUCTIVE - FORBIDDEN
+
+npm exec prisma migrate reset # ❌ DESTRUCTIVE - FORBIDDEN
 npm exec prisma db push --force-reset # ❌ DESTRUCTIVE - FORBIDDEN
-```
+
+````
 
 **INSTEAD:**
 
@@ -476,9 +492,10 @@ model Package {
   ...
   new_field String?  // ← Added
 }
-```
+````
 
 Correct action:
+
 ```bash
 npm exec prisma migrate dev --name add_new_field_to_package
 # AI: "I've created a migration. Run the command above, then test with: npm test"
@@ -487,6 +504,7 @@ npm exec prisma migrate dev --name add_new_field_to_package
 **Example 2: Adding an enum (requires manual SQL)**
 
 Schema change:
+
 ```prisma
 enum PackageStatus {
   ACTIVE
@@ -495,6 +513,7 @@ enum PackageStatus {
 ```
 
 Correct action:
+
 ```
 1. Identify this needs manual SQL (enums can't be created by Prisma)
 2. Create: server/prisma/migrations/08_add_package_status_enum.sql
@@ -506,10 +525,12 @@ Correct action:
 ### When in Doubt
 
 If unsure whether to use Pattern A or B:
+
 1. Check SCHEMA_DRIFT_PREVENTION.md Decision Tree
 2. Ask the user: "Should I use Prisma migrate or manual SQL?"
 3. Never assume - always verify before running commands
-```
+
+````
 
 ---
 
@@ -580,7 +601,7 @@ npm exec prisma studio
 # 6. Commit schema.prisma + migration directory
 git add server/prisma/
 git commit -m "feat: add newField to Package model"
-```
+````
 
 ### Step-by-Step: Add an Enum (Manual SQL)
 
@@ -633,6 +654,7 @@ git commit -m "feat: add BookingType enum and bookingType column to Booking"
 ### Troubleshooting Schema Changes
 
 **Problem: "prisma migrate status" shows pending migrations**
+
 ```bash
 # Solution: Apply migrations locally
 npm exec prisma migrate dev
@@ -642,12 +664,14 @@ npm exec prisma db push
 ```
 
 **Problem: "Cannot find generated Prisma Client"**
+
 ```bash
 # Solution: Regenerate after schema changes
 npm exec prisma generate
 ```
 
 **Problem: "Unique constraint violation after migration"**
+
 ```bash
 # This means the migration found duplicate data
 # Solution: Manual data cleanup or use data migration in SQL
@@ -655,6 +679,7 @@ npm exec prisma generate
 ```
 
 **Problem: "ALTER TABLE... ADD COLUMN fails with 'already exists'"**
+
 ```bash
 # Solution: Use idempotent SQL
 ALTER TABLE "TableName"
@@ -672,6 +697,7 @@ There's a pre-commit hook that prevents schema drift:
 This hook prevents commits that change schema.prisma without creating migrations.
 
 If the hook blocks your commit:
+
 1. Verify you created a migration: `ls server/prisma/migrations/`
 2. If you need to undo the schema change: `git checkout server/prisma/schema.prisma`
 3. If you need to create the migration: see step-by-step guides above
@@ -682,7 +708,8 @@ If the hook blocks your commit:
 - **Always test migrations on dev DB first** before pushing to main
 - **Never modify migrations after they're committed** (breaks for other developers)
 - **Always regenerate Prisma Client after migrations** (`npm exec prisma generate`)
-```
+
+````
 
 ---
 
@@ -798,7 +825,7 @@ describe('Schema Consistency', () => {
     expect(migrations.length).toBeGreaterThan(0);
   });
 });
-```
+````
 
 ### Integration Test: Migration Application Success
 
@@ -842,7 +869,7 @@ describe('Migration Validation', () => {
     try {
       // Check migration status
       const { stdout } = await execAsync('npm exec prisma migrate status', {
-        cwd: path.dirname(__dirname)
+        cwd: path.dirname(__dirname),
       });
 
       // If no "pending migrations" message, all migrations are applied
@@ -862,7 +889,7 @@ describe('Migration Validation', () => {
     try {
       // Validate Prisma schema syntax
       await execAsync('npm exec prisma validate', {
-        cwd: path.dirname(__dirname)
+        cwd: path.dirname(__dirname),
       });
     } catch (err: any) {
       expect(err).toBeNull();
@@ -883,7 +910,7 @@ describe('Migration Validation', () => {
       'Booking',
       'Service',
       'AvailabilityRule',
-      'WebhookEvent'
+      'WebhookEvent',
     ];
 
     for (const table of requiredTables) {
@@ -934,6 +961,7 @@ describe('Migration Validation', () => {
 ### Safe Database Commands (AI Agents)
 
 ✅ Safe to run:
+
 - `npm exec prisma migrate status`
 - `npm exec prisma validate`
 - `npm exec prisma studio`
@@ -942,6 +970,7 @@ describe('Migration Validation', () => {
 - `npm test`
 
 ❌ Never run without user consent:
+
 - `npm exec prisma migrate dev`
 - `npm exec prisma migrate deploy`
 - `npm exec prisma migrate reset` (destructive)

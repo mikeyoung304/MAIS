@@ -61,9 +61,7 @@ describe('E2E Seed', () => {
 
       const mockPrisma = createMockPrisma();
 
-      await expect(seedE2E(mockPrisma)).rejects.toThrow(
-        /fixed test keys.*publicly visible/i
-      );
+      await expect(seedE2E(mockPrisma)).rejects.toThrow(/fixed test keys.*publicly visible/i);
     });
 
     it('should suggest using SEED_MODE=production in error message', async () => {
@@ -71,9 +69,7 @@ describe('E2E Seed', () => {
 
       const mockPrisma = createMockPrisma();
 
-      await expect(seedE2E(mockPrisma)).rejects.toThrow(
-        /SEED_MODE=production/
-      );
+      await expect(seedE2E(mockPrisma)).rejects.toThrow(/SEED_MODE=production/);
     });
 
     it('should allow execution in development environment', async () => {

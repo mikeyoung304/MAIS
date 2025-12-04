@@ -1,10 +1,10 @@
 ---
 status: complete
 priority: p2
-issue_id: "240"
+issue_id: '240'
 tags: [performance, landing-page, database]
 dependencies: []
-source: "code-review-pr-14"
+source: 'code-review-pr-14'
 ---
 
 # TODO-240: Eliminate Redundant Tenant Queries in Draft Operations
@@ -20,6 +20,7 @@ source: "code-review-pr-14"
 Several draft methods query the tenant table multiple times when one query would suffice. For example, `getLandingPageDraft` reads the tenant to get config, then could potentially read it again.
 
 **Why It Matters:**
+
 - Extra database round-trips add latency
 - Auto-save fires every 2 seconds, multiplying the overhead
 - PostgreSQL connection pool gets unnecessary load
@@ -27,6 +28,7 @@ Several draft methods query the tenant table multiple times when one query would
 ## Findings
 
 **Evidence:**
+
 - `tenant.repository.ts:588-600`: saveLandingPageDraft reads tenant, then updates
 - Pattern is correct for read-modify-write but could use single UPDATE with RETURNING
 
@@ -73,6 +75,7 @@ The read-modify-write pattern is acceptable for correctness. The performance imp
 **Decision: Accept Current Pattern (Option B)**
 
 After architectural review, the read-modify-write pattern was accepted because:
+
 1. We must preserve the `published` config while updating only `draft` - reading first is necessary
 2. Prisma transaction already provides ACID guarantees
 3. Auto-save debouncing limits actual save frequency to ~1 per 2-5 seconds (not a hot path)
@@ -83,9 +86,9 @@ After architectural review, the read-modify-write pattern was accepted because:
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-12-04 | Created | Code review of PR #14 |
+| Date       | Action   | Notes                                          |
+| ---------- | -------- | ---------------------------------------------- |
+| 2025-12-04 | Created  | Code review of PR #14                          |
 | 2025-12-04 | Resolved | Accepted current pattern, documented rationale |
 
 ## Tags

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "067"
+issue_id: '067'
 tags: [code-review, security, rate-limiting, performance]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The upload rate limiter uses IP-based limiting (100 uploads/hour/IP), which doesn't prevent per-tenant abuse. A single tenant with dynamic IPs can bypass limits, while shared IPs (corporate NAT) unfairly punish multiple tenants. No storage quota enforcement exists.
 
 **Why This Matters:**
+
 - One tenant can exhaust storage quota (cost explosion)
 - Mobile users with changing IPs bypass limits
 - Corporate users behind NAT share rate limit unfairly
@@ -23,6 +24,7 @@ The upload rate limiter uses IP-based limiting (100 uploads/hour/IP), which does
 ### Evidence from Code Review
 
 **Current Implementation:**
+
 ```typescript
 // rateLimiter.ts
 export const uploadLimiter = rateLimit({
@@ -33,6 +35,7 @@ export const uploadLimiter = rateLimit({
 ```
 
 **Attack Scenario:**
+
 ```
 Malicious tenant uses 10 different IPs (VPN/mobile):
 - 10 IPs × 100 uploads/hour × 5MB = 5GB/hour storage consumption
@@ -41,6 +44,7 @@ Malicious tenant uses 10 different IPs (VPN/mobile):
 ```
 
 ### Performance Oracle & Security Sentinel Assessment
+
 - HIGH: Single tenant can exhaust storage resources
 - Shared IPs punish legitimate multi-tenant usage
 - No storage quota enforcement at all
@@ -52,11 +56,13 @@ Malicious tenant uses 10 different IPs (VPN/mobile):
 **Description:** IP-level + tenant-level rate limits, plus storage quota.
 
 **Pros:**
+
 - Protects against distributed attacks (IP layer)
 - Protects against single-tenant abuse (tenant layer)
 - Fair to all tenants
 
 **Cons:**
+
 - More complex middleware chain
 - Two rate limit checks per request
 - Requires tenant ID extraction before limit check
@@ -83,9 +89,10 @@ export const uploadLimiterTenant = rateLimit({
 });
 
 // Route usage
-router.post('/segment-image',
-  uploadLimiterIP,      // Layer 1
-  uploadLimiterTenant,  // Layer 2
+router.post(
+  '/segment-image',
+  uploadLimiterIP, // Layer 1
+  uploadLimiterTenant // Layer 2
   // ... rest of middleware
 );
 ```
@@ -95,10 +102,12 @@ router.post('/segment-image',
 **Description:** Replace IP-based with tenant-based limiting.
 
 **Pros:**
+
 - Simpler (single layer)
 - Fair per-tenant limits
 
 **Cons:**
+
 - No IP-level DDoS protection
 - Unauthenticated requests unprotected
 
@@ -110,10 +119,12 @@ router.post('/segment-image',
 **Description:** Track storage per tenant, reject uploads when quota exceeded.
 
 **Pros:**
+
 - Hard limit on storage abuse
 - Cost control
 
 **Cons:**
+
 - Database schema change required
 - Need to track all uploads
 
@@ -127,6 +138,7 @@ router.post('/segment-image',
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/middleware/rateLimiter.ts` - Add tenant-level limiter
 - `server/src/routes/tenant-admin.routes.ts` - Apply both limiters
 
@@ -140,8 +152,8 @@ router.post('/segment-image',
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                         |
+| ---------- | ------- | --------------------------------------------- |
 | 2025-11-29 | Created | Found during code review - Performance Oracle |
 
 ## Resources

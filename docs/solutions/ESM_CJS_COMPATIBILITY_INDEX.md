@@ -1,5 +1,5 @@
 ---
-title: "ESM/CJS Module Compatibility - Prevention Strategies Index"
+title: 'ESM/CJS Module Compatibility - Prevention Strategies Index'
 slug: esm-cjs-compatibility-index
 category: prevention
 severity: high
@@ -26,6 +26,7 @@ created: 2025-11-29
 Before adding ANY npm package to your project, run through this checklist:
 
 ### Step 1: Package Type Investigation
+
 - [ ] Check if package has `"type": "module"` in its `package.json`
 - [ ] Check the `"exports"` field (modern packages use conditional exports)
 - [ ] Check the `"main"` field (points to entry point)
@@ -33,18 +34,21 @@ Before adding ANY npm package to your project, run through this checklist:
 - [ ] Check GitHub/npm for recent issues about ESM compatibility
 
 ### Step 2: Compatibility Assessment
+
 - [ ] Is this an ESM-only package? ✅ Safe to import directly
 - [ ] Is this a CJS-only package? ⚠️ Requires `createRequire` wrapper
 - [ ] Does it support both ESM and CJS? ✅ Check `"exports"` field for dual support
 - [ ] Is there an ESM alternative package? 🔍 Prefer ESM versions
 
 ### Step 3: Implementation Planning
+
 - [ ] Document which pattern you're using (ESM import, createRequire, dynamic import)
 - [ ] Add TypeScript types for any CJS imports
 - [ ] Plan for testing in both development and production
 - [ ] Write a comment explaining why this pattern is needed
 
 ### Step 4: Testing & Validation
+
 - [ ] Run `npm run typecheck` - TypeScript validation
 - [ ] Run `npm test` - Unit/integration tests
 - [ ] Run `npm run test:e2e` - End-to-end tests with tsx
@@ -55,15 +59,15 @@ Before adding ANY npm package to your project, run through this checklist:
 
 ## Current Module Compatibility Status
 
-| Package | Version | Type | Pattern | Status |
-|---------|---------|------|---------|--------|
-| `file-type` | ^16.5.4 | CJS | `createRequire` | ✅ Working |
-| `express` | ^4.21.2 | ESM/CJS | Direct import | ✅ Working |
-| `stripe` | ^19.1.0 | ESM/CJS | Direct import | ✅ Working |
-| `multer` | ^2.0.2 | CJS | ⚠️ Uses `createRequire` | ✅ Working |
-| `ioredis` | ^5.8.2 | ESM/CJS | Direct import | ✅ Working |
-| `prisma` | ^6.17.1 | ESM | Direct import | ✅ Working |
-| `zod` | ^3.24.0 | ESM | Direct import | ✅ Working |
+| Package     | Version | Type    | Pattern                 | Status     |
+| ----------- | ------- | ------- | ----------------------- | ---------- |
+| `file-type` | ^16.5.4 | CJS     | `createRequire`         | ✅ Working |
+| `express`   | ^4.21.2 | ESM/CJS | Direct import           | ✅ Working |
+| `stripe`    | ^19.1.0 | ESM/CJS | Direct import           | ✅ Working |
+| `multer`    | ^2.0.2  | CJS     | ⚠️ Uses `createRequire` | ✅ Working |
+| `ioredis`   | ^5.8.2  | ESM/CJS | Direct import           | ✅ Working |
+| `prisma`    | ^6.17.1 | ESM     | Direct import           | ✅ Working |
+| `zod`       | ^3.24.0 | ESM     | Direct import           | ✅ Working |
 
 ---
 
@@ -110,6 +114,7 @@ Before adding ANY npm package to your project, run through this checklist:
 ## Key Concepts
 
 ### ESM (ECMAScript Modules)
+
 - Modern JavaScript module standard (native to browsers and modern Node.js)
 - Syntax: `import`, `export`
 - Tree-shaking friendly
@@ -117,12 +122,14 @@ Before adding ANY npm package to your project, run through this checklist:
 - **In MAIS:** All `.ts` files are treated as ESM due to `"type": "module"`
 
 ### CJS (CommonJS)
+
 - Older Node.js module standard
 - Syntax: `require()`, `module.exports`
 - Still widely used by older packages
 - Synchronous loading
 
 ### Dual Package Hazard
+
 - When a package exposes both CJS and ESM, you might accidentally import both versions
 - Creates duplicate instances, state mismatches
 - Solution: Use `"exports"` field with conditional entry points
@@ -132,6 +139,7 @@ Before adding ANY npm package to your project, run through this checklist:
 ## Common Issues & Solutions
 
 ### Issue: "Cannot find module 'package-name'"
+
 ```typescript
 // ❌ WRONG - Node.js can't resolve CJS module in pure ESM
 import fileType from 'file-type';
@@ -147,6 +155,7 @@ const fileType = require('file-type');
 ---
 
 ### Issue: "Cannot find module 'package-name' in pure ESM mode"
+
 ```typescript
 // ❌ WRONG - Default export might not exist in CJS
 import fileType from 'file-type';
@@ -162,6 +171,7 @@ const { fromBuffer } = require('file-type');
 ---
 
 ### Issue: Types don't work with `createRequire`
+
 ```typescript
 // ❌ WRONG - TypeScript loses type information
 const fileType = require('file-type');
@@ -211,6 +221,7 @@ When you add or modify module imports:
 **Challenge:** `file-type` v16 is CommonJS-only, but we're in pure ESM mode.
 
 **Solution Implemented:**
+
 ```typescript
 // server/src/services/upload.service.ts
 import { createRequire } from 'module';
@@ -218,7 +229,7 @@ import { createRequire } from 'module';
 // ✅ PATTERN: createRequire for CJS package
 const require = createRequire(import.meta.url);
 const fileType = require('file-type') as {
-  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>
+  fromBuffer: (buffer: Buffer) => Promise<{ mime: string; ext: string } | undefined>;
 };
 
 // Usage
@@ -229,10 +240,11 @@ if (detected?.mime === 'image/jpeg') {
 ```
 
 **Tests:**
+
 ```typescript
 // test/services/upload.service.test.ts
 test('should detect JPEG using magic bytes', async () => {
-  const jpegBuffer = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]);
+  const jpegBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
   const detected = await service['validateFile']({
     buffer: jpegBuffer,
     mimetype: 'image/jpeg',
@@ -242,7 +254,7 @@ test('should detect JPEG using magic bytes', async () => {
     destination: 'uploads/',
     filename: 'test.jpg',
     path: 'uploads/test.jpg',
-    size: 4
+    size: 4,
   });
   // Should not throw
 });

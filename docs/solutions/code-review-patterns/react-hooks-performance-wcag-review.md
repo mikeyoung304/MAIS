@@ -1,25 +1,25 @@
 ---
-title: "React Hooks Performance & WCAG Accessibility Code Review Patterns"
-category: "code-review-patterns"
-severity: ["p1", "p2"]
+title: 'React Hooks Performance & WCAG Accessibility Code Review Patterns'
+category: 'code-review-patterns'
+severity: ['p1', 'p2']
 components:
-  - "TenantDashboard"
-  - "TenantPackagesManager"
-  - "useDashboardData"
+  - 'TenantDashboard'
+  - 'TenantPackagesManager'
+  - 'useDashboardData'
 tags:
-  - "react-hooks"
-  - "performance"
-  - "accessibility"
-  - "wcag-compliance"
-  - "useCallback"
-  - "useMemo"
-  - "focus-visible"
-  - "pr-12"
-date_solved: "2025-12-01"
+  - 'react-hooks'
+  - 'performance'
+  - 'accessibility'
+  - 'wcag-compliance'
+  - 'useCallback'
+  - 'useMemo'
+  - 'focus-visible'
+  - 'pr-12'
+date_solved: '2025-12-01'
 total_issues: 12
 p1_issues: 6
 p2_issues: 6
-related_pr: "https://github.com/mikeyoung304/MAIS/pull/12"
+related_pr: 'https://github.com/mikeyoung304/MAIS/pull/12'
 ---
 
 # React Hooks Performance & WCAG Accessibility Code Review Patterns
@@ -32,31 +32,32 @@ Multi-agent code review of PR #12 (Tenant Dashboard Segment-Package Hierarchy) i
 
 ### P1 Critical (Fixed)
 
-| ID | Issue | Category | WCAG |
-|----|-------|----------|------|
-| #119 | Missing useCallback for load functions | Performance | - |
-| #120 | useEffect missing dependencies | Performance | - |
-| #121 | Unstable event handlers break React.memo | Performance | - |
-| #122 | Missing keyboard focus indicator | Accessibility | 2.4.7 |
-| #123 | No chevron icon for accordion state | Accessibility | 1.3.1 |
-| #124 | Button clicks toggle accordion | UX | - |
+| ID   | Issue                                    | Category      | WCAG  |
+| ---- | ---------------------------------------- | ------------- | ----- |
+| #119 | Missing useCallback for load functions   | Performance   | -     |
+| #120 | useEffect missing dependencies           | Performance   | -     |
+| #121 | Unstable event handlers break React.memo | Performance   | -     |
+| #122 | Missing keyboard focus indicator         | Accessibility | 2.4.7 |
+| #123 | No chevron icon for accordion state      | Accessibility | 1.3.1 |
+| #124 | Button clicks toggle accordion           | UX            | -     |
 
 ### P2 Verified (No Action Needed)
 
-| ID | Issue | Resolution |
-|----|-------|------------|
-| #125 | Duplicate header blocks | FALSE POSITIVE - intentionally different |
-| #126 | Duplicate success message | FALSE POSITIVE - correct reuse |
-| #127 | Type export location | DEFERRED - acceptable location |
-| #128 | Missing toast notifications | NOT NEEDED - hooks handle errors |
-| #129 | console.error usage | NOT FOUND - no console.error |
-| #130 | Accordion default state | ALREADY IMPLEMENTED |
+| ID   | Issue                       | Resolution                               |
+| ---- | --------------------------- | ---------------------------------------- |
+| #125 | Duplicate header blocks     | FALSE POSITIVE - intentionally different |
+| #126 | Duplicate success message   | FALSE POSITIVE - correct reuse           |
+| #127 | Type export location        | DEFERRED - acceptable location           |
+| #128 | Missing toast notifications | NOT NEEDED - hooks handle errors         |
+| #129 | console.error usage         | NOT FOUND - no console.error             |
+| #130 | Accordion default state     | ALREADY IMPLEMENTED                      |
 
 ## Solutions Applied
 
 ### 1. useCallback for Load Functions (#119)
 
 **Before:**
+
 ```typescript
 const loadPackagesAndSegments = async () => {
   setIsLoading(true);
@@ -67,8 +68,9 @@ return { loadPackages: loadPackagesAndSegments }; // New reference every render!
 ```
 
 **After:**
+
 ```typescript
-import { useCallback } from "react";
+import { useCallback } from 'react';
 
 const loadPackagesAndSegments = useCallback(async () => {
   setIsLoading(true);
@@ -81,18 +83,20 @@ return { loadPackages: loadPackagesAndSegments };
 ### 2. useEffect Dependencies (#120)
 
 **Before:**
+
 ```typescript
 useEffect(() => {
-  if (activeTab === "packages") {
+  if (activeTab === 'packages') {
     loadPackagesAndSegments(); // Not in deps!
   }
 }, [activeTab]); // ESLint warning
 ```
 
 **After:**
+
 ```typescript
 useEffect(() => {
-  if (activeTab === "packages") {
+  if (activeTab === 'packages') {
     loadPackagesAndSegments();
   }
 }, [activeTab, loadPackagesAndSegments, loadBlackouts, loadBookings, loadBranding]);
@@ -101,6 +105,7 @@ useEffect(() => {
 ### 3. Event Handler Stability (#121)
 
 **Before:**
+
 ```typescript
 const handleEdit = async (pkg: PackageDto) => {
   packageForm.loadPackage(pkg);
@@ -109,21 +114,27 @@ const handleEdit = async (pkg: PackageDto) => {
 ```
 
 **After:**
+
 ```typescript
-const handleEdit = useCallback(async (pkg: PackageDto) => {
-  packageForm.loadPackage(pkg);
-  await packageManager.handleEdit(pkg);
-}, [packageForm.loadPackage, packageManager.handleEdit]);
+const handleEdit = useCallback(
+  async (pkg: PackageDto) => {
+    packageForm.loadPackage(pkg);
+    await packageManager.handleEdit(pkg);
+  },
+  [packageForm.loadPackage, packageManager.handleEdit]
+);
 ```
 
 ### 4. Keyboard Focus Indicator (#122 - WCAG 2.4.7)
 
 **Before:**
+
 ```typescript
 <summary className="... hover:bg-sage-light/5 ...">
 ```
 
 **After:**
+
 ```typescript
 <summary className="... hover:bg-sage-light/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2 ...">
 ```
@@ -131,6 +142,7 @@ const handleEdit = useCallback(async (pkg: PackageDto) => {
 ### 5. Visual State Indicator (#123 - WCAG 1.3.1)
 
 **Before:**
+
 ```typescript
 <span className="text-text-primary">
   {segment.name}
@@ -138,6 +150,7 @@ const handleEdit = useCallback(async (pkg: PackageDto) => {
 ```
 
 **After:**
+
 ```typescript
 <span className="flex items-center gap-2">
   <ChevronRight className="w-5 h-5 text-sage transition-transform duration-200 group-open:rotate-90" />
@@ -150,6 +163,7 @@ const handleEdit = useCallback(async (pkg: PackageDto) => {
 ### 6. Event Propagation (#124)
 
 **Pattern (already implemented):**
+
 ```typescript
 <summary>
   <span>Content</span>
@@ -175,17 +189,20 @@ const handleEdit = useCallback(async (pkg: PackageDto) => {
 
 ```markdown
 ## Performance
+
 - [ ] Callbacks to memoized components use useCallback
 - [ ] useEffect dependency arrays are complete
 - [ ] No ESLint exhaustive-deps warnings
 
 ## Accessibility (WCAG AA)
+
 - [ ] Focus ring visible on keyboard navigation (2.4.7)
 - [ ] Interactive state communicated visually (1.3.1)
 - [ ] Color is not the only indicator
 - [ ] Touch targets >= 44x44px (2.5.5)
 
 ## UX
+
 - [ ] Button clicks in containers don't trigger parent
 - [ ] Accordion default state appropriate for UX
 ```
@@ -209,23 +226,31 @@ Add to `.eslintrc`:
 ## Quick Patterns Reference
 
 ### useCallback Template
+
 ```typescript
-const handler = useCallback(async (param: Type) => {
-  // implementation
-}, [dep1, dep2]);
+const handler = useCallback(
+  async (param: Type) => {
+    // implementation
+  },
+  [dep1, dep2]
+);
 ```
 
 ### Focus Visible Classes
+
 ```typescript
-className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2"
+className =
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2';
 ```
 
 ### Rotating Icon (Accordion)
+
 ```typescript
 <ChevronRight className="transition-transform duration-200 group-open:rotate-90" />
 ```
 
 ### Stop Propagation Wrapper
+
 ```typescript
 <div onClick={e => e.stopPropagation()}>
   {/* buttons here */}
@@ -241,15 +266,15 @@ className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage focus
 
 ## Resolution Summary
 
-| Metric | Value |
-|--------|-------|
-| Total Issues | 12 |
-| P1 Fixed | 5 |
-| P1 Already Implemented | 1 |
-| P2 False Positives | 3 |
-| P2 Deferred | 1 |
-| P2 Already Implemented | 2 |
-| Files Modified | 2 |
-| Resolution Time | ~55 minutes |
+| Metric                 | Value       |
+| ---------------------- | ----------- |
+| Total Issues           | 12          |
+| P1 Fixed               | 5           |
+| P1 Already Implemented | 1           |
+| P2 False Positives     | 3           |
+| P2 Deferred            | 1           |
+| P2 Already Implemented | 2           |
+| Files Modified         | 2           |
+| Resolution Time        | ~55 minutes |
 
 **Commit:** `c763cf0` - "fix(pr-12): resolve all P1 review findings"

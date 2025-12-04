@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "203"
+issue_id: '203'
 tags: [error-handling, frontend, landing-page, resilience]
 dependencies: []
 ---

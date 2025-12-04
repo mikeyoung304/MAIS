@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "074"
+issue_id: '074'
 tags: [security, code-review, seed, production-safety]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The production platform seed uses `upsert()` which **unconditionally updates the password hash** on every seed run. This can lock out legitimate admins who have changed their password after initial setup.
 
 **Why it matters:**
+
 - Running `db:seed:production` resets the admin password unexpectedly
 - No audit trail for password changes
 - Security risk: allows password reset via CI/CD access
@@ -31,12 +32,14 @@ const admin = await prisma.user.upsert({
 ```
 
 **Attack Scenario:**
+
 1. Attacker gains CI/CD access or production server SSH
 2. Runs `ADMIN_EMAIL=admin@company.com ADMIN_DEFAULT_PASSWORD=hacked123 npm run db:seed:production`
 3. Admin password is reset to `hacked123`
 4. Attacker logs in as platform admin
 
 **Production Scenario:**
+
 1. Deploy v1.0 → seed runs → admin logs in with password `XYZ`
 2. Admin changes password to `ABC` via admin panel
 3. Deploy v1.1 → seed runs again → password reset to `XYZ`
@@ -45,6 +48,7 @@ const admin = await prisma.user.upsert({
 ## Proposed Solutions
 
 ### Solution A: Create-only seed (Recommended)
+
 **Pros:** Safe for re-runs, no password overwrites
 **Cons:** Requires manual password update if needed
 **Effort:** Small (15 min)
@@ -52,7 +56,7 @@ const admin = await prisma.user.upsert({
 
 ```typescript
 const existingAdmin = await prisma.user.findUnique({
-  where: { email: adminEmail }
+  where: { email: adminEmail },
 });
 
 if (existingAdmin) {
@@ -72,6 +76,7 @@ const admin = await prisma.user.create({
 ```
 
 ### Solution B: Explicit flag for password reset
+
 **Pros:** Flexible, supports intentional resets
 **Cons:** More complex, risk of accidental flag usage
 **Effort:** Medium (30 min)
@@ -96,6 +101,7 @@ if (shouldResetPassword) {
 ```
 
 ### Solution C: Update only non-sensitive fields
+
 **Pros:** Maintains name/role updates
 **Cons:** Still uses upsert pattern
 **Effort:** Small (10 min)
@@ -116,9 +122,11 @@ update: {
 ## Technical Details
 
 **Affected Files:**
+
 - `server/prisma/seeds/platform.ts`
 
 **Components:**
+
 - Platform seed function
 - User model
 
@@ -134,8 +142,8 @@ update: {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                                  |
+| ---------- | ------------------------ | ---------------------------------------------------------- |
 | 2025-11-29 | Created from code review | upsert update clause should never include sensitive fields |
 
 ## Resources

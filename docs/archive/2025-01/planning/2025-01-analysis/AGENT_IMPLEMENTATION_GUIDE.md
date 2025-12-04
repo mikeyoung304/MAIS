@@ -7,6 +7,7 @@
 ## Quick Reference: Authentication Flow
 
 ### Step 1: Login (Get Token)
+
 ```bash
 curl -X POST http://localhost:3001/v1/auth/login \
   -H "Content-Type: application/json" \
@@ -22,6 +23,7 @@ curl -X POST http://localhost:3001/v1/auth/login \
 ```
 
 ### Step 2: Verify Token & Get Context
+
 ```bash
 curl -X GET http://localhost:3001/v1/auth/verify \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -47,6 +49,7 @@ curl -X GET http://localhost:3001/v1/auth/verify \
 ## Use Case 1: Create Package with Add-ons
 
 ### Objective
+
 Agent helps photographer create a wedding package with 2 add-ons
 
 ### Implementation Pattern
@@ -57,15 +60,15 @@ async function createWeddingPackage(token: string) {
   const packageRes = await fetch('http://localhost:3001/v1/tenant/admin/packages', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       slug: 'deluxe-wedding-2025',
       title: 'Deluxe Wedding Package',
       description: 'Full day coverage with 2 photographers and engagement session',
-      priceCents: 350000 // $3,500.00
-    })
+      priceCents: 350000, // $3,500.00
+    }),
   });
 
   if (!packageRes.ok) {
@@ -83,13 +86,13 @@ async function createWeddingPackage(token: string) {
     {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         title: 'Engagement Session',
-        priceCents: 50000 // $500.00
-      })
+        priceCents: 50000, // $500.00
+      }),
     }
   );
 
@@ -108,13 +111,13 @@ async function createWeddingPackage(token: string) {
     {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         title: 'Bridal Party Photos',
-        priceCents: 75000 // $750.00
-      })
+        priceCents: 75000, // $750.00
+      }),
     }
   );
 
@@ -128,7 +131,7 @@ async function createWeddingPackage(token: string) {
 
   return {
     packageId,
-    addonIds: [addon1.id, addon2.id]
+    addonIds: [addon1.id, addon2.id],
   };
 }
 ```
@@ -146,20 +149,20 @@ async function createWeddingPackageWithRollback(token: string) {
       slug: 'deluxe-wedding-2025',
       title: 'Deluxe Wedding Package',
       description: 'Full day coverage',
-      priceCents: 350000
+      priceCents: 350000,
     });
     createdPackageId = pkg.id;
 
     // Create add-ons
     const addon1 = await createAddOn(token, pkg.id, {
       title: 'Engagement Session',
-      priceCents: 50000
+      priceCents: 50000,
     });
     createdAddonIds.push(addon1.id);
 
     const addon2 = await createAddOn(token, pkg.id, {
       title: 'Bridal Party Photos',
-      priceCents: 75000
+      priceCents: 75000,
     });
     createdAddonIds.push(addon2.id);
 
@@ -167,7 +170,7 @@ async function createWeddingPackageWithRollback(token: string) {
   } catch (error) {
     // Rollback on error
     console.error('Operation failed, rolling back...', error);
-    
+
     if (createdPackageId) {
       try {
         await deletePackage(token, createdPackageId);
@@ -177,7 +180,7 @@ async function createWeddingPackageWithRollback(token: string) {
         // Package orphaned - needs manual cleanup
       }
     }
-    
+
     throw error;
   }
 }
@@ -188,27 +191,21 @@ async function createWeddingPackageWithRollback(token: string) {
 ## Use Case 2: Update Pricing for Package & All Add-ons
 
 ### Objective
+
 Agent helps photographer increase package price by 10%
 
 ### Implementation Pattern
 
 ```typescript
-async function updatePackagePricing(
-  token: string,
-  packageId: string,
-  percentageIncrease: number
-) {
+async function updatePackagePricing(token: string, packageId: string, percentageIncrease: number) {
   // Step 1: Get current package + add-ons
-  const pkgRes = await fetch(
-    `http://localhost:3001/v1/tenant/admin/packages`,
-    {
-      headers: { 'Authorization': `Bearer ${token}` }
-    }
-  );
+  const pkgRes = await fetch(`http://localhost:3001/v1/tenant/admin/packages`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
   const packages = await pkgRes.json();
   const pkg = packages.find((p: any) => p.id === packageId);
-  
+
   if (!pkg) {
     throw new Error(`Package not found: ${packageId}`);
   }
@@ -216,24 +213,21 @@ async function updatePackagePricing(
   // Step 2: Calculate new prices
   const oldPackagePrice = pkg.priceCents;
   const newPackagePrice = Math.round(oldPackagePrice * (1 + percentageIncrease / 100));
-  
+
   const oldAddons = pkg.photos || []; // ⚠️ API returns photos, not add-ons!
   // Need to get add-ons separately since they're not included
 
   // Step 3: Update package price
-  const updateRes = await fetch(
-    `http://localhost:3001/v1/tenant/admin/packages/${packageId}`,
-    {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        priceCents: newPackagePrice
-      })
-    }
-  );
+  const updateRes = await fetch(`http://localhost:3001/v1/tenant/admin/packages/${packageId}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      priceCents: newPackagePrice,
+    }),
+  });
 
   if (!updateRes.ok) {
     throw new Error(`Failed to update package price: ${updateRes.status}`);
@@ -243,7 +237,7 @@ async function updatePackagePricing(
 
   return {
     oldPrice: oldPackagePrice,
-    newPrice: newPackagePrice
+    newPrice: newPackagePrice,
   };
 }
 ```
@@ -256,11 +250,11 @@ The package endpoint returns `photos` array but not `addOns`. Need different app
 async function getPackageWithAddons(token: string, packageId: string) {
   // Fetch all packages to get the one we want (not ideal but necessary)
   const res = await fetch('http://localhost:3001/v1/tenant/admin/packages', {
-    headers: { 'Authorization': `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
   });
 
   if (!res.ok) throw new Error(`Failed to fetch packages`);
-  
+
   const packages = await res.json();
   const pkg = packages.find((p: any) => p.id === packageId);
 
@@ -279,6 +273,7 @@ async function getPackageWithAddons(token: string, packageId: string) {
 ## Use Case 3: Create Bulk Blackout Dates
 
 ### Objective
+
 Agent creates unavailable dates for photographer's vacation
 
 ### Implementation Pattern
@@ -287,47 +282,44 @@ Agent creates unavailable dates for photographer's vacation
 async function createBlackoutDatesForVacation(
   token: string,
   startDate: string, // YYYY-MM-DD
-  endDate: string    // YYYY-MM-DD
+  endDate: string // YYYY-MM-DD
 ) {
   const dates = generateDateRange(startDate, endDate);
   const reason = 'Photographer vacation - unavailable';
-  
+
   const results = {
     created: [] as string[],
-    failed: [] as { date: string; error: string }[]
+    failed: [] as { date: string; error: string }[],
   };
 
   // ⚠️ No bulk endpoint - must create individually
   for (const date of dates) {
     try {
-      const res = await fetch(
-        'http://localhost:3001/v1/tenant/admin/blackouts',
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            date,
-            reason
-          })
-        }
-      );
+      const res = await fetch('http://localhost:3001/v1/tenant/admin/blackouts', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          date,
+          reason,
+        }),
+      });
 
       if (!res.ok) {
         const errorData = await res.json();
-        results.failed.push({ 
-          date, 
-          error: errorData.error || `HTTP ${res.status}` 
+        results.failed.push({
+          date,
+          error: errorData.error || `HTTP ${res.status}`,
         });
       } else {
         results.created.push(date);
       }
     } catch (error) {
-      results.failed.push({ 
-        date, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      results.failed.push({
+        date,
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
 
@@ -353,7 +345,7 @@ function generateDateRange(start: string, end: string): string[] {
 }
 
 function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 ```
 
@@ -361,11 +353,7 @@ function delay(ms: number): Promise<void> {
 
 ```json
 {
-  "created": [
-    "2025-06-01",
-    "2025-06-02",
-    "2025-06-03"
-  ],
+  "created": ["2025-06-01", "2025-06-02", "2025-06-03"],
   "failed": []
 }
 ```
@@ -375,18 +363,16 @@ function delay(ms: number): Promise<void> {
 ## Use Case 4: Update Branding with Color Validation
 
 ### Objective
+
 Agent updates photographer's brand colors
 
 ### Implementation Pattern
 
 ```typescript
-async function updateBranding(
-  token: string,
-  colors: { primary: string; secondary: string }
-) {
+async function updateBranding(token: string, colors: { primary: string; secondary: string }) {
   // Validate colors are valid 6-digit hex (required by API)
   const hexRegex = /^#[0-9A-Fa-f]{6}$/;
-  
+
   if (!hexRegex.test(colors.primary)) {
     throw new Error(
       `Invalid primary color: ${colors.primary}. Must be 6-digit hex (e.g., #FF5733)`
@@ -400,20 +386,17 @@ async function updateBranding(
   }
 
   // Update branding
-  const res = await fetch(
-    'http://localhost:3001/v1/tenant/admin/branding',
-    {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        primaryColor: colors.primary,
-        secondaryColor: colors.secondary
-      })
-    }
-  );
+  const res = await fetch('http://localhost:3001/v1/tenant/admin/branding', {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      primaryColor: colors.primary,
+      secondaryColor: colors.secondary,
+    }),
+  });
 
   if (!res.ok) {
     const error = await res.json();
@@ -426,22 +409,25 @@ async function updateBranding(
 
 // Example: Convert RGB to Hex
 function rgbToHex(r: number, g: number, b: number): string {
-  return '#' + [r, g, b]
-    .map(x => {
-      const hex = x.toString(16);
-      return hex.length === 1 ? '0' + hex : hex;
-    })
-    .join('')
-    .toUpperCase();
+  return (
+    '#' +
+    [r, g, b]
+      .map((x) => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      })
+      .join('')
+      .toUpperCase()
+  );
 }
 
 // Usage
-const primaryColor = rgbToHex(255, 87, 51);   // #FF5733
+const primaryColor = rgbToHex(255, 87, 51); // #FF5733
 const secondaryColor = rgbToHex(52, 152, 219); // #3498DB
 
 await updateBranding(token, {
   primary: primaryColor,
-  secondary: secondaryColor
+  secondary: secondaryColor,
 });
 ```
 
@@ -450,6 +436,7 @@ await updateBranding(token, {
 ## Use Case 5: Safe Configuration Changes with Verification
 
 ### Objective
+
 Agent makes configuration changes and verifies they were applied
 
 ### Implementation Pattern
@@ -466,38 +453,36 @@ async function updateConfigurationWithVerification(
 ) {
   const before = {
     package: null as any,
-    blackouts: null as any[]
+    blackouts: null as any[],
   };
 
   const after = {
     package: null as any,
-    blackouts: null as any[]
+    blackouts: null as any[],
   };
 
   try {
     // Step 1: Capture current state
     if (changes.packageId) {
-      const res = await fetch(
-        'http://localhost:3001/v1/tenant/admin/packages',
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
+      const res = await fetch('http://localhost:3001/v1/tenant/admin/packages', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const packages = await res.json();
       before.package = packages.find((p: any) => p.id === changes.packageId);
     }
 
-    const blackoutRes = await fetch(
-      'http://localhost:3001/v1/tenant/admin/blackouts',
-      { headers: { 'Authorization': `Bearer ${token}` } }
-    );
+    const blackoutRes = await fetch('http://localhost:3001/v1/tenant/admin/blackouts', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     before.blackouts = await blackoutRes.json();
 
     // Step 2: Apply changes
     if (changes.packageId && (changes.newTitle || changes.newPrice)) {
       await updatePackage(token, changes.packageId, {
         title: changes.newTitle,
-        priceCents: changes.newPrice
+        priceCents: changes.newPrice,
       });
-      
+
       console.log(`✓ Updated package ${changes.packageId}`);
     }
 
@@ -505,16 +490,15 @@ async function updateConfigurationWithVerification(
       for (const date of changes.newBlackoutDates) {
         await createBlackout(token, date);
       }
-      
+
       console.log(`✓ Created ${changes.newBlackoutDates.length} blackout dates`);
     }
 
     // Step 3: Verify changes
     if (changes.packageId) {
-      const res = await fetch(
-        'http://localhost:3001/v1/tenant/admin/packages',
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
+      const res = await fetch('http://localhost:3001/v1/tenant/admin/packages', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const packages = await res.json();
       after.package = packages.find((p: any) => p.id === changes.packageId);
 
@@ -527,15 +511,14 @@ async function updateConfigurationWithVerification(
     }
 
     if (changes.newBlackoutDates) {
-      const blackoutRes = await fetch(
-        'http://localhost:3001/v1/tenant/admin/blackouts',
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
+      const blackoutRes = await fetch('http://localhost:3001/v1/tenant/admin/blackouts', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       after.blackouts = await blackoutRes.json();
 
       const createdDates = after.blackouts
-        .filter(b => changes.newBlackoutDates!.includes(b.date))
-        .map(b => b.date);
+        .filter((b) => changes.newBlackoutDates!.includes(b.date))
+        .map((b) => b.date);
 
       if (createdDates.length !== changes.newBlackoutDates.length) {
         throw new Error(
@@ -550,17 +533,17 @@ async function updateConfigurationWithVerification(
       success: true,
       before,
       after,
-      message: 'Configuration updated and verified'
+      message: 'Configuration updated and verified',
     };
   } catch (error) {
     console.error('Configuration update failed:', error);
-    
+
     return {
       success: false,
       before,
       after,
       error: error instanceof Error ? error.message : 'Unknown error',
-      message: 'Configuration update failed - manual verification recommended'
+      message: 'Configuration update failed - manual verification recommended',
     };
   }
 }
@@ -594,7 +577,7 @@ async function makeRequestWithRateLimitHandling<T>(
           `Rate limited (429). Waiting ${delay / 1000}s before retry ${retries + 1}/${maxRetries}...`
         );
 
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         retries++;
         continue;
       }
@@ -607,7 +590,7 @@ async function makeRequestWithRateLimitHandling<T>(
       return response.json() as Promise<T>;
     } catch (error) {
       lastError = error as Error;
-      
+
       // Don't retry on validation errors (400, 401, 403, 404)
       if (error instanceof TypeError) {
         throw error; // Network error
@@ -631,10 +614,10 @@ class RateLimitBudget {
 
   canMakeRequest(): boolean {
     const now = Date.now();
-    
+
     // Remove old requests outside window
-    this.requests = this.requests.filter(time => now - time < this.windowMs);
-    
+    this.requests = this.requests.filter((time) => now - time < this.windowMs);
+
     return this.requests.length < this.requestsAllowed;
   }
 
@@ -644,7 +627,7 @@ class RateLimitBudget {
 
   getRemainingRequests(): number {
     const now = Date.now();
-    this.requests = this.requests.filter(time => now - time < this.windowMs);
+    this.requests = this.requests.filter((time) => now - time < this.windowMs);
     return this.requestsAllowed - this.requests.length;
   }
 
@@ -664,9 +647,7 @@ const budget = new RateLimitBudget();
 async function makeRateLimitedRequest(url: string, options: RequestInit) {
   if (!budget.canMakeRequest()) {
     const resetTime = budget.getResetTime();
-    throw new Error(
-      `Rate limit budget exhausted. Reset at ${resetTime.toISOString()}`
-    );
+    throw new Error(`Rate limit budget exhausted. Reset at ${resetTime.toISOString()}`);
   }
 
   const response = await fetch(url, options);
@@ -686,15 +667,15 @@ async function makeRateLimitedRequest(url: string, options: RequestInit) {
 
 ```typescript
 enum ErrorType {
-  VALIDATION = 'VALIDATION',      // 400 - Invalid input
+  VALIDATION = 'VALIDATION', // 400 - Invalid input
   AUTHENTICATION = 'AUTHENTICATION', // 401 - Missing/invalid token
-  FORBIDDEN = 'FORBIDDEN',         // 403 - Insufficient permissions
-  NOT_FOUND = 'NOT_FOUND',         // 404 - Resource not found
-  CONFLICT = 'CONFLICT',           // 409 - Resource already exists
-  RATE_LIMITED = 'RATE_LIMITED',   // 429 - Too many requests
-  SERVER_ERROR = 'SERVER_ERROR',   // 5xx - Server error
+  FORBIDDEN = 'FORBIDDEN', // 403 - Insufficient permissions
+  NOT_FOUND = 'NOT_FOUND', // 404 - Resource not found
+  CONFLICT = 'CONFLICT', // 409 - Resource already exists
+  RATE_LIMITED = 'RATE_LIMITED', // 429 - Too many requests
+  SERVER_ERROR = 'SERVER_ERROR', // 5xx - Server error
   NETWORK_ERROR = 'NETWORK_ERROR', // Network failure
-  UNKNOWN = 'UNKNOWN'              // Other errors
+  UNKNOWN = 'UNKNOWN', // Other errors
 }
 
 interface ApiError {
@@ -715,7 +696,7 @@ function classifyApiError(response: Response, data: any): ApiError {
         status,
         message: data.error || 'Validation failed',
         details: data.details,
-        retryable: false
+        retryable: false,
       };
 
     case 401:
@@ -723,7 +704,7 @@ function classifyApiError(response: Response, data: any): ApiError {
         type: ErrorType.AUTHENTICATION,
         status,
         message: data.error || 'Authentication failed',
-        retryable: false
+        retryable: false,
       };
 
     case 403:
@@ -731,7 +712,7 @@ function classifyApiError(response: Response, data: any): ApiError {
         type: ErrorType.FORBIDDEN,
         status,
         message: data.error || 'Forbidden',
-        retryable: false
+        retryable: false,
       };
 
     case 404:
@@ -739,7 +720,7 @@ function classifyApiError(response: Response, data: any): ApiError {
         type: ErrorType.NOT_FOUND,
         status,
         message: data.error || 'Not found',
-        retryable: false
+        retryable: false,
       };
 
     case 409:
@@ -747,7 +728,7 @@ function classifyApiError(response: Response, data: any): ApiError {
         type: ErrorType.CONFLICT,
         status,
         message: data.error || 'Conflict',
-        retryable: false
+        retryable: false,
       };
 
     case 429:
@@ -755,7 +736,7 @@ function classifyApiError(response: Response, data: any): ApiError {
         type: ErrorType.RATE_LIMITED,
         status,
         message: data.message || 'Rate limited',
-        retryable: true
+        retryable: true,
       };
 
     case 500:
@@ -765,7 +746,7 @@ function classifyApiError(response: Response, data: any): ApiError {
         type: ErrorType.SERVER_ERROR,
         status,
         message: `Server error (${status})`,
-        retryable: true
+        retryable: true,
       };
 
     default:
@@ -773,7 +754,7 @@ function classifyApiError(response: Response, data: any): ApiError {
         type: ErrorType.UNKNOWN,
         status,
         message: `Unknown error (${status})`,
-        retryable: false
+        retryable: false,
       };
   }
 }
@@ -804,10 +785,11 @@ try {
 ## Key Safety Principles for Agents
 
 ### 1. Always Verify Authentication Before Operations
+
 ```typescript
 async function verifyAuthBeforeOperation(token: string) {
   const res = await fetch('http://localhost:3001/v1/auth/verify', {
-    headers: { 'Authorization': `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
   });
 
   if (!res.ok) {
@@ -819,17 +801,18 @@ async function verifyAuthBeforeOperation(token: string) {
 ```
 
 ### 2. Never Assume Success Without Verification
+
 ```typescript
 // ❌ BAD: Assume operation succeeded
 await fetch('/v1/tenant/admin/packages', {
   method: 'POST',
-  body: JSON.stringify(packageData)
+  body: JSON.stringify(packageData),
 });
 
 // ✓ GOOD: Check response and verify state
 const response = await fetch('/v1/tenant/admin/packages', {
   method: 'POST',
-  body: JSON.stringify(packageData)
+  body: JSON.stringify(packageData),
 });
 
 if (!response.ok) {
@@ -841,6 +824,7 @@ console.log(`Package created: ${pkg.id}`);
 ```
 
 ### 3. Handle Partial Failures Gracefully
+
 ```typescript
 // When operations span multiple requests, track partial success
 const operations = {
@@ -874,6 +858,7 @@ try {
 ```
 
 ### 4. Respect Rate Limits
+
 ```typescript
 // Track requests and wait if approaching limit
 const maxRequestsPerWindow = 120;
@@ -883,7 +868,7 @@ async function throttledFetch(url: string, options: RequestInit) {
   while (!rateLimit.canMakeRequest()) {
     const resetTime = rateLimit.getResetTime();
     const waitMs = resetTime.getTime() - Date.now();
-    
+
     console.log(`Rate limit approaching. Waiting ${waitMs}ms...`);
     await delay(Math.min(waitMs, 10000)); // Wait up to 10s
   }
@@ -895,6 +880,7 @@ async function throttledFetch(url: string, options: RequestInit) {
 ```
 
 ### 5. Validate Input Before Sending
+
 ```typescript
 function validatePackageInput(data: any) {
   if (!data.slug || data.slug.length === 0) {
@@ -936,10 +922,7 @@ interface RequestLog {
 
 const requestLogs: RequestLog[] = [];
 
-async function loggedFetch(
-  url: string,
-  options: RequestInit
-): Promise<Response> {
+async function loggedFetch(url: string, options: RequestInit): Promise<Response> {
   const startTime = Date.now();
   const method = options.method || 'GET';
 
@@ -953,13 +936,11 @@ async function loggedFetch(
       url,
       status: response.status,
       duration,
-      success: response.ok
+      success: response.ok,
     });
 
     if (!response.ok) {
-      console.log(
-        `[${method}] ${url} - ${response.status} (${duration}ms)`
-      );
+      console.log(`[${method}] ${url} - ${response.status} (${duration}ms)`);
     }
 
     return response;
@@ -973,7 +954,7 @@ async function loggedFetch(
       status: 0,
       duration,
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
 
     throw error;
@@ -989,16 +970,16 @@ function exportRequestLog(format: 'json' | 'csv' = 'json'): string {
   // CSV format
   return [
     ['Timestamp', 'Method', 'URL', 'Status', 'Duration (ms)', 'Success'].join(','),
-    ...requestLogs.map(log =>
+    ...requestLogs.map((log) =>
       [
         log.timestamp,
         log.method,
         log.url,
         log.status,
         log.duration,
-        log.success ? 'Yes' : 'No'
+        log.success ? 'Yes' : 'No',
       ].join(',')
-    )
+    ),
   ].join('\n');
 }
 ```
@@ -1018,4 +999,3 @@ function exportRequestLog(format: 'json' | 'csv' = 'json'): string {
 7. **Log all operations** for debugging and audit
 
 **Test in Mock Mode First** before using real credentials - the API includes `/v1/dev/*` endpoints for safe testing.
-

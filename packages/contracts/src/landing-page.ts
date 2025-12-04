@@ -27,7 +27,8 @@ const ALLOWED_PROTOCOLS = ['https:', 'http:'];
  *
  * @see https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html
  */
-export const SafeUrlSchema = z.string()
+export const SafeUrlSchema = z
+  .string()
   .max(2048, 'URL must not exceed 2048 characters') // RFC 7230 recommended limit
   .url()
   .refine(
@@ -62,7 +63,8 @@ export const SafeImageUrlOptionalSchema = SafeImageUrlSchema.optional();
  * Instagram handle schema - validates format to prevent URL injection.
  * @see https://help.instagram.com/370452623149242 (Instagram username rules)
  */
-export const InstagramHandleSchema = z.string()
+export const InstagramHandleSchema = z
+  .string()
   .max(31) // 30 chars + optional @ prefix
   .regex(
     /^@?[a-zA-Z0-9._]{1,30}$/,
@@ -74,7 +76,14 @@ export const InstagramHandleSchema = z.string()
 // Social Proof Icon Types
 // ============================================================================
 
-export const SocialProofIconSchema = z.enum(['star', 'calendar', 'users', 'award', 'heart', 'check']);
+export const SocialProofIconSchema = z.enum([
+  'star',
+  'calendar',
+  'users',
+  'award',
+  'heart',
+  'check',
+]);
 export type SocialProofIcon = z.infer<typeof SocialProofIconSchema>;
 
 // ============================================================================

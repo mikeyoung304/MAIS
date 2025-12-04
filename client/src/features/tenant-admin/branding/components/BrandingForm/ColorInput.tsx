@@ -4,10 +4,10 @@
  * Reusable color input field with both text and color picker
  */
 
-import { Palette, HelpCircle } from "lucide-react";
-import { InputEnhanced } from "@/components/ui/input-enhanced";
-import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Palette, HelpCircle } from 'lucide-react';
+import { InputEnhanced } from '@/components/ui/input-enhanced';
+import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ColorInputProps {
   id: string;

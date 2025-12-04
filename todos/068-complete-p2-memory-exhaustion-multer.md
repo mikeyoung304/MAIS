@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "068"
+issue_id: '068'
 tags: [code-review, performance, memory, security]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 File uploads use `multer.memoryStorage()` which loads entire files into RAM. With 5MB files and 100 uploads/hour rate limit, concurrent requests can cause memory spikes of 200-500MB, potentially crashing the server under load or attack.
 
 **Why This Matters:**
+
 - 10 concurrent 5MB uploads = 50MB+ memory spike
 - Under attack: 100 requests/minute × 5MB = 500MB consumption
 - Node.js GC pressure can cause CPU spikes
@@ -23,6 +24,7 @@ File uploads use `multer.memoryStorage()` which loads entire files into RAM. Wit
 ### Evidence from Code Review
 
 **Current Configuration:**
+
 ```typescript
 const upload = multer({
   storage: multer.memoryStorage(), // Entire file in RAM
@@ -31,6 +33,7 @@ const upload = multer({
 ```
 
 **Memory Impact Analysis:**
+
 ```
 Normal load: 10 concurrent uploads × 5MB = 50MB
 High load: 50 concurrent uploads × 5MB = 250MB
@@ -41,6 +44,7 @@ Peak memory: 500-1500MB under attack
 ```
 
 ### Performance Oracle Assessment
+
 - CRITICAL: Memory exhaustion risk
 - No per-tenant upload concurrency limits
 - All file data buffered before processing
@@ -52,11 +56,13 @@ Peak memory: 500-1500MB under attack
 **Description:** Limit concurrent uploads per tenant to prevent memory spikes.
 
 **Pros:**
+
 - Quick implementation
 - Limits memory per tenant
 - Fair resource allocation
 
 **Cons:**
+
 - Doesn't eliminate memory usage
 - May queue legitimate uploads
 - Semaphore complexity
@@ -88,11 +94,13 @@ function releaseConcurrency(tenantId: string): void {
 **Description:** Use diskStorage temporarily, then stream to Supabase.
 
 **Pros:**
+
 - Minimal memory usage
 - Handles large files
 - More scalable
 
 **Cons:**
+
 - More complex implementation
 - Temp file cleanup needed
 - Disk I/O overhead
@@ -119,11 +127,13 @@ fs.unlinkSync(file.path); // Clean up
 **Description:** Generate signed upload URLs, client uploads directly to Supabase.
 
 **Pros:**
+
 - Zero server memory usage
 - Faster uploads (no double-hop)
 - Supabase handles all storage
 
 **Cons:**
+
 - More complex client implementation
 - Need upload confirmation flow
 - Signed URL security considerations
@@ -138,6 +148,7 @@ fs.unlinkSync(file.path); // Clean up
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/routes/tenant-admin.routes.ts` - Add concurrency check
 - `server/src/services/upload.service.ts` - Concurrency helpers
 - `server/src/middleware/upload.middleware.ts` - Optional: disk storage
@@ -154,6 +165,7 @@ fs.unlinkSync(file.path); // Clean up
 **Implemented:** Option A - Tenant-Level Concurrency Limits
 
 **Changes Made:**
+
 1. Added `checkUploadConcurrency()` and `releaseUploadConcurrency()` functions in `server/src/adapters/upload.adapter.ts`
 2. Set `MAX_CONCURRENT_UPLOADS = 3` per tenant to limit memory spikes
 3. Implemented semaphore-based tracking with `Map<string, number>` for per-tenant upload counts
@@ -166,36 +178,41 @@ fs.unlinkSync(file.path); // Clean up
 7. Used try-finally pattern to ensure concurrency slots are always released
 
 **File Size Limits:**
+
 - Logo uploads: 2MB limit (multer configuration line 38)
 - Package photos: 5MB limit (multer configuration line 46)
 - Segment images: 5MB limit (validated in upload.adapter.ts)
 
 **Memory Protection:**
+
 - Maximum concurrent memory usage per tenant: 3 × 5MB = 15MB
 - With multiple tenants: Memory scales per-tenant, not globally
 - Memory exhaustion attack surface reduced from 500MB to ~45-150MB under load
 
 **Test Coverage:**
+
 - ✅ 75 passing tests in upload.service.test.ts (including concurrent upload handling)
 - ✅ 23 passing tests in tenant-admin-logo.test.ts (including route-level upload tests)
 - ✅ TypeScript compilation passes with no errors
 
 **Acceptance Criteria Status:**
+
 - ✅ Max 3 concurrent uploads per tenant enforced
 - ✅ Exceeded concurrency returns 429 with clear message ("Too many concurrent uploads. Please wait and try again.")
 - ✅ Memory usage capped per tenant
 - ⚠️ Load test under 50 concurrent uploads not yet performed (deferred for production monitoring)
 
 **Future Improvements:**
+
 - Consider Option B (disk storage) for larger file support (>5MB)
 - Consider Option C (direct-to-Supabase) for zero server memory usage
 - Add monitoring/metrics for concurrency limit hits
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-29 | Created | Found during code review - Performance Oracle |
+| Date       | Action   | Notes                                                                 |
+| ---------- | -------- | --------------------------------------------------------------------- |
+| 2025-11-29 | Created  | Found during code review - Performance Oracle                         |
 | 2025-12-02 | Resolved | Implemented Option A - tenant-level concurrency limits with semaphore |
 
 ## Resources

@@ -12,7 +12,9 @@ import { apiKeyService } from '../../src/lib/api-key.service';
  * Transaction client type for seed operations
  * Allows functions to work with both PrismaClient and transaction clients
  */
-type PrismaOrTransaction = PrismaClient | Omit<PrismaClient, '$transaction' | '$connect' | '$disconnect' | '$on' | '$use'>;
+type PrismaOrTransaction =
+  | PrismaClient
+  | Omit<PrismaClient, '$transaction' | '$connect' | '$disconnect' | '$on' | '$use'>;
 
 /**
  * Options for creating/updating a tenant
@@ -122,14 +124,7 @@ export async function createOrUpdatePackage(
   prisma: PrismaOrTransaction,
   options: PackageSeedOptions
 ): Promise<Package> {
-  const {
-    tenantId,
-    slug,
-    name,
-    description,
-    basePrice,
-    photos = [],
-  } = options;
+  const { tenantId, slug, name, description, basePrice, photos = [] } = options;
 
   return prisma.package.upsert({
     where: { tenantId_slug: { slug, tenantId } },
@@ -191,9 +186,7 @@ export async function createOrUpdatePackages(
   packageOptions: Array<Omit<PackageSeedOptions, 'tenantId'>>
 ): Promise<Package[]> {
   return Promise.all(
-    packageOptions.map((opts) =>
-      createOrUpdatePackage(prisma, { ...opts, tenantId })
-    )
+    packageOptions.map((opts) => createOrUpdatePackage(prisma, { ...opts, tenantId }))
   );
 }
 
@@ -206,9 +199,7 @@ export async function createOrUpdateAddOns(
   addOnOptions: Array<Omit<AddOnSeedOptions, 'tenantId'>>
 ): Promise<AddOn[]> {
   return Promise.all(
-    addOnOptions.map((opts) =>
-      createOrUpdateAddOn(prisma, { ...opts, tenantId })
-    )
+    addOnOptions.map((opts) => createOrUpdateAddOn(prisma, { ...opts, tenantId }))
   );
 }
 
@@ -220,9 +211,5 @@ export async function linkAddOnsToPackage(
   packageId: string,
   addOnIds: string[]
 ): Promise<void> {
-  await Promise.all(
-    addOnIds.map((addOnId) =>
-      linkAddOnToPackage(prisma, packageId, addOnId)
-    )
-  );
+  await Promise.all(addOnIds.map((addOnId) => linkAddOnToPackage(prisma, packageId, addOnId)));
 }

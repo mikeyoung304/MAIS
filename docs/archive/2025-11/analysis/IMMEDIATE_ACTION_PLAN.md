@@ -9,11 +9,13 @@
 ## BLOCKING ISSUES (Do First)
 
 ### 1. Fix ESLint Configuration
+
 **Severity:** CRITICAL (Prevents linting)  
 **Time:** 1-2 hours  
 **Why:** ESLint broken, no code quality checks running
 
 **Steps:**
+
 ```bash
 # 1. Update .eslintrc.cjs with parserOptions.project
 # Add to module.exports:
@@ -30,16 +32,19 @@ npm run lint
 ```
 
 **Files to Modify:**
+
 - `.eslintrc.cjs` - Add parserOptions.project
 
 ---
 
 ### 2. Fix Security Vulnerability
+
 **Severity:** CRITICAL (Security)  
 **Time:** 30 minutes  
 **Why:** Prototype pollution in js-yaml
 
 **Steps:**
+
 ```bash
 # 1. Run audit fix
 npm audit fix
@@ -55,11 +60,13 @@ git commit -m "fix: resolve js-yaml prototype pollution vulnerability"
 ---
 
 ### 3. Update Payment-Critical Packages
+
 **Severity:** HIGH (Stripe integration)  
 **Time:** 1 hour  
 **Why:** Stripe 19.1.0 → 19.3.1 has payment improvements
 
 **Steps:**
+
 ```bash
 # 1. Update packages
 npm update stripe @prisma/client prisma
@@ -78,6 +85,7 @@ git commit -m "chore: update stripe and prisma to latest versions"
 ---
 
 ### 4. Fix Type Safety (116 'any' Casts)
+
 **Severity:** HIGH (Type safety)  
 **Time:** 4-6 hours  
 **Why:** Runtime errors possible with JSON columns
@@ -85,14 +93,21 @@ git commit -m "chore: update stripe and prisma to latest versions"
 **Steps:**
 
 **4a. Create Type-Safe JSON Validators**
+
 ```typescript
 // File: src/lib/json-schemas.ts (NEW)
 
 import { z } from 'zod';
 
 export const brandingSchema = z.object({
-  primaryColor: z.string().regex(/^#[0-9A-F]{6}$/i).optional(),
-  secondaryColor: z.string().regex(/^#[0-9A-F]{6}$/i).optional(),
+  primaryColor: z
+    .string()
+    .regex(/^#[0-9A-F]{6}$/i)
+    .optional(),
+  secondaryColor: z
+    .string()
+    .regex(/^#[0-9A-F]{6}$/i)
+    .optional(),
   fontFamily: z.string().optional(),
   logo: z.string().url().optional(),
 });
@@ -100,11 +115,13 @@ export const brandingSchema = z.object({
 export type BrandingConfig = z.infer<typeof brandingSchema>;
 
 export const secretsSchema = z.object({
-  stripe: z.object({
-    ciphertext: z.string(),
-    iv: z.string(),
-    authTag: z.string(),
-  }).optional(),
+  stripe: z
+    .object({
+      ciphertext: z.string(),
+      iv: z.string(),
+      authTag: z.string(),
+    })
+    .optional(),
 });
 
 export type SecretsConfig = z.infer<typeof secretsSchema>;
@@ -120,6 +137,7 @@ export function parseSecrets(data: unknown): SecretsConfig {
 ```
 
 **4b. Replace 'any' Casts**
+
 ```typescript
 // BEFORE:
 const currentBranding = (tenant.branding as any) || {};
@@ -130,18 +148,20 @@ const currentBranding = parseBranding(tenant.branding);
 ```
 
 **4c. Enable TypeScript Strict Options**
+
 ```json
 // server/tsconfig.json
 {
   "compilerOptions": {
-    "noUnusedLocals": true,        // Add (currently false)
-    "noUnusedParameters": true,    // Add (currently false)
+    "noUnusedLocals": true, // Add (currently false)
+    "noUnusedParameters": true // Add (currently false)
     // ... rest stays same
   }
 }
 ```
 
 **4d. Fix Violations**
+
 ```bash
 npm run typecheck
 # Fix each error - most are unused variables
@@ -149,11 +169,13 @@ npm run typecheck
 ```
 
 **Files to Modify:**
+
 - `src/lib/json-schemas.ts` (NEW)
 - All files with `as any` casts (~30 files)
 - `server/tsconfig.json`
 
 **Verification:**
+
 ```bash
 npm run typecheck  # Should pass with no errors
 npm run lint       # Once ESLint fixed
@@ -162,6 +184,7 @@ npm run lint       # Once ESLint fixed
 ---
 
 ### 5. Increase Test Coverage to 70%
+
 **Severity:** CRITICAL (Pre-launch requirement)  
 **Time:** 8-10 hours  
 **Why:** Currently 51%, need 70% for launch
@@ -173,6 +196,7 @@ npm run lint       # Once ESLint fixed
 Target: 50% coverage
 
 Files to test:
+
 - `src/adapters/prisma/booking.repository.ts` (369 lines, 41.75% covered)
 - `src/adapters/prisma/catalog.repository.ts` (305 lines, 41.75% covered)
 - `src/adapters/prisma/tenant.repository.ts` (varies)
@@ -188,9 +212,9 @@ describe('BookingRepository', () => {
     it('should reject double-booking same date');
     it('should handle transaction rollback on validation error');
   });
-  
+
   describe('findByTenant', () => {
-    it('should only return tenant\'s own bookings');
+    it("should only return tenant's own bookings");
     it('should return empty array for nonexistent tenant');
   });
 });
@@ -210,7 +234,7 @@ describe('TenantAdminController', () => {
     it('should reject oversized file (>2MB)');
     it('should validate file type');
   });
-  
+
   describe('updateBranding', () => {
     it('should update branding config');
     it('should validate color hex codes');
@@ -223,6 +247,7 @@ describe('TenantAdminController', () => {
 Target: 60% coverage
 
 Key routes to test:
+
 - POST /v1/bookings - create booking
 - GET /v1/bookings - list with filters
 - POST /v1/packages - create package
@@ -244,6 +269,7 @@ grep -r "it.skip" test/integration/
 ```
 
 **Actions:**
+
 ```bash
 # 1. Create test files
 touch src/adapters/prisma/__tests__/booking.repository.spec.ts
@@ -273,6 +299,7 @@ git commit -m "test: increase coverage from 51% to 70% (target: 70%)"
 ---
 
 ### 6. Remove Dead Code
+
 **Severity:** MEDIUM (Code quality)  
 **Time:** 2 hours  
 **Why:** Reduces maintenance burden
@@ -301,6 +328,7 @@ git commit -m "test: increase coverage from 51% to 70% (target: 70%)"
    - Audit all imports with `eslint . --fix`
 
 **Actions:**
+
 ```bash
 # 1. Create deprecated folder
 mkdir -p _deprecated
@@ -324,6 +352,7 @@ git commit -m "refactor: archive incomplete features and remove dead code"
 ---
 
 ### 7. Break Down Large Files
+
 **Severity:** MEDIUM (Maintainability)  
 **Time:** 4 hours  
 **Why:** 704-line file hard to maintain
@@ -331,6 +360,7 @@ git commit -m "refactor: archive incomplete features and remove dead code"
 **File: src/routes/tenant-admin.routes.ts (704 lines)**
 
 Split into:
+
 - `src/routes/tenant-admin/branding.ts` (100 lines)
 - `src/routes/tenant-admin/packages.ts` (200 lines)
 - `src/routes/tenant-admin/bookings.ts` (150 lines)
@@ -338,10 +368,12 @@ Split into:
 - `src/routes/tenant-admin/index.ts` (50 lines - main router)
 
 **Extract Middleware:**
+
 - `src/middleware/multer-error-handler.ts` (20 lines)
 - `src/middleware/validation.ts` (30 lines)
 
 **Actions:**
+
 ```bash
 # 1. Create directory structure
 mkdir -p src/routes/tenant-admin
@@ -459,4 +491,3 @@ Once these fixes complete, move to:
 5. **Deployment Documentation** (4-6 hours)
 
 See `CODE_HEALTH_ASSESSMENT.md` for full details.
-

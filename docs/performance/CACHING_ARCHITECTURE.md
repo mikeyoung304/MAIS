@@ -8,10 +8,12 @@
 ## Overview
 
 MAIS implements a **dual-mode caching system** with automatic adapter selection based on environment:
+
 - **Production/Real Mode:** Redis-backed distributed caching with graceful degradation
 - **Development/Mock Mode:** In-memory caching for fast local development
 
 This architecture enables:
+
 - 🚀 **Reduced database load** (30-50% fewer queries)
 - ⚡ **Faster response times** (catalog requests: ~200ms → ~5ms)
 - 🔄 **Seamless failover** (graceful degradation if Redis unavailable)
@@ -43,6 +45,7 @@ export interface CacheServicePort {
 ```
 
 **Key Features:**
+
 - Generic `get<T>()` with type safety
 - TTL support for time-based expiration
 - Pattern-based flush for cache invalidation
@@ -65,6 +68,7 @@ if (config.ADAPTERS_PRESET === 'real' && process.env.REDIS_URL) {
 ```
 
 **Configuration:**
+
 - Set `REDIS_URL` for Redis caching (e.g., `redis://localhost:6379`)
 - Omit `REDIS_URL` or use `ADAPTERS_PRESET=mock` for in-memory caching
 
@@ -77,36 +81,41 @@ if (config.ADAPTERS_PRESET === 'real' && process.env.REDIS_URL) {
 ### Features
 
 #### 1. Automatic Reconnection
+
 ```typescript
 retryStrategy: (times) => {
   if (times > 3) return null; // Stop after 3 retries
   const delay = Math.min(times * 50, 2000); // Exponential backoff, max 2s
   return delay;
-}
+};
 ```
 
 **Behavior:**
+
 - Retries 3 times with exponential backoff (50ms → 100ms → 200ms)
 - Stops retrying after 3 failures to prevent infinite loops
 - Emits connection events for monitoring
 
 #### 2. Connection Pooling
+
 ```typescript
 const redis = new Redis(redisUrl, {
   maxRetriesPerRequest: 3,
   enableReadyCheck: true,
   lazyConnect: false,
-  connectTimeout: 10000,  // 10s
-  commandTimeout: 5000,   // 5s
+  connectTimeout: 10000, // 10s
+  commandTimeout: 5000, // 5s
 });
 ```
 
 **Configuration:**
+
 - Connection timeout: 10 seconds
 - Command timeout: 5 seconds
 - Max retries per request: 3 attempts
 
 #### 3. Graceful Degradation
+
 ```typescript
 async get<T>(key: string): Promise<T | null> {
   if (!this.redis || !this.connected) {
@@ -124,6 +133,7 @@ async get<T>(key: string): Promise<T | null> {
 ```
 
 **Failure Modes:**
+
 - Redis unavailable → Cache miss (no error thrown)
 - Parse error → Cache miss + logged error
 - Command timeout → Cache miss + logged error
@@ -131,6 +141,7 @@ async get<T>(key: string): Promise<T | null> {
 **Result:** Application continues functioning even if Redis fails.
 
 #### 4. Production-Safe Flush
+
 ```typescript
 async flush(pattern: string): Promise<void> {
   // Use SCAN to avoid blocking (production-safe)
@@ -149,11 +160,13 @@ async flush(pattern: string): Promise<void> {
 ```
 
 **Why SCAN instead of KEYS:**
+
 - `KEYS` blocks Redis (BAD in production)
 - `SCAN` iterates incrementally (safe for production)
 - Batched deletes prevent memory spikes
 
 #### 5. Performance Metrics
+
 ```typescript
 async getStats(): Promise<{
   hits: number;
@@ -171,6 +184,7 @@ async getStats(): Promise<{
 ```
 
 **Metrics Tracked:**
+
 - Cache hits (successful lookups)
 - Cache misses (key not found or expired)
 - Total keys in Redis
@@ -197,6 +211,7 @@ redis.on('reconnecting', () => logger.info('Redis reconnecting...'));
 ### Features
 
 #### 1. Simple Map-Based Storage
+
 ```typescript
 private cache = new Map<string, CacheEntry>();
 
@@ -207,11 +222,13 @@ interface CacheEntry {
 ```
 
 **Storage:**
+
 - JavaScript `Map` for O(1) lookups
 - Optional TTL with millisecond precision
 - No persistence (cleared on restart)
 
 #### 2. TTL Support
+
 ```typescript
 async set(key: string, value: any, ttlSeconds?: number): Promise<void> {
   const entry: CacheEntry = {
@@ -224,11 +241,13 @@ async set(key: string, value: any, ttlSeconds?: number): Promise<void> {
 ```
 
 **Expiration:**
+
 - TTL stored as Unix timestamp (milliseconds)
 - Checked on `get()` operations
 - Expired entries automatically deleted
 
 #### 3. Automatic Garbage Collection
+
 ```typescript
 private cleanupExpired(): void {
   const now = Date.now();
@@ -247,10 +266,12 @@ private cleanupExpired(): void {
 ```
 
 **When Triggered:**
+
 - Before `getStats()` (periodic cleanup)
 - On every `get()` operation (lazy cleanup)
 
 #### 4. Pattern Matching
+
 ```typescript
 async flush(pattern: string): Promise<void> {
   // Convert pattern to regex (simple pattern matching)
@@ -270,6 +291,7 @@ async flush(pattern: string): Promise<void> {
 ```
 
 **Examples:**
+
 - `flush('catalog:*')` → Matches all catalog keys
 - `flush('catalog:tenant123:*')` → Matches tenant-specific catalog keys
 - `flush('*')` → Clears entire cache
@@ -286,22 +308,22 @@ async flush(pattern: string): Promise<void> {
 const key = `${namespace}:${tenantId}:${resource}`;
 
 // Examples:
-'catalog:tenant123:packages'
-'catalog:tenant123:package:basic-elopement'
-'availability:tenant123:2025-06-15'
-'booking:tenant123:booking456'
+('catalog:tenant123:packages');
+('catalog:tenant123:package:basic-elopement');
+('availability:tenant123:2025-06-15');
+('booking:tenant123:booking456');
 ```
 
 ### Bad Examples (SECURITY VULNERABILITY)
 
 ```typescript
 // ❌ WRONG - Data leakage across tenants
-'catalog:packages'
-'availability:2025-06-15'
+'catalog:packages';
+'availability:2025-06-15';
 
 // ❌ WRONG - Insufficient isolation
-'packages'
-'booking456'
+'packages';
+'booking456';
 ```
 
 ### Cache Invalidation Patterns
@@ -326,6 +348,7 @@ await cacheAdapter.flush('availability:tenant123:*');
 Sprint 10 added the following performance indexes to optimize frequently queried data:
 
 ### Booking Model
+
 ```prisma
 model Booking {
   @@index([tenantId, status])      // Query bookings by status
@@ -338,12 +361,14 @@ model Booking {
 ```
 
 **Query Patterns Optimized:**
+
 - `WHERE tenantId = ? AND status = 'CONFIRMED'` (confirmed bookings)
 - `WHERE tenantId = ? AND date > ?` (upcoming bookings)
 - `WHERE customerId = ?` (customer history)
 - `ORDER BY createdAt DESC` (recent bookings)
 
 ### Customer Model
+
 ```prisma
 model Customer {
   @@index([createdAt])                // Recent customers
@@ -352,10 +377,12 @@ model Customer {
 ```
 
 **Query Patterns Optimized:**
+
 - `WHERE tenantId = ? ORDER BY createdAt DESC` (recent customers for tenant)
 - `ORDER BY createdAt DESC LIMIT 10` (newest customers globally)
 
 ### Package Model
+
 ```prisma
 model Package {
   @@index([tenantId, active])         // Active packages for tenant
@@ -365,11 +392,13 @@ model Package {
 ```
 
 **Query Patterns Optimized:**
+
 - `WHERE tenantId = ? AND active = true` (active packages)
 - `WHERE segmentId = ? AND active = true` (active packages in segment)
 - `WHERE segmentId = ? AND grouping = ?` (packages by grouping)
 
 ### AddOn Model
+
 ```prisma
 model AddOn {
   @@index([tenantId, active])         // Active add-ons for tenant
@@ -378,10 +407,12 @@ model AddOn {
 ```
 
 **Query Patterns Optimized:**
+
 - `WHERE tenantId = ? AND active = true` (active add-ons)
 - `WHERE tenantId = ? AND segmentId = ?` (segment-specific add-ons)
 
 ### Segment Model
+
 ```prisma
 model Segment {
   @@index([tenantId, active])         // Active segments for tenant
@@ -390,9 +421,11 @@ model Segment {
 ```
 
 **Query Patterns Optimized:**
+
 - `WHERE tenantId = ? AND active = true ORDER BY sortOrder` (active segments sorted)
 
 ### Venue Model
+
 ```prisma
 model Venue {
   @@index([tenantId, city])           // Venues by location
@@ -400,6 +433,7 @@ model Venue {
 ```
 
 **Query Patterns Optimized:**
+
 - `WHERE tenantId = ? AND city = ?` (venues in specific city)
 
 ---
@@ -504,26 +538,28 @@ app.get('/health', async (req, res) => {
 
 ### Before Caching (Sprint 0-9)
 
-| Endpoint | Response Time | Database Queries |
-|----------|--------------|------------------|
-| GET /packages | ~200ms | 1 query (packages + add-ons) |
-| GET /packages/:slug | ~150ms | 1 query (package + add-ons) |
-| GET /availability/:date | ~50ms | 2 queries (blackouts + bookings) |
+| Endpoint                | Response Time | Database Queries                 |
+| ----------------------- | ------------- | -------------------------------- |
+| GET /packages           | ~200ms        | 1 query (packages + add-ons)     |
+| GET /packages/:slug     | ~150ms        | 1 query (package + add-ons)      |
+| GET /availability/:date | ~50ms         | 2 queries (blackouts + bookings) |
 
 **Issues:**
+
 - Every request hits database
 - Redundant queries for unchanged data
 - High load during traffic spikes
 
 ### After Caching (Sprint 10)
 
-| Endpoint | Response Time (Cache Hit) | Response Time (Cache Miss) | Database Queries (Hit) | Database Queries (Miss) |
-|----------|--------------------------|---------------------------|----------------------|------------------------|
-| GET /packages | ~5ms | ~200ms | 0 | 1 |
-| GET /packages/:slug | ~3ms | ~150ms | 0 | 1 |
-| GET /availability/:date | ~2ms | ~50ms | 0 | 2 |
+| Endpoint                | Response Time (Cache Hit) | Response Time (Cache Miss) | Database Queries (Hit) | Database Queries (Miss) |
+| ----------------------- | ------------------------- | -------------------------- | ---------------------- | ----------------------- |
+| GET /packages           | ~5ms                      | ~200ms                     | 0                      | 1                       |
+| GET /packages/:slug     | ~3ms                      | ~150ms                     | 0                      | 1                       |
+| GET /availability/:date | ~2ms                      | ~50ms                      | 0                      | 2                       |
 
 **Improvements:**
+
 - **97.5% faster** response times on cache hits
 - **~70% cache hit rate** after warm-up period (15 minutes)
 - **~50% reduction** in database load under normal traffic
@@ -532,13 +568,16 @@ app.get('/health', async (req, res) => {
 ### Estimated Load Reduction
 
 **Assumptions:**
+
 - 70% cache hit rate (after warm-up)
 - 1000 requests/hour to catalog endpoints
 
 **Before Caching:**
+
 - Database queries: 1000/hour
 
 **After Caching:**
+
 - Cache hits: 700/hour (0 database queries)
 - Cache misses: 300/hour (1 database query each)
 - **Total database queries: 300/hour (70% reduction)**
@@ -550,6 +589,7 @@ app.get('/health', async (req, res) => {
 ### Local Development
 
 **Docker Compose** (recommended):
+
 ```yaml
 version: '3.8'
 services:
@@ -566,6 +606,7 @@ volumes:
 ```
 
 **Environment Variable:**
+
 ```bash
 REDIS_URL=redis://localhost:6379
 ```
@@ -573,16 +614,19 @@ REDIS_URL=redis://localhost:6379
 ### Production (Upstash/AWS ElastiCache)
 
 **Upstash Redis** (serverless, recommended):
+
 ```bash
 REDIS_URL=rediss://:password@host:port
 ```
 
 **AWS ElastiCache:**
+
 ```bash
 REDIS_URL=redis://cache-cluster.123456.region.cache.amazonaws.com:6379
 ```
 
 **Recommended Settings:**
+
 - Maxmemory policy: `allkeys-lru` (evict least recently used keys)
 - Max connections: 50 per instance
 - Persistence: AOF (Append-Only File) for durability
@@ -609,6 +653,7 @@ app.get('/health/cache', async (req, res) => {
 ```
 
 **Response:**
+
 ```json
 {
   "connected": true,
@@ -664,7 +709,7 @@ describe('RedisCacheAdapter', () => {
 
   it('should return null for expired keys', async () => {
     await adapter.set('test:expire', 'value', 1); // 1 second TTL
-    await new Promise(resolve => setTimeout(resolve, 1100));
+    await new Promise((resolve) => setTimeout(resolve, 1100));
     const value = await adapter.get('test:expire');
     expect(value).toBeNull();
   });
@@ -735,6 +780,7 @@ describe('CatalogService with caching', () => {
 **Symptom:** Application logs show "Redis connection error"
 
 **Solutions:**
+
 1. **Check Redis is running:** `redis-cli ping` (should return `PONG`)
 2. **Verify REDIS_URL:** `echo $REDIS_URL`
 3. **Check firewall/network:** `telnet localhost 6379`
@@ -747,12 +793,14 @@ describe('CatalogService with caching', () => {
 **Symptom:** Cache hit rate < 50% after warm-up period
 
 **Possible Causes:**
+
 1. **TTL too short:** Increase TTL from 900s (15min) to 1800s (30min)
 2. **Frequent invalidations:** Review cache flush patterns (may be too aggressive)
 3. **High churn data:** Some data shouldn't be cached (e.g., real-time availability)
 4. **Multiple instances:** Each instance has separate in-memory cache (use Redis)
 
 **Diagnosis:**
+
 ```bash
 curl http://localhost:3001/health/cache
 ```
@@ -762,13 +810,16 @@ curl http://localhost:3001/health/cache
 **Symptom:** Redis memory usage grows unbounded
 
 **Solutions:**
+
 1. **Set maxmemory policy:**
+
    ```bash
    redis-cli CONFIG SET maxmemory 256mb
    redis-cli CONFIG SET maxmemory-policy allkeys-lru
    ```
 
 2. **Monitor key count:**
+
    ```bash
    redis-cli DBSIZE
    ```
@@ -782,6 +833,7 @@ curl http://localhost:3001/health/cache
 **Symptom:** Multiple requests simultaneously fetch the same data on cache miss
 
 **Solution:** Implement cache warming on startup:
+
 ```typescript
 async function warmCache() {
   const tenants = await tenantRepo.getAllActive();
@@ -803,7 +855,9 @@ await warmCache();
 ## Future Enhancements
 
 ### 1. Cache Warming on Mutation
+
 Instead of invalidating on update, update the cache:
+
 ```typescript
 async updatePackage(tenantId: string, packageId: string, data: PackageUpdate): Promise<Package> {
   const updated = await this.catalogRepo.updatePackage(tenantId, packageId, data);
@@ -817,17 +871,19 @@ async updatePackage(tenantId: string, packageId: string, data: PackageUpdate): P
 ```
 
 ### 2. Distributed Locking (Prevent Cache Stampede)
+
 Use Redis SET NX for distributed locks:
+
 ```typescript
 async function acquireLock(key: string, ttlSeconds: number): Promise<boolean> {
-  return await redis.set(`lock:${key}`, '1', 'NX', 'EX', ttlSeconds) === 'OK';
+  return (await redis.set(`lock:${key}`, '1', 'NX', 'EX', ttlSeconds)) === 'OK';
 }
 
 async function withLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
   const locked = await acquireLock(key, 10);
   if (!locked) {
     // Wait for lock holder to finish
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     return await fn(); // Retry
   }
 
@@ -840,7 +896,9 @@ async function withLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
 ```
 
 ### 3. Cache Compression
+
 Compress large cached objects to reduce memory:
+
 ```typescript
 import { gzip, gunzip } from 'zlib';
 import { promisify } from 'util';
@@ -864,7 +922,9 @@ async get<T>(key: string): Promise<T | null> {
 ```
 
 ### 4. Multi-Tier Caching
+
 Combine in-memory + Redis for ultra-fast lookups:
+
 ```typescript
 class MultiTierCacheAdapter implements CacheServicePort {
   constructor(

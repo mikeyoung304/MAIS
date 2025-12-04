@@ -1,5 +1,5 @@
 ---
-title: "ESM/CJS Compatibility - Alternatives & Upgrade Guide"
+title: 'ESM/CJS Compatibility - Alternatives & Upgrade Guide'
 slug: esm-cjs-alternatives-guide
 category: prevention
 tags: [modules, esm, cjs, alternatives, upgrades, migration, package-selection]
@@ -47,6 +47,7 @@ Is there an ESM version available?
 ### Real Example: file-type
 
 **Current Situation:**
+
 - v16: CJS-only (we're using this with `createRequire`)
 - v17+: ESM-native
 
@@ -143,15 +144,18 @@ export async function detectFileType(buffer: Buffer): Promise<FileTypeResult | u
 #### File Type Detection
 
 **❌ CJS-only:**
+
 - `file-type@^16` - CommonJS only
 
 **✅ ESM alternatives:**
+
 - `file-type@^17` - Upgrade (preferred)
 - `magic-bytes.js` - Pure ESM, no magic bytes detection
 - `file-extension` - Simple extension checking
 - `mime-types` - MIME type handling (different feature)
 
 **Decision:**
+
 ```
 Need magic byte detection?
 ├─ YES → Use file-type@17 (upgrade)
@@ -162,13 +166,13 @@ Need magic byte detection?
 
 **Pattern: ESM alternatives for common CJS packages**
 
-| CJS Package | Use Case | ESM Alternative | Notes |
-|------------|----------|-----------------|-------|
-| `fs-extra` | File utilities | `fs` + Promises API | Node.js 25 has good built-ins |
-| `lodash` | Utilities | `lodash-es` | Direct ESM version |
-| `moment` | Date/time | `date-fns` | Better ESM support |
-| `uuid` | UUID generation | `uuid` (v4+) | Has ESM export |
-| `cheerio` | HTML parsing | `cheerio` (latest) | ESM support added |
+| CJS Package | Use Case        | ESM Alternative     | Notes                         |
+| ----------- | --------------- | ------------------- | ----------------------------- |
+| `fs-extra`  | File utilities  | `fs` + Promises API | Node.js 25 has good built-ins |
+| `lodash`    | Utilities       | `lodash-es`         | Direct ESM version            |
+| `moment`    | Date/time       | `date-fns`          | Better ESM support            |
+| `uuid`      | UUID generation | `uuid` (v4+)        | Has ESM export                |
+| `cheerio`   | HTML parsing    | `cheerio` (latest)  | ESM support added             |
 
 ### Evaluation Criteria
 
@@ -406,11 +410,11 @@ Add this to your documentation:
 ```markdown
 # CJS Packages Pending ESM Migration
 
-| Package | Version | Current Pattern | ESM Available | Target Version | Status | Notes |
-|---------|---------|-----------------|----------------|-----------------|--------|-------|
-| file-type | ^16.5.4 | createRequire | v17.0.0+ | ^17.0.0 | Pending | Low priority, works fine with createRequire |
-| multer | ^2.0.2 | createRequire | v2.1.0+ (maybe) | ^2.1.0 | Research | Check if new version is ESM |
-| ioredis | ^5.8.2 | Direct import | Built-in | - | Done | Already supports ESM |
+| Package   | Version | Current Pattern | ESM Available   | Target Version | Status   | Notes                                       |
+| --------- | ------- | --------------- | --------------- | -------------- | -------- | ------------------------------------------- |
+| file-type | ^16.5.4 | createRequire   | v17.0.0+        | ^17.0.0        | Pending  | Low priority, works fine with createRequire |
+| multer    | ^2.0.2  | createRequire   | v2.1.0+ (maybe) | ^2.1.0         | Research | Check if new version is ESM                 |
+| ioredis   | ^5.8.2  | Direct import   | Built-in        | -              | Done     | Already supports ESM                        |
 
 **Review Frequency:** Monthly
 **Next Review Date:** 2025-12-29
@@ -438,6 +442,7 @@ export class UploadService {
 ```
 
 **Issues:**
+
 - Less elegant syntax
 - Type assertion required
 - Future upgrade pending
@@ -471,6 +476,7 @@ git commit -m "chore(deps): upgrade file-type to v17+ (ESM-native)"
 ```
 
 **Benefits:**
+
 - ✅ Cleaner code (no createRequire)
 - ✅ Better TypeScript support (no type assertion)
 - ✅ Future-proof (if file-type stays ESM)

@@ -6,20 +6,21 @@ This comprehensive architectural analysis evaluates Elope's readiness for pivoti
 
 **Overall Readiness Score: 7.0/10**
 
-| Area | Score | Status |
-|------|-------|--------|
-| Widget Infrastructure | 8/10 | ✅ Strong foundation |
-| Config Extensibility | 9/10 | ✅ Excellent (JSONB schema) |
-| Multi-Tenancy | 9/10 | ✅ Robust isolation |
-| API Surface for Agents | 6/10 | ⚠️ Missing bulk operations |
-| Versioning/Publishing | 2/10 | 🔴 Critical gap |
-| Validation & Guardrails | 7/10 | ⚠️ Needs enhancement |
-| Theme Generation | 4/10 | 🔴 Minimal capabilities |
-| Audit Logging | 0/10 | 🔴 Missing entirely |
-| Payment Abstraction | 6/10 | ⚠️ Stripe-coupled |
-| Tech Debt Profile | 8/10 | ✅ Clean architecture |
+| Area                    | Score | Status                      |
+| ----------------------- | ----- | --------------------------- |
+| Widget Infrastructure   | 8/10  | ✅ Strong foundation        |
+| Config Extensibility    | 9/10  | ✅ Excellent (JSONB schema) |
+| Multi-Tenancy           | 9/10  | ✅ Robust isolation         |
+| API Surface for Agents  | 6/10  | ⚠️ Missing bulk operations  |
+| Versioning/Publishing   | 2/10  | 🔴 Critical gap             |
+| Validation & Guardrails | 7/10  | ⚠️ Needs enhancement        |
+| Theme Generation        | 4/10  | 🔴 Minimal capabilities     |
+| Audit Logging           | 0/10  | 🔴 Missing entirely         |
+| Payment Abstraction     | 6/10  | ⚠️ Stripe-coupled           |
+| Tech Debt Profile       | 8/10  | ✅ Clean architecture       |
 
 **Critical Blockers:**
+
 1. ❌ No draft/published config workflow
 2. ❌ No audit logging (blocks compliance)
 3. ❌ Widget branding endpoint not implemented (TODO in code)
@@ -27,6 +28,7 @@ This comprehensive architectural analysis evaluates Elope's readiness for pivoti
 5. ❌ Cache vulnerability causes cross-tenant data leakage
 
 **Quick Wins:**
+
 1. ✅ Config schema is JSONB (zero-migration extensibility)
 2. ✅ Widget embedding is production-ready
 3. ✅ Multi-tenant isolation is robust (4-layer defense)
@@ -50,23 +52,32 @@ Parent Site → SDK (mais-sdk.js) → Widget iframe → React App → Backend AP
 ```
 
 **Stage 1: SDK Initialization** (`client/public/mais-sdk.js:246-258`)
+
 ```html
-<script src="https://widget.mais.com/sdk/mais-sdk.js"
-        data-tenant="bellaweddings"
-        data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8">
-</script>
+<script
+  src="https://widget.mais.com/sdk/mais-sdk.js"
+  data-tenant="bellaweddings"
+  data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8"
+></script>
 ```
 
 SDK extracts attributes and creates iframe with URL parameters:
+
 ```javascript
-iframe.src = widgetBaseUrl +
-  '?tenant=' + encodeURIComponent(config.tenant) +
-  '&apiKey=' + encodeURIComponent(config.apiKey) +
-  '&mode=' + encodeURIComponent(config.mode) +
-  '&parentOrigin=' + encodeURIComponent(window.location.origin);
+iframe.src =
+  widgetBaseUrl +
+  '?tenant=' +
+  encodeURIComponent(config.tenant) +
+  '&apiKey=' +
+  encodeURIComponent(config.apiKey) +
+  '&mode=' +
+  encodeURIComponent(config.mode) +
+  '&parentOrigin=' +
+  encodeURIComponent(window.location.origin);
 ```
 
 **Stage 2: Widget App Initialization** (`client/src/widget-main.tsx:18-25`)
+
 ```typescript
 const params = new URLSearchParams(window.location.search);
 const widgetConfig = {
@@ -80,6 +91,7 @@ const widgetConfig = {
 **Stage 3: Config/Data Fetching** (`client/src/widget/WidgetApp.tsx`)
 
 **Packages (Tiers):** ✅ Working
+
 - Hook: `usePackages()` from `client/src/features/catalog/hooks.ts`
 - Endpoint: `GET /v1/packages` (public)
 - Scoping: X-Tenant-Key header
@@ -88,6 +100,7 @@ const widgetConfig = {
 **Branding (Theme):** ⚠️ **NOT WORKING - Critical Issue**
 
 **CRITICAL TODO FOUND** (`client/src/widget/WidgetApp.tsx:50-62`):
+
 ```typescript
 const { data: branding, isLoading: brandingLoading } = useQuery<TenantBrandingDto>({
   queryKey: ['tenant', 'branding', config.tenant],
@@ -96,7 +109,7 @@ const { data: branding, isLoading: brandingLoading } = useQuery<TenantBrandingDt
     // For now, return default branding
     // TODO: Implement /api/v1/tenant/branding endpoint
     return Promise.resolve({
-      primaryColor: '#7C3AED',  // Hardcoded purple
+      primaryColor: '#7C3AED', // Hardcoded purple
       secondaryColor: '#DDD6FE',
       fontFamily: 'Inter, system-ui, sans-serif',
     });
@@ -107,6 +120,7 @@ const { data: branding, isLoading: brandingLoading } = useQuery<TenantBrandingDt
 **Impact:** Widget ALWAYS uses hardcoded purple branding. Tenant customization is ignored.
 
 **Server Endpoint EXISTS** (`packages/contracts/src/api.v1.ts:224`):
+
 ```typescript
 getTenantBranding: {
   method: 'GET',
@@ -122,6 +136,7 @@ But widget doesn't call it!
 **Hard-Coded Logic:**
 
 ❌ Hard-coded elements (cannot be customized):
+
 - Typography scales (h1-h6 sizes)
 - Spacing/padding (Tailwind utilities)
 - Border radius
@@ -129,29 +144,33 @@ But widget doesn't call it!
 - Component structure
 
 ✅ Config-driven elements:
+
 - Primary/secondary colors (CSS variables)
 - Font family (8 Google Fonts supported)
 - Logo URL
 - Custom CSS injection
 
 **Presentation vs State:**
+
 - ✅ Package data from API (no hard-coded tiers)
 - ✅ Add-ons dynamically loaded
 - ⚠️ Branding partially config-driven (but not fetched from server)
 - ❌ Layout/structure is hard-coded React components
 
 **Config Schema** (`packages/contracts/src/dto.ts:134-141`):
+
 ```typescript
 export const TenantBrandingDtoSchema = z.object({
   primaryColor: z.string().optional(),
   secondaryColor: z.string().optional(),
   fontFamily: z.string().optional(),
   logo: z.string().url().optional(),
-  customCss: z.string().optional(),  // Allows arbitrary CSS injection
+  customCss: z.string().optional(), // Allows arbitrary CSS injection
 });
 ```
 
 **Recommendations:**
+
 1. **URGENT:** Implement actual branding fetch in WidgetApp.tsx (remove TODO)
 2. Add layout variants to config schema (grid/list, 2/3 columns)
 3. Add typography scale config (h1-h6 sizes)
@@ -166,6 +185,7 @@ export const TenantBrandingDtoSchema = z.object({
 **Finding:** Schema is **EXCELLENTLY designed for extensibility** (9/10 score).
 
 **Storage Layer** (`server/prisma/schema.prisma`):
+
 ```prisma
 model Tenant {
   id        String   @id @default(cuid())
@@ -176,41 +196,58 @@ model Tenant {
 ```
 
 **Why This Is Excellent:**
+
 - **JSONB column** = No database migrations needed for new fields
 - **Schema-flexible** = Can add arbitrary properties instantly
 - **Type-safe** = Zod validation enforces structure at runtime
 
 **Validation Layer** (`packages/contracts/src/dto.ts:134-153`):
+
 ```typescript
 // Current schema (4 fields)
 export const TenantBrandingDtoSchema = z.object({
-  primaryColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).optional(),
-  secondaryColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).optional(),
+  primaryColor: z
+    .string()
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+    .optional(),
+  secondaryColor: z
+    .string()
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+    .optional(),
   fontFamily: z.string().min(1).optional(),
   logo: z.string().url().optional(),
-  customCss: z.string().optional(),  // Added flexibility
+  customCss: z.string().optional(), // Added flexibility
 });
 
 // Example: Adding new fields requires ZERO migrations
 export const TenantBrandingDtoSchema = z.object({
   // Existing fields...
-  primaryColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).optional(),
+  primaryColor: z
+    .string()
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+    .optional(),
 
   // NEW FIELDS - Just add to schema!
-  accentColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).optional(),
+  accentColor: z
+    .string()
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+    .optional(),
   layout: z.enum(['grid', 'list', 'masonry']).optional(),
   cardStyle: z.enum(['elevated', 'flat', 'outlined']).optional(),
-  typography: z.object({
-    h1Size: z.number().min(20).max(72).optional(),
-    h2Size: z.number().min(16).max(60).optional(),
-    bodySize: z.number().min(12).max(24).optional(),
-  }).optional(),
+  typography: z
+    .object({
+      h1Size: z.number().min(20).max(72).optional(),
+      h2Size: z.number().min(16).max(60).optional(),
+      bodySize: z.number().min(12).max(24).optional(),
+    })
+    .optional(),
   spacing: z.enum(['compact', 'comfortable', 'spacious']).optional(),
   borderRadius: z.enum(['none', 'small', 'medium', 'large', 'full']).optional(),
 });
 ```
 
 **Contract Layer** (`packages/contracts/src/api.v1.ts:224-237`):
+
 ```typescript
 // API contract (auto-generated TypeScript types)
 getTenantBranding: {
@@ -232,6 +269,7 @@ updateTenantBranding: {
 ```
 
 **Server Implementation** (`server/src/controllers/tenant-admin.controller.ts:99-130`):
+
 ```typescript
 async updateBranding(req: AuthenticatedRequest, res: Response) {
   const { tenantId } = req.user!;
@@ -266,15 +304,16 @@ async updateBranding(req: AuthenticatedRequest, res: Response) {
 
 **Extensibility Assessment:**
 
-| Aspect | Score | Capability |
-|--------|-------|------------|
-| Schema Flexibility | 10/10 | JSONB = zero-migration field additions |
-| Type Safety | 10/10 | Zod + TypeScript = compile-time + runtime safety |
-| API Extensibility | 9/10 | ts-rest auto-generates types from schemas |
-| Validation | 10/10 | Zod ensures all layers validate consistently |
-| Backward Compatibility | 10/10 | All fields optional = no breaking changes |
+| Aspect                 | Score | Capability                                       |
+| ---------------------- | ----- | ------------------------------------------------ |
+| Schema Flexibility     | 10/10 | JSONB = zero-migration field additions           |
+| Type Safety            | 10/10 | Zod + TypeScript = compile-time + runtime safety |
+| API Extensibility      | 9/10  | ts-rest auto-generates types from schemas        |
+| Validation             | 10/10 | Zod ensures all layers validate consistently     |
+| Backward Compatibility | 10/10 | All fields optional = no breaking changes        |
 
 **Ready for Themes?** ✅ YES
+
 ```typescript
 // Example: Theme preset system (zero migrations needed)
 const ThemePresetSchema = z.object({
@@ -292,12 +331,14 @@ const ThemePresetSchema = z.object({
 ```
 
 **Ready for Layout Variants?** ✅ YES
+
 ```typescript
 // Add to TenantBrandingDtoSchema (no migration)
 layout: z.enum(['grid-2col', 'grid-3col', 'list', 'masonry']).optional(),
 ```
 
 **Ready for Color Schemes?** ✅ YES
+
 ```typescript
 // Add color palette (no migration)
 colorScheme: z.object({
@@ -313,12 +354,14 @@ colorScheme: z.object({
 ```
 
 **Limitations Found:**
+
 1. **No nested validation** - Complex objects require custom Zod schemas
 2. **No version tracking** - Schema changes don't track version history
 3. **No default values** - Must handle undefined fields manually
 4. **No schema migration tool** - If field is renamed, old data persists
 
 **Recommendations:**
+
 1. ✅ Current schema is excellent - keep JSONB approach
 2. Add theme preset templates (e.g., "Elegant", "Modern", "Rustic")
 3. Add schema version field to track changes
@@ -336,16 +379,19 @@ colorScheme: z.object({
 **Embedding Mechanism:**
 
 **Step 1: Parent Site Integration**
+
 ```html
 <!-- Customer adds to their site -->
-<script src="https://widget.mais.com/sdk/mais-sdk.js"
-        data-tenant="bellaweddings"
-        data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8">
-</script>
+<script
+  src="https://widget.mais.com/sdk/mais-sdk.js"
+  data-tenant="bellaweddings"
+  data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8"
+></script>
 <div id="mais-widget"></div>
 ```
 
 **Step 2: SDK Creates iframe** (`client/public/mais-sdk.js:87-102`)
+
 ```javascript
 this.iframe = document.createElement('iframe');
 this.iframe.src = this.buildWidgetUrl();
@@ -360,34 +406,37 @@ this.iframe.setAttribute('title', 'MAIS Wedding Booking Widget');
 ```
 
 **Step 3: Iframe Loads Widget** (`client/widget.html`)
+
 ```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <!-- Preconnect for performance -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <head>
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-  <style>
-    /* CSS Reset to prevent parent styles from bleeding in */
-    #root {
-      all: initial;  /* ← Nuclear option: reset ALL CSS */
-      display: block;
-      width: 100%;
-    }
+    <style>
+      /* CSS Reset to prevent parent styles from bleeding in */
+      #root {
+        all: initial; /* ← Nuclear option: reset ALL CSS */
+        display: block;
+        width: 100%;
+      }
 
-    /* Widget-scoped styles */
-    .elope-widget {
-      box-sizing: border-box;
-      font-family: var(--font-family, 'Inter', system-ui, sans-serif);
-    }
-  </style>
-</head>
+      /* Widget-scoped styles */
+      .elope-widget {
+        box-sizing: border-box;
+        font-family: var(--font-family, 'Inter', system-ui, sans-serif);
+      }
+    </style>
+  </head>
+</html>
 ```
 
 **Cross-Site Safety:**
 
 **1. CSS Isolation:** ✅ EXCELLENT
+
 - `all: initial` resets all inherited styles
 - `.elope-widget` scoping prevents collisions
 - CSS variables for dynamic theming
@@ -395,6 +444,7 @@ this.iframe.setAttribute('title', 'MAIS Wedding Booking Widget');
 
 **2. Origin Validation:** ✅ STRONG
 SDK validates messages by origin (`client/public/mais-sdk.js:123-127`):
+
 ```javascript
 MAISWidget.prototype.handleMessage = function(event) {
   // SECURITY: Validate origin
@@ -404,6 +454,7 @@ MAISWidget.prototype.handleMessage = function(event) {
 ```
 
 Widget validates parent origin (`client/src/widget/WidgetMessenger.ts:27-42`):
+
 ```typescript
 private sendToParent(type: string, data: Record<string, unknown> = {}): void {
   if (!window.parent) return;
@@ -424,6 +475,7 @@ private sendToParent(type: string, data: Record<string, unknown> = {}): void {
 
 **3. Message Source Validation:** ✅ STRONG
 Widget validates message source (`client/src/widget/WidgetApp.tsx:121-148`):
+
 ```typescript
 const handleParentMessage = (event: MessageEvent) {
   const eventData: unknown = event.data;
@@ -445,6 +497,7 @@ const handleParentMessage = (event: MessageEvent) {
 
 **4. API Key Format Validation:** ✅ STRONG
 SDK validates API key before iframe creation (`client/public/mais-sdk.js:42-46`):
+
 ```javascript
 // Must match pattern: pk_live_{tenant}_{16-hex-chars}
 if (!config.apiKey.match(/^pk_live_[a-z0-9-]+_[a-f0-9]{16}$/)) {
@@ -456,29 +509,32 @@ if (!config.apiKey.match(/^pk_live_[a-z0-9-]+_[a-f0-9]{16}$/)) {
 **5. Resource Loading:**
 
 **Font Loading:** ✅ Deduplicated (`client/src/hooks/useBranding.ts:37-39`)
+
 ```typescript
 const existingLink = document.querySelector(`link[href="${fontUrl}"]`);
-if (existingLink) return;  // Don't reload if already present
+if (existingLink) return; // Don't reload if already present
 ```
 
 **Custom CSS:** ✅ Safely scoped (`client/src/widget/WidgetApp.tsx:81-94`)
+
 ```typescript
 if (branding.customCss) {
   const styleEl = document.createElement('style');
-  styleEl.id = 'tenant-custom-css';  // Unique ID
-  styleEl.textContent = branding.customCss;  // No eval()
+  styleEl.id = 'tenant-custom-css'; // Unique ID
+  styleEl.textContent = branding.customCss; // No eval()
   document.head.appendChild(styleEl);
 
   return () => {
     const existingStyle = document.getElementById('tenant-custom-css');
     if (existingStyle) {
-      existingStyle.remove();  // Cleanup on unmount
+      existingStyle.remove(); // Cleanup on unmount
     }
   };
 }
 ```
 
 **Resize Handling:** ✅ Debounced (`client/src/widget/WidgetMessenger.ts:56-72`)
+
 ```typescript
 sendResize(height: number): void {
   // Skip if height hasn't changed significantly (within 5px)
@@ -501,24 +557,29 @@ sendResize(height: number): void {
 **Known Issues:**
 
 **1. Widget Branding Not Loaded** (Critical - covered in Q1)
+
 - Widget uses hardcoded branding
 - Tenant customization ignored
 
 **2. No CSP Headers Documented**
+
 - Widget HTML doesn't specify CSP
 - Should add: `Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`
 
 **3. No Subresource Integrity (SRI)**
+
 - SDK script tag doesn't use `integrity` attribute
 - Should add: `<script src="..." integrity="sha384-..." crossorigin="anonymous">`
 
 **4. No CORS Configuration Documented**
+
 - Widget server CORS settings not specified
 - Needs explicit allowed origins
 
 **Loading Order Constraints:**
 
 ✅ No constraints - SDK is self-contained:
+
 - SDK script can load before DOM ready
 - Creates iframe when container element exists
 - Handles missing container gracefully
@@ -526,6 +587,7 @@ sendResize(height: number): void {
 **Resource Collisions:**
 
 ✅ No collisions detected:
+
 - Unique class names (`.elope-widget`)
 - Scoped CSS variables
 - No global JavaScript variables
@@ -534,6 +596,7 @@ sendResize(height: number): void {
 **Browser Compatibility:**
 
 ✅ Modern browser support:
+
 - ResizeObserver (IE not supported)
 - postMessage API (universal support)
 - CSS custom properties (IE 11+)
@@ -542,12 +605,14 @@ sendResize(height: number): void {
 **Performance:**
 
 ✅ Optimized:
+
 - Preconnect to Google Fonts
 - Resize debouncing (100ms)
 - Font deduplication
 - Lazy loading of booking flow
 
 **Recommendations:**
+
 1. **URGENT:** Fix widget branding fetch (remove TODO)
 2. Add CSP headers to widget HTML
 3. Add SRI hashes to SDK script
@@ -616,6 +681,7 @@ sendResize(height: number): void {
 **Database Schema** (`server/prisma/schema.prisma`):
 
 **Business Models:**
+
 ```prisma
 model Package {
   id              String   @id @default(cuid())
@@ -656,6 +722,7 @@ model Booking {
 ```
 
 **Presentation Model:**
+
 ```prisma
 model Tenant {
   id          String   @id @default(cuid())
@@ -679,50 +746,53 @@ model Tenant {
 
 **Separation Analysis:**
 
-| Concern | Stored In | Coupled? |
-|---------|-----------|----------|
-| Package pricing | Package.basePrice | ❌ Independent |
-| Package description | Package.description | ❌ Independent |
-| AddOn pricing | AddOn.price | ❌ Independent |
-| Widget colors | Tenant.branding JSON | ❌ Independent |
-| Widget fonts | Tenant.branding JSON | ❌ Independent |
-| Widget logo | Tenant.branding JSON | ❌ Independent |
-| Commission rate | Tenant.stripePlatformFeePercent | ❌ Independent |
-| Booking dates | Booking.date | ❌ Independent |
+| Concern             | Stored In                       | Coupled?       |
+| ------------------- | ------------------------------- | -------------- |
+| Package pricing     | Package.basePrice               | ❌ Independent |
+| Package description | Package.description             | ❌ Independent |
+| AddOn pricing       | AddOn.price                     | ❌ Independent |
+| Widget colors       | Tenant.branding JSON            | ❌ Independent |
+| Widget fonts        | Tenant.branding JSON            | ❌ Independent |
+| Widget logo         | Tenant.branding JSON            | ❌ Independent |
+| Commission rate     | Tenant.stripePlatformFeePercent | ❌ Independent |
+| Booking dates       | Booking.date                    | ❌ Independent |
 
 **Zero Coupling Examples:**
 
 **1. Changing Widget Color Does NOT Affect Business Logic:**
+
 ```typescript
 // Update branding (presentation only)
 await prisma.tenant.update({
   where: { id: tenantId },
   data: {
-    branding: { primaryColor: '#FF0000' }  // Just changes UI
-  }
+    branding: { primaryColor: '#FF0000' }, // Just changes UI
+  },
 });
 
 // Business logic unchanged - commission calculation still works
 const commission = await stripeConnectService.calculateCommission(
   bookingTotal,
-  tenant.stripePlatformFeePercent  // ← Uses business field, not branding
+  tenant.stripePlatformFeePercent // ← Uses business field, not branding
 );
 ```
 
 **2. Changing Package Price Does NOT Affect UI Colors:**
+
 ```typescript
 // Update package price (business data)
 await packageRepo.update(packageId, {
-  basePrice: 150000  // $1500
+  basePrice: 150000, // $1500
 });
 
 // Widget still renders with tenant's branding
-const branding = tenant.branding;  // ← Presentation layer independent
+const branding = tenant.branding; // ← Presentation layer independent
 ```
 
 **Repository Pattern Enforcement:**
 
 All repository methods REQUIRE tenantId (`server/src/lib/ports.ts:50-75`):
+
 ```typescript
 export interface PackageRepository {
   findAll(tenantId: string): Promise<Package[]>;
@@ -737,11 +807,13 @@ export interface PackageRepository {
 **Migration Risks:**
 
 ❌ **Low Risk** - Adding presentation fields to Tenant.branding requires:
+
 1. Update Zod schema (no migration)
 2. Update TypeScript types (compile-time check)
 3. Update React components (isolated to UI layer)
 
 ✅ **No Risk to Business Logic** - Branding changes don't trigger:
+
 - Price recalculations
 - Availability checks
 - Booking validations
@@ -750,14 +822,17 @@ export interface PackageRepository {
 **Coupling Concerns Found:**
 
 **1. Minor: Stripe Account ID in Tenant Model**
+
 - `Tenant.stripeAccountId` mixes payment provider with tenant identity
 - **Recommendation:** Move to separate `TenantPaymentProvider` table
 
 **2. Minor: Widget Endpoint Queries Tenant Table**
+
 - Widget fetches branding from `Tenant` table
 - **Recommendation:** Create `TenantBrandingView` for read-only access
 
 **3. None: Commission Calculation**
+
 - Commission logic is server-side only (`server/src/services/stripe-connect.service.ts`)
 - Never exposed to client
 - Never part of presentation config
@@ -766,6 +841,7 @@ export interface PackageRepository {
 **Schema Evolution Example:**
 
 **Adding New Presentation Field (ZERO RISK):**
+
 ```typescript
 // Step 1: Update Zod schema (no migration needed)
 export const TenantBrandingDtoSchema = z.object({
@@ -782,6 +858,7 @@ export const TenantBrandingDtoSchema = z.object({
 ```
 
 **Adding New Business Field (REQUIRES MIGRATION):**
+
 ```typescript
 // Step 1: Add field to Prisma schema
 model Package {
@@ -800,6 +877,7 @@ if (booking.guestCount < package.minimumGuests) {
 ```
 
 **Recommendations:**
+
 1. ✅ Current separation is excellent - maintain this pattern
 2. Create `TenantPaymentProvider` table to decouple Stripe
 3. Add database view for read-only branding access
@@ -817,6 +895,7 @@ if (booking.guestCount < package.minimumGuests) {
 **Full API Inventory (39 Endpoints):**
 
 #### **Public Endpoints (7 endpoints - No auth)**
+
 ```
 GET    /v1/packages                    // List all packages (tenant-scoped)
 GET    /v1/packages/:slug              // Get single package
@@ -828,6 +907,7 @@ POST   /v1/webhooks/stripe             // Stripe webhook handler
 ```
 
 #### **Platform Admin Endpoints (10 endpoints - JWT required)**
+
 ```
 POST   /v1/admin/login                 // Login
 GET    /v1/admin/tenants               // List all tenants
@@ -844,6 +924,7 @@ PUT    /v1/admin/commission/:tenantId  // Set commission rate
 #### **Tenant Admin Endpoints (22 endpoints - JWT required + tenantId scoped)**
 
 **Packages:**
+
 ```
 GET    /v1/tenant/admin/packages       // List packages
 GET    /v1/tenant/admin/packages/:id   // Get package
@@ -855,6 +936,7 @@ DELETE /v1/tenant/admin/packages/:id/photos/:filename // Delete photo
 ```
 
 **Add-ons:**
+
 ```
 GET    /v1/tenant/admin/addons                // List add-ons
 GET    /v1/tenant/admin/addons/:id            // Get add-on
@@ -864,6 +946,7 @@ DELETE /v1/tenant/admin/addons/:id            // Delete add-on
 ```
 
 **Blackouts:**
+
 ```
 GET    /v1/tenant/admin/blackouts     // List blackouts
 POST   /v1/tenant/admin/blackouts     // Create blackout
@@ -871,12 +954,14 @@ DELETE /v1/tenant/admin/blackouts/:id // Delete blackout
 ```
 
 **Branding:**
+
 ```
 GET    /v1/tenant/admin/branding      // Get branding
 PUT    /v1/tenant/admin/branding      // Update branding
 ```
 
 **Bookings:**
+
 ```
 GET    /v1/tenant/admin/bookings      // List bookings
 GET    /v1/tenant/admin/bookings/:id  // Get booking
@@ -886,21 +971,33 @@ PUT    /v1/tenant/admin/bookings/:id/status // Update booking status
 **Validation Rules** (`packages/contracts/src/dto.ts`):
 
 **Package Validation:**
+
 ```typescript
 export const PackageDtoSchema = z.object({
-  name: z.string().min(3).max(100),         // 3-100 chars
+  name: z.string().min(3).max(100), // 3-100 chars
   description: z.string().min(10).max(1000), // 10-1000 chars
-  basePrice: z.number().int().min(1000),     // >= $10.00
+  basePrice: z.number().int().min(1000), // >= $10.00
   maxCapacity: z.number().int().min(1).max(500), // 1-500 guests
-  slug: z.string().min(3).max(100).regex(/^[a-z0-9-]+$/), // URL-safe
+  slug: z
+    .string()
+    .min(3)
+    .max(100)
+    .regex(/^[a-z0-9-]+$/), // URL-safe
 });
 ```
 
 **Branding Validation:**
+
 ```typescript
 export const TenantBrandingDtoSchema = z.object({
-  primaryColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).optional(),
-  secondaryColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).optional(),
+  primaryColor: z
+    .string()
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+    .optional(),
+  secondaryColor: z
+    .string()
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+    .optional(),
   fontFamily: z.string().min(1).optional(),
   logo: z.string().url().optional(),
   customCss: z.string().max(10000).optional(), // Max 10KB custom CSS
@@ -909,16 +1006,17 @@ export const TenantBrandingDtoSchema = z.object({
 
 **Rate Limiting** (`server/src/middleware/rateLimiter.ts`):
 
-| Route Type | Limit | Window | Enforcement |
-|------------|-------|--------|-------------|
-| Login | 5 attempts | 15 min | Strict (blocks IP) |
-| Admin routes | 120 requests | 15 min | Per-token |
-| Public routes | 300 requests | 15 min | Per-IP |
-| Webhooks | None | - | Signature-based |
+| Route Type    | Limit        | Window | Enforcement        |
+| ------------- | ------------ | ------ | ------------------ |
+| Login         | 5 attempts   | 15 min | Strict (blocks IP) |
+| Admin routes  | 120 requests | 15 min | Per-token          |
+| Public routes | 300 requests | 15 min | Per-IP             |
+| Webhooks      | None         | -      | Signature-based    |
 
 **10 Critical Gaps for Agents:**
 
 **1. ❌ NO BULK OPERATIONS**
+
 ```typescript
 // Currently: Must make N requests for N packages
 for (const pkg of packages) {
@@ -933,6 +1031,7 @@ POST /v1/tenant/admin/packages/bulk
 ```
 
 **2. ❌ NO DRY-RUN / VALIDATION ENDPOINTS**
+
 ```typescript
 // Agents need: "Will this work?" before "Do it"
 POST /v1/tenant/admin/packages/validate
@@ -952,6 +1051,7 @@ Response:
 ```
 
 **3. ❌ NO CONFIGURATION TEMPLATES**
+
 ```typescript
 // Agents need: "Give me a starting point"
 GET /v1/tenant/admin/branding/templates
@@ -965,6 +1065,7 @@ POST /v1/tenant/admin/branding/apply-template
 ```
 
 **4. ❌ NO BATCH QUERY ENDPOINTS**
+
 ```typescript
 // Currently: N+1 queries
 const packages = await api.tenant.admin.packages.list();
@@ -977,6 +1078,7 @@ GET /v1/tenant/admin/packages?include=addons,photos,bookings
 ```
 
 **5. ❌ NO AUDIT TRAIL API**
+
 ```typescript
 // Agents need: "Show me what changed"
 GET /v1/tenant/admin/audit-log
@@ -1001,6 +1103,7 @@ Response:
 ```
 
 **6. ❌ NO CONFIGURATION EXPORT/IMPORT**
+
 ```typescript
 // Agents need: "Backup and restore"
 GET /v1/tenant/admin/config/export
@@ -1016,6 +1119,7 @@ POST /v1/tenant/admin/config/import
 ```
 
 **7. ❌ NO TRANSACTION SUPPORT**
+
 ```typescript
 // Agents need: "All or nothing"
 POST /v1/tenant/admin/transaction
@@ -1030,6 +1134,7 @@ POST /v1/tenant/admin/transaction
 ```
 
 **8. ❌ NO OPTIMISTIC LOCKING (If-Match)**
+
 ```typescript
 // Agents need: "Only update if unchanged"
 PUT /v1/tenant/admin/branding
@@ -1041,6 +1146,7 @@ Response if changed:
 ```
 
 **9. ❌ NO ASYNC JOB QUEUE**
+
 ```typescript
 // Agents need: "Long-running operations"
 POST /v1/tenant/admin/packages/import-csv
@@ -1062,6 +1168,7 @@ GET /v1/tenant/admin/jobs/job_123
 ```
 
 **10. ❌ NO STRUCTURED ERROR CODES**
+
 ```typescript
 // Currently: Generic messages
 { "error": "Validation failed" }
@@ -1092,6 +1199,7 @@ GET /v1/tenant/admin/jobs/job_123
 **Agent-Safe Mutations:**
 
 ✅ Agents CAN do (all tenant-scoped):
+
 - Create/update/delete packages
 - Create/update/delete add-ons
 - Create/delete blackout dates
@@ -1100,6 +1208,7 @@ GET /v1/tenant/admin/jobs/job_123
 - Update booking status (limited state machine)
 
 **Recommendations:**
+
 1. **Phase 1 (1 week):** Add bulk operations, dry-run validation
 2. **Phase 2 (1 week):** Add audit trail API, structured errors
 3. **Phase 3 (2 weeks):** Add templates, export/import, transactions
@@ -1116,6 +1225,7 @@ GET /v1/tenant/admin/jobs/job_123
 **Current Implementation:**
 
 ❌ **NO DRAFT MODE** - All changes apply immediately:
+
 ```typescript
 // server/src/controllers/tenant-admin.controller.ts:99-130
 async updateBranding(req: AuthenticatedRequest, res: Response) {
@@ -1135,6 +1245,7 @@ async updateBranding(req: AuthenticatedRequest, res: Response) {
 **Impact:** When tenant admin changes widget color, all customers see new color instantly.
 
 ❌ **NO VERSION HISTORY** - No tracking of changes:
+
 ```prisma
 model Tenant {
   id       String @id
@@ -1148,6 +1259,7 @@ model Tenant {
 ```
 
 ❌ **NO ROLLBACK** - Cannot undo changes:
+
 ```typescript
 // No way to do this:
 POST /v1/tenant/admin/branding/rollback
@@ -1157,6 +1269,7 @@ POST /v1/tenant/admin/branding/rollback
 ```
 
 ❌ **NO PREVIEW** - Cannot test before publishing:
+
 ```typescript
 // No way to do this:
 POST /v1/tenant/admin/branding/preview
@@ -1193,6 +1306,7 @@ PUT /v1/tenant/admin/branding
 **Database Support:**
 
 **Current Schema:**
+
 ```prisma
 model Tenant {
   id        String   @id
@@ -1203,6 +1317,7 @@ model Tenant {
 ```
 
 **Missing Schema:**
+
 ```prisma
 // Option 1: Versioned branding with history table
 model BrandingVersion {
@@ -1240,23 +1355,27 @@ model Tenant {
 **Implementation Estimates:**
 
 **Phase 1: Draft/Publish (5-8 hours)**
+
 - Add `status` field to branding (draft/published)
 - Add `PUT /v1/tenant/admin/branding/draft` endpoint
 - Add `POST /v1/tenant/admin/branding/publish` endpoint
 - Update widget to only load published config
 
 **Phase 2: Version History (8-12 hours)**
+
 - Create `BrandingVersion` table
 - Add version increment logic
 - Add `GET /v1/tenant/admin/branding/versions` endpoint
 - Add `GET /v1/tenant/admin/branding/versions/:id` endpoint
 
 **Phase 3: Rollback (4-6 hours)**
+
 - Add `POST /v1/tenant/admin/branding/rollback` endpoint
 - Implement version restoration logic
 - Add UI for version comparison
 
 **Phase 4: Preview Mode (12-16 hours)**
+
 - Add `preview` query parameter to widget
 - Add preview authentication (temporary token)
 - Update widget to load draft config in preview mode
@@ -1341,6 +1460,7 @@ async rollback(req: AuthenticatedRequest, res: Response) {
 ```
 
 **Recommendations:**
+
 1. **URGENT:** Implement draft/publish workflow (Phase 1)
 2. Add version history table (Phase 2)
 3. Add rollback capability (Phase 3)
@@ -1360,37 +1480,47 @@ async rollback(req: AuthenticatedRequest, res: Response) {
 **Layer 1: Zod Schema Validation** (Client + Server)
 
 **Package Validation** (`packages/contracts/src/dto.ts:15-42`):
+
 ```typescript
 export const PackageDtoSchema = z.object({
-  name: z.string().min(3).max(100),         // ✅ Length constraints
+  name: z.string().min(3).max(100), // ✅ Length constraints
   description: z.string().min(10).max(1000), // ✅ Length constraints
-  basePrice: z.number().int().min(1000),     // ✅ Minimum $10.00
+  basePrice: z.number().int().min(1000), // ✅ Minimum $10.00
   maxCapacity: z.number().int().min(1).max(500), // ✅ Capacity limits
-  slug: z.string()
+  slug: z
+    .string()
     .min(3)
     .max(100)
-    .regex(/^[a-z0-9-]+$/),                  // ✅ URL-safe format
-  photos: z.array(z.object({
-    url: z.string().url(),                   // ✅ Valid URL
-    filename: z.string(),
-    size: z.number().int().min(1),
-    order: z.number().int().min(0).max(4),   // ✅ Max 5 photos
-  })).max(5).optional(),                     // ✅ Enforced at schema
+    .regex(/^[a-z0-9-]+$/), // ✅ URL-safe format
+  photos: z
+    .array(
+      z.object({
+        url: z.string().url(), // ✅ Valid URL
+        filename: z.string(),
+        size: z.number().int().min(1),
+        order: z.number().int().min(0).max(4), // ✅ Max 5 photos
+      })
+    )
+    .max(5)
+    .optional(), // ✅ Enforced at schema
 });
 ```
 
 **Branding Validation** (`packages/contracts/src/dto.ts:134-153`):
+
 ```typescript
 export const TenantBrandingDtoSchema = z.object({
-  primaryColor: z.string()
-    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)  // ✅ Hex color only
+  primaryColor: z
+    .string()
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/) // ✅ Hex color only
     .optional(),
-  secondaryColor: z.string()
-    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)  // ✅ Hex color only
+  secondaryColor: z
+    .string()
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/) // ✅ Hex color only
     .optional(),
-  fontFamily: z.string().min(1).optional(),         // ✅ Non-empty
-  logo: z.string().url().optional(),                // ✅ Valid URL
-  customCss: z.string().max(10000).optional(),      // ✅ Max 10KB
+  fontFamily: z.string().min(1).optional(), // ✅ Non-empty
+  logo: z.string().url().optional(), // ✅ Valid URL
+  customCss: z.string().max(10000).optional(), // ✅ Max 10KB
 });
 ```
 
@@ -1401,13 +1531,13 @@ export const TenantBrandingDtoSchema = z.object({
 export const validateBody = <T extends z.ZodType>(schema: T) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      req.body = await schema.parseAsync(req.body);  // ✅ Validates + transforms
+      req.body = await schema.parseAsync(req.body); // ✅ Validates + transforms
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           error: 'Validation failed',
-          details: error.errors,  // ✅ Returns specific field errors
+          details: error.errors, // ✅ Returns specific field errors
         });
       }
       next(error);
@@ -1419,6 +1549,7 @@ export const validateBody = <T extends z.ZodType>(schema: T) => {
 **Layer 3: Business Logic Validation** (`server/src/services/`):
 
 **Price Change Validation:**
+
 ```typescript
 // server/src/services/catalog.service.ts
 async updatePackage(id: string, updates: Partial<Package>, tenantId: string) {
@@ -1450,6 +1581,7 @@ async updatePackage(id: string, updates: Partial<Package>, tenantId: string) {
 ```
 
 **Booking Validation:**
+
 ```typescript
 // server/src/services/booking.service.ts
 async create(booking: Booking, tenantId: string) {
@@ -1523,6 +1655,7 @@ model User {
 **What's Missing for Agents:**
 
 **1. ❌ NO RATE LIMIT ON MUTATIONS**
+
 ```typescript
 // Current: No rate limit on POST/PUT/DELETE
 // Agents could spam create 1000s of packages
@@ -1530,36 +1663,39 @@ model User {
 // Needed:
 export const rateLimitMutations = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 50,  // Max 50 mutations per 15 minutes
+  max: 50, // Max 50 mutations per 15 minutes
   message: 'Too many mutations - please slow down',
 });
 ```
 
 **2. ❌ NO UPPER BOUNDS ON ARRAY FIELDS**
+
 ```typescript
 // Current: Can create package with 10,000 add-ons
 export const PackageDtoSchema = z.object({
-  addOns: z.array(AddOnDtoSchema).optional(),  // ❌ No max
+  addOns: z.array(AddOnDtoSchema).optional(), // ❌ No max
 });
 
 // Needed:
 export const PackageDtoSchema = z.object({
-  addOns: z.array(AddOnDtoSchema).max(20).optional(),  // ✅ Max 20
+  addOns: z.array(AddOnDtoSchema).max(20).optional(), // ✅ Max 20
 });
 ```
 
 **3. ❌ NO VALIDATION ON TOTAL CONFIG SIZE**
+
 ```typescript
 // Current: Could send 10MB branding JSON
 export const TenantBrandingDtoSchema = z.object({
-  customCss: z.string().max(10000).optional(),  // ✅ Has limit
+  customCss: z.string().max(10000).optional(), // ✅ Has limit
   // But JSONB column has no limit
 });
 
 // Needed: Middleware to check total body size
 export const enforceBrandingSize = (req, res, next) => {
   const size = JSON.stringify(req.body).length;
-  if (size > 100_000) {  // 100KB max
+  if (size > 100_000) {
+    // 100KB max
     return res.status(413).json({ error: 'Branding config too large' });
   }
   next();
@@ -1567,6 +1703,7 @@ export const enforceBrandingSize = (req, res, next) => {
 ```
 
 **4. ❌ NO "SAFETY MODE" FOR CRITICAL CHANGES**
+
 ```typescript
 // Agents should require confirmation for:
 // - Deleting packages with bookings
@@ -1582,6 +1719,7 @@ PUT /v1/tenant/admin/packages/:id
 ```
 
 **5. ❌ NO STRUCTURED ERROR CODES**
+
 ```typescript
 // Current: Generic messages
 { "error": "Validation failed" }
@@ -1599,6 +1737,7 @@ PUT /v1/tenant/admin/packages/:id
 ```
 
 **6. ❌ NO DRY-RUN VALIDATION**
+
 ```typescript
 // Agents need: "Will this work?" before doing it
 POST /v1/tenant/admin/packages/validate
@@ -1621,6 +1760,7 @@ Response:
 ```
 
 **7. ❌ NO APPROVAL WORKFLOW**
+
 ```typescript
 // Agents should flag high-risk changes for human approval
 POST /v1/tenant/admin/packages
@@ -1640,25 +1780,26 @@ Response:
 
 **Validation Scorecard:**
 
-| Validation Type | Exists? | Quality | Agent-Safe? |
-|----------------|---------|---------|-------------|
-| Field type checking | ✅ Yes | Excellent | ✅ Yes |
-| Length constraints | ✅ Yes | Good | ✅ Yes |
-| Format validation (regex) | ✅ Yes | Excellent | ✅ Yes |
-| Business logic rules | ✅ Yes | Good | ✅ Yes |
-| Price constraints | ⚠️ Partial | Fair | ⚠️ Needs improvement |
-| Capacity validation | ✅ Yes | Excellent | ✅ Yes |
-| Date validation | ✅ Yes | Excellent | ✅ Yes |
-| Tenant isolation | ✅ Yes | Excellent | ✅ Yes |
-| Rate limiting | ⚠️ Login only | Poor | ❌ No |
-| Upper bounds | ❌ No | N/A | ❌ No |
-| Config size limits | ⚠️ Partial | Fair | ⚠️ Needs improvement |
-| Dangerous action confirmation | ❌ No | N/A | ❌ No |
-| Structured errors | ❌ No | N/A | ❌ No |
-| Dry-run validation | ❌ No | N/A | ❌ No |
-| Approval workflow | ❌ No | N/A | ❌ No |
+| Validation Type               | Exists?       | Quality   | Agent-Safe?          |
+| ----------------------------- | ------------- | --------- | -------------------- |
+| Field type checking           | ✅ Yes        | Excellent | ✅ Yes               |
+| Length constraints            | ✅ Yes        | Good      | ✅ Yes               |
+| Format validation (regex)     | ✅ Yes        | Excellent | ✅ Yes               |
+| Business logic rules          | ✅ Yes        | Good      | ✅ Yes               |
+| Price constraints             | ⚠️ Partial    | Fair      | ⚠️ Needs improvement |
+| Capacity validation           | ✅ Yes        | Excellent | ✅ Yes               |
+| Date validation               | ✅ Yes        | Excellent | ✅ Yes               |
+| Tenant isolation              | ✅ Yes        | Excellent | ✅ Yes               |
+| Rate limiting                 | ⚠️ Login only | Poor      | ❌ No                |
+| Upper bounds                  | ❌ No         | N/A       | ❌ No                |
+| Config size limits            | ⚠️ Partial    | Fair      | ⚠️ Needs improvement |
+| Dangerous action confirmation | ❌ No         | N/A       | ❌ No                |
+| Structured errors             | ❌ No         | N/A       | ❌ No                |
+| Dry-run validation            | ❌ No         | N/A       | ❌ No                |
+| Approval workflow             | ❌ No         | N/A       | ❌ No                |
 
 **Recommendations:**
+
 1. **Phase 1 (1 week):** Add rate limiting on mutations, upper bounds on arrays
 2. **Phase 2 (1 week):** Add structured error codes, dry-run validation
 3. **Phase 3 (2 weeks):** Add dangerous action confirmation, approval workflow

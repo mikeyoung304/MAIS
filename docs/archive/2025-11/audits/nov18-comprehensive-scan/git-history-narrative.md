@@ -41,6 +41,7 @@ Week 5 (Nov 11-18): Quality & UX → Design system, component refactoring
 The project started with a **clean-slate approach** on October 14, 2025. The initial commits reveal a developer who understood the importance of proper project structure from day one.
 
 **Commit Timeline:**
+
 ```
 aab8a2e - chore: init workspaces & tooling
 cb1b65f - chore: scaffold workspace packages (api, core)
@@ -87,6 +88,7 @@ b04d962 - feat(web): admin MVP (login, bookings table, blackouts CRUD)
 ```
 
 **Significance:** Within 2 days, the project had:
+
 - Admin authentication
 - Full CRUD operations
 - Unit test infrastructure
@@ -139,6 +141,7 @@ d76f480 - test(e2e): stabilize mock flow (reset endpoint, robust waits, test IDs
 ```
 
 **What Happened:** The initial E2E tests were flaky. The developer added:
+
 - Reset endpoint for test isolation
 - Robust wait strategies
 - Test IDs in components (data-testid attributes)
@@ -153,6 +156,7 @@ da8043a - feat: P0/P1 foundations - DB, security, performance, a11y, tests
 ```
 
 This single commit introduced:
+
 - Database schema (Prisma migrations)
 - Security baseline (input validation, rate limiting concepts)
 - Performance optimizations
@@ -170,6 +174,7 @@ The most significant commit in the entire history:
 ```
 
 **Scope of Changes:**
+
 - 149 files changed, +10,755 insertions, -5,557 deletions
 - Moved `apps/api/` → `server/`
 - Moved `apps/web/` → `client/`
@@ -186,6 +191,7 @@ The most significant commit in the entire history:
 4. **Flat structure**: Moving from nested domains to flat services improved discoverability and reduced import depth
 
 **Commit Message Quality:** The commit included:
+
 - Detailed list of 5 major change categories
 - Known issues section (honest about tech debt)
 - "What's Working" checklist
@@ -202,6 +208,7 @@ a5e2cc1 - fix: resolve Prisma model mismatch, CORS port, and update dependencies
 ```
 
 **Reality Check:** The architectural refactoring introduced breaking changes. The developer spent the next 3 commits fixing:
+
 - Prisma schema mismatches (name vs title, basePrice vs priceCents)
 - CORS configuration errors
 - Database migration issues
@@ -254,6 +261,7 @@ CRITICAL SECURITY FIX (P0):
 **How It Was Discovered:** The developer likely noticed during testing that different tenants were seeing each other's data. The root cause analysis shows **sophisticated debugging** - tracing the middleware chain and identifying the cache key generation issue.
 
 **The Fix:**
+
 1. Removed HTTP-level cache middleware entirely
 2. Kept application-level cache (CacheService) with proper tenant scoping
 3. Verified isolation with 3 test tenants
@@ -265,17 +273,20 @@ CRITICAL SECURITY FIX (P0):
 The same commit (efda74b) introduced **complete multi-tenant infrastructure**:
 
 **Database Layer:**
+
 - All tables extended with `tenantId` column
 - Composite unique constraints: `[tenantId, slug]`, `[tenantId, date]`
 - Row-level data isolation enforced at query level
 
 **Middleware Layer:**
+
 - Tenant resolution from `X-Tenant-Key` header (format: `pk_live_{slug}_{random}`)
 - API key validation before database lookup
 - Tenant context injection into request object
 - 401 for invalid keys, 403 for inactive tenants
 
 **Repository Layer:**
+
 - All repository methods updated with `tenantId` as first parameter
 - 11 methods in CatalogRepository
 - 6 methods in BookingRepository
@@ -283,11 +294,13 @@ The same commit (efda74b) introduced **complete multi-tenant infrastructure**:
 - 2 methods in WebhookRepository
 
 **Service Layer:**
+
 - CommissionService introduced (per-tenant variable rates: 10-15%)
 - All services accept `tenantId` parameter
 - Booking flow calculates commission based on tenant settings
 
 **Testing Verification:**
+
 ```
 ✅ Tenant A: Returns "Test Package A" only
 ✅ Tenant B: Returns "Test Package B" only
@@ -309,6 +322,7 @@ b5c4ccb - fix(auth): Fix admin login and implement platform admin tenant managem
 ```
 
 **New Capabilities:**
+
 1. **Tenant Admin Dashboard**: 4-tab interface (Packages, Bookings, Branding, Blackouts)
 2. **Platform Admin**: Super-admin role for managing multiple tenants
 3. **Security hardening**: Login rate limiting (5 attempts per 15 min), bcrypt password hashing
@@ -327,6 +341,7 @@ d58b4a4 - feat(api): Implement proper HTTP status codes for photo upload error h
 ```
 
 **Photo Upload Feature:**
+
 - Backend API for photo upload (multipart/form-data)
 - Proper HTTP status codes (400, 413, 415, 500)
 - Type-safe implementation with Zod validation
@@ -345,6 +360,7 @@ c4eb913 - docs: fix navigation README paths and update CHANGELOG
 ```
 
 **Pattern:** As the project matured, documentation became a **first-class concern**. The developer reorganized docs into:
+
 - `/docs/setup/` - Environment setup guides
 - `/docs/operations/` - Runbooks and incident response
 - `/docs/security/` - Security documentation and procedures
@@ -366,6 +382,7 @@ Starting November 10, the developer adopted a **sprint-based approach** focused 
 ```
 
 **Sprint 3 Goals:**
+
 - Restore integration tests broken by multi-tenant refactoring
 - Achieve 75% pass rate
 - Establish stable baseline for future work
@@ -395,6 +412,7 @@ The developer discovered that **test failures were infrastructure issues, not te
 The most disciplined test improvement effort:
 
 **Phase 1: Establish Baseline**
+
 ```
 854391a - test(integration): Skip 26+ flaky tests to establish stable baseline (Sprint 6 Phase 1)
 ca1ca54 - docs: Create Sprint 6 stabilization plan with comprehensive 3-run test analysis
@@ -403,6 +421,7 @@ ca1ca54 - docs: Create Sprint 6 stabilization plan with comprehensive 3-run test
 **Strategy:** Skip flaky tests to identify truly stable tests, then systematically re-enable them.
 
 **Phase 2: Infrastructure Refactoring**
+
 ```
 6ca2e13 - feat(tests): Complete Sprint 6 Phase 2 - Test stabilization via infrastructure refactoring
 ```
@@ -410,6 +429,7 @@ ca1ca54 - docs: Create Sprint 6 stabilization plan with comprehensive 3-run test
 Fixed database connection pooling, transaction isolation, and test setup/teardown.
 
 **Phase 3: Batch Re-enabling (4 batches)**
+
 ```
 eb8683c - feat(tests): Complete Sprint 6 Phase 3 Batches 1-2 - Re-enable 9 tests (+22.5% coverage)
 aad963d - feat(tests): Complete Sprint 6 Phase 3 Batch 3 🎯 MILESTONE ACHIEVED - 54 passing tests
@@ -419,18 +439,21 @@ aad963d - feat(tests): Complete Sprint 6 Phase 3 Batch 3 🎯 MILESTONE ACHIEVED
 **Results:** Re-enabled 22 tests with **zero test code changes** - all fixes were infrastructure improvements.
 
 **Phase 4: Final Push**
+
 ```
 4f51826 - feat(tests): Complete Sprint 6 Phase 4 Batch 1 - 59 passing tests (+3.5%)
 a8a7e32 - feat(tests): Complete Sprint 6 Phase 4 Batch 2 🎯 60% PASS RATE MILESTONE
 ```
 
 **Final Sprint 6 Stats:**
+
 - **60% pass rate** (62/104 tests)
 - **0% variance** (zero flaky tests)
 - **Infrastructure improvements only** (no test logic changes)
 - **22 tests re-enabled** systematically
 
 **Pattern Recognition:** The developer identified two failure patterns:
+
 1. **Cascading failures**: One test's database pollution affected subsequent tests
 2. **Flaky tests**: Infrastructure issues (connection pools, race conditions) caused intermittent failures
 
@@ -467,6 +490,7 @@ d2e5f38 - docs: Add comprehensive test documentation and Playwright setup
 **Achievement:** All 200 tests (unit + integration + E2E) passing after multi-tenant migration.
 
 **Key Work:**
+
 1. Updated test helpers to inject tenant context
 2. Modified fixtures to include `tenantId` in all test data
 3. Added Playwright E2E tests for widget embedding
@@ -480,6 +504,7 @@ d2e5f38 - docs: Add comprehensive test documentation and Playwright setup
 ```
 
 **Pattern:** The developer added **guardrails** to prevent broken commits from entering the repository. Pre-commit hooks run:
+
 - TypeScript type checking
 - Linting
 - Unit tests
@@ -498,17 +523,20 @@ fdf69c9 - feat: Phase A Wave 1 - TypeScript safety, database optimization, compo
 ```
 
 **Phase A Wave 1:**
+
 - TypeScript strict mode improvements (no implicit any, proper null checks)
 - Database query optimization (eager loading, index usage)
 - Component refactoring (breaking up large components)
 
 **Phase A Wave 2:**
+
 - Error boundary implementation
 - Toast notification system
 - Loading state improvements
 - Test coverage expansion
 
 **God Component Refactoring:**
+
 - `PackagesManager`: Split into `PackagesList`, `PackageForm`, `CreatePackageButton`
 - `Success`: Split into `SuccessContent`, `LoadingState`, `ErrorState`, `BookingConfirmation`
 
@@ -523,11 +551,13 @@ fdf69c9 - feat: Phase A Wave 1 - TypeScript safety, database optimization, compo
 ```
 
 **Results:**
+
 - Target: 68 tests (10% increase)
 - Achieved: 77 tests (13% increase)
 - **113% of target** - developer exceeded goals
 
 **Test Categories Added:**
+
 - Edge case coverage (boundary values, empty states)
 - Error path testing (network failures, validation errors)
 - Integration test coverage (cross-service interactions)
@@ -542,6 +572,7 @@ fdf69c9 - feat: Phase A Wave 1 - TypeScript safety, database optimization, compo
 **New Feature:** Customer segmentation for targeted marketing and package visibility rules.
 
 **Capabilities:**
+
 1. Create customer segments (e.g., "Spring 2025 Weddings", "Returning Customers")
 2. Assign packages to specific segments
 3. Conditional visibility based on segment membership
@@ -557,6 +588,7 @@ c7fa258 - fix(auth): Fix critical platform admin login bug and UI visibility iss
 ```
 
 **Critical Bugs Fixed:**
+
 1. **TypeError in platformGetStats**: Accessing undefined property on null object (classic JavaScript error)
 2. **URL routing bug**: Platform admin routes conflicting with tenant admin routes
 3. **Login bug**: Platform admin credentials not being validated correctly
@@ -579,6 +611,7 @@ The final day of development shows a **UX transformation**:
 **Design System Scope:**
 
 **249 Design Tokens Defined:**
+
 - Colors: 112 tokens (primary, secondary, accent, neutral, semantic)
 - Typography: 48 tokens (font families, sizes, weights, line heights)
 - Spacing: 32 tokens (consistent spacing scale)
@@ -587,6 +620,7 @@ The final day of development shows a **UX transformation**:
 - Animation: 27 tokens (durations, easings, keyframes)
 
 **Component Library:**
+
 - Button: 5 variants (primary, secondary, outline, ghost, destructive), 4 sizes
 - Card: 3 variants (default, bordered, elevated), hover states
 - Badge: 4 variants (default, success, warning, error)
@@ -600,6 +634,7 @@ The final day of development shows a **UX transformation**:
 - Toaster: Toast notification system
 
 **Animation System:**
+
 - Micro-interactions on all interactive elements
 - Loading state transitions
 - Page transitions (fade, slide)
@@ -607,6 +642,7 @@ The final day of development shows a **UX transformation**:
 - Hover state transformations
 
 **Booking Flow Redesign:**
+
 - Branded colors from tenant dashboard
 - Smooth animations between steps
 - Progress indicator component
@@ -624,7 +660,9 @@ The final day of development shows a **UX transformation**:
 ### Development Patterns
 
 #### 1. Phased Development
+
 The developer consistently used **numbered phases** to organize work:
+
 - Phase 1: Admin package CRUD backend
 - Phase 2: Admin UI implementation
 - Phase 3: Success page with booking details
@@ -635,7 +673,9 @@ The developer consistently used **numbered phases** to organize work:
 **Why It Works:** Each phase is independently testable and deployable. Allows for clear progress tracking and rollback points.
 
 #### 2. Sprint-Based Test Improvement
+
 Starting Sprint 3 (Nov 10), the developer adopted **Agile-like sprints** focused on test quality:
+
 - Sprint 1: Cache isolation
 - Sprint 2: Audit logging
 - Sprint 3: Integration test restoration (75.1% pass rate)
@@ -646,7 +686,9 @@ Starting Sprint 3 (Nov 10), the developer adopted **Agile-like sprints** focused
 **Impact:** Test pass rate improved from ~20% to 76% over 6 sprints through **systematic, infrastructure-focused improvements**.
 
 #### 3. Documentation-Driven Development
+
 Every major change included **comprehensive documentation**:
+
 - 15+ markdown files in `/docs/`
 - Architectural Decision Records (ADRs)
 - Sprint reports with metrics
@@ -656,7 +698,9 @@ Every major change included **comprehensive documentation**:
 **Pattern:** Documentation wasn't an afterthought - it was created **alongside code** as a thinking tool.
 
 #### 4. Security-First Mindset
+
 Multiple commits focused on security:
+
 - `2c313ad` - Removed exposed secrets from documentation (P0)
 - `9e68ab4` - Login rate limiting implementation
 - `efda74b` - Fixed critical cache leak (cross-tenant data exposure)
@@ -665,7 +709,9 @@ Multiple commits focused on security:
 **Philosophy:** The developer treated security vulnerabilities as **P0 incidents** and fixed them immediately.
 
 #### 5. Refactoring Discipline
+
 The developer wasn't afraid to **refactor large codebases**:
+
 - Hexagonal → Layered architecture (149 files, 10k+ lines changed)
 - God component refactoring (PackagesManager, Success)
 - pnpm → npm package manager migration
@@ -676,30 +722,35 @@ The developer wasn't afraid to **refactor large codebases**:
 ### Problems Encountered
 
 #### 1. Flaky E2E Tests (Oct 15)
+
 **Problem:** Initial E2E tests were intermittent failures.
 **Root Cause:** No reset endpoint, timing issues, implicit waits.
 **Solution:** Added `/dev/reset` endpoint, explicit waits, test IDs (`data-testid`).
 **Lesson:** **Infrastructure beats fixing symptoms** - invest in test utilities early.
 
 #### 2. Prisma Model Mismatch (Oct 23)
+
 **Problem:** After architectural refactoring, Prisma schema mismatched entity types.
 **Root Cause:** Field names changed (`name` → `title`, `basePrice` → `priceCents`) but not all references updated.
 **Solution:** Systematic find-and-replace, TypeScript errors guided the fix.
 **Lesson:** **TypeScript is your safety net** - strict mode catches refactoring errors.
 
 #### 3. Cross-Tenant Cache Leak (Nov 6)
+
 **Problem:** Different tenants seeing each other's data.
 **Root Cause:** HTTP cache middleware ran BEFORE tenant resolution, cache keys lacked `tenantId`.
 **Solution:** Removed HTTP cache entirely, kept application-level cache with proper scoping.
 **Lesson:** **Middleware order matters** - always consider the request lifecycle.
 
 #### 4. Database Connection Exhaustion (Nov 11)
+
 **Problem:** Integration tests failing with "Too many connections" errors.
 **Root Cause:** Tests not closing connections, no connection pool limits.
 **Solution:** Set `connection_limit=5` in test environment, added cleanup in `afterAll()` hooks.
 **Lesson:** **Connection pools need limits** - especially in test environments.
 
 #### 5. God Components (Nov 15)
+
 **Problem:** `PackagesManager` and `Success` components became 300+ line monoliths.
 **Root Cause:** Feature creep - adding functionality without refactoring.
 **Solution:** Split into smaller, focused components (List, Form, Button, Content, States).
@@ -708,7 +759,9 @@ The developer wasn't afraid to **refactor large codebases**:
 ### Technology Decisions
 
 #### Why npm over pnpm?
+
 The developer switched from pnpm to npm on Oct 23:
+
 ```
 3264a2a - Phase 1: Structural alignment (hexagonal → layered architecture)
 - Removed pnpm (pnpm-lock.yaml, pnpm-workspace.yaml)
@@ -717,6 +770,7 @@ The developer switched from pnpm to npm on Oct 23:
 ```
 
 **Likely Reasons:**
+
 1. CI/CD compatibility issues
 2. Deployment environment (Render.com, Docker) better supports npm
 3. pnpm's symlink strategy caused path resolution issues
@@ -725,13 +779,16 @@ The developer switched from pnpm to npm on Oct 23:
 **Lesson:** **Bleeding-edge tooling has costs** - stability often beats performance.
 
 #### Why Downgrade Express 5 → 4 and React 19 → 18?
+
 Same commit (3264a2a):
+
 ```
 - Express: 5.1.0 → 4.21.2
 - React: 19.0.0 → 18.3.1
 ```
 
 **Reasoning:**
+
 1. Express 5 was still in beta (breaking changes expected)
 2. React 19 ecosystem compatibility issues (many libraries not updated)
 3. Production deployment favors **LTS versions** over cutting-edge
@@ -739,7 +796,9 @@ Same commit (3264a2a):
 **Lesson:** **Boring technology wins** for production systems.
 
 #### Why Layered Architecture Over Hexagonal?
+
 The developer abandoned hexagonal architecture:
+
 ```
 Before: apps/api/src/domains/booking/service.ts
 After:  server/src/services/booking.service.ts
@@ -749,6 +808,7 @@ After:  server/src/routes/packages.routes.ts
 ```
 
 **Benefits:**
+
 1. Shorter import paths (fewer `../../`)
 2. Easier onboarding (flatter is more familiar)
 3. Less abstraction overhead
@@ -785,6 +845,7 @@ BREAKING CHANGES:
 ```
 
 **Best Practices Observed:**
+
 1. **Context before code**: Explains WHY before WHAT
 2. **Impact assessment**: Lists deliverables, breaking changes, files modified
 3. **Security transparency**: Calls out critical fixes with P0/P1 labels
@@ -792,11 +853,13 @@ BREAKING CHANGES:
 5. **Structured format**: Uses sections, checklists, code blocks
 
 **Anti-pattern (rarely seen):**
+
 ```
 fix: bugs
 ```
 
 The developer almost never wrote vague messages. Even small commits had context:
+
 ```
 fix: remove deprecated husky.sh sourcing from pre-commit hook
 ```
@@ -813,6 +876,7 @@ Let me calculate the code churn for key commits:
 4. **542ee7d** - Phase 3 components: +1,480 / -12 (1,492 total)
 
 **Interpretation:**
+
 - Two mega-refactorings: Architecture (Oct 23) and Design System (Nov 18)
 - Multi-tenant transformation was surgical (1,485 lines) despite massive impact
 - Most commits were small, focused changes (100-300 lines)
@@ -826,23 +890,27 @@ Let me calculate the code churn for key commits:
 ### Focus Areas (Nov 11-18)
 
 **Test Quality (40% of commits):**
+
 - Sprint 6 systematic test stabilization
 - Test infrastructure improvements
 - Multi-tenancy test migration
 - Pre-commit hook setup
 
 **UX/Design (30% of commits):**
+
 - Design token system (249 tokens)
 - Component library with animations
 - Booking flow redesign
 - Admin interface improvements
 
 **Bug Fixes (20% of commits):**
+
 - Platform admin authentication bugs
 - Database connection pooling
 - Tenant isolation edge cases
 
 **Documentation (10% of commits):**
+
 - Sprint reports
 - Diátaxis framework adoption
 - Security documentation
@@ -851,6 +919,7 @@ Let me calculate the code churn for key commits:
 ### Velocity Trends
 
 **Commits per Week:**
+
 - Week 1 (Oct 14-20): 42 commits - **Initial development sprint**
 - Week 2 (Oct 21-27): 8 commits - **Architectural refactoring**
 - Week 3 (Oct 28-Nov 3): 5 commits - **Production stabilization**
@@ -864,11 +933,13 @@ Let me calculate the code churn for key commits:
 The developer actively tracked and paid down technical debt:
 
 **Debt Created:**
+
 - Oct 23: Architectural refactoring introduced breaking changes (acknowledged in commit)
 - Nov 6: Multi-tenant migration left some tests broken (noted as "Known Issues")
 - Nov 15: God component refactoring marked as "2/4 complete" (tracking progress)
 
 **Debt Paid:**
+
 - Oct 23-29: Fixed all breaking changes from architecture refactoring (3 commits)
 - Nov 11-14: Fixed all tests broken by multi-tenancy (200/200 passing)
 - Nov 15: Completed god component refactoring (4/4 complete)
@@ -891,6 +962,7 @@ mvpstable                             # MVP release snapshot
 ```
 
 **Pattern:**
+
 - **main** branch is stable (no direct commits)
 - Feature branches for isolated work (`audit/`, `feat/`, `fix/`)
 - Safety branches before risky changes (`backup-before-migration`)
@@ -901,6 +973,7 @@ mvpstable                             # MVP release snapshot
 ### Merge Strategy
 
 Most commits are **direct to main** or **squash merges** from feature branches:
+
 ```
 813e450 Merge remote-tracking branch 'origin/main'
 463eedd feat(test): Sprint 3 Integration Test Restoration (#2)
@@ -913,9 +986,11 @@ Most commits are **direct to main** or **squash merges** from feature branches:
 ## Part 9: Key Milestones Timeline
 
 ### October 14, 2025 - Project Genesis
+
 **Milestone:** Workspace initialization and mock booking flow
 **Commits:** aab8a2e through 0dc3d77 (20 commits in 2 days)
 **Achievements:**
+
 - Full monorepo structure with 3 packages
 - Mock booking flow end-to-end
 - Admin CRUD operations
@@ -923,9 +998,11 @@ Most commits are **direct to main** or **squash merges** from feature branches:
 - CI pipeline (typecheck + test)
 
 ### October 16, 2025 - Production Foundations
+
 **Milestone:** P0/P1 foundations commit
 **Commit:** da8043a
 **Achievements:**
+
 - PostgreSQL database schema
 - Security baseline (validation, rate limiting)
 - Performance optimizations
@@ -933,18 +1010,22 @@ Most commits are **direct to main** or **squash merges** from feature branches:
 - Comprehensive test suite
 
 ### October 23, 2025 - The Great Refactoring
+
 **Milestone:** Hexagonal → Layered architecture
 **Commit:** 3264a2a (149 files, 16,312 lines changed)
 **Achievements:**
+
 - Simplified architecture (flattened structure)
 - Stable dependencies (React 18, Express 4)
 - npm instead of pnpm
 - All imports fixed and verified
 
 ### November 6, 2025 - Multi-Tenant Launch
+
 **Milestone:** Multi-tenant SaaS transformation
 **Commit:** efda74b
 **Achievements:**
+
 - Complete tenant isolation (database + application)
 - Fixed critical cache leak (P0 security issue)
 - Variable commission rates per tenant
@@ -952,9 +1033,11 @@ Most commits are **direct to main** or **squash merges** from feature branches:
 - Verified with 3 test tenants
 
 ### November 7, 2025 - v1.1.0 Release
+
 **Milestone:** First production-ready version
 **Commit:** 13ff67d
 **Achievements:**
+
 - Unified authentication (platform + tenant admins)
 - Package photo upload feature
 - Security enhancements (rate limiting)
@@ -962,18 +1045,22 @@ Most commits are **direct to main** or **squash merges** from feature branches:
 - Complete API documentation
 
 ### November 12, 2025 - Sprint 6 Complete
+
 **Milestone:** 60% test pass rate with 0% variance
 **Commit:** a8a7e32
 **Achievements:**
+
 - 62/104 integration tests passing (stable)
 - 22 tests re-enabled via infrastructure fixes
 - Zero flaky tests
 - Comprehensive test documentation
 
 ### November 18, 2025 - Design System Launch
+
 **Milestone:** Comprehensive design system implementation
 **Commits:** 8255cae through 542ee7d (5 commits)
 **Achievements:**
+
 - 249 design tokens defined
 - Complete component library
 - Animation system
@@ -987,7 +1074,9 @@ Most commits are **direct to main** or **squash merges** from feature branches:
 ### What This Project Teaches
 
 #### 1. Architecture Evolution is Normal
+
 The developer **changed architectures twice**:
+
 1. Started with hexagonal architecture (clean architecture)
 2. Flattened to layered architecture (simpler)
 3. Extended to multi-tenant architecture (business requirement)
@@ -995,7 +1084,9 @@ The developer **changed architectures twice**:
 **Lesson:** Don't commit to an architecture too early. **Let the problem shape the solution**, not the other way around.
 
 #### 2. Mock First, Real Later
+
 Every external integration was **mocked first**:
+
 - In-memory database before PostgreSQL
 - Mock Stripe before real payments
 - File-sink emails before Postmark
@@ -1004,7 +1095,9 @@ Every external integration was **mocked first**:
 **Lesson:** Mocking enables **fast iteration** and reduces external dependencies during development. Add real integrations when you need them, not because you can.
 
 #### 3. Test Infrastructure > Test Count
+
 The developer spent **6 sprints** improving test infrastructure:
+
 - Database connection pooling
 - Transaction isolation
 - Test data factories
@@ -1016,7 +1109,9 @@ The developer spent **6 sprints** improving test infrastructure:
 **Lesson:** **Fix the foundation before building the house**. Flaky tests are usually infrastructure problems, not test logic problems.
 
 #### 4. Documentation is Code
+
 The developer treated documentation as seriously as code:
+
 - Security audits found exposed secrets in docs (fixed)
 - Documentation framework (Diátaxis) adopted
 - Sprint reports with metrics and lessons learned
@@ -1025,7 +1120,9 @@ The developer treated documentation as seriously as code:
 **Lesson:** Documentation is **force multiplication** - it enables future you and future developers to understand decisions.
 
 #### 5. Security is a Mindset
+
 Multiple security fixes throughout the project:
+
 - Cache leak (cross-tenant data exposure) - fixed immediately
 - Exposed secrets in docs - security audit found them
 - Login rate limiting - added proactively
@@ -1034,7 +1131,9 @@ Multiple security fixes throughout the project:
 **Lesson:** Security vulnerabilities will happen. The key is **rapid detection and transparent fixing**.
 
 #### 6. Refactoring Requires Courage
+
 The developer made **bold refactoring decisions**:
+
 - 149 files changed in architectural refactoring
 - Downgraded dependencies (React 19 → 18)
 - Changed package managers (pnpm → npm)
@@ -1043,7 +1142,9 @@ The developer made **bold refactoring decisions**:
 **Lesson:** **Refactor before it hurts**. Small, frequent refactorings prevent massive rewrites.
 
 #### 7. Commit Messages are a Journal
+
 Every commit message told a story:
+
 - Context before code
 - Breaking changes highlighted
 - Testing evidence included
@@ -1054,18 +1155,23 @@ Every commit message told a story:
 ### Anti-Patterns Avoided
 
 #### ❌ NOT SEEN: "Fix typo" commits
+
 The developer combined small fixes with meaningful work, avoiding noise in git history.
 
 #### ❌ NOT SEEN: "WIP" commits to main
+
 Work-in-progress commits stayed on feature branches. Main branch commits were complete, tested changes.
 
 #### ❌ NOT SEEN: Massive commits without explanation
+
 Even the 16,312-line architectural refactoring had a **detailed, structured commit message**.
 
 #### ❌ NOT SEEN: Ignoring test failures
+
 Test failures were treated as **incidents** and fixed systematically, never ignored or skipped.
 
 #### ❌ NOT SEEN: Premature optimization
+
 The developer optimized based on **measured problems** (connection pool exhaustion, cache performance), not hypothetical issues.
 
 ---
@@ -1073,6 +1179,7 @@ The developer optimized based on **measured problems** (connection pool exhausti
 ## Part 11: Technology Stack Evolution
 
 ### Initial Stack (Oct 14)
+
 ```javascript
 // Backend
 - Node.js 20
@@ -1089,6 +1196,7 @@ The developer optimized based on **measured problems** (connection pool exhausti
 ```
 
 ### Current Stack (Nov 18)
+
 ```javascript
 // Backend
 - Node.js 20
@@ -1113,22 +1221,26 @@ The developer optimized based on **measured problems** (connection pool exhausti
 ### Key Changes Explained
 
 **pnpm → npm**
+
 - Better CI/CD compatibility
 - Wider ecosystem support
 - Simpler deployment to Render.com/Docker
 - No symlink-related path issues
 
 **Express 5 → 4**
+
 - Express 5 still in beta (breaking changes risk)
 - Express 4 has 10+ years of production hardening
 - Middleware ecosystem more stable
 
 **React 19 → 18**
+
 - React 19 released mid-project, ecosystem not ready
 - Many libraries (Radix UI, TanStack Query) optimized for React 18
 - Stable production dependency preferred
 
 **Additions:**
+
 - **Radix UI**: Accessible primitives for components
 - **TanStack Query**: Server state management (replaced manual fetch)
 - **Pino**: Structured logging (added in production hardening phase)
@@ -1145,6 +1257,7 @@ The developer optimized based on **measured problems** (connection pool exhausti
 **Lines Changed (estimate):** ~50,000 lines total
 
 **Breakdown by Type:**
+
 - Features: 48 commits (39%)
 - Fixes: 22 commits (18%)
 - Documentation: 28 commits (23%)
@@ -1154,6 +1267,7 @@ The developer optimized based on **measured problems** (connection pool exhausti
 ### File Change Hotspots
 
 **Most Modified Files (by commit count):**
+
 1. `server/src/services/booking.service.ts` - 12 commits
 2. `server/src/routes/packages.routes.ts` - 10 commits
 3. `client/src/pages/Home.tsx` - 9 commits
@@ -1162,6 +1276,7 @@ The developer optimized based on **measured problems** (connection pool exhausti
 6. `client/src/features/admin/PackagesManager.tsx` - 7 commits
 
 **Interpretation:**
+
 - **Booking service**: Core business logic, evolved significantly
 - **Package routes**: API surface, changed with multi-tenancy and features
 - **Home page**: Customer-facing UI, refined through iterations
@@ -1202,6 +1317,7 @@ Nov 18:  25+ documentation files total
 ## Part 13: Critical Incidents
 
 ### Incident 1: Cross-Tenant Cache Leak (Nov 6)
+
 **Severity:** P0 (Critical Security Issue)
 **Impact:** Different tenants could see each other's packages
 **Root Cause:** HTTP cache keys lacked `tenantId`, middleware order issue
@@ -1211,11 +1327,13 @@ Nov 18:  25+ documentation files total
 **Commit:** efda74b
 
 **Lessons Learned:**
+
 1. Middleware order is critical in multi-tenant systems
 2. Cache keys MUST include all scoping dimensions
 3. Security testing should include cross-tenant data access checks
 
 ### Incident 2: Database Connection Exhaustion (Nov 11)
+
 **Severity:** P1 (Test Infrastructure Broken)
 **Impact:** Integration tests failing intermittently
 **Root Cause:** No connection pool limits, tests not closing connections
@@ -1225,11 +1343,13 @@ Nov 18:  25+ documentation files total
 **Commits:** 6070042, 3640af2
 
 **Lessons Learned:**
+
 1. Test environments need resource limits
 2. Connection pools should be smaller in test environments
 3. Infrastructure failures look like flaky tests
 
 ### Incident 3: Exposed Secrets in Documentation (Nov 12)
+
 **Severity:** P0 (Security Breach)
 **Impact:** API keys and database credentials in committed documentation
 **Root Cause:** Copy-pasting example configs without sanitizing
@@ -1239,11 +1359,13 @@ Nov 18:  25+ documentation files total
 **Commit:** 2c313ad
 
 **Lessons Learned:**
+
 1. Documentation should be included in security audits
 2. Use placeholder values (e.g., `YOUR_API_KEY_HERE`) in examples
 3. Rotate any exposed credentials immediately
 
 ### Incident 4: Platform Admin Login Broken (Nov 16)
+
 **Severity:** P1 (Feature Broken)
 **Impact:** Platform administrators couldn't log in
 **Root Cause:** User repository query filtering by wrong field
@@ -1253,6 +1375,7 @@ Nov 18:  25+ documentation files total
 **Commit:** c7fa258
 
 **Lessons Learned:**
+
 1. E2E tests should cover admin authentication flows
 2. Role-based access control needs comprehensive testing
 3. Manual testing still catches bugs automated tests miss
@@ -1264,23 +1387,27 @@ Nov 18:  25+ documentation files total
 ### Planned Work (Based on Commit Messages and Docs)
 
 **Sprint 7-8: Continue Test Stabilization**
+
 - Target: 70% pass rate (Sprint 7), 80% pass rate (Sprint 8)
 - Focus: Fix test logic issues (slug updates, concurrent creation)
 - Approach: Infrastructure improvements over test changes
 
 **Config Versioning System**
+
 - ConfigVersion database schema (draft/published states)
 - Admin approval UI for config changes
 - One-click rollback capability
 - Live widget updates via PostMessage
 
 **Agent Interface**
+
 - AI agents propose configuration changes
 - Human-in-the-loop approval workflow
 - AgentProposal table (pending/approved/rejected)
 - Display rules configuration (visibility, ordering)
 
 **Widget SDK Enhancements**
+
 - Multi-origin CORS support
 - Embeddable widget loader (`@mais/widget-loader`)
 - Parent window communication API
@@ -1291,18 +1418,21 @@ Nov 18:  25+ documentation files total
 Based on commit messages and "Known Issues" sections:
 
 **High Priority:**
+
 1. Add-on management UI for tenants (currently platform admin only)
 2. Email template customization (currently generic templates)
 3. Content management system for tenant-specific copy
 4. Remaining 31 skipped tests (Sprint 7-8 focus)
 
 **Medium Priority:**
+
 1. Performance optimization (database query optimization)
 2. Caching strategy refinement (Redis integration?)
 3. Advanced analytics dashboard
 4. Tenant billing/subscription management
 
 **Low Priority:**
+
 1. Dark mode support (design tokens already in place)
 2. Internationalization (i18n infrastructure)
 3. Advanced reporting features
@@ -1315,17 +1445,20 @@ Based on commit messages and "Known Issues" sections:
 ### Working Patterns
 
 **Commit Time Analysis:**
+
 - Most commits between 10am - 10pm EST
 - Late-night commits during critical fixes (cache leak: 6:55pm)
 - Sprint completion commits often in evenings (Sprint 6: 10pm)
 
 **Work Style:**
+
 - **Batching:** Groups related changes (5 design system commits in 30 minutes)
 - **Documentation alongside code:** Never ships features without docs
 - **Test-driven:** Fixes tests before proceeding to new features
 - **Refactoring discipline:** Doesn't let technical debt accumulate
 
 **Strengths:**
+
 1. **Systematic problem-solving:** Sprint-based approach to test stabilization
 2. **Architectural pragmatism:** Not afraid to reverse decisions
 3. **Security awareness:** Treats security issues as P0 incidents
@@ -1333,6 +1466,7 @@ Based on commit messages and "Known Issues" sections:
 5. **Quality focus:** 6 sprints dedicated to test improvement
 
 **Areas of Expertise (Inferred):**
+
 - Multi-tenant SaaS architecture
 - Full-stack TypeScript development
 - Database schema design (Prisma)
@@ -1354,31 +1488,37 @@ Based on commit messages and "Known Issues" sections:
 ## Part 16: Comparison to Industry Standards
 
 ### Commit Frequency
+
 **MAIS:** 3.5 commits/day
 **Industry Average (solo):** 2-3 commits/day
 **Assessment:** ✅ Above average, shows active development
 
 ### Test Coverage
+
 **MAIS:** 76% overall, targeting 80%
 **Industry Benchmark:** 70-80% for production systems
 **Assessment:** ✅ Meets industry standard
 
 ### Documentation-to-Code Ratio
+
 **MAIS:** ~20% of commits are documentation
 **Industry Average:** 5-10%
 **Assessment:** ✅ Exceptional documentation culture
 
 ### Commit Message Quality
+
 **MAIS:** Structured, detailed messages with context
 **Industry Standard:** Conventional Commits (type: description)
 **Assessment:** ✅ Exceeds standard (includes context, breaking changes, testing evidence)
 
 ### Refactoring Frequency
+
 **MAIS:** 2 major refactorings in 5 weeks
 **Industry Practice:** Continuous small refactorings
 **Assessment:** ⚠️ Could benefit from smaller, more frequent refactorings
 
 ### Sprint Duration
+
 **MAIS:** Sprints focused on specific goals (test quality), varying length
 **Industry Standard:** Fixed 2-week sprints
 **Assessment:** ✅ Appropriate for solo developer (goal-based vs time-based)
@@ -1414,6 +1554,7 @@ The MAIS platform git history tells the story of a **disciplined, pragmatic deve
 ### The Final Word
 
 This repository demonstrates that **one disciplined developer with clear goals** can build production-grade software by:
+
 - Breaking work into phases and sprints
 - Writing code as if a team will inherit it
 - Treating tests and documentation as first-class citizens
@@ -1426,4 +1567,4 @@ The MAIS platform isn't finished - it's evolving. But this git history shows a *
 
 **End of Analysis**
 
-*This narrative was generated from 122 commits spanning October 14 - November 18, 2025. All insights are derived from git log analysis, commit message content, file change patterns, and documentation evolution.*
+_This narrative was generated from 122 commits spanning October 14 - November 18, 2025. All insights are derived from git log analysis, commit message content, file change patterns, and documentation evolution._

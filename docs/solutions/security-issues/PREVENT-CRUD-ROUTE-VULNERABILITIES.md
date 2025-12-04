@@ -29,15 +29,15 @@ This document codifies prevention strategies for common CRUD route vulnerabiliti
 
 A multi-agent code review of newly implemented add-on CRUD routes identified 7 issues across 3 priority levels:
 
-| ID | Priority | Issue | Impact |
-|----|----------|-------|--------|
-| 192 | P1 | Missing API contract for GET /addons/:id | Type-unsafe clients, no OpenAPI docs |
-| 193 | P1 | No rate limiting on CRUD endpoints | DoS vulnerability, resource exhaustion |
-| 194 | P1 | Auth check duplicated 24 times | Maintenance nightmare, inconsistency risk |
-| 195 | P1 | DTO mapping duplicated 4+ times | Schema sync issues, bugs on changes |
-| 196 | P2 | Missing NotFoundError handling | 500 responses instead of 404 |
-| 197 | P2 | Missing audit logging | DEFERRED (YAGNI) |
-| 198 | P2 | Missing priceCents upper bound | Integer overflow, Stripe limit exceeded |
+| ID  | Priority | Issue                                    | Impact                                    |
+| --- | -------- | ---------------------------------------- | ----------------------------------------- |
+| 192 | P1       | Missing API contract for GET /addons/:id | Type-unsafe clients, no OpenAPI docs      |
+| 193 | P1       | No rate limiting on CRUD endpoints       | DoS vulnerability, resource exhaustion    |
+| 194 | P1       | Auth check duplicated 24 times           | Maintenance nightmare, inconsistency risk |
+| 195 | P1       | DTO mapping duplicated 4+ times          | Schema sync issues, bugs on changes       |
+| 196 | P2       | Missing NotFoundError handling           | 500 responses instead of 404              |
+| 197 | P2       | Missing audit logging                    | DEFERRED (YAGNI)                          |
+| 198 | P2       | Missing priceCents upper bound           | Integer overflow, Stripe limit exceeded   |
 
 ## Root Cause Analysis
 
@@ -101,6 +101,7 @@ export const addonWriteLimiter = rateLimit({
 ```
 
 Applied to routes:
+
 ```typescript
 router.get('/addons', addonReadLimiter, async (req, res, next) => { ... });
 router.get('/addons/:id', addonReadLimiter, async (req, res, next) => { ... });
@@ -133,7 +134,7 @@ const mapAddOnToDto = (addOn: {
   title: string;
   description: string | null;
   priceCents: number;
-  photoUrl: string | null
+  photoUrl: string | null;
 }) => ({
   id: addOn.id,
   packageId: addOn.packageId,
@@ -145,6 +146,7 @@ const mapAddOnToDto = (addOn: {
 ```
 
 Usage becomes cleaner:
+
 ```typescript
 // Before: 6 lines repeated 5 times
 const tenantAuth = res.locals.tenantAuth;
@@ -211,7 +213,7 @@ const MAX_PRICE_CENTS = 99999999;
 export const CreateAddOnDtoSchema = z.object({
   // ...
   priceCents: z.number().int().min(0).max(MAX_PRICE_CENTS, {
-    message: 'Price exceeds maximum allowed value ($999,999.99)'
+    message: 'Price exceeds maximum allowed value ($999,999.99)',
   }),
 });
 ```
@@ -223,6 +225,7 @@ Per YAGNI principle and DHH review guidance, audit logging for add-ons was defer
 ## Verification
 
 All 944 tests pass after applying these fixes:
+
 - TypeScript compiles cleanly (`npm run typecheck`)
 - 52 test files, 944 tests passing, 22 skipped
 - 1 pre-existing failure (Stripe keys missing in test env, unrelated)
@@ -245,19 +248,20 @@ Before implementing a new CRUD endpoint, verify:
 
 When reviewing CRUD route PRs, check for:
 
-| Area | Check |
-|------|-------|
-| Contracts | Does every route have a matching contract? |
-| Rate Limiting | Is rate limiter applied to every route? |
-| Auth | Is tenant auth checked before any business logic? |
-| DRY | Are DTO mappings extracted to a function? |
-| Errors | Are domain errors (NotFoundError, etc.) explicitly caught? |
-| Validation | Do numeric fields have min/max bounds? |
-| Security | Is cross-tenant access prevented? |
+| Area          | Check                                                      |
+| ------------- | ---------------------------------------------------------- |
+| Contracts     | Does every route have a matching contract?                 |
+| Rate Limiting | Is rate limiter applied to every route?                    |
+| Auth          | Is tenant auth checked before any business logic?          |
+| DRY           | Are DTO mappings extracted to a function?                  |
+| Errors        | Are domain errors (NotFoundError, etc.) explicitly caught? |
+| Validation    | Do numeric fields have min/max bounds?                     |
+| Security      | Is cross-tenant access prevented?                          |
 
 ### Pattern Templates
 
 **Rate Limiter Template:**
+
 ```typescript
 export const entityReadLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -270,6 +274,7 @@ export const entityReadLimiter = rateLimit({
 ```
 
 **DTO Mapper Template:**
+
 ```typescript
 const mapEntityToDto = (entity: EntityType) => ({
   id: entity.id,
@@ -278,6 +283,7 @@ const mapEntityToDto = (entity: EntityType) => ({
 ```
 
 **Error Handler Template:**
+
 ```typescript
 } catch (error) {
   if (error instanceof ZodError) {
@@ -300,13 +306,13 @@ const mapEntityToDto = (entity: EntityType) => ({
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
-| `packages/contracts/src/api.v1.ts` | Added `tenantAdminGetAddOnById` contract |
-| `packages/contracts/src/dto.ts` | Added MAX_PRICE_CENTS validation |
-| `server/src/middleware/rateLimiter.ts` | Added `addonReadLimiter`, `addonWriteLimiter` |
-| `server/src/lib/validation.ts` | Added price upper bound check |
-| `server/src/routes/tenant-admin.routes.ts` | DRY helpers, error handling |
+| File                                       | Changes                                       |
+| ------------------------------------------ | --------------------------------------------- |
+| `packages/contracts/src/api.v1.ts`         | Added `tenantAdminGetAddOnById` contract      |
+| `packages/contracts/src/dto.ts`            | Added MAX_PRICE_CENTS validation              |
+| `server/src/middleware/rateLimiter.ts`     | Added `addonReadLimiter`, `addonWriteLimiter` |
+| `server/src/lib/validation.ts`             | Added price upper bound check                 |
+| `server/src/routes/tenant-admin.routes.ts` | DRY helpers, error handling                   |
 
 ## TODO Files
 

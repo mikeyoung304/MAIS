@@ -12,6 +12,7 @@
 When a platform admin impersonates a tenant, the system must treat them as a `TENANT_ADMIN` for all UI/authorization purposes, even though their JWT still says `PLATFORM_ADMIN`. The bug occurred because developers checked only the actual role, not the impersonation state.
 
 **The Fix (Pattern):**
+
 ```typescript
 const effectiveRole = isImpersonating() ? 'TENANT_ADMIN' : user.role;
 // Use effectiveRole for all UI/permission decisions, never raw user.role
@@ -22,9 +23,11 @@ const effectiveRole = isImpersonating() ? 'TENANT_ADMIN' : user.role;
 ## Four-Layer Prevention Strategy
 
 ### 1. Code Review Checklist
+
 **File:** `CODE_REVIEW_CHECKLIST_IMPERSONATION.md`
 
 Before approving PRs with role-based logic, reviewers check:
+
 - Component imports `isImpersonating` from context
 - Effective role is calculated (not using raw `user.role`)
 - All role checks use effective role
@@ -33,19 +36,23 @@ Before approving PRs with role-based logic, reviewers check:
 - Impersonation banner is visible (if relevant)
 
 **How to Use:**
+
 - Pin this checklist to your PR template
 - When reviewing role-based changes, use as verification guide
 - Takes 2-3 minutes per PR
 
 ### 2. Testing Strategy
+
 **In:** `IMPERSONATION_NAVIGATION_BUG_PREVENTION.md` (Section 2)
 
 Required test coverage:
+
 - **Unit tests:** Test component with both `isImpersonating: true/false`
 - **Integration tests:** Test with mock auth context
 - **E2E tests:** Full impersonation flow (login → impersonate → navigate → stop)
 
 **Example test:**
+
 ```typescript
 it('shows tenant nav when admin impersonating', () => {
   // Mock auth with isImpersonating: true
@@ -55,9 +62,11 @@ it('shows tenant nav when admin impersonating', () => {
 ```
 
 ### 3. Best Practice Code Pattern
+
 **Reference:** `IMPERSONATION_NAVIGATION_BUG_PREVENTION.md` (Section 3)
 
 **Pattern to use everywhere:**
+
 ```typescript
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -77,15 +86,18 @@ function MyComponent() {
 ```
 
 **Key principles:**
+
 - Get `isImpersonating` state from context
 - Calculate `effectiveRole` at component entry
 - Use `effectiveRole` consistently throughout
 - Hide admin controls explicitly when impersonating
 
 ### 4. Documentation
+
 **Files:** Updated `CLAUDE.md` and `DEVELOPING.md` sections
 
 Added to project guidelines:
+
 - What impersonation means and why it's important
 - How to calculate effective role
 - Rule: Never use raw `user.role` for UI decisions
@@ -98,6 +110,7 @@ Added to project guidelines:
 **File:** `IMPERSONATION_QUICK_REFERENCE.md`
 
 One-page reference card for developers. Key sections:
+
 - The Rule (in 2 sentences)
 - The Pattern (code snippet)
 - Checklist for role-based components
@@ -148,6 +161,7 @@ Deep-dive reference (12 pages) covering:
 ### Understanding Impersonation
 
 **JWT Structure:**
+
 ```typescript
 {
   userId: 'admin_123',
@@ -162,12 +176,14 @@ Deep-dive reference (12 pages) covering:
 ```
 
 **Effective Role Logic:**
+
 - If `impersonating` is present → treat as `TENANT_ADMIN`
 - If `impersonating` is null → treat as actual `role` (usually `PLATFORM_ADMIN`)
 
 ### Multi-Layer Defense
 
 **Layer 1: Component Level**
+
 ```typescript
 // RoleBasedNav checks impersonation and shows correct nav
 const effectiveRole = isImpersonating() ? 'TENANT_ADMIN' : user.role;
@@ -175,6 +191,7 @@ const navItems = effectiveRole === 'PLATFORM_ADMIN' ? adminNav : tenantNav;
 ```
 
 **Layer 2: Route Level**
+
 ```typescript
 // ProtectedRoute prevents admin routes when impersonating
 if (isImpersonating() && pathname.startsWith('/admin')) {
@@ -183,6 +200,7 @@ if (isImpersonating() && pathname.startsWith('/admin')) {
 ```
 
 **Layer 3: Feature Level**
+
 ```typescript
 // Admin controls hidden explicitly during impersonation
 if (user.role === 'PLATFORM_ADMIN' && !isImpersonating()) {
@@ -191,6 +209,7 @@ if (user.role === 'PLATFORM_ADMIN' && !isImpersonating()) {
 ```
 
 **Layer 4: Visual Indicator**
+
 ```typescript
 // ImpersonationBanner always visible to provide context
 {isImpersonating() && <ImpersonationBanner {...} />}
@@ -201,6 +220,7 @@ if (user.role === 'PLATFORM_ADMIN' && !isImpersonating()) {
 ## Implementation Roadmap
 
 ### For Existing Code
+
 1. Search for all `user.role ===` checks
 2. Verify each one considers impersonation
 3. Add effective role calculation if missing
@@ -208,6 +228,7 @@ if (user.role === 'PLATFORM_ADMIN' && !isImpersonating()) {
 5. Add comments explaining the impersonation handling
 
 ### For New Features
+
 1. Always import `isImpersonating` when checking roles
 2. Calculate effective role at component entry
 3. Use effective role for all UI/permission decisions
@@ -215,6 +236,7 @@ if (user.role === 'PLATFORM_ADMIN' && !isImpersonating()) {
 5. Document why any skip of impersonation checks
 
 ### For Code Reviews
+
 1. Use `CODE_REVIEW_CHECKLIST_IMPERSONATION.md`
 2. Look for `user.role` without `isImpersonating()` check
 3. Verify effective role is calculated
@@ -238,24 +260,24 @@ if (user.role === 'PLATFORM_ADMIN' && !isImpersonating()) {
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/components/navigation/RoleBasedNav.tsx`
 
 **What was wrong:**
+
 ```typescript
 // Only checked user.role, missed impersonation
-const navItems = (user.role === "PLATFORM_ADMIN")
-  ? platformAdminNav
-  : tenantAdminNav;
+const navItems = user.role === 'PLATFORM_ADMIN' ? platformAdminNav : tenantAdminNav;
 ```
 
 **The fix:**
+
 ```typescript
 // Check both role AND impersonation state
 const { user, isImpersonating } = useAuth();
 const isCurrentlyImpersonating = isImpersonating();
-const navItems = (user.role === "PLATFORM_ADMIN" && !isCurrentlyImpersonating)
-  ? platformAdminNav
-  : tenantAdminNav;
+const navItems =
+  user.role === 'PLATFORM_ADMIN' && !isCurrentlyImpersonating ? platformAdminNav : tenantAdminNav;
 ```
 
 **Why it works:**
+
 - Explicitly calls `isImpersonating()` method
 - Short-circuits: if impersonating, skip to tenant nav
 - Clear logical flow: "Show admin nav if admin AND not impersonating"
@@ -265,18 +287,21 @@ const navItems = (user.role === "PLATFORM_ADMIN" && !isCurrentlyImpersonating)
 ## Prevention in Your Team
 
 ### For Developers
+
 1. **Read:** `IMPERSONATION_QUICK_REFERENCE.md` (5 min)
 2. **Practice:** Follow pattern in Section 3 of Prevention Guide
 3. **Reference:** Keep quick ref nearby
 4. **Test:** Write tests for impersonation state
 
 ### For Code Reviewers
+
 1. **Setup:** Use `CODE_REVIEW_CHECKLIST_IMPERSONATION.md`
 2. **Check:** 9 checklist items for role-based code
 3. **Question:** Ask author "What if this is impersonating?"
 4. **Verify:** Tests include impersonation scenarios
 
 ### For Team Leads
+
 1. **Document:** Add quick ref to onboarding materials
 2. **Training:** Share pattern and why it matters
 3. **Process:** Add checklist to PR template

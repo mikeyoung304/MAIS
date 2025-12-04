@@ -88,9 +88,7 @@ export function useErrorHandler(): UseErrorHandlerReturn {
  * }
  * ```
  */
-export function useAsyncError<T>(
-  asyncFn: () => Promise<T>
-): {
+export function useAsyncError<T>(asyncFn: () => Promise<T>): {
   execute: () => Promise<T | void>;
   error: Error | null;
   loading: boolean;

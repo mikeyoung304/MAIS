@@ -14,6 +14,7 @@ Quick reference for catching component duplication patterns before they accumula
 Before building a new React component, answer these questions:
 
 ### 1. Search for Existing Components
+
 ```bash
 # Search for components with similar structure
 grep -rn "interface.*Props" client/src/features/
@@ -24,6 +25,7 @@ ls -la client/src/features/*/  # Browse feature modules
 - [ ] If reusing existing component, confirmed it works for new use case
 
 ### 2. Check for Magic Strings/Numbers
+
 ```bash
 # Find hardcoded values that might appear elsewhere
 grep -rn "Essential\|Popular\|Premium" client/src/
@@ -38,6 +40,7 @@ grep -rn "\b150\b\|\b300\b\|\b100\b" client/src/  # Common magic numbers
 ### 3. Plan Component Structure
 
 Before writing JSX:
+
 - [ ] I've identified the "base" vs "wrapper" pattern
   - Base component: Pure presentation, receives all props explicitly
   - Wrapper component: Maps domain data to base component props
@@ -49,6 +52,7 @@ Before writing JSX:
 ## During Implementation Checklist
 
 ### 4. Implement Base Component
+
 ```typescript
 // ✅ CORRECT: All props explicit, no domain knowledge
 export const ChoiceCardBase = memo(function ChoiceCardBase({
@@ -126,14 +130,18 @@ Create `utils.ts` if ANY constant/function appears in 2+ places:
 ```typescript
 // ✅ Create utils.ts immediately when second file needs this
 export const TIER_LEVELS = ['budget', 'middle', 'luxury'] as const;
-export type TierLevel = typeof TIER_LEVELS[number];
+export type TierLevel = (typeof TIER_LEVELS)[number];
 
 export function getTierDisplayName(tierLevel: string): string {
   switch (tierLevel) {
-    case 'budget': return 'Essential';
-    case 'middle': return 'Popular';
-    case 'luxury': return 'Premium';
-    default: return tierLevel.charAt(0).toUpperCase() + tierLevel.slice(1);
+    case 'budget':
+      return 'Essential';
+    case 'middle':
+      return 'Popular';
+    case 'luxury':
+      return 'Premium';
+    default:
+      return tierLevel.charAt(0).toUpperCase() + tierLevel.slice(1);
   }
 }
 
@@ -159,6 +167,7 @@ export function truncateText(text: string, maxLength: number): string {
 When reviewing a component PR:
 
 **Automated checks:**
+
 ```bash
 # Search for identical function signatures
 grep -rn "getTierDisplayName\|truncateText" client/src/
@@ -171,6 +180,7 @@ wc -l client/src/features/storefront/*.tsx
 ```
 
 **Questions to ask:**
+
 - [ ] Is this JSX structure similar to existing components?
   - If yes: Ask author to extract base component
 - [ ] Are there hardcoded strings that appear elsewhere?
@@ -181,6 +191,7 @@ wc -l client/src/features/storefront/*.tsx
   - If yes: Ask author to add React.memo
 
 **Accept duplication if:**
+
 - ✅ Component is fundamentally different (different domain)
 - ✅ Component is used only once
 - ✅ Extraction would make code harder to understand
@@ -221,6 +232,7 @@ done
 ### Example 1: SegmentCard vs TierCard
 
 **Before Refactoring (DUPLICATION):**
+
 ```typescript
 // SegmentCard.tsx - 40 lines
 export function SegmentCard({ segment }: SegmentCardProps) {
@@ -252,11 +264,13 @@ export function TierCard({ tier }: TierCardProps) {
 ```
 
 **Problems:**
+
 - Bug in card styling must be fixed in 2 places
 - Inconsistent behavior (one updates, other doesn't)
 - 80% duplication makes code hard to maintain
 
 **After Refactoring (EXTRACTED):**
+
 ```typescript
 // ChoiceCardBase.tsx - 90 lines (single source of truth)
 export const ChoiceCardBase = memo(function ChoiceCardBase({
@@ -306,6 +320,7 @@ export const TierCard = memo(function TierCard({ pkg, tierLevel }: TierCardProps
 ```
 
 **Benefits:**
+
 - Single source of truth for card structure
 - Bug fix updates all cards at once
 - Consistent behavior across all card types
@@ -314,6 +329,7 @@ export const TierCard = memo(function TierCard({ pkg, tierLevel }: TierCardProps
 ### Example 2: Magic Constants Tracking
 
 **Before: Scattered Constants**
+
 ```typescript
 // TierCard.tsx
 const MAX_LENGTH = 150;
@@ -324,17 +340,17 @@ const maxLength = 150;
 const text = description.substring(0, maxLength) + '...';
 
 // TierSelector.tsx (slightly different)
-const desc = description.length > 140
-  ? description.substring(0, 140) + '...'
-  : description;
+const desc = description.length > 140 ? description.substring(0, 140) + '...' : description;
 ```
 
 **Problems:**
+
 - Same value (150) defined in 3 ways (inconsistent)
 - Changing from 150 to 120 requires finding all 3 places
 - Hard to understand why magic number exists
 
 **After: Centralized Constants**
+
 ```typescript
 // utils.ts - Single source of truth
 export const CARD_DESCRIPTION_MAX_LENGTH = 150;
@@ -358,6 +374,7 @@ import { truncateText, CARD_DESCRIPTION_MAX_LENGTH } from './utils';
 ```
 
 **Benefits:**
+
 - Change max length once, affects all files
 - Function consistent across codebase
 - Clear intent (named constant explains the value)
@@ -371,9 +388,24 @@ import { truncateText, CARD_DESCRIPTION_MAX_LENGTH } from './utils';
 ```typescript
 // ❌ WRONG: 20+ props, too complex
 export function Card({
-  title, description, image, categoryLabel, price, cta, href,
-  highlighted, showBadge, badgeText, onClick, onHover,
-  variant, size, color, disabled, loading, error,
+  title,
+  description,
+  image,
+  categoryLabel,
+  price,
+  cta,
+  href,
+  highlighted,
+  showBadge,
+  badgeText,
+  onClick,
+  onHover,
+  variant,
+  size,
+  color,
+  disabled,
+  loading,
+  error,
   ...otherProps
 }: any) {
   // 200+ lines of conditional rendering
@@ -381,8 +413,16 @@ export function Card({
 
 // ✅ CORRECT: Only explicit props needed
 export const ChoiceCardBase = memo(function ChoiceCardBase({
-  title, description, imageUrl, imageAlt, categoryLabel,
-  price, cta, href, highlighted = false, testId,
+  title,
+  description,
+  imageUrl,
+  imageAlt,
+  categoryLabel,
+  price,
+  cta,
+  href,
+  highlighted = false,
+  testId,
 }: ChoiceCardBaseProps) {
   // 90 lines, no conditionals
 });
@@ -439,21 +479,22 @@ export function TierCard({ pkg, tierLevel }: TierCardProps) {
 
 ## Quick Reference: When to Extract?
 
-| Situation | Extract Now | Keep Duplicated |
-|-----------|------------|-----------------|
-| 1 component uses pattern | ❌ No | ✅ Yes |
-| 2 components, identical structure | ✅ Yes | ❌ No |
-| 2 components, slightly different | ✅ Extract base, customize in wrappers | ❌ No |
-| Same function in 2 files | ✅ Move to utils.ts | ❌ No |
-| Magic string appears 2+ times | ✅ Extract constant | ❌ No |
-| Component >40 lines wrapper | ✅ Break into layers | ❌ No |
-| Component >100 lines base | ✅ Consider breaking | ⚠️ Maybe |
+| Situation                         | Extract Now                            | Keep Duplicated |
+| --------------------------------- | -------------------------------------- | --------------- |
+| 1 component uses pattern          | ❌ No                                  | ✅ Yes          |
+| 2 components, identical structure | ✅ Yes                                 | ❌ No           |
+| 2 components, slightly different  | ✅ Extract base, customize in wrappers | ❌ No           |
+| Same function in 2 files          | ✅ Move to utils.ts                    | ❌ No           |
+| Magic string appears 2+ times     | ✅ Extract constant                    | ❌ No           |
+| Component >40 lines wrapper       | ✅ Break into layers                   | ❌ No           |
+| Component >100 lines base         | ✅ Consider breaking                   | ⚠️ Maybe        |
 
 ---
 
 ## Tools & Commands
 
 ### Find Duplication
+
 ```bash
 # Find identical JSX structures
 grep -rn "<Link" client/src/features/storefront/*.tsx | wc -l
@@ -469,6 +510,7 @@ grep -rn "Essential\|Popular\|Premium" client/src/
 ```
 
 ### Verify Memoization
+
 ```bash
 # Check if wrapper components are memoized
 grep -rn "export const.*= memo(" client/src/features/storefront/
@@ -479,6 +521,7 @@ grep -rn "export const.*= memo(" client/src/features/storefront/
 ```
 
 ### Monitor Component Size
+
 ```bash
 # Check component line counts
 wc -l client/src/features/storefront/*.tsx | sort -rn
@@ -508,6 +551,7 @@ done
 **Prevention Goal:** Catch component duplication at **2 instances**, not 3+
 
 **Three Rules:**
+
 1. **Extract common structures** from 2+ components
 2. **Add React.memo** to wrapper components receiving objects
 3. **Centralize constants** in utils.ts when used 2+ times

@@ -1,23 +1,23 @@
 ---
-title: "React UI Patterns & Audit Logging Code Review Patterns"
-category: "code-review-patterns"
-severity: ["p3"]
+title: 'React UI Patterns & Audit Logging Code Review Patterns'
+category: 'code-review-patterns'
+severity: ['p3']
 components:
-  - "useVisualEditor"
-  - "EditablePackageCard"
-  - "PackageDraftService"
+  - 'useVisualEditor'
+  - 'EditablePackageCard'
+  - 'PackageDraftService'
 tags:
-  - "accessibility"
-  - "react-performance"
-  - "audit-logging"
-  - "window-confirm"
-  - "useMemo"
-  - "structured-logging"
-  - "code-review"
-date_solved: "2025-12-02"
+  - 'accessibility'
+  - 'react-performance'
+  - 'audit-logging'
+  - 'window-confirm'
+  - 'useMemo'
+  - 'structured-logging'
+  - 'code-review'
+date_solved: '2025-12-02'
 total_issues: 3
 p3_issues: 3
-related_todos: ["141", "142", "143"]
+related_todos: ['141', '142', '143']
 ---
 
 # React UI Patterns & Audit Logging Code Review Patterns
@@ -30,11 +30,11 @@ During visual editor code review, three P3 issues were identified related to Rea
 
 ### P3 Quality Improvements
 
-| ID | Issue | Category | Impact |
-|----|-------|----------|--------|
-| #141 | window.confirm() anti-pattern | Accessibility | Poor UX, not themeable, blocks main thread |
-| #142 | Missing useMemo for calculated values | Performance | Unnecessary recalculations on every render |
-| #143 | Missing audit logging | Debugging | No trail for draft operations |
+| ID   | Issue                                 | Category      | Impact                                     |
+| ---- | ------------------------------------- | ------------- | ------------------------------------------ |
+| #141 | window.confirm() anti-pattern         | Accessibility | Poor UX, not themeable, blocks main thread |
+| #142 | Missing useMemo for calculated values | Performance   | Unnecessary recalculations on every render |
+| #143 | Missing audit logging                 | Debugging     | No trail for draft operations              |
 
 ---
 
@@ -43,6 +43,7 @@ During visual editor code review, three P3 issues were identified related to Rea
 ### Detection: How to Spot the Anti-Pattern
 
 **ESLint Search:**
+
 ```bash
 # Search for window.confirm usage
 grep -r "window\.confirm" client/src/
@@ -53,11 +54,13 @@ grep -rE "window\.(confirm|alert|prompt)" client/src/
 
 **Visual Inspection:**
 Look for:
+
 - `if (!window.confirm(...))` in event handlers
 - `const confirmed = window.confirm(...)`
 - Any use of browser's built-in dialogs
 
 **Why it's an anti-pattern:**
+
 1. **Not themeable** - Doesn't match application design
 2. **Accessibility issues** - Limited screen reader support
 3. **Blocks main thread** - Synchronous, freezes UI
@@ -123,6 +126,7 @@ const handleConfirmDiscard = async () => {
 ### Example: Complete Implementation
 
 See working examples in codebase:
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/features/tenant-admin/BlackoutsManager/DeleteConfirmationDialog.tsx`
 - `/Users/mikeyoung/CODING/MAIS/client/src/features/photos/PhotoDeleteDialog.tsx`
 
@@ -216,19 +220,25 @@ When reviewing confirmation flows:
 - [ ] "Cannot be undone" warnings for destructive actions
 
 **ESLint Rule to Enforce:**
+
 ```json
 {
   "rules": {
-    "no-restricted-globals": ["error", {
-      "name": "confirm",
-      "message": "Use AlertDialog component instead of window.confirm()"
-    }, {
-      "name": "alert",
-      "message": "Use toast notifications or Dialog component instead of window.alert()"
-    }, {
-      "name": "prompt",
-      "message": "Use Dialog with form fields instead of window.prompt()"
-    }]
+    "no-restricted-globals": [
+      "error",
+      {
+        "name": "confirm",
+        "message": "Use AlertDialog component instead of window.confirm()"
+      },
+      {
+        "name": "alert",
+        "message": "Use toast notifications or Dialog component instead of window.alert()"
+      },
+      {
+        "name": "prompt",
+        "message": "Use Dialog with form fields instead of window.prompt()"
+      }
+    ]
   }
 }
 ```
@@ -241,28 +251,32 @@ When reviewing confirmation flows:
 
 **Visual Inspection:**
 Look for calculated values inside functional components that are:
+
 1. Computed from props or state
 2. Used multiple times in render
 3. Not wrapped in `useMemo()`
 4. Involving object/array operations, filtering, or transformations
 
 **Common patterns that need memoization:**
+
 ```typescript
 // ❌ Recalculated on EVERY render
 const effectiveTitle = pkg.draftTitle ?? pkg.title;
-const effectiveDescription = pkg.draftDescription ?? pkg.description ?? "";
+const effectiveDescription = pkg.draftDescription ?? pkg.description ?? '';
 const effectivePriceCents = pkg.draftPriceCents ?? pkg.priceCents;
 
 // ❌ Boolean checks recalculated on EVERY render
 const hasTitleDraft = pkg.draftTitle !== null && pkg.draftTitle !== pkg.title;
-const hasDescriptionDraft = pkg.draftDescription !== null && pkg.draftDescription !== pkg.description;
+const hasDescriptionDraft =
+  pkg.draftDescription !== null && pkg.draftDescription !== pkg.description;
 
 // ❌ Array operations recalculated on EVERY render
 const sortedItems = items.sort((a, b) => a.name.localeCompare(b.name));
-const filteredItems = items.filter(item => item.active);
+const filteredItems = items.filter((item) => item.active);
 ```
 
 **Grep search for potential issues:**
+
 ```bash
 # Find components with many derived values
 grep -A 20 "export.*function.*Component" client/src/**/*.tsx | grep -E "(const .* = .*\?\?|const .* = .*\.filter|const .* = .*\.map|const .* = .*\.sort)"
@@ -271,12 +285,14 @@ grep -A 20 "export.*function.*Component" client/src/**/*.tsx | grep -E "(const .
 ### Fix: Standard Solution
 
 **When to use useMemo:**
+
 - Expensive calculations (array operations, filtering, sorting)
 - Derived objects/arrays used as props (prevents unnecessary re-renders)
 - Values used in multiple places in render
 - Boolean flags derived from complex comparisons
 
 **When NOT to use useMemo:**
+
 - Simple primitive assignments (`const x = 5`)
 - Single string concatenation
 - Values only used once
@@ -285,44 +301,59 @@ grep -A 20 "export.*function.*Component" client/src/**/*.tsx | grep -E "(const .
 ```typescript
 // ❌ BEFORE: Recalculated on every render
 const effectiveTitle = pkg.draftTitle ?? pkg.title;
-const effectiveDescription = pkg.draftDescription ?? pkg.description ?? "";
+const effectiveDescription = pkg.draftDescription ?? pkg.description ?? '';
 const effectivePriceCents = pkg.draftPriceCents ?? pkg.priceCents;
 const effectivePhotos = pkg.draftPhotos ?? pkg.photos ?? [];
 
 const hasTitleDraft = pkg.draftTitle !== null && pkg.draftTitle !== pkg.title;
-const hasDescriptionDraft = pkg.draftDescription !== null && pkg.draftDescription !== pkg.description;
+const hasDescriptionDraft =
+  pkg.draftDescription !== null && pkg.draftDescription !== pkg.description;
 const hasPriceDraft = pkg.draftPriceCents !== null && pkg.draftPriceCents !== pkg.priceCents;
 const hasPhotoDraft = pkg.draftPhotos !== null;
 
 // ✅ AFTER: Memoized (recalculated only when dependencies change)
-const effectiveValues = useMemo(() => ({
-  title: pkg.draftTitle ?? pkg.title,
-  description: pkg.draftDescription ?? pkg.description ?? "",
-  priceCents: pkg.draftPriceCents ?? pkg.priceCents,
-  photos: pkg.draftPhotos ?? pkg.photos ?? [],
-}), [
-  pkg.draftTitle, pkg.title,
-  pkg.draftDescription, pkg.description,
-  pkg.draftPriceCents, pkg.priceCents,
-  pkg.draftPhotos, pkg.photos
-]);
+const effectiveValues = useMemo(
+  () => ({
+    title: pkg.draftTitle ?? pkg.title,
+    description: pkg.draftDescription ?? pkg.description ?? '',
+    priceCents: pkg.draftPriceCents ?? pkg.priceCents,
+    photos: pkg.draftPhotos ?? pkg.photos ?? [],
+  }),
+  [
+    pkg.draftTitle,
+    pkg.title,
+    pkg.draftDescription,
+    pkg.description,
+    pkg.draftPriceCents,
+    pkg.priceCents,
+    pkg.draftPhotos,
+    pkg.photos,
+  ]
+);
 
-const draftFlags = useMemo(() => ({
-  hasTitle: pkg.draftTitle !== null && pkg.draftTitle !== pkg.title,
-  hasDescription: pkg.draftDescription !== null && pkg.draftDescription !== pkg.description,
-  hasPrice: pkg.draftPriceCents !== null && pkg.draftPriceCents !== pkg.priceCents,
-  hasPhotos: pkg.draftPhotos !== null,
-}), [
-  pkg.draftTitle, pkg.title,
-  pkg.draftDescription, pkg.description,
-  pkg.draftPriceCents, pkg.priceCents,
-  pkg.draftPhotos
-]);
+const draftFlags = useMemo(
+  () => ({
+    hasTitle: pkg.draftTitle !== null && pkg.draftTitle !== pkg.title,
+    hasDescription: pkg.draftDescription !== null && pkg.draftDescription !== pkg.description,
+    hasPrice: pkg.draftPriceCents !== null && pkg.draftPriceCents !== pkg.priceCents,
+    hasPhotos: pkg.draftPhotos !== null,
+  }),
+  [
+    pkg.draftTitle,
+    pkg.title,
+    pkg.draftDescription,
+    pkg.description,
+    pkg.draftPriceCents,
+    pkg.priceCents,
+    pkg.draftPhotos,
+  ]
+);
 ```
 
 ### Example: Complete Implementation
 
 See working example in:
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/features/tenant-admin/visual-editor/components/EditablePackageCard.tsx`
 
 **Complete Example:**
@@ -403,8 +434,9 @@ export const EditablePackageCard = React.memo(
   },
   (prevProps, nextProps) => {
     // Return true if props are equal (skip re-render)
-    return prevProps.package.id === nextProps.package.id &&
-           prevProps.disabled === nextProps.disabled;
+    return (
+      prevProps.package.id === nextProps.package.id && prevProps.disabled === nextProps.disabled
+    );
   }
 );
 ```
@@ -424,6 +456,7 @@ When reviewing component performance:
 - [ ] Objects/arrays passed as props are memoized (prevents child re-renders)
 
 **ESLint Plugin to Enforce:**
+
 ```json
 {
   "plugins": ["react-hooks"],
@@ -434,6 +467,7 @@ When reviewing component performance:
 ```
 
 **Performance Profiling:**
+
 ```bash
 # Use React DevTools Profiler to identify unnecessary re-renders
 # Look for components with high render counts but no prop changes
@@ -447,6 +481,7 @@ When reviewing component performance:
 
 **Visual Inspection:**
 Look for service methods that:
+
 1. Modify data (create, update, delete)
 2. Publish/discard changes
 3. Change tenant configuration
@@ -454,6 +489,7 @@ Look for service methods that:
 5. Grant/revoke access
 
 **Grep search for missing logs:**
+
 ```bash
 # Find service methods without logger calls
 grep -A 30 "async.*publish\|async.*discard\|async.*delete" server/src/services/*.ts | grep -v "logger\."
@@ -463,6 +499,7 @@ grep -E "async (create|update|delete|save|publish|discard)" server/src/services/
 ```
 
 **Common patterns that need audit logging:**
+
 ```typescript
 // ❌ No audit trail - what changed? who changed it? when?
 async saveDraft(tenantId: string, packageId: string, draft: UpdatePackageDraftInput) {
@@ -479,6 +516,7 @@ async discardDrafts(tenantId: string, packageIds?: string[]) {
 ### Fix: Standard Solution
 
 **What to log:**
+
 - **Action performed** (`package_draft_saved`, `package_drafts_published`, etc.)
 - **Tenant ID** (for multi-tenant filtering)
 - **Resource ID** (package ID, segment ID, etc.)
@@ -487,6 +525,7 @@ async discardDrafts(tenantId: string, packageIds?: string[]) {
 - **Metadata** (timestamps handled by logger)
 
 **What NOT to log:**
+
 - PII (personally identifiable information)
 - Secrets or credentials
 - Full request/response bodies (use filtered/sanitized versions)
@@ -539,6 +578,7 @@ async saveDraft(
 ### Example: Complete Implementation
 
 See working example in:
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/services/package-draft.service.ts`
 
 **Complete Example (Package Draft Service):**
@@ -563,15 +603,18 @@ export class PackageDraftService {
     const result = await this.repository.updateDraft(tenantId, packageId, draft);
 
     // Audit log for draft save
-    logger.info({
-      action: 'package_draft_saved',
-      tenantId,
-      packageId,
-      packageSlug: existing.slug,
-      changedFields: Object.keys(draft).filter(
-        k => draft[k as keyof UpdatePackageDraftInput] !== undefined
-      ),
-    }, 'Package draft saved');
+    logger.info(
+      {
+        action: 'package_draft_saved',
+        tenantId,
+        packageId,
+        packageSlug: existing.slug,
+        changedFields: Object.keys(draft).filter(
+          (k) => draft[k as keyof UpdatePackageDraftInput] !== undefined
+        ),
+      },
+      'Package draft saved'
+    );
 
     return result;
   }
@@ -588,13 +631,16 @@ export class PackageDraftService {
     await this.invalidateCatalogCache(tenantId);
 
     // Audit log for publish operation
-    logger.info({
-      action: 'package_drafts_published',
-      tenantId,
-      publishedCount: packages.length,
-      packageIds: packages.map(p => p.id),
-      packageSlugs: packages.map(p => p.slug),
-    }, `Published ${packages.length} package draft(s)`);
+    logger.info(
+      {
+        action: 'package_drafts_published',
+        tenantId,
+        publishedCount: packages.length,
+        packageIds: packages.map((p) => p.id),
+        packageSlugs: packages.map((p) => p.slug),
+      },
+      `Published ${packages.length} package draft(s)`
+    );
 
     return {
       published: packages.length,
@@ -605,23 +651,23 @@ export class PackageDraftService {
   /**
    * Discard all drafts without publishing
    */
-  async discardDrafts(
-    tenantId: string,
-    packageIds?: string[]
-  ): Promise<{ discarded: number }> {
+  async discardDrafts(tenantId: string, packageIds?: string[]): Promise<{ discarded: number }> {
     // Log BEFORE discard to capture what will be lost
     const draftCount = await this.repository.countDrafts(tenantId);
 
     const discarded = await this.repository.discardDrafts(tenantId, packageIds);
 
     // Audit log for discard operation
-    logger.info({
-      action: 'package_drafts_discarded',
-      tenantId,
-      discardedCount: discarded,
-      requestedPackageIds: packageIds ?? 'all',
-      previousDraftCount: draftCount,
-    }, `Discarded ${discarded} package draft(s)`);
+    logger.info(
+      {
+        action: 'package_drafts_discarded',
+        tenantId,
+        discardedCount: discarded,
+        requestedPackageIds: packageIds ?? 'all',
+        previousDraftCount: draftCount,
+      },
+      `Discarded ${discarded} package draft(s)`
+    );
 
     return { discarded };
   }
@@ -664,17 +710,22 @@ When reviewing service methods:
 - [ ] Structured data uses consistent naming (camelCase keys)
 
 **ESLint Rule to Enforce:**
+
 ```json
 {
   "rules": {
-    "no-console": ["error", {
-      "allow": []
-    }]
+    "no-console": [
+      "error",
+      {
+        "allow": []
+      }
+    ]
   }
 }
 ```
 
 **Grep Commands for Self-Review:**
+
 ```bash
 # Check for console.log violations
 grep -r "console\." server/src/services/ server/src/routes/
@@ -724,16 +775,19 @@ Service method modifies data?
 ## Summary: Before You Commit
 
 **React UI Patterns:**
+
 1. No `window.confirm()` - use `<AlertDialog>` instead
 2. Memoize derived values with `useMemo()` (especially array operations)
 3. Memoize event handlers with `useCallback()` if passed to memoized children
 
 **Backend Audit Logging:**
+
 1. All mutations log action name, tenant ID, resource ID, and changed fields
 2. Use `logger.info()` for audit trail (NOT `console.log`)
 3. Log BEFORE destructive operations (capture what will be lost)
 
 **Self-Review Commands:**
+
 ```bash
 # Check for window.confirm violations
 grep -r "window\.confirm" client/src/
@@ -760,6 +814,6 @@ grep -E "async (create|update|delete)" server/src/services/*.ts -A 20 | grep "lo
 
 ## Version History
 
-| Date | Version | Changes |
-|------|---------|---------|
-| 2025-12-02 | 1.0 | Initial version: AlertDialog pattern, useMemo pattern, audit logging pattern |
+| Date       | Version | Changes                                                                      |
+| ---------- | ------- | ---------------------------------------------------------------------------- |
+| 2025-12-02 | 1.0     | Initial version: AlertDialog pattern, useMemo pattern, audit logging pattern |

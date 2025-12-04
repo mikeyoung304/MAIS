@@ -1,6 +1,6 @@
-import { useRef } from "react";
-import { Upload, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useRef } from 'react';
+import { Upload, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface PhotoUploadButtonProps {
   onFileSelect: (file: File) => void;
@@ -18,7 +18,7 @@ export function PhotoUploadButton({
   onFileSelect,
   isUploading,
   disabled,
-  allowedTypes
+  allowedTypes,
 }: PhotoUploadButtonProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 

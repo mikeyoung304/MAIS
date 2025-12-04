@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "031"
+issue_id: '031'
 tags: [code-review, code-quality, logging]
 dependencies: []
 ---
@@ -19,11 +19,13 @@ Multiple files use `console.log/error` instead of structured logger, violating C
 ### Server Files
 
 **Mock Adapters:** `server/src/adapters/mock/index.ts`
+
 - Line 42: `console.log('Mock data seeded...')`
 - Lines 312-314: `console.log('[MOCK EMAIL]')`
 - Line 463: `console.log('Mock state reset...')`
 
 **Config Validation:** `server/src/config/env.schema.ts:118-149`
+
 - `console.error('Environment validation failed:')`
 
 ### Client Files (10+ instances)
@@ -35,6 +37,7 @@ Multiple files use `console.log/error` instead of structured logger, violating C
 ## Proposed Solutions
 
 ### Option A: Replace All Console Calls (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 Server: Replace with `logger.info/debug/error`
@@ -49,6 +52,6 @@ Client: Replace with error boundary or dev-only logging
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                            |
+| ---------- | ------- | -------------------------------- |
 | 2025-11-27 | Created | Found during code quality review |

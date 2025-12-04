@@ -1,10 +1,10 @@
-import { FormEvent, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { InputEnhanced } from "@/components/ui/input-enhanced";
-import { ErrorSummary, type FormError } from "@/components/ui/ErrorSummary";
-import { Mail, Lock } from "lucide-react";
-import { useForm } from "@/hooks/useForm";
+import { FormEvent, useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { InputEnhanced } from '@/components/ui/input-enhanced';
+import { ErrorSummary, type FormError } from '@/components/ui/ErrorSummary';
+import { Mail, Lock } from 'lucide-react';
+import { useForm } from '@/hooks/useForm';
 
 interface TenantLoginProps {
   onLogin: (email: string, password: string) => void;
@@ -14,8 +14,8 @@ interface TenantLoginProps {
 
 export function TenantLogin({ onLogin, error, isLoading }: TenantLoginProps) {
   const { values, handleChange } = useForm({
-    email: "",
-    password: ""
+    email: '',
+    password: '',
   });
   const [validationErrors, setValidationErrors] = useState<FormError[]>([]);
 
@@ -57,14 +57,14 @@ export function TenantLogin({ onLogin, error, isLoading }: TenantLoginProps) {
       </CardHeader>
       <CardContent>
         {/* Validation Errors */}
-        <ErrorSummary
-          errors={validationErrors}
-          onDismiss={() => setValidationErrors([])}
-        />
+        <ErrorSummary errors={validationErrors} onDismiss={() => setValidationErrors([])} />
 
         {/* Server Error */}
         {error && (
-          <div role="alert" className="mb-6 p-3 bg-macon-navy-700 border border-white/20 text-white/90 rounded text-lg">
+          <div
+            role="alert"
+            className="mb-6 p-3 bg-macon-navy-700 border border-white/20 text-white/90 rounded text-lg"
+          >
             {error}
           </div>
         )}

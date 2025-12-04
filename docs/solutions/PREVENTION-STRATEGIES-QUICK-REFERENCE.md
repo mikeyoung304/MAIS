@@ -3,9 +3,11 @@
 ## Email Case-Sensitivity Login Failures
 
 ### Problem
+
 Users receive "Invalid credentials" when logging in with mixed-case emails (e.g., `User@Example.com` vs `user@example.com`)
 
 ### Root Cause
+
 Case-sensitive email lookups + case-sensitive database unique constraint
 
 ### Solution: The 3-Layer Normalization Pattern
@@ -19,7 +21,7 @@ const user = await repo.findByEmail(email.toLowerCase());
 
 // LAYER 3: Repository (Database Boundary)
 return db.findUnique({
-  where: { email: email.toLowerCase() }
+  where: { email: email.toLowerCase() },
 });
 ```
 
@@ -28,6 +30,7 @@ return db.findUnique({
 ## Testing Strategy
 
 ### Unit Tests (Repository Level)
+
 ```typescript
 it('should find tenant by uppercase email', async () => {
   const tenant = await repo.create({ email: 'test@example.com' });
@@ -37,6 +40,7 @@ it('should find tenant by uppercase email', async () => {
 ```
 
 ### Integration Tests (Service Level)
+
 ```typescript
 it('should authenticate with mixed-case email', async () => {
   const result = await service.login('User@Example.COM', password);
@@ -45,11 +49,11 @@ it('should authenticate with mixed-case email', async () => {
 ```
 
 ### API Tests (Route Level)
+
 ```typescript
 it('should prevent duplicate signup with different case', async () => {
   await request(app).post('/signup').send({ email: 'user@example.com' });
-  const res2 = await request(app).post('/signup')
-    .send({ email: 'USER@EXAMPLE.COM' });
+  const res2 = await request(app).post('/signup').send({ email: 'USER@EXAMPLE.COM' });
   expect(res2.status).toBe(409); // Conflict
 });
 ```
@@ -112,28 +116,31 @@ Testing:
 
 ## Common Mistakes & Fixes
 
-| Mistake | Problem | Fix |
-|---------|---------|-----|
-| No normalization | Case-sensitive lookups | `email.toLowerCase()` everywhere |
-| Normalize only in service | New code might bypass | Normalize in route + service + repo |
-| Store unnormalized | Duplicates possible | Normalize before storage |
-| No tests for uppercase | Bug goes undetected | Test all case variations |
-| Forget whitespace | `" user@example.com "` ≠ `"user@example.com"` | Use `.trim()` |
+| Mistake                   | Problem                                       | Fix                                 |
+| ------------------------- | --------------------------------------------- | ----------------------------------- |
+| No normalization          | Case-sensitive lookups                        | `email.toLowerCase()` everywhere    |
+| Normalize only in service | New code might bypass                         | Normalize in route + service + repo |
+| Store unnormalized        | Duplicates possible                           | Normalize before storage            |
+| No tests for uppercase    | Bug goes undetected                           | Test all case variations            |
+| Forget whitespace         | `" user@example.com "` ≠ `"user@example.com"` | Use `.trim()`                       |
 
 ---
 
 ## File Locations
 
 **Implementation:**
+
 - Repository: `/server/src/adapters/prisma/tenant.repository.ts`
 - Service: `/server/src/services/tenant-auth.service.ts`
 - Routes: `/server/src/routes/auth.routes.ts`
 - Schema: `/server/prisma/schema.prisma`
 
 **Tests:**
+
 - Auth Prevention: `/server/test/integration/auth-prevention-tests.spec.ts`
 
 **Documentation:**
+
 - Prevention Strategy: `/docs/solutions/security-issues/PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md`
 - Summary: `/docs/solutions/security-issues/EMAIL-CASE-SENSITIVITY-SUMMARY.md`
 - Best Practices: `/server/docs/auth-best-practices-checklist.md`
@@ -143,18 +150,22 @@ Testing:
 ## Quick Implementation Guide
 
 ### Step 1: Update Repository
+
 ```typescript
 // In findByEmail()
-where: { email: email.toLowerCase() }
+where: {
+  email: email.toLowerCase();
+}
 
 // In create()
-email: data.email?.toLowerCase()
+email: data.email?.toLowerCase();
 
 // In update() if email is updated
-if (data.email) data.email = data.email.toLowerCase()
+if (data.email) data.email = data.email.toLowerCase();
 ```
 
 ### Step 2: Update Service
+
 ```typescript
 // Before repository calls
 const normalized = email.toLowerCase().trim();
@@ -162,12 +173,14 @@ const user = await repo.findByEmail(normalized);
 ```
 
 ### Step 3: Update Routes
+
 ```typescript
 // At HTTP entry point
 const email = req.body.email?.toLowerCase().trim();
 ```
 
 ### Step 4: Write Tests
+
 ```typescript
 // Test all variations
 const emails = ['user@ex.com', 'USER@EX.COM', 'User@Ex.Com'];
@@ -177,6 +190,7 @@ for (const e of emails) {
 ```
 
 ### Step 5: Document
+
 ```typescript
 // In code
 /** Email MUST be lowercase - see tenant.repository.ts */
@@ -233,6 +247,7 @@ If any layer is missed, the next layer catches it.
 ## Examples
 
 ### Before (BROKEN)
+
 ```typescript
 async login(email: string, password: string) {
   const tenant = await this.repo.findByEmail(email); // ❌ Case-sensitive
@@ -241,6 +256,7 @@ async login(email: string, password: string) {
 ```
 
 ### After (FIXED)
+
 ```typescript
 async login(email: string, password: string) {
   const normalized = email.toLowerCase().trim();
@@ -254,6 +270,7 @@ async login(email: string, password: string) {
 ## Status
 
 ✅ **Fully Implemented**
+
 - Email normalization at all 3 layers
 - 40+ regression tests
 - Zero authentication failures due to case

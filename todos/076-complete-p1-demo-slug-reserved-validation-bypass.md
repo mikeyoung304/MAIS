@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "076"
+issue_id: '076'
 tags: [data-integrity, code-review, seed, validation]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The demo seed creates a tenant with slug `'demo'`, but `'demo'` is in the reserved slugs list in `apiKeyService.validateTenantSlug()`. Seeds bypass validation because they directly use Prisma, creating inconsistency between validation rules and actual data.
 
 **Why it matters:**
+
 - Runtime errors when trying to regenerate keys for demo tenant via API
 - Inconsistency between validation rules and database state
 - May cause issues with tenant signup if 'demo' slug is attempted
@@ -22,17 +23,30 @@ The demo seed creates a tenant with slug `'demo'`, but `'demo'` is in the reserv
 **Location:** `server/prisma/seeds/demo.ts:14`
 
 ```typescript
-const demoSlug = 'demo';  // RESERVED SLUG!
+const demoSlug = 'demo'; // RESERVED SLUG!
 ```
 
 **Location:** `server/src/lib/api-key.service.ts:216-234`
 
 ```typescript
 const reserved = [
-  'api', 'admin', 'app', 'www', 'widget', 'cdn',
-  'static', 'assets', 'public', 'private', 'internal',
-  'system', 'test', 'staging', 'production', 'dev',
-  'demo',  // ← Reserved!
+  'api',
+  'admin',
+  'app',
+  'www',
+  'widget',
+  'cdn',
+  'static',
+  'assets',
+  'public',
+  'private',
+  'internal',
+  'system',
+  'test',
+  'staging',
+  'production',
+  'dev',
+  'demo', // ← Reserved!
 ];
 ```
 
@@ -41,16 +55,18 @@ const reserved = [
 ## Proposed Solutions
 
 ### Solution A: Change demo slug to non-reserved value (Recommended)
+
 **Pros:** Simple, maintains consistency
 **Cons:** Breaking change for existing dev databases
 **Effort:** Small (10 min)
 **Risk:** Low
 
 ```typescript
-const demoSlug = 'demo-tenant';  // or 'sample-business'
+const demoSlug = 'demo-tenant'; // or 'sample-business'
 ```
 
 ### Solution B: Remove 'demo' from reserved list
+
 **Pros:** No seed changes needed
 **Cons:** Allows users to create tenant with slug 'demo'
 **Effort:** Small (5 min)
@@ -58,14 +74,28 @@ const demoSlug = 'demo-tenant';  // or 'sample-business'
 
 ```typescript
 const reserved = [
-  'api', 'admin', 'app', 'www', 'widget', 'cdn',
-  'static', 'assets', 'public', 'private', 'internal',
-  'system', 'test', 'staging', 'production', 'dev',
+  'api',
+  'admin',
+  'app',
+  'www',
+  'widget',
+  'cdn',
+  'static',
+  'assets',
+  'public',
+  'private',
+  'internal',
+  'system',
+  'test',
+  'staging',
+  'production',
+  'dev',
   // 'demo' removed
 ];
 ```
 
 ### Solution C: Add validation bypass flag for seeds
+
 **Pros:** Explicit, documented
 **Cons:** More complex, risk of misuse
 **Effort:** Medium (30 min)
@@ -87,10 +117,12 @@ validateTenantSlug(slug: string, options?: { allowReserved?: boolean }) {
 ## Technical Details
 
 **Affected Files:**
+
 - `server/prisma/seeds/demo.ts`
 - Optionally: `server/src/lib/api-key.service.ts`
 
 **Components:**
+
 - Demo seed function
 - API key service validation
 
@@ -105,8 +137,8 @@ validateTenantSlug(slug: string, options?: { allowReserved?: boolean }) {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                  |
+| ---------- | ------------------------ | ------------------------------------------ |
 | 2025-11-29 | Created from code review | Seeds bypass validation - need consistency |
 
 ## Resources

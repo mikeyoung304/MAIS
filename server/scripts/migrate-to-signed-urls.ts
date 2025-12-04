@@ -21,12 +21,14 @@ const prisma = new PrismaClient();
 // Validate required environment variables
 const SUPABASE_URL = process.env.SUPABASE_URL;
 // Support both naming conventions for the service role key
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_SERVICE_KEY =
+  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   console.error('❌ Missing required environment variables:');
   if (!SUPABASE_URL) console.error('   - SUPABASE_URL');
-  if (!SUPABASE_SERVICE_KEY) console.error('   - SUPABASE_SERVICE_KEY (or SUPABASE_SERVICE_ROLE_KEY)');
+  if (!SUPABASE_SERVICE_KEY)
+    console.error('   - SUPABASE_SERVICE_KEY (or SUPABASE_SERVICE_ROLE_KEY)');
   process.exit(1);
 }
 
@@ -67,7 +69,11 @@ function isSupabaseUrl(url: string): boolean {
   return url.includes('supabase');
 }
 
-async function migrateSegmentHeroImages(): Promise<{ success: number; failed: number; skipped: number }> {
+async function migrateSegmentHeroImages(): Promise<{
+  success: number;
+  failed: number;
+  skipped: number;
+}> {
   console.log('\n📸 Migrating Segment Hero Images...\n');
 
   const segments = await prisma.segment.findMany({
@@ -126,7 +132,11 @@ async function migrateSegmentHeroImages(): Promise<{ success: number; failed: nu
   return { success, failed, skipped };
 }
 
-async function migratePackagePhotos(): Promise<{ success: number; failed: number; skipped: number }> {
+async function migratePackagePhotos(): Promise<{
+  success: number;
+  failed: number;
+  skipped: number;
+}> {
   console.log('\n📦 Migrating Package Photos...\n');
 
   const packages = await prisma.package.findMany({
@@ -273,9 +283,15 @@ async function main() {
     const totalFailed = segmentResults.failed + packageResults.failed + tenantResults.failed;
     const totalSkipped = segmentResults.skipped + packageResults.skipped + tenantResults.skipped;
 
-    console.log(`Segments:  ${segmentResults.success} ✅  ${segmentResults.failed} ❌  ${segmentResults.skipped} ⏭️`);
-    console.log(`Packages:  ${packageResults.success} ✅  ${packageResults.failed} ❌  ${packageResults.skipped} ⏭️`);
-    console.log(`Tenants:   ${tenantResults.success} ✅  ${tenantResults.failed} ❌  ${tenantResults.skipped} ⏭️`);
+    console.log(
+      `Segments:  ${segmentResults.success} ✅  ${segmentResults.failed} ❌  ${segmentResults.skipped} ⏭️`
+    );
+    console.log(
+      `Packages:  ${packageResults.success} ✅  ${packageResults.failed} ❌  ${packageResults.skipped} ⏭️`
+    );
+    console.log(
+      `Tenants:   ${tenantResults.success} ✅  ${tenantResults.failed} ❌  ${tenantResults.skipped} ⏭️`
+    );
     console.log('--------------------------------');
     console.log(`Total:     ${totalSuccess} ✅  ${totalFailed} ❌  ${totalSkipped} ⏭️`);
     console.log('\n================================\n');

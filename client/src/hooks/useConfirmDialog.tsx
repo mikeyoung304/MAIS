@@ -1,11 +1,11 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 interface ConfirmDialogOptions {
   title: string;
   description: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  variant?: "default" | "destructive";
+  variant?: 'default' | 'destructive';
 }
 
 interface ConfirmDialogState extends ConfirmDialogOptions {

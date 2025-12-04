@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "202"
+issue_id: '202'
 tags: [backend, api, tenant-admin, landing-page, crud, resolved]
 dependencies: []
 ---
@@ -28,10 +28,12 @@ The landing page feature has frontend rendering and contract schemas but lacks b
 ## Files to Create/Modify
 
 ### New Files
+
 - `server/src/routes/tenant-admin/landing-page.routes.ts` - Route handlers
 - `packages/contracts/src/tenant-admin/landing-page.contract.ts` - API contracts
 
 ### Modify
+
 - `packages/contracts/src/index.ts` - Export new contract
 - `server/src/routes/tenant-admin/index.ts` - Mount landing page routes
 - `server/src/services/tenant.service.ts` - Add landing page methods
@@ -69,7 +71,17 @@ export const landingPageContract = c.router({
     method: 'PATCH',
     path: '/v1/tenant-admin/landing-page/sections',
     body: z.object({
-      section: z.enum(['hero', 'socialProofBar', 'segmentSelector', 'about', 'testimonials', 'accommodation', 'gallery', 'faq', 'finalCta']),
+      section: z.enum([
+        'hero',
+        'socialProofBar',
+        'segmentSelector',
+        'about',
+        'testimonials',
+        'accommodation',
+        'gallery',
+        'faq',
+        'finalCta',
+      ]),
       enabled: z.boolean(),
     }),
     responses: {
@@ -121,10 +133,12 @@ export const landingPageRoutes = s.router(landingPageContract, {
 Implemented complete backend CRUD routes for landing page configuration:
 
 ### Files Created
+
 1. `/packages/contracts/src/tenant-admin/landing-page.contract.ts` - ts-rest API contract
 2. `/server/src/routes/tenant-admin-landing-page.routes.ts` - Express route handlers
 
 ### Files Modified
+
 1. `/packages/contracts/src/index.ts` - Added export for landing page contract
 2. `/server/src/adapters/prisma/tenant.repository.ts` - Added methods:
    - `getLandingPageConfig(tenantId)`
@@ -134,21 +148,25 @@ Implemented complete backend CRUD routes for landing page configuration:
 4. `/server/prisma/schema.prisma` - Added `landingPageConfig Json?` field to Tenant model
 
 ### Endpoints Implemented
+
 - `GET /v1/tenant-admin/landing-page` - Fetch landing page config (200: config or null)
 - `PUT /v1/tenant-admin/landing-page` - Update entire config (200: updated config, 400: validation error)
 - `PATCH /v1/tenant-admin/landing-page/sections` - Toggle section visibility (200: success)
 
 ### Security
+
 - All routes require tenant admin authentication via JWT (tenantAuthMiddleware)
 - All operations are tenant-scoped by `tenantId` from `res.locals.tenantAuth`
 - Input validation via Zod schemas from `@macon/contracts`
 
 ### Database Migration
+
 - Schema updated with `landingPageConfig Json?` field
 - Migration file needs to be created (schema drift detected)
 - Run: `cd server && npm exec prisma migrate dev --name add_landing_page_config`
 
 ### Next Steps
+
 - [ ] Create database migration (requires user consent for migrate reset)
 - [ ] Write integration tests for landing page routes
 - [ ] Update TODO-205 (tenant admin UI) to consume these endpoints

@@ -76,9 +76,7 @@ describe('Platform Seed', () => {
 
       const mockPrisma = createMockPrisma();
 
-      await expect(seedPlatform(mockPrisma)).rejects.toThrow(
-        /platform admin email/i
-      );
+      await expect(seedPlatform(mockPrisma)).rejects.toThrow(/platform admin email/i);
     });
 
     it('should include secure generation tip in ADMIN_DEFAULT_PASSWORD error', async () => {
@@ -86,9 +84,7 @@ describe('Platform Seed', () => {
 
       const mockPrisma = createMockPrisma();
 
-      await expect(seedPlatform(mockPrisma)).rejects.toThrow(
-        /openssl rand/i
-      );
+      await expect(seedPlatform(mockPrisma)).rejects.toThrow(/openssl rand/i);
     });
   });
 
@@ -110,9 +106,7 @@ describe('Platform Seed', () => {
 
       const mockPrisma = createMockPrisma();
 
-      await expect(seedPlatform(mockPrisma)).rejects.toThrow(
-        /at least 12 characters/
-      );
+      await expect(seedPlatform(mockPrisma)).rejects.toThrow(/at least 12 characters/);
     });
 
     it('should accept password with exactly 12 characters', async () => {
@@ -262,9 +256,7 @@ describe('Platform Seed', () => {
 
       await seedPlatform(mockPrisma);
 
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('password NOT updated')
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('password NOT updated'));
     });
   });
 });

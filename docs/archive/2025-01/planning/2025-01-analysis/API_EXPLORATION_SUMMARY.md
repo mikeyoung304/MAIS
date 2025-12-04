@@ -29,21 +29,23 @@ I've conducted a comprehensive exploration of the Elope API surface area for age
 
 **39 Total Endpoints** across 5 categories:
 
-| Category | Count | Auth Type | Rate Limit | Notes |
-|----------|-------|-----------|-----------|-------|
-| Public APIs | 7 | None | 300/15min | Catalog, availability, checkout |
-| Authentication | 5 | None/JWT | 5/15min (login) | Login, token verification |
-| Platform Admin | 11 | Admin JWT | 120/15min | Tenant management, Stripe |
-| Tenant Admin | 13 | Tenant JWT | 120/15min | Packages, branding, blackouts |
-| Dev/Debug | 3 | None | N/A | Mock mode only |
+| Category       | Count | Auth Type  | Rate Limit      | Notes                           |
+| -------------- | ----- | ---------- | --------------- | ------------------------------- |
+| Public APIs    | 7     | None       | 300/15min       | Catalog, availability, checkout |
+| Authentication | 5     | None/JWT   | 5/15min (login) | Login, token verification       |
+| Platform Admin | 11    | Admin JWT  | 120/15min       | Tenant management, Stripe       |
+| Tenant Admin   | 13    | Tenant JWT | 120/15min       | Packages, branding, blackouts   |
+| Dev/Debug      | 3     | None       | N/A             | Mock mode only                  |
 
 ### Authentication Model
 
 **Two Token Types**:
+
 1. **Admin Token** - `role: 'admin'` for platform-level operations
 2. **Tenant Token** - `type: 'tenant', tenantId, slug` for self-service operations
 
 **Middleware-Enforced Security**:
+
 - Admin tokens rejected on tenant routes
 - Tenant tokens rejected on admin routes
 - Service layer verifies ownership (tenantId check)
@@ -60,6 +62,7 @@ I've conducted a comprehensive exploration of the Elope API surface area for age
 ### Validation Enforcement
 
 **Zod Schema Validation** on:
+
 - Package slugs (min 1 char, unique per tenant)
 - Prices (integer, >= 0, no max limit)
 - Colors (6-digit hex format only)
@@ -67,6 +70,7 @@ I've conducted a comprehensive exploration of the Elope API surface area for age
 - Emails (standard email format)
 
 **Notable Gaps**:
+
 - No slug format validation (alphanumeric, hyphens)
 - No max price limits (can set $1 million products)
 - No date range validation (startDate < endDate)
@@ -76,6 +80,7 @@ I've conducted a comprehensive exploration of the Elope API surface area for age
 ### Rate Limiting
 
 **Three-Tier System**:
+
 - **Login**: 5 attempts/15 minutes (strict, skipSuccessfulRequests)
 - **Admin Routes**: 120 requests/15 minutes
 - **Public Routes**: 300 requests/15 minutes
@@ -99,6 +104,7 @@ I've conducted a comprehensive exploration of the Elope API surface area for age
 10. ❌ **AI-Friendly Response Format** - Error codes vary by endpoint
 
 **WORKAROUNDS REQUIRED**:
+
 - Agent must make N+1 requests for N items
 - Agent must catch validation errors to determine uniqueness
 - Agent must manually track partial failures across requests
@@ -107,6 +113,7 @@ I've conducted a comprehensive exploration of the Elope API surface area for age
 ### Hard Security Boundaries
 
 **What Agents CANNOT Do** (enforced):
+
 - ❌ Access data across tenants (service layer blocks)
 - ❌ Modify bookings (read-only endpoint)
 - ❌ Delete tenants (platform-admin only)
@@ -119,6 +126,7 @@ I've conducted a comprehensive exploration of the Elope API surface area for age
 ### API Design Observations
 
 **Strengths**:
+
 - ✓ Clear separation: public/admin/tenant APIs
 - ✓ Consistent JWT-based authentication
 - ✓ Service layer enforces tenantId ownership
@@ -127,6 +135,7 @@ I've conducted a comprehensive exploration of the Elope API surface area for age
 - ✓ Multi-tenant isolation at multiple layers
 
 **Weaknesses**:
+
 - ✗ No bulk operations for agent efficiency
 - ✗ No dry-run endpoints for safe validation
 - ✗ No transaction support for consistency
@@ -138,6 +147,7 @@ I've conducted a comprehensive exploration of the Elope API surface area for age
 ### Implementation Patterns for Agents
 
 **Recommended Workflow**:
+
 ```
 1. Authenticate (POST /v1/auth/login)
 2. Verify token (GET /v1/auth/verify)
@@ -148,12 +158,14 @@ I've conducted a comprehensive exploration of the Elope API surface area for age
 ```
 
 **Error Recovery**:
+
 - Classify errors: validation (non-retryable) vs server errors (retryable)
 - Implement exponential backoff for 429/5xx
 - Track partial failures for rollback
 - Log all operations for debugging
 
 **Rate Limit Handling**:
+
 - Budget 120 requests per 15 minutes for admin operations
 - Track requests and wait if approaching limit
 - Add 500ms delays between rapid sequential calls
@@ -162,18 +174,21 @@ I've conducted a comprehensive exploration of the Elope API surface area for age
 ### Recommended Enhancements (by priority)
 
 **Priority 1: Critical for AI Safety** (implement before agent deployment)
+
 - Bulk CREATE endpoint (POST /v1/tenant/admin/packages/bulk-create)
 - Dry-run/validation endpoint (POST /v1/tenant/admin/packages/validate)
 - Optimistic locking (ETag headers, If-Match)
 - Structured error codes (consistent across endpoints)
 
 **Priority 2: Agent-Friendly Features**
+
 - Async job queue (POST /v1/tenant/admin/jobs)
 - Configuration export/import (JSON format)
 - Audit trail API (GET /v1/tenant/admin/changes)
 - Transaction support (batch operations)
 
 **Priority 3: Advanced Features**
+
 - Webhook events (package.created, booking.paid)
 - GraphQL endpoint (for complex queries)
 - WebSocket live updates (real-time changes)
@@ -181,10 +196,12 @@ I've conducted a comprehensive exploration of the Elope API surface area for age
 ### Files Analyzed
 
 **API Definitions**:
+
 - `packages/contracts/src/api.v1.ts` - All endpoint contracts (320 lines)
 - `packages/contracts/src/dto.ts` - Request/response schemas (200+ lines)
 
 **Route Implementations**:
+
 - `server/src/routes/index.ts` - Router setup (288 lines)
 - `server/src/routes/tenant-admin.routes.ts` - Tenant endpoints (705 lines)
 - `server/src/routes/admin/tenants.routes.ts` - Tenant management (252 lines)
@@ -193,16 +210,19 @@ I've conducted a comprehensive exploration of the Elope API surface area for age
 - `server/src/routes/tenant-auth.routes.ts` - Tenant auth
 
 **Controllers**:
+
 - `server/src/controllers/tenant-admin.controller.ts` - Business logic (296 lines)
 - `server/src/controllers/platform-admin.controller.ts` - Platform operations (49 lines)
 
 **Validation & Security**:
+
 - `server/src/validation/tenant-admin.schemas.ts` - Zod schemas (65 lines)
 - `server/src/middleware/auth.ts` - Admin authentication (67 lines)
 - `server/src/middleware/tenant-auth.ts` - Tenant authentication (71 lines)
 - `server/src/middleware/rateLimiter.ts` - Rate limiting config (47 lines)
 
 **Configuration**:
+
 - `server/src/app.ts` - Express app setup (200+ lines)
 
 ## Usage Instructions
@@ -210,6 +230,7 @@ I've conducted a comprehensive exploration of the Elope API surface area for age
 ### For API Users (Developers)
 
 Start with **API_SURFACE_AREA_ANALYSIS.md**:
+
 - Read **Part 1** for endpoint inventory (7-minute read)
 - Read **Part 2** for authentication requirements (3-minute read)
 - Read **Part 3** for validation rules (5-minute read)
@@ -218,6 +239,7 @@ Start with **API_SURFACE_AREA_ANALYSIS.md**:
 ### For Agent Implementers
 
 Read both documents in order:
+
 1. **API_SURFACE_AREA_ANALYSIS.md** - Understand what's available
    - Focus on: Parts 1-5, 8-9, 11-12
    - Reference: Validation rules in Part 3
@@ -231,6 +253,7 @@ Read both documents in order:
 ### For Platform Architects
 
 Read **API_SURFACE_AREA_ANALYSIS.md** completely:
+
 - **Part 1**: Endpoint inventory (resource planning)
 - **Part 4**: Gaps (product roadmap)
 - **Part 6**: Rate limiting (capacity planning)
@@ -238,21 +261,22 @@ Read **API_SURFACE_AREA_ANALYSIS.md** completely:
 
 ## Key Statistics
 
-| Metric | Value |
-|--------|-------|
-| Total Endpoints | 39 |
-| Mutation Endpoints (POST/PUT/DELETE) | 26 |
-| Read-Only Endpoints (GET) | 13 |
-| Authenticated Endpoints | 32 |
-| Public Endpoints | 7 |
-| Endpoints Without Bulk Support | 39 (100%) |
-| Rate-Limited Endpoints | 34 |
-| Multi-Tenant Isolated Endpoints | 26+ |
-| Endpoints with Ownership Checks | 13 |
+| Metric                               | Value     |
+| ------------------------------------ | --------- |
+| Total Endpoints                      | 39        |
+| Mutation Endpoints (POST/PUT/DELETE) | 26        |
+| Read-Only Endpoints (GET)            | 13        |
+| Authenticated Endpoints              | 32        |
+| Public Endpoints                     | 7         |
+| Endpoints Without Bulk Support       | 39 (100%) |
+| Rate-Limited Endpoints               | 34        |
+| Multi-Tenant Isolated Endpoints      | 26+       |
+| Endpoints with Ownership Checks      | 13        |
 
 ## Confidence Levels
 
 **High Confidence** (verified in code):
+
 - Authentication model (middleware explicitly checks token type/role)
 - Rate limiting (rateLimit.ts has exact config)
 - Validation rules (Zod schemas in dto.ts)
@@ -260,11 +284,13 @@ Read **API_SURFACE_AREA_ANALYSIS.md** completely:
 - Hard security boundaries (middleware prevents cross-tenant access)
 
 **Medium Confidence** (inferred from code):
+
 - Complete endpoint list (traced through routes/)
 - Error handling patterns (observed in controllers)
 - Missing features (gaps not mentioned in any endpoint)
 
 **Low Confidence** (not verified):
+
 - Performance characteristics (no load test data)
 - Actual HTTP status codes (observed in code, not tested)
 - Rate limit precision (relies on express-rate-limit default behavior)
@@ -286,22 +312,22 @@ Read **API_SURFACE_AREA_ANALYSIS.md** completely:
 1. **Immediate**: Review Part 1 of API_SURFACE_AREA_ANALYSIS.md for endpoint summary
 2. **Before Deployment**: Implement Priority 1 enhancements (bulk ops, dry-run, error codes)
 3. **During Development**: Use AGENT_IMPLEMENTATION_GUIDE.md patterns for error handling
-4. **Testing**: Use /v1/dev/* mock endpoints before production
+4. **Testing**: Use /v1/dev/\* mock endpoints before production
 5. **Monitoring**: Log all API interactions using provided pattern (RequestLog)
 
 ## Document Navigation
 
-| Question | Document | Section |
-|----------|----------|---------|
-| "What endpoints exist?" | API_SURFACE_AREA_ANALYSIS | Part 1 (pages 1-3) |
-| "How do I authenticate?" | API_SURFACE_AREA_ANALYSIS | Part 2 (pages 4-5) |
-| "What validation rules apply?" | API_SURFACE_AREA_ANALYSIS | Part 3 (pages 6-7) |
-| "What's missing?" | API_SURFACE_AREA_ANALYSIS | Part 4 (pages 8-9) |
-| "What can't I do?" | API_SURFACE_AREA_ANALYSIS | Part 5 (page 10) |
-| "How do I handle errors?" | API_SURFACE_AREA_ANALYSIS | Part 8 (pages 13-14) |
-| "How do I implement?" | AGENT_IMPLEMENTATION_GUIDE | Use Cases 1-5 (pages 3-14) |
+| Question                       | Document                   | Section                           |
+| ------------------------------ | -------------------------- | --------------------------------- |
+| "What endpoints exist?"        | API_SURFACE_AREA_ANALYSIS  | Part 1 (pages 1-3)                |
+| "How do I authenticate?"       | API_SURFACE_AREA_ANALYSIS  | Part 2 (pages 4-5)                |
+| "What validation rules apply?" | API_SURFACE_AREA_ANALYSIS  | Part 3 (pages 6-7)                |
+| "What's missing?"              | API_SURFACE_AREA_ANALYSIS  | Part 4 (pages 8-9)                |
+| "What can't I do?"             | API_SURFACE_AREA_ANALYSIS  | Part 5 (page 10)                  |
+| "How do I handle errors?"      | API_SURFACE_AREA_ANALYSIS  | Part 8 (pages 13-14)              |
+| "How do I implement?"          | AGENT_IMPLEMENTATION_GUIDE | Use Cases 1-5 (pages 3-14)        |
 | "How do I handle rate limits?" | AGENT_IMPLEMENTATION_GUIDE | Rate Limit Handling (pages 15-20) |
-| "How do I stay safe?" | AGENT_IMPLEMENTATION_GUIDE | Safety Principles (pages 23-26) |
+| "How do I stay safe?"          | AGENT_IMPLEMENTATION_GUIDE | Safety Principles (pages 23-26)   |
 
 ## Questions Answered
 

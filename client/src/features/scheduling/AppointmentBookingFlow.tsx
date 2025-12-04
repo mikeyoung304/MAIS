@@ -1,17 +1,17 @@
-import { useState, useMemo } from "react";
-import { DayPicker } from "react-day-picker";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { InputEnhanced } from "@/components/ui/input-enhanced";
-import { Stepper, type Step } from "@/components/ui/Stepper";
-import { ServiceSelector } from "./ServiceSelector";
-import { TimeSlotPicker } from "./TimeSlotPicker";
-import { api } from "@/lib/api";
-import { toast } from "sonner";
-import { toUtcMidnight } from "@macon/shared";
-import { User, Mail, Phone, ArrowLeft } from "lucide-react";
-import type { ServiceDto } from "@macon/contracts";
-import "react-day-picker/style.css";
+import { useState, useMemo } from 'react';
+import { DayPicker } from 'react-day-picker';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { InputEnhanced } from '@/components/ui/input-enhanced';
+import { Stepper, type Step } from '@/components/ui/Stepper';
+import { ServiceSelector } from './ServiceSelector';
+import { TimeSlotPicker } from './TimeSlotPicker';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
+import { toUtcMidnight } from '@macon/shared';
+import { User, Mail, Phone, ArrowLeft } from 'lucide-react';
+import type { ServiceDto } from '@macon/contracts';
+import 'react-day-picker/style.css';
 
 interface CustomerDetails {
   name: string;
@@ -32,31 +32,31 @@ export function AppointmentBookingFlow() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails>({
-    name: "",
-    email: "",
-    phone: "",
-    notes: "",
+    name: '',
+    email: '',
+    phone: '',
+    notes: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Define steps
   const steps: Step[] = useMemo(() => {
     const stepList = [
-      { label: "Service", status: "upcoming" as const },
-      { label: "Date", status: "upcoming" as const },
-      { label: "Time", status: "upcoming" as const },
-      { label: "Details", status: "upcoming" as const },
-      { label: "Confirm", status: "upcoming" as const },
+      { label: 'Service', status: 'upcoming' as const },
+      { label: 'Date', status: 'upcoming' as const },
+      { label: 'Time', status: 'upcoming' as const },
+      { label: 'Details', status: 'upcoming' as const },
+      { label: 'Confirm', status: 'upcoming' as const },
     ];
 
     return stepList.map((step, index) => ({
       ...step,
       status:
         index < currentStepIndex
-          ? ("complete" as const)
+          ? ('complete' as const)
           : index === currentStepIndex
-          ? ("current" as const)
-          : ("upcoming" as const),
+            ? ('current' as const)
+            : ('upcoming' as const),
     }));
   }, [currentStepIndex]);
 
@@ -104,14 +104,14 @@ export function AppointmentBookingFlow() {
   };
 
   const canProceedFromStep4 =
-    customerDetails.name.trim() !== "" &&
-    customerDetails.email.trim() !== "" &&
-    customerDetails.phone.trim() !== "";
+    customerDetails.name.trim() !== '' &&
+    customerDetails.email.trim() !== '' &&
+    customerDetails.phone.trim() !== '';
 
   // Step 5: Submit to Checkout
   const handleCheckout = async () => {
     if (!selectedService || !selectedSlot || !selectedDate) {
-      toast.error("Please complete all steps before checkout");
+      toast.error('Please complete all steps before checkout');
       return;
     }
 
@@ -134,17 +134,17 @@ export function AppointmentBookingFlow() {
       });
 
       if (response.status !== 201 || !response.body) {
-        throw new Error("Failed to create checkout session");
+        throw new Error('Failed to create checkout session');
       }
 
       if (response.body.checkoutUrl) {
         window.location.href = response.body.checkoutUrl;
       } else {
-        throw new Error("No checkout URL returned");
+        throw new Error('No checkout URL returned');
       }
     } catch (error) {
-      toast.error("Unable to create checkout session", {
-        description: "Please try again or contact support.",
+      toast.error('Unable to create checkout session', {
+        description: 'Please try again or contact support.',
       });
       setIsSubmitting(false);
     }
@@ -221,39 +221,39 @@ export function AppointmentBookingFlow() {
                   id="name"
                   type="text"
                   value={customerDetails.name}
-                  onChange={(e) => updateCustomerDetails("name", e.target.value)}
+                  onChange={(e) => updateCustomerDetails('name', e.target.value)}
                   placeholder="John Doe"
                   label="Full Name"
                   floatingLabel
                   leftIcon={<User className="w-5 h-5" />}
                   clearable
-                  onClear={() => updateCustomerDetails("name", "")}
+                  onClear={() => updateCustomerDetails('name', '')}
                   required
                 />
                 <InputEnhanced
                   id="email"
                   type="email"
                   value={customerDetails.email}
-                  onChange={(e) => updateCustomerDetails("email", e.target.value)}
+                  onChange={(e) => updateCustomerDetails('email', e.target.value)}
                   placeholder="john.doe@example.com"
                   label="Email Address"
                   floatingLabel
                   leftIcon={<Mail className="w-5 h-5" />}
                   clearable
-                  onClear={() => updateCustomerDetails("email", "")}
+                  onClear={() => updateCustomerDetails('email', '')}
                   required
                 />
                 <InputEnhanced
                   id="phone"
                   type="tel"
                   value={customerDetails.phone}
-                  onChange={(e) => updateCustomerDetails("phone", e.target.value)}
+                  onChange={(e) => updateCustomerDetails('phone', e.target.value)}
                   placeholder="(555) 123-4567"
                   label="Phone Number"
                   floatingLabel
                   leftIcon={<Phone className="w-5 h-5" />}
                   clearable
-                  onClear={() => updateCustomerDetails("phone", "")}
+                  onClear={() => updateCustomerDetails('phone', '')}
                   required
                 />
                 <div>
@@ -266,7 +266,7 @@ export function AppointmentBookingFlow() {
                   <textarea
                     id="notes"
                     value={customerDetails.notes}
-                    onChange={(e) => updateCustomerDetails("notes", e.target.value)}
+                    onChange={(e) => updateCustomerDetails('notes', e.target.value)}
                     placeholder="Any special requests or information..."
                     className="w-full h-24 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-base text-neutral-900 placeholder:text-neutral-500 focus:border-macon-orange focus:outline-none focus:ring-4 focus:ring-macon-orange/30"
                   />
@@ -288,12 +288,8 @@ export function AppointmentBookingFlow() {
             <CardContent>
               <div className="space-y-6">
                 <div className="border-b border-neutral-200 pb-4">
-                  <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">
-                    Service
-                  </h3>
-                  <p className="text-lg font-semibold text-neutral-900">
-                    {selectedService.name}
-                  </p>
+                  <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">Service</h3>
+                  <p className="text-lg font-semibold text-neutral-900">{selectedService.name}</p>
                   {selectedService.description && (
                     <p className="text-neutral-600">{selectedService.description}</p>
                   )}
@@ -304,10 +300,10 @@ export function AppointmentBookingFlow() {
                     Date & Time
                   </h3>
                   <p className="text-lg font-semibold text-neutral-900">
-                    {toUtcMidnight(selectedDate)} at{" "}
-                    {selectedSlot.startTime.toLocaleTimeString("en-US", {
-                      hour: "numeric",
-                      minute: "2-digit",
+                    {toUtcMidnight(selectedDate)} at{' '}
+                    {selectedSlot.startTime.toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
                       hour12: true,
                     })}
                   </p>
@@ -387,11 +383,7 @@ export function AppointmentBookingFlow() {
         </Button>
 
         {currentStepIndex < 4 ? (
-          <Button
-            onClick={goToNextStep}
-            disabled={!canProceed() || isSubmitting}
-            size="lg"
-          >
+          <Button onClick={goToNextStep} disabled={!canProceed() || isSubmitting} size="lg">
             Continue
           </Button>
         ) : (

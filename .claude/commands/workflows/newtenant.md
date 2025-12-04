@@ -23,17 +23,18 @@ $ARGUMENTS
 
 ## Interpretation Rules
 
-| If Mike says... | You should... |
-|-----------------|---------------|
-| Vague colors ("elegant", "earthy") | Pick specific hex codes that match the vibe |
-| Vague pricing ("high end", "budget") | Generate appropriate price ranges |
-| No descriptions | Write compelling descriptions based on context |
-| Exact values | Use them verbatim, no changes |
-| "you decide" or "fill it in" | Make all decisions, present for approval |
+| If Mike says...                      | You should...                                  |
+| ------------------------------------ | ---------------------------------------------- |
+| Vague colors ("elegant", "earthy")   | Pick specific hex codes that match the vibe    |
+| Vague pricing ("high end", "budget") | Generate appropriate price ranges              |
+| No descriptions                      | Write compelling descriptions based on context |
+| Exact values                         | Use them verbatim, no changes                  |
+| "you decide" or "fill it in"         | Make all decisions, present for approval       |
 
 ## Data Models Reference
 
 ### Tenant
+
 ```
 slug: string (URL-safe, lowercase, hyphens)
 name: string (Display name)
@@ -44,6 +45,7 @@ backgroundColor: hex (page background, usually white/cream)
 ```
 
 ### Segment
+
 ```
 slug: string (URL-safe)
 name: string (Display name)
@@ -54,6 +56,7 @@ sortOrder: number (display order)
 ```
 
 ### Package
+
 ```
 slug: string (URL-safe)
 name: string (Display name)
@@ -65,6 +68,7 @@ groupingOrder?: number (order within tier)
 ```
 
 ### AddOn
+
 ```
 slug: string (URL-safe)
 name: string (Display name)
@@ -119,6 +123,7 @@ Ask: "Does this look right? Say 'yes' to create, or tell me what to change."
 ### Step 3: Execute
 
 Once approved, create in this order:
+
 1. Tenant (if new) - via signup or direct DB
 2. Segments - via `POST /v1/tenant-admin/segments`
 3. Packages - via `POST /v1/tenant-admin/packages`
@@ -148,28 +153,29 @@ Would you like me to note anything specific for this tenant?
 
 ## Color Palette Suggestions by Vibe
 
-| Vibe | Primary | Secondary | Accent |
-|------|---------|-----------|--------|
-| Elegant/Luxury | #1a1a2e (deep navy) | #d4af37 (gold) | #f5f5dc (cream) |
-| Rustic/Barn | #5c4033 (brown) | #daa520 (goldenrod) | #8b4513 (saddle) |
-| Modern/Minimal | #2d3436 (charcoal) | #00b894 (mint) | #fdcb6e (yellow) |
-| Romantic/Soft | #c9a9c7 (lavender) | #f8b4b4 (blush) | #ffeaa7 (cream) |
-| Natural/Earthy | #2d5016 (forest) | #c4a35a (wheat) | #8fbc8f (sage) |
-| Coastal/Beach | #1e3d59 (ocean) | #ffc857 (sand) | #17bebb (teal) |
-| Bold/Vibrant | #e63946 (red) | #1d3557 (navy) | #f1faee (white) |
+| Vibe           | Primary             | Secondary           | Accent           |
+| -------------- | ------------------- | ------------------- | ---------------- |
+| Elegant/Luxury | #1a1a2e (deep navy) | #d4af37 (gold)      | #f5f5dc (cream)  |
+| Rustic/Barn    | #5c4033 (brown)     | #daa520 (goldenrod) | #8b4513 (saddle) |
+| Modern/Minimal | #2d3436 (charcoal)  | #00b894 (mint)      | #fdcb6e (yellow) |
+| Romantic/Soft  | #c9a9c7 (lavender)  | #f8b4b4 (blush)     | #ffeaa7 (cream)  |
+| Natural/Earthy | #2d5016 (forest)    | #c4a35a (wheat)     | #8fbc8f (sage)   |
+| Coastal/Beach  | #1e3d59 (ocean)     | #ffc857 (sand)      | #17bebb (teal)   |
+| Bold/Vibrant   | #e63946 (red)       | #1d3557 (navy)      | #f1faee (white)  |
 
 ## Price Range Suggestions
 
-| Market | Entry | Mid | Premium |
-|--------|-------|-----|---------|
-| Budget | $500-1,500 | $1,500-3,000 | $3,000-5,000 |
-| Mid-Market | $2,000-4,000 | $4,000-7,000 | $7,000-12,000 |
-| High-End | $5,000-10,000 | $10,000-20,000 | $20,000-50,000 |
-| Ultra-Luxury | $15,000-30,000 | $30,000-75,000 | $75,000+ |
+| Market       | Entry          | Mid            | Premium        |
+| ------------ | -------------- | -------------- | -------------- |
+| Budget       | $500-1,500     | $1,500-3,000   | $3,000-5,000   |
+| Mid-Market   | $2,000-4,000   | $4,000-7,000   | $7,000-12,000  |
+| High-End     | $5,000-10,000  | $10,000-20,000 | $20,000-50,000 |
+| Ultra-Luxury | $15,000-30,000 | $30,000-75,000 | $75,000+       |
 
 ## Example Interaction
 
 **Mike's input:**
+
 ```
 bella vista weddings napa valley, luxury venue, gold and burgundy vibes,
 they do full weddings and intimate elopements, barn and vineyard spaces,
@@ -177,6 +183,7 @@ pricing around 8-25k, owner sarah wants elegant but approachable copy
 ```
 
 **Your response:**
+
 ```
 ## Tenant Setup: Bella Vista Weddings
 

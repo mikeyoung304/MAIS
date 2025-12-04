@@ -132,26 +132,32 @@ private async validateFile(file: UploadedFile, maxSizeMB?: number): Promise<void
 
 // Attack: PHP shell with image/jpeg header
 const phpShell = Buffer.from('<?php system($_GET["cmd"]); ?>');
-await expect(service.uploadLogo({
-  ...mockFile,
-  mimetype: 'image/jpeg',
-  buffer: phpShell
-})).rejects.toThrow('Unable to verify file type');
+await expect(
+  service.uploadLogo({
+    ...mockFile,
+    mimetype: 'image/jpeg',
+    buffer: phpShell,
+  })
+).rejects.toThrow('Unable to verify file type');
 
 // Attack: Plain text with image/png header
 const plainText = Buffer.from('This is just plain text');
-await expect(service.uploadLogo({
-  ...mockFile,
-  mimetype: 'image/png',
-  buffer: plainText
-})).rejects.toThrow('Unable to verify file type');
+await expect(
+  service.uploadLogo({
+    ...mockFile,
+    mimetype: 'image/png',
+    buffer: plainText,
+  })
+).rejects.toThrow('Unable to verify file type');
 
 // Attack: PNG uploaded as JPEG
-await expect(service.uploadLogo({
-  originalname: 'image.jpg',
-  mimetype: 'image/jpeg',
-  buffer: PNG_MAGIC_BYTES
-})).rejects.toThrow('File validation failed');
+await expect(
+  service.uploadLogo({
+    originalname: 'image.jpg',
+    mimetype: 'image/jpeg',
+    buffer: PNG_MAGIC_BYTES,
+  })
+).rejects.toThrow('File validation failed');
 ```
 
 ---
@@ -166,13 +172,17 @@ await expect(service.uploadLogo({
 
 ```typescript
 // BEFORE (vulnerable):
-const { data: { publicUrl } } = await supabase.storage
-  .from('public-images')  // ❌ Anyone can access
+const {
+  data: { publicUrl },
+} = await supabase.storage
+  .from('public-images') // ❌ Anyone can access
   .getPublicUrl(path);
 
 // AFTER (secure):
-const { data: { signedUrl } } = await supabase.storage
-  .from('images')  // ✅ Private bucket
+const {
+  data: { signedUrl },
+} = await supabase.storage
+  .from('images') // ✅ Private bucket
   .createSignedUrl(path, ONE_YEAR_SECONDS);
 ```
 
@@ -232,6 +242,7 @@ private async uploadToSupabase(
 #### Supabase Configuration
 
 **Storage Bucket Policy** (private bucket):
+
 ```sql
 -- Block all public access
 DROP POLICY IF EXISTS "Allow public access" on storage.objects;
@@ -251,15 +262,16 @@ DROP POLICY IF EXISTS "Allow public access" on storage.objects;
 
 ```typescript
 // Cross-tenant deletion blocked
-const url = 'https://xxx.supabase.co/storage/v1/object/sign/images/tenant-abc/segments/photo.jpg?token=xxx';
+const url =
+  'https://xxx.supabase.co/storage/v1/object/sign/images/tenant-abc/segments/photo.jpg?token=xxx';
 
-await service.deleteSegmentImage(url, 'tenant-xyz');  // Different tenant!
+await service.deleteSegmentImage(url, 'tenant-xyz'); // Different tenant!
 
 // Should log security error and NOT delete
 expect(logger.error).toHaveBeenCalledWith(
   expect.objectContaining({
     tenantId: 'tenant-xyz',
-    storagePath: expect.stringMatching(/^tenant-abc\//),  // Mismatch detected!
+    storagePath: expect.stringMatching(/^tenant-abc\//), // Mismatch detected!
   }),
   expect.stringContaining('SECURITY: Attempted cross-tenant file deletion blocked')
 );
@@ -415,7 +427,8 @@ async deleteSegment(tenantId: string, id: string): Promise<void> {
 describe('Cross-Tenant Security (Real Mode)', () => {
   it('should block cross-tenant deletion attempts', async () => {
     // URL belongs to tenant-abc but requesting tenant is tenant-xyz
-    const url = 'https://xxx.supabase.co/storage/v1/object/sign/images/tenant-abc/segments/photo.jpg?token=xxx';
+    const url =
+      'https://xxx.supabase.co/storage/v1/object/sign/images/tenant-abc/segments/photo.jpg?token=xxx';
 
     await service.deleteSegmentImage(url, 'tenant-xyz');
 
@@ -423,7 +436,7 @@ describe('Cross-Tenant Security (Real Mode)', () => {
     expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({
         tenantId: 'tenant-xyz',
-        storagePath: expect.stringMatching(/^tenant-abc\//),  // Mismatch!
+        storagePath: expect.stringMatching(/^tenant-abc\//), // Mismatch!
       }),
       expect.stringContaining('SECURITY: Attempted cross-tenant file deletion blocked')
     );
@@ -446,6 +459,7 @@ Duration    54.85s
 ### Security Test Coverage
 
 **Magic Byte Detection** (23 tests):
+
 - ✅ PHP shell with image/jpeg header rejected
 - ✅ Plain text with image/png header rejected
 - ✅ PNG uploaded as JPEG rejected
@@ -458,11 +472,13 @@ Duration    54.85s
 - ✅ All other image formats properly validated
 
 **Signed URLs** (implicit in Layer 3 tests):
+
 - ✅ Private bucket prevents public access
 - ✅ Signed URLs include tokens
 - ✅ 1-year expiry set correctly
 
 **Orphaned Cleanup** (9 tests):
+
 - ✅ Cross-tenant deletion blocked
 - ✅ Deletion failures don't break segment removal
 - ✅ Empty URLs handled gracefully
@@ -473,14 +489,14 @@ Duration    54.85s
 
 ## Attack Prevention Matrix
 
-| Attack Vector | Layer 1 | Layer 2 | Layer 3 | Status |
-|---------------|---------|---------|---------|--------|
-| PHP shell upload | ✅ Magic bytes detected | - | - | BLOCKED |
-| MIME type spoofing | ✅ Detected mismatch | - | - | BLOCKED |
-| Direct URL enumeration | - | ✅ Signed URLs + Private bucket | - | BLOCKED |
-| Cross-tenant image access | - | ✅ Token required | ✅ Ownership verified | BLOCKED |
-| Cross-tenant image deletion | - | - | ✅ Tenant validation | BLOCKED |
-| Orphaned file storage | - | - | ✅ Automatic cleanup | BLOCKED |
+| Attack Vector               | Layer 1                 | Layer 2                         | Layer 3               | Status  |
+| --------------------------- | ----------------------- | ------------------------------- | --------------------- | ------- |
+| PHP shell upload            | ✅ Magic bytes detected | -                               | -                     | BLOCKED |
+| MIME type spoofing          | ✅ Detected mismatch    | -                               | -                     | BLOCKED |
+| Direct URL enumeration      | -                       | ✅ Signed URLs + Private bucket | -                     | BLOCKED |
+| Cross-tenant image access   | -                       | ✅ Token required               | ✅ Ownership verified | BLOCKED |
+| Cross-tenant image deletion | -                       | -                               | ✅ Tenant validation  | BLOCKED |
+| Orphaned file storage       | -                       | -                               | ✅ Automatic cleanup  | BLOCKED |
 
 ---
 
@@ -510,11 +526,13 @@ Duration    54.85s
 ### Monitoring
 
 Security events logged with context:
+
 - MIME type spoofing attempts
 - Cross-tenant deletion attempts
 - Cleanup failures
 
 Enable alerts on:
+
 ```
 logger.warn/error containing "SECURITY:"
 ```
@@ -522,6 +540,7 @@ logger.warn/error containing "SECURITY:"
 ### Disaster Recovery
 
 If orphaned files detected in storage:
+
 ```sql
 -- Find and audit orphaned files
 SELECT COUNT(*) FROM images

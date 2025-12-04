@@ -277,11 +277,7 @@ export class CatalogService {
     return result;
   }
 
-  async deletePackage(
-    tenantId: string,
-    id: string,
-    auditCtx?: AuditContext
-  ): Promise<void> {
+  async deletePackage(tenantId: string, id: string, auditCtx?: AuditContext): Promise<void> {
     // Check if package exists
     const existing = await this.repository.getPackageById(tenantId, id);
     if (!existing) {

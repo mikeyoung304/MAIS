@@ -1,13 +1,13 @@
 ---
-title: "E2E Rate Limiting Bypass for Visual Editor Testing"
+title: 'E2E Rate Limiting Bypass for Visual Editor Testing'
 category: testing-gaps
 severity: P2
 component: visual-editor, rate-limiter, e2e-testing
 symptoms:
-  - "E2E tests failing with HTTP 429 (Too Many Requests)"
-  - "Signup rate limit exceeded after 5 test runs"
-  - "Visual editor lacking E2E test coverage"
-  - "Tests interfering with each other due to shared auth state"
+  - 'E2E tests failing with HTTP 429 (Too Many Requests)'
+  - 'Signup rate limit exceeded after 5 test runs'
+  - 'Visual editor lacking E2E test coverage'
+  - 'Tests interfering with each other due to shared auth state'
 tags:
   - visual-editor
   - e2e-testing
@@ -108,8 +108,8 @@ async function ensureLoggedIn(page: Page): Promise<void> {
     await page.getByLabel('Password', { exact: true }).fill('SecurePass123!');
     await page.getByLabel('Confirm Password').fill('SecurePass123!');
 
-    const responsePromise = page.waitForResponse(
-      (response) => response.url().includes('/v1/auth/signup')
+    const responsePromise = page.waitForResponse((response) =>
+      response.url().includes('/v1/auth/signup')
     );
     await page.getByRole('button', { name: 'Create Account' }).click();
 
@@ -155,17 +155,17 @@ grep "E2E_TEST" e2e/playwright.config.ts
 
 The visual editor E2E test suite covers:
 
-| Test Case | Description |
-|-----------|-------------|
-| Dashboard loads | Verifies packages display after login |
-| Title editing | Inline edit package title |
-| Price editing | Inline edit package price |
-| Description editing | Inline edit package description |
-| Auto-save | Changes persist after page reload |
-| Publish all | Publish workflow with confirmation |
-| Discard all | Discard workflow with confirmation |
-| Loading states | Verify loading indicators |
-| Escape cancels | ESC key cancels inline edit |
+| Test Case           | Description                           |
+| ------------------- | ------------------------------------- |
+| Dashboard loads     | Verifies packages display after login |
+| Title editing       | Inline edit package title             |
+| Price editing       | Inline edit package price             |
+| Description editing | Inline edit package description       |
+| Auto-save           | Changes persist after page reload     |
+| Publish all         | Publish workflow with confirmation    |
+| Discard all         | Discard workflow with confirmation    |
+| Loading states      | Verify loading indicators             |
+| Escape cancels      | ESC key cancels inline edit           |
 
 ## Prevention Strategies
 
@@ -197,12 +197,12 @@ The visual editor E2E test suite covers:
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `server/src/middleware/rateLimiter.ts` | Added `E2E_TEST=1` environment check |
-| `e2e/playwright.config.ts` | Added `E2E_TEST=1` to webServer command |
-| `e2e/tests/visual-editor.spec.ts` | NEW - 331 lines of E2E tests |
-| `plans/fix-usevisualeditor-remaining-bugs.md` | NEW - Implementation plan |
+| File                                          | Change                                  |
+| --------------------------------------------- | --------------------------------------- |
+| `server/src/middleware/rateLimiter.ts`        | Added `E2E_TEST=1` environment check    |
+| `e2e/playwright.config.ts`                    | Added `E2E_TEST=1` to webServer command |
+| `e2e/tests/visual-editor.spec.ts`             | NEW - 331 lines of E2E tests            |
+| `plans/fix-usevisualeditor-remaining-bugs.md` | NEW - Implementation plan               |
 
 ## Lessons Learned
 

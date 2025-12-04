@@ -1,5 +1,5 @@
 ---
-title: "Storefront CORS and Tier Display Regression"
+title: 'Storefront CORS and Tier Display Regression'
 problem_type:
   - cors_configuration
   - api_response_mapping
@@ -63,12 +63,12 @@ if (allowed.includes(origin)) {
 }
 
 // AFTER (broken)
-const allowedOrigins = config.ALLOWED_ORIGINS || [];  // Empty if not set!
+const allowedOrigins = config.ALLOWED_ORIGINS || []; // Empty if not set!
 
 if (allowedOrigins.includes(origin)) {
   callback(null, true);
 } else {
-  callback(new Error('Not allowed by CORS'));  // Blocks everything!
+  callback(new Error('Not allowed by CORS')); // Blocks everything!
 }
 ```
 
@@ -166,8 +166,7 @@ it('should allow requests from www.maconaisolutions.com', async () => {
     .set('Origin', 'https://www.maconaisolutions.com')
     .expect(200);
 
-  expect(response.headers['access-control-allow-origin'])
-    .toBe('https://www.maconaisolutions.com');
+  expect(response.headers['access-control-allow-origin']).toBe('https://www.maconaisolutions.com');
 });
 ```
 
@@ -199,13 +198,13 @@ const response: PackageDto = {
 
 ## Timeline
 
-| Time | Event |
-|------|-------|
-| Dec 2, 20:05 | Commit 012bd9b removes CORS whitelist |
-| Dec 3, ~14:00 | Issue detected - storefront broken |
-| Dec 3, 21:24 | Commit db586e5 - CORS restored |
-| Dec 3, 21:37 | Commit 7f40941 - Tier fields added |
-| Dec 3, ~21:45 | Verified working in production |
+| Time          | Event                                 |
+| ------------- | ------------------------------------- |
+| Dec 2, 20:05  | Commit 012bd9b removes CORS whitelist |
+| Dec 3, ~14:00 | Issue detected - storefront broken    |
+| Dec 3, 21:24  | Commit db586e5 - CORS restored        |
+| Dec 3, 21:37  | Commit 7f40941 - Tier fields added    |
+| Dec 3, ~21:45 | Verified working in production        |
 
 ## Metrics
 

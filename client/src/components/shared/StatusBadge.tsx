@@ -1,7 +1,7 @@
-import { Check, Clock, X, AlertCircle, type LucideIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Check, Clock, X, AlertCircle, type LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-type StatusVariant = "success" | "warning" | "danger" | "neutral";
+type StatusVariant = 'success' | 'warning' | 'danger' | 'neutral';
 
 interface StatusBadgeProps {
   status: string;
@@ -10,10 +10,10 @@ interface StatusBadgeProps {
 }
 
 const variantStyles: Record<StatusVariant, string> = {
-  success: "bg-sage/10 text-sage",
-  warning: "bg-warning-100 text-warning-700",
-  danger: "bg-danger-50 text-danger-600",
-  neutral: "bg-text-muted/10 text-text-muted",
+  success: 'bg-sage/10 text-sage',
+  warning: 'bg-warning-100 text-warning-700',
+  danger: 'bg-danger-50 text-danger-600',
+  neutral: 'bg-text-muted/10 text-text-muted',
 };
 
 const variantIcons: Record<StatusVariant, LucideIcon> = {
@@ -28,10 +28,10 @@ const variantIcons: Record<StatusVariant, LucideIcon> = {
  */
 function getVariantFromStatus(status: string): StatusVariant {
   const lower = status.toLowerCase();
-  if (["active", "confirmed", "paid", "success", "connected"].includes(lower)) return "success";
-  if (["pending", "warning"].includes(lower)) return "warning";
-  if (["inactive", "cancelled", "canceled", "refunded", "error"].includes(lower)) return "danger";
-  return "neutral";
+  if (['active', 'confirmed', 'paid', 'success', 'connected'].includes(lower)) return 'success';
+  if (['pending', 'warning'].includes(lower)) return 'warning';
+  if (['inactive', 'cancelled', 'canceled', 'refunded', 'error'].includes(lower)) return 'danger';
+  return 'neutral';
 }
 
 /**
@@ -69,7 +69,7 @@ export function StatusBadge({ status, variant, className }: StatusBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full",
+        'inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full',
         variantStyles[resolvedVariant],
         className
       )}

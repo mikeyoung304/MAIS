@@ -4,44 +4,49 @@
 
 ## Quick Score: 7.3/10 (MODERATE)
 
-| Component | Score | Status |
-|-----------|-------|--------|
-| Authentication | 8/10 | STRONG ✓ |
-| Tenant Isolation | 9/10 | EXCELLENT ✓ |
-| Input Validation | 6/10 | MODERATE |
-| Audit Logging | 3/10 | WEAK 🔴 |
-| Rate Limiting | 8/10 | STRONG ✓ |
-| Security Headers | 6/10 | NEEDS WORK |
+| Component        | Score | Status      |
+| ---------------- | ----- | ----------- |
+| Authentication   | 8/10  | STRONG ✓    |
+| Tenant Isolation | 9/10  | EXCELLENT ✓ |
+| Input Validation | 6/10  | MODERATE    |
+| Audit Logging    | 3/10  | WEAK 🔴     |
+| Rate Limiting    | 8/10  | STRONG ✓    |
+| Security Headers | 6/10  | NEEDS WORK  |
 
 ---
 
 ## Top Strengths
 
 ### 1. Multi-Layer Tenant Isolation (9/10)
+
 - Tenant ID enforced at **4 layers**: middleware → service → repository → database
 - Composite unique constraints prevent cross-tenant data leaks
 - Cache keys include tenantId to prevent poisoning
 - Example: `catalog:${tenantId}:all-packages`
 
 ### 2. JWT Authentication (8/10)
+
 - Explicit algorithm specification prevents confusion attacks (CVE-2016-5431)
 - Strong token type separation (admin vs tenant)
 - 7-day expiration is reasonable
 - Only allows HS256, rejects other algorithms
 
 ### 3. Rate Limiting (8/10)
-- **Differentiated by endpoint**: 
+
+- **Differentiated by endpoint**:
   - Public: 300 req/15min
   - Admin: 120 req/15min
   - Login: 5 attempts/15min
 - Only counts failed login attempts (not successful ones)
 
 ### 4. Webhook Security (9/10)
+
 - Stripe signature verification prevents spoofing
 - Idempotency protection prevents double-charging
 - Zod-based payload validation (no unsafe JSON.parse)
 
 ### 5. Database Security (9/10)
+
 - Prisma ORM prevents SQL injection
 - Type-safe query building
 - Parameterized queries throughout
@@ -55,6 +60,7 @@
 **Impact**: Compliance violation (PCI-DSS, HIPAA, GDPR, SOC 2)
 
 **No audit trail for**:
+
 - Package create/update/delete
 - Price changes (CRITICAL for compliance)
 - Add-on modifications
@@ -68,6 +74,7 @@
 **Cost**: Regulatory fines, audit failure, fraud detection impossible
 
 **Fix**: Create AuditLog table + logging service
+
 ```typescript
 interface AuditLog {
   id: string;
@@ -98,11 +105,13 @@ if (process.env.NODE_ENV === 'production' && origin.startsWith('https://')) {
 ```
 
 **Risk**:
+
 - Malicious sites can embed booking widget
 - Customer data exposed to untrusted sites
 - No control over embedding partners
 
 **Fix**: Use explicit whitelist
+
 ```typescript
 const allowedOrigins = [
   'https://example.com',
@@ -120,6 +129,7 @@ const allowedOrigins = [
 **Issue**: No max limits on prices, string lengths
 
 **Examples**:
+
 ```typescript
 // Can set price of $999,999.99
 validatePrice(999999999); // ✓ Passes
@@ -132,6 +142,7 @@ photos: Array(100).fill({...}) // ✓ Passes
 ```
 
 **Fix**:
+
 ```typescript
 // Price: Max $99,999.99
 if (priceCents > 9999999) throw new ValidationError('Price too high');
@@ -177,7 +188,9 @@ async updatePackage(tenantId: string, id: string, data: UpdatePackageInput) {
 
 ```typescript
 // Checks presence but not format:
-if (!payload.tenantId || !payload.slug) { /* ... */ }
+if (!payload.tenantId || !payload.slug) {
+  /* ... */
+}
 
 // Should validate:
 // - tenantId is valid CUID format
@@ -222,20 +235,20 @@ const store = new RedisStore({ client: redis });
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Use zod instead:
-email: z.string().email()
+email: z.string().email();
 ```
 
 ---
 
 ## Compliance Status
 
-| Standard | Status | Blocker |
-|----------|--------|---------|
-| PCI-DSS | ⚠️ PARTIAL | **Audit logging** |
-| HIPAA | ⚠️ PARTIAL | **Audit logging** |
-| GDPR | ⚠️ PARTIAL | Audit logging |
+| Standard      | Status     | Blocker           |
+| ------------- | ---------- | ----------------- |
+| PCI-DSS       | ⚠️ PARTIAL | **Audit logging** |
+| HIPAA         | ⚠️ PARTIAL | **Audit logging** |
+| GDPR          | ⚠️ PARTIAL | Audit logging     |
 | SOC 2 Type II | ⚠️ PARTIAL | **Audit logging** |
-| OWASP Top 10 | ✓ GOOD | None major |
+| OWASP Top 10  | ✓ GOOD     | None major        |
 
 **Primary Blocker**: Audit logging is required by ALL compliance frameworks
 
@@ -244,6 +257,7 @@ email: z.string().email()
 ## Implementation Roadmap
 
 ### Phase 1 (THIS SPRINT - Critical)
+
 - [ ] Add AuditLog table to schema
 - [ ] Implement audit logging service
 - [ ] Log all package/addon/price changes
@@ -251,6 +265,7 @@ email: z.string().email()
 - **Estimated**: 8-10 hours
 
 ### Phase 2 (NEXT SPRINT - High Priority)
+
 - [ ] Add validation upper bounds
 - [ ] Add service-layer permission checks
 - [ ] Add token format validation
@@ -258,6 +273,7 @@ email: z.string().email()
 - **Estimated**: 6-8 hours
 
 ### Phase 3 (BEFORE GA - Medium Priority)
+
 - [ ] Switch to Redis rate limit store
 - [ ] Add session management
 - [ ] Improve email validation
@@ -269,21 +285,23 @@ email: z.string().email()
 ## Testing Recommendations
 
 ### For Audit Logging
+
 ```typescript
 it('should log price change', async () => {
   await updatePackage(tenantId, pkgId, { priceCents: 5000 });
-  
+
   const audit = await AuditLog.findLast({
-    tenantId, 
-    action: 'PRICE_UPDATE'
+    tenantId,
+    action: 'PRICE_UPDATE',
   });
-  
+
   expect(audit.changes.before.priceCents).toBe(10000);
   expect(audit.changes.after.priceCents).toBe(5000);
 });
 ```
 
 ### For Validation
+
 ```typescript
 it('should reject price > $99,999.99', async () => {
   expect(() => validatePrice(10000000)).toThrow();
@@ -300,10 +318,11 @@ it('should reject title > 255 chars', async () => {
 ```
 
 ### For CORS
+
 ```typescript
 it('should block non-whitelisted origins', async () => {
   const response = await fetch(api, {
-    headers: { origin: 'https://malicious.com' }
+    headers: { origin: 'https://malicious.com' },
   });
   expect(response.status).toBe(403); // or CORS error
 });
@@ -313,14 +332,14 @@ it('should block non-whitelisted origins', async () => {
 
 ## File-by-File Issues
 
-| File | Issue | Severity |
-|------|-------|----------|
-| `server/src/app.ts` | CORS too permissive | 🔴 CRITICAL |
-| `server/src/lib/validation.ts` | Missing upper bounds | ⚠️ HIGH |
-| `server/src/validation/tenant-admin.schemas.ts` | Missing string length limits | ⚠️ HIGH |
-| `server/src/services/catalog.service.ts` | No permission checks | ⚠️ HIGH |
-| `server/src/middleware/tenant-auth.ts` | No token format validation | ⚠️ MEDIUM |
-| Routes throughout | No audit logging | 🔴 CRITICAL |
+| File                                            | Issue                        | Severity    |
+| ----------------------------------------------- | ---------------------------- | ----------- |
+| `server/src/app.ts`                             | CORS too permissive          | 🔴 CRITICAL |
+| `server/src/lib/validation.ts`                  | Missing upper bounds         | ⚠️ HIGH     |
+| `server/src/validation/tenant-admin.schemas.ts` | Missing string length limits | ⚠️ HIGH     |
+| `server/src/services/catalog.service.ts`        | No permission checks         | ⚠️ HIGH     |
+| `server/src/middleware/tenant-auth.ts`          | No token format validation   | ⚠️ MEDIUM   |
+| Routes throughout                               | No audit logging             | 🔴 CRITICAL |
 
 ---
 

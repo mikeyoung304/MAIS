@@ -13,8 +13,8 @@ Quick copy-paste snippets for common integration scenarios.
 <script
   src="https://widget.mais.com/sdk/mais-sdk.min.js"
   data-tenant="YOUR_TENANT"
-  data-api-key="YOUR_API_KEY">
-</script>
+  data-api-key="YOUR_API_KEY"
+></script>
 ```
 
 ---
@@ -25,24 +25,26 @@ Quick copy-paste snippets for common integration scenarios.
 
 ```html
 <script>
-window.MAISWidget.on('bookingCreated', function(data) {
-  gtag('event', 'begin_checkout', {
-    currency: 'USD',
-    value: data.total,
-    items: [{
-      item_id: data.packageSlug,
-      item_name: data.packageName,
-    }]
+  window.MAISWidget.on('bookingCreated', function (data) {
+    gtag('event', 'begin_checkout', {
+      currency: 'USD',
+      value: data.total,
+      items: [
+        {
+          item_id: data.packageSlug,
+          item_name: data.packageName,
+        },
+      ],
+    });
   });
-});
 
-window.MAISWidget.on('bookingCompleted', function(data) {
-  gtag('event', 'purchase', {
-    transaction_id: data.bookingId,
-    value: data.total,
-    currency: 'USD',
+  window.MAISWidget.on('bookingCompleted', function (data) {
+    gtag('event', 'purchase', {
+      transaction_id: data.bookingId,
+      value: data.total,
+      currency: 'USD',
+    });
   });
-});
 </script>
 ```
 
@@ -50,21 +52,21 @@ window.MAISWidget.on('bookingCompleted', function(data) {
 
 ```html
 <script>
-window.MAISWidget.on('bookingCreated', function(data) {
-  fbq('track', 'InitiateCheckout', {
-    value: data.total,
-    currency: 'USD',
-    content_name: data.packageName,
+  window.MAISWidget.on('bookingCreated', function (data) {
+    fbq('track', 'InitiateCheckout', {
+      value: data.total,
+      currency: 'USD',
+      content_name: data.packageName,
+    });
   });
-});
 
-window.MAISWidget.on('bookingCompleted', function(data) {
-  fbq('track', 'Purchase', {
-    value: data.total,
-    currency: 'USD',
-    transaction_id: data.bookingId,
+  window.MAISWidget.on('bookingCompleted', function (data) {
+    fbq('track', 'Purchase', {
+      value: data.total,
+      currency: 'USD',
+      transaction_id: data.bookingId,
+    });
   });
-});
 </script>
 ```
 
@@ -72,35 +74,35 @@ window.MAISWidget.on('bookingCompleted', function(data) {
 
 ```html
 <script>
-window.MAISWidget.on('ready', function() {
-  console.log('Widget loaded');
-  trackEvent('widget_loaded');
-});
-
-window.MAISWidget.on('bookingCreated', function(data) {
-  trackEvent('booking_created', {
-    booking_id: data.bookingId,
-    package: data.packageSlug,
-    amount: data.total
-  });
-});
-
-window.MAISWidget.on('bookingCompleted', function(data) {
-  trackEvent('booking_completed', {
-    booking_id: data.bookingId,
-    status: data.status
+  window.MAISWidget.on('ready', function () {
+    console.log('Widget loaded');
+    trackEvent('widget_loaded');
   });
 
-  // Redirect to thank you page
-  window.location.href = '/thank-you?id=' + data.bookingId;
-});
-
-window.MAISWidget.on('error', function(data) {
-  trackEvent('widget_error', {
-    error: data.error,
-    details: data.details
+  window.MAISWidget.on('bookingCreated', function (data) {
+    trackEvent('booking_created', {
+      booking_id: data.bookingId,
+      package: data.packageSlug,
+      amount: data.total,
+    });
   });
-});
+
+  window.MAISWidget.on('bookingCompleted', function (data) {
+    trackEvent('booking_completed', {
+      booking_id: data.bookingId,
+      status: data.status,
+    });
+
+    // Redirect to thank you page
+    window.location.href = '/thank-you?id=' + data.bookingId;
+  });
+
+  window.MAISWidget.on('error', function (data) {
+    trackEvent('widget_error', {
+      error: data.error,
+      details: data.details,
+    });
+  });
 </script>
 ```
 
@@ -120,18 +122,18 @@ window.MAISWidget.on('error', function(data) {
 <script
   src="https://widget.mais.com/sdk/mais-sdk.min.js"
   data-tenant="bellaweddings"
-  data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8">
-</script>
+  data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8"
+></script>
 
 <script>
-function openPackage(packageSlug) {
-  window.MAISWidget.openBooking(packageSlug);
+  function openPackage(packageSlug) {
+    window.MAISWidget.openBooking(packageSlug);
 
-  // Optional: scroll to widget
-  document.getElementById('mais-widget').scrollIntoView({
-    behavior: 'smooth'
-  });
-}
+    // Optional: scroll to widget
+    document.getElementById('mais-widget').scrollIntoView({
+      behavior: 'smooth',
+    });
+  }
 </script>
 ```
 
@@ -139,19 +141,19 @@ function openPackage(packageSlug) {
 
 ```html
 <script>
-// Load SDK first
+  // Load SDK first
 </script>
 
 <script>
-// After SDK loads, check URL for package parameter
-window.addEventListener('load', function() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const packageSlug = urlParams.get('package');
+  // After SDK loads, check URL for package parameter
+  window.addEventListener('load', function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    const packageSlug = urlParams.get('package');
 
-  if (packageSlug && window.MAISWidget) {
-    window.MAISWidget.openBooking(packageSlug);
-  }
-});
+    if (packageSlug && window.MAISWidget) {
+      window.MAISWidget.openBooking(packageSlug);
+    }
+  });
 </script>
 ```
 
@@ -161,15 +163,15 @@ Example URL: `https://example.com/booking?package=luxury`
 
 ```html
 <script>
-// Handle deep links like /book/luxury-package
-window.addEventListener('load', function() {
-  const path = window.location.pathname;
-  const match = path.match(/\/book\/([a-z0-9-]+)/);
+  // Handle deep links like /book/luxury-package
+  window.addEventListener('load', function () {
+    const path = window.location.pathname;
+    const match = path.match(/\/book\/([a-z0-9-]+)/);
 
-  if (match && match[1] && window.MAISWidget) {
-    window.MAISWidget.openBooking(match[1]);
-  }
-});
+    if (match && match[1] && window.MAISWidget) {
+      window.MAISWidget.openBooking(match[1]);
+    }
+  });
 </script>
 ```
 
@@ -186,8 +188,8 @@ window.addEventListener('load', function() {
   src="https://widget.mais.com/sdk/mais-sdk.min.js"
   data-tenant="bellaweddings"
   data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8"
-  data-container="my-booking-form">
-</script>
+  data-container="my-booking-form"
+></script>
 ```
 
 ### Multiple Containers (Conditional)
@@ -203,15 +205,15 @@ window.addEventListener('load', function() {
   src="https://widget.mais.com/sdk/mais-sdk.min.js"
   data-tenant="bellaweddings"
   data-api-key="pk_live_bellaweddings_a3f8c9d2e1b4f7g8"
-  data-container="mobile-widget">
-</script>
+  data-container="mobile-widget"
+></script>
 
 <script>
-// Dynamically switch container based on screen size
-if (window.matchMedia('(min-width: 768px)').matches) {
-  window.MAISWidget.config.containerId = 'desktop-widget';
-  window.MAISWidget.init(); // Re-initialize with new container
-}
+  // Dynamically switch container based on screen size
+  if (window.matchMedia('(min-width: 768px)').matches) {
+    window.MAISWidget.config.containerId = 'desktop-widget';
+    window.MAISWidget.init(); // Re-initialize with new container
+  }
 </script>
 ```
 
@@ -270,6 +272,7 @@ add_shortcode('mais_widget', 'mais_widget_shortcode');
 ```
 
 Usage in WordPress editor:
+
 ```
 [mais_widget]
 [mais_widget package="luxury"]
@@ -393,7 +396,7 @@ import { onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
   tenant: String,
-  apiKey: String
+  apiKey: String,
 });
 
 const emit = defineEmits(['booking-completed']);
@@ -456,12 +459,15 @@ Content-Security-Policy:
 ### HTML Meta Tag
 
 ```html
-<meta http-equiv="Content-Security-Policy" content="
+<meta
+  http-equiv="Content-Security-Policy"
+  content="
   default-src 'self';
   script-src 'self' https://widget.mais.com;
   frame-src https://widget.mais.com;
   connect-src 'self' https://api.mais.com;
-">
+"
+/>
 ```
 
 ---
@@ -472,20 +478,20 @@ Content-Security-Policy:
 
 ```html
 <script>
-window.MAISWidget.on('error', function(data) {
-  // Log to Sentry
-  if (typeof Sentry !== 'undefined') {
-    Sentry.captureException(new Error(data.error), {
-      extra: {
-        details: data.details,
-        tenant: window.MAISWidget.config.tenant
-      }
-    });
-  }
+  window.MAISWidget.on('error', function (data) {
+    // Log to Sentry
+    if (typeof Sentry !== 'undefined') {
+      Sentry.captureException(new Error(data.error), {
+        extra: {
+          details: data.details,
+          tenant: window.MAISWidget.config.tenant,
+        },
+      });
+    }
 
-  // Show user-friendly error
-  alert('Sorry, there was an error processing your booking. Please try again.');
-});
+    // Show user-friendly error
+    alert('Sorry, there was an error processing your booking. Please try again.');
+  });
 </script>
 ```
 
@@ -499,17 +505,17 @@ window.MAISWidget.on('error', function(data) {
 </div>
 
 <script>
-window.MAISWidget.on('error', function(data) {
-  document.getElementById('error-text').textContent = data.error;
-  document.getElementById('error-message').style.display = 'block';
-  document.getElementById('mais-widget').style.display = 'none';
-});
+  window.MAISWidget.on('error', function (data) {
+    document.getElementById('error-text').textContent = data.error;
+    document.getElementById('error-message').style.display = 'block';
+    document.getElementById('mais-widget').style.display = 'none';
+  });
 
-function retryBooking() {
-  document.getElementById('error-message').style.display = 'none';
-  document.getElementById('mais-widget').style.display = 'block';
-  window.MAISWidget.init(); // Reinitialize widget
-}
+  function retryBooking() {
+    document.getElementById('error-message').style.display = 'none';
+    document.getElementById('mais-widget').style.display = 'block';
+    window.MAISWidget.init(); // Reinitialize widget
+  }
 </script>
 ```
 
@@ -521,16 +527,17 @@ function retryBooking() {
 
 ```html
 <script>
-// Dynamically choose SDK based on environment
-const sdkUrl = window.location.hostname === 'localhost'
-  ? 'http://localhost:5173/mais-sdk.js'
-  : 'https://widget.mais.com/sdk/mais-sdk.min.js';
+  // Dynamically choose SDK based on environment
+  const sdkUrl =
+    window.location.hostname === 'localhost'
+      ? 'http://localhost:5173/mais-sdk.js'
+      : 'https://widget.mais.com/sdk/mais-sdk.min.js';
 
-const script = document.createElement('script');
-script.src = sdkUrl;
-script.setAttribute('data-tenant', 'bellaweddings');
-script.setAttribute('data-api-key', 'pk_live_bellaweddings_a3f8c9d2e1b4f7g8');
-document.body.appendChild(script);
+  const script = document.createElement('script');
+  script.src = sdkUrl;
+  script.setAttribute('data-tenant', 'bellaweddings');
+  script.setAttribute('data-api-key', 'pk_live_bellaweddings_a3f8c9d2e1b4f7g8');
+  document.body.appendChild(script);
 </script>
 ```
 
@@ -538,16 +545,16 @@ document.body.appendChild(script);
 
 ```html
 <script>
-// Enable debug logging
-window.MAIS_DEBUG = true;
+  // Enable debug logging
+  window.MAIS_DEBUG = true;
 
-window.MAISWidget.on('ready', function() {
-  console.log('[DEBUG] Widget ready');
-});
+  window.MAISWidget.on('ready', function () {
+    console.log('[DEBUG] Widget ready');
+  });
 
-window.MAISWidget.on('bookingCreated', function(data) {
-  console.log('[DEBUG] Booking created:', JSON.stringify(data, null, 2));
-});
+  window.MAISWidget.on('bookingCreated', function (data) {
+    console.log('[DEBUG] Booking created:', JSON.stringify(data, null, 2));
+  });
 </script>
 ```
 
@@ -573,8 +580,8 @@ open http://localhost:8000/example.html
 <script
   src="https://widget.mais.com/sdk/mais-sdk.min.js"
   data-tenant="bellaweddings"
-  data-api-key="invalid_key">
-</script>
+  data-api-key="invalid_key"
+></script>
 <!-- Check console for error: "[MAIS SDK] Invalid API key format" -->
 ```
 
@@ -588,27 +595,27 @@ open http://localhost:8000/example.html
 <div id="mais-widget" data-lazy-load="true"></div>
 
 <script>
-// Load SDK only when widget container is visible
-const observer = new IntersectionObserver(function(entries) {
-  if (entries[0].isIntersecting) {
-    const script = document.createElement('script');
-    script.src = 'https://widget.mais.com/sdk/mais-sdk.min.js';
-    script.setAttribute('data-tenant', 'bellaweddings');
-    script.setAttribute('data-api-key', 'pk_live_bellaweddings_a3f8c9d2e1b4f7g8');
-    document.body.appendChild(script);
-    observer.disconnect();
-  }
-});
+  // Load SDK only when widget container is visible
+  const observer = new IntersectionObserver(function (entries) {
+    if (entries[0].isIntersecting) {
+      const script = document.createElement('script');
+      script.src = 'https://widget.mais.com/sdk/mais-sdk.min.js';
+      script.setAttribute('data-tenant', 'bellaweddings');
+      script.setAttribute('data-api-key', 'pk_live_bellaweddings_a3f8c9d2e1b4f7g8');
+      document.body.appendChild(script);
+      observer.disconnect();
+    }
+  });
 
-observer.observe(document.getElementById('mais-widget'));
+  observer.observe(document.getElementById('mais-widget'));
 </script>
 ```
 
 ### Preconnect to Widget Domain
 
 ```html
-<link rel="preconnect" href="https://widget.mais.com">
-<link rel="dns-prefetch" href="https://widget.mais.com">
+<link rel="preconnect" href="https://widget.mais.com" />
+<link rel="dns-prefetch" href="https://widget.mais.com" />
 ```
 
 ---
@@ -629,9 +636,9 @@ console.log('Iframe created:', !!document.querySelector('#mais-widget iframe'));
 
 ```javascript
 // Ensure event listeners are added after SDK loads
-window.addEventListener('load', function() {
+window.addEventListener('load', function () {
   if (window.MAISWidget) {
-    window.MAISWidget.on('ready', function() {
+    window.MAISWidget.on('ready', function () {
       console.log('Widget ready!');
     });
   } else {

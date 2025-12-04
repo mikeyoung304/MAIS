@@ -71,11 +71,13 @@ Before you begin, ensure you have the following installed:
 4. **Set up the database**
 
    For local PostgreSQL:
+
    ```bash
    createdb mais_dev
    ```
 
    Update `DATABASE_URL` in `server/.env`:
+
    ```bash
    DATABASE_URL="postgresql://username:password@localhost:5432/mais_dev?schema=public"
    ```
@@ -116,7 +118,6 @@ Before you begin, ensure you have the following installed:
    ```
 
 8. **Verify setup**
-
    - API: http://localhost:3001/v1/packages
    - Web: http://localhost:3000
 
@@ -296,8 +297,9 @@ export function calculateTotal(items: LineItem[]): number {
 }
 
 // Bad
-export function calculateTotal(items: any) {  // ❌ No 'any'
-  return items.reduce((sum, item) => sum + item.priceCents, 0);  // ❌ No return type
+export function calculateTotal(items: any) {
+  // ❌ No 'any'
+  return items.reduce((sum, item) => sum + item.priceCents, 0); // ❌ No return type
 }
 ```
 
@@ -394,7 +396,7 @@ describe('BookingService', () => {
     const date = '2025-12-15';
 
     // Act
-    const result = await service.createCheckout({ date, /* ... */ });
+    const result = await service.createCheckout({ date /* ... */ });
 
     // Assert
     expect(result.isOk()).toBe(true);
@@ -609,6 +611,7 @@ Example:
 Booking form allows selecting past dates
 
 **Steps to Reproduce**
+
 1. Go to booking page
 2. Open date picker
 3. Select a date in the past
@@ -621,6 +624,7 @@ Past dates should be disabled in the date picker
 Past dates are selectable and form submits successfully
 
 **Environment**
+
 - OS: macOS 14.0
 - Node.js: 20.10.0
 - Browser: Chrome 120.0

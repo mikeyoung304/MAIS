@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "150"
+issue_id: '150'
 tags: [code-review, data-integrity, mvp-gaps, refunds]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The `processRefund` method has no validation that the refund amount doesn't exceed the total paid. This can lead to over-refunds and incorrect cumulative refund tracking.
 
 **Why This Matters:**
+
 - Over-refunds cause financial loss
 - Cumulative refund tracking broken
 - Stripe will reject but error handling unclear
@@ -24,6 +25,7 @@ The `processRefund` method has no validation that the refund amount doesn't exce
 **Location:** `server/src/services/booking.service.ts:1115-1175`
 
 **Evidence:**
+
 ```typescript
 async processRefund(
   tenantId: string,
@@ -43,6 +45,7 @@ async processRefund(
 **Data Integrity Violations:**
 
 1. **Refund > Total Paid:**
+
 ```typescript
 // Booking: totalCents = 200000 (already refunded 150000)
 // Request: amountCents = 100000
@@ -50,12 +53,14 @@ async processRefund(
 ```
 
 2. **Deposit Scenario Missing:**
+
 ```typescript
 // Booking: depositPaidAmount = 50000, balancePaidAmount = 150000
 // Refund: totalCents = 200000 -- Wrong! Should only refund what was actually paid
 ```
 
 3. **Partial Refund Tracking Broken:**
+
 ```typescript
 // First refund: 50000
 // Second refund: 50000
@@ -65,6 +70,7 @@ async processRefund(
 ## Proposed Solutions
 
 ### Option A: Add Amount Validation (Recommended)
+
 **Pros:** Prevents over-refunds, accurate tracking
 **Cons:** Slightly more complex
 **Effort:** Small (2-3 hours)
@@ -82,7 +88,7 @@ if (refundAmount > maxRefundable) {
 // Track cumulative refunds
 refundAmount: booking.refundAmount
   ? booking.refundAmount + refundResult.amountCents
-  : refundResult.amountCents
+  : refundResult.amountCents;
 ```
 
 ## Recommended Action
@@ -92,6 +98,7 @@ refundAmount: booking.refundAmount
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/services/booking.service.ts`
 
 **Components:** Refund processing
@@ -106,8 +113,8 @@ refundAmount: booking.refundAmount
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                     |
+| ---------- | ------- | ------------------------- |
 | 2025-12-02 | Created | From MVP gaps code review |
 
 ## Resources

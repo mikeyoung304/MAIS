@@ -4,8 +4,8 @@
  * Basic information fields for segment form (slug, name)
  */
 
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 interface BasicInfoFieldsProps {
   slug: string;

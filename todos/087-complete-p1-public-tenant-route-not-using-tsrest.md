@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "087"
+issue_id: '087'
 tags: [todo]
 dependencies: []
 ---
@@ -18,12 +18,14 @@ dependencies: []
 The `public-tenant.routes.ts` file uses raw Express Router instead of ts-rest binding. This bypasses the contract enforcement that other routes use and creates inconsistency in the codebase.
 
 Current implementation:
+
 ```typescript
 const router = Router();
 router.get('/:slug', async (req, res) => { ... });
 ```
 
 Should use:
+
 ```typescript
 const publicTenantRouter = createExpressEndpoints(
   contract.getTenantPublic,

@@ -322,7 +322,11 @@ describe('AuditService', () => {
     it('should return empty array if no history', async () => {
       (mockPrisma.configChangeLog.findMany as any).mockResolvedValue([]);
 
-      const history = await auditService.getEntityHistory('tenant_123', 'Package', 'pkg_nonexistent');
+      const history = await auditService.getEntityHistory(
+        'tenant_123',
+        'Package',
+        'pkg_nonexistent'
+      );
 
       expect(history).toEqual([]);
     });
@@ -357,7 +361,11 @@ describe('AuditService', () => {
     it('should return null if no history', async () => {
       (mockPrisma.configChangeLog.findFirst as any).mockResolvedValue(null);
 
-      const snapshot = await auditService.getLatestSnapshot('tenant_123', 'Package', 'pkg_nonexistent');
+      const snapshot = await auditService.getLatestSnapshot(
+        'tenant_123',
+        'Package',
+        'pkg_nonexistent'
+      );
 
       expect(snapshot).toBeNull();
     });

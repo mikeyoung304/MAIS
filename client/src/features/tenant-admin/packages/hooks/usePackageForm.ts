@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { api } from "@/lib/api";
-import type { PackageDto } from "@macon/contracts";
+import { useState } from 'react';
+import { api } from '@/lib/api';
+import type { PackageDto } from '@macon/contracts';
 
 export interface PackageFormData {
   title: string;
@@ -9,9 +9,9 @@ export interface PackageFormData {
   minLeadDays: string;
   isActive: boolean;
   // Tier/segment organization fields
-  segmentId: string;      // Empty string = no segment
-  grouping: string;       // Free-form tier label (e.g., "Solo", "Couple", "Group")
-  groupingOrder: string;  // Number as string for input field
+  segmentId: string; // Empty string = no segment
+  grouping: string; // Free-form tier label (e.g., "Solo", "Couple", "Group")
+  groupingOrder: string; // Number as string for input field
 }
 
 interface UsePackageFormProps {
@@ -21,28 +21,28 @@ interface UsePackageFormProps {
 
 export function usePackageForm({ onSuccess, onPackagesChange }: UsePackageFormProps) {
   const [form, setForm] = useState<PackageFormData>({
-    title: "",
-    description: "",
-    priceCents: "",
-    minLeadDays: "7",
+    title: '',
+    description: '',
+    priceCents: '',
+    minLeadDays: '7',
     isActive: true,
-    segmentId: "",
-    grouping: "",
-    groupingOrder: "",
+    segmentId: '',
+    grouping: '',
+    groupingOrder: '',
   });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const resetForm = () => {
     setForm({
-      title: "",
-      description: "",
-      priceCents: "",
-      minLeadDays: "7",
+      title: '',
+      description: '',
+      priceCents: '',
+      minLeadDays: '7',
       isActive: true,
-      segmentId: "",
-      grouping: "",
-      groupingOrder: "",
+      segmentId: '',
+      grouping: '',
+      groupingOrder: '',
     });
     setError(null);
   };
@@ -52,17 +52,17 @@ export function usePackageForm({ onSuccess, onPackagesChange }: UsePackageFormPr
       title: pkg.title,
       description: pkg.description,
       priceCents: pkg.priceCents.toString(),
-      minLeadDays: "7", // Frontend-only field, not persisted to backend
+      minLeadDays: '7', // Frontend-only field, not persisted to backend
       isActive: pkg.isActive !== false,
-      segmentId: pkg.segmentId ?? "",
-      grouping: pkg.grouping ?? "",
-      groupingOrder: pkg.groupingOrder?.toString() ?? "",
+      segmentId: pkg.segmentId ?? '',
+      grouping: pkg.grouping ?? '',
+      groupingOrder: pkg.groupingOrder?.toString() ?? '',
     });
   };
 
   const validateForm = (): boolean => {
     if (!form.title || !form.description || !form.priceCents) {
-      setError("Title, description, and price are required");
+      setError('Title, description, and price are required');
       return false;
     }
 
@@ -70,12 +70,12 @@ export function usePackageForm({ onSuccess, onPackagesChange }: UsePackageFormPr
     const minLeadDays = parseInt(form.minLeadDays, 10);
 
     if (isNaN(priceCents) || priceCents <= 0) {
-      setError("Price must be a positive number");
+      setError('Price must be a positive number');
       return false;
     }
 
     if (isNaN(minLeadDays) || minLeadDays < 0) {
-      setError("Min lead days must be a non-negative number");
+      setError('Min lead days must be a non-negative number');
       return false;
     }
 
@@ -93,12 +93,13 @@ export function usePackageForm({ onSuccess, onPackagesChange }: UsePackageFormPr
 
     try {
       // Generate slug from title (lowercase, replace spaces with hyphens)
-      const slug = form.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const slug = form.title
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
 
       // Parse groupingOrder - convert to number or null
-      const groupingOrder = form.groupingOrder
-        ? parseInt(form.groupingOrder, 10)
-        : null;
+      const groupingOrder = form.groupingOrder ? parseInt(form.groupingOrder, 10) : null;
 
       const data = {
         slug,
@@ -118,12 +119,12 @@ export function usePackageForm({ onSuccess, onPackagesChange }: UsePackageFormPr
         });
 
         if (result.status === 200) {
-          onSuccess("Package updated successfully");
+          onSuccess('Package updated successfully');
           resetForm();
           onPackagesChange();
           return true;
         } else {
-          setError("Failed to update package");
+          setError('Failed to update package');
           return false;
         }
       } else {
@@ -132,20 +133,20 @@ export function usePackageForm({ onSuccess, onPackagesChange }: UsePackageFormPr
         });
 
         if (result.status === 201) {
-          onSuccess("Package created successfully");
+          onSuccess('Package created successfully');
           resetForm();
           onPackagesChange();
           return true;
         } else {
-          setError("Failed to create package");
+          setError('Failed to create package');
           return false;
         }
       }
     } catch (err) {
       if (import.meta.env.DEV) {
-        console.error("Failed to save package:", err);
+        console.error('Failed to save package:', err);
       }
-      setError("An error occurred while saving the package");
+      setError('An error occurred while saving the package');
       return false;
     } finally {
       setIsSaving(false);

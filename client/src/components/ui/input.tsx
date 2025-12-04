@@ -1,5 +1,5 @@
-import * as React from 'react'
-import { cn } from '@/lib/utils'
+import * as React from 'react';
+import { cn } from '@/lib/utils';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: boolean;
@@ -28,7 +28,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             'disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:border-neutral-200',
             'file:border-0 file:bg-transparent file:text-sm file:font-medium',
             'bg-gradient-to-b from-white to-neutral-50/50',
-            error ? 'border-danger-500 focus:border-danger-600 focus-visible:ring-danger-500/30' : 'border-neutral-300',
+            error
+              ? 'border-danger-500 focus:border-danger-600 focus-visible:ring-danger-500/30'
+              : 'border-neutral-300',
             className
           )}
           ref={ref}
@@ -43,9 +45,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           </span>
         )}
       </>
-    )
+    );
   }
-)
-Input.displayName = 'Input'
+);
+Input.displayName = 'Input';
 
-export { Input }
+export { Input };

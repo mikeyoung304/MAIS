@@ -1,9 +1,9 @@
 ---
 status: complete
 priority: p3
-issue_id: "019"
+issue_id: '019'
 tags: [code-review, simplification, yagni, storefront, deferred]
-dependencies: ["016"]
+dependencies: ['016']
 ---
 
 # Consider Merging Duplicate Page Components (YAGNI)
@@ -17,53 +17,65 @@ PR #6 creates separate page components for segment-based and root tier selection
 ## Findings
 
 ### SegmentTiers vs RootTiers
+
 **Files:**
+
 - `client/src/pages/SegmentTiers.tsx` (75 lines)
 - `client/src/pages/RootTiers.tsx` (91 lines)
 
 **Differences:**
+
 - Data source: `useSegmentWithPackages(slug)` vs `usePackages()`
 - Filter: segment packages vs `!p.segmentId`
 - Back link: exists for segment, none for root
 
 **Identical code:**
+
 - Loading skeleton rendering
 - Error state handling
 - TierSelector props pattern
 
 ### SegmentTierDetail vs RootTierDetail
+
 **Files:** Both in `client/src/pages/TierDetailPage.tsx` (146 lines total)
 
 **Differences:**
+
 - Data source hooks
 - Package filtering (4 lines)
 
 **Identical code:**
+
 - Param validation
 - Loading/error handling
 - TierDetail rendering
 
 ### Simplification Potential
+
 - **Before:** 7 files, 961 lines
 - **After:** 5 files, ~620 lines (35% reduction)
 
 ## Proposed Solutions
 
 ### Option A: Keep Separate (Current State)
+
 **Effort:** None | **Risk:** None
 
 Keep current implementation for clarity.
 
 **Pros:**
+
 - Each route has dedicated component
 - Easy to understand individual flows
 - No risk of breaking changes
 
 **Cons:**
+
 - Duplicate code to maintain
 - Larger bundle size
 
 ### Option B: Merge Pages with Route Params
+
 **Effort:** Medium | **Risk:** Medium
 
 Create unified components that handle both cases:
@@ -87,25 +99,30 @@ function Tiers() {
 ```
 
 **Pros:**
+
 - 35% code reduction
 - Single source of truth
 - Fewer files to maintain
 
 **Cons:**
+
 - Conditional hook calls need careful handling
 - Slightly more complex component logic
 - Risk of regressions in existing flows
 
 ### Option C: Create Shared Content Component
+
 **Effort:** Small | **Risk:** Low
 
 Extract shared loading/error states to TierSelector, keep thin page wrappers.
 
 **Pros:**
+
 - Reduces duplication without risky refactor
 - Pages remain simple route handlers
 
 **Cons:**
+
 - Still have multiple files
 
 ## Recommended Action
@@ -123,7 +140,7 @@ After detailed analysis, the cost of merging outweighs the benefits:
 3. **Route Semantic Clarity**: These routes represent fundamentally different concepts:
    - `/s/:slug` = "filter packages within a specific segment"
    - `/tiers` = "filter packages without a segment association"
-   Separate components make this distinction explicit and self-documenting.
+     Separate components make this distinction explicit and self-documenting.
 
 4. **Context Passing**: Segment routes pass segment metadata (`segmentSlug`, `segmentName`); root routes don't. Conditional prop passing adds complexity.
 
@@ -134,6 +151,7 @@ After detailed analysis, the cost of merging outweighs the benefits:
 ### What Could Be Done Instead (Lower-Risk):
 
 If code duplication becomes a real issue in the future, consider:
+
 - **Extract shared loading skeleton** to a utility hook or wrapper component
 - **Extract error UI pattern** to reusable component
 - **Extract tier validation logic** to a custom hook
@@ -145,6 +163,7 @@ These are lower-risk refactors that don't require conditional hooks or route con
 This is a **nice-to-have** refactoring opportunity, not a requirement. The current implementation is functional and maintainable.
 
 **If pursuing Option B:**
+
 - Update `client/src/router.tsx` to use unified components
 - Ensure all tests still pass
 - Verify both URL patterns work correctly
@@ -152,6 +171,7 @@ This is a **nice-to-have** refactoring opportunity, not a requirement. The curre
 ## Acceptance Criteria
 
 If implementing:
+
 - [ ] Unified component handles both segment and root cases
 - [ ] `/tiers` route works correctly
 - [ ] `/s/:slug` route works correctly
@@ -161,9 +181,9 @@ If implementing:
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-27 | Created | Identified during PR #6 simplicity review |
+| Date       | Action   | Notes                                                                                                                           |
+| ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-11-27 | Created  | Identified during PR #6 simplicity review                                                                                       |
 | 2025-12-03 | DEFERRED | Detailed analysis shows conditional hooks + route semantic differences justify keeping separate. Document as deferred decision. |
 
 ## Resources

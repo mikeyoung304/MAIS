@@ -99,7 +99,7 @@ describe.sequential('Catalog Segment Integration Tests', () => {
       // Query packages for segment A - should only return 2 packages
       const packagesA = await catalogService.getPackagesBySegment(tenant.id, segmentA.id);
       expect(packagesA).toHaveLength(2);
-      expect(packagesA.every(p => p.title.startsWith('Wellness'))).toBe(true);
+      expect(packagesA.every((p) => p.title.startsWith('Wellness'))).toBe(true);
 
       // Query packages for segment B - should only return 1 package
       const packagesB = await catalogService.getPackagesBySegment(tenant.id, segmentB.id);
@@ -281,9 +281,9 @@ describe.sequential('Catalog Segment Integration Tests', () => {
 
       // Should include wellness-specific (1) + global (1) = 2 total
       expect(addOns).toHaveLength(2);
-      expect(addOns.find(a => a.title === 'Yoga Session')).toBeTruthy();
-      expect(addOns.find(a => a.title === 'Farm-Fresh Meals')).toBeTruthy();
-      expect(addOns.find(a => a.title === 'Photography')).toBeUndefined();
+      expect(addOns.find((a) => a.title === 'Yoga Session')).toBeTruthy();
+      expect(addOns.find((a) => a.title === 'Farm-Fresh Meals')).toBeTruthy();
+      expect(addOns.find((a) => a.title === 'Photography')).toBeUndefined();
     });
 
     it('should filter packages with add-ons to show only relevant add-ons', async () => {
@@ -353,8 +353,8 @@ describe.sequential('Catalog Segment Integration Tests', () => {
 
       expect(packages).toHaveLength(1);
       expect(packages[0].addOns).toHaveLength(2);
-      expect(packages[0].addOns.find(a => a.title === 'Yoga Session')).toBeTruthy();
-      expect(packages[0].addOns.find(a => a.title === 'Farm Meals')).toBeTruthy();
+      expect(packages[0].addOns.find((a) => a.title === 'Yoga Session')).toBeTruthy();
+      expect(packages[0].addOns.find((a) => a.title === 'Farm Meals')).toBeTruthy();
     });
 
     it('should not include inactive add-ons', async () => {

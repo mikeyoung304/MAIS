@@ -20,7 +20,7 @@ import { FeatureErrorBoundary } from '@/components/errors';
 function SegmentHero({
   title,
   subtitle,
-  image
+  image,
 }: {
   title: string;
   subtitle: string | null;
@@ -100,9 +100,7 @@ function SegmentLandingContent() {
           <h1 className="font-heading text-3xl md:text-4xl font-bold text-macon-navy mb-6">
             Not Found
           </h1>
-          <p className="text-xl text-neutral-600 mb-8">
-            This experience is no longer available.
-          </p>
+          <p className="text-xl text-neutral-600 mb-8">This experience is no longer available.</p>
           <Link to="/packages">
             <Button size="lg" className="min-h-[44px]">
               <ArrowLeft className="w-5 h-5 mr-2" />
@@ -149,12 +147,8 @@ function SegmentLandingContent() {
       <Container className="py-8 pb-16">
         {packages.length === 0 ? (
           <div className="text-center py-20 bg-neutral-50 rounded-xl border-2 border-neutral-200">
-            <p className="text-2xl text-macon-navy-600 mb-3 font-semibold">
-              Coming soon
-            </p>
-            <p className="text-lg text-neutral-600 mb-8">
-              New options launching shortly.
-            </p>
+            <p className="text-2xl text-macon-navy-600 mb-3 font-semibold">Coming soon</p>
+            <p className="text-lg text-neutral-600 mb-8">New options launching shortly.</p>
             <Link to="/packages">
               <Button variant="outline" size="lg" className="min-h-[44px]">
                 View All

@@ -10,9 +10,9 @@ symptoms:
   - Email addresses with uppercase letters fail to match database records
   - Multiple root causes: misleading demo credentials, case-sensitive lookups
 error_messages:
-  - "Invalid credentials. Please check your email and password."
-  - "Tenant account not configured for login"
-  - "Tenant account is inactive"
+  - 'Invalid credentials. Please check your email and password.'
+  - 'Tenant account not configured for login'
+  - 'Tenant account is inactive'
 date_solved: 2025-11-27
 related_prs: []
 ---
@@ -40,8 +40,8 @@ These issues violated UX best practices (emails should be case-insensitive) and 
 ```typescript
 // BEFORE: Non-existent credentials
 const { values, handleChange } = useForm({
-  email: "admin@macon.com",        // Not a real user account
-  password: "admin123"              // Doesn't match any real password
+  email: 'admin@macon.com', // Not a real user account
+  password: 'admin123', // Doesn't match any real password
 });
 ```
 
@@ -95,15 +95,17 @@ Implemented a two-layer fix:
 **File**: `client/src/pages/Login.tsx`
 
 **Changes**:
+
 ```typescript
 // AFTER: Use actual seeded test credentials
 const { values, handleChange } = useForm({
-  email: "mike@maconheadshots.com",  // Actual seeded test user
-  password: "@Nupples8"                // Actual user password
+  email: 'mike@maconheadshots.com', // Actual seeded test user
+  password: '@Nupples8', // Actual user password
 });
 ```
 
 **Why This Was Necessary**:
+
 - **User Experience**: New developers and testers see working credentials immediately
 - **Onboarding**: Reduces friction when setting up local development environment
 - **Clarity**: Pre-filled form indicates the authentication system is working
@@ -114,6 +116,7 @@ const { values, handleChange } = useForm({
 **File**: `server/src/services/tenant-auth.service.ts`
 
 **Changes**:
+
 ```typescript
 // AFTER: Normalize email before lookup
 async login(email: string, password: string): Promise<{ token: string }> {
@@ -127,6 +130,7 @@ async login(email: string, password: string): Promise<{ token: string }> {
 ```
 
 **Why This Was Necessary**:
+
 - **Standards Compliance**: RFC 5321 requires email addresses to be case-insensitive for SMTP
 - **User Expectations**: Users expect their email addresses to work regardless of case
 - **Defense in Depth**: Normalizes at the service layer before repository call
@@ -137,6 +141,7 @@ async login(email: string, password: string): Promise<{ token: string }> {
 **File**: `server/src/adapters/prisma/tenant.repository.ts`
 
 **Changes**:
+
 ```typescript
 // AFTER: Normalize email in repository method
 async findByEmail(email: string): Promise<Tenant | null> {
@@ -148,6 +153,7 @@ async findByEmail(email: string): Promise<Tenant | null> {
 ```
 
 **Why This Was Necessary**:
+
 - **Data Layer Consistency**: Repository method handles normalization independently
 - **Defensive Programming**: Doesn't depend on callers to normalize correctly
 - **Documentation**: Comment clarifies the intent of the operation
@@ -167,6 +173,7 @@ Having normalization in both the service and repository might seem redundant, bu
 ### No Additional Vulnerabilities Introduced
 
 The email normalization does not:
+
 - Create timing attack vectors (comparison is still done by Prisma)
 - Bypass password validation (bcrypt comparison is unchanged)
 - Introduce new injection risks (email is normalized before database query)
@@ -177,11 +184,13 @@ The email normalization does not:
 ### Manual Test Cases
 
 **Before Fix**:
+
 - Email: `mike@maconheadshots.com`, Password: `@Nupples8` → Success
 - Email: `Mike@maconheadshots.com`, Password: `@Nupples8` → **Failed** (case mismatch)
 - Email: `MIKE@MACONHEADSHOTS.COM`, Password: `@Nupples8` → **Failed** (case mismatch)
 
 **After Fix**:
+
 - Email: `mike@maconheadshots.com`, Password: `@Nupples8` → Success
 - Email: `Mike@maconheadshots.com`, Password: `@Nupples8` → Success
 - Email: `MIKE@MACONHEADSHOTS.COM`, Password: `@Nupples8` → Success
@@ -191,6 +200,7 @@ The email normalization does not:
 ### Affected Test Files
 
 All existing authentication tests continue to pass because:
+
 - Test fixtures normalize emails consistently
 - Bcrypt comparison is unchanged
 - Error handling remains the same
@@ -201,6 +211,7 @@ All existing authentication tests continue to pass because:
 ### Checklist for Authentication Features
 
 **For all email-based authentication:**
+
 - [ ] Normalize email to lowercase in service layer
 - [ ] Normalize email to lowercase in repository layer
 - [ ] Document why normalization is performed
@@ -227,6 +238,7 @@ async findByEmail(email: string): Promise<Tenant | null> {
 ### Demo Data Best Practices
 
 **When updating demo credentials:**
+
 - [ ] Use credentials that actually exist in test data
 - [ ] Verify the account has a password set (`passwordHash !== null`)
 - [ ] Confirm the account is active (`isActive === true`)
@@ -250,11 +262,11 @@ async findByEmail(email: string): Promise<Tenant | null> {
 
 ## Code Changes Summary
 
-| File | Change | Lines | Purpose |
-|------|--------|-------|---------|
-| `client/src/pages/Login.tsx` | Update demo credentials | 26-27 | Use real seeded test account |
-| `server/src/services/tenant-auth.service.ts` | Normalize email input | 28 | Apply lowercase normalization before lookup |
-| `server/src/adapters/prisma/tenant.repository.ts` | Normalize email in query | 89-91 | Defensive normalization in repository |
+| File                                              | Change                   | Lines | Purpose                                     |
+| ------------------------------------------------- | ------------------------ | ----- | ------------------------------------------- |
+| `client/src/pages/Login.tsx`                      | Update demo credentials  | 26-27 | Use real seeded test account                |
+| `server/src/services/tenant-auth.service.ts`      | Normalize email input    | 28    | Apply lowercase normalization before lookup |
+| `server/src/adapters/prisma/tenant.repository.ts` | Normalize email in query | 89-91 | Defensive normalization in repository       |
 
 ---
 

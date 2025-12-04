@@ -4,8 +4,8 @@
  * Responsive grid that displays all packages for visual editing.
  */
 
-import { EditablePackageCard } from "./EditablePackageCard";
-import type { PackageWithDraft, PackagePhoto, DraftUpdate } from "../hooks/useVisualEditor";
+import { EditablePackageCard } from './EditablePackageCard';
+import type { PackageWithDraft, PackagePhoto, DraftUpdate } from '../hooks/useVisualEditor';
 
 interface EditablePackageGridProps {
   packages: PackageWithDraft[];

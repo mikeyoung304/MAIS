@@ -10,6 +10,7 @@
 ## 📋 OVERVIEW
 
 This roadmap is divided into two major phases:
+
 - **PHASE A**: Work I can do NOW (no dependencies on external services)
 - **YOUR WORK**: Manual tasks only you can complete
 - **PHASE B**: Work I'll do AFTER you complete your tasks (depends on API keys, legal content)
@@ -27,6 +28,7 @@ This roadmap is divided into two major phases:
 ## A1: CODE QUALITY & TYPE SAFETY (2 hours)
 
 ### What I'll Do:
+
 - [ ] Fix all 116 TypeScript `any` types
 - [ ] Update strict mode compliance
 - [ ] Fix ESLint configuration issues
@@ -34,6 +36,7 @@ This roadmap is divided into two major phases:
 - [ ] Update vulnerable dependencies (js-yaml security fix)
 
 ### Files to Modify:
+
 - `server/src/routes/webhooks.routes.ts` (23 any types)
 - `client/src/lib/api.ts` (18 any types)
 - `server/src/services/*.ts` (75 any types)
@@ -41,6 +44,7 @@ This roadmap is divided into two major phases:
 - `.eslintrc.js` (fix broken rules)
 
 ### Output:
+
 - All files will have proper TypeScript types
 - No security vulnerabilities
 - Clean linter output
@@ -52,9 +56,11 @@ This roadmap is divided into two major phases:
 ## A2: GOD COMPONENT REFACTORING (3 hours)
 
 ### What I'll Do:
+
 Split large components into smaller, maintainable pieces:
 
 #### 1. PackagePhotoUploader (462 lines → 4 files)
+
 ```
 client/src/features/photos/
 ├── PhotoUploader.tsx (main component)
@@ -65,6 +71,7 @@ client/src/features/photos/
 ```
 
 #### 2. TenantPackagesManager (425 lines → 3 files)
+
 ```
 client/src/features/tenant-admin/packages/
 ├── TenantPackagesManager.tsx (layout)
@@ -76,6 +83,7 @@ client/src/features/tenant-admin/packages/
 ```
 
 #### 3. Admin Dashboard (343 lines → 4 files)
+
 ```
 client/src/features/admin/dashboard/
 ├── DashboardLayout.tsx (main)
@@ -87,6 +95,7 @@ client/src/features/admin/dashboard/
 ```
 
 ### Output:
+
 - 7 god components refactored
 - ~30 new focused components
 - Improved testability
@@ -99,16 +108,19 @@ client/src/features/admin/dashboard/
 ## A3: DATABASE & QUERY OPTIMIZATION (1 hour)
 
 ### What I'll Do:
+
 - [ ] Add missing indexes for performance
 - [ ] Optimize N+1 query patterns
 - [ ] Review and fix slow queries
 - [ ] Add query result caching where appropriate
 
 ### Files to Modify:
+
 - `server/prisma/schema.prisma` (add indexes)
 - `server/src/adapters/prisma/*.repository.ts` (optimize queries)
 
 ### Output:
+
 - Faster database queries
 - Reduced API response times
 - Better scalability
@@ -120,6 +132,7 @@ client/src/features/admin/dashboard/
 ## A4: TEST COVERAGE IMPROVEMENT (2 hours)
 
 ### What I'll Do:
+
 Increase test coverage from 51% to 70%:
 
 - [ ] Add unit tests for services (current: 38-42%)
@@ -128,6 +141,7 @@ Increase test coverage from 51% to 70%:
 - [ ] Mock external dependencies properly
 
 ### New Test Files:
+
 ```
 server/test/
 ├── services/
@@ -146,6 +160,7 @@ server/test/
 ```
 
 ### Output:
+
 - 70% test coverage (from 51%)
 - All critical paths tested
 - Race condition tests passing
@@ -157,6 +172,7 @@ server/test/
 ## A5: ERROR HANDLING & LOGGING (30 minutes)
 
 ### What I'll Do:
+
 - [ ] Add Sentry integration (without DSN - you'll add that later)
 - [ ] Create error boundaries for React
 - [ ] Standardize error responses
@@ -164,6 +180,7 @@ server/test/
 - [ ] Improve logging consistency
 
 ### Files to Create/Modify:
+
 ```
 server/src/lib/
 ├── error-handler.ts (NEW)
@@ -176,6 +193,7 @@ client/src/components/
 ```
 
 ### Output:
+
 - Production-ready error tracking setup
 - Better debugging capability
 - User-friendly error messages
@@ -187,6 +205,7 @@ client/src/components/
 ## A6: DOCUMENTATION UPDATES (30 minutes)
 
 ### What I'll Do:
+
 - [ ] Update README with new features
 - [ ] Document all new services
 - [ ] Create API documentation
@@ -194,6 +213,7 @@ client/src/components/
 - [ ] Create troubleshooting guide
 
 ### Files to Create:
+
 ```
 docs/
 ├── API.md (NEW)
@@ -218,6 +238,7 @@ docs/
 ### Email Service (CHOOSE ONE):
 
 **Option A: SendGrid** (Recommended)
+
 ```bash
 1. Go to: https://sendgrid.com/
 2. Sign up (free tier: 100 emails/day)
@@ -227,6 +248,7 @@ docs/
 ```
 
 **Option B: Resend** (Modern, simple)
+
 ```bash
 1. Go to: https://resend.com/
 2. Sign up (free tier: 10,000 emails/month)
@@ -235,6 +257,7 @@ docs/
 ```
 
 **Option C: Postmark** (Transactional specialist)
+
 ```bash
 1. Go to: https://postmarkapp.com/
 2. Sign up (free tier: 100 emails/month)
@@ -284,6 +307,7 @@ docs/
 Create: `/legal/terms-of-service.md`
 
 **Must Include**:
+
 - Service description
 - User responsibilities
 - Payment terms
@@ -292,6 +316,7 @@ Create: `/legal/terms-of-service.md`
 - Dispute resolution
 
 **Templates**:
+
 - https://www.termsfeed.com/blog/sample-terms-of-service-template/
 - https://www.termly.io/products/terms-and-conditions-generator/
 
@@ -304,6 +329,7 @@ Create: `/legal/terms-of-service.md`
 Create: `/legal/privacy-policy.md`
 
 **Must Include**:
+
 - What data you collect
 - How you use it
 - Third-party services (Stripe, SendGrid, Sentry)
@@ -312,6 +338,7 @@ Create: `/legal/privacy-policy.md`
 - Contact information
 
 **Templates**:
+
 - https://www.privacypolicygenerator.info/
 - https://www.termly.io/resources/templates/privacy-policy-template/
 
@@ -324,6 +351,7 @@ Create: `/legal/privacy-policy.md`
 Create: `/legal/refund-policy.md`
 
 **Decide**:
+
 - Full refund period (e.g., 14+ days before event)
 - Partial refund period (e.g., 7-13 days before)
 - No refund period (e.g., <7 days before)
@@ -343,30 +371,31 @@ Create: `/config/business-rules.yaml`
 ```yaml
 # Commission Structure
 commission:
-  default_percentage: 10  # % you take from each booking
-  minimum_cents: 500      # $5.00 minimum commission
+  default_percentage: 10 # % you take from each booking
+  minimum_cents: 500 # $5.00 minimum commission
 
 # Tenant Subscription (if applicable)
 subscription:
-  enabled: false          # Enable monthly fees?
-  monthly_cents: 9900     # $99/month per tenant
+  enabled: false # Enable monthly fees?
+  monthly_cents: 9900 # $99/month per tenant
 
 # Usage Limits
 limits:
-  free_tier_bookings: 10          # Free bookings before payment
+  free_tier_bookings: 10 # Free bookings before payment
   max_photos_per_package: 10
   max_packages_per_tenant: 100
   max_addons_per_package: 20
 
 # Refund Processing
 refunds:
-  full_refund_days: 14    # Days before event for full refund
-  partial_refund_days: 7  # Days before event for partial refund
+  full_refund_days: 14 # Days before event for full refund
+  partial_refund_days: 7 # Days before event for partial refund
   partial_refund_percent: 50
   processing_fee_cents: 0 # Keep processing fee on refunds?
 ```
 
 **Actions**:
+
 - Decide commission percentage
 - Decide if you'll charge monthly fees
 - Set usage limits
@@ -380,24 +409,24 @@ Create: `/config/email-templates.yaml`
 
 ```yaml
 booking_confirmation:
-  subject: "Booking Confirmed: {package_name} on {date}"
-  preview: "Your wedding booking is confirmed!"
+  subject: 'Booking Confirmed: {package_name} on {date}'
+  preview: 'Your wedding booking is confirmed!'
 
 booking_reminder:
-  subject: "Reminder: {package_name} in 3 days"
-  preview: "Your special day is almost here!"
+  subject: 'Reminder: {package_name} in 3 days'
+  preview: 'Your special day is almost here!'
 
 cancellation:
-  subject: "Booking Cancelled: {package_name}"
-  preview: "Your cancellation has been processed"
+  subject: 'Booking Cancelled: {package_name}'
+  preview: 'Your cancellation has been processed'
 
 refund_processed:
-  subject: "Refund Processed: {amount}"
-  preview: "Your refund of {amount} has been issued"
+  subject: 'Refund Processed: {amount}'
+  preview: 'Your refund of {amount} has been issued'
 
 welcome:
-  subject: "Welcome to {tenant_name}!"
-  preview: "Thank you for choosing us for your special day"
+  subject: 'Welcome to {tenant_name}!'
+  preview: 'Thank you for choosing us for your special day'
 ```
 
 **Action**: Write email subjects and preview text
@@ -444,6 +473,7 @@ SESSION_SECRET=<GENERATE_STRONG_SECRET>
 ```
 
 **Actions**:
+
 - Set up production database
 - Get Stripe LIVE keys (not test)
 - Generate strong secrets
@@ -455,6 +485,7 @@ SESSION_SECRET=<GENERATE_STRONG_SECRET>
 ### Multi-Tenant Subdomain Setup
 
 **Option A: Wildcard CNAME** (Easiest)
+
 ```
 DNS Record Type: CNAME
 Host: *.yourdomain.com
@@ -462,6 +493,7 @@ Points to: your-server.com
 ```
 
 **Option B: Individual Subdomains**
+
 ```
 tenant1.yourdomain.com → CNAME → your-server.com
 tenant2.yourdomain.com → CNAME → your-server.com
@@ -469,6 +501,7 @@ tenant3.yourdomain.com → CNAME → your-server.com
 ```
 
 **SSL Certificate**:
+
 - Vercel/Netlify: Automatic
 - Self-hosted: `certbot certonly --webroot -w /var/www -d *.yourdomain.com`
 
@@ -489,6 +522,7 @@ tenant3.yourdomain.com → CNAME → your-server.com
 **Depends On**: Y1 (Email service API key)
 
 ### What I'll Do:
+
 - [ ] Create email service wrapper for your chosen provider
 - [ ] Implement email templates with tenant branding
 - [ ] Add email sending to booking flow
@@ -496,6 +530,7 @@ tenant3.yourdomain.com → CNAME → your-server.com
 - [ ] Test email delivery
 
 ### Files to Create:
+
 ```
 server/src/services/
 ├── email.service.ts (NEW)
@@ -519,7 +554,9 @@ server/src/services/
 **Depends On**: Y2 (Legal content - Terms/Privacy)
 
 ### What I'll Do:
+
 Create customer-facing portal with:
+
 - [ ] View all bookings
 - [ ] Booking details page
 - [ ] Cancellation request flow
@@ -527,6 +564,7 @@ Create customer-facing portal with:
 - [ ] Terms/Privacy acceptance
 
 ### Files to Create:
+
 ```
 client/src/features/customer/
 ├── CustomerPortal.tsx (NEW)
@@ -551,6 +589,7 @@ server/src/routes/
 **Depends On**: Y2 (Terms/Privacy content)
 
 ### What I'll Do:
+
 - [ ] Create Terms/Privacy display components
 - [ ] Add acceptance checkboxes to checkout
 - [ ] Track acceptance in database
@@ -558,6 +597,7 @@ server/src/routes/
 - [ ] Add to customer portal
 
 ### Files to Create:
+
 ```
 client/src/features/legal/
 ├── TermsOfService.tsx (NEW)
@@ -578,6 +618,7 @@ server/src/routes/
 **Depends On**: Y2 (Privacy Policy), Y1 (Sentry for tracking)
 
 ### What I'll Do:
+
 - [ ] Data export endpoint (JSON/CSV)
 - [ ] Data deletion endpoint
 - [ ] Consent tracking
@@ -585,6 +626,7 @@ server/src/routes/
 - [ ] Data retention policy enforcement
 
 ### Files to Create:
+
 ```
 server/src/services/
 └── gdpr.service.ts (NEW)
@@ -607,6 +649,7 @@ client/src/features/privacy/
 **Depends On**: Y1 (Sentry DSN)
 
 ### What I'll Do:
+
 - [ ] Initialize Sentry with your DSN
 - [ ] Add error boundaries
 - [ ] Configure source maps
@@ -614,6 +657,7 @@ client/src/features/privacy/
 - [ ] Set up alerting rules
 
 ### Files to Modify:
+
 ```
 server/src/index.ts (add Sentry init)
 client/src/main.tsx (add Sentry init)
@@ -629,12 +673,14 @@ server/src/lib/sentry.ts (add DSN)
 **Depends On**: Y3 (Business decisions)
 
 ### What I'll Do:
+
 - [ ] Implement commission calculation with your rates
 - [ ] Add usage limits enforcement
 - [ ] Implement refund policy logic
 - [ ] Add subscription billing (if enabled)
 
 ### Files to Modify:
+
 ```
 server/src/services/
 ├── commission.service.ts (update rates)
@@ -677,6 +723,7 @@ WEEK 2:
 # ✅ COMPLETION CHECKLIST
 
 ## Phase A (Can Start Now):
+
 - [ ] TypeScript types fixed
 - [ ] God components refactored
 - [ ] Database optimized
@@ -685,6 +732,7 @@ WEEK 2:
 - [ ] Documentation updated
 
 ## Your Work (4 hours):
+
 - [ ] Email service API key obtained
 - [ ] Sentry DSN obtained
 - [ ] Stripe webhook configured
@@ -697,6 +745,7 @@ WEEK 2:
 - [ ] DNS configured
 
 ## Phase B (After Your Work):
+
 - [ ] Email service integrated
 - [ ] Customer portal built
 - [ ] Legal compliance complete
@@ -711,6 +760,7 @@ WEEK 2:
 ## Step 1: I Start Phase A Now
 
 Just say **"Start Phase A"** and I'll begin:
+
 - Fixing TypeScript issues
 - Refactoring components
 - Improving tests
@@ -721,6 +771,7 @@ This will take 6-8 hours of automation time.
 ## Step 2: You Complete Your Work
 
 While I'm working on Phase A, you can:
+
 - Get API keys (see Y1)
 - Write legal content (see Y2)
 - Make business decisions (see Y3)
@@ -730,6 +781,7 @@ We work in parallel!
 ## Step 3: I Complete Phase B
 
 Once you finish your tasks, tell me:
+
 - "I've got the API keys" → I'll integrate services
 - "Legal content is ready" → I'll build customer features
 - "Business rules defined" → I'll implement logic
@@ -739,21 +791,27 @@ Once you finish your tasks, tell me:
 # 📝 COMMUNICATION PROTOCOL
 
 ### When I Complete Phase A:
+
 I'll give you:
+
 - List of all changes made
 - Files modified count
 - Test results
 - Review checklist
 
 ### When You Complete Your Work:
+
 Tell me:
+
 - Which email service you chose
 - Paste your Sentry DSN
 - Confirm legal content location
 - Confirm business decisions
 
 ### When We're Ready for Phase B:
+
 I'll ask:
+
 - "Ready to integrate email?"
 - "Ready to add customer portal?"
 - "Ready to enable monitoring?"

@@ -68,20 +68,14 @@ export class ReminderService {
 
     try {
       // Find bookings needing reminders
-      const bookingsToRemind = await this.bookingRepo.findBookingsNeedingReminders(
-        tenantId,
-        limit
-      );
+      const bookingsToRemind = await this.bookingRepo.findBookingsNeedingReminders(tenantId, limit);
 
       if (bookingsToRemind.length === 0) {
         logger.debug({ tenantId }, 'No pending reminders found');
         return result;
       }
 
-      logger.info(
-        { tenantId, count: bookingsToRemind.length },
-        'Processing overdue reminders'
-      );
+      logger.info({ tenantId, count: bookingsToRemind.length }, 'Processing overdue reminders');
 
       // Batch fetch all packages to avoid N+1 query
       const packageIds = [...new Set(bookingsToRemind.map((b) => b.packageId))];
@@ -114,10 +108,7 @@ export class ReminderService {
             error: error instanceof Error ? error.message : 'Unknown error',
           });
 
-          logger.error(
-            { bookingId: booking.id, error },
-            'Failed to send reminder'
-          );
+          logger.error({ bookingId: booking.id, error }, 'Failed to send reminder');
         }
       }
 
@@ -147,9 +138,7 @@ export class ReminderService {
     // Calculate days until event
     const eventDate = new Date(booking.eventDate + 'T00:00:00Z');
     const now = new Date();
-    const daysUntilEvent = Math.ceil(
-      (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-    );
+    const daysUntilEvent = Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
     // Generate manage booking URL
     const manageUrl = generateManageBookingUrl(booking.id, tenantId);
@@ -167,10 +156,7 @@ export class ReminderService {
       manageUrl,
     });
 
-    logger.debug(
-      { bookingId: booking.id, daysUntilEvent },
-      'Booking reminder event emitted'
-    );
+    logger.debug({ bookingId: booking.id, daysUntilEvent }, 'Booking reminder event emitted');
   }
 
   /**
@@ -194,17 +180,16 @@ export class ReminderService {
   async getUpcomingReminders(
     tenantId: string,
     limit: number = 5
-  ): Promise<Array<{
-    bookingId: string;
-    coupleName: string;
-    eventDate: string;
-    reminderDueDate: string;
-    daysUntilEvent: number;
-  }>> {
-    const pending = await this.bookingRepo.findBookingsNeedingReminders(
-      tenantId,
-      limit
-    );
+  ): Promise<
+    Array<{
+      bookingId: string;
+      coupleName: string;
+      eventDate: string;
+      reminderDueDate: string;
+      daysUntilEvent: number;
+    }>
+  > {
+    const pending = await this.bookingRepo.findBookingsNeedingReminders(tenantId, limit);
 
     const now = new Date();
 

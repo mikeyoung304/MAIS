@@ -30,6 +30,7 @@ The public tenant lookup route (`/v1/public/tenants/:slug`) was created for stor
 ## Root Cause
 
 Route was created quickly to enable storefront routing feature without following the established patterns for:
+
 - Contract-level input validation
 - Repository-based data access (DI)
 - Branding field sanitization
@@ -60,9 +61,20 @@ getTenantPublic: {
 const HexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color');
 
 export const ALLOWED_FONT_FAMILIES = [
-  'Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat',
-  'Poppins', 'Source Sans Pro', 'Nunito', 'Raleway', 'Work Sans',
-  'system-ui', 'sans-serif', 'serif', 'monospace',
+  'Inter',
+  'Roboto',
+  'Open Sans',
+  'Lato',
+  'Montserrat',
+  'Poppins',
+  'Source Sans Pro',
+  'Nunito',
+  'Raleway',
+  'Work Sans',
+  'system-ui',
+  'sans-serif',
+  'serif',
+  'monospace',
 ] as const;
 
 export const TenantPublicDtoSchema = z.object({
@@ -70,14 +82,16 @@ export const TenantPublicDtoSchema = z.object({
   slug: z.string(),
   name: z.string(),
   apiKeyPublic: z.string(),
-  branding: z.object({
-    primaryColor: HexColorSchema.optional(),
-    secondaryColor: HexColorSchema.optional(),
-    accentColor: HexColorSchema.optional(),
-    backgroundColor: HexColorSchema.optional(),
-    fontFamily: z.enum(ALLOWED_FONT_FAMILIES).optional(),
-    logoUrl: z.string().url().optional(),
-  }).optional(),
+  branding: z
+    .object({
+      primaryColor: HexColorSchema.optional(),
+      secondaryColor: HexColorSchema.optional(),
+      accentColor: HexColorSchema.optional(),
+      backgroundColor: HexColorSchema.optional(),
+      fontFamily: z.enum(ALLOWED_FONT_FAMILIES).optional(),
+      logoUrl: z.string().url().optional(),
+    })
+    .optional(),
 });
 ```
 
@@ -162,13 +176,13 @@ app.use('/v1/public/tenants', publicTenantLookupLimiter, publicTenantRoutes);
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `packages/contracts/src/api.v1.ts` | Added slug validation regex |
-| `packages/contracts/src/dto.ts` | Added ALLOWED_FONT_FAMILIES, hex color validation |
-| `server/src/adapters/prisma/tenant.repository.ts` | Added findBySlugPublic() |
-| `server/src/routes/public-tenant.routes.ts` | Refactored to use repository |
-| `server/src/routes/index.ts` | Wired tenantRepo instead of prismaClient |
+| File                                              | Change                                            |
+| ------------------------------------------------- | ------------------------------------------------- |
+| `packages/contracts/src/api.v1.ts`                | Added slug validation regex                       |
+| `packages/contracts/src/dto.ts`                   | Added ALLOWED_FONT_FAMILIES, hex color validation |
+| `server/src/adapters/prisma/tenant.repository.ts` | Added findBySlugPublic()                          |
+| `server/src/routes/public-tenant.routes.ts`       | Refactored to use repository                      |
+| `server/src/routes/index.ts`                      | Wired tenantRepo instead of prismaClient          |
 
 ## Related Documentation
 

@@ -28,9 +28,11 @@
 ## Document Overview
 
 ### 1. FILE_UPLOAD_QUICK_REFERENCE.md
+
 **Type:** Cheat Sheet | **Length:** 5 min | **Format:** Tables + Code snippets
 
 **What's Inside:**
+
 - The 7 Critical Rules (memorize these!)
 - Red Flags Checklist (what NOT to do)
 - File Size Limits
@@ -39,6 +41,7 @@
 - Emergency SOS (quota exceeded, orphaned files, stuck uploads)
 
 **When to Use:**
+
 - Print and pin to desk
 - Reference during code review
 - Remind yourself of best practices
@@ -47,9 +50,11 @@
 ---
 
 ### 2. FILE_UPLOAD_PREVENTION_STRATEGIES.md
+
 **Type:** Comprehensive Guide | **Length:** 45 min | **Format:** Scenarios + Test Cases
 
 **What's Inside:**
+
 - **3 Major Vulnerabilities:**
   1. MIME Type Spoofing (execution attacks)
   2. Cross-Tenant Data Leak (privacy breach)
@@ -66,6 +71,7 @@
 - **Security Testing Scenarios** - Real attack simulations
 
 **When to Use:**
+
 - Planning file upload features
 - Understanding what went wrong
 - Writing test cases
@@ -75,9 +81,11 @@
 ---
 
 ### 3. FILE_UPLOAD_ARCHITECTURE_PATTERNS.md
+
 **Type:** Advanced Guide | **Length:** 30 min | **Format:** Patterns + Code
 
 **What's Inside:**
+
 - **8 Architectural Patterns:**
   1. Dual-Mode Storage (mock vs. real)
   2. Dependency Injection for testability
@@ -89,6 +97,7 @@
   8. Rate Limiting Strategy
 
 **When to Use:**
+
 - Designing new upload features
 - Understanding current architecture
 - Debugging complex scenarios
@@ -98,9 +107,11 @@
 ---
 
 ### 4. FILE_UPLOAD_IMPLEMENTATION_PATTERNS.md
+
 **Type:** Implementation Guide | **Length:** 1 hour | **Format:** Walkthroughs + Code
 
 **What's Inside:**
+
 - Full upload flow walkthrough
 - Request/response examples
 - Database schema requirements
@@ -108,6 +119,7 @@
 - Frontend integration examples
 
 **When to Use:**
+
 - First time implementing uploads
 - Understanding current implementation
 - Adding new upload endpoints
@@ -124,6 +136,7 @@
 **Why It's Bad:** Server executes malicious code
 
 **How to Fix:**
+
 1. Validate file content (magic bytes), not just header
 2. Use `file-type` library to detect actual format
 3. Reject if detected type ≠ declared type
@@ -140,6 +153,7 @@
 **Why It's Bad:** Privacy breach, compliance violation
 
 **How to Fix:**
+
 1. Use private Supabase bucket
 2. Include tenantId in storage path
 3. Generate signed URLs for access
@@ -157,6 +171,7 @@
 **Why It's Bad:** Quota exhaustion, wasted storage
 
 **How to Fix:**
+
 1. Delete files before entity deletion
 2. Wrap cleanup in try-catch (don't block deletion)
 3. Run periodic cleanup job for discovered orphans
@@ -261,11 +276,13 @@ A: Logo: 2MB, Package photo/Segment image: 5MB. Set at both multer config AND se
 ## Related Files in Repository
 
 ### Implementation Reference
+
 - `server/src/services/upload.service.ts` - Main upload service
 - `server/test/services/upload.service.test.ts` - Comprehensive tests
 - `client/src/components/ImageUploadField.tsx` - Frontend component
 
 ### Configuration
+
 - `server/src/middleware/rateLimiter.ts` - Rate limiting
 - `server/src/app.ts` - Multer configuration
 
@@ -273,9 +290,9 @@ A: Logo: 2MB, Package photo/Segment image: 5MB. Set at both multer config AND se
 
 ## Version History
 
-| Date | Version | Status |
-|------|---------|--------|
-| Nov 29, 2025 | 1.0 | Ready for Production |
+| Date         | Version | Status               |
+| ------------ | ------- | -------------------- |
+| Nov 29, 2025 | 1.0     | Ready for Production |
 
 **Created:** November 29, 2025
 **Status:** Ready for Production

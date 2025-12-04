@@ -7,24 +7,28 @@
 **Deployment Status:** Preparing for demo user production deployment
 
 **Recent Milestones:**
+
 - ✅ Sprint 9: Package catalog & discovery system
 - ✅ Sprint 8.5: Complete UX enhancements
 - ✅ Sprint 10: Technical excellence (test stability, security hardening, performance optimization)
 - 🚀 Next: Production deployment for demo users
 
 **Test Coverage:**
+
 - 752/752 tests passing (100%), 3 skipped, 12 todo
 - 42 new tests added in Sprint 10 (race conditions + security)
 - Test infrastructure: Retry helpers with exponential backoff
 - Sprint 10 Phase 2: Fixed remaining 2 failing tests
 
 **Security Posture:**
+
 - OWASP Top 10 compliance: 70%
 - Input sanitization: 100% coverage (all routes except webhooks)
 - Custom CSP with 8 strict directives
 - Defense-in-depth: Zod validation → Sanitization → Prisma parameterization
 
 **Performance:**
+
 - Cache hit response time: ~5ms (97.5% faster than database queries)
 - Database load reduction: 70% (with Redis caching enabled)
 - 16 performance indexes across 6 models
@@ -452,6 +456,7 @@ See `DECISIONS.md` for architectural decision records (ADRs) explaining key desi
 ### Production Requirements
 
 **Environment Variables (Required):**
+
 ```bash
 # Database
 DATABASE_URL=postgresql://...      # Supabase connection string
@@ -474,6 +479,7 @@ ADAPTERS_PRESET=real
 ```
 
 **Environment Variables (Optional - Graceful Fallback):**
+
 ```bash
 # Email (falls back to file-sink in tmp/emails/)
 POSTMARK_SERVER_TOKEN=...
@@ -490,12 +496,14 @@ SENTRY_DSN=...                      # Error tracking
 ### Pre-Deployment Checklist
 
 **1. Infrastructure Setup**
+
 - [ ] Supabase project created with connection pooling enabled
 - [ ] Upstash Redis instance created (for caching)
 - [ ] DNS records configured (app.maconaisolutions.com)
 - [ ] SSL certificates provisioned (automatic with Vercel/Railway)
 
 **2. Database Migration**
+
 ```bash
 cd server
 npm exec prisma migrate deploy    # Apply all migrations
@@ -503,24 +511,28 @@ npm exec prisma db seed           # Seed initial data
 ```
 
 **3. Environment Configuration**
+
 - [ ] All required environment variables set in hosting platform
 - [ ] JWT secrets generated (never reuse between environments)
 - [ ] Stripe webhook endpoint registered (https://app.maconaisolutions.com/v1/webhooks/stripe)
 - [ ] CORS origins configured for widget embeds
 
 **4. Security Verification**
+
 - [ ] CSP directives reviewed for production domains
 - [ ] Rate limiting enabled (5 attempts/15min/IP for auth endpoints)
 - [ ] Tenant secrets encryption key secured (use secret manager)
-- [ ] API keys validated (pk_live_ format enforced)
+- [ ] API keys validated (pk*live* format enforced)
 
 **5. Monitoring Setup**
+
 - [ ] Sentry error tracking configured
 - [ ] Health check endpoint monitored (/health)
 - [ ] Cache metrics endpoint monitored (/health/cache)
 - [ ] Database connection pool monitored
 
 **6. Performance Validation**
+
 - [ ] Redis caching enabled (verify REDIS_URL set)
 - [ ] Database indexes applied (16 performance indexes)
 - [ ] Load testing completed (target: 100 concurrent users)
@@ -529,6 +541,7 @@ npm exec prisma db seed           # Seed initial data
 ### Post-Deployment Validation
 
 **Health Checks:**
+
 ```bash
 # API health
 curl https://app.maconaisolutions.com/health
@@ -542,6 +555,7 @@ curl https://app.maconaisolutions.com/v1/packages \
 ```
 
 **Expected Responses:**
+
 ```json
 // /health
 {
@@ -565,6 +579,7 @@ curl https://app.maconaisolutions.com/v1/packages \
 ### Demo User Onboarding
 
 **Initial Tenants:**
+
 1. Create demo tenant via admin CLI: `npm run create-tenant`
 2. Configure branding (colors, logo) via tenant admin dashboard
 3. Add 3-5 packages with photos
@@ -572,6 +587,7 @@ curl https://app.maconaisolutions.com/v1/packages \
 5. Test booking flow end-to-end
 
 **Widget Embed:**
+
 ```html
 <!-- Client website integration -->
 <iframe
@@ -587,17 +603,20 @@ curl https://app.maconaisolutions.com/v1/packages \
 **If issues detected post-deployment:**
 
 1. **Immediate:** Revert to previous Git commit
+
    ```bash
    git revert HEAD
    git push origin main
    ```
 
 2. **Database:** Roll back migration if needed
+
    ```bash
    npm exec prisma migrate resolve --rolled-back <migration-name>
    ```
 
 3. **Cache:** Flush Redis cache to clear corrupted data
+
    ```bash
    redis-cli FLUSHALL  # Only if cache corruption suspected
    ```

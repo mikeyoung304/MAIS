@@ -29,16 +29,13 @@ function getAuthToken(): string | null {
 }
 
 // ❌ PATTERN 2: Direct fetch() bypassing ts-rest API client
-const response = await fetch(
-  `${baseUrl}/v1/tenant-admin/packages/${packageId}/photos`,
-  {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-    body: formData,
-  }
-);
+const response = await fetch(`${baseUrl}/v1/tenant-admin/packages/${packageId}/photos`, {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+  body: formData,
+});
 ```
 
 ### Problems with This Approach
@@ -59,6 +56,7 @@ const response = await fetch(
 **Move all `getAuthToken()` logic into centralized auth utilities**
 
 Current state:
+
 - `client/src/lib/auth.ts` has token utilities (decode, validate, store)
 - `client/src/lib/api.ts` has HTTP client setup with impersonation handling
 - **Missing:** Public function to get the correct token for authenticated requests
@@ -95,6 +93,7 @@ export function getAuthToken(): string | null {
 ```
 
 **Benefits:**
+
 - Single source of truth
 - Easy to audit: one place to check impersonation logic
 - Easy to add features: token refresh, logging, expiration checks
@@ -108,7 +107,7 @@ export function getAuthToken(): string | null {
 
 Create `client/src/lib/fetch-client.ts`:
 
-```typescript
+````typescript
 /**
  * Type-safe fetch wrapper for authenticated API calls
  *
@@ -158,7 +157,7 @@ export async function authenticatedFetch<T = unknown>(
 
   const headers: Record<string, string> = {
     ...options.headers,
-    'Authorization': `Bearer ${token}`,
+    Authorization: `Bearer ${token}`,
   };
 
   const response = await fetch(url, {
@@ -168,7 +167,7 @@ export async function authenticatedFetch<T = unknown>(
 
   let body: T | null = null;
   try {
-    body = await response.json() as T;
+    body = (await response.json()) as T;
   } catch {
     // Response is not JSON (e.g., 204 No Content)
     body = null;
@@ -180,9 +179,10 @@ export async function authenticatedFetch<T = unknown>(
     headers: response.headers,
   };
 }
-```
+````
 
 **Benefits:**
+
 - Centralized token injection
 - Consistent error handling
 - Type-safe responses
@@ -204,7 +204,7 @@ Example - photo upload currently uses direct fetch:
 // ❌ Current: Direct fetch
 const response = await fetch(`${baseUrl}/v1/tenant-admin/packages/${packageId}/photos`, {
   method: 'POST',
-  headers: { 'Authorization': `Bearer ${token}` },
+  headers: { Authorization: `Bearer ${token}` },
   body: formData,
 });
 
@@ -216,12 +216,14 @@ const response = await api.tenantAdmin.uploadPackagePhoto({
 ```
 
 **Benefits:**
+
 - Full type safety
 - Centralized auth handling in one place (`client/src/lib/api.ts`)
 - Contract enforcement
 - Easier to test and audit
 
 **Migration Priority:**
+
 1. High: Photo upload endpoints (currently 5 duplications)
 2. Medium: Logo upload
 3. Long-term: All tenant-admin routes
@@ -261,14 +263,11 @@ if (status !== 200) {
 ```typescript
 import { authenticatedFetch } from '@/lib/fetch-client';
 
-const { status, body } = await authenticatedFetch(
-  `${baseUrl}/v1/tenant-admin/packages`,
-  {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-    // authenticatedFetch automatically adds Authorization header
-  }
-);
+const { status, body } = await authenticatedFetch(`${baseUrl}/v1/tenant-admin/packages`, {
+  method: 'GET',
+  headers: { 'Content-Type': 'application/json' },
+  // authenticatedFetch automatically adds Authorization header
+});
 ```
 
 #### For ts-rest Client (Preferred)
@@ -381,7 +380,7 @@ function getAuthToken(): string | null {
 // ❌ ANTI-PATTERN 1: Direct localStorage access for tokens
 const token = localStorage.getItem('tenantToken');
 const response = await fetch(url, {
-  headers: { 'Authorization': `Bearer ${token}` },
+  headers: { Authorization: `Bearer ${token}` },
 });
 
 // ❌ ANTI-PATTERN 2: Incomplete impersonation check
@@ -468,7 +467,7 @@ describe('authenticatedFetch', () => {
       expect.anything(),
       expect.objectContaining({
         headers: expect.objectContaining({
-          'Authorization': 'Bearer test_token_123',
+          Authorization: 'Bearer test_token_123',
         }),
       })
     );
@@ -477,9 +476,9 @@ describe('authenticatedFetch', () => {
   it('throws error when not authenticated', async () => {
     localStorage.clear();
 
-    await expect(
-      authenticatedFetch('/api/test', { method: 'GET' })
-    ).rejects.toThrow('Authentication required');
+    await expect(authenticatedFetch('/api/test', { method: 'GET' })).rejects.toThrow(
+      'Authentication required'
+    );
   });
 
   it('handles impersonation token', async () => {
@@ -492,7 +491,7 @@ describe('authenticatedFetch', () => {
       expect.anything(),
       expect.objectContaining({
         headers: expect.objectContaining({
-          'Authorization': 'Bearer admin_impersonation_token',
+          Authorization: 'Bearer admin_impersonation_token',
         }),
       })
     );
@@ -569,12 +568,14 @@ test('impersonation token is NOT tenant token', async ({ page }) => {
 ## Implementation Roadmap
 
 ### Phase 1: Foundation (Week 1)
+
 - [ ] Add `getAuthToken()` to `client/src/lib/auth.ts`
 - [ ] Create `client/src/lib/fetch-client.ts` with `authenticatedFetch()`
 - [ ] Add unit tests for both functions
 - [ ] Update documentation
 
 ### Phase 2: Migration (Week 2-3)
+
 - [ ] Migrate `packagePhotoApi` to use `authenticatedFetch()`
 - [ ] Migrate `ImageUploadField` component
 - [ ] Migrate `LogoUploadButton` component
@@ -583,11 +584,13 @@ test('impersonation token is NOT tenant token', async ({ page }) => {
 - [ ] Run full test suite
 
 ### Phase 3: Long-Term (Ongoing)
+
 - [ ] Define missing endpoints in contracts
 - [ ] Migrate remaining endpoints to ts-rest client
 - [ ] Remove `authenticatedFetch()` wrapper (not needed if all on ts-rest)
 
 ### Phase 4: Hardening
+
 - [ ] Add token refresh logic if needed
 - [ ] Add request/response logging for security audit
 - [ ] Add rate limiting for auth endpoints
@@ -597,13 +600,13 @@ test('impersonation token is NOT tenant token', async ({ page }) => {
 
 ## Files Requiring Updates
 
-| File | Issue | Solution |
-|------|-------|----------|
-| `client/src/lib/package-photo-api.ts` | Duplicate `getAuthToken()` | Use centralized version |
-| `client/src/components/ImageUploadField.tsx` | Duplicate `getAuthToken()` | Use centralized version |
+| File                                                                        | Issue                      | Solution                |
+| --------------------------------------------------------------------------- | -------------------------- | ----------------------- |
+| `client/src/lib/package-photo-api.ts`                                       | Duplicate `getAuthToken()` | Use centralized version |
+| `client/src/components/ImageUploadField.tsx`                                | Duplicate `getAuthToken()` | Use centralized version |
 | `client/src/features/tenant-admin/branding/components/LogoUploadButton.tsx` | Duplicate `getAuthToken()` | Use centralized version |
-| `client/src/features/photos/hooks/usePhotoUpload.ts` | Duplicate `getAuthToken()` | Use centralized version |
-| (Unknown - TBD) | Possibly more instances | Grep for all instances |
+| `client/src/features/photos/hooks/usePhotoUpload.ts`                        | Duplicate `getAuthToken()` | Use centralized version |
+| (Unknown - TBD)                                                             | Possibly more instances    | Grep for all instances  |
 
 ---
 
@@ -646,6 +649,7 @@ headers['Authorization'] = `Bearer ${token}`;
 ### Vulnerability Fixed
 
 **Authentication Bypass During Impersonation**
+
 - Platform admin impersonating tenant could use old tenantToken
 - Old tenantToken would fail authentication (belongs to different tenant)
 - Confused API would return 401/403, breaking impersonation experience

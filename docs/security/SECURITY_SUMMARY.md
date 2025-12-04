@@ -57,6 +57,7 @@ Comprehensive overview of security features, vulnerabilities fixed, and best pra
 ### 1. Authentication System
 
 #### JWT-Based Authentication
+
 - **Algorithm:** HS256 (HMAC with SHA-256)
 - **Token Expiration:** 7 days
 - **Secret Key:** 64-character cryptographically secure hex string
@@ -64,6 +65,7 @@ Comprehensive overview of security features, vulnerabilities fixed, and best pra
 - **Transmission:** Authorization header with Bearer scheme
 
 **Implementation:**
+
 ```typescript
 // Token generation (server)
 const token = jwt.sign(
@@ -71,7 +73,7 @@ const token = jwt.sign(
     userId: user.id,
     email: user.email,
     role: user.role,
-    tenantId: user.tenantId
+    tenantId: user.tenantId,
   },
   JWT_SECRET,
   { expiresIn: '7d', algorithm: 'HS256' }
@@ -79,11 +81,12 @@ const token = jwt.sign(
 
 // Token validation (server)
 const decoded = jwt.verify(token, JWT_SECRET, {
-  algorithms: ['HS256']
+  algorithms: ['HS256'],
 });
 ```
 
 **Security Controls:**
+
 - ✅ Signature validation on every request
 - ✅ Expiration enforcement
 - ✅ No token data in error messages
@@ -91,12 +94,14 @@ const decoded = jwt.verify(token, JWT_SECRET, {
 - ✅ Token includes user role for authorization
 
 #### Password Security
+
 - **Hashing Algorithm:** bcrypt
 - **Salt Rounds:** 10
 - **Minimum Length:** 12 characters
 - **Comparison:** Constant-time algorithm
 
 **Implementation:**
+
 ```typescript
 // Password hashing
 const passwordHash = await bcrypt.hash(password, 10);
@@ -106,29 +111,33 @@ const isValid = await bcrypt.compare(password, user.passwordHash);
 ```
 
 **Security Controls:**
+
 - ✅ Salt rounds prevent rainbow table attacks
 - ✅ Constant-time comparison prevents timing attacks
 - ✅ Password never stored in plaintext
 - ✅ Password never logged or exposed in errors
 
 #### Login Rate Limiting
+
 - **Limit:** 5 attempts per 15-minute window
 - **Scope:** Per IP address
 - **Storage:** In-memory (NodeCache)
 - **Response:** 429 Too Many Requests
 
 **Implementation:**
+
 ```typescript
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // 5 requests per window
-  message: "Too many login attempts. Please try again in 15 minutes.",
+  message: 'Too many login attempts. Please try again in 15 minutes.',
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
 });
 ```
 
 **Security Controls:**
+
 - ✅ Prevents brute-force attacks
 - ✅ Clear error messages to legitimate users
 - ✅ Automatic reset after time window
@@ -139,12 +148,14 @@ const loginLimiter = rateLimit({
 #### Role-Based Access Control (RBAC)
 
 **User Roles:**
+
 - `PLATFORM_ADMIN` - System-wide administration
 - `TENANT_ADMIN` - Single tenant management
 - `ADMIN` - Legacy admin role
 - `USER` - End customer (booking system)
 
 **Role Hierarchy:**
+
 ```
 PLATFORM_ADMIN (highest privilege)
   ├─ Can access /admin/* routes
@@ -165,6 +176,7 @@ USER (lowest privilege)
 ```
 
 **Authorization Middleware:**
+
 ```typescript
 // Platform admin only
 requirePlatformAdmin(req, res, next) {
@@ -198,6 +210,7 @@ verifyTenantOwnership(req, res, next) {
 ```
 
 **Security Controls:**
+
 - ✅ Role validation on every protected route
 - ✅ Tenant ownership verification
 - ✅ Proper 403 Forbidden responses
@@ -207,45 +220,50 @@ verifyTenantOwnership(req, res, next) {
 ### 3. Tenant Data Isolation
 
 #### Database-Level Isolation
+
 - **All queries scoped by tenantId** - No data leakage between tenants
 - **Unique constraints:** `@@unique([tenantId, slug])` on shared resources
 - **Cascade deletes:** Automatic cleanup of tenant data
 - **Indexes:** `@@index([tenantId])` for query performance
 
 **Implementation:**
+
 ```typescript
 // All tenant queries include tenantId filter
 const packages = await prisma.package.findMany({
   where: {
     tenantId: req.user.tenantId, // REQUIRED
-    active: true
-  }
+    active: true,
+  },
 });
 
 // Tenant creation includes API key generation
 const tenant = await prisma.tenant.create({
   data: {
-    name: "Bella Weddings",
-    slug: "bella-weddings",
+    name: 'Bella Weddings',
+    slug: 'bella-weddings',
     publicKey: `pk_live_bella-weddings_${randomBytes(16).toString('hex')}`,
-    secretKey: `sk_live_bella-weddings_${randomBytes(24).toString('hex')}`
-  }
+    secretKey: `sk_live_bella-weddings_${randomBytes(24).toString('hex')}`,
+  },
 });
 ```
 
 **Security Controls:**
+
 - ✅ Row-level tenantId scoping on all queries
 - ✅ API key tenant association validation
 - ✅ Cross-tenant access attempts blocked with 403
 - ✅ Verified through comprehensive testing (21 tests passed)
 
 #### API Key Authentication
+
 - **Format:** `pk_live_{slug}_{random}` (public) / `sk_live_{slug}_{random}` (secret)
 - **Header:** `X-Tenant-Key`
 - **Validation:** Tenant lookup and association
 - **Scope:** Public read-only operations
 
 **Security Controls:**
+
 - ✅ Public keys safe to expose (read-only)
 - ✅ Secret keys never exposed in responses
 - ✅ Key rotation supported
@@ -254,18 +272,21 @@ const tenant = await prisma.tenant.create({
 ### 4. File Upload Security
 
 #### Photo Upload Controls
+
 - **Max File Size:** 5MB (enforced by Multer)
 - **Allowed Types:** image/jpeg, image/jpg, image/png, image/webp, image/svg+xml
 - **Max Photos:** 5 per package
 - **Storage:** `/server/uploads/packages/` (isolated directory)
 
 **Filename Sanitization:**
+
 ```typescript
 // Secure filename generation
 const filename = `package-${Date.now()}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
 ```
 
 **Security Controls:**
+
 - ✅ File type validation (MIME type check)
 - ✅ File size limits prevent DoS
 - ✅ Randomized filenames prevent overwrites
@@ -274,10 +295,11 @@ const filename = `package-${Date.now()}-${crypto.randomBytes(8).toString('hex')}
 - ✅ Automatic cleanup on deletion
 
 **Validation Flow:**
+
 ```typescript
 // 1. Client-side validation
 if (file.size > 5 * 1024 * 1024) {
-  return error("File too large (max 5MB)");
+  return error('File too large (max 5MB)');
 }
 
 // 2. Server-side Multer validation
@@ -289,12 +311,12 @@ multer({
       return cb(new Error('Invalid file type'));
     }
     cb(null, true);
-  }
+  },
 });
 
 // 3. Package ownership validation
 const package = await prisma.package.findFirst({
-  where: { id: packageId, tenantId: req.user.tenantId }
+  where: { id: packageId, tenantId: req.user.tenantId },
 });
 if (!package) {
   return res.status(403).json({ error: 'Forbidden' });
@@ -315,6 +337,7 @@ if (!package) {
 Platform Admin JWT tokens were incorrectly accepted for Tenant Admin endpoints, allowing platform admins to access tenant-specific operations they should not have access to.
 
 **Impact:**
+
 - Platform admins could upload photos to any tenant's packages
 - Platform admins could delete any tenant's data
 - Violation of security boundary between platform and tenant operations
@@ -323,6 +346,7 @@ Platform Admin JWT tokens were incorrectly accepted for Tenant Admin endpoints, 
 Missing role validation middleware on tenant admin routes.
 
 **Fix:**
+
 ```typescript
 // BEFORE (vulnerable)
 router.post('/packages/:id/photos', authenticateJWT, uploadPhoto);
@@ -332,11 +356,13 @@ router.post('/packages/:id/photos', authenticateJWT, requireTenantAdmin, uploadP
 ```
 
 **Verification:**
+
 - 21 authentication/authorization tests added and passing
 - Cross-authentication scenarios tested
 - Proper 403 Forbidden responses verified
 
 **Lessons Learned:**
+
 - Always validate role AND tenant ownership on protected routes
 - Defense in depth: multiple layers of authorization checks
 - Comprehensive testing of authentication edge cases
@@ -351,6 +377,7 @@ router.post('/packages/:id/photos', authenticateJWT, requireTenantAdmin, uploadP
 Photos successfully uploaded to filesystem but metadata not persisting to database, resulting in 100% data loss (orphaned files).
 
 **Impact:**
+
 - All uploaded photos lost database records
 - Photos not visible to users
 - 10 orphaned files identified during testing
@@ -359,6 +386,7 @@ Photos successfully uploaded to filesystem but metadata not persisting to databa
 Server process using stale Prisma client that didn't include the `photos` column in its schema (migration applied after server started).
 
 **Fix:**
+
 ```bash
 # Proper migration sequence
 1. Stop server
@@ -373,11 +401,13 @@ Server process using stale Prisma client that didn't include the `photos` column
 ```
 
 **Verification:**
+
 - Database schema verified (photos column exists)
 - File upload persistence tested
 - Data integrity verified (100% consistency)
 
 **Lessons Learned:**
+
 - Always restart server after schema changes
 - Implement database transactions for file operations
 - Monitor for orphaned files
@@ -393,12 +423,14 @@ Server process using stale Prisma client that didn't include the `photos` column
 Tenant admin routes missing proper authorization middleware, relying only on authentication checks.
 
 **Impact:**
+
 - Authenticated users could potentially access routes without proper role
 - No privilege escalation prevention
 - Weak authorization boundary
 
 **Fix:**
 Added explicit role validation middleware to all protected routes:
+
 ```typescript
 // All tenant admin routes now have:
 router.use('/tenant/admin/*', authenticateJWT, requireTenantAdmin);
@@ -408,6 +440,7 @@ router.use('/admin/*', authenticateJWT, requirePlatformAdmin);
 ```
 
 **Verification:**
+
 - Route protection tested
 - Role validation verified
 - Proper 403 responses confirmed
@@ -443,12 +476,12 @@ router.use('/admin/*', authenticateJWT, requirePlatformAdmin);
 
 ### Authorization Matrix
 
-| User Role | Platform Routes | Tenant Routes | Public Routes | Tenant Data Access |
-|-----------|----------------|---------------|---------------|-------------------|
-| PLATFORM_ADMIN | ✅ Full Access | ❌ Forbidden | ✅ Read-Only | ❌ No Access |
-| TENANT_ADMIN | ❌ Forbidden | ✅ Full Access (own tenant) | ✅ Read-Only | ✅ Own Tenant Only |
-| ADMIN | ⚠️ Legacy | ⚠️ Legacy | ✅ Read-Only | ⚠️ Legacy |
-| USER | ❌ Forbidden | ❌ Forbidden | ✅ Full Access | ❌ No Access |
+| User Role      | Platform Routes | Tenant Routes               | Public Routes  | Tenant Data Access |
+| -------------- | --------------- | --------------------------- | -------------- | ------------------ |
+| PLATFORM_ADMIN | ✅ Full Access  | ❌ Forbidden                | ✅ Read-Only   | ❌ No Access       |
+| TENANT_ADMIN   | ❌ Forbidden    | ✅ Full Access (own tenant) | ✅ Read-Only   | ✅ Own Tenant Only |
+| ADMIN          | ⚠️ Legacy       | ⚠️ Legacy                   | ✅ Read-Only   | ⚠️ Legacy          |
+| USER           | ❌ Forbidden    | ❌ Forbidden                | ✅ Full Access | ❌ No Access       |
 
 ### Protected Route Examples
 
@@ -491,14 +524,16 @@ POST /v1/bookings - X-Tenant-Key required
 ### Secret Management
 
 **Environment Variables:**
+
 - `JWT_SECRET` - 64-character hex string (openssl rand -hex 32)
 - `TENANT_SECRETS_ENCRYPTION_KEY` - 64-character hex string (openssl rand -hex 32)
-- `STRIPE_SECRET_KEY` - Stripe API secret key (sk_live_...)
-- `STRIPE_WEBHOOK_SECRET` - Stripe webhook signing secret (whsec_...)
+- `STRIPE_SECRET_KEY` - Stripe API secret key (sk*live*...)
+- `STRIPE_WEBHOOK_SECRET` - Stripe webhook signing secret (whsec\_...)
 - `POSTMARK_SERVER_TOKEN` - Postmark API token
 - `GOOGLE_SERVICE_ACCOUNT_JSON_BASE64` - Base64 encoded service account
 
 **Best Practices:**
+
 - ✅ Never commit secrets to version control (.env in .gitignore)
 - ✅ Use separate secrets for dev/staging/prod
 - ✅ Rotate secrets regularly (quarterly recommended)
@@ -525,12 +560,16 @@ All API endpoints use Zod schemas for validation:
 ```typescript
 // Example: Package creation
 const PackageCreateSchema = z.object({
-  slug: z.string().min(3).max(50).regex(/^[a-z0-9-]+$/),
+  slug: z
+    .string()
+    .min(3)
+    .max(50)
+    .regex(/^[a-z0-9-]+$/),
   title: z.string().min(5).max(100),
   description: z.string().max(1000),
   priceCents: z.number().int().min(0).max(1000000),
   photoUrl: z.string().url().optional(),
-  photos: z.array(PhotoSchema).max(5).optional()
+  photos: z.array(PhotoSchema).max(5).optional(),
 });
 
 // Validation in route handler
@@ -538,7 +577,7 @@ const result = PackageCreateSchema.safeParse(req.body);
 if (!result.success) {
   return res.status(400).json({
     error: 'Validation failed',
-    details: result.error.errors
+    details: result.error.errors,
   });
 }
 ```
@@ -546,7 +585,7 @@ if (!result.success) {
 ### Client-Side Validation
 
 - **File Size:** Checked before upload (max 5MB)
-- **File Type:** MIME type validation (image/* only)
+- **File Type:** MIME type validation (image/\* only)
 - **Form Validation:** Email format, required fields
 - **URL Validation:** Proper URL format for external links
 
@@ -561,8 +600,8 @@ if (!result.success) {
 const package = await prisma.package.findFirst({
   where: {
     id: packageId, // Automatically parameterized
-    tenantId: tenantId
-  }
+    tenantId: tenantId,
+  },
 });
 
 // NEVER DO THIS (vulnerable)
@@ -659,6 +698,7 @@ const query = `SELECT * FROM Package WHERE id = '${packageId}'`;
 JWT tokens stored in localStorage are vulnerable to XSS attacks.
 
 **Mitigation:**
+
 - Use httpOnly cookies for production (planned for v1.2.0)
 - Implement strict Content Security Policy
 - Regular XSS vulnerability scanning
@@ -672,6 +712,7 @@ Current implementation uses React's built-in XSS protection and careful output e
 Login rate limiting is per IP address, which can be bypassed using multiple IPs (VPN, proxy rotation).
 
 **Mitigation:**
+
 - Implement account-level rate limiting (planned for v1.2.0)
 - Add CAPTCHA after 3 failed attempts
 - Monitor for distributed brute-force attacks
@@ -687,6 +728,7 @@ Current rate limiting sufficient for most attack scenarios.
 API doesn't implement CSRF tokens for state-changing operations.
 
 **Mitigation:**
+
 - CSRF primarily affects cookie-based auth (not using cookies currently)
 - SameSite cookie attribute when migrating to cookies
 - CSRF tokens for sensitive operations
@@ -700,6 +742,7 @@ Bearer token authentication provides partial CSRF protection.
 No support for 2FA/MFA for admin accounts.
 
 **Mitigation:**
+
 - Implement TOTP-based 2FA (planned for v1.3.0)
 - Enforce for platform admins
 - Optional for tenant admins
@@ -743,11 +786,13 @@ Strong password requirements and login rate limiting provide baseline protection
 ## Security Contacts
 
 **Report Security Vulnerabilities:**
+
 - Email: security@elope.com
 - PGP Key: [Link to public key]
 - Response SLA: 48 hours
 
 **Security Documentation:**
+
 - [INCIDENT_RESPONSE.md](./docs/operations/INCIDENT_RESPONSE.md)
 - [SECRET_ROTATION_GUIDE.md](./docs/security/SECRET_ROTATION_GUIDE.md)
 - [IMMEDIATE_SECURITY_ACTIONS.md](./docs/security/IMMEDIATE_SECURITY_ACTIONS.md)

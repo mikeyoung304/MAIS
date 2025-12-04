@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "047"
+issue_id: '047'
 tags: [code-review, scheduling, api, contracts, critical]
 dependencies: []
 ---
@@ -21,6 +21,7 @@ The API contracts define endpoints to view services and check availability, but 
 **Location:** `packages/contracts/src/api.v1.ts` - Scheduling section
 
 Current public scheduling endpoints:
+
 ```typescript
 // Line 1013-1034 - getPublicServices (GET /v1/public/services) ✓
 // Line 1035-1052 - getAvailableSlots (GET /v1/public/availability/slots) ✓
@@ -34,10 +35,10 @@ Current public scheduling endpoints:
 ```typescript
 // Raw fetch call bypassing contracts
 const response = await fetch(`${baseUrl}/v1/public/appointments/checkout`, {
-  method: "POST",
+  method: 'POST',
   headers: {
-    "Content-Type": "application/json",
-    "X-Tenant-Key": localStorage.getItem("tenantKey") || "",
+    'Content-Type': 'application/json',
+    'X-Tenant-Key': localStorage.getItem('tenantKey') || '',
   },
   body: JSON.stringify({
     serviceId: selectedService.id,
@@ -68,6 +69,7 @@ The route exists (`POST /v1/public/appointments/checkout`) but is NOT defined in
 ## Proposed Solutions
 
 ### Option A: Add Contract Definition (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 Add the missing contract to `api.v1.ts`:
@@ -106,15 +108,18 @@ createAppointmentCheckout: {
 ```
 
 **Pros:**
+
 - Type-safe API contract
 - Consistent with other endpoints
 - Enables generated client usage
 - Zod validation for request/response
 
 **Cons:**
+
 - Need to update frontend to use contract client
 
 ### Option B: Add DTOs to Contracts
+
 **Effort:** Medium | **Risk:** Low
 
 Also add proper DTOs:
@@ -148,6 +153,7 @@ Implement **Option A** with **Option B** - Add both the contract endpoint and pr
 ## Technical Details
 
 **Files to Update:**
+
 1. `packages/contracts/src/dto.ts` - Add DTO schemas
 2. `packages/contracts/src/api.v1.ts` - Add contract endpoint
 3. `client/src/features/scheduling/AppointmentBookingFlow.tsx` - Use contract client
@@ -193,8 +199,8 @@ if (result.status === 201) {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                           |
+| ---------- | ------- | ----------------------------------------------- |
 | 2025-11-27 | Created | Found during API Contract review - BLOCKS MERGE |
 
 ## Resources

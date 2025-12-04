@@ -47,7 +47,14 @@ const validationGaps: string[] = [];
 function createTestImage(sizeBytes: number): Buffer {
   // Create a minimal PNG header + data
   const header = Buffer.from([
-    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, // PNG signature
+    0x89,
+    0x50,
+    0x4e,
+    0x47,
+    0x0d,
+    0x0a,
+    0x1a,
+    0x0a, // PNG signature
   ]);
   const remaining = sizeBytes - header.length;
   return Buffer.concat([header, Buffer.alloc(remaining, 0xff)]);
@@ -318,16 +325,12 @@ async function test6_NonExistentPackage(): Promise<void> {
     const form = new FormData();
     form.append('photo', createTestImage(1024), 'test.png');
 
-    await axios.post(
-      `${API_BASE}/v1/tenant-admin/packages/non-existent-package-id/photos`,
-      form,
-      {
-        headers: {
-          ...form.getHeaders(),
-          Authorization: `Bearer ${validToken}`,
-        },
-      }
-    );
+    await axios.post(`${API_BASE}/v1/tenant-admin/packages/non-existent-package-id/photos`, form, {
+      headers: {
+        ...form.getHeaders(),
+        Authorization: `Bearer ${validToken}`,
+      },
+    });
 
     recordTest('Upload to non-existent package', 404, 200, 'Should return 404 for missing package');
   } catch (error: any) {
@@ -437,7 +440,7 @@ async function test9_UploadToAnotherTenantPackage(): Promise<void> {
     );
 
     recordTest(
-      'Upload to another tenant\'s package',
+      "Upload to another tenant's package",
       403,
       200,
       'SECURITY ISSUE: Cross-tenant upload allowed'
@@ -449,12 +452,10 @@ async function test9_UploadToAnotherTenantPackage(): Promise<void> {
     // Could be 404 (package not visible) or 403 (forbidden)
     const isCorrect = status === 403 || status === 404;
     recordTest(
-      'Upload to another tenant\'s package',
+      "Upload to another tenant's package",
       403,
       status,
-      isCorrect
-        ? 'Correctly prevented cross-tenant upload'
-        : `Wrong status: ${status} - ${message}`
+      isCorrect ? 'Correctly prevented cross-tenant upload' : `Wrong status: ${status} - ${message}`
     );
   }
 }
@@ -490,7 +491,7 @@ async function test10_DeleteAnotherTenantPhoto(): Promise<void> {
     );
 
     recordTest(
-      'Delete another tenant\'s photo',
+      "Delete another tenant's photo",
       403,
       200,
       'SECURITY ISSUE: Cross-tenant deletion allowed'
@@ -501,7 +502,7 @@ async function test10_DeleteAnotherTenantPhoto(): Promise<void> {
     const message = error.response?.data?.error || '';
     const isCorrect = status === 403 || status === 404;
     recordTest(
-      'Delete another tenant\'s photo',
+      "Delete another tenant's photo",
       403,
       status,
       isCorrect
@@ -575,9 +576,7 @@ async function test12_TinyImage(): Promise<void> {
       'Upload 1-byte file',
       400,
       status,
-      status === 400
-        ? 'Correctly rejected tiny file'
-        : `Unexpected error: ${message}`
+      status === 400 ? 'Correctly rejected tiny file' : `Unexpected error: ${message}`
     );
   }
 }
@@ -628,9 +627,7 @@ async function test13_DeletePhotoTwice(): Promise<void> {
       'Delete same photo twice',
       404,
       status,
-      status === 404
-        ? 'Correctly handled double deletion'
-        : `Unexpected error: ${message}`
+      status === 404 ? 'Correctly handled double deletion' : `Unexpected error: ${message}`
     );
   }
 }

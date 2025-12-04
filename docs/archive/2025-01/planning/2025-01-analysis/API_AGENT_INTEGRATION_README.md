@@ -6,6 +6,7 @@
 ## Documents in This Suite
 
 ### 1. API_SURFACE_AREA_ANALYSIS.md (27KB, 809 lines)
+
 **Comprehensive technical reference for all API endpoints**
 
 - **Part 1**: Complete endpoint inventory (39 endpoints across 5 categories)
@@ -24,6 +25,7 @@
 **Best for**: Architects, API designers, security reviewers
 
 **Quick Facts**:
+
 - 39 total endpoints
 - 26 mutation endpoints (POST/PUT/DELETE)
 - 13 read-only endpoints (GET)
@@ -34,6 +36,7 @@
 ---
 
 ### 2. AGENT_IMPLEMENTATION_GUIDE.md (24KB, 1,021 lines)
+
 **Practical code examples and patterns for building safe agents**
 
 - **Quick Reference**: Authentication flow (login, token verification)
@@ -56,6 +59,7 @@
 ---
 
 ### 3. API_EXPLORATION_SUMMARY.md (12KB, 345 lines)
+
 **Executive summary and navigation guide**
 
 - **Overview**: Document structure and what's covered
@@ -76,7 +80,9 @@
 ## Quick Navigation by Role
 
 ### I'm a Developer Building an Agent
+
 **Start here**: AGENT_IMPLEMENTATION_GUIDE.md
+
 1. Read "Quick Reference: Authentication Flow" (5 min)
 2. Study "Use Case 1: Create Package with Add-ons" (10 min)
 3. Review "Rate Limit Handling" section (10 min)
@@ -87,7 +93,9 @@
 ---
 
 ### I'm a Platform Architect
+
 **Start here**: API_SURFACE_AREA_ANALYSIS.md
+
 1. Read Part 1 (endpoint inventory) - 10 min
 2. Read Part 4 (gaps) - 5 min
 3. Read Part 10 (enhancements) - 5 min
@@ -98,7 +106,9 @@
 ---
 
 ### I'm a Security Reviewer
+
 **Start here**: API_SURFACE_AREA_ANALYSIS.md
+
 1. Read Part 2 (authentication) - 5 min
 2. Read Part 5 (hard boundaries) - 5 min
 3. Read Part 7 (multi-tenancy) - 5 min
@@ -109,7 +119,9 @@
 ---
 
 ### I'm an API User (Developer Using Elope)
+
 **Start here**: API_EXPLORATION_SUMMARY.md
+
 1. Skim "Quick Navigation" section (2 min)
 2. Check relevant "Key Findings" subsection (3 min)
 
@@ -119,26 +131,27 @@
 
 ## Key Statistics
 
-| Metric | Value |
-|--------|-------|
-| Total Endpoints Documented | 39 |
-| Mutation Endpoints (POST/PUT/DELETE) | 26 |
-| Endpoints Requiring Authentication | 32 |
-| Rate Limited Admin Requests/15min | 120 |
-| Rate Limited Login Attempts/15min | 5 |
-| Multi-tenant Isolated Endpoints | 26+ |
-| Critical Gaps Identified | 10 |
-| Hard Security Boundaries | 8 |
-| Code Examples Provided | 15+ |
-| Use Cases Worked Through | 5 |
-| Lines of Documentation | 2,154 |
-| Code Files Analyzed | 13 |
+| Metric                               | Value |
+| ------------------------------------ | ----- |
+| Total Endpoints Documented           | 39    |
+| Mutation Endpoints (POST/PUT/DELETE) | 26    |
+| Endpoints Requiring Authentication   | 32    |
+| Rate Limited Admin Requests/15min    | 120   |
+| Rate Limited Login Attempts/15min    | 5     |
+| Multi-tenant Isolated Endpoints      | 26+   |
+| Critical Gaps Identified             | 10    |
+| Hard Security Boundaries             | 8     |
+| Code Examples Provided               | 15+   |
+| Use Cases Worked Through             | 5     |
+| Lines of Documentation               | 2,154 |
+| Code Files Analyzed                  | 13    |
 
 ---
 
 ## Critical Findings Summary
 
 ### What's Available
+
 - 39 REST API endpoints
 - 26 configuration mutation endpoints
 - Clear separation: public/admin/tenant APIs
@@ -148,6 +161,7 @@
 - 3-tier rate limiting (login/admin/public)
 
 ### What's Missing (for agents)
+
 - No bulk operations (must make N requests for N items)
 - No dry-run/validation-only endpoints
 - No transaction support (operations not atomic)
@@ -158,6 +172,7 @@
 - No machine-readable error codes (vary by endpoint)
 
 ### Security Constraints (enforced)
+
 - Cannot access data across tenants
 - Cannot modify bookings (read-only)
 - Cannot delete tenants (admin-only)
@@ -170,16 +185,19 @@
 ## Recommended Reading Order
 
 ### For Quick Overview (15 minutes)
+
 1. This file (5 min)
 2. API_EXPLORATION_SUMMARY.md (10 min)
 
 ### For Complete Understanding (1 hour)
+
 1. API_EXPLORATION_SUMMARY.md (10 min)
 2. API_SURFACE_AREA_ANALYSIS.md Part 1 (endpoint inventory) (15 min)
 3. API_SURFACE_AREA_ANALYSIS.md Part 4 (gaps) (10 min)
 4. AGENT_IMPLEMENTATION_GUIDE.md "Safety Principles" (15 min)
 
 ### For Implementation (2+ hours)
+
 1. AGENT_IMPLEMENTATION_GUIDE.md "Quick Reference" (10 min)
 2. AGENT_IMPLEMENTATION_GUIDE.md "Use Case 1" (20 min)
 3. AGENT_IMPLEMENTATION_GUIDE.md "Rate Limit Handling" (20 min)
@@ -191,6 +209,7 @@
 ## API at a Glance
 
 ### Public Endpoints (No Auth Required)
+
 ```
 GET    /v1/packages              - List packages
 GET    /v1/packages/:slug        - Get package by slug
@@ -203,6 +222,7 @@ POST   /v1/webhooks/stripe       - Stripe webhook
 ```
 
 ### Auth Endpoints (No Auth Required)
+
 ```
 POST   /v1/auth/login            - Login for admin or tenant
 GET    /v1/auth/verify           - Verify token
@@ -212,6 +232,7 @@ GET    /v1/tenant-auth/me        - Get tenant context
 ```
 
 ### Admin Endpoints (Admin JWT Required)
+
 ```
 GET    /v1/admin/tenants         - List tenants
 POST   /v1/admin/tenants         - Create tenant
@@ -225,6 +246,7 @@ DELETE /v1/admin/packages/:id    - Delete package (legacy)
 ```
 
 ### Tenant Admin Endpoints (Tenant JWT Required)
+
 ```
 GET    /v1/tenant/admin/packages - List packages
 POST   /v1/tenant/admin/packages - Create package
@@ -248,32 +270,37 @@ GET    /v1/tenant/admin/bookings - List bookings (read-only)
 Before deploying agents to production:
 
 ### Security
+
 - [ ] Review API_SURFACE_AREA_ANALYSIS.md Part 2 & 5
 - [ ] Verify token refresh strategy (none exists - plan accordingly)
 - [ ] Implement all "Safety Principles" from AGENT_IMPLEMENTATION_GUIDE.md
 - [ ] Test authentication failure scenarios
 
 ### Rate Limiting
+
 - [ ] Implement RateLimitBudget from AGENT_IMPLEMENTATION_GUIDE.md
 - [ ] Test with 120 requests/15min budget
 - [ ] Add logging for rate limit approaches
 - [ ] Implement exponential backoff for 429 responses
 
 ### Error Handling
+
 - [ ] Implement ErrorType classification from AGENT_IMPLEMENTATION_GUIDE.md
 - [ ] Handle all error cases from Part 8 of API_SURFACE_AREA_ANALYSIS.md
 - [ ] Test with validation errors (400), auth errors (401/403), not found (404)
 - [ ] Implement retry logic only for retryable errors
 
 ### Data Consistency
+
 - [ ] Implement state verification pattern (fetch before/after)
 - [ ] Track partial failures for rollback (see Use Case 5)
 - [ ] Test with random network failures during multi-step operations
 - [ ] Log all operations using RequestLog pattern
 
 ### Testing
+
 - [ ] Test all Use Cases 1-5 from AGENT_IMPLEMENTATION_GUIDE.md
-- [ ] Use /v1/dev/* endpoints for mock testing first
+- [ ] Use /v1/dev/\* endpoints for mock testing first
 - [ ] Test rate limit handling with consecutive requests
 - [ ] Test error recovery with invalid tokens
 - [ ] Test multi-step operations with failures
@@ -310,15 +337,18 @@ A: Subsequent requests fail with 401. Re-authenticate and retry.
 
 ## Support & Contributions
 
-**Found an issue with the API?** 
+**Found an issue with the API?**
+
 - See API_SURFACE_AREA_ANALYSIS.md Part 4 (Gaps)
 - Check Part 5 for security concerns
 
 **Need more examples?**
+
 - See AGENT_IMPLEMENTATION_GUIDE.md Use Cases 1-5
 - All patterns are copy-paste ready
 
 **Have questions?**
+
 - Check "Common Questions" above
 - Search API_SURFACE_AREA_ANALYSIS.md by section
 
@@ -326,12 +356,12 @@ A: Subsequent requests fail with 401. Re-authenticate and retry.
 
 ## Document Versions
 
-| Document | Version | Updated | Lines |
-|----------|---------|---------|-------|
-| API_SURFACE_AREA_ANALYSIS.md | 1.0 | 2025-11-10 | 809 |
-| AGENT_IMPLEMENTATION_GUIDE.md | 1.0 | 2025-11-10 | 1,021 |
-| API_EXPLORATION_SUMMARY.md | 1.0 | 2025-11-10 | 345 |
-| API_AGENT_INTEGRATION_README.md | 1.0 | 2025-11-10 | This file |
+| Document                        | Version | Updated    | Lines     |
+| ------------------------------- | ------- | ---------- | --------- |
+| API_SURFACE_AREA_ANALYSIS.md    | 1.0     | 2025-11-10 | 809       |
+| AGENT_IMPLEMENTATION_GUIDE.md   | 1.0     | 2025-11-10 | 1,021     |
+| API_EXPLORATION_SUMMARY.md      | 1.0     | 2025-11-10 | 345       |
+| API_AGENT_INTEGRATION_README.md | 1.0     | 2025-11-10 | This file |
 
 ---
 
@@ -339,7 +369,7 @@ A: Subsequent requests fail with 401. Re-authenticate and retry.
 
 1. **Week 1**: Read documents (2-3 hours total)
 2. **Week 2**: Implement using patterns from AGENT_IMPLEMENTATION_GUIDE.md (8 hours)
-3. **Week 3**: Test with mock endpoints (/v1/dev/*) (4 hours)
+3. **Week 3**: Test with mock endpoints (/v1/dev/\*) (4 hours)
 4. **Week 4**: Deploy to production with monitoring (2 hours)
 
 ---

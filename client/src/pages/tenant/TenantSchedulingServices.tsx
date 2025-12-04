@@ -4,7 +4,7 @@
  * Page for tenant admins to manage their bookable services.
  */
 
-import { ServicesManager } from "@/features/tenant-admin/scheduling/ServicesManager";
+import { ServicesManager } from '@/features/tenant-admin/scheduling/ServicesManager';
 
 export function TenantSchedulingServicesPage() {
   return (

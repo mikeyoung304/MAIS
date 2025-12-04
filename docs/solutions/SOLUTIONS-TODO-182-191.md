@@ -17,6 +17,7 @@ This document extracts working solutions from recent TODO resolutions for reuse 
 **Solution:** Remove sensitive metadata from metrics output while preserving monitoring capabilities.
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/routes/metrics.routes.ts`
 
 **Code:**
@@ -50,6 +51,7 @@ const metrics = {
 ```
 
 **Benefits:**
+
 - Prevents fingerprinting attacks from exposed version/environment info
 - Maintains monitoring capability for uptime, memory, and CPU metrics
 - Follows principle of least privilege: metrics endpoint returns only operational data needed for monitoring tools (Prometheus, Datadog)
@@ -67,6 +69,7 @@ const metrics = {
 **Solution:** Return an unsubscribe function that encapsulates handler removal logic.
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/lib/core/events.ts`
 
 **Code:**
@@ -117,6 +120,7 @@ unsubscribe();
 ```
 
 **Benefits:**
+
 - Memory safety: No handler references leak into closure
 - Simplifies cleanup in React effects and lifecycle methods
 - Type-safe: TypeScript enforces return type
@@ -141,6 +145,7 @@ useEffect(() => {
 **Solution:** Derive types directly from Zod schemas in contracts package using `z.infer<typeof Schema>`.
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/lib/utils.ts`
 
 **Code:**
@@ -163,6 +168,7 @@ type BookingStatus = z.infer<typeof BookingSchema>['status'];
 ```
 
 **Benefits:**
+
 - Single source of truth: Schema is in contracts, types are derived
 - Prevents sync issues when schemas change
 - Compile-time verification: If schema changes break types, TypeScript errors immediately
@@ -179,6 +185,7 @@ type BookingStatus = z.infer<typeof BookingSchema>['status'];
 **Solution:** Add default case with exhaustiveness check using `never` type.
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/lib/utils.ts`
 
 **Code:**
@@ -230,12 +237,14 @@ function getRefundStatusText(status: RefundStatus): string {
 ```
 
 **Benefits:**
+
 - Compile-time safety: TypeScript prevents missing cases
 - Prevents silent failures when enums change
 - Self-documenting: Code shows all possible values
 - Catches schema changes early in development
 
 **How It Works:**
+
 1. If all cases are handled, `status` has type `never` (unreachable)
 2. If a case is missing, `status` has that case's type, causing type error
 3. Assigning to `never` variable makes the error visible
@@ -251,6 +260,7 @@ function getRefundStatusText(status: RefundStatus): string {
 **Solution:** Generate keys inside the transaction, only log after successful commit.
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/prisma/seeds/demo.ts`
 
 **Code:**
@@ -279,28 +289,31 @@ logger.warn(`Secret Key: ${secretKey}`); // Logged even on failure
 let publicKeyForLogging: string;
 let secretKeyForLogging: string | null = null;
 
-await prisma.$transaction(async (tx) => {
-  // Generate keys INSIDE transaction - only created if commit succeeds
-  let publicKey: string;
-  let secretKey: string | null = null;
+await prisma.$transaction(
+  async (tx) => {
+    // Generate keys INSIDE transaction - only created if commit succeeds
+    let publicKey: string;
+    let secretKey: string | null = null;
 
-  if (existingTenant) {
-    publicKey = existingTenant.apiKeyPublic;
-  } else {
-    publicKey = `pk_live_${DEMO_SLUG}_${crypto.randomBytes(8).toString('hex')}`;
-    secretKey = `sk_live_${DEMO_SLUG}_${crypto.randomBytes(16).toString('hex')}`;
-  }
+    if (existingTenant) {
+      publicKey = existingTenant.apiKeyPublic;
+    } else {
+      publicKey = `pk_live_${DEMO_SLUG}_${crypto.randomBytes(8).toString('hex')}`;
+      secretKey = `sk_live_${DEMO_SLUG}_${crypto.randomBytes(16).toString('hex')}`;
+    }
 
-  const tenant = await createOrUpdateTenant(tx, {
-    // ...
-    apiKeyPublic: publicKey,
-    apiKeySecret: secretKey,
-  });
+    const tenant = await createOrUpdateTenant(tx, {
+      // ...
+      apiKeyPublic: publicKey,
+      apiKeySecret: secretKey,
+    });
 
-  // Capture keys for logging AFTER transaction succeeds
-  publicKeyForLogging = publicKey;
-  secretKeyForLogging = secretKey;
-}, { timeout: 60000 });
+    // Capture keys for logging AFTER transaction succeeds
+    publicKeyForLogging = publicKey;
+    secretKeyForLogging = secretKey;
+  },
+  { timeout: 60000 }
+);
 
 // Log ONLY after transaction commits successfully
 if (existingTenant) {
@@ -316,6 +329,7 @@ if (existingTenant) {
 **Pattern Applied to:** `demo.ts`, `e2e.ts`, `platform.ts`
 
 **Benefits:**
+
 - No wasted entropy: Keys only generated if they'll be stored
 - Clearer intent: Logging happens after successful commit
 - Transactional consistency: Keys and logging are atomically paired
@@ -332,6 +346,7 @@ if (existingTenant) {
 **Solution:** Add useEffect cleanup that resolves the pending promise with false on unmount.
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/hooks/useConfirmDialog.tsx`
 
 **Code:**
@@ -401,6 +416,7 @@ export function useConfirmDialog() {
 ```
 
 **Benefits:**
+
 - Prevents memory leaks: All promises are resolved before component unmounts
 - Cleaner cleanup: React DevTools will show no lingering promises
 - Graceful degradation: Cancelled dialogs resolve to false (safe for callers)
@@ -430,6 +446,7 @@ useEffect(() => {
 **Solution:** Create 14 unit tests covering core behaviors, edge cases, and error isolation.
 
 **Files Created:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/test/lib/events.test.ts`
 
 **Test Coverage:**
@@ -442,15 +459,12 @@ describe('InProcessEventEmitter', () => {
   // - Multiple handlers for same event
   // - Async handler execution
   // - Event type isolation
-
   // 2. Error handling (2 tests)
   // - Sync and async handler errors don't affect other handlers
   // - Promise.allSettled ensures all handlers execute
-
   // 3. clearAll() behavior (2 tests)
   // - Clears all subscriptions
   // - Allows re-subscription after clear
-
   // 4. unsubscribe() function (4 tests)
   // - Individual handler unsubscription
   // - Safe to call multiple times
@@ -497,6 +511,7 @@ it('should unsubscribe individual handlers', async () => {
 ```
 
 **Benefits:**
+
 - Comprehensive coverage: All public methods tested
 - Edge cases covered: Errors, cleanup, unsubscribe
 - Regression prevention: Tests lock in expected behavior
@@ -513,6 +528,7 @@ it('should unsubscribe individual handlers', async () => {
 **Solution:** Add logger calls before and after transaction with elapsed duration.
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/prisma/seeds/demo.ts`
 - `/Users/mikeyoung/CODING/MAIS/server/prisma/seeds/e2e.ts`
 - `/Users/mikeyoung/CODING/MAIS/server/prisma/seeds/platform.ts`
@@ -531,37 +547,46 @@ const startTime = Date.now();
 
 logger.info({ operations: 16, slug: DEMO_SLUG }, 'Starting seed transaction');
 
-await prisma.$transaction(async (tx) => {
-  // ... create tenant
-  logger.info(`Demo tenant created: ${tenant.name}`);
+await prisma.$transaction(
+  async (tx) => {
+    // ... create tenant
+    logger.info(`Demo tenant created: ${tenant.name}`);
 
-  // ... create packages
-  logger.info(`Demo packages created: ${packages.length}`);
+    // ... create packages
+    logger.info(`Demo packages created: ${packages.length}`);
 
-  // ... link relationships
-  logger.info(`Demo add-ons created and linked`);
-}, { timeout: 60000 });
+    // ... link relationships
+    logger.info(`Demo add-ons created and linked`);
+  },
+  { timeout: 60000 }
+);
 
-logger.info({
-  slug: DEMO_SLUG,
-  durationMs: Date.now() - startTime
-}, 'Seed transaction committed successfully');
+logger.info(
+  {
+    slug: DEMO_SLUG,
+    durationMs: Date.now() - startTime,
+  },
+  'Seed transaction committed successfully'
+);
 
 logger.info('Demo seed completed successfully (all operations committed)');
 ```
 
 **Applied to All Seed Files:**
+
 - `demo.ts`: Creates rich demo data
 - `e2e.ts`: Creates test tenant with fixed keys
 - `platform.ts`: Creates platform admin user
 
 **Benefits:**
+
 - Visibility: Track how long seed operations take
 - Debugging: Identify where seed fails with precise logs
 - Performance: Monitor seed duration across environments
 - Compliance: Audit trail of database modifications
 
 **Log Levels:**
+
 - `logger.info()`: Transaction start/end, successes
 - `logger.warn()`: Sensitive data (API keys, passwords)
 - `logger.error()`: Transaction failures
@@ -577,6 +602,7 @@ logger.info('Demo seed completed successfully (all operations committed)');
 **Solution:** Create comprehensive registry documenting all lock IDs, patterns, and guidelines.
 
 **Files Created:**
+
 - `/Users/mikeyoung/CODING/MAIS/docs/reference/ADVISORY_LOCKS.md`
 
 **Documentation Sections:**
@@ -593,28 +619,31 @@ logger.info('Demo seed completed successfully (all operations committed)');
 **Key Content - Lock Registry:**
 
 ```markdown
-| Lock ID | Component | Purpose | Scope |
-|---------|-----------|---------|-------|
-| 42424242 | IdempotencyService | Cleanup scheduler coordination | Global |
-| FNV-1a({tenantId}:{date}) | BookingRepository | Race prevention | Per tenant+date |
-| FNV-1a({tenantId}:balance:{bookingId}) | BookingRepository | Balance coordination | Per tenant+booking |
+| Lock ID                                | Component          | Purpose                        | Scope              |
+| -------------------------------------- | ------------------ | ------------------------------ | ------------------ |
+| 42424242                               | IdempotencyService | Cleanup scheduler coordination | Global             |
+| FNV-1a({tenantId}:{date})              | BookingRepository  | Race prevention                | Per tenant+date    |
+| FNV-1a({tenantId}:balance:{bookingId}) | BookingRepository  | Balance coordination           | Per tenant+booking |
 ```
 
 **Key Content - Adding New Locks:**
 
 ```markdown
 ### Use Hardcoded IDs When:
+
 - Lock coordinates global operations (all tenants)
 - Lock ID is feature-specific and unique
 - No resource-specific scoping needed
 
 ### Use FNV-1a Hashing When:
+
 - Lock is scoped to specific tenant/resource
 - Lock ID must be deterministic from runtime values
 - Many lock IDs needed (thousands of combinations)
 ```
 
 **Benefits:**
+
 - Central reference: All lock IDs documented in one place
 - Collision prevention: Manual review prevents ID reuse
 - Best practices: Guidelines for adding new locks
@@ -629,6 +658,7 @@ logger.info('Demo seed completed successfully (all operations committed)');
 **Solution:** Move to `docs/examples/` directory with clear documentation comments.
 
 **Files Moved:**
+
 - `server/test/event-emitter-type-safety.ts` → `docs/examples/event-emitter-type-safety.ts`
 
 **File Content:**
@@ -688,12 +718,14 @@ emitter.emit(BookingEvents.PAID, {
 ```
 
 **Benefits:**
+
 - Clearer intent: Examples are in docs, not tests
 - Better organization: Tests folder contains only runnable tests
 - Easier discovery: Developers find examples in docs directory
 - No impact on test suite: Not counted as a test file anymore
 
 **Directory Structure After Move:**
+
 ```
 docs/examples/
   event-emitter-type-safety.ts    (Type safety documentation)
@@ -708,12 +740,12 @@ server/test/
 
 ## Summary
 
-| Category | Count | Key Solutions |
-|----------|-------|---|
-| Security | 1 | Removed version/environment from metrics |
-| Type Safety | 3 | Unsubscribe functions, contract-derived types, exhaustiveness checks |
-| Code Quality | 4 | Keys in transactions, hook cleanup, unit tests, transaction logging |
-| Documentation | 2 | Advisory locks registry, type safety examples moved to docs |
+| Category      | Count | Key Solutions                                                        |
+| ------------- | ----- | -------------------------------------------------------------------- |
+| Security      | 1     | Removed version/environment from metrics                             |
+| Type Safety   | 3     | Unsubscribe functions, contract-derived types, exhaustiveness checks |
+| Code Quality  | 4     | Keys in transactions, hook cleanup, unit tests, transaction logging  |
+| Documentation | 2     | Advisory locks registry, type safety examples moved to docs          |
 
 ## Reusable Patterns
 

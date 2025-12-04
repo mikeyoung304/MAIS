@@ -1,17 +1,17 @@
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
-import { useConfirmDialog } from "@/hooks/useConfirmDialog";
-import type { FormError } from "@/components/ui/ErrorSummary";
-import type { PackageFormData } from "../hooks/usePackageForm";
-import type { SegmentDto } from "@macon/contracts";
-import { ValidationService } from "./ValidationService";
-import { FormHeader } from "./FormHeader";
-import { BasicInfoSection } from "./BasicInfoSection";
-import { PricingSection } from "./PricingSection";
-import { OrganizationSection } from "./OrganizationSection";
-import { FormActions } from "./FormActions";
+import { useState, useEffect } from 'react';
+import { Card } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import type { FormError } from '@/components/ui/ErrorSummary';
+import type { PackageFormData } from '../hooks/usePackageForm';
+import type { SegmentDto } from '@macon/contracts';
+import { ValidationService } from './ValidationService';
+import { FormHeader } from './FormHeader';
+import { BasicInfoSection } from './BasicInfoSection';
+import { PricingSection } from './PricingSection';
+import { OrganizationSection } from './OrganizationSection';
+import { FormActions } from './FormActions';
 
 interface PackageFormProps {
   form: PackageFormData;
@@ -61,15 +61,16 @@ export function PackageForm({
   // Enable unsaved changes warning with ConfirmDialog
   useUnsavedChanges({
     isDirty,
-    message: "You have unsaved package changes. Are you sure you want to leave?",
+    message: 'You have unsaved package changes. Are you sure you want to leave?',
     enabled: true,
-    confirmFn: (msg) => confirm({
-      title: "Unsaved Changes",
-      description: msg,
-      confirmLabel: "Leave",
-      cancelLabel: "Stay",
-      variant: "destructive"
-    })
+    confirmFn: (msg) =>
+      confirm({
+        title: 'Unsaved Changes',
+        description: msg,
+        confirmLabel: 'Leave',
+        cancelLabel: 'Stay',
+        variant: 'destructive',
+      }),
   });
 
   // Validate field on blur

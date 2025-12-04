@@ -226,17 +226,11 @@ export class GoogleCalendarSyncAdapter extends GoogleCalendarAdapter implements 
         return false;
       }
 
-      logger.info(
-        { tenantId, eventId },
-        'Google Calendar event deleted'
-      );
+      logger.info({ tenantId, eventId }, 'Google Calendar event deleted');
 
       return true;
     } catch (error) {
-      logger.error(
-        { error, tenantId, eventId },
-        'Error deleting Google Calendar event'
-      );
+      logger.error({ error, tenantId, eventId }, 'Error deleting Google Calendar event');
       return false;
     }
   }

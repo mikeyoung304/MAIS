@@ -1,7 +1,7 @@
 ---
 status: pending
 priority: p2
-issue_id: "155"
+issue_id: '155'
 tags: [deferred, code-review, architecture, mvp-gaps, refactoring]
 dependencies: []
 ---
@@ -123,12 +123,14 @@ abstract class BaseBookingService {
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/services/booking.service.ts` (1226 lines)
 - `server/src/di.ts` (dependency injection wiring)
 - `server/test/booking.service.spec.ts` (225 lines)
 - `server/test/services/booking.service.edge-cases.spec.ts` (311 lines)
 
 **Current Dependencies:**
+
 1. `bookingRepo: BookingRepository`
 2. `catalogRepo: CatalogRepository`
 3. `_eventEmitter: EventEmitter`
@@ -140,6 +142,7 @@ abstract class BaseBookingService {
 9. `serviceRepo?: ServiceRepository` (optional)
 
 **Test Complexity:**
+
 - 8 dependencies to mock (manageable with current helpers)
 - 536 lines of unit tests (well-organized)
 - Comprehensive integration tests for concurrency
@@ -156,6 +159,7 @@ abstract class BaseBookingService {
 
 **Investigator:** Claude Code (Agent)
 **Method:**
+
 1. Read TODO file and booking.service.ts
 2. Counted lines (1226, updated from 1177)
 3. Analyzed method responsibilities and domain boundaries
@@ -166,12 +170,14 @@ abstract class BaseBookingService {
 **Actual Line Count:** 1226 lines (not 1177 as originally reported)
 
 **Method Breakdown:**
+
 - 13 public methods across 3 domains
 - Average method length: ~94 lines (includes comments/docs)
 - Longest method: `onPaymentCompleted` (~94 lines)
 - Shortest method: `getAllBookings` (2 lines)
 
 **Documentation Quality:** Excellent
+
 - All public methods have comprehensive JSDoc
 - Multi-tenant patterns documented
 - Examples provided for all methods

@@ -1,13 +1,9 @@
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import { api } from "@/lib/api";
-import { useConfirmDialog } from "@/hooks/useConfirmDialog";
-import type {
-  AddOnDto,
-  CreateAddOnDto,
-  UpdateAddOnDto,
-} from "@macon/contracts";
-import type { AddOnFormData } from "../../types";
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import type { AddOnDto, CreateAddOnDto, UpdateAddOnDto } from '@macon/contracts';
+import type { AddOnFormData } from '../../types';
 
 interface UseAddOnManagerProps {
   onPackagesChange: () => void;
@@ -18,14 +14,16 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
   const [isAddingAddOn, setIsAddingAddOn] = useState<string | null>(null);
   const [editingAddOnId, setEditingAddOnId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [segments, setSegments] = useState<Array<{ id: string; name: string; active: boolean }>>([]);
+  const [segments, setSegments] = useState<Array<{ id: string; name: string; active: boolean }>>(
+    []
+  );
   const { confirm, dialogState, handleOpenChange } = useConfirmDialog();
 
   const [addOnForm, setAddOnForm] = useState<AddOnFormData>({
-    title: "",
-    priceCents: "",
-    photoUrl: "",
-    segmentId: "",
+    title: '',
+    priceCents: '',
+    photoUrl: '',
+    segmentId: '',
   });
 
   // Fetch segments
@@ -46,10 +44,10 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
   // Reset form
   const resetAddOnForm = () => {
     setAddOnForm({
-      title: "",
-      priceCents: "",
-      photoUrl: "",
-      segmentId: "",
+      title: '',
+      priceCents: '',
+      photoUrl: '',
+      segmentId: '',
     });
   };
 
@@ -64,8 +62,8 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
     setAddOnForm({
       title: addOn.title,
       priceCents: addOn.priceCents.toString(),
-      photoUrl: addOn.photoUrl || "",
-      segmentId: addOn.segmentId || "",
+      photoUrl: addOn.photoUrl || '',
+      segmentId: addOn.segmentId || '',
     });
     setEditingAddOnId(addOn.id);
     setIsAddingAddOn(addOn.packageId);
@@ -75,16 +73,16 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
     e.preventDefault();
 
     if (!addOnForm.title || !addOnForm.priceCents) {
-      toast.error("Missing Required Fields", {
-        description: "Title and price are required",
+      toast.error('Missing Required Fields', {
+        description: 'Title and price are required',
       });
       return;
     }
 
     const priceCents = parseInt(addOnForm.priceCents, 10);
     if (isNaN(priceCents) || priceCents <= 0) {
-      toast.error("Invalid Price", {
-        description: "Price must be a positive number",
+      toast.error('Invalid Price', {
+        description: 'Price must be a positive number',
       });
       return;
     }
@@ -106,14 +104,14 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
         });
 
         if (result.status === 200) {
-          showSuccess("Add-on updated successfully");
+          showSuccess('Add-on updated successfully');
           setIsAddingAddOn(null);
           setEditingAddOnId(null);
           resetAddOnForm();
           onPackagesChange();
         } else {
-          toast.error("Failed to update add-on", {
-            description: "Please try again or contact support.",
+          toast.error('Failed to update add-on', {
+            description: 'Please try again or contact support.',
           });
         }
       } else {
@@ -131,22 +129,22 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
         });
 
         if (result.status === 200) {
-          showSuccess("Add-on created successfully");
+          showSuccess('Add-on created successfully');
           setIsAddingAddOn(null);
           resetAddOnForm();
           onPackagesChange();
         } else {
-          toast.error("Failed to create add-on", {
-            description: "Please try again or contact support.",
+          toast.error('Failed to create add-on', {
+            description: 'Please try again or contact support.',
           });
         }
       }
     } catch (err) {
       if (import.meta.env.DEV) {
-        console.error("Failed to save add-on:", err);
+        console.error('Failed to save add-on:', err);
       }
-      toast.error("An error occurred while saving the add-on", {
-        description: "Please try again or contact support.",
+      toast.error('An error occurred while saving the add-on', {
+        description: 'Please try again or contact support.',
       });
     } finally {
       setIsSaving(false);
@@ -155,11 +153,11 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
 
   const handleDeleteAddOn = async (addOnId: string) => {
     const confirmed = await confirm({
-      title: "Delete Add-on",
-      description: "Are you sure you want to delete this add-on?",
-      confirmLabel: "Delete",
-      cancelLabel: "Cancel",
-      variant: "destructive",
+      title: 'Delete Add-on',
+      description: 'Are you sure you want to delete this add-on?',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      variant: 'destructive',
     });
 
     if (!confirmed) {
@@ -173,19 +171,19 @@ export function useAddOnManager({ onPackagesChange, showSuccess }: UseAddOnManag
       });
 
       if (result.status === 204) {
-        showSuccess("Add-on deleted successfully");
+        showSuccess('Add-on deleted successfully');
         onPackagesChange();
       } else {
-        toast.error("Failed to delete add-on", {
-          description: "Please try again or contact support.",
+        toast.error('Failed to delete add-on', {
+          description: 'Please try again or contact support.',
         });
       }
     } catch (err) {
       if (import.meta.env.DEV) {
-        console.error("Failed to delete add-on:", err);
+        console.error('Failed to delete add-on:', err);
       }
-      toast.error("An error occurred while deleting the add-on", {
-        description: "Please try again or contact support.",
+      toast.error('An error occurred while deleting the add-on', {
+        description: 'Please try again or contact support.',
       });
     }
   };

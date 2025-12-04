@@ -13,6 +13,7 @@
 ### The Problem in Detail
 
 When Playwright MCP or custom scripts open a browser, you see:
+
 ```
 1. Browser launches
 2. Window 1: about:blank (unexpected)
@@ -27,6 +28,7 @@ When Playwright MCP or custom scripts open a browser, you see:
 **Primary Cause: Fixture Dependency Conflicts**
 
 Playwright's built-in fixtures (`page`, `context`, `browser`) have a dependency chain:
+
 ```
 page → context → browser
 ```
@@ -74,16 +76,18 @@ Test uses: browser + page
 ### Solution 1: Avoid Fixture Mixing (Recommended)
 
 **Don't do this:**
+
 ```typescript
 // ❌ BAD: Uses both 'page' fixture and creates custom context
 test('my test', async ({ browser, page }) => {
-  const context = await browser.newContext();  // Creates context #2
-  const customPage = await context.newPage();  // Creates page #2
+  const context = await browser.newContext(); // Creates context #2
+  const customPage = await context.newPage(); // Creates page #2
   // 'page' fixture already created context #1 and page #1
 });
 ```
 
 **Do this instead:**
+
 ```typescript
 // ✅ GOOD: Only use browser fixture, create everything yourself
 test('my test', async ({ browser }) => {
@@ -94,6 +98,7 @@ test('my test', async ({ browser }) => {
 ```
 
 **Or this:**
+
 ```typescript
 // ✅ GOOD: Use page fixture directly, don't create custom
 test('my test', async ({ page }) => {
@@ -105,17 +110,19 @@ test('my test', async ({ page }) => {
 ### Solution 2: MCP Server Pattern
 
 **Problem pattern in MCP:**
+
 ```typescript
 // ❌ BAD: Creates new context every request without cleanup
 export async function handleBrowserNavigate(url: string) {
-  const browser = await chromium.launch();  // Reused across requests
-  const context = await browser.newContext();  // New context each time
-  const page = await context.newPage();  // New page each time
+  const browser = await chromium.launch(); // Reused across requests
+  const context = await browser.newContext(); // New context each time
+  const page = await context.newPage(); // New page each time
   // Contexts never closed → accumulates blank pages
 }
 ```
 
 **Fixed pattern:**
+
 ```typescript
 // ✅ GOOD: Proper lifecycle management
 class BrowserManager {
@@ -163,11 +170,12 @@ class BrowserManager {
 ### Solution 3: Configuration-Based Fix
 
 **playwright.config.ts optimization:**
+
 ```typescript
 export default defineConfig({
   use: {
     // Move all page-level config to global level
-    ignoreHTTPSErrors: true,  // Don't pass to newPage()
+    ignoreHTTPSErrors: true, // Don't pass to newPage()
     viewport: { width: 1280, height: 720 },
 
     // Prevent automatic blank page
@@ -194,37 +202,40 @@ export default defineConfig({
 ### Solution 4: Page Object Pattern Fix
 
 **Don't do this:**
+
 ```typescript
 // ❌ BAD: beforeEach creates page separate from test context
 let homePage: HomePage;
 
 test.beforeEach(async ({ page }) => {
-  homePage = new HomePage(page);  // Uses fixture page
+  homePage = new HomePage(page); // Uses fixture page
 });
 
 test('my test', async ({ browser }) => {
-  const context = await browser.newContext();  // New context
-  const customPage = await context.newPage();  // Blank page created
+  const context = await browser.newContext(); // New context
+  const customPage = await context.newPage(); // Blank page created
   // Now you have 2 pages: one from fixture, one from test
 });
 ```
 
 **Do this instead:**
+
 ```typescript
 // ✅ GOOD: Use same page throughout
 test('my test', async ({ page }) => {
-  const homePage = new HomePage(page);  // Same page instance
+  const homePage = new HomePage(page); // Same page instance
   await homePage.navigate();
 });
 ```
 
 **Or this:**
+
 ```typescript
 // ✅ GOOD: Create page object from custom context
 test('my test', async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
-  const homePage = new HomePage(page);  // From your context
+  const homePage = new HomePage(page); // From your context
 });
 ```
 
@@ -245,8 +256,8 @@ async function testBlankPages() {
   const page1 = await context1.newPage();
 
   const pages1 = context1.pages();
-  console.log(`Pages created: ${pages1.length}`);  // Should be 1
-  console.log(`URLs: ${pages1.map(p => p.url()).join(', ')}`);
+  console.log(`Pages created: ${pages1.length}`); // Should be 1
+  console.log(`URLs: ${pages1.map((p) => p.url()).join(', ')}`);
 
   await context1.close();
   await browser1.close();
@@ -274,6 +285,7 @@ testBlankPages().catch(console.error);
 ```
 
 **Run:**
+
 ```bash
 npx tsx test-blank-pages.ts
 ```
@@ -294,7 +306,7 @@ class MCPBrowserSingleton {
   private static instance: MCPBrowserSingleton;
   private browser: Browser | null = null;
   private activeContexts: Map<string, BrowserContext> = new Map();
-  private maxContexts = 1;  // MCP should typically use 1 context at a time
+  private maxContexts = 1; // MCP should typically use 1 context at a time
 
   static getInstance(): MCPBrowserSingleton {
     if (!MCPBrowserSingleton.instance) {
@@ -387,13 +399,14 @@ test('good example 2', async ({ browser }) => {
 ### Scenario 3: Our capture-landing.js Script
 
 **Current script** (may have issues):
+
 ```javascript
 // capture-landing.js
 const { chromium } = require('playwright');
 
 (async () => {
-  const browser = await chromium.launch();  // ✅ OK
-  const page = await browser.newPage();      // ⚠️  Implicit context created
+  const browser = await chromium.launch(); // ✅ OK
+  const page = await browser.newPage(); // ⚠️  Implicit context created
 
   // Multiple calls without cleanup
   await page.goto('http://localhost:5173');
@@ -404,6 +417,7 @@ const { chromium } = require('playwright');
 ```
 
 **Fixed script:**
+
 ```javascript
 // capture-landing.js
 const { chromium } = require('playwright');
@@ -442,11 +456,12 @@ After applying fixes, verify:
 - [ ] **Clean close:** Browser closes completely without hanging
 
 **How to check:**
+
 ```typescript
 // Add to your test/script
 const allPages = context.pages();
-console.log(`Total pages: ${allPages.length}`);  // Should be 1
-console.log(`Page URLs: ${allPages.map(p => p.url()).join(', ')}`);
+console.log(`Total pages: ${allPages.length}`); // Should be 1
+console.log(`Page URLs: ${allPages.map((p) => p.url()).join(', ')}`);
 ```
 
 ---
@@ -490,7 +505,6 @@ async function captureLandingPage() {
 
     console.log('Screenshots saved successfully');
     console.log(`Final page count: ${context.pages().length}`);
-
   } catch (error) {
     console.error('Error:', error);
   } finally {

@@ -1,5 +1,5 @@
-import { Container } from "@/ui/Container";
-import { DollarSign, Percent } from "lucide-react";
+import { Container } from '@/ui/Container';
+import { DollarSign, Percent } from 'lucide-react';
 
 /**
  * PartnershipSection - Revenue-Share Partnership Model
@@ -36,7 +36,9 @@ export function PartnershipSection() {
                 <DollarSign className="w-6 h-6 text-sage" />
               </div>
               <div>
-                <h3 className="font-semibold text-text-primary text-lg mb-2">Predictable monthly fee</h3>
+                <h3 className="font-semibold text-text-primary text-lg mb-2">
+                  Predictable monthly fee
+                </h3>
                 <p className="text-text-muted">
                   For hosting, maintenance, and ongoing optimization
                 </p>
@@ -48,10 +50,10 @@ export function PartnershipSection() {
                 <Percent className="w-6 h-6 text-sage" />
               </div>
               <div>
-                <h3 className="font-semibold text-text-primary text-lg mb-2">Percentage of sales</h3>
-                <p className="text-text-muted">
-                  That go through your storefront
-                </p>
+                <h3 className="font-semibold text-text-primary text-lg mb-2">
+                  Percentage of sales
+                </h3>
+                <p className="text-text-muted">That go through your storefront</p>
               </div>
             </div>
           </div>
@@ -59,7 +61,8 @@ export function PartnershipSection() {
           {/* Close */}
           <div className="bg-sage/10 border border-sage/20 rounded-2xl p-8 text-center">
             <p className="text-lg text-text-primary font-medium">
-              If your storefront isn't producing, we feel it too. Our incentives are aligned with your growth.
+              If your storefront isn't producing, we feel it too. Our incentives are aligned with
+              your growth.
             </p>
           </div>
         </div>

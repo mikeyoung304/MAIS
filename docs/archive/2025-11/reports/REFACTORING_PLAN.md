@@ -5,6 +5,7 @@
 Comprehensive codebase analysis completed on 2025-01-22. Analysis identified 47 issues across backend, frontend, database, testing, and configuration layers. This document outlines the 6-phase refactoring plan to address critical security vulnerabilities, improve code quality, and eliminate technical debt.
 
 **Progress Update (November 22, 2025)**:
+
 - ✅ Phase 1: Foundation & Safety - COMPLETE
 - ✅ Phase 2: Path Alias & Type Safety - COMPLETE
 - ✅ Phase 3: Error Handling Consolidation - COMPLETE (3a, 3b, 3c)
@@ -13,6 +14,7 @@ Comprehensive codebase analysis completed on 2025-01-22. Analysis identified 47 
 - 🔲 Phase 6: Cleanup & Final Touches - PLANNED
 
 **Impact to Date**:
+
 - **Code Eliminated**: 544 lines (321 error duplication + 100 cache duplication + 123 component duplication)
 - **Test Pass Rate**: Improved from 60% → 92.2% (568/616 tests passing)
 - **Type Safety**: 0 TypeScript errors (strict mode)
@@ -32,6 +34,7 @@ Comprehensive codebase analysis completed on 2025-01-22. Analysis identified 47 
 ## Critical Issues Identified
 
 ### 1. Security Vulnerability: Payment Model Missing tenantId
+
 **Severity**: CRITICAL
 **Impact**: Cross-tenant data leakage risk
 **Location**: `server/prisma/schema.prisma:311-325`
@@ -39,13 +42,16 @@ Comprehensive codebase analysis completed on 2025-01-22. Analysis identified 47 
 The Payment model lacks a tenantId field, allowing queries filtered by `processorId` to return payments from all tenants.
 
 ### 2. Frontend Type Safety Gaps
+
 **Severity**: CRITICAL
 **Impact**: 7 instances of `as any` casts due to incomplete type contracts
 **Locations**:
+
 - `client/src/features/tenant-admin/packages/PackageList.tsx:78-118`
 - `client/src/features/tenant-admin/packages/usePackageForm.ts:45-46`
 
 ### 3. Configuration Path Alias Mismatch
+
 **Severity**: HIGH
 **Impact**: Potential runtime failures
 **Location**: `server/tsconfig.json`
@@ -54,41 +60,49 @@ Uses `@elope/*` aliases but package.json declares `@macon/*`
 ## Refactoring Phases
 
 ### Phase 1: Foundation & Safety (Days 1-2) ✅ COMPLETE
+
 **Goal**: Eliminate security vulnerabilities, fix type contracts, resolve tooling conflicts
 **Completed**: November 22, 2025
 **Commit**: `a4cb467`
 
 **Tasks**:
+
 1. ✅ Add Payment.tenantId migration (4 hours)
 2. ✅ Fix PackageDto schema with missing fields (6 hours)
 3. ✅ Fix concurrently version conflict (15 minutes)
 
 **Success Criteria**:
+
 - ✅ Payment model has tenantId
 - ✅ No `as any` casts in frontend (eliminated all 7 instances)
 - ✅ All dev servers start successfully
 - ✅ Existing tests maintain 99.8% pass rate
 
 ### Phase 2: Path Alias & Type Safety (Day 3) ✅ COMPLETE
+
 **Goal**: Eliminate legacy @elope references, upgrade TypeScript
 **Completed**: November 22, 2025
 **Commit**: `6e3bbc5`
 
 **Tasks**:
+
 1. ✅ Replace all @elope references with @macon (1 hour)
 2. ✅ Upgrade TypeScript to 5.9.3 (3 hours)
 
 **Success Criteria**:
+
 - ✅ Zero @elope references remain (50+ imports updated)
 - ✅ All typecheck passes (0 TypeScript errors)
 - ✅ No new type errors introduced
 
 ### Phase 3: Error Handling Consolidation (Day 4) ✅ COMPLETE
+
 **Goal**: Unify error handling, add error boundaries
 **Completed**: November 22, 2025
 **Commits**: `f0169d5` (3a), `b0a23d4` (3b), `ffbea52` (3c)
 
 **Tasks**:
+
 1. ✅ **Phase 3a**: Consolidate 3 error systems into unified AppError pattern (6 hours)
    - Created `lib/errors/` directory with 40+ domain-specific error classes
    - Updated 51 files (38 source + 13 test)
@@ -103,16 +117,19 @@ Uses `@elope/*` aliases but package.json declares `@macon/*`
    - Replaced 10 `alert()` calls with `toast.error()`
 
 **Success Criteria**:
+
 - ✅ Single error handling system (`lib/errors/`)
 - ✅ All endpoints document error responses (44/44)
 - ✅ Feature failures isolated (5 error boundaries)
 
 ### Phase 4: Component Refactoring (Days 5-6) ✅ COMPLETE
+
 **Goal**: Extract helpers, split large components, reduce duplication
 **Completed**: November 22, 2025
 **Commits**: `e9c3420` (4a), `61c11e8` (4b)
 
 **Tasks**:
+
 1. ✅ **Phase 4a**: Extract caching helper (~100 LOC savings, 4 hours)
    - Created `lib/cache-helpers.ts`
    - Refactored `CatalogService` and `SegmentService`
@@ -125,32 +142,39 @@ Uses `@elope/*` aliases but package.json declares `@macon/*`
 3. 🔲 Fix prop drilling with Context API (3 hours) - DEFERRED to Sprint 11
 
 **Success Criteria**:
+
 - ✅ ~100 lines of cache duplication eliminated
 - ✅ No component >250 lines (deleted 444-line file)
 - 🟡 Prop count reduced by 50% (partially complete, AddOn Context deferred)
 
 ### Phase 5: Testing & Performance (Days 7-8)
+
 **Goal**: Unblock skipped tests, fix N+1 queries, optimize indexes
 
 **Tasks**:
+
 1. Unblock 33 skipped tests (8 hours)
 2. Fix N+1 queries in catalog endpoints (3 hours)
 3. Optimize booking indexes (2 hours)
 
 **Success Criteria**:
+
 - 100% test pass rate (all skipped tests resolved)
 - No N+1 queries in catalog
 - Query performance improved by 20%+
 
 ### Phase 6: Cleanup & Final Touches (Day 9)
+
 **Goal**: Remove cruft, add documentation, final validation
 
 **Tasks**:
+
 1. Remove unused puppeteer dependency (30 minutes)
 2. Add JSDoc documentation to DTOs (2 hours)
 3. Final validation checkpoint
 
 **Success Criteria**:
+
 - Zero unused dependencies
 - All DTOs documented
 - Full test suite passes
@@ -159,6 +183,7 @@ Uses `@elope/*` aliases but package.json declares `@macon/*`
 ## Architecture Highlights
 
 ### Strengths
+
 - ✅ Excellent multi-tenant isolation (99% correct)
 - ✅ Strong transaction safety with pessimistic locking
 - ✅ Type-safe API contracts with ts-rest + Zod
@@ -166,6 +191,7 @@ Uses `@elope/*` aliases but package.json declares `@macon/*`
 - ✅ Comprehensive test coverage (99.8% pass rate)
 
 ### Areas Improved by This Refactoring
+
 - 🔄 Payment model multi-tenant isolation (CRITICAL)
 - 🔄 Frontend type safety (eliminate all `as any`)
 - 🔄 Error handling consistency (3 systems → 1)
@@ -175,6 +201,7 @@ Uses `@elope/*` aliases but package.json declares `@macon/*`
 ## Expected Outcomes
 
 ### Before Refactoring (January 2025)
+
 - Test Pass Rate: 60% (baseline)
 - Type Safety: 75% (`as any` casts present)
 - Error Systems: 3 inconsistent patterns
@@ -182,6 +209,7 @@ Uses `@elope/*` aliases but package.json declares `@macon/*`
 - Security: 1 critical vulnerability (Payment.tenantId)
 
 ### After Phases 1-4 (November 22, 2025)
+
 - Test Pass Rate: 92.2% (568/616 passing) ✅
 - Type Safety: 100% (zero `as any` casts, 0 TypeScript errors) ✅
 - Error Systems: 1 unified pattern (`lib/errors/`) ✅
@@ -189,6 +217,7 @@ Uses `@elope/*` aliases but package.json declares `@macon/*`
 - Security: 0 critical vulnerabilities ✅
 
 ### Target After Phases 5-6 (Planned)
+
 - Test Pass Rate: 100% (all tests unblocked)
 - Performance: N+1 queries eliminated
 - Database: Optimized indexes
@@ -207,6 +236,7 @@ Uses `@elope/*` aliases but package.json declares `@macon/*`
 **Overall Risk**: MEDIUM
 **Highest Risk Phase**: Phase 1 (database migration)
 **Mitigation Strategy**:
+
 - Reversible migrations
 - Feature flags for schema changes
 - Testing checkpoint after each phase
@@ -223,6 +253,7 @@ Uses `@elope/*` aliases but package.json declares `@macon/*`
 ## Next Steps
 
 ### Completed (Phases 1-4)
+
 1. ✅ Committed analysis documentation to repository
 2. ✅ Pushed to main branch
 3. ✅ Completed Phase 1: Foundation & Safety (commit `a4cb467`)
@@ -235,6 +266,7 @@ Uses `@elope/*` aliases but package.json declares `@macon/*`
 10. ✅ Updated documentation with lessons learned
 
 ### Upcoming (Phases 5-6, Sprint 11)
+
 1. 🔲 Phase 5: Testing & Performance
    - Unblock 48 failing tests (database dependency)
    - Fix N+1 queries in catalog endpoints

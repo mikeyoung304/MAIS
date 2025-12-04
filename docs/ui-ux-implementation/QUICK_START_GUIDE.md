@@ -21,6 +21,7 @@ Before starting, ensure you have:
 📖 **Read:** [`00_MASTER_PLAN.md`](/Users/mikeyoung/CODING/MAIS/docs/ui-ux-implementation/00_MASTER_PLAN.md)
 
 **Key Takeaways:**
+
 - Understand the 4-phase approach
 - Note the 12-week timeline
 - Review success criteria
@@ -33,6 +34,7 @@ Before starting, ensure you have:
 📋 **Read:** [`01_PHASE_1_FOUNDATION.md`](/Users/mikeyoung/CODING/MAIS/docs/ui-ux-implementation/01_PHASE_1_FOUNDATION.md)
 
 **Focus On:**
+
 - Week 1 tasks (navigation, error handling)
 - Technical implementation details
 - Acceptance criteria for each task
@@ -81,9 +83,11 @@ npm run dev:client
 Key files to familiarize yourself with:
 
 **Navigation:**
+
 - No persistent navigation (this is what we're fixing!)
 
 **Components:**
+
 ```
 client/src/components/ui/
 ├── button.tsx         # Button variants
@@ -96,6 +100,7 @@ client/src/components/ui/
 ```
 
 **Pages:**
+
 ```
 client/src/pages/
 ├── Home.tsx                          # Marketing home
@@ -105,6 +110,7 @@ client/src/pages/
 ```
 
 **Tailwind Config:**
+
 ```
 client/tailwind.config.js  # Design tokens, colors, typography
 ```
@@ -112,20 +118,24 @@ client/tailwind.config.js  # Design tokens, colors, typography
 ### Identify Issues to Fix
 
 **Navigation Issues:**
+
 - No persistent nav bar in admin dashboards
 - No way to navigate between sections
 - Only logout button exists
 
 **Loading States:**
+
 - Using simple spinner, not skeleton screens
 - No loading text
 
 **Mobile:**
+
 - Tables overflow on mobile
 - No responsive grid for metrics
 - No hamburger menu
 
 **Empty States:**
+
 - Plain text "No tenants yet" in table cells
 - Should use EmptyState component with CTAs
 
@@ -158,6 +168,7 @@ client/tailwind.config.js  # Design tokens, colors, typography
    - Deployment approach
 
 **Action Items:**
+
 - [ ] Assign Task 1.1 (AdminNav) to frontend dev
 - [ ] Designer starts on logo and role badges
 - [ ] QA sets up testing environment
@@ -172,6 +183,7 @@ client/tailwind.config.js  # Design tokens, colors, typography
 **Steps:**
 
 1. **Create Component File**
+
    ```bash
    mkdir -p client/src/components/navigation
    touch client/src/components/navigation/AdminNav.tsx
@@ -201,6 +213,7 @@ client/tailwind.config.js  # Design tokens, colors, typography
 ### Components You'll Create/Modify
 
 **Phase 1:**
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/components/navigation/AdminNav.tsx` (NEW)
 - `/Users/mikeyoung/CODING/MAIS/client/src/components/errors/ErrorBoundary.tsx` (ENHANCE)
 - `/Users/mikeyoung/CODING/MAIS/client/src/components/ui/skeleton.tsx` (EXTEND)
@@ -208,17 +221,20 @@ client/tailwind.config.js  # Design tokens, colors, typography
 - `/Users/mikeyoung/CODING/MAIS/client/src/lib/toast.ts` (NEW)
 
 **Phase 2:**
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/styles/tokens.css` (NEW)
 - `/Users/mikeyoung/CODING/MAIS/client/src/styles/typography.css` (NEW)
 - `/Users/mikeyoung/CODING/MAIS/client/src/components/ui/metric-card.tsx` (NEW)
 - `/Users/mikeyoung/CODING/MAIS/client/tailwind.config.js` (MODIFY)
 
 **Phase 3:**
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/providers/ThemeProvider.tsx` (NEW)
 - `/Users/mikeyoung/CODING/MAIS/client/src/components/ui/theme-toggle.tsx` (NEW)
 - `/Users/mikeyoung/CODING/MAIS/client/src/hooks/useKeyboardShortcuts.ts` (NEW)
 
 **Phase 4:**
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/components/ui/chart.tsx` (NEW)
 - `/Users/mikeyoung/CODING/MAIS/client/src/components/ui/pagination.tsx` (NEW)
 - `/Users/mikeyoung/CODING/MAIS/client/src/components/onboarding/OnboardingTour.tsx` (NEW)
@@ -248,6 +264,7 @@ client/tailwind.config.js  # Design tokens, colors, typography
 ### Code Review Process
 
 **Before Creating PR:**
+
 - [ ] Code runs without errors
 - [ ] Tests pass (`npm test`)
 - [ ] Linting passes (`npm run lint`)
@@ -256,23 +273,29 @@ client/tailwind.config.js  # Design tokens, colors, typography
 - [ ] Tested on mobile (responsive mode or real device)
 
 **PR Template:**
+
 ```markdown
 ## What Changed
+
 Brief description of changes
 
 ## Why
+
 Reason for change (links to task in plan)
 
 ## Testing
+
 - [ ] Unit tests added/updated
 - [ ] Manual testing completed
 - [ ] Accessibility tested
 - [ ] Mobile tested
 
 ## Screenshots
+
 Before/After screenshots
 
 ## Checklist
+
 - [ ] Follows design system
 - [ ] Responsive at all breakpoints
 - [ ] Accessible (keyboard, screen reader)
@@ -282,6 +305,7 @@ Before/After screenshots
 ### Testing Checklist
 
 **For Every Component:**
+
 - [ ] Renders correctly in light theme
 - [ ] Renders correctly in dark theme (Phase 3+)
 - [ ] Responsive on mobile (320px)
@@ -300,6 +324,7 @@ Before/After screenshots
 ### "I can't see my changes"
 
 **Solution:**
+
 1. Hard refresh browser (Cmd+Shift+R or Ctrl+Shift+R)
 2. Check Vite dev server is running
 3. Check for TypeScript errors in terminal
@@ -308,6 +333,7 @@ Before/After screenshots
 ### "Tests are failing"
 
 **Solution:**
+
 1. Run `npm test` to see specific failures
 2. Check if you need to update snapshots
 3. Ensure all imports are correct
@@ -316,6 +342,7 @@ Before/After screenshots
 ### "Linting errors"
 
 **Solution:**
+
 1. Run `npm run lint -- --fix` to auto-fix
 2. Manually fix remaining issues
 3. Add `// eslint-disable-next-line` only as last resort
@@ -323,6 +350,7 @@ Before/After screenshots
 ### "TypeScript errors"
 
 **Solution:**
+
 1. Check import paths are correct
 2. Verify types are properly defined
 3. Use `as` type assertion only when necessary
@@ -369,6 +397,7 @@ By end of Week 1, you should have:
 - [ ] Deployed to staging environment
 
 **If you're stuck or behind schedule:**
+
 1. Review the task acceptance criteria
 2. Ask for help in Slack
 3. Pair program with another developer

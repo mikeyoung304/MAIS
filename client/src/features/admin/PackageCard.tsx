@@ -1,7 +1,7 @@
-import { useMemo } from "react";
-import { Edit, Trash2, ChevronDown, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useMemo } from 'react';
+import { Edit, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,9 +12,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { formatCurrency } from "@/lib/utils";
-import type { PackageCardProps } from "./types";
+} from '@/components/ui/alert-dialog';
+import { formatCurrency } from '@/lib/utils';
+import type { PackageCardProps } from './types';
 
 export function PackageCard({
   package: pkg,
@@ -78,16 +78,13 @@ export function PackageCard({
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete "{pkg.title}"?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the package
-                  and all {pkg.addOns.length} associated add-on{pkg.addOns.length !== 1 ? 's' : ''}.
+                  This action cannot be undone. This will permanently delete the package and all{' '}
+                  {pkg.addOns.length} associated add-on{pkg.addOns.length !== 1 ? 's' : ''}.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDelete}
-                  className="bg-red-600 hover:bg-red-700"
-                >
+                <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
                   Delete Package
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -101,14 +98,12 @@ export function PackageCard({
         <button
           onClick={onToggleExpand}
           className="flex items-center gap-2 text-lg font-medium text-white/60 hover:text-white/70 transition-colors"
-          aria-label={isExpanded ? `Collapse add-ons for ${pkg.title}` : `Expand add-ons for ${pkg.title}`}
+          aria-label={
+            isExpanded ? `Collapse add-ons for ${pkg.title}` : `Expand add-ons for ${pkg.title}`
+          }
           aria-expanded={isExpanded}
         >
-          {isExpanded ? (
-            <ChevronDown className="w-5 h-5" />
-          ) : (
-            <ChevronRight className="w-5 h-5" />
-          )}
+          {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
           Add-ons ({pkg.addOns.length})
         </button>
       </div>

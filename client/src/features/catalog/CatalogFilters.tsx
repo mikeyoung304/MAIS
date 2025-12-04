@@ -5,7 +5,13 @@
 
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Search, X, ChevronDown } from 'lucide-react';
 
@@ -40,8 +46,7 @@ export function CatalogFilters({
   }, [localSearch, onSearchChange]);
 
   // Check if any filters are active
-  const hasActiveFilters =
-    searchQuery || priceRange.min > 0 || priceRange.max < Infinity;
+  const hasActiveFilters = searchQuery || priceRange.min > 0 || priceRange.max < Infinity;
 
   // Clear all filters
   const clearFilters = () => {
@@ -57,7 +62,10 @@ export function CatalogFilters({
         {/* Search Input */}
         <div className="flex-1">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 w-5 h-5" aria-hidden="true" />
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 w-5 h-5"
+              aria-hidden="true"
+            />
             <Input
               type="text"
               placeholder="Search packages by name or description..."
@@ -71,7 +79,10 @@ export function CatalogFilters({
 
         {/* Sort Dropdown */}
         <div className="w-full lg:w-64">
-          <Select value={sortBy} onValueChange={(value) => onSortChange(value as 'price-asc' | 'price-desc')}>
+          <Select
+            value={sortBy}
+            onValueChange={(value) => onSortChange(value as 'price-asc' | 'price-desc')}
+          >
             <SelectTrigger className="min-h-[44px] text-lg border-neutral-300 focus:border-macon-orange focus:ring-macon-orange/20">
               <SelectValue placeholder="Sort by..." />
             </SelectTrigger>

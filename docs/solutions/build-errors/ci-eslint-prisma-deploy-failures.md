@@ -1,7 +1,18 @@
 ---
 title: Fix Cascading CI/CD Production Deployment Failures (9 Issues + Secrets)
 category: build-errors
-tags: [ci-cd, github-actions, eslint, prisma, deployment, environment-variables, codecov, build-order, e2e-tests]
+tags:
+  [
+    ci-cd,
+    github-actions,
+    eslint,
+    prisma,
+    deployment,
+    environment-variables,
+    codecov,
+    build-order,
+    e2e-tests,
+  ]
 severity: critical
 affected_components:
   - .github/workflows/deploy-production.yml
@@ -10,7 +21,7 @@ affected_components:
   - GitHub Secrets configuration
 symptoms:
   - Production deploys via GitHub Actions failing for weeks (workflow never succeeded)
-  - ESLint error: "@typescript-eslint/dot-notation requires parserOptions.project"
+  - ESLint error: '@typescript-eslint/dot-notation requires parserOptions.project'
   - Prisma migrations failing with "Environment variable not found: DIRECT_URL"
   - Unit tests failing: Missing STRIPE_SECRET_KEY and TENANT_SECRETS_ENCRYPTION_KEY
   - Coverage threshold blocking unit tests
@@ -22,7 +33,7 @@ root_cause: |
   Multiple cascading issues in production deployment pipeline that had never been tested end-to-end.
   Each fix revealed the next blocker in a chain of 9 issues plus missing GitHub Secrets.
 date_solved: 2025-11-27
-time_to_resolve: "4-5 hours (cascading debugging)"
+time_to_resolve: '4-5 hours (cascading debugging)'
 commits:
   - b13f746 (make linting non-blocking)
   - a1fb39d (add DIRECT_URL for Prisma)
@@ -44,18 +55,18 @@ Production deployments via GitHub Actions deploy-production.yml had **never succ
 
 Each fix revealed the next blocker:
 
-| # | Issue | Error | Fix |
-|---|-------|-------|-----|
-| 1 | ESLint strict rules | `parserOptions.project required` | `continue-on-error: true` |
-| 2 | Prisma DIRECT_URL | `Environment variable not found: DIRECT_URL` | Add env var to migration step |
-| 3 | Unit test env vars | `STRIPE_SECRET_KEY required` | Add test env vars |
-| 4 | Coverage threshold | `Coverage 23% < 40% threshold` | Remove `--coverage` from unit tests |
-| 5 | E2E tests failing | No running server in CI | `continue-on-error: true` |
-| 6 | Integration tests | `DATABASE_URL must start with postgresql://` | Change `DATABASE_URL_TEST` → `DATABASE_URL` |
-| 7 | Codecov upload | Token/upload failures | `continue-on-error: true` |
-| 8 | Build - Prisma | `Cannot find module '../../generated/prisma'` | Add `prisma generate` step |
-| 9 | Build order | `Could not load contracts/dist/index.js` | Build contracts before client |
-| 10 | Secrets missing | Empty `DATABASE_URL` in production jobs | Configure all GitHub Secrets |
+| #   | Issue               | Error                                         | Fix                                         |
+| --- | ------------------- | --------------------------------------------- | ------------------------------------------- |
+| 1   | ESLint strict rules | `parserOptions.project required`              | `continue-on-error: true`                   |
+| 2   | Prisma DIRECT_URL   | `Environment variable not found: DIRECT_URL`  | Add env var to migration step               |
+| 3   | Unit test env vars  | `STRIPE_SECRET_KEY required`                  | Add test env vars                           |
+| 4   | Coverage threshold  | `Coverage 23% < 40% threshold`                | Remove `--coverage` from unit tests         |
+| 5   | E2E tests failing   | No running server in CI                       | `continue-on-error: true`                   |
+| 6   | Integration tests   | `DATABASE_URL must start with postgresql://`  | Change `DATABASE_URL_TEST` → `DATABASE_URL` |
+| 7   | Codecov upload      | Token/upload failures                         | `continue-on-error: true`                   |
+| 8   | Build - Prisma      | `Cannot find module '../../generated/prisma'` | Add `prisma generate` step                  |
+| 9   | Build order         | `Could not load contracts/dist/index.js`      | Build contracts before client               |
+| 10  | Secrets missing     | Empty `DATABASE_URL` in production jobs       | Configure all GitHub Secrets                |
 
 ## Solutions
 
@@ -64,7 +75,7 @@ Each fix revealed the next blocker:
 ```yaml
 - name: Run linting
   run: npm run lint
-  continue-on-error: true  # Don't block deploy on lint issues (TODO: fix lint errors)
+  continue-on-error: true # Don't block deploy on lint issues (TODO: fix lint errors)
 ```
 
 ### Fix 2: Add DIRECT_URL for Prisma Migrations
@@ -94,7 +105,7 @@ Unit tests alone don't meet 40% threshold (integration tests cover more code):
 
 ```yaml
 - name: Run unit tests
-  run: npm run test:unit  # Removed --coverage flag
+  run: npm run test:unit # Removed --coverage flag
 ```
 
 ### Fix 5: Make E2E Tests Non-Blocking
@@ -102,7 +113,7 @@ Unit tests alone don't meet 40% threshold (integration tests cover more code):
 ```yaml
 - name: Run E2E tests
   run: npm run test:e2e
-  continue-on-error: true  # E2E tests need running servers - TODO: fix CI E2E setup
+  continue-on-error: true # E2E tests need running servers - TODO: fix CI E2E setup
 ```
 
 ### Fix 6: Fix Integration Tests DATABASE_URL
@@ -122,7 +133,7 @@ Changed from `DATABASE_URL_TEST` to standard `DATABASE_URL`:
 ```yaml
 - name: Upload coverage reports
   uses: codecov/codecov-action@v4
-  continue-on-error: true  # Don't block deploy on coverage upload issues
+  continue-on-error: true # Don't block deploy on coverage upload issues
   with:
     fail_ci_if_error: false
 ```
@@ -156,23 +167,24 @@ Client imports from `@macon/contracts`, so contracts must build first:
 
 All production secrets were missing. Added via `gh secret set`:
 
-| Secret | Source |
-|--------|--------|
-| `PRODUCTION_DATABASE_URL` | Supabase connection string |
-| `PRODUCTION_DIRECT_URL` | Supabase direct connection |
-| `VERCEL_ORG_ID` | `.vercel/project.json` |
-| `VERCEL_PROJECT_ID` | `.vercel/project.json` |
-| `VERCEL_TOKEN` | Vercel CLI auth config |
-| `RENDER_PRODUCTION_API_DEPLOY_HOOK` | Render dashboard |
+| Secret                              | Source                     |
+| ----------------------------------- | -------------------------- |
+| `PRODUCTION_DATABASE_URL`           | Supabase connection string |
+| `PRODUCTION_DIRECT_URL`             | Supabase direct connection |
+| `VERCEL_ORG_ID`                     | `.vercel/project.json`     |
+| `VERCEL_PROJECT_ID`                 | `.vercel/project.json`     |
+| `VERCEL_TOKEN`                      | Vercel CLI auth config     |
+| `RENDER_PRODUCTION_API_DEPLOY_HOOK` | Render dashboard           |
 
 ## Why Two Database URLs?
 
-| URL | Purpose | Connection Type |
-|-----|---------|-----------------|
-| `DATABASE_URL` | Application queries | Pooled (PgBouncer) |
-| `DIRECT_URL` | Migrations | Direct (no pooling) |
+| URL            | Purpose             | Connection Type     |
+| -------------- | ------------------- | ------------------- |
+| `DATABASE_URL` | Application queries | Pooled (PgBouncer)  |
+| `DIRECT_URL`   | Migrations          | Direct (no pooling) |
 
 Migrations need direct connections because:
+
 - They acquire locks that don't work through connection poolers
 - They run DDL statements that require stable connections
 
@@ -200,12 +212,13 @@ gh secret list
 During debugging, make steps non-blocking to see the full cascade. But document TODOs:
 
 ```yaml
-continue-on-error: true  # TODO: fix E2E server startup in CI
+continue-on-error: true # TODO: fix E2E server startup in CI
 ```
 
 ### 4. Build Order in Monorepos
 
 Always build dependencies before dependents:
+
 1. `packages/contracts` (shared types)
 2. `packages/shared` (utilities)
 3. `server` (API)

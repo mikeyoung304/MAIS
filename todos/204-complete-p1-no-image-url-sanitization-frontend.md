@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "204"
+issue_id: '204'
 tags: [security, xss, frontend, landing-page, defense-in-depth]
 dependencies: []
 ---
@@ -119,6 +119,7 @@ export function AboutSection({ config }: AboutSectionProps) {
 ## Note
 
 This is defense-in-depth. Primary validation should occur at the API level (TODO-200). Frontend sanitization catches edge cases where:
+
 - Direct database manipulation occurred
 - API validation was bypassed
 - Migration introduced invalid data

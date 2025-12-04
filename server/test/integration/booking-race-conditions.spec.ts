@@ -15,7 +15,12 @@ import { BookingConflictError, BookingLockTimeoutError } from '../../src/lib/err
 import { FakeEventEmitter, FakePaymentProvider } from '../helpers/fakes';
 import type { Booking } from '../../src/lib/entities';
 import { setupCompleteIntegrationTest } from '../helpers/integration-setup';
-import { withConcurrencyRetry, withDatabaseRetry, withTimingRetry, isBookingConflictError } from '../helpers/retry';
+import {
+  withConcurrencyRetry,
+  withDatabaseRetry,
+  withTimingRetry,
+  isBookingConflictError,
+} from '../helpers/retry';
 
 describe.sequential('Booking Race Conditions - Integration Tests', () => {
   const ctx = setupCompleteIntegrationTest('booking-race');
@@ -44,12 +49,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
     paymentProvider = new FakePaymentProvider();
 
     // Initialize service
-    bookingService = new BookingService(
-      bookingRepo,
-      catalogRepo,
-      eventEmitter,
-      paymentProvider
-    );
+    bookingService = new BookingService(bookingRepo, catalogRepo, eventEmitter, paymentProvider);
 
     // Create test package using catalog repository
     const pkg = ctx.factories.package.create({ title: 'Test Package Race', priceCents: 250000 });
@@ -58,8 +58,15 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
     testPackageSlug = createdPkg.slug;
 
     // Create test add-on
-    const addOn = ctx.factories.addOn.create({ title: 'Test Add-On Race', priceCents: 5000, packageId: testPackageId });
-    const createdAddOn = await catalogRepo.createAddOn(testTenantId, { ...addOn, packageId: testPackageId });
+    const addOn = ctx.factories.addOn.create({
+      title: 'Test Add-On Race',
+      priceCents: 5000,
+      packageId: testPackageId,
+    });
+    const createdAddOn = await catalogRepo.createAddOn(testTenantId, {
+      ...addOn,
+      packageId: testPackageId,
+    });
     testAddOnId = createdAddOn.id;
   });
 
@@ -105,8 +112,8 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         ]);
 
         // Assert: One succeeds, one fails
-        const succeeded = results.filter(r => r.status === 'fulfilled');
-        const failed = results.filter(r => r.status === 'rejected');
+        const succeeded = results.filter((r) => r.status === 'fulfilled');
+        const failed = results.filter((r) => r.status === 'rejected');
 
         expect(succeeded).toHaveLength(1);
         expect(failed).toHaveLength(1);
@@ -149,8 +156,8 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         const results = await Promise.allSettled(bookingRequests);
 
         // Assert: Only one should succeed
-        const succeeded = results.filter(r => r.status === 'fulfilled');
-        const failed = results.filter(r => r.status === 'rejected');
+        const succeeded = results.filter((r) => r.status === 'fulfilled');
+        const failed = results.filter((r) => r.status === 'rejected');
 
         expect(succeeded).toHaveLength(1);
         expect(failed).toHaveLength(9);
@@ -212,7 +219,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
     it('should prevent double-booking with advisory locks and READ COMMITTED isolation', async () => {
       // Generate unique date to avoid conflicts from previous test runs
       const uniqueSuffix = Date.now() % 100;
-      const eventDate = `2025-08-${String(uniqueSuffix % 28 + 1).padStart(2, '0')}`;
+      const eventDate = `2025-08-${String((uniqueSuffix % 28) + 1).padStart(2, '0')}`;
 
       // Create a booking
       const booking1: Booking = {
@@ -244,9 +251,9 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
 
       // Should fail due to advisory lock + unique constraint enforcement
       // Note: Changed from SERIALIZABLE to READ COMMITTED with advisory locks (ADR-006)
-      await expect(bookingRepo.create(testTenantId, booking2))
-        .rejects
-        .toThrow(BookingConflictError);
+      await expect(bookingRepo.create(testTenantId, booking2)).rejects.toThrow(
+        BookingConflictError
+      );
 
       // Verify only one booking exists
       const bookings = await ctx.prisma.booking.findMany({
@@ -270,9 +277,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
       };
 
       // Try to create booking with invalid package
-      await expect(bookingRepo.create(testTenantId, invalidBooking))
-        .rejects
-        .toThrow();
+      await expect(bookingRepo.create(testTenantId, invalidBooking)).rejects.toThrow();
 
       // Verify no customer was created (rollback worked)
       const customer = await ctx.prisma.customer.findFirst({
@@ -324,8 +329,8 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         ]);
 
         // Assert: One succeeds, one fails
-        const succeeded = results.filter(r => r.status === 'fulfilled');
-        const failed = results.filter(r => r.status === 'rejected');
+        const succeeded = results.filter((r) => r.status === 'fulfilled');
+        const failed = results.filter((r) => r.status === 'rejected');
 
         expect(succeeded).toHaveLength(1);
         expect(failed).toHaveLength(1);
@@ -337,7 +342,9 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         expect(bookings).toHaveLength(1);
 
         // Verify event was emitted only once
-        expect(eventEmitter.emittedEvents.filter(e => e.event === BookingEvents.PAID)).toHaveLength(1);
+        expect(
+          eventEmitter.emittedEvents.filter((e) => e.event === BookingEvents.PAID)
+        ).toHaveLength(1);
       });
     });
 
@@ -418,9 +425,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         };
 
         // Should fail due to advisory lock serialization
-        await expect(bookingRepo.create(testTenantId, booking2))
-          .rejects
-          .toThrow();
+        await expect(bookingRepo.create(testTenantId, booking2)).rejects.toThrow();
       });
     });
 
@@ -470,9 +475,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         };
 
         // Try to create booking (will fail)
-        await expect(bookingRepo.create(testTenantId, invalidBooking))
-          .rejects
-          .toThrow();
+        await expect(bookingRepo.create(testTenantId, invalidBooking)).rejects.toThrow();
 
         // Lock should be released, verify we can query the date
         const isBooked = await bookingRepo.isDateBooked(testTenantId, eventDate);
@@ -491,9 +494,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
           createdAt: new Date().toISOString(),
         };
 
-        await expect(bookingRepo.create(testTenantId, validBooking))
-          .resolves
-          .toBeDefined();
+        await expect(bookingRepo.create(testTenantId, validBooking)).resolves.toBeDefined();
       });
     });
   });
@@ -534,7 +535,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         ]);
 
         // Assert: One succeeds with add-ons
-        const succeeded = results.filter(r => r.status === 'fulfilled');
+        const succeeded = results.filter((r) => r.status === 'fulfilled');
         expect(succeeded).toHaveLength(1);
 
         // Verify the successful booking has add-ons
@@ -633,8 +634,8 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
           }),
         ]);
 
-        const succeeded = results.filter(r => r.status === 'fulfilled');
-        const failed = results.filter(r => r.status === 'rejected');
+        const succeeded = results.filter((r) => r.status === 'fulfilled');
+        const failed = results.filter((r) => r.status === 'rejected');
 
         // Dates 1 and 4 should succeed, dates 2 and 3 should fail
         expect(succeeded).toHaveLength(2);

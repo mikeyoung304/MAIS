@@ -4,12 +4,12 @@
 
 This plan addresses 4 P1 issues discovered during the scheduling platform code review. Issues are prioritized by user impact and security risk.
 
-| # | Issue | Priority | Impact | Effort | Status |
-|---|-------|----------|--------|--------|--------|
-| 7 | Password Reset UI Missing | P1 | High (User-blocking) | 5 min | **Verify E2E** |
-| 8 | Customer Email Normalization | P1 | Medium (Data integrity) | 5 min | Ready |
-| 9 | Webhook Idempotency Race | P1 | High (Security/data) | 15 min | Ready |
-| 10 | Multiple PrismaClient Instances | P1 | Medium (Performance) | 10 min | Ready |
+| #   | Issue                           | Priority | Impact                  | Effort | Status         |
+| --- | ------------------------------- | -------- | ----------------------- | ------ | -------------- |
+| 7   | Password Reset UI Missing       | P1       | High (User-blocking)    | 5 min  | **Verify E2E** |
+| 8   | Customer Email Normalization    | P1       | Medium (Data integrity) | 5 min  | Ready          |
+| 9   | Webhook Idempotency Race        | P1       | High (Security/data)    | 15 min | Ready          |
+| 10  | Multiple PrismaClient Instances | P1       | Medium (Performance)    | 10 min | Ready          |
 
 ---
 
@@ -18,18 +18,20 @@ This plan addresses 4 P1 issues discovered during the scheduling platform code r
 **Reviewed by:** DHH-style, Security, and Simplicity reviewers (2025-11-28)
 
 ### Decisions Made:
+
 1. **Issue #9:** Use fail-fast approach (return 400 to Stripe) for `checkout.session.completed` without tenantId
 2. **Issue #7:** Verify E2E tests pass before closing (link already exists)
 3. **DB Constraint:** Skip - application-level validation is sufficient
 4. **Scope:** Approved - proceed with all 4 issues
 
 ### Reviewer Verdicts:
-| Issue | DHH | Security | Simplicity |
-|-------|-----|----------|------------|
-| #7 | ✅ APPROVE | ✅ SECURE | 5/5 |
-| #8 | ✅ APPROVE | ✅ SECURE | 4/5 |
-| #9 | ✅ APPROVE | ⚠️ NEEDS_HARDENING | 4/5 (after clarification) |
-| #10 | ✅ APPROVE | ✅ SECURE | 4/5 |
+
+| Issue | DHH        | Security           | Simplicity                |
+| ----- | ---------- | ------------------ | ------------------------- |
+| #7    | ✅ APPROVE | ✅ SECURE          | 5/5                       |
+| #8    | ✅ APPROVE | ✅ SECURE          | 4/5                       |
+| #9    | ✅ APPROVE | ⚠️ NEEDS_HARDENING | 4/5 (after clarification) |
+| #10   | ✅ APPROVE | ✅ SECURE          | 4/5                       |
 
 ---
 
@@ -39,14 +41,15 @@ This plan addresses 4 P1 issues discovered during the scheduling platform code r
 
 **Discovery:** Research reveals the frontend pages **already exist**:
 
-| Component | File | Status |
-|-----------|------|--------|
-| ForgotPasswordPage | `client/src/features/auth/ForgotPasswordPage.tsx` | ✅ Complete (210 lines) |
-| ResetPasswordPage | `client/src/features/auth/ResetPasswordPage.tsx` | ✅ Complete (279 lines) |
-| Routes | `client/src/router.tsx` | ✅ Configured at `/forgot-password` and `/reset-password` |
-| Login Link | `client/src/pages/Login.tsx:187-189` | ✅ "Forgot Password?" link exists |
+| Component          | File                                              | Status                                                    |
+| ------------------ | ------------------------------------------------- | --------------------------------------------------------- |
+| ForgotPasswordPage | `client/src/features/auth/ForgotPasswordPage.tsx` | ✅ Complete (210 lines)                                   |
+| ResetPasswordPage  | `client/src/features/auth/ResetPasswordPage.tsx`  | ✅ Complete (279 lines)                                   |
+| Routes             | `client/src/router.tsx`                           | ✅ Configured at `/forgot-password` and `/reset-password` |
+| Login Link         | `client/src/pages/Login.tsx:187-189`              | ✅ "Forgot Password?" link exists                         |
 
 **Features Already Implemented:**
+
 - Email validation and submission
 - Success/error states with appropriate icons
 - Token validation from URL query parameter
@@ -82,12 +85,12 @@ const customer = await tx.customer.upsert({
   where: {
     tenantId_email: {
       tenantId,
-      email: booking.email,  // ❌ Not normalized
+      email: booking.email, // ❌ Not normalized
     },
   },
   create: {
     tenantId,
-    email: booking.email,    // ❌ Not normalized
+    email: booking.email, // ❌ Not normalized
     // ...
   },
 });
@@ -106,7 +109,7 @@ const customer = await tx.customer.upsert({
   where: {
     tenantId_email: {
       tenantId,
-      email: normalizedEmail,  // ✅ Normalized
+      email: normalizedEmail, // ✅ Normalized
     },
   },
   update: {
@@ -115,7 +118,7 @@ const customer = await tx.customer.upsert({
   },
   create: {
     tenantId,
-    email: normalizedEmail,    // ✅ Normalized
+    email: normalizedEmail, // ✅ Normalized
     name: booking.coupleName,
     phone: booking.phone,
   },
@@ -154,10 +157,11 @@ it('should treat email case-insensitively for customer upsert', async () => {
 **File:** `server/src/routes/webhooks.routes.ts:128-129`
 
 ```typescript
-let tenantId = 'unknown';  // ❌ Default to 'unknown'
+let tenantId = 'unknown'; // ❌ Default to 'unknown'
 ```
 
 When `tenantId` cannot be extracted from webhook metadata:
+
 1. Multiple unidentified webhooks use same key `('unknown', eventId)`
 2. Cross-tenant data collision possible
 3. Idempotency check fails to isolate tenants
@@ -178,10 +182,7 @@ if (!tenantId && event.type === 'checkout.session.completed') {
     'CRITICAL: checkout.session.completed webhook missing tenantId in metadata'
   );
   // Return 400 - Stripe will retry, giving us time to fix metadata bug
-  throw new ValidationError(
-    'Webhook missing required tenantId in metadata',
-    'MISSING_TENANT_ID'
-  );
+  throw new ValidationError('Webhook missing required tenantId in metadata', 'MISSING_TENANT_ID');
 }
 
 // For non-critical events (payment_intent.created, etc.), use 'system' namespace
@@ -208,9 +209,9 @@ it('should reject checkout.session.completed without tenantId', async () => {
     type: 'checkout.session.completed',
     data: {
       object: {
-        metadata: {} // Missing tenantId
-      }
-    }
+        metadata: {}, // Missing tenantId
+      },
+    },
   };
 
   await expect(
@@ -222,7 +223,7 @@ it('should allow non-critical events without tenantId using system namespace', a
   const event = {
     id: 'evt_test_system',
     type: 'payment_intent.created',
-    data: { object: { metadata: {} } }
+    data: { object: { metadata: {} } },
   };
 
   // Should not throw - uses 'system' namespace
@@ -230,7 +231,7 @@ it('should allow non-critical events without tenantId using system namespace', a
 
   // Verify recorded with 'system' tenantId
   const recorded = await prisma.webhookEvent.findFirst({
-    where: { eventId: 'evt_test_system' }
+    where: { eventId: 'evt_test_system' },
   });
   expect(recorded?.tenantId).toBe('system');
 });
@@ -248,13 +249,14 @@ Per decision, application-level validation is sufficient. No database constraint
 
 **Files with duplicate PrismaClient creation:**
 
-| File | Line | Pattern |
-|------|------|---------|
-| `server/src/routes/admin/tenants.routes.ts` | 264 | `const legacyPrisma = new PrismaClient()` |
-| `server/src/routes/admin/stripe.routes.ts` | 213 | `const legacyPrisma = new PrismaClient()` |
-| `server/src/routes/index.ts` | 78 | `prisma ?? new PrismaClient()` (fallback) |
+| File                                        | Line | Pattern                                   |
+| ------------------------------------------- | ---- | ----------------------------------------- |
+| `server/src/routes/admin/tenants.routes.ts` | 264  | `const legacyPrisma = new PrismaClient()` |
+| `server/src/routes/admin/stripe.routes.ts`  | 213  | `const legacyPrisma = new PrismaClient()` |
+| `server/src/routes/index.ts`                | 78   | `prisma ?? new PrismaClient()` (fallback) |
 
 **Impact:**
+
 - Connection pool exhaustion (each instance has separate pool)
 - Wasted memory and database connections
 - Higher latency from connection initialization
@@ -305,6 +307,7 @@ const prismaClient = prisma;
 **File:** `server/src/di.ts:438`
 
 Already correct - returns `prisma` in container:
+
 ```typescript
 return { controllers, services, repositories, mailProvider, cacheAdapter, prisma };
 ```
@@ -345,23 +348,27 @@ Update to use factory function pattern if found.
 ## Acceptance Criteria
 
 ### Issue #7: Password Reset UI
+
 - [ ] E2E password reset tests pass (`npm run test:e2e -- e2e/tests/password-reset.spec.ts`)
 - [ ] "Forgot Password?" link visible on login page (already exists)
 - [ ] Link navigates to `/forgot-password`
 - [ ] Full flow works: forgot → email → reset → login
 
 ### Issue #8: Email Normalization
+
 - [ ] `booking.email.toLowerCase().trim()` in upsert
 - [ ] Test case for case-insensitive customer matching
 - [ ] All tests pass
 
 ### Issue #9: Webhook Race
+
 - [ ] `checkout.session.completed` without `tenantId` returns error
 - [ ] Non-critical events use `'system'` namespace
 - [ ] Existing webhook tests pass
 - [ ] Add test for missing tenantId scenario
 
 ### Issue #10: PrismaClient
+
 - [ ] Legacy exports removed from tenants.routes.ts
 - [ ] Legacy exports removed from stripe.routes.ts
 - [ ] Fallback in index.ts replaced with assertion
@@ -391,16 +398,16 @@ ADAPTERS_PRESET=real npm run dev:api 2>&1 | grep -i "prisma"
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
-| `client/src/pages/Login.tsx` | Add "Forgot Password?" link |
-| `server/src/adapters/prisma/booking.repository.ts` | Add `.toLowerCase()` to email |
-| `server/src/routes/webhooks.routes.ts` | Fail-fast for missing tenantId |
-| `server/src/routes/admin/tenants.routes.ts` | Remove legacy export |
-| `server/src/routes/admin/stripe.routes.ts` | Remove legacy export |
-| `server/src/routes/index.ts` | Remove fallback PrismaClient |
-| `server/test/integration/booking-repository.integration.spec.ts` | Add email normalization test |
-| `server/test/integration/webhook-race-conditions.spec.ts` | Add missing tenantId test |
+| File                                                             | Changes                        |
+| ---------------------------------------------------------------- | ------------------------------ |
+| `client/src/pages/Login.tsx`                                     | Add "Forgot Password?" link    |
+| `server/src/adapters/prisma/booking.repository.ts`               | Add `.toLowerCase()` to email  |
+| `server/src/routes/webhooks.routes.ts`                           | Fail-fast for missing tenantId |
+| `server/src/routes/admin/tenants.routes.ts`                      | Remove legacy export           |
+| `server/src/routes/admin/stripe.routes.ts`                       | Remove legacy export           |
+| `server/src/routes/index.ts`                                     | Remove fallback PrismaClient   |
+| `server/test/integration/booking-repository.integration.spec.ts` | Add email normalization test   |
+| `server/test/integration/webhook-race-conditions.spec.ts`        | Add missing tenantId test      |
 
 ---
 

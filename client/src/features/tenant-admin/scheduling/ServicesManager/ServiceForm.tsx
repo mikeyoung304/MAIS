@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
-import { InputEnhanced } from "@/components/ui/input-enhanced";
-import { Loader2 } from "lucide-react";
-import type { ServiceFormProps } from "./types";
+import { Button } from '@/components/ui/button';
+import { InputEnhanced } from '@/components/ui/input-enhanced';
+import { Loader2 } from 'lucide-react';
+import type { ServiceFormProps } from './types';
 
 export function ServiceForm({
   serviceForm,
@@ -13,10 +13,13 @@ export function ServiceForm({
   onCancel,
 }: ServiceFormProps) {
   return (
-    <form onSubmit={onSubmit} className="space-y-6 p-6 border border-white/20 bg-macon-navy-700 rounded-lg">
+    <form
+      onSubmit={onSubmit}
+      className="space-y-6 p-6 border border-white/20 bg-macon-navy-700 rounded-lg"
+    >
       <div className="flex items-center justify-between">
         <h3 className="text-2xl font-semibold text-white">
-          {editingServiceId ? "Edit Service" : "Create New Service"}
+          {editingServiceId ? 'Edit Service' : 'Create New Service'}
         </h3>
       </div>
 
@@ -58,9 +61,7 @@ export function ServiceForm({
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-white/90 mb-2">
-          Description
-        </label>
+        <label className="block text-sm font-semibold text-white/90 mb-2">Description</label>
         <textarea
           value={serviceForm.description}
           onChange={(e) => onFormChange({ ...serviceForm, description: e.target.value })}
@@ -89,9 +90,7 @@ export function ServiceForm({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-white/90 mb-2">
-            Buffer (minutes)
-          </label>
+          <label className="block text-sm font-semibold text-white/90 mb-2">Buffer (minutes)</label>
           <InputEnhanced
             type="number"
             value={serviceForm.bufferMinutes}
@@ -121,9 +120,7 @@ export function ServiceForm({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-white/90 mb-2">
-            Timezone
-          </label>
+          <label className="block text-sm font-semibold text-white/90 mb-2">Timezone</label>
           <select
             value={serviceForm.timezone}
             onChange={(e) => onFormChange({ ...serviceForm, timezone: e.target.value })}
@@ -142,9 +139,7 @@ export function ServiceForm({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-semibold text-white/90 mb-2">
-            Sort Order
-          </label>
+          <label className="block text-sm font-semibold text-white/90 mb-2">Sort Order</label>
           <InputEnhanced
             type="number"
             value={serviceForm.sortOrder}
@@ -180,7 +175,7 @@ export function ServiceForm({
               Saving...
             </>
           ) : (
-            <>{editingServiceId ? "Update Service" : "Create Service"}</>
+            <>{editingServiceId ? 'Update Service' : 'Create Service'}</>
           )}
         </Button>
         <Button

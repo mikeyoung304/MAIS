@@ -18,8 +18,16 @@ describe('BookingRepository - Concurrency', () => {
     it('should prevent concurrent bookings for same date - only one succeeds', async () => {
       // Arrange: Two bookings for the same date
       const date = '2025-06-15';
-      const booking1 = buildBooking({ id: 'booking_1', eventDate: date, email: 'first@example.com' });
-      const booking2 = buildBooking({ id: 'booking_2', eventDate: date, email: 'second@example.com' });
+      const booking1 = buildBooking({
+        id: 'booking_1',
+        eventDate: date,
+        email: 'first@example.com',
+      });
+      const booking2 = buildBooking({
+        id: 'booking_2',
+        eventDate: date,
+        email: 'second@example.com',
+      });
 
       // Act: Simulate concurrent execution
       const results = await Promise.allSettled([
@@ -103,7 +111,10 @@ describe('BookingRepository - Concurrency', () => {
 
       // Act: Book each date sequentially
       for (const date of dates) {
-        await repository.create('test-tenant', buildBooking({ id: `booking_${date}`, eventDate: date }));
+        await repository.create(
+          'test-tenant',
+          buildBooking({ id: `booking_${date}`, eventDate: date })
+        );
       }
 
       // Assert: All bookings created
@@ -154,8 +165,14 @@ describe('BookingRepository - Concurrency', () => {
 
     it('should clear all bookings when clear() is called', async () => {
       // Arrange: Create multiple bookings
-      await repository.create('test-tenant', buildBooking({ id: 'booking_1', eventDate: '2025-11-01' }));
-      await repository.create('test-tenant', buildBooking({ id: 'booking_2', eventDate: '2025-11-02' }));
+      await repository.create(
+        'test-tenant',
+        buildBooking({ id: 'booking_1', eventDate: '2025-11-01' })
+      );
+      await repository.create(
+        'test-tenant',
+        buildBooking({ id: 'booking_2', eventDate: '2025-11-02' })
+      );
 
       // Act
       repository.clear();
@@ -232,7 +249,11 @@ describe('BookingRepository - Concurrency', () => {
   describe('Data consistency', () => {
     it('should store bookings correctly', async () => {
       // Arrange & Act
-      const originalBooking = buildBooking({ id: 'original', eventDate: '2025-08-15', coupleName: 'John & Jane' });
+      const originalBooking = buildBooking({
+        id: 'original',
+        eventDate: '2025-08-15',
+        coupleName: 'John & Jane',
+      });
       const created = await repository.create('test-tenant', originalBooking);
 
       // Assert: Created booking has correct data
@@ -247,8 +268,14 @@ describe('BookingRepository - Concurrency', () => {
 
     it('should return consistent results from findAll()', async () => {
       // Arrange
-      await repository.create('test-tenant', buildBooking({ id: 'booking_1', eventDate: '2025-06-01' }));
-      await repository.create('test-tenant', buildBooking({ id: 'booking_2', eventDate: '2025-06-02' }));
+      await repository.create(
+        'test-tenant',
+        buildBooking({ id: 'booking_1', eventDate: '2025-06-01' })
+      );
+      await repository.create(
+        'test-tenant',
+        buildBooking({ id: 'booking_2', eventDate: '2025-06-02' })
+      );
 
       // Act: Call findAll multiple times
       const result1 = await repository.findAll('test-tenant');

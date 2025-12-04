@@ -1,5 +1,5 @@
-import { Container } from "@/ui/Container";
-import { Grid, Layers, Shield } from "lucide-react";
+import { Container } from '@/ui/Container';
+import { Grid, Layers, Shield } from 'lucide-react';
 
 /**
  * PsychologySection - Why 3 Tiers Work
@@ -26,7 +26,8 @@ export function PsychologySection() {
 
           {/* Intro */}
           <p className="text-xl text-text-muted text-center mb-16 max-w-3xl mx-auto">
-            People don't like guessing. They want to feel in control, informed, and confident they're choosing the right level of service. A 3-tier storefront taps into that:
+            People don't like guessing. They want to feel in control, informed, and confident
+            they're choosing the right level of service. A 3-tier storefront taps into that:
           </p>
 
           {/* 3 Principles */}
@@ -40,7 +41,8 @@ export function PsychologySection() {
                 Clear choices reduce decision friction
               </h3>
               <p className="text-text-muted leading-relaxed">
-                With three well-defined options, clients can quickly see "which one is me" instead of feeling overwhelmed or confused.
+                With three well-defined options, clients can quickly see "which one is me" instead
+                of feeling overwhelmed or confused.
               </p>
             </div>
 
@@ -53,7 +55,9 @@ export function PsychologySection() {
                 A "middle" option anchors value
               </h3>
               <p className="text-text-muted leading-relaxed">
-                Most clients gravitate to the clearly positioned core package. The entry tier lowers the barrier to start; the premium tier signals what "top-shelf" looks like and makes your core offer feel like a smart, safe decision.
+                Most clients gravitate to the clearly positioned core package. The entry tier lowers
+                the barrier to start; the premium tier signals what "top-shelf" looks like and makes
+                your core offer feel like a smart, safe decision.
               </p>
             </div>
 
@@ -66,7 +70,9 @@ export function PsychologySection() {
                 Transparency builds trust
               </h3>
               <p className="text-text-muted leading-relaxed">
-                Clear pricing, inclusions, and next steps reduce the anxiety that often stalls bookings—especially for high-emotion events like weddings or once-in-a-lifetime experiences.
+                Clear pricing, inclusions, and next steps reduce the anxiety that often stalls
+                bookings—especially for high-emotion events like weddings or once-in-a-lifetime
+                experiences.
               </p>
             </div>
           </div>
@@ -74,7 +80,10 @@ export function PsychologySection() {
           {/* Authority close */}
           <div className="bg-surface rounded-2xl p-8 text-center">
             <p className="text-lg text-text-primary leading-relaxed max-w-3xl mx-auto">
-              At MaconAI, we've done the research, tested the flows, and refined the wording. You're not starting from a blank page or guessing at what might work. You're plugging into a proven storefront pattern tuned for service businesses that sell trust, timing, and experience.
+              At MaconAI, we've done the research, tested the flows, and refined the wording. You're
+              not starting from a blank page or guessing at what might work. You're plugging into a
+              proven storefront pattern tuned for service businesses that sell trust, timing, and
+              experience.
             </p>
           </div>
         </div>

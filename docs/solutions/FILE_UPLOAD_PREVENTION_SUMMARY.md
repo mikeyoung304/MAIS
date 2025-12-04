@@ -42,11 +42,13 @@ if (detected.mime !== file.mimetype) {
 ```
 
 **Implementation in MAIS:**
+
 - File: `/server/src/services/upload.service.ts` (lines 122-162)
 - Tests: `/server/test/services/upload.service.test.ts` (lines 749-877)
 - Coverage: PHP shells, text files, format mismatches, SVG special handling
 
 **Test Cases Added:**
+
 - ✅ Reject PHP file with fake image/jpeg header
 - ✅ Reject plain text file with fake image/png header
 - ✅ Reject PNG file claiming to be JPEG
@@ -74,6 +76,7 @@ Result: ❌ Cross-tenant data access, privacy violation
 
 **Prevention Mechanism:**
 Three-layer defense:
+
 1. **Private Bucket:** Supabase bucket marked as private (not public)
 2. **Tenant-Scoped Paths:** All files organized as `${tenantId}/folder/filename`
 3. **Signed URLs:** Generated with 1-year expiry, only valid token holders can access
@@ -96,11 +99,13 @@ if (!storagePath.startsWith(`${tenantId}/`)) {
 ```
 
 **Implementation in MAIS:**
+
 - File: `/server/src/services/upload.service.ts` (lines 175-225, 425-470)
 - Tests: `/server/test/services/upload.service.test.ts` (lines 938-969)
 - Supabase: Private "images" bucket with RLS enabled
 
 **Test Cases Added:**
+
 - ✅ Block cross-tenant deletion attempts
 - ✅ Allow deletion for same-tenant files
 - ✅ Parse signed URLs correctly
@@ -146,6 +151,7 @@ try {
 ```
 
 **Background Cleanup Job:**
+
 ```typescript
 // Run hourly via cron
 async cleanupOrphanedFiles(tenantId: string): Promise<number> {
@@ -169,11 +175,13 @@ async cleanupOrphanedFiles(tenantId: string): Promise<number> {
 ```
 
 **Implementation in MAIS:**
+
 - File: `/server/src/services/upload.service.ts` (lines 432-470)
 - Tests: `/server/test/services/upload.service.test.ts` (lines 902-971)
 - Strategy: Cleanup before delete, graceful failure, lazy cleanup via background job
 
 **Test Cases Added:**
+
 - ✅ Delete file when package is deleted
 - ✅ Not block package deletion if cleanup fails
 - ✅ Find and cleanup orphaned files
@@ -183,15 +191,15 @@ async cleanupOrphanedFiles(tenantId: string): Promise<number> {
 
 ## Prevention Strategy Matrix
 
-| Layer | Vulnerability | Prevention | Implementation |
-|-------|----------------|-----------|-----------------|
-| **File Content** | MIME Spoofing | Magic byte validation | `detectFileType(buffer)` |
-| **Storage Path** | Cross-Tenant Access | Include tenantId | `${tenantId}/logos/file.jpg` |
-| **Access Control** | Data Leak | Private bucket + RLS | Supabase configuration |
-| **URLs** | Public Access | Signed URLs | 1-year token expiry |
-| **Ownership** | Unauthorized Delete | Verify tenant | Path prefix check |
-| **Lifecycle** | Orphaned Files | Cleanup on delete | Try-catch + background job |
-| **Monitoring** | Detection | Security logging | SECURITY: prefix logs |
+| Layer              | Vulnerability       | Prevention            | Implementation               |
+| ------------------ | ------------------- | --------------------- | ---------------------------- |
+| **File Content**   | MIME Spoofing       | Magic byte validation | `detectFileType(buffer)`     |
+| **Storage Path**   | Cross-Tenant Access | Include tenantId      | `${tenantId}/logos/file.jpg` |
+| **Access Control** | Data Leak           | Private bucket + RLS  | Supabase configuration       |
+| **URLs**           | Public Access       | Signed URLs           | 1-year token expiry          |
+| **Ownership**      | Unauthorized Delete | Verify tenant         | Path prefix check            |
+| **Lifecycle**      | Orphaned Files      | Cleanup on delete     | Try-catch + background job   |
+| **Monitoring**     | Detection           | Security logging      | SECURITY: prefix logs        |
 
 ---
 
@@ -200,6 +208,7 @@ async cleanupOrphanedFiles(tenantId: string): Promise<number> {
 When reviewing file upload code, verify:
 
 ### File Validation ✅
+
 - [ ] Magic byte validation (not just Content-Type)
 - [ ] `detectFileType(file.buffer)` called
 - [ ] Declared type matches detected type
@@ -207,6 +216,7 @@ When reviewing file upload code, verify:
 - [ ] SVG files validated specially (text-based)
 
 ### Multi-Tenant Isolation ✅
+
 - [ ] Storage path includes `${tenantId}`
 - [ ] Supabase bucket is PRIVATE
 - [ ] RLS policies enabled
@@ -214,6 +224,7 @@ When reviewing file upload code, verify:
 - [ ] Tenant ownership verified before delete
 
 ### Cleanup ✅
+
 - [ ] Cleanup logic present on entity deletion
 - [ ] Cleanup wrapped in try-catch
 - [ ] Cleanup failure doesn't throw
@@ -221,12 +232,14 @@ When reviewing file upload code, verify:
 - [ ] Orphaned file detection implemented
 
 ### Error Handling ✅
+
 - [ ] Errors don't leak file paths
 - [ ] Generic messages for users
 - [ ] Security events always logged
 - [ ] Tenant context in all logs
 
 ### Testing ✅
+
 - [ ] MIME spoofing test cases
 - [ ] Cross-tenant deletion tests
 - [ ] Cleanup success/failure tests
@@ -237,16 +250,16 @@ When reviewing file upload code, verify:
 
 ## Red Flags (Never Do This)
 
-| Red Flag | Risk | Fix |
-|----------|------|-----|
-| ❌ Only `file.mimetype` check | Spoofing attacks | Add magic byte validation |
-| ❌ Path like `logos/${filename}` | Cross-tenant access | Use `${tenantId}/logos/${filename}` |
-| ❌ Public Supabase bucket | Public file access | Make bucket private |
-| ❌ Delete without ownership check | Cross-tenant deletion | Verify `path.startsWith(tenantId)` |
-| ❌ No cleanup on delete | Quota exhaustion | Cleanup before delete |
-| ❌ Cleanup blocks deletion | Data stuck | Wrap cleanup in try-catch |
-| ❌ Error shows file path | Info disclosure | Use generic messages |
-| ❌ SVG without validation | XSS via SVG | Validate SVG content |
+| Red Flag                          | Risk                  | Fix                                 |
+| --------------------------------- | --------------------- | ----------------------------------- |
+| ❌ Only `file.mimetype` check     | Spoofing attacks      | Add magic byte validation           |
+| ❌ Path like `logos/${filename}`  | Cross-tenant access   | Use `${tenantId}/logos/${filename}` |
+| ❌ Public Supabase bucket         | Public file access    | Make bucket private                 |
+| ❌ Delete without ownership check | Cross-tenant deletion | Verify `path.startsWith(tenantId)`  |
+| ❌ No cleanup on delete           | Quota exhaustion      | Cleanup before delete               |
+| ❌ Cleanup blocks deletion        | Data stuck            | Wrap cleanup in try-catch           |
+| ❌ Error shows file path          | Info disclosure       | Use generic messages                |
+| ❌ SVG without validation         | XSS via SVG           | Validate SVG content                |
 
 ---
 
@@ -277,6 +290,7 @@ npm run test:e2e -- upload.spec.ts
 ## Implementation Stats
 
 ### Code Changes
+
 - **Files Modified:** 6
 - **Files Added:** 3
 - **New Tests:** 120+ test cases
@@ -284,11 +298,13 @@ npm run test:e2e -- upload.spec.ts
 - **Lines of Code:** ~500 (validation + cleanup)
 
 ### Vulnerabilities Fixed
+
 - ✅ MIME Type Spoofing (magic byte validation)
 - ✅ Cross-Tenant Data Leak (signed URLs + tenantId path)
 - ✅ Orphaned Files (automatic cleanup)
 
 ### Documentation Created
+
 - 6 comprehensive guides (~4,600 lines)
 - Prevention strategies for each vulnerability
 - Architecture patterns for secure design
@@ -301,6 +317,7 @@ npm run test:e2e -- upload.spec.ts
 ## Files Modified/Created
 
 ### Core Implementation
+
 - `/server/src/services/upload.service.ts` - Upload service with validations
 - `/server/test/services/upload.service.test.ts` - Comprehensive test suite
 - `/server/src/middleware/rateLimiter.ts` - Rate limiting
@@ -309,6 +326,7 @@ npm run test:e2e -- upload.spec.ts
 - `/client/src/components/ImageUploadField.tsx` - Frontend component
 
 ### Documentation (NEW)
+
 - `/docs/solutions/FILE_UPLOAD_PREVENTION_STRATEGIES.md` - Prevention guide
 - `/docs/solutions/FILE_UPLOAD_ARCHITECTURE_PATTERNS.md` - Architecture patterns
 - `/docs/solutions/FILE_UPLOAD_SECURITY_INDEX.md` - Master index
@@ -330,6 +348,7 @@ npm run test:e2e -- upload.spec.ts
 ## Monitoring & Alerting
 
 ### Metrics to Track
+
 - MIME validation rejections (target: < 1/day)
 - Cross-tenant deletion attempts (target: 0)
 - Orphaned files (weekly cleanup check)
@@ -337,6 +356,7 @@ npm run test:e2e -- upload.spec.ts
 - Storage usage per tenant (alert if > 90% quota)
 
 ### Logs to Monitor
+
 ```
 SECURITY: MIME type mismatch detected
 SECURITY: Attempted cross-tenant file deletion blocked
@@ -408,6 +428,7 @@ Orphaned file cleanup completed
 ## References
 
 ### Documentation Files
+
 - **FILE_UPLOAD_QUICK_REFERENCE.md** - One-page cheat sheet (print it!)
 - **FILE_UPLOAD_PREVENTION_STRATEGIES.md** - Full prevention guide
 - **FILE_UPLOAD_ARCHITECTURE_PATTERNS.md** - System design patterns
@@ -415,6 +436,7 @@ Orphaned file cleanup completed
 - **FILE_UPLOAD_SECURITY_INDEX.md** - Master index and navigation
 
 ### Source Files
+
 - `/server/src/services/upload.service.ts` - Implementation
 - `/server/test/services/upload.service.test.ts` - Test suite
 - `/CLAUDE.md` - Project conventions

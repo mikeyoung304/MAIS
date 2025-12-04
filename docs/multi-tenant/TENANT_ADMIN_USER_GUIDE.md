@@ -28,6 +28,7 @@ MAIS (Macon AI Solutions) is a multi-tenant SaaS platform that enables entrepren
 ### Your Tenant Account
 
 When your account was created, you received:
+
 - **Tenant Slug**: Your unique identifier (e.g., `bellaweddings`)
 - **Public API Key**: For embedding widgets and API calls (e.g., `pk_bellaweddings_abc123`)
 - **Secret API Key**: For server-side operations (⚠️ keep this secure!)
@@ -47,6 +48,7 @@ When your account was created, you received:
 ### Overview
 
 Make your booking experience uniquely yours with custom branding:
+
 - **Logo**: Your business logo
 - **Colors**: Primary and secondary brand colors
 - **Fonts**: Choose from curated wedding-appropriate fonts
@@ -62,12 +64,14 @@ curl -X POST https://api.yourplatform.com/v1/tenant/logo \
 ```
 
 **Requirements**:
+
 - **File Types**: JPG, PNG, SVG, WebP
 - **Max Size**: 2MB
 - **Recommended**: Square or horizontal logos work best
 - **Dimensions**: 500x200px or similar (will be scaled)
 
 **Response**:
+
 ```json
 {
   "url": "https://api.yourplatform.com/uploads/logos/logo-1234567890-abc123.png",
@@ -98,6 +102,7 @@ curl -X PUT https://api.yourplatform.com/v1/tenant/branding \
 **Color Format**: Hex colors in `#RRGGBB` format (e.g., `#7C3AED`)
 
 **Recommendations**:
+
 - **Primary Color**: Main brand color (buttons, highlights)
 - **Secondary Color**: Accent color (backgrounds, borders)
 - **Contrast**: Ensure good contrast for accessibility
@@ -106,16 +111,16 @@ curl -X PUT https://api.yourplatform.com/v1/tenant/branding \
 
 Choose from our curated collection of wedding-appropriate fonts:
 
-| Font Name | Style | Best For |
-|-----------|-------|----------|
-| **Inter** | Modern Sans-Serif | Clean, professional look |
-| **Playfair Display** | Elegant Serif | Luxury, sophisticated weddings |
-| **Lora** | Classic Serif | Traditional, timeless feel |
-| **Montserrat** | Clean Sans-Serif | Modern, minimalist style |
-| **Cormorant Garamond** | Romantic Serif | Romantic, vintage weddings |
-| **Raleway** | Refined Sans-Serif | Elegant, contemporary look |
-| **Crimson Text** | Traditional Serif | Classic, formal events |
-| **Poppins** | Friendly Sans-Serif | Casual, approachable vibe |
+| Font Name              | Style               | Best For                       |
+| ---------------------- | ------------------- | ------------------------------ |
+| **Inter**              | Modern Sans-Serif   | Clean, professional look       |
+| **Playfair Display**   | Elegant Serif       | Luxury, sophisticated weddings |
+| **Lora**               | Classic Serif       | Traditional, timeless feel     |
+| **Montserrat**         | Clean Sans-Serif    | Modern, minimalist style       |
+| **Cormorant Garamond** | Romantic Serif      | Romantic, vintage weddings     |
+| **Raleway**            | Refined Sans-Serif  | Elegant, contemporary look     |
+| **Crimson Text**       | Traditional Serif   | Classic, formal events         |
+| **Poppins**            | Friendly Sans-Serif | Casual, approachable vibe      |
 
 #### Via API
 
@@ -136,6 +141,7 @@ curl -X GET https://api.yourplatform.com/v1/tenant/branding \
 ```
 
 **Response**:
+
 ```json
 {
   "primaryColor": "#7C3AED",
@@ -159,6 +165,7 @@ curl -X GET https://api.yourplatform.com/v1/tenant/branding \
 ### Overview
 
 Packages are the wedding experiences you offer to customers. Each package includes:
+
 - Title and description
 - Base price
 - Optional photo
@@ -172,6 +179,7 @@ curl -X GET https://api.yourplatform.com/v1/tenant-admin/packages \
 ```
 
 **Response**:
+
 ```json
 [
   {
@@ -201,6 +209,7 @@ curl -X POST https://api.yourplatform.com/v1/tenant-admin/packages \
 ```
 
 **Field Guide**:
+
 - **slug**: URL-friendly identifier (lowercase, no spaces)
 - **title**: Display name (what customers see)
 - **description**: Detailed description (sell your package!)
@@ -254,6 +263,7 @@ curl -X GET https://api.yourplatform.com/v1/tenant-admin/blackouts \
 ```
 
 **Response**:
+
 ```json
 [
   {
@@ -277,6 +287,7 @@ curl -X POST https://api.yourplatform.com/v1/tenant-admin/blackouts \
 ```
 
 **Field Guide**:
+
 - **date**: Date in YYYY-MM-DD format
 - **reason**: Optional description (internal use)
 
@@ -310,6 +321,7 @@ curl -X GET https://api.yourplatform.com/v1/tenant-admin/bookings \
 ```
 
 **Response**:
+
 ```json
 [
   {
@@ -330,23 +342,27 @@ curl -X GET https://api.yourplatform.com/v1/tenant-admin/bookings \
 ### Filtering Bookings
 
 #### By Status
+
 ```bash
 curl -X GET "https://api.yourplatform.com/v1/tenant-admin/bookings?status=PAID" \
   -H "X-Tenant-Key: YOUR_PUBLIC_API_KEY"
 ```
 
 **Status Values**:
+
 - `PAID`: Confirmed and paid
 - `REFUNDED`: Refunded
 - `CANCELED`: Canceled
 
 #### By Date Range
+
 ```bash
 curl -X GET "https://api.yourplatform.com/v1/tenant-admin/bookings?startDate=2025-06-01&endDate=2025-06-30" \
   -H "X-Tenant-Key: YOUR_PUBLIC_API_KEY"
 ```
 
 #### Combined Filters
+
 ```bash
 curl -X GET "https://api.yourplatform.com/v1/tenant-admin/bookings?status=PAID&startDate=2025-06-01&endDate=2025-06-30" \
   -H "X-Tenant-Key: YOUR_PUBLIC_API_KEY"
@@ -388,6 +404,7 @@ All API requests require your public API key in the header:
 ```
 
 **Example**:
+
 ```bash
 curl -X GET https://api.yourplatform.com/v1/tenant/branding \
   -H "X-Tenant-Key: pk_bellaweddings_abc123"
@@ -408,24 +425,30 @@ curl -X GET https://api.yourplatform.com/v1/tenant/branding \
 ### Common Issues
 
 #### "Unauthorized: No tenant context"
+
 **Problem**: API key not provided or invalid
 **Solution**: Check that you're including the `X-Tenant-Key` header with your public API key
 
 #### "File size exceeds maximum of 2MB"
+
 **Problem**: Logo file too large
 **Solution**: Compress your logo or use a smaller file
 
 #### "Invalid hex color format"
+
 **Problem**: Color not in #RRGGBB format
 **Solution**: Use hex colors like `#7C3AED` (must start with #, 6 hex digits)
 
 #### "Package not found"
+
 **Problem**: Package ID doesn't exist or belongs to another tenant
 **Solution**: Verify the package ID and ensure it's yours
 
 #### Logo Not Displaying
+
 **Problem**: Logo uploaded but not showing on booking page
 **Solution**:
+
 1. Clear browser cache
 2. Verify logo URL is accessible
 3. Check that branding was saved (`GET /v1/tenant/branding`)
@@ -509,23 +532,24 @@ A: Your commission percentage is set when your account is created.
 
 ### API Endpoints
 
-| Action | Method | Endpoint |
-|--------|--------|----------|
-| Upload logo | POST | `/v1/tenant/logo` |
-| Update branding | PUT | `/v1/tenant/branding` |
-| Get branding | GET | `/v1/tenant/branding` |
-| List packages | GET | `/v1/tenant-admin/packages` |
-| Create package | POST | `/v1/tenant-admin/packages` |
-| Update package | PUT | `/v1/tenant-admin/packages/:id` |
-| Delete package | DELETE | `/v1/tenant-admin/packages/:id` |
-| List blackouts | GET | `/v1/tenant-admin/blackouts` |
-| Add blackout | POST | `/v1/tenant-admin/blackouts` |
+| Action          | Method | Endpoint                         |
+| --------------- | ------ | -------------------------------- |
+| Upload logo     | POST   | `/v1/tenant/logo`                |
+| Update branding | PUT    | `/v1/tenant/branding`            |
+| Get branding    | GET    | `/v1/tenant/branding`            |
+| List packages   | GET    | `/v1/tenant-admin/packages`      |
+| Create package  | POST   | `/v1/tenant-admin/packages`      |
+| Update package  | PUT    | `/v1/tenant-admin/packages/:id`  |
+| Delete package  | DELETE | `/v1/tenant-admin/packages/:id`  |
+| List blackouts  | GET    | `/v1/tenant-admin/blackouts`     |
+| Add blackout    | POST   | `/v1/tenant-admin/blackouts`     |
 | Remove blackout | DELETE | `/v1/tenant-admin/blackouts/:id` |
-| List bookings | GET | `/v1/tenant-admin/bookings` |
+| List bookings   | GET    | `/v1/tenant-admin/bookings`      |
 
 ### Common cURL Examples
 
 **Upload Logo:**
+
 ```bash
 curl -X POST https://api.yourplatform.com/v1/tenant/logo \
   -H "X-Tenant-Key: pk_your_key" \
@@ -533,6 +557,7 @@ curl -X POST https://api.yourplatform.com/v1/tenant/logo \
 ```
 
 **Update Colors:**
+
 ```bash
 curl -X PUT https://api.yourplatform.com/v1/tenant/branding \
   -H "X-Tenant-Key: pk_your_key" \
@@ -541,6 +566,7 @@ curl -X PUT https://api.yourplatform.com/v1/tenant/branding \
 ```
 
 **Create Package:**
+
 ```bash
 curl -X POST https://api.yourplatform.com/v1/tenant-admin/packages \
   -H "X-Tenant-Key: pk_your_key" \
@@ -549,6 +575,7 @@ curl -X POST https://api.yourplatform.com/v1/tenant-admin/packages \
 ```
 
 **Add Blackout:**
+
 ```bash
 curl -X POST https://api.yourplatform.com/v1/tenant-admin/blackouts \
   -H "X-Tenant-Key: pk_your_key" \

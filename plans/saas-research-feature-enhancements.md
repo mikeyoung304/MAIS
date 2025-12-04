@@ -5,6 +5,7 @@
 This document extracts actionable feature ideas from SaaS market research to enhance MAIS's existing multi-tenant platform. These are **additive features** that strengthen the current business model of revenue-sharing partnerships with customizable storefronts.
 
 **What MAIS Already Has:**
+
 - Multi-tenant platform with complete data isolation
 - Customizable 3-tier storefronts per tenant
 - Revenue-sharing model (10-15% commission)
@@ -14,6 +15,7 @@ This document extracts actionable feature ideas from SaaS market research to enh
 - Stripe Connect, Postmark, Google Calendar integrations
 
 **What the Research Suggests Adding:**
+
 - AI-powered features that help tenants run their businesses better
 - "Back office" automation beyond just booking
 - Narrative insights that explain data, not just display it
@@ -30,14 +32,16 @@ This document extracts actionable feature ideas from SaaS market research to enh
 **Feature:** AI analyzes booking patterns and suggests package adjustments.
 
 **How it works:**
+
 - Tenant dashboard shows: "Your 'Premium' tier converts 3x better than 'Basic' - consider raising the price by 15%"
 - Based on actual booking data, not guesswork
 - Suggestions are notifications, not automatic changes (human stays in control)
 
 **Implementation:**
+
 ```typescript
 // New endpoint
-GET /v1/insights/package-recommendations
+GET / v1 / insights / package - recommendations;
 
 // Response
 {
@@ -48,9 +52,9 @@ GET /v1/insights/package-recommendations
       currentPrice: 500,
       suggestedPrice: 575,
       reasoning: 'This package has 85% conversion rate, well above your 60% average',
-      confidence: 'high'
-    }
-  ]
+      confidence: 'high',
+    },
+  ];
 }
 ```
 
@@ -65,6 +69,7 @@ GET /v1/insights/package-recommendations
 **Feature:** AI notices patterns and suggests seasonal adjustments.
 
 **How it works:**
+
 - "December bookings are 40% higher than average - consider a holiday premium"
 - "January is slow historically - consider a 10% early-bird discount"
 - Integrates with existing config-driven system (agent proposes, admin approves)
@@ -80,11 +85,13 @@ GET /v1/insights/package-recommendations
 **Feature:** Automated reminders when prospects go cold.
 
 **How it works:**
+
 - Customer views package but doesn't book → 48 hours later, tenant gets reminder
 - "3 prospects viewed your 'Wedding Package' this week but didn't book. Send follow-up?"
 - One-click to send templated email
 
 **Implementation:**
+
 ```typescript
 // New model
 model ProspectActivity {
@@ -113,10 +120,12 @@ model ProspectActivity {
 **Feature:** AI explains what the numbers mean in simple language.
 
 **How it works:**
+
 - Instead of just showing "Bookings: 12 this month"
 - Show: "Bookings are up 25% from last month. Your new 'Mini Session' package is driving most of the growth."
 
 **Implementation:**
+
 ```typescript
 // New endpoint
 GET /v1/insights/dashboard-narrative
@@ -149,6 +158,7 @@ GET /v1/insights/dashboard-narrative
 **Feature:** Auto-generated monthly summary email.
 
 **How it works:**
+
 - First of month: tenant receives email with last month's highlights
 - Revenue, bookings, top packages, trends
 - Sent via existing Postmark integration
@@ -166,6 +176,7 @@ GET /v1/insights/dashboard-narrative
 **Feature:** Different landing experiences based on customer segment.
 
 **How it works:**
+
 - Tenant creates segments: "Wedding", "Corporate", "Portrait"
 - Each segment has its own hero image, featured packages, messaging
 - URL: `tenant.mais.app/weddings` vs `tenant.mais.app/corporate`
@@ -181,6 +192,7 @@ GET /v1/insights/dashboard-narrative
 **Feature:** Packages auto-filter based on segment or customer answers.
 
 **How it works:**
+
 - Customer answers: "What type of event?" → "Wedding"
 - Only wedding-relevant packages shown
 - Uses existing `Package.segments` relation
@@ -196,12 +208,14 @@ GET /v1/insights/dashboard-narrative
 **Feature:** Configurable email sequences triggered by booking events.
 
 **How it works:**
+
 - Booking confirmed → Send confirmation (existing)
 - 7 days before event → Send preparation checklist
 - 1 day after event → Send thank-you + review request
 - Tenant configures which emails to send and when
 
 **Implementation:**
+
 ```typescript
 // New model
 model EmailSequence {
@@ -229,6 +243,7 @@ model EmailSequence {
 **Feature:** Surface the most important actions at the top.
 
 **How it works:**
+
 - "You have 2 pending bookings to confirm"
 - "3 customers viewed packages but didn't book"
 - "Your calendar has availability this weekend - promote it?"
@@ -244,11 +259,13 @@ model EmailSequence {
 **Feature:** Pre-built templates tenants can customize.
 
 **How it works:**
+
 - "Start with a template" when creating new package
 - Templates organized by business type (wellness, photography, consulting)
 - Tenant can edit everything after importing
 
 **Implementation:**
+
 ```typescript
 // New model
 model Template {
@@ -272,11 +289,13 @@ model Template {
 **Feature:** AI helps write/improve package descriptions.
 
 **How it works:**
+
 - Tenant clicks "Help me write this"
 - AI generates description based on: package name, price, what's included
 - Tenant can edit, accept, or regenerate
 
 **Implementation:**
+
 ```typescript
 // New endpoint
 POST /v1/ai/generate-description
@@ -308,6 +327,7 @@ POST /v1/ai/generate-description
 **Feature:** Simple funnel visualization.
 
 **How it works:**
+
 - View → Checkout Started → Booking Complete
 - "You're losing 40% of customers at checkout - your packages might be too expensive"
 
@@ -322,6 +342,7 @@ POST /v1/ai/generate-description
 **Feature:** Simple projection based on confirmed bookings + historical patterns.
 
 **How it works:**
+
 - "Projected revenue this month: $4,200 (based on 8 confirmed bookings)"
 - "You typically get 3-5 more bookings in the last week of the month"
 
@@ -336,6 +357,7 @@ POST /v1/ai/generate-description
 **Feature:** Compare against anonymized platform averages.
 
 **How it works:**
+
 - "Your conversion rate (65%) is above the platform average (52%)"
 - "Your average booking value is in the top 25% of similar businesses"
 - All data anonymized and aggregated
@@ -371,6 +393,7 @@ POST /v1/ai/generate-description
 ### LLM Integration (for AI features)
 
 Simple, single-provider approach:
+
 ```typescript
 // server/src/adapters/llm/claude.adapter.ts
 export class ClaudeAdapter {
@@ -378,7 +401,7 @@ export class ClaudeAdapter {
     const response = await anthropic.messages.create({
       model: 'claude-3-5-haiku-20241022',
       max_tokens: 500,
-      messages: [{ role: 'user', content: prompt }]
+      messages: [{ role: 'user', content: prompt }],
     });
     return response.content[0].text;
   }
@@ -390,6 +413,7 @@ Add to DI container, inject where needed. No multi-LLM router - keep it simple.
 ### Caching Strategy
 
 AI-generated insights should be cached:
+
 ```typescript
 // Cache narrative insights for 1 hour
 const cacheKey = `insights:${tenantId}:dashboard`;
@@ -404,6 +428,7 @@ return insights;
 ### Tenant Isolation
 
 All new features follow existing pattern:
+
 ```typescript
 // Every query includes tenantId
 const bookings = await prisma.booking.findMany({
@@ -435,5 +460,5 @@ These features strengthen MAIS's value proposition to club members: "We don't ju
 
 ---
 
-*Plan created: November 25, 2025*
-*Focus: Feature enhancements, not business pivot*
+_Plan created: November 25, 2025_
+_Focus: Feature enhancements, not business pivot_

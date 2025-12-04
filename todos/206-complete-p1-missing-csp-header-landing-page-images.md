@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "206"
+issue_id: '206'
 tags: [security, csp, headers, landing-page, images]
 dependencies: []
 ---
@@ -17,6 +17,7 @@ dependencies: []
 ## Description
 
 Landing page images can reference external URLs but there's no Content Security Policy (CSP) configuration to restrict allowed image sources. This could allow:
+
 1. Loading images from untrusted domains
 2. Tracking pixels via external image loads
 3. Mixed content issues if HTTP images loaded on HTTPS
@@ -24,6 +25,7 @@ Landing page images can reference external URLs but there's no Content Security 
 ## Current State
 
 The `TenantStorefrontLayout.tsx` has a comment mentioning CSP:
+
 ```typescript
 // NOTE: Backend validates logo URLs with Zod (.url()).
 // CSP headers enforce img-src https: at browser level.
@@ -50,8 +52,8 @@ export const securityMiddleware = helmet({
       defaultSrc: ["'self'"],
       imgSrc: [
         "'self'",
-        'https:',  // Allow HTTPS images
-        'data:',   // Allow inline data URIs for small images (use carefully)
+        'https:', // Allow HTTPS images
+        'data:', // Allow inline data URIs for small images (use carefully)
         // Add specific trusted domains:
         'https://*.supabase.co',
         'https://images.unsplash.com',
@@ -151,6 +153,7 @@ contentSecurityPolicy: {
 ```
 
 **Security Posture:**
+
 - ✅ HTTPS-only image sources enforced
 - ✅ Supabase storage explicitly allowed
 - ✅ CSP violations logged for monitoring
@@ -158,6 +161,7 @@ contentSecurityPolicy: {
 - ✅ Permissive mode allows tenant flexibility while blocking HTTP
 
 **Verification:**
+
 - TypeScript compilation: ✅ No errors
 - CSP violation endpoint: ✅ Already implemented (`/v1/csp-violations`)
 - Helmet middleware: ✅ Already configured with CSP directives

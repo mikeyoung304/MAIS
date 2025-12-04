@@ -24,6 +24,7 @@ T5      ✅ Booking created                ❌ BookingConflictError
 ## Root Cause Analysis
 
 The original implementation had two separate operations:
+
 1. **Check:** `isDuplicate()` - Non-blocking read query
 2. **Record:** `recordWebhook()` - Returns void, doesn't communicate if duplicate detected
 
@@ -56,7 +57,7 @@ export interface WebhookRepository {
     eventId: string;
     eventType: string;
     rawPayload: string;
-  }): Promise<boolean>;  // ← Changed from Promise<void>
+  }): Promise<boolean>; // ← Changed from Promise<void>
 
   markProcessed(tenantId: string, eventId: string): Promise<void>;
   markFailed(tenantId: string, eventId: string, errorMessage: string): Promise<void>;
@@ -65,6 +66,7 @@ export interface WebhookRepository {
 ```
 
 **Key Change:** Return type is now `Promise<boolean>` instead of `Promise<void>`
+
 - `true` = new record created successfully (first call wins)
 - `false` = duplicate detected via unique constraint (already exists)
 
@@ -204,6 +206,7 @@ VALUES ('tenant_123', 'evt_abc123', 'checkout.session.completed', '...', 'PENDIN
 ```
 
 Only ONE can succeed atomically:
+
 - **Thread 1 (wins):** Creates record, returns normally
 - **Thread 2 (loses):** Gets P2002 unique constraint error
 
@@ -297,8 +300,8 @@ test('concurrent webhooks are deduplicated atomically', async () => {
   ]);
 
   // Exactly one should succeed
-  expect([result1, result2].filter(r => r).length).toBe(1);
-  expect([result1, result2].filter(r => !r).length).toBe(1);
+  expect([result1, result2].filter((r) => r).length).toBe(1);
+  expect([result1, result2].filter((r) => !r).length).toBe(1);
 });
 ```
 
@@ -356,6 +359,7 @@ test('handles duplicate webhook gracefully', async () => {
 - **Database:** Constraint check is local to insert, minimal overhead
 
 **Benchmark Results:**
+
 - Single webhook: ~45ms (unchanged)
 - Concurrent webhooks: ~50ms (slightly faster - less waiting)
 
@@ -427,6 +431,7 @@ if (!isNew) return; // Atomic guard for race conditions
 ### Log Patterns to Watch
 
 **Normal webhook processing:**
+
 ```
 INFO Stripe webhook received {eventId: "evt_abc123", type: "checkout.session.completed"}
 INFO Webhook event recorded {tenantId: "tenant_123", eventId: "evt_abc123"}
@@ -435,17 +440,20 @@ INFO Webhook marked as processed {tenantId: "tenant_123", eventId: "evt_abc123"}
 ```
 
 **Duplicate webhook (pre-check):**
+
 ```
 INFO Duplicate webhook (global check) - returning 200 OK to Stripe {eventId: "evt_old123"}
 ```
 
 **Duplicate webhook (atomic recording):**
+
 ```
 INFO Webhook duplicate detected during recording - returning 200 OK {eventId: "evt_race123"}
 INFO Webhook already recorded (duplicate eventId) {tenantId: "tenant_123", eventId: "evt_race123"}
 ```
 
 **Race condition detected:**
+
 ```
 INFO Webhook duplicate detected during recording - returning 200 OK {eventId: "evt_concurrent"}
 ```
@@ -453,6 +461,7 @@ INFO Webhook duplicate detected during recording - returning 200 OK {eventId: "e
 ### Database Queries for Debugging
 
 **Find all webhooks for a tenant:**
+
 ```sql
 SELECT eventId, eventType, status, attempts, createdAt
 FROM webhook_events
@@ -462,6 +471,7 @@ LIMIT 20;
 ```
 
 **Find duplicate attempts:**
+
 ```sql
 SELECT eventId, COUNT(*) as attempt_count, MAX(attempts) as max_attempts
 FROM webhook_events
@@ -471,6 +481,7 @@ ORDER BY attempt_count DESC;
 ```
 
 **Analyze webhook failures:**
+
 ```sql
 SELECT eventType, status, COUNT(*) as count
 FROM webhook_events
@@ -484,6 +495,7 @@ ORDER BY count DESC;
 The webhook idempotency race condition fix uses **database-enforced atomic constraints** as the idempotency barrier. By changing `recordWebhook` to return `boolean` and checking the result before processing, we guarantee that only one booking is created per webhook event, even under high concurrency.
 
 The solution is:
+
 - ✅ **Atomic** - Database constraint provides guarantee
 - ✅ **Efficient** - Single `INSERT` instead of separate check/write
 - ✅ **Idempotent** - Returns 200 OK for duplicates (Stripe requirement)

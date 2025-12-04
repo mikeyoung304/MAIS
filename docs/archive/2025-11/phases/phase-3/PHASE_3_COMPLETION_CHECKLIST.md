@@ -5,6 +5,7 @@
 Phase 3 adds Stripe Connect payment processing with commission-based revenue sharing. Each tenant receives payments directly to their Stripe account, and the platform automatically collects a commission.
 
 **Commission Model:**
+
 - Platform collects commission on each booking (10-15%)
 - Tenant receives net payment (85-90%)
 - Commission calculated server-side, enforced via Stripe API
@@ -25,6 +26,7 @@ Phase 3 adds Stripe Connect payment processing with commission-based revenue sha
 - [x] `WebhookEvent` - Webhook processing history
 
 **Verification:**
+
 ```sql
 -- Check schema
 \d "Tenant"
@@ -47,6 +49,7 @@ Phase 3 adds Stripe Connect payment processing with commission-based revenue sha
 - [x] Detailed logging
 
 **Verification:**
+
 ```bash
 cd /Users/mikeyoung/CODING/Elope/server
 npm run test:commission
@@ -66,6 +69,7 @@ Expected: All tests pass ✅
 - [x] Metadata support for tenant/booking tracking
 
 **Verification:**
+
 ```bash
 npm run test:stripe-connect
 ```
@@ -86,6 +90,7 @@ npm run test:stripe-connect
 - [x] Secret rotation support
 
 **Verification:**
+
 ```bash
 # Terminal 1
 npm run dev
@@ -105,6 +110,7 @@ stripe trigger payment_intent.succeeded
 - [x] API key scoping
 
 **Security verification:**
+
 ```bash
 # Verify tenant isolation in database
 SELECT id, slug, "commissionPercent", "stripeAccountId", "stripeOnboarded"
@@ -115,16 +121,19 @@ WHERE "isActive" = true;
 ### 6. Testing Infrastructure
 
 **Documentation:**
+
 - [x] `STRIPE_CONNECT_TESTING_GUIDE.md` - Complete testing guide
 - [x] `ENV_VARIABLES.md` - Environment variables reference
 - [x] `PHASE_3_COMPLETION_CHECKLIST.md` - This checklist
 
 **Test Scripts:**
+
 - [x] `scripts/test-commission.ts` - Commission calculation tests
 - [x] `scripts/test-stripe-connect.ts` - End-to-end integration test
 - [x] `package.json` scripts added
 
 **Verification:**
+
 ```bash
 npm run test:commission
 npm run test:stripe-connect
@@ -213,6 +222,7 @@ See `/Users/mikeyoung/CODING/Elope/server/STRIPE_CONNECT_TESTING_GUIDE.md`
 - [x] Rate limiting per tenant
 
 **Security verification checklist:**
+
 ```bash
 # 1. Check .env is in .gitignore
 cat .gitignore | grep .env
@@ -372,10 +382,10 @@ grep -A 10 "verifyWebhook" src/routes/webhooks.routes.ts
 
 ### Team Sign-Off
 
-- [ ] Engineering Lead: _________________
-- [ ] Product Manager: _________________
-- [ ] Security Officer: _________________
-- [ ] DevOps/SRE: _________________
+- [ ] Engineering Lead: ********\_********
+- [ ] Product Manager: ********\_********
+- [ ] Security Officer: ********\_********
+- [ ] DevOps/SRE: ********\_********
 
 ---
 
@@ -408,6 +418,7 @@ Phase 3 establishes the payment foundation. Phase 4 will focus on:
    - Performance optimization
 
 **Prerequisites for Phase 4:**
+
 - Phase 3 complete (this checklist)
 - Stripe Connect tested and verified
 - Commission calculation accurate
@@ -418,17 +429,20 @@ Phase 3 establishes the payment foundation. Phase 4 will focus on:
 ## Resources
 
 ### Stripe Documentation
+
 - [Connect Overview](https://stripe.com/docs/connect)
 - [Application Fees](https://stripe.com/docs/connect/direct-charges)
 - [Webhooks](https://stripe.com/docs/webhooks)
 - [Testing](https://stripe.com/docs/testing)
 
 ### Internal Documentation
+
 - `/Users/mikeyoung/CODING/Elope/server/STRIPE_CONNECT_TESTING_GUIDE.md`
 - `/Users/mikeyoung/CODING/Elope/server/ENV_VARIABLES.md`
 - `/Users/mikeyoung/CODING/Elope/server/src/services/commission.service.ts`
 
 ### Support Contacts
+
 - Stripe Support: support@stripe.com
 - Stripe Discord: https://discord.gg/stripe
 - Engineering Team: [your team slack/email]

@@ -1,8 +1,8 @@
-import { AlertCircle } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { formatCurrency } from "@/lib/utils";
-import type { PackageFormData } from "../hooks/usePackageForm";
+import { AlertCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { formatCurrency } from '@/lib/utils';
+import type { PackageFormData } from '../hooks/usePackageForm';
 
 interface PricingSectionProps {
   form: PackageFormData;
@@ -27,7 +27,7 @@ export function PricingSection({
   fieldErrors,
   setFieldErrors,
   validateField,
-  isSaving
+  isSaving,
 }: PricingSectionProps) {
   return (
     <>
@@ -70,7 +70,7 @@ export function PricingSection({
             <p id="priceCents-help" className="text-base text-white/70">
               {form.priceCents && !isNaN(parseInt(form.priceCents, 10))
                 ? formatCurrency(parseInt(form.priceCents, 10))
-                : "Enter price in cents (e.g., 50000 = $500.00)"}
+                : 'Enter price in cents (e.g., 50000 = $500.00)'}
             </p>
           )}
         </div>

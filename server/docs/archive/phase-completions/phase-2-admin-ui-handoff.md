@@ -9,6 +9,7 @@
 ## Phase 1 Recap
 
 ✅ **Completed** (100%):
+
 - Database schema with Segment table
 - PrismaSegmentRepository (full CRUD)
 - SegmentService (validation + caching)
@@ -25,6 +26,7 @@ Build admin UI components for segment management, enabling Little Bit Farm admin
 ## Architecture Context
 
 ### Frontend Stack
+
 - **Framework**: React 18 with TypeScript
 - **Build Tool**: Vite
 - **Routing**: React Router v6
@@ -34,6 +36,7 @@ Build admin UI components for segment management, enabling Little Bit Farm admin
 - **HTTP Client**: Axios with tenant context
 
 ### Admin UI Location
+
 - **Directory**: `/apps/web/src/pages/admin/`
 - **Route**: `https://app.elopetomaconga.com/admin/segments`
 - **Auth**: Requires tenant admin authentication
@@ -64,9 +67,11 @@ Reference these existing admin pages for consistency:
 ## Tasks Breakdown
 
 ### Task 1: Create SegmentManager Component (40%)
+
 **File**: `/apps/web/src/pages/admin/SegmentManager.tsx`
 
 **Requirements**:
+
 - List view showing all segments (active + inactive) for tenant
 - Table columns: Name, Slug, Status (Active/Inactive), Sort Order, Packages Count, Actions
 - "Create Segment" button in header
@@ -76,8 +81,14 @@ Reference these existing admin pages for consistency:
 - Error handling with retry option
 
 **React Query Setup**:
+
 ```typescript
-const { data: segments, isLoading, error, refetch } = useQuery({
+const {
+  data: segments,
+  isLoading,
+  error,
+  refetch,
+} = useQuery({
   queryKey: ['segments', tenantId],
   queryFn: async () => {
     const res = await api.get(`/v1/tenant/admin/segments`);
@@ -87,6 +98,7 @@ const { data: segments, isLoading, error, refetch } = useQuery({
 ```
 
 **Delete Mutation**:
+
 ```typescript
 const deleteMutation = useMutation({
   mutationFn: async (id: string) => {
@@ -100,6 +112,7 @@ const deleteMutation = useMutation({
 ```
 
 **UI Wireframe**:
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ Segment Manager                          [+ Create Segment] │
@@ -113,9 +126,11 @@ const deleteMutation = useMutation({
 ```
 
 ### Task 2: Create SegmentForm Component (40%)
+
 **File**: `/apps/web/src/pages/admin/SegmentForm.tsx`
 
 **Requirements**:
+
 - Support both create and edit modes
 - Form fields:
   - **slug** (required, lowercase alphanumeric + hyphens, unique per tenant)
@@ -136,9 +151,14 @@ const deleteMutation = useMutation({
 - Modal or full-page form (recommend modal for consistency)
 
 **Zod Validation Schema**:
+
 ```typescript
 const segmentSchema = z.object({
-  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only'),
+  slug: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only'),
   name: z.string().min(1).max(100),
   heroTitle: z.string().min(1).max(200),
   heroSubtitle: z.string().max(300).optional(),
@@ -152,8 +172,15 @@ const segmentSchema = z.object({
 ```
 
 **React Hook Form Setup**:
+
 ```typescript
-const { register, handleSubmit, formState: { errors, isSubmitting }, setValue, watch } = useForm({
+const {
+  register,
+  handleSubmit,
+  formState: { errors, isSubmitting },
+  setValue,
+  watch,
+} = useForm({
   resolver: zodResolver(segmentSchema),
   defaultValues: segment || {
     slug: '',
@@ -168,12 +195,19 @@ const { register, handleSubmit, formState: { errors, isSubmitting }, setValue, w
 const name = watch('name');
 useEffect(() => {
   if (!segment && name) {
-    setValue('slug', name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''));
+    setValue(
+      'slug',
+      name
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+    );
   }
 }, [name, segment, setValue]);
 ```
 
 **Create/Update Mutation**:
+
 ```typescript
 const mutation = useMutation({
   mutationFn: async (data) => {
@@ -192,9 +226,11 @@ const mutation = useMutation({
 ```
 
 ### Task 3: Update AdminHome to Include Segments (10%)
+
 **File**: `/apps/web/src/pages/admin/AdminHome.tsx`
 
 **Requirements**:
+
 - Add "Segments" card to admin dashboard
 - Display segment count as summary stat
 - Link to `/admin/segments` route
@@ -202,6 +238,7 @@ const mutation = useMutation({
 - Position: Above or alongside Packages card
 
 **Example Card**:
+
 ```typescript
 <Card>
   <CardHeader>
@@ -217,9 +254,11 @@ const mutation = useMutation({
 ```
 
 ### Task 4: Add Segment Selection to PackageForm (5%)
+
 **File**: `/apps/web/src/pages/admin/PackageForm.tsx`
 
 **Requirements**:
+
 - Add optional "Segment" dropdown field
 - Fetch active segments for dropdown options
 - Allow "None" option (for non-segmented packages)
@@ -227,6 +266,7 @@ const mutation = useMutation({
 - Display current segment in edit mode
 
 **Example**:
+
 ```typescript
 <FormField label="Segment (Optional)">
   <select {...register('segmentId')}>
@@ -239,9 +279,11 @@ const mutation = useMutation({
 ```
 
 ### Task 5: Add Segment Selection to AddOnForm (5%)
+
 **File**: `/apps/web/src/pages/admin/AddOnForm.tsx`
 
 **Requirements**:
+
 - Add optional "Segment" dropdown field
 - Fetch active segments for dropdown options
 - Allow "Global" option (segmentId = null, available to all segments)
@@ -249,6 +291,7 @@ const mutation = useMutation({
 - Update add-on create/edit mutations to include `segmentId`
 
 **Example**:
+
 ```typescript
 <FormField label="Availability">
   <select {...register('segmentId')}>
@@ -262,16 +305,20 @@ const mutation = useMutation({
 ```
 
 ### Task 6: Add Routing for Segments (Minimal)
+
 **File**: `/apps/web/src/App.tsx` or router config
 
 **Requirements**:
+
 - Add route: `/admin/segments` → `<SegmentManager />`
 - Protect with admin auth guard (already exists)
 
 ### Task 7: Component Tests (Optional but Recommended)
+
 **Files**: `*.spec.tsx` or `*.test.tsx`
 
 **Requirements**:
+
 - Unit tests for SegmentForm validation
 - Integration tests for SegmentManager CRUD flow
 - Mock API responses with MSW (Mock Service Worker)
@@ -282,6 +329,7 @@ const mutation = useMutation({
 All endpoints already implemented in Phase 1:
 
 ### Admin Endpoints (Authenticated)
+
 ```
 GET    /v1/tenant/admin/segments           # List all segments
 POST   /v1/tenant/admin/segments           # Create segment
@@ -294,6 +342,7 @@ GET    /v1/tenant/admin/segments/:id/stats # Get stats (package/add-on counts)
 ### Request/Response Examples
 
 **GET /v1/tenant/admin/segments**:
+
 ```json
 [
   {
@@ -316,6 +365,7 @@ GET    /v1/tenant/admin/segments/:id/stats # Get stats (package/add-on counts)
 ```
 
 **POST /v1/tenant/admin/segments**:
+
 ```json
 {
   "slug": "wellness-retreat",
@@ -334,6 +384,7 @@ GET    /v1/tenant/admin/segments/:id/stats # Get stats (package/add-on counts)
 ## Design Guidelines
 
 ### UI/UX Consistency
+
 - Match existing admin UI style (colors, typography, spacing)
 - Use same button styles as PackageManager
 - Use same table layout as PackageManager
@@ -341,6 +392,7 @@ GET    /v1/tenant/admin/segments/:id/stats # Get stats (package/add-on counts)
 - Consistent error messages and loading states
 
 ### Accessibility
+
 - Proper form labels with htmlFor
 - ARIA labels for icon buttons
 - Keyboard navigation support
@@ -348,6 +400,7 @@ GET    /v1/tenant/admin/segments/:id/stats # Get stats (package/add-on counts)
 - Screen reader friendly error messages
 
 ### Responsive Design
+
 - Mobile-friendly table (stack/scroll on mobile)
 - Touch-friendly button sizes
 - Responsive modal widths
@@ -355,7 +408,9 @@ GET    /v1/tenant/admin/segments/:id/stats # Get stats (package/add-on counts)
 ## Technical Notes
 
 ### Axios Configuration
+
 The frontend already has an axios instance with tenant context. Use it:
+
 ```typescript
 import { api } from '@/lib/api'; // or wherever it's configured
 
@@ -363,13 +418,17 @@ const response = await api.get('/v1/tenant/admin/segments');
 ```
 
 ### Tenant Context
+
 Tenant ID is already available in the app context:
+
 ```typescript
 const { tenantId } = useTenant(); // or similar hook
 ```
 
 ### Toast Notifications
+
 Use existing toast library:
+
 ```typescript
 import { toast } from '@/lib/toast';
 
@@ -378,7 +437,9 @@ toast.error('Failed to create segment');
 ```
 
 ### Form Validation
+
 Use React Hook Form + Zod (already in use):
+
 ```typescript
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -387,6 +448,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 ## Testing Strategy
 
 ### Manual Testing Checklist
+
 - [ ] Create segment with all fields
 - [ ] Create segment with minimal fields (required only)
 - [ ] Edit segment (change name, slug, status)
@@ -402,6 +464,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 - [ ] Test loading states (slow network simulation)
 
 ### Integration Testing with Backend
+
 1. Start backend: `npm run dev` (in `/server`)
 2. Start frontend: `npm run dev` (in `/apps/web`)
 3. Test CRUD operations end-to-end
@@ -411,6 +474,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 ## Success Criteria
 
 Phase 2 is complete when:
+
 - [x] SegmentManager component functional (list, create, edit, delete)
 - [x] SegmentForm component functional (validation, submission)
 - [x] AdminHome includes Segments card with link
@@ -435,12 +499,14 @@ Phase 2 is complete when:
 ## Next Steps After Phase 2
 
 Phase 3: Customer-Facing Routes
+
 - Home page with segment cards
 - Segment landing pages (`/segments/:slug`)
 - Package detail pages with segment context
 - Breadcrumb navigation
 
 Phase 4: Analytics
+
 - Google Analytics 4 integration
 - Segment view tracking
 - Package view tracking by segment
@@ -448,6 +514,7 @@ Phase 4: Analytics
 ## Resources
 
 ### Existing Code References
+
 - `/apps/web/src/pages/admin/PackageManager.tsx` - List view pattern
 - `/apps/web/src/pages/admin/PackageForm.tsx` - Form pattern
 - `/apps/web/src/pages/admin/AdminHome.tsx` - Dashboard pattern
@@ -455,11 +522,13 @@ Phase 4: Analytics
 - `/apps/web/src/hooks/useTenant.ts` - Tenant context
 
 ### Backend Documentation
+
 - `/server/docs/phase-1-completion-report.md` - Full backend API reference
 - `/server/docs/phase-1-test-verification.md` - Test coverage details
 - `/server/src/validation/segment.schemas.ts` - Validation schema reference
 
 ### External Documentation
+
 - [React Hook Form](https://react-hook-form.com/)
 - [Zod](https://zod.dev/)
 - [TanStack Query (React Query)](https://tanstack.com/query/latest)

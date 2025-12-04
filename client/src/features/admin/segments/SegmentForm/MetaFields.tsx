@@ -4,18 +4,13 @@
  * SEO metadata fields for segment form
  */
 
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 const CharCount = ({ current, max }: { current: number; max: number }) => (
-  <p
-    className={cn(
-      "text-sm",
-      current > max ? "text-destructive" : "text-white/60"
-    )}
-  >
+  <p className={cn('text-sm', current > max ? 'text-destructive' : 'text-white/60')}>
     {current} / {max} characters
   </p>
 );

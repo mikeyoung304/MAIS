@@ -27,6 +27,7 @@ ESLint can catch duplication patterns that humans miss in code review:
 ### Problem Statement
 
 Same function (e.g., `getTierDisplayName`) defined in multiple files:
+
 - TierCard.tsx: Line 42
 - TierSelector.tsx: Line 35
 - TierDetail.tsx: Line 28
@@ -56,10 +57,10 @@ module.exports = {
     docs: {
       description: 'Detect identical function definitions across files',
       category: 'Best Practices',
-      recommended: true
+      recommended: true,
     },
     fixable: null,
-    schema: []
+    schema: [],
   },
 
   create(context) {
@@ -85,26 +86,27 @@ module.exports = {
           if (existing.file !== fileKey) {
             context.report({
               node,
-              message: `Function "${functionName}" is already defined in ${existing.file}:${existing.line}. ` +
-                       `Extract to shared utils module to avoid duplication.`,
+              message:
+                `Function "${functionName}" is already defined in ${existing.file}:${existing.line}. ` +
+                `Extract to shared utils module to avoid duplication.`,
               suggest: [
                 {
                   desc: `Create utils/${functionName}.ts and export from index`,
                   fix(fixer) {
-                    return fixer.insertTextBefore(node,
-                      `// TODO: Extract to utils.ts\n` +
-                      `// See also: ${existing.file}\n`
+                    return fixer.insertTextBefore(
+                      node,
+                      `// TODO: Extract to utils.ts\n` + `// See also: ${existing.file}\n`
                     );
-                  }
-                }
-              ]
+                  },
+                },
+              ],
             });
           }
         } else {
           functionRegistry.set(key, {
             file: fileKey,
             line: node.loc.start.line,
-            signature: signature
+            signature: signature,
           });
         }
       },
@@ -117,9 +119,9 @@ module.exports = {
             // Same logic as above
           }
         }
-      }
+      },
     };
-  }
+  },
 };
 
 /**
@@ -127,9 +129,7 @@ module.exports = {
  * Ignores implementation details, focuses on signature
  */
 function createFunctionSignature(node) {
-  const params = node.params
-    .map(p => `${p.name}:${getTypeString(p)}`)
-    .join(',');
+  const params = node.params.map((p) => `${p.name}:${getTypeString(p)}`).join(',');
 
   return `(${params})`;
 }
@@ -155,9 +155,9 @@ module.exports = {
       rules: {
         // Enable the duplicate detection rule
         'no-duplicate-function-definitions': 'warn',
-      }
-    }
-  ]
+      },
+    },
+  ],
 };
 ```
 
@@ -180,6 +180,7 @@ npm run lint -- client/src/features/
 ### Problem Statement
 
 Same hardcoded value appears in multiple files:
+
 - TierCard.tsx: `'150'` (truncation length)
 - TierDetail.tsx: `'150'` (truncation length)
 - TierSelector.tsx: `'140'` (inconsistent truncation)
@@ -198,14 +199,26 @@ Same hardcoded value appears in multiple files:
 
 const KNOWN_CONSTANTS = {
   // Tier display names - should use getTierDisplayName()
-  'Essential': { severity: 'warning', suggestion: 'getTierDisplayName("budget")' },
-  'Popular': { severity: 'warning', suggestion: 'getTierDisplayName("middle")' },
-  'Premium': { severity: 'warning', suggestion: 'getTierDisplayName("luxury")' },
+  Essential: { severity: 'warning', suggestion: 'getTierDisplayName("budget")' },
+  Popular: { severity: 'warning', suggestion: 'getTierDisplayName("middle")' },
+  Premium: { severity: 'warning', suggestion: 'getTierDisplayName("luxury")' },
 
   // Card description max length - should use CARD_DESCRIPTION_MAX_LENGTH
-  '150': { severity: 'warning', suggestion: 'CARD_DESCRIPTION_MAX_LENGTH', context: 'description|text' },
-  '140': { severity: 'error', suggestion: 'CARD_DESCRIPTION_MAX_LENGTH', context: 'description|text' },
-  '160': { severity: 'error', suggestion: 'CARD_DESCRIPTION_MAX_LENGTH', context: 'description|text' },
+  150: {
+    severity: 'warning',
+    suggestion: 'CARD_DESCRIPTION_MAX_LENGTH',
+    context: 'description|text',
+  },
+  140: {
+    severity: 'error',
+    suggestion: 'CARD_DESCRIPTION_MAX_LENGTH',
+    context: 'description|text',
+  },
+  160: {
+    severity: 'error',
+    suggestion: 'CARD_DESCRIPTION_MAX_LENGTH',
+    context: 'description|text',
+  },
 
   // CTA button text - should be configurable props
   'See Packages': { severity: 'info', suggestion: 'Move to prop "cta"' },
@@ -218,10 +231,10 @@ module.exports = {
     docs: {
       description: 'Detect hardcoded constants that should be extracted',
       category: 'Best Practices',
-      recommended: true
+      recommended: true,
     },
     fixable: false,
-    schema: []
+    schema: [],
   },
 
   create(context) {
@@ -243,33 +256,30 @@ module.exports = {
 
         context.report({
           node,
-          message: `Magic constant "${value}" detected. ` +
-                   `${config.suggestion}`,
+          message: `Magic constant "${value}" detected. ` + `${config.suggestion}`,
           severity: config.severity === 'error' ? 2 : config.severity === 'warning' ? 1 : 0,
           suggest: [
             {
               desc: `Extract to constant and import from utils`,
               fix(fixer) {
-                return fixer.replaceText(node,
-                  formatConstantReference(value)
-                );
-              }
-            }
-          ]
+                return fixer.replaceText(node, formatConstantReference(value));
+              },
+            },
+          ],
         });
-      }
+      },
     };
-  }
+  },
 };
 
 function formatConstantReference(value) {
   const mapping = {
-    'Essential': 'getTierDisplayName("budget")',
-    'Popular': 'getTierDisplayName("middle")',
-    'Premium': 'getTierDisplayName("luxury")',
-    '150': 'CARD_DESCRIPTION_MAX_LENGTH',
-    '140': 'CARD_DESCRIPTION_MAX_LENGTH',
-    '160': 'CARD_DESCRIPTION_MAX_LENGTH',
+    Essential: 'getTierDisplayName("budget")',
+    Popular: 'getTierDisplayName("middle")',
+    Premium: 'getTierDisplayName("luxury")',
+    150: 'CARD_DESCRIPTION_MAX_LENGTH',
+    140: 'CARD_DESCRIPTION_MAX_LENGTH',
+    160: 'CARD_DESCRIPTION_MAX_LENGTH',
   };
   return mapping[value] || value;
 }
@@ -317,10 +327,10 @@ module.exports = {
     docs: {
       description: 'Require React.memo on wrapper components',
       category: 'Performance',
-      recommended: true
+      recommended: true,
     },
     fixable: true,
-    schema: []
+    schema: [],
   },
 
   create(context) {
@@ -344,20 +354,19 @@ module.exports = {
 
         context.report({
           node,
-          message: `Wrapper component "${componentName}" receives object props ` +
-                   `and should be wrapped with React.memo() to prevent unnecessary re-renders.`,
+          message:
+            `Wrapper component "${componentName}" receives object props ` +
+            `and should be wrapped with React.memo() to prevent unnecessary re-renders.`,
           fix(fixer) {
             const startText = `export const ${componentName} = `;
             const endText = init.type === 'FunctionExpression' ? ';' : '';
 
-            return fixer.replaceText(init,
-              `memo(${context.sourceCode.getText(init)})`
-            );
-          }
+            return fixer.replaceText(init, `memo(${context.sourceCode.getText(init)})`);
+          },
         });
-      }
+      },
     };
-  }
+  },
 };
 
 /**
@@ -381,7 +390,7 @@ function isLikelyWrapperComponent(node, context) {
   // Should have exactly one return statement
   let returnCount = 0;
   if (node.body?.type === 'BlockStatement') {
-    returnCount = node.body.body.filter(stmt => stmt.type === 'ReturnStatement').length;
+    returnCount = node.body.body.filter((stmt) => stmt.type === 'ReturnStatement').length;
   } else if (node.body?.type === 'JSXElement') {
     returnCount = 1;
   }
@@ -462,10 +471,10 @@ module.exports = {
     docs: {
       description: 'Detect duplicate JSX patterns across components',
       category: 'Code Quality',
-      recommended: false  // Advanced rule, might have false positives
+      recommended: false, // Advanced rule, might have false positives
     },
     fixable: false,
-    schema: []
+    schema: [],
   },
 
   create(context) {
@@ -482,32 +491,33 @@ module.exports = {
           if (existing.file !== fileName) {
             context.report({
               node,
-              message: `Duplicate JSX structure detected. ` +
-                       `Similar component found in ${existing.file}:${existing.line}. ` +
-                       `Consider extracting to a shared base component.`,
+              message:
+                `Duplicate JSX structure detected. ` +
+                `Similar component found in ${existing.file}:${existing.line}. ` +
+                `Consider extracting to a shared base component.`,
               suggest: [
                 {
                   desc: 'Extract JSX to BaseComponent and reuse',
                   fix(fixer) {
-                    return fixer.insertTextBefore(node,
-                      '// TODO: Extract JSX to base component\n' +
-                      `// See also: ${existing.file}\n`
+                    return fixer.insertTextBefore(
+                      node,
+                      '// TODO: Extract JSX to base component\n' + `// See also: ${existing.file}\n`
                     );
-                  }
-                }
-              ]
+                  },
+                },
+              ],
             });
           }
         } else {
           jsxRegistry.set(hash, {
             file: fileName,
             line: node.loc.start.line,
-            structure: describeJSXStructure(node)
+            structure: describeJSXStructure(node),
           });
         }
-      }
+      },
     };
-  }
+  },
 };
 
 /**
@@ -516,11 +526,7 @@ module.exports = {
  */
 function createJSXHash(node) {
   const structure = describeJSXStructure(node);
-  return crypto
-    .createHash('sha256')
-    .update(structure)
-    .digest('hex')
-    .slice(0, 8);
+  return crypto.createHash('sha256').update(structure).digest('hex').slice(0, 8);
 }
 
 /**
@@ -533,15 +539,15 @@ function describeJSXStructure(node) {
 
   const tag = node.openingElement?.name?.name || '?';
   const childrenDesc = (node.children || [])
-    .filter(child => child.type === 'JSXElement')
-    .map(child => describeJSXStructure(child))
+    .filter((child) => child.type === 'JSXElement')
+    .map((child) => describeJSXStructure(child))
     .join('+');
 
   return `${tag}>${childrenDesc}<${tag}`;
 }
 
 function getChildCount(node) {
-  return (node.children || []).filter(c => c.type === 'JSXElement').length;
+  return (node.children || []).filter((c) => c.type === 'JSXElement').length;
 }
 ```
 
@@ -554,7 +560,7 @@ module.exports = {
   rules: {
     // Detect duplicate JSX structures
     'no-duplicate-jsx-patterns': 'warn',
-  }
+  },
 };
 ```
 
@@ -592,14 +598,20 @@ module.exports = {
     // ─────────────────────────────────────
 
     // Detect duplicate function definitions
-    'custom-rules/no-duplicate-function-definitions': ['warn', {
-      ignore: ['test', 'spec']
-    }],
+    'custom-rules/no-duplicate-function-definitions': [
+      'warn',
+      {
+        ignore: ['test', 'spec'],
+      },
+    ],
 
     // Detect magic constants
-    'custom-rules/no-magic-constants': ['warn', {
-      allowedContexts: ['comment', 'log']
-    }],
+    'custom-rules/no-magic-constants': [
+      'warn',
+      {
+        allowedContexts: ['comment', 'log'],
+      },
+    ],
 
     // Require memo on wrapper components
     'custom-rules/require-memo-on-wrapper-components': 'warn',
@@ -610,8 +622,8 @@ module.exports = {
     // ─────────────────────────────────────
     // React Best Practices
     // ─────────────────────────────────────
-    'react/prop-types': 'off',  // Using TypeScript
-    'react/react-in-jsx-scope': 'off',  // Modern React doesn't need React import
+    'react/prop-types': 'off', // Using TypeScript
+    'react/react-in-jsx-scope': 'off', // Modern React doesn't need React import
     'react/display-name': 'warn',
     '@typescript-eslint/no-explicit-any': 'error',
 
@@ -619,7 +631,7 @@ module.exports = {
     // Code Quality
     // ─────────────────────────────────────
     'no-console': ['warn', { allow: ['warn', 'error'] }],
-    'no-unused-vars': 'off',  // Use TypeScript's checking
+    'no-unused-vars': 'off', // Use TypeScript's checking
     '@typescript-eslint/no-unused-vars': 'warn',
     'prefer-const': 'warn',
     'no-var': 'error',
@@ -676,11 +688,13 @@ module.exports = {
 ## Running the Rules
 
 ### Check for All Issues
+
 ```bash
 npm run lint
 ```
 
 ### Check Only Duplication Rules
+
 ```bash
 npm run lint:duplication
 
@@ -693,11 +707,13 @@ npm run lint:duplication
 ```
 
 ### Auto-Fix Where Possible
+
 ```bash
 npm run lint:fix
 ```
 
 ### Watch Mode (During Development)
+
 ```bash
 npm run lint:watch
 ```
@@ -730,7 +746,7 @@ jobs:
       # Run duplication detection
       - name: Check for component duplication
         run: npm run lint:duplication
-        continue-on-error: true  # Warning, not error
+        continue-on-error: true # Warning, not error
 
       # Run full lint
       - name: Run ESLint
@@ -777,12 +793,12 @@ Then **manually verify** during code review before treating as errors.
 
 ESLint rules can detect:
 
-| Issue | Rule | Detection |
-|-------|------|-----------|
-| Function duplication | `no-duplicate-function-definitions` | Exact match in 2+ files |
-| Magic constants | `no-magic-constants` | Hardcoded values in config list |
-| Missing memo | `require-memo-on-wrapper-components` | <30 line components + object props |
-| JSX duplication | `no-duplicate-jsx-patterns` | Structural hash matching |
+| Issue                | Rule                                 | Detection                          |
+| -------------------- | ------------------------------------ | ---------------------------------- |
+| Function duplication | `no-duplicate-function-definitions`  | Exact match in 2+ files            |
+| Magic constants      | `no-magic-constants`                 | Hardcoded values in config list    |
+| Missing memo         | `require-memo-on-wrapper-components` | <30 line components + object props |
+| JSX duplication      | `no-duplicate-jsx-patterns`          | Structural hash matching           |
 
 **Best Practice:** Use these as warnings to guide code review, not strict enforcement.
 

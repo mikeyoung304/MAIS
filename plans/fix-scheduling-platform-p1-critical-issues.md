@@ -49,6 +49,7 @@ Phase 7: Validation (30 min)
 **Problem:** Local interfaces don't match `ports.ts`. DI uses `as any`.
 
 **Files:**
+
 - `server/src/services/scheduling-availability.service.ts`
 - `server/src/di.ts`
 
@@ -96,9 +97,11 @@ const schedulingAvailabilityService = new SchedulingAvailabilityService(
 **Why first:** Constraint must exist BEFORE new code deploys to prevent race conditions.
 
 **Files:**
+
 - `server/prisma/schema.prisma`
 
 **Pre-Migration Check (5 min):**
+
 ```sql
 -- Run in production DB to verify no duplicates exist
 SELECT "tenantId", "serviceId", "startTime", "endTime", COUNT(*)
@@ -110,6 +113,7 @@ HAVING COUNT(*) > 1;
 ```
 
 **Schema Changes:**
+
 ```prisma
 model Booking {
   // ... existing fields
@@ -124,6 +128,7 @@ model Booking {
 ```
 
 **Migration:**
+
 ```bash
 cd server
 npm exec prisma migrate dev --name add_timeslot_unique_constraint
@@ -138,11 +143,13 @@ npm exec prisma migrate dev --name add_timeslot_unique_constraint
 ### 3A: Implement findTimeslotBookings()
 
 **Files:**
+
 - `server/src/lib/ports.ts`
 - `server/src/adapters/prisma/booking.repository.ts`
 - `server/src/services/scheduling-availability.service.ts`
 
 **Interface (ports.ts):**
+
 ```typescript
 export interface BookingRepository {
   // ... existing methods
@@ -151,15 +158,12 @@ export interface BookingRepository {
    * Find TIMESLOT bookings for conflict detection
    * Returns only PENDING/CONFIRMED bookings
    */
-  findTimeslotBookings(
-    tenantId: string,
-    date: Date,
-    serviceId?: string
-  ): Promise<Booking[]>;
+  findTimeslotBookings(tenantId: string, date: Date, serviceId?: string): Promise<Booking[]>;
 }
 ```
 
 **Implementation (booking.repository.ts):**
+
 ```typescript
 async findTimeslotBookings(
   tenantId: string,
@@ -191,6 +195,7 @@ async findTimeslotBookings(
 ```
 
 **Service Update (scheduling-availability.service.ts):**
+
 ```typescript
 // REPLACE the stub method (lines 392-407)
 private async getTimeslotBookings(
@@ -211,10 +216,12 @@ private async getTimeslotBookings(
 ### 3B: Google Calendar Sync for TIMESLOT Bookings
 
 **Files:**
+
 - `server/src/services/booking.service.ts`
 - `server/src/services/google-calendar.service.ts`
 
 **Update booking.service.ts - onAppointmentPaymentCompleted():**
+
 ```typescript
 async onAppointmentPaymentCompleted(
   tenantId: string,
@@ -255,6 +262,7 @@ async onAppointmentPaymentCompleted(
 ```
 
 **Add to google-calendar.service.ts:**
+
 ```typescript
 async createAppointmentEvent(params: {
   tenantId: string;
@@ -294,6 +302,7 @@ async createAppointmentEvent(params: {
 ```
 
 **Validation:**
+
 - Unit test: `findTimeslotBookings()` returns correct bookings
 - Integration test: Concurrent booking attempts - one succeeds, one fails
 
@@ -304,10 +313,12 @@ async createAppointmentEvent(params: {
 **Problem:** Loads all bookings into memory, filters with `as any`.
 
 **Files:**
+
 - `server/src/services/booking.service.ts`
 - `server/src/routes/tenant-admin-scheduling.routes.ts`
 
 **New Service Method (booking.service.ts):**
+
 ```typescript
 async getTimeslotAppointments(
   tenantId: string,
@@ -333,6 +344,7 @@ async getTimeslotAppointments(
 ```
 
 **Route Update (tenant-admin-scheduling.routes.ts):**
+
 ```typescript
 // REPLACE lines 498-501
 // BEFORE
@@ -355,11 +367,13 @@ const appointments = await bookingService.getTimeslotAppointments(tenantId, {
 **Problem:** Public checkout uses raw fetch, no type safety.
 
 **Files:**
+
 - `packages/contracts/src/dto.ts`
 - `packages/contracts/src/api.v1.ts`
 - `client/src/features/scheduling/AppointmentBookingFlow.tsx`
 
 **DTO Schema (dto.ts):**
+
 ```typescript
 export const CreateAppointmentCheckoutDtoSchema = z.object({
   serviceId: z.string().min(1),
@@ -381,6 +395,7 @@ export type CreateAppointmentCheckoutDto = z.infer<typeof CreateAppointmentCheck
 ```
 
 **Contract (api.v1.ts):**
+
 ```typescript
 createAppointmentCheckout: {
   method: 'POST',
@@ -402,6 +417,7 @@ createAppointmentCheckout: {
 ```
 
 **Frontend Update (AppointmentBookingFlow.tsx):**
+
 ```typescript
 // REPLACE raw fetch (lines 120-154)
 const result = await api.createAppointmentCheckout({
@@ -435,6 +451,7 @@ if (result.status === 201) {
 **File:** `client/src/features/scheduling/TimeSlotPicker.tsx`
 
 **Change (line 159):**
+
 ```typescript
 // BEFORE
 {data.slots.map((slot: TimeSlotDto, index: number) => {
@@ -452,6 +469,7 @@ if (result.status === 201) {
 ## Phase 7: Validation (30 minutes)
 
 ### Test Suite
+
 ```bash
 npm test                    # All 606+ tests pass
 npm run typecheck           # No errors, no 'as any'
@@ -459,6 +477,7 @@ npm run test:e2e            # E2E booking flow works
 ```
 
 ### Concurrent Booking Test
+
 ```typescript
 // Add to test/integration/booking.service.test.ts
 test('Concurrent booking attempts - one succeeds, one fails', async () => {
@@ -485,6 +504,7 @@ test('Concurrent booking attempts - one succeeds, one fails', async () => {
 ```
 
 ### Performance Check
+
 ```typescript
 test('Availability query < 50ms with 1000 bookings', async () => {
   await seedBookings(tenantId, 1000);
@@ -506,6 +526,7 @@ test('Availability query < 50ms with 1000 bookings', async () => {
 ## Acceptance Criteria
 
 ### Functional
+
 - [ ] `getAvailableSlots()` excludes slots with existing PENDING/CONFIRMED bookings
 - [ ] Two concurrent booking attempts for same slot - one succeeds (201), one fails (409)
 - [ ] Admin appointments endpoint queries DB directly (no in-memory filter)
@@ -514,11 +535,13 @@ test('Availability query < 50ms with 1000 bookings', async () => {
 - [ ] TIMESLOT bookings sync to Google Calendar
 
 ### Non-Functional
+
 - [ ] TypeScript compiles without `as any` in DI or routes
 - [ ] Availability check < 50ms with 1000 bookings
 - [ ] Admin appointments list < 100ms with 10,000 bookings
 
 ### Quality Gates
+
 - [ ] All 606+ existing tests pass
 - [ ] New concurrent booking test passes
 - [ ] `npm run typecheck` passes
@@ -528,35 +551,35 @@ test('Availability query < 50ms with 1000 bookings', async () => {
 
 ## Files Changed Summary
 
-| File | Change | Phase |
-|------|--------|-------|
-| `server/src/services/scheduling-availability.service.ts` | Remove local interfaces, update method calls | 1, 3 |
-| `server/src/di.ts` | Remove `as any` | 1 |
-| `server/prisma/schema.prisma` | Add constraint + indexes | 2 |
-| `server/src/lib/ports.ts` | Add `findTimeslotBookings` | 3 |
-| `server/src/adapters/prisma/booking.repository.ts` | Implement method | 3 |
-| `server/src/services/booking.service.ts` | Add calendar sync + appointments method | 3, 4 |
-| `server/src/services/google-calendar.service.ts` | Add appointment event method | 3 |
-| `server/src/routes/tenant-admin-scheduling.routes.ts` | Use new service method | 4 |
-| `packages/contracts/src/dto.ts` | Add checkout DTOs | 5 |
-| `packages/contracts/src/api.v1.ts` | Add checkout contract | 5 |
-| `client/src/features/scheduling/AppointmentBookingFlow.tsx` | Use contract client | 5 |
-| `client/src/features/scheduling/TimeSlotPicker.tsx` | Fix React key | 6 |
+| File                                                        | Change                                       | Phase |
+| ----------------------------------------------------------- | -------------------------------------------- | ----- |
+| `server/src/services/scheduling-availability.service.ts`    | Remove local interfaces, update method calls | 1, 3  |
+| `server/src/di.ts`                                          | Remove `as any`                              | 1     |
+| `server/prisma/schema.prisma`                               | Add constraint + indexes                     | 2     |
+| `server/src/lib/ports.ts`                                   | Add `findTimeslotBookings`                   | 3     |
+| `server/src/adapters/prisma/booking.repository.ts`          | Implement method                             | 3     |
+| `server/src/services/booking.service.ts`                    | Add calendar sync + appointments method      | 3, 4  |
+| `server/src/services/google-calendar.service.ts`            | Add appointment event method                 | 3     |
+| `server/src/routes/tenant-admin-scheduling.routes.ts`       | Use new service method                       | 4     |
+| `packages/contracts/src/dto.ts`                             | Add checkout DTOs                            | 5     |
+| `packages/contracts/src/api.v1.ts`                          | Add checkout contract                        | 5     |
+| `client/src/features/scheduling/AppointmentBookingFlow.tsx` | Use contract client                          | 5     |
+| `client/src/features/scheduling/TimeSlotPicker.tsx`         | Fix React key                                | 6     |
 
 ---
 
 ## Timeline
 
-| Phase | Task | Time | Parallel? |
-|-------|------|------|-----------|
-| 1 | Interface fix | 30 min | No |
-| 2 | DB constraint | 45 min | No |
-| 3 | Conflict detection + Calendar | 2 hours | No |
-| 4 | Admin filter | 1 hour | Yes |
-| 5 | API contract | 1 hour | Yes |
-| 6 | React key | 15 min | Yes |
-| 7 | Validation | 30 min | No |
-| **Total** | | **~6 hours wall-clock** | |
+| Phase     | Task                          | Time                    | Parallel? |
+| --------- | ----------------------------- | ----------------------- | --------- |
+| 1         | Interface fix                 | 30 min                  | No        |
+| 2         | DB constraint                 | 45 min                  | No        |
+| 3         | Conflict detection + Calendar | 2 hours                 | No        |
+| 4         | Admin filter                  | 1 hour                  | Yes       |
+| 5         | API contract                  | 1 hour                  | Yes       |
+| 6         | React key                     | 15 min                  | Yes       |
+| 7         | Validation                    | 30 min                  | No        |
+| **Total** |                               | **~6 hours wall-clock** |           |
 
 ---
 
@@ -588,6 +611,6 @@ erDiagram
 
 ---
 
-*Plan updated: 2025-11-28*
-*Reviewers: DHH-style, Kieran-style, Simplicity*
-*Includes: Google Calendar sync, reordered phases, concurrent booking test*
+_Plan updated: 2025-11-28_
+_Reviewers: DHH-style, Kieran-style, Simplicity_
+_Includes: Google Calendar sync, reordered phases, concurrent booking test_

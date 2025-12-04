@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
-import type { SegmentDto } from "@macon/contracts";
-import { api } from "@/lib/api";
-import { SegmentForm } from "./SegmentForm";
-import { SegmentsList } from "./SegmentsList";
-import { CreateSegmentButton } from "./CreateSegmentButton";
-import { SuccessMessage } from "../packages/SuccessMessage";
-import { useSuccessMessage } from "../packages/hooks/useSuccessMessage";
-import { useSegmentManager } from "./hooks/useSegmentManager";
+import { useState, useEffect } from 'react';
+import type { SegmentDto } from '@macon/contracts';
+import { api } from '@/lib/api';
+import { SegmentForm } from './SegmentForm';
+import { SegmentsList } from './SegmentsList';
+import { CreateSegmentButton } from './CreateSegmentButton';
+import { SuccessMessage } from '../packages/SuccessMessage';
+import { useSuccessMessage } from '../packages/hooks/useSuccessMessage';
+import { useSegmentManager } from './hooks/useSegmentManager';
 
 export function SegmentsManager() {
   const [segments, setSegments] = useState<SegmentDto[]>([]);
@@ -56,8 +56,8 @@ export function SegmentsManager() {
             <h2 className="font-serif text-2xl font-bold text-text-primary">Your Segments</h2>
             <p className="text-text-muted text-sm mt-1">
               {segments.length === 0
-                ? "Organize your packages into segments"
-                : `${segments.length} segment${segments.length !== 1 ? "s" : ""} created`}
+                ? 'Organize your packages into segments'
+                : `${segments.length} segment${segments.length !== 1 ? 's' : ''} created`}
             </p>
           </div>
           <CreateSegmentButton onClick={handleCreateSegment} />

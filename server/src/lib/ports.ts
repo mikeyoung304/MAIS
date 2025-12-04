@@ -30,12 +30,19 @@ export interface CatalogRepository {
 
   // Segment-scoped methods (Phase A - Segment Implementation)
   getPackagesBySegment(tenantId: string, segmentId: string): Promise<Package[]>;
-  getPackagesBySegmentWithAddOns(tenantId: string, segmentId: string): Promise<(Package & { addOns: AddOn[] })[]>;
+  getPackagesBySegmentWithAddOns(
+    tenantId: string,
+    segmentId: string
+  ): Promise<(Package & { addOns: AddOn[] })[]>;
   getAddOnsForSegment(tenantId: string, segmentId: string): Promise<AddOn[]>;
 
   // Draft methods (Visual Editor)
   getAllPackagesWithDrafts(tenantId: string): Promise<PackageWithDraft[]>;
-  updateDraft(tenantId: string, packageId: string, draft: UpdatePackageDraftInput): Promise<PackageWithDraft>;
+  updateDraft(
+    tenantId: string,
+    packageId: string,
+    draft: UpdatePackageDraftInput
+  ): Promise<PackageWithDraft>;
   publishDrafts(tenantId: string, packageIds?: string[]): Promise<Package[]>;
   discardDrafts(tenantId: string, packageIds?: string[]): Promise<number>;
   countDrafts(tenantId: string): Promise<number>;
@@ -61,10 +68,17 @@ export interface TimeslotBooking {
  */
 export interface BookingUpdateInput {
   // Reschedule fields
-  eventDate?: string;            // New date (YYYY-MM-DD format)
+  eventDate?: string; // New date (YYYY-MM-DD format)
 
   // Status transitions
-  status?: 'PENDING' | 'DEPOSIT_PAID' | 'PAID' | 'CONFIRMED' | 'CANCELED' | 'REFUNDED' | 'FULFILLED';
+  status?:
+    | 'PENDING'
+    | 'DEPOSIT_PAID'
+    | 'PAID'
+    | 'CONFIRMED'
+    | 'CANCELED'
+    | 'REFUNDED'
+    | 'FULFILLED';
 
   // Cancellation fields
   cancelledAt?: Date;
@@ -266,7 +280,10 @@ export interface BlackoutRepository {
   getAllBlackouts(tenantId: string): Promise<{ date: string; reason?: string }[]>;
   addBlackout(tenantId: string, date: string, reason?: string): Promise<void>;
   deleteBlackout(tenantId: string, id: string): Promise<void>;
-  findBlackoutById(tenantId: string, id: string): Promise<{ id: string; date: string; reason?: string } | null>;
+  findBlackoutById(
+    tenantId: string,
+    id: string
+  ): Promise<{ id: string; date: string; reason?: string } | null>;
 }
 
 /**
@@ -314,8 +331,16 @@ export interface ServiceRepository {
 export interface AvailabilityRuleRepository {
   getAll(tenantId: string): Promise<AvailabilityRule[]>;
   getByService(tenantId: string, serviceId: string | null): Promise<AvailabilityRule[]>;
-  getByDayOfWeek(tenantId: string, dayOfWeek: number, serviceId?: string | null): Promise<AvailabilityRule[]>;
-  getEffectiveRules(tenantId: string, date: Date, serviceId?: string | null): Promise<AvailabilityRule[]>;
+  getByDayOfWeek(
+    tenantId: string,
+    dayOfWeek: number,
+    serviceId?: string | null
+  ): Promise<AvailabilityRule[]>;
+  getEffectiveRules(
+    tenantId: string,
+    date: Date,
+    serviceId?: string | null
+  ): Promise<AvailabilityRule[]>;
   create(tenantId: string, data: CreateAvailabilityRuleData): Promise<AvailabilityRule>;
   update(tenantId: string, id: string, data: UpdateAvailabilityRuleData): Promise<AvailabilityRule>;
   delete(tenantId: string, id: string): Promise<void>;
@@ -413,10 +438,7 @@ export interface PaymentProvider {
     applicationFeeAmount: number; // Platform commission in cents (required for Connect)
     idempotencyKey?: string; // Idempotency key to prevent duplicate charges
   }): Promise<CheckoutSession>;
-  verifyWebhook(
-    payload: string,
-    signature: string
-  ): Promise<Stripe.Event>;
+  verifyWebhook(payload: string, signature: string): Promise<Stripe.Event>;
   refund(input: {
     paymentIntentId: string;
     amountCents?: number; // Optional: for partial refunds, omit for full refund
@@ -764,7 +786,11 @@ export interface FileSystem {
  */
 export interface StorageProvider {
   uploadLogo(file: UploadedFile, tenantId: string): Promise<UploadResult>;
-  uploadPackagePhoto(file: UploadedFile, packageId: string, tenantId?: string): Promise<UploadResult>;
+  uploadPackagePhoto(
+    file: UploadedFile,
+    packageId: string,
+    tenantId?: string
+  ): Promise<UploadResult>;
   uploadSegmentImage(file: UploadedFile, tenantId: string): Promise<UploadResult>;
   deleteLogo(filename: string): Promise<void>;
   deletePackagePhoto(filename: string): Promise<void>;

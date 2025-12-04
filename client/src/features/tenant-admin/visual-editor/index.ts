@@ -13,11 +13,11 @@
  * - useVisualEditor: Main state management hook
  */
 
-export { VisualEditorDashboard } from "./VisualEditorDashboard";
-export { EditablePackageCard } from "./components/EditablePackageCard";
-export { EditablePackageGrid } from "./components/EditablePackageGrid";
-export { EditableText } from "./components/EditableText";
-export { EditablePrice } from "./components/EditablePrice";
-export { PhotoDropZone } from "./components/PhotoDropZone";
-export { useVisualEditor } from "./hooks/useVisualEditor";
-export type { PackageWithDraft, PackagePhoto, DraftUpdate } from "./hooks/useVisualEditor";
+export { VisualEditorDashboard } from './VisualEditorDashboard';
+export { EditablePackageCard } from './components/EditablePackageCard';
+export { EditablePackageGrid } from './components/EditablePackageGrid';
+export { EditableText } from './components/EditableText';
+export { EditablePrice } from './components/EditablePrice';
+export { PhotoDropZone } from './components/PhotoDropZone';
+export { useVisualEditor } from './hooks/useVisualEditor';
+export type { PackageWithDraft, PackagePhoto, DraftUpdate } from './hooks/useVisualEditor';

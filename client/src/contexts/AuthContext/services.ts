@@ -85,9 +85,7 @@ export async function authenticateUser(
     token,
     role: targetRole,
     tenantId:
-      targetRole === 'TENANT_ADMIN' && userData.role === 'TENANT_ADMIN'
-        ? userData.tenantId
-        : null,
+      targetRole === 'TENANT_ADMIN' && userData.role === 'TENANT_ADMIN' ? userData.tenantId : null,
     impersonation: null, // Normal login never has impersonation
   };
 }

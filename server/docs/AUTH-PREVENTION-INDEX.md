@@ -7,11 +7,13 @@ Quick navigation guide for authentication prevention strategies, best practices,
 ## Files in This Series
 
 ### 1. **AUTH-ISSUES-SUMMARY.md** (Start Here)
+
 **Purpose:** Executive overview of the three authentication issues and current fixes
 **Read Time:** 15 minutes
 **Best For:** Understanding what was fixed and why
 
 **Contents:**
+
 - Quick issue overview table
 - What happened for each issue
 - Root cause analysis
@@ -23,6 +25,7 @@ Quick navigation guide for authentication prevention strategies, best practices,
 ---
 
 ### 2. **auth-prevention-strategies.md** (Deep Dive)
+
 **Purpose:** Comprehensive prevention strategies with detailed implementation guides
 **Read Time:** 45 minutes (or reference as needed)
 **Best For:** Implementing fixes, understanding prevention strategies, writing tests
@@ -30,12 +33,14 @@ Quick navigation guide for authentication prevention strategies, best practices,
 **Contents:**
 
 #### Issue 1: Password Hash Synchronization
+
 - Centralized credential configuration
 - Updating seed script
 - Test helpers
 - Best practices checklist
 
 #### Issue 2: Case-Insensitive Email Handling
+
 - Prisma schema constraints
 - Repository layer normalization
 - Service layer normalization
@@ -44,6 +49,7 @@ Quick navigation guide for authentication prevention strategies, best practices,
 - Best practices checklist
 
 #### Issue 3: Demo/Dev Credentials Sync
+
 - Centralized credential distribution
 - Build-time generation
 - Frontend integration
@@ -52,6 +58,7 @@ Quick navigation guide for authentication prevention strategies, best practices,
 - Best practices checklist
 
 #### Additional Sections
+
 - Testing strategy
 - Comprehensive prevention checklist
 - Quick reference for where credentials are used
@@ -64,6 +71,7 @@ Quick navigation guide for authentication prevention strategies, best practices,
 ---
 
 ### 3. **auth-best-practices-checklist.md** (Checklist)
+
 **Purpose:** Action-oriented checklists for development, review, and maintenance
 **Read Time:** 10 minutes (or reference as needed)
 **Best For:** Code reviews, implementation tasks, security audits
@@ -91,6 +99,7 @@ Quick navigation guide for authentication prevention strategies, best practices,
 **File:** `test/integration/auth-prevention-tests.spec.ts` (740 lines)
 
 **Test Suites:**
+
 1. **Issue 1: Password Hash Synchronization** (6 tests)
    - Seed data validation
    - Password hash verification
@@ -115,6 +124,7 @@ Quick navigation guide for authentication prevention strategies, best practices,
 **Total Test Cases:** 40+
 
 **Run Tests:**
+
 ```bash
 npm test -- test/integration/auth-prevention-tests.spec.ts
 ```
@@ -126,26 +136,34 @@ npm test -- test/integration/auth-prevention-tests.spec.ts
 ### I Want To...
 
 #### Understand What Was Fixed
+
 → Read: [`AUTH-ISSUES-SUMMARY.md`](./AUTH-ISSUES-SUMMARY.md)
+
 - 5-minute overview of each issue
 - Before/after code examples
 - Current state verification
 
 #### Implement Authentication Feature
+
 → Use: [`auth-best-practices-checklist.md`](./auth-best-practices-checklist.md) → Implementation Checklist
+
 - Step-by-step implementation guide
 - Required file changes
 - Testing requirements
 
 #### Review Authentication Code
+
 → Use: [`auth-best-practices-checklist.md`](./auth-best-practices-checklist.md) → Code Review Checklist
+
 - Email handling validation
 - Password management review
 - Credential configuration check
 - Testing verification
 
 #### Add a New Dev Credential Type
+
 → Follow: [`auth-prevention-strategies.md`](./auth-prevention-strategies.md) → Maintenance Guide
+
 1. Edit `server/config/dev-credentials.ts`
 2. Update seed script
 3. Create test fixtures
@@ -153,13 +171,17 @@ npm test -- test/integration/auth-prevention-tests.spec.ts
 5. Run seed and verify
 
 #### Debug Authentication Issue
+
 → Use: [`auth-best-practices-checklist.md`](./auth-best-practices-checklist.md) → Troubleshooting Guide
+
 - Common issues and solutions
 - Quick commands for diagnosis
 - Verification steps
 
 #### Set Up Security Audit
+
 → Use: [`auth-best-practices-checklist.md`](./auth-best-practices-checklist.md) → Security Audit Checklist
+
 - 30+ items to verify
 - Cryptography checks
 - Input validation review
@@ -176,11 +198,13 @@ npm test -- test/integration/auth-prevention-tests.spec.ts
 **Rule:** Always normalize emails to lowercase at storage AND lookup
 
 **Where:**
+
 - Repository layer: `src/adapters/prisma/tenant.repository.ts`
 - Service layer: `src/services/tenant-auth.service.ts`
 - Route layer: `src/routes/auth.routes.ts`
 
 **Pattern:**
+
 ```typescript
 const normalized = email.toLowerCase().trim();
 ```
@@ -194,12 +218,14 @@ const normalized = email.toLowerCase().trim();
 **Location:** `server/config/dev-credentials.ts`
 
 **Used By:**
+
 - Seed script: `server/prisma/seed.ts`
 - Test helpers: `server/test/helpers/dev-credentials.ts`
 - All test files that need credentials
 - Build script for frontend generation
 
 **Pattern:**
+
 ```typescript
 import { DEV_CREDENTIALS } from '../config/dev-credentials';
 const { email, password } = DEV_CREDENTIALS.platformAdmin;
@@ -210,12 +236,14 @@ const { email, password } = DEV_CREDENTIALS.platformAdmin;
 **Rule:** Always hash passwords with bcryptjs before storage
 
 **Requirements:**
+
 - Minimum 10 rounds (OWASP 2024 recommendation)
 - Use `bcrypt.hash()` for hashing
 - Use `bcrypt.compare()` for verification
 - Never store plaintext passwords
 
 **Pattern:**
+
 ```typescript
 const hash = await bcrypt.hash(password, 12);
 const isValid = await bcrypt.compare(inputPassword, hash);
@@ -226,22 +254,24 @@ const isValid = await bcrypt.compare(inputPassword, hash);
 **Rule:** Explicit algorithm, validated expiration, type checking
 
 **Requirements:**
+
 - Specify `algorithm: 'HS256'`
 - Verify algorithm with `algorithms: ['HS256']`
 - Set `expiresIn` to reasonable time (7-30 days)
 - Validate `type` field in payload
 
 **Pattern:**
+
 ```typescript
 // Create
 const token = jwt.sign(payload, secret, {
   algorithm: 'HS256',
-  expiresIn: '7d'
+  expiresIn: '7d',
 });
 
 // Verify
 const payload = jwt.verify(token, secret, {
-  algorithms: ['HS256']
+  algorithms: ['HS256'],
 });
 if (payload.type !== 'tenant') throw new Error('Invalid type');
 ```
@@ -253,12 +283,14 @@ if (payload.type !== 'tenant') throw new Error('Invalid type');
 ### File Locations
 
 **Configuration:**
+
 ```
 server/config/
   └─ dev-credentials.ts (SINGLE SOURCE OF TRUTH)
 ```
 
 **Seed & Migration:**
+
 ```
 server/prisma/
   ├─ schema.prisma (Email normalization documented)
@@ -266,6 +298,7 @@ server/prisma/
 ```
 
 **Backend Implementation:**
+
 ```
 server/src/
   ├─ adapters/prisma/
@@ -277,6 +310,7 @@ server/src/
 ```
 
 **Tests:**
+
 ```
 server/test/
   ├─ integration/
@@ -288,6 +322,7 @@ server/test/
 ```
 
 **Documentation:**
+
 ```
 server/docs/
   ├─ AUTH-ISSUES-SUMMARY.md (Executive overview)
@@ -301,6 +336,7 @@ server/docs/
 ## Essential Reading Order
 
 ### For New Developers
+
 1. `AUTH-ISSUES-SUMMARY.md` (15 min) - Understand the problems
 2. `auth-best-practices-checklist.md` → Pre-Development (10 min) - Remember do's and don'ts
 3. Read the code: `src/adapters/prisma/tenant.repository.ts` (5 min) - See email normalization
@@ -309,6 +345,7 @@ server/docs/
 **Total Time:** ~30 minutes
 
 ### For Code Reviewers
+
 1. `auth-best-practices-checklist.md` → Code Review Checklist (10 min)
 2. Use checklist to review auth-related PRs
 3. Reference specific sections for email handling, password hashing, etc.
@@ -316,6 +353,7 @@ server/docs/
 **Time per review:** ~15 minutes
 
 ### For Security Audits
+
 1. `auth-best-practices-checklist.md` → Security Audit Checklist (20 min)
 2. `auth-prevention-strategies.md` → Security section (10 min)
 3. Verify each item in the checklist
@@ -353,32 +391,35 @@ grep -r "router.post.*auth\|router.get.*auth" server/src/routes/
 
 ## Troubleshooting Quick Links
 
-| Issue | Solution |
-|-------|----------|
-| Login fails with correct credentials | [See troubleshooting guide](./auth-best-practices-checklist.md#troubleshooting-guide) |
-| Signup fails with "Email already exists" | Check email case normalization, whitespace |
-| Tests use different credentials than seed | Verify tests import from `config/dev-credentials.ts` |
-| Frontend autofill shows wrong credentials | Run `npm run build` to regenerate |
-| Mixed-case email login fails | Check normalization at all layers |
-| Password hash doesn't match | Verify seed script and bcrypt rounds |
+| Issue                                     | Solution                                                                              |
+| ----------------------------------------- | ------------------------------------------------------------------------------------- |
+| Login fails with correct credentials      | [See troubleshooting guide](./auth-best-practices-checklist.md#troubleshooting-guide) |
+| Signup fails with "Email already exists"  | Check email case normalization, whitespace                                            |
+| Tests use different credentials than seed | Verify tests import from `config/dev-credentials.ts`                                  |
+| Frontend autofill shows wrong credentials | Run `npm run build` to regenerate                                                     |
+| Mixed-case email login fails              | Check normalization at all layers                                                     |
+| Password hash doesn't match               | Verify seed script and bcrypt rounds                                                  |
 
 ---
 
 ## Key Statistics
 
 ### Documentation
+
 - **Total Pages:** 60+ pages of documentation
 - **Code Examples:** 50+ examples across all files
 - **Checklists:** 6 comprehensive checklists
 - **Test Cases:** 40+ test scenarios
 
 ### Code Changes
+
 - **New Files:** 7 (config, scripts, tests, docs)
 - **Modified Files:** 5 (seed, service, repo, routes, schema)
 - **Lines Added:** ~1,500 (mostly tests and docs)
 - **Test Coverage:** 100% of auth flows
 
 ### Prevention Coverage
+
 - **Issue 1 (Hash Sync):** 6 tests + checklist + guide
 - **Issue 2 (Email Case):** 13 tests + checklist + guide
 - **Issue 3 (Cred Sync):** 8 tests + checklist + guide
@@ -389,24 +430,28 @@ grep -r "router.post.*auth\|router.get.*auth" server/src/routes/
 ## How to Use These Documents
 
 ### As a Developer
+
 1. Keep `auth-best-practices-checklist.md` bookmarked
 2. Reference during implementation
 3. Use before committing
 4. Run test suite before PR
 
 ### As a Code Reviewer
+
 1. Use `Code Review Checklist` for all auth changes
 2. Verify email normalization in all layers
 3. Check password hashing practices
 4. Ensure test coverage
 
 ### As a Maintainer
+
 1. Follow `Maintenance Checklist` for regular tasks
 2. Review `Troubleshooting Guide` when issues arise
 3. Update `config/dev-credentials.ts` when needed
 4. Run `npm test -- auth-prevention-tests.spec.ts` after changes
 
 ### As DevOps/Security
+
 1. Use `Security Audit Checklist` before deployments
 2. Monitor suggestions in `Monitoring and Alerts` section
 3. Implement alerting for auth failures
@@ -417,6 +462,7 @@ grep -r "router.post.*auth\|router.get.*auth" server/src/routes/
 ## Quick Reference Cards
 
 ### Email Normalization Checklist
+
 - [ ] Normalize in repository `findByEmail()`
 - [ ] Normalize in repository `create()`
 - [ ] Normalize in repository `update()`
@@ -429,6 +475,7 @@ grep -r "router.post.*auth\|router.get.*auth" server/src/routes/
 - [ ] Test with whitespace
 
 ### Password Handling Checklist
+
 - [ ] Use bcryptjs library
 - [ ] Hash with minimum 10 rounds
 - [ ] Use centralized credentials config
@@ -441,6 +488,7 @@ grep -r "router.post.*auth\|router.get.*auth" server/src/routes/
 - [ ] Test wrong password rejection
 
 ### Credential Sync Checklist
+
 - [ ] Define in `config/dev-credentials.ts`
 - [ ] Seed script imports from config
 - [ ] Tests import from config
@@ -474,11 +522,11 @@ grep -r "router.post.*auth\|router.get.*auth" server/src/routes/
 
 ## Version History
 
-| Date | What Changed |
-|------|--------------|
+| Date       | What Changed                                        |
+| ---------- | --------------------------------------------------- |
 | 2025-11-27 | Initial documentation created for Issue 1, 2, and 3 |
-| TBD | Updates based on team feedback |
-| TBD | Additional prevention strategies added |
+| TBD        | Updates based on team feedback                      |
+| TBD        | Additional prevention strategies added              |
 
 ---
 

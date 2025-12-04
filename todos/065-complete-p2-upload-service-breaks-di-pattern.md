@@ -1,11 +1,11 @@
 ---
 status: complete
 priority: p2
-issue_id: "065"
+issue_id: '065'
 tags: [code-review, architecture, patterns, refactor]
 dependencies: []
-resolved_at: "2025-12-02"
-resolution: "UploadAdapter now follows DI pattern with StorageProvider interface"
+resolved_at: '2025-12-02'
+resolution: 'UploadAdapter now follows DI pattern with StorageProvider interface'
 ---
 
 # UploadService Breaks Dependency Injection Pattern
@@ -15,6 +15,7 @@ resolution: "UploadAdapter now follows DI pattern with StorageProvider interface
 The UploadService is implemented as a singleton that self-configures based on `process.env.ADAPTERS_PRESET`, completely bypassing the established DI container (`di.ts`) and adapter/port pattern used throughout the codebase. This creates architectural inconsistency and makes testing harder.
 
 **Why This Matters:**
+
 - Violates Open/Closed Principle (cannot add S3 without modifying service)
 - Tests must manipulate process.env instead of injecting mocks
 - Inconsistent with BookingService, CatalogService patterns
@@ -50,6 +51,7 @@ The upload service has been refactored to follow the DI pattern:
 ### Evidence from Code Review
 
 **Current Pattern (inconsistent):**
+
 ```typescript
 // upload.service.ts
 export class UploadService {
@@ -72,6 +74,7 @@ export const uploadService = new UploadService();
 ```
 
 **Expected Pattern (from codebase):**
+
 ```typescript
 // di.ts
 if (config.ADAPTERS_PRESET === 'mock') {
@@ -90,6 +93,7 @@ export class BookingService {
 ```
 
 ### Architecture Strategist Assessment
+
 - No interface contract in `ports.ts`
 - No DI wiring in `di.ts`
 - Internal if/else instead of adapter swapping
@@ -102,12 +106,14 @@ export class BookingService {
 **Description:** Create StorageProvider interface, separate adapters, wire in DI.
 
 **Pros:**
+
 - Consistent with codebase architecture
 - Easy to add S3, Cloudflare R2 in future
 - Tests use dependency injection
 - Follows SOLID principles
 
 **Cons:**
+
 - More files (interface + 2 adapters)
 - Migration effort for existing usage
 - May be over-engineering for simple feature
@@ -141,11 +147,13 @@ export const uploadService = new UploadService(storageProvider);
 **Description:** Add interface to ports.ts, keep singleton but document pattern violation.
 
 **Pros:**
+
 - Faster to implement
 - No breaking changes
 - Documents for future reference
 
 **Cons:**
+
 - Still violates DI pattern
 - Testing still requires env var manipulation
 - Technical debt remains
@@ -158,10 +166,12 @@ export const uploadService = new UploadService(storageProvider);
 **Description:** Keep as-is, add TODO comments and ticket for future refactor.
 
 **Pros:**
+
 - No code changes
 - Ships faster
 
 **Cons:**
+
 - Pattern violation persists
 - Will be cargo-culted for future uploads
 
@@ -176,6 +186,7 @@ export const uploadService = new UploadService(storageProvider);
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/lib/ports.ts` - Add StorageProvider interface
 - `server/src/adapters/mock/mock-storage.adapter.ts` - New file
 - `server/src/adapters/supabase/supabase-storage.adapter.ts` - New file
@@ -196,9 +207,9 @@ export const uploadService = new UploadService(storageProvider);
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-29 | Created | Found during code review - Architecture Strategist |
+| Date       | Action   | Notes                                                      |
+| ---------- | -------- | ---------------------------------------------------------- |
+| 2025-11-29 | Created  | Found during code review - Architecture Strategist         |
 | 2025-12-02 | Resolved | Verified DI pattern implementation is complete and correct |
 
 ## Resources

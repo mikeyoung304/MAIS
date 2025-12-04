@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "046"
+issue_id: '046'
 tags: [code-review, scheduling, security, performance, critical]
 dependencies: []
 ---
@@ -38,6 +38,7 @@ bookings = bookings.filter((b: any) => b.bookingType === 'TIMESLOT');
 ### Performance Impact
 
 With 10,000 legacy DATE bookings and 100 TIMESLOT appointments:
+
 - Current: Load 10,100 records into memory, return 100
 - Should be: Query only TIMESLOT bookings, return 100
 
@@ -54,6 +55,7 @@ With 10,000 legacy DATE bookings and 100 TIMESLOT appointments:
 ## Proposed Solutions
 
 ### Option A: Move Filter to Database Query (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 Add method to BookingService that queries only TIMESLOT bookings:
@@ -87,14 +89,17 @@ const bookings = await bookingService.getTimeslotAppointments(tenantId, {
 ```
 
 **Pros:**
+
 - Database does filtering (efficient)
 - Type-safe (no `as any`)
 - Fail-closed pattern (DB error if column missing)
 
 **Cons:**
+
 - New method in service
 
 ### Option B: Add Type Guard
+
 **Effort:** Small | **Risk:** Low
 
 Add runtime type check before filter:
@@ -108,10 +113,12 @@ bookings = bookings.filter(isTimeslotBooking);
 ```
 
 **Pros:**
+
 - Type-safe filtering
 - Explicit about expected structure
 
 **Cons:**
+
 - Still loads all data into memory
 
 ## Recommended Action
@@ -121,16 +128,19 @@ Implement **Option A** - move filtering to database query for both performance a
 ## Technical Details
 
 **Files to Update:**
+
 1. `server/src/services/booking.service.ts` - Add `getTimeslotAppointments()` method
 2. `server/src/routes/tenant-admin-scheduling.routes.ts:498-501` - Use new method
 
 **Current Code (WRONG):**
+
 ```typescript
 let bookings = await bookingService.getAllBookings(tenantId);
 bookings = bookings.filter((b: any) => b.bookingType === 'TIMESLOT');
 ```
 
 **Fixed Code:**
+
 ```typescript
 const appointments = await bookingService.getTimeslotAppointments(tenantId, {
   status: req.query.status,
@@ -151,8 +161,8 @@ const appointments = await bookingService.getTimeslotAppointments(tenantId, {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                                |
+| ---------- | ------- | ---------------------------------------------------- |
 | 2025-11-27 | Created | Found during Security Sentinel review - BLOCKS MERGE |
 
 ## Resources

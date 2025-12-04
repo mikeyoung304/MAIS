@@ -88,6 +88,6 @@ export class AvailabilityService {
   async getUnavailableDates(tenantId: string, startDate: Date, endDate: Date): Promise<string[]> {
     // Batch fetch all booked dates in the range (single DB query, tenant-scoped)
     const bookedDates = await this.bookingRepo.getUnavailableDates(tenantId, startDate, endDate);
-    return bookedDates.map(d => d.toISOString().split('T')[0]); // Return as YYYY-MM-DD strings
+    return bookedDates.map((d) => d.toISOString().split('T')[0]); // Return as YYYY-MM-DD strings
   }
 }

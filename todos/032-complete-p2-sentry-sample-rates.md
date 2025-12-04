@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "032"
+issue_id: '032'
 tags: [code-review, devops, monitoring, sentry]
 dependencies: []
 resolved_date: 2025-12-02
@@ -35,6 +35,7 @@ profilesSampleRate: config?.profilesSampleRate || 0.1,   // 10%
 ## Proposed Solutions
 
 ### Option A: Increase Rates and Add Filtering (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 ```typescript
@@ -58,9 +59,9 @@ beforeSend(event, hint) {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-27 | Created | Found during DevOps analysis |
+| Date       | Action   | Notes                                                         |
+| ---------- | -------- | ------------------------------------------------------------- |
+| 2025-11-27 | Created  | Found during DevOps analysis                                  |
 | 2025-12-02 | Resolved | Server config already updated, applied same changes to client |
 
 ## Resolution Summary
@@ -78,6 +79,7 @@ beforeSend(event, hint) {
    - ✅ Environment variable overrides already supported
 
 **Impact:**
+
 - 5x improvement in trace capture rate (10% → 50%)
 - Reduced noise from operational events (health checks, 404s, 429s)
 - Better production observability for performance debugging

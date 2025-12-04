@@ -182,12 +182,15 @@ export class UnifiedAuthController {
       },
     });
 
-    logger.info({
-      event: 'impersonation_started',
-      adminEmail: payload.email,
-      tenantId: tenant.id,
-      tenantSlug: tenant.slug,
-    }, `Platform admin ${payload.email} started impersonating tenant ${tenant.slug}`);
+    logger.info(
+      {
+        event: 'impersonation_started',
+        adminEmail: payload.email,
+        tenantId: tenant.id,
+        tenantSlug: tenant.slug,
+      },
+      `Platform admin ${payload.email} started impersonating tenant ${tenant.slug}`
+    );
 
     return {
       token: impersonationToken,
@@ -221,10 +224,13 @@ export class UnifiedAuthController {
       role: 'PLATFORM_ADMIN' as const,
     });
 
-    logger.info({
-      event: 'impersonation_stopped',
-      adminEmail: payload.email,
-    }, `Platform admin ${payload.email} stopped impersonation`);
+    logger.info(
+      {
+        event: 'impersonation_stopped',
+        adminEmail: payload.email,
+      },
+      `Platform admin ${payload.email} stopped impersonation`
+    );
 
     return {
       token: normalToken,
@@ -287,27 +293,33 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
       const result = await controller.login({ email, password });
 
       // Log successful login
-      logger.info({
-        event: 'unified_login_success',
-        endpoint: '/v1/auth/login',
-        email: result.email,
-        role: result.role,
-        tenantId: result.tenantId,
-        ipAddress,
-        timestamp: new Date().toISOString(),
-      }, `Successful ${result.role} login`);
+      logger.info(
+        {
+          event: 'unified_login_success',
+          endpoint: '/v1/auth/login',
+          email: result.email,
+          role: result.role,
+          tenantId: result.tenantId,
+          ipAddress,
+          timestamp: new Date().toISOString(),
+        },
+        `Successful ${result.role} login`
+      );
 
       res.status(200).json(result);
     } catch (error) {
       // Log failed login attempts
-      logger.warn({
-        event: 'unified_login_failed',
-        endpoint: '/v1/auth/login',
-        email: req.body.email,
-        ipAddress,
-        timestamp: new Date().toISOString(),
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }, 'Failed login attempt');
+      logger.warn(
+        {
+          event: 'unified_login_failed',
+          endpoint: '/v1/auth/login',
+          email: req.body.email,
+          ipAddress,
+          timestamp: new Date().toISOString(),
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+        'Failed login attempt'
+      );
 
       next(error);
     }
@@ -412,10 +424,13 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
         } catch (defaultDataError) {
           // Don't fail signup if default data creation fails
           // The tenant can still create their own packages manually
-          logger.warn({
-            tenantId: tenant.id,
-            error: defaultDataError instanceof Error ? defaultDataError.message : 'Unknown error',
-          }, 'Failed to create default segment/packages for new tenant');
+          logger.warn(
+            {
+              tenantId: tenant.id,
+              error: defaultDataError instanceof Error ? defaultDataError.message : 'Unknown error',
+            },
+            'Failed to create default segment/packages for new tenant'
+          );
         }
       }
 
@@ -423,15 +438,18 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
       const { token } = await tenantAuthService.login(normalizedEmail, password);
 
       // Log successful signup
-      logger.info({
-        event: 'tenant_signup_success',
-        endpoint: '/v1/auth/signup',
-        tenantId: tenant.id,
-        slug: tenant.slug,
-        email: tenant.email,
-        ipAddress,
-        timestamp: new Date().toISOString(),
-      }, 'New tenant signup');
+      logger.info(
+        {
+          event: 'tenant_signup_success',
+          endpoint: '/v1/auth/signup',
+          tenantId: tenant.id,
+          slug: tenant.slug,
+          email: tenant.email,
+          ipAddress,
+          timestamp: new Date().toISOString(),
+        },
+        'New tenant signup'
+      );
 
       res.status(201).json({
         token,
@@ -443,14 +461,17 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
       });
     } catch (error) {
       // Log failed signup attempts
-      logger.warn({
-        event: 'tenant_signup_failed',
-        endpoint: '/v1/auth/signup',
-        email: req.body.email,
-        ipAddress,
-        timestamp: new Date().toISOString(),
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }, 'Failed signup attempt');
+      logger.warn(
+        {
+          event: 'tenant_signup_failed',
+          endpoint: '/v1/auth/signup',
+          email: req.body.email,
+          ipAddress,
+          timestamp: new Date().toISOString(),
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+        'Failed signup attempt'
+      );
 
       next(error);
     }
@@ -470,71 +491,84 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
    *   "message": "If an account exists, a reset link has been sent"
    * }
    */
-  router.post('/forgot-password', signupLimiter, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { email } = req.body;
+  router.post(
+    '/forgot-password',
+    signupLimiter,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { email } = req.body;
 
-      if (!email) {
-        throw new ValidationError('Email is required');
-      }
-
-      const normalizedEmail = email.toLowerCase().trim();
-      const tenant = await tenantRepo.findByEmail(normalizedEmail);
-
-      if (tenant) {
-        // Generate secure random token (32 bytes = 64 hex chars)
-        const resetToken = crypto.randomBytes(32).toString('hex');
-
-        // Hash the token before storing (SHA-256)
-        const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
-        const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-
-        // Store hashed token in database
-        await tenantRepo.update(tenant.id, {
-          passwordResetToken: tokenHash,
-          passwordResetExpires: expires,
-        });
-
-        // Generate reset URL for frontend
-        const resetUrl = `${process.env.CORS_ORIGIN || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
-
-        // Send password reset email
-        if (mailProvider) {
-          try {
-            await mailProvider.sendPasswordReset(normalizedEmail, resetToken, resetUrl);
-            logger.info({
-              event: 'password_reset_email_sent',
-              tenantId: tenant.id,
-              email: tenant.email,
-            }, 'Password reset email sent');
-          } catch (emailError) {
-            logger.error({
-              event: 'password_reset_email_failed',
-              tenantId: tenant.id,
-              email: tenant.email,
-              error: emailError instanceof Error ? emailError.message : 'Unknown error',
-            }, 'Failed to send password reset email');
-            // Continue - don't leak error to user
-          }
-        } else {
-          // Development mode - log the token
-          logger.info({
-            event: 'password_reset_requested',
-            tenantId: tenant.id,
-            email: tenant.email,
-            resetUrl: process.env.NODE_ENV === 'development' ? resetUrl : '[redacted]',
-          }, 'Password reset requested (no mail provider configured)');
+        if (!email) {
+          throw new ValidationError('Email is required');
         }
-      }
 
-      // Always return success (don't leak email existence)
-      res.status(200).json({
-        message: 'If an account exists, a reset link has been sent',
-      });
-    } catch (error) {
-      next(error);
+        const normalizedEmail = email.toLowerCase().trim();
+        const tenant = await tenantRepo.findByEmail(normalizedEmail);
+
+        if (tenant) {
+          // Generate secure random token (32 bytes = 64 hex chars)
+          const resetToken = crypto.randomBytes(32).toString('hex');
+
+          // Hash the token before storing (SHA-256)
+          const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+          const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+          // Store hashed token in database
+          await tenantRepo.update(tenant.id, {
+            passwordResetToken: tokenHash,
+            passwordResetExpires: expires,
+          });
+
+          // Generate reset URL for frontend
+          const resetUrl = `${process.env.CORS_ORIGIN || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+
+          // Send password reset email
+          if (mailProvider) {
+            try {
+              await mailProvider.sendPasswordReset(normalizedEmail, resetToken, resetUrl);
+              logger.info(
+                {
+                  event: 'password_reset_email_sent',
+                  tenantId: tenant.id,
+                  email: tenant.email,
+                },
+                'Password reset email sent'
+              );
+            } catch (emailError) {
+              logger.error(
+                {
+                  event: 'password_reset_email_failed',
+                  tenantId: tenant.id,
+                  email: tenant.email,
+                  error: emailError instanceof Error ? emailError.message : 'Unknown error',
+                },
+                'Failed to send password reset email'
+              );
+              // Continue - don't leak error to user
+            }
+          } else {
+            // Development mode - log the token
+            logger.info(
+              {
+                event: 'password_reset_requested',
+                tenantId: tenant.id,
+                email: tenant.email,
+                resetUrl: process.env.NODE_ENV === 'development' ? resetUrl : '[redacted]',
+              },
+              'Password reset requested (no mail provider configured)'
+            );
+          }
+        }
+
+        // Always return success (don't leak email existence)
+        res.status(200).json({
+          message: 'If an account exists, a reset link has been sent',
+        });
+      } catch (error) {
+        next(error);
+      }
     }
-  });
+  );
 
   /**
    * POST /reset-password
@@ -593,11 +627,14 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
         passwordResetExpires: null,
       });
 
-      logger.info({
-        event: 'password_reset_success',
-        tenantId: tenant.id,
-        email: tenant.email,
-      }, 'Password reset successful');
+      logger.info(
+        {
+          event: 'password_reset_success',
+          tenantId: tenant.id,
+          email: tenant.email,
+        },
+        'Password reset successful'
+      );
 
       res.status(200).json({
         message: 'Password updated successfully',
@@ -632,7 +669,9 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
 
       const parts = authHeader.split(' ');
       if (parts.length !== 2 || parts[0] !== 'Bearer') {
-        res.status(401).json({ error: 'Invalid Authorization header format. Expected: Bearer <token>' });
+        res
+          .status(401)
+          .json({ error: 'Invalid Authorization header format. Expected: Bearer <token>' });
         return;
       }
 
@@ -682,12 +721,15 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
 
       const result = await controller.startImpersonation(token, tenantId);
 
-      logger.info({
-        event: 'impersonation_api_success',
-        adminEmail: result.email,
-        tenantId: result.tenantId,
-        tenantSlug: result.slug,
-      }, 'Impersonation started via API');
+      logger.info(
+        {
+          event: 'impersonation_api_success',
+          adminEmail: result.email,
+          tenantId: result.tenantId,
+          tenantSlug: result.slug,
+        },
+        'Impersonation started via API'
+      );
 
       res.status(200).json(result);
     } catch (error) {
@@ -717,10 +759,13 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
 
       const result = await controller.stopImpersonation(token);
 
-      logger.info({
-        event: 'stop_impersonation_api_success',
-        adminEmail: result.email,
-      }, 'Impersonation stopped via API');
+      logger.info(
+        {
+          event: 'stop_impersonation_api_success',
+          adminEmail: result.email,
+        },
+        'Impersonation stopped via API'
+      );
 
       res.status(200).json(result);
     } catch (error) {

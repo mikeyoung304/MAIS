@@ -12,6 +12,7 @@
 **What is the issue or situation that motivated this decision?**
 
 Describe the problem space, constraints, and forces at play. Include:
+
 - What problem are we trying to solve?
 - What requirements or constraints exist?
 - What technical context is relevant?
@@ -22,6 +23,7 @@ Describe the problem space, constraints, and forces at play. Include:
 **What is the change that we're proposing and/or doing?**
 
 Clearly state the decision that was made. Be specific and actionable:
+
 - What will we do?
 - How will we implement it?
 - What are the key aspects of this decision?
@@ -31,40 +33,49 @@ Clearly state the decision that was made. Be specific and actionable:
 List and evaluate other options that were considered:
 
 ### Option 1: {Name}
+
 **Description:** [Brief description of the alternative]
 
 **Pros:**
+
 - [Advantage 1]
 - [Advantage 2]
 
 **Cons:**
+
 - [Disadvantage 1]
 - [Disadvantage 2]
 
 **Why rejected:** [Reason this option wasn't chosen]
 
 ### Option 2: {Name}
+
 **Description:** [Brief description of the alternative]
 
 **Pros:**
+
 - [Advantage 1]
 - [Advantage 2]
 
 **Cons:**
+
 - [Disadvantage 1]
 - [Disadvantage 2]
 
 **Why rejected:** [Reason this option wasn't chosen]
 
 ### Option 3: Status Quo (Do Nothing)
+
 **Description:** Continue with current approach
 
 **Pros:**
+
 - No implementation cost
 - No disruption
 - [Other benefits]
 
 **Cons:**
+
 - [Problems that persist]
 - [Opportunity cost]
 
@@ -73,16 +84,19 @@ List and evaluate other options that were considered:
 ## Consequences
 
 ### Positive Consequences
+
 - [Benefit 1: What we gain from this decision]
 - [Benefit 2: What problems this solves]
 - [Benefit 3: What opportunities this creates]
 
 ### Negative Consequences
+
 - [Tradeoff 1: What we sacrifice or complicate]
 - [Tradeoff 2: What new problems this might create]
 - [Tradeoff 3: What technical debt this introduces]
 
 ### Neutral Consequences
+
 - [Impact 1: Changes that are neither good nor bad]
 - [Impact 2: Side effects to be aware of]
 
@@ -91,6 +105,7 @@ List and evaluate other options that were considered:
 **How will this decision be implemented?**
 
 Include:
+
 - High-level implementation steps
 - Timeline or milestones
 - Who is responsible
@@ -99,13 +114,14 @@ Include:
 
 ## Risks and Mitigation
 
-| Risk | Impact | Likelihood | Mitigation Strategy |
-|------|--------|------------|---------------------|
+| Risk               | Impact          | Likelihood      | Mitigation Strategy    |
+| ------------------ | --------------- | --------------- | ---------------------- |
 | [Risk description] | High/Medium/Low | High/Medium/Low | [How we'll address it] |
 
 ## Compliance and Standards
 
 **Does this decision affect:**
+
 - [ ] Security requirements
 - [ ] Privacy/compliance (GDPR, etc.)
 - [ ] Performance SLAs
@@ -128,10 +144,12 @@ Include:
 ## Follow-up
 
 **Open questions:**
+
 - [Question 1 to be resolved]
 - [Question 2 to be resolved]
 
 **Next actions:**
+
 - [ ] [Action item 1]
 - [ ] [Action item 2]
 - [ ] [Action item 3]
@@ -146,6 +164,6 @@ Include:
 
 ## Version History
 
-| Date | Author | Changes |
-|------|--------|---------|
+| Date       | Author | Changes         |
+| ---------- | ------ | --------------- |
 | YYYY-MM-DD | [Name] | Initial version |

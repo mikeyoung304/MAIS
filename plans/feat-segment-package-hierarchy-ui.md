@@ -80,14 +80,14 @@ This is our flagship UX. Both segment and tier selection pages must look **nearl
 
 ### Key Design Decisions
 
-| Aspect | Segment Cards | Tier Cards |
-|--------|---------------|------------|
-| **Aspect ratio** | 4:3 | 4:3 |
-| **Price displayed** | No | Yes (exact price) |
-| **CTA text** | "See Packages" | "View Details" |
-| **"Most Popular" badge** | Never | Only if exactly 3 tiers AND tier is middle |
-| **Hover effects** | Same | Same |
-| **Mobile layout** | Vertical stack | Vertical stack |
+| Aspect                   | Segment Cards  | Tier Cards                                 |
+| ------------------------ | -------------- | ------------------------------------------ |
+| **Aspect ratio**         | 4:3            | 4:3                                        |
+| **Price displayed**      | No             | Yes (exact price)                          |
+| **CTA text**             | "See Packages" | "View Details"                             |
+| **"Most Popular" badge** | Never          | Only if exactly 3 tiers AND tier is middle |
+| **Hover effects**        | Same           | Same                                       |
+| **Mobile layout**        | Vertical stack | Vertical stack                             |
 
 ### Conversion Psychology
 
@@ -111,8 +111,8 @@ interface ChoiceCardBaseProps {
   description: string;
   imageUrl: string | null;
   imageAlt: string;
-  categoryLabel: string;  // e.g., "Weddings" or "Popular"
-  price?: number;         // cents, only for tier cards
+  categoryLabel: string; // e.g., "Weddings" or "Popular"
+  price?: number; // cents, only for tier cards
   cta: string;
   href: string;
   highlighted?: boolean;
@@ -132,10 +132,7 @@ export const ChoiceCardBase = memo(function ChoiceCardBase({
   return (
     <Link
       to={href}
-      className={clsx(
-        cardStyles.base,
-        highlighted ? cardStyles.highlighted : cardStyles.normal
-      )}
+      className={clsx(cardStyles.base, highlighted ? cardStyles.highlighted : cardStyles.normal)}
     >
       {/* "Most Popular" badge */}
       {highlighted && (
@@ -152,7 +149,9 @@ export const ChoiceCardBase = memo(function ChoiceCardBase({
             alt={imageAlt}
             loading="lazy"
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-macon-navy to-macon-teal/80 flex items-center justify-center">
@@ -181,9 +180,7 @@ export const ChoiceCardBase = memo(function ChoiceCardBase({
           </div>
         )}
 
-        <p className="text-lg text-neutral-600 mb-6 line-clamp-3 flex-1">
-          {description}
-        </p>
+        <p className="text-lg text-neutral-600 mb-6 line-clamp-3 flex-1">{description}</p>
 
         {/* CTA - styled div, not nested button (a11y fix) */}
         <div
@@ -231,16 +228,14 @@ interface TierCardProps {
   package: PackageDto;
   tierLevel: TierLevel;
   segmentSlug?: string;
-  totalTierCount: number;  // Used to determine if highlighting applies
+  totalTierCount: number; // Used to determine if highlighting applies
 }
 
 export function TierCard({ package: pkg, tierLevel, segmentSlug, totalTierCount }: TierCardProps) {
   // Only highlight middle tier when exactly 3 tiers exist
   const isHighlighted = totalTierCount === 3 && tierLevel === 'middle';
 
-  const href = segmentSlug
-    ? `/s/${segmentSlug}/${tierLevel}`
-    : `/tiers/${tierLevel}`;
+  const href = segmentSlug ? `/s/${segmentSlug}/${tierLevel}` : `/tiers/${tierLevel}`;
 
   return (
     <ChoiceCardBase
@@ -281,12 +276,14 @@ export const cardStyles = {
 // Handles 1, 2, 3, or 4+ cards elegantly
 function ChoiceGrid({ children, itemCount }: { children: React.ReactNode; itemCount: number }) {
   return (
-    <div className={clsx(
-      'grid gap-6 lg:gap-8',
-      itemCount === 1 && 'grid-cols-1 max-w-2xl mx-auto',
-      itemCount === 2 && 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto',
-      itemCount >= 3 && 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-    )}>
+    <div
+      className={clsx(
+        'grid gap-6 lg:gap-8',
+        itemCount === 1 && 'grid-cols-1 max-w-2xl mx-auto',
+        itemCount === 2 && 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto',
+        itemCount >= 3 && 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+      )}
+    >
       {children}
     </div>
   );
@@ -297,14 +294,14 @@ function ChoiceGrid({ children, itemCount }: { children: React.ReactNode; itemCo
 
 ## Files to Change
 
-| File | Change |
-|------|--------|
-| `client/src/features/storefront/ChoiceCardBase.tsx` | **NEW** - Pure presentation component |
-| `client/src/features/storefront/SegmentCard.tsx` | **NEW** - Thin wrapper for segments |
-| `client/src/features/storefront/TierCard.tsx` | **REWRITE** - Thin wrapper using ChoiceCardBase |
-| `client/src/features/storefront/cardStyles.ts` | **NEW** - Shared styling constants |
-| `client/src/pages/StorefrontHome.tsx` | Use SegmentCard, add 1-segment skip, change to 4:3 aspect |
-| `client/src/features/storefront/TierSelector.tsx` | Use new TierCard, pass totalTierCount |
+| File                                                | Change                                                    |
+| --------------------------------------------------- | --------------------------------------------------------- |
+| `client/src/features/storefront/ChoiceCardBase.tsx` | **NEW** - Pure presentation component                     |
+| `client/src/features/storefront/SegmentCard.tsx`    | **NEW** - Thin wrapper for segments                       |
+| `client/src/features/storefront/TierCard.tsx`       | **REWRITE** - Thin wrapper using ChoiceCardBase           |
+| `client/src/features/storefront/cardStyles.ts`      | **NEW** - Shared styling constants                        |
+| `client/src/pages/StorefrontHome.tsx`               | Use SegmentCard, add 1-segment skip, change to 4:3 aspect |
+| `client/src/features/storefront/TierSelector.tsx`   | Use new TierCard, pass totalTierCount                     |
 
 ### StorefrontHome Changes
 
@@ -321,23 +318,23 @@ if (!isLoading && (!segments || segments.length === 0)) {
 
 // Segment display using new SegmentCard
 <ChoiceGrid itemCount={segments.length}>
-  {segments.map(segment => (
+  {segments.map((segment) => (
     <SegmentCard key={segment.id} segment={segment} />
   ))}
-</ChoiceGrid>
+</ChoiceGrid>;
 ```
 
 ### TierSelector Changes
 
 ```tsx
 // Pass total tier count for highlighting logic
-const configuredTiers = useMemo(() =>
-  TIER_LEVELS.filter(level => tiers[level] !== undefined),
+const configuredTiers = useMemo(
+  () => TIER_LEVELS.filter((level) => tiers[level] !== undefined),
   [tiers]
 );
 
 <ChoiceGrid itemCount={configuredTiers.length}>
-  {configuredTiers.map(tierLevel => {
+  {configuredTiers.map((tierLevel) => {
     const pkg = tiers[tierLevel]!;
     return (
       <TierCard
@@ -349,7 +346,7 @@ const configuredTiers = useMemo(() =>
       />
     );
   })}
-</ChoiceGrid>
+</ChoiceGrid>;
 ```
 
 ---
@@ -405,6 +402,7 @@ const configuredTiers = useMemo(() =>
 ## Acceptance Criteria
 
 ### Visual
+
 - [ ] Segment cards and tier cards look identical (same base component)
 - [ ] Both use 4:3 aspect ratio
 - [ ] Hover: -1px translateY + shadow elevation
@@ -412,6 +410,7 @@ const configuredTiers = useMemo(() =>
 - [ ] Gradient fallback when image is missing
 
 ### Functional
+
 - [ ] Segment cards show NO price, CTA says "See Packages"
 - [ ] Tier cards show exact price, CTA says "View Details"
 - [ ] "Most Popular" badge appears ONLY when exactly 3 tiers AND tier is middle
@@ -419,11 +418,13 @@ const configuredTiers = useMemo(() =>
 - [ ] 0 segments → redirect to /tiers
 
 ### Accessibility
+
 - [ ] Focus-visible ring on keyboard navigation
 - [ ] Alt text includes tier level for screen readers
 - [ ] No nested interactive elements (Link > Button removed)
 
 ### Edge Cases
+
 - [ ] 4+ segments → grid wraps to multiple rows
 - [ ] Segment with 0 packages → shows empty state message
 - [ ] Invalid segment slug → 404 or redirect
@@ -432,18 +433,18 @@ const configuredTiers = useMemo(() =>
 
 ## Edge Case Handling
 
-| Scenario | Behavior |
-|----------|----------|
-| 0 segments | Redirect to `/tiers` with `replace` |
-| 1 segment | Navigate to `/s/{slug}` without `replace` (back button works) |
-| 2 segments | Show 2 cards, centered on desktop |
-| 3+ segments | Show grid, wraps to multiple rows if needed |
-| 1 tier | Single card, centered, no badge |
-| 2 tiers | Two cards, no badge on either |
-| 3 tiers | Three cards, middle gets "Most Popular" badge |
-| Missing heroImage | Show gradient fallback with segment name |
-| Missing photoUrl | Show gradient fallback with tier name |
-| Segment with 0 packages | TierSelector shows "No packages available" message |
+| Scenario                | Behavior                                                      |
+| ----------------------- | ------------------------------------------------------------- |
+| 0 segments              | Redirect to `/tiers` with `replace`                           |
+| 1 segment               | Navigate to `/s/{slug}` without `replace` (back button works) |
+| 2 segments              | Show 2 cards, centered on desktop                             |
+| 3+ segments             | Show grid, wraps to multiple rows if needed                   |
+| 1 tier                  | Single card, centered, no badge                               |
+| 2 tiers                 | Two cards, no badge on either                                 |
+| 3 tiers                 | Three cards, middle gets "Most Popular" badge                 |
+| Missing heroImage       | Show gradient fallback with segment name                      |
+| Missing photoUrl        | Show gradient fallback with tier name                         |
+| Segment with 0 packages | TierSelector shows "No packages available" message            |
 
 ---
 
@@ -461,39 +462,43 @@ const configuredTiers = useMemo(() =>
 
 ## Key References
 
-| What | Where |
-|------|-------|
-| Segment model | `server/prisma/schema.prisma:144-181` |
-| Package model | `server/prisma/schema.prisma:183-220` |
-| SegmentDto | `packages/contracts/src/dto.ts:371-388` |
-| PackageDto | `packages/contracts/src/dto.ts:77-98` |
-| Current TierCard | `client/src/features/storefront/TierCard.tsx` |
-| Current TierSelector | `client/src/features/storefront/TierSelector.tsx` |
-| Current StorefrontHome | `client/src/pages/StorefrontHome.tsx` |
-| Tier utils | `client/src/features/storefront/utils.ts` |
-| Design tokens | `client/src/styles/design-tokens.css` |
-| formatCurrency | `client/src/lib/utils.ts:17-22` |
-| truncateText | `client/src/features/storefront/utils.ts:57-60` |
+| What                   | Where                                             |
+| ---------------------- | ------------------------------------------------- |
+| Segment model          | `server/prisma/schema.prisma:144-181`             |
+| Package model          | `server/prisma/schema.prisma:183-220`             |
+| SegmentDto             | `packages/contracts/src/dto.ts:371-388`           |
+| PackageDto             | `packages/contracts/src/dto.ts:77-98`             |
+| Current TierCard       | `client/src/features/storefront/TierCard.tsx`     |
+| Current TierSelector   | `client/src/features/storefront/TierSelector.tsx` |
+| Current StorefrontHome | `client/src/pages/StorefrontHome.tsx`             |
+| Tier utils             | `client/src/features/storefront/utils.ts`         |
+| Design tokens          | `client/src/styles/design-tokens.css`             |
+| formatCurrency         | `client/src/lib/utils.ts:17-22`                   |
+| truncateText           | `client/src/features/storefront/utils.ts:57-60`   |
 
 ---
 
 ## Design System References
 
 **Colors:**
+
 - `--macon-orange: #d97706` (CTAs, highlights)
 - `--macon-navy: #1a365d` (primary text)
 - `--macon-teal` (gradient fallback)
 
 **Typography:**
+
 - Headings: `Playfair Display` (serif)
 - Body: `Inter` (sans-serif)
 
 **Shadows:**
+
 - `elevation-1`: Base card state
 - `elevation-2`: Highlighted card
 - `elevation-3`: Hover state
 
 **Animation:**
+
 - Cubic-bezier: `cubic-bezier(0.4, 0, 0.2, 1)`
 - Duration: 300ms (hover)
 

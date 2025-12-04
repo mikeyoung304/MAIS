@@ -13,11 +13,13 @@ The test suite is organized into three main categories:
 Unit tests verify individual components (services, utilities) in isolation using fake implementations.
 
 **Key Files:**
+
 - `*.service.spec.ts` - Service layer unit tests
 - `*.spec.ts` - General unit tests
 - `helpers/fakes.ts` - Fake implementations of repositories and providers
 
 **Example Files:**
+
 - `test/booking.service.spec.ts`
 - `test/catalog.service.spec.ts`
 - `test/availability.service.spec.ts`
@@ -29,11 +31,13 @@ Unit tests verify individual components (services, utilities) in isolation using
 Integration tests verify database interactions, transactions, race conditions, and multi-tenancy isolation using a real test database.
 
 **Key Files:**
+
 - `*repository.integration.spec.ts` - Repository tests with real database
 - `*race-conditions.spec.ts` - Concurrent operation tests
 - `cache-isolation.integration.spec.ts` - Multi-tenant cache isolation
 
 **Example Files:**
+
 - `test/integration/booking-repository.integration.spec.ts`
 - `test/integration/catalog.repository.integration.spec.ts`
 - `test/integration/webhook-repository.integration.spec.ts`
@@ -45,6 +49,7 @@ Integration tests verify database interactions, transactions, race conditions, a
 End-to-end tests verify complete user flows using Playwright, simulating real browser interactions.
 
 **Key Files:**
+
 - `tests/booking-flow.spec.ts` - Customer booking journey
 - `tests/admin-flow.spec.ts` - Admin management workflows
 - `tests/booking-mock.spec.ts` - Mock adapter testing
@@ -52,6 +57,7 @@ End-to-end tests verify complete user flows using Playwright, simulating real br
 ## Running Tests
 
 ### All Tests (Unit + Integration)
+
 ```bash
 # From server directory
 cd /Users/mikeyoung/CODING/Elope/server
@@ -63,12 +69,14 @@ npm test
 ```
 
 ### Unit Tests Only
+
 ```bash
 # Run unit tests, excluding integration tests
 npm test -- test/ --exclude="test/integration/**"
 ```
 
 ### Integration Tests Only
+
 ```bash
 # Requires test database to be configured
 npm run test:integration
@@ -78,6 +86,7 @@ npm run test:integration:watch
 ```
 
 ### E2E Tests
+
 ```bash
 # From root directory
 cd /Users/mikeyoung/CODING/Elope
@@ -91,6 +100,7 @@ npm run test:e2e:headed
 ```
 
 ### Watch Mode
+
 ```bash
 # Watch mode for unit tests
 npm run test:watch
@@ -100,6 +110,7 @@ npm run test:integration:watch
 ```
 
 ### Coverage Reports
+
 ```bash
 # Generate coverage report for all tests
 npm run test:coverage
@@ -123,13 +134,14 @@ npm run test:coverage:report
 **Critical Rule:** All service and repository methods require `tenantId` as the **first parameter**.
 
 #### Example - Service Method
+
 ```typescript
 // CORRECT
 await bookingService.createCheckout('test-tenant', {
   packageId: 'basic',
   coupleName: 'John & Jane',
   email: 'couple@example.com',
-  eventDate: '2025-07-01'
+  eventDate: '2025-07-01',
 });
 
 // INCORRECT - Missing tenantId
@@ -137,11 +149,12 @@ await bookingService.createCheckout({
   packageId: 'basic',
   coupleName: 'John & Jane',
   email: 'couple@example.com',
-  eventDate: '2025-07-01'
+  eventDate: '2025-07-01',
 });
 ```
 
 #### Example - Repository Method
+
 ```typescript
 // CORRECT
 const packages = await catalogRepo.getAllPackages('test-tenant');
@@ -157,6 +170,7 @@ Location: `test/helpers/fakes.ts`
 Fake implementations provide in-memory versions of repositories and providers for unit testing.
 
 #### Available Fakes
+
 - `FakeBookingRepository` - In-memory booking storage
 - `FakeCatalogRepository` - In-memory package/add-on storage
 - `FakeBlackoutRepository` - In-memory blackout dates
@@ -168,13 +182,14 @@ Fake implementations provide in-memory versions of repositories and providers fo
 - `FakeEventEmitter` - Mock event bus
 
 #### Example Usage
+
 ```typescript
 import {
   FakeBookingRepository,
   FakeCatalogRepository,
   FakeEventEmitter,
   buildPackage,
-  buildBooking
+  buildBooking,
 } from './helpers/fakes';
 
 describe('BookingService', () => {
@@ -189,7 +204,7 @@ describe('BookingService', () => {
 
     service = new BookingService(
       bookingRepo,
-      catalogRepo,
+      catalogRepo
       // ... other dependencies
     );
   });
@@ -229,7 +244,7 @@ beforeEach(() => {
   service = new BookingService(
     bookingRepo,
     catalogRepo,
-    eventEmitter,
+    eventEmitter
     // ... other deps
   );
 });
@@ -249,7 +264,7 @@ beforeEach(() => {
   commissionService = {
     calculateCommission: vi.fn().mockReturnValue({
       platformFeeCents: 500,
-      vendorPayoutCents: 99500
+      vendorPayoutCents: 99500,
     }),
     calculateBookingTotal: vi.fn().mockResolvedValue({
       basePrice: 100000,
@@ -257,16 +272,16 @@ beforeEach(() => {
       subtotal: 150000,
       platformFeeCents: 7500,
       vendorPayoutCents: 142500,
-      customerTotalCents: 150000
-    })
+      customerTotalCents: 150000,
+    }),
   };
 
   tenantRepo = {
     findById: vi.fn().mockResolvedValue({
       id: 'test-tenant',
       stripeConnectedAccountId: 'acct_test123',
-      name: 'Test Tenant'
-    })
+      name: 'Test Tenant',
+    }),
   };
 
   service = new BookingService(
@@ -274,8 +289,8 @@ beforeEach(() => {
     catalogRepo,
     eventEmitter,
     paymentProvider,
-    commissionService,  // Mock
-    tenantRepo          // Mock
+    commissionService, // Mock
+    tenantRepo // Mock
   );
 });
 ```
@@ -322,7 +337,7 @@ describe('GET /v1/packages', () => {
   it('returns packages list', async () => {
     const res = await request(app)
       .get('/v1/packages')
-      .set('X-Tenant-Key', testTenantApiKey)  // REQUIRED for multi-tenancy
+      .set('X-Tenant-Key', testTenantApiKey) // REQUIRED for multi-tenancy
       .expect('Content-Type', /json/)
       .expect(200);
 
@@ -359,7 +374,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
 
   it('creates booking with database transaction', async () => {
     const booking = ctx.factories.booking.create({
-      eventDate: '2025-12-25'
+      eventDate: '2025-12-25',
     });
 
     const created = await repository.create(testTenantId, booking);
@@ -373,6 +388,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
 ### Issue: Missing `tenantId` Parameter
 
 **Symptom:**
+
 ```
 TypeError: Cannot read property 'id' of undefined
 ```
@@ -391,6 +407,7 @@ await service.createBooking('test-tenant', { ... });
 ### Issue: 401 Unauthorized in HTTP Tests
 
 **Symptom:**
+
 ```
 Expected status 200, received 401
 ```
@@ -401,13 +418,14 @@ Add the `X-Tenant-Key` header with a valid tenant API key:
 ```typescript
 await request(app)
   .get('/v1/packages')
-  .set('X-Tenant-Key', testTenantApiKey)  // Add this line
+  .set('X-Tenant-Key', testTenantApiKey) // Add this line
   .expect(200);
 ```
 
 ### Issue: Repository Method Signature Mismatch
 
 **Symptom:**
+
 ```
 Expected 2 arguments, but got 1
 ```
@@ -428,11 +446,13 @@ await repo.findAll('test-tenant');
 ### Issue: Test Database Not Configured
 
 **Symptom:**
+
 ```
 Error: DATABASE_URL_TEST environment variable not set
 ```
 
 **Solution:**
+
 1. Copy `.env.example` to `.env.test`
 2. Set `DATABASE_URL_TEST` to your test database connection string
 3. Run `npm run test:integration`
@@ -447,11 +467,11 @@ Ensure proper cleanup in `beforeEach` and `afterEach` hooks:
 
 ```typescript
 beforeEach(() => {
-  fakeRepo.clear();  // Clear fake repository state
+  fakeRepo.clear(); // Clear fake repository state
 });
 
 afterEach(async () => {
-  await ctx.cleanup();  // Clean up integration test database
+  await ctx.cleanup(); // Clean up integration test database
 });
 ```
 
@@ -482,12 +502,14 @@ buildUser(overrides?: Partial<User>): User
 ## Test Organization
 
 ### File Naming Conventions
+
 - Unit tests: `*.spec.ts`
 - Integration tests: `*.integration.spec.ts`
 - HTTP tests: `*.test.ts`
 - E2E tests: `*.spec.ts` (in `e2e/tests/`)
 
 ### Directory Structure
+
 ```
 server/test/
 ├── README.md                          # This file
@@ -521,6 +543,7 @@ server/test/
 ## Best Practices
 
 ### 1. Test Isolation
+
 Each test should be independent and not rely on state from other tests.
 
 ```typescript
@@ -535,6 +558,7 @@ const repo = new FakeBookingRepository();
 ```
 
 ### 2. Descriptive Test Names
+
 Use clear, behavior-focused test descriptions:
 
 ```typescript
@@ -546,6 +570,7 @@ it('test package', async () => { ... });
 ```
 
 ### 3. Arrange-Act-Assert Pattern
+
 Structure tests clearly:
 
 ```typescript
@@ -557,7 +582,7 @@ it('calculates total with add-ons', async () => {
   // Act - Execute the operation
   const result = await service.createCheckout('test-tenant', {
     packageId: pkg.id,
-    addOnIds: ['addon_1']
+    addOnIds: ['addon_1'],
   });
 
   // Assert - Verify the result
@@ -566,6 +591,7 @@ it('calculates total with add-ons', async () => {
 ```
 
 ### 4. Multi-Tenancy Testing
+
 Always test tenant isolation for repository operations:
 
 ```typescript
@@ -580,6 +606,7 @@ it('isolates data by tenant', async () => {
 ```
 
 ### 5. Error Cases
+
 Always test both success and error scenarios:
 
 ```typescript
@@ -595,6 +622,7 @@ describe('createBooking', () => {
 ## Debugging Tests
 
 ### Run Single Test
+
 ```bash
 # Run specific test file
 npm test -- booking.service.spec.ts
@@ -604,12 +632,14 @@ npm test -- -t "creates booking successfully"
 ```
 
 ### Enable Verbose Output
+
 ```bash
 # Already enabled by default in package.json
 npm test  # Uses --reporter=verbose
 ```
 
 ### Debug Integration Tests
+
 ```bash
 # Run single integration test file
 npm run test:integration -- booking-repository.integration.spec.ts
@@ -623,6 +653,7 @@ npm run test:integration:watch
 Tests are automatically run in CI/CD pipelines. See `docs/TESTING.md` for CI configuration.
 
 ### Pre-Commit Recommendations
+
 ```bash
 # Run fast unit tests before committing
 npm test -- test/ --exclude="test/integration/**"
@@ -643,6 +674,7 @@ The project uses Vitest with V8 coverage provider to track test coverage. Covera
 ### Current Coverage Status
 
 **Baseline Coverage (as of 2025-11-14):**
+
 - Lines: 42.35% (Target: 80%)
 - Branches: 77.45% (Target: 75%) ✓ PASSING
 - Functions: 36.94% (Target: 80%)
@@ -701,6 +733,7 @@ The following files are excluded from coverage calculations:
 ### Coverage by Area
 
 **High Coverage (>70%):**
+
 - ✓ Validation schemas (100%)
 - ✓ Error handling middleware (100%)
 - ✓ Identity service (100%)
@@ -709,12 +742,14 @@ The following files are excluded from coverage calculations:
 - ✓ Availability service (88.46%)
 
 **Medium Coverage (40-70%):**
+
 - Catalog service (72.35%)
 - DI container (48.64%)
 - Cache service (47.56%)
 - App setup (54.42%)
 
 **Low Coverage (<40%):**
+
 - Adapters (7.83%) - Mostly tested via integration tests
 - Prisma repositories (10.46%) - Tested via integration tests
 - Controllers (2.99%) - Tested via HTTP tests
@@ -764,6 +799,7 @@ When adding new code or improving coverage:
 5. **Review Report** - Open HTML report to identify uncovered lines
 
 **Example Workflow:**
+
 ```bash
 # 1. Make changes to src/services/booking.service.ts
 # 2. Run unit tests with coverage
@@ -807,6 +843,7 @@ If coverage drops below thresholds:
 4. **Update Thresholds** - If intentional (document reasoning)
 
 **Example:**
+
 ```bash
 # Coverage dropped from 42% to 38%
 ERROR: Coverage for lines (38%) does not meet threshold (40%)
@@ -826,17 +863,20 @@ npm run test:coverage:unit
 ### Roadmap to 80% Coverage
 
 **Phase 1: Reach 50% (Current + 8%)**
+
 - Add adapter unit tests with mocked APIs
 - Add service unit tests for commission/product
 - Timeline: 2-3 weeks
 
 **Phase 2: Reach 65% (Phase 1 + 15%)**
+
 - Add controller unit tests
 - Add route HTTP tests
 - Add error path coverage
 - Timeline: 4-6 weeks
 
 **Phase 3: Reach 80% (Phase 2 + 15%)**
+
 - Add edge case tests
 - Add integration test coverage
 - Fill remaining gaps

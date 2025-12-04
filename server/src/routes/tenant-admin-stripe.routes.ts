@@ -7,11 +7,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import type { StripeConnectService } from '../services/stripe-connect.service';
 import { logger } from '../lib/core/logger';
-import {
-  ValidationError,
-  NotFoundError,
-  ConflictError,
-} from '../lib/errors';
+import { ValidationError, NotFoundError, ConflictError } from '../lib/errors';
 
 // Validation schemas
 const createAccountSchema = z.object({
@@ -25,9 +21,7 @@ const onboardingLinkSchema = z.object({
   returnUrl: z.string().url(),
 });
 
-export function createTenantAdminStripeRoutes(
-  stripeConnectService: StripeConnectService
-): Router {
+export function createTenantAdminStripeRoutes(stripeConnectService: StripeConnectService): Router {
   const router = Router();
 
   /**
@@ -106,11 +100,7 @@ export function createTenantAdminStripeRoutes(
       const { refreshUrl, returnUrl } = validation.data;
 
       // Generate onboarding link
-      const url = await stripeConnectService.createOnboardingLink(
-        tenantId,
-        refreshUrl,
-        returnUrl
-      );
+      const url = await stripeConnectService.createOnboardingLink(tenantId, refreshUrl, returnUrl);
 
       logger.info({ tenantId }, 'Stripe onboarding link generated');
 

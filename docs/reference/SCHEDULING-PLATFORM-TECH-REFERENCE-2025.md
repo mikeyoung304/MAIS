@@ -1,4 +1,5 @@
 # Scheduling Platform Technical Reference 2025
+
 ## MAIS Stack Optimization Guide
 
 Generated: 2025-11-27
@@ -28,6 +29,7 @@ Target Stack: Prisma 6, ts-rest, Express, TypeScript, React, TanStack Query, Str
 **When to use**: High-concurrency booking systems where conflicts are rare and avoiding locks improves scalability.
 
 **Pattern**: Version field tracking
+
 ```typescript
 // Schema definition
 model Booking {
@@ -86,36 +88,41 @@ async function updateBooking(id: string, tenantId: string, data: UpdateData, exp
 **When to use**: Payment processing, high-value bookings, or when conflicts are likely.
 
 **Pattern**: Database-level row locking with `FOR UPDATE`
+
 ```typescript
 // Interactive transaction with pessimistic lock
 async function createBookingWithLock(tenantId: string, date: Date, data: BookingData) {
-  return await prisma.$transaction(async (tx) => {
-    // Lock the date row (or create if doesn't exist)
-    const existing = await tx.$queryRaw<Array<{ id: string }>>`
+  return await prisma.$transaction(
+    async (tx) => {
+      // Lock the date row (or create if doesn't exist)
+      const existing = await tx.$queryRaw<Array<{ id: string }>>`
       SELECT id FROM bookings
       WHERE "tenantId" = ${tenantId} AND date = ${date}
       FOR UPDATE
     `;
 
-    if (existing.length > 0) {
-      throw new BookingConflictError(date);
-    }
+      if (existing.length > 0) {
+        throw new BookingConflictError(date);
+      }
 
-    // Create booking within same transaction
-    return await tx.booking.create({
-      data: { tenantId, date, ...data }
-    });
-  }, {
-    maxWait: 2000,  // 2 seconds to acquire transaction
-    timeout: 5000,  // 5 seconds max transaction duration
-    isolationLevel: 'Serializable' // Strictest isolation
-  });
+      // Create booking within same transaction
+      return await tx.booking.create({
+        data: { tenantId, date, ...data },
+      });
+    },
+    {
+      maxWait: 2000, // 2 seconds to acquire transaction
+      timeout: 5000, // 5 seconds max transaction duration
+      isolationLevel: 'Serializable', // Strictest isolation
+    }
+  );
 }
 ```
 
 **Critical Warning**: "Keeping transactions open for a long time hurts database performance and can even cause deadlocks. Try to avoid performing network requests and executing slow queries inside your transaction functions."
 
 **Best Practices**:
+
 - Keep transactions under 5 seconds
 - Avoid external API calls inside transactions
 - Use for read-modify-write patterns only
@@ -126,6 +133,7 @@ async function createBookingWithLock(tenantId: string, date: Date, data: Booking
 #### Indexing Strategies
 
 **B-Tree Indexes (Default, Recommended for Date Ranges)**
+
 ```prisma
 model Booking {
   id        String   @id @default(cuid())
@@ -144,6 +152,7 @@ model Booking {
 ```
 
 **Why B-Tree**: Supports equality (=) and range operators (<, <=, >, >=), ideal for:
+
 - Finding bookings between dates
 - Availability checks for date ranges
 - Chronological sorting
@@ -153,30 +162,27 @@ model Booking {
 **When to Use Hash Indexes**: Only if querying by exact date match (equality only), but B-Tree handles this efficiently too.
 
 #### Efficient Date Range Queries
+
 ```typescript
 // Find available slots for a date range (tenant-scoped)
-async function findAvailableSlots(
-  tenantId: string,
-  startDate: Date,
-  endDate: Date
-) {
+async function findAvailableSlots(tenantId: string, startDate: Date, endDate: Date) {
   return await prisma.booking.findMany({
     where: {
       tenantId, // CRITICAL: Always filter by tenantId
       date: {
         gte: startDate,
-        lte: endDate
-      }
+        lte: endDate,
+      },
     },
     orderBy: {
-      date: 'asc'
+      date: 'asc',
     },
     select: {
       id: true,
       date: true,
       startTime: true,
-      endTime: true
-    }
+      endTime: true,
+    },
   });
 }
 
@@ -195,20 +201,20 @@ async function isSlotAvailable(
         {
           // New booking starts during existing booking
           startTime: { lte: startTime },
-          endTime: { gt: startTime }
+          endTime: { gt: startTime },
         },
         {
           // New booking ends during existing booking
           startTime: { lt: endTime },
-          endTime: { gte: endTime }
+          endTime: { gte: endTime },
         },
         {
           // New booking completely contains existing booking
           startTime: { gte: startTime },
-          endTime: { lte: endTime }
-        }
-      ]
-    }
+          endTime: { lte: endTime },
+        },
+      ],
+    },
   });
 
   return conflict === null;
@@ -220,11 +226,13 @@ async function isSlotAvailable(
 **Recommended Approach**: Use Prisma Client Extensions (middleware is deprecated)
 
 #### Installation
+
 ```bash
 npm install prisma-extension-soft-delete
 ```
 
 #### Schema Setup
+
 ```prisma
 model Booking {
   id        String    @id @default(cuid())
@@ -237,6 +245,7 @@ model Booking {
 ```
 
 #### Implementation
+
 ```typescript
 import { PrismaClient } from '@prisma/client';
 import { softDelete } from 'prisma-extension-soft-delete';
@@ -246,25 +255,25 @@ const prisma = new PrismaClient().$extends(
     models: {
       Booking: {
         field: 'deletedAt',
-        createValue: (deleted) => deleted ? new Date() : null,
+        createValue: (deleted) => (deleted ? new Date() : null),
       },
     },
     defaultConfig: {
       field: 'deletedAt',
-      createValue: (deleted) => deleted ? new Date() : null,
-    }
+      createValue: (deleted) => (deleted ? new Date() : null),
+    },
   })
 );
 
 // Usage - automatically excludes soft-deleted records
 const activeBookings = await prisma.booking.findMany({
-  where: { tenantId }
+  where: { tenantId },
   // No need to manually add deletedAt: null
 });
 
 // Soft delete a booking
 await prisma.booking.delete({
-  where: { id: bookingId }
+  where: { id: bookingId },
   // Sets deletedAt to current timestamp
 });
 
@@ -272,24 +281,26 @@ await prisma.booking.delete({
 const allBookings = await prisma.booking.findMany({
   where: {
     tenantId,
-    deletedAt: { not: null } // Explicitly query deleted records
-  }
+    deletedAt: { not: null }, // Explicitly query deleted records
+  },
 });
 
 // Restore a soft-deleted booking
 await prisma.booking.update({
   where: { id: bookingId },
-  data: { deletedAt: null }
+  data: { deletedAt: null },
 });
 ```
 
 **Benefits**:
+
 - Preserves booking history for compliance
 - Easy data recovery
 - Audit trail maintenance
 - No need to manually add `deletedAt: null` to every query
 
 **Costs**:
+
 - Additional storage for deleted records
 - Slightly more complex queries if accessing deleted records
 - Need to periodically archive truly old records
@@ -297,32 +308,36 @@ await prisma.booking.update({
 ### 1.4 Transaction Best Practices
 
 **Configuration Options**:
+
 ```typescript
 await prisma.$transaction(
   async (tx) => {
     // Transaction logic here
   },
   {
-    maxWait: 2000,  // Time to acquire transaction (default: 2s)
-    timeout: 5000,  // Max transaction duration (default: 5s)
-    isolationLevel: 'Serializable' // Strictest isolation
+    maxWait: 2000, // Time to acquire transaction (default: 2s)
+    timeout: 5000, // Max transaction duration (default: 5s)
+    isolationLevel: 'Serializable', // Strictest isolation
   }
 );
 ```
 
 **Isolation Levels**:
+
 - `ReadUncommitted`: Fastest, but allows dirty reads
 - `ReadCommitted`: Prevents dirty reads (PostgreSQL default)
 - `RepeatableRead`: Consistent snapshot within transaction
 - `Serializable`: Strictest, prevents all anomalies (use for booking)
 
 **Do's**:
+
 - Keep transactions short (< 5 seconds)
 - Use for read-modify-write patterns
 - Group related operations together
 - Handle rollbacks with try-catch
 
 **Don'ts**:
+
 - Avoid network requests inside transactions
 - Don't run slow queries
 - Don't hold locks longer than necessary
@@ -337,6 +352,7 @@ await prisma.$transaction(
 **Problem**: JavaScript Date objects don't serialize well in JSON. Zod provides datetime string validation.
 
 #### Date String Validation
+
 ```typescript
 import { z } from 'zod';
 
@@ -348,29 +364,33 @@ const BookingSchema = z.object({
   startTime: z.string().datetime(),
   endTime: z.string().datetime(),
   createdAt: z.string().datetime(),
-  deletedAt: z.string().datetime().nullable()
+  deletedAt: z.string().datetime().nullable(),
 });
 
 // Date-only validation (no time component)
 const DateOnlySchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) // "2025-11-27"
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // "2025-11-27"
 });
 
 // Custom date validation with business rules
-const BookingRequestSchema = z.object({
-  date: z.string().datetime().refine(
-    (date) => new Date(date) > new Date(),
-    { message: "Booking date must be in the future" }
-  ),
-  startTime: z.string().datetime(),
-  endTime: z.string().datetime()
-}).refine(
-  (data) => new Date(data.endTime) > new Date(data.startTime),
-  { message: "End time must be after start time" }
-);
+const BookingRequestSchema = z
+  .object({
+    date: z
+      .string()
+      .datetime()
+      .refine((date) => new Date(date) > new Date(), {
+        message: 'Booking date must be in the future',
+      }),
+    startTime: z.string().datetime(),
+    endTime: z.string().datetime(),
+  })
+  .refine((data) => new Date(data.endTime) > new Date(data.startTime), {
+    message: 'End time must be after start time',
+  });
 ```
 
 #### Contract Definition with Nested Validation
+
 ```typescript
 import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
@@ -385,18 +405,22 @@ export const bookingContract = c.router({
     query: z.object({
       startDate: z.string().datetime(),
       endDate: z.string().datetime(),
-      duration: z.number().min(15).max(480) // 15 min to 8 hours
+      duration: z.number().min(15).max(480), // 15 min to 8 hours
     }),
     responses: {
-      200: z.array(z.object({
-        date: z.string().datetime(),
-        available: z.boolean(),
-        slots: z.array(z.object({
-          startTime: z.string().datetime(),
-          endTime: z.string().datetime()
-        }))
-      }))
-    }
+      200: z.array(
+        z.object({
+          date: z.string().datetime(),
+          available: z.boolean(),
+          slots: z.array(
+            z.object({
+              startTime: z.string().datetime(),
+              endTime: z.string().datetime(),
+            })
+          ),
+        })
+      ),
+    },
   },
 
   // Create booking
@@ -408,9 +432,9 @@ export const bookingContract = c.router({
       201: BookingSchema,
       409: z.object({
         error: z.string(),
-        conflictingDate: z.string().datetime()
-      })
-    }
+        conflictingDate: z.string().datetime(),
+      }),
+    },
   },
 
   // Update booking
@@ -418,7 +442,7 @@ export const bookingContract = c.router({
     method: 'PATCH',
     path: '/bookings/:id',
     pathParams: z.object({
-      id: z.string().cuid()
+      id: z.string().cuid(),
     }),
     body: BookingRequestSchema.partial(),
     responses: {
@@ -427,10 +451,10 @@ export const bookingContract = c.router({
       409: z.object({
         error: z.string(),
         expectedVersion: z.number(),
-        actualVersion: z.number()
-      })
-    }
-  }
+        actualVersion: z.number(),
+      }),
+    },
+  },
 });
 ```
 
@@ -446,13 +470,13 @@ const StripeWebhookSchema = z.object({
     'payment_intent.succeeded',
     'payment_intent.payment_failed',
     'account.updated',
-    'account.application.deauthorized'
+    'account.application.deauthorized',
   ]),
   data: z.object({
-    object: z.record(z.any()) // Stripe's dynamic object
+    object: z.record(z.any()), // Stripe's dynamic object
   }),
   created: z.number(), // Unix timestamp
-  livemode: z.boolean()
+  livemode: z.boolean(),
 });
 
 // Google Calendar webhook contract
@@ -462,7 +486,7 @@ const GoogleCalendarWebhookSchema = z.object({
   resourceId: z.string(),
   resourceUri: z.string().url(),
   channelToken: z.string().optional(),
-  expiration: z.string().datetime().optional()
+  expiration: z.string().datetime().optional(),
 });
 
 export const webhookContract = c.router({
@@ -472,8 +496,8 @@ export const webhookContract = c.router({
     body: StripeWebhookSchema,
     responses: {
       200: z.object({ received: z.boolean() }),
-      400: z.object({ error: z.string() })
-    }
+      400: z.object({ error: z.string() }),
+    },
   },
 
   googleCalendarWebhook: {
@@ -482,13 +506,13 @@ export const webhookContract = c.router({
     headers: z.object({
       'x-goog-channel-id': z.string(),
       'x-goog-resource-id': z.string(),
-      'x-goog-resource-state': z.enum(['sync', 'exists', 'not_exists'])
+      'x-goog-resource-state': z.enum(['sync', 'exists', 'not_exists']),
     }),
     body: z.object({}).optional(), // Calendar webhooks have no body
     responses: {
-      200: z.object({ processed: z.boolean() })
-    }
-  }
+      200: z.object({ processed: z.boolean() }),
+    },
+  },
 });
 ```
 
@@ -497,33 +521,41 @@ export const webhookContract = c.router({
 **Recommended for MAIS**: URL Path Versioning (current: `/v1`)
 
 #### URL Path Versioning Pattern
+
 ```typescript
 // packages/contracts/src/api.v1.ts
-export const apiV1 = c.router({
-  bookings: bookingContract,
-  packages: packageContract,
-  // ...
-}, {
-  pathPrefix: '/v1'
-});
+export const apiV1 = c.router(
+  {
+    bookings: bookingContract,
+    packages: packageContract,
+    // ...
+  },
+  {
+    pathPrefix: '/v1',
+  }
+);
 
 // packages/contracts/src/api.v2.ts (future)
-export const apiV2 = c.router({
-  bookings: bookingContractV2, // Updated schema
-  packages: packageContractV2,
-  // ...
-}, {
-  pathPrefix: '/v2'
-});
+export const apiV2 = c.router(
+  {
+    bookings: bookingContractV2, // Updated schema
+    packages: packageContractV2,
+    // ...
+  },
+  {
+    pathPrefix: '/v2',
+  }
+);
 ```
 
 #### Migration Strategy
+
 ```typescript
 // Shared schema for backward compatibility
 const BookingV1Schema = z.object({
   id: z.string(),
   date: z.string().datetime(),
-  status: z.enum(['pending', 'confirmed', 'cancelled'])
+  status: z.enum(['pending', 'confirmed', 'cancelled']),
 });
 
 // V2 adds new fields but supports V1 responses
@@ -531,7 +563,7 @@ const BookingV2Schema = BookingV1Schema.extend({
   version: z.number(), // OCC support
   metadata: z.record(z.string()).optional(), // Extensibility
   cancelledBy: z.string().optional(),
-  cancellationReason: z.string().optional()
+  cancellationReason: z.string().optional(),
 });
 
 // Transformation layer in service
@@ -542,6 +574,7 @@ function toV1Response(booking: BookingV2): BookingV1 {
 ```
 
 #### Deprecation Headers
+
 ```typescript
 // Express middleware for deprecation warnings
 function deprecationMiddleware(version: string, sunsetDate: string) {
@@ -559,6 +592,7 @@ app.use('/v1', deprecationMiddleware('v1', 'Wed, 05 Mar 2026 00:00:00 GMT'));
 ```
 
 **Best Practices**:
+
 1. **Support window**: 12-18 months for old versions
 2. **Communication**: Announce deprecation 6+ months in advance
 3. **Monitoring**: Track version usage via analytics
@@ -574,6 +608,7 @@ app.use('/v1', deprecationMiddleware('v1', 'Wed, 05 Mar 2026 00:00:00 GMT'));
 **Current MAIS Pattern**: Tenant middleware injects `tenantId` into `req.tenantId`
 
 #### Enhanced Context with AsyncLocalStorage
+
 ```typescript
 import { AsyncLocalStorage } from 'async_hooks';
 
@@ -595,8 +630,8 @@ export function contextMiddleware(req: Request, res: Response, next: NextFunctio
     tenantId: req.tenantId, // From tenant middleware
     userId: res.locals.tenantAuth?.userId,
     requestId: uuidv4(),
-    correlationId: req.headers['x-correlation-id'] as string || uuidv4(),
-    startTime: Date.now()
+    correlationId: (req.headers['x-correlation-id'] as string) || uuidv4(),
+    startTime: Date.now(),
   };
 
   // Set correlation ID in response headers
@@ -621,13 +656,14 @@ class BookingService {
   async create(data: BookingData) {
     const { tenantId } = getContext(); // Automatically tenant-scoped
     return await prisma.booking.create({
-      data: { ...data, tenantId }
+      data: { ...data, tenantId },
     });
   }
 }
 ```
 
 **Benefits**:
+
 - No need to pass `tenantId` to every service method
 - Automatic correlation ID tracking
 - Simplified service signatures
@@ -641,37 +677,44 @@ class BookingService {
 **Alternative for Scale**: Connection pooling per tenant
 
 #### Single Pool with Tenant Filtering (Current, Recommended)
+
 ```typescript
 // ✅ MAIS current approach - simple and effective for most use cases
 const prisma = new PrismaClient();
 
 async function getBookings(tenantId: string) {
   return await prisma.booking.findMany({
-    where: { tenantId } // Always filter by tenantId
+    where: { tenantId }, // Always filter by tenantId
   });
 }
 ```
 
 **Pros**:
+
 - Simple connection management
 - Works well for hundreds of tenants
 - Lower memory footprint
 - Easier to maintain
 
 **Cons**:
+
 - All tenants share connection pool
 - No per-tenant connection limits
 - Potential for one tenant to exhaust connections
 
 #### Connection Per Tenant (For Large Scale)
+
 ```typescript
 import { PrismaClient } from '@prisma/client';
 
 // Connection cache with TTL
-const tenantConnections = new Map<string, {
-  client: PrismaClient;
-  lastAccessed: number;
-}>();
+const tenantConnections = new Map<
+  string,
+  {
+    client: PrismaClient;
+    lastAccessed: number;
+  }
+>();
 
 const CONNECTION_TTL = 60 * 60 * 1000; // 1 hour
 const MAX_CONNECTIONS = 100; // Limit per tenant
@@ -689,12 +732,10 @@ function getTenantClient(tenantId: string): PrismaClient {
   const client = new PrismaClient({
     datasources: {
       db: {
-        url: process.env.DATABASE_URL
-      }
+        url: process.env.DATABASE_URL,
+      },
     },
-    log: [
-      { emit: 'event', level: 'query' }
-    ]
+    log: [{ emit: 'event', level: 'query' }],
   });
 
   // Add tenant ID to all queries via middleware
@@ -708,22 +749,25 @@ function getTenantClient(tenantId: string): PrismaClient {
 
   tenantConnections.set(tenantId, {
     client,
-    lastAccessed: Date.now()
+    lastAccessed: Date.now(),
   });
 
   return client;
 }
 
 // Cleanup stale connections
-setInterval(() => {
-  const now = Date.now();
-  for (const [tenantId, { client, lastAccessed }] of tenantConnections) {
-    if (now - lastAccessed > CONNECTION_TTL) {
-      client.$disconnect();
-      tenantConnections.delete(tenantId);
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [tenantId, { client, lastAccessed }] of tenantConnections) {
+      if (now - lastAccessed > CONNECTION_TTL) {
+        client.$disconnect();
+        tenantConnections.delete(tenantId);
+      }
     }
-  }
-}, 10 * 60 * 1000); // Check every 10 minutes
+  },
+  10 * 60 * 1000
+); // Check every 10 minutes
 ```
 
 **When to use**: 1000+ tenants, per-tenant SLAs, or need connection isolation
@@ -731,6 +775,7 @@ setInterval(() => {
 ### 3.3 Rate Limiting Per Tenant
 
 #### Global Rate Limiting (Current MAIS)
+
 ```typescript
 import rateLimit from 'express-rate-limit';
 
@@ -738,11 +783,12 @@ import rateLimit from 'express-rate-limit';
 const signupLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 5, // 5 requests per IP
-  message: 'Too many signup attempts'
+  message: 'Too many signup attempts',
 });
 ```
 
 #### Tenant-Aware Rate Limiting
+
 ```typescript
 import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
@@ -754,22 +800,26 @@ const redis = new Redis(process.env.REDIS_URL);
 const tenantRateLimiter = rateLimit({
   store: new RedisStore({
     client: redis,
-    prefix: 'rate-limit:tenant:'
+    prefix: 'rate-limit:tenant:',
   }),
   windowMs: 60 * 1000, // 1 minute
   max: async (req) => {
     // Different limits per tenant tier
     const tenant = await getTenant(req.tenantId);
     switch (tenant.tier) {
-      case 'enterprise': return 1000;
-      case 'professional': return 500;
-      case 'basic': return 100;
-      default: return 50;
+      case 'enterprise':
+        return 1000;
+      case 'professional':
+        return 500;
+      case 'basic':
+        return 100;
+      default:
+        return 50;
     }
   },
   keyGenerator: (req) => req.tenantId, // Rate limit by tenantId, not IP
   message: (req) => `Rate limit exceeded for tenant ${req.tenantId}`,
-  skip: (req) => req.tenantId === 'internal' // Skip internal tools
+  skip: (req) => req.tenantId === 'internal', // Skip internal tools
 });
 
 // Apply to tenant-authenticated routes
@@ -777,19 +827,20 @@ app.use('/v1/tenant-admin', tenantMiddleware, tenantRateLimiter);
 ```
 
 #### Endpoint-Specific Rate Limits
+
 ```typescript
 // Stricter limits for resource-intensive operations
 const bookingLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 10, // 10 bookings per minute per tenant
-  keyGenerator: (req) => `${req.tenantId}:bookings`
+  keyGenerator: (req) => `${req.tenantId}:bookings`,
 });
 
 const webhookLimiter = rateLimit({
   windowMs: 10 * 1000,
   max: 100, // 100 webhook calls per 10 seconds
   keyGenerator: (req) => `${req.tenantId}:webhooks`,
-  skipFailedRequests: true // Don't count failed requests
+  skipFailedRequests: true, // Don't count failed requests
 });
 
 app.post('/v1/bookings', tenantMiddleware, bookingLimiter, createBooking);
@@ -799,6 +850,7 @@ app.post('/v1/webhooks/stripe', webhookLimiter, handleStripeWebhook);
 ### 3.4 Audit Logging Patterns
 
 #### Audit Log Schema
+
 ```prisma
 model AuditLog {
   id            String   @id @default(cuid())
@@ -821,6 +873,7 @@ model AuditLog {
 ```
 
 #### Audit Middleware
+
 ```typescript
 import { AuditLog } from '@prisma/client';
 
@@ -849,12 +902,12 @@ class AuditLogger {
         metadata: {
           method: req.method,
           path: req.path,
-          query: req.query
+          query: req.query,
         },
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
-        correlationId: context.correlationId
-      }
+        correlationId: context.correlationId,
+      },
     });
   }
 }
@@ -864,12 +917,12 @@ export const auditLogger = new AuditLogger();
 // Usage in services
 async function updateBooking(id: string, tenantId: string, updates: BookingUpdate, req: Request) {
   const before = await prisma.booking.findUnique({
-    where: { id, tenantId }
+    where: { id, tenantId },
   });
 
   const after = await prisma.booking.update({
     where: { id, tenantId },
-    data: updates
+    data: updates,
   });
 
   await auditLogger.log({
@@ -879,7 +932,7 @@ async function updateBooking(id: string, tenantId: string, updates: BookingUpdat
     resourceType: 'Booking',
     resourceId: id,
     changes: { before, after },
-    req
+    req,
   });
 
   return after;
@@ -887,50 +940,44 @@ async function updateBooking(id: string, tenantId: string, updates: BookingUpdat
 ```
 
 #### Audit Log Querying
+
 ```typescript
 // Get audit trail for a resource
-async function getResourceAuditTrail(
-  tenantId: string,
-  resourceType: string,
-  resourceId: string
-) {
+async function getResourceAuditTrail(tenantId: string, resourceType: string, resourceId: string) {
   return await prisma.auditLog.findMany({
     where: {
       tenantId,
       resourceType,
-      resourceId
+      resourceId,
     },
     orderBy: { createdAt: 'desc' },
-    take: 100
+    take: 100,
   });
 }
 
 // Get tenant activity summary
-async function getTenantActivity(
-  tenantId: string,
-  startDate: Date,
-  endDate: Date
-) {
+async function getTenantActivity(tenantId: string, startDate: Date, endDate: Date) {
   return await prisma.auditLog.groupBy({
     by: ['action'],
     where: {
       tenantId,
       createdAt: {
         gte: startDate,
-        lte: endDate
-      }
+        lte: endDate,
+      },
     },
     _count: true,
     orderBy: {
       _count: {
-        action: 'desc'
-      }
-    }
+        action: 'desc',
+      },
+    },
   });
 }
 ```
 
 **Best Practices**:
+
 1. **Async logging**: Use background jobs for writes
 2. **Partitioning**: Use PostgreSQL partitioning for large datasets
 3. **Retention**: Archive old logs after 90 days
@@ -944,6 +991,7 @@ async function getTenantActivity(
 ### 4.1 Optimistic Updates for Booking Forms
 
 #### UI-Level Optimistic Updates (Simple)
+
 ```typescript
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -985,13 +1033,13 @@ function BookingForm() {
 **When to use**: Single display location (e.g., confirmation screen)
 
 #### Cache-Level Optimistic Updates (Multi-Location)
+
 ```typescript
 function useCreateBooking() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (booking: BookingRequest) =>
-      apiClient.bookings.createBooking({ body: booking }),
+    mutationFn: (booking: BookingRequest) => apiClient.bookings.createBooking({ body: booking }),
 
     // Optimistically update cache
     onMutate: async (newBooking) => {
@@ -1008,8 +1056,8 @@ function useCreateBooking() {
           id: 'temp-' + Date.now(),
           ...newBooking,
           status: 'pending',
-          createdAt: new Date().toISOString()
-        }
+          createdAt: new Date().toISOString(),
+        },
       ]);
 
       // Return context for rollback
@@ -1029,7 +1077,7 @@ function useCreateBooking() {
     // Always refetch to sync with server
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
-    }
+    },
   });
 }
 ```
@@ -1037,6 +1085,7 @@ function useCreateBooking() {
 **When to use**: Multiple UI locations showing bookings (dashboard + modal + notifications)
 
 #### Tracking Multiple Mutations
+
 ```typescript
 import { useMutationState } from '@tanstack/react-query';
 
@@ -1067,6 +1116,7 @@ function BookingDashboard() {
 ### 4.2 Real-time Availability Polling
 
 #### Basic Polling with refetchInterval
+
 ```typescript
 function useAvailability(date: string) {
   return useQuery({
@@ -1083,12 +1133,13 @@ function useAvailability(date: string) {
     refetchOnWindowFocus: true,
 
     // Keep showing stale data while refetching
-    staleTime: 0
+    staleTime: 0,
   });
 }
 ```
 
 #### Dynamic Polling Based on Activity
+
 ```typescript
 function useSmartAvailabilityPolling(date: string) {
   const [userActive, setUserActive] = useState(true);
@@ -1122,12 +1173,13 @@ function useSmartAvailabilityPolling(date: string) {
     // Continue polling in background for dashboards
     refetchIntervalInBackground: true,
 
-    staleTime: 0
+    staleTime: 0,
   });
 }
 ```
 
 #### Conditional Polling
+
 ```typescript
 function useConditionalPolling(date: string) {
   const { data } = useQuery({
@@ -1138,7 +1190,7 @@ function useConditionalPolling(date: string) {
       // Stop polling if date is fully booked
       if (result.body.availableSlots === 0) {
         queryClient.setQueryDefaults(['availability', date], {
-          refetchInterval: false
+          refetchInterval: false,
         });
       }
 
@@ -1158,7 +1210,7 @@ function useConditionalPolling(date: string) {
       }
 
       return 30 * 1000; // 30 seconds
-    }
+    },
   });
 
   return data;
@@ -1166,6 +1218,7 @@ function useConditionalPolling(date: string) {
 ```
 
 **Best Practices**:
+
 - Use `refetchInterval` for real-time updates
 - Set `refetchIntervalInBackground: false` for most cases (saves resources)
 - Use `staleTime: 0` to always show fresh data
@@ -1177,6 +1230,7 @@ function useConditionalPolling(date: string) {
 #### Recommended: react-big-calendar
 
 **Why react-big-calendar**:
+
 - Free and open-source (MIT license)
 - React-only, optimized for React ecosystem
 - Good for event management and scheduling interfaces
@@ -1184,17 +1238,20 @@ function useConditionalPolling(date: string) {
 - 8,500+ GitHub stars, 500k+ weekly downloads
 
 **When to avoid**:
+
 - Need drag-and-drop (requires manual implementation)
 - Need resource views (FullCalendar Premium has better support)
 - Need extensive built-in editing features
 
 #### Installation
+
 ```bash
 npm install react-big-calendar moment
 # Or use date-fns, dayjs, or globalize as localizer
 ```
 
 #### Basic Integration with TanStack Query
+
 ```typescript
 import { Calendar, momentLocalizer, Event } from 'react-big-calendar';
 import moment from 'moment';
@@ -1296,6 +1353,7 @@ function BookingCalendar() {
 #### FullCalendar Alternative (Premium Features)
 
 **When to use FullCalendar**:
+
 - Need drag-and-drop out of the box
 - Resource scheduling (multiple calendars side-by-side)
 - Timeline views
@@ -1340,12 +1398,14 @@ function FullCalendarBooking() {
 **Use case**: SaaS platforms where customers transact directly with connected accounts (clubs/businesses).
 
 **Characteristics**:
+
 - Payment appears on connected account, not platform
 - Connected account's balance increases
 - Platform collects application fees
 - Customers often unaware of platform
 
 **Implementation**:
+
 ```typescript
 import Stripe from 'stripe';
 
@@ -1359,45 +1419,53 @@ async function createDirectCharge(
   paymentMethodId: string
 ) {
   // Create PaymentIntent on connected account
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount,
-    currency: 'usd',
-    payment_method: paymentMethodId,
-    confirm: true,
-    application_fee_amount: Math.floor(amount * 0.05), // 5% platform fee
+  const paymentIntent = await stripe.paymentIntents.create(
+    {
+      amount,
+      currency: 'usd',
+      payment_method: paymentMethodId,
+      confirm: true,
+      application_fee_amount: Math.floor(amount * 0.05), // 5% platform fee
 
-    // Optional: Description for customer statement
-    statement_descriptor: 'MAIS Booking',
+      // Optional: Description for customer statement
+      statement_descriptor: 'MAIS Booking',
 
-    // Optional: Metadata for tracking
-    metadata: {
-      tenantId,
-      bookingId: 'booking_123'
+      // Optional: Metadata for tracking
+      metadata: {
+        tenantId,
+        bookingId: 'booking_123',
+      },
+    },
+    {
+      stripeAccount: connectedAccountId, // Route to connected account
     }
-  }, {
-    stripeAccount: connectedAccountId // Route to connected account
-  });
+  );
 
   return paymentIntent;
 }
 ```
 
 **Fee Structure**:
+
 - Connected account pays standard Stripe fees (2.9% + $0.30)
 - Platform receives application fee (e.g., 5% of transaction)
 - Platform can optionally pay Stripe fees for connected accounts
 
 #### Platform Fee Configuration
+
 ```typescript
 // Platform pays Stripe fees for connected account
-const paymentIntent = await stripe.paymentIntents.create({
-  amount: 10000, // $100.00
-  currency: 'usd',
-  application_fee_amount: 500, // $5.00 platform fee
-  on_behalf_of: connectedAccountId, // Optional: Platform pays fees
-}, {
-  stripeAccount: connectedAccountId
-});
+const paymentIntent = await stripe.paymentIntents.create(
+  {
+    amount: 10000, // $100.00
+    currency: 'usd',
+    application_fee_amount: 500, // $5.00 platform fee
+    on_behalf_of: connectedAccountId, // Optional: Platform pays fees
+  },
+  {
+    stripeAccount: connectedAccountId,
+  }
+);
 ```
 
 ### 5.2 Connected Account Onboarding
@@ -1414,12 +1482,12 @@ async function createConnectedAccount(tenantId: string, email: string) {
     email,
     capabilities: {
       card_payments: { requested: true },
-      transfers: { requested: true }
+      transfers: { requested: true },
     },
     business_type: 'individual', // or 'company'
     metadata: {
-      tenantId
-    }
+      tenantId,
+    },
   });
 
   // Store in database
@@ -1427,24 +1495,20 @@ async function createConnectedAccount(tenantId: string, email: string) {
     where: { id: tenantId },
     data: {
       stripeAccountId: account.id,
-      stripeAccountStatus: 'pending'
-    }
+      stripeAccountStatus: 'pending',
+    },
   });
 
   return account;
 }
 
 // Generate onboarding link
-async function createAccountLink(
-  stripeAccountId: string,
-  refreshUrl: string,
-  returnUrl: string
-) {
+async function createAccountLink(stripeAccountId: string, refreshUrl: string, returnUrl: string) {
   const accountLink = await stripe.accountLinks.create({
     account: stripeAccountId,
     refresh_url: refreshUrl,
     return_url: returnUrl,
-    type: 'account_onboarding'
+    type: 'account_onboarding',
   });
 
   return accountLink.url; // Redirect user here
@@ -1460,12 +1524,13 @@ async function checkAccountStatus(stripeAccountId: string) {
     payoutsEnabled: account.payouts_enabled,
     requirementsDue: account.requirements?.currently_due || [],
     requirementsEventuallyDue: account.requirements?.eventually_due || [],
-    disabled: account.requirements?.disabled_reason
+    disabled: account.requirements?.disabled_reason,
   };
 }
 ```
 
 #### Webhook Handling for Account Updates
+
 ```typescript
 import { Request, Response } from 'express';
 
@@ -1482,9 +1547,9 @@ async function handleAccountUpdated(event: Stripe.Event) {
         chargesEnabled: account.charges_enabled,
         payoutsEnabled: account.payouts_enabled,
         requirementsDue: account.requirements?.currently_due,
-        disabledReason: account.requirements?.disabled_reason
-      }
-    }
+        disabledReason: account.requirements?.disabled_reason,
+      },
+    },
   });
 
   // Notify tenant if action required
@@ -1492,7 +1557,7 @@ async function handleAccountUpdated(event: Stripe.Event) {
     await sendEmail({
       to: account.email,
       subject: 'Action Required: Complete Stripe Verification',
-      body: `Please complete the following requirements: ${account.requirements.currently_due.join(', ')}`
+      body: `Please complete the following requirements: ${account.requirements.currently_due.join(', ')}`,
     });
   }
 }
@@ -1533,28 +1598,25 @@ async function handleStripeWebhook(req: Request, res: Response) {
 
 ```typescript
 // Save payment method on platform
-async function savePaymentMethod(
-  customerId: string,
-  paymentMethodId: string
-) {
+async function savePaymentMethod(customerId: string, paymentMethodId: string) {
   // Attach to platform customer
   await stripe.paymentMethods.attach(paymentMethodId, {
-    customer: customerId
+    customer: customerId,
   });
 
   return paymentMethodId;
 }
 
 // Clone to connected account
-async function clonePaymentMethod(
-  paymentMethodId: string,
-  connectedAccountId: string
-) {
-  const clonedPaymentMethod = await stripe.paymentMethods.create({
-    payment_method: paymentMethodId // Reference to platform payment method
-  }, {
-    stripeAccount: connectedAccountId
-  });
+async function clonePaymentMethod(paymentMethodId: string, connectedAccountId: string) {
+  const clonedPaymentMethod = await stripe.paymentMethods.create(
+    {
+      payment_method: paymentMethodId, // Reference to platform payment method
+    },
+    {
+      stripeAccount: connectedAccountId,
+    }
+  );
 
   return clonedPaymentMethod.id;
 }
@@ -1569,21 +1631,25 @@ async function chargeConnectedAccount(
   const clonedPM = await clonePaymentMethod(platformPaymentMethodId, connectedAccountId);
 
   // Create PaymentIntent on connected account
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount,
-    currency: 'usd',
-    payment_method: clonedPM,
-    confirm: true,
-    application_fee_amount: Math.floor(amount * 0.05)
-  }, {
-    stripeAccount: connectedAccountId
-  });
+  const paymentIntent = await stripe.paymentIntents.create(
+    {
+      amount,
+      currency: 'usd',
+      payment_method: clonedPM,
+      confirm: true,
+      application_fee_amount: Math.floor(amount * 0.05),
+    },
+    {
+      stripeAccount: connectedAccountId,
+    }
+  );
 
   return paymentIntent;
 }
 ```
 
 **Limitations**:
+
 - Only works for `card` and `us_bank_account` types
 - Cannot clone between connected accounts (only platform → connected)
 - Cloned payment methods are independent (not synced)
@@ -1592,19 +1658,18 @@ async function chargeConnectedAccount(
 
 ```typescript
 // Refund direct charge (application fee returned by default)
-async function refundDirectCharge(
-  chargeId: string,
-  connectedAccountId: string,
-  amount?: number
-) {
-  const refund = await stripe.refunds.create({
-    charge: chargeId,
-    amount, // Optional: partial refund
-    reverse_transfer: false, // Don't reverse application fee
-    refund_application_fee: true // Refund application fee
-  }, {
-    stripeAccount: connectedAccountId
-  });
+async function refundDirectCharge(chargeId: string, connectedAccountId: string, amount?: number) {
+  const refund = await stripe.refunds.create(
+    {
+      charge: chargeId,
+      amount, // Optional: partial refund
+      reverse_transfer: false, // Don't reverse application fee
+      refund_application_fee: true, // Refund application fee
+    },
+    {
+      stripeAccount: connectedAccountId,
+    }
+  );
 
   return refund;
 }
@@ -1614,10 +1679,9 @@ async function handleDisputeCreated(event: Stripe.Event) {
   const dispute = event.data.object as Stripe.Dispute;
 
   // Notify connected account (tenant)
-  const charge = await stripe.charges.retrieve(
-    dispute.charge as string,
-    { stripeAccount: dispute.account as string }
-  );
+  const charge = await stripe.charges.retrieve(dispute.charge as string, {
+    stripeAccount: dispute.account as string,
+  });
 
   const tenantId = charge.metadata.tenantId;
 
@@ -1625,7 +1689,7 @@ async function handleDisputeCreated(event: Stripe.Event) {
     disputeId: dispute.id,
     amount: dispute.amount,
     reason: dispute.reason,
-    evidence_due_by: dispute.evidence_details?.due_by
+    evidence_due_by: dispute.evidence_details?.due_by,
   });
 }
 ```
@@ -1648,8 +1712,8 @@ const auth = new google.auth.GoogleAuth({
   keyFile: process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH,
   scopes: [
     'https://www.googleapis.com/auth/calendar',
-    'https://www.googleapis.com/auth/calendar.events'
-  ]
+    'https://www.googleapis.com/auth/calendar.events',
+  ],
 });
 
 // Get auth client
@@ -1660,6 +1724,7 @@ const calendar = google.calendar({ version: 'v3', auth: authClient });
 ```
 
 #### JWT Client Pattern
+
 ```typescript
 const { google } = require('googleapis');
 
@@ -1677,6 +1742,7 @@ const calendar = google.calendar({ version: 'v3', auth: jwtClient });
 ```
 
 **Environment Variables**:
+
 ```bash
 GOOGLE_CLIENT_EMAIL=service-account@project-id.iam.gserviceaccount.com
 GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
@@ -1686,6 +1752,7 @@ GOOGLE_CALENDAR_ID=primary # or specific calendar ID
 ### 6.2 CRUD Operations
 
 #### Create Event
+
 ```typescript
 async function createCalendarEvent(booking: Booking) {
   const event = await calendar.events.insert({
@@ -1695,30 +1762,28 @@ async function createCalendarEvent(booking: Booking) {
       description: booking.notes,
       start: {
         dateTime: booking.startTime.toISOString(),
-        timeZone: 'America/New_York'
+        timeZone: 'America/New_York',
       },
       end: {
         dateTime: booking.endTime.toISOString(),
-        timeZone: 'America/New_York'
+        timeZone: 'America/New_York',
       },
-      attendees: [
-        { email: booking.clientEmail }
-      ],
+      attendees: [{ email: booking.clientEmail }],
       reminders: {
         useDefault: false,
         overrides: [
           { method: 'email', minutes: 24 * 60 }, // 1 day before
-          { method: 'popup', minutes: 30 }
-        ]
+          { method: 'popup', minutes: 30 },
+        ],
       },
       // Store booking ID for synchronization
       extendedProperties: {
         private: {
           bookingId: booking.id,
-          tenantId: booking.tenantId
-        }
-      }
-    }
+          tenantId: booking.tenantId,
+        },
+      },
+    },
   });
 
   return event.data;
@@ -1726,6 +1791,7 @@ async function createCalendarEvent(booking: Booking) {
 ```
 
 #### List Events
+
 ```typescript
 async function listEvents(startDate: Date, endDate: Date) {
   const response = await calendar.events.list({
@@ -1734,7 +1800,7 @@ async function listEvents(startDate: Date, endDate: Date) {
     timeMax: endDate.toISOString(),
     singleEvents: true, // Expand recurring events
     orderBy: 'startTime',
-    maxResults: 100
+    maxResults: 100,
   });
 
   return response.data.items || [];
@@ -1742,6 +1808,7 @@ async function listEvents(startDate: Date, endDate: Date) {
 ```
 
 #### Update Event
+
 ```typescript
 async function updateCalendarEvent(eventId: string, updates: Partial<Booking>) {
   const event = await calendar.events.patch({
@@ -1749,15 +1816,19 @@ async function updateCalendarEvent(eventId: string, updates: Partial<Booking>) {
     eventId,
     requestBody: {
       summary: updates.packageName ? `${updates.packageName} - ${updates.clientName}` : undefined,
-      start: updates.startTime ? {
-        dateTime: updates.startTime.toISOString(),
-        timeZone: 'America/New_York'
-      } : undefined,
-      end: updates.endTime ? {
-        dateTime: updates.endTime.toISOString(),
-        timeZone: 'America/New_York'
-      } : undefined
-    }
+      start: updates.startTime
+        ? {
+            dateTime: updates.startTime.toISOString(),
+            timeZone: 'America/New_York',
+          }
+        : undefined,
+      end: updates.endTime
+        ? {
+            dateTime: updates.endTime.toISOString(),
+            timeZone: 'America/New_York',
+          }
+        : undefined,
+    },
   });
 
   return event.data;
@@ -1765,11 +1836,12 @@ async function updateCalendarEvent(eventId: string, updates: Partial<Booking>) {
 ```
 
 #### Delete Event
+
 ```typescript
 async function deleteCalendarEvent(eventId: string) {
   await calendar.events.delete({
     calendarId: 'primary',
-    eventId
+    eventId,
   });
 }
 ```
@@ -1784,7 +1856,7 @@ import { v4 as uuidv4 } from 'uuid';
 // Create watch channel
 async function watchCalendar(webhookUrl: string, calendarId: string = 'primary') {
   const channelId = uuidv4();
-  const expiration = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
+  const expiration = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
 
   const response = await calendar.events.watch({
     calendarId,
@@ -1792,8 +1864,8 @@ async function watchCalendar(webhookUrl: string, calendarId: string = 'primary')
       id: channelId, // Unique channel ID
       type: 'web_hook',
       address: webhookUrl, // Must be HTTPS
-      expiration: expiration.toString()
-    }
+      expiration: expiration.toString(),
+    },
   });
 
   // Store channel info for renewal/stopping
@@ -1802,8 +1874,8 @@ async function watchCalendar(webhookUrl: string, calendarId: string = 'primary')
       channelId,
       resourceId: response.data.resourceId!,
       calendarId,
-      expiration: new Date(expiration)
-    }
+      expiration: new Date(expiration),
+    },
   });
 
   return response.data;
@@ -1824,7 +1896,7 @@ async function handleCalendarWebhook(req: Request, res: Response) {
   if (resourceState === 'exists') {
     // Fetch updated events
     const channel = await prisma.calendarWatchChannel.findUnique({
-      where: { channelId }
+      where: { channelId },
     });
 
     if (channel) {
@@ -1841,7 +1913,7 @@ async function syncCalendarEvents(calendarId: string) {
     calendarId,
     timeMin: new Date().toISOString(),
     maxResults: 100,
-    singleEvents: true
+    singleEvents: true,
   });
 
   // Update local database with changes
@@ -1858,17 +1930,18 @@ async function stopWatchingCalendar(channelId: string, resourceId: string) {
   await calendar.channels.stop({
     requestBody: {
       id: channelId,
-      resourceId
-    }
+      resourceId,
+    },
   });
 
   await prisma.calendarWatchChannel.delete({
-    where: { channelId }
+    where: { channelId },
   });
 }
 ```
 
 **Best Practices**:
+
 - Webhook URL must be HTTPS with valid SSL certificate
 - Acknowledge all webhook requests with 200 status
 - Renew watch channels before they expire (7-day max)
@@ -1888,7 +1961,10 @@ import axios from 'axios';
 async function batchCreateEvents(bookings: Booking[], accessToken: string) {
   const boundary = 'batch_boundary';
 
-  const batchBody = bookings.map((booking, i) => `
+  const batchBody =
+    bookings
+      .map((booking, i) =>
+        `
 --${boundary}
 Content-Type: application/http
 Content-ID: <item${i}>
@@ -1899,20 +1975,18 @@ Content-Type: application/json
 ${JSON.stringify({
   summary: `${booking.packageName} - ${booking.clientName}`,
   start: { dateTime: booking.startTime.toISOString() },
-  end: { dateTime: booking.endTime.toISOString() }
+  end: { dateTime: booking.endTime.toISOString() },
 })}
-  `.trim()).join('\n') + `\n--${boundary}--`;
+  `.trim()
+      )
+      .join('\n') + `\n--${boundary}--`;
 
-  const response = await axios.post(
-    'https://www.googleapis.com/batch/calendar/v3',
-    batchBody,
-    {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': `multipart/mixed; boundary=${boundary}`
-      }
-    }
-  );
+  const response = await axios.post('https://www.googleapis.com/batch/calendar/v3', batchBody, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': `multipart/mixed; boundary=${boundary}`,
+    },
+  });
 
   return response.data;
 }
@@ -1925,6 +1999,7 @@ ${JSON.stringify({
 ### 7.1 Time Mocking with Vitest
 
 #### Basic Time Mocking
+
 ```typescript
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
@@ -1951,7 +2026,7 @@ describe('Booking Service', () => {
         tenantId: 'test',
         date: pastDate,
         startTime: pastDate,
-        endTime: new Date('2025-11-26T11:00:00Z')
+        endTime: new Date('2025-11-26T11:00:00Z'),
       })
     ).rejects.toThrow('Booking date must be in the future');
   });
@@ -1964,7 +2039,7 @@ describe('Booking Service', () => {
       tenantId: 'test',
       date: new Date('2025-11-28T14:00:00Z'), // Next day at 2 PM
       startTime: new Date('2025-11-28T14:00:00Z'),
-      endTime: new Date('2025-11-28T15:00:00Z')
+      endTime: new Date('2025-11-28T15:00:00Z'),
     });
 
     expect(booking).toBeDefined();
@@ -1986,6 +2061,7 @@ describe('Booking Service', () => {
 ```
 
 #### Testing Expiration Logic
+
 ```typescript
 describe('Booking Expiration', () => {
   beforeEach(() => {
@@ -2004,7 +2080,7 @@ describe('Booking Expiration', () => {
     const booking = await bookingService.create({
       tenantId: 'test',
       date: new Date('2025-11-28T14:00:00Z'),
-      status: 'pending'
+      status: 'pending',
     });
 
     expect(booking.status).toBe('pending');
@@ -2025,6 +2101,7 @@ describe('Booking Expiration', () => {
 ### 7.2 Testing Race Conditions
 
 #### Concurrent Booking Simulation
+
 ```typescript
 import { describe, it, expect } from 'vitest';
 
@@ -2033,21 +2110,25 @@ describe('Double-Booking Prevention', () => {
     const date = new Date('2025-11-28T14:00:00Z');
 
     // Simulate 10 concurrent booking attempts for same slot
-    const bookingPromises = Array.from({ length: 10 }, (_, i) =>
-      bookingService.create({
-        tenantId: 'test',
-        clientName: `Client ${i}`,
-        date,
-        startTime: date,
-        endTime: new Date('2025-11-28T15:00:00Z')
-      }).catch(err => err) // Catch errors to count failures
+    const bookingPromises = Array.from(
+      { length: 10 },
+      (_, i) =>
+        bookingService
+          .create({
+            tenantId: 'test',
+            clientName: `Client ${i}`,
+            date,
+            startTime: date,
+            endTime: new Date('2025-11-28T15:00:00Z'),
+          })
+          .catch((err) => err) // Catch errors to count failures
     );
 
     const results = await Promise.all(bookingPromises);
 
     // Only one should succeed
-    const successes = results.filter(r => !(r instanceof Error));
-    const failures = results.filter(r => r instanceof Error);
+    const successes = results.filter((r) => !(r instanceof Error));
+    const failures = results.filter((r) => r instanceof Error);
 
     expect(successes).toHaveLength(1);
     expect(failures).toHaveLength(9);
@@ -2058,7 +2139,7 @@ describe('Double-Booking Prevention', () => {
     // Create booking
     const booking = await bookingService.create({
       tenantId: 'test',
-      date: new Date('2025-11-28T14:00:00Z')
+      date: new Date('2025-11-28T14:00:00Z'),
     });
 
     // Simulate two concurrent updates
@@ -2079,8 +2160,8 @@ describe('Double-Booking Prevention', () => {
     const results = await Promise.allSettled([update1, update2]);
 
     // One should succeed, one should fail
-    const succeeded = results.filter(r => r.status === 'fulfilled');
-    const failed = results.filter(r => r.status === 'rejected');
+    const succeeded = results.filter((r) => r.status === 'fulfilled');
+    const failed = results.filter((r) => r.status === 'rejected');
 
     expect(succeeded).toHaveLength(1);
     expect(failed).toHaveLength(1);
@@ -2089,6 +2170,7 @@ describe('Double-Booking Prevention', () => {
 ```
 
 #### Property-Based Testing with fast-check
+
 ```typescript
 import { test } from 'vitest';
 import * as fc from 'fast-check';
@@ -2100,7 +2182,7 @@ test('booking date ranges should never overlap', async () => {
       fc.array(
         fc.record({
           startTime: fc.date({ min: new Date('2025-01-01') }),
-          duration: fc.integer({ min: 15, max: 480 }) // 15 min to 8 hours
+          duration: fc.integer({ min: 15, max: 480 }), // 15 min to 8 hours
         }),
         { minLength: 2, maxLength: 10 }
       ),
@@ -2109,20 +2191,20 @@ test('booking date ranges should never overlap', async () => {
 
         // Attempt to create all bookings
         const results = await Promise.allSettled(
-          bookingRequests.map(req =>
+          bookingRequests.map((req) =>
             bookingService.create({
               tenantId,
               date: req.startTime,
               startTime: req.startTime,
-              endTime: new Date(req.startTime.getTime() + req.duration * 60000)
+              endTime: new Date(req.startTime.getTime() + req.duration * 60000),
             })
           )
         );
 
         // Get successful bookings
         const bookings = results
-          .filter(r => r.status === 'fulfilled')
-          .map(r => (r as PromiseFulfilledResult<any>).value);
+          .filter((r) => r.status === 'fulfilled')
+          .map((r) => (r as PromiseFulfilledResult<any>).value);
 
         // Verify no overlaps
         for (let i = 0; i < bookings.length; i++) {
@@ -2136,9 +2218,7 @@ test('booking date ranges should never overlap', async () => {
             const bEnd = new Date(b.endTime).getTime();
 
             // Assert no overlap
-            expect(
-              aEnd <= bStart || bEnd <= aStart
-            ).toBe(true);
+            expect(aEnd <= bStart || bEnd <= aStart).toBe(true);
           }
         }
       }
@@ -2151,6 +2231,7 @@ test('booking date ranges should never overlap', async () => {
 ### 7.3 E2E Testing with Playwright
 
 #### Booking Flow Test
+
 ```typescript
 import { test, expect } from '@playwright/test';
 
@@ -2202,7 +2283,7 @@ test.describe('Booking Flow', () => {
     await createBooking(page, {
       date: '2025-11-28',
       startTime: '14:00',
-      clientName: 'Client 1'
+      clientName: 'Client 1',
     });
 
     // Attempt to create conflicting booking
@@ -2250,10 +2331,11 @@ async function createBooking(page, data) {
 ```
 
 #### Calendar Integration Test
+
 ```typescript
 test('should sync booking with Google Calendar', async ({ page }) => {
   // Mock Google Calendar API
-  await page.route('https://www.googleapis.com/calendar/v3/**', async route => {
+  await page.route('https://www.googleapis.com/calendar/v3/**', async (route) => {
     if (route.request().method() === 'POST') {
       await route.fulfill({
         status: 200,
@@ -2261,8 +2343,8 @@ test('should sync booking with Google Calendar', async ({ page }) => {
           id: 'calendar-event-123',
           summary: 'Test Booking',
           start: { dateTime: '2025-11-28T14:00:00Z' },
-          end: { dateTime: '2025-11-28T15:00:00Z' }
-        })
+          end: { dateTime: '2025-11-28T15:00:00Z' },
+        }),
       });
     }
   });
@@ -2271,7 +2353,7 @@ test('should sync booking with Google Calendar', async ({ page }) => {
   await createBooking(page, {
     date: '2025-11-28',
     startTime: '14:00',
-    clientName: 'John Doe'
+    clientName: 'John Doe',
   });
 
   // Verify calendar sync indicator
@@ -2286,6 +2368,7 @@ test('should sync booking with Google Calendar', async ({ page }) => {
 ### Core Dependencies
 
 #### Database & ORM
+
 ```json
 {
   "prisma": "^6.0.0",
@@ -2295,6 +2378,7 @@ test('should sync booking with Google Calendar', async ({ page }) => {
 ```
 
 #### API & Validation
+
 ```json
 {
   "@ts-rest/core": "^3.53.0",
@@ -2306,6 +2390,7 @@ test('should sync booking with Google Calendar', async ({ page }) => {
 ```
 
 #### Frontend State Management
+
 ```json
 {
   "@tanstack/react-query": "^5.0.0",
@@ -2314,6 +2399,7 @@ test('should sync booking with Google Calendar', async ({ page }) => {
 ```
 
 #### Calendar Components
+
 ```json
 {
   "react-big-calendar": "^1.15.0",
@@ -2335,6 +2421,7 @@ test('should sync booking with Google Calendar', async ({ page }) => {
 ```
 
 #### Payment Processing
+
 ```json
 {
   "stripe": "^17.0.0"
@@ -2342,6 +2429,7 @@ test('should sync booking with Google Calendar', async ({ page }) => {
 ```
 
 #### Google Calendar Integration
+
 ```json
 {
   "googleapis": "^144.0.0"
@@ -2349,6 +2437,7 @@ test('should sync booking with Google Calendar', async ({ page }) => {
 ```
 
 #### Testing
+
 ```json
 {
   "vitest": "^2.0.0",
@@ -2359,6 +2448,7 @@ test('should sync booking with Google Calendar', async ({ page }) => {
 ```
 
 #### Multi-tenant Utilities
+
 ```json
 {
   "express-rate-limit": "^7.0.0",
@@ -2370,6 +2460,7 @@ test('should sync booking with Google Calendar', async ({ page }) => {
 ```
 
 #### Logging & Monitoring
+
 ```json
 {
   "winston": "^3.17.0",
@@ -2380,19 +2471,20 @@ test('should sync booking with Google Calendar', async ({ page }) => {
 
 ### Version Compatibility Matrix
 
-| Package | Prisma 6 | Node 20 | TypeScript 5.9 | Notes |
-|---------|----------|---------|----------------|-------|
-| @ts-rest/core | ✅ 3.53.0+ | ✅ | ✅ | Zod 4 support in RC |
-| @tanstack/react-query | ✅ 5.0+ | ✅ | ✅ | React 18+ required |
-| googleapis | ✅ | ✅ | ✅ | Built-in TypeScript types |
-| stripe | ✅ 17.0+ | ✅ | ✅ | API version 2025-01-27 |
-| vitest | ✅ 2.0+ | ✅ | ✅ | Native ESM support |
+| Package               | Prisma 6   | Node 20 | TypeScript 5.9 | Notes                     |
+| --------------------- | ---------- | ------- | -------------- | ------------------------- |
+| @ts-rest/core         | ✅ 3.53.0+ | ✅      | ✅             | Zod 4 support in RC       |
+| @tanstack/react-query | ✅ 5.0+    | ✅      | ✅             | React 18+ required        |
+| googleapis            | ✅         | ✅      | ✅             | Built-in TypeScript types |
+| stripe                | ✅ 17.0+   | ✅      | ✅             | API version 2025-01-27    |
+| vitest                | ✅ 2.0+    | ✅      | ✅             | Native ESM support        |
 
 ---
 
 ## Sources
 
 ### Prisma & Database
+
 - [Optimistic Concurrency Control · Issue #4988 · prisma/prisma](https://github.com/prisma/prisma/issues/4988)
 - [Transactions and batch queries (Reference) | Prisma Documentation](https://www.prisma.io/docs/orm/prisma-client/queries/transactions)
 - [How To Build a High-Concurrency Ticket Booking System With Prisma](https://dev.to/zenstack/how-to-build-a-high-concurrency-ticket-booking-system-with-prisma-184n)
@@ -2403,6 +2495,7 @@ test('should sync booking with Google Calendar', async ({ page }) => {
 - [Implementing Soft Deletion in Prisma with Client Extensions](https://matranga.dev/true-soft-deletion-in-prisma-orm/)
 
 ### ts-rest & API Contracts
+
 - [Ts-Rest](https://ts-rest.com/)
 - [REST API Validation Using Zod](https://jeffsegovia.dev/blogs/rest-api-validation-using-zod)
 - [Defining schemas | Zod](https://zod.dev/api)
@@ -2410,11 +2503,13 @@ test('should sync booking with Google Calendar', async ({ page }) => {
 - [Versioning REST API: Guide to Strategies & Best Practices 2025](https://www.devzery.com/post/versioning-rest-api-strategies-best-practices-2025)
 
 ### Multi-tenant Architecture
+
 - [Designing Multi-Tenant SaaS Systems with Node.js](https://medium.com/@aliaftabk/designing-multi-tenant-saas-systems-with-node-js-4a12688dba27)
 - [Schema-based multitenancy with NestJS, TypeORM and PostgresSQL](https://thomasvds.com/schema-based-multitenancy-with-nest-js-type-orm-and-postgres-sql/)
 - [Building a Comprehensive Audit System in NestJS (and Express.JS)](https://medium.com/@usottah/building-a-comprehensive-audit-system-in-nestjs-and-express-js-b34af8588f58)
 
 ### TanStack Query & React
+
 - [Optimistic Updates | TanStack Query React Docs](https://tanstack.com/query/latest/docs/framework/react/guides/optimistic-updates)
 - [React TanStack Query Optimistic Updates Ui Example](https://tanstack.com/query/v5/docs/framework/react/examples/optimistic-updates-ui)
 - [TanStack Query : Mastering Polling](https://medium.com/@soodakriti45/tanstack-query-mastering-polling-ee11dc3625cb)
@@ -2422,17 +2517,20 @@ test('should sync booking with Google Calendar', async ({ page }) => {
 - [TanStack DB Enters Beta with Reactive Queries, Optimistic Mutations, and Local-First Sync](https://www.infoq.com/news/2025/08/tanstack-db-beta/)
 
 ### Calendar Libraries
+
 - [React FullCalendar vs Big Calendar - Bryntum](https://bryntum.com/blog/react-fullcalendar-vs-big-calendar/)
 - [React calendar components: 6 best libraries for 2025](https://www.builder.io/blog/best-react-calendar-component-ai)
 - [GitHub - jquense/react-big-calendar](https://github.com/jquense/react-big-calendar)
 
 ### Stripe Connect
+
 - [Create direct charges | Stripe Documentation](https://docs.stripe.com/connect/direct-charges)
 - [Share payment methods across multiple accounts for direct charges | Stripe Documentation](https://docs.stripe.com/connect/direct-charges-multiple-accounts)
 - [Choose your onboarding configuration | Stripe Documentation](https://docs.stripe.com/connect/onboarding)
 - [Account onboarding | Stripe Documentation](https://docs.stripe.com/connect/supported-embedded-components/account-onboarding)
 
 ### Google Calendar API
+
 - [googleapis - npm](https://www.npmjs.com/package/googleapis)
 - [GitHub - googleapis/google-api-nodejs-client](https://github.com/googleapis/google-api-nodejs-client)
 - [Accessing Google Calendar API with Service Account](https://medium.com/product-monday/accessing-google-calendar-api-with-service-account-a99aa0f7f743)
@@ -2440,6 +2538,7 @@ test('should sync booking with Google Calendar', async ({ page }) => {
 - [Google Calendar Webhooks with Node.js • Stateful](https://stateful.com/blog/google-calendar-webhooks)
 
 ### Testing
+
 - [Mocking | Guide | Vitest](https://vitest.dev/guide/mocking)
 - [Vitest Mocking Time](https://www.thecandidstartup.org/2024/04/02/vitest-mocking-time.html)
 - [Beyond flaky tests — Bringing Controlled Randomness to Vitest](https://fast-check.dev/blog/2025/03/28/beyond-flaky-tests-bringing-controlled-randomness-to-vitest/)
@@ -2452,6 +2551,7 @@ test('should sync booking with Google Calendar', async ({ page }) => {
 Based on current MAIS architecture and this research, here are recommended priorities:
 
 ### Phase 1: Foundation (Current)
+
 - ✅ Multi-tenant data isolation with `tenantId` filtering
 - ✅ Optimistic concurrency control (version field)
 - ✅ Pessimistic locking for booking creation
@@ -2459,6 +2559,7 @@ Based on current MAIS architecture and this research, here are recommended prior
 - ✅ TanStack Query for client state management
 
 ### Phase 2: Calendar Integration
+
 1. Implement Google Calendar sync
    - Service account authentication
    - CRUD operations for bookings
@@ -2468,6 +2569,7 @@ Based on current MAIS architecture and this research, here are recommended prior
    - Implement with TanStack Query for optimistic updates
 
 ### Phase 3: Enhanced Real-time Features
+
 1. Smart polling for availability
    - Dynamic `refetchInterval` based on slot availability
    - User activity detection
@@ -2476,18 +2578,21 @@ Based on current MAIS architecture and this research, here are recommended prior
    - Rollback strategy for conflicts
 
 ### Phase 4: Stripe Connect Expansion
+
 1. Direct charges implementation (already started)
 2. Payment method cloning for repeat customers
 3. Refund and dispute handling
 4. Enhanced onboarding status tracking
 
 ### Phase 5: Testing & Observability
+
 1. Expand race condition tests
 2. Property-based testing with fast-check
 3. Audit logging implementation
 4. Request context propagation with AsyncLocalStorage
 
 ### Phase 6: Scale Optimization
+
 1. Per-tenant rate limiting
 2. Connection pooling strategy evaluation
 3. Soft delete implementation with Prisma extensions

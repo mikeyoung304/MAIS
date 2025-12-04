@@ -287,7 +287,7 @@ test('edits made during publishAll flush are included', async () => {
 
   // Mock network delay
   api.tenantAdminUpdatePackageDraft.mockImplementation(
-    () => new Promise(resolve => setTimeout(resolve, 200))
+    () => new Promise((resolve) => setTimeout(resolve, 200))
   );
 
   // Start publish

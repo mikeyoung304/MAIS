@@ -1,15 +1,15 @@
 ---
 status: complete
 priority: p2
-issue_id: "087"
+issue_id: '087'
 tags:
   - code-review
   - testing
   - e2e
   - storefront
 dependencies: []
-resolution: "Created comprehensive e2e/tests/storefront.spec.ts with tests for navigation, tier display, responsive layout, and image handling"
-completed_date: "2025-11-30"
+resolution: 'Created comprehensive e2e/tests/storefront.spec.ts with tests for navigation, tier display, responsive layout, and image handling'
+completed_date: '2025-11-30'
 ---
 
 # Missing E2E Tests for Storefront Components
@@ -17,6 +17,7 @@ completed_date: "2025-11-30"
 ## Problem Statement
 
 The storefront refactoring introduces significant new functionality with NO test coverage:
+
 - 1-segment auto-skip navigation
 - "Most Popular" badge conditional logic (only when 3 tiers)
 - Image fallback handling
@@ -27,6 +28,7 @@ Without tests, regressions could go undetected.
 ## Findings
 
 ### Discovery
+
 Test coverage analysis found zero tests for:
 
 1. **TierCard API change** - `highlighted` replaced with `totalTierCount`
@@ -36,11 +38,13 @@ Test coverage analysis found zero tests for:
 5. **Grid layout** - Responsive columns based on item count
 
 ### Current Test Files
+
 - `e2e/tests/booking-flow.spec.ts` - Uses legacy `/` route, not `/storefront`
 - `e2e/tests/booking-mock.spec.ts` - Mock mode testing
 - No storefront-specific test file exists
 
 ### Impact
+
 - High risk of regressions
 - No confidence in conditional logic
 - Edge cases untested
@@ -80,11 +84,13 @@ test.describe('Storefront', () => {
 ```
 
 **Pros:**
+
 - Comprehensive coverage
 - Documents expected behavior
 - Catches regressions
 
 **Cons:**
+
 - Requires test data setup
 - Adds CI time
 
@@ -96,10 +102,12 @@ test.describe('Storefront', () => {
 Cover only critical paths: navigation and badge logic.
 
 **Pros:**
+
 - Faster to implement
 - Covers highest-risk areas
 
 **Cons:**
+
 - Edge cases still untested
 
 **Effort:** Small (1 hour)
@@ -112,9 +120,11 @@ Cover only critical paths: navigation and badge logic.
 ## Technical Details
 
 ### Affected Files
+
 - `e2e/tests/storefront.spec.ts` (NEW)
 
 ### Components
+
 - StorefrontHome
 - TierSelector
 - TierCard
@@ -122,6 +132,7 @@ Cover only critical paths: navigation and badge logic.
 - ChoiceCardBase
 
 ### Database Changes
+
 None (may need test fixtures)
 
 ## Acceptance Criteria
@@ -135,8 +146,8 @@ None (may need test fixtures)
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                     | Learnings                                          |
+| ---------- | -------------------------- | -------------------------------------------------- |
 | 2025-11-29 | Created during code review | Test coverage analysis found zero storefront tests |
 
 ## Resources

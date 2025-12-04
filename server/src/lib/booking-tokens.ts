@@ -33,8 +33,8 @@ export interface BookingTokenPayload {
   bookingId: string;
   tenantId: string;
   action: BookingTokenAction;
-  iat: number;  // Issued at
-  exp: number;  // Expiration
+  iat: number; // Issued at
+  exp: number; // Expiration
 }
 
 /**
@@ -135,7 +135,7 @@ export function validateBookingToken(
       return {
         valid: false,
         error: 'malformed',
-        message: 'Token is missing required fields'
+        message: 'Token is missing required fields',
       };
     }
 
@@ -146,7 +146,7 @@ export function validateBookingToken(
         return {
           valid: false,
           error: 'wrong_action',
-          message: `Invalid token action: expected ${expectedAction}, got ${payload.action}`
+          message: `Invalid token action: expected ${expectedAction}, got ${payload.action}`,
         };
       }
     }
@@ -157,7 +157,7 @@ export function validateBookingToken(
       return {
         valid: false,
         error: 'expired',
-        message: 'Token has expired'
+        message: 'Token has expired',
       };
     }
 
@@ -165,14 +165,14 @@ export function validateBookingToken(
       return {
         valid: false,
         error: 'invalid',
-        message: 'Invalid token signature'
+        message: 'Invalid token signature',
       };
     }
 
     return {
       valid: false,
       error: 'invalid',
-      message: 'Token validation failed'
+      message: 'Token validation failed',
     };
   }
 }

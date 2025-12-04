@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "111"
+issue_id: '111'
 tags: [code-review, architecture, duplication, ui-redesign]
 dependencies: []
 ---
@@ -19,10 +19,12 @@ Identical mobile dropdown implementation (31 lines) duplicated 100% in PackageLi
 ### From pattern-recognition agent:
 
 **Files with duplication:**
+
 - `client/src/features/tenant-admin/packages/PackageList.tsx` (lines 169-192)
 - `client/src/features/admin/segments/SegmentsList.tsx` (lines 122-143)
 
 **Duplicated pattern (31 lines each):**
+
 ```tsx
 <div className="sm:hidden">
   <DropdownMenu>
@@ -48,6 +50,7 @@ Identical mobile dropdown implementation (31 lines) duplicated 100% in PackageLi
 ## Proposed Solutions
 
 ### Solution 1: Create ActionMenu Component (Recommended)
+
 **Pros:** Reusable, DRY
 **Cons:** Slight abstraction overhead
 **Effort:** Small (1 hour)
@@ -104,6 +107,6 @@ export function ActionMenu({ items, ariaLabel }: ActionMenuProps) {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                 |
+| ---------- | ------------------------ | ------------------------- |
 | 2025-11-30 | Created from code review | Pattern duplication found |

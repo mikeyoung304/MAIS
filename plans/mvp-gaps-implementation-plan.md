@@ -38,6 +38,7 @@ This plan addresses the critical gaps identified in the MAIS MVP Implementation 
 ### Architecture Approach
 
 All features will follow existing MAIS patterns:
+
 - **Multi-tenant isolation:** All queries filtered by `tenantId`
 - **Repository pattern:** New repositories implement ports.ts interfaces
 - **Transaction safety:** PostgreSQL advisory locks for concurrent operations (ADR-006)
@@ -492,32 +493,15 @@ enum InvoiceStatus {
 
 ```typescript
 export class InvoiceService {
-  async generateFromBooking(
-    tenantId: string,
-    bookingId: string
-  ): Promise<Invoice>;
+  async generateFromBooking(tenantId: string, bookingId: string): Promise<Invoice>;
 
-  async updateStatus(
-    tenantId: string,
-    invoiceId: string,
-    status: InvoiceStatus
-  ): Promise<Invoice>;
+  async updateStatus(tenantId: string, invoiceId: string, status: InvoiceStatus): Promise<Invoice>;
 
-  async generatePDF(
-    tenantId: string,
-    invoiceId: string
-  ): Promise<Buffer>;
+  async generatePDF(tenantId: string, invoiceId: string): Promise<Buffer>;
 
-  async sendInvoiceEmail(
-    tenantId: string,
-    invoiceId: string
-  ): Promise<void>;
+  async sendInvoiceEmail(tenantId: string, invoiceId: string): Promise<void>;
 
-  async handleRefund(
-    tenantId: string,
-    invoiceId: string,
-    refundAmount: number
-  ): Promise<Invoice>;
+  async handleRefund(tenantId: string, invoiceId: string, refundAmount: number): Promise<Invoice>;
 }
 ```
 
@@ -628,18 +612,19 @@ graph TD
 
 ### External Dependencies
 
-| Dependency | Purpose | Status |
-|------------|---------|--------|
-| Stripe SDK | Refunds, checkout sessions | ✅ Installed |
-| Postmark | Email delivery | ✅ Configured |
-| Google Calendar API | Event sync | ✅ Adapter exists |
-| `luxon` | Timezone handling | ❌ Need to install |
-| `pdfkit` or `puppeteer` | Invoice PDF generation | ❌ Need to install |
-| `node-cron` | Scheduled jobs | ❌ Need to install |
+| Dependency              | Purpose                    | Status             |
+| ----------------------- | -------------------------- | ------------------ |
+| Stripe SDK              | Refunds, checkout sessions | ✅ Installed       |
+| Postmark                | Email delivery             | ✅ Configured      |
+| Google Calendar API     | Event sync                 | ✅ Adapter exists  |
+| `luxon`                 | Timezone handling          | ❌ Need to install |
+| `pdfkit` or `puppeteer` | Invoice PDF generation     | ❌ Need to install |
+| `node-cron`             | Scheduled jobs             | ❌ Need to install |
 
 ### Database Migrations
 
 Run in order:
+
 1. `20251202_add_booking_action_tokens.sql`
 2. `20251202_add_booking_reminders.sql`
 3. `20251203_add_deposit_policy.sql`
@@ -651,14 +636,14 @@ Run in order:
 
 ## Risk Analysis & Mitigation
 
-| Risk | Severity | Mitigation |
-|------|----------|------------|
+| Risk                                 | Severity | Mitigation                                   |
+| ------------------------------------ | -------- | -------------------------------------------- |
 | Refund fails after booking cancelled | CRITICAL | 3-phase cancellation with async refund queue |
-| Race condition on reschedule | HIGH | Reuse ADR-006 advisory locks |
-| Calendar sync quota exceeded | MEDIUM | Implement sync queue with rate limiting |
-| Token replay attack | MEDIUM | Single-use tokens, IP logging |
-| Deposit paid, balance never paid | MEDIUM | Auto-cancel after grace period |
-| Timezone calculation errors | LOW | Use `luxon` library, store customer timezone |
+| Race condition on reschedule         | HIGH     | Reuse ADR-006 advisory locks                 |
+| Calendar sync quota exceeded         | MEDIUM   | Implement sync queue with rate limiting      |
+| Token replay attack                  | MEDIUM   | Single-use tokens, IP logging                |
+| Deposit paid, balance never paid     | MEDIUM   | Auto-cancel after grace period               |
+| Timezone calculation errors          | LOW      | Use `luxon` library, store customer timezone |
 
 ---
 
@@ -744,14 +729,14 @@ erDiagram
 
 ## Success Metrics
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Invoice generation | 100% of paid bookings | Count invoices vs. paid bookings |
-| Calendar sync success | >95% | Track `calendarSyncStatus` on bookings |
-| Self-service cancellation | >80% via link | Track `cancelledBy` = CUSTOMER |
-| Reminder delivery | >98% | Track reminder status = SENT |
-| Refund completion | <5min average | Time from cancellation to refund |
-| Balance collection | >90% before due date | Track `balancePaidAt` vs. `balanceDueDate` |
+| Metric                    | Target                | Measurement                                |
+| ------------------------- | --------------------- | ------------------------------------------ |
+| Invoice generation        | 100% of paid bookings | Count invoices vs. paid bookings           |
+| Calendar sync success     | >95%                  | Track `calendarSyncStatus` on bookings     |
+| Self-service cancellation | >80% via link         | Track `cancelledBy` = CUSTOMER             |
+| Reminder delivery         | >98%                  | Track reminder status = SENT               |
+| Refund completion         | <5min average         | Time from cancellation to refund           |
+| Balance collection        | >90% before due date  | Track `balancePaidAt` vs. `balanceDueDate` |
 
 ---
 
@@ -783,13 +768,13 @@ erDiagram
 
 ## Timeline Estimate
 
-| Phase | Duration | Team |
-|-------|----------|------|
-| Phase 1: Foundation | 5 days | 1 engineer |
-| Phase 2: Core Features | 10 days | 2 engineers (parallel) |
-| Phase 3: Self-Service | 7 days | 1 engineer |
-| Phase 4: Invoicing | 7 days | 1 engineer |
-| **Total** | **~29 days** | **2 engineers** |
+| Phase                  | Duration     | Team                   |
+| ---------------------- | ------------ | ---------------------- |
+| Phase 1: Foundation    | 5 days       | 1 engineer             |
+| Phase 2: Core Features | 10 days      | 2 engineers (parallel) |
+| Phase 3: Self-Service  | 7 days       | 1 engineer             |
+| Phase 4: Invoicing     | 7 days       | 1 engineer             |
+| **Total**              | **~29 days** | **2 engineers**        |
 
 Add 30% buffer for testing and iteration: **~38 days total**
 

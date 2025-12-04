@@ -95,9 +95,7 @@
       "details": "Skipped: Could not upload photos for cleanup test"
     }
   ],
-  "securityIssues": [
-    "Cross-tenant photo upload may not be prevented"
-  ],
+  "securityIssues": ["Cross-tenant photo upload may not be prevented"],
   "validationGaps": [
     "Missing file validation not enforced",
     "File size limit (5MB) not enforced",

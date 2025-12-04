@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { CheckCircle, AlertCircle } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { usePhotoUpload, type PackagePhoto } from "./hooks/usePhotoUpload";
-import { PhotoGrid } from "./PhotoGrid";
-import { PhotoUploadButton } from "./PhotoUploadButton";
-import { PhotoDeleteDialog } from "./PhotoDeleteDialog";
+import { useState } from 'react';
+import { CheckCircle, AlertCircle } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { usePhotoUpload, type PackagePhoto } from './hooks/usePhotoUpload';
+import { PhotoGrid } from './PhotoGrid';
+import { PhotoUploadButton } from './PhotoUploadButton';
+import { PhotoDeleteDialog } from './PhotoDeleteDialog';
 
 /**
  * Props for PhotoUploader component
@@ -79,7 +79,10 @@ export function PhotoUploader({
 
       {/* Error Message */}
       {error && (
-        <div role="alert" className="flex items-center gap-2 p-4 border border-red-600 bg-macon-navy-700 rounded-lg">
+        <div
+          role="alert"
+          className="flex items-center gap-2 p-4 border border-red-600 bg-macon-navy-700 rounded-lg"
+        >
           <AlertCircle className="w-5 h-5 text-red-300 flex-shrink-0" />
           <span className="text-base text-white/90">{error}</span>
         </div>

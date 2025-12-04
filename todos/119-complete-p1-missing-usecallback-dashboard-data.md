@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "119"
+issue_id: '119'
 tags: [code-review, performance, pr-12]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 All data loading functions (`loadPackagesAndSegments`, `loadBlackouts`, `loadBookings`, `loadBranding`) in `useDashboardData.ts` are recreated on every render. These functions are passed as callbacks to child components, causing unnecessary re-renders of the entire component tree.
 
 **Why it matters:**
+
 - `TenantPackagesManager` re-renders on every parent render
 - All 3 custom hooks inside `TenantPackagesManager` re-initialize
 - Grouped view with multiple segments causes cascading re-renders of all `PackageList` components
@@ -26,6 +27,7 @@ All data loading functions (`loadPackagesAndSegments`, `loadBlackouts`, `loadBoo
 **Lines:** 46-153
 
 **Current Pattern (Lines 46-65):**
+
 ```typescript
 const loadPackagesAndSegments = async () => {
   setIsLoading(true);
@@ -41,7 +43,7 @@ const loadPackagesAndSegments = async () => {
 };
 
 return {
-  loadPackages: loadPackagesAndSegments,  // ❌ New reference every render
+  loadPackages: loadPackagesAndSegments, // ❌ New reference every render
   // ...
 };
 ```
@@ -49,6 +51,7 @@ return {
 ## Proposed Solutions
 
 ### Solution 1: Wrap functions in useCallback (Recommended)
+
 ```typescript
 const loadPackagesAndSegments = useCallback(async () => {
   setIsLoading(true);
@@ -63,9 +66,15 @@ const loadPackagesAndSegments = useCallback(async () => {
   }
 }, []); // No dependencies - API client is stable
 
-const loadBlackouts = useCallback(async () => { /* ... */ }, []);
-const loadBookings = useCallback(async () => { /* ... */ }, []);
-const loadBranding = useCallback(async () => { /* ... */ }, []);
+const loadBlackouts = useCallback(async () => {
+  /* ... */
+}, []);
+const loadBookings = useCallback(async () => {
+  /* ... */
+}, []);
+const loadBranding = useCallback(async () => {
+  /* ... */
+}, []);
 ```
 
 **Pros:** Minimal change, stable references, prevents re-renders
@@ -74,6 +83,7 @@ const loadBranding = useCallback(async () => { /* ... */ }, []);
 **Risk:** Low
 
 ### Solution 2: Refactor to TanStack Query
+
 Use `useQuery` hooks instead of manual state management (matches existing codebase pattern).
 
 **Pros:** Better caching, automatic refetch, error handling
@@ -88,9 +98,11 @@ Implement Solution 1 immediately to fix performance regression.
 ## Technical Details
 
 **Affected Files:**
+
 - `client/src/features/tenant-admin/TenantDashboard/useDashboardData.ts`
 
 **Components Impacted:**
+
 - `TenantDashboard`
 - `TenantPackagesManager`
 - `PackageList` (multiple instances in grouped view)
@@ -105,8 +117,8 @@ Implement Solution 1 immediately to fix performance regression.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                   |
+| ---------- | ------- | ----------------------- |
 | 2025-12-01 | Created | From PR #12 code review |
 
 ## Resources

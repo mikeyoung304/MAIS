@@ -13,19 +13,25 @@ This directory contains a comprehensive code review of the `useVisualEditor` Rea
 ## Quick Start
 
 ### If you have 5 minutes:
+
 Read: **useVisualEditor-QUICK-FIX.md**
+
 - TL;DR of all issues
 - 3 one-line fixes
 - Testing checklist
 
 ### If you have 15 minutes:
+
 Read: **useVisualEditor-SUMMARY.md**
+
 - Executive overview
 - All findings explained
 - Impact analysis
 
 ### If you have 30+ minutes:
+
 Start with: **useVisualEditor-INDEX.md**
+
 - Documentation guide
 - Multiple reading paths
 - Choose based on your role

@@ -23,6 +23,7 @@
 **File:** `server/src/adapters/prisma/tenant.repository.ts`
 
 The repository is the boundary between application code and database. Email normalization MUST happen here because:
+
 - It's the single point where all queries pass through
 - It prevents case-sensitive lookups at the database level
 - It ensures consistency before storage
@@ -62,9 +63,10 @@ async update(id: string, data: UpdateTenantInput): Promise<Tenant> {
 ```
 
 **Defense-in-Depth Pattern:**
+
 ```typescript
 // Also trim whitespace to handle "  email@example.com  "
-email: data.email?.toLowerCase().trim()
+email: data.email?.toLowerCase().trim();
 ```
 
 #### 1.2 Service Layer (Defense-in-Depth)
@@ -88,6 +90,7 @@ async login(email: string, password: string): Promise<{ token: string }> {
 ```
 
 **Why Defense-in-Depth?**
+
 - If a developer forgets to normalize in the route layer
 - If a new repository method is added without normalization
 - If the code is refactored, we still have protection
@@ -233,10 +236,7 @@ describe('Email Case-Sensitivity - Service Layer', () => {
     });
 
     // Login with uppercase
-    const result = await authService.login(
-      'USER@EXAMPLE.COM',
-      password
-    );
+    const result = await authService.login('USER@EXAMPLE.COM', password);
 
     expect(result.token).toBeDefined();
   });
@@ -449,6 +449,7 @@ model Tenant {
 Create these layers of defense:
 
 **Layer 1: Input Validation (Route)**
+
 ```typescript
 const normalizedEmail = email.toLowerCase().trim();
 if (!isValidEmail(normalizedEmail)) {
@@ -457,18 +458,21 @@ if (!isValidEmail(normalizedEmail)) {
 ```
 
 **Layer 2: Business Logic (Service)**
+
 ```typescript
 const tenant = await this.repo.findByEmail(email.toLowerCase());
 ```
 
 **Layer 3: Data Access (Repository)**
+
 ```typescript
 return this.db.findUnique({
-  where: { email: email.toLowerCase() }
+  where: { email: email.toLowerCase() },
 });
 ```
 
 **Layer 4: Database Constraint**
+
 ```prisma
 email String? @unique
 ```
@@ -580,6 +584,7 @@ async forgotPassword(email: string) {
 These tests ensure the issue never resurfaces:
 
 **Total Test Cases:** 12+ covering:
+
 - ✅ Repository layer email handling (4 tests)
 - ✅ Service layer authentication (3 tests)
 - ✅ Route layer validation (5+ tests)
@@ -592,6 +597,7 @@ These tests ensure the issue never resurfaces:
 **Test File:** `/server/test/integration/auth-prevention-tests.spec.ts`
 
 Run with:
+
 ```bash
 npm test -- auth-prevention-tests.spec.ts
 ```
@@ -674,11 +680,13 @@ When implementing or modifying authentication features:
 ### Issue: "Invalid credentials" with correct email/password
 
 **Diagnosis:**
+
 1. Check if email in database matches user input case
 2. Check if email normalization happens in all layers
 3. Verify unique constraint isn't preventing creation
 
 **Solution:**
+
 ```bash
 # Check database
 SELECT email, COUNT(*) FROM tenants GROUP BY email;
@@ -695,6 +703,7 @@ npm test -- auth-prevention-tests.spec.ts
 **Root Cause:** Email normalization not consistent
 
 **Solution:**
+
 1. Verify `tenantRepo.create()` normalizes email
 2. Verify `tenantRepo.findByEmail()` normalizes input
 3. Ensure all new methods normalize email
@@ -702,6 +711,7 @@ npm test -- auth-prevention-tests.spec.ts
 ### Issue: Mixed-case email test fails
 
 **Check:**
+
 ```typescript
 // 1. Verify repository normalizes
 const found = await repo.findByEmail('TEST@EXAMPLE.COM');
@@ -762,11 +772,13 @@ SELECT * FROM tenants WHERE id = '...';
 ## References
 
 **Related Documentation:**
+
 - [AUTH-ISSUES-SUMMARY.md](./AUTH-ISSUES-SUMMARY.md) - Executive summary
 - [auth-best-practices-checklist.md](./auth-best-practices-checklist.md) - Quick checklist
 - [/docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md](/docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md) - Multi-tenant patterns
 
 **Standards:**
+
 - OWASP Authentication Cheat Sheet
 - NIST 800-63-3 Password Guidelines
 - RFC 5321 (Email format standard)
@@ -786,6 +798,7 @@ SELECT * FROM tenants WHERE id = '...';
 6. **Consistent error messages** - Don't reveal which field is wrong
 
 **Prevention Formula:**
+
 ```
 Normalize Input + Store Normalized + Query Normalized = Case-Insensitive Auth
 ```
@@ -797,16 +810,19 @@ Normalize Input + Store Normalized + Query Normalized = Case-Insensitive Auth
 **Status:** ✅ FULLY IMPLEMENTED AND TESTED
 
 **Files Modified:**
+
 - `server/src/adapters/prisma/tenant.repository.ts` - Email normalization at storage/retrieval
 - `server/src/services/tenant-auth.service.ts` - Email normalization before repository calls
 - `server/src/routes/auth.routes.ts` - Email normalization at input
 
 **Files Created:**
+
 - `server/test/integration/auth-prevention-tests.spec.ts` - 40+ regression tests
 - `server/docs/auth-prevention-strategies.md` - Prevention documentation
 - `server/docs/AUTH-ISSUES-SUMMARY.md` - Executive summary
 
 **Test Results:**
+
 - ✅ 12+ new test cases all passing
 - ✅ 0 regression failures
 - ✅ 100% coverage of case-sensitivity scenarios

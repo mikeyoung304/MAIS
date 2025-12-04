@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { TenantDashboard as TenantDashboardComponent } from "../features/tenant-admin/TenantDashboard";
-import { FeatureErrorBoundary } from "../components/errors";
-import { useAuth } from "../contexts/AuthContext";
-import { api } from "../lib/api";
-import { logger } from "../lib/logger";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { TenantDashboard as TenantDashboardComponent } from '../features/tenant-admin/TenantDashboard';
+import { FeatureErrorBoundary } from '../components/errors';
+import { useAuth } from '../contexts/AuthContext';
+import { api } from '../lib/api';
+import { logger } from '../lib/logger';
 
 type TenantDto = {
   id: string;
@@ -44,9 +44,9 @@ export function TenantDashboard() {
     }
 
     // Check for tenant token, redirect to login if not present
-    const token = localStorage.getItem("tenantToken");
+    const token = localStorage.getItem('tenantToken');
     if (!token && !isAuthenticated) {
-      navigate("/tenant/login");
+      navigate('/tenant/login');
       return;
     }
 
@@ -58,7 +58,7 @@ export function TenantDashboard() {
           setTenantInfo(result.body);
         }
       } catch (error) {
-        logger.error("Failed to load tenant info", { error, component: "TenantDashboard" });
+        logger.error('Failed to load tenant info', { error, component: 'TenantDashboard' });
       } finally {
         setIsLoadingInfo(false);
       }
@@ -73,7 +73,7 @@ export function TenantDashboard() {
   }
 
   // Allow access if impersonating or has tenant token
-  const hasAccess = isImpersonating() || localStorage.getItem("tenantToken");
+  const hasAccess = isImpersonating() || localStorage.getItem('tenantToken');
   if (!hasAccess) {
     return null;
   }

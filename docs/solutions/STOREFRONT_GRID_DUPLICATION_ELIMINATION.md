@@ -9,6 +9,7 @@ The storefront grid layout had two critical issues identified in code review:
 2. **Missing React Memoization**: Two heavily-used presentational components (`SegmentCard` and `TierCard`) lacked memoization. These components were rendered inside loops and could re-render unnecessarily when parent components updated, causing performance degradation on pages with multiple segments or tiers.
 
 ### Impact
+
 - Code maintenance burden: Grid layout changes required updates in multiple locations
 - Runtime performance: Unnecessary re-renders of card components even when props didn't change
 - Inconsistent behavior: Future layout changes could diverge between grid implementations
@@ -22,13 +23,14 @@ The storefront grid layout had two critical issues identified in code review:
 **Grid Layout Pattern:**
 The responsive grid system needed to handle three distinct scenarios:
 
-| Scenario | Columns | Behavior | Use Case |
-|----------|---------|----------|----------|
-| 1 item | 1 col | Centered with `max-w-2xl` | Single product/segment offer |
-| 2 items | 1 (mobile) → 2 (md+) | Centered with `max-w-4xl` | Budget vs Premium tier |
-| 3+ items | 1 (mobile) → 2 (md) → 3 (lg) | Full width | Complete tier system |
+| Scenario | Columns                      | Behavior                  | Use Case                     |
+| -------- | ---------------------------- | ------------------------- | ---------------------------- |
+| 1 item   | 1 col                        | Centered with `max-w-2xl` | Single product/segment offer |
+| 2 items  | 1 (mobile) → 2 (md+)         | Centered with `max-w-4xl` | Budget vs Premium tier       |
+| 3+ items | 1 (mobile) → 2 (md) → 3 (lg) | Full width                | Complete tier system         |
 
 **Memoization Requirement:**
+
 - `SegmentCard` is a thin wrapper around `ChoiceCardBase`, mapping `SegmentDto` → props
 - `TierCard` is a thin wrapper around `ChoiceCardBase`, mapping `PackageDto` → props
 - Both are pure components (deterministic output given props)
@@ -38,6 +40,7 @@ The responsive grid system needed to handle three distinct scenarios:
 ### Code Locations Analyzed
 
 **StorefrontHome** (before refactoring):
+
 ```typescript
 // Grid layout defined inline - duplicate grid logic
 <div className={clsx(
@@ -51,6 +54,7 @@ The responsive grid system needed to handle three distinct scenarios:
 ```
 
 **TierSelector** (before refactoring):
+
 ```typescript
 // Identical grid layout logic repeated
 <div className={clsx(
@@ -64,6 +68,7 @@ The responsive grid system needed to handle three distinct scenarios:
 ```
 
 **Card Components** (before memoization):
+
 ```typescript
 // SegmentCard - not memoized
 export function SegmentCard({ segment }: SegmentCardProps) {
@@ -97,11 +102,13 @@ export function TierCard({ package: pkg, ... }: TierCardProps) {
 ### Correct Assessment
 
 The duplication was **real and problematic**:
+
 - Grid logic would break if Tailwind utilities changed
 - Layout decisions are architectural (should be centralized)
 - Made the codebase harder to understand (what's the grid strategy?)
 
 The memoization was **correctly identified as necessary**:
+
 - Cards are pure functions of props
 - Cards are in loops (high render count scenarios)
 - Cards contain nested ChoiceCardBase which is already memoized
@@ -152,6 +159,7 @@ export function ChoiceGrid({ children, itemCount }: ChoiceGridProps) {
 ```
 
 **Key Design Decisions:**
+
 - **Props**: `children` (content) + `itemCount` (layout determiner)
 - **Naming**: "ChoiceGrid" reflects its purpose (grid for choice cards)
 - **Comments**: Documented layout behavior in JSDoc comment
@@ -201,6 +209,7 @@ export const SegmentCard = memo(function SegmentCard({ segment }: SegmentCardPro
 ```
 
 **Key Implementation Details:**
+
 - **Named Function Pattern**: `memo(function SegmentCard(...))` preserves component name for DevTools
 - **JSDoc Update**: Added comment emphasizing memoization and its purpose
 - **No Logic Changes**: Pure refactoring—behavior identical, only wrapped with `React.memo()`
@@ -278,6 +287,7 @@ export const TierCard = memo(function TierCard({
 ```
 
 **Memoization Effectiveness:**
+
 - `TierCard` props: `package`, `tierLevel`, `segmentSlug`, `totalTierCount` (3-4 objects)
 - Memo prevents re-render when these props are referentially identical
 - Parent `TierSelector` passes new array objects each render—but tiers from `useMemo()`
@@ -330,6 +340,7 @@ Updated `/Users/mikeyoung/CODING/MAIS/client/src/features/storefront/TierSelecto
 ```
 
 **Benefits:**
+
 - Lines reduced from grid definition (~8 lines) to single component use (1 line)
 - Layout logic now centralized and maintainable
 - Component responsibilities clearer
@@ -380,7 +391,7 @@ Updated `/Users/mikeyoung/CODING/MAIS/client/src/features/storefront/index.ts`:
  */
 
 export { ChoiceCardBase } from './ChoiceCardBase';
-export { ChoiceGrid } from './ChoiceGrid';  // ← NEW
+export { ChoiceGrid } from './ChoiceGrid'; // ← NEW
 export { SegmentCard } from './SegmentCard';
 export { TierCard } from './TierCard';
 export { TierSelector } from './TierSelector';
@@ -409,12 +420,14 @@ export { cardStyles } from './cardStyles';
 The `ChoiceGrid` component was tested for all scenarios:
 
 1. **1 Item**: Renders with `max-w-2xl mx-auto` centering
+
    ```
    Desktop:  [  card  ]
    Mobile:   [  card  ]
    ```
 
 2. **2 Items**: Renders with `md:grid-cols-2 max-w-4xl` centering
+
    ```
    Desktop:  [card 1] [card 2]
    Mobile:   [card 1]
@@ -435,15 +448,18 @@ The `ChoiceGrid` component was tested for all scenarios:
 ### Memoization Effectiveness Verification
 
 **Before Memoization:**
+
 - Parent `TierSelector` updates → all TierCard components re-render
 - Even when tier data unchanged, cards re-rendered due to parent render
 
 **After Memoization:**
+
 - Parent `TierSelector` updates → TierCard checks props with `Object.is()`
 - Cards only re-render if `package`, `tierLevel`, `segmentSlug`, or `totalTierCount` change
 - Prevents cascading renders to `ChoiceCardBase` and image elements
 
 **Practical Impact:**
+
 - On 4-tier display: ~4 unnecessary renders prevented per parent update
 - On 3-segment display: ~3 unnecessary renders prevented per parent update
 - Especially important when parent updates frequently (data fetching, sorting)
@@ -471,14 +487,14 @@ TierDetail
 
 ### Files Modified
 
-| File | Change | Reason |
-|------|--------|--------|
-| `ChoiceGrid.tsx` | Created | New abstraction for grid layout |
-| `SegmentCard.tsx` | Added `memo()` wrapper | Performance optimization |
-| `TierCard.tsx` | Added `memo()` wrapper | Performance optimization |
-| `TierSelector.tsx` | Uses `ChoiceGrid` | Eliminate duplication |
-| `StorefrontHome.tsx` | Uses `ChoiceGrid` | Eliminate duplication |
-| `index.ts` | Export `ChoiceGrid` | Public API consistency |
+| File                 | Change                 | Reason                          |
+| -------------------- | ---------------------- | ------------------------------- |
+| `ChoiceGrid.tsx`     | Created                | New abstraction for grid layout |
+| `SegmentCard.tsx`    | Added `memo()` wrapper | Performance optimization        |
+| `TierCard.tsx`       | Added `memo()` wrapper | Performance optimization        |
+| `TierSelector.tsx`   | Uses `ChoiceGrid`      | Eliminate duplication           |
+| `StorefrontHome.tsx` | Uses `ChoiceGrid`      | Eliminate duplication           |
+| `index.ts`           | Export `ChoiceGrid`    | Public API consistency          |
 
 ### Import Patterns
 
@@ -505,12 +521,14 @@ import { SegmentCard } from '@/features/storefront/SegmentCard';
 ### When to Apply Similar Solutions
 
 **Duplicate Grid Layouts:**
+
 - Identify grid logic appearing in 2+ components
 - Extract into dedicated layout component with `itemCount` or similar prop
 - Update all consumers to import the shared component
 - Benefit: Maintainability, consistency, reduced code
 
 **Missing Memoization on Cards:**
+
 - Look for components that:
   - Are rendered inside `.map()` loops
   - Are pure functions of their props
@@ -522,11 +540,13 @@ import { SegmentCard } from '@/features/storefront/SegmentCard';
 ### Performance Considerations
 
 **ChoiceGrid Performance:**
+
 - Zero runtime overhead (pure layout component)
 - Conditional class application optimized by `clsx` library
 - No state or effects
 
 **Card Memoization Performance:**
+
 - Reference comparison on props (Object.is)
 - Most beneficial when:
   - Parent renders frequently

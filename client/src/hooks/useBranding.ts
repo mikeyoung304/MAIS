@@ -16,13 +16,19 @@ function loadGoogleFont(fontFamily: string): void {
 
   // Map common font families to Google Fonts URLs
   const fontUrlMap: Record<string, string> = {
-    'Playfair Display': 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap',
-    'Lora': 'https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap',
-    'Montserrat': 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap',
-    'Cormorant Garamond': 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap',
-    'Raleway': 'https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap',
-    'Crimson Text': 'https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&display=swap',
-    'Poppins': 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap',
+    'Playfair Display':
+      'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap',
+    Lora: 'https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap',
+    Montserrat:
+      'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap',
+    'Cormorant Garamond':
+      'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap',
+    Raleway:
+      'https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap',
+    'Crimson Text':
+      'https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&display=swap',
+    Poppins:
+      'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap',
   };
 
   const fontUrl = fontUrlMap[fontFamily];
@@ -43,7 +49,11 @@ function loadGoogleFont(fontFamily: string): void {
  * Hook to fetch and apply tenant branding
  */
 export function useBranding() {
-  const { data: branding, isLoading, error } = useQuery<TenantBrandingDto>({
+  const {
+    data: branding,
+    isLoading,
+    error,
+  } = useQuery<TenantBrandingDto>({
     queryKey: ['tenant', 'branding'],
     queryFn: async () => {
       const response = await api.getTenantBranding();

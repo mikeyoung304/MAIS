@@ -1,10 +1,10 @@
 ---
 status: pending
 priority: p2
-issue_id: "197"
+issue_id: '197'
 tags: [code-review, audit, consistency]
 dependencies: []
-deferred_reason: "YAGNI - Audit logs not yet production-critical per DHH review"
+deferred_reason: 'YAGNI - Audit logs not yet production-critical per DHH review'
 ---
 
 # Missing Audit Logging for Add-On Operations
@@ -14,6 +14,7 @@ deferred_reason: "YAGNI - Audit logs not yet production-critical per DHH review"
 Package CRUD operations include audit logging (lines 203-216, 252-265, 294-306 in catalog.service.ts), but add-on CRUD operations do NOT. This creates an incomplete audit trail.
 
 ### Why It Matters
+
 - Inconsistent audit trail for tenant configuration changes
 - Can't track who created/modified/deleted add-ons
 - Compliance risk for tenant admin actions
@@ -24,6 +25,7 @@ Package CRUD operations include audit logging (lines 203-216, 252-265, 294-306 i
 **Source:** Security Review, Architecture Review, Code Quality Review
 
 **Evidence:**
+
 ```typescript
 // Package creation HAS audit logging (lines 203-216)
 if (this.auditService && auditCtx) {
@@ -45,12 +47,14 @@ async createAddOn(tenantId: string, data: CreateAddOnInput): Promise<AddOn> {
 ## Proposed Solutions
 
 ### Option A: Add Audit Logging (Matches Package Pattern)
+
 **Pros:** Consistent with packages, complete audit trail
 **Cons:** More code, requires updating method signatures
 **Effort:** Medium (30 minutes)
 **Risk:** Low
 
 1. Update method signatures:
+
 ```typescript
 async createAddOn(
   tenantId: string,
@@ -75,6 +79,7 @@ async deleteAddOn(
 2. Add audit logging in each method following package pattern.
 
 ### Option B: Defer (YAGNI)
+
 **Pros:** Ship faster
 **Cons:** Inconsistent behavior, technical debt
 **Effort:** None
@@ -89,6 +94,7 @@ Option A if audit logs are actually used; Option B if they're not production-cri
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/services/catalog.service.ts`
 - `server/src/routes/tenant-admin.routes.ts` (pass auditCtx)
 
@@ -104,10 +110,10 @@ Option A if audit logs are actually used; Option B if they're not production-cri
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2025-12-03 | Created from code review | Match audit patterns across entity types |
-| 2025-12-03 | DEFERRED: Following DHH review YAGNI principle | Defer features until actually needed |
+| Date       | Action                                         | Learnings                                |
+| ---------- | ---------------------------------------------- | ---------------------------------------- |
+| 2025-12-03 | Created from code review                       | Match audit patterns across entity types |
+| 2025-12-03 | DEFERRED: Following DHH review YAGNI principle | Defer features until actually needed     |
 
 ## Resources
 

@@ -25,7 +25,11 @@ export function TenantStorefrontLayout() {
   const location = useLocation();
 
   // Fetch tenant by slug
-  const { data: tenant, isLoading, error } = useQuery<TenantPublicDto>({
+  const {
+    data: tenant,
+    isLoading,
+    error,
+  } = useQuery<TenantPublicDto>({
     queryKey: ['tenant-public', tenantSlug],
     queryFn: async () => {
       const result = await api.getTenantPublic({ params: { slug: tenantSlug! } });
@@ -135,7 +139,9 @@ export function TenantStorefrontLayout() {
       <footer className="border-t border-gray-200 bg-gray-50">
         <Container>
           <div className="py-6 text-center text-sm text-gray-500">
-            <span>&copy; {new Date().getFullYear()} {tenant.name}</span>
+            <span>
+              &copy; {new Date().getFullYear()} {tenant.name}
+            </span>
             <span className="mx-2">&middot;</span>
             <a
               href="https://maconaisolutions.com"

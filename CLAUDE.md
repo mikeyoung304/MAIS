@@ -7,12 +7,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 MAIS (Macon AI Solutions) is a business growth club platform that partners with entrepreneurs and small business owners through revenue-sharing partnerships. Built as a multi-tenant modular monolith with Express + React, featuring complete data isolation, config-driven architecture, and mock-first development. The platform provides AI consulting, seamless booking/scheduling, professional websites, and marketing automation.
 
 **Tech Stack:**
+
 - Backend: Express 4, TypeScript 5.9.3 (strict), Prisma 6, PostgreSQL
 - Frontend: React 18, Vite 6, TailwindCSS, Radix UI, TanStack Query
 - API: ts-rest + Zod for type-safe contracts
 - Testing: Vitest (unit/integration), Playwright (E2E)
 
 **Current Status:**
+
 - MVP Sprint Day 4 complete (771 server tests + 21 E2E tests)
 - Tenant self-signup: Backend + Frontend complete (`/signup` → `/tenant/dashboard`)
 - Password reset flow: Complete with Postmark email integration
@@ -25,6 +27,7 @@ MAIS (Macon AI Solutions) is a business growth club platform that partners with 
 ## Monorepo Structure
 
 This is an npm workspace monorepo. Key points:
+
 - **Root commands** run across all workspaces: `npm run typecheck`
 - **Workspace-specific:** `npm run --workspace=server test`
 - **Shared packages:** `@macon/contracts` and `@macon/shared` are internal
@@ -34,6 +37,7 @@ This is an npm workspace monorepo. Key points:
 ## Essential Commands
 
 ### Development
+
 ```bash
 npm run dev:api                    # Start API server (mock mode default)
 npm run dev:client                 # Start React client (Vite)
@@ -45,6 +49,7 @@ ADAPTERS_PRESET=real npm run dev:api   # PostgreSQL, Stripe, Postmark, GCal
 ```
 
 ### Testing
+
 ```bash
 npm test                           # Run all server tests
 npm run test:unit                  # Unit tests only
@@ -57,6 +62,7 @@ npm run test:e2e:headed            # E2E with visible browser
 ```
 
 ### Database (Prisma)
+
 ```bash
 cd server
 npm exec prisma studio             # Visual DB browser
@@ -68,6 +74,7 @@ npm run create-tenant              # Create new club member with API keys
 ```
 
 ### Code Quality
+
 ```bash
 npm run typecheck                  # TypeScript validation (all workspaces)
 npm run lint                       # ESLint
@@ -77,6 +84,7 @@ npm run doctor                     # Environment health check
 ```
 
 ### Single Test Execution
+
 ```bash
 # Run specific test file
 npm test -- test/services/booking.service.test.ts
@@ -107,22 +115,24 @@ npm run test:e2e -- e2e/tests/booking-mock.spec.ts
 ```typescript
 // ✅ CORRECT - Tenant-scoped
 const packages = await prisma.package.findMany({
-  where: { tenantId, active: true }
+  where: { tenantId, active: true },
 });
 
 // ❌ WRONG - Returns data from all tenants (security vulnerability)
 const packages = await prisma.package.findMany({
-  where: { active: true }
+  where: { active: true },
 });
 ```
 
 **Tenant Resolution Flow:**
+
 1. Client sends `X-Tenant-Key` header (format: `pk_live_{slug}_{random}`)
 2. Tenant middleware validates key and resolves tenant
 3. Middleware injects `tenantId` into `req.tenantId`
 4. All subsequent queries use `req.tenantId` for filtering
 
 **Key Files:**
+
 - `server/src/middleware/tenant.ts` - Tenant resolution middleware
 - `server/src/lib/ports.ts` - Repository interfaces (all require tenantId)
 
@@ -191,6 +201,7 @@ await prisma.$transaction(async (tx) => {
 ```
 
 **Key Files:**
+
 - `server/src/services/booking.service.ts` - Transaction wrapper
 - `server/src/services/availability.service.ts` - Lock-aware availability
 
@@ -202,11 +213,11 @@ Stripe webhooks use database-based deduplication (see DECISIONS.md ADR-002):
 // Store webhook event with unique eventId
 await prisma.webhookEvent.create({
   data: {
-    eventId: event.id,        // Unique constraint prevents duplicates
+    eventId: event.id, // Unique constraint prevents duplicates
     eventType: event.type,
     payload: event,
     status: 'pending',
-  }
+  },
 });
 
 // Process only if not already processed
@@ -216,6 +227,7 @@ if (event.status === 'processed') {
 ```
 
 **Key Files:**
+
 - `server/src/routes/webhooks.routes.ts` - Webhook handler
 - `server/prisma/schema.prisma` - WebhookEvent model
 
@@ -248,6 +260,7 @@ const key = 'catalog:packages';
 MAIS uses a **hybrid migration system** with two patterns. Choose the right one:
 
 **Pattern A: Prisma Migrations** (for tables/columns)
+
 ```bash
 1. Edit server/prisma/schema.prisma
 2. npm exec prisma migrate dev --name descriptive_name
@@ -257,6 +270,7 @@ MAIS uses a **hybrid migration system** with two patterns. Choose the right one:
 ```
 
 **Pattern B: Manual Raw SQL** (for enums, indexes, extensions, RLS)
+
 ```bash
 1. Edit server/prisma/schema.prisma
 2. Find next migration number: ls server/prisma/migrations/ | grep '^[0-9]' | tail -1
@@ -277,6 +291,7 @@ MAIS uses a **hybrid migration system** with two patterns. Choose the right one:
 | RLS policy | B | `ALTER TABLE ... ENABLE ROW SECURITY` |
 
 **Critical Rules:**
+
 - Never modify applied migrations (they're part of git history)
 - Always use idempotent SQL (IF EXISTS, IF NOT EXISTS, DO $$ blocks)
 - Test on dev database before committing
@@ -292,6 +307,7 @@ MAIS uses a **hybrid migration system** with two patterns. Choose the right one:
 - **Coverage target:** 70% (current: 100% pass rate, 752 passing tests)
 
 **Integration Test Pattern:**
+
 ```typescript
 // Use helper for tenant isolation
 import { createTestTenant } from '../helpers/test-tenant';
@@ -318,14 +334,17 @@ test('should create booking', async () => {
 ## Environment Setup
 
 Required secrets (generate with `openssl rand -hex 32`):
+
 - `JWT_SECRET` - JWT signing key
 - `TENANT_SECRETS_ENCRYPTION_KEY` - Encrypt tenant-specific secrets
 
 Database (required for real mode):
+
 - `DATABASE_URL` - Supabase or local PostgreSQL
 - `DIRECT_URL` - Same as DATABASE_URL (for migrations)
 
 Optional (graceful fallbacks in real mode):
+
 - `POSTMARK_SERVER_TOKEN` - Email (falls back to file-sink in `tmp/emails/`)
 - `GOOGLE_CALENDAR_ID` - Calendar (falls back to mock calendar)
 - `STRIPE_SECRET_KEY` - Payments (required for real mode)
@@ -346,6 +365,7 @@ Optional (graceful fallbacks in real mode):
 ## Documentation Conventions
 
 ### Directory Structure
+
 - `docs/guides/` - How-to guides (task-oriented)
 - `docs/reference/` - API, architecture, ADRs (information-oriented)
 - `docs/solutions/` - Patterns, prevention strategies (understanding-oriented)
@@ -353,17 +373,20 @@ Optional (graceful fallbacks in real mode):
 - `docs/archive/YYYY-MM/` - Historical documents by month
 
 ### When Adding Documentation
+
 - **New feature guide**: Add to `docs/guides/`
 - **API or architecture**: Add to `docs/reference/`
 - **Pattern or solution**: Add to `docs/solutions/`
 - **ADR**: Add to `docs/adrs/` using ADR template, update DECISIONS.md index
 
 ### When Archiving
+
 - Move completed phase/sprint docs to `docs/archive/YYYY-MM/`
 - Use date prefix: `YYYY-MM-DD_original-filename.md`
 - Never delete historical docs - archive them
 
 ### Naming Conventions
+
 - Use SCREAMING_SNAKE_CASE for documentation files (e.g., `SETUP_GUIDE.md`)
 - Use kebab-case for directories (e.g., `design-system/`)
 - ADRs: `ADR-NNN-short-title.md` (e.g., `ADR-013-advisory-locks.md`)
@@ -371,6 +394,7 @@ Optional (graceful fallbacks in real mode):
 ## Code Patterns to Follow
 
 ### Error Handling Pattern
+
 ```typescript
 // Service throws domain error
 throw new BookingConflictError(date);
@@ -387,6 +411,7 @@ try {
 ```
 
 ### Repository Pattern with TenantId
+
 ```typescript
 // All repository methods require tenantId as first parameter
 interface CatalogRepository {
@@ -396,6 +421,7 @@ interface CatalogRepository {
 ```
 
 ### Service Constructor Pattern
+
 ```typescript
 export class BookingService {
   constructor(
@@ -411,12 +437,14 @@ export class BookingService {
 **IMPORTANT:** Before any UI work, read `docs/design/BRAND_VOICE_GUIDE.md`.
 
 ### Voice Principles
+
 - Lead with **transformation**, not features ("Book more clients" not "Automated invoicing")
 - Speak to **identity**, not pain ("You're a photographer, not a bookkeeper")
 - Be **specific** ("Instagram DM to final gallery" not "client communications")
 - **Confidence without arrogance** - no hype words (revolutionary, amazing, game-changing)
 
 ### Design Principles
+
 - **Generous whitespace:** `py-32 md:py-40` section padding minimum
 - **80% neutral, 20% accent:** Sage is precious—use sparingly
 - **Typography:** Serif headlines (`font-serif`), tight tracking, light subheadlines
@@ -425,6 +453,7 @@ export class BookingService {
 - **When in doubt, remove** - Apple's mantra
 
 ### Quick Reference
+
 ```tsx
 // Section spacing
 <section className="py-32 md:py-40">
@@ -457,6 +486,7 @@ export class BookingService {
 ## Prevention Strategies (Read These!)
 
 The following links prevent common mistakes from recurring:
+
 - **[PREVENTION-TS-REST-ANY-TYPE.md](docs/solutions/PREVENTION-TS-REST-ANY-TYPE.md)** - When `any` is acceptable (library limitations)
 - **[PREVENTION-ANY-TYPES-QUICK-REF.md](docs/solutions/PREVENTION-ANY-TYPES-QUICK-REF.md)** - 30-second decision tree
 - **[CODE-REVIEW-ANY-TYPE-CHECKLIST.md](docs/solutions/CODE-REVIEW-ANY-TYPE-CHECKLIST.md)** - Detailed code review process
@@ -466,6 +496,7 @@ The following links prevent common mistakes from recurring:
 ## Quick Start Checklist
 
 When starting work on this codebase:
+
 1. Check environment: `npm run doctor`
 2. Start in mock mode first: `ADAPTERS_PRESET=mock npm run dev:api`
 3. Verify tenant isolation in all queries
@@ -507,6 +538,7 @@ packages/
 **MVP Sprint Status:** Day 4 Complete (5-day aggressive timeline)
 
 **Day 1 Status:** ✅ COMPLETE (November 25, 2025)
+
 - ✅ Tenant self-signup backend (`POST /v1/auth/signup`)
 - ✅ Password reset scaffolding (forgot-password, reset-password endpoints)
 - ✅ Schema updates: emailVerified, passwordResetToken, passwordResetExpires
@@ -515,6 +547,7 @@ packages/
 - ✅ 759 tests passing (up from 752)
 
 **Day 2 Status:** ✅ COMPLETE
+
 - ✅ Password reset email flow with Postmark (HTML template, SHA-256 token hashing)
 - ✅ Stripe Connect onboarding backend routes (`/v1/tenant-admin/stripe/*`)
 - ✅ StripeConnectCard.tsx component with status dashboard
@@ -522,22 +555,26 @@ packages/
 - ✅ 771 tests passing
 
 **Day 3 Status:** ✅ COMPLETE
+
 - ✅ SignupPage.tsx at `/signup` route
 - ✅ SignupForm.tsx with full validation (business name, email, password)
 - ✅ AuthContext integration with signup() method
 - ✅ Success flow: JWT storage → redirect to tenant dashboard
 
 **Day 4 Status:** ✅ COMPLETE
+
 - ✅ tenant-signup.spec.ts (12 E2E test cases)
 - ✅ password-reset.spec.ts (9 E2E test cases)
 - ✅ Total: 771 server tests + 21 new E2E tests
 
 **Day 5 Goals:** Deploy + Documentation
+
 - Production deployment
 - User documentation
 - Monitoring setup
 
 **Known Issues:**
+
 - Pre-existing TypeScript compilation errors in contracts (Zod/ts-rest version mismatch, no runtime impact)
 
 ## Troubleshooting Guide
@@ -545,12 +582,14 @@ packages/
 ### Common Issues
 
 **Port already in use:**
+
 ```bash
 lsof -i :3001  # Find process using port
 kill -9 <PID>  # Kill the process
 ```
 
 **Database connection errors:**
+
 ```bash
 # Check if PostgreSQL is running
 psql $DATABASE_URL -c "SELECT 1;"
@@ -560,6 +599,7 @@ cd server && npm exec prisma migrate reset
 ```
 
 **Test failures after schema change:**
+
 ```bash
 cd server
 npm exec prisma generate  # Regenerate Prisma Client
@@ -567,15 +607,16 @@ npm exec prisma migrate dev  # Apply migrations
 ```
 
 **Stripe webhook not working:**
+
 ```bash
 stripe listen --forward-to localhost:3001/v1/webhooks/stripe
 # Copy the webhook secret to .env
 ```
 
 **Mock vs Real mode issues:**
+
 ```bash
 # Explicitly set mode
 export ADAPTERS_PRESET=mock  # or 'real'
 npm run dev:api
 ```
-

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "014"
+issue_id: '014'
 tags: [code-review, api, bug, tenant-admin]
 dependencies: []
 ---
@@ -17,9 +17,11 @@ The server endpoints for tenant management don't return the `email` field that b
 ## Findings
 
 ### Root Cause
+
 The server endpoints explicitly select/return specific fields but omit `email`:
 
 **GET /admin/tenants (list)** - `server/src/routes/admin/tenants.routes.ts:29-40`:
+
 ```typescript
 const tenants = await prisma.tenant.findMany({
   select: {
@@ -30,11 +32,12 @@ const tenants = await prisma.tenant.findMany({
     apiKeyPublic: true,
     commissionPercent: true,
     // ...
-  }
+  },
 });
 ```
 
 **GET /admin/tenants/:id (detail)** - `server/src/routes/admin/tenants.routes.ts:146-158`:
+
 ```typescript
 const tenant = await prisma.tenant.findUnique({
   where: { id },
@@ -54,7 +57,9 @@ res.json({
 ```
 
 ### Contract Expectation
+
 `packages/contracts/src/dto.ts:304-320`:
+
 ```typescript
 export const TenantDtoSchema = z.object({
   email: z.string().email().nullable(), // REQUIRED by contract
@@ -63,13 +68,15 @@ export const TenantDtoSchema = z.object({
 ```
 
 ### Client Expectation
+
 `client/src/features/admin/tenants/TenantForm/tenantApi.ts:18-28`:
+
 ```typescript
 return {
   name: tenant.name,
   slug: tenant.slug,
-  email: tenant.email || "",  // Expects email field
-  phone: tenant.phone || "",  // Also expects phone (not in schema)
+  email: tenant.email || '', // Expects email field
+  phone: tenant.phone || '', // Also expects phone (not in schema)
   // ...
 };
 ```
@@ -77,6 +84,7 @@ return {
 ## Proposed Solutions
 
 ### Option A: Add Email to Server Responses (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 Update both tenant endpoints to include the email field:
@@ -85,22 +93,27 @@ Update both tenant endpoints to include the email field:
 2. In GET /admin/tenants/:id (detail), add `email: tenant.email` to response mapping
 
 **Pros:**
+
 - Simple fix, minimal code change
 - Aligns server with contracts
 - Fixes the broken form immediately
 
 **Cons:**
+
 - None significant
 
 ### Option B: Remove Email from Client Form
+
 **Effort:** Small | **Risk:** Medium
 
 Remove email field from tenant form since it's nullable in the database.
 
 **Pros:**
+
 - Quick fix on client side
 
 **Cons:**
+
 - Reduces functionality
 - Email is useful for tenant admin login
 - Contracts would need updating
@@ -112,9 +125,11 @@ Implement **Option A** - Add email to server responses.
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/routes/admin/tenants.routes.ts` (lines 29-40, 164-184)
 
 **Database Schema:**
+
 - `email` field exists in Tenant model (nullable): `server/prisma/schema.prisma:43`
 
 **No migration needed** - field already exists in database.
@@ -129,8 +144,8 @@ Implement **Option A** - Add email to server responses.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                           |
+| ---------- | ------- | ----------------------------------------------- |
 | 2025-11-24 | Created | Found during code review of broken tenant pages |
 
 ## Resources

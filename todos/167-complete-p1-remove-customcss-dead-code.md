@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "167"
+issue_id: '167'
 tags: [code-review, security, dead-code, batch-5-review]
 dependencies: []
 resolved_date: 2025-12-02
@@ -14,6 +14,7 @@ resolved_date: 2025-12-02
 The `useTenantBranding` hook contains dead code for `customCss` processing that is never used. This dead code path poses a CSS injection risk if ever activated and violates the principle of minimal attack surface.
 
 **Why it matters:**
+
 - CSS injection can enable data exfiltration via `url()` properties
 - Dead code increases maintenance burden and confusion
 - Security-sensitive code paths should not exist if unused
@@ -26,6 +27,7 @@ The `useTenantBranding` hook contains dead code for `customCss` processing that 
 **Lines:** 117-121 (approximate)
 
 **Current code:**
+
 ```typescript
 // Dead code - customCss is never passed to this hook
 if (branding?.customCss) {
@@ -37,6 +39,7 @@ if (branding?.customCss) {
 ## Proposed Solution
 
 Remove the customCss handling code entirely since:
+
 1. No component passes customCss to this hook
 2. TenantBrandingDto schema does not include customCss
 3. If CSS customization is needed in future, implement with sanitization
@@ -58,9 +61,9 @@ Remove the customCss handling code entirely since:
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-12-02 | Created | From batch 5 code review |
+| Date       | Action   | Notes                                                                              |
+| ---------- | -------- | ---------------------------------------------------------------------------------- |
+| 2025-12-02 | Created  | From batch 5 code review                                                           |
 | 2025-12-02 | Resolved | Removed customCss dead code from useTenantBranding.ts and TenantBranding interface |
 
 ## Resources

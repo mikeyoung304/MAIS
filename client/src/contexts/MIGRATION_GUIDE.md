@@ -5,6 +5,7 @@ This guide helps you migrate existing login pages and authentication logic to us
 ## Overview
 
 The new AuthContext provides:
+
 - Unified authentication for both Platform Admins and Tenant Admins
 - Automatic JWT token management
 - Role-based access control
@@ -16,9 +17,9 @@ The new AuthContext provides:
 
 ```tsx
 // OLD - pages/AdminLogin.tsx
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { api } from "../lib/api";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { api } from '../lib/api';
 
 export function AdminLogin() {
   const navigate = useNavigate();
@@ -36,13 +37,13 @@ export function AdminLogin() {
 
       if (result.status === 200) {
         // Manual token storage
-        localStorage.setItem("adminToken", result.body.token);
-        navigate("/admin");
+        localStorage.setItem('adminToken', result.body.token);
+        navigate('/admin');
       } else {
-        setError("Invalid credentials");
+        setError('Invalid credentials');
       }
     } catch (err) {
-      setError("Login failed. Please try again.");
+      setError('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -60,9 +61,9 @@ export function AdminLogin() {
 
 ```tsx
 // OLD - pages/TenantLogin.tsx
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { api } from "../lib/api";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { api } from '../lib/api';
 
 export function TenantLogin() {
   const navigate = useNavigate();
@@ -71,9 +72,9 @@ export function TenantLogin() {
 
   useEffect(() => {
     // Manual check for existing token
-    const token = localStorage.getItem("tenantToken");
+    const token = localStorage.getItem('tenantToken');
     if (token) {
-      navigate("/tenant/dashboard");
+      navigate('/tenant/dashboard');
     }
   }, [navigate]);
 
@@ -89,12 +90,12 @@ export function TenantLogin() {
       if (result.status === 200) {
         // Manual token storage
         (api as any).setTenantToken(result.body.token);
-        navigate("/tenant/dashboard");
+        navigate('/tenant/dashboard');
       } else {
-        setError("Invalid credentials");
+        setError('Invalid credentials');
       }
     } catch (err) {
-      setError("Login failed. Please try again.");
+      setError('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -114,17 +115,23 @@ export function TenantLogin() {
 
 ```tsx
 // NEW - pages/Login.tsx
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import type { UserRole } from "@/contexts/AuthContext";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import type { UserRole } from '@/contexts/AuthContext';
 
 export function Login() {
-  const { login, isAuthenticated, isPlatformAdmin, isTenantAdmin, isLoading: authLoading } = useAuth();
+  const {
+    login,
+    isAuthenticated,
+    isPlatformAdmin,
+    isTenantAdmin,
+    isLoading: authLoading,
+  } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("TENANT_ADMIN");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState<UserRole>('TENANT_ADMIN');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -132,9 +139,9 @@ export function Login() {
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       if (isPlatformAdmin()) {
-        navigate("/admin");
+        navigate('/admin');
       } else if (isTenantAdmin()) {
-        navigate("/tenant/dashboard");
+        navigate('/tenant/dashboard');
       }
     }
   }, [isAuthenticated, isPlatformAdmin, isTenantAdmin, authLoading, navigate]);
@@ -149,13 +156,13 @@ export function Login() {
       await login(email, password, role);
 
       // Redirect based on role
-      if (role === "PLATFORM_ADMIN") {
-        navigate("/admin");
+      if (role === 'PLATFORM_ADMIN') {
+        navigate('/admin');
       } else {
-        navigate("/tenant/dashboard");
+        navigate('/tenant/dashboard');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed. Please try again.");
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -227,7 +234,7 @@ export function Login() {
             disabled={isSubmitting}
             className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md disabled:opacity-50"
           >
-            {isSubmitting ? "Signing in..." : "Sign in"}
+            {isSubmitting ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
       </div>
@@ -242,11 +249,11 @@ export function Login() {
 
 ```tsx
 // Before
-import { api } from "../lib/api";
+import { api } from '../lib/api';
 
 // After
-import { useAuth } from "@/contexts/AuthContext";
-import type { UserRole } from "@/contexts/AuthContext";
+import { useAuth } from '@/contexts/AuthContext';
+import type { UserRole } from '@/contexts/AuthContext';
 ```
 
 ### 2. Use AuthContext Hook
@@ -273,13 +280,13 @@ const result = await api.adminLogin({
 });
 
 if (result.status === 200) {
-  localStorage.setItem("adminToken", result.body.token);
-  navigate("/admin");
+  localStorage.setItem('adminToken', result.body.token);
+  navigate('/admin');
 }
 
 // After
 await login(email, password, role);
-navigate(role === "PLATFORM_ADMIN" ? "/admin" : "/tenant/dashboard");
+navigate(role === 'PLATFORM_ADMIN' ? '/admin' : '/tenant/dashboard');
 ```
 
 ### 4. Auto-Redirect if Already Authenticated
@@ -287,9 +294,9 @@ navigate(role === "PLATFORM_ADMIN" ? "/admin" : "/tenant/dashboard");
 ```tsx
 // Before - Manual check
 useEffect(() => {
-  const token = localStorage.getItem("tenantToken");
+  const token = localStorage.getItem('tenantToken');
   if (token) {
-    navigate("/tenant/dashboard");
+    navigate('/tenant/dashboard');
   }
 }, [navigate]);
 
@@ -297,9 +304,9 @@ useEffect(() => {
 useEffect(() => {
   if (!isLoading && isAuthenticated) {
     if (isPlatformAdmin()) {
-      navigate("/admin");
+      navigate('/admin');
     } else if (isTenantAdmin()) {
-      navigate("/tenant/dashboard");
+      navigate('/tenant/dashboard');
     }
   }
 }, [isAuthenticated, isPlatformAdmin, isTenantAdmin, isLoading, navigate]);
@@ -315,9 +322,9 @@ export function Admin() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem('adminToken');
     if (!token) {
-      navigate("/admin/login");
+      navigate('/admin/login');
     }
   }, [navigate]);
 
@@ -345,7 +352,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 Or use the auth hook:
 
 ```tsx
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from '@/contexts/AuthContext';
 
 export function Admin() {
   const { isAuthenticated, isPlatformAdmin, isLoading } = useAuth();
@@ -354,9 +361,9 @@ export function Admin() {
   useEffect(() => {
     if (!isLoading) {
       if (!isAuthenticated) {
-        navigate("/login");
+        navigate('/login');
       } else if (!isPlatformAdmin()) {
-        navigate("/tenant/dashboard");
+        navigate('/tenant/dashboard');
       }
     }
   }, [isAuthenticated, isPlatformAdmin, isLoading, navigate]);
@@ -375,7 +382,7 @@ export function Admin() {
 
 ```tsx
 // Manual auth check
-const token = localStorage.getItem("adminToken");
+const token = localStorage.getItem('adminToken');
 
 return (
   <nav>
@@ -388,7 +395,7 @@ return (
 ### After
 
 ```tsx
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from '@/contexts/AuthContext';
 
 export function Navigation() {
   const { isAuthenticated, user, isPlatformAdmin, isTenantAdmin, logout } = useAuth();
@@ -401,13 +408,9 @@ export function Navigation() {
         <>
           <span>Welcome, {user?.email}</span>
 
-          {isPlatformAdmin() && (
-            <a href="/admin">Admin Dashboard</a>
-          )}
+          {isPlatformAdmin() && <a href="/admin">Admin Dashboard</a>}
 
-          {isTenantAdmin() && (
-            <a href="/tenant/dashboard">Dashboard</a>
-          )}
+          {isTenantAdmin() && <a href="/tenant/dashboard">Dashboard</a>}
 
           <button onClick={logout}>Logout</button>
         </>
@@ -423,22 +426,22 @@ export function Navigation() {
 
 ```tsx
 const handleLogout = () => {
-  localStorage.removeItem("adminToken");
-  navigate("/admin/login");
+  localStorage.removeItem('adminToken');
+  navigate('/admin/login');
 };
 ```
 
 ### After
 
 ```tsx
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from '@/contexts/AuthContext';
 
 const { logout } = useAuth();
 
 // Just call logout - it handles everything
 const handleLogout = () => {
   logout();
-  navigate("/login");
+  navigate('/login');
 };
 ```
 

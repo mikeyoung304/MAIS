@@ -1,5 +1,5 @@
-import { Container } from "@/ui/Container";
-import { UserCheck, MessageSquare, Bell } from "lucide-react";
+import { Container } from '@/ui/Container';
+import { UserCheck, MessageSquare, Bell } from 'lucide-react';
 
 /**
  * CollectiveSection - AI + Skills of the Collective

@@ -12,6 +12,7 @@
 This plan migrates Elope's 261 documentation files from an ad-hoc 9-category structure to the proven **Diátaxis framework** (tutorials, how-to, reference, explanation). The migration addresses critical documentation drift identified in the Strategic Audit and establishes sustainable governance to prevent future decay.
 
 **Key Metrics:**
+
 - **Total Files**: 261 markdown files (excluding node_modules)
 - **Current Structure**: 9 ad-hoc categories + scattered files
 - **Target Structure**: 4 Diátaxis quadrants + time-based archive
@@ -20,6 +21,7 @@ This plan migrates Elope's 261 documentation files from an ad-hoc 9-category str
 - **Expected ROI**: 100+ hours saved annually in documentation maintenance
 
 **Critical Success Factors:**
+
 1. Phased migration (avoid big-bang disruption)
 2. Automated link validation and rewriting
 3. Team buy-in and training on new structure
@@ -45,21 +47,21 @@ This plan migrates Elope's 261 documentation files from an ad-hoc 9-category str
 
 ### Directory Distribution
 
-| Location | Count | Primary Content |
-|----------|-------|----------------|
-| `docs/archive/` | 115 | Historical docs, old analyses, deprecated guides |
-| `docs/phases/` | 15 | Phase completion reports (1-5) |
-| `docs/sprints/` | 14 | Sprint 1-6 session reports, handoffs, blockers |
-| `.claude/` | 33 | Agent reports, audit findings, analysis |
-| `docs/multi-tenant/` | 7 | Multi-tenant implementation guides, roadmaps |
-| `docs/operations/` | 6 | Runbooks, deployment, incident response |
-| `docs/security/` | 7 | Security guides, secret rotation, audits |
-| `docs/roadmaps/` | 7 | Product roadmaps, widget integration |
-| `docs/setup/` | 5 | Environment setup, local testing |
-| `docs/api/` | 4 | API documentation, error codes |
-| `client/` | 12 | Client-specific guides (Auth, SDK, widgets) |
-| `server/` | 12 | Server-specific guides (Stripe, auth, testing) |
-| Root | 24 | Core docs (README, ARCHITECTURE, TESTING, etc.) |
+| Location             | Count | Primary Content                                  |
+| -------------------- | ----- | ------------------------------------------------ |
+| `docs/archive/`      | 115   | Historical docs, old analyses, deprecated guides |
+| `docs/phases/`       | 15    | Phase completion reports (1-5)                   |
+| `docs/sprints/`      | 14    | Sprint 1-6 session reports, handoffs, blockers   |
+| `.claude/`           | 33    | Agent reports, audit findings, analysis          |
+| `docs/multi-tenant/` | 7     | Multi-tenant implementation guides, roadmaps     |
+| `docs/operations/`   | 6     | Runbooks, deployment, incident response          |
+| `docs/security/`     | 7     | Security guides, secret rotation, audits         |
+| `docs/roadmaps/`     | 7     | Product roadmaps, widget integration             |
+| `docs/setup/`        | 5     | Environment setup, local testing                 |
+| `docs/api/`          | 4     | API documentation, error codes                   |
+| `client/`            | 12    | Client-specific guides (Auth, SDK, widgets)      |
+| `server/`            | 12    | Server-specific guides (Stripe, auth, testing)   |
+| Root                 | 24    | Core docs (README, ARCHITECTURE, TESTING, etc.)  |
 
 **Total**: 261 files
 
@@ -99,10 +101,12 @@ This plan migrates Elope's 261 documentation files from an ad-hoc 9-category str
 The [Diátaxis framework](https://diataxis.fr/) organizes documentation along two axes:
 
 **Axis 1: Study vs Work**
+
 - **Study**: Learning-oriented (tutorials, explanations)
 - **Work**: Task-oriented (how-to guides, reference)
 
 **Axis 2: Practical vs Theoretical**
+
 - **Practical**: Code-focused (tutorials, how-to)
 - **Theoretical**: Concept-focused (explanations, reference)
 
@@ -238,6 +242,7 @@ docs/
 ### Content Guidelines by Quadrant
 
 #### Tutorials (Learning-Oriented)
+
 - **Audience**: Complete beginners
 - **Goal**: Build confidence through successful completion
 - **Style**: Step-by-step, prescriptive, encouraging
@@ -245,6 +250,7 @@ docs/
 - **Example**: "Build Your First Booking Flow in 30 Minutes"
 
 **Characteristics**:
+
 - Numbered steps (1, 2, 3...)
 - Expected outputs shown
 - No assumptions about prior knowledge
@@ -252,6 +258,7 @@ docs/
 - Works every time (tested regularly)
 
 #### How-To Guides (Problem-Solving)
+
 - **Audience**: Users with specific goals
 - **Goal**: Solve a real-world problem
 - **Style**: Direct, practical, goal-oriented
@@ -259,6 +266,7 @@ docs/
 - **Example**: "How to Rotate JWT Secrets Without Downtime"
 
 **Characteristics**:
+
 - Starts with the problem/goal
 - Assumes basic knowledge
 - Multiple approaches OK
@@ -266,6 +274,7 @@ docs/
 - Links to reference docs
 
 #### Reference (Information)
+
 - **Audience**: Users needing factual details
 - **Goal**: Provide accurate, comprehensive information
 - **Style**: Dry, technical, exhaustive
@@ -273,6 +282,7 @@ docs/
 - **Example**: "Environment Variables Reference"
 
 **Characteristics**:
+
 - Alphabetical or logical ordering
 - Every option documented
 - No opinions or recommendations
@@ -280,6 +290,7 @@ docs/
 - Machine-readable when possible
 
 #### Explanation (Understanding)
+
 - **Audience**: Users wanting deeper understanding
 - **Goal**: Clarify concepts and decisions
 - **Style**: Discursive, contextual, thoughtful
@@ -287,6 +298,7 @@ docs/
 - **Example**: "Why Elope Uses Multi-Tenant Architecture"
 
 **Characteristics**:
+
 - Answers "why?" not "how?"
 - Explores alternatives considered
 - Discusses trade-offs
@@ -301,15 +313,15 @@ docs/
 
 These files form the new structure's foundation and must be created first.
 
-| New Location | Source Material | Action | Effort |
-|--------------|----------------|--------|--------|
-| `docs/README.md` | Write new | Create framework guide | 2h |
-| `docs/tutorials/README.md` | Write new | Tutorial index + guidelines | 1h |
-| `docs/how-to/README.md` | Write new | How-to index + guidelines | 1h |
-| `docs/reference/README.md` | Write new | Reference index + guidelines | 1h |
-| `docs/explanation/README.md` | Write new | Explanation index + guidelines | 1h |
-| `docs/archive/README.md` | Write new | Archive policy + index | 1h |
-| `docs/DOCUMENTATION_STANDARDS.md` | Write new | Governance document | 3h |
+| New Location                      | Source Material | Action                         | Effort |
+| --------------------------------- | --------------- | ------------------------------ | ------ |
+| `docs/README.md`                  | Write new       | Create framework guide         | 2h     |
+| `docs/tutorials/README.md`        | Write new       | Tutorial index + guidelines    | 1h     |
+| `docs/how-to/README.md`           | Write new       | How-to index + guidelines      | 1h     |
+| `docs/reference/README.md`        | Write new       | Reference index + guidelines   | 1h     |
+| `docs/explanation/README.md`      | Write new       | Explanation index + guidelines | 1h     |
+| `docs/archive/README.md`          | Write new       | Archive policy + index         | 1h     |
+| `docs/DOCUMENTATION_STANDARDS.md` | Write new       | Governance document            | 3h     |
 
 **Total Phase 1 Effort**: 10 hours
 
@@ -319,50 +331,50 @@ Critical docs that users need immediately. Must work in new structure.
 
 #### Tutorials
 
-| New Location | Current Location | Status | Effort |
-|--------------|-----------------|--------|--------|
-| `docs/tutorials/01-quick-start.md` | Root: `README.md` (Quick Start section) | Extract + simplify | 2h |
-| `docs/tutorials/02-first-tenant.md` | Root: `README.md` (Create First Tenant) | Extract + expand | 2h |
-| `docs/tutorials/03-first-booking.md` | Write new from `DEVELOPING.md` | Create new | 3h |
-| `docs/tutorials/04-admin-dashboard.md` | `docs/multi-tenant/TENANT_ADMIN_USER_GUIDE.md` | Simplify for beginners | 2h |
-| `docs/tutorials/05-widget-integration.md` | `docs/roadmaps/WIDGET_INTEGRATION_GUIDE.md` | Extract quickstart | 2h |
+| New Location                              | Current Location                               | Status                 | Effort |
+| ----------------------------------------- | ---------------------------------------------- | ---------------------- | ------ |
+| `docs/tutorials/01-quick-start.md`        | Root: `README.md` (Quick Start section)        | Extract + simplify     | 2h     |
+| `docs/tutorials/02-first-tenant.md`       | Root: `README.md` (Create First Tenant)        | Extract + expand       | 2h     |
+| `docs/tutorials/03-first-booking.md`      | Write new from `DEVELOPING.md`                 | Create new             | 3h     |
+| `docs/tutorials/04-admin-dashboard.md`    | `docs/multi-tenant/TENANT_ADMIN_USER_GUIDE.md` | Simplify for beginners | 2h     |
+| `docs/tutorials/05-widget-integration.md` | `docs/roadmaps/WIDGET_INTEGRATION_GUIDE.md`    | Extract quickstart     | 2h     |
 
 **Subtotal**: 11 hours
 
 #### How-To Guides
 
-| New Location | Current Location | Status | Effort |
-|--------------|-----------------|--------|--------|
-| `docs/how-to/deployment/deploy-to-production.md` | `docs/operations/PRODUCTION_DEPLOYMENT_GUIDE.md` | Move + update | 1h |
-| `docs/how-to/deployment/setup-stripe-webhooks.md` | `docs/operations/RUNBOOK.md` (extract) | Extract section | 1h |
-| `docs/how-to/deployment/configure-email-provider.md` | `docs/operations/RUNBOOK.md` (extract) | Extract section | 1h |
-| `docs/how-to/deployment/rotate-secrets.md` | `docs/security/SECRET_ROTATION_GUIDE.md` | Move as-is | 0.5h |
-| `docs/how-to/development/add-new-endpoint.md` | `DEVELOPING.md` (extract) | Extract + expand | 2h |
-| `docs/how-to/development/write-integration-test.md` | `TESTING.md` + `server/test/helpers/README.md` | Synthesize | 2h |
-| `docs/how-to/operations/handle-production-incident.md` | `docs/operations/INCIDENT_RESPONSE.md` | Move as-is | 0.5h |
-| `docs/how-to/tenant-admin/upload-package-photos.md` | `client/QUICK_START_PHOTO_UPLOADER.md` | Move + update | 1h |
+| New Location                                           | Current Location                                 | Status           | Effort |
+| ------------------------------------------------------ | ------------------------------------------------ | ---------------- | ------ |
+| `docs/how-to/deployment/deploy-to-production.md`       | `docs/operations/PRODUCTION_DEPLOYMENT_GUIDE.md` | Move + update    | 1h     |
+| `docs/how-to/deployment/setup-stripe-webhooks.md`      | `docs/operations/RUNBOOK.md` (extract)           | Extract section  | 1h     |
+| `docs/how-to/deployment/configure-email-provider.md`   | `docs/operations/RUNBOOK.md` (extract)           | Extract section  | 1h     |
+| `docs/how-to/deployment/rotate-secrets.md`             | `docs/security/SECRET_ROTATION_GUIDE.md`         | Move as-is       | 0.5h   |
+| `docs/how-to/development/add-new-endpoint.md`          | `DEVELOPING.md` (extract)                        | Extract + expand | 2h     |
+| `docs/how-to/development/write-integration-test.md`    | `TESTING.md` + `server/test/helpers/README.md`   | Synthesize       | 2h     |
+| `docs/how-to/operations/handle-production-incident.md` | `docs/operations/INCIDENT_RESPONSE.md`           | Move as-is       | 0.5h   |
+| `docs/how-to/tenant-admin/upload-package-photos.md`    | `client/QUICK_START_PHOTO_UPLOADER.md`           | Move + update    | 1h     |
 
 **Subtotal**: 9 hours
 
 #### Reference
 
-| New Location | Current Location | Status | Effort |
-|--------------|-----------------|--------|--------|
-| `docs/reference/api/endpoints.md` | `docs/api/README.md` + `docs/api/API_DOCS_QUICKSTART.md` | Consolidate | 2h |
-| `docs/reference/api/error-codes.md` | `docs/api/ERRORS.md` | Move as-is | 0.5h |
-| `docs/reference/configuration/environment-variables.md` | `docs/setup/ENVIRONMENT.md` + `server/ENV_VARIABLES.md` | Consolidate | 1.5h |
-| `docs/reference/architecture/database-schema.md` | Extract from `server/prisma/schema.prisma` | Generate + annotate | 3h |
+| New Location                                            | Current Location                                         | Status              | Effort |
+| ------------------------------------------------------- | -------------------------------------------------------- | ------------------- | ------ |
+| `docs/reference/api/endpoints.md`                       | `docs/api/README.md` + `docs/api/API_DOCS_QUICKSTART.md` | Consolidate         | 2h     |
+| `docs/reference/api/error-codes.md`                     | `docs/api/ERRORS.md`                                     | Move as-is          | 0.5h   |
+| `docs/reference/configuration/environment-variables.md` | `docs/setup/ENVIRONMENT.md` + `server/ENV_VARIABLES.md`  | Consolidate         | 1.5h   |
+| `docs/reference/architecture/database-schema.md`        | Extract from `server/prisma/schema.prisma`               | Generate + annotate | 3h     |
 
 **Subtotal**: 7 hours
 
 #### Explanation
 
-| New Location | Current Location | Status | Effort |
-|--------------|-----------------|--------|--------|
-| `docs/explanation/architecture/multi-tenancy.md` | `docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md` | Rewrite for understanding | 3h |
-| `docs/explanation/architecture/modular-monolith.md` | `DECISIONS/0001-modular-monolith.md` | Expand ADR | 2h |
-| `docs/explanation/architecture/mock-first-development.md` | `DECISIONS/0002-mock-first.md` | Expand ADR | 2h |
-| `docs/explanation/architecture/config-driven-platform.md` | Root: `README.md` (Agent-Powered section) | Extract + expand | 3h |
+| New Location                                              | Current Location                                         | Status                    | Effort |
+| --------------------------------------------------------- | -------------------------------------------------------- | ------------------------- | ------ |
+| `docs/explanation/architecture/multi-tenancy.md`          | `docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md` | Rewrite for understanding | 3h     |
+| `docs/explanation/architecture/modular-monolith.md`       | `DECISIONS/0001-modular-monolith.md`                     | Expand ADR                | 2h     |
+| `docs/explanation/architecture/mock-first-development.md` | `DECISIONS/0002-mock-first.md`                           | Expand ADR                | 2h     |
+| `docs/explanation/architecture/config-driven-platform.md` | Root: `README.md` (Agent-Powered section)                | Extract + expand          | 3h     |
 
 **Subtotal**: 10 hours
 
@@ -374,55 +386,55 @@ Move historical and sprint documentation to time-based archive.
 
 #### Archive: 2025-11 (November - Current Sprint)
 
-| New Location | Current Location | Action | Count |
-|--------------|-----------------|--------|-------|
-| `docs/archive/2025-11/sprints/sprint-4/` | `docs/sprints/sprint-4/*` | Move all files | 7 files |
-| `docs/archive/2025-11/sprints/sprint-5-6/` | `docs/sprints/sprint-5-6/*` | Move all files | 7 files |
-| `docs/archive/2025-11/sprints/sprint-4/` | `.claude/SPRINT_4_*.md` | Move duplicates | 0 files |
-| `docs/archive/2025-11/sprints/sprint-5-6/` | `.claude/SPRINT_5_*.md`, `.claude/SPRINT_6_*.md` | Move duplicates | 6 files |
-| `docs/archive/2025-11/phases/` | `docs/phases/*` | Move all phase completion reports | 15 files |
-| `docs/archive/2025-11/audits/` | `.claude/DOCUMENTATION_AUDIT_*.md` | Move audit reports | 2 files |
-| `docs/archive/2025-11/audits/` | `.claude/PRODUCTION_READINESS_*.md` | Move assessment | 1 file |
-| `docs/archive/2025-11/audits/` | `.claude/LINT_*.md`, `.claude/UNSAFE_*.md` | Move technical reports | 4 files |
+| New Location                               | Current Location                                 | Action                            | Count    |
+| ------------------------------------------ | ------------------------------------------------ | --------------------------------- | -------- |
+| `docs/archive/2025-11/sprints/sprint-4/`   | `docs/sprints/sprint-4/*`                        | Move all files                    | 7 files  |
+| `docs/archive/2025-11/sprints/sprint-5-6/` | `docs/sprints/sprint-5-6/*`                      | Move all files                    | 7 files  |
+| `docs/archive/2025-11/sprints/sprint-4/`   | `.claude/SPRINT_4_*.md`                          | Move duplicates                   | 0 files  |
+| `docs/archive/2025-11/sprints/sprint-5-6/` | `.claude/SPRINT_5_*.md`, `.claude/SPRINT_6_*.md` | Move duplicates                   | 6 files  |
+| `docs/archive/2025-11/phases/`             | `docs/phases/*`                                  | Move all phase completion reports | 15 files |
+| `docs/archive/2025-11/audits/`             | `.claude/DOCUMENTATION_AUDIT_*.md`               | Move audit reports                | 2 files  |
+| `docs/archive/2025-11/audits/`             | `.claude/PRODUCTION_READINESS_*.md`              | Move assessment                   | 1 file   |
+| `docs/archive/2025-11/audits/`             | `.claude/LINT_*.md`, `.claude/UNSAFE_*.md`       | Move technical reports            | 4 files  |
 
 **Files to Move**: 42 files
 **Effort**: 3 hours (bulk move + create README.md indexes)
 
 #### Archive: 2025-10 (October - Analysis Period)
 
-| New Location | Current Location | Action | Count |
-|--------------|-----------------|--------|-------|
-| `docs/archive/2025-10/analysis/` | `docs/archive/october-2025-analysis/*` | Move all (fix mislabel) | 16 files |
-| `docs/archive/2025-10/sprints/` | `docs/archive/sprints/SPRINT_1_*.md` through `SPRINT_3_*.md` | Move sprint 1-3 reports | 18 files |
-| `docs/archive/2025-10/cache-investigation/` | `docs/archive/cache-investigation/*` | Move as-is | 4 files |
-| `docs/archive/2025-10/client-reports/` | `docs/archive/client-reports/nov-2025/*` (fix mislabel) | Move client work | 9 files |
-| `docs/archive/2025-10/test-reports/` | `docs/archive/test-reports/*` | Move test reports | 6 files |
-| `docs/archive/2025-10/phase-3/` | `docs/archive/phase-3/*` | Move phase 3 | 5 files |
+| New Location                                | Current Location                                             | Action                  | Count    |
+| ------------------------------------------- | ------------------------------------------------------------ | ----------------------- | -------- |
+| `docs/archive/2025-10/analysis/`            | `docs/archive/october-2025-analysis/*`                       | Move all (fix mislabel) | 16 files |
+| `docs/archive/2025-10/sprints/`             | `docs/archive/sprints/SPRINT_1_*.md` through `SPRINT_3_*.md` | Move sprint 1-3 reports | 18 files |
+| `docs/archive/2025-10/cache-investigation/` | `docs/archive/cache-investigation/*`                         | Move as-is              | 4 files  |
+| `docs/archive/2025-10/client-reports/`      | `docs/archive/client-reports/nov-2025/*` (fix mislabel)      | Move client work        | 9 files  |
+| `docs/archive/2025-10/test-reports/`        | `docs/archive/test-reports/*`                                | Move test reports       | 6 files  |
+| `docs/archive/2025-10/phase-3/`             | `docs/archive/phase-3/*`                                     | Move phase 3            | 5 files  |
 
 **Files to Move**: 58 files
 **Effort**: 3 hours
 
 #### Archive: 2025-01 (January - Planning Period)
 
-| New Location | Current Location | Action | Count |
-|--------------|-----------------|--------|-------|
-| `docs/archive/2025-01/config-pivot-analysis/` | `docs/archive/planning/2025-01-analysis/CONFIG_*.md` | Move config planning | 14 files |
-| `docs/archive/2025-01/mcp-analysis/` | `docs/archive/planning/2025-01-analysis/MCP_*.md` | Move MCP planning | 4 files |
-| `docs/archive/2025-01/payment-analysis/` | `docs/archive/planning/2025-01-analysis/PAYMENT_*.md` | Move payment analysis | 6 files |
-| `docs/archive/2025-01/database-analysis/` | `docs/archive/planning/2025-01-analysis/DATABASE_*.md` | Move DB analysis | 4 files |
-| `docs/archive/2025-01/security-audit/` | `docs/archive/planning/2025-01-analysis/SECURITY_*.md` | Move security audit | 4 files |
-| `docs/archive/2025-01/tech-debt/` | `docs/archive/planning/2025-01-analysis/TECH_DEBT_*.md` | Move tech debt | 4 files |
-| `docs/archive/2025-01/theme-analysis/` | `docs/archive/planning/2025-01-analysis/THEME_*.md` | Move theme analysis | 4 files |
-| `docs/archive/2025-01/versioning/` | `docs/archive/planning/2025-01-analysis/VERSIONING_*.md` | Move versioning | 3 files |
-| `docs/archive/2025-01/api-exploration/` | `docs/archive/planning/2025-01-analysis/API_*.md`, `AGENT_*.md` | Move API + agent docs | 5 files |
+| New Location                                  | Current Location                                                | Action                | Count    |
+| --------------------------------------------- | --------------------------------------------------------------- | --------------------- | -------- |
+| `docs/archive/2025-01/config-pivot-analysis/` | `docs/archive/planning/2025-01-analysis/CONFIG_*.md`            | Move config planning  | 14 files |
+| `docs/archive/2025-01/mcp-analysis/`          | `docs/archive/planning/2025-01-analysis/MCP_*.md`               | Move MCP planning     | 4 files  |
+| `docs/archive/2025-01/payment-analysis/`      | `docs/archive/planning/2025-01-analysis/PAYMENT_*.md`           | Move payment analysis | 6 files  |
+| `docs/archive/2025-01/database-analysis/`     | `docs/archive/planning/2025-01-analysis/DATABASE_*.md`          | Move DB analysis      | 4 files  |
+| `docs/archive/2025-01/security-audit/`        | `docs/archive/planning/2025-01-analysis/SECURITY_*.md`          | Move security audit   | 4 files  |
+| `docs/archive/2025-01/tech-debt/`             | `docs/archive/planning/2025-01-analysis/TECH_DEBT_*.md`         | Move tech debt        | 4 files  |
+| `docs/archive/2025-01/theme-analysis/`        | `docs/archive/planning/2025-01-analysis/THEME_*.md`             | Move theme analysis   | 4 files  |
+| `docs/archive/2025-01/versioning/`            | `docs/archive/planning/2025-01-analysis/VERSIONING_*.md`        | Move versioning       | 3 files  |
+| `docs/archive/2025-01/api-exploration/`       | `docs/archive/planning/2025-01-analysis/API_*.md`, `AGENT_*.md` | Move API + agent docs | 5 files  |
 
 **Files to Move**: 48 files
 **Effort**: 4 hours
 
 #### Remaining Archive Files
 
-| New Location | Current Location | Action | Count |
-|--------------|-----------------|--------|-------|
+| New Location                 | Current Location                                                            | Action                  | Count   |
+| ---------------------------- | --------------------------------------------------------------------------- | ----------------------- | ------- |
 | `docs/archive/2025-10/misc/` | `docs/archive/MIGRATION_LOG.md`, `PROMPTS.md`, `README_DEPLOYMENT.md`, etc. | Move misc archive files | 7 files |
 
 **Files to Move**: 7 files
@@ -436,52 +448,52 @@ Client, server, and root documentation files.
 
 #### Client Documentation
 
-| New Location | Current Location | Action | Effort |
-|--------------|-----------------|--------|--------|
-| `docs/reference/client/sdk-architecture.md` | `client/public/SDK_ARCHITECTURE.md` | Move to reference | 0.5h |
-| `docs/reference/client/api-service.md` | `client/API_SERVICE_INTEGRATION_COMPLETE.md` | Move to reference | 0.5h |
-| `docs/explanation/client/role-based-architecture.md` | `client/ROLE_BASED_ARCHITECTURE.md` | Move to explanation | 0.5h |
-| `docs/how-to/client/auth-context-usage.md` | `client/src/contexts/AUTH_CONTEXT_USAGE.md` | Move to how-to | 0.5h |
-| `docs/reference/client/auth-reference.md` | `client/src/contexts/AUTH_QUICK_REFERENCE.md` | Move to reference | 0.5h |
-| `docs/archive/2025-11/client/` | `client/src/contexts/MIGRATION_GUIDE.md`, `client/src/components/PackagePhotoUploader.md`, etc. | Archive old guides | 1h |
+| New Location                                         | Current Location                                                                                | Action              | Effort |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------- | ------ |
+| `docs/reference/client/sdk-architecture.md`          | `client/public/SDK_ARCHITECTURE.md`                                                             | Move to reference   | 0.5h   |
+| `docs/reference/client/api-service.md`               | `client/API_SERVICE_INTEGRATION_COMPLETE.md`                                                    | Move to reference   | 0.5h   |
+| `docs/explanation/client/role-based-architecture.md` | `client/ROLE_BASED_ARCHITECTURE.md`                                                             | Move to explanation | 0.5h   |
+| `docs/how-to/client/auth-context-usage.md`           | `client/src/contexts/AUTH_CONTEXT_USAGE.md`                                                     | Move to how-to      | 0.5h   |
+| `docs/reference/client/auth-reference.md`            | `client/src/contexts/AUTH_QUICK_REFERENCE.md`                                                   | Move to reference   | 0.5h   |
+| `docs/archive/2025-11/client/`                       | `client/src/contexts/MIGRATION_GUIDE.md`, `client/src/components/PackagePhotoUploader.md`, etc. | Archive old guides  | 1h     |
 
 **Subtotal**: 3.5 hours
 
 #### Server Documentation
 
-| New Location | Current Location | Action | Effort |
-|--------------|-----------------|--------|--------|
-| `docs/reference/server/stripe-connect-api.md` | `server/STRIPE_CONNECT_ADMIN_API.md` | Move to reference | 0.5h |
-| `docs/how-to/server/stripe-connect-testing.md` | `server/STRIPE_CONNECT_TESTING_GUIDE.md` | Move to how-to | 0.5h |
-| `docs/explanation/server/unified-auth.md` | `server/UNIFIED_AUTH_IMPLEMENTATION_REPORT.md` | Move to explanation | 1h |
-| `docs/how-to/server/login-rate-limiting.md` | `server/LOGIN_RATE_LIMITING.md` | Move to how-to | 0.5h |
-| `docs/reference/testing/test-automation.md` | `server/TEST_AUTOMATION_README.md` | Move to reference | 0.5h |
-| `docs/reference/testing/test-helpers.md` | `server/test/helpers/README.md` | Move to reference | 0.5h |
+| New Location                                   | Current Location                               | Action              | Effort |
+| ---------------------------------------------- | ---------------------------------------------- | ------------------- | ------ |
+| `docs/reference/server/stripe-connect-api.md`  | `server/STRIPE_CONNECT_ADMIN_API.md`           | Move to reference   | 0.5h   |
+| `docs/how-to/server/stripe-connect-testing.md` | `server/STRIPE_CONNECT_TESTING_GUIDE.md`       | Move to how-to      | 0.5h   |
+| `docs/explanation/server/unified-auth.md`      | `server/UNIFIED_AUTH_IMPLEMENTATION_REPORT.md` | Move to explanation | 1h     |
+| `docs/how-to/server/login-rate-limiting.md`    | `server/LOGIN_RATE_LIMITING.md`                | Move to how-to      | 0.5h   |
+| `docs/reference/testing/test-automation.md`    | `server/TEST_AUTOMATION_README.md`             | Move to reference   | 0.5h   |
+| `docs/reference/testing/test-helpers.md`       | `server/test/helpers/README.md`                | Move to reference   | 0.5h   |
 
 **Subtotal**: 3.5 hours
 
 #### Root Documentation (Keep in Root)
 
-| File | Action | Effort |
-|------|--------|--------|
-| `README.md` | Update links to new structure | 1h |
-| `ARCHITECTURE.md` | Update links, move diagrams to `docs/reference/architecture/` | 1h |
-| `DEVELOPING.md` | Extract how-tos, keep as overview | 1.5h |
-| `TESTING.md` | Extract how-tos, keep as overview | 1h |
-| `CONTRIBUTING.md` | Update with new doc standards | 1h |
-| `CHANGELOG.md` | Keep as-is (root) | 0h |
-| `DECISIONS.md` | Keep as index, expand individual ADRs in `docs/explanation/` | 1h |
-| `CODING_GUIDELINES.md` | Keep as-is (root) | 0h |
+| File                   | Action                                                        | Effort |
+| ---------------------- | ------------------------------------------------------------- | ------ |
+| `README.md`            | Update links to new structure                                 | 1h     |
+| `ARCHITECTURE.md`      | Update links, move diagrams to `docs/reference/architecture/` | 1h     |
+| `DEVELOPING.md`        | Extract how-tos, keep as overview                             | 1.5h   |
+| `TESTING.md`           | Extract how-tos, keep as overview                             | 1h     |
+| `CONTRIBUTING.md`      | Update with new doc standards                                 | 1h     |
+| `CHANGELOG.md`         | Keep as-is (root)                                             | 0h     |
+| `DECISIONS.md`         | Keep as index, expand individual ADRs in `docs/explanation/`  | 1h     |
+| `CODING_GUIDELINES.md` | Keep as-is (root)                                             | 0h     |
 
 **Subtotal**: 6.5 hours
 
 #### Miscellaneous Root Files
 
-| New Location | Current Location | Action | Effort |
-|--------------|-----------------|--------|--------|
-| `docs/archive/2025-11/misc/` | `IMPLEMENTATION_SUMMARY.md`, `LOGIN_FIX_REPORT.md`, `QA_UNIFIED_AUTH_TEST_REPORT.md`, `SERVER_IMPLEMENTATION_CHECKLIST.md`, `PRODUCTION_READINESS_STATUS.md` | Archive completion reports | 1h |
-| `docs/archive/2025-11/misc/` | `BACKLOG_PLATFORM_ADMIN_AUDIT_GAP.md`, `SPRINT_4_HANDOFF.md` | Archive backlog/handoff docs | 0.5h |
-| `docs/archive/2025-11/misc/` | `DOCUMENTATION_CHANGELOG.md` | Archive old changelog | 0.5h |
+| New Location                 | Current Location                                                                                                                                             | Action                       | Effort |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- | ------ |
+| `docs/archive/2025-11/misc/` | `IMPLEMENTATION_SUMMARY.md`, `LOGIN_FIX_REPORT.md`, `QA_UNIFIED_AUTH_TEST_REPORT.md`, `SERVER_IMPLEMENTATION_CHECKLIST.md`, `PRODUCTION_READINESS_STATUS.md` | Archive completion reports   | 1h     |
+| `docs/archive/2025-11/misc/` | `BACKLOG_PLATFORM_ADMIN_AUDIT_GAP.md`, `SPRINT_4_HANDOFF.md`                                                                                                 | Archive backlog/handoff docs | 0.5h   |
+| `docs/archive/2025-11/misc/` | `DOCUMENTATION_CHANGELOG.md`                                                                                                                                 | Archive old changelog        | 0.5h   |
 
 **Subtotal**: 2 hours
 
@@ -491,25 +503,25 @@ Client, server, and root documentation files.
 
 #### Duplicates to Delete
 
-| File | Duplicate Of | Action |
-|------|--------------|--------|
-| `.claude/SPRINT_6_COMPLETE_SUMMARY.md` | `docs/sprints/sprint-5-6/SPRINT_6_COMPLETE_SUMMARY.md` | Delete .claude version |
-| `.claude/SPRINT_6_STABILIZATION_PLAN.md` | `docs/sprints/sprint-5-6/SPRINT_6_STABILIZATION_PLAN.md` | Delete .claude version |
-| `.claude/SPRINT_6_PHASE_*_REPORT.md` | `docs/sprints/sprint-5-6/SPRINT_6_PHASE_*_REPORT.md` | Delete .claude versions |
-| `.claude/SPRINT_5_SESSION_REPORT.md` | `docs/sprints/sprint-5-6/SPRINT_5_SESSION_REPORT.md` | Delete .claude version |
-| `SPRINT_4_HANDOFF.md` (root) | `docs/sprints/sprint-4/SPRINT_4_HANDOFF.md` | Delete root version |
+| File                                     | Duplicate Of                                             | Action                  |
+| ---------------------------------------- | -------------------------------------------------------- | ----------------------- |
+| `.claude/SPRINT_6_COMPLETE_SUMMARY.md`   | `docs/sprints/sprint-5-6/SPRINT_6_COMPLETE_SUMMARY.md`   | Delete .claude version  |
+| `.claude/SPRINT_6_STABILIZATION_PLAN.md` | `docs/sprints/sprint-5-6/SPRINT_6_STABILIZATION_PLAN.md` | Delete .claude version  |
+| `.claude/SPRINT_6_PHASE_*_REPORT.md`     | `docs/sprints/sprint-5-6/SPRINT_6_PHASE_*_REPORT.md`     | Delete .claude versions |
+| `.claude/SPRINT_5_SESSION_REPORT.md`     | `docs/sprints/sprint-5-6/SPRINT_5_SESSION_REPORT.md`     | Delete .claude version  |
+| `SPRINT_4_HANDOFF.md` (root)             | `docs/sprints/sprint-4/SPRINT_4_HANDOFF.md`              | Delete root version     |
 
 **Files to Delete**: 8 files
 **Effort**: 0.5 hours
 
 #### Client Documentation Duplicates
 
-| File | Duplicate Of | Action |
-|------|--------------|--------|
-| `client/public/QUICK_START.md` | `client/public/SDK_README.md` | Consolidate into SDK_README |
-| `client/public/USAGE_SNIPPETS.md` | Covered in SDK_README | Delete |
-| `client/ROLE_QUICK_REFERENCE.md` | `client/ROLE_BASED_ARCHITECTURE.md` (summary) | Keep quick ref, expand architecture |
-| `client/src/lib/PACKAGE_PHOTO_API_README.md` | `client/src/lib/package-photo-api.quickref.md` | Consolidate |
+| File                                         | Duplicate Of                                   | Action                              |
+| -------------------------------------------- | ---------------------------------------------- | ----------------------------------- |
+| `client/public/QUICK_START.md`               | `client/public/SDK_README.md`                  | Consolidate into SDK_README         |
+| `client/public/USAGE_SNIPPETS.md`            | Covered in SDK_README                          | Delete                              |
+| `client/ROLE_QUICK_REFERENCE.md`             | `client/ROLE_BASED_ARCHITECTURE.md` (summary)  | Keep quick ref, expand architecture |
+| `client/src/lib/PACKAGE_PHOTO_API_README.md` | `client/src/lib/package-photo-api.quickref.md` | Consolidate                         |
 
 **Files to Consolidate**: 4 pairs
 **Effort**: 2 hours
@@ -517,18 +529,21 @@ Client, server, and root documentation files.
 #### .claude/ Directory Strategy
 
 **.claude/ is agent workspace** - should contain only:
+
 - `PROJECT.md` (agent quick reference) ✅ Keep
 - `PATTERNS.md` (validation patterns) ✅ Keep
 - `commands/*.md` (slash commands) ✅ Keep
 - Temporary analysis files (gitignored) ✅ Allow
 
 **Files to Move/Archive from .claude/**:
+
 - All `SPRINT_*.md` → Archive
 - All `PHASE*.md` → Archive
 - All audit reports → Archive
 - All analysis reports → Archive or delete if superseded
 
 **Files to Keep in .claude/**:
+
 - `PROJECT.md`
 - `PATTERNS.md`
 - `commands/*.md`
@@ -543,20 +558,20 @@ Client, server, and root documentation files.
 
 ### All 261 Files Categorized
 
-| Category | Count | Destination | Notes |
-|----------|-------|-------------|-------|
-| **Tutorials** | 5 | `docs/tutorials/` | New files from existing content |
-| **How-To Guides** | 28 | `docs/how-to/` | Move + extract from guides |
-| **Reference** | 18 | `docs/reference/` | Move + consolidate |
-| **Explanation** | 12 | `docs/explanation/` | Expand ADRs + concepts |
-| **Archive 2025-11** | 42 | `docs/archive/2025-11/` | Current sprint/phase reports |
-| **Archive 2025-10** | 58 | `docs/archive/2025-10/` | October analysis + Sprints 1-3 |
-| **Archive 2025-01** | 48 | `docs/archive/2025-01/` | Planning period docs |
-| **Archive Misc** | 22 | `docs/archive/2025-11/misc/` | Other historical docs |
-| **Root (Keep)** | 8 | Root directory | Core project docs |
-| **Client (Move)** | 6 | `docs/reference/client/` or `docs/how-to/client/` | Client-specific docs |
-| **Server (Move)** | 6 | `docs/reference/server/` or `docs/how-to/server/` | Server-specific docs |
-| **Delete (Duplicates)** | 8 | N/A | Confirmed duplicates |
+| Category                | Count | Destination                                       | Notes                           |
+| ----------------------- | ----- | ------------------------------------------------- | ------------------------------- |
+| **Tutorials**           | 5     | `docs/tutorials/`                                 | New files from existing content |
+| **How-To Guides**       | 28    | `docs/how-to/`                                    | Move + extract from guides      |
+| **Reference**           | 18    | `docs/reference/`                                 | Move + consolidate              |
+| **Explanation**         | 12    | `docs/explanation/`                               | Expand ADRs + concepts          |
+| **Archive 2025-11**     | 42    | `docs/archive/2025-11/`                           | Current sprint/phase reports    |
+| **Archive 2025-10**     | 58    | `docs/archive/2025-10/`                           | October analysis + Sprints 1-3  |
+| **Archive 2025-01**     | 48    | `docs/archive/2025-01/`                           | Planning period docs            |
+| **Archive Misc**        | 22    | `docs/archive/2025-11/misc/`                      | Other historical docs           |
+| **Root (Keep)**         | 8     | Root directory                                    | Core project docs               |
+| **Client (Move)**       | 6     | `docs/reference/client/` or `docs/how-to/client/` | Client-specific docs            |
+| **Server (Move)**       | 6     | `docs/reference/server/` or `docs/how-to/server/` | Server-specific docs            |
+| **Delete (Duplicates)** | 8     | N/A                                               | Confirmed duplicates            |
 
 **Total**: 261 files
 
@@ -569,22 +584,27 @@ Client, server, and root documentation files.
 **Objective**: Prepare environment and get team buy-in.
 
 **Tasks**:
+
 1. **Create migration branch**:
+
    ```bash
    git checkout -b docs/migrate-to-diataxis
    ```
 
 2. **Backup current documentation**:
+
    ```bash
    tar -czf docs-backup-$(date +%Y%m%d).tar.gz docs/ .claude/ *.md
    ```
 
 3. **Install link checker**:
+
    ```bash
    npm install -D markdown-link-check
    ```
 
 4. **Document all current internal links**:
+
    ```bash
    grep -r "](\.\./" docs/ > docs-links-before.txt
    grep -r "](/docs/" docs/ >> docs-links-before.txt
@@ -608,6 +628,7 @@ Client, server, and root documentation files.
 **Tasks**:
 
 1. **Create Diátaxis directory structure** (1 hour):
+
    ```bash
    mkdir -p docs/{tutorials,how-to,reference,explanation,archive}
    mkdir -p docs/how-to/{deployment,development,operations,tenant-admin}
@@ -646,6 +667,7 @@ Client, server, and root documentation files.
    ```
 
 **Deliverables**:
+
 - ✅ New directory structure created
 - ✅ 6 README files with guidelines
 - ✅ DOCUMENTATION_STANDARDS.md governance doc
@@ -723,6 +745,7 @@ Client, server, and root documentation files.
    ```
 
 **Deliverables**:
+
 - ✅ 5 tutorials (tested and working)
 - ✅ 8 how-to guides
 - ✅ 4 reference docs
@@ -741,6 +764,7 @@ Client, server, and root documentation files.
 **Day 1: November 2025 Archive** (4 hours)
 
 1. **Move current sprint docs** (1 hour):
+
    ```bash
    # Sprint 4
    mv docs/sprints/sprint-4 docs/archive/2025-11/sprints/sprint-4
@@ -754,11 +778,13 @@ Client, server, and root documentation files.
    ```
 
 2. **Move phase reports** (1 hour):
+
    ```bash
    mv docs/phases docs/archive/2025-11/phases
    ```
 
 3. **Move audit reports** (1 hour):
+
    ```bash
    mv .claude/DOCUMENTATION_AUDIT_*.md docs/archive/2025-11/audits/
    mv .claude/PRODUCTION_READINESS_*.md docs/archive/2025-11/audits/
@@ -778,6 +804,7 @@ Client, server, and root documentation files.
 **Day 2: October 2025 + January 2025 Archive** (7 hours)
 
 1. **Move October 2025** (3 hours):
+
    ```bash
    mv docs/archive/october-2025-analysis docs/archive/2025-10/analysis
    mv docs/archive/sprints/SPRINT_[123]_*.md docs/archive/2025-10/sprints/
@@ -788,6 +815,7 @@ Client, server, and root documentation files.
    ```
 
 2. **Move January 2025** (3 hours):
+
    ```bash
    mv docs/archive/planning/2025-01-analysis/CONFIG_*.md docs/archive/2025-01/config-pivot/
    mv docs/archive/planning/2025-01-analysis/MCP_*.md docs/archive/2025-01/mcp/
@@ -806,6 +834,7 @@ Client, server, and root documentation files.
    ```
 
 **Deliverables**:
+
 - ✅ 155 files moved to time-based archive
 - ✅ 3 month README indexes
 - ✅ Clean docs/archive/ structure
@@ -823,6 +852,7 @@ Client, server, and root documentation files.
 **Day 3: Client + Server Docs** (7 hours)
 
 1. **Move client docs** (3.5 hours):
+
    ```bash
    mv client/public/SDK_ARCHITECTURE.md docs/reference/client/sdk-architecture.md
    mv client/API_SERVICE_INTEGRATION_COMPLETE.md docs/reference/client/api-service.md
@@ -835,6 +865,7 @@ Client, server, and root documentation files.
    ```
 
 2. **Move server docs** (3.5 hours):
+
    ```bash
    mv server/STRIPE_CONNECT_ADMIN_API.md docs/reference/server/stripe-connect-api.md
    mv server/STRIPE_CONNECT_TESTING_GUIDE.md docs/how-to/server/stripe-connect-testing.md
@@ -869,6 +900,7 @@ Client, server, and root documentation files.
 **Day 5: Archive Misc Root Files** (2 hours)
 
 1. **Move completion reports** (2 hours):
+
    ```bash
    mv IMPLEMENTATION_SUMMARY.md docs/archive/2025-11/misc/
    mv LOGIN_FIX_REPORT.md docs/archive/2025-11/misc/
@@ -887,6 +919,7 @@ Client, server, and root documentation files.
    ```
 
 **Deliverables**:
+
 - ✅ 12 client/server docs moved
 - ✅ 8 root docs updated
 - ✅ 8 misc docs archived
@@ -904,6 +937,7 @@ Client, server, and root documentation files.
 **Day 1: Deduplication** (3.5 hours)
 
 1. **Delete confirmed duplicates** (0.5 hours):
+
    ```bash
    # Delete .claude/ duplicates
    rm .claude/SPRINT_6_COMPLETE_SUMMARY.md
@@ -932,6 +966,7 @@ Client, server, and root documentation files.
 **Day 2: Link Validation & Fixes** (8 hours)
 
 1. **Run link checker** (1 hour):
+
    ```bash
    find docs/ -name "*.md" -exec markdown-link-check {} \; > link-check-report.txt
    ```
@@ -943,6 +978,7 @@ Client, server, and root documentation files.
    - Estimate: ~50-100 links to update
 
 3. **Generate link map** (1 hour):
+
    ```bash
    # Create redirect map for common old → new paths
    cat > docs/LINK_MIGRATION_MAP.md << EOF
@@ -970,6 +1006,7 @@ Client, server, and root documentation files.
    ```
 
 **Deliverables**:
+
 - ✅ 8 duplicate files deleted
 - ✅ 4 client doc sets consolidated
 - ✅ .claude/ cleaned and gitignored
@@ -1053,6 +1090,7 @@ Client, server, and root documentation files.
    ```
 
 **Deliverables**:
+
 - ✅ ADR-003 documented
 - ✅ Learning materials created
 - ✅ Team trained
@@ -1088,6 +1126,7 @@ Client, server, and root documentation files.
 **Day 2: Merge** (1 hour)
 
 1. **Merge PR**:
+
    ```bash
    git checkout main
    git merge docs/migrate-to-diataxis
@@ -1117,6 +1156,7 @@ Client, server, and root documentation files.
    - Document lessons learned
 
 **Deliverables**:
+
 - ✅ Migration merged to main
 - ✅ Team notified
 - ✅ Monitoring in place
@@ -1129,16 +1169,16 @@ Client, server, and root documentation files.
 
 ## Migration Timeline Summary
 
-| Phase | Duration | Key Deliverables | Risk |
-|-------|----------|-----------------|------|
-| Phase 0: Pre-Migration | 2 hours | Backup, branch, tooling | Low |
-| Phase 1: Foundation | 12 hours (1.5 days) | Structure, governance, READMEs | Low |
-| Phase 2: Core User Docs | 37 hours (3 days) | Tutorials, how-tos, reference, explanation | Medium |
-| Phase 3: Archive Migration | 11 hours (2 days) | Time-based archive | Low |
-| Phase 4: Remaining Files | 15.5 hours (3 days) | Client, server, root docs | Medium |
-| Phase 5: Cleanup & Validation | 11.5 hours (2 days) | Deduplication, link fixes | High |
-| Phase 6: Documentation & Training | 12 hours (3 days) | ADR, learning materials, training | Low |
-| Phase 7: Merge & Monitor | 5 hours + ongoing | PR merge, monitoring | Low |
+| Phase                             | Duration            | Key Deliverables                           | Risk   |
+| --------------------------------- | ------------------- | ------------------------------------------ | ------ |
+| Phase 0: Pre-Migration            | 2 hours             | Backup, branch, tooling                    | Low    |
+| Phase 1: Foundation               | 12 hours (1.5 days) | Structure, governance, READMEs             | Low    |
+| Phase 2: Core User Docs           | 37 hours (3 days)   | Tutorials, how-tos, reference, explanation | Medium |
+| Phase 3: Archive Migration        | 11 hours (2 days)   | Time-based archive                         | Low    |
+| Phase 4: Remaining Files          | 15.5 hours (3 days) | Client, server, root docs                  | Medium |
+| Phase 5: Cleanup & Validation     | 11.5 hours (2 days) | Deduplication, link fixes                  | High   |
+| Phase 6: Documentation & Training | 12 hours (3 days)   | ADR, learning materials, training          | Low    |
+| Phase 7: Merge & Monitor          | 5 hours + ongoing   | PR merge, monitoring                       | Low    |
 
 **Total Effort**: 106 hours ÷ 8 hours/day = **13.25 work days** (~3 weeks)
 
@@ -1155,6 +1195,7 @@ Client, server, and root documentation files.
 **Risk**: Moving 261 files will break many internal links, disrupting documentation users.
 
 **Mitigation**:
+
 - Use automated link checker (markdown-link-check)
 - Create comprehensive link migration map
 - Test all major navigation paths manually
@@ -1171,6 +1212,7 @@ Client, server, and root documentation files.
 **Risk**: Team continues using old patterns, creating drift in new structure.
 
 **Mitigation**:
+
 - Comprehensive training session (2 hours)
 - Clear decision tree: "Where does X go?"
 - Pre-commit validation hooks
@@ -1187,6 +1229,7 @@ Client, server, and root documentation files.
 **Risk**: CI scripts may reference old doc paths for validation, deployment, or testing.
 
 **Mitigation**:
+
 - Audit all CI scripts before migration
 - Update references in `.github/workflows/` if any
 - Test CI locally before pushing
@@ -1204,6 +1247,7 @@ Client, server, and root documentation files.
 **Risk**: External sites, blog posts, or bookmarks may link to old doc paths.
 
 **Mitigation**:
+
 - Keep old structure for 1 sprint with redirect messages
 - Add `_redirects` or `.htaccess` if docs are hosted
 - Document common old→new paths in migration map
@@ -1219,6 +1263,7 @@ Client, server, and root documentation files.
 **Risk**: Google has indexed old doc paths, will take time to re-index.
 
 **Mitigation**:
+
 - Submit new sitemap to Google (if docs are public)
 - Keep old paths with redirects for 3 months
 - Add canonical URLs in new docs
@@ -1236,6 +1281,7 @@ Client, server, and root documentation files.
 **Risk**: Files accidentally deleted during migration.
 
 **Mitigation**:
+
 - Complete tar.gz backup before starting
 - All changes in Git (can revert any commit)
 - Migration plan tracks every file explicitly
@@ -1251,6 +1297,7 @@ Client, server, and root documentation files.
 **Risk**: Some files placed in wrong Diátaxis quadrant.
 
 **Mitigation**:
+
 - Review each file during migration
 - Get second opinion on unclear cases
 - Easy to move file post-migration (just a `git mv`)
@@ -1268,7 +1315,9 @@ Client, server, and root documentation files.
 **Trigger**: Major broken links, CI failures, team can't find docs
 
 **Action**:
+
 1. **Immediate**:
+
    ```bash
    git revert <merge-commit>
    git push origin main --force-with-lease
@@ -1293,8 +1342,10 @@ Client, server, and root documentation files.
 **Trigger**: Some links broken, but structure is sound
 
 **Action**:
+
 1. **Keep new structure** (don't rollback)
 2. **Fix issues incrementally**:
+
    ```bash
    git checkout main
    # Fix specific issues
@@ -1316,6 +1367,7 @@ Client, server, and root documentation files.
 **Trigger**: After 2 weeks, new docs still going to wrong places
 
 **Action**:
+
 1. **Don't rollback structure** (framework is correct)
 2. **Improve governance**:
    - Add stricter pre-commit validation
@@ -1337,6 +1389,7 @@ Client, server, and root documentation files.
 **Trigger**: Doc hosting, search indexing, or external integrations broken
 
 **Action**:
+
 1. **Keep new structure**
 2. **Fix integrations**:
    - Update doc hosting config
@@ -1361,6 +1414,7 @@ Client, server, and root documentation files.
 **Tool**: `markdown-link-check`
 
 **Configuration** (`.markdown-link-check.json`):
+
 ```json
 {
   "ignorePatterns": [
@@ -1380,6 +1434,7 @@ Client, server, and root documentation files.
 ```
 
 **Usage**:
+
 ```bash
 # Check all docs
 find docs/ -name "*.md" -exec markdown-link-check {} \;
@@ -1521,14 +1576,17 @@ This document will be created in Phase 1 and will define:
 #### 1. Naming Conventions
 
 **File Naming**:
+
 - Use `kebab-case` for all documentation files
 - Examples: `multi-tenancy.md`, `deploy-to-production.md`, `api-endpoints.md`
 
 **Exceptions**:
+
 - Agent reports: `UPPERCASE_UNDERSCORE.md` (e.g., `SPRINT_6_COMPLETE_SUMMARY.md`)
 - ADRs: `0000-title.md` (e.g., `0001-modular-monolith.md`)
 
 **Date Formats**:
+
 - Archive folders: `YYYY-MM/` (e.g., `2025-11/`)
 - Timestamps in content: `YYYY-MM-DD` (e.g., `2025-11-12`)
 
@@ -1561,6 +1619,7 @@ Is this document historical/completed work?
 ```
 
 **Common Patterns**:
+
 - Sprint session reports → `archive/YYYY-MM/sprints/`
 - Phase completion reports → `archive/YYYY-MM/phases/`
 - Audit reports → `archive/YYYY-MM/audits/`
@@ -1674,6 +1733,7 @@ git commit -m "docs: Archive doc.md to $ARCHIVE_MONTH"
 ```
 
 **Archive Retention**:
+
 - Keep archived docs indefinitely (Git history sufficient)
 - Delete only if legally required or contains sensitive data
 
@@ -1708,20 +1768,22 @@ git commit -m "docs: Archive doc.md to $ARCHIVE_MONTH"
 
 **Writing Style by Quadrant**:
 
-| Quadrant | Tone | Voice | Tense | Examples |
-|----------|------|-------|-------|----------|
-| **Tutorials** | Encouraging | Second person (you) | Present | "You will create your first tenant" |
-| **How-To** | Direct | Second person (you) | Imperative | "Run npm install" |
-| **Reference** | Neutral | Third person | Present | "The API returns a 200 status code" |
-| **Explanation** | Thoughtful | First person plural (we) | Past/Present | "We chose PostgreSQL because..." |
+| Quadrant        | Tone        | Voice                    | Tense        | Examples                            |
+| --------------- | ----------- | ------------------------ | ------------ | ----------------------------------- |
+| **Tutorials**   | Encouraging | Second person (you)      | Present      | "You will create your first tenant" |
+| **How-To**      | Direct      | Second person (you)      | Imperative   | "Run npm install"                   |
+| **Reference**   | Neutral     | Third person             | Present      | "The API returns a 200 status code" |
+| **Explanation** | Thoughtful  | First person plural (we) | Past/Present | "We chose PostgreSQL because..."    |
 
 **Length Guidelines**:
+
 - Tutorials: 500-2000 words (15-30 min read)
 - How-To: 200-1000 words (5-15 min read)
 - Reference: As long as needed (comprehensive)
 - Explanation: 1000-3000 words (deep dive)
 
 **Code Examples**:
+
 - Always include: Language, expected output
 - Test all examples before publishing
 - Use realistic but anonymized data
@@ -1772,6 +1834,7 @@ exit 0
 ```
 
 **Install**:
+
 ```bash
 cp .claude/scripts/pre-commit .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
@@ -1853,33 +1916,33 @@ jobs:
 
 ### 30-Day Targets (Post-Migration)
 
-| Metric | Current | Target | Measurement |
-|--------|---------|--------|-------------|
-| **Files Outside Structure** | 33 (.claude/) | 0 | `find docs/ -type f ! -path "*/tutorials/*" ! -path "*/how-to/*" ! -path "*/reference/*" ! -path "*/explanation/*" ! -path "*/archive/*"` |
-| **Broken Links** | Unknown | 0 | Run link checker |
-| **Docs with Metadata** | ~10% | 100% | Run metadata validator |
-| **Team Adoption** | 0% | 80% | % of new docs placed correctly |
-| **Documentation Health Score** | N/A | >80% | Composite: links + metadata + structure |
+| Metric                         | Current       | Target | Measurement                                                                                                                               |
+| ------------------------------ | ------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Files Outside Structure**    | 33 (.claude/) | 0      | `find docs/ -type f ! -path "*/tutorials/*" ! -path "*/how-to/*" ! -path "*/reference/*" ! -path "*/explanation/*" ! -path "*/archive/*"` |
+| **Broken Links**               | Unknown       | 0      | Run link checker                                                                                                                          |
+| **Docs with Metadata**         | ~10%          | 100%   | Run metadata validator                                                                                                                    |
+| **Team Adoption**              | 0%            | 80%    | % of new docs placed correctly                                                                                                            |
+| **Documentation Health Score** | N/A           | >80%   | Composite: links + metadata + structure                                                                                                   |
 
 ### 90-Day Targets
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| **Duplication Rate** | <5% (from 23%) | Manual review |
-| **Security Exposures** | 0 | Secret scanner |
-| **Archive Drift** | 0% | No files in archive with status "Active" |
-| **Team Self-Sufficiency** | >90% | % of docs placed correctly without review |
-| **User Satisfaction** | >80% | Survey: "Can you find what you need?" |
+| Metric                    | Target         | Measurement                               |
+| ------------------------- | -------------- | ----------------------------------------- |
+| **Duplication Rate**      | <5% (from 23%) | Manual review                             |
+| **Security Exposures**    | 0              | Secret scanner                            |
+| **Archive Drift**         | 0%             | No files in archive with status "Active"  |
+| **Team Self-Sufficiency** | >90%           | % of docs placed correctly without review |
+| **User Satisfaction**     | >80%           | Survey: "Can you find what you need?"     |
 
 ### 6-Month Target
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| **Documentation Drift Rate** | <5% | % of files outside structure |
-| **Time to Find Info** | <2 minutes | User survey |
-| **Governance Self-Sustaining** | Yes | No manual interventions needed |
-| **External Links Updated** | >80% | Google Search Console |
-| **New Contributors** | 3+ | # of non-core team members adding docs |
+| Metric                         | Target     | Measurement                            |
+| ------------------------------ | ---------- | -------------------------------------- |
+| **Documentation Drift Rate**   | <5%        | % of files outside structure           |
+| **Time to Find Info**          | <2 minutes | User survey                            |
+| **Governance Self-Sustaining** | Yes        | No manual interventions needed         |
+| **External Links Updated**     | >80%       | Google Search Console                  |
+| **New Contributors**           | 3+         | # of non-core team members adding docs |
 
 ---
 
@@ -1892,6 +1955,7 @@ A complete spreadsheet with all 261 files is available at:
 **Location**: `.claude/DOCUMENTATION_MIGRATION_INVENTORY.csv`
 
 **Columns**:
+
 - Current Path
 - File Size (KB)
 - Last Modified
@@ -1919,18 +1983,18 @@ docs/sprints/sprint-4/SPRINT_4_COMPLETE.md,21KB,2025-11-11,Archive,docs/archive/
 
 **Common Old → New Paths**:
 
-| Old Path | New Path |
-|----------|----------|
-| `docs/setup/ENVIRONMENT.md` | `docs/reference/configuration/environment-variables.md` |
-| `docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md` | `docs/explanation/architecture/multi-tenancy.md` |
-| `docs/operations/PRODUCTION_DEPLOYMENT_GUIDE.md` | `docs/how-to/deployment/deploy-to-production.md` |
-| `docs/security/SECRET_ROTATION_GUIDE.md` | `docs/how-to/deployment/rotate-secrets.md` |
-| `docs/operations/INCIDENT_RESPONSE.md` | `docs/how-to/operations/handle-production-incident.md` |
-| `docs/sprints/sprint-4/` | `docs/archive/2025-11/sprints/sprint-4/` |
-| `docs/phases/PHASE_4_COMPLETION_REPORT.md` | `docs/archive/2025-11/phases/PHASE_4_COMPLETION_REPORT.md` |
-| `docs/api/README.md` | `docs/reference/api/endpoints.md` |
-| `DEVELOPING.md` (for "How to add endpoint") | `docs/how-to/development/add-new-endpoint.md` |
-| `TESTING.md` (for "How to write test") | `docs/how-to/development/write-integration-test.md` |
+| Old Path                                                 | New Path                                                   |
+| -------------------------------------------------------- | ---------------------------------------------------------- |
+| `docs/setup/ENVIRONMENT.md`                              | `docs/reference/configuration/environment-variables.md`    |
+| `docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md` | `docs/explanation/architecture/multi-tenancy.md`           |
+| `docs/operations/PRODUCTION_DEPLOYMENT_GUIDE.md`         | `docs/how-to/deployment/deploy-to-production.md`           |
+| `docs/security/SECRET_ROTATION_GUIDE.md`                 | `docs/how-to/deployment/rotate-secrets.md`                 |
+| `docs/operations/INCIDENT_RESPONSE.md`                   | `docs/how-to/operations/handle-production-incident.md`     |
+| `docs/sprints/sprint-4/`                                 | `docs/archive/2025-11/sprints/sprint-4/`                   |
+| `docs/phases/PHASE_4_COMPLETION_REPORT.md`               | `docs/archive/2025-11/phases/PHASE_4_COMPLETION_REPORT.md` |
+| `docs/api/README.md`                                     | `docs/reference/api/endpoints.md`                          |
+| `DEVELOPING.md` (for "How to add endpoint")              | `docs/how-to/development/add-new-endpoint.md`              |
+| `TESTING.md` (for "How to write test")                   | `docs/how-to/development/write-integration-test.md`        |
 
 ---
 
@@ -1954,6 +2018,7 @@ docs/sprints/sprint-4/SPRINT_4_COMPLETE.md,21KB,2025-11-11,Archive,docs/archive/
    - Microsoft Writing Style Guide
 
 **Internal Materials** (Created in Phase 6):
+
 - `docs/DIATAXIS_QUICK_GUIDE.md` - 1-page summary
 - `docs/DOCUMENTATION_CHEAT_SHEET.md` - Quick reference
 - Video: "Elope Documentation Structure Walkthrough" (10 min Loom)
@@ -2016,6 +2081,7 @@ START: I need to document something
 #### Issue: "I can't find where to put my doc"
 
 **Solution**:
+
 1. Use the decision tree above
 2. Look at similar existing docs - where are they?
 3. Ask in #docs Slack channel
@@ -2026,6 +2092,7 @@ START: I need to document something
 #### Issue: "My doc fits in multiple quadrants"
 
 **Solution**:
+
 1. Split it into multiple docs (recommended)
    - Tutorial part → tutorials/
    - How-to part → how-to/
@@ -2035,6 +2102,7 @@ START: I need to document something
    - "If I could only put it in one place, where?"
 
 **Example**: "Multi-Tenant Guide"
+
 - Tutorial: "tutorials/create-your-first-tenant.md"
 - How-To: "how-to/development/debug-multi-tenant-issue.md"
 - Reference: "reference/architecture/database-schema.md" (tenantId column)
@@ -2047,6 +2115,7 @@ START: I need to document something
 **Common Case**: API endpoint documentation
 
 **Solution**: Split it
+
 - How-To: "how-to/development/call-catalog-api.md" (with examples)
 - Reference: "reference/api/catalog-endpoints.md" (complete spec)
 - Link between them
@@ -2056,10 +2125,12 @@ START: I need to document something
 #### Issue: "Should this be archived?"
 
 **Guidelines**:
+
 - ✅ Archive: Sprint reports, phase reports, completed work, superseded docs
 - ❌ Don't archive: Active guides, current features, evergreen content
 
 **Test**: "Will this doc change in the next 3 months?"
+
 - Yes → Keep active
 - No → Consider archiving
 
@@ -2067,18 +2138,18 @@ START: I need to document something
 
 ### F. Glossary
 
-| Term | Definition |
-|------|------------|
-| **Diátaxis** | Documentation framework with 4 quadrants (tutorials, how-to, reference, explanation) |
-| **Tutorial** | Learning-oriented doc that teaches by doing |
-| **How-To Guide** | Task-oriented doc that solves a specific problem |
-| **Reference** | Information-oriented doc for lookup (API, config, etc.) |
-| **Explanation** | Understanding-oriented doc that clarifies concepts |
-| **Archive** | Time-based storage for historical documentation |
-| **Drift** | When new docs bypass the structure and end up in wrong places |
-| **Governance** | Rules and processes to maintain documentation quality |
-| **Link Rot** | When links break due to files moving or being deleted |
-| **Metadata** | Structured information about a doc (date, owner, status) |
+| Term             | Definition                                                                           |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| **Diátaxis**     | Documentation framework with 4 quadrants (tutorials, how-to, reference, explanation) |
+| **Tutorial**     | Learning-oriented doc that teaches by doing                                          |
+| **How-To Guide** | Task-oriented doc that solves a specific problem                                     |
+| **Reference**    | Information-oriented doc for lookup (API, config, etc.)                              |
+| **Explanation**  | Understanding-oriented doc that clarifies concepts                                   |
+| **Archive**      | Time-based storage for historical documentation                                      |
+| **Drift**        | When new docs bypass the structure and end up in wrong places                        |
+| **Governance**   | Rules and processes to maintain documentation quality                                |
+| **Link Rot**     | When links break due to files moving or being deleted                                |
+| **Metadata**     | Structured information about a doc (date, owner, status)                             |
 
 ---
 
@@ -2115,6 +2186,7 @@ This migration plan provides a comprehensive roadmap to transition Elope's 261 d
 ---
 
 **Document Metadata**:
+
 - **Author**: Documentation Systems Architect
 - **Created**: 2025-11-12
 - **Status**: Draft (awaiting team approval)
@@ -2123,4 +2195,4 @@ This migration plan provides a comprehensive roadmap to transition Elope's 261 d
 
 ---
 
-*This migration plan is a living document. Update it as phases complete and lessons are learned.*
+_This migration plan is a living document. Update it as phases complete and lessons are learned._

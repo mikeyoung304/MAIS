@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "207"
+issue_id: '207'
 tags: [accessibility, a11y, keyboard, landing-page, wcag]
 dependencies: []
 ---

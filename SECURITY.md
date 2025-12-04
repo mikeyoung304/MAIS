@@ -9,6 +9,7 @@ If you discover a security vulnerability in MAIS, please report it to:
 ### What to Include
 
 Please include:
+
 - Description of the vulnerability
 - Steps to reproduce
 - Potential impact
@@ -41,17 +42,20 @@ MAIS uses row-level multi-tenancy with **strict tenant ID scoping**:
 ### Authentication & Authorization
 
 **Platform Admin:**
+
 - JWT-based authentication
 - bcrypt password hashing (cost factor: 10)
 - Rate limiting: 5 attempts per 15 minutes per IP
 - Session expiry: 24 hours
 
 **Tenant Admin:**
+
 - Separate JWT tokens with tenant scope
-- API key authentication (pk_live_* / sk_live_*)
+- API key authentication (pk*live*_ / sk*live*_)
 - Rate limiting: 5 attempts per 15 minutes per IP
 
 **Customer:**
+
 - Email-based identification (no password)
 - Verified via Stripe checkout flow
 
@@ -64,6 +68,7 @@ MAIS uses row-level multi-tenancy with **strict tenant ID scoping**:
 3. **Database Layer (Tertiary):** Prisma parameterized queries (SQL injection prevention)
 
 **Sanitization Rules:**
+
 - Plain text fields: Strip all HTML, escape special chars
 - Email fields: Normalize + validate format
 - URL fields: Protocol whitelist (http/https only)
@@ -77,17 +82,13 @@ MAIS uses row-level multi-tenancy with **strict tenant ID scoping**:
 ✅ **No String Concatenation:** Never concatenate user input into SQL
 
 **Example:**
+
 ```typescript
 // ✅ SAFE - Parameterized
-await tx.$queryRawUnsafe(
-  'SELECT * FROM "Booking" WHERE "tenantId" = $1',
-  tenantId
-);
+await tx.$queryRawUnsafe('SELECT * FROM "Booking" WHERE "tenantId" = $1', tenantId);
 
 // ❌ UNSAFE - Never do this
-await tx.$queryRawUnsafe(
-  `SELECT * FROM "Booking" WHERE "tenantId" = '${tenantId}'`
-);
+await tx.$queryRawUnsafe(`SELECT * FROM "Booking" WHERE "tenantId" = '${tenantId}'`);
 ```
 
 ### Cross-Site Scripting (XSS) Prevention
@@ -112,6 +113,7 @@ await tx.$queryRawUnsafe(
 ### Cross-Site Request Forgery (CSRF)
 
 **Protection:**
+
 - SameSite cookies: `strict`
 - CORS whitelist for API endpoints
 - JWT tokens (not cookies) for authentication
@@ -120,6 +122,7 @@ await tx.$queryRawUnsafe(
 ### Rate Limiting
 
 **Global Rate Limits:**
+
 - General API: 100 req/min per IP
 - Admin routes: 20 req/min per IP
 - Login endpoints: 5 attempts per 15 min per IP
@@ -129,6 +132,7 @@ await tx.$queryRawUnsafe(
 ### Secrets Management
 
 **Environment Variables:**
+
 - `JWT_SECRET` - JWT signing key (256-bit)
 - `TENANT_SECRETS_ENCRYPTION_KEY` - Tenant-specific secret encryption (256-bit)
 - `DATABASE_URL` - PostgreSQL connection string
@@ -136,6 +140,7 @@ await tx.$queryRawUnsafe(
 - `POSTMARK_SERVER_TOKEN` - Email service token
 
 **Rotation:**
+
 - JWT secrets: Rotate every 90 days
 - Database passwords: Rotate every 180 days
 - API keys: Rotate on tenant offboarding
@@ -145,6 +150,7 @@ See: [Secret Rotation Guide](./docs/security/SECRET_ROTATION_GUIDE.md)
 ### HTTPS & TLS
 
 **Production Requirements:**
+
 - TLS 1.2+ only (1.0/1.1 disabled)
 - Strong cipher suites
 - HSTS enabled (max-age: 1 year, includeSubDomains)
@@ -164,6 +170,7 @@ Configured via Helmet.js:
 ### Error Handling
 
 **Production Error Policy:**
+
 - ❌ Never expose stack traces
 - ❌ Never expose internal paths
 - ❌ Never expose database errors
@@ -173,6 +180,7 @@ Configured via Helmet.js:
 ### Audit Logging
 
 **Logged Events:**
+
 - Authentication attempts (success/failure)
 - Admin actions (package create/update/delete)
 - Tenant configuration changes
@@ -185,6 +193,7 @@ Configured via Helmet.js:
 ### Dependency Management
 
 **Process:**
+
 - Weekly automated dependency updates (Dependabot)
 - Security audit: `npm audit` in CI/CD
 - Critical CVEs: Patch within 48 hours
@@ -193,6 +202,7 @@ Configured via Helmet.js:
 ### Third-Party Services
 
 **External Dependencies:**
+
 - **Stripe:** PCI-DSS compliant (payment processing)
 - **Postmark:** GDPR compliant (email delivery)
 - **Supabase:** SOC 2 Type II (database hosting)
@@ -229,6 +239,7 @@ Configured via Helmet.js:
 ### Data Privacy
 
 **User Data Handling:**
+
 - Minimal data collection
 - Explicit consent for email
 - Data deletion on request (GDPR Article 17)

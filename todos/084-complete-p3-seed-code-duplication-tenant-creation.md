@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "084"
+issue_id: '084'
 tags: [quality, code-review, dry, maintainability]
 dependencies: []
 completed_date: 2025-12-03
@@ -14,6 +14,7 @@ completed_date: 2025-12-03
 E2E and demo seeds have nearly identical code for creating tenants, packages, and add-ons. This violates DRY principle.
 
 **Why it matters:**
+
 - Bug fixes must be applied in multiple places
 - Inconsistent behavior if one is updated without the other
 - Harder to maintain
@@ -80,11 +81,13 @@ export async function linkAddOnToPackage(
 ## Changes Made
 
 ### 1. Created `/Users/mikeyoung/CODING/MAIS/server/prisma/seeds/utils.ts`
+
 - 186 lines of well-documented utility functions
 - Comprehensive TypeScript interfaces for all options
 - Includes batch and relationship helpers
 
 ### 2. Refactored `/Users/mikeyoung/CODING/MAIS/server/prisma/seeds/e2e.ts`
+
 - Replaced manual tenant creation with `createOrUpdateTenant()`
 - Replaced manual package creation with `createOrUpdatePackages()`
 - Replaced manual add-on creation with `createOrUpdateAddOns()`
@@ -92,6 +95,7 @@ export async function linkAddOnToPackage(
 - ~50 lines of boilerplate removed (109 → 81 lines)
 
 ### 3. Refactored `/Users/mikeyoung/CODING/MAIS/server/prisma/seeds/demo.ts`
+
 - Replaced manual tenant creation with `createOrUpdateTenant()`
 - Replaced manual package creation with `createOrUpdatePackages()`
 - Replaced manual add-on creation with `createOrUpdateAddOns()`
@@ -99,6 +103,7 @@ export async function linkAddOnToPackage(
 - ~80 lines of boilerplate removed (239 → 161 lines)
 
 ### 4. Updated `/Users/mikeyoung/CODING/MAIS/server/test/seeds/demo-seed.test.ts`
+
 - Updated mock to include `tenant.upsert()` method
 - Updated 5 tests to verify `upsert` calls instead of separate `create`/`update` calls
 - All 647 unit tests pass
@@ -106,11 +111,13 @@ export async function linkAddOnToPackage(
 ## Verification
 
 ### Code Quality Checks
+
 - TypeScript compilation: PASS (no errors)
 - Unit tests: 647 passing (31 test files, including 25 seed tests)
 - Linting: No new violations
 
 ### Lines of Code Impact
+
 - **e2e.ts:** 117 → 81 lines (-31%)
 - **demo.ts:** 239 → 161 lines (-33%)
 - **utils.ts:** +186 lines (new file, reusable)
@@ -143,12 +150,12 @@ export async function linkAddOnToPackage(
 
 ## Work Log
 
-| Date | Action | Result |
-|------|--------|--------|
+| Date       | Action                                   | Result                 |
+| ---------- | ---------------------------------------- | ---------------------- |
 | 2025-12-03 | Created utils.ts with reusable functions | 186 lines, 8 functions |
-| 2025-12-03 | Refactored e2e.ts to use utils | 31% reduction in LOC |
-| 2025-12-03 | Refactored demo.ts to use utils | 33% reduction in LOC |
-| 2025-12-03 | Updated tests and verified all pass | 647/647 tests passing |
+| 2025-12-03 | Refactored e2e.ts to use utils           | 31% reduction in LOC   |
+| 2025-12-03 | Refactored demo.ts to use utils          | 33% reduction in LOC   |
+| 2025-12-03 | Updated tests and verified all pass      | 647/647 tests passing  |
 
 ## Resources
 

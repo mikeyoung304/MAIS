@@ -7,6 +7,7 @@ Implemented Google Calendar one-way sync (MAIS → Google) for the scheduling pl
 ## Files Created
 
 ### 1. GoogleCalendarService (`server/src/services/google-calendar.service.ts`)
+
 - **Purpose**: High-level service for managing appointment events
 - **Key Features**:
   - Creates calendar events for new appointments
@@ -16,6 +17,7 @@ Implemented Google Calendar one-way sync (MAIS → Google) for the scheduling pl
 - **Lines**: 202
 
 ### 2. GoogleCalendarSyncAdapter (`server/src/adapters/google-calendar-sync.adapter.ts`)
+
 - **Purpose**: Real Google Calendar integration using API v3
 - **Key Features**:
   - Extends GoogleCalendarAdapter for full sync capabilities
@@ -26,6 +28,7 @@ Implemented Google Calendar one-way sync (MAIS → Google) for the scheduling pl
 - **Lines**: 235
 
 ### 3. Integration Documentation (`docs/google-calendar-integration.md`)
+
 - **Purpose**: Comprehensive guide for integrating calendar sync
 - **Contents**:
   - Architecture overview
@@ -39,7 +42,9 @@ Implemented Google Calendar one-way sync (MAIS → Google) for the scheduling pl
 ## Files Modified
 
 ### 1. CalendarProvider Interface (`server/src/lib/ports.ts`)
+
 **Changes**: Added optional methods for event management:
+
 ```typescript
 export interface CalendarProvider {
   isDateAvailable(date: string): Promise<boolean>;
@@ -49,7 +54,9 @@ export interface CalendarProvider {
 ```
 
 ### 2. BookingRepository Interface (`server/src/lib/ports.ts`)
+
 **Changes**: Added method to store Google Calendar event ID:
+
 ```typescript
 export interface BookingRepository {
   // ... existing methods
@@ -58,7 +65,9 @@ export interface BookingRepository {
 ```
 
 ### 3. PrismaBookingRepository (`server/src/adapters/prisma/booking.repository.ts`)
+
 **Changes**: Implemented updateGoogleEventId method (lines 372-397):
+
 ```typescript
 async updateGoogleEventId(tenantId: string, bookingId: string, googleEventId: string): Promise<void> {
   await this.prisma.booking.updateMany({
@@ -69,14 +78,18 @@ async updateGoogleEventId(tenantId: string, bookingId: string, googleEventId: st
 ```
 
 ### 4. MockCalendarProvider (`server/src/adapters/mock/index.ts`)
+
 **Changes**: Added event creation/deletion support for testing:
+
 - In-memory event storage
 - Console logging for debugging
 - Mock event ID generation
 - getMockEvents() helper for testing
 
 ### 5. MockBookingRepository (`server/src/adapters/mock/index.ts`)
+
 **Changes**: Implemented updateGoogleEventId for mock mode:
+
 ```typescript
 async updateGoogleEventId(tenantId: string, bookingId: string, googleEventId: string): Promise<void> {
   // Stores event ID in mock booking storage
@@ -84,13 +97,16 @@ async updateGoogleEventId(tenantId: string, bookingId: string, googleEventId: st
 ```
 
 ### 6. Dependency Injection Container (`server/src/di.ts`)
+
 **Changes**: Wired up GoogleCalendarService in both modes:
 
 **Mock Mode**:
+
 - Creates GoogleCalendarService with MockCalendarProvider
 - Exports service in container.services.googleCalendar
 
 **Real Mode**:
+
 - Uses GoogleCalendarSyncAdapter instead of GoogleCalendarAdapter
 - Creates GoogleCalendarService with real adapter
 - Exports service in container.services.googleCalendar
@@ -98,26 +114,31 @@ async updateGoogleEventId(tenantId: string, bookingId: string, googleEventId: st
 ## Architecture Decisions
 
 ### 1. One-Way Sync Only
+
 - **Decision**: MAIS is the source of truth, Google Calendar is a view
 - **Rationale**: Prevents sync conflicts, simpler implementation
 - **Future**: Can add two-way sync if needed
 
 ### 2. Optional Methods on CalendarProvider
+
 - **Decision**: createEvent() and deleteEvent() are optional
 - **Rationale**: Backward compatibility, graceful degradation
 - **Result**: Existing GoogleCalendarAdapter works without changes
 
 ### 3. Graceful Degradation
+
 - **Decision**: Calendar sync failures never block booking operations
 - **Rationale**: Booking is core functionality, calendar is convenience
 - **Implementation**: All sync methods return null on failure, log errors
 
 ### 4. No New npm Dependencies
+
 - **Decision**: Use existing JWT authentication pattern (fetch API)
 - **Rationale**: Avoid heavyweight googleapis package
 - **Benefit**: Smaller bundle, consistent auth approach
 
 ### 5. Tenant Isolation
+
 - **Decision**: Store tenantId in event metadata
 - **Rationale**: Multi-tenant security, audit trail
 - **Implementation**: extendedProperties.private.tenantId
@@ -125,6 +146,7 @@ async updateGoogleEventId(tenantId: string, bookingId: string, googleEventId: st
 ## Environment Variables
 
 **New (Optional)**:
+
 ```bash
 GOOGLE_CALENDAR_ID=your-calendar-id@group.calendar.google.com
 GOOGLE_SERVICE_ACCOUNT_JSON_BASE64=<base64-encoded-json>
@@ -135,6 +157,7 @@ GOOGLE_SERVICE_ACCOUNT_JSON_BASE64=<base64-encoded-json>
 ## Database Schema
 
 **No changes required** - the `Booking.googleEventId` field already exists:
+
 ```prisma
 model Booking {
   // ... other fields
@@ -145,11 +168,13 @@ model Booking {
 ## Testing Strategy
 
 ### Mock Mode
+
 - MockCalendarProvider logs events to console
 - In-memory event storage for verification
 - No external dependencies
 
 ### Real Mode Testing
+
 1. Create service account in Google Cloud Console
 2. Share calendar with service account email
 3. Set environment variables
@@ -157,6 +182,7 @@ model Booking {
 5. Create test booking, verify event in Google Calendar
 
 ### Integration Testing
+
 - Unit tests for GoogleCalendarService (mocked provider)
 - Integration tests for GoogleCalendarSyncAdapter (requires real credentials)
 - E2E tests use mock mode (no external dependencies)
@@ -164,6 +190,7 @@ model Booking {
 ## Usage Example
 
 ### Direct Integration
+
 ```typescript
 // In your booking service
 const result = await googleCalendarService.createAppointmentEvent(tenantId, {
@@ -181,19 +208,15 @@ if (result) {
 ```
 
 ### Event-Driven Integration
+
 ```typescript
 // Subscribe to booking events
 eventEmitter.subscribe('AppointmentBooked', async (payload) => {
-  const result = await googleCalendarService.createAppointmentEvent(
-    payload.tenantId,
-    { /* appointment details */ }
-  );
+  const result = await googleCalendarService.createAppointmentEvent(payload.tenantId, {
+    /* appointment details */
+  });
   if (result) {
-    await bookingRepo.updateGoogleEventId(
-      payload.tenantId,
-      payload.bookingId,
-      result.eventId
-    );
+    await bookingRepo.updateGoogleEventId(payload.tenantId, payload.bookingId, result.eventId);
   }
 });
 ```
@@ -201,12 +224,14 @@ eventEmitter.subscribe('AppointmentBooked', async (payload) => {
 ## Error Handling
 
 ### Graceful Failures
+
 1. **Missing credentials**: Logs warning, returns null
 2. **API errors**: Logs error, returns null
 3. **Network failures**: Logs error, returns null
 4. **404 on delete**: Logs warning, returns true (idempotent)
 
 ### Never Blocks Booking
+
 - Booking creation succeeds even if calendar sync fails
 - Error logs provide debugging information
 - System continues to function normally
@@ -229,6 +254,7 @@ eventEmitter.subscribe('AppointmentBooked', async (payload) => {
 ## Monitoring & Observability
 
 ### Log Events
+
 - ✅ `Google Calendar event created successfully` (info)
 - ⚠️ `Calendar provider does not support event creation` (debug)
 - ❌ `Failed to create Google Calendar event` (error)
@@ -236,6 +262,7 @@ eventEmitter.subscribe('AppointmentBooked', async (payload) => {
 - ❌ `Failed to delete Google Calendar event` (error)
 
 ### Metrics to Track
+
 - Calendar sync success rate
 - Average sync latency
 - Failed sync attempts

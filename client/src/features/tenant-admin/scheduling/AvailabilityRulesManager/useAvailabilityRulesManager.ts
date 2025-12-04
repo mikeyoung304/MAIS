@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { toast } from "sonner";
-import { api } from "@/lib/api";
-import { logger } from "@/lib/logger";
-import { useSuccessMessage } from "@/hooks/useSuccessMessage";
-import type { AvailabilityRuleDto, RuleFormData } from "./types";
-import { getTodayISODate } from "./utils";
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
+import { logger } from '@/lib/logger';
+import { useSuccessMessage } from '@/hooks/useSuccessMessage';
+import type { AvailabilityRuleDto, RuleFormData } from './types';
+import { getTodayISODate } from './utils';
 
 /**
  * useAvailabilityRulesManager Hook
@@ -26,8 +26,8 @@ export function useAvailabilityRulesManager(onRulesChange: () => void) {
   const [ruleForm, setRuleForm] = useState<RuleFormData>({
     serviceId: null,
     dayOfWeek: 1, // Monday
-    startTime: "09:00",
-    endTime: "17:00",
+    startTime: '09:00',
+    endTime: '17:00',
     effectiveFrom: getTodayISODate(),
     effectiveTo: null,
   });
@@ -39,8 +39,8 @@ export function useAvailabilityRulesManager(onRulesChange: () => void) {
     setRuleForm({
       serviceId: null,
       dayOfWeek: 1,
-      startTime: "09:00",
-      endTime: "17:00",
+      startTime: '09:00',
+      endTime: '17:00',
       effectiveFrom: getTodayISODate(),
       effectiveTo: null,
     });
@@ -59,7 +59,7 @@ export function useAvailabilityRulesManager(onRulesChange: () => void) {
     try {
       // Validate times
       if (ruleForm.startTime >= ruleForm.endTime) {
-        setError("End time must be after start time");
+        setError('End time must be after start time');
         setIsSaving(false);
         return;
       }
@@ -73,32 +73,30 @@ export function useAvailabilityRulesManager(onRulesChange: () => void) {
           effectiveFrom: ruleForm.effectiveFrom
             ? new Date(ruleForm.effectiveFrom).toISOString()
             : new Date().toISOString(),
-          effectiveTo: ruleForm.effectiveTo
-            ? new Date(ruleForm.effectiveTo).toISOString()
-            : null,
+          effectiveTo: ruleForm.effectiveTo ? new Date(ruleForm.effectiveTo).toISOString() : null,
         },
       });
 
       if (result.status === 201) {
-        showSuccess("Availability rule created successfully");
+        showSuccess('Availability rule created successfully');
         setIsCreatingRule(false);
         onRulesChange();
       } else if (result.status === 409) {
-        setError("A rule with this time slot already exists for this day and service");
+        setError('A rule with this time slot already exists for this day and service');
       } else {
-        setError("Failed to create availability rule. Please try again.");
-        toast.error("Failed to create availability rule", {
-          description: "Please try again or contact support.",
+        setError('Failed to create availability rule. Please try again.');
+        toast.error('Failed to create availability rule', {
+          description: 'Please try again or contact support.',
         });
       }
     } catch (err) {
-      logger.error("Failed to create availability rule", {
+      logger.error('Failed to create availability rule', {
         error: err,
-        component: "useAvailabilityRulesManager",
+        component: 'useAvailabilityRulesManager',
       });
-      setError("An error occurred while creating the rule");
-      toast.error("An error occurred while creating the availability rule", {
-        description: "Please try again or contact support.",
+      setError('An error occurred while creating the rule');
+      toast.error('An error occurred while creating the availability rule', {
+        description: 'Please try again or contact support.',
       });
     } finally {
       setIsSaving(false);
@@ -120,23 +118,23 @@ export function useAvailabilityRulesManager(onRulesChange: () => void) {
       });
 
       if (result.status === 204) {
-        showSuccess("Availability rule deleted successfully");
+        showSuccess('Availability rule deleted successfully');
         onRulesChange();
         setDeleteDialogOpen(false);
         setRuleToDelete(null);
       } else {
-        toast.error("Failed to delete availability rule", {
-          description: "Please try again or contact support.",
+        toast.error('Failed to delete availability rule', {
+          description: 'Please try again or contact support.',
         });
       }
     } catch (err) {
-      logger.error("Failed to delete availability rule", {
+      logger.error('Failed to delete availability rule', {
         error: err,
-        component: "useAvailabilityRulesManager",
+        component: 'useAvailabilityRulesManager',
         ruleId: ruleToDelete.id,
       });
-      toast.error("An error occurred while deleting the availability rule", {
-        description: "Please try again or contact support.",
+      toast.error('An error occurred while deleting the availability rule', {
+        description: 'Please try again or contact support.',
       });
     }
   };

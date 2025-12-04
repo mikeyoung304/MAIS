@@ -5,12 +5,14 @@ Prevention strategies to catch testing gaps and ensure critical functions remain
 ## Overview
 
 **Problem Context:** The codebase had 771 server tests but zero tests for critical seed functions. The new storefront refactoring also had no E2E coverage. This created risk of:
+
 - Seed breakage discovered only in production
 - No verification of idempotency
 - No testing of error paths
 - Regressions in storefront navigation logic
 
 **Solutions Implemented:**
+
 - 66 seed unit tests covering mode detection, security guards, idempotency
 - Storefront E2E tests covering navigation, display, responsive layout
 
@@ -19,9 +21,11 @@ Prevention strategies to catch testing gaps and ensure critical functions remain
 ## 1. Pre-Commit Hooks
 
 ### Current Setup
+
 Location: `.husky/pre-commit`
 
 Current checks:
+
 ```bash
 # Documentation validation
 ./scripts/validate-docs.sh
@@ -36,6 +40,7 @@ npm run typecheck
 ### Enhanced Pre-Commit Hooks
 
 #### 1.1 Test Coverage Validation Hook
+
 **Purpose:** Prevent commits that reduce test coverage for critical modules.
 
 ```bash
@@ -86,6 +91,7 @@ echo "✅ Test coverage check passed"
 ```
 
 #### 1.2 Seed Function Validation Hook
+
 **Purpose:** Ensure seed files have corresponding tests and maintain idempotency guarantees.
 
 ```bash
@@ -123,6 +129,7 @@ echo "✅ Seed function validation passed"
 ```
 
 #### 1.3 E2E Coverage for Critical Paths Hook
+
 **Purpose:** Ensure critical UI flows have E2E test coverage.
 
 ```bash
@@ -168,9 +175,11 @@ echo "✅ E2E coverage check passed"
 ```
 
 #### 1.4 Composite Pre-Commit Script
+
 **Purpose:** Orchestrate all checks in the right order.
 
 **Update `.husky/pre-commit`:**
+
 ```bash
 #!/bin/bash
 
@@ -215,6 +224,7 @@ Add to PR description template or review guidelines:
 When reviewing changes to `server/prisma/seeds/`:
 
 **Mandatory Questions:**
+
 - [ ] Does the seed have a corresponding test file (`server/test/seeds/{name}.test.ts`)?
 - [ ] Are environment variable guards tested (missing vars throw clear errors)?
 - [ ] Is idempotency verified (running twice doesn't create duplicates)?
@@ -224,6 +234,7 @@ When reviewing changes to `server/prisma/seeds/`:
 - [ ] Is the seed mode reflected in `server/prisma/seed.ts` orchestration?
 
 **Test Coverage Expectations:**
+
 ```typescript
 // For each seed function, verify these test categories:
 
@@ -257,6 +268,7 @@ describe('ErrorHandling') {
 When reviewing `client/src/features/storefront/` or similar critical UI:
 
 **Mandatory Questions:**
+
 - [ ] Is there an E2E test for this feature/route (`e2e/tests/*.spec.ts`)?
 - [ ] Does the E2E test cover the happy path AND error states?
 - [ ] Are responsive breakpoints tested (mobile, tablet, desktop)?
@@ -265,6 +277,7 @@ When reviewing `client/src/features/storefront/` or similar critical UI:
 - [ ] Is accessibility considered (keyboard navigation, ARIA labels)?
 
 **E2E Test Expectations:**
+
 ```typescript
 // For each critical UI feature, verify these test categories:
 
@@ -304,6 +317,7 @@ test.describe('ErrorHandling') {
 When reviewing changes to `server/src/services/`:
 
 **Mandatory Questions:**
+
 - [ ] Does the service have unit tests (mocked dependencies)?
 - [ ] Does the service have integration tests (real database)?
 - [ ] Are multi-tenant queries scoped by `tenantId`?
@@ -316,9 +330,11 @@ When reviewing changes to `server/src/services/`:
 ## 3. CI Pipeline Enhancements
 
 ### 3.1 Current Pipeline
+
 Location: `.github/workflows/main-pipeline.yml`
 
 Jobs included:
+
 - Documentation validation
 - Pattern validation
 - Lint & format check
@@ -333,199 +349,203 @@ Jobs included:
 ### 3.2 Proposed Enhancements
 
 #### 3.2.1 Seed Function Test Coverage Gate
+
 **Add new CI job:**
 
+````yaml
+# Job X: Seed Function Tests
+seed-tests:
+  name: Seed Function Tests
+  runs-on: ubuntu-latest
+  timeout-minutes: 10
+
+  services:
+    postgres:
+      image: postgres:16
+      env:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: mais_seed_test
+      ports:
+        - 5432:5432
+      options: >-
+        --health-cmd pg_isready
+        --health-interval 10s
+        --health-timeout 5s
+        --health-retries 5
+
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Generate Prisma Client
+      run: npm run --workspace=server prisma:generate
+
+    - name: Run database migrations
+      run: npx prisma migrate deploy --schema=./server/prisma/schema.prisma
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_seed_test
+
+    - name: Run seed function tests
+      run: npm test -- server/test/seeds/
+      env:
+        NODE_ENV: test
+
+    - name: Test seed idempotency (production mode)
+      run: |
+        npm run --workspace=server db:seed:production || true
+        npm run --workspace=server db:seed:production
+        echo "✅ Idempotency test passed (no errors on second run)"
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_seed_test
+        ADMIN_EMAIL: test@example.com
+        ADMIN_DEFAULT_PASSWORD: test-password-12345
+
+    - name: Comment PR on failure
+      if: failure() && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '❌ **Seed function tests failed**\n\nPlease verify seed functions:\n```bash\nnpm test -- server/test/seeds/\n```'
+          })
+````
+
+#### 3.2.2 E2E Coverage Analysis
+
+**Add optional coverage reporting:**
+
 ```yaml
-  # Job X: Seed Function Tests
-  seed-tests:
-    name: Seed Function Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+# Job X: E2E Coverage Report
+e2e-coverage:
+  name: E2E Test Coverage Analysis
+  runs-on: ubuntu-latest
+  timeout-minutes: 5
+  if: github.event_name == 'pull_request'
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: mais_seed_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Get base branch E2E tests
+      run: |
+        git fetch origin ${{ github.base_ref }}
+        BASE_TESTS=$(git diff origin/${{ github.base_ref }}...HEAD --name-only -- e2e/tests/ | wc -l)
+        echo "BASE_TESTS=$BASE_TESTS" >> $GITHUB_ENV
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+    - name: Check for E2E coverage of critical files
+      run: |
+        CRITICAL_PATHS="client/src/features/storefront client/src/pages"
+        CRITICAL_CHANGED=$(git diff origin/${{ github.base_ref }} --name-only -- $CRITICAL_PATHS | wc -l)
 
-      - name: Install dependencies
-        run: npm ci
+        if [ "$CRITICAL_CHANGED" -gt 0 ]; then
+          E2E_TESTS=$(git diff origin/${{ github.base_ref }} --name-only -- e2e/tests/ | wc -l)
+          if [ "$E2E_TESTS" -eq 0 ]; then
+            echo "⚠️  Warning: Critical UI changes without new E2E tests"
+            echo "Consider adding E2E tests to verify storefront/booking flows"
+          fi
+        fi
 
-      - name: Generate Prisma Client
-        run: npm run --workspace=server prisma:generate
+    - name: Comment PR
+      if: always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const criticalChanges = ${{ env.CRITICAL_CHANGED || 0 }};
+          const e2eTests = ${{ env.E2E_TESTS || 0 }};
 
-      - name: Run database migrations
-        run: npx prisma migrate deploy --schema=./server/prisma/schema.prisma
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_seed_test
-
-      - name: Run seed function tests
-        run: npm test -- server/test/seeds/
-        env:
-          NODE_ENV: test
-
-      - name: Test seed idempotency (production mode)
-        run: |
-          npm run --workspace=server db:seed:production || true
-          npm run --workspace=server db:seed:production
-          echo "✅ Idempotency test passed (no errors on second run)"
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_seed_test
-          ADMIN_EMAIL: test@example.com
-          ADMIN_DEFAULT_PASSWORD: test-password-12345
-
-      - name: Comment PR on failure
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
+          if (criticalChanges > 0 && e2eTests === 0) {
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '❌ **Seed function tests failed**\n\nPlease verify seed functions:\n```bash\nnpm test -- server/test/seeds/\n```'
+              body: '⚠️  **E2E Coverage**: Critical UI changes detected without new E2E tests. Consider adding tests for user-facing changes.'
             })
-```
-
-#### 3.2.2 E2E Coverage Analysis
-**Add optional coverage reporting:**
-
-```yaml
-  # Job X: E2E Coverage Report
-  e2e-coverage:
-    name: E2E Test Coverage Analysis
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Get base branch E2E tests
-        run: |
-          git fetch origin ${{ github.base_ref }}
-          BASE_TESTS=$(git diff origin/${{ github.base_ref }}...HEAD --name-only -- e2e/tests/ | wc -l)
-          echo "BASE_TESTS=$BASE_TESTS" >> $GITHUB_ENV
-
-      - name: Check for E2E coverage of critical files
-        run: |
-          CRITICAL_PATHS="client/src/features/storefront client/src/pages"
-          CRITICAL_CHANGED=$(git diff origin/${{ github.base_ref }} --name-only -- $CRITICAL_PATHS | wc -l)
-
-          if [ "$CRITICAL_CHANGED" -gt 0 ]; then
-            E2E_TESTS=$(git diff origin/${{ github.base_ref }} --name-only -- e2e/tests/ | wc -l)
-            if [ "$E2E_TESTS" -eq 0 ]; then
-              echo "⚠️  Warning: Critical UI changes without new E2E tests"
-              echo "Consider adding E2E tests to verify storefront/booking flows"
-            fi
-          fi
-
-      - name: Comment PR
-        if: always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const criticalChanges = ${{ env.CRITICAL_CHANGED || 0 }};
-            const e2eTests = ${{ env.E2E_TESTS || 0 }};
-
-            if (criticalChanges > 0 && e2eTests === 0) {
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: '⚠️  **E2E Coverage**: Critical UI changes detected without new E2E tests. Consider adding tests for user-facing changes.'
-              })
-            }
+          }
 ```
 
 #### 3.2.3 Test Mutation Validation (Advanced)
+
 **Optional stryker mutation testing:**
 
 ```yaml
-  # Job X: Mutation Testing (Optional, nightly only)
-  mutation-tests:
-    name: Mutation Testing (Stryker)
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+# Job X: Mutation Testing (Optional, nightly only)
+mutation-tests:
+  name: Mutation Testing (Stryker)
+  runs-on: ubuntu-latest
+  timeout-minutes: 30
+  if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+    - name: Install dependencies
+      run: npm ci
 
-      - name: Run mutation tests on critical services
-        run: |
-          npx stryker run \
-            --testRunner=vitest \
-            --files="server/src/services/booking.service.ts,server/src/services/availability.service.ts" \
-            --mutators="StringLiteral,BooleanLiteral,UpdateOperator"
+    - name: Run mutation tests on critical services
+      run: |
+        npx stryker run \
+          --testRunner=vitest \
+          --files="server/src/services/booking.service.ts,server/src/services/availability.service.ts" \
+          --mutators="StringLiteral,BooleanLiteral,UpdateOperator"
 
-      - name: Upload mutation report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: mutation-report-${{ github.run_id }}
-          path: reports/
-          retention-days: 30
+    - name: Upload mutation report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: mutation-report-${{ github.run_id }}
+        path: reports/
+        retention-days: 30
 ```
 
 #### 3.2.4 Update Pipeline Complete Job
+
 **Add seed-tests to requirements:**
 
 ```yaml
-  pipeline-complete:
-    name: Pipeline Complete
-    runs-on: ubuntu-latest
-    needs: [
+pipeline-complete:
+  name: Pipeline Complete
+  runs-on: ubuntu-latest
+  needs: [
       docs-validation,
       pattern-validation,
       lint,
       typecheck,
       unit-tests,
       integration-tests,
-      seed-tests,  # ADD THIS
+      seed-tests, # ADD THIS
       e2e-tests,
-      build
+      build,
     ]
-    if: always()
+  if: always()
 
-    steps:
-      - name: Check all jobs status
-        run: |
-          if [ "${{ needs.seed-tests.result }}" != "success" ]; then
-            echo "❌ Seed function tests failed"
-            exit 1
-          fi
-          # ... other checks ...
+  steps:
+    - name: Check all jobs status
+      run: |
+        if [ "${{ needs.seed-tests.result }}" != "success" ]; then
+          echo "❌ Seed function tests failed"
+          exit 1
+        fi
+        # ... other checks ...
 ```
 
 ---
@@ -535,6 +555,7 @@ Jobs included:
 ### 4.1 When to Add Seed Tests
 
 **ALWAYS add tests when:**
+
 - Creating a new seed function (e.g., `seedPlatform`, `seedDemo`)
 - Modifying seed environment variable requirements
 - Adding security guards or validation
@@ -584,12 +605,14 @@ describe('New Seed Function', () => {
 ### 4.2 When to Add E2E Tests
 
 **ALWAYS add tests when:**
+
 - Creating new user-facing routes/pages
 - Adding critical workflows (signup, booking, payment)
 - Modifying storefront/catalog display logic
 - Refactoring navigation or routing
 
 **OPTIONAL but recommended:**
+
 - Responsive layout changes (add responsive test)
 - Form validation changes (add form test)
 - Error state handling (add error path test)
@@ -678,7 +701,7 @@ describe('Seed Idempotency', () => {
     mockPrisma.user.findUnique.mockResolvedValueOnce({
       id: 'user-1',
       email: 'admin@example.com',
-      passwordHash: 'original-hash'
+      passwordHash: 'original-hash',
     });
 
     // Run seed
@@ -730,17 +753,13 @@ describe('Environment Variable Guards', () => {
 
     const mockPrisma = createMockPrisma();
 
-    await expect(seedPlatform(mockPrisma))
-      .rejects
-      .toThrow(/ADMIN_EMAIL.*required/i);
+    await expect(seedPlatform(mockPrisma)).rejects.toThrow(/ADMIN_EMAIL.*required/i);
   });
 
   it('should provide helpful error message with instructions', async () => {
     const mockPrisma = createMockPrisma();
 
-    await expect(seedPlatform(mockPrisma))
-      .rejects
-      .toThrow(/openssl rand|generate/i);
+    await expect(seedPlatform(mockPrisma)).rejects.toThrow(/openssl rand|generate/i);
   });
 
   it('should validate password length (min 12 chars)', async () => {
@@ -749,9 +768,7 @@ describe('Environment Variable Guards', () => {
 
     const mockPrisma = createMockPrisma();
 
-    await expect(seedPlatform(mockPrisma))
-      .rejects
-      .toThrow(/12.*character|password.*length/i);
+    await expect(seedPlatform(mockPrisma)).rejects.toThrow(/12.*character|password.*length/i);
   });
 
   it('should allow optional ADMIN_NAME', async () => {
@@ -827,13 +844,11 @@ describe('BookingService', () => {
       const tx = {
         $queryRaw: vi.fn().mockResolvedValue([{ id: 'booking-1' }]),
         booking: {
-          create: vi.fn().mockRejectedValue(
-            new PrismaClientKnownRequestError(
-              'Unique constraint failed',
-              'P2002',
-              '6.17.1'
-            )
-          ),
+          create: vi
+            .fn()
+            .mockRejectedValue(
+              new PrismaClientKnownRequestError('Unique constraint failed', 'P2002', '6.17.1')
+            ),
         },
       };
       return callback(tx);
@@ -841,11 +856,13 @@ describe('BookingService', () => {
 
     const service = new BookingService(mockPrisma as any);
 
-    await expect(service.create({
-      tenantId: 'tenant-1',
-      date: new Date(),
-      // ... other fields
-    })).rejects.toThrow(BookingConflictError);
+    await expect(
+      service.create({
+        tenantId: 'tenant-1',
+        date: new Date(),
+        // ... other fields
+      })
+    ).rejects.toThrow(BookingConflictError);
   });
 });
 ```
@@ -890,8 +907,7 @@ test.describe('Responsive Layout', () => {
         const secondCard = await cards.nth(1).boundingBox();
 
         // Should be side by side
-        expect((secondCard?.x || 0) - (firstCard?.x || 0))
-          .toBeGreaterThan(firstCard?.width || 0);
+        expect((secondCard?.x || 0) - (firstCard?.x || 0)).toBeGreaterThan(firstCard?.width || 0);
       } else {
         // Desktop: 3+ columns
         const cards = page.locator('[data-testid^="tier-card-"]');
@@ -901,9 +917,7 @@ test.describe('Responsive Layout', () => {
       }
 
       // Verify no horizontal scroll
-      const scrollWidth = await page.evaluate(() =>
-        document.documentElement.scrollWidth
-      );
+      const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
       expect(scrollWidth).toBeLessThanOrEqual(width);
     });
   });
@@ -933,10 +947,12 @@ describe('Error Handling', () => {
 
     const service = new BookingService(mockPrisma as any);
 
-    await expect(service.create({
-      tenantId: 'tenant-1',
-      date: new Date(),
-    })).rejects.toThrow(BookingConflictError);
+    await expect(
+      service.create({
+        tenantId: 'tenant-1',
+        date: new Date(),
+      })
+    ).rejects.toThrow(BookingConflictError);
   });
 
   it('should include date in error for debugging', async () => {
@@ -963,17 +979,17 @@ describe('Error Handling', () => {
     const mockPrisma = createMockPrisma();
 
     // Unknown error
-    (mockPrisma.booking.create as any).mockRejectedValue(
-      new Error('Connection timeout')
-    );
+    (mockPrisma.booking.create as any).mockRejectedValue(new Error('Connection timeout'));
 
     const service = new BookingService(mockPrisma as any);
 
     // Should not wrap/transform unknown errors
-    await expect(service.create({
-      tenantId: 'tenant-1',
-      date: new Date(),
-    })).rejects.toThrow('Connection timeout');
+    await expect(
+      service.create({
+        tenantId: 'tenant-1',
+        date: new Date(),
+      })
+    ).rejects.toThrow('Connection timeout');
   });
 });
 ```
@@ -983,24 +999,28 @@ describe('Error Handling', () => {
 ## 6. Testing Implementation Timeline
 
 ### Phase 1: Foundation (Week 1)
+
 - [x] Add seed function unit tests (66 tests)
 - [x] Add storefront E2E tests (6+ tests)
 - [ ] Update pre-commit hooks with test validation
 - [ ] Update code review checklist
 
 ### Phase 2: CI Integration (Week 2)
+
 - [ ] Add seed-tests job to main-pipeline.yml
 - [ ] Add E2E coverage analysis job
 - [ ] Configure coverage thresholds
 - [ ] Document CI coverage requirements
 
 ### Phase 3: Refinement (Week 3)
+
 - [ ] Add pre-commit hooks for test coverage
 - [ ] Create test pattern library
 - [ ] Document mutation testing strategy
 - [ ] Review and refine based on team feedback
 
 ### Phase 4: Team Adoption (Week 4+)
+
 - [ ] Train team on testing patterns
 - [ ] Enforce new guidelines on PRs
 - [ ] Iterate based on real-world usage
@@ -1011,6 +1031,7 @@ describe('Error Handling', () => {
 ## 7. Quick Reference Cheat Sheet
 
 ### Pre-Commit Checks
+
 ```bash
 # Run all pre-commit checks locally
 npm run test:unit
@@ -1025,6 +1046,7 @@ npm run test:e2e
 ```
 
 ### Test Coverage Verification
+
 ```bash
 # Coverage for changed files
 npm run test:coverage -- --coverage
@@ -1039,17 +1061,20 @@ npm run test:coverage:report
 ### Adding Tests
 
 **For new seed function:**
+
 1. Create `server/prisma/seeds/my-seed.ts`
 2. Create `server/test/seeds/my-seed.test.ts`
 3. Include env validation, idempotency, error tests
 4. Run: `npm test -- server/test/seeds/my-seed.test.ts`
 
 **For new E2E feature:**
+
 1. Create `e2e/tests/my-feature.spec.ts`
 2. Test happy path, error states, responsive layout
 3. Run: `npm run test:e2e -- e2e/tests/my-feature.spec.ts`
 
 ### CI Pipeline Commands
+
 ```bash
 # Test seed idempotency locally
 npm run db:seed:production
@@ -1077,10 +1102,13 @@ npm run typecheck && npm run test:unit && npm run test:coverage
 ## Appendix: Test File Templates
 
 ### Seed Test Template
+
 See: `server/test/seeds/seed-orchestrator.test.ts` (existing example)
 
 ### E2E Test Template
+
 See: `e2e/tests/storefront.spec.ts` (existing example)
 
 ### Service Test Template
+
 See: `server/src/services/audit.service.test.ts` (existing example)

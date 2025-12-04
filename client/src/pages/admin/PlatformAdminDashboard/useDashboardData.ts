@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { api } from "../../../lib/api";
-import { logger } from "../../../lib/logger";
-import type { TenantDto, SegmentDto, SystemStats } from "./types";
+import { useState, useEffect } from 'react';
+import { api } from '../../../lib/api';
+import { logger } from '../../../lib/logger';
+import type { TenantDto, SegmentDto, SystemStats } from './types';
 
 /**
  * useDashboardData Hook
@@ -44,7 +44,7 @@ export function useDashboardData() {
           const segmentCount = segments.length;
           const activeSegmentCount = segments.filter((s) => s.active).length;
 
-          setStats(prev => ({
+          setStats((prev) => ({
             ...prev,
             totalSegments: segmentCount,
             activeSegments: activeSegmentCount,
@@ -53,15 +53,18 @@ export function useDashboardData() {
       } catch (segmentError) {
         // Segments endpoint might not be accessible or might fail
         // Set to 0 as fallback
-        logger.warn("Could not fetch segments", { error: segmentError, component: "useDashboardData" });
-        setStats(prev => ({
+        logger.warn('Could not fetch segments', {
+          error: segmentError,
+          component: 'useDashboardData',
+        });
+        setStats((prev) => ({
           ...prev,
           totalSegments: 0,
           activeSegments: 0,
         }));
       }
     } catch (error) {
-      logger.error("Failed to load dashboard data", { error, component: "useDashboardData" });
+      logger.error('Failed to load dashboard data', { error, component: 'useDashboardData' });
     } finally {
       setIsLoading(false);
     }
@@ -76,6 +79,6 @@ export function useDashboardData() {
     tenants,
     stats,
     isLoading,
-    refresh: loadDashboardData
+    refresh: loadDashboardData,
   };
 }

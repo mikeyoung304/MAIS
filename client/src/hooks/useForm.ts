@@ -16,16 +16,14 @@ export interface UseFormResult<T extends Record<string, unknown>> {
 /**
  * Hook for managing form state with validation
  */
-export function useForm<T extends Record<string, unknown>>(
-  initialValues: T
-): UseFormResult<T> {
+export function useForm<T extends Record<string, unknown>>(initialValues: T): UseFormResult<T> {
   const [values, setValues] = useState<T>(initialValues);
   const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({});
 
   const handleChange = (field: keyof T, value: T[keyof T]) => {
-    setValues(prev => ({ ...prev, [field]: value }));
+    setValues((prev) => ({ ...prev, [field]: value }));
     // Clear error for this field when it changes
-    setErrors(prev => ({ ...prev, [field]: undefined }));
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
   const reset = () => {

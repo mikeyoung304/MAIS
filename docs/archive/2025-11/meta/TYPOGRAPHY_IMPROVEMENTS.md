@@ -9,16 +9,18 @@ All text sizes have been significantly increased throughout the application for 
 ## 🎯 Typography Scale Changes
 
 ### Base Configuration (tailwind.config.js)
-| Element | Before | After | Change |
-|---------|--------|-------|--------|
-| **Hero** | 48px | **72px** | +50% |
-| **H1** | 48px | **60px** | +25% |
-| **H2** | 36px | **48px** | +33% |
-| **H3** | 24px | **32px** | +33% |
-| **Subtitle** | 18px | **22px** | +22% |
-| **Body** | 16px | **18px** | +13% |
+
+| Element      | Before | After    | Change |
+| ------------ | ------ | -------- | ------ |
+| **Hero**     | 48px   | **72px** | +50%   |
+| **H1**       | 48px   | **60px** | +25%   |
+| **H2**       | 36px   | **48px** | +33%   |
+| **H3**       | 24px   | **32px** | +33%   |
+| **Subtitle** | 18px   | **22px** | +22%   |
+| **Body**     | 16px   | **18px** | +13%   |
 
 ### Global Base (index.css)
+
 - **Body font-size**: 16px → **18px**
 - **Line-height**: 1.6 → **1.7** (better line spacing)
 
@@ -29,21 +31,25 @@ All text sizes have been significantly increased throughout the application for 
 ### Core UI Components
 
 **Button:**
+
 - Default: h-11 → **h-14**, text added: **text-lg**
 - Small: h-9 → **h-11**, text-sm → **text-base**
 - Large: h-14 → **h-16**, text-lg → **text-xl**
 - Icon: h-10 w-10 → **h-12 w-12**
 
 **Card:**
+
 - Title: text-2xl → **text-3xl**
 - Description: text-sm → **text-lg**
 
 **Input:**
+
 - Height: h-10 → **h-12**
 - Text: text-sm → **text-lg**
 - Padding: px-3 py-2 → **px-4 py-3**
 
 **Label:**
+
 - Text: text-sm → **text-base**
 
 ---
@@ -51,28 +57,31 @@ All text sizes have been significantly increased throughout the application for 
 ## 📱 Page-Level Changes
 
 ### Home Page
-| Section | Element | Before | After |
-|---------|---------|--------|-------|
-| **Hero** | Headline | text-5xl md:text-6xl lg:text-7xl | **text-6xl md:text-7xl lg:text-8xl** |
-| **Hero** | Subtitle | text-lg md:text-xl | **text-2xl md:text-3xl** |
-| **Hero** | Buttons | default | **text-xl** |
-| **Stats** | Numbers | text-4xl md:text-5xl | **text-5xl md:text-6xl lg:text-7xl** |
-| **Stats** | Labels | text-sm | **text-lg md:text-xl** |
-| **Sections** | Headings | text-4xl md:text-5xl | **text-5xl md:text-6xl lg:text-7xl** |
-| **Sections** | Body | text-lg md:text-xl | **text-xl md:text-2xl** |
-| **Cards** | Titles | text-2xl | **text-3xl md:text-4xl** |
-| **Cards** | Body | default | **text-xl** |
-| **Testimonials** | Quote | default | **text-xl** |
-| **Testimonials** | Author | default | **text-xl** |
-| **Testimonials** | Details | text-sm | **text-lg** |
+
+| Section          | Element  | Before                           | After                                |
+| ---------------- | -------- | -------------------------------- | ------------------------------------ |
+| **Hero**         | Headline | text-5xl md:text-6xl lg:text-7xl | **text-6xl md:text-7xl lg:text-8xl** |
+| **Hero**         | Subtitle | text-lg md:text-xl               | **text-2xl md:text-3xl**             |
+| **Hero**         | Buttons  | default                          | **text-xl**                          |
+| **Stats**        | Numbers  | text-4xl md:text-5xl             | **text-5xl md:text-6xl lg:text-7xl** |
+| **Stats**        | Labels   | text-sm                          | **text-lg md:text-xl**               |
+| **Sections**     | Headings | text-4xl md:text-5xl             | **text-5xl md:text-6xl lg:text-7xl** |
+| **Sections**     | Body     | text-lg md:text-xl               | **text-xl md:text-2xl**              |
+| **Cards**        | Titles   | text-2xl                         | **text-3xl md:text-4xl**             |
+| **Cards**        | Body     | default                          | **text-xl**                          |
+| **Testimonials** | Quote    | default                          | **text-xl**                          |
+| **Testimonials** | Author   | default                          | **text-xl**                          |
+| **Testimonials** | Details  | text-sm                          | **text-lg**                          |
 
 ### Catalog Components
+
 - **Package titles**: text-xl → **text-3xl**
 - **Package descriptions**: text-sm → **text-lg**
 - **Prices**: text-2xl → **text-4xl**
 - **Page title**: text-4xl → **text-5xl**
 
 ### Booking Components
+
 - **DatePicker instructions**: text-sm → **text-lg**
 - **Add-on titles**: default → **text-xl**
 - **Add-on prices**: default → **text-2xl**
@@ -80,6 +89,7 @@ All text sizes have been significantly increased throughout the application for 
 - **Total label**: text-sm → **text-lg**
 
 ### Admin Components
+
 - **Page titles**: text-3xl → **text-4xl**
 - **Metric values**: text-3xl → **text-4xl**
 - **Metric labels**: text-sm → **text-base**
@@ -90,6 +100,7 @@ All text sizes have been significantly increased throughout the application for 
 - **Form inputs**: default → **text-lg h-12**
 
 ### Navigation & Layout
+
 - **Logo**: text-2xl → **text-3xl**
 - **Nav links**: text-sm → **text-lg**
 - **Footer headings**: text-xs → **text-base**
@@ -113,6 +124,7 @@ All text sizes have been significantly increased throughout the application for 
 ## 📏 Minimum Text Sizes
 
 **No more small text!** All text-sm and text-xs have been replaced:
+
 - **Minimum body text**: text-base (18px base)
 - **Minimum labels**: text-base
 - **Minimum descriptions**: text-lg

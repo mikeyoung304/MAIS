@@ -1,19 +1,20 @@
 ---
 status: complete
 priority: p2
-issue_id: "170"
+issue_id: '170'
 tags: [code-review, performance, client-side-joins, frontend]
 dependencies: []
 resolved_date: 2025-12-02
 ---
 
-# Replace N*M Client-Side Joins with Map Lookup in AppointmentsView
+# Replace N\*M Client-Side Joins with Map Lookup in AppointmentsView
 
 ## Problem Statement
 
 The `AppointmentsView` component performs N*M array operations when joining appointments with services. For each appointment, it searches through the entire services array with `find()`. This O(N*M) complexity degrades performance as data grows.
 
 **Why it matters:**
+
 - Performance scales poorly with appointment/service count
 - Unnecessary iterations on every render
 - Map-based lookup is O(N+M) instead
@@ -26,11 +27,12 @@ The `AppointmentsView` component performs N*M array operations when joining appo
 **Lines:** ~125-135 (approximate - join logic)
 
 **Current code:**
+
 ```typescript
 // O(N*M) - for each appointment, search all services
-const enrichedAppointments = appointments.map(apt => ({
+const enrichedAppointments = appointments.map((apt) => ({
   ...apt,
-  service: services.find(s => s.id === apt.serviceId),
+  service: services.find((s) => s.id === apt.serviceId),
 }));
 ```
 
@@ -40,16 +42,14 @@ Build a Map for O(1) lookups:
 
 ```typescript
 // O(N+M) - build Map once, then constant-time lookups
-const serviceMap = useMemo(
-  () => new Map(services.map(s => [s.id, s])),
-  [services]
-);
+const serviceMap = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
 
 const enrichedAppointments = useMemo(
-  () => appointments.map(apt => ({
-    ...apt,
-    service: serviceMap.get(apt.serviceId),
-  })),
+  () =>
+    appointments.map((apt) => ({
+      ...apt,
+      service: serviceMap.get(apt.serviceId),
+    })),
   [appointments, serviceMap]
 );
 ```
@@ -67,8 +67,8 @@ const enrichedAppointments = useMemo(
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes            |
+| ---------- | ------- | ---------------- |
 | 2025-12-02 | Created | From code review |
 
 ## Resources

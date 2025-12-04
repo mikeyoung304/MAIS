@@ -42,16 +42,16 @@ git push origin main
 
 **Copy these exact settings:**
 
-| Setting | Value |
-|---------|-------|
-| Name | `elope-api` |
-| Region | `Oregon (US West)` |
-| Branch | `main` (or `stack-migration`) |
-| Root Directory | `server` |
-| Runtime | `Node` |
-| Build Command | `pnpm install && pnpm run build` |
-| Start Command | `pnpm start` |
-| Instance Type | `Free` |
+| Setting        | Value                            |
+| -------------- | -------------------------------- |
+| Name           | `elope-api`                      |
+| Region         | `Oregon (US West)`               |
+| Branch         | `main` (or `stack-migration`)    |
+| Root Directory | `server`                         |
+| Runtime        | `Node`                           |
+| Build Command  | `pnpm install && pnpm run build` |
+| Start Command  | `pnpm start`                     |
+| Instance Type  | `Free`                           |
 
 ### 2C. Add Environment Variables
 
@@ -119,20 +119,20 @@ Should return JSON with packages ✅
 
 **Copy these exact settings:**
 
-| Setting | Value |
-|---------|-------|
-| Framework Preset | `Vite` |
-| Root Directory | `client` |
-| Build Command | `pnpm run build` |
-| Output Directory | `dist` |
-| Install Command | `pnpm install` |
+| Setting          | Value            |
+| ---------------- | ---------------- |
+| Framework Preset | `Vite`           |
+| Root Directory   | `client`         |
+| Build Command    | `pnpm run build` |
+| Output Directory | `dist`           |
+| Install Command  | `pnpm install`   |
 
 ### 3C. Add Environment Variable
 
 Click **"Environment Variables"**:
 
-| Name | Value |
-|------|-------|
+| Name           | Value                                                   |
+| -------------- | ------------------------------------------------------- |
 | `VITE_API_URL` | `https://elope-api-xxxx.onrender.com` (your Render URL) |
 
 ### 3D. Deploy
@@ -195,6 +195,7 @@ Open your Vercel URL in browser - should see homepage ✅
 ## ✅ You're Live!
 
 **Your URLs:**
+
 - 🌐 **Website:** `https://elope-xxxx.vercel.app`
 - 🔌 **API:** `https://elope-api-xxxx.onrender.com`
 
@@ -243,6 +244,7 @@ https://elope-xxxx.vercel.app/admin
 ## 🔧 If Something Goes Wrong
 
 ### Frontend Not Loading
+
 ```bash
 # Check Vercel deployment
 vercel --prod
@@ -252,6 +254,7 @@ vercel env ls
 ```
 
 ### Backend Not Working
+
 ```bash
 # Check Render logs
 # Go to dashboard.render.com → Your Service → Logs
@@ -261,12 +264,14 @@ curl https://elope-api-xxxx.onrender.com/v1/packages
 ```
 
 ### CORS Errors (in browser console)
+
 ```
 Solution: Double-check CORS_ORIGIN in Render matches Vercel URL exactly
 Include https:// and no trailing slash
 ```
 
 ### Stripe Checkout Not Working
+
 ```
 Solution:
 1. Check STRIPE_SUCCESS_URL and STRIPE_CANCEL_URL in Render
@@ -279,6 +284,7 @@ Solution:
 ## 💰 Cost Breakdown
 
 **Current Setup (Free):**
+
 - ✅ Vercel: Free tier (100 GB bandwidth)
 - ✅ Render: Free tier (750 hours)
 - ✅ Supabase: Free tier (500 MB)
@@ -287,6 +293,7 @@ Solution:
 **Total:** $0/month 🎉
 
 **Note:** Free tier has cold starts. For always-on:
+
 - Render Starter: $7/month
 - Vercel Pro: $20/month (optional)
 
@@ -335,6 +342,7 @@ Solution:
 ## 🆘 Need Help?
 
 **Stuck?** Check these logs:
+
 - Render: dashboard.render.com → Your Service → Logs
 - Vercel: vercel.com/dashboard → Your Project → Deployments
 - Stripe: dashboard.stripe.com → Developers → Webhooks

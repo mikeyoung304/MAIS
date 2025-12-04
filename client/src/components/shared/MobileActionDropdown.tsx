@@ -1,18 +1,18 @@
-import { MoreVertical } from "lucide-react";
+import { MoreVertical } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { type LucideIcon } from "lucide-react";
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { type LucideIcon } from 'lucide-react';
 
 interface ActionItem {
   label: string;
   icon?: LucideIcon;
   onClick: () => void;
-  variant?: "default" | "danger";
+  variant?: 'default' | 'danger';
   disabled?: boolean;
 }
 
@@ -30,12 +30,17 @@ interface MobileActionDropdownProps {
  * @param actions - Array of action items to display in the dropdown
  * @param className - Optional additional CSS classes
  */
-export function MobileActionDropdown({ actions, className = "" }: MobileActionDropdownProps) {
+export function MobileActionDropdown({ actions, className = '' }: MobileActionDropdownProps) {
   return (
     <div className={`sm:hidden ${className}`}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="text-text-muted" aria-label="Open actions menu">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-text-muted"
+            aria-label="Open actions menu"
+          >
             <MoreVertical className="w-4 h-4" aria-hidden="true" />
             <span className="sr-only">Open menu</span>
           </Button>
@@ -48,7 +53,7 @@ export function MobileActionDropdown({ actions, className = "" }: MobileActionDr
                 key={index}
                 onClick={action.onClick}
                 disabled={action.disabled}
-                className={action.variant === "danger" ? "text-danger-600" : "text-text-primary"}
+                className={action.variant === 'danger' ? 'text-danger-600' : 'text-text-primary'}
               >
                 {Icon && <Icon className="w-4 h-4 mr-2" aria-hidden="true" />}
                 {action.label}

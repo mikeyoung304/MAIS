@@ -33,16 +33,20 @@ Read SPRINT_9_EXECUTION_PROMPT.md for full details and execute all tasks.
 ## Executive Summary
 
 ### The Problem
+
 **CRITICAL:** Users cannot browse packages. They must know direct URLs (`/package/:slug`) to view offerings. This blocks the entire discovery flow and makes the platform unusable for new users.
 
 **Impact:**
+
 - Booking completion rate stuck at 30%
 - Users bounce from homepage (no clear path forward)
 - Primary user journey is 0% complete
 - Platform appears incomplete/broken
 
 ### The Solution
+
 Build a comprehensive package catalog page with:
+
 - Grid view of all active packages
 - Search by name/description
 - Filter by category and price range
@@ -51,6 +55,7 @@ Build a comprehensive package catalog page with:
 - Linked from homepage CTAs and main navigation
 
 ### Expected Outcomes
+
 - Booking completion rate: 30% → 50%+ (+67% improvement)
 - Primary user journey: 0% → 100% complete
 - Platform design maturity: 9.2/10 → 9.5/10
@@ -61,6 +66,7 @@ Build a comprehensive package catalog page with:
 ## Sprint 9 Objectives & Success Criteria
 
 ### Must-Have Features (P0)
+
 - [ ] `/packages` route exists and renders
 - [ ] Package grid displays all active packages
 - [ ] Packages load from existing API (`apiClient.getPackages()`)
@@ -71,6 +77,7 @@ Build a comprehensive package catalog page with:
 - [ ] Homepage CTAs link to catalog
 
 ### Should-Have Features (P1)
+
 - [ ] Search by package name/description
 - [ ] Filter by category (if categories exist)
 - [ ] Filter by price range (min/max)
@@ -80,6 +87,7 @@ Build a comprehensive package catalog page with:
 - [ ] Error state (API failure with retry)
 
 ### Nice-to-Have Features (P2)
+
 - [ ] Filters persist in URL query params
 - [ ] Sort by popularity (booking count)
 - [ ] Featured/promoted packages at top
@@ -95,6 +103,7 @@ Build a comprehensive package catalog page with:
 **File to create:** `client/src/pages/PackageCatalog.tsx`
 
 **Requirements:**
+
 1. Use existing API contract: `apiClient.packages.getPackages()`
 2. Display packages in responsive grid
 3. Handle loading state (skeleton loaders)
@@ -103,6 +112,7 @@ Build a comprehensive package catalog page with:
 6. Mobile-first responsive design
 
 **Component Structure:**
+
 ```tsx
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -113,7 +123,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function PackageCatalog() {
   // Fetch packages
-  const { data: packages, isLoading, error } = useQuery({
+  const {
+    data: packages,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['packages'],
     queryFn: () => apiClient.packages.getPackages(),
   });
@@ -126,10 +140,13 @@ export function PackageCatalog() {
 
   // Apply filters
   const filteredPackages = packages
-    ?.filter(pkg => {
+    ?.filter((pkg) => {
       // Search filter
-      if (searchQuery && !pkg.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-          !pkg.description.toLowerCase().includes(searchQuery.toLowerCase())) {
+      if (
+        searchQuery &&
+        !pkg.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !pkg.description.toLowerCase().includes(searchQuery.toLowerCase())
+      ) {
         return false;
       }
       // Category filter
@@ -155,7 +172,7 @@ export function PackageCatalog() {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-h1 mb-8">Browse Packages</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map(i => (
+          {[1, 2, 3, 4, 5, 6].map((i) => (
             <Skeleton key={i} className="h-96" />
           ))}
         </div>
@@ -206,11 +223,15 @@ export function PackageCatalog() {
         />
         <div className="text-center py-12">
           <p className="text-macon-navy-600">No packages match your filters.</p>
-          <button onClick={() => {
-            setSearchQuery('');
-            setCategoryFilter([]);
-            setPriceRange({ min: 0, max: Infinity });
-          }}>Clear Filters</button>
+          <button
+            onClick={() => {
+              setSearchQuery('');
+              setCategoryFilter([]);
+              setPriceRange({ min: 0, max: Infinity });
+            }}
+          >
+            Clear Filters
+          </button>
         </div>
       </div>
     );
@@ -236,7 +257,7 @@ export function PackageCatalog() {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8">
-        {filteredPackages.map(pkg => (
+        {filteredPackages.map((pkg) => (
           <PackageCard key={pkg.id} package={pkg} />
         ))}
       </div>
@@ -246,6 +267,7 @@ export function PackageCatalog() {
 ```
 
 **Responsive Grid Classes:**
+
 ```
 Mobile (320px-639px):   grid-cols-1 (single column)
 Tablet (640px-1023px):  sm:grid-cols-2 (two columns)
@@ -260,6 +282,7 @@ Large (1280px+):        xl:grid-cols-4 (four columns)
 **File to create:** `client/src/features/catalog/PackageCard.tsx`
 
 **Requirements:**
+
 1. Display package photo (with lazy loading)
 2. Show package name (H3 heading)
 3. Show truncated description (120 chars)
@@ -269,6 +292,7 @@ Large (1280px+):        xl:grid-cols-4 (four columns)
 7. Accessible (ARIA labels, keyboard navigation)
 
 **Component Structure:**
+
 ```tsx
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardMedia } from '@/components/ui/card';
@@ -326,6 +350,7 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
 ```
 
 **Design Specifications:**
+
 - Card height: Auto (min-h-[400px] to keep consistent)
 - Image height: 192px (h-48)
 - Padding: 24px (p-6)
@@ -340,6 +365,7 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
 **File to create:** `client/src/features/catalog/CatalogFilters.tsx`
 
 **Requirements:**
+
 1. Search input with debounce (300ms)
 2. Category multi-select filter
 3. Price range filter (min/max inputs)
@@ -348,10 +374,17 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
 6. Mobile responsive (stacked on small screens)
 
 **Component Structure:**
+
 ```tsx
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Search, X } from 'lucide-react';
 
@@ -386,8 +419,8 @@ export function CatalogFilters({
     return () => clearTimeout(timer);
   }, [localSearch, onSearchChange]);
 
-  const hasActiveFilters = searchQuery || categoryFilter.length > 0 ||
-                          priceRange.min > 0 || priceRange.max < Infinity;
+  const hasActiveFilters =
+    searchQuery || categoryFilter.length > 0 || priceRange.min > 0 || priceRange.max < Infinity;
 
   const clearFilters = () => {
     setLocalSearch('');
@@ -429,11 +462,7 @@ export function CatalogFilters({
 
         {/* Clear Filters */}
         {hasActiveFilters && (
-          <Button
-            variant="outline"
-            onClick={clearFilters}
-            className="w-full lg:w-auto"
-          >
+          <Button variant="outline" onClick={clearFilters} className="w-full lg:w-auto">
             <X className="w-4 h-4 mr-2" />
             Clear Filters
           </Button>
@@ -455,13 +484,17 @@ export function CatalogFilters({
                   type="number"
                   placeholder="Min"
                   value={priceRange.min || ''}
-                  onChange={(e) => onPriceRangeChange({ ...priceRange, min: Number(e.target.value) })}
+                  onChange={(e) =>
+                    onPriceRangeChange({ ...priceRange, min: Number(e.target.value) })
+                  }
                 />
                 <Input
                   type="number"
                   placeholder="Max"
                   value={priceRange.max === Infinity ? '' : priceRange.max}
-                  onChange={(e) => onPriceRangeChange({ ...priceRange, max: Number(e.target.value) || Infinity })}
+                  onChange={(e) =>
+                    onPriceRangeChange({ ...priceRange, max: Number(e.target.value) || Infinity })
+                  }
                 />
               </div>
             </div>
@@ -483,11 +516,12 @@ export function CatalogFilters({
 **File to modify:** `client/src/App.tsx`
 
 **Changes:**
+
 ```tsx
 import { PackageCatalog } from '@/pages/PackageCatalog';
 
 // Add route in router configuration
-<Route path="/packages" element={<PackageCatalog />} />
+<Route path="/packages" element={<PackageCatalog />} />;
 ```
 
 **Location:** Add after `/package/:slug` route, before admin routes.
@@ -499,6 +533,7 @@ import { PackageCatalog } from '@/pages/PackageCatalog';
 **Files to modify:**
 
 1. **client/src/components/AppShell.tsx**
+
 ```tsx
 // Add to navigation links array
 <Link to="/packages" className="text-macon-navy-700 hover:text-macon-orange">
@@ -507,6 +542,7 @@ import { PackageCatalog } from '@/pages/PackageCatalog';
 ```
 
 2. **client/src/pages/Homepage.tsx**
+
 ```tsx
 // Update hero CTA
 <Button asChild size="lg">
@@ -528,14 +564,16 @@ import { PackageCatalog } from '@/pages/PackageCatalog';
 **Location:** Inside PackageCatalog.tsx (already scaffolded in Task 1)
 
 **Requirements:**
+
 - Case-insensitive search
 - Search package name AND description
 - Debounced (300ms after user stops typing)
 - Highlight matching text (optional)
 
 **Implementation:**
+
 ```typescript
-const filteredPackages = packages?.filter(pkg => {
+const filteredPackages = packages?.filter((pkg) => {
   if (!searchQuery) return true;
 
   const query = searchQuery.toLowerCase();
@@ -553,25 +591,26 @@ const filteredPackages = packages?.filter(pkg => {
 **Location:** Inside PackageCatalog.tsx (already scaffolded in Task 1)
 
 **Requirements:**
+
 - Filter by category (multi-select)
 - Filter by price range (min/max)
 - Filters work in combination (AND logic)
 - URL query params preserve filter state
 
 **Implementation:**
+
 ```typescript
 // Category filter
-const categoryMatch = categoryFilter.length === 0 ||
-                      categoryFilter.includes(pkg.category);
+const categoryMatch = categoryFilter.length === 0 || categoryFilter.includes(pkg.category);
 
 // Price filter
-const priceMatch = pkg.price >= priceRange.min &&
-                   pkg.price <= priceRange.max;
+const priceMatch = pkg.price >= priceRange.min && pkg.price <= priceRange.max;
 
 return categoryMatch && priceMatch;
 ```
 
 **URL State (optional):**
+
 ```typescript
 import { useSearchParams } from 'react-router-dom';
 
@@ -584,8 +623,8 @@ useEffect(() => {
   const maxPrice = searchParams.get('maxPrice');
 
   if (query) setSearchQuery(query);
-  if (minPrice) setPriceRange(prev => ({ ...prev, min: Number(minPrice) }));
-  if (maxPrice) setPriceRange(prev => ({ ...prev, max: Number(maxPrice) }));
+  if (minPrice) setPriceRange((prev) => ({ ...prev, min: Number(minPrice) }));
+  if (maxPrice) setPriceRange((prev) => ({ ...prev, max: Number(maxPrice) }));
 }, []);
 
 // Update URL when filters change
@@ -606,11 +645,13 @@ useEffect(() => {
 **Location:** Inside PackageCatalog.tsx (already scaffolded in Task 1)
 
 **Requirements:**
+
 - Sort by price ascending
 - Sort by price descending
 - Sort by popularity (booking count) - if available
 
 **Implementation:**
+
 ```typescript
 const sortedPackages = filteredPackages?.sort((a, b) => {
   switch (sortBy) {
@@ -634,6 +675,7 @@ const sortedPackages = filteredPackages?.sort((a, b) => {
 **Manual Testing Checklist:**
 
 **Basic Functionality:**
+
 - [ ] Navigate to `/packages` - page loads
 - [ ] Package grid displays all active packages
 - [ ] Package cards show photo, name, description, price
@@ -642,12 +684,14 @@ const sortedPackages = filteredPackages?.sort((a, b) => {
 - [ ] Click homepage CTA - opens catalog
 
 **Search:**
+
 - [ ] Search by package name - filters correctly
 - [ ] Search by description keyword - filters correctly
 - [ ] Search with no results - shows empty state
 - [ ] Clear search - shows all packages
 
 **Filters:**
+
 - [ ] Filter by price min - excludes cheaper packages
 - [ ] Filter by price max - excludes expensive packages
 - [ ] Filter by category - shows only selected categories
@@ -655,17 +699,20 @@ const sortedPackages = filteredPackages?.sort((a, b) => {
 - [ ] Clear filters - resets to all packages
 
 **Sort:**
+
 - [ ] Sort by price low to high - correct order
 - [ ] Sort by price high to low - correct order
 - [ ] Sort persists after filtering
 
 **Responsive:**
+
 - [ ] Mobile (320px) - 1 column grid, stacked filters
 - [ ] Tablet (768px) - 2 column grid, filters visible
 - [ ] Desktop (1024px) - 3 column grid
 - [ ] Large desktop (1440px+) - 4 column grid
 
 **Edge Cases:**
+
 - [ ] Zero packages (tenant has no packages) - empty state
 - [ ] One package - single card displays
 - [ ] 50+ packages - grid scales properly
@@ -675,6 +722,7 @@ const sortedPackages = filteredPackages?.sort((a, b) => {
 - [ ] API error - error state with retry
 
 **Performance:**
+
 - [ ] Images lazy load
 - [ ] Search debounces (300ms)
 - [ ] Filter updates are instant (no lag)
@@ -682,6 +730,7 @@ const sortedPackages = filteredPackages?.sort((a, b) => {
 - [ ] No TypeScript errors
 
 **Automated Testing:**
+
 ```bash
 # Add E2E test
 touch client/e2e/tests/package-catalog.spec.ts
@@ -729,6 +778,7 @@ test.describe('Package Catalog', () => {
 Template: Follow `SPRINT_8_COMPLETION_REPORT.md` structure
 
 **Sections:**
+
 1. Executive Summary
 2. WS-6 Results (catalog implementation)
 3. Files Created/Modified
@@ -738,11 +788,13 @@ Template: Follow `SPRINT_8_COMPLETION_REPORT.md` structure
 7. Next Steps
 
 **Update DESIGN_AUDIT_MASTER_REPORT.md:**
+
 - Mark P0-3 (No package catalog) as ✅ RESOLVED
 - Update metrics (booking completion rate)
 - Update platform maturity score
 
 **Create CHANGELOG_SPRINT_9.md:**
+
 - List all new components
 - Document API usage
 - Note responsive patterns
@@ -818,6 +870,7 @@ type Package = {
 ## Design System Reference
 
 ### Color Palette
+
 ```
 Primary: macon-orange (#d97706)
 Secondary: macon-teal (#0d9488)
@@ -827,6 +880,7 @@ Borders: macon-navy-200
 ```
 
 ### Typography Scale
+
 ```
 Heading 1: text-h1 (60px, bold)
 Heading 2: text-h2 (48px, bold)
@@ -837,6 +891,7 @@ Body Small: text-body-sm (14px, normal)
 ```
 
 ### Spacing Scale
+
 ```
 Gap between cards: gap-6 (24px)
 Card padding: p-6 (24px)
@@ -845,6 +900,7 @@ Container padding: px-4 (16px)
 ```
 
 ### Responsive Breakpoints
+
 ```
 sm: 640px
 md: 768px
@@ -890,6 +946,7 @@ xl: 1280px
 ## Success Metrics
 
 ### Before Sprint 9
+
 ```
 Package Discovery Available: NO
 Catalog Linked from Homepage: NO
@@ -900,6 +957,7 @@ Primary Journey Complete: 0%
 ```
 
 ### After Sprint 9 (Target)
+
 ```
 Package Discovery Available: YES ✅
 Catalog Linked from Homepage: YES ✅
@@ -917,6 +975,7 @@ Platform Maturity: 9.5/10 ✅ (+0.3)
 Use this checklist to track progress:
 
 ### Development
+
 - [ ] PackageCatalog.tsx created
 - [ ] PackageCard.tsx created
 - [ ] CatalogFilters.tsx created
@@ -936,6 +995,7 @@ Use this checklist to track progress:
 - [ ] All touch targets ≥44px
 
 ### Testing
+
 - [ ] TypeScript validation passes
 - [ ] Manual QA on mobile (320px)
 - [ ] Manual QA on tablet (768px)
@@ -948,6 +1008,7 @@ Use this checklist to track progress:
 - [ ] Test pass rate ≥99.6%
 
 ### Documentation
+
 - [ ] Sprint 9 completion report created
 - [ ] DESIGN_AUDIT_MASTER_REPORT.md updated
 - [ ] CHANGELOG_SPRINT_9.md created
@@ -995,18 +1056,23 @@ When executing this sprint:
 ## Open Questions & Answers
 
 ### Q1: Should catalog paginate after X packages?
+
 **A:** No pagination for Sprint 9. If tenant has 50+ packages, show all in grid. Consider pagination in Sprint 10+ if performance issues arise.
 
 ### Q2: Where do categories come from?
+
 **A:** Categories are NOT in the current Package schema. For Sprint 9, defer category filtering. If needed, can add "category" field to packages in future sprint.
 
 ### Q3: Should some packages be featured at top?
+
 **A:** No for Sprint 9. Show all packages in sorted order. "Featured" can be added in Sprint 10+ with a `featured: boolean` field.
 
 ### Q4: Show "Fully booked" badge if no availability?
+
 **A:** No for Sprint 9. Availability is checked on package detail page and during booking. Catalog shows all active packages regardless of availability.
 
 ### Q5: Show "Starting at $X" for packages with add-ons?
+
 **A:** No for Sprint 9. Show base price only. Add-ons are shown on package detail page.
 
 ---
@@ -1014,11 +1080,13 @@ When executing this sprint:
 ## Estimated Timeline
 
 **Week 1: Core Catalog (18 hours)**
+
 - Day 1-2: PackageCatalog page (6h)
 - Day 2-3: PackageCard component (4h)
 - Day 3-4: CatalogFilters component (8h)
 
 **Week 2: Integration & Polish (12 hours)**
+
 - Day 1: Add routes and navigation links (3h)
 - Day 2: Implement search/filter/sort logic (6h)
 - Day 3: Testing & QA (3h)

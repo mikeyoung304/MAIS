@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "186"
+issue_id: '186'
 tags: [code-review, type-safety, patterns]
 dependencies: []
 ---
@@ -17,8 +17,11 @@ The `getStatusVariant()` and `getRefundStatusText()` functions use switch statem
 **Location:** `client/src/lib/utils.ts:50-65` and `70-83`
 
 **Current Code (no exhaustiveness check):**
+
 ```typescript
-export function getStatusVariant(status: BookingStatus): 'default' | 'secondary' | 'destructive' | 'outline' {
+export function getStatusVariant(
+  status: BookingStatus
+): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status) {
     case 'CONFIRMED':
     case 'FULFILLED':
@@ -38,12 +41,14 @@ export function getStatusVariant(status: BookingStatus): 'default' | 'secondary'
 ```
 
 **Risk Assessment:**
+
 - Impact: Medium (silent failures if union types expand)
 - Likelihood: Medium (status types may expand as product evolves)
 
 ## Proposed Solutions
 
 ### Solution 1: Add exhaustiveness check with never (Recommended)
+
 - Add default case that assigns to `never` type
 - TypeScript errors if any case is missing
 - **Pros:** Compile-time guarantee all cases handled
@@ -52,6 +57,7 @@ export function getStatusVariant(status: BookingStatus): 'default' | 'secondary'
 - **Risk:** None
 
 ### Solution 2: Add default case with fallback
+
 - Add explicit default case returning safe value
 - **Pros:** Simple, no runtime errors
 - **Cons:** Masks missing cases, no compile-time warning
@@ -65,11 +71,15 @@ Implement **Solution 1** for compile-time safety.
 ## Technical Details
 
 **Affected Files:**
+
 - `client/src/lib/utils.ts`
 
 **Proposed Change:**
+
 ```typescript
-export function getStatusVariant(status: BookingStatus): 'default' | 'secondary' | 'destructive' | 'outline' {
+export function getStatusVariant(
+  status: BookingStatus
+): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status) {
     case 'CONFIRMED':
     case 'FULFILLED':
@@ -122,8 +132,8 @@ export function getRefundStatusText(status?: RefundStatus): string | null {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                      |
+| ---------- | ------- | ------------------------------------------ |
 | 2025-12-03 | Created | Found during code review of commit 45024e6 |
 
 ## Resources

@@ -112,7 +112,8 @@ export class BookingService {
     applicationFeeAmount: number;
     idempotencyKeyParts: [string, string, string, string, number];
   }): Promise<{ checkoutUrl: string }> {
-    const { tenantId, amountCents, email, metadata, applicationFeeAmount, idempotencyKeyParts } = params;
+    const { tenantId, amountCents, email, metadata, applicationFeeAmount, idempotencyKeyParts } =
+      params;
 
     // Fetch tenant to get Stripe account ID
     const tenant = await this.tenantRepo.findById(tenantId);
@@ -136,7 +137,7 @@ export class BookingService {
     const isNew = await this.idempotencyService.checkAndStore(idempotencyKey);
     if (!isNew) {
       // Race condition: another request stored the key while we were checking
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       const retryResponse = await this.idempotencyService.getStoredResponse(idempotencyKey);
       if (retryResponse) {
         const retryData = retryResponse.data as { url: string };
@@ -214,7 +215,10 @@ export class BookingService {
    * // Returns: { checkoutUrl: 'https://checkout.stripe.com/...' }
    * ```
    */
-  async createCheckout(tenantId: string, input: CreateBookingInput): Promise<{ checkoutUrl: string }> {
+  async createCheckout(
+    tenantId: string,
+    input: CreateBookingInput
+  ): Promise<{ checkoutUrl: string }> {
     // Validate package exists for this tenant
     const pkg = await this.catalogRepo.getPackageBySlug(tenantId, input.packageId);
     if (!pkg) {
@@ -495,7 +499,7 @@ export class BookingService {
    */
   async getUnavailableDates(tenantId: string, startDate: Date, endDate: Date): Promise<string[]> {
     const dates = await this.bookingRepo.getUnavailableDates(tenantId, startDate, endDate);
-    return dates.map(d => d.toISOString().split('T')[0]); // Return as YYYY-MM-DD strings
+    return dates.map((d) => d.toISOString().split('T')[0]); // Return as YYYY-MM-DD strings
   }
 
   /**
@@ -547,19 +551,22 @@ export class BookingService {
    * // Returns: { id: 'booking_123', status: 'PAID', commissionAmount: 18000, ... }
    * ```
    */
-  async onPaymentCompleted(tenantId: string, input: {
-    sessionId: string;
-    packageId: string;
-    eventDate: string;
-    email: string;
-    coupleName: string;
-    addOnIds?: string[];
-    totalCents: number;
-    commissionAmount?: number;
-    commissionPercent?: number;
-    isDeposit?: boolean;
-    depositPercent?: number;
-  }): Promise<Booking> {
+  async onPaymentCompleted(
+    tenantId: string,
+    input: {
+      sessionId: string;
+      packageId: string;
+      eventDate: string;
+      email: string;
+      coupleName: string;
+      addOnIds?: string[];
+      totalCents: number;
+      commissionAmount?: number;
+      commissionPercent?: number;
+      isDeposit?: boolean;
+      depositPercent?: number;
+    }
+  ): Promise<Booking> {
     // Fetch package details for event payload
     const pkg = await this.catalogRepo.getPackageBySlug(tenantId, input.packageId);
     if (!pkg) {
@@ -578,10 +585,13 @@ export class BookingService {
     // Only set if the event is more than 7 days away
     const eventDate = new Date(input.eventDate + 'T00:00:00Z');
     const now = new Date();
-    const daysUntilEvent = Math.floor((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    const reminderDueDate = daysUntilEvent > 7
-      ? new Date(eventDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-      : undefined;
+    const daysUntilEvent = Math.floor(
+      (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const reminderDueDate =
+      daysUntilEvent > 7
+        ? new Date(eventDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        : undefined;
 
     // Handle deposit vs full payment
     let depositPaidAmount: number | undefined;
@@ -690,7 +700,9 @@ export class BookingService {
   ): Promise<{ checkoutUrl: string }> {
     // Verify scheduling dependencies are available
     if (!this.serviceRepo || !this.schedulingAvailabilityService) {
-      throw new Error('Scheduling services are not available. Ensure ServiceRepository and SchedulingAvailabilityService are injected.');
+      throw new Error(
+        'Scheduling services are not available. Ensure ServiceRepository and SchedulingAvailabilityService are injected.'
+      );
     }
 
     // 1. Fetch service and validate it exists and belongs to this tenant
@@ -735,7 +747,13 @@ export class BookingService {
       email: input.clientEmail,
       metadata,
       applicationFeeAmount: 0, // No commission for appointments (can be configured later)
-      idempotencyKeyParts: [tenantId, input.clientEmail, input.serviceId, input.startTime.toISOString(), Date.now()],
+      idempotencyKeyParts: [
+        tenantId,
+        input.clientEmail,
+        input.serviceId,
+        input.startTime.toISOString(),
+        Date.now(),
+      ],
     });
   }
 
@@ -810,7 +828,13 @@ export class BookingService {
       coupleName: input.clientName,
       email: input.clientEmail,
       phone: input.clientPhone,
-      eventDate: new Date(input.startTime.getFullYear(), input.startTime.getMonth(), input.startTime.getDate()).toISOString().split('T')[0],
+      eventDate: new Date(
+        input.startTime.getFullYear(),
+        input.startTime.getMonth(),
+        input.startTime.getDate()
+      )
+        .toISOString()
+        .split('T')[0],
       addOnIds: [], // No add-ons for appointments
       startTime: input.startTime.toISOString(),
       endTime: input.endTime.toISOString(),
@@ -888,10 +912,7 @@ export class BookingService {
    * });
    * ```
    */
-  async getAppointments(
-    tenantId: string,
-    filters?: GetAppointmentsFilters
-  ): Promise<any[]> {
+  async getAppointments(tenantId: string, filters?: GetAppointmentsFilters): Promise<any[]> {
     // Delegate to repository with pagination
     // Convert Date objects to ISO strings for repository
     const repositoryFilters = {
@@ -935,11 +956,7 @@ export class BookingService {
    * );
    * ```
    */
-  async rescheduleBooking(
-    tenantId: string,
-    bookingId: string,
-    newDate: string
-  ): Promise<Booking> {
+  async rescheduleBooking(tenantId: string, bookingId: string, newDate: string): Promise<Booking> {
     // Validate booking exists
     const booking = await this.bookingRepo.findById(tenantId, bookingId);
     if (!booking) {
@@ -1086,9 +1103,8 @@ export class BookingService {
 
     // P1-150 FIX: Calculate total paid and validate refund amount
     // Total paid = deposit + balance (if applicable), falling back to totalCents for legacy bookings
-    const totalPaid = (booking.depositPaidAmount ?? 0) +
-                     (booking.balancePaidAmount ?? 0) ||
-                     booking.totalCents;
+    const totalPaid =
+      (booking.depositPaidAmount ?? 0) + (booking.balancePaidAmount ?? 0) || booking.totalCents;
 
     // Track cumulative refunds to prevent over-refunds
     const previousRefunds = booking.refundAmount ?? 0;

@@ -4,8 +4,8 @@
  * Settings fields for segment form (sort order, active status)
  */
 
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 interface SettingsFieldsProps {
   sortOrder: number;
@@ -38,9 +38,7 @@ export function SettingsFields({
             disabled={disabled}
             className="bg-macon-navy-900 border-white/20 text-white placeholder:text-white/50 focus:border-white/30 text-lg h-12"
           />
-          <p className="text-base text-white/70">
-            Lower numbers appear first in navigation
-          </p>
+          <p className="text-base text-white/70">Lower numbers appear first in navigation</p>
         </div>
       </div>
 
@@ -58,9 +56,7 @@ export function SettingsFields({
             Active
           </Label>
         </div>
-        <p className="text-base text-white/70">
-          Inactive segments are hidden from public view
-        </p>
+        <p className="text-base text-white/70">Inactive segments are hidden from public view</p>
       </div>
     </>
   );

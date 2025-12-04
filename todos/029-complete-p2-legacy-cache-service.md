@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "029"
+issue_id: '029'
 tags: [code-review, architecture, technical-debt, caching]
 dependencies: []
 ---
@@ -22,8 +22,8 @@ The codebase maintains TWO parallel caching systems: `CacheService` (synchronous
 
 ```typescript
 // Both created in DI container
-const legacyCacheService = new CacheService(900);  // NodeCache
-let cacheAdapter: CacheServicePort;  // Redis or In-Memory adapter
+const legacyCacheService = new CacheService(900); // NodeCache
+let cacheAdapter: CacheServicePort; // Redis or In-Memory adapter
 
 // Services use legacy cache
 const catalogService = new CatalogService(adapters.catalogRepo, legacyCacheService, auditService);
@@ -40,6 +40,7 @@ const segmentService = new SegmentService(segmentRepo, legacyCacheService);
 ## Proposed Solutions
 
 ### Option A: Migrate All Services to CacheServicePort (Recommended)
+
 **Effort:** Medium | **Risk:** Low
 
 1. Update service constructors to accept `CacheServicePort`
@@ -48,11 +49,13 @@ const segmentService = new SegmentService(segmentRepo, legacyCacheService);
 4. Add linting rule to prevent legacy imports
 
 **Pros:**
+
 - Single source of truth
 - Async-ready for Redis
 - Cleaner DI container
 
 **Cons:**
+
 - Requires updating service signatures
 
 ## Acceptance Criteria
@@ -65,8 +68,8 @@ const segmentService = new SegmentService(segmentRepo, legacyCacheService);
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                            |
+| ---------- | ------- | -------------------------------- |
 | 2025-11-27 | Created | Found during architecture review |
 
 ## Resources

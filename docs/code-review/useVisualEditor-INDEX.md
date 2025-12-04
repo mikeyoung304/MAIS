@@ -9,6 +9,7 @@
 ## 📋 Quick Navigation
 
 ### Start Here
+
 - **[useVisualEditor-QUICK-FIX.md](useVisualEditor-QUICK-FIX.md)** ⭐ (5 min read)
   - TL;DR of all 3 bugs
   - 3 code changes with diffs
@@ -16,6 +17,7 @@
   - Expected results
 
 ### Executive Summary
+
 - **[useVisualEditor-SUMMARY.md](useVisualEditor-SUMMARY.md)** (10 min read)
   - Overview of all findings
   - Critical/high/medium issues
@@ -24,6 +26,7 @@
   - Testing recommendations
 
 ### Technical Deep Dive
+
 - **[useVisualEditor-analysis.md](useVisualEditor-analysis.md)** (15 min read)
   - Detailed analysis of each issue
   - Root cause explanations
@@ -32,6 +35,7 @@
   - Test coverage recommendations
 
 ### Visual Explanations
+
 - **[useVisualEditor-race-conditions.md](useVisualEditor-race-conditions.md)** (15 min read)
   - Timeline diagrams for each bug
   - Scenario walkthroughs
@@ -40,6 +44,7 @@
   - Testing strategies with code examples
 
 ### Implementation Guide
+
 - **[useVisualEditor-fixes.md](useVisualEditor-fixes.md)** (10 min read)
   - Complete fix for each issue
   - Full diffs for all changes
@@ -53,6 +58,7 @@
 ## 🐛 Bugs Identified
 
 ### 1. CRITICAL: Stale Closure in `updateDraft`
+
 **Location:** Line 225 (dependency array)
 **Problem:** `packages` in deps causes callback recreation on every keystroke
 **Impact:** Wrong original state capture, potential data loss
@@ -60,6 +66,7 @@
 **Fix:** Remove `packages` from deps
 
 ### 2. HIGH: Race Condition in `publishAll`
+
 **Location:** Lines 231-266
 **Problem:** User can edit during `flushPendingChanges` (100-500ms), new edits not published
 **Impact:** Lost edits, inconsistent state
@@ -67,6 +74,7 @@
 **Fix:** Re-check draftCount after async flush completes
 
 ### 3. MEDIUM: Stale `draftCount` in Callbacks
+
 **Location:** Line 78
 **Problem:** Not memoized, captured at callback definition time
 **Impact:** Defensive coding issue, potential stale state access
@@ -77,13 +85,13 @@
 
 ## 📊 Document Sizes & Estimated Reading Time
 
-| Document | Size | Read Time | Best For |
-|----------|------|-----------|----------|
-| QUICK-FIX | 2.5KB | 5 min | Implementers |
-| SUMMARY | 11KB | 10 min | Managers, reviewers |
-| analysis | 16KB | 15 min | Developers |
-| race-conditions | 9.2KB | 15 min | Understanding issues |
-| fixes | 9.2KB | 10 min | Implementation details |
+| Document        | Size  | Read Time | Best For               |
+| --------------- | ----- | --------- | ---------------------- |
+| QUICK-FIX       | 2.5KB | 5 min     | Implementers           |
+| SUMMARY         | 11KB  | 10 min    | Managers, reviewers    |
+| analysis        | 16KB  | 15 min    | Developers             |
+| race-conditions | 9.2KB | 15 min    | Understanding issues   |
+| fixes           | 9.2KB | 10 min    | Implementation details |
 
 **Total:** ~50KB, ~55 minutes for complete review
 
@@ -92,12 +100,14 @@
 ## 👥 Recommended Reading Paths
 
 ### For Quick Implementation
+
 1. Read: `useVisualEditor-QUICK-FIX.md` (5 min)
 2. Implement: 3 fixes (~15 min)
 3. Test: Manual verification (5 min)
 4. Done!
 
 ### For Complete Understanding
+
 1. Read: `useVisualEditor-SUMMARY.md` (10 min)
 2. Read: `useVisualEditor-race-conditions.md` (15 min) - see diagrams
 3. Read: `useVisualEditor-fixes.md` (10 min) - understand fixes
@@ -105,12 +115,14 @@
 5. Test: Full suite + manual (10 min)
 
 ### For Code Review
+
 1. Read: `useVisualEditor-SUMMARY.md` (10 min)
 2. Read: `useVisualEditor-analysis.md` (15 min) - detailed analysis
 3. Review: Code changes in fixes (5 min)
 4. Approve or comment
 
 ### For Future Reference
+
 - Bookmark: `useVisualEditor-QUICK-FIX.md`
 - Archive: `useVisualEditor-SUMMARY.md`
 - Reference: `useVisualEditor-race-conditions.md` for diagrams
@@ -121,6 +133,7 @@
 ## 🔍 Key Insights
 
 ### What Works Well
+
 - ✅ Excellent cleanup effect pattern
 - ✅ Good error handling with rollback
 - ✅ Correct sequential processing (for...await)
@@ -128,11 +141,13 @@
 - ✅ Well-documented code
 
 ### What Needs Fixing
+
 - ❌ Stale closure in updateDraft (critical)
 - ❌ Race condition in publishAll (high)
 - ⚠️ Missing memoization (medium)
 
 ### Performance Impact
+
 - **Current:** 6+ re-renders per keystroke
 - **After Fix:** 1-2 re-renders per keystroke
 - **User Experience:** Smooth vs sluggish
@@ -141,13 +156,13 @@
 
 ## 📝 Code Statistics
 
-| Metric | Value |
-|--------|-------|
-| Lines of code | 347 |
-| Lines with issues | 3 (less than 1%) |
-| Functions affected | 2 (updateDraft, publishAll) |
-| Dependencies | 4 (useState, useCallback, useRef, useEffect) |
-| Test coverage needed | 3 scenarios |
+| Metric               | Value                                        |
+| -------------------- | -------------------------------------------- |
+| Lines of code        | 347                                          |
+| Lines with issues    | 3 (less than 1%)                             |
+| Functions affected   | 2 (updateDraft, publishAll)                  |
+| Dependencies         | 4 (useState, useCallback, useRef, useEffect) |
+| Test coverage needed | 3 scenarios                                  |
 
 ---
 
@@ -173,19 +188,23 @@
 ## 🚀 Deployment Notes
 
 ### Pre-Deployment
+
 - All existing tests pass
 - New E2E tests added and passing
 - No breaking changes
 - Performance improvements expected
 
 ### Post-Deployment
+
 - Monitor error logs for rollback events
 - Track user reports of lost edits
 - Verify performance metrics improve
 - Check typing responsiveness
 
 ### Rollback Plan
+
 Each fix is independent and can be reverted:
+
 ```bash
 git revert <commit-hash>
 npm test
@@ -196,11 +215,13 @@ npm test
 ## 📚 Related Resources
 
 ### React Patterns
+
 - [useCallback documentation](https://react.dev/reference/react/useCallback)
 - [Closures in JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures)
 - [Race conditions](https://en.wikipedia.org/wiki/Race_condition)
 
 ### Project Standards
+
 - See `CLAUDE.md` for coding patterns
 - See `ARCHITECTURE.md` for system design
 - See `TESTING.md` for test strategy
@@ -224,18 +245,22 @@ After implementing fixes:
 ## 📞 Questions?
 
 ### For Quick Answers
+
 - See: `useVisualEditor-QUICK-FIX.md`
 - Time: 5 minutes
 
 ### For Deep Understanding
+
 - See: `useVisualEditor-analysis.md`
 - Time: 15 minutes
 
 ### For Visual Explanation
+
 - See: `useVisualEditor-race-conditions.md`
 - Time: 15 minutes
 
 ### For Implementation Details
+
 - See: `useVisualEditor-fixes.md`
 - Time: 10 minutes
 

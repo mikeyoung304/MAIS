@@ -7,11 +7,19 @@
  * Design: Matches landing page aesthetic with sage accents
  */
 
-import { useState, useEffect } from "react";
-import { ArrowUpRight, CheckCircle2, AlertCircle, Loader2, CreditCard, Check, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState, useEffect } from 'react';
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  CreditCard,
+  Check,
+  X,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -20,12 +28,12 @@ import {
   DialogDescription,
   DialogBody,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { EmptyState } from "@/components/shared/EmptyState";
-import { StatusBadge } from "@/components/shared/StatusBadge";
-import { api } from "@/lib/api";
-import { logger } from "@/lib/logger";
-import { ANIMATION_TRANSITION } from "@/lib/animation-constants";
+} from '@/components/ui/dialog';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { api } from '@/lib/api';
+import { logger } from '@/lib/logger';
+import { ANIMATION_TRANSITION } from '@/lib/animation-constants';
 
 /**
  * Validates that a URL is a legitimate Stripe domain
@@ -34,10 +42,7 @@ import { ANIMATION_TRANSITION } from "@/lib/animation-constants";
 const validateStripeUrl = (url: string): boolean => {
   try {
     const parsed = new URL(url);
-    return (
-      parsed.hostname.endsWith(".stripe.com") ||
-      parsed.hostname === "stripe.com"
-    );
+    return parsed.hostname.endsWith('.stripe.com') || parsed.hostname === 'stripe.com';
   } catch {
     return false;
   }
@@ -64,8 +69,8 @@ export function StripeConnectCard() {
 
   // Onboarding dialog state
   const [showOnboardingDialog, setShowOnboardingDialog] = useState(false);
-  const [dialogEmail, setDialogEmail] = useState("");
-  const [dialogBusinessName, setDialogBusinessName] = useState("");
+  const [dialogEmail, setDialogEmail] = useState('');
+  const [dialogBusinessName, setDialogBusinessName] = useState('');
   const [dialogErrors, setDialogErrors] = useState<{ email?: string; businessName?: string }>({});
 
   // Fetch Stripe Connect status on mount
@@ -86,11 +91,11 @@ export function StripeConnectCard() {
         // No account exists yet - this is expected
         setStatus(null);
       } else {
-        setError("Failed to fetch Stripe status");
+        setError('Failed to fetch Stripe status');
       }
     } catch (err) {
-      logger.error("Error fetching Stripe status:", { error: err, component: "StripeConnectCard" });
-      setError("Failed to fetch Stripe status");
+      logger.error('Error fetching Stripe status:', { error: err, component: 'StripeConnectCard' });
+      setError('Failed to fetch Stripe status');
     } finally {
       setLoading(false);
     }
@@ -114,8 +119,8 @@ export function StripeConnectCard() {
    * Opens the onboarding dialog
    */
   const handleOpenOnboardingDialog = () => {
-    setDialogEmail("");
-    setDialogBusinessName("");
+    setDialogEmail('');
+    setDialogBusinessName('');
     setDialogErrors({});
     setShowOnboardingDialog(true);
   };
@@ -127,11 +132,12 @@ export function StripeConnectCard() {
     const errors: { email?: string; businessName?: string } = {};
 
     if (!validateEmail(dialogEmail)) {
-      errors.email = "Please enter a valid email address";
+      errors.email = 'Please enter a valid email address';
     }
 
     if (!validateBusinessName(dialogBusinessName)) {
-      errors.businessName = "Business name must be 2-100 characters (letters, numbers, spaces, and common punctuation)";
+      errors.businessName =
+        'Business name must be 2-100 characters (letters, numbers, spaces, and common punctuation)';
     }
 
     if (Object.keys(errors).length > 0) {
@@ -152,7 +158,7 @@ export function StripeConnectCard() {
         body: {
           email,
           businessName,
-          country: "US",
+          country: 'US',
         },
       });
 
@@ -162,14 +168,17 @@ export function StripeConnectCard() {
         // Automatically start onboarding
         await handleOnboard();
       } else if (result.status === 409) {
-        setError("Stripe account already exists");
+        setError('Stripe account already exists');
         await fetchStatus();
       } else {
-        setError("Failed to create Stripe account");
+        setError('Failed to create Stripe account');
       }
     } catch (err) {
-      logger.error("Error creating Stripe account:", { error: err, component: "StripeConnectCard" });
-      setError("Failed to create Stripe account");
+      logger.error('Error creating Stripe account:', {
+        error: err,
+        component: 'StripeConnectCard',
+      });
+      setError('Failed to create Stripe account');
     } finally {
       setCreating(false);
     }
@@ -194,20 +203,26 @@ export function StripeConnectCard() {
       if (result.status === 200 && result.body?.url) {
         // Validate URL is from Stripe before redirecting (defense-in-depth)
         if (!validateStripeUrl(result.body.url)) {
-          logger.error("Invalid Stripe URL received", { url: result.body.url, component: "StripeConnectCard" });
-          setError("Invalid redirect URL from server");
+          logger.error('Invalid Stripe URL received', {
+            url: result.body.url,
+            component: 'StripeConnectCard',
+          });
+          setError('Invalid redirect URL from server');
           return;
         }
         // Redirect to Stripe onboarding
         window.location.href = result.body.url;
       } else if (result.status === 404) {
-        setError("No Stripe account found. Create one first.");
+        setError('No Stripe account found. Create one first.');
       } else {
-        setError("Failed to generate onboarding link");
+        setError('Failed to generate onboarding link');
       }
     } catch (err) {
-      logger.error("Error generating onboarding link:", { error: err, component: "StripeConnectCard" });
-      setError("Failed to generate onboarding link");
+      logger.error('Error generating onboarding link:', {
+        error: err,
+        component: 'StripeConnectCard',
+      });
+      setError('Failed to generate onboarding link');
     } finally {
       setOnboarding(false);
     }
@@ -222,18 +237,24 @@ export function StripeConnectCard() {
       if (result.status === 200 && result.body?.url) {
         // Validate URL is from Stripe before opening (defense-in-depth)
         if (!validateStripeUrl(result.body.url)) {
-          logger.error("Invalid Stripe dashboard URL received", { url: result.body.url, component: "StripeConnectCard" });
-          setError("Invalid dashboard URL from server");
+          logger.error('Invalid Stripe dashboard URL received', {
+            url: result.body.url,
+            component: 'StripeConnectCard',
+          });
+          setError('Invalid dashboard URL from server');
           return;
         }
         // Open Stripe dashboard in new tab
-        window.open(result.body.url, "_blank");
+        window.open(result.body.url, '_blank');
       } else {
-        setError("Failed to generate dashboard link");
+        setError('Failed to generate dashboard link');
       }
     } catch (err) {
-      logger.error("Error generating dashboard link:", { error: err, component: "StripeConnectCard" });
-      setError("Failed to generate dashboard link");
+      logger.error('Error generating dashboard link:', {
+        error: err,
+        component: 'StripeConnectCard',
+      });
+      setError('Failed to generate dashboard link');
     }
   };
 
@@ -265,7 +286,10 @@ export function StripeConnectCard() {
             <>
               {error && (
                 <div className="p-4 bg-danger-50 border border-danger-100 rounded-xl flex items-start gap-3 mb-4">
-                  <AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                  <AlertCircle
+                    className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5"
+                    aria-hidden="true"
+                  />
                   <span className="text-sm text-danger-700">{error}</span>
                 </div>
               )}
@@ -282,7 +306,10 @@ export function StripeConnectCard() {
                 ) : (
                   <>
                     Connect Stripe
-                    <ArrowUpRight className={`w-4 h-4 ml-2 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${ANIMATION_TRANSITION.TRANSFORM}`} aria-hidden="true" />
+                    <ArrowUpRight
+                      className={`w-4 h-4 ml-2 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${ANIMATION_TRANSITION.TRANSFORM}`}
+                      aria-hidden="true"
+                    />
                   </>
                 )}
               </Button>
@@ -296,7 +323,8 @@ export function StripeConnectCard() {
             <DialogHeader>
               <DialogTitle>Set Up Stripe Connect</DialogTitle>
               <DialogDescription>
-                Enter your business details to create your Stripe Connect account for payment processing.
+                Enter your business details to create your Stripe Connect account for payment
+                processing.
               </DialogDescription>
             </DialogHeader>
             <DialogBody>
@@ -314,9 +342,9 @@ export function StripeConnectCard() {
                         setDialogErrors((prev) => ({ ...prev, email: undefined }));
                       }
                     }}
-                    className={dialogErrors.email ? "border-danger-500" : ""}
+                    className={dialogErrors.email ? 'border-danger-500' : ''}
                     aria-invalid={!!dialogErrors.email}
-                    aria-describedby={dialogErrors.email ? "stripe-email-error" : undefined}
+                    aria-describedby={dialogErrors.email ? 'stripe-email-error' : undefined}
                   />
                   {dialogErrors.email && (
                     <p id="stripe-email-error" className="text-sm text-danger-600">
@@ -337,9 +365,11 @@ export function StripeConnectCard() {
                         setDialogErrors((prev) => ({ ...prev, businessName: undefined }));
                       }
                     }}
-                    className={dialogErrors.businessName ? "border-danger-500" : ""}
+                    className={dialogErrors.businessName ? 'border-danger-500' : ''}
                     aria-invalid={!!dialogErrors.businessName}
-                    aria-describedby={dialogErrors.businessName ? "stripe-business-name-error" : undefined}
+                    aria-describedby={
+                      dialogErrors.businessName ? 'stripe-business-name-error' : undefined
+                    }
                   />
                   {dialogErrors.businessName && (
                     <p id="stripe-business-name-error" className="text-sm text-danger-600">
@@ -373,15 +403,19 @@ export function StripeConnectCard() {
   }
 
   // Account exists - show status
-  const isFullyOnboarded = status.chargesEnabled && status.payoutsEnabled && status.detailsSubmitted;
-  const hasRequirements = status.requirements.currentlyDue.length > 0 || status.requirements.pastDue.length > 0;
+  const isFullyOnboarded =
+    status.chargesEnabled && status.payoutsEnabled && status.detailsSubmitted;
+  const hasRequirements =
+    status.requirements.currentlyDue.length > 0 || status.requirements.pastDue.length > 0;
 
   const StatusItem = ({ label, enabled }: { label: string; enabled: boolean }) => (
     <div className="flex items-center justify-between py-3 border-b border-sage-light/10 last:border-0">
       <span className="text-text-muted">{label}</span>
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-        enabled ? "bg-sage/10" : "bg-warning-100"
-      }`}>
+      <div
+        className={`w-8 h-8 rounded-full flex items-center justify-center ${
+          enabled ? 'bg-sage/10' : 'bg-warning-100'
+        }`}
+      >
         {enabled ? (
           <Check className="w-4 h-4 text-sage" aria-hidden="true" />
         ) : (
@@ -397,7 +431,7 @@ export function StripeConnectCard() {
         <div>
           <h2 className="font-serif text-2xl font-bold text-text-primary">Payment Processing</h2>
           <p className="text-text-muted text-sm mt-1">
-            {isFullyOnboarded ? "Stripe is connected and ready" : "Complete your Stripe setup"}
+            {isFullyOnboarded ? 'Stripe is connected and ready' : 'Complete your Stripe setup'}
           </p>
         </div>
         {isFullyOnboarded && (
@@ -410,7 +444,10 @@ export function StripeConnectCard() {
 
       {error && (
         <div className="p-4 bg-danger-50 border border-danger-100 rounded-xl flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+          <AlertCircle
+            className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5"
+            aria-hidden="true"
+          />
           <span className="text-sm text-danger-700">{error}</span>
         </div>
       )}
@@ -443,12 +480,12 @@ export function StripeConnectCard() {
               <h4 className="font-medium text-warning-900 mb-1">Action Required</h4>
               {status.requirements.pastDue.length > 0 && (
                 <p className="text-sm text-warning-700 mb-1">
-                  <strong>Past Due:</strong> {status.requirements.pastDue.join(", ")}
+                  <strong>Past Due:</strong> {status.requirements.pastDue.join(', ')}
                 </p>
               )}
               {status.requirements.currentlyDue.length > 0 && (
                 <p className="text-sm text-warning-700">
-                  <strong>Currently Due:</strong> {status.requirements.currentlyDue.join(", ")}
+                  <strong>Currently Due:</strong> {status.requirements.currentlyDue.join(', ')}
                 </p>
               )}
             </div>
@@ -481,7 +518,7 @@ export function StripeConnectCard() {
         <Button
           onClick={handleOpenDashboard}
           variant="ghost"
-          className={`text-text-muted hover:text-sage hover:bg-sage/10 rounded-full h-11 ${!isFullyOnboarded ? "" : "flex-1"}`}
+          className={`text-text-muted hover:text-sage hover:bg-sage/10 rounded-full h-11 ${!isFullyOnboarded ? '' : 'flex-1'}`}
         >
           <ArrowUpRight className="w-4 h-4 mr-2" aria-hidden="true" />
           Open Stripe Dashboard

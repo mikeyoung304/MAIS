@@ -35,33 +35,43 @@ describe('BookingService', () => {
 
     // Create simple mocks for the new dependencies
     commissionService = {
-      calculateCommission: vi.fn().mockReturnValue({ platformFeeCents: 500, vendorPayoutCents: 99500 }),
+      calculateCommission: vi
+        .fn()
+        .mockReturnValue({ platformFeeCents: 500, vendorPayoutCents: 99500 }),
       calculateBookingTotal: vi.fn().mockResolvedValue({
         basePrice: 100000,
         addOnsTotal: 50000,
         subtotal: 150000,
         platformFeeCents: 7500,
         vendorPayoutCents: 142500,
-        customerTotalCents: 150000
-      })
+        customerTotalCents: 150000,
+      }),
     };
 
     tenantRepo = {
       findById: vi.fn().mockResolvedValue({
         id: 'test-tenant',
         stripeConnectedAccountId: 'acct_test123',
-        name: 'Test Tenant'
-      })
+        name: 'Test Tenant',
+      }),
     };
 
     idempotencyService = {
       generateCheckoutKey: vi.fn().mockReturnValue('checkout_test_key_123'),
       checkAndStore: vi.fn().mockResolvedValue(true),
       getStoredResponse: vi.fn().mockResolvedValue(null),
-      updateResponse: vi.fn().mockResolvedValue(undefined)
+      updateResponse: vi.fn().mockResolvedValue(undefined),
     };
 
-    service = new BookingService(bookingRepo, catalogRepo, eventEmitter, paymentProvider, commissionService, tenantRepo, idempotencyService);
+    service = new BookingService(
+      bookingRepo,
+      catalogRepo,
+      eventEmitter,
+      paymentProvider,
+      commissionService,
+      tenantRepo,
+      idempotencyService
+    );
   });
 
   describe('createCheckout', () => {
@@ -220,7 +230,9 @@ describe('BookingService', () => {
 
     it('throws NotFoundError if booking not found', async () => {
       // Act & Assert
-      await expect(service.getBookingById('test-tenant', 'nonexistent')).rejects.toThrow(NotFoundError);
+      await expect(service.getBookingById('test-tenant', 'nonexistent')).rejects.toThrow(
+        NotFoundError
+      );
     });
   });
 });

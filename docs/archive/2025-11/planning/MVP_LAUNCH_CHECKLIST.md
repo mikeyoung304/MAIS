@@ -308,14 +308,17 @@ These don't block engineering but should happen in parallel:
 ## Success Metrics (Go/No-Go Decision Points)
 
 ### End of Week 1
+
 - **Go?** 752 tests passing AND one E2E booking verified AND Supabase Storage working
 - **No-go?** Fix issues, don't move to Week 2 until all three pass
 
 ### End of Week 2
+
 - **Go?** Signup works AND first tenant can go live AND payment processes
 - **No-go?** Debug, don't deploy until all three work
 
 ### Launch Day
+
 - **Go live?** Production health checks pass AND smoke test succeeds AND no critical errors
 - **Rollback?** If major issues, revert and debug
 
@@ -325,13 +328,13 @@ These don't block engineering but should happen in parallel:
 
 These are acceptable for MVP and will be fixed post-launch:
 
-| Issue | Impact | Fix Timeline |
-|-------|--------|--------------|
-| Photo upload tests failing | Low (endpoint works, tests skip) | Week 3 |
-| Webhook HTTP tests todo | Low (endpoint works, tests skip) | Week 3 |
-| No analytics dashboard | Low (Stripe dashboard exists) | Week 3 |
-| No email templates | Low (file-sink works) | Week 3 |
-| No settings page | Low (users can ask for password reset) | Week 4 |
+| Issue                      | Impact                                 | Fix Timeline |
+| -------------------------- | -------------------------------------- | ------------ |
+| Photo upload tests failing | Low (endpoint works, tests skip)       | Week 3       |
+| Webhook HTTP tests todo    | Low (endpoint works, tests skip)       | Week 3       |
+| No analytics dashboard     | Low (Stripe dashboard exists)          | Week 3       |
+| No email templates         | Low (file-sink works)                  | Week 3       |
+| No settings page           | Low (users can ask for password reset) | Week 4       |
 
 **These are NOT blockers for first customer.**
 
@@ -388,6 +391,7 @@ If something blocks launch:
 4. **Execute:** Fix or defer based on decision
 
 **Example escalation:**
+
 - "Webhook tests failing"
 - "Would take 3-4 hours to debug"
 - "Decision: Fix now, it's critical for payment"
@@ -400,6 +404,7 @@ If something blocks launch:
 This is your complete file checklist:
 
 ### New Files (Create)
+
 ```
 server/src/routes/tenant-signup.routes.ts (50 lines)
 server/src/services/tenant-signup.service.ts (100 lines)
@@ -410,6 +415,7 @@ docs/WEEK2_STATUS.md (post-week-2)
 ```
 
 ### Modified Files (Update)
+
 ```
 packages/contracts/src/api.v1.ts (add signup contract)
 server/src/di.ts (wire signup service)
@@ -418,6 +424,7 @@ client/src/App.tsx (add /signup route)
 ```
 
 ### NO Changes Required
+
 ```
 server/prisma/schema.prisma (no schema changes)
 Database migrations (no new migrations)
@@ -429,11 +436,13 @@ Testing infrastructure (use existing)
 ## Time Budget
 
 **Week 1:** 12-14 hours over 5 days
+
 - Day 1-2: 8 hours (tests)
 - Day 3-4: 4 hours (E2E verify)
 - Day 5: 2 hours (storage + docs)
 
 **Week 2:** 5-6 hours over 3 days
+
 - Day 1-2: 3 hours (signup endpoint + form)
 - Day 3-4: 2 hours (integration + testing)
 - Day 5: 1 hour (deploy)
@@ -462,4 +471,3 @@ When you hit the checkboxes above, you've launched:
 Update it daily, check items off as you go, and escalate blockers immediately.
 
 Good luck! 🚀
-

@@ -11,6 +11,7 @@ Successfully generated complete OpenAPI/Swagger documentation for the MAIS Weddi
 ## Tasks Completed
 
 ### 1. Dependencies Installation (COMPLETED)
+
 - Installed `swagger-ui-express` for serving Swagger UI
 - Installed `@types/swagger-ui-express` for TypeScript support
 - Installed `openapi-types` for OpenAPI v3 type definitions
@@ -35,6 +36,7 @@ Added two new endpoints to `/Users/mikeyoung/CODING/MAIS/server/src/app.ts`:
 2. `GET /api/docs` - Interactive Swagger UI for exploring and testing the API
 
 Configuration includes:
+
 - Custom branding (title, CSS)
 - Persistent authorization (JWT tokens stay in UI between refreshes)
 - Request duration display
@@ -54,6 +56,7 @@ Documented all common error responses:
 - **500 Internal Server Error** - Server errors
 
 Each error includes:
+
 - Error code (e.g., `VALIDATION_ERROR`, `UNAUTHORIZED`)
 - Human-readable message
 - Example responses
@@ -61,6 +64,7 @@ Each error includes:
 ### 5. Testing (COMPLETED)
 
 Verified functionality:
+
 - `/api/docs/openapi.json` returns valid OpenAPI JSON (200 OK)
 - `/api/docs` serves Swagger UI HTML (200 OK with redirect)
 - All 16 endpoints documented correctly
@@ -70,6 +74,7 @@ Verified functionality:
 ## API Endpoints Documented
 
 ### Public Endpoints (6)
+
 1. `GET /v1/packages` - Get all wedding packages
 2. `GET /v1/packages/:slug` - Get specific package by slug
 3. `GET /v1/availability` - Check date availability
@@ -78,6 +83,7 @@ Verified functionality:
 6. `POST /v1/webhooks/stripe` - Handle Stripe webhook events
 
 ### Admin Endpoints (10)
+
 7. `POST /v1/admin/login` - Admin authentication
 8. `GET /v1/admin/bookings` - List all bookings
 9. `GET /v1/admin/blackouts` - List blackout dates
@@ -92,6 +98,7 @@ Verified functionality:
 ## Data Schemas Documented
 
 Comprehensive schemas for:
+
 - `Package` - Wedding package with add-ons
 - `AddOn` - Additional service/product
 - `Booking` - Booking details with status
@@ -103,15 +110,18 @@ Comprehensive schemas for:
 ## Technical Implementation Details
 
 ### Challenge: Zod v4 Compatibility
+
 The project uses Zod v4, but `@ts-rest/open-api` requires Zod v3. This created a dependency conflict that prevented using the automated OpenAPI generation.
 
 **Solution:** Created a manual OpenAPI 3.0 specification that:
+
 - Mirrors the ts-rest contract definitions
 - Maintains complete accuracy with the actual API
 - Avoids dependency conflicts
 - Provides more control over documentation details
 
 ### File Structure
+
 ```
 server/
 ├── src/
@@ -121,6 +131,7 @@ server/
 ```
 
 ### Code Quality
+
 - Full TypeScript type safety using `OpenAPIV3.Document` type
 - Follows OpenAPI 3.0 specification standards
 - Comprehensive examples for all schemas
@@ -144,6 +155,7 @@ server/
 ### Testing Admin Endpoints
 
 1. Use `/v1/admin/login` with credentials:
+
    ```json
    {
      "email": "admin@elope.example.com",
@@ -162,12 +174,14 @@ server/
 ### Production URLs
 
 The documentation includes two server configurations:
+
 - **Local:** http://localhost:3001
 - **Production:** https://api.elope.example.com (update when deployed)
 
 ## Integration with Existing System
 
 The documentation integrates seamlessly with:
+
 - **Express app** - Mounted as middleware routes
 - **ts-rest contracts** - Schemas manually mirror contract definitions
 - **Error handling** - Uses existing error codes and formats
@@ -186,17 +200,20 @@ The documentation integrates seamlessly with:
 ## Recommendations
 
 ### Immediate (Priority 1)
+
 1. Update production server URL when deploying
 2. Add examples for common request/response patterns
 3. Test all endpoints via Swagger UI to ensure accuracy
 
 ### Short-term (Priority 2)
+
 1. Add authentication flow documentation with screenshots
 2. Document rate limiting details per endpoint
 3. Add webhook signature verification documentation
 4. Include common error scenarios in endpoint descriptions
 
 ### Long-term (Priority 3)
+
 1. Consider using OpenAPI spec for contract testing
 2. Generate API client libraries from spec (TypeScript, Python, etc.)
 3. Automate OpenAPI spec validation in CI/CD
@@ -205,13 +222,16 @@ The documentation integrates seamlessly with:
 ## Files Modified/Created
 
 ### Created:
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/api-docs.ts` (1024 lines)
 
 ### Modified:
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/app.ts` (Added Swagger UI middleware and routes)
 - `/Users/mikeyoung/CODING/MAIS/server/package.json` (Added dependencies)
 
 ### Dependencies Added:
+
 - `swagger-ui-express@^5.0.0`
 - `@types/swagger-ui-express@^4.1.6` (dev)
 - `openapi-types@^12.1.3` (dev)
@@ -261,6 +281,7 @@ curl -X POST http://localhost:3001/v1/admin/login \
 ## Conclusion
 
 The API documentation is complete and fully functional. Developers and clients can now:
+
 - Explore the API interactively via Swagger UI
 - Test endpoints without writing code
 - Generate client libraries from the OpenAPI specification
@@ -272,6 +293,7 @@ The manual OpenAPI specification approach, while requiring more maintenance than
 ---
 
 **Next Steps:**
+
 - Update production server URL before deploying
 - Test all endpoints via Swagger UI
 - Share documentation URL with frontend team

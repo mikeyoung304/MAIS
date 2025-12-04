@@ -1,10 +1,10 @@
 ---
-title: "P3 Issue Prevention Strategies - Summary"
-category: "prevention"
+title: 'P3 Issue Prevention Strategies - Summary'
+category: 'prevention'
 tags: [p3-issues, code-review, react, logging, accessibility]
 priority: P3
-date_created: "2025-12-02"
-related_todos: ["141", "142", "143"]
+date_created: '2025-12-02'
+related_todos: ['141', '142', '143']
 ---
 
 # P3 Issue Prevention Strategies - Summary
@@ -14,6 +14,7 @@ related_todos: ["141", "142", "143"]
 This document summarizes the prevention strategies for three P3 (quality improvement) issues identified during visual editor code review. While not critical blockers, these patterns represent technical debt that compounds at scale and makes debugging difficult.
 
 **Issues Addressed:**
+
 1. **#141** - window.confirm() anti-pattern (accessibility/UX)
 2. **#142** - Missing useMemo for calculated values (performance)
 3. **#143** - Missing audit logging (debugging/troubleshooting)
@@ -30,12 +31,14 @@ This document summarizes the prevention strategies for three P3 (quality improve
 
 ```markdown
 ## React UI Patterns ✓
+
 - [ ] No window.confirm/alert/prompt (use AlertDialog)
 - [ ] Derived values wrapped in useMemo()
 - [ ] Event handlers wrapped in useCallback()
 - [ ] WCAG focus indicators present
 
 ## Backend Logging Patterns ✓
+
 - [ ] All mutations have logger.info() calls
 - [ ] Logs include: action, tenantId, resourceId, changedFields
 - [ ] No console.log usage
@@ -64,6 +67,7 @@ grep -A 20 "export.*function.*Component" client/src/**/*.tsx | grep -E "const .*
 ### Pattern 1: AlertDialog vs window.confirm()
 
 **Problem:** Browser's built-in `window.confirm()` is:
+
 - Not themeable (doesn't match app design)
 - Inaccessible (poor screen reader support)
 - Blocking (freezes main thread)
@@ -72,6 +76,7 @@ grep -A 20 "export.*function.*Component" client/src/**/*.tsx | grep -E "const .*
 **Solution:** Use Radix UI AlertDialog component
 
 **Example:**
+
 ```typescript
 // ❌ BEFORE
 const discardAll = async () => {
@@ -99,6 +104,7 @@ const [showDialog, setShowDialog] = useState(false);
 ```
 
 **Reference Examples:**
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/features/tenant-admin/BlackoutsManager/DeleteConfirmationDialog.tsx`
 - `/Users/mikeyoung/CODING/MAIS/client/src/features/photos/PhotoDeleteDialog.tsx`
 
@@ -107,6 +113,7 @@ const [showDialog, setShowDialog] = useState(false);
 ### Pattern 2: useMemo for Derived Values
 
 **Problem:** Calculated values recalculated on every render:
+
 - Unnecessary CPU cycles
 - Causes unnecessary re-renders in child components
 - Compounds with large datasets
@@ -114,17 +121,20 @@ const [showDialog, setShowDialog] = useState(false);
 **Solution:** Wrap derived values in `useMemo()`
 
 **When to use:**
+
 - Array operations (filter, map, sort)
 - Objects/arrays passed as props
 - Complex boolean logic
 - Values used multiple times
 
 **When NOT to use:**
+
 - Simple primitive assignments
 - Values only used once
 - Premature optimization
 
 **Example:**
+
 ```typescript
 // ❌ BEFORE: Recalculated on every render
 const effectiveTitle = draft.title ?? live.title;
@@ -132,18 +142,22 @@ const effectivePrice = draft.price ?? live.price;
 const hasChanges = draft.title !== live.title || draft.price !== live.price;
 
 // ✅ AFTER: Memoized
-const effectiveValues = useMemo(() => ({
-  title: draft.title ?? live.title,
-  price: draft.price ?? live.price,
-}), [draft.title, live.title, draft.price, live.price]);
+const effectiveValues = useMemo(
+  () => ({
+    title: draft.title ?? live.title,
+    price: draft.price ?? live.price,
+  }),
+  [draft.title, live.title, draft.price, live.price]
+);
 
-const hasChanges = useMemo(() =>
-  draft.title !== live.title || draft.price !== live.price,
+const hasChanges = useMemo(
+  () => draft.title !== live.title || draft.price !== live.price,
   [draft.title, live.title, draft.price, live.price]
 );
 ```
 
 **Reference Example:**
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/features/tenant-admin/visual-editor/components/EditablePackageCard.tsx`
 
 ---
@@ -151,6 +165,7 @@ const hasChanges = useMemo(() =>
 ### Pattern 3: Audit Logging for Important Operations
 
 **Problem:** No audit trail for operations:
+
 - Impossible to debug "who changed what when"
 - No visibility into system behavior
 - Difficult to troubleshoot user issues
@@ -158,6 +173,7 @@ const hasChanges = useMemo(() =>
 **Solution:** Add structured logging with `logger.info()`
 
 **What to log:**
+
 - Action performed (`package_draft_saved`, etc.)
 - Tenant ID (for multi-tenant filtering)
 - Resource ID (package ID, segment ID)
@@ -165,6 +181,7 @@ const hasChanges = useMemo(() =>
 - Count of affected records (bulk operations)
 
 **Example:**
+
 ```typescript
 // ❌ BEFORE: No audit trail
 async saveDraft(tenantId: string, id: string, draft: DraftInput) {
@@ -189,12 +206,14 @@ async saveDraft(tenantId: string, id: string, draft: DraftInput) {
 ```
 
 **Log Levels:**
+
 - `logger.info` - Normal operations, audit trail
 - `logger.warn` - Unexpected but handled situations
 - `logger.error` - Errors requiring attention
 - `logger.debug` - Development/troubleshooting (not in production)
 
 **Reference Example:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/services/package-draft.service.ts`
 
 ---
@@ -204,6 +223,7 @@ async saveDraft(tenantId: string, id: string, draft: DraftInput) {
 ### 1. Prevention Quick Reference Updated
 
 Added quick patterns to `/Users/mikeyoung/CODING/MAIS/docs/solutions/PREVENTION-QUICK-REFERENCE.md`:
+
 - UI Patterns section expanded with AlertDialog + useMemo
 - Backend Logging Pattern section added
 - Code Review Checklist updated
@@ -212,6 +232,7 @@ Added quick patterns to `/Users/mikeyoung/CODING/MAIS/docs/solutions/PREVENTION-
 ### 2. Prevention Strategies Index Updated
 
 Added to `/Users/mikeyoung/CODING/MAIS/docs/solutions/PREVENTION-STRATEGIES-INDEX.md`:
+
 - New section "Code Review Pattern Guides"
 - "By Use Case" section expanded:
   - "I'm adding React UI components"
@@ -224,6 +245,7 @@ Added to `/Users/mikeyoung/CODING/MAIS/docs/solutions/PREVENTION-STRATEGIES-INDE
 New document: `/Users/mikeyoung/CODING/MAIS/docs/solutions/code-review-patterns/react-ui-patterns-audit-logging-review.md`
 
 **Contents:**
+
 - Detection methods (how to spot anti-patterns)
 - Standard solutions with complete examples
 - Code review checklists
@@ -240,19 +262,27 @@ Add these to `.eslintrc.json`:
 ```json
 {
   "rules": {
-    "no-restricted-globals": ["error", {
-      "name": "confirm",
-      "message": "Use AlertDialog component instead of window.confirm()"
-    }, {
-      "name": "alert",
-      "message": "Use toast notifications or Dialog component instead of window.alert()"
-    }, {
-      "name": "prompt",
-      "message": "Use Dialog with form fields instead of window.prompt()"
-    }],
-    "no-console": ["error", {
-      "allow": []
-    }],
+    "no-restricted-globals": [
+      "error",
+      {
+        "name": "confirm",
+        "message": "Use AlertDialog component instead of window.confirm()"
+      },
+      {
+        "name": "alert",
+        "message": "Use toast notifications or Dialog component instead of window.alert()"
+      },
+      {
+        "name": "prompt",
+        "message": "Use Dialog with form fields instead of window.prompt()"
+      }
+    ],
+    "no-console": [
+      "error",
+      {
+        "allow": []
+      }
+    ],
     "react-hooks/exhaustive-deps": "error"
   }
 }
@@ -263,11 +293,13 @@ Add these to `.eslintrc.json`:
 ## Success Metrics
 
 **Before (Visual Editor PR):**
+
 - 3 P3 issues identified during review
 - No automated prevention
 - Manual code review required to catch patterns
 
 **After (This Implementation):**
+
 - ESLint rules block anti-patterns at commit time
 - Grep commands enable self-review
 - Code review checklists formalized
@@ -275,6 +307,7 @@ Add these to `.eslintrc.json`:
 - Prevention strategies indexed
 
 **Expected Impact:**
+
 - 80% reduction in similar P3 issues in future PRs
 - Faster code reviews (checklists + automation)
 - Improved code quality over time
@@ -287,6 +320,7 @@ Add these to `.eslintrc.json`:
 ### For New Engineers
 
 **Required Reading:**
+
 1. This document (5 min)
 2. [Prevention Quick Reference - UI Patterns](../PREVENTION-QUICK-REFERENCE.md#ui-patterns) (5 min)
 3. [Prevention Quick Reference - Backend Logging](../PREVENTION-QUICK-REFERENCE.md#backend-logging-pattern) (5 min)
@@ -296,6 +330,7 @@ Add these to `.eslintrc.json`:
 ### For Code Reviewers
 
 **Additional Reading:**
+
 1. [React UI Patterns & Audit Logging Review](./react-ui-patterns-audit-logging-review.md) (20 min)
 2. [React Hooks Performance & WCAG Review](./react-hooks-performance-wcag-review.md) (15 min)
 
@@ -342,22 +377,26 @@ Service method modifies data?
 ## Rollout Plan
 
 ### Phase 1: Documentation (Complete)
+
 - [x] Create comprehensive guide
 - [x] Update Prevention Quick Reference
 - [x] Update Prevention Strategies Index
 - [x] Document working examples
 
 ### Phase 2: Automation (Recommended)
+
 - [ ] Add ESLint rules for window.confirm/alert/prompt
 - [ ] Add pre-commit hook for grep checks
 - [ ] Add CI/CD validation for audit logs
 
 ### Phase 3: Training (Recommended)
+
 - [ ] Team meeting to review patterns (30 min)
 - [ ] Update onboarding checklist
 - [ ] Add to code review template
 
 ### Phase 4: Monitoring (Optional)
+
 - [ ] Track P3 issue count in future PRs
 - [ ] Review effectiveness after 4 weeks
 - [ ] Adjust strategies based on feedback
@@ -367,15 +406,18 @@ Service method modifies data?
 ## Related Documentation
 
 **Prevention Strategies:**
+
 - [Prevention Quick Reference](/Users/mikeyoung/CODING/MAIS/docs/solutions/PREVENTION-QUICK-REFERENCE.md)
 - [Prevention Strategies Index](/Users/mikeyoung/CODING/MAIS/docs/solutions/PREVENTION-STRATEGIES-INDEX.md)
 - [Comprehensive Prevention Strategies](/Users/mikeyoung/CODING/MAIS/docs/solutions/COMPREHENSIVE-PREVENTION-STRATEGIES.md)
 
 **Code Review Patterns:**
+
 - [React UI Patterns & Audit Logging Review](/Users/mikeyoung/CODING/MAIS/docs/solutions/code-review-patterns/react-ui-patterns-audit-logging-review.md)
 - [React Hooks Performance & WCAG Review](/Users/mikeyoung/CODING/MAIS/docs/solutions/code-review-patterns/react-hooks-performance-wcag-review.md)
 
 **External Resources:**
+
 - [shadcn/ui AlertDialog](https://ui.shadcn.com/docs/components/alert-dialog)
 - [React useMemo](https://react.dev/reference/react/useMemo)
 - [React.memo](https://react.dev/reference/react/memo)
@@ -388,6 +430,7 @@ Service method modifies data?
 ### Q: Why are these P3 instead of P1/P2?
 
 **A:** These issues don't block functionality or create security vulnerabilities:
+
 - window.confirm() works, just poor UX/accessibility
 - Missing useMemo() works, just slower performance
 - Missing audit logs works, just harder to debug
@@ -397,6 +440,7 @@ However, they represent technical debt that compounds over time.
 ### Q: Should I refactor existing code to fix these patterns?
 
 **A:** Prioritize based on:
+
 1. **High traffic components** - Yes, refactor for useMemo performance
 2. **User-facing confirmations** - Yes, refactor to AlertDialog for UX
 3. **Important operations** - Yes, add audit logging for debugging
@@ -405,6 +449,7 @@ However, they represent technical debt that compounds over time.
 ### Q: Can I use window.confirm() for development/debugging?
 
 **A:** Yes, but:
+
 - Only in development/test code
 - Never in production code paths
 - Remove before committing to main
@@ -412,6 +457,7 @@ However, they represent technical debt that compounds over time.
 ### Q: How do I know if useMemo() is actually helping performance?
 
 **A:** Use React DevTools Profiler:
+
 1. Record component renders
 2. Look for high render counts
 3. Check if props/state actually changed
@@ -421,6 +467,7 @@ However, they represent technical debt that compounds over time.
 ### Q: What if I forget to add audit logging?
 
 **A:** Code review checklist catches it:
+
 - PR template includes logging checklist
 - Grep commands detect missing logs
 - Reviewer validates audit trail
@@ -430,6 +477,7 @@ However, they represent technical debt that compounds over time.
 ## Conclusion
 
 These three P3 patterns are now:
+
 1. **Documented** with examples and rationale
 2. **Integrated** into code review process
 3. **Searchable** via grep commands
@@ -437,6 +485,7 @@ These three P3 patterns are now:
 5. **Teachable** via training materials
 
 **Next Steps:**
+
 1. Engineers: Read this summary (5 min)
 2. Tech Lead: Schedule team review (30 min)
 3. DevOps: Add ESLint rules (1 hour)

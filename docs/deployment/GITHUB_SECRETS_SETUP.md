@@ -106,6 +106,7 @@ Store these securely (password manager, secure note, etc.).
      - Copy `postgresql://user:pass@...` (for DIRECT_URL/PRODUCTION_DIRECT_URL)
 
 3. **Add Secrets:**
+
    ```
    Secret Name: PRODUCTION_DATABASE_URL
    Value: postgresql://...
@@ -126,6 +127,7 @@ Store these securely (password manager, secure note, etc.).
      - Copy Webhook Signing Secret from Webhooks section
 
 3. **Add Secrets:**
+
    ```
    Secret Name: STRIPE_SECRET_KEY
    Value: sk_live_...
@@ -163,6 +165,7 @@ Store these securely (password manager, secure note, etc.).
    - Create new token (scopes: `deployments`, `project.read`)
 
 3. **Add Secrets:**
+
    ```
    Secret Name: VERCEL_TOKEN
    Value: <token from step 2>
@@ -196,6 +199,7 @@ Store these securely (password manager, secure note, etc.).
    - Settings → Environments → production
 
 2. **Add Environment Variables:**
+
    ```
    Name: PRODUCTION_API_URL
    Value: https://api.maconaisolutions.com
@@ -261,18 +265,18 @@ done
 
 ## Secret Rotation Schedule
 
-| Secret | Rotation | Reason |
-|--------|----------|--------|
-| `JWT_SECRET` | 90 days | Cryptographic key compromise detection window |
-| `TENANT_SECRETS_ENCRYPTION_KEY` | 90 days | Encryption key security |
-| `STRIPE_SECRET_KEY` | 180 days | PCI compliance recommendation |
-| `STRIPE_WEBHOOK_SECRET` | 180 days | PCI compliance recommendation |
-| `POSTMARK_SERVER_TOKEN` | 180 days | Email service security |
-| `PRODUCTION_DATABASE_URL` | On team changes | Only if credentials change |
-| `PRODUCTION_DIRECT_URL` | On team changes | Only if credentials change |
-| `RENDER_PRODUCTION_API_DEPLOY_HOOK` | 180 days | Deploy hook security |
-| `VERCEL_TOKEN` | 180 days | Hosting provider security |
-| `CODECOV_TOKEN` | 365 days | Low-privilege reporting token |
+| Secret                              | Rotation        | Reason                                        |
+| ----------------------------------- | --------------- | --------------------------------------------- |
+| `JWT_SECRET`                        | 90 days         | Cryptographic key compromise detection window |
+| `TENANT_SECRETS_ENCRYPTION_KEY`     | 90 days         | Encryption key security                       |
+| `STRIPE_SECRET_KEY`                 | 180 days        | PCI compliance recommendation                 |
+| `STRIPE_WEBHOOK_SECRET`             | 180 days        | PCI compliance recommendation                 |
+| `POSTMARK_SERVER_TOKEN`             | 180 days        | Email service security                        |
+| `PRODUCTION_DATABASE_URL`           | On team changes | Only if credentials change                    |
+| `PRODUCTION_DIRECT_URL`             | On team changes | Only if credentials change                    |
+| `RENDER_PRODUCTION_API_DEPLOY_HOOK` | 180 days        | Deploy hook security                          |
+| `VERCEL_TOKEN`                      | 180 days        | Hosting provider security                     |
+| `CODECOV_TOKEN`                     | 365 days        | Low-privilege reporting token                 |
 
 ### Rotation Procedure
 
@@ -303,11 +307,13 @@ echo $NEW_SECRET
 **Error:** Workflow fails with "variable not set"
 
 **Check:**
+
 1. Secret name matches exactly (case-sensitive)
 2. Secret is available to the workflow's environment
 3. Workflow can access secrets (not in schedule events by default)
 
 **Fix:**
+
 ```yaml
 # Correct syntax
 env:
@@ -323,6 +329,7 @@ env:
 **If secret is leaked:**
 
 1. **Immediately rotate the secret:**
+
    ```bash
    # 1. Generate new value
    NEW=$(openssl rand -hex 32)
@@ -334,6 +341,7 @@ env:
    ```
 
 2. **Check for exposure:**
+
    ```bash
    # Search commit history for secret
    git log -p | grep -i "sk_test_\|sk_live_"
@@ -352,6 +360,7 @@ env:
 **Problem:** Pull request workflow can't access production secrets
 
 **This is intentional!** Production secrets are only available to:
+
 - Push to main branch
 - Manual workflow dispatch
 - Tagged releases
@@ -363,12 +372,14 @@ env:
 **Error:** "could not connect to server"
 
 **Check:**
+
 1. DATABASE_URL format is correct (with pooler suffix)
 2. DIRECT_URL is set (required for migrations)
 3. Database allows connections from GitHub Actions IPs
 4. Connection pooler is active in Supabase
 
 **Fix:**
+
 ```yaml
 env:
   DATABASE_URL: postgresql://user:pass@host:port/db?poolingMode=transaction

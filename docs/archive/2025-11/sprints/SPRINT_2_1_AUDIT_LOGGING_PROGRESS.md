@@ -19,10 +19,12 @@ Implementing comprehensive audit logging system to track all configuration chang
 ## Completed Tasks (7/11) ✅
 
 ### 1. Database Schema Design ✅
+
 **File:** `server/prisma/schema.prisma`
 **Commit:** `e1e4ea6`
 
 Created `ConfigChangeLog` table with:
+
 - **Tenant Scoping:** All audit logs isolated by tenantId
 - **Change Tracking:** changeType, operation, entityType, entityId
 - **Attribution:** userId, agentId, email, role (who made the change)
@@ -35,6 +37,7 @@ Created `ConfigChangeLog` table with:
   - `[userId]` - User activity tracking
 
 **Change Types:**
+
 - `config_version` - New config system changes (future)
 - `agent_proposal` - Agent-proposed changes (future)
 - `package_crud` - Package create/update/delete (legacy, during migration)
@@ -42,10 +45,12 @@ Created `ConfigChangeLog` table with:
 - `blackout_change` - Blackout date changes (legacy, during migration)
 
 ### 2. AuditService Implementation ✅
+
 **File:** `server/src/services/audit.service.ts`
 **Commit:** `e1e4ea6`
 
 **Core Methods:**
+
 ```typescript
 // For new config system (ConfigVersion, AgentProposal)
 await auditService.trackChange({
@@ -84,16 +89,19 @@ const timeline = await auditService.getTenantAuditLog(tenantId, { limit: 50 });
 ```
 
 **Features:**
+
 - Full before/after snapshots for rollback
 - Optional metadata (IP, session, reason)
 - Paginated queries with filters
 - Tenant-scoped audit trails
 
 ### 3. Package CRUD Audit Hooks ✅
+
 **File:** `server/src/services/catalog.service.ts`
 **Commit:** `15ab95a`
 
 **Implementation:**
+
 ```typescript
 // Added AuditContext interface
 export interface AuditContext {
@@ -116,12 +124,14 @@ async deletePackage(tenantId: string, id: string, auditCtx?: AuditContext)
 ```
 
 **Audit Behavior:**
+
 - **Create:** Logs afterSnapshot only (no previous state)
 - **Update:** Logs both beforeSnapshot and afterSnapshot
 - **Delete:** Logs beforeSnapshot only (no final state)
 - **Optional:** If auditCtx missing, operation succeeds without logging (gradual adoption)
 
 ### 4. Dependency Injection ✅
+
 **File:** `server/src/di.ts`
 **Commits:** `e1e4ea6`, `15ab95a`
 
@@ -134,16 +144,19 @@ async deletePackage(tenantId: string, id: string, auditCtx?: AuditContext)
 ## Remaining Tasks (4/11) ⏳
 
 ### 5. Tenant Branding Audit Hooks ⏳ NEXT
+
 **Target File:** `server/src/controllers/tenant-admin.controller.ts` or equivalent
 **Status:** Not started
 
 **TODO:**
+
 - Find where Tenant.branding is updated
 - Add AuditService injection
 - Add audit logging with `changeType: 'branding_update'`
 - Track before/after snapshots of branding JSON
 
 **Code Pattern:**
+
 ```typescript
 const beforeBranding = await getTenantBranding(tenantId);
 await updateTenantBranding(tenantId, newBranding);
@@ -166,16 +179,19 @@ if (auditService && auditCtx) {
 ```
 
 ### 6. Blackout Changes Audit Hooks ⏳ NEXT
+
 **Target File:** Check `server/src/routes/blackouts.routes.ts` or equivalent
 **Status:** Not started
 
 **TODO:**
+
 - Find BlackoutRepository or BlackoutService
 - Add AuditService injection
 - Add audit logging for create/delete operations
 - Use `changeType: 'blackout_change'`
 
 **Code Pattern:**
+
 ```typescript
 // Create
 const blackout = await blackoutRepo.addBlackout(tenantId, date, reason);
@@ -210,11 +226,13 @@ if (auditService && auditCtx && existing) {
 ```
 
 ### 7. Unit Tests for AuditService ⏳
+
 **Target File:** `server/src/services/audit.service.test.ts` (create)
 **Status:** Not started
 **Coverage Goal:** 70% branch coverage
 
 **Test Cases Needed:**
+
 ```typescript
 describe('AuditService', () => {
   describe('trackChange', () => {
@@ -257,10 +275,12 @@ describe('AuditService', () => {
 ```
 
 ### 8. Integration Tests for Audit Hooks ⏳
+
 **Target File:** `server/src/services/catalog.service.integration.test.ts` (create)
 **Status:** Not started
 
 **Test Cases Needed:**
+
 - Package create with audit logging
 - Package update with audit logging
 - Package delete with audit logging
@@ -273,18 +293,22 @@ describe('AuditService', () => {
 ## Architecture Decisions
 
 ### Why Optional Audit Context?
+
 Allows gradual adoption as controllers are updated. Operations succeed even without audit context, but logging is skipped. Once all controllers provide context, make it required.
 
 ### Why Double-Logging During Migration?
+
 Legacy CRUD operations (Package, Tenant.branding, BlackoutDate) logged now to maintain auditability. Once migrated to config system, these become config changes logged via `trackChange()`.
 
 ### Why Full Snapshots Instead of Diffs?
+
 - **Rollback:** Can restore any previous version instantly
 - **Simplicity:** No complex diff/merge logic needed
 - **Debugging:** See exact state at any point in time
 - **Storage:** JSON columns in Postgres are efficient
 
 ### Why Separate trackChange() and trackLegacyChange()?
+
 - **Type Safety:** Different changeTypes for new vs legacy
 - **Migration Clarity:** Easy to identify legacy operations
 - **Future Cleanup:** Remove trackLegacyChange() after migration
@@ -359,6 +383,7 @@ git log --oneline audit/cache-tenant-isolation
 Agent-powered, config-driven booking platform. Sprint 2 focuses on foundation (audit logging, type safety, tests) before implementing config versioning (Sprint 3) and agent interface (Sprint 4).
 
 **Current Architecture:**
+
 - Multi-tenant SaaS (up to 50 wedding businesses)
 - Row-level tenant isolation (all queries scoped by tenantId)
 - PostgreSQL + Prisma ORM
@@ -366,28 +391,33 @@ Agent-powered, config-driven booking platform. Sprint 2 focuses on foundation (a
 - React 18 + Vite frontend
 
 **Migration Strategy:**
+
 - Old: Hardcoded branding, manual admin updates
 - New: Config-driven, versioned, agent-proposed changes
 - Transition: Log both systems until fully migrated
 
 **Security Requirements:**
+
 - All config changes MUST be logged with attribution
 - All agent proposals MUST require human approval
 - All changes MUST be rollback-capable via snapshots
 - 70% branch coverage required for production
 
 **Sprint 2 Roadmap:**
+
 - 2.1: Audit logging ✅ 60% complete
 - 2.2: Type safety (remove `as any`, add Zod schemas)
 - 2.3: Test suite (unit + integration + E2E, 70% coverage)
 
 **Sprint 3 Roadmap:**
+
 - ConfigVersion database schema
 - Config versioning API endpoints
 - Preview/publish workflow
 - Widget config hydration via PostMessage
 
 **Sprint 4 Roadmap:**
+
 - AgentProposal table
 - Agent API endpoints
 - Admin approval UI with diff view
@@ -398,17 +428,20 @@ Agent-powered, config-driven booking platform. Sprint 2 focuses on foundation (a
 ## Technical Debt & Future Work
 
 ### After Sprint 2.1 Complete
+
 - Make audit context required (remove optional `?`)
 - Add audit context to all admin controllers
 - Add IP address/user agent extraction from request
 - Add audit log viewer UI in admin dashboard
 
 ### After Migration to Config System (Sprint 3+)
+
 - Remove `trackLegacyChange()` method
 - Remove `changeType: 'package_crud' | 'branding_update' | 'blackout_change'`
 - All operations use `trackChange()` with config system types
 
 ### Performance Optimization (Sprint 5+)
+
 - Add audit log archival (move old logs to cold storage)
 - Add audit log search/filtering UI
 - Add audit log export (CSV, JSON)
@@ -419,18 +452,21 @@ Agent-powered, config-driven booking platform. Sprint 2 focuses on foundation (a
 ## Testing Strategy
 
 ### Unit Tests (Vitest)
+
 - Mock Prisma client
 - Test all AuditService methods
 - Test error handling
 - Test optional parameters
 
 ### Integration Tests (Vitest + Real DB)
+
 - Use test database
 - Test actual Prisma writes
 - Verify foreign key constraints
 - Test tenant isolation
 
 ### E2E Tests (Playwright - Sprint 2.3)
+
 - Test admin package CRUD with audit logging
 - Verify audit log appears in admin UI
 - Test rollback functionality
@@ -459,17 +495,20 @@ A: Current implementation: Operation succeeds, audit fails silently (logged to e
 ## Performance Considerations
 
 ### Database Impact
+
 - Each mutation adds 1 INSERT to ConfigChangeLog
 - Indexes keep queries fast (timeline, entity history)
 - JSON snapshots compressed by Postgres
 - Expected impact: <5ms per operation
 
 ### Storage Growth
+
 - Estimate: ~2KB per audit entry (with snapshots)
 - 1000 changes/day = 2MB/day = ~730MB/year per tenant
 - Mitigation: Implement archival after 1 year
 
 ### Query Performance
+
 - Timeline queries: Indexed on [tenantId, createdAt]
 - Entity history: Indexed on [tenantId, entityType, entityId]
 - Expected: <10ms for most queries
@@ -479,12 +518,14 @@ A: Current implementation: Operation succeeds, audit fails silently (logged to e
 ## Security & Compliance
 
 ### GDPR Considerations
+
 - Audit logs contain user email (PII)
 - Must be included in data export requests
 - Must be deleted on user account deletion
 - Retention policy: TBD (default 7 years for financial records)
 
 ### SOC 2 Compliance
+
 - Audit trail satisfies control requirements
 - Immutable logs (no UPDATE/DELETE on ConfigChangeLog)
 - Attribution tracking (who, when, why)
@@ -495,6 +536,7 @@ A: Current implementation: Operation succeeds, audit fails silently (logged to e
 ## Success Metrics
 
 **Sprint 2.1 Complete When:**
+
 - ✅ ConfigChangeLog table deployed
 - ✅ AuditService implemented with all methods
 - ✅ Package CRUD audit hooks functional
@@ -504,6 +546,7 @@ A: Current implementation: Operation succeeds, audit fails silently (logged to e
 - ⏳ Integration tests passing
 
 **Definition of Done:**
+
 - All code committed to `audit/cache-tenant-isolation` branch
 - All tests passing locally
 - Pattern validation hook passes (no tenant isolation warnings)

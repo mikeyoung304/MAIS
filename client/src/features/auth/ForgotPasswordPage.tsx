@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { InputEnhanced } from "@/components/ui/input-enhanced";
-import { Logo } from "@/components/brand/Logo";
-import { ErrorSummary, type FormError } from "@/components/ui/ErrorSummary";
-import { Mail, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
-import { useForm } from "@/hooks/useForm";
-import { api } from "@/lib/api";
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { InputEnhanced } from '@/components/ui/input-enhanced';
+import { Logo } from '@/components/brand/Logo';
+import { ErrorSummary, type FormError } from '@/components/ui/ErrorSummary';
+import { Mail, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import { useForm } from '@/hooks/useForm';
+import { api } from '@/lib/api';
 
 /**
  * Forgot Password Page
@@ -22,7 +22,7 @@ export function ForgotPasswordPage() {
   const [validationErrors, setValidationErrors] = useState<FormError[]>([]);
 
   const { values, handleChange } = useForm({
-    email: "",
+    email: '',
   });
 
   /**
@@ -32,9 +32,9 @@ export function ForgotPasswordPage() {
     const errors: FormError[] = [];
 
     if (!values.email) {
-      errors.push({ field: "email", message: "Email is required" });
+      errors.push({ field: 'email', message: 'Email is required' });
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-      errors.push({ field: "email", message: "Please enter a valid email address" });
+      errors.push({ field: 'email', message: 'Please enter a valid email address' });
     }
 
     return errors;
@@ -63,13 +63,13 @@ export function ForgotPasswordPage() {
       });
 
       if (response.status !== 200) {
-        throw new Error("Failed to send reset email");
+        throw new Error('Failed to send reset email');
       }
 
       // Success - show confirmation
       setIsSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setIsLoading(false);
     }
@@ -97,8 +97,8 @@ export function ForgotPasswordPage() {
               <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-white mb-2">Check Your Email</h2>
               <p className="text-white/70 mb-6">
-                If an account exists for <strong className="text-white">{values.email}</strong>,
-                you will receive a password reset link shortly.
+                If an account exists for <strong className="text-white">{values.email}</strong>, you
+                will receive a password reset link shortly.
               </p>
               <p className="text-white/50 text-sm mb-6">
                 Didn't receive the email? Check your spam folder or try again.
@@ -148,14 +148,14 @@ export function ForgotPasswordPage() {
           </CardHeader>
           <CardContent>
             {/* Validation Errors */}
-            <ErrorSummary
-              errors={validationErrors}
-              onDismiss={() => setValidationErrors([])}
-            />
+            <ErrorSummary errors={validationErrors} onDismiss={() => setValidationErrors([])} />
 
             {/* Server Error */}
             {error && (
-              <div role="alert" className="mb-6 p-4 bg-red-900/50 border border-red-400 text-red-100 rounded">
+              <div
+                role="alert"
+                className="mb-6 p-4 bg-red-900/50 border border-red-400 text-red-100 rounded"
+              >
                 <div className="flex items-start gap-2">
                   <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
                   <p>{error}</p>
@@ -168,7 +168,7 @@ export function ForgotPasswordPage() {
                 id="email"
                 type="email"
                 value={values.email}
-                onChange={(e) => handleChange("email", e.target.value)}
+                onChange={(e) => handleChange('email', e.target.value)}
                 label="Email"
                 floatingLabel
                 leftIcon={<Mail className="w-5 h-5 text-white/60" />}
@@ -190,7 +190,7 @@ export function ForgotPasswordPage() {
 
             <div className="mt-6 text-center">
               <p className="text-white/70 text-sm">
-                Remember your password?{" "}
+                Remember your password?{' '}
                 <Link
                   to="/login"
                   className="text-white font-semibold underline hover:text-macon-orange transition-colors"

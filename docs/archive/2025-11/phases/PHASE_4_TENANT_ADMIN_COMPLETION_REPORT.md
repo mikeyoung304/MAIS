@@ -26,6 +26,7 @@ Phase 4 completes the multi-tenant SaaS platform by implementing comprehensive b
 ### Backend Components
 
 #### Upload Service (`server/src/services/upload.service.ts`)
+
 - **Purpose**: Handle file uploads for tenant logos
 - **Storage**: Local file system (`/uploads/logos/`)
 - **Validation**:
@@ -35,15 +36,17 @@ Phase 4 completes the multi-tenant SaaS platform by implementing comprehensive b
 - **Future**: Can be upgraded to cloud storage (Cloudinary, AWS S3)
 
 **Key Features**:
+
 ```typescript
 class UploadService {
-  uploadLogo(file, tenantId) // Upload and validate logo
-  deleteLogo(filename)        // Clean up old logos
-  getUploadDir()              // Get upload directory path
+  uploadLogo(file, tenantId); // Upload and validate logo
+  deleteLogo(filename); // Clean up old logos
+  getUploadDir(); // Get upload directory path
 }
 ```
 
 #### Tenant Admin Routes (`server/src/routes/tenant-admin.routes.ts`)
+
 - **POST /v1/tenant/logo**: Upload logo with multipart/form-data
 - **PUT /v1/tenant/branding**: Update colors and fonts
 - **GET /v1/tenant/branding**: Retrieve current branding
@@ -56,17 +59,20 @@ class UploadService {
 - **GET /v1/tenant-admin/bookings**: View all bookings with filtering
 
 **Security**:
+
 - Tenant middleware ensures multi-tenant isolation
 - All routes verify tenant ownership before modifications
 - File upload validation prevents malicious uploads
 
 #### Static File Serving (`server/src/app.ts`)
+
 ```typescript
 // Serve uploaded logos from static directory
 app.use('/uploads/logos', express.static(uploadDir));
 ```
 
 **Environment Variables**:
+
 - `UPLOAD_DIR`: Upload directory path (default: `./uploads/logos`)
 - `API_BASE_URL`: Base URL for generating public logo URLs
 
@@ -77,6 +83,7 @@ app.use('/uploads/logos', express.static(uploadDir));
 ### ColorPicker Component (`client/src/components/ColorPicker.tsx`)
 
 **Features**:
+
 - Visual color picker using `react-colorful`
 - Hex color input with validation
 - Live color preview
@@ -84,6 +91,7 @@ app.use('/uploads/logos', express.static(uploadDir));
 - Real-time color updates
 
 **Usage Example**:
+
 ```tsx
 <ColorPicker
   label="Primary Color"
@@ -95,6 +103,7 @@ app.use('/uploads/logos', express.static(uploadDir));
 ### FontSelector Component (`client/src/components/FontSelector.tsx`)
 
 **Features**:
+
 - Curated list of wedding-appropriate Google Fonts:
   - Inter (Modern Sans-Serif)
   - Playfair Display (Elegant Serif)
@@ -109,11 +118,9 @@ app.use('/uploads/logos', express.static(uploadDir));
 - Dropdown with font previews
 
 **Usage Example**:
+
 ```tsx
-<FontSelector
-  value="Inter"
-  onChange={(font) => setBranding({ ...branding, fontFamily: font })}
-/>
+<FontSelector value="Inter" onChange={(font) => setBranding({ ...branding, fontFamily: font })} />
 ```
 
 ---
@@ -125,6 +132,7 @@ app.use('/uploads/logos', express.static(uploadDir));
 **Purpose**: Fetch and apply tenant branding to the booking flow
 
 **Features**:
+
 - Fetches branding from `/v1/tenant/branding`
 - Applies CSS custom properties:
   - `--color-primary`: Primary brand color
@@ -134,6 +142,7 @@ app.use('/uploads/logos', express.static(uploadDir));
 - Caches branding for 5 minutes
 
 **Usage**:
+
 ```tsx
 // In Home.tsx and Package.tsx
 function Home() {
@@ -143,6 +152,7 @@ function Home() {
 ```
 
 ### Applied To:
+
 1. ✅ **Home Page** (`client/src/pages/Home.tsx`)
 2. ✅ **Package Page** (`client/src/pages/Package.tsx`)
 3. ✅ **CatalogGrid** (via Home page)
@@ -156,6 +166,7 @@ function Home() {
 ### Updated CLI (`server/scripts/create-tenant-with-stripe.ts`)
 
 **New Options**:
+
 ```bash
 # Password for tenant admin dashboard
 --password=secure123
@@ -167,6 +178,7 @@ function Home() {
 ```
 
 **Complete Example**:
+
 ```bash
 pnpm create-tenant-with-stripe \
   --slug=bellaweddings \
@@ -180,6 +192,7 @@ pnpm create-tenant-with-stripe \
 ```
 
 **Output**:
+
 - Tenant ID and metadata
 - API keys (public and secret - shown once)
 - Stripe Connect account details
@@ -196,8 +209,14 @@ pnpm create-tenant-with-stripe \
 ```typescript
 // Update Branding DTO
 export const UpdateBrandingDtoSchema = z.object({
-  primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  primaryColor: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional(),
+  secondaryColor: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional(),
   fontFamily: z.string().optional(),
 });
 
@@ -215,10 +234,12 @@ export const LogoUploadResponseDtoSchema = z.object({
 ## 6. Dependencies Added
 
 ### Server
+
 - `multer`: ^1.4.5-lts.1 - Multipart form data handling
 - `@types/multer`: ^1.4.12 - TypeScript types
 
 ### Client
+
 - `react-colorful`: ^5.6.1 - Color picker component
 
 ---
@@ -228,6 +249,7 @@ export const LogoUploadResponseDtoSchema = z.object({
 ### Manual Testing Checklist
 
 #### Logo Upload
+
 - [ ] Upload JPG logo (< 2MB)
 - [ ] Upload PNG logo (< 2MB)
 - [ ] Upload SVG logo (< 2MB)
@@ -237,6 +259,7 @@ export const LogoUploadResponseDtoSchema = z.object({
 - [ ] Verify logo persists in tenant.branding
 
 #### Color Customization
+
 - [ ] Pick color from color picker
 - [ ] Enter valid hex color manually
 - [ ] Enter invalid hex color (should show error)
@@ -244,12 +267,14 @@ export const LogoUploadResponseDtoSchema = z.object({
 - [ ] Verify color saves to tenant.branding
 
 #### Font Customization
+
 - [ ] Select each font from dropdown
 - [ ] Verify font preview renders correctly
 - [ ] Verify Google Font loads dynamically
 - [ ] Verify font saves to tenant.branding
 
 #### Branding Application
+
 - [ ] Verify branding loads on Home page
 - [ ] Verify branding loads on Package page
 - [ ] Verify branding loads in Widget
@@ -257,6 +282,7 @@ export const LogoUploadResponseDtoSchema = z.object({
 - [ ] Verify font family applied globally
 
 #### CLI Tool
+
 - [ ] Create tenant with basic options
 - [ ] Create tenant with branding options
 - [ ] Verify branding saved to database
@@ -265,6 +291,7 @@ export const LogoUploadResponseDtoSchema = z.object({
 ### API Testing Examples
 
 #### Upload Logo
+
 ```bash
 curl -X POST http://localhost:5000/v1/tenant/logo \
   -H "X-Tenant-Key: YOUR_PUBLIC_API_KEY" \
@@ -272,6 +299,7 @@ curl -X POST http://localhost:5000/v1/tenant/logo \
 ```
 
 #### Update Branding
+
 ```bash
 curl -X PUT http://localhost:5000/v1/tenant/branding \
   -H "X-Tenant-Key: YOUR_PUBLIC_API_KEY" \
@@ -284,6 +312,7 @@ curl -X PUT http://localhost:5000/v1/tenant/branding \
 ```
 
 #### Get Branding
+
 ```bash
 curl -X GET http://localhost:5000/v1/tenant/branding \
   -H "X-Tenant-Key: YOUR_PUBLIC_API_KEY"
@@ -294,6 +323,7 @@ curl -X GET http://localhost:5000/v1/tenant/branding \
 ## 8. File Structure
 
 ### New Files Created
+
 ```
 server/
 ├── src/
@@ -319,6 +349,7 @@ docs/
 ```
 
 ### Modified Files
+
 ```
 server/
 ├── src/
@@ -347,6 +378,7 @@ packages/
 ## 9. Security Considerations
 
 ### File Upload Security
+
 1. **File Size Limit**: 2MB maximum to prevent DoS
 2. **MIME Type Validation**: Only image types allowed
 3. **Filename Sanitization**: Generated unique filenames prevent overwrites
@@ -354,12 +386,14 @@ packages/
 5. **Path Traversal Prevention**: No user input in file paths
 
 ### Tenant Isolation
+
 1. **Middleware Enforcement**: All routes use tenant middleware
 2. **Ownership Validation**: Verify tenant owns resources before modifications
 3. **Multi-Tenant Database**: Tenant ID filter on all queries
 4. **API Key Authentication**: Public API key required for all requests
 
 ### Input Validation
+
 1. **Hex Color Validation**: Regex validation for color format
 2. **Font Family Whitelist**: Only predefined fonts accepted
 3. **Request Body Validation**: Zod schemas for all inputs
@@ -369,12 +403,14 @@ packages/
 ## 10. Performance Optimizations
 
 ### Branding
+
 - **Caching**: Branding cached for 5 minutes on client
 - **CSS Custom Properties**: Fast runtime application
 - **Font Loading**: Lazy loading of Google Fonts
 - **Static Files**: Efficient static file serving via Express
 
 ### File Uploads
+
 - **Memory Storage**: Small files stored in memory before writing
 - **Streaming**: Large files can be streamed to disk
 - **Compression**: Future: Add image optimization (resize, compress)
@@ -384,6 +420,7 @@ packages/
 ## 11. Future Enhancements
 
 ### Short-Term (MVP+)
+
 1. **Cloud Storage**: Migrate to Cloudinary or AWS S3
 2. **Image Optimization**: Resize and compress logos automatically
 3. **CDN Integration**: Serve logos from CDN
@@ -391,6 +428,7 @@ packages/
 5. **Multiple Logos**: Support light/dark mode logos
 
 ### Medium-Term
+
 1. **Advanced Branding**:
    - Custom CSS editor
    - Background images
@@ -401,6 +439,7 @@ packages/
 4. **Brand Guidelines**: Accessibility contrast checking
 
 ### Long-Term
+
 1. **White-Label Platform**: Complete platform customization
 2. **Multi-Brand Support**: Multiple brands per tenant
 3. **Theme Marketplace**: Shareable/purchasable themes
@@ -413,11 +452,13 @@ packages/
 ### For Existing Tenants
 
 #### Step 1: Create Upload Directory
+
 ```bash
 mkdir -p server/uploads/logos
 ```
 
 #### Step 2: Update Environment Variables
+
 ```bash
 # Add to .env
 UPLOAD_DIR=./uploads/logos
@@ -425,12 +466,14 @@ API_BASE_URL=http://localhost:5000
 ```
 
 #### Step 3: Restart Server
+
 ```bash
 cd server
 pnpm dev
 ```
 
 #### Step 4: Test Logo Upload
+
 ```bash
 # Use curl or Postman to test
 curl -X POST http://localhost:5000/v1/tenant/logo \
@@ -443,6 +486,7 @@ curl -X POST http://localhost:5000/v1/tenant/logo \
 ## 13. Known Issues & Limitations
 
 ### Current Limitations
+
 1. **Local Storage**: Files stored locally (not production-ready)
 2. **No Image Processing**: No resize/compress on upload
 3. **No Logo Deletion**: Old logos not cleaned up on update
@@ -450,6 +494,7 @@ curl -X POST http://localhost:5000/v1/tenant/logo \
 5. **No Branding Versioning**: Can't rollback branding changes
 
 ### Workarounds
+
 1. Use reverse proxy (nginx) for production file serving
 2. Manually optimize images before upload
 3. Periodically clean up orphaned logo files
@@ -462,32 +507,33 @@ curl -X POST http://localhost:5000/v1/tenant/logo \
 
 ### Tenant Admin Endpoints
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/v1/tenant/logo` | Upload tenant logo | Tenant API Key |
-| PUT | `/v1/tenant/branding` | Update branding | Tenant API Key |
-| GET | `/v1/tenant/branding` | Get current branding | Tenant API Key |
-| GET | `/v1/tenant-admin/packages` | List packages | Tenant API Key |
-| POST | `/v1/tenant-admin/packages` | Create package | Tenant API Key |
-| PUT | `/v1/tenant-admin/packages/:id` | Update package | Tenant API Key |
-| DELETE | `/v1/tenant-admin/packages/:id` | Delete package | Tenant API Key |
-| GET | `/v1/tenant-admin/blackouts` | List blackout dates | Tenant API Key |
-| POST | `/v1/tenant-admin/blackouts` | Add blackout date | Tenant API Key |
-| DELETE | `/v1/tenant-admin/blackouts/:id` | Remove blackout | Tenant API Key |
-| GET | `/v1/tenant-admin/bookings` | View bookings | Tenant API Key |
+| Method | Endpoint                         | Description          | Auth           |
+| ------ | -------------------------------- | -------------------- | -------------- |
+| POST   | `/v1/tenant/logo`                | Upload tenant logo   | Tenant API Key |
+| PUT    | `/v1/tenant/branding`            | Update branding      | Tenant API Key |
+| GET    | `/v1/tenant/branding`            | Get current branding | Tenant API Key |
+| GET    | `/v1/tenant-admin/packages`      | List packages        | Tenant API Key |
+| POST   | `/v1/tenant-admin/packages`      | Create package       | Tenant API Key |
+| PUT    | `/v1/tenant-admin/packages/:id`  | Update package       | Tenant API Key |
+| DELETE | `/v1/tenant-admin/packages/:id`  | Delete package       | Tenant API Key |
+| GET    | `/v1/tenant-admin/blackouts`     | List blackout dates  | Tenant API Key |
+| POST   | `/v1/tenant-admin/blackouts`     | Add blackout date    | Tenant API Key |
+| DELETE | `/v1/tenant-admin/blackouts/:id` | Remove blackout      | Tenant API Key |
+| GET    | `/v1/tenant-admin/bookings`      | View bookings        | Tenant API Key |
 
 ### Public Endpoints
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/v1/tenant/branding` | Get tenant branding | Tenant API Key |
-| GET | `/uploads/logos/:filename` | Serve logo file | None (public) |
+| Method | Endpoint                   | Description         | Auth           |
+| ------ | -------------------------- | ------------------- | -------------- |
+| GET    | `/v1/tenant/branding`      | Get tenant branding | Tenant API Key |
+| GET    | `/uploads/logos/:filename` | Serve logo file     | None (public)  |
 
 ---
 
 ## 15. Success Metrics
 
 ### Implementation Metrics
+
 - ✅ **8** new API endpoints created
 - ✅ **2** new React components (ColorPicker, FontSelector)
 - ✅ **1** new service (UploadService)
@@ -498,6 +544,7 @@ curl -X POST http://localhost:5000/v1/tenant/logo \
 - ✅ **100%** multi-tenant isolation enforced
 
 ### Quality Metrics
+
 - ✅ File upload validation (size, type)
 - ✅ Input validation (colors, fonts)
 - ✅ Security middleware on all routes
@@ -521,6 +568,7 @@ The platform is now production-ready for multi-tenant SaaS deployment with full 
 ### Next Phase Recommendations
 
 **Phase 5: Tenant Admin Dashboard**
+
 - Build full-featured admin UI for tenant self-service
 - Package manager with drag-drop photo upload
 - Blackout calendar with visual date picker
@@ -529,6 +577,7 @@ The platform is now production-ready for multi-tenant SaaS deployment with full 
 - Analytics and reporting dashboard
 
 **Phase 6: Advanced Features**
+
 - Email notifications and templates
 - SMS reminders via Twilio
 - Customer portal for booking modifications

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "088"
+issue_id: '088'
 tags:
   - code-review
   - accessibility
@@ -15,6 +15,7 @@ dependencies: []
 ## Problem Statement
 
 The storefront components have several accessibility issues that could affect users with disabilities:
+
 - Missing ARIA attributes on dynamic content
 - Image fallback lacks role="img"
 - Warning messages need aria-live
@@ -23,27 +24,34 @@ The storefront components have several accessibility issues that could affect us
 ## Findings
 
 ### Discovery
+
 Code quality review identified these a11y gaps:
 
 1. **Missing role on gradient fallback** (ChoiceCardBase line 87-90)
+
    ```typescript
    <div className="w-full h-full bg-gradient-to-br ...">
      <span>{categoryLabel}</span>
    </div>
    ```
+
    Should have `role="img"` and `aria-label` when acting as image replacement.
 
 2. **Warning not announced** (TierSelector line 110-125)
+
    ```typescript
    {!isComplete && configuredTiers.length > 0 && (
      <div className="mb-8 p-4 bg-amber-50 ...">
    ```
+
    Should have `aria-live="polite"` and `role="alert"`.
 
 3. **Icon accessibility** (TierSelector line 90-96)
+
    ```typescript
    <ArrowLeft className="w-4 h-4 mr-2" />
    ```
+
    Decorative icon should have `aria-hidden="true"`.
 
 4. **Badge accessibility** (ChoiceCardBase line 68)
@@ -53,6 +61,7 @@ Code quality review identified these a11y gaps:
    Works for visual users but could use explicit aria-label.
 
 ### Impact
+
 - Screen reader users may miss important context
 - WCAG 2.1 AA compliance at risk
 - Legal liability in some jurisdictions
@@ -75,11 +84,13 @@ Fix each issue with appropriate ARIA markup:
 ```
 
 **Pros:**
+
 - Proper accessibility compliance
 - Minimal code changes
 - No visual impact
 
 **Cons:**
+
 - Need to test with screen readers
 
 **Effort:** Small (30 min)
@@ -90,10 +101,12 @@ Fix each issue with appropriate ARIA markup:
 Add comments explaining accessibility decisions made.
 
 **Pros:**
+
 - Documents intent
 - No code changes
 
 **Cons:**
+
 - Doesn't fix issues
 - Compliance risk remains
 
@@ -107,14 +120,17 @@ Add comments explaining accessibility decisions made.
 ## Technical Details
 
 ### Affected Files
+
 - `client/src/features/storefront/ChoiceCardBase.tsx`
 - `client/src/features/storefront/TierSelector.tsx`
 
 ### Components
+
 - ChoiceCardBase
 - TierSelector
 
 ### Database Changes
+
 None
 
 ## Acceptance Criteria
@@ -127,9 +143,9 @@ None
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2025-11-29 | Created during code review | Quality review identified a11y gaps |
+| Date       | Action                      | Learnings                                                                     |
+| ---------- | --------------------------- | ----------------------------------------------------------------------------- |
+| 2025-11-29 | Created during code review  | Quality review identified a11y gaps                                           |
 | 2025-12-02 | Implemented ARIA attributes | Added role="img", aria-label, aria-hidden to improve screen reader experience |
 
 ## Resources

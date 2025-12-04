@@ -9,12 +9,14 @@ Complete guide for deploying tenant-scoped routing to Vercel with custom domains
 **URL Pattern:** `app.com/t/{tenantSlug}`
 
 **Pros:**
+
 - No DNS configuration needed
 - Single domain SSL certificate
 - Easiest to implement
 - Works immediately after deploy
 
 **Cons:**
+
 - Tenants share same domain (less white-label)
 - URL is longer
 
@@ -65,12 +67,14 @@ Complete guide for deploying tenant-scoped routing to Vercel with custom domains
 ```
 
 **Deployment:**
+
 ```bash
 npm run build
 # Push to Vercel (automatic with GitHub integration)
 ```
 
 **Test:**
+
 ```
 https://app.vercel.app/t/demo-tenant
 https://app.vercel.app/t/acme-corp
@@ -83,11 +87,13 @@ https://app.vercel.app/t/acme-corp
 **URL Pattern:** `{tenantSlug}.app.com`
 
 **Pros:**
+
 - True white-label URLs
 - Tenants can use custom subdomains
 - Professional appearance
 
 **Cons:**
+
 - Requires DNS wildcard configuration
 - Each custom domain needs SSL certificate
 - More complex Vercel setup
@@ -104,6 +110,7 @@ TTL: 3600
 ```
 
 **Example (Route53):**
+
 ```
 Name: *.app.com
 Type: CNAME
@@ -111,6 +118,7 @@ Value: cname.vercel-dns.com
 ```
 
 **Example (Cloudflare):**
+
 ```
 Type: CNAME
 Name: *
@@ -165,6 +173,7 @@ Content: app.vercel.app
 ```
 
 **Important:** Vercel's `has` condition with named groups requires:
+
 1. Node.js 16+ (check Vercel Environment tab)
 2. Vercel Pro plan (for custom headers with named groups)
 3. Proper named group syntax in regex
@@ -198,15 +207,14 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
 ```
 
 **Note:** This middleware approach works with Next.js. For a pure Vite/SPA app, the `vercel.json` rewrites are preferred.
 
 **Test:**
+
 ```
 https://demo-tenant.app.com
 https://acme-corp.app.com
@@ -220,11 +228,13 @@ https://www.app.com (main domain)
 **URL Pattern:** Tenants use their own custom domain
 
 **Pros:**
+
 - Full white-label experience
 - SEO benefits (own domain)
 - Tenant branding without URL compromise
 
 **Cons:**
+
 - Most complex setup
 - Requires domain management
 - Each domain needs separate configuration
@@ -240,6 +250,7 @@ Type: Root Domain or Subdomain
 ```
 
 Vercel will provide nameservers:
+
 ```
 ns1.vercel-dns.com
 ns2.vercel-dns.com
@@ -322,6 +333,7 @@ export async function resolveTenantFromDomain(host: string) {
 ```
 
 **Test:**
+
 ```
 https://customer.com (SSL auto-provisioned)
 https://app.vercel.app/t/customer
@@ -470,6 +482,7 @@ export default defineConfig({
 **Symptoms:** Getting 404 on `/t/:tenantSlug` routes
 
 **Solution:**
+
 1. Check `vercel.json` rewrites order (most specific first)
 2. Ensure catch-all rewrite goes last: `{ "source": "/(.*)", "destination": "/index.html" }`
 3. Verify React Router routes match Vercel rewrites
@@ -479,6 +492,7 @@ export default defineConfig({
 **Symptoms:** Certificate error on custom domain
 
 **Solution:**
+
 1. Wait 48 hours for DNS propagation
 2. Check Vercel dashboard for certificate status
 3. Ensure DNS records are pointing to Vercel
@@ -489,6 +503,7 @@ export default defineConfig({
 **Symptoms:** `*.app.com` not reaching deployment
 
 **Solution:**
+
 1. Verify DNS wildcard record exists: `*.app.com`
 2. Check DNS propagation: `dig *.app.com`
 3. Ensure Vercel Pro plan (required for wildcard)
@@ -499,6 +514,7 @@ export default defineConfig({
 **Symptoms:** Logout when switching tenants
 
 **Solution:**
+
 1. Store JWT in HttpOnly cookie (not localStorage)
 2. Clear tenant-specific caches when switching
 3. Implement proper CSRF protection for custom domains
@@ -673,20 +689,24 @@ analytics.track('tenant_accessed', {
 ### From Single Domain to Multi-Tenant
 
 **Phase 1: Path-Based (Week 1)**
+
 - Deploy with `/t/:slug` routes
 - Works immediately
 
 **Phase 2: Subdomains (Week 2)**
+
 - Add wildcard DNS record
 - Update `vercel.json` with subdomain rules
 - Enable for beta tenants
 
 **Phase 3: Custom Domains (Week 3)**
+
 - Add custom domain support
 - Build domain management UI
 - Gradual rollout to enterprise tenants
 
 **Phase 4: Deprecate Old Routes (Week 4)**
+
 - Remove legacy routes
 - Migrate admin to tenant admin dashboard
 

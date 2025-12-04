@@ -1,4 +1,5 @@
 # API Documentation Audit Report
+
 **Date:** November 18, 2025
 **Auditor:** API Documentation Specialist
 **Scope:** Complete API surface verification against documentation
@@ -19,20 +20,22 @@
 
 ### Documentation Files Found
 
-| File | Location | Status | Last Updated |
-|------|----------|--------|--------------|
-| **API_DOCS_QUICKSTART.md** | `/docs/api/` | OUTDATED | Oct 31, 2025 |
-| **API_DOCUMENTATION_COMPLETION_REPORT.md** | `/docs/api/` | OUTDATED | Oct 31, 2025 |
-| **ERRORS.md** | `/docs/api/` | CURRENT | Minimal but accurate |
-| **README.md** | `/docs/api/` | CURRENT | Index only |
-| **api-docs.ts** | `/server/src/` | OUTDATED | Oct 31, 2025 |
+| File                                       | Location       | Status   | Last Updated         |
+| ------------------------------------------ | -------------- | -------- | -------------------- |
+| **API_DOCS_QUICKSTART.md**                 | `/docs/api/`   | OUTDATED | Oct 31, 2025         |
+| **API_DOCUMENTATION_COMPLETION_REPORT.md** | `/docs/api/`   | OUTDATED | Oct 31, 2025         |
+| **ERRORS.md**                              | `/docs/api/`   | CURRENT  | Minimal but accurate |
+| **README.md**                              | `/docs/api/`   | CURRENT  | Index only           |
+| **api-docs.ts**                            | `/server/src/` | OUTDATED | Oct 31, 2025         |
 
 ### OpenAPI Specification Location
+
 - **Interactive Swagger UI:** `http://localhost:3001/api/docs`
 - **JSON Specification:** `http://localhost:3001/api/docs/openapi.json`
 - **Source File:** `/server/src/api-docs.ts` (1024 lines, manually maintained)
 
 ### Technology Stack
+
 - **Contract System:** ts-rest with Zod validation
 - **Documentation:** Manual OpenAPI 3.0 specification
 - **Type Safety:** Full TypeScript type checking via contracts
@@ -45,6 +48,7 @@
 ### ACTUAL API Surface (31 endpoints from contracts)
 
 **Public Endpoints (7):**
+
 1. `GET /v1/packages` - List all packages
 2. `GET /v1/packages/:slug` - Get package by slug
 3. `GET /v1/availability` - Check date availability
@@ -53,47 +57,24 @@
 6. `GET /v1/bookings/:id` - Get booking details
 7. `GET /v1/tenant/branding` - Get tenant branding **[MISSING]**
 
-**Webhook Endpoints (1):**
-8. `POST /v1/webhooks/stripe` - Handle Stripe webhooks
+**Webhook Endpoints (1):** 8. `POST /v1/webhooks/stripe` - Handle Stripe webhooks
 
-**Authentication Endpoints (2):**
-9. `POST /v1/admin/login` - Platform admin login
-10. `POST /v1/tenant-auth/login` - Tenant admin login **[MISSING]**
+**Authentication Endpoints (2):** 9. `POST /v1/admin/login` - Platform admin login 10. `POST /v1/tenant-auth/login` - Tenant admin login **[MISSING]**
 
-**Platform Admin API (6):**
-11. `GET /v1/admin/tenants` - List all tenants **[MISSING]**
-12. `POST /v1/admin/tenants` - Create tenant **[MISSING]**
-13. `GET /v1/admin/tenants/:id` - Get tenant details **[MISSING]**
-14. `PUT /v1/admin/tenants/:id` - Update tenant **[MISSING]**
-15. `DELETE /v1/admin/tenants/:id` - Deactivate tenant **[MISSING]**
-16. `GET /v1/admin/stats` - Platform statistics **[MISSING]**
+**Platform Admin API (6):** 11. `GET /v1/admin/tenants` - List all tenants **[MISSING]** 12. `POST /v1/admin/tenants` - Create tenant **[MISSING]** 13. `GET /v1/admin/tenants/:id` - Get tenant details **[MISSING]** 14. `PUT /v1/admin/tenants/:id` - Update tenant **[MISSING]** 15. `DELETE /v1/admin/tenants/:id` - Deactivate tenant **[MISSING]** 16. `GET /v1/admin/stats` - Platform statistics **[MISSING]**
 
-**Admin API - Bookings/Blackouts (3):**
-17. `GET /v1/admin/bookings` - List bookings
-18. `GET /v1/admin/blackouts` - List blackout dates
-19. `POST /v1/admin/blackouts` - Create blackout
+**Admin API - Bookings/Blackouts (3):** 17. `GET /v1/admin/bookings` - List bookings 18. `GET /v1/admin/blackouts` - List blackout dates 19. `POST /v1/admin/blackouts` - Create blackout
 
-**Admin API - Packages (3):**
-20. `POST /v1/admin/packages` - Create package
-21. `PUT /v1/admin/packages/:id` - Update package
-22. `DELETE /v1/admin/packages/:id` - Delete package
+**Admin API - Packages (3):** 20. `POST /v1/admin/packages` - Create package 21. `PUT /v1/admin/packages/:id` - Update package 22. `DELETE /v1/admin/packages/:id` - Delete package
 
-**Admin API - Add-ons (3):**
-23. `POST /v1/admin/packages/:packageId/addons` - Create add-on
-24. `PUT /v1/admin/addons/:id` - Update add-on
-25. `DELETE /v1/admin/addons/:id` - Delete add-on
+**Admin API - Add-ons (3):** 23. `POST /v1/admin/packages/:packageId/addons` - Create add-on 24. `PUT /v1/admin/addons/:id` - Update add-on 25. `DELETE /v1/admin/addons/:id` - Delete add-on
 
-**Tenant Admin API - Segments (6):**
-26. `GET /v1/tenant/admin/segments` - List segments **[MISSING]**
-27. `POST /v1/tenant/admin/segments` - Create segment **[MISSING]**
-28. `GET /v1/tenant/admin/segments/:id` - Get segment **[MISSING]**
-29. `PUT /v1/tenant/admin/segments/:id` - Update segment **[MISSING]**
-30. `DELETE /v1/tenant/admin/segments/:id` - Delete segment **[MISSING]**
-31. `GET /v1/tenant/admin/segments/:id/stats` - Get segment stats **[MISSING]**
+**Tenant Admin API - Segments (6):** 26. `GET /v1/tenant/admin/segments` - List segments **[MISSING]** 27. `POST /v1/tenant/admin/segments` - Create segment **[MISSING]** 28. `GET /v1/tenant/admin/segments/:id` - Get segment **[MISSING]** 29. `PUT /v1/tenant/admin/segments/:id` - Update segment **[MISSING]** 30. `DELETE /v1/tenant/admin/segments/:id` - Delete segment **[MISSING]** 31. `GET /v1/tenant/admin/segments/:id/stats` - Get segment stats **[MISSING]**
 
 ### DOCUMENTED Endpoints (16 endpoints in api-docs.ts)
 
 **Currently Documented:**
+
 1. ✅ `GET /v1/packages`
 2. ✅ `GET /v1/packages/:slug`
 3. ✅ `GET /v1/availability`
@@ -113,17 +94,17 @@
 
 ### Coverage Metrics
 
-| Category | Implemented | Documented | Coverage |
-|----------|-------------|------------|----------|
-| Public API | 7 | 5 | 71.4% |
-| Webhooks | 1 | 1 | 100% |
-| Authentication | 2 | 1 | 50% |
-| Platform Admin | 6 | 0 | 0% |
-| Admin (Bookings/Blackouts) | 3 | 3 | 100% |
-| Admin (Packages) | 3 | 3 | 100% |
-| Admin (Add-ons) | 3 | 3 | 100% |
-| Tenant Admin (Segments) | 6 | 0 | 0% |
-| **TOTAL** | **31** | **16** | **51.6%** |
+| Category                   | Implemented | Documented | Coverage  |
+| -------------------------- | ----------- | ---------- | --------- |
+| Public API                 | 7           | 5          | 71.4%     |
+| Webhooks                   | 1           | 1          | 100%      |
+| Authentication             | 2           | 1          | 50%       |
+| Platform Admin             | 6           | 0          | 0%        |
+| Admin (Bookings/Blackouts) | 3           | 3          | 100%      |
+| Admin (Packages)           | 3           | 3          | 100%      |
+| Admin (Add-ons)            | 3           | 3          | 100%      |
+| Tenant Admin (Segments)    | 6           | 0          | 0%        |
+| **TOTAL**                  | **31**      | **16**     | **51.6%** |
 
 ---
 
@@ -132,6 +113,7 @@
 ### Critical Gaps - Platform Admin API (0% documented)
 
 **1. Tenant Management (5 endpoints)**
+
 ```typescript
 GET    /v1/admin/tenants        // List all tenants with stats
 POST   /v1/admin/tenants        // Create new tenant + API keys
@@ -141,6 +123,7 @@ DELETE /v1/admin/tenants/:id    // Deactivate tenant (soft delete)
 ```
 
 **Request/Response Examples:**
+
 ```json
 // POST /v1/admin/tenants
 {
@@ -166,11 +149,13 @@ DELETE /v1/admin/tenants/:id    // Deactivate tenant (soft delete)
 ```
 
 **2. Platform Statistics**
+
 ```typescript
-GET /v1/admin/stats  // Platform-wide metrics
+GET / v1 / admin / stats; // Platform-wide metrics
 ```
 
 **Response Schema:**
+
 ```json
 {
   "totalTenants": 12,
@@ -180,9 +165,9 @@ GET /v1/admin/stats  // Platform-wide metrics
   "totalBookings": 234,
   "confirmedBookings": 198,
   "pendingBookings": 36,
-  "totalRevenue": 458000,      // cents
+  "totalRevenue": 458000, // cents
   "platformCommission": 45800, // cents
-  "tenantRevenue": 412200,     // cents
+  "tenantRevenue": 412200, // cents
   "revenueThisMonth": 89000,
   "bookingsThisMonth": 42
 }
@@ -191,6 +176,7 @@ GET /v1/admin/stats  // Platform-wide metrics
 ### Critical Gaps - Tenant Admin API (0% documented)
 
 **Segment Management (6 endpoints)**
+
 ```typescript
 GET    /v1/tenant/admin/segments           // List all segments
 POST   /v1/tenant/admin/segments           // Create new segment
@@ -201,6 +187,7 @@ GET    /v1/tenant/admin/segments/:id/stats // Get segment statistics
 ```
 
 **Segment Schema (from DTO):**
+
 ```typescript
 {
   id: string;              // CUID
@@ -223,30 +210,29 @@ GET    /v1/tenant/admin/segments/:id/stats // Get segment statistics
 ### Missing Public Endpoints
 
 **1. Batch Availability Check**
+
 ```typescript
 GET /v1/availability/unavailable?startDate=2025-01-01&endDate=2025-01-31
 ```
 
 **Response:**
+
 ```json
 {
-  "dates": [
-    "2025-01-05",
-    "2025-01-12",
-    "2025-01-15",
-    "2025-01-25"
-  ]
+  "dates": ["2025-01-05", "2025-01-12", "2025-01-15", "2025-01-25"]
 }
 ```
 
 **Use Case:** Calendar widget optimization - single request instead of 30+ individual checks
 
 **2. Tenant Branding**
+
 ```typescript
-GET /v1/tenant/branding
+GET / v1 / tenant / branding;
 ```
 
 **Response:**
+
 ```json
 {
   "primaryColor": "#8B4513",
@@ -263,11 +249,13 @@ GET /v1/tenant/branding
 ### Missing Authentication Endpoint
 
 **Tenant Admin Login**
+
 ```typescript
-POST /v1/tenant-auth/login
+POST / v1 / tenant - auth / login;
 ```
 
 **Request:**
+
 ```json
 {
   "email": "admin@bellaweddings.com",
@@ -276,6 +264,7 @@ POST /v1/tenant-auth/login
 ```
 
 **Response:**
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -291,11 +280,13 @@ POST /v1/tenant-auth/login
 ### Current State (Partial)
 
 **Documented Authentication:**
+
 - ✅ JWT Bearer tokens for admin endpoints
 - ✅ Authorization header format (`Bearer <token>`)
 - ✅ Platform admin login endpoint
 
 **Missing Authentication Documentation:**
+
 - ❌ X-Tenant-Key header (critical for multi-tenancy!)
 - ❌ Tenant admin authentication (separate from platform admin)
 - ❌ API key format specification
@@ -309,6 +300,7 @@ POST /v1/tenant-auth/login
 The API uses TWO authentication systems:
 
 **System A: API Keys (Public Endpoints)**
+
 ```
 Header: X-Tenant-Key
 Format: pk_live_{slug}_{random32}
@@ -318,6 +310,7 @@ Security: Safe for client-side code
 ```
 
 **System B: JWT Tokens (Admin Endpoints)**
+
 ```
 Header: Authorization
 Format: Bearer {jwt_token}
@@ -340,6 +333,7 @@ When creating a tenant via `POST /v1/admin/tenants`:
 **WARNING:** Secret key is shown ONCE and never stored in plaintext. Must be saved immediately.
 
 **Public vs Secret Keys:**
+
 - **Public Key (`pk_live_*`)**: Safe for embedding in client-side code, widgets
 - **Secret Key (`sk_live_*`)**: Server-side only, used for Stripe Connect operations
 
@@ -350,6 +344,7 @@ When creating a tenant via `POST /v1/admin/tenants`:
 ### Accurate Schemas (From Contract Verification)
 
 **All documented schemas match Zod definitions:**
+
 - ✅ Package schema matches `PackageDtoSchema`
 - ✅ Booking schema matches `BookingDtoSchema`
 - ✅ AddOn schema matches `AddOnDtoSchema`
@@ -361,6 +356,7 @@ When creating a tenant via `POST /v1/admin/tenants`:
 ### Missing Schemas (Need to be added)
 
 **New DTOs in contracts but not in OpenAPI:**
+
 1. `TenantDto` - Tenant information
 2. `TenantDetailDto` - Extended tenant details with stats
 3. `CreateTenantDto` - Tenant creation request
@@ -382,6 +378,7 @@ When creating a tenant via `POST /v1/admin/tenants`:
 ### Current State: MINIMAL BUT ACCURATE
 
 **Documented in `/docs/api/ERRORS.md`:**
+
 ```
 400 - Validation failed (zod)
 401 - Auth required (admin)
@@ -393,6 +390,7 @@ When creating a tenant via `POST /v1/admin/tenants`:
 ```
 
 **Domain Errors:**
+
 ```
 BookingDateTakenError → 409
 InvalidWebhookSignatureError → 422
@@ -401,6 +399,7 @@ InvalidWebhookSignatureError → 422
 ### Missing Error Details
 
 **1. Multi-Tenant Specific Errors**
+
 ```
 401 INVALID_TENANT_KEY - X-Tenant-Key header missing or invalid
 403 TENANT_INACTIVE - Tenant account deactivated
@@ -412,6 +411,7 @@ InvalidWebhookSignatureError → 422
 **2. Validation Error Structure**
 
 When Zod validation fails:
+
 ```json
 {
   "error": "Validation error",
@@ -432,6 +432,7 @@ When Zod validation fails:
 **3. Missing Error Examples**
 
 The OpenAPI spec includes error responses but lacks realistic examples for:
+
 - Tenant authorization failures
 - Stripe webhook signature validation
 - Segment ownership violations
@@ -446,6 +447,7 @@ The OpenAPI spec includes error responses but lacks realistic examples for:
 **From git log analysis:**
 
 **Phase 3 (Latest):**
+
 - Platform admin tenant management endpoints (6 endpoints)
 - Tenant admin segment management (6 endpoints)
 - Batch availability check endpoint
@@ -453,6 +455,7 @@ The OpenAPI spec includes error responses but lacks realistic examples for:
 - Platform statistics endpoint
 
 **Phase 2:**
+
 - Segment model and CRUD operations
 - Multi-tenant authentication separation
 - Tenant admin role implementation
@@ -470,6 +473,7 @@ The OpenAPI spec includes error responses but lacks realistic examples for:
 **Source of Truth:** `/packages/contracts/src/api.v1.ts`
 
 **Verification Method:**
+
 1. Extracted all endpoint names from `Contracts` object
 2. Compared with route implementations in `/server/src/routes/`
 3. Cross-checked with OpenAPI `operationId` values
@@ -531,6 +535,7 @@ The OpenAPI spec includes error responses but lacks realistic examples for:
 
 ```markdown
 ### Public Endpoints (6)
+
 ### Admin Endpoints (10)
 ```
 
@@ -539,6 +544,7 @@ The OpenAPI spec includes error responses but lacks realistic examples for:
 **From API_DOCS_QUICKSTART.md (Line 122-154):**
 
 Lists endpoints but **completely omits:**
+
 - X-Tenant-Key authentication requirement
 - Tenant admin vs platform admin distinction
 - Segment management endpoints
@@ -550,12 +556,14 @@ Lists endpoints but **completely omits:**
 **Status:** CORRECT
 
 Swagger UI at `/api/docs` is properly configured with:
+
 - ✅ Bearer token authentication
 - ✅ Interactive "Try it out" functionality
 - ✅ Request/response examples
 - ✅ Persistent authorization
 
 **Missing:**
+
 - ❌ X-Tenant-Key security scheme definition
 - ❌ Separate authentication flows for tenant vs platform admin
 - ❌ Role-based endpoint grouping
@@ -567,6 +575,7 @@ Swagger UI at `/api/docs` is properly configured with:
 ### Priority 1: IMMEDIATE (Week 1)
 
 **1. Update OpenAPI Specification**
+
 - Add all 15 missing endpoints to `/server/src/api-docs.ts`
 - Define new schemas (TenantDto, SegmentDto, etc.)
 - Add X-Tenant-Key security scheme
@@ -574,6 +583,7 @@ Swagger UI at `/api/docs` is properly configured with:
 - **Estimated Effort:** 4-6 hours
 
 **2. Update X-Tenant-Key Documentation**
+
 - Document multi-tenant authentication model
 - Add API key format specification
 - Explain public vs secret key usage
@@ -581,6 +591,7 @@ Swagger UI at `/api/docs` is properly configured with:
 - **Estimated Effort:** 2 hours
 
 **3. Refresh Quick Start Guide**
+
 - Update endpoint count (16 → 31)
 - Add tenant admin login flow
 - Add segment management examples
@@ -590,6 +601,7 @@ Swagger UI at `/api/docs` is properly configured with:
 ### Priority 2: SHORT-TERM (Week 2-3)
 
 **4. Enhance Error Documentation**
+
 - Add tenant-specific error codes
 - Document Zod validation error structure
 - Include realistic error examples for each endpoint
@@ -597,6 +609,7 @@ Swagger UI at `/api/docs` is properly configured with:
 - **Estimated Effort:** 3 hours
 
 **5. Add Workflow Documentation**
+
 - Document platform admin tenant creation flow
 - Document tenant admin segment management flow
 - Document widget integration with branding API
@@ -604,6 +617,7 @@ Swagger UI at `/api/docs` is properly configured with:
 - **Estimated Effort:** 4 hours
 
 **6. Create Postman Collection**
+
 - Generate from updated OpenAPI spec
 - Pre-configure authentication
 - Add environment variables for tenant keys
@@ -613,24 +627,28 @@ Swagger UI at `/api/docs` is properly configured with:
 ### Priority 3: LONG-TERM (Month 2)
 
 **7. Automate Documentation Validation**
+
 - Create CI/CD check to compare contracts vs OpenAPI spec
 - Alert on endpoint count mismatch
 - Validate schema consistency
 - **Estimated Effort:** 8 hours
 
 **8. Generate Client SDKs**
+
 - TypeScript client from OpenAPI spec
 - Python client for integrations
 - Include tenant key management helpers
 - **Estimated Effort:** 12 hours
 
 **9. Add Interactive Examples**
+
 - Embed code snippets for each endpoint
 - Add cURL, JavaScript, Python examples
 - Create widget integration guide
 - **Estimated Effort:** 6 hours
 
 **10. Version Documentation**
+
 - Add API versioning strategy
 - Document deprecation policy
 - Create v1 vs v2 comparison (when applicable)
@@ -717,6 +735,7 @@ Swagger UI at `/api/docs` is properly configured with:
 ```
 
 **Add similar patterns for:**
+
 - `/v1/admin/tenants/:id` (GET, PUT, DELETE)
 - `/v1/admin/stats` (GET)
 - `/v1/tenant/admin/segments` (all CRUD)
@@ -901,13 +920,13 @@ npx swagger-cli validate server/src/api-docs.ts
 
 **Quality Metrics:**
 
-| Metric | Current | Target |
-|--------|---------|--------|
-| Endpoint Coverage | 51.6% (16/31) | 100% (31/31) |
-| Schema Coverage | 60% | 100% |
-| Authentication Methods | 50% (1/2) | 100% (2/2) |
-| Error Code Documentation | 40% | 90%+ |
-| Example Completeness | 70% | 95%+ |
+| Metric                   | Current       | Target       |
+| ------------------------ | ------------- | ------------ |
+| Endpoint Coverage        | 51.6% (16/31) | 100% (31/31) |
+| Schema Coverage          | 60%           | 100%         |
+| Authentication Methods   | 50% (1/2)     | 100% (2/2)   |
+| Error Code Documentation | 40%           | 90%+         |
+| Example Completeness     | 70%           | 95%+         |
 
 ---
 
@@ -916,6 +935,7 @@ npx swagger-cli validate server/src/api-docs.ts
 ### Preventing Future Documentation Drift
 
 **1. Pre-Commit Hook**
+
 ```bash
 #!/bin/bash
 # .git/hooks/pre-commit
@@ -938,6 +958,7 @@ fi
 ```
 
 **2. CI/CD Check**
+
 ```yaml
 # .github/workflows/docs-validation.yml
 name: API Documentation Validation
@@ -992,12 +1013,14 @@ When adding new endpoint to contracts:
 The API implementation is **robust and type-safe** with 31 well-defined endpoints, but documentation has **fallen 18 days behind** and covers only **51.6%** of the API surface.
 
 **Strengths:**
+
 - ✅ Contract-first design ensures type safety
 - ✅ Existing documentation (16 endpoints) is accurate
 - ✅ Swagger UI properly configured and functional
 - ✅ Error handling consistent and well-structured
 
 **Critical Gaps:**
+
 - ❌ 15 endpoints completely undocumented (48% of API)
 - ❌ Multi-tenant authentication (X-Tenant-Key) not explained
 - ❌ Platform admin vs tenant admin distinction unclear
@@ -1006,6 +1029,7 @@ The API implementation is **robust and type-safe** with 31 well-defined endpoint
 ### Business Impact
 
 **Without Documentation Updates:**
+
 - Frontend developers cannot integrate new features
 - Third-party integrations impossible for tenant management
 - Widget customization (branding API) undiscoverable
@@ -1013,6 +1037,7 @@ The API implementation is **robust and type-safe** with 31 well-defined endpoint
 - API appears incomplete or unmaintained
 
 **With Documentation Updates:**
+
 - Self-service client integration
 - Reduced support burden (Swagger UI self-explanatory)
 - Professional appearance to potential clients
@@ -1022,17 +1047,20 @@ The API implementation is **robust and type-safe** with 31 well-defined endpoint
 ### Recommended Next Actions
 
 **Week 1 (8 hours):**
+
 1. Update `/server/src/api-docs.ts` with 15 missing endpoints
 2. Add X-Tenant-Key security scheme
 3. Add missing schemas (Tenant, Segment, etc.)
 4. Test in Swagger UI
 
 **Week 2 (6 hours):**
+
 1. Update Quick Start Guide
 2. Enhance error documentation
 3. Generate and test Postman collection
 
 **Week 3 (4 hours):**
+
 1. Add workflow documentation
 2. Create CI/CD validation
 3. Implement pre-commit hook
@@ -1045,74 +1073,74 @@ The API implementation is **robust and type-safe** with 31 well-defined endpoint
 
 ### Public API (7 endpoints)
 
-| Endpoint | Method | Status | Notes |
-|----------|--------|--------|-------|
-| `/v1/packages` | GET | ✅ Documented | |
-| `/v1/packages/:slug` | GET | ✅ Documented | |
-| `/v1/availability` | GET | ✅ Documented | |
-| `/v1/availability/unavailable` | GET | ❌ Missing | Batch query |
-| `/v1/bookings/checkout` | POST | ✅ Documented | |
-| `/v1/bookings/:id` | GET | ✅ Documented | |
-| `/v1/tenant/branding` | GET | ❌ Missing | Widget customization |
+| Endpoint                       | Method | Status        | Notes                |
+| ------------------------------ | ------ | ------------- | -------------------- |
+| `/v1/packages`                 | GET    | ✅ Documented |                      |
+| `/v1/packages/:slug`           | GET    | ✅ Documented |                      |
+| `/v1/availability`             | GET    | ✅ Documented |                      |
+| `/v1/availability/unavailable` | GET    | ❌ Missing    | Batch query          |
+| `/v1/bookings/checkout`        | POST   | ✅ Documented |                      |
+| `/v1/bookings/:id`             | GET    | ✅ Documented |                      |
+| `/v1/tenant/branding`          | GET    | ❌ Missing    | Widget customization |
 
 ### Webhook API (1 endpoint)
 
-| Endpoint | Method | Status | Notes |
-|----------|--------|--------|-------|
-| `/v1/webhooks/stripe` | POST | ✅ Documented | |
+| Endpoint              | Method | Status        | Notes |
+| --------------------- | ------ | ------------- | ----- |
+| `/v1/webhooks/stripe` | POST   | ✅ Documented |       |
 
 ### Authentication API (2 endpoints)
 
-| Endpoint | Method | Status | Notes |
-|----------|--------|--------|-------|
-| `/v1/admin/login` | POST | ✅ Documented | Platform admin |
-| `/v1/tenant-auth/login` | POST | ❌ Missing | Tenant admin |
+| Endpoint                | Method | Status        | Notes          |
+| ----------------------- | ------ | ------------- | -------------- |
+| `/v1/admin/login`       | POST   | ✅ Documented | Platform admin |
+| `/v1/tenant-auth/login` | POST   | ❌ Missing    | Tenant admin   |
 
 ### Platform Admin API (6 endpoints)
 
-| Endpoint | Method | Status | Notes |
-|----------|--------|--------|-------|
-| `/v1/admin/tenants` | GET | ❌ Missing | List all tenants |
-| `/v1/admin/tenants` | POST | ❌ Missing | Create tenant |
-| `/v1/admin/tenants/:id` | GET | ❌ Missing | Tenant details |
-| `/v1/admin/tenants/:id` | PUT | ❌ Missing | Update tenant |
-| `/v1/admin/tenants/:id` | DELETE | ❌ Missing | Deactivate tenant |
-| `/v1/admin/stats` | GET | ❌ Missing | Platform statistics |
+| Endpoint                | Method | Status     | Notes               |
+| ----------------------- | ------ | ---------- | ------------------- |
+| `/v1/admin/tenants`     | GET    | ❌ Missing | List all tenants    |
+| `/v1/admin/tenants`     | POST   | ❌ Missing | Create tenant       |
+| `/v1/admin/tenants/:id` | GET    | ❌ Missing | Tenant details      |
+| `/v1/admin/tenants/:id` | PUT    | ❌ Missing | Update tenant       |
+| `/v1/admin/tenants/:id` | DELETE | ❌ Missing | Deactivate tenant   |
+| `/v1/admin/stats`       | GET    | ❌ Missing | Platform statistics |
 
 ### Admin API - Bookings/Blackouts (3 endpoints)
 
-| Endpoint | Method | Status | Notes |
-|----------|--------|--------|-------|
-| `/v1/admin/bookings` | GET | ✅ Documented | |
-| `/v1/admin/blackouts` | GET | ✅ Documented | |
-| `/v1/admin/blackouts` | POST | ✅ Documented | |
+| Endpoint              | Method | Status        | Notes |
+| --------------------- | ------ | ------------- | ----- |
+| `/v1/admin/bookings`  | GET    | ✅ Documented |       |
+| `/v1/admin/blackouts` | GET    | ✅ Documented |       |
+| `/v1/admin/blackouts` | POST   | ✅ Documented |       |
 
 ### Admin API - Packages (3 endpoints)
 
-| Endpoint | Method | Status | Notes |
-|----------|--------|--------|-------|
-| `/v1/admin/packages` | POST | ✅ Documented | |
-| `/v1/admin/packages/:id` | PUT | ✅ Documented | |
-| `/v1/admin/packages/:id` | DELETE | ✅ Documented | |
+| Endpoint                 | Method | Status        | Notes |
+| ------------------------ | ------ | ------------- | ----- |
+| `/v1/admin/packages`     | POST   | ✅ Documented |       |
+| `/v1/admin/packages/:id` | PUT    | ✅ Documented |       |
+| `/v1/admin/packages/:id` | DELETE | ✅ Documented |       |
 
 ### Admin API - Add-ons (3 endpoints)
 
-| Endpoint | Method | Status | Notes |
-|----------|--------|--------|-------|
-| `/v1/admin/packages/:packageId/addons` | POST | ✅ Documented | |
-| `/v1/admin/addons/:id` | PUT | ✅ Documented | |
-| `/v1/admin/addons/:id` | DELETE | ✅ Documented | |
+| Endpoint                               | Method | Status        | Notes |
+| -------------------------------------- | ------ | ------------- | ----- |
+| `/v1/admin/packages/:packageId/addons` | POST   | ✅ Documented |       |
+| `/v1/admin/addons/:id`                 | PUT    | ✅ Documented |       |
+| `/v1/admin/addons/:id`                 | DELETE | ✅ Documented |       |
 
 ### Tenant Admin API - Segments (6 endpoints)
 
-| Endpoint | Method | Status | Notes |
-|----------|--------|--------|-------|
-| `/v1/tenant/admin/segments` | GET | ❌ Missing | List segments |
-| `/v1/tenant/admin/segments` | POST | ❌ Missing | Create segment |
-| `/v1/tenant/admin/segments/:id` | GET | ❌ Missing | Segment details |
-| `/v1/tenant/admin/segments/:id` | PUT | ❌ Missing | Update segment |
-| `/v1/tenant/admin/segments/:id` | DELETE | ❌ Missing | Delete segment |
-| `/v1/tenant/admin/segments/:id/stats` | GET | ❌ Missing | Segment statistics |
+| Endpoint                              | Method | Status     | Notes              |
+| ------------------------------------- | ------ | ---------- | ------------------ |
+| `/v1/tenant/admin/segments`           | GET    | ❌ Missing | List segments      |
+| `/v1/tenant/admin/segments`           | POST   | ❌ Missing | Create segment     |
+| `/v1/tenant/admin/segments/:id`       | GET    | ❌ Missing | Segment details    |
+| `/v1/tenant/admin/segments/:id`       | PUT    | ❌ Missing | Update segment     |
+| `/v1/tenant/admin/segments/:id`       | DELETE | ❌ Missing | Delete segment     |
+| `/v1/tenant/admin/segments/:id/stats` | GET    | ❌ Missing | Segment statistics |
 
 **Total:** 31 endpoints
 **Documented:** 16 (51.6%)
@@ -1123,15 +1151,18 @@ The API implementation is **robust and type-safe** with 31 well-defined endpoint
 ## Appendix B: Contact Information
 
 **For Documentation Updates:**
+
 - API Specification: `/server/src/api-docs.ts`
 - Quick Start Guide: `/docs/api/API_DOCS_QUICKSTART.md`
 - Error Documentation: `/docs/api/ERRORS.md`
 
 **Source of Truth:**
+
 - Contracts: `/packages/contracts/src/api.v1.ts`
 - DTOs: `/packages/contracts/src/dto.ts`
 
 **Testing:**
+
 - Swagger UI: `http://localhost:3001/api/docs`
 - OpenAPI JSON: `http://localhost:3001/api/docs/openapi.json`
 

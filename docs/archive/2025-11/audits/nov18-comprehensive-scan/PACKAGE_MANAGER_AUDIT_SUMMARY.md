@@ -28,16 +28,19 @@ This audit conducted a comprehensive review of all package manager references ac
 ## Files Requiring Immediate Updates
 
 ### Tier 1 - CRITICAL (95%+ user visibility)
+
 - README.md (18 references)
 - CONTRIBUTING.md (27+ references)
 - DEVELOPING.md (11 references)
 
 ### Tier 2 - HIGH
+
 - TESTING.md (50+ references)
 - CODE_HEALTH_ASSESSMENT.md (10+ references)
 - LAUNCH_ACTION_PLAN.md (5+ references)
 
 ### Tier 3 - MEDIUM
+
 - UI_UX_IMPROVEMENT_PLAN.md (12+ references)
 - PHASE_A_EXECUTION_PLAN.md (5+ references)
 
@@ -46,12 +49,14 @@ This audit conducted a comprehensive review of all package manager references ac
 ## What to Change
 
 Replace these patterns across documentation:
+
 - `npm install` → `pnpm install`
 - `npm run` → `pnpm run`
 - `npm exec` → `pnpm exec`
 - `npm install <pkg>` → `pnpm add <pkg>`
 
 Keep these unchanged:
+
 - `npm install -g pnpm` (correct as-is)
 - `npm 8+` prerequisite (correct as-is)
 - package.json files (maintain npm workspaces)

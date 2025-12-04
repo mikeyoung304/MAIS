@@ -1,13 +1,9 @@
-import { useState } from "react";
-import { toast } from "sonner";
-import { api } from "@/lib/api";
-import { useConfirmDialog } from "@/hooks/useConfirmDialog";
-import type {
-  SegmentDto,
-  CreateSegmentDto,
-  UpdateSegmentDto,
-} from "@macon/contracts";
-import type { SegmentFormData } from "../../types";
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import type { SegmentDto, CreateSegmentDto, UpdateSegmentDto } from '@macon/contracts';
+import type { SegmentFormData } from '../../types';
 
 interface UseSegmentManagerProps {
   onSegmentsChange: () => void;
@@ -21,15 +17,15 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
   const { confirm, dialogState, handleOpenChange } = useConfirmDialog();
 
   const [segmentForm, setSegmentForm] = useState<SegmentFormData>({
-    slug: "",
-    name: "",
-    heroTitle: "",
-    heroSubtitle: "",
-    heroImage: "",
-    description: "",
-    metaTitle: "",
-    metaDescription: "",
-    sortOrder: "0",
+    slug: '',
+    name: '',
+    heroTitle: '',
+    heroSubtitle: '',
+    heroImage: '',
+    description: '',
+    metaTitle: '',
+    metaDescription: '',
+    sortOrder: '0',
     active: true,
   });
 
@@ -42,24 +38,24 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
   const generateSlug = (name: string): string => {
     return name
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
       .trim()
-      .replace(/\s+/g, "-") // Replace spaces with hyphens
-      .replace(/-+/g, "-"); // Replace multiple hyphens with single hyphen
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-'); // Replace multiple hyphens with single hyphen
   };
 
   // Reset form
   const resetSegmentForm = () => {
     setSegmentForm({
-      slug: "",
-      name: "",
-      heroTitle: "",
-      heroSubtitle: "",
-      heroImage: "",
-      description: "",
-      metaTitle: "",
-      metaDescription: "",
-      sortOrder: "0",
+      slug: '',
+      name: '',
+      heroTitle: '',
+      heroSubtitle: '',
+      heroImage: '',
+      description: '',
+      metaTitle: '',
+      metaDescription: '',
+      sortOrder: '0',
       active: true,
     });
   };
@@ -76,11 +72,11 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
       slug: segment.slug,
       name: segment.name,
       heroTitle: segment.heroTitle,
-      heroSubtitle: segment.heroSubtitle || "",
-      heroImage: segment.heroImage || "",
-      description: segment.description || "",
-      metaTitle: segment.metaTitle || "",
-      metaDescription: segment.metaDescription || "",
+      heroSubtitle: segment.heroSubtitle || '',
+      heroImage: segment.heroImage || '',
+      description: segment.description || '',
+      metaTitle: segment.metaTitle || '',
+      metaDescription: segment.metaDescription || '',
       sortOrder: segment.sortOrder.toString(),
       active: segment.active,
     });
@@ -93,16 +89,16 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
 
     // Validate required fields
     if (!segmentForm.slug || !segmentForm.name || !segmentForm.heroTitle) {
-      toast.error("Missing Required Fields", {
-        description: "Slug, Name, and Hero Title are required",
+      toast.error('Missing Required Fields', {
+        description: 'Slug, Name, and Hero Title are required',
       });
       return;
     }
 
     // Validate slug format
     if (!isValidSlug(segmentForm.slug)) {
-      toast.error("Invalid Slug Format", {
-        description: "Slug must be lowercase with hyphens only (no spaces)",
+      toast.error('Invalid Slug Format', {
+        description: 'Slug must be lowercase with hyphens only (no spaces)',
       });
       return;
     }
@@ -110,8 +106,8 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
     // Validate sortOrder
     const sortOrder = parseInt(segmentForm.sortOrder, 10);
     if (isNaN(sortOrder) || sortOrder < 0) {
-      toast.error("Invalid Sort Order", {
-        description: "Sort Order must be a number >= 0",
+      toast.error('Invalid Sort Order', {
+        description: 'Sort Order must be a number >= 0',
       });
       return;
     }
@@ -140,13 +136,13 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
         });
 
         if (result.status === 200) {
-          showSuccess("Segment updated successfully");
+          showSuccess('Segment updated successfully');
           setIsCreatingSegment(false);
           resetSegmentForm();
           onSegmentsChange();
         } else {
-          toast.error("Failed to update segment", {
-            description: "Please try again or contact support.",
+          toast.error('Failed to update segment', {
+            description: 'Please try again or contact support.',
           });
         }
       } else {
@@ -169,22 +165,22 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
         });
 
         if (result.status === 200) {
-          showSuccess("Segment created successfully");
+          showSuccess('Segment created successfully');
           setIsCreatingSegment(false);
           resetSegmentForm();
           onSegmentsChange();
         } else {
-          toast.error("Failed to create segment", {
-            description: "Please try again or contact support.",
+          toast.error('Failed to create segment', {
+            description: 'Please try again or contact support.',
           });
         }
       }
     } catch (err) {
       if (import.meta.env.DEV) {
-        console.error("Failed to save segment:", err);
+        console.error('Failed to save segment:', err);
       }
-      toast.error("An error occurred while saving the segment", {
-        description: "Please try again or contact support.",
+      toast.error('An error occurred while saving the segment', {
+        description: 'Please try again or contact support.',
       });
     } finally {
       setIsSaving(false);
@@ -193,11 +189,11 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
 
   const handleDeleteSegment = async (id: string) => {
     const confirmed = await confirm({
-      title: "Delete Segment",
-      description: "Are you sure you want to delete this segment? This action cannot be undone.",
-      confirmLabel: "Delete",
-      cancelLabel: "Cancel",
-      variant: "destructive",
+      title: 'Delete Segment',
+      description: 'Are you sure you want to delete this segment? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      variant: 'destructive',
     });
 
     if (!confirmed) {
@@ -211,19 +207,19 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
       });
 
       if (result.status === 204) {
-        showSuccess("Segment deleted successfully");
+        showSuccess('Segment deleted successfully');
         onSegmentsChange();
       } else {
-        toast.error("Failed to delete segment", {
-          description: "Please try again or contact support.",
+        toast.error('Failed to delete segment', {
+          description: 'Please try again or contact support.',
         });
       }
     } catch (err) {
       if (import.meta.env.DEV) {
-        console.error("Failed to delete segment:", err);
+        console.error('Failed to delete segment:', err);
       }
-      toast.error("An error occurred while deleting the segment", {
-        description: "Please try again or contact support.",
+      toast.error('An error occurred while deleting the segment', {
+        description: 'Please try again or contact support.',
       });
     }
   };
@@ -235,7 +231,7 @@ export function useSegmentManager({ onSegmentsChange, showSuccess }: UseSegmentM
 
   // Auto-generate slug from name when creating (not editing)
   const handleNameChange = (name: string) => {
-    setSegmentForm(prev => {
+    setSegmentForm((prev) => {
       const newForm = { ...prev, name };
       // Only auto-generate slug when creating (not editing)
       if (!editingSegmentId) {

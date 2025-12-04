@@ -7,6 +7,7 @@ This document describes the role-based authentication and dashboard selection sy
 ## User Roles
 
 ### PLATFORM_ADMIN
+
 - **Purpose**: Full system administration
 - **Access Level**: System-wide
 - **Dashboard**: `/admin/dashboard` (PlatformAdminDashboard)
@@ -19,6 +20,7 @@ This document describes the role-based authentication and dashboard selection sy
   - NO access to tenant-specific content
 
 ### TENANT_ADMIN
+
 - **Purpose**: Individual tenant business management
 - **Access Level**: Single tenant only
 - **Dashboard**: `/tenant/dashboard` (TenantAdminDashboard)
@@ -35,6 +37,7 @@ This document describes the role-based authentication and dashboard selection sy
 ## Database Schema Changes
 
 ### User Model Updates
+
 ```prisma
 model User {
   id           String   @id @default(cuid())
@@ -57,6 +60,7 @@ enum UserRole {
 ```
 
 ### Tenant Model Updates
+
 ```prisma
 model Tenant {
   // ... existing fields ...
@@ -68,6 +72,7 @@ model Tenant {
 ## Authentication Flow
 
 ### Unified Login
+
 1. User navigates to `/login`
 2. Enters email and password
 3. System attempts authentication
@@ -77,6 +82,7 @@ model Tenant {
    - `TENANT_ADMIN` → `/tenant/dashboard`
 
 ### Token Storage
+
 - **Token**: `localStorage.authToken`
 - **User Data**: `localStorage.authUser` (JSON)
 - **Legacy Support**: Old `adminToken` and `tenantToken` are cleared on logout
@@ -84,21 +90,24 @@ model Tenant {
 ## Route Protection
 
 ### ProtectedRoute Component
+
 Location: `/client/src/components/auth/ProtectedRoute.tsx`
 
 ```tsx
-<ProtectedRoute allowedRoles={["PLATFORM_ADMIN"]}>
+<ProtectedRoute allowedRoles={['PLATFORM_ADMIN']}>
   <PlatformAdminDashboard />
 </ProtectedRoute>
 ```
 
 **Behavior**:
+
 - Checks if user is authenticated
 - Validates user role against `allowedRoles`
 - Redirects to `/login` if not authenticated
 - Redirects to appropriate dashboard if wrong role
 
 ### Router Configuration
+
 Location: `/client/src/router.tsx`
 
 ```tsx
@@ -128,31 +137,34 @@ Location: `/client/src/router.tsx`
 Location: `/client/src/contexts/AuthContext.tsx`
 
 ### State
+
 ```tsx
 interface AuthUser {
   id: string;
   email: string;
   name?: string;
   role: UserRole;
-  tenantId?: string;     // Only for TENANT_ADMIN
-  tenantName?: string;   // Only for TENANT_ADMIN
-  tenantSlug?: string;   // Only for TENANT_ADMIN
+  tenantId?: string; // Only for TENANT_ADMIN
+  tenantName?: string; // Only for TENANT_ADMIN
+  tenantSlug?: string; // Only for TENANT_ADMIN
 }
 ```
 
 ### Methods
+
 - `login(token: string, user: AuthUser)` - Store auth data and set user
 - `logout()` - Clear auth data and redirect to login
 - `hasRole(role: UserRole)` - Check if user has specific role
 
 ### Usage
+
 ```tsx
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from '@/contexts/AuthContext';
 
 function MyComponent() {
   const { user, logout, hasRole } = useAuth();
 
-  if (hasRole("PLATFORM_ADMIN")) {
+  if (hasRole('PLATFORM_ADMIN')) {
     // Show platform admin features
   }
 
@@ -163,9 +175,11 @@ function MyComponent() {
 ## Dashboard Components
 
 ### PlatformAdminDashboard
+
 Location: `/client/src/pages/admin/PlatformAdminDashboard.tsx`
 
 **Features**:
+
 - System metrics cards (total tenants, bookings, revenue, commission)
 - Tenants list with search
 - Tenant management actions
@@ -173,19 +187,23 @@ Location: `/client/src/pages/admin/PlatformAdminDashboard.tsx`
 - NO tenant-specific content
 
 **Key Metrics**:
+
 - Total Tenants / Active Tenants
 - Total Bookings (all tenants)
 - Total Revenue (all tenants)
 - Platform Commission
 
 **API Endpoints** (to be implemented):
+
 - `platformGetAllTenants()` - List all tenants with stats
 - `platformGetStats()` - System-wide statistics
 
 ### TenantAdminDashboard
+
 Location: `/client/src/pages/tenant/TenantAdminDashboard.tsx`
 
 **Features**:
+
 - Tenant metrics cards (packages, bookings, blackouts, branding)
 - Tabbed interface:
   - Packages - Manage wedding packages
@@ -195,6 +213,7 @@ Location: `/client/src/pages/tenant/TenantAdminDashboard.tsx`
 - Tenant isolation enforced
 
 **Reuses Existing Components**:
+
 - `TenantPackagesManager`
 - `TenantBookingList`
 - `BlackoutsManager`
@@ -203,14 +222,17 @@ Location: `/client/src/pages/tenant/TenantAdminDashboard.tsx`
 ## Navigation
 
 ### RoleBasedNav Component
+
 Location: `/client/src/components/navigation/RoleBasedNav.tsx`
 
 **Platform Admin Navigation**:
+
 - Dashboard - System overview
 - Tenants - Manage all tenants
 - System Settings - Platform configuration
 
 **Tenant Admin Navigation**:
+
 - Dashboard - Tenant overview
 - Packages - Manage packages
 - Bookings - View bookings
@@ -219,6 +241,7 @@ Location: `/client/src/components/navigation/RoleBasedNav.tsx`
 - Settings - Tenant settings
 
 **Variants**:
+
 - `sidebar` - Vertical navigation with descriptions
 - `horizontal` - Compact horizontal navigation
 
@@ -244,12 +267,14 @@ Location: `/client/src/components/navigation/RoleBasedNav.tsx`
 ### Data Access Rules
 
 **PLATFORM_ADMIN**:
+
 - ✅ Can access all tenants
 - ✅ Can view system-wide statistics
 - ✅ Can manage tenant accounts
 - ❌ Cannot access tenant-specific operational data
 
 **TENANT_ADMIN**:
+
 - ✅ Can access only their tenant data
 - ✅ Can manage packages, bookings, settings for their tenant
 - ❌ Cannot access other tenants' data
@@ -259,6 +284,7 @@ Location: `/client/src/components/navigation/RoleBasedNav.tsx`
 ## Migration Path
 
 ### Legacy Support
+
 The system maintains backward compatibility during migration:
 
 1. **Old Routes**: Redirect to new structure
@@ -280,6 +306,7 @@ The system maintains backward compatibility during migration:
 ### Server-Side Implementation
 
 1. **Unified Login Endpoint**:
+
    ```typescript
    POST /v1/auth/login
    Body: { email, password }
@@ -287,6 +314,7 @@ The system maintains backward compatibility during migration:
    ```
 
 2. **Platform Admin Endpoints**:
+
    ```typescript
    GET /v1/platform/tenants - List all tenants
    GET /v1/platform/stats - System statistics
@@ -331,12 +359,14 @@ client/src/
 ## Testing Checklist
 
 ### Authentication
+
 - [ ] Login as PLATFORM_ADMIN redirects to `/admin/dashboard`
 - [ ] Login as TENANT_ADMIN redirects to `/tenant/dashboard`
 - [ ] Invalid credentials show error
 - [ ] Logout clears all tokens
 
 ### Route Protection
+
 - [ ] PLATFORM_ADMIN can access `/admin/dashboard`
 - [ ] PLATFORM_ADMIN cannot access `/tenant/dashboard`
 - [ ] TENANT_ADMIN can access `/tenant/dashboard`
@@ -344,12 +374,14 @@ client/src/
 - [ ] Unauthenticated users redirect to `/login`
 
 ### Tenant Isolation
+
 - [ ] TENANT_ADMIN only sees their packages
 - [ ] TENANT_ADMIN only sees their bookings
 - [ ] TENANT_ADMIN cannot access other tenants' data
 - [ ] API enforces tenantId filtering
 
 ### Navigation
+
 - [ ] PLATFORM_ADMIN sees system-wide navigation
 - [ ] TENANT_ADMIN sees tenant-specific navigation
 - [ ] Navigation items match role permissions
@@ -376,6 +408,7 @@ client/src/
 ## Support
 
 For questions or issues with the role-based architecture:
+
 1. Check this documentation
 2. Review the implementation in source files
 3. Test with the provided test checklist

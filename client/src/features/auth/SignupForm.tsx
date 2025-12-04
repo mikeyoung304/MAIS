@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { InputEnhanced } from "@/components/ui/input-enhanced";
-import { ErrorSummary, type FormError } from "@/components/ui/ErrorSummary";
-import { Mail, Lock, Building2, Eye, EyeOff, AlertCircle } from "lucide-react";
-import { useForm } from "@/hooks/useForm";
-import { api } from "@/lib/api";
-import { storeToken } from "@/lib/auth";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { InputEnhanced } from '@/components/ui/input-enhanced';
+import { ErrorSummary, type FormError } from '@/components/ui/ErrorSummary';
+import { Mail, Lock, Building2, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { useForm } from '@/hooks/useForm';
+import { api } from '@/lib/api';
+import { storeToken } from '@/lib/auth';
 
 /**
  * Signup Form Component
@@ -28,10 +28,10 @@ export function SignupForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { values, handleChange } = useForm({
-    businessName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
+    businessName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
   });
 
   /**
@@ -44,9 +44,15 @@ export function SignupForm() {
     if (!values.businessName) {
       errors.push({ field: 'businessName', message: 'Business name is required' });
     } else if (values.businessName.length < 2) {
-      errors.push({ field: 'businessName', message: 'Business name must be at least 2 characters' });
+      errors.push({
+        field: 'businessName',
+        message: 'Business name must be at least 2 characters',
+      });
     } else if (values.businessName.length > 100) {
-      errors.push({ field: 'businessName', message: 'Business name must be less than 100 characters' });
+      errors.push({
+        field: 'businessName',
+        message: 'Business name must be less than 100 characters',
+      });
     }
 
     // Email validation
@@ -112,35 +118,38 @@ export function SignupForm() {
         api.setTenantToken(token);
 
         // Store API keys temporarily in sessionStorage to show on success page
-        sessionStorage.setItem('signup_success', JSON.stringify({
-          tenantId,
-          slug,
-          apiKeyPublic,
-          secretKey,
-        }));
+        sessionStorage.setItem(
+          'signup_success',
+          JSON.stringify({
+            tenantId,
+            slug,
+            apiKeyPublic,
+            secretKey,
+          })
+        );
 
         // Redirect to tenant dashboard
-        navigate("/tenant/dashboard");
+        navigate('/tenant/dashboard');
       } else if (result.status === 400) {
         // Validation errors from server
         const errorBody = result.body as { errors?: Array<{ field: string; message: string }> };
         if (errorBody.errors && errorBody.errors.length > 0) {
           setValidationErrors(errorBody.errors);
         } else {
-          setServerError("Invalid input. Please check your information and try again.");
+          setServerError('Invalid input. Please check your information and try again.');
         }
       } else if (result.status === 409) {
         // Email already exists
-        setServerError("An account with this email already exists. Please log in instead.");
+        setServerError('An account with this email already exists. Please log in instead.');
       } else if (result.status === 429) {
         // Rate limited
-        setServerError("Too many signup attempts. Please try again later.");
+        setServerError('Too many signup attempts. Please try again later.');
       } else {
         // Other errors
-        setServerError("An error occurred during signup. Please try again.");
+        setServerError('An error occurred during signup. Please try again.');
       }
     } catch (error) {
-      setServerError("An unexpected error occurred. Please try again.");
+      setServerError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -149,10 +158,7 @@ export function SignupForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Validation Errors */}
-      <ErrorSummary
-        errors={validationErrors}
-        onDismiss={() => setValidationErrors([])}
-      />
+      <ErrorSummary errors={validationErrors} onDismiss={() => setValidationErrors([])} />
 
       {/* Server Error */}
       {serverError && (
@@ -199,7 +205,7 @@ export function SignupForm() {
       <div className="relative">
         <InputEnhanced
           id="password"
-          type={showPassword ? "text" : "password"}
+          type={showPassword ? 'text' : 'password'}
           value={values.password}
           onChange={(e) => handleChange('password', e.target.value)}
           label="Password"
@@ -214,7 +220,7 @@ export function SignupForm() {
           type="button"
           onClick={() => setShowPassword(!showPassword)}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors"
-          aria-label={showPassword ? "Hide password" : "Show password"}
+          aria-label={showPassword ? 'Hide password' : 'Show password'}
           tabIndex={-1}
         >
           {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -225,7 +231,7 @@ export function SignupForm() {
       <div className="relative">
         <InputEnhanced
           id="confirmPassword"
-          type={showConfirmPassword ? "text" : "password"}
+          type={showConfirmPassword ? 'text' : 'password'}
           value={values.confirmPassword}
           onChange={(e) => handleChange('confirmPassword', e.target.value)}
           label="Confirm Password"
@@ -240,7 +246,7 @@ export function SignupForm() {
           type="button"
           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors"
-          aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+          aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
           tabIndex={-1}
         >
           {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}

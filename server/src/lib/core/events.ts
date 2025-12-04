@@ -81,8 +81,8 @@ export const AppointmentEvents = {
 } as const;
 
 // Type exports for type-safe event name handling
-export type BookingEventName = typeof BookingEvents[keyof typeof BookingEvents];
-export type AppointmentEventName = typeof AppointmentEvents[keyof typeof AppointmentEvents];
+export type BookingEventName = (typeof BookingEvents)[keyof typeof BookingEvents];
+export type AppointmentEventName = (typeof AppointmentEvents)[keyof typeof AppointmentEvents];
 
 export type EventName = BookingEventName | AppointmentEventName;
 
@@ -199,10 +199,7 @@ export interface EventEmitter {
    * @param event - Event name (must be a key of AllEventPayloads)
    * @param payload - Event payload (must match the type for the event name)
    */
-  emit<K extends keyof AllEventPayloads>(
-    event: K,
-    payload: AllEventPayloads[K]
-  ): Promise<void>;
+  emit<K extends keyof AllEventPayloads>(event: K, payload: AllEventPayloads[K]): Promise<void>;
 
   /**
    * Clear all event subscriptions

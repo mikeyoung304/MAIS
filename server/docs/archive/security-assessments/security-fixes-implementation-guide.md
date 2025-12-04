@@ -3,6 +3,7 @@
 ## Fix 1: Add Magic Number Validation (CRITICAL)
 
 ### Current Code
+
 ```typescript
 // server/src/services/upload.service.ts - Lines 71-90
 private validateFile(file: UploadedFile, maxSizeMB?: number): void {
@@ -26,6 +27,7 @@ private validateFile(file: UploadedFile, maxSizeMB?: number): void {
 ```
 
 ### Fixed Code
+
 ```typescript
 import FileType from 'file-type';
 
@@ -57,7 +59,7 @@ private validateFile(file: UploadedFile, maxSizeMB?: number): void {
 private async validateFileContent(file: UploadedFile): Promise<void> {
   try {
     const fileType = await FileType.fromBuffer(file.buffer);
-    
+
     if (!fileType) {
       throw new Error('Unable to determine file type (empty or unsupported)');
     }
@@ -86,12 +88,14 @@ private async validateFileContent(file: UploadedFile): Promise<void> {
 ```
 
 ### Installation
+
 ```bash
 npm install file-type
 npm install --save-dev @types/file-type
 ```
 
 ### Update package.json
+
 ```json
 {
   "dependencies": {
@@ -131,7 +135,7 @@ export class UploadService {
       } catch (error) {
         logger.warn(
           'ClamAV not available, continuing without virus scanning. ' +
-          'This is acceptable for development but NOT for production.'
+            'This is acceptable for development but NOT for production.'
         );
       }
     }
@@ -146,13 +150,8 @@ export class UploadService {
       if (this.clamscan) {
         const scanResult = await this.clamscan.scanBuffer(file.buffer);
         if (scanResult.isInfected) {
-          logger.warn(
-            { tenantId, detections: scanResult.viruses },
-            'Malicious file rejected'
-          );
-          throw new Error(
-            'File failed security scanning - malware detected'
-          );
+          logger.warn({ tenantId, detections: scanResult.viruses }, 'Malicious file rejected');
+          throw new Error('File failed security scanning - malware detected');
         }
       }
 
@@ -187,16 +186,12 @@ export class UploadService {
       const formData = new FormData();
       formData.append('file', new Blob([buffer]));
 
-      const response = await axios.post(
-        'https://www.virustotal.com/api/v3/files',
-        formData,
-        {
-          headers: {
-            'x-apikey': this.virusTotalApiKey,
-            ...formData.getHeaders(),
-          },
-        }
-      );
+      const response = await axios.post('https://www.virustotal.com/api/v3/files', formData, {
+        headers: {
+          'x-apikey': this.virusTotalApiKey,
+          ...formData.getHeaders(),
+        },
+      });
 
       const fileId = response.data.data.id;
 
@@ -212,10 +207,7 @@ export class UploadService {
       const hasThreats = stats.malicious > 0 || stats.suspicious > 0;
 
       if (hasThreats) {
-        logger.warn(
-          { stats },
-          'File marked as suspicious/malicious by VirusTotal'
-        );
+        logger.warn({ stats }, 'File marked as suspicious/malicious by VirusTotal');
       }
 
       return !hasThreats;
@@ -246,6 +238,7 @@ export class UploadService {
 ```
 
 ### Installation
+
 ```bash
 # Option A: ClamAV
 npm install clamscan
@@ -255,6 +248,7 @@ npm install axios
 ```
 
 ### Environment Configuration
+
 ```bash
 # .env file
 ENABLE_CLAMAV=true
@@ -271,6 +265,7 @@ VIRUSTOTAL_API_KEY=your_api_key_here
 ## Fix 3: Implement Upload-Specific Rate Limiting (HIGH)
 
 ### Current Code
+
 ```typescript
 // server/src/middleware/rateLimiter.ts - Missing upload limiter
 export const adminLimiter = rateLimit({
@@ -280,6 +275,7 @@ export const adminLimiter = rateLimit({
 ```
 
 ### Fixed Code
+
 ```typescript
 // server/src/middleware/rateLimiter.ts - Add this new limiter
 
@@ -319,6 +315,7 @@ export const packagePhotoUploadLimiter = rateLimit({
 ```
 
 ### Update Routes
+
 ```typescript
 // server/src/routes/tenant-admin.routes.ts - Lines 241-245
 
@@ -349,6 +346,7 @@ router.post(
 ## Fix 4: Fix File Permissions (MEDIUM)
 
 ### Current Code
+
 ```typescript
 // server/src/services/upload.service.ts - Lines 61-66 (Bad permissions)
 private ensureUploadDir(dir: string): void {
@@ -365,6 +363,7 @@ await fs.promises.writeFile(filepath, file.buffer);
 ```
 
 ### Fixed Code
+
 ```typescript
 private ensureUploadDir(dir: string): void {
   if (!fs.existsSync(dir)) {
@@ -378,10 +377,10 @@ async uploadLogo(file: UploadedFile, tenantId: string): Promise<UploadResult> {
   try {
     // ... validation ...
     const filepath = path.join(this.logoUploadDir, filename);
-    
+
     // FIX: Write file with restrictive permissions (owner only)
     await fs.promises.writeFile(filepath, file.buffer, { mode: 0o600 });
-    
+
     // ... rest of code ...
   }
 }
@@ -390,16 +389,17 @@ async uploadPackagePhoto(file: UploadedFile, packageId: string): Promise<UploadR
   try {
     // ... validation ...
     const filepath = path.join(this.packagePhotoUploadDir, filename);
-    
+
     // FIX: Write file with restrictive permissions (owner only)
     await fs.promises.writeFile(filepath, file.buffer, { mode: 0o600 });
-    
+
     // ... rest of code ...
   }
 }
 ```
 
 ### Verify Permissions
+
 ```bash
 # After fix, check:
 ls -la /uploads/logos/
@@ -416,6 +416,7 @@ ls -la /uploads/logos/
 ## Fix 5: Add Security Headers for Uploaded Files (MEDIUM)
 
 ### Current Code
+
 ```typescript
 // server/src/app.ts - Lines 87-93
 app.use('/uploads/logos', express.static(logoUploadDir));
@@ -423,6 +424,7 @@ app.use('/uploads/packages', express.static(packagePhotoUploadDir));
 ```
 
 ### Fixed Code
+
 ```typescript
 // server/src/app.ts
 
@@ -451,23 +453,16 @@ function addSecurityHeadersToUploads(req: Request, res: Response, next: NextFunc
 }
 
 // Apply to logo uploads
-app.use(
-  '/uploads/logos',
-  addSecurityHeadersToUploads,
-  express.static(logoUploadDir)
-);
+app.use('/uploads/logos', addSecurityHeadersToUploads, express.static(logoUploadDir));
 
 // Apply to package photos
-app.use(
-  '/uploads/packages',
-  addSecurityHeadersToUploads,
-  express.static(packagePhotoUploadDir)
-);
+app.use('/uploads/packages', addSecurityHeadersToUploads, express.static(packagePhotoUploadDir));
 
 logger.info('Security headers configured for uploaded files');
 ```
 
 ### Verify Headers
+
 ```bash
 curl -I http://localhost:5000/uploads/logos/logo-123456-abc123.jpg
 
@@ -483,6 +478,7 @@ curl -I http://localhost:5000/uploads/logos/logo-123456-abc123.jpg
 ## Fix 6: Remove SVG Upload Support (HIGH)
 
 ### Current Code
+
 ```typescript
 // server/src/services/upload.service.ts - Lines 44-50
 private allowedMimeTypes: string[] = [
@@ -495,6 +491,7 @@ private allowedMimeTypes: string[] = [
 ```
 
 ### Option A: Remove SVG (Recommended)
+
 ```typescript
 private allowedMimeTypes: string[] = [
   'image/jpeg',
@@ -506,6 +503,7 @@ private allowedMimeTypes: string[] = [
 ```
 
 ### Option B: Handle SVG Safely (If SVG support needed)
+
 ```typescript
 private allowedMimeTypes: string[] = [
   'image/jpeg',
@@ -527,7 +525,7 @@ private sanitizeSVG(svgBuffer: Buffer): Buffer {
 async uploadLogo(file: UploadedFile, tenantId: string): Promise<UploadResult> {
   try {
     // ... validation ...
-    
+
     // If SVG, sanitize it
     let fileBuffer = file.buffer;
     if (file.mimetype === 'image/svg+xml') {
@@ -536,13 +534,14 @@ async uploadLogo(file: UploadedFile, tenantId: string): Promise<UploadResult> {
 
     const filepath = path.join(this.logoUploadDir, filename);
     await fs.promises.writeFile(filepath, fileBuffer);
-    
+
     // ... rest of code ...
   }
 }
 ```
 
 ### Installation (if using Option B)
+
 ```bash
 npm install isomorphic-dompurify
 npm install --save-dev @types/isomorphic-dompurify
@@ -553,6 +552,7 @@ npm install --save-dev @types/isomorphic-dompurify
 ## Fix 7: Implement Storage Quota per Tenant (MEDIUM)
 
 ### New Service: StorageQuotaService
+
 ```typescript
 // server/src/services/storage-quota.service.ts
 
@@ -599,7 +599,7 @@ export class StorageQuotaService {
       const usage = await this.getStorageUsage(tenantId);
       throw new Error(
         `Storage quota exceeded. Current: ${Math.round(usage.usedBytes / 1024 / 1024)}MB / ` +
-        `${Math.round(usage.limitBytes / 1024 / 1024)}MB`
+          `${Math.round(usage.limitBytes / 1024 / 1024)}MB`
       );
     }
   }
@@ -607,6 +607,7 @@ export class StorageQuotaService {
 ```
 
 ### Update UploadService
+
 ```typescript
 // server/src/services/upload.service.ts
 
@@ -636,7 +637,7 @@ export class UploadService {
     try {
       // Get tenant ID from package
       const pkg = await this.catalogService.getPackageById(tenantId, packageId);
-      
+
       // NEW: Check storage quota before upload
       await this.quotaService.enforceQuota(pkg.tenantId, file.size);
 
@@ -654,6 +655,7 @@ export class UploadService {
 ## Fix 8: Update Multer Configuration (MINOR)
 
 ### Current Code
+
 ```typescript
 // server/src/routes/tenant-admin.routes.ts - Lines 30-43
 const upload = multer({
@@ -666,6 +668,7 @@ const upload = multer({
 ```
 
 ### Fixed Code
+
 ```typescript
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -674,17 +677,14 @@ const upload = multer({
   },
   // NEW: Add file filter for early rejection
   fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-    ];
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
     if (!allowedMimeTypes.includes(file.mimetype)) {
-      cb(new Error(
-        `Invalid file type: ${file.mimetype}. ` +
-        `Allowed: ${allowedMimeTypes.join(', ')}`
-      ));
+      cb(
+        new Error(
+          `Invalid file type: ${file.mimetype}. ` + `Allowed: ${allowedMimeTypes.join(', ')}`
+        )
+      );
     } else {
       cb(null, true);
     }
@@ -698,17 +698,14 @@ const uploadPackagePhoto = multer({
   },
   // NEW: Add file filter
   fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-    ];
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
     if (!allowedMimeTypes.includes(file.mimetype)) {
-      cb(new Error(
-        `Invalid file type: ${file.mimetype}. ` +
-        `Allowed: ${allowedMimeTypes.join(', ')}`
-      ));
+      cb(
+        new Error(
+          `Invalid file type: ${file.mimetype}. ` + `Allowed: ${allowedMimeTypes.join(', ')}`
+        )
+      );
     } else {
       cb(null, true);
     }
@@ -721,6 +718,7 @@ const uploadPackagePhoto = multer({
 ## Testing the Fixes
 
 ### Test 1: Magic Number Validation
+
 ```bash
 # Create fake image (executable content with image MIME type)
 echo -e 'MZ\x90\x00' > fake_image.jpg
@@ -734,6 +732,7 @@ curl -F "logo=@fake_image.jpg;type=image/jpeg" \
 ```
 
 ### Test 2: Rate Limiting
+
 ```bash
 # Try uploading 11 times in an hour
 for i in {1..11}; do
@@ -746,6 +745,7 @@ done
 ```
 
 ### Test 3: File Permissions
+
 ```bash
 # Check directory permissions
 ls -la /uploads/logos/
@@ -757,6 +757,7 @@ ls -la /uploads/logos/logo-*.jpg
 ```
 
 ### Test 4: Security Headers
+
 ```bash
 curl -I http://localhost:5000/uploads/logos/logo-test.jpg | grep -E "X-Content-Type|X-Frame|CSP"
 
@@ -767,6 +768,7 @@ curl -I http://localhost:5000/uploads/logos/logo-test.jpg | grep -E "X-Content-T
 ```
 
 ### Test 5: Storage Quota
+
 ```bash
 # Try uploading file that exceeds quota
 # (Adjust limit to test - e.g., set to 1MB)
@@ -816,16 +818,18 @@ If issues occur during deployment:
 
 ```typescript
 // Add metrics tracking
-logger.info({
-  event: 'file_upload',
-  tenantId,
-  filename,
-  fileSize,
-  uploadDuration: Date.now() - startTime,
-  magicNumberValid: true,
-  virusScanResult: 'clean',
-  rateLimitRemaining: 10 - 1,
-  storageUsagePercent: 45,
-}, 'File uploaded successfully');
+logger.info(
+  {
+    event: 'file_upload',
+    tenantId,
+    filename,
+    fileSize,
+    uploadDuration: Date.now() - startTime,
+    magicNumberValid: true,
+    virusScanResult: 'clean',
+    rateLimitRemaining: 10 - 1,
+    storageUsagePercent: 45,
+  },
+  'File uploaded successfully'
+);
 ```
-

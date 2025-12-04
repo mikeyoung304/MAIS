@@ -1,10 +1,10 @@
 ---
 status: complete
 priority: p2
-issue_id: "113"
+issue_id: '113'
 tags: [code-review, accessibility, wcag, ui-redesign]
 dependencies: []
-resolved_date: "2025-12-02"
+resolved_date: '2025-12-02'
 ---
 
 # Status Indicators Rely Only on Color (WCAG 1.4.1)
@@ -24,12 +24,14 @@ The issue has been successfully resolved through the creation of a shared `Statu
 ### Implementation Details
 
 **Primary Solution:** Created `/client/src/components/shared/StatusBadge.tsx`
+
 - Uses lucide-react icons (Check, Clock, X, AlertCircle)
 - Icons marked with `aria-hidden="true"` (text provides semantic meaning)
 - Auto-detects variant from common status strings
 - Supports manual variant override
 
 **Files Updated:**
+
 - ✅ `client/src/features/tenant-admin/TenantBookingList.tsx` - Now uses StatusBadge
 - ✅ `client/src/features/tenant-admin/packages/PackageList.tsx` - Uses StatusBadge
 - ✅ `client/src/features/admin/segments/SegmentsList.tsx` - Uses StatusBadge
@@ -37,6 +39,7 @@ The issue has been successfully resolved through the creation of a shared `Statu
 - ✅ `client/src/features/tenant-admin/scheduling/AppointmentsView/AppointmentsList.tsx` - Has icons with status
 
 **Minor Finding:**
+
 - ⚠️ `client/src/pages/booking-management/BookingDetailsCard.tsx` - Uses basic Badge for booking status (lines 83-85)
   - Note: This is in the public-facing booking management page
   - Impact: Low (single occurrence, not in main tenant dashboard)
@@ -45,6 +48,7 @@ The issue has been successfully resolved through the creation of a shared `Statu
 ## Code Implementation
 
 **StatusBadge Component:**
+
 ```typescript
 // client/src/components/shared/StatusBadge.tsx
 import { Check, Clock, X, AlertCircle } from "lucide-react";
@@ -70,6 +74,7 @@ export function StatusBadge({ status, variant, className }: StatusBadgeProps) {
 ```
 
 **Usage Example:**
+
 ```tsx
 // Before (color only - NOT accessible)
 <span className="bg-sage/10 text-sage">Confirmed</span>
@@ -105,10 +110,10 @@ export function StatusBadge({ status, variant, className }: StatusBadgeProps) {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2025-11-30 | Created from code review | WCAG 1.4.1 violation identified |
-| 2025-12-02 | Investigation completed | Found StatusBadge component already implemented |
-| 2025-12-02 | Verified implementation | Component has icons, aria-hidden, proper accessibility |
-| 2025-12-02 | Build validation | TypeScript compilation successful |
-| 2025-12-02 | Marked as resolved | Issue addressed in primary UI surfaces |
+| Date       | Action                   | Learnings                                              |
+| ---------- | ------------------------ | ------------------------------------------------------ |
+| 2025-11-30 | Created from code review | WCAG 1.4.1 violation identified                        |
+| 2025-12-02 | Investigation completed  | Found StatusBadge component already implemented        |
+| 2025-12-02 | Verified implementation  | Component has icons, aria-hidden, proper accessibility |
+| 2025-12-02 | Build validation         | TypeScript compilation successful                      |
+| 2025-12-02 | Marked as resolved       | Issue addressed in primary UI surfaces                 |

@@ -7,6 +7,7 @@
 **Deployment:** Preparing for demo user production deployment
 
 **Recent Sprints:**
+
 - ✅ Sprint 7: Test stabilization (95% pass rate achieved)
 - ✅ Sprint 8: UX & mobile excellence
 - ✅ Sprint 8.5: Complete UX enhancements (progress indicators, back buttons, unsaved changes)
@@ -14,12 +15,14 @@
 - ✅ Sprint 10: Technical excellence (test stability, security, performance)
 
 **Sprint 10 Achievements:**
+
 - Test infrastructure: Retry helpers with exponential backoff (225 lines)
 - Security: OWASP 70% compliance, input sanitization, custom CSP
 - Performance: Redis caching (97.5% faster), 16 database indexes
 - Test coverage: 752/752 passing (100%), 3 skipped, 12 todo, +42 new tests
 
 **November 2025 Updates:**
+
 - Platform admin "Sign In As" impersonation for tenant management
 - Fixed tenant API to include email field in responses
 - Cleaned up broken navigation routes
@@ -55,6 +58,7 @@ This project is implementing multi-tenant self-service capabilities in phases:
 **Current Status:** Platform production-ready. Deploying for demo users.
 
 **Key Documents:**
+
 - [SPRINT_10_FINAL_SUMMARY.md](./docs/sprints/SPRINT_10_FINAL_SUMMARY.md) - Sprint 10 completion report
 - [CACHING_ARCHITECTURE.md](./docs/performance/CACHING_ARCHITECTURE.md) - Performance optimization guide
 - [SECURITY.md](./SECURITY.md) - Security policy and vulnerability reporting
@@ -63,6 +67,7 @@ This project is implementing multi-tenant self-service capabilities in phases:
 
 **Development Workflow:**
 When implementing new tenant-facing features, follow these principles:
+
 1. **Tenant Scoping**: All queries must filter by `tenantId`
 2. **Ownership Verification**: Always verify tenant owns the resource before mutations
 3. **Multi-Tenant Isolation**: Never leak data between tenants (see Sprint 10 webhook fix)
@@ -79,6 +84,7 @@ When implementing new tenant-facing features, follow these principles:
 Platform admins can "sign in as" any tenant to manage their account with full editing capabilities.
 
 **How it works:**
+
 1. Go to Platform Admin Dashboard (`/admin/dashboard`)
 2. Click "Sign In As" button on any tenant row
 3. System generates a special JWT with impersonation metadata
@@ -87,16 +93,19 @@ Platform admins can "sign in as" any tenant to manage their account with full ed
 6. Click "Exit Impersonation" to return to admin view
 
 **API Endpoints:**
+
 - `POST /v1/auth/impersonate` - Start impersonation (requires platform admin token)
 - `POST /v1/auth/stop-impersonation` - Return to admin mode
 
 **Security:**
+
 - Only PLATFORM_ADMIN users can impersonate
 - All impersonation actions are audit-logged
 - Token includes `impersonating.startedAt` timestamp
 - Original admin identity preserved for accountability
 
 **Files:**
+
 - Backend: `server/src/routes/auth.routes.ts` (lines 140-181)
 - Frontend: `client/src/pages/admin/PlatformAdminDashboard/TenantsTableSection.tsx`
 - Banner: `client/src/features/admin/dashboard/components/ImpersonationBanner.tsx`
@@ -117,31 +126,37 @@ npm test --workspace=server       # Run server tests
 ### Prerequisites
 
 Install PostgreSQL 14+. Options:
+
 - **Local:** `brew install postgresql@16` (macOS) or Docker
 - **Cloud:** Railway, Render, Supabase, or Neon
 
 ### Initial Setup
 
 1. **Create a database:**
+
    ```bash
    createdb mais_dev
    ```
 
 2. **Set DATABASE_URL in `server/.env`:**
+
    ```bash
    DATABASE_URL="postgresql://username:password@localhost:5432/mais_dev?schema=public"
    ```
 
 3. **Run migrations:**
+
    ```bash
    cd server
    npm exec prisma migrate dev
    ```
 
 4. **Seed the database:**
+
    ```bash
    npm exec prisma db seed
    ```
+
    This creates:
    - Admin user: `admin@example.com` / password: `admin`
    - 3 service packages (Basic, Professional, Premium) with 4 add-ons
@@ -221,11 +236,13 @@ TENANT_SECRETS_ENCRYPTION_KEY=<generated-encryption-key>
 ### Login Rate Limiting
 
 Login endpoints are automatically protected with rate limiting:
+
 - **5 attempts** per 15-minute window per IP address
 - Only **failed attempts** count toward the limit
 - Returns **429 Too Many Requests** after limit exceeded
 
 **Test the rate limiting:**
+
 ```bash
 cd server
 ./test-login-rate-limit.sh
@@ -234,6 +251,7 @@ cd server
 ### Security Monitoring
 
 Failed login attempts are logged with structured data:
+
 ```bash
 # View failed login attempts in logs
 grep "login_failed" server/logs/*.log
@@ -252,6 +270,7 @@ For production deployments, rotate secrets quarterly:
 4. **TENANT_SECRETS_ENCRYPTION_KEY** - Requires migration script
 
 **See comprehensive guides:**
+
 - [SECRET_ROTATION_GUIDE.md](./docs/security/SECRET_ROTATION_GUIDE.md) - Complete rotation procedures
 - [IMMEDIATE_SECURITY_ACTIONS.md](./docs/security/IMMEDIATE_SECURITY_ACTIONS.md) - Urgent actions checklist
 - [SECURITY.md](./docs/security/SECURITY.md) - Security best practices

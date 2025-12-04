@@ -19,13 +19,13 @@
 
 ### Primary Metrics
 
-| Metric | Baseline | Target | Measurement Method |
-|--------|----------|--------|-------------------|
-| Users can navigate admin | 40% | 90% | User testing (n=10) |
-| Error understanding rate | 20% | 85% | User testing + support tickets |
-| Mobile admin usage | 5% | 50% | Analytics (device type) |
-| Time to first action (new user) | 5 min | 2 min | Task timing |
-| Support tickets (navigation) | 10/month | 2/month | Support ticket analysis |
+| Metric                          | Baseline | Target  | Measurement Method             |
+| ------------------------------- | -------- | ------- | ------------------------------ |
+| Users can navigate admin        | 40%      | 90%     | User testing (n=10)            |
+| Error understanding rate        | 20%      | 85%     | User testing + support tickets |
+| Mobile admin usage              | 5%       | 50%     | Analytics (device type)        |
+| Time to first action (new user) | 5 min    | 2 min   | Task timing                    |
+| Support tickets (navigation)    | 10/month | 2/month | Support ticket analysis        |
 
 ### Secondary Metrics
 
@@ -36,21 +36,23 @@
 ### How to Measure
 
 **User Testing (Week 3):**
+
 - Recruit 10 users (5 platform admin, 5 tenant admin)
 - Task: "Find the tenant settings page"
 - Success = completed without help in <30 seconds
 
 **Analytics Setup:**
+
 ```javascript
 // Track navigation usage
 trackEvent('admin_nav_click', {
   from: currentPage,
-  to: targetPage
+  to: targetPage,
 });
 
 // Track mobile usage
 trackEvent('page_view', {
-  device: isMobile ? 'mobile' : 'desktop'
+  device: isMobile ? 'mobile' : 'desktop',
 });
 ```
 
@@ -60,12 +62,12 @@ trackEvent('page_view', {
 
 ### Primary Metrics
 
-| Metric | Baseline | Target | Measurement Method |
-|--------|----------|--------|-------------------|
-| Brand consistency score | 6/10 | 9/10 | Design audit checklist (20 items) |
-| Design system adherence | 40% | 85% | Code review (% using variants) |
-| Custom className overrides | ~200 | <20 | Grep search |
-| Admin CTAs using brand orange | 0% | 100% | Visual inspection |
+| Metric                        | Baseline | Target | Measurement Method                |
+| ----------------------------- | -------- | ------ | --------------------------------- |
+| Brand consistency score       | 6/10     | 9/10   | Design audit checklist (20 items) |
+| Design system adherence       | 40%      | 85%    | Code review (% using variants)    |
+| Custom className overrides    | ~200     | <20    | Grep search                       |
+| Admin CTAs using brand orange | 0%       | 100%   | Visual inspection                 |
 
 ### Secondary Metrics
 
@@ -76,6 +78,7 @@ trackEvent('page_view', {
 ### How to Measure
 
 **Design Audit Checklist:**
+
 ```markdown
 - [ ] Logo visible in admin header
 - [ ] Orange CTAs for primary actions
@@ -87,10 +90,11 @@ trackEvent('page_view', {
 - [ ] Elevation system used correctly
 - [ ] Card variants used (not custom classes)
 - [ ] Button variants used (not custom classes)
-... (10 more items)
+      ... (10 more items)
 ```
 
 **Code Audit Script:**
+
 ```bash
 # Count custom className overrides
 grep -r "className.*bg-macon" client/src/ | wc -l
@@ -104,14 +108,14 @@ grep -r "className.*bg-macon" client/src/ | wc -l
 
 ### Primary Metrics
 
-| Metric | Baseline | Target | Measurement Method |
-|--------|----------|--------|-------------------|
-| WCAG AA Compliance | ~60% | 95%+ | axe DevTools, Lighthouse |
-| Lighthouse Accessibility Score | 75 | 98 | Automated audit |
-| Mobile admin usability | 20% | 90% | User testing |
-| Keyboard navigation coverage | 40% | 100% | Manual testing |
-| Lighthouse Performance Score | 75 | 92 | Automated audit |
-| Mobile admin users | 5% | 40% | Analytics |
+| Metric                         | Baseline | Target | Measurement Method       |
+| ------------------------------ | -------- | ------ | ------------------------ |
+| WCAG AA Compliance             | ~60%     | 95%+   | axe DevTools, Lighthouse |
+| Lighthouse Accessibility Score | 75       | 98     | Automated audit          |
+| Mobile admin usability         | 20%      | 90%    | User testing             |
+| Keyboard navigation coverage   | 40%      | 100%   | Manual testing           |
+| Lighthouse Performance Score   | 75       | 92     | Automated audit          |
+| Mobile admin users             | 5%       | 40%    | Analytics                |
 
 ### Secondary Metrics
 
@@ -123,6 +127,7 @@ grep -r "className.*bg-macon" client/src/ | wc -l
 ### How to Measure
 
 **Automated Accessibility Testing:**
+
 ```bash
 # Run Lighthouse CI
 npm run lighthouse -- --only-categories=accessibility
@@ -131,6 +136,7 @@ npm run lighthouse -- --only-categories=accessibility
 ```
 
 **Manual Testing Checklist:**
+
 ```markdown
 - [ ] Tab through entire app without mouse
 - [ ] All focusable elements have visible focus ring
@@ -143,6 +149,7 @@ npm run lighthouse -- --only-categories=accessibility
 ```
 
 **Responsive Testing:**
+
 - Test at 320px, 375px, 768px, 1024px, 1920px
 - Test on iPhone SE, iPhone 14, iPad, Android
 - All functionality works at all sizes
@@ -153,13 +160,13 @@ npm run lighthouse -- --only-categories=accessibility
 
 ### Primary Metrics
 
-| Metric | Baseline | Target | Measurement Method |
-|--------|----------|--------|-------------------|
-| Time to first action (new user) | 5 min | 1 min | Task timing with onboarding |
-| Onboarding completion rate | 0% | 70% | Analytics tracking |
-| Data insights clarity | 3/10 | 9/10 | User survey |
-| User delight score (NPS) | TBD | +20 points | NPS survey |
-| Support tickets (feature discovery) | 15/month | 3/month | Support ticket analysis |
+| Metric                              | Baseline | Target     | Measurement Method          |
+| ----------------------------------- | -------- | ---------- | --------------------------- |
+| Time to first action (new user)     | 5 min    | 1 min      | Task timing with onboarding |
+| Onboarding completion rate          | 0%       | 70%        | Analytics tracking          |
+| Data insights clarity               | 3/10     | 9/10       | User survey                 |
+| User delight score (NPS)            | TBD      | +20 points | NPS survey                  |
+| Support tickets (feature discovery) | 15/month | 3/month    | Support ticket analysis     |
 
 ### Secondary Metrics
 
@@ -171,6 +178,7 @@ npm run lighthouse -- --only-categories=accessibility
 ### How to Measure
 
 **Onboarding Tracking:**
+
 ```javascript
 // Track onboarding progress
 trackEvent('onboarding_started', { tourId });
@@ -178,11 +186,11 @@ trackEvent('onboarding_step_completed', { tourId, step: 1 });
 trackEvent('onboarding_completed', { tourId });
 
 // Calculate completion rate
-const completionRate =
-  completedCount / startedCount;
+const completionRate = completedCount / startedCount;
 ```
 
 **NPS Survey (Week 12):**
+
 - Send to all active users
 - Question: "How likely are you to recommend MAIS to a colleague?"
 - 0-10 scale
@@ -223,11 +231,13 @@ const completionRate =
 ### Weekly Tracking
 
 **Every Monday:**
+
 - Review previous week's task completion
 - Update progress dashboard
 - Identify blockers
 
 **Every Friday:**
+
 - Run Lighthouse audits
 - Check bundle size
 - Review code quality metrics
@@ -264,18 +274,21 @@ const completionRate =
 ### Events to Track
 
 **Authentication:**
+
 ```javascript
 trackEvent('login', { role: 'platform' | 'tenant' });
 trackEvent('logout');
 ```
 
 **Navigation:**
+
 ```javascript
 trackEvent('page_view', { path, device: 'mobile' | 'desktop' });
 trackEvent('navigation_click', { from, to });
 ```
 
 **CRUD Operations:**
+
 ```javascript
 trackEvent('tenant_created', { tenantId });
 trackEvent('package_created', { packageId });
@@ -283,6 +296,7 @@ trackEvent('booking_created', { bookingId });
 ```
 
 **UI Interactions:**
+
 ```javascript
 trackEvent('theme_toggled', { theme: 'light' | 'dark' });
 trackEvent('filter_applied', { column, values });
@@ -291,6 +305,7 @@ trackEvent('help_tooltip_viewed', { topic });
 ```
 
 **Onboarding:**
+
 ```javascript
 trackEvent('onboarding_started', { tourId });
 trackEvent('onboarding_completed', { tourId, duration });
@@ -304,22 +319,26 @@ trackEvent('onboarding_skipped', { tourId, step });
 ### Weekly Dashboard (Notion/Confluence)
 
 **Phase Progress:**
+
 - ✅ Tasks completed: 12/15 (80%)
 - ⏳ Tasks in progress: 2
 - 🚧 Tasks blocked: 1
 
 **Quality Metrics:**
+
 - Lighthouse Performance: 88 (-2 from last week)
 - Lighthouse Accessibility: 96 (+8 from last week)
 - Bundle Size: 485KB (+15KB from last week)
 - Test Coverage: 62% (+2% from last week)
 
 **User Metrics:**
+
 - Mobile Usage: 12% (+7% from baseline)
 - Support Tickets (UI): 6 this week (-4 from baseline)
 - Error Rate: 0.3% (stable)
 
 **Actions:**
+
 - ⚠️ Performance regression: investigate bundle size increase
 - ✅ Accessibility improving: on track for Phase 3 target
 - 🎯 Mobile usage growing: positive trend
@@ -331,6 +350,7 @@ trackEvent('onboarding_skipped', { tourId, step });
 **Before/After Comparison:**
 
 ### Before Phase 1
+
 > "I can't find where to manage my packages. I keep clicking around but nothing makes sense. Where's the navigation?"
 
 **User Task Completion:** 40%
@@ -338,6 +358,7 @@ trackEvent('onboarding_skipped', { tourId, step });
 **Support Tickets:** 10/month (navigation issues)
 
 ### After Phase 1
+
 > "Love the new navigation! I can finally see all the sections at a glance. Much better experience."
 
 **User Task Completion:** 92% (+52%)
@@ -351,18 +372,21 @@ trackEvent('onboarding_skipped', { tourId, step });
 ### Post-Launch Tracking (Ongoing)
 
 **Monthly:**
+
 - NPS survey (sample 20% of users)
 - Support ticket analysis
 - Analytics review
 - Performance monitoring
 
 **Quarterly:**
+
 - Comprehensive UI/UX audit
 - User interviews (5-10 users)
 - Competitive analysis
 - Accessibility re-audit
 
 **Annually:**
+
 - Major design system update
 - Technology refresh (dependencies, frameworks)
 - Trend analysis (what's new in UI/UX)
@@ -383,7 +407,8 @@ trackEvent('onboarding_skipped', { tourId, step });
 - [ ] Set up analytics tracking
 - [ ] Create metrics dashboard
 
-**Baseline Date:** _____________
+**Baseline Date:** ******\_******
 
 **Notes:**
-_______________________________________________________
+
+---

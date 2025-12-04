@@ -12,7 +12,7 @@
 
 export type PaymentProviderType = 'stripe' | 'paypal' | 'square';
 
-export type PaymentEventType = 
+export type PaymentEventType =
   | 'checkout_completed'
   | 'checkout_expired'
   | 'payment_succeeded'
@@ -27,28 +27,28 @@ export type PaymentEventType =
 export interface PaymentEvent {
   /** Unique event ID from provider */
   id: string;
-  
+
   /** Event type (normalized across providers) */
   type: PaymentEventType;
-  
+
   /** Which provider sent this event */
   provider: PaymentProviderType;
-  
+
   /** Raw metadata (contains tenantId, packageId, etc) */
   metadata: Record<string, string>;
-  
+
   /** Provider-specific data (raw event data) */
   data: Record<string, unknown>;
-  
+
   /** Unix timestamp of event */
   timestamp: number;
-  
+
   /** Whether event represents a successful payment */
   isSuccess: boolean;
-  
+
   /** Amount in cents if applicable */
   amountCents?: number;
-  
+
   /** Error message if failed */
   error?: string;
 }
@@ -74,7 +74,7 @@ export interface PaymentProvider {
     metadata: Record<string, string>;
     applicationFeeAmount?: number;
   }): Promise<CheckoutSession>;
-  
+
   createConnectCheckoutSession(input: {
     amountCents: number;
     email: string;
@@ -82,7 +82,7 @@ export interface PaymentProvider {
     stripeAccountId: string;
     applicationFeeAmount: number;
   }): Promise<CheckoutSession>;
-  
+
   verifyWebhook(payload: string, signature: string): Promise<Stripe.Event>;
 }
 
@@ -94,15 +94,15 @@ export interface PaymentProvider {
     metadata: Record<string, string>;
     applicationFeeAmount?: number;
   }): Promise<CheckoutSession>;
-  
+
   createConnectCheckoutSession(input: {
     amountCents: number;
     email: string;
     metadata: Record<string, string>;
-    stripeAccountId?: string;  // Made optional for non-Stripe providers
+    stripeAccountId?: string; // Made optional for non-Stripe providers
     applicationFeeAmount: number;
   }): Promise<CheckoutSession>;
-  
+
   /**
    * Verify webhook signature and normalize to PaymentEvent
    * Returns provider-agnostic PaymentEvent instead of Stripe.Event
@@ -117,14 +117,14 @@ export interface PaymentProviderService {
     tenantId: string,
     config: PaymentProviderConfig
   ): Promise<{ accountId: string }>;
-  
+
   /** Generate onboarding link for tenant */
   createOnboardingLink(
     tenantId: string,
     returnUrl: string,
     refreshUrl: string
   ): Promise<{ url: string }>;
-  
+
   /** Check if tenant completed onboarding */
   checkOnboardingStatus(tenantId: string): Promise<{ isOnboarded: boolean }>;
 }
@@ -235,7 +235,7 @@ export class StripePaymentAdapter implements PaymentProvider {
 
     // Validate application fee (Stripe requires 0.5% - 50%)
     const minFee = Math.ceil(input.amountCents * 0.005);
-    const maxFee = Math.floor(input.amountCents * 0.50);
+    const maxFee = Math.floor(input.amountCents * 0.5);
 
     if (input.applicationFeeAmount < minFee) {
       logger.warn(
@@ -290,13 +290,9 @@ export class StripePaymentAdapter implements PaymentProvider {
 
   async verifyWebhook(payload: string, signature: string): Promise<PaymentEvent> {
     let stripeEvent: Stripe.Event;
-    
+
     try {
-      stripeEvent = this.stripe.webhooks.constructEvent(
-        payload,
-        signature,
-        this.webhookSecret
-      );
+      stripeEvent = this.stripe.webhooks.constructEvent(payload, signature, this.webhookSecret);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       logger.error({ error: message }, 'Stripe webhook verification failed');
@@ -384,10 +380,8 @@ export class PayPalPaymentAdapter implements PaymentProvider {
     this.mode = options.mode;
     this.successUrl = options.successUrl;
     this.cancelUrl = options.cancelUrl;
-    this.apiBase = 
-      options.mode === 'sandbox'
-        ? 'https://api-m.sandbox.paypal.com'
-        : 'https://api-m.paypal.com';
+    this.apiBase =
+      options.mode === 'sandbox' ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
   }
 
   async createCheckoutSession(input: {
@@ -398,12 +392,12 @@ export class PayPalPaymentAdapter implements PaymentProvider {
   }): Promise<CheckoutSession> {
     // PayPal specific implementation
     const accessToken = await this.getAccessToken();
-    
+
     const response = await fetch(`${this.apiBase}/v2/checkout/orders`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         intent: 'CAPTURE',
@@ -433,11 +427,9 @@ export class PayPalPaymentAdapter implements PaymentProvider {
 
     const data = await response.json();
     const paypalOrderId = data.id;
-    
+
     // Find approve link
-    const approveLink = data.links?.find(
-      (link: any) => link.rel === 'approve'
-    )?.href;
+    const approveLink = data.links?.find((link: any) => link.rel === 'approve')?.href;
 
     if (!approveLink) {
       throw new Error('PayPal order created but no approve URL');
@@ -458,9 +450,7 @@ export class PayPalPaymentAdapter implements PaymentProvider {
   }): Promise<CheckoutSession> {
     // PayPal doesn't use Stripe account IDs
     // Implementation would handle PayPal's merchant accounts differently
-    throw new Error(
-      'PayPal uses different onboarding model. Use PaymentProviderService instead.'
-    );
+    throw new Error('PayPal uses different onboarding model. Use PaymentProviderService instead.');
   }
 
   async verifyWebhook(payload: string, signature: string): Promise<PaymentEvent> {
@@ -471,7 +461,7 @@ export class PayPalPaymentAdapter implements PaymentProvider {
     }
 
     const accessToken = await this.getAccessToken();
-    
+
     // Verify signature with PayPal API
     const verifyResponse = await fetch(
       `${this.apiBase}/v1/notifications/verify-webhook-signature`,
@@ -479,7 +469,7 @@ export class PayPalPaymentAdapter implements PaymentProvider {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           webhook_id: webhookId,
@@ -503,21 +493,20 @@ export class PayPalPaymentAdapter implements PaymentProvider {
   }
 
   private normalizePayPalEvent(event: any): PaymentEvent {
-    const metadata = event.resource?.custom_id
-      ? JSON.parse(event.resource.custom_id)
-      : {};
+    const metadata = event.resource?.custom_id ? JSON.parse(event.resource.custom_id) : {};
 
     return {
       id: event.id,
-      type: event.event_type === 'CHECKOUT.ORDER.COMPLETED' 
-        ? 'checkout_completed' 
-        : 'payment_succeeded',
+      type:
+        event.event_type === 'CHECKOUT.ORDER.COMPLETED'
+          ? 'checkout_completed'
+          : 'payment_succeeded',
       provider: 'paypal',
       metadata,
       data: event.resource || {},
       timestamp: Math.floor(new Date(event.create_time).getTime() / 1000),
       isSuccess: event.event_type?.includes('COMPLETED'),
-      amountCents: event.resource?.amount?.value 
+      amountCents: event.resource?.amount?.value
         ? Math.round(parseFloat(event.resource.amount.value) * 100)
         : undefined,
     };
@@ -528,9 +517,9 @@ export class PayPalPaymentAdapter implements PaymentProvider {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${Buffer.from(
-          `${this.clientId}:${this.clientSecret}`
-        ).toString('base64')}`,
+        Authorization: `Basic ${Buffer.from(`${this.clientId}:${this.clientSecret}`).toString(
+          'base64'
+        )}`,
       },
       body: 'grant_type=client_credentials',
     });
@@ -551,10 +540,7 @@ export class PayPalPaymentAdapter implements PaymentProvider {
 import type { PaymentProvider, WebhookRepository } from '../lib/ports';
 import type { BookingService } from '../services/booking.service';
 import { logger } from '../lib/core/logger';
-import {
-  WebhookValidationError,
-  WebhookProcessingError,
-} from '../lib/errors';
+import { WebhookValidationError, WebhookProcessingError } from '../lib/errors';
 import { z } from 'zod';
 import { PaymentEvent } from '../lib/payment-events';
 
@@ -581,10 +567,7 @@ export class WebhooksController {
    * Handle webhook from ANY payment provider
    * Provider-agnostic implementation
    */
-  async handlePaymentWebhook(
-    rawBody: string,
-    signature: string
-  ): Promise<void> {
+  async handlePaymentWebhook(rawBody: string, signature: string): Promise<void> {
     let event: PaymentEvent;
 
     // Verify webhook signature (provider-specific)
@@ -611,10 +594,7 @@ export class WebhooksController {
     // Idempotency check
     const isDupe = await this.webhookRepo.isDuplicate(tenantId, event.id);
     if (isDupe) {
-      logger.info(
-        { eventId: event.id, tenantId },
-        'Duplicate webhook ignored'
-      );
+      logger.info({ eventId: event.id, tenantId }, 'Duplicate webhook ignored');
       return;
     }
 
@@ -632,14 +612,9 @@ export class WebhooksController {
         case 'checkout_completed':
         case 'payment_succeeded': {
           // Validate metadata
-          const metadataResult = PaymentMetadataSchema.safeParse(
-            event.metadata
-          );
+          const metadataResult = PaymentMetadataSchema.safeParse(event.metadata);
           if (!metadataResult.success) {
-            logger.error(
-              { errors: metadataResult.error.flatten() },
-              'Invalid webhook metadata'
-            );
+            logger.error({ errors: metadataResult.error.flatten() }, 'Invalid webhook metadata');
             await this.webhookRepo.markFailed(
               tenantId,
               event.id,
@@ -669,32 +644,22 @@ export class WebhooksController {
                 parsedAddOnIds = arrayResult.data;
               }
             } catch (error) {
-              logger.warn(
-                { addOnIds, error: String(error) },
-                'Invalid addOnIds'
-              );
+              logger.warn({ addOnIds, error: String(error) }, 'Invalid addOnIds');
             }
           }
 
           // Create booking
-          await this.bookingService.onPaymentCompleted(
-            validatedTenantId,
-            {
-              sessionId: event.id,
-              packageId,
-              eventDate,
-              email,
-              coupleName,
-              addOnIds: parsedAddOnIds,
-              totalCents: event.amountCents || 0,
-              commissionAmount: commissionAmount
-                ? parseInt(commissionAmount, 10)
-                : undefined,
-              commissionPercent: commissionPercent
-                ? parseFloat(commissionPercent)
-                : undefined,
-            }
-          );
+          await this.bookingService.onPaymentCompleted(validatedTenantId, {
+            sessionId: event.id,
+            packageId,
+            eventDate,
+            email,
+            coupleName,
+            addOnIds: parsedAddOnIds,
+            totalCents: event.amountCents || 0,
+            commissionAmount: commissionAmount ? parseInt(commissionAmount, 10) : undefined,
+            commissionPercent: commissionPercent ? parseFloat(commissionPercent) : undefined,
+          });
 
           logger.info(
             { eventId: event.id, tenantId: validatedTenantId },
@@ -755,18 +720,13 @@ export class WebhooksController {
 export class CommissionService {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async calculateCommission(
-    tenantId: string,
-    bookingTotal: number
-  ): Promise<CommissionResult> {
+  async calculateCommission(tenantId: string, bookingTotal: number): Promise<CommissionResult> {
     // ... existing validation code ...
 
     const commissionPercent = Number(tenant.commissionPercent);
 
     // Calculate commission (provider-independent)
-    const commissionCents = Math.ceil(
-      bookingTotal * (commissionPercent / 100)
-    );
+    const commissionCents = Math.ceil(bookingTotal * (commissionPercent / 100));
 
     // REMOVED: Provider-specific validation
     // const minCommission = Math.ceil(bookingTotal * 0.005);
@@ -812,7 +772,7 @@ model Tenant {
 model Tenant {
   id String @id
   commissionPercent Decimal
-  
+
   // NEW: Generic payment configuration
   paymentConfig PaymentProviderConfig?
 }
@@ -822,24 +782,24 @@ model PaymentProviderConfig {
   tenantId String @unique
   provider String // 'stripe' | 'paypal' | 'square'
   isOnboarded Boolean @default(false)
-  
+
   // Stripe-specific
   stripeAccountId String?
   stripeRestrictedKey String? // Encrypted
-  
+
   // PayPal-specific
   paypalMerchantId String?
   paypalAccessToken String? // Encrypted
-  
+
   // Square-specific
   squareAccountId String?
   squareAccessToken String? // Encrypted
-  
+
   // Generic fields
   onboardingStatus Json // Flexible status tracking
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   tenant Tenant @relation(fields: [tenantId], references: [id])
 }
 ```
@@ -938,4 +898,3 @@ export interface Config {
   CURRENCY?: string;
 }
 ```
-

@@ -7,10 +7,7 @@
 import type { PaymentProvider, WebhookRepository } from '../lib/ports';
 import type { BookingService } from '../services/booking.service';
 import { logger } from '../lib/core/logger';
-import {
-  WebhookValidationError,
-  WebhookProcessingError,
-} from '../lib/errors';
+import { WebhookValidationError, WebhookProcessingError } from '../lib/errors';
 import { z } from 'zod';
 import type Stripe from 'stripe';
 
@@ -140,7 +137,10 @@ export class WebhooksController {
     // This uses a temporary "global" namespace just for the duplicate check
     const isGlobalDupe = await this.webhookRepo.isDuplicate('_global', event.id);
     if (isGlobalDupe) {
-      logger.info({ eventId: event.id }, 'Duplicate webhook (global check) - returning 200 OK to Stripe');
+      logger.info(
+        { eventId: event.id },
+        'Duplicate webhook (global check) - returning 200 OK to Stripe'
+      );
       return;
     }
 
@@ -152,7 +152,10 @@ export class WebhooksController {
       const tempSession = event.data.object as Stripe.Checkout.Session;
       tenantId = tempSession?.metadata?.tenantId;
     } catch (err) {
-      logger.warn({ eventId: event.id, error: err }, 'Could not extract tenantId from webhook metadata');
+      logger.warn(
+        { eventId: event.id, error: err },
+        'Could not extract tenantId from webhook metadata'
+      );
     }
 
     // For checkout.session.completed, tenantId is CRITICAL - fail fast
@@ -161,7 +164,7 @@ export class WebhooksController {
       logger.error(
         { eventId: event.id, type: event.type },
         'CRITICAL: checkout.session.completed webhook missing tenantId in metadata. ' +
-        'Rejecting webhook - Stripe will retry. Fix checkout session creation to include tenantId in metadata.'
+          'Rejecting webhook - Stripe will retry. Fix checkout session creation to include tenantId in metadata.'
       );
       throw new WebhookValidationError('Webhook missing required tenantId in metadata');
     }
@@ -191,7 +194,10 @@ export class WebhooksController {
     // This handles the case where two concurrent calls both passed the initial
     // isDuplicate check before either recorded.
     if (!isNewRecord) {
-      logger.info({ eventId: event.id }, 'Webhook duplicate detected during recording - returning 200 OK');
+      logger.info(
+        { eventId: event.id },
+        'Webhook duplicate detected during recording - returning 200 OK'
+      );
       return;
     }
 
@@ -203,7 +209,10 @@ export class WebhooksController {
         const sessionResult = StripeSessionSchema.safeParse(event.data.object);
         if (!sessionResult.success) {
           // Log full error details for debugging (server logs only)
-          logger.error({ errors: sessionResult.error.flatten() }, 'Invalid session structure from Stripe');
+          logger.error(
+            { errors: sessionResult.error.flatten() },
+            'Invalid session structure from Stripe'
+          );
           // Store only error type in DB - no sensitive data (P0 security fix)
           await this.webhookRepo.markFailed(
             effectiveTenantId,
@@ -248,7 +257,9 @@ export class WebhooksController {
         // Check if this is a balance payment
         if (isBalancePayment === 'true' && bookingId) {
           // This is a balance payment - update existing booking
-          const balanceAmount = balanceAmountCents ? parseInt(balanceAmountCents, 10) : session.amount_total ?? 0;
+          const balanceAmount = balanceAmountCents
+            ? parseInt(balanceAmountCents, 10)
+            : (session.amount_total ?? 0);
 
           logger.info(
             {
@@ -267,7 +278,10 @@ export class WebhooksController {
             balanceAmount
           );
 
-          logger.info({ eventId: event.id, sessionId: session.id, tenantId: validatedTenantId, bookingId }, 'Balance payment processed successfully');
+          logger.info(
+            { eventId: event.id, sessionId: session.id, tenantId: validatedTenantId, bookingId },
+            'Balance payment processed successfully'
+          );
         } else {
           // This is a regular booking (deposit or full payment)
           // Parse add-on IDs with Zod validation
@@ -285,25 +299,32 @@ export class WebhooksController {
                 if (arrayResult.success) {
                   parsedAddOnIds = arrayResult.data;
                 } else {
-                  logger.warn({
-                    addOnIds,
-                    errors: arrayResult.error.flatten()
-                  }, 'addOnIds array contains non-string values, ignoring');
+                  logger.warn(
+                    {
+                      addOnIds,
+                      errors: arrayResult.error.flatten(),
+                    },
+                    'addOnIds array contains non-string values, ignoring'
+                  );
                 }
               }
             } catch (error) {
-              logger.warn({
-                addOnIds,
-                error: error instanceof Error ? error.message : String(error)
-              }, 'Invalid JSON in addOnIds, ignoring');
+              logger.warn(
+                {
+                  addOnIds,
+                  error: error instanceof Error ? error.message : String(error),
+                },
+                'Invalid JSON in addOnIds, ignoring'
+              );
             }
           }
 
           // Calculate total from Stripe session (in cents)
           // For deposits, use the original totalCents from metadata
-          const totalCents = isDeposit === 'true' && metadataTotalCents
-            ? parseInt(metadataTotalCents, 10)
-            : session.amount_total ?? 0;
+          const totalCents =
+            isDeposit === 'true' && metadataTotalCents
+              ? parseInt(metadataTotalCents, 10)
+              : (session.amount_total ?? 0);
 
           logger.info(
             {
@@ -320,7 +341,9 @@ export class WebhooksController {
 
           // Parse commission data from metadata
           const commissionAmountNum = commissionAmount ? parseInt(commissionAmount, 10) : undefined;
-          const commissionPercentNum = commissionPercent ? parseFloat(commissionPercent) : undefined;
+          const commissionPercentNum = commissionPercent
+            ? parseFloat(commissionPercent)
+            : undefined;
 
           // Create booking in database (tenant-scoped)
           // BookingConflictError is handled below as idempotent success
@@ -338,10 +361,16 @@ export class WebhooksController {
             depositPercent: depositPercent ? parseFloat(depositPercent) : undefined,
           });
 
-          logger.info({ eventId: event.id, sessionId: session.id, tenantId: validatedTenantId }, 'Booking created successfully');
+          logger.info(
+            { eventId: event.id, sessionId: session.id, tenantId: validatedTenantId },
+            'Booking created successfully'
+          );
         }
       } else {
-        logger.info({ eventId: event.id, type: event.type }, 'Ignoring unhandled webhook event type');
+        logger.info(
+          { eventId: event.id, type: event.type },
+          'Ignoring unhandled webhook event type'
+        );
       }
 
       // Mark webhook as successfully processed (tenant-scoped)

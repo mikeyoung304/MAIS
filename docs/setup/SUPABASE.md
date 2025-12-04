@@ -11,6 +11,7 @@
 MAIS uses **Supabase** as its production PostgreSQL database with built-in connection pooling, automatic backups, and high availability.
 
 **Integration Type:** Database Only (Simple)
+
 - ✅ PostgreSQL database with connection pooling
 - ✅ Automatic backups (7-day point-in-time recovery)
 - ✅ SSL/TLS encryption enforced
@@ -36,6 +37,7 @@ SUPABASE_SERVICE_ROLE_KEY="eyJhbGc..."
 ```
 
 **Important:**
+
 - Password special characters must be URL-encoded (@ = %40)
 - Both DATABASE_URL and DIRECT_URL use port 5432 (transaction mode)
 - Never commit `.env` file to git
@@ -75,11 +77,13 @@ npm run db:seed
 ### Schema Features
 
 **Critical Constraints:**
+
 - ✅ `Booking.date` - **UNIQUE** constraint prevents double-booking
 - ✅ `Payment.processorId` - **UNIQUE** constraint prevents duplicate webhook processing
 - ✅ `User.passwordHash` - **NOT NULL** for admin authentication
 
 **Performance Indexes:**
+
 - `Booking.date` - Fast availability lookups
 - `Payment.processorId` - Fast Stripe webhook verification
 - `BlackoutDate.date` - Fast blackout checking
@@ -103,11 +107,13 @@ const packages = await prisma.package.findMany();
 ### From Supabase Dashboard
 
 **SQL Editor:**
+
 - Run ad-hoc queries
 - View data directly
 - Execute migrations manually
 
 **Table Editor:**
+
 - Visual data browsing
 - Quick edits (use cautiously)
 - Export data as CSV
@@ -118,23 +124,25 @@ const packages = await prisma.package.findMany();
 
 The seed script creates:
 
-| Resource | Count | Details |
-|----------|-------|---------|
-| Admin User | 1 | `admin@example.com` / `admin` |
-| Packages | 3 | Classic ($2,500), Garden ($3,500), Luxury ($5,500) |
-| Add-Ons | 4 | Photography, Officiant, Bouquet, Violinist |
-| Package-AddOn Links | 8 | All addons linked to Classic & Garden |
-| Blackout Dates | 1 | Christmas 2025 |
+| Resource            | Count | Details                                            |
+| ------------------- | ----- | -------------------------------------------------- |
+| Admin User          | 1     | `admin@example.com` / `admin`                      |
+| Packages            | 3     | Classic ($2,500), Garden ($3,500), Luxury ($5,500) |
+| Add-Ons             | 4     | Photography, Officiant, Bouquet, Violinist         |
+| Package-AddOn Links | 8     | All addons linked to Classic & Garden              |
+| Blackout Dates      | 1     | Christmas 2025                                     |
 
 ---
 
 ## Connection Pooling
 
 **Supabase provides:**
+
 - **Transaction Mode** (port 5432) - Used by default
 - **Session Mode** (port 6543) - Available but not used
 
 **Current Setup:**
+
 - Uses port 5432 (transaction mode)
 - Supports up to 100 concurrent connections (free tier)
 - No additional pgBouncer setup required
@@ -144,11 +152,13 @@ The seed script creates:
 ## Backups
 
 **Automatic Backups:**
+
 - Daily full backups
 - 7-day retention (free tier)
 - Point-in-time recovery available
 
 **Manual Backup:**
+
 ```bash
 # Via Supabase Dashboard → Database → Backups
 # Or via pg_dump:
@@ -160,6 +170,7 @@ pg_dump $DATABASE_URL > backup.sql
 ## Monitoring
 
 **Supabase Dashboard provides:**
+
 - ✅ Query performance metrics
 - ✅ Connection pool usage
 - ✅ Database size tracking
@@ -211,23 +222,27 @@ CREATE INDEX IF NOT EXISTS "idx_name" ON "Table"("column");
 ### Credentials Management
 
 **Production:**
+
 - ❌ Never hardcode credentials
 - ✅ Use environment variables only
 - ✅ Rotate passwords quarterly
 - ✅ Use separate credentials per environment
 
 **Local Development:**
+
 - Keep separate `.env` file (not committed)
 - Use Supabase test project (not production)
 
 ### Access Control
 
 **Database Level:**
+
 - Supabase enforces SSL/TLS
 - IP restrictions available (paid tiers)
 - Role-based access via Supabase dashboard
 
 **Application Level:**
+
 - Prisma queries run as postgres role
 - No Row-Level Security (RLS) used (single-tenant app)
 - JWT authentication in app layer
@@ -239,12 +254,14 @@ CREATE INDEX IF NOT EXISTS "idx_name" ON "Table"("column");
 ### Connection Issues
 
 **"Can't reach database server"**
+
 - Check Supabase project status (paused?)
 - Verify password URL-encoding (@ = %40)
 - Test connection in SQL Editor first
 - Check if IPv6 is enabled (some networks block it)
 
 **"Too many connections"**
+
 - Increase connection pool limit in DATABASE_URL
 - Check for connection leaks in code
 - Use `prisma.$disconnect()` properly
@@ -252,6 +269,7 @@ CREATE INDEX IF NOT EXISTS "idx_name" ON "Table"("column");
 ### Migration Issues
 
 **"Migration already applied"**
+
 - Supabase tracks migrations in `_prisma_migrations` table
 - Use `--skip-seed` if data already exists
 - Run migrations via SQL Editor manually
@@ -266,14 +284,9 @@ CREATE INDEX IF NOT EXISTS "idx_name" ON "Table"("column");
 // Photo uploads for wedding packages
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-await supabase.storage
-  .from('package-photos')
-  .upload(`${packageId}/hero.jpg`, file);
+await supabase.storage.from('package-photos').upload(`${packageId}/hero.jpg`, file);
 ```
 
 ### Phase 4: Realtime (Optional)
@@ -282,13 +295,17 @@ await supabase.storage
 // Live booking updates for admin dashboard
 supabase
   .channel('bookings')
-  .on('postgres_changes', {
-    event: 'INSERT',
-    schema: 'public',
-    table: 'Booking'
-  }, payload => {
-    console.log('New booking!', payload);
-  })
+  .on(
+    'postgres_changes',
+    {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'Booking',
+    },
+    (payload) => {
+      console.log('New booking!', payload);
+    }
+  )
   .subscribe();
 ```
 
@@ -300,6 +317,7 @@ supabase
 **Prisma + Supabase Guide:** https://www.prisma.io/docs/guides/database/supabase
 
 **Internal Docs:**
+
 - `ENVIRONMENT.md` - Environment variables
 - `ARCHITECTURE.md` - System architecture
 - `DEVELOPING.md` - Development workflow
@@ -309,6 +327,7 @@ supabase
 ## Project Details
 
 **Supabase Project:**
+
 - **Project Ref:** `gpyvdknhmevcfdbgtqir`
 - **Region:** US East (N. Virginia)
 - **Database:** PostgreSQL 15

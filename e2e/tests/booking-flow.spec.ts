@@ -20,7 +20,9 @@ test.describe('Booking Flow', () => {
     await expect(page).toHaveURL('/');
 
     // Verify hero section loaded
-    await expect(page.getByRole('heading', { name: /Your Perfect Day, Simplified/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /Your Perfect Day, Simplified/i })
+    ).toBeVisible();
 
     // 2. Click "View Packages" button to scroll to packages section
     await page.getByRole('button', { name: /View Packages/i }).click();
@@ -50,7 +52,9 @@ test.describe('Booking Flow', () => {
 
     // Find and click an available date in the calendar (button inside non-disabled day cell)
     // react-day-picker uses button elements for selectable dates
-    const dateButton = page.locator('.rdp-day:not([data-hidden]):not([data-outside]):not(.rdp-day_disabled) button').first();
+    const dateButton = page
+      .locator('.rdp-day:not([data-hidden]):not([data-outside]):not(.rdp-day_disabled) button')
+      .first();
     await expect(dateButton).toBeVisible();
     await dateButton.click();
 
@@ -125,7 +129,9 @@ test.describe('Booking Flow', () => {
     await expect(checkoutButton).toBeDisabled();
 
     // Select a date (button inside non-disabled day cell)
-    const dateButton = page.locator('.rdp-day:not([data-hidden]):not([data-outside]):not(.rdp-day_disabled) button').first();
+    const dateButton = page
+      .locator('.rdp-day:not([data-hidden]):not([data-outside]):not(.rdp-day_disabled) button')
+      .first();
     await expect(dateButton).toBeVisible();
     await dateButton.click();
     await page.waitForLoadState('networkidle');

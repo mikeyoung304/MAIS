@@ -15,6 +15,7 @@
 MAIS has successfully transformed from a single-tenant booking platform into a production-ready multi-tenant SaaS platform. **Phase 4 is complete**, and Phase 5 is 33% complete with package photo uploads operational. The platform now supports tenant authentication, branding management, self-service operations, and visual package catalogs.
 
 **What's Working:**
+
 - Multi-tenant data isolation (row-level, 100% secure)
 - Tenant branding (logo, colors, fonts)
 - Tenant authentication (email/password + JWT)
@@ -25,6 +26,7 @@ MAIS has successfully transformed from a single-tenant booking platform into a p
 - Tenant admin dashboard for operations
 
 **What's Missing (Phase 5+ Priorities):**
+
 - Add-on management UI (tenants cannot create/edit add-ons) - IN PROGRESS
 - Email template customization (fixed platform templates) - IN PROGRESS
 - UI copy/content management (hardcoded platform branding)
@@ -45,14 +47,14 @@ Enable 50 independent wedding businesses to operate as **white-label platforms**
 
 ### Timeline Overview
 
-| Phase | Duration | Effort | Completion Target |
-|-------|----------|--------|-------------------|
-| Phase 5: Self-Service Foundation | 4-6 weeks | 80-100 hours | Q1 2026 |
-| Phase 6: Content & Copy Management | 3-4 weeks | 60-80 hours | Q1 2026 |
-| Phase 7: Media & Cloud Infrastructure | 2-3 weeks | 40-60 hours | Q2 2026 |
-| Phase 8: Advanced Features | 4-6 weeks | 100-120 hours | Q2-Q3 2026 |
-| Phase 9: Analytics & Optimization | 2-3 weeks | 40-60 hours | Q3 2026 |
-| Phase 10: Marketplace & Templates | 3-4 weeks | 60-80 hours | Q4 2026 |
+| Phase                                 | Duration  | Effort        | Completion Target |
+| ------------------------------------- | --------- | ------------- | ----------------- |
+| Phase 5: Self-Service Foundation      | 4-6 weeks | 80-100 hours  | Q1 2026           |
+| Phase 6: Content & Copy Management    | 3-4 weeks | 60-80 hours   | Q1 2026           |
+| Phase 7: Media & Cloud Infrastructure | 2-3 weeks | 40-60 hours   | Q2 2026           |
+| Phase 8: Advanced Features            | 4-6 weeks | 100-120 hours | Q2-Q3 2026        |
+| Phase 9: Analytics & Optimization     | 2-3 weeks | 40-60 hours   | Q3 2026           |
+| Phase 10: Marketplace & Templates     | 3-4 weeks | 60-80 hours   | Q4 2026           |
 
 **Total Time to Maturity Score 9/10:** 6-9 months (18-26 weeks)
 
@@ -63,24 +65,30 @@ Enable 50 independent wedding businesses to operate as **white-label platforms**
 ### Completed Features
 
 #### 1. Multi-Tenant Foundation (Phase 1)
+
 **Files:**
+
 - `server/prisma/schema.prisma` - Tenant model with encrypted secrets
 - `server/src/lib/encryption.service.ts` - AES-256-GCM encryption
 - `server/src/middleware/tenant.ts` - X-Tenant-Key authentication
 
 **Capabilities:**
+
 - Row-level data isolation (100% secure, no cross-tenant leakage)
 - API key generation (`pk_live_*` and `sk_live_*`)
 - Commission calculation service (10-15% variable rates)
 - Tenant-scoped database queries (all repositories)
 
 #### 2. Embeddable Widget Core (Phase 2)
+
 **Files:**
+
 - `client/src/widget/` - Widget application
 - `client/public/widget-loader.js` - SDK loader (<3KB)
 - `server/src/routes/branding.routes.ts` - Branding API
 
 **Capabilities:**
+
 - JavaScript SDK for tenant website embedding
 - Iframe-based widget with postMessage communication
 - Dynamic branding application (logo, colors, fonts)
@@ -88,11 +96,14 @@ Enable 50 independent wedding businesses to operate as **white-label platforms**
 - Mobile-responsive design
 
 #### 3. Stripe Connect Integration (Phase 3)
+
 **Files:**
+
 - `server/src/services/stripe-connect.service.ts` - Connect service
 - `server/src/services/commission.service.ts` - Commission engine
 
 **Capabilities:**
+
 - Stripe Express Connected Accounts
 - Variable commission payments (10%, 12.5%, 15%)
 - Server-side commission calculation (security)
@@ -100,7 +111,9 @@ Enable 50 independent wedding businesses to operate as **white-label platforms**
 - Payment intent with application fees
 
 #### 4. Tenant Admin UI (Phase 4)
+
 **Files:**
+
 - `server/src/routes/tenant-admin.routes.ts` - Admin API routes (8 endpoints)
 - `server/src/services/tenant-auth.service.ts` - JWT authentication
 - `server/src/services/upload.service.ts` - File upload service
@@ -109,6 +122,7 @@ Enable 50 independent wedding businesses to operate as **white-label platforms**
 - `client/src/hooks/useBranding.ts` - Branding hook
 
 **Capabilities:**
+
 - Tenant authentication (email/password + JWT)
 - Logo upload (2MB max, local storage)
 - Color customization (primary, secondary)
@@ -118,6 +132,7 @@ Enable 50 independent wedding businesses to operate as **white-label platforms**
 - Booking view (read-only with filters)
 
 **API Endpoints:**
+
 ```
 POST   /v1/tenant/logo             # Upload logo
 PUT    /v1/tenant/branding         # Update colors/fonts
@@ -135,18 +150,21 @@ GET    /v1/tenant-admin/bookings   # View bookings
 ### Gaps Analysis
 
 #### Priority 1: Self-Service Blockers
+
 1. **Add-On Management Missing** - Tenants cannot create/edit add-ons (only packages)
 2. **Photo Upload Limited** - Only logo upload exists; no package/add-on photo management
 3. **Email Templates Fixed** - Hardcoded platform templates; no tenant customization
 4. **UI Copy Hardcoded** - Platform branding in widget; no tenant content control
 
 #### Priority 2: Production Readiness
+
 5. **Local File Storage** - Logo files stored locally (not production-ready)
 6. **No Image Optimization** - No resize/compress; large files impact performance
 7. **Limited Font Selection** - Only 8 fonts; no custom font upload
 8. **No Email Tracking** - Cannot view sent emails or resend confirmations
 
 #### Priority 3: Advanced Features
+
 9. **Static Pricing** - No seasonal pricing, discounts, or deposit options
 10. **Basic Booking View** - No modification, refund, or customer communication tools
 11. **Calendar Gaps** - No visual calendar or recurring blackouts
@@ -161,6 +179,7 @@ GET    /v1/tenant-admin/bookings   # View bookings
 **Target Completion:** Q1 2026
 
 ### Completed ✅
+
 - **5.1 Package Photo Upload System** (Completed December 2025)
   - Database schema updated (photos JSON column)
   - Upload service extended (uploadPackagePhoto, deletePackagePhoto)
@@ -173,6 +192,7 @@ GET    /v1/tenant-admin/bookings   # View bookings
   - Full E2E test coverage added
 
 ### In Progress 🔄
+
 - **5.2 Add-On Management System** (December 2025)
   - Backend API routes for add-on CRUD
   - Frontend UI components
@@ -184,9 +204,11 @@ GET    /v1/tenant-admin/bookings   # View bookings
   - Preview system
 
 ### Pending ⏳
+
 None - All Phase 5 features have been initiated
 
 ### Goal
+
 Enable tenants to fully manage their service offerings independently without platform support.
 
 ### Timeline: Q1 2026 (January - February)
@@ -194,11 +216,13 @@ Enable tenants to fully manage their service offerings independently without pla
 ### Features
 
 #### 5.1 Add-On Management System
+
 **Why:** Tenants cannot offer additional services (photography albums, videography, extra hours) without this feature. Currently, only platform admins can create add-ons.
 
 **Effort:** 2 weeks (40 hours)
 
 **Requirements:**
+
 1. **Backend API Endpoints**
    - `GET /v1/tenant-admin/add-ons` - List all add-ons for tenant
    - `POST /v1/tenant-admin/add-ons` - Create new add-on
@@ -206,6 +230,7 @@ Enable tenants to fully manage their service offerings independently without pla
    - `DELETE /v1/tenant-admin/add-ons/:id` - Delete add-on (verify ownership)
 
 2. **Database Schema** (Already exists in Prisma)
+
    ```prisma
    model AddOn {
      id        String   @id @default(cuid())
@@ -229,7 +254,11 @@ Enable tenants to fully manage their service offerings independently without pla
 4. **Validation Schema** (`server/src/validation/tenant-admin.schemas.ts`)
    ```typescript
    export const createAddOnSchema = z.object({
-     slug: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/),
+     slug: z
+       .string()
+       .min(1)
+       .max(50)
+       .regex(/^[a-z0-9-]+$/),
      title: z.string().min(1).max(100),
      description: z.string().max(500).optional(),
      priceCents: z.number().int().min(0),
@@ -238,6 +267,7 @@ Enable tenants to fully manage their service offerings independently without pla
    ```
 
 **Implementation Steps:**
+
 1. Create backend API routes in `server/src/routes/tenant-admin.routes.ts`
 2. Add validation schemas for add-on CRUD operations
 3. Build `TenantAddOnsManager` component with CRUD UI
@@ -246,6 +276,7 @@ Enable tenants to fully manage their service offerings independently without pla
 6. Test multi-tenant isolation (verify Tenant A cannot access Tenant B's add-ons)
 
 **Acceptance Criteria:**
+
 - [x] Tenant can create add-ons with title, description, price, photo URL
 - [x] Tenant can edit their own add-ons (cannot edit other tenants' add-ons)
 - [x] Tenant can delete their own add-ons (soft delete maintains booking history)
@@ -254,16 +285,19 @@ Enable tenants to fully manage their service offerings independently without pla
 - [x] Validation errors displayed clearly in UI
 
 **Files to Create:**
+
 - `server/src/routes/tenant-admin.routes.ts` (add 4 endpoints to existing file)
 - `client/src/features/tenant-admin/TenantAddOnsManager.tsx` (new component)
 - `client/src/features/tenant-admin/AddOnForm.tsx` (new component)
 - `server/src/validation/tenant-admin.schemas.ts` (extend existing)
 
 **Files to Modify:**
+
 - `server/src/routes/tenant-admin.routes.ts` (add add-on routes)
 - `client/src/App.tsx` (add route for add-on manager)
 
 **Testing:**
+
 ```bash
 # API Tests
 curl -X POST http://localhost:5000/v1/tenant-admin/add-ons \
@@ -283,12 +317,15 @@ curl -X POST http://localhost:5000/v1/tenant-admin/add-ons \
 ---
 
 #### 5.2 Email Template Customization
+
 **Why:** Branded communications are critical for professionalism. Currently, all tenants receive identical platform emails with generic platform branding.
 
 **Effort:** 2-3 weeks (50 hours)
 
 **Requirements:**
+
 1. **Email Template Model**
+
    ```prisma
    model EmailTemplate {
      id          String   @id @default(cuid())
@@ -332,6 +369,7 @@ curl -X POST http://localhost:5000/v1/tenant-admin/add-ons \
    - Replace variables with actual booking data
 
 **Implementation Steps:**
+
 1. Create `EmailTemplate` Prisma model and run migration
 2. Build `email-template.service.ts` with CRUD operations
 3. Extend `emailProvider` to load tenant templates
@@ -341,6 +379,7 @@ curl -X POST http://localhost:5000/v1/tenant-admin/add-ons \
 7. Test template rendering with different tenants
 
 **Acceptance Criteria:**
+
 - [x] Customize booking confirmation email (subject + body)
 - [x] Customize reminder emails (2 days before event)
 - [x] Customize cancellation/refund emails
@@ -350,17 +389,20 @@ curl -X POST http://localhost:5000/v1/tenant-admin/add-ons \
 - [x] Fallback to default template if tenant hasn't customized
 
 **Files to Create:**
+
 - `server/src/services/email-template.service.ts` (new service)
 - `client/src/features/tenant-admin/EmailTemplateEditor.tsx` (new component)
 - `client/src/features/tenant-admin/EmailTemplatePreview.tsx` (new component)
 - `server/prisma/migrations/xxx_add_email_templates.sql` (new migration)
 
 **Files to Modify:**
+
 - `server/prisma/schema.prisma` (add EmailTemplate model)
 - `server/src/adapters/postmark.adapter.ts` (load tenant templates)
 - `server/src/di.ts` (inject email template service)
 
 **Testing:**
+
 ```bash
 # Update confirmation email template
 curl -X PUT http://localhost:5000/v1/tenant-admin/email-templates/booking_confirmation \
@@ -388,6 +430,7 @@ curl -X POST http://localhost:5000/v1/tenant-admin/email-templates/booking_confi
 ### Success Metrics (Phase 5)
 
 **Quantitative:**
+
 - 100% of tenants can manage add-ons independently
 - 90%+ of packages have photos uploaded
 - 80% of tenants customize email templates
@@ -395,6 +438,7 @@ curl -X POST http://localhost:5000/v1/tenant-admin/email-templates/booking_confi
 - <100ms API response time for add-on CRUD
 
 **Qualitative:**
+
 - Tenants report "easy to use" for add-on manager (survey)
 - Email branding consistent with tenant visual identity
 - Zero cross-tenant data leaks (security audit)
@@ -405,6 +449,7 @@ curl -X POST http://localhost:5000/v1/tenant-admin/email-templates/booking_confi
 ## Phase 6: Content & Copy Management (3-4 weeks)
 
 ### Goal
+
 Enable true white-label experience with full content control over all customer-facing text.
 
 ### Timeline: Q1 2026 (February - March)
@@ -412,35 +457,38 @@ Enable true white-label experience with full content control over all customer-f
 ### Features
 
 #### 6.1 UI Copy Customization System
+
 **Why:** Widget currently shows hardcoded platform branding and generic copy. Tenants need to customize all text to match their brand voice.
 
 **Effort:** 2 weeks (40 hours)
 
 **Requirements:**
+
 1. **Content Model**
+
    ```typescript
    interface TenantContent {
      hero: {
-       title: string;          // "Capture Your Perfect Day"
-       subtitle: string;       // "Premium Wedding Photography"
-       ctaText: string;        // "View Packages"
+       title: string; // "Capture Your Perfect Day"
+       subtitle: string; // "Premium Wedding Photography"
+       ctaText: string; // "View Packages"
      };
      about: {
-       heading: string;        // "About Us"
-       body: string;           // Rich text
+       heading: string; // "About Us"
+       body: string; // Rich text
      };
      features: Array<{
-       icon: string;           // Icon name
-       title: string;          // "All-Day Coverage"
-       description: string;    // "From prep to reception"
+       icon: string; // Icon name
+       title: string; // "All-Day Coverage"
+       description: string; // "From prep to reception"
      }>;
      buttons: {
-       bookNow: string;        // "Book Now"
-       viewDetails: string;    // "View Details"
-       addToCart: string;      // "Add to Cart"
+       bookNow: string; // "Book Now"
+       viewDetails: string; // "View Details"
+       addToCart: string; // "Add to Cart"
      };
      footer: {
-       copyright: string;      // "© 2026 Bella Weddings"
+       copyright: string; // "© 2026 Bella Weddings"
        links: Array<{
          text: string;
          url: string;
@@ -465,6 +513,7 @@ Enable true white-label experience with full content control over all customer-f
    - Integration into widget to load tenant content
 
 **Implementation Steps:**
+
 1. Extend Tenant model with `content` JSON field
 2. Create content editor UI with sections (hero, about, features, buttons)
 3. Add content loading to widget (fetch from `/v1/tenant/content`)
@@ -473,6 +522,7 @@ Enable true white-label experience with full content control over all customer-f
 6. Test with multiple languages (verify Unicode support)
 
 **Acceptance Criteria:**
+
 - [x] Tenant can edit hero section (title, subtitle, CTA)
 - [x] Tenant can edit about section (heading, rich text body)
 - [x] Tenant can customize feature descriptions
@@ -482,10 +532,12 @@ Enable true white-label experience with full content control over all customer-f
 - [x] Preview system works without publishing
 
 **Files to Create:**
+
 - `client/src/features/tenant-admin/ContentEditor.tsx` (new component)
 - `client/src/features/tenant-admin/ContentPreview.tsx` (new component)
 
 **Files to Modify:**
+
 - `server/prisma/schema.prisma` (add content field to Tenant)
 - `server/src/routes/tenant-admin.routes.ts` (add content endpoints)
 - `client/src/widget/WidgetApp.tsx` (load tenant content)
@@ -493,12 +545,15 @@ Enable true white-label experience with full content control over all customer-f
 ---
 
 #### 6.2 Testimonials Management
+
 **Why:** Social proof is critical for wedding bookings. Tenants need to showcase customer reviews.
 
 **Effort:** 1 week (20 hours)
 
 **Requirements:**
+
 1. **Testimonial Model**
+
    ```prisma
    model Testimonial {
      id          String   @id @default(cuid())
@@ -530,6 +585,7 @@ Enable true white-label experience with full content control over all customer-f
    - `TestimonialCarousel.tsx` - Widget display component
 
 **Acceptance Criteria:**
+
 - [x] CRUD testimonials via dashboard
 - [x] Upload customer photo (optional)
 - [x] Mark testimonials as "featured" for homepage display
@@ -538,23 +594,28 @@ Enable true white-label experience with full content control over all customer-f
 - [x] Configurable display count (3, 5, 10 testimonials)
 
 **Files to Create:**
+
 - `server/prisma/migrations/xxx_add_testimonials.sql` (new migration)
 - `client/src/features/tenant-admin/TestimonialManager.tsx` (new component)
 - `client/src/widget/components/TestimonialCarousel.tsx` (new component)
 
 **Files to Modify:**
+
 - `server/prisma/schema.prisma` (add Testimonial model)
 - `server/src/routes/tenant-admin.routes.ts` (add testimonial endpoints)
 
 ---
 
 #### 6.3 Legal Pages (Terms, Privacy)
+
 **Why:** Each tenant needs custom legal pages for compliance (GDPR, CCPA, etc.)
 
 **Effort:** 1 week (20 hours)
 
 **Requirements:**
+
 1. **Legal Page Model**
+
    ```prisma
    model LegalPage {
      id        String   @id @default(cuid())
@@ -578,6 +639,7 @@ Enable true white-label experience with full content control over all customer-f
    - Footer links automatically appear when pages exist
 
 **Acceptance Criteria:**
+
 - [x] Tenant can write custom terms of service
 - [x] Tenant can write custom privacy policy
 - [x] Tenant can write custom refund policy
@@ -587,10 +649,12 @@ Enable true white-label experience with full content control over all customer-f
 - [x] Default templates provided for common legal text
 
 **Files to Create:**
+
 - `client/src/features/tenant-admin/LegalPageEditor.tsx` (new component)
 - `client/src/widget/pages/LegalPage.tsx` (new widget page)
 
 **Files to Modify:**
+
 - `server/prisma/schema.prisma` (add LegalPage model)
 - `server/src/routes/tenant-admin.routes.ts` (add legal page endpoints)
 - `client/src/widget/App.tsx` (add legal page routes)
@@ -600,12 +664,14 @@ Enable true white-label experience with full content control over all customer-f
 ### Success Metrics (Phase 6)
 
 **Quantitative:**
+
 - 100% of tenants can customize all customer-facing copy
 - 70%+ of tenants add testimonials
 - 90%+ of tenants customize legal pages
 - Zero hardcoded platform branding in tenant widgets
 
 **Qualitative:**
+
 - Widget feels like tenant's brand (not platform brand)
 - Legal pages meet compliance requirements
 - Testimonials increase conversion rate by 15%+
@@ -615,6 +681,7 @@ Enable true white-label experience with full content control over all customer-f
 ## Phase 7: Media & Cloud Infrastructure (2-3 weeks)
 
 ### Goal
+
 Production-ready media management with cloud storage and CDN delivery.
 
 ### Timeline: Q2 2026 (March - April)
@@ -622,11 +689,13 @@ Production-ready media management with cloud storage and CDN delivery.
 ### Features
 
 #### 7.1 Cloud Storage Migration
+
 **Why:** Local file storage is not production-ready. Need scalable, redundant, CDN-delivered media.
 
 **Effort:** 1.5 weeks (30 hours)
 
 **Requirements:**
+
 1. **Cloud Storage Provider** (Choose one)
    - **Option A: AWS S3 + CloudFront**
      - Pros: Full control, lowest cost at scale
@@ -650,6 +719,7 @@ Production-ready media management with cloud storage and CDN delivery.
    - Thumbnail generation (multiple sizes)
 
 **Implementation Steps:**
+
 1. Create `MediaStorageProvider` interface in `lib/ports.ts`
 2. Implement `CloudinaryAdapter` or `S3Adapter`
 3. Update `upload.service.ts` to use new adapter
@@ -659,6 +729,7 @@ Production-ready media management with cloud storage and CDN delivery.
 7. Test upload/delete/retrieve operations
 
 **Acceptance Criteria:**
+
 - [x] All uploads go to cloud storage (S3 or Cloudinary)
 - [x] Images served via CDN (<100ms load time globally)
 - [x] Automatic image optimization (50%+ size reduction)
@@ -667,16 +738,19 @@ Production-ready media management with cloud storage and CDN delivery.
 - [x] Local adapter still works for development
 
 **Files to Create:**
+
 - `server/src/adapters/cloudinary.adapter.ts` (new adapter)
 - `server/src/lib/ports.ts` (add MediaStorageProvider interface)
 - `server/scripts/migrate-to-cloud-storage.ts` (migration script)
 
 **Files to Modify:**
+
 - `server/src/services/upload.service.ts` (use new adapter)
 - `server/src/di.ts` (inject cloud storage adapter)
 - `server/.env.example` (add cloud storage variables)
 
 **Testing:**
+
 ```bash
 # Upload test
 curl -X POST http://localhost:5000/v1/tenant/logo \
@@ -693,12 +767,15 @@ curl https://res.cloudinary.com/.../test-logo.png
 ---
 
 #### 7.2 Media Library UI
+
 **Why:** Tenants need centralized media management to see all uploaded images, reuse images, and delete unused files.
 
 **Effort:** 1 week (20 hours)
 
 **Requirements:**
+
 1. **Media Library Model**
+
    ```prisma
    model MediaAsset {
      id          String   @id @default(cuid())
@@ -730,6 +807,7 @@ curl https://res.cloudinary.com/.../test-logo.png
    - Filters: type (image/video), date, usage status
 
 **Acceptance Criteria:**
+
 - [x] Upload multiple files at once (drag-and-drop)
 - [x] View all uploaded media in grid
 - [x] Search and filter media (name, date, type)
@@ -738,11 +816,13 @@ curl https://res.cloudinary.com/.../test-logo.png
 - [x] Reuse media across multiple entities (select from library)
 
 **Files to Create:**
+
 - `client/src/features/tenant-admin/MediaLibrary.tsx` (new component)
 - `client/src/features/tenant-admin/MediaUploader.tsx` (new component)
 - `client/src/components/MediaSelector.tsx` (new reusable component)
 
 **Files to Modify:**
+
 - `server/prisma/schema.prisma` (add MediaAsset model)
 - `server/src/routes/tenant-admin.routes.ts` (add media endpoints)
 
@@ -751,12 +831,14 @@ curl https://res.cloudinary.com/.../test-logo.png
 ### Success Metrics (Phase 7)
 
 **Quantitative:**
+
 - 50%+ reduction in image load times (CDN vs local)
 - Zero local filesystem dependencies
 - 99.9%+ uptime for media delivery
 - 50%+ reduction in storage costs (optimization)
 
 **Qualitative:**
+
 - Tenants can manage media independently
 - Images load fast globally
 - No media-related support tickets
@@ -766,6 +848,7 @@ curl https://res.cloudinary.com/.../test-logo.png
 ## Phase 8: Advanced Features (4-6 weeks)
 
 ### Goal
+
 Competitive feature parity with established booking platforms (Acuity, Calendly, Honeybook).
 
 ### Timeline: Q2-Q3 2026 (April - July)
@@ -773,12 +856,15 @@ Competitive feature parity with established booking platforms (Acuity, Calendly,
 ### Features
 
 #### 8.1 Dynamic Pricing Engine
+
 **Why:** Tenants need seasonal pricing, early bird discounts, and deposit options for competitiveness.
 
 **Effort:** 2 weeks (40 hours)
 
 **Requirements:**
+
 1. **Pricing Rule Model**
+
    ```prisma
    model PricingRule {
      id          String   @id @default(cuid())
@@ -805,6 +891,7 @@ Competitive feature parity with established booking platforms (Acuity, Calendly,
    - Calculate deposit amounts
 
 3. **Discount Code System**
+
    ```prisma
    model DiscountCode {
      id          String   @id @default(cuid())
@@ -831,6 +918,7 @@ Competitive feature parity with established booking platforms (Acuity, Calendly,
    - Payment plans (split into 2-3 installments)
 
 **Acceptance Criteria:**
+
 - [x] Create seasonal pricing rules (date range, percentage/amount)
 - [x] Early bird discounts (book 90+ days in advance)
 - [x] Last-minute discounts (book <30 days out)
@@ -840,11 +928,13 @@ Competitive feature parity with established booking platforms (Acuity, Calendly,
 - [x] Pricing displayed in widget (with discounts shown)
 
 **Files to Create:**
+
 - `server/src/services/pricing-engine.service.ts` (new service)
 - `client/src/features/tenant-admin/PricingRulesManager.tsx` (new component)
 - `client/src/features/tenant-admin/DiscountCodeManager.tsx` (new component)
 
 **Files to Modify:**
+
 - `server/prisma/schema.prisma` (add PricingRule and DiscountCode models)
 - `server/src/services/booking.service.ts` (integrate pricing engine)
 - `client/src/widget/components/PackageCard.tsx` (show discounted prices)
@@ -852,11 +942,13 @@ Competitive feature parity with established booking platforms (Acuity, Calendly,
 ---
 
 #### 8.2 Advanced Booking Management
+
 **Why:** Tenants need to modify bookings, process refunds, and communicate with customers.
 
 **Effort:** 2 weeks (40 hours)
 
 **Requirements:**
+
 1. **Booking Modification Interface**
    - Change event date (if available)
    - Modify package (upgrade/downgrade)
@@ -883,6 +975,7 @@ Competitive feature parity with established booking platforms (Acuity, Calendly,
    - Search bookings by notes
 
 **Acceptance Criteria:**
+
 - [x] Modify booking date (check availability first)
 - [x] Modify booking package (calculate price difference)
 - [x] Process full/partial refunds via Stripe
@@ -892,11 +985,13 @@ Competitive feature parity with established booking platforms (Acuity, Calendly,
 - [x] Tag bookings for organization
 
 **Files to Create:**
+
 - `client/src/features/tenant-admin/BookingModificationModal.tsx` (new component)
 - `client/src/features/tenant-admin/RefundModal.tsx` (new component)
 - `client/src/features/tenant-admin/CustomerMessageModal.tsx` (new component)
 
 **Files to Modify:**
+
 - `server/src/services/booking.service.ts` (add modification methods)
 - `server/src/adapters/stripe.adapter.ts` (add refund methods)
 - `server/prisma/schema.prisma` (add notes and tags to Booking)
@@ -904,11 +999,13 @@ Competitive feature parity with established booking platforms (Acuity, Calendly,
 ---
 
 #### 8.3 Visual Calendar System
+
 **Why:** Tenants need visual calendar to see bookings, blackouts, and availability at a glance.
 
 **Effort:** 1.5 weeks (30 hours)
 
 **Requirements:**
+
 1. **Calendar Views**
    - Month view (traditional calendar grid)
    - Week view (detailed daily schedule)
@@ -927,6 +1024,7 @@ Competitive feature parity with established booking platforms (Acuity, Calendly,
    - Custom styling to match tenant branding
 
 **Acceptance Criteria:**
+
 - [x] Month/week/list calendar views
 - [x] Color-coded bookings by status
 - [x] Drag-and-drop rescheduling (with availability check)
@@ -935,21 +1033,25 @@ Competitive feature parity with established booking platforms (Acuity, Calendly,
 - [x] Export calendar to iCal (import to Google Calendar)
 
 **Files to Create:**
+
 - `client/src/features/tenant-admin/Calendar.tsx` (new component)
 - `client/src/features/tenant-admin/RecurringBlackoutModal.tsx` (new component)
 
 **Files to Modify:**
+
 - `server/src/routes/tenant-admin.routes.ts` (add calendar export endpoint)
 - `server/prisma/schema.prisma` (add recurring patterns to BlackoutDate)
 
 ---
 
 #### 8.4 Multi-Language Support
+
 **Why:** Tenants operating in multilingual regions need localized widgets.
 
 **Effort:** 1 week (20 hours)
 
 **Requirements:**
+
 1. **Language System**
    - Default language per tenant (English, Spanish, French, etc.)
    - UI translation files (JSON)
@@ -969,6 +1071,7 @@ Competitive feature parity with established booking platforms (Acuity, Calendly,
    - Italian (it-IT)
 
 **Acceptance Criteria:**
+
 - [x] Tenant can set default language
 - [x] Widget displays in tenant's default language
 - [x] Language selector in widget (optional)
@@ -977,11 +1080,13 @@ Competitive feature parity with established booking platforms (Acuity, Calendly,
 - [x] Fallback to English if translation missing
 
 **Files to Create:**
+
 - `client/src/i18n/translations/en-US.json` (new translation file)
 - `client/src/i18n/translations/es-ES.json` (new translation file)
 - `client/src/hooks/useTranslation.ts` (new hook)
 
 **Files to Modify:**
+
 - `server/prisma/schema.prisma` (add defaultLanguage to Tenant)
 - `client/src/widget/WidgetApp.tsx` (integrate i18n)
 
@@ -990,12 +1095,14 @@ Competitive feature parity with established booking platforms (Acuity, Calendly,
 ### Success Metrics (Phase 8)
 
 **Quantitative:**
+
 - 50%+ of tenants use dynamic pricing
 - 30%+ of tenants offer payment plans
 - 80%+ of tenants use calendar view daily
 - 20%+ of tenants enable multi-language
 
 **Qualitative:**
+
 - Feature parity with top 3 competitors
 - Tenant satisfaction score >9/10
 - Tenants report "powerful" and "easy to use"
@@ -1005,6 +1112,7 @@ Competitive feature parity with established booking platforms (Acuity, Calendly,
 ## Phase 9: Analytics & Optimization (2-3 weeks)
 
 ### Goal
+
 Data-driven insights for tenants to optimize pricing, packages, and conversion.
 
 ### Timeline: Q3 2026 (July - August)
@@ -1012,9 +1120,11 @@ Data-driven insights for tenants to optimize pricing, packages, and conversion.
 ### Features
 
 #### 9.1 Revenue Dashboards
+
 **Effort:** 1 week (20 hours)
 
 **Metrics:**
+
 - Total revenue (monthly, yearly)
 - Average booking value
 - Revenue by package (which packages sell best)
@@ -1025,9 +1135,11 @@ Data-driven insights for tenants to optimize pricing, packages, and conversion.
 ---
 
 #### 9.2 Booking Analytics
+
 **Effort:** 1 week (20 hours)
 
 **Metrics:**
+
 - Total bookings (confirmed, pending, cancelled)
 - Booking conversion rate (checkouts → confirmed)
 - Lead time (days between booking and event)
@@ -1037,9 +1149,11 @@ Data-driven insights for tenants to optimize pricing, packages, and conversion.
 ---
 
 #### 9.3 Conversion Tracking
+
 **Effort:** 1 week (20 hours)
 
 **Metrics:**
+
 - Widget visitors (unique, pageviews)
 - Package views
 - Add to cart rate
@@ -1050,9 +1164,11 @@ Data-driven insights for tenants to optimize pricing, packages, and conversion.
 ---
 
 #### 9.4 A/B Testing Framework
+
 **Effort:** 1 week (20 hours)
 
 **Features:**
+
 - Test different pricing (A/B test price points)
 - Test package descriptions (which copy converts better)
 - Test button text ("Book Now" vs "Reserve Your Date")
@@ -1062,9 +1178,11 @@ Data-driven insights for tenants to optimize pricing, packages, and conversion.
 ---
 
 #### 9.5 Package Performance Insights
+
 **Effort:** 1 week (20 hours)
 
 **Metrics:**
+
 - Views per package
 - Conversion rate per package
 - Average revenue per package
@@ -1076,11 +1194,13 @@ Data-driven insights for tenants to optimize pricing, packages, and conversion.
 ### Success Metrics (Phase 9)
 
 **Quantitative:**
+
 - 100% of tenants have access to analytics dashboard
 - 50%+ of tenants use analytics weekly
 - 20%+ of tenants run A/B tests
 
 **Qualitative:**
+
 - Tenants make data-driven pricing decisions
 - Conversion rates improve by 15%+ on average
 - Tenants report "invaluable insights"
@@ -1090,6 +1210,7 @@ Data-driven insights for tenants to optimize pricing, packages, and conversion.
 ## Phase 10: Marketplace & Templates (3-4 weeks)
 
 ### Goal
+
 Accelerate tenant onboarding with pre-built templates and shared resources.
 
 ### Timeline: Q4 2026 (September - October)
@@ -1097,9 +1218,11 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 ### Features
 
 #### 10.1 Pre-Built Package Templates
+
 **Effort:** 1 week (20 hours)
 
 **Templates:**
+
 - "Romantic Elopement" (2 hours, 100 photos)
 - "Full-Day Wedding" (8 hours, 500 photos, album)
 - "Engagement Session" (1 hour, 50 photos)
@@ -1108,9 +1231,11 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 ---
 
 #### 10.2 Theme Marketplace
+
 **Effort:** 1.5 weeks (30 hours)
 
 **Themes:**
+
 - Pre-designed widget themes (colors, fonts, layouts)
 - One-click theme application
 - Theme preview before applying
@@ -1119,9 +1244,11 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 ---
 
 #### 10.3 Email Template Gallery
+
 **Effort:** 1 week (20 hours)
 
 **Templates:**
+
 - 10+ pre-written email templates
 - Professional copywriting
 - Industry best practices
@@ -1130,9 +1257,11 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 ---
 
 #### 10.4 Service Catalog Templates
+
 **Effort:** 1 week (20 hours)
 
 **Templates:**
+
 - Complete catalog for photography business
 - Complete catalog for videography business
 - Complete catalog for photo booth business
@@ -1143,11 +1272,13 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 ### Success Metrics (Phase 10)
 
 **Quantitative:**
+
 - 80%+ of new tenants use templates
 - Onboarding time <30 minutes (down from 2 hours)
 - 50%+ of tenants try multiple themes
 
 **Qualitative:**
+
 - "Templates saved me hours" (tenant feedback)
 - Faster time to first booking
 - Higher quality initial setup
@@ -1157,6 +1288,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 ## Implementation Priorities
 
 ### Must-Have (Phase 5) - Q1 2026
+
 **Total Effort:** 110 hours (4-6 weeks)
 **Current Progress:** 33% complete (December 2025)
 
@@ -1177,6 +1309,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
    - Preview system
 
 ### Should-Have (Phase 6-7) - Q1-Q2 2026
+
 **Total Effort:** 130 hours (5-7 weeks)
 
 4. **Content/Copy CMS** - 60 hours (3-4 weeks)
@@ -1190,6 +1323,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
    - Media library UI
 
 ### Nice-to-Have (Phase 8+) - Q2-Q4 2026
+
 **Total Effort:** 260+ hours (13+ weeks)
 
 6. **Advanced Features** - 120 hours (6 weeks)
@@ -1213,6 +1347,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 ## Technical Debt & Refactoring
 
 ### Before Phase 5
+
 **Priority:** HIGH
 
 - [x] Refactor upload service to support multiple entity types (logos, packages, add-ons, testimonials)
@@ -1224,6 +1359,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 **Estimated Effort:** 8 hours (1 day)
 
 ### During Phase 6
+
 **Priority:** MEDIUM
 
 - [ ] Implement proper CSS variable consumption in all components
@@ -1235,6 +1371,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 **Estimated Effort:** 16 hours (2 days)
 
 ### During Phase 7
+
 **Priority:** HIGH
 
 - [ ] Replace local storage adapter with cloud storage adapter
@@ -1252,6 +1389,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 ### Development Team
 
 #### Phase 5-6 (Q1 2026) - Self-Service Foundation
+
 **Duration:** 7-10 weeks
 
 - **Backend Engineer:** 1 FTE
@@ -1277,6 +1415,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 **Total:** 2.75 FTE
 
 #### Phase 7-8 (Q2-Q3 2026) - Advanced Features
+
 **Duration:** 6-9 weeks
 
 - **Backend Engineer:** 1 FTE
@@ -1300,6 +1439,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 **Total:** 2.5 FTE
 
 #### Phase 9-10 (Q3-Q4 2026) - Polish & Marketplace
+
 **Duration:** 5-7 weeks
 
 - **Full Stack Engineer:** 1 FTE
@@ -1323,6 +1463,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 ### Infrastructure Costs
 
 #### Development Environment (Current)
+
 **Monthly Cost:** ~$0
 
 - Local development (no cloud costs)
@@ -1330,9 +1471,11 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 - Free tier hosting (local testing)
 
 #### Production Environment (Phase 7+)
+
 **Monthly Cost:** ~$150-300
 
 **Cloud Storage (Cloudinary or AWS S3):**
+
 - Cloudinary: $99/month (Pro plan)
   - 75GB storage
   - 150GB bandwidth
@@ -1346,16 +1489,19 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
   - Data transfer: $5-20/month
 
 **Email Service (Postmark or SendGrid):**
+
 - Postmark: $15/month (10,000 emails)
 - SendGrid: $20/month (50,000 emails)
 
 **Database (Supabase or Neon):**
+
 - Supabase Pro: $25/month
   - 8GB database
   - 250GB bandwidth
   - Automated backups
 
 **Monitoring & Error Tracking:**
+
 - Sentry: $26/month (Team plan)
 - Uptime monitoring: $10/month
 
@@ -1368,6 +1514,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 ### Third-Party Services
 
 #### Required for Phase 7
+
 - **Cloudinary Account** (Image management)
   - Pro plan: $99/month
   - Features: Storage, CDN, transformations
@@ -1377,6 +1524,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
   - ~$50-100/month for 50 tenants
 
 #### Required for Phase 9
+
 - **Google Analytics 4** (Free)
   - Website analytics
   - Conversion tracking
@@ -1386,6 +1534,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
   - Free tier available
 
 #### Optional for Phase 10
+
 - **Figma** ($12/editor/month)
   - Design templates
   - Theme mockups
@@ -1397,10 +1546,12 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 ### Technical Risks
 
 #### Risk 1: Cloud Storage Migration Complexity
+
 **Probability:** MEDIUM
 **Impact:** HIGH (could delay Phase 7 by 1-2 weeks)
 
 **Mitigation:**
+
 - Start with Cloudinary (simpler than AWS S3)
 - Test migration on staging with 10 tenants first
 - Keep local storage adapter as fallback
@@ -1408,15 +1559,18 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 - Schedule migration during low-traffic period
 
 **Contingency:**
+
 - If migration fails, rollback to local storage
 - Reschedule for next sprint
 - Consider hiring Cloudinary consultant
 
 #### Risk 2: Email Template Rendering Issues
+
 **Probability:** MEDIUM
 **Impact:** MEDIUM (emails may look broken in some clients)
 
 **Mitigation:**
+
 - Use proven email template framework (MJML or Foundation for Emails)
 - Test in all major email clients (Gmail, Outlook, Apple Mail, Yahoo)
 - Use Litmus or Email on Acid for email testing
@@ -1424,15 +1578,18 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 - Pre-test with 5 tenants before rollout
 
 **Contingency:**
+
 - Fall back to simple text emails if HTML issues
 - Hire email specialist for complex issues
 - Provide basic templates only until resolved
 
 #### Risk 3: Performance Degradation with Media Library
+
 **Probability:** MEDIUM
 **Impact:** MEDIUM (slow load times for admin dashboard)
 
 **Mitigation:**
+
 - Implement pagination (50 images per page)
 - Add lazy loading for thumbnails
 - Use CDN for fast media delivery
@@ -1440,15 +1597,18 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 - Cache media library queries (5 min TTL)
 
 **Contingency:**
+
 - Reduce thumbnails per page (25 instead of 50)
 - Add search/filter to reduce results
 - Optimize database queries with indexes
 
 #### Risk 4: Rich Text Editor XSS Vulnerabilities
+
 **Probability:** LOW
 **Impact:** HIGH (security risk)
 
 **Mitigation:**
+
 - Use well-vetted library (React Quill, Slate.js)
 - Sanitize all HTML before saving (DOMPurify)
 - Implement Content Security Policy (CSP)
@@ -1456,6 +1616,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 - Regular security audits
 
 **Contingency:**
+
 - Disable rich text editor if XSS detected
 - Fall back to plain text only
 - Emergency security patch
@@ -1466,10 +1627,12 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 ### Business Risks
 
 #### Risk 1: Feature Creep (Scope Expansion)
+
 **Probability:** HIGH
 **Impact:** HIGH (delays, budget overruns)
 
 **Mitigation:**
+
 - Stick to phased roadmap (no mid-sprint changes)
 - Require business case for new features
 - Defer non-essential features to future phases
@@ -1477,15 +1640,18 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 - Review scope every 2 weeks
 
 **Contingency:**
+
 - Push new features to Phase 11 (Q1 2027)
 - Re-prioritize if critical feature emerges
 - Add resources only if business-critical
 
 #### Risk 2: Tenant Migration (Breaking Changes)
+
 **Probability:** MEDIUM
 **Impact:** MEDIUM (tenant frustration, support load)
 
 **Mitigation:**
+
 - Communicate changes 2 weeks in advance
 - Provide migration guides with screenshots
 - Offer migration support (office hours, video calls)
@@ -1493,15 +1659,18 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 - Provide rollback option for 30 days
 
 **Contingency:**
+
 - If issues, pause rollout and fix bugs
 - Extend migration period from 30 to 60 days
 - Create dedicated support channel for migrations
 
 #### Risk 3: Support Load (New Features = More Questions)
+
 **Probability:** HIGH
 **Impact:** MEDIUM (support team overwhelmed)
 
 **Mitigation:**
+
 - Create comprehensive documentation before each phase launch
 - Record video tutorials for complex features
 - Build in-app tooltips and onboarding tours
@@ -1509,6 +1678,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 - Implement in-app chat support (Intercom or similar)
 
 **Contingency:**
+
 - Hire temporary support staff during launches
 - Create knowledge base for self-service
 - Prioritize bug fixes over new features
@@ -1518,6 +1688,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 ## Success Criteria
 
 ### Phase 5 Complete When:
+
 - ✅ Tenants can manage add-ons independently (CRUD operations)
 - ✅ All packages have photos uploaded (90%+ adoption)
 - ✅ Emails are fully branded with tenant logos/colors (80%+ customization)
@@ -1526,6 +1697,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 - ✅ Tenant satisfaction score >8/10 for Phase 5 features
 
 ### Phase 6 Complete When:
+
 - ✅ Tenants control all customer-facing copy (hero, about, buttons)
 - ✅ No hardcoded platform branding remains (100% white-label)
 - ✅ Legal pages customizable (terms, privacy, refund)
@@ -1534,6 +1706,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 - ✅ Zero critical bugs for 2 weeks post-launch
 
 ### Phase 7 Complete When:
+
 - ✅ All uploads go to cloud storage (100% migration)
 - ✅ Images served via CDN (<100ms load time globally)
 - ✅ 50%+ reduction in image file sizes (optimization working)
@@ -1542,6 +1715,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 - ✅ Media library UI adopted by 80%+ of tenants
 
 ### Phase 8 Complete When:
+
 - ✅ 50%+ of tenants use dynamic pricing features
 - ✅ 30%+ of tenants offer payment plans
 - ✅ 80%+ of tenants use calendar view daily
@@ -1550,6 +1724,7 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 - ✅ Zero critical bugs for 2 weeks post-launch
 
 ### Full Self-Service Achieved When:
+
 - ✅ 95%+ of tenant operations require zero platform admin support
 - ✅ Onboarding time <30 minutes (down from 2+ hours)
 - ✅ Tenant satisfaction score >8/10 (NPS survey)
@@ -1565,31 +1740,37 @@ Accelerate tenant onboarding with pre-built templates and shared resources.
 ### Key Performance Indicators (KPIs)
 
 #### Self-Service Adoption
+
 - **Metric:** % of tenants using each new feature
 - **Target:** >70% adoption within 60 days of launch
 - **Measurement:** Track feature usage in database
 
 #### Support Ticket Reduction
+
 - **Metric:** # of support tickets per tenant per month
 - **Target:** <2 tickets/tenant/month (down from 8)
 - **Measurement:** Support system analytics
 
 #### Onboarding Time
+
 - **Metric:** Time to first booking (from tenant creation)
 - **Target:** <30 minutes (down from 2+ hours)
 - **Measurement:** Timestamp analysis (account created → first booking)
 
 #### Tenant Satisfaction (NPS)
+
 - **Metric:** Net Promoter Score
 - **Target:** >50 (8+/10 satisfaction)
 - **Measurement:** Quarterly survey
 
 #### Feature Usage
+
 - **Metric:** Daily/weekly active users of new features
 - **Target:** >80% use add-on manager monthly
 - **Measurement:** Feature usage analytics
 
 #### Revenue Impact
+
 - **Metric:** Average revenue per tenant
 - **Target:** >$500/month (bookings × commission)
 - **Measurement:** Stripe dashboard
@@ -1605,17 +1786,20 @@ This roadmap provides a **clear, actionable path** from current maturity score 6
 3. **Differentiation (Phase 8-10)** - Add competitive features that attract and retain tenants
 
 **Timeline Summary:**
+
 - **Q1 2026:** Phases 5-6 (Self-Service Foundation + Content Management) - 7-10 weeks
 - **Q2 2026:** Phases 7-8 (Cloud Infrastructure + Advanced Features) - 6-9 weeks
 - **Q3-Q4 2026:** Phases 9-10 (Analytics + Marketplace) - 5-7 weeks
 - **Total:** 18-26 weeks (6-9 months) to full maturity
 
 **Investment Required:**
+
 - **Development Effort:** 500+ hours (~2.5 engineers × 6 months)
 - **Infrastructure:** ~$2,100-3,400/year (production cloud services)
 - **ROI:** Reduced support costs, higher tenant retention, increased GMV
 
 **Next Steps:**
+
 1. Review and approve roadmap (stakeholder sign-off)
 2. Allocate resources for Q1 2026 (2 engineers, 1 designer)
 3. Begin Phase 5 kickoff (January 2026)
@@ -1631,6 +1815,7 @@ This roadmap provides a **clear, actionable path** from current maturity score 6
 **Questions/Feedback:** Reference specific phase and feature IDs in discussions
 
 **Related Documents:**
+
 - [PHASE_4_TENANT_ADMIN_COMPLETION_REPORT.md](../../PHASE_4_TENANT_ADMIN_COMPLETION_REPORT.md) - Current state documentation
 - [MULTI_TENANT_IMPLEMENTATION_GUIDE.md](../../MULTI_TENANT_IMPLEMENTATION_GUIDE.md) - Technical implementation details
 - [ARCHITECTURE.md](../../ARCHITECTURE.md) - System architecture overview

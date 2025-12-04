@@ -3,6 +3,7 @@
 ## Code Locations Reference
 
 ### Current Branding Implementation
+
 - **Schema**: `/Users/mikeyoung/CODING/Elope/server/prisma/schema.prisma:37-68`
   - `Tenant.branding` (JSON)
   - `Tenant.updatedAt` (DateTime)
@@ -28,6 +29,7 @@
   - No version history display
 
 ### Current Package Implementation
+
 - **Schema**: `/Users/mikeyoung/CODING/Elope/server/prisma/schema.prisma:106-129`
   - `Package.active` (Boolean, only status field)
   - `Package.photos` (JSON array)
@@ -48,6 +50,7 @@
   - No versioning UI
 
 ### API Contracts
+
 - **DTOs**: `/Users/mikeyoung/CODING/Elope/packages/contracts/src/dto.ts:133-150`
   - `TenantBrandingDtoSchema` - simple object with color/font/logo
   - Missing: isDraft, publishedAt, versionNumber
@@ -59,6 +62,7 @@
   - No draft/publish endpoints
 
 ### Caching Layer
+
 - **Cache Service**: `/Users/mikeyoung/CODING/Elope/server/src/lib/cache.ts`
   - Uses simple key-based caching
   - No version-aware caching
@@ -67,6 +71,7 @@
 ## Schema Changes Required
 
 ### Add Tenant Versioning Fields
+
 ```prisma
 model Tenant {
   // ... existing ...
@@ -74,7 +79,7 @@ model Tenant {
   draftBranding         Json       @default("{}")        // Draft for preview
   currentBrandingVersion Int       @default(0)          // Track version number
   brandingPublishedAt   DateTime?                        // When last published
-  
+
   // Relations
   brandingVersions      BrandingVersion[]
   auditLogs             AuditLog[]
@@ -82,6 +87,7 @@ model Tenant {
 ```
 
 ### Create Version History Tables
+
 ```prisma
 model BrandingVersion {
   id              String   @id @default(cuid())
@@ -92,9 +98,9 @@ model BrandingVersion {
   createdAt       DateTime @default(now())
   createdBy       String?
   changeDescription String?
-  
+
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+
   @@unique([tenantId, versionNumber])
   @@index([tenantId, publishedAt])
 }
@@ -112,9 +118,9 @@ model PackageVersion {
   createdAt       DateTime @default(now())
   createdBy       String?
   changeDescription String?
-  
+
   package         Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  
+
   @@unique([packageId, versionNumber])
   @@index([packageId, publishedAt])
 }
@@ -130,15 +136,16 @@ model AuditLog {
   userEmail       String?
   ipAddress       String?
   timestamp       DateTime @default(now())
-  
+
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+
   @@index([tenantId, timestamp])
   @@index([entityType, entityId])
 }
 ```
 
 ### Update Package Model
+
 ```prisma
 model Package {
   // ... existing ...
@@ -147,9 +154,9 @@ model Package {
   currentVersion  Int      @default(1)
   photos          Json     @default("[]")      // Published photos
   draftPhotos     Json     @default("[]")      // Draft photos
-  
+
   versions        PackageVersion[]
-  
+
   @@index([tenantId, isDraft, active])
 }
 ```
@@ -157,6 +164,7 @@ model Package {
 ## New DTOs Required
 
 ### Versioning DTOs
+
 ```typescript
 // Version history item
 export const BrandingVersionDtoSchema = z.object({
@@ -200,6 +208,7 @@ export const AuditLogDtoSchema = z.object({
 ## New Service Methods Required
 
 ### BrandingService
+
 ```typescript
 // Draft management
 saveDraft(tenantId: string, branding: BrandingDto, userId: string): Promise<void>
@@ -219,6 +228,7 @@ compareBrandingVersions(tenantId: string, fromVersion: number, toVersion: number
 ```
 
 ### PackageService (New)
+
 ```typescript
 // Draft management
 createPackageDraft(tenantId: string, data: CreatePackageInput, userId: string): Promise<PackageDto>
@@ -235,6 +245,7 @@ getPackageVersionHistory(tenantId: string, packageId: string, limit?: number): P
 ```
 
 ### AuditLogService (New)
+
 ```typescript
 log(entry: {
   tenantId: string;
@@ -261,6 +272,7 @@ getEntityHistory(tenantId: string, entityType: string, entityId: string): Promis
 ## New API Endpoints Required
 
 ### Branding Versioning
+
 ```
 POST   /v1/tenant/branding/draft         - Save draft
 POST   /v1/tenant/branding/publish       - Publish draft
@@ -273,6 +285,7 @@ POST   /v1/tenant/branding/versions/:from/:to/compare - Compare versions
 ```
 
 ### Package Versioning
+
 ```
 POST   /v1/tenant/packages/draft                      - Create draft package
 POST   /v1/tenant/packages/:id/draft                  - Save package draft
@@ -284,6 +297,7 @@ POST   /v1/tenant/packages/:id/versions/:versionNumber/rollback - Rollback
 ```
 
 ### Audit Log
+
 ```
 GET    /v1/tenant/audit-log                           - Get audit log
 GET    /v1/tenant/audit-log/:entityType/:entityId     - Get entity history
@@ -294,7 +308,7 @@ GET    /v1/tenant/audit-log/:entityType/:entityId     - Get entity history
 ```sql
 -- Migrate existing branding to version 1
 INSERT INTO "BrandingVersion" (id, "tenantId", "versionNumber", "branding", "publishedAt", "createdAt", "createdBy")
-SELECT 
+SELECT
   lower(substr(md5(random()::text), 1, 8)) || lower(substr(md5(random()::text), 1, 8)) || lower(substr(md5(random()::text), 1, 8)),
   id,
   1,
@@ -306,14 +320,14 @@ FROM "Tenant"
 WHERE branding IS NOT NULL AND branding != '{}';
 
 -- Update tenants with current branding version
-UPDATE "Tenant" 
+UPDATE "Tenant"
 SET "currentBrandingVersion" = 1,
     "brandingPublishedAt" = "updatedAt"
 WHERE branding IS NOT NULL AND branding != '{}';
 
 -- Similar for packages
 INSERT INTO "PackageVersion" (id, "packageId", "versionNumber", "slug", "name", "description", "basePrice", "photos", "publishedAt", "createdAt")
-SELECT 
+SELECT
   lower(substr(md5(random()::text), 1, 8)) || lower(substr(md5(random()::text), 1, 8)) || lower(substr(md5(random()::text), 1, 8)),
   id,
   1,
@@ -327,7 +341,7 @@ SELECT
 FROM "Package";
 
 -- Update packages with current version
-UPDATE "Package" 
+UPDATE "Package"
 SET "currentVersion" = 1,
     "publishedAt" = "updatedAt";
 ```
@@ -335,27 +349,32 @@ SET "currentVersion" = 1,
 ## Testing Locations to Add
 
 ### Service Tests
+
 - `/Users/mikeyoung/CODING/Elope/server/test/services/branding.service.spec.ts` (new)
 - `/Users/mikeyoung/CODING/Elope/server/test/services/package.service.spec.ts` (new)
 - `/Users/mikeyoung/CODING/Elope/server/test/services/audit-log.service.spec.ts` (new)
 
 ### Integration Tests
+
 - `/Users/mikeyoung/CODING/Elope/server/test/integration/versioning.spec.ts` (new)
 - `/Users/mikeyoung/CODING/Elope/server/test/integration/audit-log.spec.ts` (new)
 
 ### E2E Tests
+
 - `/Users/mikeyoung/CODING/Elope/e2e/tests/branding-versioning.spec.ts` (new)
 - `/Users/mikeyoung/CODING/Elope/e2e/tests/package-versioning.spec.ts` (new)
 
 ## Key Implementation Details
 
 ### Draft Workflow
+
 1. User makes changes → API saves to `draftBranding` or `draftPhotos`
 2. User previews → API serves `draftBranding` with flag `isDraft: true`
 3. User publishes → Creates version record, copies to published field
 4. User can discard → Clears draft fields
 
 ### Rollback Workflow
+
 1. User selects version from history
 2. Service fetches that version
 3. Creates NEW version entry with old content
@@ -363,11 +382,13 @@ SET "currentVersion" = 1,
 5. Logs rollback action
 
 ### Audit Trail
+
 - Every change logged with: WHO (userId/email), WHAT (before/after), WHEN (timestamp)
 - Changes stored as JSON diffs
 - Queryable by entity type and ID
 
 ### Cache Invalidation
+
 - Update: Invalidate cache + create version record + log
 - Publish: Invalidate cache + create version record + update current + log
 - Rollback: Invalidate cache + create version record + update current + log
@@ -375,30 +396,33 @@ SET "currentVersion" = 1,
 ## Performance Considerations
 
 ### Indexing Strategy
+
 ```sql
 -- For BrandingVersion lookups
-CREATE INDEX idx_branding_version_tenant_published 
+CREATE INDEX idx_branding_version_tenant_published
   ON "BrandingVersion"("tenantId", "publishedAt" DESC);
 
 -- For PackageVersion lookups
-CREATE INDEX idx_package_version_published 
+CREATE INDEX idx_package_version_published
   ON "PackageVersion"("packageId", "publishedAt" DESC);
 
 -- For AuditLog searches
-CREATE INDEX idx_audit_log_tenant_timestamp 
+CREATE INDEX idx_audit_log_tenant_timestamp
   ON "AuditLog"("tenantId", "timestamp" DESC);
 
-CREATE INDEX idx_audit_log_entity 
+CREATE INDEX idx_audit_log_entity
   ON "AuditLog"("entityType", "entityId", "timestamp" DESC);
 ```
 
 ### Caching Strategy
+
 - Cache version history separately from current version
 - Invalidate history cache on new version
 - Cache current version aggressively (5-15 min TTL)
 - Never cache draft (real-time)
 
 ### Query Optimization
+
 - Use LIMIT on history queries (default 50, max 500)
 - Paginate audit logs
 - Use indexes for common queries
@@ -407,14 +431,15 @@ CREATE INDEX idx_audit_log_entity
 ## Backwards Compatibility
 
 ### For Existing Clients
+
 - `/v1/tenant/branding` continues to work (returns published version)
 - Existing update endpoints deprecated but functional
 - New clients use draft/publish workflow
 - Version migration happens transparently
 
 ### Migration Path
+
 1. Create version 1 for all existing data
 2. Set `currentVersion = 1`
 3. Deprecate old endpoints (add warnings)
 4. Eventually retire old endpoints (v2 API)
-

@@ -9,7 +9,10 @@ import { NotFoundError } from '../lib/errors';
 export class BookingsController {
   constructor(private readonly bookingService: BookingService) {}
 
-  async createCheckout(tenantId: string, input: CreateCheckoutDto): Promise<{ checkoutUrl: string }> {
+  async createCheckout(
+    tenantId: string,
+    input: CreateCheckoutDto
+  ): Promise<{ checkoutUrl: string }> {
     return this.bookingService.createCheckout(tenantId, {
       packageId: input.packageId,
       coupleName: input.coupleName,

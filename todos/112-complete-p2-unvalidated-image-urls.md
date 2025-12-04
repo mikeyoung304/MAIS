@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "112"
+issue_id: '112'
 tags: [code-review, security, ui-redesign]
 dependencies: []
 ---
@@ -19,6 +19,7 @@ Package photos and logo URLs are rendered without validation. An attacker could 
 ### From security-sentinel agent:
 
 **Files affected:**
+
 - `client/src/features/tenant-admin/packages/PackageList.tsx` (line 94)
 - `client/src/features/tenant-admin/branding/components/BrandingPreview.tsx` (line 53)
 
@@ -31,6 +32,7 @@ Package photos and logo URLs are rendered without validation. An attacker could 
 ## Proposed Solutions
 
 ### Solution 1: Create URL Sanitizer Utility (Recommended)
+
 **Pros:** Defense in depth
 **Cons:** Minimal overhead
 **Effort:** Small (1 hour)
@@ -67,6 +69,6 @@ export const sanitizeImageUrl = (url: string | undefined): string => {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                   |
+| ---------- | ------------------------ | --------------------------- |
 | 2025-11-30 | Created from code review | Security concern identified |

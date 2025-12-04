@@ -1,12 +1,12 @@
 ---
 status: resolved
 priority: p1
-issue_id: "232"
+issue_id: '232'
 tags: [api, code-review, landing-page, ts-rest]
 dependencies: []
-source: "code-review-landing-page-visual-editor"
-resolved_at: "2025-12-04"
-resolved_by: "feat/landing-page-editor-p1-security branch"
+source: 'code-review-landing-page-visual-editor'
+resolved_at: '2025-12-04'
+resolved_by: 'feat/landing-page-editor-p1-security branch'
 ---
 
 # TODO-232: Add Missing 404 Error Status Codes to Draft Contracts
@@ -22,6 +22,7 @@ resolved_by: "feat/landing-page-editor-p1-security branch"
 The proposed draft API contracts don't include `404 NotFoundErrorSchema` for resource endpoints, violating the established ts-rest pattern in the codebase.
 
 **Why It Matters:**
+
 - Inconsistent error handling across endpoints
 - Frontend can't properly type-check 404 responses
 - Breaks client-side error handling expectations
@@ -29,10 +30,12 @@ The proposed draft API contracts don't include `404 NotFoundErrorSchema` for res
 ## Findings
 
 **Evidence:**
+
 - Plan (lines 514-543): No 404 responses defined for draft endpoints
 - Existing pattern (api.v1.ts lines 376-404): All resource endpoints include 404
 
 **Current Safe Pattern:**
+
 ```typescript
 tenantAdminUpdatePackage: {
   responses: {
@@ -50,6 +53,7 @@ tenantAdminUpdatePackage: {
 ## Proposed Solutions
 
 ### Option A: Add All Error Responses (Recommended)
+
 Update contract to include complete error response set.
 
 **Pros:** Consistent, type-safe, matches existing patterns
@@ -81,9 +85,11 @@ saveLandingPageDraft: {
 ## Technical Details
 
 **Affected Files:**
+
 - `packages/contracts/src/tenant-admin/landing-page.contract.ts` - Add error responses
 
 **Endpoints to Update:**
+
 - `GET /v1/tenant-admin/landing-page/draft`
 - `PUT /v1/tenant-admin/landing-page/draft`
 - `POST /v1/tenant-admin/landing-page/publish`
@@ -98,8 +104,8 @@ saveLandingPageDraft: {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                                  |
+| ---------- | ------- | ------------------------------------------------------ |
 | 2025-12-04 | Created | API contract review of landing page visual editor plan |
 
 ## Tags

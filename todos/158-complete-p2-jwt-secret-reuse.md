@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "158"
+issue_id: '158'
 tags: [code-review, security, mvp-gaps, jwt]
 dependencies: []
 completed_date: 2025-12-02
@@ -14,6 +14,7 @@ completed_date: 2025-12-02
 Booking tokens use the same `JWT_SECRET` as tenant authentication tokens. If a booking token leaks, attackers could analyze the JWT structure.
 
 **Why This Matters:**
+
 - Shared secret increases attack surface
 - Token leak could expose signing patterns
 - Defense in depth violation
@@ -25,6 +26,7 @@ Booking tokens use the same `JWT_SECRET` as tenant authentication tokens. If a b
 **Location:** `server/src/lib/booking-tokens.ts:67-72`
 
 **Evidence:**
+
 ```typescript
 const token = jwt.sign(
   { bookingId, tenantId, action },
@@ -38,12 +40,14 @@ const token = jwt.sign(
 ### Separate Booking Token Secret with Fallback (Completed)
 
 **Implementation Details:**
+
 1. Added `BOOKING_TOKEN_SECRET` to config schema with optional validation
 2. Created `getBookingTokenSecret()` helper function with fallback logic
 3. Updated `booking-tokens.ts` to use dedicated secret
 4. Documented new environment variable in `.env.example`
 
 **Files Changed:**
+
 - `server/src/lib/core/config.ts` - Added BOOKING_TOKEN_SECRET config + helper
 - `server/src/lib/booking-tokens.ts` - Uses getBookingTokenSecret() for sign/verify
 - `.env.example` - Documented new optional variable
@@ -51,6 +55,7 @@ const token = jwt.sign(
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/lib/booking-tokens.ts`
 - `server/src/lib/core/config.ts`
 - `.env.example`

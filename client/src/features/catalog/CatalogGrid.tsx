@@ -1,9 +1,9 @@
-import { Link } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
-import { PackageCardSkeleton } from "@/components/ui/skeleton";
-import { usePackages } from "./hooks";
-import type { PackageDto } from "@macon/contracts";
-import { formatCurrency } from "@/lib/utils";
+import { Link } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { PackageCardSkeleton } from '@/components/ui/skeleton';
+import { usePackages } from './hooks';
+import type { PackageDto } from '@macon/contracts';
+import { formatCurrency } from '@/lib/utils';
 
 export function CatalogGrid() {
   const { data: packages, isLoading, error } = usePackages();
@@ -27,11 +27,7 @@ export function CatalogGrid() {
   }
 
   if (!packages || packages.length === 0) {
-    return (
-      <div className="text-center py-12 text-neutral-700 text-xl">
-        No packages available
-      </div>
-    );
+    return <div className="text-center py-12 text-neutral-700 text-xl">No packages available</div>;
   }
 
   return (

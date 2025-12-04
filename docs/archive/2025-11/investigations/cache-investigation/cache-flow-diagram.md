@@ -144,6 +144,7 @@ Visual representation of how caching works in the current (broken) system vs. th
 ```
 
 **What Happened:**
+
 1. HTTP cache uses key: `"GET:/v1/packages:{}"`
 2. This is the SAME key for all tenants!
 3. Cache returns Alice's data without checking tenant
@@ -355,6 +356,7 @@ Total: ~7ms (slightly slower, but CORRECT!)
 ```
 
 **Analysis:**
+
 - HTTP cache saves ~6ms per request (tenant resolve + route handler)
 - BUT tenant resolve MUST happen anyway for security
 - 6ms savings is NOT worth the security risk!

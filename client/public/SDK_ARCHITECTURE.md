@@ -324,12 +324,14 @@ client/public/
 
 ```javascript
 // SDK auto-detects environment from script src
-const widgetBaseUrl = currentScript.src.indexOf('localhost') !== -1
-  ? 'http://localhost:5173'    // Development
-  : 'https://widget.mais.com'; // Production
+const widgetBaseUrl =
+  currentScript.src.indexOf('localhost') !== -1
+    ? 'http://localhost:5173' // Development
+    : 'https://widget.mais.com'; // Production
 ```
 
 **Development Mode:**
+
 - SDK loaded from localhost
 - Widget iframe: `http://localhost:5173`
 - Hot module reload
@@ -337,6 +339,7 @@ const widgetBaseUrl = currentScript.src.indexOf('localhost') !== -1
 - Console logging
 
 **Production Mode:**
+
 - SDK loaded from CDN
 - Widget iframe: `https://widget.mais.com`
 - Minified code
@@ -401,16 +404,19 @@ const widgetBaseUrl = currentScript.src.indexOf('localhost') !== -1
 ## Performance Metrics
 
 **Load Performance:**
+
 - Script parse time: < 5ms
 - Initialization time: < 10ms
 - Time to interactive: < 50ms
 
 **Runtime Performance:**
+
 - Message handling: < 1ms
 - Resize handling: < 5ms
 - Memory footprint: < 100KB
 
 **Network Performance:**
+
 - SDK download: 1.4KB (gzipped)
 - First paint: Immediate (iframe loads async)
 - LCP impact: Minimal (non-blocking)
@@ -420,6 +426,7 @@ const widgetBaseUrl = currentScript.src.indexOf('localhost') !== -1
 ## Maintenance Notes
 
 **Version Updates:**
+
 1. Update version in SDK header comment
 2. Update CHANGELOG.md
 3. Create new versioned file (mais-sdk-v1.1.0.min.js)
@@ -428,6 +435,7 @@ const widgetBaseUrl = currentScript.src.indexOf('localhost') !== -1
 6. Update documentation if API changes
 
 **Breaking Changes:**
+
 - Always maintain backwards compatibility
 - Deprecate old features (don't remove)
 - Provide migration guide
@@ -438,6 +446,7 @@ const widgetBaseUrl = currentScript.src.indexOf('localhost') !== -1
 ## Future Enhancements
 
 **Phase 3 Potential Features:**
+
 - [ ] Modal mode support
 - [ ] Multiple widgets per page
 - [ ] Widget preloading for faster display

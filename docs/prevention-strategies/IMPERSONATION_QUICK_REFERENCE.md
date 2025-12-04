@@ -29,6 +29,7 @@ Before committing code that checks `user.role`:
 ## Code Example
 
 ### Before (Buggy)
+
 ```typescript
 export function RoleBasedNav() {
   const { user } = useAuth();
@@ -39,6 +40,7 @@ export function RoleBasedNav() {
 ```
 
 ### After (Fixed)
+
 ```typescript
 export function RoleBasedNav() {
   const { user, isImpersonating } = useAuth();
@@ -52,6 +54,7 @@ export function RoleBasedNav() {
 ## Testing Impersonation
 
 **Unit test**:
+
 ```typescript
 it('shows tenant nav when impersonating', () => {
   const { getByText } = render(
@@ -69,6 +72,7 @@ it('shows tenant nav when impersonating', () => {
 ```
 
 **E2E test**:
+
 ```typescript
 test('admin impersonation shows tenant nav', async ({ page }) => {
   // Login as admin
@@ -79,27 +83,28 @@ test('admin impersonation shows tenant nav', async ({ page }) => {
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `client/src/contexts/AuthContext/AuthProvider.tsx` | Provides `isImpersonating()` helper |
-| `client/src/contexts/AuthContext/services.ts` | Auth state restoration from localStorage |
-| `client/src/components/navigation/RoleBasedNav.tsx` | Example of fixed role-based component |
-| `client/src/components/auth/ProtectedRoute.tsx` | Multi-layer protection with effective role |
-| `server/test/routes/auth-impersonation.spec.ts` | Backend impersonation tests |
+| File                                                | Purpose                                    |
+| --------------------------------------------------- | ------------------------------------------ |
+| `client/src/contexts/AuthContext/AuthProvider.tsx`  | Provides `isImpersonating()` helper        |
+| `client/src/contexts/AuthContext/services.ts`       | Auth state restoration from localStorage   |
+| `client/src/components/navigation/RoleBasedNav.tsx` | Example of fixed role-based component      |
+| `client/src/components/auth/ProtectedRoute.tsx`     | Multi-layer protection with effective role |
+| `server/test/routes/auth-impersonation.spec.ts`     | Backend impersonation tests                |
 
 ## Common Mistakes
 
-| Mistake | Impact | Fix |
-|---------|--------|-----|
-| Check only `user.role` | Admin nav visible when impersonating | Add `isImpersonating()` check |
-| Not calculating `effectiveRole` | Duplicate role checks everywhere | Use single `const effectiveRole = ...` |
-| Direct token parsing | Type unsafe, duplicated logic | Use `useAuth().isImpersonating()` |
-| Missing tests for impersonation | Bug remains undetected | Add E2E test for full flow |
-| No ImpersonationBanner visible | Confusing UX | Display banner during impersonation |
+| Mistake                         | Impact                               | Fix                                    |
+| ------------------------------- | ------------------------------------ | -------------------------------------- |
+| Check only `user.role`          | Admin nav visible when impersonating | Add `isImpersonating()` check          |
+| Not calculating `effectiveRole` | Duplicate role checks everywhere     | Use single `const effectiveRole = ...` |
+| Direct token parsing            | Type unsafe, duplicated logic        | Use `useAuth().isImpersonating()`      |
+| Missing tests for impersonation | Bug remains undetected               | Add E2E test for full flow             |
+| No ImpersonationBanner visible  | Confusing UX                         | Display banner during impersonation    |
 
 ## When You Need to Check Role
 
 ### For Navigation/UI
+
 ```typescript
 // Calculate effective role ONCE at component level
 const effectiveRole = isImpersonating() ? 'TENANT_ADMIN' : user.role;
@@ -110,12 +115,14 @@ if (effectiveRole === 'TENANT_ADMIN') { ... }
 ```
 
 ### For Admin Features
+
 ```typescript
 // Check ACTUAL role (not effective) when hiding admin-only features
 const canAccessAdminFeatures = user.role === 'PLATFORM_ADMIN' && !isImpersonating();
 ```
 
 ### For Data Queries
+
 ```typescript
 // Backend already filters by tenantId from middleware
 // No special logic needed - backend handles impersonation context

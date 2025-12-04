@@ -1,9 +1,9 @@
 ---
 status: complete
 priority: p2
-issue_id: "156"
+issue_id: '156'
 tags: [code-review, quality, mvp-gaps, duplication]
-dependencies: ["155"]
+dependencies: ['155']
 resolved_at: 2025-12-02
 ---
 
@@ -14,6 +14,7 @@ resolved_at: 2025-12-02
 Identical checkout session creation logic is repeated 3 times with minor variations: wedding checkout, balance checkout, and appointment checkout.
 
 **Why This Matters:**
+
 - 120+ lines of duplicated code
 - Bug fixes must be applied 3 times
 - Already caused inconsistency in balance payment
@@ -23,11 +24,13 @@ Identical checkout session creation logic is repeated 3 times with minor variati
 ### Agent: code-simplicity-reviewer
 
 **Location:** `server/src/services/booking.service.ts`
+
 - Lines 133-223 (wedding checkout)
 - Lines 292-363 (balance checkout)
 - Lines 716-789 (appointment checkout)
 
 **Duplicated patterns:**
+
 1. Idempotency key generation (8 lines)
 2. Cached response check (5 lines)
 3. Race condition handling (9 lines)
@@ -37,6 +40,7 @@ Identical checkout session creation logic is repeated 3 times with minor variati
 ## Solution Implemented
 
 ### Option A: Extract Shared Method (Implemented)
+
 **Implementation Date:** 2025-12-02
 
 Created private method `createCheckoutSession()` that consolidates all common checkout logic:
@@ -55,6 +59,7 @@ private async createCheckoutSession(params: {
 ```
 
 **Changes:**
+
 1. Added shared `createCheckoutSession()` method at lines 105-175
 2. Refactored `createCheckout()` to use shared method (reduced from 123 lines to 65 lines)
 3. Refactored `createBalancePaymentCheckout()` to use shared method (reduced from 116 lines to 56 lines)
@@ -62,6 +67,7 @@ private async createCheckoutSession(params: {
 5. Fixed bug in `createBalancePaymentCheckout()` where `extendedBooking` was undefined (line 337)
 
 **Results:**
+
 - **155 lines of duplicated code eliminated**
 - Single source of truth for checkout session creation
 - All 15 unit tests passing
@@ -71,6 +77,7 @@ private async createCheckoutSession(params: {
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/services/booking.service.ts`
 
 ## Acceptance Criteria

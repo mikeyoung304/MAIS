@@ -3,6 +3,7 @@
 ## Executive Summary
 
 The Elope platform implements a **multi-tenant branding configuration system** using:
+
 - **Zod schemas** for runtime validation (server-side)
 - **TypeScript interfaces** for type safety (client & server)
 - **JSON column storage** in PostgreSQL for flexible branding configs
@@ -24,16 +25,17 @@ model Tenant {
   id   String @id @default(cuid())
   slug String @unique
   name String
-  
+
   // Branding Configuration stored as JSON
   // Structure: {primaryColor, secondaryColor, fontFamily, logo}
   branding Json @default("{}")
-  
+
   // ... other fields
 }
 ```
 
 **Key Design Decisions**:
+
 - Uses `Json` column type for flexible schema evolution
 - No migration needed for branding field additions
 - Stored as JSONB in PostgreSQL for query performance
@@ -46,6 +48,7 @@ model Tenant {
 **File**: `/Users/mikeyoung/CODING/Elope/packages/contracts/src/dto.ts`
 
 #### TenantBrandingDtoSchema
+
 ```typescript
 export const TenantBrandingDtoSchema = z.object({
   primaryColor: z.string().optional(),
@@ -58,12 +61,14 @@ export type TenantBrandingDto = z.infer<typeof TenantBrandingDtoSchema>;
 ```
 
 **Field Definitions**:
+
 - **primaryColor**: Hex color (optional, no validation in schema)
 - **secondaryColor**: Hex color (optional, no validation in schema)
 - **fontFamily**: CSS font family string (optional)
 - **logo**: Full URL to logo image (optional, requires valid URL format)
 
 #### UpdateBrandingDtoSchema
+
 ```typescript
 export const UpdateBrandingDtoSchema = z.object({
   primaryColor: z
@@ -82,6 +87,7 @@ export type UpdateBrandingDto = z.infer<typeof UpdateBrandingDtoSchema>;
 ```
 
 **Validation Rules**:
+
 - **primaryColor**: `^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$` (6 or 3-digit hex)
 - **secondaryColor**: `^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$` (6 or 3-digit hex)
 - **fontFamily**: Minimum 1 character
@@ -95,6 +101,7 @@ export type UpdateBrandingDto = z.infer<typeof UpdateBrandingDtoSchema>;
 **File**: `/Users/mikeyoung/CODING/Elope/packages/contracts/src/api.v1.ts`
 
 #### Public Endpoint
+
 ```typescript
 getTenantBranding: {
   method: 'GET',
@@ -107,6 +114,7 @@ getTenantBranding: {
 ```
 
 #### Tenant Admin Endpoints
+
 ```typescript
 tenantGetBranding: {
   method: 'GET',
@@ -159,7 +167,8 @@ export const updateBrandingSchema = z.object({
 export type UpdateBrandingInput = z.infer<typeof updateBrandingSchema>;
 ```
 
-**Extensibility Note**: 
+**Extensibility Note**:
+
 - Easy to add new fields: just add new Zod schema properties
 - Example: adding `accentColor`, `bodyFont`, `linkColor`, etc. requires only schema changes
 - No database migration needed (JSON column)
@@ -171,6 +180,7 @@ export type UpdateBrandingInput = z.infer<typeof updateBrandingSchema>;
 **File**: `/Users/mikeyoung/CODING/Elope/server/src/routes/tenant-admin.routes.ts`
 
 #### GET /v1/tenant/admin/branding
+
 ```typescript
 router.get('/branding', async (req: Request, res: Response): Promise<void> => {
   const tenantAuth = res.locals.tenantAuth;
@@ -197,6 +207,7 @@ router.get('/branding', async (req: Request, res: Response): Promise<void> => {
 ```
 
 #### PUT /v1/tenant/admin/branding
+
 ```typescript
 router.put('/branding', async (req: Request, res: Response): Promise<void> => {
   const tenantAuth = res.locals.tenantAuth;
@@ -208,8 +219,14 @@ router.put('/branding', async (req: Request, res: Response): Promise<void> => {
 
   // Validate request body
   const UpdateBrandingSchema = z.object({
-    primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-    secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+    primaryColor: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/)
+      .optional(),
+    secondaryColor: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/)
+      .optional(),
     fontFamily: z.string().optional(),
   });
 
@@ -245,6 +262,7 @@ router.put('/branding', async (req: Request, res: Response): Promise<void> => {
 ```
 
 **Security Features**:
+
 - JWT token extracted from `Authorization: Bearer <token>` header
 - TenantId from JWT token (not from request body)
 - Prevents cross-tenant access
@@ -439,6 +457,7 @@ const handleSave = async (e: React.FormEvent) => {
 ```
 
 **Features**:
+
 - Live color picker with hex validation
 - Font family selector (6 wedding-appropriate fonts)
 - Color preset system (6 themed combinations)
@@ -493,6 +512,7 @@ export const packagePhotoApi = {
 #### Example: Adding `accentColor`, `darkMode` flag
 
 **Step 1**: Update Zod Schema (`packages/contracts/src/dto.ts`)
+
 ```typescript
 export const TenantBrandingDtoSchema = z.object({
   primaryColor: z.string().optional(),
@@ -500,12 +520,16 @@ export const TenantBrandingDtoSchema = z.object({
   fontFamily: z.string().optional(),
   logo: z.string().url().optional(),
   // NEW FIELDS:
-  accentColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).optional(),
+  accentColor: z
+    .string()
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+    .optional(),
   darkModeEnabled: z.boolean().optional(),
 });
 ```
 
 **Step 2**: Update API contract (`packages/contracts/src/api.v1.ts`)
+
 ```typescript
 tenantUpdateBranding: {
   method: 'PUT',
@@ -525,6 +549,7 @@ tenantUpdateBranding: {
 **Step 3**: No database changes needed! JSON column automatically supports new fields.
 
 **Step 4**: Update client components to handle new fields
+
 ```typescript
 const [accentColor, setAccentColor] = useState('#FFD700');
 const [darkModeEnabled, setDarkModeEnabled] = useState(false);
@@ -543,15 +568,15 @@ await api.tenantUpdateBranding({
 
 ### 4.2 Current Extensibility Score
 
-| Dimension | Rating | Notes |
-|-----------|--------|-------|
-| **Schema Flexibility** | 9/10 | JSON column supports unlimited fields |
-| **Type Safety** | 10/10 | End-to-end TypeScript + Zod validation |
-| **API Extensibility** | 9/10 | Easy to add endpoints; backward compatible |
-| **Validation** | 8/10 | Comprehensive regex & format validation |
-| **Multi-file Support** | 10/10 | JSON array patterns proven with photos |
-| **Audit Trail** | 1/10 | **No versioning or change history** |
-| **Draft/Publish** | 1/10 | **No draft support, only live config** |
+| Dimension              | Rating | Notes                                      |
+| ---------------------- | ------ | ------------------------------------------ |
+| **Schema Flexibility** | 9/10   | JSON column supports unlimited fields      |
+| **Type Safety**        | 10/10  | End-to-end TypeScript + Zod validation     |
+| **API Extensibility**  | 9/10   | Easy to add endpoints; backward compatible |
+| **Validation**         | 8/10   | Comprehensive regex & format validation    |
+| **Multi-file Support** | 10/10  | JSON array patterns proven with photos     |
+| **Audit Trail**        | 1/10   | **No versioning or change history**        |
+| **Draft/Publish**      | 1/10   | **No draft support, only live config**     |
 
 ---
 
@@ -562,6 +587,7 @@ await api.tenantUpdateBranding({
 **Status**: **NOT IMPLEMENTED**
 
 The system uses a **single, always-live configuration** model:
+
 - No draft/published distinction
 - No version history
 - No rollback capability
@@ -579,13 +605,13 @@ Client submits update → API validates → Database updated → Live immediatel
 ```prisma
 model Tenant {
   id String @id @default(cuid())
-  
+
   // Current published config
   branding Json @default("{}")
-  
+
   // Draft config (null = no draft exists)
   brandingDraft Json?
-  
+
   // Draft metadata
   brandingDraftCreatedAt DateTime?
   brandingDraftCreatedBy String?
@@ -593,6 +619,7 @@ model Tenant {
 ```
 
 **Endpoints Needed**:
+
 ```
 GET  /v1/tenant/admin/branding        → Gets published config
 GET  /v1/tenant/admin/branding/draft  → Gets draft config (if exists)
@@ -615,7 +642,7 @@ model BrandingHistory {
   createdBy String
   publishedAt DateTime?
   tenant Tenant @relation(fields: [tenantId], references: [id])
-  
+
   @@unique([tenantId, version])
 }
 
@@ -652,22 +679,22 @@ model Tenant {
 model ConfigAuditLog {
   id String @id @default(cuid())
   tenantId String
-  
+
   // What changed
   fieldChanged String // e.g., "primaryColor"
   oldValue String?
   newValue String
-  
+
   // Who and when
   changedBy String // User ID from JWT
   changedAt DateTime @default(now())
-  
+
   // Context
   ipAddress String?
   userAgent String?
-  
+
   tenant Tenant @relation(fields: [tenantId], references: [id])
-  
+
   @@index([tenantId, changedAt])
 }
 ```
@@ -678,46 +705,50 @@ model ConfigAuditLog {
 
 ### Public/Widget Endpoints
 
-| Method | Path | Response | Auth | Purpose |
-|--------|------|----------|------|---------|
-| GET | `/v1/tenant/branding` | BrandingDto | None | Fetch branding for widget display |
+| Method | Path                  | Response    | Auth | Purpose                           |
+| ------ | --------------------- | ----------- | ---- | --------------------------------- |
+| GET    | `/v1/tenant/branding` | BrandingDto | None | Fetch branding for widget display |
 
 ### Tenant Admin Endpoints
 
-| Method | Path | Body | Response | Auth | Purpose |
-|--------|------|------|----------|------|---------|
-| GET | `/v1/tenant/admin/branding` | — | BrandingDto | JWT | Get tenant's current branding |
-| PUT | `/v1/tenant/admin/branding` | UpdateBrandingDto | BrandingDto | JWT | Update branding |
-| POST | `/v1/tenant/admin/branding/logo` | FormData (multipart) | LogoUploadResponse | JWT | Upload logo file |
+| Method | Path                             | Body                 | Response           | Auth | Purpose                       |
+| ------ | -------------------------------- | -------------------- | ------------------ | ---- | ----------------------------- |
+| GET    | `/v1/tenant/admin/branding`      | —                    | BrandingDto        | JWT  | Get tenant's current branding |
+| PUT    | `/v1/tenant/admin/branding`      | UpdateBrandingDto    | BrandingDto        | JWT  | Update branding               |
+| POST   | `/v1/tenant/admin/branding/logo` | FormData (multipart) | LogoUploadResponse | JWT  | Upload logo file              |
 
 ### Related Package Photo Endpoints
 
-| Method | Path | Body | Response | Auth | Purpose |
-|--------|------|------|----------|------|---------|
-| POST | `/v1/tenant/admin/packages/:id/photos` | FormData | PackagePhoto | JWT | Upload package photo |
-| DELETE | `/v1/tenant/admin/packages/:id/photos/:filename` | — | 204 | JWT | Delete package photo |
+| Method | Path                                             | Body     | Response     | Auth | Purpose              |
+| ------ | ------------------------------------------------ | -------- | ------------ | ---- | -------------------- |
+| POST   | `/v1/tenant/admin/packages/:id/photos`           | FormData | PackagePhoto | JWT  | Upload package photo |
+| DELETE | `/v1/tenant/admin/packages/:id/photos/:filename` | —        | 204          | JWT  | Delete package photo |
 
 ---
 
 ## 8. Validation Constraints Summary
 
 ### Color Validation
+
 - **Pattern**: `^#([A-Fa-f0-9]{6}\|[A-Fa-f0-9]{3})$`
 - **Supported**: `#RRGGBB` and `#RGB` formats
 - **Examples**: `#FF5733`, `#FF5`, `#ffffff`
 
 ### Font Family Validation
+
 - **Type**: String
 - **Minimum**: 1 character
 - **No whitelist** (any font name accepted)
 - **Usage**: Passed to CSS `font-family` property
 
 ### Logo URL Validation
+
 - **Type**: Valid URL format
 - **Pattern**: Standard URL validation (z.string().url())
 - **Max size**: No server validation currently
 
 ### Partial Updates
+
 - **All fields optional**: Can update individual fields without touching others
 - **Merge behavior**: New values merged with existing config
 
@@ -726,12 +757,14 @@ model ConfigAuditLog {
 ## 9. Security Considerations
 
 ### Current Security Measures
+
 ✓ JWT authentication on all admin endpoints
 ✓ TenantId from JWT token (not request body)
 ✓ Cross-tenant isolation enforced
 ✓ Input validation via Zod schemas
 
 ### Potential Improvements
+
 - [ ] Add rate limiting to branding updates
 - [ ] Add signature/HMAC validation for public widget endpoint
 - [ ] Implement draft/publish workflow for safer updates
@@ -803,14 +836,8 @@ const { status, body } = await fetch('/v1/tenant/branding');
 const branding = body; // {primaryColor, secondaryColor, fontFamily, logo}
 
 // Apply to DOM
-document.documentElement.style.setProperty(
-  '--primary-color',
-  branding.primaryColor
-);
-document.documentElement.style.setProperty(
-  '--secondary-color',
-  branding.secondaryColor
-);
+document.documentElement.style.setProperty('--primary-color', branding.primaryColor);
+document.documentElement.style.setProperty('--secondary-color', branding.secondaryColor);
 document.body.style.fontFamily = branding.fontFamily;
 ```
 
@@ -819,18 +846,21 @@ document.body.style.fontFamily = branding.fontFamily;
 ## 12. Recommendations for Production
 
 ### Priority 1 (Required)
+
 - [ ] Implement draft/publish workflow for safer changes
 - [ ] Add audit logging for tenant actions
 - [ ] Add rate limiting (max 10 updates/minute per tenant)
 - [ ] Validate logo file type on server (image only)
 
 ### Priority 2 (Recommended)
+
 - [ ] Add branding change history/rollback
 - [ ] Implement preview mode before publishing
 - [ ] Add visual preview in admin UI
 - [ ] Support additional colors (link, error, success)
 
 ### Priority 3 (Enhancement)
+
 - [ ] Add custom CSS support (controlled)
 - [ ] Implement layout templates
 - [ ] Add typography scale configuration
@@ -840,15 +870,14 @@ document.body.style.fontFamily = branding.fontFamily;
 
 ## File Reference Map
 
-| Purpose | File Path |
-|---------|-----------|
-| Type contracts | `/Users/mikeyoung/CODING/Elope/packages/contracts/src/dto.ts` |
-| API routes | `/Users/mikeyoung/CODING/Elope/packages/contracts/src/api.v1.ts` |
-| DB schema | `/Users/mikeyoung/CODING/Elope/server/prisma/schema.prisma` |
-| Validation | `/Users/mikeyoung/CODING/Elope/server/src/validation/tenant-admin.schemas.ts` |
-| Routes | `/Users/mikeyoung/CODING/Elope/server/src/routes/tenant-admin.routes.ts` |
-| Controller | `/Users/mikeyoung/CODING/Elope/server/src/controllers/tenant-admin.controller.ts` |
-| Client API | `/Users/mikeyoung/CODING/Elope/client/src/lib/api.ts` |
-| UI Component | `/Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/BrandingEditor.tsx` |
-| Package Photos | `/Users/mikeyoung/CODING/Elope/client/src/lib/package-photo-api.ts` |
-
+| Purpose        | File Path                                                                           |
+| -------------- | ----------------------------------------------------------------------------------- |
+| Type contracts | `/Users/mikeyoung/CODING/Elope/packages/contracts/src/dto.ts`                       |
+| API routes     | `/Users/mikeyoung/CODING/Elope/packages/contracts/src/api.v1.ts`                    |
+| DB schema      | `/Users/mikeyoung/CODING/Elope/server/prisma/schema.prisma`                         |
+| Validation     | `/Users/mikeyoung/CODING/Elope/server/src/validation/tenant-admin.schemas.ts`       |
+| Routes         | `/Users/mikeyoung/CODING/Elope/server/src/routes/tenant-admin.routes.ts`            |
+| Controller     | `/Users/mikeyoung/CODING/Elope/server/src/controllers/tenant-admin.controller.ts`   |
+| Client API     | `/Users/mikeyoung/CODING/Elope/client/src/lib/api.ts`                               |
+| UI Component   | `/Users/mikeyoung/CODING/Elope/client/src/features/tenant-admin/BrandingEditor.tsx` |
+| Package Photos | `/Users/mikeyoung/CODING/Elope/client/src/lib/package-photo-api.ts`                 |

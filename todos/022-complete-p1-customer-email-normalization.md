@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "022"
+issue_id: '022'
 tags: [code-review, security, data-integrity, multi-tenant]
 dependencies: []
 ---
@@ -51,6 +51,7 @@ const customer = await tx.customer.upsert({
 ## Proposed Solutions
 
 ### Option A: Normalize in Repository (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 Update `booking.repository.ts` to normalize email:
@@ -71,26 +72,32 @@ const customer = await tx.customer.upsert({
 ```
 
 **Pros:**
+
 - Simple one-line fix
 - Consistent with tenant email handling
 - No migration needed
 
 **Cons:**
+
 - Existing duplicate records need cleanup
 
 ### Option B: Add Database Constraint
+
 **Effort:** Medium | **Risk:** Medium
 
 Add PostgreSQL lower() function to unique constraint:
+
 ```sql
 CREATE UNIQUE INDEX idx_customer_email_ci ON "Customer" (tenantId, LOWER(email));
 ```
 
 **Pros:**
+
 - Database enforces consistency
 - Cannot be bypassed
 
 **Cons:**
+
 - Requires migration
 - Must clean existing duplicates first
 
@@ -101,9 +108,11 @@ Implement **Option A** immediately, then schedule **Option B** as follow-up.
 ## Technical Details
 
 **Files to Update:**
+
 - `server/src/adapters/prisma/booking.repository.ts:162-167`
 
 **Database Cleanup Required:**
+
 ```sql
 -- Find duplicates
 SELECT tenantId, LOWER(email), COUNT(*)
@@ -123,8 +132,8 @@ HAVING COUNT(*) > 1;
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                  |
+| ---------- | ------- | -------------------------------------- |
 | 2025-11-27 | Created | Found during comprehensive code review |
 
 ## Resources

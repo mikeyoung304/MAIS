@@ -23,12 +23,14 @@ vercel --prod
 **Quick Fix:**
 
 1. Check build scripts have `--force`:
+
    ```bash
    grep '"build"' packages/*/package.json
    # Should see: "build": "tsc -b --force"
    ```
 
 2. Check Vite config points to `.js` files:
+
    ```bash
    grep 'alias:' client/vite.config.ts
    # Should see: ../packages/contracts/dist/index.js
@@ -47,16 +49,18 @@ vercel --prod
 ## Critical File Patterns
 
 ### ✅ CORRECT Build Script
+
 ```json
 // packages/contracts/package.json
 {
   "scripts": {
-    "build": "tsc -b --force"  // ← --force is critical
+    "build": "tsc -b --force" // ← --force is critical
   }
 }
 ```
 
 ### ✅ CORRECT Vite Alias
+
 ```typescript
 // client/vite.config.ts
 {
@@ -68,6 +72,7 @@ vercel --prod
 ```
 
 ### ✅ CORRECT Vercel Config
+
 ```json
 // vercel.json
 {
@@ -87,6 +92,7 @@ graph LR
 ```
 
 **Command:**
+
 ```bash
 npm run build --workspace=@macon/contracts && \
 npm run build --workspace=@macon/shared && \
@@ -117,23 +123,25 @@ npm run verify-build
 
 ## Common Mistakes
 
-| ❌ WRONG | ✅ CORRECT |
-|----------|-----------|
-| `"build": "tsc -b"` | `"build": "tsc -b --force"` |
+| ❌ WRONG                                           | ✅ CORRECT                                                  |
+| -------------------------------------------------- | ----------------------------------------------------------- |
+| `"build": "tsc -b"`                                | `"build": "tsc -b --force"`                                 |
 | `"@macon/contracts": "../packages/contracts/dist"` | `"@macon/contracts": "../packages/contracts/dist/index.js"` |
-| `"outputDirectory": "dist"` | `"outputDirectory": "client/dist"` |
-| Build in parallel | Build sequentially (contracts → shared → client) |
+| `"outputDirectory": "dist"`                        | `"outputDirectory": "client/dist"`                          |
+| Build in parallel                                  | Build sequentially (contracts → shared → client)            |
 
 ---
 
 ## When to Disable Vercel Cache
 
 **ONLY if:**
+
 - Experiencing persistent build failures after code changes
 - Just upgraded major dependencies (TypeScript, Vite, etc.)
 - Debugging incremental compilation issues
 
 **How:**
+
 1. Vercel Dashboard → Project Settings → Build & Development
 2. Uncheck "Use Build Cache"
 3. Re-enable after issue resolved
@@ -143,10 +151,12 @@ npm run verify-build
 ## Emergency Contacts
 
 **Documentation:**
+
 - Full guide: `/docs/deployment/VERCEL_BUILD_PREVENTION_GUIDE.md`
 - Deployment checklist: `/docs/deployment/PRODUCTION_DEPLOYMENT_CHECKLIST.md`
 
 **Key Files:**
+
 - `/vercel.json` - Vercel configuration
 - `/client/vite.config.ts` - Vite aliases
 - `/packages/contracts/package.json` - Build scripts

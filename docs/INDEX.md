@@ -32,6 +32,7 @@ Welcome to the MAIS documentation hub. This index helps you navigate all availab
 - **[DIATAXIS_IMPLEMENTATION_GUIDE.md](./DIATAXIS_IMPLEMENTATION_GUIDE.md)** - Deep dive on framework
 
 **Architecture Decision Records:**
+
 - **[adrs/ADR-001](./adrs/ADR-001-adopt-diataxis-framework.md)** - Adopt Diátaxis Framework
 - **[adrs/ADR-002](./adrs/ADR-002-documentation-naming-standards.md)** - Documentation Naming Standards
 - **[adrs/ADR-003](./adrs/ADR-003-sprint-documentation-lifecycle.md)** - Sprint Documentation Lifecycle
@@ -129,26 +130,28 @@ Welcome to the MAIS documentation hub. This index helps you navigate all availab
 
 **By task:**
 
-| What you want to do | Where to look |
-|---------------------|---------------|
-| Set up local development | [README.md](../README.md) → Quick Start |
-| Deploy to production | [operations/DEPLOYMENT_GUIDE.md](./operations/DEPLOYMENT_GUIDE.md) |
-| Understand architecture | [ARCHITECTURE.md](../ARCHITECTURE.md) |
-| Fix a production incident | [operations/INCIDENT_RESPONSE.md](./operations/INCIDENT_RESPONSE.md) |
-| Add a new feature | [DEVELOPING.md](../DEVELOPING.md) |
-| Write tests | [TESTING.md](../TESTING.md) |
-| Integrate the widget | [roadmaps/WIDGET_INTEGRATION_GUIDE.md](./roadmaps/WIDGET_INTEGRATION_GUIDE.md) |
-| Manage secrets | [security/SECRET_ROTATION_GUIDE.md](./security/SECRET_ROTATION_GUIDE.md) |
-| Set up database | [setup/SUPABASE.md](./setup/SUPABASE.md) |
-| Understand multi-tenancy | [multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md](./multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md) |
+| What you want to do       | Where to look                                                                                            |
+| ------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Set up local development  | [README.md](../README.md) → Quick Start                                                                  |
+| Deploy to production      | [operations/DEPLOYMENT_GUIDE.md](./operations/DEPLOYMENT_GUIDE.md)                                       |
+| Understand architecture   | [ARCHITECTURE.md](../ARCHITECTURE.md)                                                                    |
+| Fix a production incident | [operations/INCIDENT_RESPONSE.md](./operations/INCIDENT_RESPONSE.md)                                     |
+| Add a new feature         | [DEVELOPING.md](../DEVELOPING.md)                                                                        |
+| Write tests               | [TESTING.md](../TESTING.md)                                                                              |
+| Integrate the widget      | [roadmaps/WIDGET_INTEGRATION_GUIDE.md](./roadmaps/WIDGET_INTEGRATION_GUIDE.md)                           |
+| Manage secrets            | [security/SECRET_ROTATION_GUIDE.md](./security/SECRET_ROTATION_GUIDE.md)                                 |
+| Set up database           | [setup/SUPABASE.md](./setup/SUPABASE.md)                                                                 |
+| Understand multi-tenancy  | [multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md](./multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md) |
 
 ## 📝 Contributing to Documentation
 
 **IMPORTANT:** Before creating or updating documentation:
+
 - **Quick answers?** See [Documentation Quick Reference](./DOCUMENTATION_QUICK_REFERENCE.md) (30-second guide)
 - **Full standards?** See [Documentation Standards](./DOCUMENTATION_STANDARDS.md) (comprehensive guide)
 
 This comprehensive guide covers:
+
 - **Naming Conventions:** When to use UPPERCASE_UNDERSCORE vs kebab-case vs timestamps vs ADR format
 - **File Placement Rules:** Decision tree for "where does this document go?"
 - **Metadata Requirements:** Required headers and versioning
@@ -157,6 +160,7 @@ This comprehensive guide covers:
 - **Ownership Model:** Who reviews what and escalation paths
 
 **Quick Reference:**
+
 1. **Place it correctly:** Use decision tree in [DOCUMENTATION_STANDARDS.md](./DOCUMENTATION_STANDARDS.md#quick-decision-trees)
 2. **Name it properly:** Follow [naming conventions](./DOCUMENTATION_STANDARDS.md#1-naming-conventions)
 3. **Add metadata headers:** Include version, date, owner, status
@@ -167,22 +171,26 @@ This comprehensive guide covers:
 ## 🎯 Current Focus
 
 **Sprint 6 (November 2025): COMPLETE ✅**
+
 - **Test Stabilization**: Achieved 62/104 tests passing (60% pass rate) with 0% variance
 - **Infrastructure Improvements**: Fixed connection pool poisoning, eliminated catalog test failures
 - **Zero-Code Test Re-enablement**: 22 tests re-enabled with only infrastructure fixes
 - **Pattern Discovery**: Identified and fixed "cascading failure" and "flaky test" patterns
 
 **Recent Sprints:**
+
 - **Sprint 5**: Test suite foundation and integration helper patterns
 - **Sprint 4**: Cache isolation and HTTP catalog implementation
 - **Sprint 1-3**: Platform foundation, branding, Stripe refunds, audit system
 
 **Sprint 7 (Upcoming): Continue Test Stabilization**
+
 - Target: 70% pass rate (73/104 tests)
 - Focus: Test logic fixes, data contamination, complex transaction issues
 - Continue systematic re-enablement approach
 
 **Future Sprints:**
+
 - **Config Versioning**: Database schema, API endpoints, backward compatibility
 - **Agent Interface**: Proposal system, API endpoints, admin review UI
 - **Display Rules**: Configuration UI and runtime engine

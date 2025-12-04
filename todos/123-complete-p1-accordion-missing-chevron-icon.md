@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "123"
+issue_id: '123'
 tags: [code-review, accessibility, ux, pr-12]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The accordion sections have no icon or visual cue indicating whether they are expanded or collapsed. The native disclosure triangle was removed but no replacement was added.
 
 **Why it matters:**
+
 - Users cannot visually determine if section is expanded or collapsed
 - Violates WCAG 2.1 Success Criterion 1.3.1 (Info and Relationships)
 - Confusing UX, especially with multiple segments
@@ -26,6 +27,7 @@ The accordion sections have no icon or visual cue indicating whether they are ex
 **Lines:** 205-208
 
 **Current Code:**
+
 ```typescript
 <summary className="... list-none [&::-webkit-details-marker]:hidden">
   <span className="text-text-primary">
@@ -39,6 +41,7 @@ The accordion sections have no icon or visual cue indicating whether they are ex
 ## Proposed Solutions
 
 ### Solution 1: Add Rotating Chevron (Recommended)
+
 ```typescript
 import { ChevronRight } from "lucide-react";
 
@@ -67,6 +70,7 @@ Implement Solution 1 immediately. This is a WCAG compliance issue.
 ## Technical Details
 
 **Affected Files:**
+
 - `client/src/features/tenant-admin/TenantPackagesManager.tsx` (lines 205-208)
 
 **Note:** May need to add `group` class to `<details>` element for `group-open` to work.
@@ -81,8 +85,8 @@ Implement Solution 1 immediately. This is a WCAG compliance issue.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                   |
+| ---------- | ------- | ----------------------- |
 | 2025-12-01 | Created | From PR #12 code review |
 
 ## Resources

@@ -1,11 +1,11 @@
 ---
 status: complete
 priority: p1
-issue_id: "075"
+issue_id: '075'
 tags: [ci-cd, code-review, e2e-tests, deployment]
 dependencies: []
-resolution: "Already fixed - E2E seed step exists at main-pipeline.yml:409-413"
-completed_date: "2025-11-30"
+resolution: 'Already fixed - E2E seed step exists at main-pipeline.yml:409-413'
+completed_date: '2025-11-30'
 ---
 
 # P1: E2E Seed Missing from CI/CD Pipeline
@@ -15,6 +15,7 @@ completed_date: "2025-11-30"
 The CI/CD pipeline runs E2E tests but **does not seed the E2E test tenant** before running tests. Tests assume the `mais-e2e` tenant exists but it won't exist in a fresh CI database.
 
 **Why it matters:**
+
 - E2E tests will fail with 401/403 errors in CI
 - Tests pass locally (dev DB has seed) but fail in CI
 - Deployment pipeline blocked by failing E2E tests
@@ -37,6 +38,7 @@ The CI/CD pipeline runs E2E tests but **does not seed the E2E test tenant** befo
 ```
 
 **Evidence:** E2E tests use fixed API key:
+
 ```typescript
 // e2e.ts exports
 const E2E_PUBLIC_KEY = 'pk_live_mais-e2e_0000000000000000';
@@ -47,6 +49,7 @@ Tests expect this tenant to exist for authentication.
 ## Proposed Solutions
 
 ### Solution A: Add E2E seed to pipeline (Recommended)
+
 **Pros:** Simple, explicit, matches local dev flow
 **Cons:** Adds ~5 seconds to pipeline
 **Effort:** Small (15 min)
@@ -66,6 +69,7 @@ Tests expect this tenant to exist for authentication.
 ```
 
 ### Solution B: Auto-seed in test setup
+
 **Pros:** Self-contained, no CI changes
 **Cons:** Slower tests, seed runs multiple times
 **Effort:** Medium (30 min)
@@ -81,6 +85,7 @@ export default async function globalSetup() {
 ```
 
 ### Solution C: Use beforeAll in test fixtures
+
 **Pros:** Per-file isolation possible
 **Cons:** More complex, potential race conditions
 **Effort:** Medium (45 min)
@@ -100,9 +105,11 @@ test.beforeAll(async () => {
 ## Technical Details
 
 **Affected Files:**
+
 - `.github/workflows/main-pipeline.yml`
 
 **Components:**
+
 - E2E test job
 - Database setup step
 
@@ -117,8 +124,8 @@ test.beforeAll(async () => {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                             |
+| ---------- | ------------------------ | ----------------------------------------------------- |
 | 2025-11-29 | Created from code review | Local dev masks CI issues due to persistent seed data |
 
 ## Resources

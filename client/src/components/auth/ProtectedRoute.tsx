@@ -7,9 +7,9 @@
  * - They are redirected to tenant dashboard from admin routes
  */
 
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuth, UserRole } from "../../contexts/AuthContext";
-import { Loading } from "../../ui/Loading";
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth, UserRole } from '../../contexts/AuthContext';
+import { Loading } from '../../ui/Loading';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -44,9 +44,9 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   // Check if user's effective role is allowed
   if (!allowedRoles.includes(effectiveRole)) {
     // Redirect to appropriate dashboard based on effective role
-    if (effectiveRole === "PLATFORM_ADMIN") {
+    if (effectiveRole === 'PLATFORM_ADMIN') {
       return <Navigate to="/admin/dashboard" replace />;
-    } else if (effectiveRole === "TENANT_ADMIN") {
+    } else if (effectiveRole === 'TENANT_ADMIN') {
       return <Navigate to="/tenant/dashboard" replace />;
     }
     // Fallback to login if role not recognized

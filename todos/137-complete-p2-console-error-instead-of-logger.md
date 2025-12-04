@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "137"
+issue_id: '137'
 tags: [code-review, visual-editor, logging, standards]
 dependencies: []
 ---
@@ -17,27 +17,32 @@ The visual editor components use `console.error()` for error logging instead of 
 ## Findings
 
 ### Discovery Source
+
 Code Quality Review Agent - Code Review
 
 ### Evidence
 
 **PhotoDropZone.tsx lines 82 and 173:**
+
 ```typescript
-console.error("Failed to upload photo:", err);
-console.error("Failed to delete photo:", err);
+console.error('Failed to upload photo:', err);
+console.error('Failed to delete photo:', err);
 ```
 
 **useVisualEditor.ts line 187:**
+
 ```typescript
-console.error("Failed to save draft:", err);
+console.error('Failed to save draft:', err);
 ```
 
 **CLAUDE.md rule:**
+
 > **Logging**: Use `logger`, never `console.log`
 
 ## Proposed Solutions
 
 ### Option 1: Use Existing Logger (Recommended)
+
 Import and use the centralized logger from lib/logger.
 
 ```typescript
@@ -46,7 +51,7 @@ import { logger } from '@/lib/logger';
 // Instead of console.error
 logger.error('Failed to upload photo', {
   packageId,
-  error: err instanceof Error ? err.message : String(err)
+  error: err instanceof Error ? err.message : String(err),
 });
 ```
 
@@ -56,6 +61,7 @@ logger.error('Failed to upload photo', {
 **Risk**: Low
 
 ### Option 2: Create Client-Side Error Reporter
+
 Create a dedicated error reporting utility for client-side errors.
 
 ```typescript
@@ -82,11 +88,12 @@ export function reportError(context: string, error: unknown) {
 **Risk**: Low
 
 ### Option 3: Leave with ESLint Disable Comments
+
 Disable the linting rule for these specific locations.
 
 ```typescript
 // eslint-disable-next-line no-console
-console.error("Failed to upload photo:", err);
+console.error('Failed to upload photo:', err);
 ```
 
 **Pros**: Quick fix
@@ -95,22 +102,27 @@ console.error("Failed to upload photo:", err);
 **Risk**: High (bad practice)
 
 ## Recommended Action
+
 <!-- Filled during triage -->
 
 ## Technical Details
 
 ### Affected Files
+
 - `client/src/features/tenant-admin/visual-editor/components/PhotoDropZone.tsx`
 - `client/src/features/tenant-admin/visual-editor/hooks/useVisualEditor.ts`
 
 ### Affected Components
+
 - Photo upload error handling
 - Draft save error handling
 
 ### Database Changes Required
+
 None
 
 ## Acceptance Criteria
+
 - [ ] No `console.error` calls in visual editor code
 - [ ] Errors logged through proper logging mechanism
 - [ ] Error messages include relevant context (packageId, tenantId)
@@ -119,10 +131,11 @@ None
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                       |
+| ---------- | ------- | ------------------------------------------- |
 | 2025-12-01 | Created | Identified during visual editor code review |
 
 ## Resources
+
 - PR: feat(visual-editor) commit 0327dee
 - CLAUDE.md logging standards

@@ -73,7 +73,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
     }) {
       // Validate application fee constraints
       const minFee = Math.ceil(input.amountCents * 0.005);
-      const maxFee = Math.floor(input.amountCents * 0.50);
+      const maxFee = Math.floor(input.amountCents * 0.5);
 
       if (input.applicationFeeAmount < minFee || input.applicationFeeAmount > maxFee) {
         throw new Error(`Application fee ${input.applicationFeeAmount} outside valid range`);
@@ -138,11 +138,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
     );
 
     // Initialize webhook controller
-    webhooksController = new WebhooksController(
-      mockPaymentProvider,
-      bookingService,
-      webhookRepo
-    );
+    webhooksController = new WebhooksController(mockPaymentProvider, bookingService, webhookRepo);
 
     // Create test package
     const pkg = ctx.factories.package.create({

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "017"
+issue_id: '017'
 tags: [code-review, performance, react, storefront]
 dependencies: []
 ---
@@ -17,21 +17,26 @@ The `TierCard` and `SegmentCard` components are rendered multiple times per page
 ## Findings
 
 ### TierCard Component
+
 **File:** `client/src/features/storefront/TierCard.tsx` (lines 54-150)
 
 The component is rendered 3x per page (budget/middle/luxury) and includes:
+
 - Complex className template literals with conditional classes (lines 67-75)
 - Image with CSS transitions
 - Badge rendering with conditional display
 
 ### SegmentCard Component
+
 **File:** `client/src/pages/StorefrontHome.tsx` (lines 29-83)
 
 The component is rendered 1-3x per page depending on tenant segments and includes:
+
 - Hero image rendering with gradient overlay
 - Conditional content rendering
 
 ### Performance Impact
+
 - Every parent state change triggers 3-9 re-renders
 - className concatenation recalculates on every render
 - No prop changes should trigger re-render, but currently does
@@ -39,6 +44,7 @@ The component is rendered 1-3x per page depending on tenant segments and include
 ## Proposed Solutions
 
 ### Option A: Wrap Components with React.memo (Recommended)
+
 **Effort:** Small | **Risk:** Low
 
 ```typescript
@@ -61,22 +67,27 @@ const SegmentCard = memo(function SegmentCard({ segment }: { segment: SegmentDto
 ```
 
 **Pros:**
+
 - Simple 2-line change per component
 - Prevents re-renders when props haven't changed
 - React's default shallow comparison works for these props
 
 **Cons:**
+
 - Minimal overhead from memo comparison
 
 ### Option B: Extract Inline Functions and useMemo
+
 **Effort:** Medium | **Risk:** Low
 
 Also memoize internal computations like className generation.
 
 **Pros:**
+
 - Maximum optimization
 
 **Cons:**
+
 - Overkill for 3-item arrays
 - Adds complexity
 
@@ -87,10 +98,12 @@ Implement **Option A** - Add `React.memo` wrapper to both components.
 ## Technical Details
 
 **Files to Update:**
+
 - `client/src/features/storefront/TierCard.tsx` - Wrap with memo
 - `client/src/pages/StorefrontHome.tsx` - Wrap SegmentCard with memo
 
 **Changes:**
+
 ```typescript
 // Before
 export function TierCard({ ... }) { ... }
@@ -109,8 +122,8 @@ export const TierCard = memo(function TierCard({ ... }) { ... });
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                 |
+| ---------- | ------- | ------------------------------------- |
 | 2025-11-27 | Created | Found during PR #6 performance review |
 
 ## Resources

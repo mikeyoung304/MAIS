@@ -1,7 +1,7 @@
 ---
 status: pending
 priority: p3
-issue_id: "226"
+issue_id: '226'
 tags: [analytics, tracking, landing-page, conversion]
 dependencies: []
 ---
@@ -22,6 +22,7 @@ This TODO is being deferred because the MAIS project does not currently have an 
 4. **Well-Documented for Future**: All event definitions, hook structures, and implementation patterns are documented in this TODO for when analytics is added
 
 **Next Steps When Analytics is Ready:**
+
 - Select and configure analytics provider (GA4, Segment, etc.)
 - Add provider SDK to client package
 - Implement `useAnalytics` hook with the chosen provider
@@ -38,14 +39,14 @@ Landing page interactions aren't tracked with analytics events. Tracking section
 
 ## Suggested Events
 
-| Event | Trigger | Properties |
-|-------|---------|------------|
-| `landing_page_view` | Page load | tenant_slug, sections_enabled |
-| `section_view` | Section enters viewport | section_type, position |
-| `cta_click` | CTA button click | section_type, cta_text, destination |
-| `faq_expand` | FAQ accordion open | question_index, question_text |
-| `gallery_image_click` | Gallery image click | image_index |
-| `testimonial_view` | Testimonial card in view | testimonial_index |
+| Event                 | Trigger                  | Properties                          |
+| --------------------- | ------------------------ | ----------------------------------- |
+| `landing_page_view`   | Page load                | tenant_slug, sections_enabled       |
+| `section_view`        | Section enters viewport  | section_type, position              |
+| `cta_click`           | CTA button click         | section_type, cta_text, destination |
+| `faq_expand`          | FAQ accordion open       | question_index, question_text       |
+| `gallery_image_click` | Gallery image click      | image_index                         |
+| `testimonial_view`    | Testimonial card in view | testimonial_index                   |
 
 ## Implementation
 

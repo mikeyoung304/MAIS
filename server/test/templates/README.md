@@ -31,11 +31,13 @@ All templates follow the **AAA pattern** (Arrange-Act-Assert) and include compre
 ## Available Templates
 
 ### 1. Service Test Template
+
 **File:** `service.test.template.ts`
 
 **Use for:** Testing service layer business logic
 
 **Features:**
+
 - CRUD operation tests
 - Validation testing
 - Error handling
@@ -44,6 +46,7 @@ All templates follow the **AAA pattern** (Arrange-Act-Assert) and include compre
 - Dependency interaction tests
 
 **When to use:**
+
 - Testing business logic
 - Testing service methods that orchestrate repositories
 - Testing validation rules
@@ -52,11 +55,13 @@ All templates follow the **AAA pattern** (Arrange-Act-Assert) and include compre
 ---
 
 ### 2. Repository Test Template
+
 **File:** `repository.test.template.ts`
 
 **Use for:** Testing data access layer
 
 **Features:**
+
 - CRUD operation tests
 - Data persistence verification
 - Concurrency and race condition tests
@@ -65,6 +70,7 @@ All templates follow the **AAA pattern** (Arrange-Act-Assert) and include compre
 - Tenant isolation tests
 
 **When to use:**
+
 - Testing repository implementations
 - Testing data access patterns
 - Testing query methods
@@ -74,11 +80,13 @@ All templates follow the **AAA pattern** (Arrange-Act-Assert) and include compre
 ---
 
 ### 3. Controller/HTTP Test Template
+
 **File:** `controller.test.template.ts`
 
 **Use for:** Testing HTTP endpoints
 
 **Features:**
+
 - Request/response testing
 - Authentication tests
 - Authorization tests
@@ -89,6 +97,7 @@ All templates follow the **AAA pattern** (Arrange-Act-Assert) and include compre
 - Tenant isolation
 
 **When to use:**
+
 - Testing REST API endpoints
 - Testing HTTP contracts
 - Testing authentication/authorization
@@ -98,11 +107,13 @@ All templates follow the **AAA pattern** (Arrange-Act-Assert) and include compre
 ---
 
 ### 4. Webhook Test Template
+
 **File:** `webhook.test.template.ts`
 
 **Use for:** Testing webhook handlers
 
 **Features:**
+
 - Webhook signature verification
 - Idempotency testing
 - Event validation
@@ -112,6 +123,7 @@ All templates follow the **AAA pattern** (Arrange-Act-Assert) and include compre
 - Event type routing
 
 **When to use:**
+
 - Testing Stripe webhooks
 - Testing external service webhooks
 - Testing event processing
@@ -144,6 +156,7 @@ cp server/test/templates/webhook.test.template.ts server/test/controllers/my-web
 Each template uses placeholders that you need to replace:
 
 **Common placeholders:**
+
 - `[ServiceName]` - Your service class name (e.g., BookingService)
 - `[RepositoryName]` - Your repository name (e.g., Booking, Catalog)
 - `[Entity]` - Your entity type (e.g., Booking, Package)
@@ -151,6 +164,7 @@ Each template uses placeholders that you need to replace:
 - `[WebhookName]` - Your webhook type (e.g., Stripe, PayPal)
 
 **Pro tip:** Use your editor's find/replace with case sensitivity:
+
 1. Find: `[ServiceName]` → Replace: `Booking`
 2. Find: `[service-name]` → Replace: `booking`
 3. Find: `[Repository]` → Replace: `Booking`
@@ -180,7 +194,7 @@ const entity = build[Entity]({ id: 'entity_1', field: 'value' });
 const booking = buildBooking({
   id: 'booking_1',
   eventDate: '2025-06-15',
-  coupleName: 'John & Jane'
+  coupleName: 'John & Jane',
 });
 ```
 
@@ -255,9 +269,7 @@ describe('BookingService', () => {
       };
 
       // Act & Assert
-      await expect(
-        service.createBooking('test-tenant', data)
-      ).rejects.toThrow(ValidationError);
+      await expect(service.createBooking('test-tenant', data)).rejects.toThrow(ValidationError);
     });
   });
 });
@@ -289,9 +301,9 @@ describe('BookingRepository', () => {
 
       // Act & Assert
       const booking2 = buildBooking({ id: 'booking_2', eventDate: '2025-06-15' });
-      await expect(
-        repository.create('test-tenant', booking2)
-      ).rejects.toThrow(BookingConflictError);
+      await expect(repository.create('test-tenant', booking2)).rejects.toThrow(
+        BookingConflictError
+      );
     });
   });
 
@@ -309,7 +321,7 @@ describe('BookingRepository', () => {
       ]);
 
       // Assert: Only one succeeds
-      const successes = results.filter(r => r.status === 'fulfilled');
+      const successes = results.filter((r) => r.status === 'fulfilled');
       expect(successes.length).toBe(1);
     });
   });
@@ -352,9 +364,7 @@ describe('GET /v1/bookings', () => {
   });
 
   it('returns 401 when API key is missing', async () => {
-    await request(app)
-      .get('/v1/bookings')
-      .expect(401);
+    await request(app).get('/v1/bookings').expect(401);
   });
 });
 ```
@@ -442,8 +452,8 @@ it('only returns data for specified tenant', async () => {
   const result = await service.getAll('tenant-1');
 
   // Assert: Only tenant-1 data returned
-  expect(result.some(e => e.id === 'entity_1')).toBe(true);
-  expect(result.some(e => e.id === 'entity_2')).toBe(false);
+  expect(result.some((e) => e.id === 'entity_1')).toBe(true);
+  expect(result.some((e) => e.id === 'entity_2')).toBe(false);
 });
 ```
 
@@ -477,6 +487,7 @@ const booking = {
 ```
 
 **Builder functions provide:**
+
 - Sensible defaults
 - Type safety
 - Less boilerplate
@@ -516,14 +527,12 @@ it('creates a booking successfully', async () => {
 ```typescript
 it('throws NotFoundError when entity not found', async () => {
   // Act & Assert: Verify error type
-  await expect(
-    service.getById('test-tenant', 'nonexistent')
-  ).rejects.toThrow(NotFoundError);
+  await expect(service.getById('test-tenant', 'nonexistent')).rejects.toThrow(NotFoundError);
 
   // Assert: Verify error message
-  await expect(
-    service.getById('test-tenant', 'nonexistent')
-  ).rejects.toThrow('Entity with id "nonexistent" not found');
+  await expect(service.getById('test-tenant', 'nonexistent')).rejects.toThrow(
+    'Entity with id "nonexistent" not found'
+  );
 });
 ```
 
@@ -568,8 +577,8 @@ it('handles concurrent operations correctly', async () => {
   const results = await Promise.allSettled(operations);
 
   // Assert
-  const successes = results.filter(r => r.status === 'fulfilled');
-  const failures = results.filter(r => r.status === 'rejected');
+  const successes = results.filter((r) => r.status === 'fulfilled');
+  const failures = results.filter((r) => r.status === 'rejected');
 
   expect(successes.length).toBe(2);
   expect(failures.length).toBe(1);
@@ -607,7 +616,7 @@ it('returns correct response', async () => {
 it('calls dependency correctly', async () => {
   // Arrange: Create mock
   const emailService = {
-    sendEmail: vi.fn().mockResolvedValue(undefined)
+    sendEmail: vi.fn().mockResolvedValue(undefined),
   };
 
   const service = new BookingService(repository, emailService);
@@ -666,6 +675,7 @@ beforeAll(() => {
 ### Issue: Async tests timing out
 
 **Solution:**
+
 1. Ensure you're using `async/await`
 2. Check that promises are properly awaited
 3. Increase timeout if needed:
@@ -685,7 +695,7 @@ it('performs long operation', async () => {
 ```typescript
 // Create mock
 const mockService = {
-  method: vi.fn().mockResolvedValue('result')
+  method: vi.fn().mockResolvedValue('result'),
 };
 
 // Use the mock
@@ -701,6 +711,7 @@ expect(mockService.method).toHaveBeenCalled();
 ### Issue: HTTP tests return 404
 
 **Solution:**
+
 1. Verify route is registered in app
 2. Check HTTP method matches (GET, POST, etc.)
 3. Verify tenant API key is set
@@ -709,9 +720,9 @@ expect(mockService.method).toHaveBeenCalled();
 ```typescript
 // Verify all parts
 await request(app)
-  .get('/v1/bookings')                      // Correct path
-  .set('X-Tenant-Key', testTenantApiKey)    // Required header
-  .expect(200);                             // Expected status
+  .get('/v1/bookings') // Correct path
+  .set('X-Tenant-Key', testTenantApiKey) // Required header
+  .expect(200); // Expected status
 ```
 
 ---
@@ -745,14 +756,14 @@ afterEach(() => {
 
 ```typescript
 // Good
-it('throws ValidationError when price is negative')
-it('creates booking successfully with valid data')
-it('returns 404 when resource not found')
+it('throws ValidationError when price is negative');
+it('creates booking successfully with valid data');
+it('returns 404 when resource not found');
 
 // Avoid
-it('test 1')
-it('should work')
-it('handles error')
+it('test 1');
+it('should work');
+it('handles error');
 ```
 
 ---
@@ -785,7 +796,9 @@ describe('BookingService', () => {
 ```typescript
 // Good: Self-contained test
 it('creates booking', async () => {
-  const data = { /* test data */ };
+  const data = {
+    /* test data */
+  };
   const result = await service.create('test-tenant', data);
   expect(result).toBeDefined();
 });
@@ -910,7 +923,7 @@ it('finds booking by id', async () => {
 afterEach(async () => {
   // Clean up test data
   await prisma.booking.deleteMany({
-    where: { tenantId: 'test-tenant' }
+    where: { tenantId: 'test-tenant' },
   });
 });
 
@@ -925,12 +938,14 @@ afterAll(async () => {
 ### 10. Test Coverage Goals
 
 **Aim for these coverage targets:**
+
 - **Services:** 90%+ coverage
 - **Repositories:** 85%+ coverage
 - **Controllers:** 80%+ coverage
 - **Webhooks:** 95%+ coverage (critical path)
 
 **Run coverage:**
+
 ```bash
 npm test -- --coverage
 ```

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "195"
+issue_id: '195'
 tags: [code-review, dry, refactoring]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The add-on DTO mapping is done inline in each route handler, with the exact same transformation repeated 4+ times for add-ons and 6+ times for packages.
 
 ### Why It Matters
+
 - Code repetition across multiple routes
 - Risk of inconsistent DTO shapes
 - When you add a field, you have to update it in 10 places
@@ -23,6 +24,7 @@ The add-on DTO mapping is done inline in each route handler, with the exact same
 **Source:** DHH Review, Code Quality Review, Architecture Review
 
 **Evidence:**
+
 ```typescript
 // Lines 1031-1038, 1067-1074, 1104-1111, 1151-1158 - IDENTICAL code
 const addOnsDto = addOns.map((addOn) => ({
@@ -40,6 +42,7 @@ const addOnsDto = addOns.map((addOn) => ({
 ## Proposed Solutions
 
 ### Option A: Create Mapper Functions (Recommended)
+
 **Pros:** Single source of truth, easy to test, explicit
 **Cons:** Slightly more files
 **Effort:** Small (15 minutes)
@@ -69,6 +72,7 @@ res.json(mapAddOnToDto(addOn));
 ```
 
 ### Option B: Use Class-Based Transformers
+
 **Pros:** OOP pattern, can add validation
 **Cons:** Over-engineering for this use case
 **Effort:** Medium (45 minutes)
@@ -81,6 +85,7 @@ Option A - Simple mapper functions at top of routes file.
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/routes/tenant-admin.routes.ts`
 
 **Database Changes:** None
@@ -95,8 +100,8 @@ Option A - Simple mapper functions at top of routes file.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                              |
+| ---------- | ------------------------ | -------------------------------------- |
 | 2025-12-03 | Created from code review | Extract repeated patterns to functions |
 
 ## Resources

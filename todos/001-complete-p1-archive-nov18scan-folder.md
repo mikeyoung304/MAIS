@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "001"
+issue_id: '001'
 tags: [documentation, archive, cleanup]
 dependencies: []
 ---
@@ -28,6 +28,7 @@ The `/nov18scan/` folder contains a comprehensive point-in-time documentation au
 ## Proposed Solutions
 
 ### Solution 1: Archive Entire Folder (Recommended)
+
 - Move `/nov18scan/` to `/docs/archive/2025-11/audits/nov18-comprehensive-scan/`
 - Add README explaining archived status
 - Effort: Small (30 min)
@@ -36,6 +37,7 @@ The `/nov18scan/` folder contains a comprehensive point-in-time documentation au
 - Cons: None
 
 ### Solution 2: Delete Folder
+
 - Remove `/nov18scan/` entirely
 - Effort: Trivial (5 min)
 - Risk: Medium - loses historical baseline documentation
@@ -49,12 +51,15 @@ Use Solution 1: Archive the folder with a README noting it's historical.
 ## Technical Details
 
 **Affected Files:**
+
 - `/nov18scan/` (entire folder, 18 files)
 
 **Archive Location:**
+
 - `/docs/archive/2025-11/audits/nov18-comprehensive-scan/`
 
 **Commands:**
+
 ```bash
 mkdir -p docs/archive/2025-11/audits/nov18-comprehensive-scan
 mv nov18scan/* docs/archive/2025-11/audits/nov18-comprehensive-scan/
@@ -70,8 +75,8 @@ rmdir nov18scan
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                  |
+| ---------- | ------- | -------------------------------------- |
 | 2025-11-24 | Created | Identified during documentation review |
 
 ## Resources

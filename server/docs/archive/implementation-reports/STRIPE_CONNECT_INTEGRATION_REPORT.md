@@ -1,12 +1,15 @@
 # Stripe Connect Integration - Phase 3 Completion Report
 
 ## Overview
+
 Successfully implemented Stripe Connect with application fees for multi-tenant payment processing. The system now supports direct payments to tenant Stripe accounts with platform commission automatically deducted.
 
 ## Files Modified
 
 ### 1. `/server/src/lib/ports.ts`
+
 **Changes:**
+
 - Added `createConnectCheckoutSession()` method to `PaymentProvider` interface
 - New parameters:
   - `stripeAccountId: string` - Connected Stripe account
@@ -14,6 +17,7 @@ Successfully implemented Stripe Connect with application fees for multi-tenant p
 - Maintains backwards compatibility with existing `createCheckoutSession()`
 
 **Code:**
+
 ```typescript
 export interface PaymentProvider {
   createCheckoutSession(input: {
@@ -36,7 +40,9 @@ export interface PaymentProvider {
 ```
 
 ### 2. `/server/src/adapters/stripe.adapter.ts`
+
 **Changes:**
+
 - Implemented `createConnectCheckoutSession()` method
 - Uses Stripe Connect destination charges pattern
 - Validates application fee (0.5% - 50% as per Stripe limits)
@@ -45,6 +51,7 @@ export interface PaymentProvider {
   - `transfer_data.destination` - Connected account ID
 
 **Example Stripe Session Payload:**
+
 ```typescript
 {
   mode: 'payment',
@@ -85,10 +92,11 @@ export interface PaymentProvider {
 ```
 
 **Validation:**
+
 ```typescript
 // Stripe requires commission between 0.5% - 50%
 const minFee = Math.ceil(amountCents * 0.005); // 0.5%
-const maxFee = Math.floor(amountCents * 0.50); // 50%
+const maxFee = Math.floor(amountCents * 0.5); // 50%
 
 if (applicationFeeAmount < minFee || applicationFeeAmount > maxFee) {
   throw new Error('Application fee outside Stripe limits');
@@ -96,7 +104,9 @@ if (applicationFeeAmount < minFee || applicationFeeAmount > maxFee) {
 ```
 
 ### 3. `/server/src/services/booking.service.ts`
+
 **Changes:**
+
 - Added `PrismaTenantRepository` dependency injection
 - Updated `createCheckout()` to:
   1. Fetch tenant to get `stripeAccountId` and `stripeOnboarded` status
@@ -106,6 +116,7 @@ if (applicationFeeAmount < minFee || applicationFeeAmount > maxFee) {
      - **Standard Stripe** (fallback) → payment goes to platform
 
 **Flow:**
+
 ```typescript
 async createCheckout(tenantId: string, input: CreateBookingInput) {
   // 1. Validate package
@@ -147,18 +158,23 @@ async createCheckout(tenantId: string, input: CreateBookingInput) {
 ```
 
 ### 4. `/server/src/di.ts`
+
 **Changes:**
+
 - Injected `tenantRepo` into both `BookingService` instantiations
 - Modified mock environment setup to include tenant repository
 
 ### 5. `/server/src/adapters/mock/index.ts`
+
 **Changes:**
+
 - Implemented `createConnectCheckoutSession()` in `MockPaymentProvider`
 - Enables testing without real Stripe account
 
 ## Integration Example
 
 ### Scenario: Tenant with Stripe Connect
+
 ```typescript
 // Tenant in database
 {
@@ -200,6 +216,7 @@ Tenant receives: $1,320.00 (132000 cents)
 ```
 
 ### Payment Flow:
+
 1. Customer pays $1,500.00 via Stripe Checkout
 2. Stripe deposits $1,320.00 to tenant's connected account
 3. Stripe holds $180.00 as platform commission
@@ -208,6 +225,7 @@ Tenant receives: $1,320.00 (132000 cents)
 ## Commission Verification
 
 The commission is calculated by `CommissionService` and includes:
+
 - **Database lookup**: Fetches tenant's `commissionPercent`
 - **Calculation**: Always rounds UP to protect platform revenue
 - **Validation**: Enforces Stripe's 0.5% - 50% limits
@@ -245,6 +263,7 @@ if (tenant.stripeAccountId && tenant.stripeOnboarded) {
 ## Testing Notes
 
 ### Manual Testing:
+
 ```bash
 # 1. Start the server
 npm run dev
@@ -267,11 +286,13 @@ curl -X POST http://localhost:3001/api/v1/bookings/checkout \
 ```
 
 ### Unit Tests:
+
 - Commission calculation ✓ (existing tests pass)
 - Stripe session creation ✓ (mock adapter implemented)
 - Tenant lookup ✓ (repository method exists)
 
 ### Integration Tests:
+
 - End-to-end booking flow with Stripe Connect
 - Webhook processing with commission data
 - Commission validation (0.5% - 50% limits)
@@ -301,6 +322,7 @@ curl -X POST http://localhost:3001/api/v1/bookings/checkout \
 ## Summary
 
 Phase 3 is complete. The payment system now supports Stripe Connect with:
+
 - ✅ Automatic commission calculation
 - ✅ Direct payments to tenant accounts
 - ✅ Platform application fees

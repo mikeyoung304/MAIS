@@ -11,6 +11,7 @@
 ✅ **Elope's multi-tenant architecture is production-ready** for handling customer bookings with complete tenant isolation, payment processing, and admin controls.
 
 ❌ **CANNOT LAUNCH TO PRODUCTION** without implementing 11 critical features:
+
 - 4 Legal/Compliance features (ToS, GDPR, data export/deletion)
 - 4 Customer experience features (emails, portal, cancellations, billing)
 - 3 Operational features (onboarding, monitoring, rate limiting)
@@ -19,16 +20,16 @@
 
 ## WHAT'S READY ✅
 
-| Component | Status | Details |
-|-----------|--------|---------|
-| Multi-tenant isolation | ✅ | 75.6% test coverage, verified |
-| Payment processing | ✅ | Stripe Connect integrated, refunds working |
-| Admin separation | ✅ | Platform vs Tenant admin fully implemented |
-| Database schema | ✅ | Multi-tenant constraints in place |
-| Security headers | ✅ | Helmet configured, HTTPS ready |
-| API versioning | ✅ | /v1 endpoints ready |
-| Audit logging | ✅ | Config changes tracked (tenant admin 100%) |
-| Rate limiting | 🟡 | Global limits present, per-tenant missing |
+| Component              | Status | Details                                    |
+| ---------------------- | ------ | ------------------------------------------ |
+| Multi-tenant isolation | ✅     | 75.6% test coverage, verified              |
+| Payment processing     | ✅     | Stripe Connect integrated, refunds working |
+| Admin separation       | ✅     | Platform vs Tenant admin fully implemented |
+| Database schema        | ✅     | Multi-tenant constraints in place          |
+| Security headers       | ✅     | Helmet configured, HTTPS ready             |
+| API versioning         | ✅     | /v1 endpoints ready                        |
+| Audit logging          | ✅     | Config changes tracked (tenant admin 100%) |
+| Rate limiting          | 🟡     | Global limits present, per-tenant missing  |
 
 ---
 
@@ -37,23 +38,27 @@
 ### BLOCKERS (Cannot Launch Without)
 
 **Legal/Compliance (4 features) - 4 days**
+
 - [ ] Terms of Service acceptance tracking
 - [ ] GDPR privacy policy & compliance
 - [ ] Data export (GDPR requirement)
 - [ ] Data deletion/right-to-be-forgotten
 
 **Customer Features (4 features) - 7 days**
+
 - [ ] Branded email confirmations (currently plain text)
 - [ ] Customer booking portal (currently none)
 - [ ] Cancellation/refund flow (partially done)
 - [ ] Email template customization
 
 **Business Model (3 features) - 8 days**
+
 - [ ] Tenant onboarding flow (currently manual)
 - [ ] Billing/subscription system (no monetization)
 - [ ] Tenant usage quotas & limits
 
 **Operations (2 features) - 2 days**
+
 - [ ] Error tracking (Sentry)
 - [ ] Per-tenant rate limiting
 
@@ -61,22 +66,22 @@
 
 ### HIGH-PRIORITY (Should Have)
 
-| Feature | Days | Impact |
-|---------|------|--------|
-| Custom booking flow | 5 | Competitive feature |
-| Tenant analytics | 4 | Business operations |
-| Subdomain routing | 3 | White-label feature |
-| Custom homepage | 2 | Branding |
-| **Subtotal** | **14** | **Post-launch OK** |
+| Feature             | Days   | Impact              |
+| ------------------- | ------ | ------------------- |
+| Custom booking flow | 5      | Competitive feature |
+| Tenant analytics    | 4      | Business operations |
+| Subdomain routing   | 3      | White-label feature |
+| Custom homepage     | 2      | Branding            |
+| **Subtotal**        | **14** | **Post-launch OK**  |
 
 ### NICE-TO-HAVE (Post-Launch)
 
-| Feature | Days |
-|---------|------|
-| Backup/restore | 3 |
-| Reviews/testimonials | 2 |
-| Waitlist | 3 |
-| **Subtotal** | **8** |
+| Feature              | Days  |
+| -------------------- | ----- |
+| Backup/restore       | 3     |
+| Reviews/testimonials | 2     |
+| Waitlist             | 3     |
+| **Subtotal**         | **8** |
 
 ---
 
@@ -112,50 +117,55 @@ Launch Date: ~December 14, 2025 (if starting Nov 14)
 ## CRITICAL GAPS BY CATEGORY
 
 ### 1. TENANT FEATURES
-| Feature | Status | Priority | Days |
-|---------|--------|----------|------|
-| Subdomain routing | ❌ | HIGH | 3 |
-| Custom homepage | 🟡 | HIGH | 2 |
-| Email templates | ❌ | CRITICAL | 2 |
-| Custom booking flow | 🟡 | HIGH | 5 |
-| Analytics | ❌ | MEDIUM | 4 |
+
+| Feature             | Status | Priority | Days |
+| ------------------- | ------ | -------- | ---- |
+| Subdomain routing   | ❌     | HIGH     | 3    |
+| Custom homepage     | 🟡     | HIGH     | 2    |
+| Email templates     | ❌     | CRITICAL | 2    |
+| Custom booking flow | 🟡     | HIGH     | 5    |
+| Analytics           | ❌     | MEDIUM   | 4    |
 
 ### 2. ADMIN CAPABILITIES
-| Feature | Status | Priority | Days |
-|---------|--------|----------|------|
-| Platform/Tenant separation | ✅ | DONE | 0 |
-| Tenant onboarding | 🟡 | CRITICAL | 2 |
-| Billing/subscriptions | ❌ | CRITICAL | 5 |
-| Usage quotas | ❌ | HIGH | 2 |
-| Monitoring dashboard | ❌ | HIGH | 3 |
+
+| Feature                    | Status | Priority | Days |
+| -------------------------- | ------ | -------- | ---- |
+| Platform/Tenant separation | ✅     | DONE     | 0    |
+| Tenant onboarding          | 🟡     | CRITICAL | 2    |
+| Billing/subscriptions      | ❌     | CRITICAL | 5    |
+| Usage quotas               | ❌     | HIGH     | 2    |
+| Monitoring dashboard       | ❌     | HIGH     | 3    |
 
 ### 3. CUSTOMER FEATURES
-| Feature | Status | Priority | Days |
-|---------|--------|----------|------|
-| Branded emails | 🟡 | CRITICAL | 1 |
-| Booking portal | ❌ | CRITICAL | 2 |
-| Cancellations | 🟡 | CRITICAL | 2 |
-| Refunds | ✅ | DONE | 0 |
-| Waitlist | ❌ | NICE | 3 |
-| Reviews | ❌ | NICE | 2 |
+
+| Feature        | Status | Priority | Days |
+| -------------- | ------ | -------- | ---- |
+| Branded emails | 🟡     | CRITICAL | 1    |
+| Booking portal | ❌     | CRITICAL | 2    |
+| Cancellations  | 🟡     | CRITICAL | 2    |
+| Refunds        | ✅     | DONE     | 0    |
+| Waitlist       | ❌     | NICE     | 3    |
+| Reviews        | ❌     | NICE     | 2    |
 
 ### 4. OPERATIONAL FEATURES
-| Feature | Status | Priority | Days |
-|---------|--------|----------|------|
-| Error tracking | ❌ | CRITICAL | 1 |
-| Audit logging | 🟡 | CRITICAL | 0* |
-| Backup/restore | ❌ | MEDIUM | 3 |
-| Rate limiting | 🟡 | HIGH | 1 |
-| API versioning | 🟢 | DONE | 0 |
+
+| Feature        | Status | Priority | Days |
+| -------------- | ------ | -------- | ---- |
+| Error tracking | ❌     | CRITICAL | 1    |
+| Audit logging  | 🟡     | CRITICAL | 0\*  |
+| Backup/restore | ❌     | MEDIUM   | 3    |
+| Rate limiting  | 🟡     | HIGH     | 1    |
+| API versioning | 🟢     | DONE     | 0    |
 
 ### 5. COMPLIANCE & LEGAL
-| Feature | Status | Priority | Days |
-|---------|--------|----------|------|
-| Terms of Service | ❌ | CRITICAL | 1 |
-| GDPR/Privacy | ❌ | CRITICAL | 2 |
-| Data export | ❌ | CRITICAL | 1 |
-| Data deletion | ❌ | CRITICAL | 2 |
-| SSL headers | ✅ | DONE | 0 |
+
+| Feature          | Status | Priority | Days |
+| ---------------- | ------ | -------- | ---- |
+| Terms of Service | ❌     | CRITICAL | 1    |
+| GDPR/Privacy     | ❌     | CRITICAL | 2    |
+| Data export      | ❌     | CRITICAL | 1    |
+| Data deletion    | ❌     | CRITICAL | 2    |
+| SSL headers      | ✅     | DONE     | 0    |
 
 ---
 
@@ -164,6 +174,7 @@ Launch Date: ~December 14, 2025 (if starting Nov 14)
 ### Critical Path (Must Complete Before Launch)
 
 **Phase 1: Legal (4 days)**
+
 ```
 1. Create Terms of Service page + acceptance tracking
 2. Create Privacy Policy + GDPR documentation
@@ -172,6 +183,7 @@ Launch Date: ~December 14, 2025 (if starting Nov 14)
 ```
 
 **Phase 2: Customer (5 days)**
+
 ```
 1. Update PostmarkMailAdapter to load HTML templates from DB
 2. Create EmailTemplate CRUD endpoints + UI
@@ -180,6 +192,7 @@ Launch Date: ~December 14, 2025 (if starting Nov 14)
 ```
 
 **Phase 3: Billing (5 days)**
+
 ```
 1. Create SubscriptionPlan + TenantSubscription models
 2. Integrate Stripe billing for tenant subscriptions
@@ -188,6 +201,7 @@ Launch Date: ~December 14, 2025 (if starting Nov 14)
 ```
 
 **Phase 4: Onboarding & Monitoring (5 days)**
+
 ```
 1. Create TenantSignup flow with email verification
 2. Implement Sentry error tracking integration
@@ -196,6 +210,7 @@ Launch Date: ~December 14, 2025 (if starting Nov 14)
 ```
 
 **Phase 5: Testing (3 days)**
+
 ```
 1. Integration testing for all new features
 2. Security review (GDPR, payment handling)
@@ -207,6 +222,7 @@ Launch Date: ~December 14, 2025 (if starting Nov 14)
 ## FILES TO CREATE
 
 ### New Services (11)
+
 - `EmailTemplateService`
 - `CancellationService`
 - `SubscriptionService`
@@ -220,6 +236,7 @@ Launch Date: ~December 14, 2025 (if starting Nov 14)
 - `PlatformAnalyticsService`
 
 ### New Routes (8 groups)
+
 - `/v1/customer/*` - Customer portal
 - `/v1/email-templates/*` - Template management
 - `/v1/billing/*` - Subscriptions
@@ -230,6 +247,7 @@ Launch Date: ~December 14, 2025 (if starting Nov 14)
 - `/v1/backup/*` - Backups
 
 ### New Components (12)
+
 - `EmailTemplateEditor`
 - `CancellationRequestList`
 - `BillingSettings`
@@ -244,6 +262,7 @@ Launch Date: ~December 14, 2025 (if starting Nov 14)
 - `ReportBuilder`
 
 ### Database Changes
+
 - 7 new tables
 - 15+ ALTER statements
 - 3 new indexes
@@ -252,48 +271,55 @@ Launch Date: ~December 14, 2025 (if starting Nov 14)
 
 ## RISK MATRIX
 
-| Risk | Impact | Probability | Mitigation |
-|------|--------|-------------|-----------|
-| GDPR non-compliance | Critical (🔴) | High | Implement all GDPR features |
-| Customer demanding refunds | High (🟠) | Very High | Implement cancellation flow |
-| No billing system | Critical (🔴) | High | Implement subscription model |
-| Security vulnerabilities | High (🟠) | Medium | Security review before launch |
-| Integration issues | Medium (🟡) | Medium | Comprehensive testing |
+| Risk                       | Impact        | Probability | Mitigation                    |
+| -------------------------- | ------------- | ----------- | ----------------------------- |
+| GDPR non-compliance        | Critical (🔴) | High        | Implement all GDPR features   |
+| Customer demanding refunds | High (🟠)     | Very High   | Implement cancellation flow   |
+| No billing system          | Critical (🔴) | High        | Implement subscription model  |
+| Security vulnerabilities   | High (🟠)     | Medium      | Security review before launch |
+| Integration issues         | Medium (🟡)   | Medium      | Comprehensive testing         |
 
 ---
 
 ## RECOMMENDATIONS
 
 ### OPTION A: IMMEDIATE LAUNCH (High Risk)
+
 **Timeline:** 2 weeks (MVP)
 **Implementation:**
+
 - Legal: Terms + Privacy only (1 day)
 - Customer: Skip portal, provide email support (0 days)
 - Billing: Skip subscriptions, fixed pricing (0 days)
 - Operations: Add Sentry only (1 day)
-**Risk:** VERY HIGH - No GDPR compliance, no refunds, no monetization
+  **Risk:** VERY HIGH - No GDPR compliance, no refunds, no monetization
 
 ❌ **NOT RECOMMENDED**
 
 ### OPTION B: LAUNCH AFTER BLOCKERS (Recommended)
+
 **Timeline:** 4-5 weeks (Full feature set)
 **Implementation:**
+
 - Phase 1-5: All 11 blockers (22 days)
 - Integration testing (3 days)
-**Risk:** LOW - All critical features implemented
-**Result:** Professional, compliant, monetizable platform
+  **Risk:** LOW - All critical features implemented
+  **Result:** Professional, compliant, monetizable platform
 
 ✅ **STRONGLY RECOMMENDED**
 
 ### OPTION C: PHASED LAUNCH (Balanced)
+
 **Timeline:** 2 weeks → 4 weeks
 **Phase 1 (Week 1-2):**
+
 - Implement all legal/compliance features (4 days)
 - Implement branded emails + customer portal (4 days)
 - Basic Sentry monitoring (1 day)
 - **Launch date:** December 1, 2025
 
 **Phase 2 (Week 3-4):**
+
 - Add billing/subscriptions (5 days)
 - Add tenant onboarding (2 days)
 - **Production ready:** December 14, 2025
@@ -304,15 +330,15 @@ Launch Date: ~December 14, 2025 (if starting Nov 14)
 
 ## SUMMARY TABLE
 
-| Category | Ready? | Gap | Days | Blocker? |
-|----------|--------|-----|------|----------|
-| Architecture | ✅ | None | 0 | No |
-| Payment | ✅ | None | 0 | No |
-| Admin | ✅ | Onboarding, Billing | 7 | Yes |
-| Customer | 🟡 | Portal, Emails, Cancellation | 5 | Yes |
-| Operations | 🟡 | Monitoring, Rate-limiting | 2 | Yes |
-| Legal | ❌ | ToS, GDPR, Export, Delete | 6 | Yes |
-| **TOTAL** | 🟡 | **11 features** | **22 days** | **YES** |
+| Category     | Ready? | Gap                          | Days        | Blocker? |
+| ------------ | ------ | ---------------------------- | ----------- | -------- |
+| Architecture | ✅     | None                         | 0           | No       |
+| Payment      | ✅     | None                         | 0           | No       |
+| Admin        | ✅     | Onboarding, Billing          | 7           | Yes      |
+| Customer     | 🟡     | Portal, Emails, Cancellation | 5           | Yes      |
+| Operations   | 🟡     | Monitoring, Rate-limiting    | 2           | Yes      |
+| Legal        | ❌     | ToS, GDPR, Export, Delete    | 6           | Yes      |
+| **TOTAL**    | 🟡     | **11 features**              | **22 days** | **YES**  |
 
 ---
 

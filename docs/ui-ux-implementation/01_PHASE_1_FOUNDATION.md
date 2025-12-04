@@ -26,6 +26,7 @@ Phase 1 focuses on **critical UX issues** that prevent users from effectively us
 ### Week 1: Navigation & Error Handling
 
 #### Task 1.1: Create AdminNav Component (2 days)
+
 **Priority:** Critical
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 16 hours
@@ -39,7 +40,15 @@ Create a persistent navigation bar for admin interfaces with logo, links, and us
 
 ```tsx
 import { NavLink } from 'react-router-dom';
-import { Building2, LayoutDashboard, Package, Calendar, Settings, LogOut, HelpCircle } from 'lucide-react';
+import {
+  Building2,
+  LayoutDashboard,
+  Package,
+  Calendar,
+  Settings,
+  LogOut,
+  HelpCircle,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
@@ -132,10 +141,12 @@ export function AdminNav({ role }: AdminNavProps) {
 ```
 
 **Integration Points:**
+
 - Add to `/Users/mikeyoung/CODING/MAIS/client/src/pages/admin/PlatformAdminDashboard.tsx`
 - Add to `/Users/mikeyoung/CODING/MAIS/client/src/pages/tenant/TenantAdminDashboard.tsx`
 
 **Acceptance Criteria:**
+
 - [ ] Navigation bar appears on all admin pages
 - [ ] Logo is visible and links to dashboard
 - [ ] Role badge clearly indicates Platform Admin vs Tenant Admin
@@ -146,6 +157,7 @@ export function AdminNav({ role }: AdminNavProps) {
 - [ ] Responsive: collapses to hamburger menu on mobile (<768px)
 
 **Testing Checklist:**
+
 - [ ] Unit test: renders correct links for each role
 - [ ] Unit test: highlights active route
 - [ ] Integration test: logout functionality
@@ -159,6 +171,7 @@ export function AdminNav({ role }: AdminNavProps) {
 ---
 
 #### Task 1.2: Implement Toast Notification System (1 day)
+
 **Priority:** High
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 8 hours
@@ -212,6 +225,7 @@ export function useToast() {
 ```
 
 **Integration Example:**
+
 ```tsx
 // In PlatformAdminDashboard.tsx
 import { useToast } from '@/lib/toast';
@@ -231,6 +245,7 @@ function PlatformAdminDashboard() {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Toast appears in top-right corner
 - [ ] Success toasts are green with checkmark icon
 - [ ] Error toasts are red with X icon
@@ -242,6 +257,7 @@ function PlatformAdminDashboard() {
 - [ ] Maximum 3 toasts visible at once
 
 **Testing Checklist:**
+
 - [ ] Unit test: each toast variant renders correctly
 - [ ] Integration test: toasts appear on API success/error
 - [ ] E2E test: toast appears after tenant creation
@@ -254,6 +270,7 @@ function PlatformAdminDashboard() {
 ---
 
 #### Task 1.3: Create Error Boundary Component (0.5 days)
+
 **Priority:** High
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 4 hours
@@ -266,6 +283,7 @@ Implement React error boundaries to catch JavaScript errors and show fallback UI
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/components/errors/ErrorBoundary.tsx` (already exists, enhance it)
 
 **Enhancement:**
+
 ```tsx
 import { Component, ReactNode } from 'react';
 import { ErrorFallback } from './ErrorFallback';
@@ -308,12 +326,7 @@ export class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) {
         return this.props.fallback;
       }
-      return (
-        <ErrorFallback
-          error={this.state.error}
-          resetError={this.handleReset}
-        />
-      );
+      return <ErrorFallback error={this.state.error} resetError={this.handleReset} />;
     }
 
     return this.props.children;
@@ -322,6 +335,7 @@ export class ErrorBoundary extends Component<Props, State> {
 ```
 
 **Integration:**
+
 ```tsx
 // In App.tsx or router.tsx
 <ErrorBoundary>
@@ -340,6 +354,7 @@ export class ErrorBoundary extends Component<Props, State> {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Catches React component errors
 - [ ] Shows friendly error message
 - [ ] Provides "Try Again" button
@@ -349,6 +364,7 @@ export class ErrorBoundary extends Component<Props, State> {
 - [ ] Error details shown in development, hidden in production
 
 **Testing Checklist:**
+
 - [ ] Unit test: error boundary catches thrown errors
 - [ ] Integration test: reset button restores component
 - [ ] E2E test: intentional error triggers fallback
@@ -361,6 +377,7 @@ export class ErrorBoundary extends Component<Props, State> {
 ### Week 2: Loading States & Mobile Tables
 
 #### Task 2.1: Create Skeleton Components (1 day)
+
 **Priority:** High
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 8 hours
@@ -373,6 +390,7 @@ Create reusable skeleton components for metrics, tables, and cards.
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/components/ui/skeleton.tsx` (already exists, extend it)
 
 **New Skeleton Variants:**
+
 ```tsx
 // MetricCardSkeleton
 export function MetricCardSkeleton() {
@@ -424,26 +442,28 @@ export function TableSkeleton({ rows = 5, columns = 8 }: { rows?: number; column
 ```
 
 **Integration:**
+
 ```tsx
 // In PlatformAdminDashboard.tsx
-{isLoadingMetrics ? (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-    {Array.from({ length: 5 }).map((_, i) => (
-      <MetricCardSkeleton key={i} />
-    ))}
-  </div>
-) : (
-  <DashboardMetrics metrics={metrics} />
-)}
+{
+  isLoadingMetrics ? (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <MetricCardSkeleton key={i} />
+      ))}
+    </div>
+  ) : (
+    <DashboardMetrics metrics={metrics} />
+  );
+}
 
-{isLoadingTenants ? (
-  <TableSkeleton rows={5} columns={8} />
-) : (
-  <TenantsTable tenants={tenants} />
-)}
+{
+  isLoadingTenants ? <TableSkeleton rows={5} columns={8} /> : <TenantsTable tenants={tenants} />;
+}
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Skeleton matches final component shape
 - [ ] Smooth shimmer animation
 - [ ] Correct colors for dark theme (navy-700, navy-800)
@@ -451,6 +471,7 @@ export function TableSkeleton({ rows = 5, columns = 8 }: { rows?: number; column
 - [ ] Accessible (aria-busy, aria-label)
 
 **Testing Checklist:**
+
 - [ ] Visual test: skeleton matches real component
 - [ ] Animation test: shimmer effect works
 - [ ] Accessibility test: screen reader announces loading
@@ -461,6 +482,7 @@ export function TableSkeleton({ rows = 5, columns = 8 }: { rows?: number; column
 ---
 
 #### Task 2.2: Make Tables Mobile Responsive (1.5 days)
+
 **Priority:** Critical
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 12 hours
@@ -473,7 +495,14 @@ Implement horizontal scroll and card-based views for tables on mobile.
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/components/ui/responsive-table.tsx`
 
 ```tsx
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
@@ -508,7 +537,10 @@ export function ResponsiveTable<T>({
               {columns
                 .filter((col) => !col.mobileHidden)
                 .map((col, idx) => (
-                  <div key={idx} className="flex justify-between py-2 border-b border-macon-navy-700 last:border-0">
+                  <div
+                    key={idx}
+                    className="flex justify-between py-2 border-b border-macon-navy-700 last:border-0"
+                  >
                     <span className="text-sm text-macon-navy-300 font-medium">
                       {col.mobileLabel || col.header}
                     </span>
@@ -548,6 +580,7 @@ export function ResponsiveTable<T>({
 ```
 
 **Usage Example:**
+
 ```tsx
 const columns = [
   { header: 'Tenant', accessor: (t: Tenant) => t.name, mobileLabel: 'Name' },
@@ -556,15 +589,11 @@ const columns = [
   { header: 'Status', accessor: (t: Tenant) => <StatusBadge status={t.status} /> },
 ];
 
-<ResponsiveTable
-  columns={columns}
-  data={tenants}
-  keyExtractor={(t) => t.id}
-  mobileView="cards"
-/>
+<ResponsiveTable columns={columns} data={tenants} keyExtractor={(t) => t.id} mobileView="cards" />;
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Desktop: traditional table layout
 - [ ] Mobile (<768px): card-based layout
 - [ ] Horizontal scroll works on tablet (768px-1024px)
@@ -573,6 +602,7 @@ const columns = [
 - [ ] Touch-friendly (44px minimum touch targets)
 
 **Testing Checklist:**
+
 - [ ] Responsive test: renders correctly at 320px, 768px, 1024px, 1920px
 - [ ] Mobile test: card view on iPhone, Android
 - [ ] Tablet test: scroll on iPad
@@ -586,6 +616,7 @@ const columns = [
 ### Week 3: Empty States & Role Indicators
 
 #### Task 3.1: Implement Empty State Components (1 day)
+
 **Priority:** High
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 8 hours
@@ -598,48 +629,55 @@ Use EmptyState component throughout admin dashboards.
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/components/ui/empty-state.tsx` (already exists, integrate it everywhere)
 
 **Usage in Platform Admin Dashboard:**
+
 ```tsx
 // When no tenants
-{tenants.length === 0 && (
-  <EmptyState
-    icon={<Building2 className="w-16 h-16 text-macon-navy-400" />}
-    title="No tenants yet"
-    description="Get started by creating your first tenant. They'll be able to manage their own packages, bookings, and branding."
-    action={
-      <Button variant="secondary" onClick={() => navigate('/admin/tenants/new')}>
-        <Plus className="w-4 h-4 mr-2" />
-        Add Your First Tenant
-      </Button>
-    }
-  />
-)}
+{
+  tenants.length === 0 && (
+    <EmptyState
+      icon={<Building2 className="w-16 h-16 text-macon-navy-400" />}
+      title="No tenants yet"
+      description="Get started by creating your first tenant. They'll be able to manage their own packages, bookings, and branding."
+      action={
+        <Button variant="secondary" onClick={() => navigate('/admin/tenants/new')}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Your First Tenant
+        </Button>
+      }
+    />
+  );
+}
 ```
 
 **Usage in Tenant Admin Dashboard:**
+
 ```tsx
 // When no packages
-{packages.length === 0 && (
-  <EmptyState
-    icon={<Package className="w-16 h-16 text-macon-teal" />}
-    title="No packages yet"
-    description="Create your first package to start accepting bookings from your clients."
-    action={
-      <Button variant="secondary" onClick={() => setActiveTab('packages')}>
-        Create First Package
-      </Button>
-    }
-    secondaryAction={
-      <Button variant="ghost" asChild>
-        <a href="/docs/packages" target="_blank">
-          Learn about packages →
-        </a>
-      </Button>
-    }
-  />
-)}
+{
+  packages.length === 0 && (
+    <EmptyState
+      icon={<Package className="w-16 h-16 text-macon-teal" />}
+      title="No packages yet"
+      description="Create your first package to start accepting bookings from your clients."
+      action={
+        <Button variant="secondary" onClick={() => setActiveTab('packages')}>
+          Create First Package
+        </Button>
+      }
+      secondaryAction={
+        <Button variant="ghost" asChild>
+          <a href="/docs/packages" target="_blank">
+            Learn about packages →
+          </a>
+        </Button>
+      }
+    />
+  );
+}
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Empty state used for: no tenants, no packages, no bookings, no blackouts
 - [ ] Icons match the context (Building2, Package, Calendar, etc.)
 - [ ] Descriptions are helpful and action-oriented
@@ -648,6 +686,7 @@ Use EmptyState component throughout admin dashboards.
 - [ ] Maintains brand colors (orange for primary actions)
 
 **Testing Checklist:**
+
 - [ ] Visual test: empty states render correctly
 - [ ] E2E test: new user sees empty state, creates first item
 - [ ] Accessibility test: icon has aria-label
@@ -658,6 +697,7 @@ Use EmptyState component throughout admin dashboards.
 ---
 
 #### Task 3.2: Add Role Indicator Badge (0.5 days)
+
 **Priority:** Medium
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 4 hours
@@ -704,6 +744,7 @@ export function PageHeader({ title, subtitle, role, actions }: PageHeaderProps) 
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Badge appears in navigation bar
 - [ ] Badge appears in page header (optional)
 - [ ] Orange badge for Platform Admin
@@ -712,6 +753,7 @@ export function PageHeader({ title, subtitle, role, actions }: PageHeaderProps) 
 - [ ] Consistent positioning
 
 **Testing Checklist:**
+
 - [ ] Visual test: badge visible and correct color
 - [ ] Integration test: correct badge for each role
 
@@ -764,24 +806,28 @@ export function PageHeader({ title, subtitle, role, actions }: PageHeaderProps) 
 ## Testing Strategy for Phase 1
 
 ### Unit Tests (70% coverage)
+
 - All new components have test files
 - Test all variants and props
 - Test error states
 - Test accessibility attributes
 
 ### Integration Tests (20% coverage)
+
 - Toast notifications appear on API errors
 - Navigation links work correctly
 - Role badge shows correct role
 - Empty states show correct actions
 
 ### E2E Tests (10% coverage)
+
 - User can navigate between admin sections
 - User sees error toast when API fails
 - User sees empty state and creates first item
 - Mobile user can open hamburger menu
 
 ### Manual Testing Checklist
+
 - [ ] Test on Chrome, Firefox, Safari, Edge (latest)
 - [ ] Test on iPhone (Safari)
 - [ ] Test on Android (Chrome)
@@ -794,16 +840,19 @@ export function PageHeader({ title, subtitle, role, actions }: PageHeaderProps) 
 ## Deployment Strategy
 
 ### Week 1 Deployment (End of Week 1)
+
 **Deploy:** Navigation system, toast notifications, error boundaries
 **Feature Flag:** `enable_admin_nav` (default: true)
 **Rollback:** Revert feature flag to false
 
 ### Week 2 Deployment (End of Week 2)
+
 **Deploy:** Skeleton loading states, mobile responsive tables
 **Feature Flag:** `enable_skeleton_loading` (default: true)
 **Rollback:** Revert feature flag, restore spinner loading
 
 ### Week 3 Deployment (End of Week 3)
+
 **Deploy:** Empty states, role indicators
 **Feature Flag:** Not needed (low risk)
 **Rollback:** Git revert if issues found
@@ -812,13 +861,13 @@ export function PageHeader({ title, subtitle, role, actions }: PageHeaderProps) 
 
 ## Success Metrics (Phase 1)
 
-| Metric | Before Phase 1 | After Phase 1 | Target |
-|--------|----------------|---------------|--------|
-| Users can find features | 40% (no nav) | 90% | 90% |
-| Error understanding | 20% (silent failures) | 85% | 85% |
-| Mobile admin usage | 5% (unusable) | 50% | 50% |
-| Time to first action (new user) | 5 min | 2 min | 2 min |
-| Support tickets (navigation) | 10/month | 2/month | <3/month |
+| Metric                          | Before Phase 1        | After Phase 1 | Target   |
+| ------------------------------- | --------------------- | ------------- | -------- |
+| Users can find features         | 40% (no nav)          | 90%           | 90%      |
+| Error understanding             | 20% (silent failures) | 85%           | 85%      |
+| Mobile admin usage              | 5% (unusable)         | 50%           | 50%      |
+| Time to first action (new user) | 5 min                 | 2 min         | 2 min    |
+| Support tickets (navigation)    | 10/month              | 2/month       | <3/month |
 
 ---
 
@@ -828,25 +877,29 @@ export function PageHeader({ title, subtitle, role, actions }: PageHeaderProps) 
 **Attendees:** Dev, Designer, QA, PM
 
 ### What Went Well?
+
 -
 
 ### What Could Be Improved?
+
 -
 
 ### Blockers Encountered?
+
 -
 
 ### Lessons Learned?
+
 -
 
 ### Adjustments for Phase 2?
--
 
----
+- ***
 
 ## Next Steps
 
 After completing Phase 1:
+
 1. ✅ Deploy all Phase 1 changes to production
 2. 📊 Measure success metrics (1 week monitoring)
 3. 🐛 Bug fixing period (2-3 days)

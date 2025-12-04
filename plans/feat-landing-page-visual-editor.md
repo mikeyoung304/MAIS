@@ -5,6 +5,7 @@
 Build a WYSIWYG visual editor for tenant landing pages that mirrors the existing marketplace visual editor experience. Tenants can opt-in to pre-designed section templates (Hero, Testimonials, About, FAQ, Gallery, Final CTA), edit content inline, and publish changes when ready.
 
 **Key Principles:**
+
 - **Apple-style closed system**: Fixed, polished section layouts (no freeform positioning)
 - **Marketplace defaults**: Landing page shows only segment selector by default
 - **Progressive opt-in**: Tenants add sections from a sidebar gallery
@@ -231,6 +232,7 @@ client/src/features/tenant-admin/landing-page-editor/
 ```
 
 **Tasks:**
+
 - [ ] Create `LandingPageEditor.tsx` main container with sidebar + preview layout
 - [ ] Create `useLandingPageEditor.ts` hook mirroring `useVisualEditor.ts` patterns
 - [ ] Create `EditorSidebar.tsx` with active/available section lists
@@ -239,6 +241,7 @@ client/src/features/tenant-admin/landing-page-editor/
 - [ ] Add navigation link in tenant admin sidebar
 
 **Acceptance Criteria:**
+
 - [ ] Editor page loads at `/tenant/landing-page`
 - [ ] Sidebar shows section toggles
 - [ ] Publish/Discard buttons visible in toolbar
@@ -279,7 +282,8 @@ export const SECTION_DEFAULTS = {
   },
   about: {
     headline: 'About Us',
-    content: 'Tell your story here. What makes your business special? Share your journey, mission, and values with your customers.',
+    content:
+      'Tell your story here. What makes your business special? Share your journey, mission, and values with your customers.',
     imageUrl: null,
     imagePosition: 'right',
   },
@@ -328,6 +332,7 @@ export const SECTION_DEFAULTS = {
 ```
 
 **Tasks:**
+
 - [ ] Create `EditableHeroSection.tsx` with EditableText for headline/subheadline, image upload
 - [ ] Create `EditableSocialProofBar.tsx` with editable stat items
 - [ ] Create `EditableAboutSection.tsx` with EditableText and image upload
@@ -339,6 +344,7 @@ export const SECTION_DEFAULTS = {
 - [ ] Integrate editable sections into LandingPageEditor preview area
 
 **Acceptance Criteria:**
+
 - [ ] Each section renders with demo data when first added
 - [ ] Click-to-edit works on all text fields
 - [ ] Image upload works on Hero, About, Gallery
@@ -378,6 +384,7 @@ interface TenantLandingPageDraft {
 ```
 
 **Tasks:**
+
 - [ ] Add draft endpoints to landing-page.contract.ts
 - [ ] Implement draft save/load in tenant.repository.ts
 - [ ] Create publish endpoint that copies draft to live config
@@ -387,6 +394,7 @@ interface TenantLandingPageDraft {
 - [ ] Add optimistic updates with rollback on error
 
 **Acceptance Criteria:**
+
 - [ ] Drafts auto-save after 1s of inactivity
 - [ ] Publish button copies draft to live
 - [ ] Discard button reverts to published state
@@ -396,6 +404,7 @@ interface TenantLandingPageDraft {
 #### Phase 4: Polish & Testing (1-2 days)
 
 **Tasks:**
+
 - [ ] Add loading skeletons during initial load
 - [ ] Add success/error toast notifications
 - [ ] Add confirmation dialog for discard action
@@ -406,6 +415,7 @@ interface TenantLandingPageDraft {
 - [ ] Mobile-responsive sidebar (collapse to bottom drawer on mobile - future)
 
 **Acceptance Criteria:**
+
 - [ ] All happy paths work smoothly
 - [ ] Error states handled gracefully
 - [ ] E2E tests pass
@@ -696,24 +706,26 @@ export const landingPageContract = c.router({
 ## Dependencies & Prerequisites
 
 **Completed:**
+
 - ✅ TODO-202: Backend landing page CRUD routes
 - ✅ Landing page section components (HeroSection, AboutSection, etc.)
 - ✅ Visual editor patterns (useVisualEditor, EditableText, etc.)
 - ✅ Landing page schema with validation
 
 **Required:**
+
 - Photo upload API (existing - reuse from package photos)
 - Toast notification system (existing)
 - Confirmation dialog component (existing)
 
 ## Risk Analysis & Mitigation
 
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|------------|------------|
-| Draft data loss on browser crash | Medium | Low | Auto-save every change with 1s debounce |
-| Concurrent editing conflicts | Low | Low | Single admin per tenant (MVP acceptable) |
-| Large image uploads slow editor | Medium | Medium | Image compression, loading states |
-| Complex state management | Medium | Medium | Follow proven useVisualEditor patterns |
+| Risk                             | Impact | Likelihood | Mitigation                               |
+| -------------------------------- | ------ | ---------- | ---------------------------------------- |
+| Draft data loss on browser crash | Medium | Low        | Auto-save every change with 1s debounce  |
+| Concurrent editing conflicts     | Low    | Low        | Single admin per tenant (MVP acceptable) |
+| Large image uploads slow editor  | Medium | Medium     | Image compression, loading states        |
+| Complex state management         | Medium | Medium     | Follow proven useVisualEditor patterns   |
 
 ## File Changes Summary
 
@@ -755,13 +767,13 @@ server/src/adapters/prisma/tenant.repository.ts    # Draft repository methods
 
 ## Estimated Effort
 
-| Phase | Duration | Notes |
-|-------|----------|-------|
-| Phase 1: Core Infrastructure | 1-2 days | Route, layout, sidebar, toolbar |
-| Phase 2: Editable Sections | 2-3 days | 7 section components with inline editing |
-| Phase 3: Draft System | 1-2 days | API integration, auto-save, publish/discard |
-| Phase 4: Polish & Testing | 1-2 days | Edge cases, E2E tests, error handling |
-| **Total** | **5-9 days** | |
+| Phase                        | Duration     | Notes                                       |
+| ---------------------------- | ------------ | ------------------------------------------- |
+| Phase 1: Core Infrastructure | 1-2 days     | Route, layout, sidebar, toolbar             |
+| Phase 2: Editable Sections   | 2-3 days     | 7 section components with inline editing    |
+| Phase 3: Draft System        | 1-2 days     | API integration, auto-save, publish/discard |
+| Phase 4: Polish & Testing    | 1-2 days     | Edge cases, E2E tests, error handling       |
+| **Total**                    | **5-9 days** |                                             |
 
 ## References
 
@@ -822,6 +834,6 @@ erDiagram
 
 ---
 
-*Plan created: 2024-12-04*
-*Updated: 2025-12-04 - P1 Security Findings Resolved*
-*Status: Ready for Implementation - Security patterns implemented in backend*
+_Plan created: 2024-12-04_
+_Updated: 2025-12-04 - P1 Security Findings Resolved_
+_Status: Ready for Implementation - Security patterns implemented in backend_

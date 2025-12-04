@@ -39,11 +39,13 @@
 **Goal:** Verify all cache operations include `${tenantId}:` prefix and prevent cross-tenant leakage
 
 **Current State:**
+
 - Cache pattern documented in `.claude/CACHE_WARNING.md`
 - No integration tests validating cache isolation
 - Risk level: Medium (could allow cross-tenant cache pollution)
 
 **Tasks:**
+
 1. Create `test/integration/cache-isolation.spec.ts`
 2. Test cache key generation includes tenantId prefix
 3. Test multi-tenant cache operations don't leak
@@ -51,6 +53,7 @@
 5. Add cache key validation in development mode
 
 **Test Scenarios:**
+
 ```typescript
 describe('Cache Tenant Isolation', () => {
   it('should prefix all cache keys with tenantId');
@@ -62,6 +65,7 @@ describe('Cache Tenant Isolation', () => {
 ```
 
 **Success Criteria:**
+
 - ✅ 10+ cache isolation tests passing
 - ✅ All cache operations verified tenant-scoped
 - ✅ Development mode validation implemented
@@ -79,11 +83,13 @@ describe('Cache Tenant Isolation', () => {
 **Current Blocker:** `test/http/packages.test.ts` (3/4 tests failing with 401)
 
 **Expected Behavior (Pre-Multi-Tenant):**
+
 - `GET /v1/packages` - Public list endpoint
 - `GET /v1/packages/:slug` - Public package details
 - Used by embeddable widget (requires public access)
 
 **Actual Behavior (Post-Multi-Tenant):**
+
 - All routes return 401 Unauthorized
 - Tenant middleware blocking public access
 - Widget integration broken
@@ -91,6 +97,7 @@ describe('Cache Tenant Isolation', () => {
 **Architectural Options:**
 
 #### Option A: Public Catalog with Tenant Context (Recommended)
+
 - **Approach:** Tenant identified by subdomain or header
 - **Example:** `GET https://macon.elope.app/v1/packages`
 - **Pro:** Maintains public widget access
@@ -99,6 +106,7 @@ describe('Cache Tenant Isolation', () => {
 - **Implementation:** 2-3 hours
 
 #### Option B: Tenant-Scoped Catalog with Auth
+
 - **Approach:** Require API key for all catalog access
 - **Example:** `GET /v1/packages` with `X-Tenant-API-Key` header
 - **Pro:** More secure, explicit tenant context
@@ -107,6 +115,7 @@ describe('Cache Tenant Isolation', () => {
 - **Implementation:** 1-2 hours
 
 #### Option C: Hybrid (Public List, Protected Details)
+
 - **Approach:** List endpoint public, individual packages require auth
 - **Pro:** Balance security and accessibility
 - **Con:** Inconsistent API contract
@@ -114,15 +123,18 @@ describe('Cache Tenant Isolation', () => {
 - **Implementation:** 3-4 hours
 
 **Recommended Decision:** Option A (Public Catalog with Tenant Context)
+
 - Aligns with embeddable widget use case
 - Standard SaaS multi-tenant pattern
 - Maintains backward compatibility for widget
 
 **Decision Required From:**
+
 - Product owner or technical lead
 - Document decision in `docs/architecture/CATALOG_ROUTING.md`
 
 **Implementation Tasks (Option A):**
+
 1. Update tenant middleware to allow public catalog routes
 2. Extract tenant context from subdomain or header
 3. Update catalog routes to use tenant context
@@ -130,6 +142,7 @@ describe('Cache Tenant Isolation', () => {
 5. Update widget integration documentation
 
 **Success Criteria:**
+
 - ✅ Architectural decision documented
 - ✅ HTTP catalog tests passing (4/4)
 - ✅ Widget integration validated
@@ -145,6 +158,7 @@ describe('Cache Tenant Isolation', () => {
 **Goal:** Improve developer experience and test maintainability
 
 **Current Pain Points:**
+
 - Duplicate tenant setup code across test files
 - Inconsistent test data creation patterns
 - No centralized test helper utilities
@@ -208,6 +222,7 @@ export async function createTestBooking(
 **Action:** Update 5 integration test files to use helper utilities
 **Impact:** Reduce code duplication, improve consistency
 **Files:**
+
 - `test/integration/booking-repository.integration.spec.ts`
 - `test/integration/webhook-repository.integration.spec.ts`
 - `test/integration/booking-race-conditions.spec.ts`
@@ -219,6 +234,7 @@ export async function createTestBooking(
 **File:** `server/TESTING.md` (update existing)
 
 **Content:**
+
 - Integration test setup patterns
 - Using test helper utilities
 - Common pitfalls and solutions
@@ -226,6 +242,7 @@ export async function createTestBooking(
 - Foreign key cleanup order reference
 
 **Success Criteria:**
+
 - ✅ Test helper utilities created
 - ✅ 5 integration files refactored to use helpers
 - ✅ TESTING.md updated with patterns
@@ -247,6 +264,7 @@ export async function createTestBooking(
 **Location:** `test/integration/catalog.repository.integration.spec.ts`
 
 **Issues:**
+
 1. **Error Message Format (2 tests)** - ETA: 5 minutes
    - Update expectations: `'already exists'` → `'DUPLICATE_SLUG'`
    - Update expectations: `'not found'` → `'NOT_FOUND'`
@@ -264,12 +282,14 @@ export async function createTestBooking(
 #### 4.2 Flaky Race Condition Test Strategy (10 tests)
 
 **Distribution:**
+
 - 4 in `booking-race-conditions.spec.ts`
 - 3 in `webhook-race-conditions.spec.ts`
 - 2 in `booking.service.spec.ts`
 - 1 in `catalog.repository.integration.spec.ts`
 
 **Options:**
+
 1. **Mark as `it.skip()`** (Recommended)
    - Add comment: "Timing-dependent race condition test"
    - Reference: SPRINT_3_KNOWN_ISSUES.md
@@ -289,6 +309,7 @@ export async function createTestBooking(
 **Total Effort:** 0-30 minutes depending on chosen option
 
 #### Priority: Very Low
+
 These issues do not affect production code or core functionality. They can be addressed opportunistically during Sprint 4 or deferred to Sprint 5.
 
 ---
@@ -297,27 +318,30 @@ These issues do not affect production code or core functionality. They can be ad
 
 ### Overall Effort Breakdown
 
-| Work Item | Priority | Estimate | Risk |
-|-----------|----------|----------|------|
-| **Cache Isolation Tests** | HIGH | 3-4 hours | Low |
-| **HTTP Catalog Decision** | HIGH | 3-4 hours* | Medium |
-| **Test Infrastructure** | MEDIUM | 4-6 hours | Low |
-| **Sprint 3 Cleanup** | LOW | 1-2 hours | Low |
-| **Total Sprint 4** | - | **11-16 hours** | - |
+| Work Item                 | Priority | Estimate        | Risk   |
+| ------------------------- | -------- | --------------- | ------ |
+| **Cache Isolation Tests** | HIGH     | 3-4 hours       | Low    |
+| **HTTP Catalog Decision** | HIGH     | 3-4 hours\*     | Medium |
+| **Test Infrastructure**   | MEDIUM   | 4-6 hours       | Low    |
+| **Sprint 3 Cleanup**      | LOW      | 1-2 hours       | Low    |
+| **Total Sprint 4**        | -        | **11-16 hours** | -      |
 
-*Assumes architectural decision made at sprint start
+\*Assumes architectural decision made at sprint start
 
 ### Sprint Schedule (Recommended)
 
 **Day 1 (4-5 hours):**
+
 - Make HTTP catalog architectural decision (1 hour discussion)
 - Implement cache isolation tests (3-4 hours)
 
 **Day 2 (4-5 hours):**
+
 - Implement HTTP catalog route changes (3-4 hours)
 - Begin test infrastructure helpers (1 hour)
 
 **Day 3 (4-6 hours):**
+
 - Complete test infrastructure improvements (3-5 hours)
 - Optional: Sprint 3 cleanup if time permits (1 hour)
 
@@ -360,6 +384,7 @@ These issues do not affect production code or core functionality. They can be ad
 **Impact:** Blocks 3-4 hours of implementation work
 **Probability:** Medium
 **Mitigation:**
+
 - Schedule decision meeting at sprint start
 - Provide analysis and recommendation (Option A)
 - Prepare implementation for multiple options
@@ -371,6 +396,7 @@ These issues do not affect production code or core functionality. They can be ad
 **Impact:** 3-4 hour estimate becomes 6-8 hours
 **Probability:** Low
 **Mitigation:**
+
 - Cache pattern already documented and reviewed
 - Repository layer already enforces tenantId
 - Tests are validation, not new feature development
@@ -381,6 +407,7 @@ These issues do not affect production code or core functionality. They can be ad
 **Impact:** 4-6 hour estimate becomes 8-10 hours
 **Probability:** Low
 **Mitigation:**
+
 - Focus on helper utilities only
 - Don't refactor test logic, only setup code
 - Can defer some files to Sprint 5 if needed
@@ -391,6 +418,7 @@ These issues do not affect production code or core functionality. They can be ad
 **Impact:** Sprint 3 "production ready" status questioned
 **Probability:** Very Low
 **Mitigation:**
+
 - Production code already reviewed and validated
 - Tests verify actual timing issues, not logic errors
 - Webhook repository handles P2002 gracefully
@@ -403,6 +431,7 @@ These issues do not affect production code or core functionality. They can be ad
 ### Sprint 3 Completion Status
 
 **Completed:**
+
 - ✅ Multi-tenant integration test pattern established
 - ✅ 178/237 tests passing (75.1%)
 - ✅ Repository layer 100% tenant-scoped
@@ -410,6 +439,7 @@ These issues do not affect production code or core functionality. They can be ad
 - ✅ Comprehensive documentation created
 
 **Known Issues Tracked:**
+
 - 📋 `server/SPRINT_3_KNOWN_ISSUES.md` - 17 non-blocking issues
 - 📋 `server/SPRINT_3_BLOCKERS.md` - HTTP catalog decision pending
 - 📋 `.claude/CACHE_WARNING.md` - Cache isolation needs tests
@@ -417,11 +447,13 @@ These issues do not affect production code or core functionality. They can be ad
 ### Required Before Starting
 
 **Technical Prerequisites:**
+
 - ✅ Sprint 3 PR merged to main
 - ✅ Test suite at 75%+ pass rate
 - ✅ No blocking production issues
 
 **Decision Prerequisites:**
+
 - ⏳ HTTP catalog routing decision (required for Task 2)
 - ⏳ Flaky test strategy approval (optional for Task 4)
 
@@ -548,17 +580,20 @@ These issues do not affect production code or core functionality. They can be ad
 **Sprint 4 Branch:** `feat/cache-isolation-test-infra` (to be created)
 
 **Context:**
+
 - Multi-tenant architecture fully validated (64 integration tests)
 - Test coverage at 75.1%, exceeding 70% target
 - Known issues tracked but non-blocking
 - Cache isolation identified as security gap requiring tests
 
 **Quick Wins Available:**
+
 1. Cache isolation tests (well-documented pattern, just needs validation)
 2. Test helper utilities (immediate DX improvement)
 3. Sprint 3 cleanup (7 tests, 60 minutes if desired)
 
 **Blockers to Address:**
+
 1. HTTP catalog architectural decision (product decision required)
 2. No technical blockers remaining
 
@@ -569,6 +604,7 @@ These issues do not affect production code or core functionality. They can be ad
 ### Product Owner Decisions Needed
 
 **Decision 1: HTTP Catalog Routing** (HIGH PRIORITY)
+
 - **Question:** Should catalog endpoints be public (subdomain/header-based tenant) or require API key auth?
 - **Impact:** Widget integration, public API contract
 - **Recommendation:** Public with tenant context (Option A)
@@ -577,12 +613,14 @@ These issues do not affect production code or core functionality. They can be ad
 ### Technical Lead Approvals Needed
 
 **Approval 1: Test Helper Utilities**
+
 - **Change:** Extract common test setup code to utilities
 - **Impact:** All integration tests refactored
 - **Risk:** Low (pure refactoring)
 - **Approval:** Can proceed without explicit approval
 
 **Approval 2: Flaky Test Strategy**
+
 - **Options:** Skip, retry, or accept flaky race condition tests
 - **Recommendation:** Skip with documentation (Option 1)
 - **Impact:** 10 tests marked as skip
@@ -591,6 +629,7 @@ These issues do not affect production code or core functionality. They can be ad
 ### Status Reporting
 
 **Weekly Status Update Format:**
+
 - Test coverage metrics (pass rate, new tests added)
 - Tasks completed vs planned
 - Blockers and decisions needed
@@ -610,6 +649,7 @@ These issues do not affect production code or core functionality. They can be ad
 6. ✅ **Documentation Complete:** All decisions and patterns documented
 
 **Stretch Goals:**
+
 - ⭐ Sprint 3 cleanup completed (7 tests fixed)
 - ⭐ Flaky test strategy decided and implemented
 - ⭐ Test coverage reaches 80%+
@@ -649,7 +689,7 @@ These issues do not affect production code or core functionality. They can be ad
 
 ---
 
-*Created: 2025-11-10 23:00 EST*
-*Sprint: Sprint 4 - Cache Isolation & Test Infrastructure*
-*Previous: Sprint 3 - Integration Test Restoration (✅ Complete)*
-*Next: Sprint 5 - E2E Tests & Production Hardening*
+_Created: 2025-11-10 23:00 EST_
+_Sprint: Sprint 4 - Cache Isolation & Test Infrastructure_
+_Previous: Sprint 3 - Integration Test Restoration (✅ Complete)_
+_Next: Sprint 5 - E2E Tests & Production Hardening_

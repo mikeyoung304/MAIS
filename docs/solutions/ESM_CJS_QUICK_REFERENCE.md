@@ -1,5 +1,5 @@
 ---
-title: "ESM/CJS Module Compatibility - Quick Reference (Print & Pin!)"
+title: 'ESM/CJS Module Compatibility - Quick Reference (Print & Pin!)'
 slug: esm-cjs-quick-reference
 category: prevention
 tags: [cheat-sheet, modules, esm, cjs, quick-reference, developer-guide]
@@ -23,6 +23,7 @@ npm view package-name exports
 ```
 
 **What you're looking for:**
+
 - `"type": "module"` → ESM-native ✅
 - No `type` field → CJS ⚠️
 - `"exports.import"` → ESM-first ✅
@@ -34,14 +35,14 @@ npm view package-name exports
 
 ```typescript
 // ESM-native packages (type: module or exports.import)
-import { feature } from 'esm-package';     // ✅ Direct import
+import { feature } from 'esm-package'; // ✅ Direct import
 
 // CJS-only packages (no type field)
 const require = createRequire(import.meta.url);
-const pkg = require('cjs-package') as typeof import('cjs-package');  // ⚠️ createRequire
+const pkg = require('cjs-package') as typeof import('cjs-package'); // ⚠️ createRequire
 
 // Infrequently used CJS
-const pkg = await import('lazy-package');  // ℹ️ Dynamic import
+const pkg = await import('lazy-package'); // ℹ️ Dynamic import
 ```
 
 ---
@@ -72,6 +73,7 @@ npm run test:e2e     # Must pass
 ## Common Patterns at a Glance
 
 ### Direct Import (ESM-native)
+
 ```typescript
 import { stripe } from 'stripe';
 import { z } from 'zod';
@@ -79,11 +81,13 @@ import type { Config } from 'package';
 
 // No comment needed - obvious
 ```
+
 **When:** Package has `"type": "module"`
 
 ---
 
 ### createRequire (CJS-only)
+
 ```typescript
 // file-type v16 is CJS-only - See: github.com/sindresorhus/file-type
 const require = createRequire(import.meta.url);
@@ -91,17 +95,20 @@ const fileType = require('file-type') as typeof import('file-type');
 
 await fileType.fromBuffer(buffer);
 ```
+
 **When:** Package has NO `"type": "module"`, used frequently
 
 ---
 
 ### Dynamic Import (Lazy-loaded)
+
 ```typescript
 async function validateFile(buffer: Buffer) {
   const { fromBuffer } = await import('file-type');
   return await fromBuffer(buffer);
 }
 ```
+
 **When:** Package rarely used, safe to lazy-load
 
 ---
@@ -109,19 +116,24 @@ async function validateFile(buffer: Buffer) {
 ## Dangerous Mistakes
 
 ### ❌ NEVER: Direct import of CJS-only package
+
 ```typescript
-import fileType from 'file-type';  // BOOM! Cannot find module
+import fileType from 'file-type'; // BOOM! Cannot find module
 ```
+
 **Fix:** Use `createRequire` or upgrade package to ESM
 
 ---
 
 ### ❌ NEVER: Missing type assertion
+
 ```typescript
 const pkg = require('package');
 pkg.method(); // No autocomplete, type errors!
 ```
+
 **Fix:** Add type assertion:
+
 ```typescript
 const pkg = require('package') as typeof import('package');
 ```
@@ -129,14 +141,17 @@ const pkg = require('package') as typeof import('package');
 ---
 
 ### ❌ NEVER: Import in loop
+
 ```typescript
 for (const file of files) {
-  const { validate } = await import('validator');  // N imports!
+  const { validate } = await import('validator'); // N imports!
 }
 ```
+
 **Fix:** Import once, reuse:
+
 ```typescript
-const { validate } = await import('validator');  // Once!
+const { validate } = await import('validator'); // Once!
 for (const file of files) {
   validate(file);
 }
@@ -145,11 +160,14 @@ for (const file of files) {
 ---
 
 ### ❌ NEVER: Missing CJS comments
+
 ```typescript
 const require = createRequire(import.meta.url);
 const pkg = require('package'); // Why is this here?
 ```
+
 **Fix:** Always add comment explaining:
+
 ```typescript
 // package v1 is CJS-only - See: github.com/org/package
 // v2.0+ is ESM, plan to upgrade
@@ -160,17 +178,18 @@ const pkg = require('package') as typeof import('package');
 ---
 
 ### ❌ NEVER: Duplicate imports
+
 ```typescript
 // ❌ Two different files doing:
 // src/service-1.ts
 const pkg = require('package');
 
 // src/service-2.ts
-const pkg = require('package');  // Duplicated!
+const pkg = require('package'); // Duplicated!
 
 // Better: Create adapter
 // src/adapters/package.adapter.ts
-const pkg = require('package');  // Once!
+const pkg = require('package'); // Once!
 
 // src/service-1.ts, src/service-2.ts
 import { packageAdapter } from '../adapters/package.adapter';
@@ -246,7 +265,7 @@ const pkg = require('package') as typeof import('package');
 ```typescript
 // ❌ WRONG: Importing wrong export
 const fileType = require('file-type');
-fileType.fromBuffer(buffer);  // Doesn't exist!
+fileType.fromBuffer(buffer); // Doesn't exist!
 
 // ✅ FIX: Import correct export
 const { fromBuffer } = require('file-type') as typeof import('file-type');
@@ -257,24 +276,24 @@ await fromBuffer(buffer);
 
 ## Package Status in MAIS
 
-| Package | Status | Pattern | Notes |
-|---------|--------|---------|-------|
-| `file-type` | ⚠️ CJS v16 | createRequire | Upgrade to v17+ available |
-| `stripe` | ✅ ESM v19+ | Direct import | Fully ESM |
-| `zod` | ✅ ESM | Direct import | Fully ESM |
-| `express` | ✅ ESM/CJS | Direct import | Works with both |
-| `multer` | ⚠️ CJS v2 | createRequire | Monitor for ESM version |
-| `prisma` | ✅ ESM | Direct import | Fully ESM |
+| Package     | Status      | Pattern       | Notes                     |
+| ----------- | ----------- | ------------- | ------------------------- |
+| `file-type` | ⚠️ CJS v16  | createRequire | Upgrade to v17+ available |
+| `stripe`    | ✅ ESM v19+ | Direct import | Fully ESM                 |
+| `zod`       | ✅ ESM      | Direct import | Fully ESM                 |
+| `express`   | ✅ ESM/CJS  | Direct import | Works with both           |
+| `multer`    | ⚠️ CJS v2   | createRequire | Monitor for ESM version   |
+| `prisma`    | ✅ ESM      | Direct import | Fully ESM                 |
 
 ---
 
 ## When to Use Each Pattern
 
-| Situation | Pattern | Example |
-|-----------|---------|---------|
-| Package is ESM-native | Direct import | `import { z } from 'zod'` |
-| CJS package, used often | createRequire | `const pkg = require('pkg') as ...` |
-| CJS package, used rarely | Dynamic import | `const pkg = await import('pkg')` |
+| Situation                    | Pattern        | Example                             |
+| ---------------------------- | -------------- | ----------------------------------- |
+| Package is ESM-native        | Direct import  | `import { z } from 'zod'`           |
+| CJS package, used often      | createRequire  | `const pkg = require('pkg') as ...` |
+| CJS package, used rarely     | Dynamic import | `const pkg = await import('pkg')`   |
 | Package might upgrade to ESM | Monitor & plan | Check npm for new version quarterly |
 
 ---
@@ -284,6 +303,7 @@ await fromBuffer(buffer);
 ### ✅ Good: CJS with createRequire
 
 `server/src/services/upload.service.ts`
+
 ```typescript
 import { createRequire } from 'module';
 
@@ -291,7 +311,7 @@ import { createRequire } from 'module';
 // See: https://github.com/sindresorhus/file-type
 const require = createRequire(import.meta.url);
 const fileType = require('file-type') as {
-  fromBuffer: (buf: Buffer) => Promise<{ mime: string; ext: string } | undefined>
+  fromBuffer: (buf: Buffer) => Promise<{ mime: string; ext: string } | undefined>;
 };
 
 export async function detectFileType(buffer: Buffer) {
@@ -302,6 +322,7 @@ export async function detectFileType(buffer: Buffer) {
 ### ✅ Good: Direct ESM import
 
 `server/src/services/booking.service.ts`
+
 ```typescript
 import { stripe } from 'stripe';
 import type { Price } from 'stripe';
@@ -309,7 +330,7 @@ import type { Price } from 'stripe';
 export async function createStripePrice(amount: number): Promise<Price> {
   return await stripe.prices.create({
     currency: 'usd',
-    unit_amount: amount
+    unit_amount: amount,
   });
 }
 ```
@@ -317,6 +338,7 @@ export async function createStripePrice(amount: number): Promise<Price> {
 ### ✅ Good: Adapter pattern (centralizes CJS)
 
 `server/src/adapters/file-type.adapter.ts`
+
 ```typescript
 // Centralize CJS import
 import { createRequire } from 'module';
@@ -330,6 +352,7 @@ export async function detectFileType(buffer: Buffer) {
 ```
 
 `server/src/services/upload.service.ts`
+
 ```typescript
 // Use adapter - clean service code
 import { detectFileType } from '../adapters/file-type.adapter';

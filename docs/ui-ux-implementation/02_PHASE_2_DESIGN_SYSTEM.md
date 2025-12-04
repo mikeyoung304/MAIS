@@ -26,6 +26,7 @@ Phase 2 focuses on **brand unification** and **design system consistency**. We'l
 ### Week 4: Color Palette Unification
 
 #### Task 4.1: Define Semantic Color Tokens (1 day)
+
 **Priority:** Critical
 **Assigned To:** Frontend Developer + Designer
 **Estimated Effort:** 8 hours
@@ -72,7 +73,7 @@ Create semantic color tokens that map to brand colors and enable theme switching
   }
 
   /* Dark theme for admin dashboards */
-  [data-theme="dark"] {
+  [data-theme='dark'] {
     /* Surface colors */
     --color-surface: 36 38 63; /* Navy 900 */
     --color-surface-variant: 48 51 77; /* Navy 800 */
@@ -118,6 +119,7 @@ colors: {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] CSS variables defined for all semantic colors
 - [ ] Light theme (default) uses white surface, dark text
 - [ ] Dark theme uses navy surface, light text
@@ -125,6 +127,7 @@ colors: {
 - [ ] Documentation created explaining token usage
 
 **Testing Checklist:**
+
 - [ ] Visual test: light theme renders correctly
 - [ ] Visual test: dark theme renders correctly
 - [ ] Unit test: CSS variables are defined
@@ -135,6 +138,7 @@ colors: {
 ---
 
 #### Task 4.2: Refactor Admin Dashboards to Use Semantic Tokens (2 days)
+
 **Priority:** High
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 16 hours
@@ -145,6 +149,7 @@ Replace all hardcoded color classes with semantic token classes.
 **Implementation Details:**
 
 **Before:**
+
 ```tsx
 <Card className="bg-macon-navy-800 border-macon-navy-600">
   <CardContent className="p-6">
@@ -155,6 +160,7 @@ Replace all hardcoded color classes with semantic token classes.
 ```
 
 **After:**
+
 ```tsx
 <Card className="bg-surface-variant border-outline">
   <CardContent className="p-6">
@@ -165,17 +171,20 @@ Replace all hardcoded color classes with semantic token classes.
 ```
 
 **Files to Update:**
+
 - `/Users/mikeyoung/CODING/MAIS/client/src/pages/admin/PlatformAdminDashboard.tsx`
 - `/Users/mikeyoung/CODING/MAIS/client/src/pages/tenant/TenantAdminDashboard.tsx`
 - `/Users/mikeyoung/CODING/MAIS/client/src/features/admin/dashboard/components/DashboardMetrics.tsx`
 
 **Acceptance Criteria:**
+
 - [ ] All admin pages use semantic tokens
 - [ ] No hardcoded macon-navy-XXX classes in components
 - [ ] Theme switching works (light/dark toggle in Phase 3)
 - [ ] Visual appearance unchanged
 
 **Testing Checklist:**
+
 - [ ] Visual regression test: no visual changes
 - [ ] Theme test: dark theme still renders correctly
 - [ ] Unit test: components render with correct classes
@@ -186,6 +195,7 @@ Replace all hardcoded color classes with semantic token classes.
 ---
 
 #### Task 4.3: Add Orange CTAs Throughout Admin (1 day)
+
 **Priority:** High
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 8 hours
@@ -196,17 +206,15 @@ Replace navy primary buttons with orange secondary variant for all CTAs.
 **Implementation Details:**
 
 **Before:**
+
 ```tsx
-<Button className="bg-macon-navy hover:bg-macon-navy-dark">
-  Add Tenant
-</Button>
+<Button className="bg-macon-navy hover:bg-macon-navy-dark">Add Tenant</Button>
 ```
 
 **After:**
+
 ```tsx
-<Button variant="secondary">
-  Add Tenant
-</Button>
+<Button variant="secondary">Add Tenant</Button>
 ```
 
 **Update Button Component:**
@@ -216,27 +224,26 @@ Replace navy primary buttons with orange secondary variant for all CTAs.
 Ensure `variant="secondary"` uses Macon Orange:
 
 ```tsx
-const buttonVariants = cva(
-  "...",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-elevation-2",
-        // ... other variants
-      }
-    }
-  }
-);
+const buttonVariants = cva('...', {
+  variants: {
+    variant: {
+      default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+      secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-elevation-2',
+      // ... other variants
+    },
+  },
+});
 ```
 
 **Files to Update:**
+
 - All "Add X" buttons in admin dashboards
 - All "Create X" buttons
 - All primary action buttons
 - Navigation active state (already orange in Phase 1)
 
 **Acceptance Criteria:**
+
 - [ ] Primary CTAs are orange (secondary variant)
 - [ ] Destructive actions remain red (danger variant)
 - [ ] Neutral actions remain navy (default variant)
@@ -244,6 +251,7 @@ const buttonVariants = cva(
 - [ ] Focus rings visible and accessible
 
 **Testing Checklist:**
+
 - [ ] Visual test: orange buttons throughout admin
 - [ ] Interaction test: hover, active, focus states
 - [ ] Accessibility test: color contrast passes WCAG AA
@@ -256,6 +264,7 @@ const buttonVariants = cva(
 ### Week 5: Typography & Component Refactoring
 
 #### Task 5.1: Create Typography System (1 day)
+
 **Priority:** Medium
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 8 hours
@@ -324,18 +333,21 @@ Create semantic typography classes based on the defined scale.
 **Refactor Components:**
 
 **Before:**
+
 ```tsx
 <h1 className="text-4xl font-bold text-macon-navy-50">Platform Admin Dashboard</h1>
 <p className="text-lg text-macon-navy-300">Manage all tenants and system settings</p>
 ```
 
 **After:**
+
 ```tsx
 <h1 className="text-heading-1 text-on-surface">Platform Admin Dashboard</h1>
 <p className="text-body-large text-on-surface-variant">Manage all tenants and system settings</p>
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Typography classes defined for all levels
 - [ ] Responsive classes for marketing pages
 - [ ] Line height and font weight consistent
@@ -343,6 +355,7 @@ Create semantic typography classes based on the defined scale.
 - [ ] Documentation created
 
 **Testing Checklist:**
+
 - [ ] Visual test: typography scales correctly
 - [ ] Responsive test: responsive classes work at all breakpoints
 - [ ] Consistency check: same semantic level = same appearance
@@ -353,6 +366,7 @@ Create semantic typography classes based on the defined scale.
 ---
 
 #### Task 5.2: Refactor Card Component Usage (1.5 days)
+
 **Priority:** Medium
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 12 hours
@@ -369,49 +383,51 @@ Ensure all Card components use colorScheme prop instead of custom classes.
 Ensure colorScheme variants are well-defined:
 
 ```tsx
-const cardVariants = cva(
-  "rounded-xl border transition-all duration-300",
-  {
-    variants: {
-      colorScheme: {
-        default: "bg-surface border-outline",
-        navy: "bg-surface-variant border-outline",
-        orange: "bg-secondary/10 border-secondary/20",
-        teal: "bg-accent/10 border-accent/20",
-        elevated: "bg-surface-elevated border-outline shadow-elevation-2",
-      }
+const cardVariants = cva('rounded-xl border transition-all duration-300', {
+  variants: {
+    colorScheme: {
+      default: 'bg-surface border-outline',
+      navy: 'bg-surface-variant border-outline',
+      orange: 'bg-secondary/10 border-secondary/20',
+      teal: 'bg-accent/10 border-accent/20',
+      elevated: 'bg-surface-elevated border-outline shadow-elevation-2',
     },
-    defaultVariants: {
-      colorScheme: "default",
-    }
-  }
-);
+  },
+  defaultVariants: {
+    colorScheme: 'default',
+  },
+});
 ```
 
 **Refactor Usage:**
 
 **Before:**
+
 ```tsx
 <Card className="bg-macon-navy-800 border-macon-navy-600 hover:border-macon-orange/50">
 ```
 
 **After:**
+
 ```tsx
 <Card colorScheme="navy" className="hover:border-secondary/50">
 ```
 
 **Files to Update:**
+
 - All metric cards in dashboards
 - All feature cards on marketing page
 - All content cards throughout app
 
 **Acceptance Criteria:**
+
 - [ ] All cards use colorScheme prop
 - [ ] No bg-macon-navy-XXX classes on cards
 - [ ] Hover effects preserved
 - [ ] Shadow elevation consistent
 
 **Testing Checklist:**
+
 - [ ] Visual test: cards render correctly
 - [ ] Interaction test: hover effects work
 - [ ] Theme test: cards adapt to theme
@@ -422,6 +438,7 @@ const cardVariants = cva(
 ---
 
 #### Task 5.3: Create MetricCard Component (1 day)
+
 **Priority:** Medium
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 8 hours
@@ -493,9 +510,7 @@ export function MetricCard({
                 {trendIcons[trend]} {trendValue}
               </span>
             )}
-            {sublabel && (
-              <span className="text-sm text-on-surface-variant">{sublabel}</span>
-            )}
+            {sublabel && <span className="text-sm text-on-surface-variant">{sublabel}</span>}
           </div>
         )}
       </CardContent>
@@ -507,6 +522,7 @@ export function MetricCard({
 **Usage:**
 
 **Before:**
+
 ```tsx
 <Card className="bg-macon-navy-800 border-macon-navy-600">
   <CardContent className="p-6">
@@ -518,6 +534,7 @@ export function MetricCard({
 ```
 
 **After:**
+
 ```tsx
 <MetricCard
   label="Total Tenants"
@@ -531,6 +548,7 @@ export function MetricCard({
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Component renders all variants correctly
 - [ ] Icons optional, positioned correctly
 - [ ] Trend indicators show up/down/neutral
@@ -539,6 +557,7 @@ export function MetricCard({
 - [ ] Used in all dashboard metric sections
 
 **Testing Checklist:**
+
 - [ ] Unit test: all props render correctly
 - [ ] Unit test: click handler fires
 - [ ] Visual test: matches original design
@@ -552,6 +571,7 @@ export function MetricCard({
 ### Week 6: Brand Elements & Logo Integration
 
 #### Task 6.1: Add Macon Logo to Admin Headers (0.5 days)
+
 **Priority:** High
 **Assigned To:** Designer + Frontend Developer
 **Estimated Effort:** 4 hours
@@ -562,6 +582,7 @@ Create logo asset and integrate into all admin navigation bars.
 **Implementation Details:**
 
 **Designer Task:**
+
 - Export logo as SVG (transparent background)
 - Create light version (for dark backgrounds)
 - Create dark version (for light backgrounds)
@@ -573,18 +594,13 @@ Create logo asset and integrate into all admin navigation bars.
 
 ```tsx
 <div className="flex items-center gap-4">
-  <img
-    src="/logo-light.svg"
-    alt="Macon AI"
-    className="h-8 w-auto"
-  />
-  <Badge className={`${roleBadgeColor} text-white text-xs font-semibold`}>
-    {roleLabel}
-  </Badge>
+  <img src="/logo-light.svg" alt="Macon AI" className="h-8 w-auto" />
+  <Badge className={`${roleBadgeColor} text-white text-xs font-semibold`}>{roleLabel}</Badge>
 </div>
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Logo appears in admin navigation
 - [ ] Logo links to dashboard home
 - [ ] Logo is properly sized (h-8 / 32px)
@@ -592,6 +608,7 @@ Create logo asset and integrate into all admin navigation bars.
 - [ ] Logo loads quickly (optimized SVG)
 
 **Testing Checklist:**
+
 - [ ] Visual test: logo visible and crisp
 - [ ] Responsive test: logo scales on mobile
 - [ ] Accessibility test: alt text present
@@ -602,6 +619,7 @@ Create logo asset and integrate into all admin navigation bars.
 ---
 
 #### Task 6.2: Create Branded Empty State Illustrations (1 day)
+
 **Priority:** Low
 **Assigned To:** Designer
 **Estimated Effort:** 8 hours
@@ -612,12 +630,14 @@ Design custom illustrations for empty states (no tenants, no packages, etc.).
 **Implementation Details:**
 
 **Designer Task:**
+
 - Create 4-5 simple, flat illustrations
 - Use Macon brand colors (navy, orange, teal)
 - Export as SVG (optimized)
 - Style: Modern, minimal, friendly
 
 **Illustrations Needed:**
+
 1. No tenants (building/office icon)
 2. No packages (box/gift icon)
 3. No bookings (calendar icon)
@@ -640,21 +660,20 @@ export function NoTenantsIllustration() {
 ```
 
 **Usage:**
+
 ```tsx
-<EmptyState
-  icon={<NoTenantsIllustration />}
-  title="No tenants yet"
-  description="..."
-/>
+<EmptyState icon={<NoTenantsIllustration />} title="No tenants yet" description="..." />
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Illustrations match brand style
 - [ ] Illustrations are colorful but not overwhelming
 - [ ] SVGs are optimized (<10KB each)
 - [ ] Illustrations work on light and dark backgrounds
 
 **Testing Checklist:**
+
 - [ ] Visual test: illustrations render correctly
 - [ ] Performance test: SVGs load quickly
 
@@ -664,6 +683,7 @@ export function NoTenantsIllustration() {
 ---
 
 #### Task 6.3: Refactor Button Usage Throughout App (1.5 days)
+
 **Priority:** Medium
 **Assigned To:** Frontend Developer
 **Estimated Effort:** 12 hours
@@ -674,6 +694,7 @@ Remove all custom className overrides on Button components, use variant system e
 **Implementation Details:**
 
 **Audit Script:**
+
 ```bash
 # Find all Button components with custom className
 grep -r "Button.*className.*bg-" client/src/
@@ -682,6 +703,7 @@ grep -r "Button.*className.*bg-" client/src/
 **Refactor Pattern:**
 
 **Before:**
+
 ```tsx
 <Button className="bg-macon-orange hover:bg-macon-orange-dark text-white font-bold text-xl px-12 py-7 shadow-2xl hover:shadow-[0_0_40px_rgba(255,107,53,0.6)] min-w-[300px] min-h-[64px]">
   Apply to Join
@@ -689,6 +711,7 @@ grep -r "Button.*className.*bg-" client/src/
 ```
 
 **After:**
+
 ```tsx
 <Button variant="secondary" size="xl" className="min-w-[300px]">
   Apply to Join
@@ -700,37 +723,39 @@ grep -r "Button.*className.*bg-" client/src/
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/components/ui/button.tsx`
 
 ```tsx
-const buttonVariants = cva(
-  "...",
-  {
-    variants: {
-      variant: { /* existing variants */ },
-      size: {
-        default: "h-12 px-6 py-2",
-        sm: "h-9 px-4 text-sm",
-        lg: "h-14 px-8 text-lg",
-        xl: "h-16 px-12 text-xl", // NEW for hero CTAs
-        icon: "h-10 w-10",
-      }
-    }
-  }
-);
+const buttonVariants = cva('...', {
+  variants: {
+    variant: {
+      /* existing variants */
+    },
+    size: {
+      default: 'h-12 px-6 py-2',
+      sm: 'h-9 px-4 text-sm',
+      lg: 'h-14 px-8 text-lg',
+      xl: 'h-16 px-12 text-xl', // NEW for hero CTAs
+      icon: 'h-10 w-10',
+    },
+  },
+});
 ```
 
 **Files to Update:**
+
 - Marketing home page
 - Admin dashboards
 - Login page
 - All forms
 
 **Acceptance Criteria:**
-- [ ] No Button components have bg-* classes in className
+
+- [ ] No Button components have bg-\* classes in className
 - [ ] All buttons use variant prop
 - [ ] All buttons use size prop
 - [ ] Custom styling limited to spacing/width only
 - [ ] Visual appearance unchanged
 
 **Testing Checklist:**
+
 - [ ] Visual regression test: buttons look the same
 - [ ] Interaction test: hover, active, focus states work
 - [ ] Unit test: all variants render correctly
@@ -772,16 +797,19 @@ const buttonVariants = cva(
 ## Testing Strategy for Phase 2
 
 ### Visual Regression Testing
+
 - Screenshot all pages before refactoring
 - Compare after each task
 - Ensure no unintended visual changes
 
 ### Theme Testing
+
 - Test light theme (default)
 - Test dark theme (admin dashboards)
 - Test theme switching (Phase 3 will enable toggle)
 
 ### Accessibility Testing
+
 - Color contrast audit with new semantic tokens
 - Ensure WCAG AA compliance maintained
 - Test with automated tools (axe, Lighthouse)
@@ -791,16 +819,19 @@ const buttonVariants = cva(
 ## Deployment Strategy
 
 ### Week 4 Deployment (End of Week 4)
+
 **Deploy:** Semantic color tokens, admin dashboard refactoring, orange CTAs
 **Feature Flag:** `enable_semantic_tokens` (default: true)
 **Rollback:** Revert feature flag, restore hardcoded colors
 
 ### Week 5 Deployment (End of Week 5)
+
 **Deploy:** Typography system, Card refactoring, MetricCard component
 **Feature Flag:** Not needed (low risk, visual-only changes)
 **Rollback:** Git revert if visual issues
 
 ### Week 6 Deployment (End of Week 6)
+
 **Deploy:** Logo integration, illustrations, Button refactoring
 **Feature Flag:** Not needed
 **Rollback:** Git revert
@@ -809,13 +840,13 @@ const buttonVariants = cva(
 
 ## Success Metrics (Phase 2)
 
-| Metric | Before Phase 2 | After Phase 2 | Target |
-|--------|----------------|---------------|--------|
-| Brand consistency score | 6/10 | 9/10 | 9/10 |
-| Design system adherence | 40% | 85% | 85% |
-| Custom className overrides | ~200 | <20 | <20 |
-| Theme switching ready | No | Yes | Yes |
-| Admin CTAs using brand orange | 0% | 100% | 100% |
+| Metric                        | Before Phase 2 | After Phase 2 | Target |
+| ----------------------------- | -------------- | ------------- | ------ |
+| Brand consistency score       | 6/10           | 9/10          | 9/10   |
+| Design system adherence       | 40%            | 85%           | 85%    |
+| Custom className overrides    | ~200           | <20           | <20    |
+| Theme switching ready         | No             | Yes           | Yes    |
+| Admin CTAs using brand orange | 0%             | 100%          | 100%   |
 
 ---
 
@@ -825,25 +856,29 @@ const buttonVariants = cva(
 **Attendees:** Dev, Designer, QA, PM
 
 ### What Went Well?
+
 -
 
 ### What Could Be Improved?
+
 -
 
 ### Blockers Encountered?
+
 -
 
 ### Lessons Learned?
+
 -
 
 ### Adjustments for Phase 3?
--
 
----
+- ***
 
 ## Next Steps
 
 After completing Phase 2:
+
 1. ✅ Deploy all Phase 2 changes to production
 2. 📊 Measure success metrics (1 week monitoring)
 3. 🐛 Bug fixing period (2-3 days)

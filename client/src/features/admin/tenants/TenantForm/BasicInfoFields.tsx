@@ -1,6 +1,6 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import type { TenantFormData, TenantFormErrors } from "./types";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import type { TenantFormData, TenantFormErrors } from './types';
 
 interface BasicInfoFieldsProps {
   formData: TenantFormData;
@@ -33,9 +33,7 @@ export function BasicInfoFields({
           placeholder="e.g., Acme Consulting"
           disabled={isSubmitting}
         />
-        {errors.name && (
-          <p className="text-red-400 text-sm">{errors.name}</p>
-        )}
+        {errors.name && <p className="text-red-400 text-sm">{errors.name}</p>}
       </div>
 
       {/* Slug */}
@@ -51,12 +49,8 @@ export function BasicInfoFields({
           placeholder="e.g., acme-consulting"
           disabled={isSubmitting}
         />
-        <p className="text-white/60 text-sm">
-          This will be used in URLs and API keys
-        </p>
-        {errors.slug && (
-          <p className="text-red-400 text-sm">{errors.slug}</p>
-        )}
+        <p className="text-white/60 text-sm">This will be used in URLs and API keys</p>
+        {errors.slug && <p className="text-red-400 text-sm">{errors.slug}</p>}
       </div>
 
       {/* Email */}
@@ -73,9 +67,7 @@ export function BasicInfoFields({
           placeholder="admin@acmeconsulting.com"
           disabled={isSubmitting}
         />
-        {errors.email && (
-          <p className="text-red-400 text-sm">{errors.email}</p>
-        )}
+        {errors.email && <p className="text-red-400 text-sm">{errors.email}</p>}
       </div>
 
       {/* Phone */}

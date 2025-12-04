@@ -1,9 +1,9 @@
-import { Link } from "react-router-dom";
-import { Container } from "@/ui/Container";
-import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight } from "lucide-react";
-import { useSegments } from "@/features/catalog/hooks";
-import type { SegmentDto } from "@macon/contracts";
+import { Link } from 'react-router-dom';
+import { Container } from '@/ui/Container';
+import { Card, CardContent } from '@/components/ui/card';
+import { ArrowRight } from 'lucide-react';
+import { useSegments } from '@/features/catalog/hooks';
+import type { SegmentDto } from '@macon/contracts';
 
 /**
  * SegmentSection - Data-driven customer journey selector
@@ -63,17 +63,13 @@ function SegmentCard({ segment }: { segment: SegmentDto }) {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-4">
-              <h3 className="font-heading text-xl font-bold text-white">
-                {segment.name}
-              </h3>
+              <h3 className="font-heading text-xl font-bold text-white">{segment.name}</h3>
             </div>
           </div>
         ) : (
           <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-macon-navy via-macon-navy/90 to-macon-teal/80 flex items-end">
             <div className="p-4 w-full">
-              <h3 className="font-heading text-xl font-bold text-white">
-                {segment.name}
-              </h3>
+              <h3 className="font-heading text-xl font-bold text-white">{segment.name}</h3>
             </div>
           </div>
         )}
@@ -81,7 +77,7 @@ function SegmentCard({ segment }: { segment: SegmentDto }) {
         {/* Content */}
         <CardContent className="p-4">
           <p className="text-neutral-600 text-sm mb-3 line-clamp-2">
-            {segment.heroSubtitle || segment.description || "Explore our packages"}
+            {segment.heroSubtitle || segment.description || 'Explore our packages'}
           </p>
           <div className="flex items-center text-macon-orange font-medium text-sm group-hover:text-macon-orange-dark transition-colors">
             View packages

@@ -13,6 +13,7 @@
 The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking system** with comprehensive implementation across all critical business domains. The codebase demonstrates:
 
 ✅ **Fully Implemented Core Features**
+
 - Multi-tenant architecture with complete data isolation
 - Stripe Connect payment processing for distributed payouts
 - Tenant admin dashboard with full CRUD operations
@@ -23,6 +24,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 - Error handling infrastructure with Sentry integration
 
 ⚠️ **Features with Partial/Alternative Implementations**
+
 - Google Calendar integration: Adapter exists but not wired to workflows
 - Email notifications: Postmark adapter ready, not fully integrated into booking flow
 - Package photo upload: Implemented but not integrated into package management UI
@@ -39,12 +41,14 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Current Status**: 80% Complete
 
 **What Exists**:
+
 - `PostmarkMailAdapter` (52 lines) - Email delivery adapter
 - File sink fallback for development (writes to `/tmp/emails`)
 - Real Postmark integration ready (requires `POSTMARK_SERVER_TOKEN`)
 - Booking confirmation email template
 
 **What's Missing**:
+
 - Email service not integrated into booking webhook handler
 - No customer booking confirmation emails sent after payment
 - No tenant admin notification emails (new bookings, booking changes)
@@ -58,6 +62,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Location**: `/server/src/adapters/postmark.adapter.ts`
 
 **Code Gap**:
+
 ```typescript
 // postmark.adapter.ts has sendBookingConfirm() method
 // but webhook handler (webhooks.routes.ts) never calls it
@@ -73,12 +78,14 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Current Status**: 5% Complete (Files exist, not integrated)
 
 **What Exists**:
+
 - Empty adapter files: `gcal.jwt.ts`, `gcal.adapter.ts`
 - No implementation in files
 - Calendar endpoints defined in contracts but not connected
 - Schema supports Google Calendar metadata storage
 
 **What's Missing**:
+
 - Full Google Calendar API integration
 - Event creation when booking confirmed
 - Availability sync from Google Calendar
@@ -101,6 +108,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Current Status**: 70% Complete
 
 **What Exists**:
+
 - Upload service infrastructure (`upload.service.ts` - 237 lines)
   - File validation (mime type, size)
   - Unique filename generation
@@ -110,6 +118,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 - Static file serving configured
 
 **What's Missing**:
+
 - Package photo upload endpoint NOT integrated in admin UI
 - Package form component doesn't have photo upload field
 - Photo gallery management (reorder, delete existing photos)
@@ -117,12 +126,14 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 - Admin UI for managing package photos
 - Integration with catalog service to fetch photos
 
-**Location**: 
+**Location**:
+
 - Service: `/server/src/services/upload.service.ts`
 - Route incomplete: `/server/src/routes/tenant-admin.routes.ts`
 - Missing UI: `/client/src/features/admin/packages/`
 
 **Code Gap**:
+
 ```typescript
 // uploadPackagePhoto() method exists but never called from admin routes
 // Package model has 'photos' JSON field but admin form doesn't expose it
@@ -138,6 +149,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Current Status**: 60% Complete
 
 **What Exists**:
+
 - Stripe refund adapter (`stripe.adapter.ts` lines 174-210)
   - `refund()` method with full/partial refund support
   - Supports both platform and Connect accounts
@@ -147,6 +159,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 - Booking repository maps refund status
 
 **What's Missing**:
+
 - NO booking cancellation endpoint in API routes
 - NO refund initiation endpoint in API routes
 - NO refund UI in tenant admin dashboard
@@ -156,12 +169,14 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 - No audit trail for refunds in ConfigChangeLog
 - Cannot distinguish between canceled and refunded bookings in repository
 
-**Location**: 
+**Location**:
+
 - Adapter: `/server/src/adapters/stripe.adapter.ts`
 - Missing routes in: `/server/src/routes/`
 - Missing controller in: `/server/src/controllers/`
 
 **Code Gap**:
+
 ```typescript
 // Repository comment explicitly states:
 // "Cannot distinguish between CANCELED and REFUNDED"
@@ -180,24 +195,28 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Current Status**: 50% Complete
 
 **What Exists**:
+
 - Upload service ready
 - Route handler exists in `tenant-admin.routes.ts`
 - Branding model stores logo URL
 - Static file serving configured
 
 **What's Missing**:
+
 - Logo upload UI NOT integrated in BrandingEditor component
 - BrandingEditor only has color pickers, no file upload
 - Logo delete functionality not implemented
 - Logo URL validation in branding updates
 - Logo replacement (old logo not deleted when new one uploaded)
 
-**Location**: 
+**Location**:
+
 - Service: `/server/src/services/upload.service.ts`
 - Route: `/server/src/routes/tenant-admin.routes.ts` (line 75-120)
 - Missing UI: `/client/src/features/tenant-admin/BrandingEditor.tsx`
 
 **Code Gap**:
+
 ```typescript
 // uploadLogo endpoint exists but:
 // BrandingEditor.tsx doesn't have file input
@@ -214,10 +233,12 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Current Status**: 0% Complete (Schema support only)
 
 **What Exists**:
+
 - Database field: `booking.notes: String?`
 - No UI, routes, or services
 
 **What's Missing**:
+
 - Customer UI to add special requests during checkout
 - Tenant admin UI to view/edit booking notes
 - Notes field in booking confirmation email
@@ -234,6 +255,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Current Status**: 100% Complete & Well-Tested ✅
 
 **What's Implemented**:
+
 - `CommissionService` (10+ KB) with comprehensive logic
 - 12 unit tests covering edge cases
 - Proper Stripe limit validation (0.5% - 50%)
@@ -250,19 +272,22 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Current Status**: 90% Complete
 
 **What Exists**:
+
 - `StripeConnectService.createConnectedAccount()` fully implemented
 - Account creation flow working
 - Status stored in database (`stripeOnboarded` flag)
 - Validation of account readiness
 
 **What's Partially Missing**:
+
 - NO onboarding UI for tenant admins to start Stripe Connect
 - NO refresh/status check of onboarding (manual only)
 - NO error messaging if onboarding fails
 - NO dashboard widget showing Stripe status
 - Cannot retry failed onboarding
 
-**Location**: 
+**Location**:
+
 - Service: `/server/src/services/stripe-connect.service.ts`
 - Missing UI: Tenant admin dashboard
 
@@ -275,6 +300,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Current Status**: 95% Complete ✅
 
 **What's Implemented**:
+
 - Two auth systems:
   1. **API Key Auth** (X-Tenant-Key header): Public widget access
   2. **JWT Auth**: Admin dashboard access
@@ -284,12 +310,14 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 - Session management
 
 **What's Missing**:
+
 - NO password reset flow for tenant admins
 - NO token refresh mechanism (one-time auth)
 - NO session revocation/logout (JWT doesn't have expiry handling)
 - NO multi-session management (one admin could be logged in multiple places)
 
-**Location**: 
+**Location**:
+
 - Middleware: `/server/src/middleware/auth.ts`, `/server/src/middleware/tenant-auth.ts`
 - Routes: `/server/src/routes/auth.routes.ts`
 
@@ -304,12 +332,14 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Current Status**: 60% Complete
 
 **What Exists**:
+
 - `AvailabilityService` reads bookings and blackout dates
 - Supports date range queries
 - Returns booked/available/blackout status
 - Database indexes optimized
 
 **What's Missing**:
+
 - NO integration with Google Calendar
 - NO automatic availability updates from external sources
 - NO recurring availability patterns (e.g., "closed Tuesdays")
@@ -325,11 +355,13 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Current Status**: 50% Complete
 
 **What Exists**:
+
 - `EmailProvider` interface defined in `lib/ports.ts`
 - Postmark adapter implements interface
 - Two implementations (Postmark real, file sink for dev)
 
 **What's Partially Missing**:
+
 - No notification orchestration service
 - No event-driven notification system
 - No SMS provider abstraction (only email)
@@ -347,6 +379,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Current Status**: 85% Complete
 
 **What Exists**:
+
 - `ConfigChangeLog` model (Prisma) - comprehensive audit trail
 - `AuditService` (8.5 KB) - CRUD logging
 - 14 unit tests
@@ -354,6 +387,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 - Captures before/after snapshots
 
 **What's Partially Missing**:
+
 - Audit logging not fully integrated into all operations
 - Some routes don't log changes to audit trail
 - No API endpoint to query audit logs
@@ -361,7 +395,8 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 - No retention policy for old audit logs
 - ConfigChangeLog not populated in every scenario
 
-**Location**: 
+**Location**:
+
 - Service: `/server/src/services/audit.service.ts`
 - Database: `ConfigChangeLog` model
 - Missing: Admin UI, API endpoints
@@ -375,12 +410,14 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Current Status**: 80% Complete
 
 **What Exists**:
+
 - Global rate limiter middleware
 - Strict rate limiting for login endpoints
 - Admin-specific rate limiter
 - Configurable via environment
 
 **What's Missing**:
+
 - No per-tenant rate limiting (important for multi-tenant)
 - No API key rotation mechanism
 - No request signing/verification
@@ -396,11 +433,13 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Current Status**: 10% Complete
 
 **What Exists**:
+
 - `platformGetStats()` endpoint returns basic counts
 - Dashboard shows revenue metrics
 - Booking counts per tenant
 
 **What's Missing**:
+
 - NO detailed revenue reports
 - NO tenant performance analytics
 - NO commission reports
@@ -417,22 +456,22 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 
 ### 4.1 MODEL COVERAGE ANALYSIS
 
-| Model | CRUD Complete | Routes | Services | Notes |
-|-------|---------------|--------|----------|-------|
-| **Tenant** | 90% | ✅ | ✅ | Missing: password reset, session management |
-| **User** | 80% | ✅ | ✅ | Missing: email verification, 2FA |
-| **Customer** | 95% | ✅ | ✅ | Auto-created during booking |
-| **Segment** | 100% | ✅ | ✅ | Full CRUD implemented (Phase 2) |
-| **Package** | 95% | ✅ | ✅ | Missing: photo management UI |
-| **AddOn** | 95% | ✅ | ✅ | Missing: photo management UI |
-| **Booking** | 70% | ✅ | ✅ | Missing: cancellation, refunds, notes |
-| **BookingAddOn** | 100% | ✅ | ✅ | Junction table, fully working |
-| **Venue** | 50% | ⚠️ | ⚠️ | Schema exists, minimal implementation |
-| **BlackoutDate** | 95% | ✅ | ✅ | Full CRUD in admin dashboard |
-| **WebhookEvent** | 100% | ✅ | ✅ | Stripe webhooks fully implemented |
-| **ConfigChangeLog** | 70% | ⚠️ | ✅ | Service exists, not integrated everywhere |
-| **IdempotencyKey** | 100% | N/A | ✅ | Internal service, working correctly |
-| **Payment** | 70% | ⚠️ | ⚠️ | Schema supports but webhooks don't populate |
+| Model               | CRUD Complete | Routes | Services | Notes                                       |
+| ------------------- | ------------- | ------ | -------- | ------------------------------------------- |
+| **Tenant**          | 90%           | ✅     | ✅       | Missing: password reset, session management |
+| **User**            | 80%           | ✅     | ✅       | Missing: email verification, 2FA            |
+| **Customer**        | 95%           | ✅     | ✅       | Auto-created during booking                 |
+| **Segment**         | 100%          | ✅     | ✅       | Full CRUD implemented (Phase 2)             |
+| **Package**         | 95%           | ✅     | ✅       | Missing: photo management UI                |
+| **AddOn**           | 95%           | ✅     | ✅       | Missing: photo management UI                |
+| **Booking**         | 70%           | ✅     | ✅       | Missing: cancellation, refunds, notes       |
+| **BookingAddOn**    | 100%          | ✅     | ✅       | Junction table, fully working               |
+| **Venue**           | 50%           | ⚠️     | ⚠️       | Schema exists, minimal implementation       |
+| **BlackoutDate**    | 95%           | ✅     | ✅       | Full CRUD in admin dashboard                |
+| **WebhookEvent**    | 100%          | ✅     | ✅       | Stripe webhooks fully implemented           |
+| **ConfigChangeLog** | 70%           | ⚠️     | ✅       | Service exists, not integrated everywhere   |
+| **IdempotencyKey**  | 100%          | N/A    | ✅       | Internal service, working correctly         |
+| **Payment**         | 70%           | ⚠️     | ⚠️       | Schema supports but webhooks don't populate |
 
 ---
 
@@ -440,20 +479,20 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 
 ### 5.1 Route Completeness Matrix
 
-| Frontend Route | Backend Endpoint | Status | Notes |
-|---|---|---|---|
-| `/` (Home) | `GET /v1/packages` | ✅ | Fully working |
-| `/login` | `POST /v1/auth/login` | ✅ | Works for both roles |
-| `/admin/dashboard` | `GET /v1/admin/tenants` + stats | ✅ | Fully functional |
-| `/admin/segments` | `GET/POST/PUT/DELETE /v1/segments` | ✅ | Phase 2 complete |
-| `/admin/tenants/new` | `POST /v1/admin/tenants` | ✅ | Functional |
-| `/admin/tenants/:id` | `GET/PUT /v1/admin/tenants/:id` | ✅ | Functional |
-| `/tenant/dashboard` | `GET /v1/tenant/info` | ⚠️ | Endpoint exists but incomplete |
-| `/tenant/dashboard` packages tab | Package CRUD missing | ❌ | No endpoints for tenant package CRUD |
-| `/tenant/dashboard` branding tab | `PUT /v1/tenant/branding` | ✅ | Functional |
-| `/tenant/dashboard` blackouts tab | `GET/POST /v1/tenant/blackouts` | ✅ | Functional |
-| `/package/:slug` | `GET /v1/packages/:slug` | ✅ | Fully working |
-| `/success` | `GET /v1/bookings/:id` | ✅ | Fully working |
+| Frontend Route                    | Backend Endpoint                   | Status | Notes                                |
+| --------------------------------- | ---------------------------------- | ------ | ------------------------------------ |
+| `/` (Home)                        | `GET /v1/packages`                 | ✅     | Fully working                        |
+| `/login`                          | `POST /v1/auth/login`              | ✅     | Works for both roles                 |
+| `/admin/dashboard`                | `GET /v1/admin/tenants` + stats    | ✅     | Fully functional                     |
+| `/admin/segments`                 | `GET/POST/PUT/DELETE /v1/segments` | ✅     | Phase 2 complete                     |
+| `/admin/tenants/new`              | `POST /v1/admin/tenants`           | ✅     | Functional                           |
+| `/admin/tenants/:id`              | `GET/PUT /v1/admin/tenants/:id`    | ✅     | Functional                           |
+| `/tenant/dashboard`               | `GET /v1/tenant/info`              | ⚠️     | Endpoint exists but incomplete       |
+| `/tenant/dashboard` packages tab  | Package CRUD missing               | ❌     | No endpoints for tenant package CRUD |
+| `/tenant/dashboard` branding tab  | `PUT /v1/tenant/branding`          | ✅     | Functional                           |
+| `/tenant/dashboard` blackouts tab | `GET/POST /v1/tenant/blackouts`    | ✅     | Functional                           |
+| `/package/:slug`                  | `GET /v1/packages/:slug`           | ✅     | Fully working                        |
+| `/success`                        | `GET /v1/bookings/:id`             | ✅     | Fully working                        |
 
 ---
 
@@ -485,6 +524,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 - Can view own bookings
 
 **Missing**:
+
 - Password reset flow
 - Two-factor authentication
 - Login history / session management
@@ -511,6 +551,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Status**: ✅ 90% Complete
 
 **What's Implemented**:
+
 - Checkout session creation
 - Stripe Connect for distributed payouts
 - Webhook handling with idempotency
@@ -520,12 +561,14 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 - PaymentIntent tracking
 
 **Code Files** (all complete):
+
 - `stripe.adapter.ts` - 300+ lines, fully functional
 - `webhook.routes.ts` - 200+ lines, comprehensive handling
 - `stripe-connect.service.ts` - 200+ lines, working
 - `commission.service.ts` - 300+ lines, well-tested
 
 **What's Partially Missing**:
+
 - Refund UI (adapter exists, not wired)
 - Payment status dashboard UI
 - Failed payment retry mechanism
@@ -550,7 +593,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Status**: ⚠️ 40% Complete
 
 - Backend: ✅ Fully implemented
-- API route: ✅ Exists  
+- API route: ✅ Exists
 - UI: ❌ No upload form
 - Gallery: ❌ No photo management
 
@@ -571,6 +614,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 **Status**: ✅ 95% Complete
 
 **What's Implemented**:
+
 - Comprehensive error hierarchy (`ApiError`, `ValidationError`, `NotFoundError`, `WebhookValidationError`, etc.)
 - 12 custom error types
 - Request ID tracking in all responses
@@ -580,6 +624,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 - Validation with Zod
 
 **What's Missing**:
+
 - Sentry DSN not configured (code ready, needs env var)
 - Some catch blocks don't properly log context
 
@@ -596,6 +641,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 - Development pretty-printing
 
 **Missing**:
+
 - Log retention policy
 - Log aggregation setup
 - Correlation IDs across services
@@ -662,6 +708,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 ### Readiness Score: 8.2/10 for BETA, 7.5/10 for PUBLIC PRODUCTION
 
 **Strengths**:
+
 - Multi-tenant architecture is rock-solid
 - Payment processing fully implemented
 - Error handling comprehensive
@@ -672,6 +719,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 - Stripe Connect for distributed payouts
 
 **Weaknesses**:
+
 - Email notifications not wired (backend ready, not integrated)
 - Refund UI missing (backend ready, no UI)
 - Photo uploads not exposed in UI (backend ready, no forms)
@@ -679,8 +727,9 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 - No password reset flow
 - Limited analytics/reporting
 
-**Verdict**: 
+**Verdict**:
 ✅ **Ready for BETA deployment** with focus on:
+
 - Email notification integration (1-2 days)
 - Refund flow completion (1-2 days)
 - Logo/photo upload UI (1-2 days)
@@ -692,6 +741,7 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 ## FILE LOCATIONS REFERENCE
 
 **Key Implementation Files**:
+
 - Payment: `/server/src/adapters/stripe.adapter.ts` (300 lines)
 - Commission: `/server/src/services/commission.service.ts` (250 lines)
 - Webhooks: `/server/src/routes/webhooks.routes.ts` (250 lines)
@@ -702,8 +752,8 @@ The MAIS platform is a **production-ready, multi-tenant SaaS wedding booking sys
 - Error Handling: `/server/src/lib/core/errors.ts` (200 lines)
 
 **Missing/Incomplete Files**:
+
 - Google Calendar: `/server/src/adapters/gcal*.ts` (empty)
 - Refund UI: `/client/src/features/tenant-admin/` (no refund component)
 - Package Photo Form: `/client/src/features/admin/packages/PackageForm.tsx` (no upload field)
 - Email Workflow: Not integrated into webhook handler
-

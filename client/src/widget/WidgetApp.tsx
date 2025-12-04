@@ -43,7 +43,11 @@ export function WidgetApp({ config }: Props): JSX.Element {
   const { data: branding, isLoading: brandingLoading } = useQuery<TenantBrandingDto>({
     queryKey: ['tenant', 'branding', config.tenant],
     queryFn: async () => {
-      const result = await (api as unknown as { getTenantBranding: () => Promise<{ status: number; body: TenantBrandingDto }> }).getTenantBranding();
+      const result = await (
+        api as unknown as {
+          getTenantBranding: () => Promise<{ status: number; body: TenantBrandingDto }>;
+        }
+      ).getTenantBranding();
       if (result.status === 200 && result.body) {
         return result.body;
       }

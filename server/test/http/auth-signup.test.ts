@@ -39,7 +39,7 @@ afterAll(async () => {
       where: { email: { in: allTestEmails } },
       select: { id: true },
     });
-    const tenantIds = tenants.map(t => t.id);
+    const tenantIds = tenants.map((t) => t.id);
 
     if (tenantIds.length > 0) {
       // Delete packages first (references segments)
@@ -155,7 +155,7 @@ describe('POST /v1/auth/signup - Tenant Signup', () => {
       expect(packages[2].groupingOrder).toBe(3);
 
       // All packages should be linked to the default segment
-      expect(packages.every(p => p.segmentId === segments[0].id)).toBe(true);
+      expect(packages.every((p) => p.segmentId === segments[0].id)).toBe(true);
 
       // Test 3: Token validity - use the token to access a protected endpoint
       const verifyRes = await request(app)

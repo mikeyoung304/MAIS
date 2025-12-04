@@ -5,11 +5,13 @@ This directory contains comprehensive guides for deployment, CI/CD configuration
 ## Quick Start
 
 **New to deployments?** Start here:
+
 1. Read `CI_CD_QUICK_REFERENCE.md` for common fixes
 2. Run `npm run doctor` to validate your environment
 3. Check `ENVIRONMENT_VARIABLES.md` for required configuration
 
 **Deploying to production?**
+
 1. Review `GITHUB_SECRETS_SETUP.md` to ensure all secrets are configured
 2. Run `scripts/ci-preflight-check.sh` to validate CI/CD setup
 3. Follow the checklist in `PRODUCTION_DEPLOYMENT_CHECKLIST.md`
@@ -19,12 +21,14 @@ This directory contains comprehensive guides for deployment, CI/CD configuration
 ### Essential Reading (30 minutes)
 
 **`CI_CD_QUICK_REFERENCE.md`** (Best for quick fixes)
+
 - Common error messages and solutions
 - Pre-deployment checklist
 - Quick reference for environment variables
 - Troubleshooting workflow
 
 **`ENVIRONMENT_VARIABLES.md`** (Best for configuration)
+
 - Complete reference matrix of all variables
 - Per-job requirements for CI/CD
 - Environment-specific configuration
@@ -33,6 +37,7 @@ This directory contains comprehensive guides for deployment, CI/CD configuration
 ### Deep Dive (1-2 hours)
 
 **`CI_CD_FAILURE_PREVENTION.md`** (Best for understanding root causes)
+
 - Documented failures and root causes
 - Prevention strategies for each issue
 - Best practices for CI/CD
@@ -40,6 +45,7 @@ This directory contains comprehensive guides for deployment, CI/CD configuration
 - Implementation roadmap
 
 **`GITHUB_SECRETS_SETUP.md`** (Best for secrets management)
+
 - Step-by-step secret configuration
 - How to obtain values from providers (Stripe, Vercel, etc.)
 - Secret validation checklist
@@ -49,6 +55,7 @@ This directory contains comprehensive guides for deployment, CI/CD configuration
 ### Operations (Reference)
 
 **`PRODUCTION_DEPLOYMENT_CHECKLIST.md`**
+
 - Pre-deployment validation steps
 - Deployment procedures
 - Post-deployment verification
@@ -56,6 +63,7 @@ This directory contains comprehensive guides for deployment, CI/CD configuration
 - Communication templates
 
 **`VERCEL_BUILD_PREVENTION_GUIDE.md`**
+
 - Vercel-specific build issues
 - Root cause analysis
 - Prevention strategies
@@ -69,6 +77,7 @@ This directory contains comprehensive guides for deployment, CI/CD configuration
 **Problem:** Strict TypeScript linting fails in CI but not locally.
 
 **Prevention:**
+
 - Generate types before linting: `npm run typecheck -- --noEmit`
 - Set up workspace-specific ESLint configs
 - Clear cache before linting: `rm -rf .eslintcache`
@@ -80,6 +89,7 @@ This directory contains comprehensive guides for deployment, CI/CD configuration
 **Problem:** Prisma migrations fail with "could not find DIRECT_URL"
 
 **Prevention:**
+
 - Always set both `DATABASE_URL` and `DIRECT_URL` in CI jobs
 - Use Supabase pooler URL for DATABASE_URL, direct URL for DIRECT_URL
 - Document in ENVIRONMENT_VARIABLES.md
@@ -91,6 +101,7 @@ This directory contains comprehensive guides for deployment, CI/CD configuration
 **Problem:** Required variables missing from CI/secrets configuration
 
 **Prevention:**
+
 - Maintain ENVIRONMENT_VARIABLES.md as single source of truth
 - Use doctor script to validate variables
 - Add pre-commit hooks to check documentation
@@ -102,6 +113,7 @@ This directory contains comprehensive guides for deployment, CI/CD configuration
 **Problem:** Deployments fail due to missing configuration
 
 **Prevention:**
+
 - Run `scripts/ci-preflight-check.sh` before deployment
 - Use doctor script: `npm run doctor`
 - Test locally before pushing: `npm run build --workspaces`
@@ -113,24 +125,30 @@ This directory contains comprehensive guides for deployment, CI/CD configuration
 ## Tools & Scripts
 
 ### Doctor Script
+
 Validates environment variables per ADAPTERS_PRESET mode:
+
 ```bash
 npm run doctor
 ```
 
 **Usage:**
+
 - Run before starting development
 - Run in pre-commit hooks
 - Validates TIER 1 variables always
 - Validates TIER 2 variables in real mode
 
 ### CI Preflight Check
+
 Validates entire CI/CD configuration before deployment:
+
 ```bash
 ./scripts/ci-preflight-check.sh
 ```
 
 **Checks:**
+
 - ESLint configuration
 - Prisma schema setup
 - Environment documentation
@@ -139,12 +157,15 @@ Validates entire CI/CD configuration before deployment:
 - Best practices
 
 ### CI Validation Tests
+
 Automated tests for CI/CD configuration:
+
 ```bash
 npm test -- tests/ci/ci-validation.test.ts
 ```
 
 **Validates:**
+
 - ESLint strict mode enabled
 - DIRECT_URL in schema and workflows
 - Required documentation exists
@@ -156,6 +177,7 @@ npm test -- tests/ci/ci-validation.test.ts
 ## Environment Variable Categories
 
 ### Tier 1: Core (Always Required)
+
 ```
 JWT_SECRET
 TENANT_SECRETS_ENCRYPTION_KEY
@@ -165,6 +187,7 @@ ADAPTERS_PRESET
 ```
 
 ### Tier 2: Production-Critical
+
 ```
 STRIPE_SECRET_KEY
 STRIPE_WEBHOOK_SECRET
@@ -172,6 +195,7 @@ POSTMARK_SERVER_TOKEN
 ```
 
 ### Tier 3: Optional (Graceful Fallbacks)
+
 ```
 GOOGLE_CALENDAR_ID
 POSTMARK_FROM_EMAIL
@@ -183,30 +207,33 @@ POSTMARK_FROM_EMAIL
 
 ## Common Failures & Quick Fixes
 
-| Error | Solution | Docs |
-|-------|----------|------|
-| "could not find DIRECT_URL" | Add DIRECT_URL env var to migration steps | CI_CD_QUICK_REFERENCE.md |
-| "ESLint errors in CI only" | Generate types before linting | CI_CD_QUICK_REFERENCE.md |
-| "Missing environment variable" | Add to .env.example, doc, doctor.ts, GitHub secrets | ENVIRONMENT_VARIABLES.md |
-| "Prisma Client not found" | Run `npm run --workspace=server prisma:generate` | CI_CD_FAILURE_PREVENTION.md |
-| "Deployment bypasses lint checks" | Remove `continue-on-error: true` | CI_CD_QUICK_REFERENCE.md |
+| Error                             | Solution                                            | Docs                        |
+| --------------------------------- | --------------------------------------------------- | --------------------------- |
+| "could not find DIRECT_URL"       | Add DIRECT_URL env var to migration steps           | CI_CD_QUICK_REFERENCE.md    |
+| "ESLint errors in CI only"        | Generate types before linting                       | CI_CD_QUICK_REFERENCE.md    |
+| "Missing environment variable"    | Add to .env.example, doc, doctor.ts, GitHub secrets | ENVIRONMENT_VARIABLES.md    |
+| "Prisma Client not found"         | Run `npm run --workspace=server prisma:generate`    | CI_CD_FAILURE_PREVENTION.md |
+| "Deployment bypasses lint checks" | Remove `continue-on-error: true`                    | CI_CD_QUICK_REFERENCE.md    |
 
 ---
 
 ## Implementation Roadmap
 
 ### Phase 1: Documentation (Week 1)
+
 - [x] Create `CI_CD_FAILURE_PREVENTION.md`
 - [x] Create `ENVIRONMENT_VARIABLES.md`
 - [x] Create `GITHUB_SECRETS_SETUP.md`
 - [x] Create `CI_CD_QUICK_REFERENCE.md`
 
 ### Phase 2: Scripts (Week 1)
+
 - [x] Create `scripts/ci-preflight-check.sh`
 - [x] Update `server/scripts/doctor.ts` with DIRECT_URL check
 - [ ] Add doctor script to husky pre-commit hooks
 
 ### Phase 3: Configuration (Week 1-2)
+
 - [ ] Create `server/.eslintrc.cjs` workspace override
 - [ ] Create `client/.eslintrc.cjs` workspace override
 - [ ] Update root `.eslintrc.cjs` with tsconfig references
@@ -214,11 +241,13 @@ POSTMARK_FROM_EMAIL
 - [ ] Fix `deploy-production.yml` lint bypass
 
 ### Phase 4: Testing (Week 2)
+
 - [x] Create `tests/ci/ci-validation.test.ts`
 - [ ] Run test suite to validate configuration
 - [ ] Fix any identified issues
 
 ### Phase 5: Integration (Week 2)
+
 - [ ] Add pre-commit hook to run doctor script
 - [ ] Add pre-push hook to run ci-preflight-check.sh
 - [ ] Update CONTRIBUTING.md with checklist
@@ -229,12 +258,14 @@ POSTMARK_FROM_EMAIL
 ## References
 
 ### Related Documentation
+
 - `/CLAUDE.md` - Project setup and patterns
 - `/CONTRIBUTING.md` - Contributing guidelines
 - `/ARCHITECTURE.md` - System architecture
 - `/.github/workflows/` - CI/CD workflows
 
 ### External Resources
+
 - [Prisma: Direct URL](https://www.prisma.io/docs/concepts/components/prisma-client/connection-strings#direct-connection-to-the-database)
 - [Supabase: Connection Pooling](https://supabase.com/docs/guides/database/connecting-to-postgres#connection-pooler)
 - [GitHub Actions: Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
@@ -276,18 +307,21 @@ This documentation was created based on actual CI/CD failures in production. If 
 ## Quick Links
 
 **Most Used:**
+
 - Run doctor: `npm run doctor`
 - Pre-flight check: `./scripts/ci-preflight-check.sh`
 - View environment vars: `docs/deployment/ENVIRONMENT_VARIABLES.md`
 - Quick fixes: `docs/deployment/CI_CD_QUICK_REFERENCE.md`
 
 **Configuration:**
+
 - Main pipeline: `.github/workflows/main-pipeline.yml`
 - Production deployment: `.github/workflows/deploy-production.yml`
 - ESLint config: `.eslintrc.cjs`
 - Prisma schema: `server/prisma/schema.prisma`
 
 **Commands:**
+
 ```bash
 npm run doctor                               # Validate environment
 scripts/ci-preflight-check.sh               # Validate CI/CD setup

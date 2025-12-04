@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "003"
+issue_id: '003'
 tags: [documentation, branding, find-replace]
 dependencies: []
 ---
@@ -15,11 +15,13 @@ The project was renamed from "Elope" to "MAIS" (Macon AI Solutions) but **2,344 
 ## Findings
 
 **Scope of issue:**
+
 - 2,344 occurrences of "elope" or "Elope" across markdown files
 - 326 files affected
 - Primarily in documentation, not code
 
 **High-priority files identified:**
+
 1. `.github/workflows/README.md` - References "Elope" project badges
 2. `client/ROLE_BASED_ARCHITECTURE.md` - Throughout entire document
 3. `client/WIDGET_README.md` - Title and content
@@ -31,6 +33,7 @@ The project was renamed from "Elope" to "MAIS" (Macon AI Solutions) but **2,344 
 ## Proposed Solutions
 
 ### Solution 1: Selective Find/Replace (Recommended)
+
 - Replace project name references but preserve wedding terminology
 - Target: "Elope Platform", "Elope booking", "Elope Widget"
 - Preserve: "elopement package", "elopement ceremony"
@@ -40,6 +43,7 @@ The project was renamed from "Elope" to "MAIS" (Macon AI Solutions) but **2,344 
 - Cons: More time required
 
 ### Solution 2: Bulk Replace All
+
 - Replace all "Elope" → "MAIS", "elope" → "mais"
 - Effort: Small (1 hour)
 - Risk: Medium - may break wedding terminology
@@ -47,6 +51,7 @@ The project was renamed from "Elope" to "MAIS" (Macon AI Solutions) but **2,344 
 - Cons: May need post-fix corrections
 
 ### Solution 3: Replace in Priority Files Only
+
 - Fix only high-visibility files (.github/, root docs, client/)
 - Effort: Small (2 hours)
 - Risk: Low
@@ -60,6 +65,7 @@ Solution 1 - Selective find/replace with pattern matching.
 ## Technical Details
 
 **Patterns to replace:**
+
 - "Elope Platform" → "MAIS Platform"
 - "Elope booking" → "MAIS booking"
 - "Elope Widget" → "MAIS Widget"
@@ -67,11 +73,13 @@ Solution 1 - Selective find/replace with pattern matching.
 - GitHub badge URLs with "Elope" repo name
 
 **Patterns to PRESERVE:**
+
 - "elopement package" - legitimate business term
 - "elopement ceremony" - wedding industry term
 - "elope" as verb - not project reference
 
 **Command for audit:**
+
 ```bash
 # Find all occurrences
 grep -ri "elope" --include="*.md" . | grep -v node_modules | grep -v ".git"
@@ -90,13 +98,13 @@ grep -ril "elope" --include="*.md" . | grep -v node_modules | wc -l
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-24 | Created | 2,344 occurrences identified |
-| 2025-11-24 | Partial fix | Fixed CHANGELOG.md GitHub URLs (elope→mais) |
-| 2025-11-24 | Partial fix | Fixed client/ROLE_BASED_ARCHITECTURE.md project name |
-| 2025-11-24 | Scoped | 122 non-archived files have references (vs 325 total) |
-| 2025-12-01 | Complete | Fixed all high-visibility files (20+ files): client/src/lib/*.md, client/src/components/*.md, client/src/styles/*.md, client/src/contexts/*.md, docs/setup/*.md, docs/phases/*.md, docs/SEGMENT_TIER_INTEGRATION_REPORT.md, server/docs/*.md, .claude/*.md. Preserved "elopement" wedding terms. Remaining low-priority files in docs/roadmaps/ and docs/operations/ contain code samples. |
+| Date       | Action      | Notes                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2025-11-24 | Created     | 2,344 occurrences identified                                                                                                                                                                                                                                                                                                                                                               |
+| 2025-11-24 | Partial fix | Fixed CHANGELOG.md GitHub URLs (elope→mais)                                                                                                                                                                                                                                                                                                                                                |
+| 2025-11-24 | Partial fix | Fixed client/ROLE_BASED_ARCHITECTURE.md project name                                                                                                                                                                                                                                                                                                                                       |
+| 2025-11-24 | Scoped      | 122 non-archived files have references (vs 325 total)                                                                                                                                                                                                                                                                                                                                      |
+| 2025-12-01 | Complete    | Fixed all high-visibility files (20+ files): client/src/lib/_.md, client/src/components/_.md, client/src/styles/_.md, client/src/contexts/_.md, docs/setup/_.md, docs/phases/_.md, docs/SEGMENT_TIER_INTEGRATION_REPORT.md, server/docs/_.md, .claude/_.md. Preserved "elopement" wedding terms. Remaining low-priority files in docs/roadmaps/ and docs/operations/ contain code samples. |
 
 ## Resources
 

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "056"
+issue_id: '056'
 tags: [code-review, scheduling, api, ux]
 dependencies: []
 resolved_date: 2025-12-02
@@ -56,6 +56,7 @@ The API has endpoints to create and delete availability rules, but no endpoint t
 ## Implementation Details
 
 ### Route Handler Pattern
+
 ```typescript
 router.put('/availability-rules/:id', async (req, res, next) => {
   const tenantId = res.locals.tenantAuth.tenantId;
@@ -86,6 +87,7 @@ router.put('/availability-rules/:id', async (req, res, next) => {
 ```
 
 ### Key Features
+
 - **Tenant Isolation**: All updates scoped by `tenantId` (security requirement)
 - **Partial Updates**: Only provided fields are updated
 - **Rule ID Preservation**: Rule ID remains unchanged on update
@@ -104,11 +106,13 @@ router.put('/availability-rules/:id', async (req, res, next) => {
 ## Frontend Status
 
 **NOT IMPLEMENTED**: The frontend (`client/src/features/tenant-admin/scheduling/AvailabilityRulesManager/`) currently only supports:
+
 - Creating new rules
 - Deleting rules
 - Viewing rules
 
 **Missing Features:**
+
 - No Edit button in `RulesList.tsx`
 - No edit mode in `useAvailabilityRulesManager.ts`
 - Users still must delete + recreate to modify rules
@@ -117,7 +121,7 @@ router.put('/availability-rules/:id', async (req, res, next) => {
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
-| 2025-11-27 | Created | Found during API Contract review |
+| Date       | Action   | Notes                                      |
+| ---------- | -------- | ------------------------------------------ |
+| 2025-11-27 | Created  | Found during API Contract review           |
 | 2025-12-02 | Resolved | Backend API fully implemented and verified |

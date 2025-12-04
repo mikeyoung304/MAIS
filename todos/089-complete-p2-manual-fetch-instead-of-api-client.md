@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "089"
+issue_id: '089'
 tags: [todo]
 dependencies: []
 ---
@@ -18,6 +18,7 @@ dependencies: []
 `TenantStorefrontLayout.tsx` uses manual `fetch()` instead of the type-safe API client. This bypasses type safety, error handling, and interceptors that the API client provides.
 
 Current:
+
 ```typescript
 const response = await fetch(`${baseUrl}/v1/public/tenants/${tenantSlug}`);
 if (response.status === 200) {
@@ -26,6 +27,7 @@ if (response.status === 200) {
 ```
 
 Should use:
+
 ```typescript
 const result = await api.getTenantPublic({ params: { slug: tenantSlug } });
 if (result.status === 200) {
@@ -50,7 +52,11 @@ if (result.status === 200) {
 2. Replace manual fetch with API client call:
 
 ```typescript
-const { data: tenant, isLoading, error } = useQuery({
+const {
+  data: tenant,
+  isLoading,
+  error,
+} = useQuery({
   queryKey: ['tenant-public', tenantSlug],
   queryFn: async () => {
     const result = await api.getTenantPublic({ params: { slug: tenantSlug! } });

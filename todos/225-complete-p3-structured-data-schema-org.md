@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "225"
+issue_id: '225'
 tags: [seo, schema-org, structured-data, landing-page]
 dependencies: []
 ---
@@ -151,6 +151,7 @@ function LandingPageContent({ tenant }: LandingPageProps) {
 ## Validation
 
 Test with:
+
 - Google Rich Results Test: https://search.google.com/test/rich-results
 - Schema.org Validator: https://validator.schema.org/
 

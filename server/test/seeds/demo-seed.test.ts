@@ -124,9 +124,7 @@ describe('Demo Seed', () => {
 
       const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
       // Public key format: pk_live_little-bit-farm_{16 hex chars}
-      expect(upsertCall.create.apiKeyPublic).toMatch(
-        /^pk_live_little-bit-farm_[0-9a-f]{16}$/
-      );
+      expect(upsertCall.create.apiKeyPublic).toMatch(/^pk_live_little-bit-farm_[0-9a-f]{16}$/);
     });
 
     it('should NOT regenerate keys on subsequent seeds (idempotency)', async () => {
@@ -202,9 +200,7 @@ describe('Demo Seed', () => {
 
       await seedDemo(mockPrisma);
 
-      const prices = mockPrisma.package.upsert.mock.calls.map(
-        (call) => call[0].create.basePrice
-      );
+      const prices = mockPrisma.package.upsert.mock.calls.map((call) => call[0].create.basePrice);
 
       // Verify prices are in cents and reasonable
       prices.forEach((price) => {
@@ -343,9 +339,7 @@ describe('Demo Seed', () => {
 
       await seedDemo(mockPrisma);
 
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Demo tenant created')
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Demo tenant created'));
     });
 
     it('should log updated tenant info on subsequent seeds', async () => {
@@ -372,9 +366,7 @@ describe('Demo Seed', () => {
 
       await seedDemo(mockPrisma);
 
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Secret Key')
-      );
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Secret Key'));
     });
 
     it('should warn that keys will NOT be regenerated on first create', async () => {
@@ -383,9 +375,7 @@ describe('Demo Seed', () => {
 
       await seedDemo(mockPrisma);
 
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('will not be regenerated')
-      );
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('will not be regenerated'));
     });
 
     it('should inform that keys are unchanged on update', async () => {
@@ -401,9 +391,7 @@ describe('Demo Seed', () => {
 
       await seedDemo(mockPrisma);
 
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Secret key unchanged')
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Secret key unchanged'));
     });
   });
 });
@@ -412,7 +400,15 @@ describe('Demo Seed', () => {
  * Create a mock PrismaClient for testing
  * @param existingTenant - Pass existing tenant to simulate update scenario, null for create scenario
  */
-function createMockPrisma(existingTenant?: { id: string; slug: string; name: string; apiKeyPublic: string; apiKeySecret: string } | null): PrismaClient {
+function createMockPrisma(
+  existingTenant?: {
+    id: string;
+    slug: string;
+    name: string;
+    apiKeyPublic: string;
+    apiKeySecret: string;
+  } | null
+): PrismaClient {
   const mockTenant = existingTenant || {
     id: 'tenant-demo-123',
     slug: 'little-bit-farm',

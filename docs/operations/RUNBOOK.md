@@ -13,6 +13,7 @@ npm run doctor
 ### Doctor Output Examples
 
 **Mock mode (all good):**
+
 ```
 🏥 Environment Configuration Doctor
 
@@ -41,6 +42,7 @@ Core Configuration:
 ```
 
 **Real mode (missing required vars):**
+
 ```
 🏥 Environment Configuration Doctor
 
@@ -103,6 +105,7 @@ See SECRETS.md for details on each variable.
 ### Fixing Missing Variables
 
 1. **Copy the example env file:**
+
    ```bash
    cp server/.env.example server/.env
    ```
@@ -113,6 +116,7 @@ See SECRETS.md for details on each variable.
    - For real mode: you'll need database, Stripe, and optionally Postmark/GCal credentials
 
 3. **Re-run the doctor to verify:**
+
    ```bash
    npm run doctor
    ```
@@ -141,12 +145,14 @@ npm run dev:client
 ## Switching to real mode ✅ COMPLETE
 
 Real mode is now fully operational with:
+
 - **PostgreSQL**: Prisma ORM with migrations + seed data
 - **Stripe**: Test mode with webhook support
 - **Email**: File-sink fallback (Postmark optional)
 - **Calendar**: Mock fallback (Google Calendar optional)
 
 ### Setup Steps:
+
 1. Set `ADAPTERS_PRESET=real` in `server/.env`
 2. Configure `DATABASE_URL` and run migrations
 3. Seed database: creates admin (`admin@example.com` / `admin`)
@@ -168,6 +174,7 @@ Real mode is now fully operational with:
      ```
 
 2. **Install Stripe CLI:**
+
    ```bash
    brew install stripe/stripe-cli/stripe
    # or download from https://stripe.com/docs/stripe-cli
@@ -181,6 +188,7 @@ Real mode is now fully operational with:
 ### Testing Webhooks Locally
 
 1. **Start the webhook forwarder:**
+
    ```bash
    stripe listen --forward-to localhost:3001/v1/webhooks/stripe
    ```
@@ -188,11 +196,13 @@ Real mode is now fully operational with:
    This will output a webhook signing secret like `whsec_xxx...`
 
 2. **Update your `.env`:**
+
    ```
    STRIPE_WEBHOOK_SECRET=whsec_xxx...
    ```
 
 3. **Restart the API:**
+
    ```bash
    npm run dev:api:real
    ```
@@ -272,6 +282,7 @@ Each email is saved with a timestamp and recipient filename. Check the API logs 
 The API uses Google Calendar's **freeBusy API** to check date availability. Results are cached for 60 seconds to minimize API calls.
 
 **Requirements:**
+
 - Google Cloud project with Calendar API enabled
 - Service account with calendar read access
 - Calendar shared with the service account
@@ -303,6 +314,7 @@ The API uses Google Calendar's **freeBusy API** to check date availability. Resu
    - Download the JSON file (keep it secure!)
 
 5. **Encode the Service Account JSON:**
+
    ```bash
    # macOS/Linux:
    cat service-account.json | base64
@@ -370,12 +382,14 @@ The API will log a warning on startup and gracefully degrade to the mock behavio
 ### Health endpoints
 
 **Liveness check** — Always returns 200 OK:
+
 ```bash
 curl http://localhost:3001/health
 # {"ok":true}
 ```
 
 **Readiness check** — Verifies configuration:
+
 ```bash
 # Mock mode — always ready
 curl http://localhost:3001/ready
@@ -388,6 +402,7 @@ curl http://localhost:3001/ready
 ```
 
 If `/ready` returns `ok: false`, check your `.env` file and ensure all required keys are set:
+
 - `DATABASE_URL`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
@@ -411,6 +426,7 @@ If `/ready` returns `ok: false`, check your `.env` file and ensure all required 
 All login endpoints are protected with automatic rate limiting:
 
 **Configuration:**
+
 - **Limit:** 5 failed attempts per 15-minute window
 - **Scope:** Per IP address
 - **Endpoints:**
@@ -418,6 +434,7 @@ All login endpoints are protected with automatic rate limiting:
   - `POST /v1/tenant-auth/login`
 
 **Testing Rate Limiting:**
+
 ```bash
 cd server
 ./test-login-rate-limit.sh
@@ -429,6 +446,7 @@ curl -X POST http://localhost:3000/v1/tenant-auth/login \
 ```
 
 **Expected Results:**
+
 - Attempts 1-5: HTTP 401 (Invalid credentials)
 - Attempt 6+: HTTP 429 (Too many requests)
 
@@ -437,6 +455,7 @@ curl -X POST http://localhost:3000/v1/tenant-auth/login \
 All security events are logged with structured data for monitoring and alerting.
 
 **Failed Login Attempts:**
+
 ```bash
 # View failed login attempts
 grep "login_failed" server/logs/*.log
@@ -454,6 +473,7 @@ grep "login_failed" server/logs/*.log
 ```
 
 **Rate Limit Hits:**
+
 ```bash
 # Monitor for potential attacks
 grep "429" server/logs/*.log
@@ -463,18 +483,21 @@ grep "too_many_login_attempts" server/logs/*.log
 ### Security Monitoring Checklist
 
 **Daily Monitoring:**
+
 - [ ] Check for unusual spike in failed login attempts
 - [ ] Review rate limit hits (429 responses)
 - [ ] Monitor for distributed attacks (multiple IPs targeting same email)
 - [ ] Check for geographic anomalies in failed attempts
 
 **Weekly Reviews:**
+
 - [ ] Analyze failed login patterns
 - [ ] Review security logs for suspicious activity
 - [ ] Verify rate limiting effectiveness
 - [ ] Check for credential stuffing attempts
 
 **Monthly Tasks:**
+
 - [ ] Review and rotate JWT_SECRET if needed
 - [ ] Audit tenant API keys
 - [ ] Review Stripe webhook logs
@@ -501,6 +524,7 @@ grep "too_many_login_attempts" server/logs/*.log
    - Action: Verify webhook secret is current
 
 **Example Alert Configuration (Datadog/Sentry/CloudWatch):**
+
 ```
 Alert: security-failed-logins-spike
 Metric: count(log.event:login_failed)
@@ -511,6 +535,7 @@ Notification: security-team-channel
 ### Responding to Security Events
 
 **Brute Force Attack Detected:**
+
 1. Verify rate limiting is active (check logs)
 2. Identify attacking IP addresses
 3. Consider temporary IP blocking if severe
@@ -518,6 +543,7 @@ Notification: security-team-channel
 5. Document incident and response
 
 **Credential Stuffing Detected:**
+
 1. Identify targeted email accounts
 2. Force password reset for affected accounts
 3. Notify affected users if any successful logins
@@ -525,6 +551,7 @@ Notification: security-team-channel
 5. Consider implementing CAPTCHA
 
 **Rate Limit Bypass Attempt:**
+
 1. Verify distributed attack pattern
 2. Check for proxy/VPN usage
 3. Consider implementing additional protections
@@ -538,6 +565,7 @@ Notification: security-team-channel
 For production with multiple servers, rate limiting requires shared storage:
 
 **Option 1: Redis (Recommended)**
+
 ```bash
 # Install Redis
 brew install redis  # or use cloud provider
@@ -547,10 +575,12 @@ REDIS_URL=redis://localhost:6379
 ```
 
 **Option 2: Sticky Sessions**
+
 - Configure load balancer for IP-based session affinity
 - Ensures same IP always routes to same server
 
 **Security Documentation:**
+
 - [SECURITY.md](../security/SECURITY.md) - Complete security documentation
 - [SECRET_ROTATION_GUIDE.md](../security/SECRET_ROTATION_GUIDE.md) - Secret rotation procedures
 - [IMMEDIATE_SECURITY_ACTIONS.md](../security/IMMEDIATE_SECURITY_ACTIONS.md) - Urgent action items
@@ -563,6 +593,7 @@ REDIS_URL=redis://localhost:6379
 ### Current Feature Availability
 
 **Phase 4 (Current Production):**
+
 - Tenant branding customization (logo, colors, fonts)
 - Package CRUD operations
 - Blackout date management
@@ -570,6 +601,7 @@ REDIS_URL=redis://localhost:6379
 - CSV export for bookings
 
 **Phase 5 (Coming Soon):**
+
 - Add-on management
 - Package photo uploads
 - Email template customization
@@ -577,6 +609,7 @@ REDIS_URL=redis://localhost:6379
 ### Tenant Support Common Issues
 
 **Issue: "Tenant can't see their packages"**
+
 ```bash
 # Check if tenant exists and has packages
 psql $DATABASE_URL -c "SELECT id, name, slug FROM tenants WHERE slug = 'tenant-slug';"
@@ -584,6 +617,7 @@ psql $DATABASE_URL -c "SELECT id, title, \"isActive\" FROM packages WHERE \"tena
 ```
 
 **Issue: "Tenant login not working"**
+
 ```bash
 # Check tenant admin exists
 psql $DATABASE_URL -c "SELECT id, email FROM users WHERE email = 'admin@example.com' AND \"isTenantAdmin\" = true;"
@@ -593,6 +627,7 @@ psql $DATABASE_URL -c "SELECT id, email FROM users WHERE email = 'admin@example.
 ```
 
 **Issue: "Branding not applying"**
+
 ```bash
 # Check branding configuration
 psql $DATABASE_URL -c "SELECT branding FROM tenants WHERE id = 'tenant-id';"
@@ -601,6 +636,7 @@ psql $DATABASE_URL -c "SELECT branding FROM tenants WHERE id = 'tenant-id';"
 ```
 
 **Issue: "Uploaded logo not displaying"**
+
 ```bash
 # Verify file exists
 ls -lh server/uploads/logos/
@@ -620,17 +656,20 @@ curl http://localhost:3001/uploads/logos/logo-filename.png
 ### Phase 5 Operational Notes
 
 **When Phase 5 deploys:**
+
 - Add-ons will become tenant-scoped (existing global add-ons need migration)
 - Package photo upload will increase storage requirements (monitor disk usage)
 - Email templates stored in database (backup strategy critical)
 
 **Pre-Phase 5 Checklist:**
+
 - [ ] Backup database before migration
 - [ ] Ensure adequate disk space for package photos (estimate 5MB × packages × 5 photos)
 - [ ] Configure email service (SendGrid/SES) for template rendering
 - [ ] Set up cloud storage if migrating from local filesystem
 
 **Monitoring Phase 5 Features:**
+
 ```bash
 # Check add-on counts per tenant
 psql $DATABASE_URL -c "SELECT \"tenantId\", COUNT(*) FROM add_ons GROUP BY \"tenantId\";"

@@ -18,10 +18,7 @@ const TOKEN_CHECK_INTERVAL = 60000; // 60 seconds
  * @param token - JWT token to monitor
  * @param onExpired - Callback to execute when token expires
  */
-export function useTokenExpiration(
-  token: string | null,
-  onExpired: () => void
-): void {
+export function useTokenExpiration(token: string | null, onExpired: () => void): void {
   useEffect(() => {
     if (!token) return;
 

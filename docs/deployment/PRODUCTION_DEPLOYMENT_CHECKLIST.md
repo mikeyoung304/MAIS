@@ -94,6 +94,7 @@ FRONTEND_URL="https://app.maconaisolutions.com"
 ### 3. Security Configuration
 
 - [ ] **Secrets Generation**
+
   ```bash
   # Generate JWT_SECRET (64 characters)
   openssl rand -hex 32
@@ -101,6 +102,7 @@ FRONTEND_URL="https://app.maconaisolutions.com"
   # Generate TENANT_SECRETS_ENCRYPTION_KEY (64 characters)
   openssl rand -hex 32
   ```
+
   - [ ] Secrets stored in platform's secret manager (not in Git)
   - [ ] Secrets different from development environment
   - [ ] Secrets backed up securely (1Password, etc.)
@@ -133,23 +135,28 @@ FRONTEND_URL="https://app.maconaisolutions.com"
 ### 4. Database Migration
 
 - [ ] **Backup Existing Data** (if applicable)
+
   ```bash
   pg_dump $DATABASE_URL > backup_$(date +%Y%m%d).sql
   ```
 
 - [ ] **Run Migrations**
+
   ```bash
   cd server
   npm exec prisma migrate deploy
   ```
+
   - [ ] All 16 performance indexes applied
   - [ ] Unique constraints verified (`Booking.date`, `Payment.processorId`)
   - [ ] Migration history clean (no drift detected)
 
 - [ ] **Seed Database**
+
   ```bash
   npm exec prisma db seed
   ```
+
   - [ ] Platform admin user created
   - [ ] Sample packages added (optional for demo)
 
@@ -162,16 +169,19 @@ FRONTEND_URL="https://app.maconaisolutions.com"
 ### 5. Build & Deploy
 
 - [ ] **Build Application**
+
   ```bash
   npm run build              # Build all workspaces
   npm run typecheck          # Verify no TypeScript errors
   ```
 
 - [ ] **Run Tests**
+
   ```bash
   npm test                   # Unit + integration tests
   npm run test:e2e          # End-to-end tests (optional for CI)
   ```
+
   - [ ] Test pass rate ≥ 92% (568/616 expected)
   - [ ] No critical test failures
 
@@ -202,10 +212,13 @@ FRONTEND_URL="https://app.maconaisolutions.com"
 ### 6. Health Checks
 
 **API Health:**
+
 ```bash
 curl https://app.maconaisolutions.com/health
 ```
+
 Expected response:
+
 ```json
 {
   "status": "healthy",
@@ -215,10 +228,13 @@ Expected response:
 ```
 
 **Cache Health:**
+
 ```bash
 curl https://app.maconaisolutions.com/health/cache
 ```
+
 Expected response:
+
 ```json
 {
   "connected": true,
@@ -232,10 +248,12 @@ Expected response:
 ```
 
 **Database Connectivity:**
+
 ```bash
 curl https://app.maconaisolutions.com/v1/packages \
   -H "X-Tenant-Key: pk_live_demo_..."
 ```
+
 Expected: 200 OK with package list (or empty array)
 
 ### 7. Monitoring Setup
@@ -269,10 +287,12 @@ Expected: 200 OK with package list (or empty array)
 ### 8. Demo Tenant Setup
 
 - [ ] **Create First Demo Tenant**
+
   ```bash
   npm run create-tenant
   # Follow prompts to create demo tenant
   ```
+
   - [ ] Tenant slug: `demo-tenant`
   - [ ] Email: `demo@maconaisolutions.com`
   - [ ] Password: <secure-password>
@@ -304,6 +324,7 @@ Expected: 200 OK with package list (or empty array)
     frameborder="0"
   ></iframe>
   ```
+
   - [ ] Widget loads correctly
   - [ ] Branding applied
   - [ ] Booking flow works end-to-end
@@ -341,6 +362,7 @@ Expected: 200 OK with package list (or empty array)
 ### 10. Performance Validation
 
 - [ ] **Response Time Testing**
+
   ```bash
   # Install autocannon
   npm install -g autocannon
@@ -350,6 +372,7 @@ Expected: 200 OK with package list (or empty array)
     -H "X-Tenant-Key: pk_live_demo_..." \
     https://app.maconaisolutions.com/v1/packages
   ```
+
   - [ ] P50 latency < 100ms
   - [ ] P95 latency < 500ms
   - [ ] P99 latency < 1000ms
@@ -380,9 +403,11 @@ Expected: 200 OK with package list (or empty array)
   - [ ] SSL Labs grade A or A+
 
 - [ ] **Headers Audit**
+
   ```bash
   curl -I https://app.maconaisolutions.com
   ```
+
   - [ ] `Content-Security-Policy` present
   - [ ] `Strict-Transport-Security` present
   - [ ] `X-Content-Type-Options: nosniff` present
@@ -458,6 +483,7 @@ Expected: 200 OK with package list (or empty array)
 ### 14. Post-Launch Monitoring (Week 1)
 
 **Daily:**
+
 - [ ] Review error logs (Sentry)
 - [ ] Check response time trends
 - [ ] Verify cache hit rate > 70%
@@ -465,6 +491,7 @@ Expected: 200 OK with package list (or empty array)
 - [ ] Review support tickets
 
 **End of Week:**
+
 - [ ] Compile metrics report
 - [ ] Identify any performance bottlenecks
 - [ ] Document lessons learned
@@ -479,6 +506,7 @@ Expected: 200 OK with package list (or empty array)
 ### Immediate Rollback (< 5 minutes)
 
 1. **Revert Application Code**
+
    ```bash
    git revert HEAD
    git push origin main
@@ -499,11 +527,13 @@ Expected: 200 OK with package list (or empty array)
 **⚠️ CAUTION: Only if database migration caused issue**
 
 1. **Mark Migration as Rolled Back**
+
    ```bash
    npm exec prisma migrate resolve --rolled-back <migration-name>
    ```
 
 2. **Restore from Backup**
+
    ```bash
    psql $DATABASE_URL < backup_<date>.sql
    ```
@@ -574,16 +604,16 @@ SCAN 0 MATCH catalog:* COUNT 100
 
 **Current Status:** 9.8/10 (Production-Ready)
 
-| Category | Score | Notes |
-|----------|-------|-------|
-| **Core Functionality** | 10/10 | All features complete |
-| **Test Coverage** | 9/10 | 92.2% pass rate, 2 flaky tests |
-| **Security** | 9/10 | OWASP 70%, input sanitization, CSP |
-| **Performance** | 10/10 | Caching, indexes, <500ms p99 |
-| **Monitoring** | 8/10 | Health checks, cache stats (APM pending) |
-| **Documentation** | 10/10 | Comprehensive docs + runbooks |
-| **DevOps** | 9/10 | CI/CD ready, migrations automated |
-| **Multi-Tenancy** | 10/10 | Full isolation, tenant-scoped queries |
+| Category               | Score | Notes                                    |
+| ---------------------- | ----- | ---------------------------------------- |
+| **Core Functionality** | 10/10 | All features complete                    |
+| **Test Coverage**      | 9/10  | 92.2% pass rate, 2 flaky tests           |
+| **Security**           | 9/10  | OWASP 70%, input sanitization, CSP       |
+| **Performance**        | 10/10 | Caching, indexes, <500ms p99             |
+| **Monitoring**         | 8/10  | Health checks, cache stats (APM pending) |
+| **Documentation**      | 10/10 | Comprehensive docs + runbooks            |
+| **DevOps**             | 9/10  | CI/CD ready, migrations automated        |
+| **Multi-Tenancy**      | 10/10 | Full isolation, tenant-scoped queries    |
 
 **Total:** 9.8/10 average
 

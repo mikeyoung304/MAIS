@@ -43,12 +43,8 @@ function RootTiersContent() {
     return (
       <Container className="py-12">
         <div className="text-center py-20 bg-neutral-50 rounded-xl border-2 border-neutral-200">
-          <p className="text-2xl text-macon-navy-600 mb-3 font-semibold">
-            Unable to load packages
-          </p>
-          <p className="text-lg text-neutral-600 mb-6">
-            Please try again in a moment.
-          </p>
+          <p className="text-2xl text-macon-navy-600 mb-3 font-semibold">Unable to load packages</p>
+          <p className="text-lg text-neutral-600 mb-6">Please try again in a moment.</p>
           <button
             onClick={() => refetch()}
             className="px-6 py-3 bg-macon-orange text-white rounded-lg hover:bg-macon-orange/90 transition-colors"
@@ -65,9 +61,7 @@ function RootTiersContent() {
     () =>
       (packages || []).filter(
         (p: PackageDto) =>
-          !p.segmentId &&
-          p.grouping &&
-          TIER_LEVELS.includes(p.grouping.toLowerCase() as TierLevel)
+          !p.segmentId && p.grouping && TIER_LEVELS.includes(p.grouping.toLowerCase() as TierLevel)
       ),
     [packages]
   );

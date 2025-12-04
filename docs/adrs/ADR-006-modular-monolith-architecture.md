@@ -16,6 +16,7 @@ MAIS is being built as a solo development project with the goal of rapid MVP del
 - **Development velocity:** Minimal infrastructure overhead
 
 Key constraints:
+
 - Single developer (no team coordination overhead)
 - Rapid MVP timeline (6-week sprint)
 - Future growth potential (may need to scale)
@@ -35,6 +36,7 @@ We have chosen a **modular monolith** architecture with:
    - Ports (interfaces)
 
 **Architecture Overview:**
+
 ```
 ┌─────────────────────────────────────────┐
 │          API Routes (ts-rest)           │
@@ -58,6 +60,7 @@ We have chosen a **modular monolith** architecture with:
 ```
 
 **Key Principles:**
+
 - Services depend on interfaces (ports), not implementations
 - Dependency injection wires real vs mock adapters
 - All external dependencies abstracted behind interfaces
@@ -99,6 +102,7 @@ We have chosen a **modular monolith** architecture with:
 **Approach:** Build separate services for catalog, booking, payments, etc.
 
 **Why Rejected:**
+
 - ❌ Solo developer - no team to own separate services
 - ❌ Infrastructure overhead (multiple deploys, service mesh, etc.)
 - ❌ Network latency between services
@@ -107,6 +111,7 @@ We have chosen a **modular monolith** architecture with:
 - ❌ Premature optimization (no scale requirements yet)
 
 **When to Reconsider:**
+
 - Team grows to 5+ developers
 - Need to scale specific modules independently
 - Revenue justifies infrastructure investment
@@ -116,6 +121,7 @@ We have chosen a **modular monolith** architecture with:
 **Approach:** Deploy each domain as separate Lambda/Cloud Functions.
 
 **Why Rejected:**
+
 - ❌ Cold start latency unacceptable for booking flows
 - ❌ Difficult to share database connections
 - ❌ Limited transaction support across functions
@@ -123,6 +129,7 @@ We have chosen a **modular monolith** architecture with:
 - ❌ Vendor lock-in (AWS Lambda, Google Cloud Functions)
 
 **When to Reconsider:**
+
 - Need extreme horizontal scaling
 - Traffic is very spiky (can benefit from auto-scaling)
 
@@ -131,6 +138,7 @@ We have chosen a **modular monolith** architecture with:
 **Approach:** Build single Express app with no architectural boundaries.
 
 **Why Rejected:**
+
 - ❌ Coupling increases over time (spaghetti code risk)
 - ❌ Difficult to extract services later
 - ❌ No clean test boundaries
@@ -141,6 +149,7 @@ We have chosen a **modular monolith** architecture with:
 ## Implementation Details
 
 **File Structure:**
+
 ```
 server/src/
 ├── routes/              # HTTP handlers (ts-rest)
@@ -163,26 +172,21 @@ server/src/
 ```
 
 **Dependency Injection Example:**
+
 ```typescript
 // di.ts - Wire dependencies based on mode
-const catalogRepo = config.mode === 'real'
-  ? new PrismaCatalogRepository(prisma)
-  : new MockCatalogRepository();
+const catalogRepo =
+  config.mode === 'real' ? new PrismaCatalogRepository(prisma) : new MockCatalogRepository();
 
-const paymentProvider = config.mode === 'real'
-  ? new StripePaymentAdapter(stripe)
-  : new MockPaymentProvider();
+const paymentProvider =
+  config.mode === 'real' ? new StripePaymentAdapter(stripe) : new MockPaymentProvider();
 
 const catalogService = new CatalogService(catalogRepo);
-const bookingService = new BookingService(
-  bookingRepo,
-  catalogRepo,
-  paymentProvider,
-  eventEmitter
-);
+const bookingService = new BookingService(bookingRepo, catalogRepo, paymentProvider, eventEmitter);
 ```
 
 **Module Boundaries:**
+
 - Routes only call services (never adapters directly)
 - Services only depend on ports (never concrete adapters)
 - Adapters implement ports (never import services)

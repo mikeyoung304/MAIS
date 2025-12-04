@@ -204,17 +204,17 @@ describe.sequential('SegmentService Integration Tests', () => {
     it('should throw NotFoundError for non-existent segment on getSegmentBySlug', async () => {
       const tenant = await ctx.tenants.tenantA.create();
 
-      await expect(
-        service.getSegmentBySlug(tenant.id, 'non-existent-slug')
-      ).rejects.toThrow(NotFoundError);
+      await expect(service.getSegmentBySlug(tenant.id, 'non-existent-slug')).rejects.toThrow(
+        NotFoundError
+      );
     });
 
     it('should throw NotFoundError for non-existent segment on getSegmentWithRelations', async () => {
       const tenant = await ctx.tenants.tenantA.create();
 
-      await expect(
-        service.getSegmentWithRelations(tenant.id, 'non-existent-slug')
-      ).rejects.toThrow(NotFoundError);
+      await expect(service.getSegmentWithRelations(tenant.id, 'non-existent-slug')).rejects.toThrow(
+        NotFoundError
+      );
     });
 
     it('should throw NotFoundError when updating non-existent segment', async () => {
@@ -228,9 +228,9 @@ describe.sequential('SegmentService Integration Tests', () => {
     it('should throw NotFoundError when deleting non-existent segment', async () => {
       const tenant = await ctx.tenants.tenantA.create();
 
-      await expect(
-        service.deleteSegment(tenant.id, 'non-existent-id')
-      ).rejects.toThrow(NotFoundError);
+      await expect(service.deleteSegment(tenant.id, 'non-existent-id')).rejects.toThrow(
+        NotFoundError
+      );
     });
   });
 

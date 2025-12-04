@@ -11,43 +11,48 @@ import { hasStatusCode, isApiError, getErrorMessage, isRecord } from '@elope/sha
 ### 2. Fix API Calls (Array Response)
 
 **BEFORE:**
+
 ```typescript
 const result = await api.getBookings();
 if (result.status === 200) {
-  setBookings(result.body);  // ❌ unsafe-assignment
+  setBookings(result.body); // ❌ unsafe-assignment
 }
 ```
 
 **AFTER:**
+
 ```typescript
 const result = await api.getBookings();
 if (result.status === 200 && Array.isArray(result.body)) {
-  setBookings(result.body as BookingDto[]);  // ✅ safe
+  setBookings(result.body as BookingDto[]); // ✅ safe
 }
 ```
 
 ### 3. Fix API Calls (Object Response)
 
 **BEFORE:**
+
 ```typescript
 const result = await api.getTenant();
 if (result.status === 200) {
-  const { name } = result.body;  // ❌ unsafe-member-access
+  const { name } = result.body; // ❌ unsafe-member-access
 }
 ```
 
 **AFTER:**
+
 ```typescript
 const result = await api.getTenant();
 if (result.status === 200 && isRecord(result.body)) {
   const tenant = result.body as TenantDto;
-  const { name } = tenant;  // ✅ safe
+  const { name } = tenant; // ✅ safe
 }
 ```
 
 ### 4. Fix Error Handlers
 
 **BEFORE:**
+
 ```typescript
 } catch (error) {
   console.error('Failed:', error);  // ❌ no-unsafe-assignment
@@ -56,6 +61,7 @@ if (result.status === 200 && isRecord(result.body)) {
 ```
 
 **AFTER:**
+
 ```typescript
 } catch (error: unknown) {
   console.error('Failed:', getErrorMessage(error));  // ✅ safe
@@ -66,6 +72,7 @@ if (result.status === 200 && isRecord(result.body)) {
 ### 5. Fix Error Status Checks
 
 **BEFORE:**
+
 ```typescript
 } catch (error) {
   if (error.status === 401) {  // ❌ no-unsafe-member-access
@@ -75,6 +82,7 @@ if (result.status === 200 && isRecord(result.body)) {
 ```
 
 **AFTER:**
+
 ```typescript
 } catch (error: unknown) {
   if (hasStatusCode(error) && error.status === 401) {  // ✅ safe
@@ -86,24 +94,26 @@ if (result.status === 200 && isRecord(result.body)) {
 ### 6. Fix React Query Hooks
 
 **BEFORE:**
+
 ```typescript
 const { data } = useQuery({
   queryKey: ['packages'],
   queryFn: async () => {
     const response = await api.getPackages();
-    return response.body;  // ❌ unsafe-return
+    return response.body; // ❌ unsafe-return
   },
 });
 ```
 
 **AFTER:**
+
 ```typescript
 const { data } = useQuery({
   queryKey: ['packages'],
   queryFn: async () => {
     const response = await api.getPackages();
     if (response.status === 200) {
-      return response.body as PackageDto[];  // ✅ safe
+      return response.body as PackageDto[]; // ✅ safe
     }
     throw new Error('Failed to fetch packages');
   },
@@ -113,15 +123,19 @@ const { data } = useQuery({
 ### 7. Replace `any` with `unknown`
 
 **BEFORE:**
+
 ```typescript
-function handleData(data: any) {  // ❌ no-explicit-any
+function handleData(data: any) {
+  // ❌ no-explicit-any
   // ...
 }
 ```
 
 **AFTER:**
+
 ```typescript
-function handleData(data: unknown) {  // ✅ safe
+function handleData(data: unknown) {
+  // ✅ safe
   if (isRecord(data)) {
     // now you can use data safely
   }
@@ -131,15 +145,17 @@ function handleData(data: unknown) {  // ✅ safe
 ### 8. Fix JSON Parsing
 
 **BEFORE:**
+
 ```typescript
-const data = await response.json();  // ❌ no-unsafe-assignment
+const data = await response.json(); // ❌ no-unsafe-assignment
 ```
 
 **AFTER:**
+
 ```typescript
-const data = (await response.json()) as YourType;  // ✅ safe
+const data = (await response.json()) as YourType; // ✅ safe
 // or
-const data: YourType = await response.json() as YourType;  // ✅ safe
+const data: YourType = (await response.json()) as YourType; // ✅ safe
 ```
 
 ## File-Specific Fixes
@@ -214,29 +230,32 @@ import type {
 
 ```typescript
 import {
-  isApiError,      // Check if error is ApiError
-  hasStatusCode,   // Check if has .status property
-  hasMessage,      // Check if has .message property
-  isError,         // Check if is Error instance
+  isApiError, // Check if error is ApiError
+  hasStatusCode, // Check if has .status property
+  hasMessage, // Check if has .message property
+  isError, // Check if is Error instance
   getErrorMessage, // Extract message safely
-  getErrorStatus,  // Extract status safely
-  isRecord,        // Check if is object/record
+  getErrorStatus, // Extract status safely
+  isRecord, // Check if is object/record
 } from '@elope/shared';
 ```
 
 ## Testing After Fix
 
 1. **Verify TypeScript compiles:**
+
    ```bash
    npm run type-check
    ```
 
 2. **Verify lint passes:**
+
    ```bash
    npm run lint --no-cache
    ```
 
 3. **Count remaining errors:**
+
    ```bash
    npm run lint 2>&1 | grep "client/" | grep -E "no-unsafe|no-explicit-any" | wc -l
    ```
@@ -250,6 +269,7 @@ import {
 ## Common Mistakes to Avoid
 
 ❌ **Don't do this:**
+
 ```typescript
 catch (error: any) {  // Still uses 'any'
   console.error(error);  // Still unsafe
@@ -257,19 +277,23 @@ catch (error: any) {  // Still uses 'any'
 ```
 
 ❌ **Don't do this:**
+
 ```typescript
 const result = await api.getPackages();
-setPackages(result.body as PackageDto[]);  // Missing status check!
+setPackages(result.body as PackageDto[]); // Missing status check!
 ```
 
 ❌ **Don't do this:**
+
 ```typescript
-if (error.status === 401) {  // Missing type guard!
+if (error.status === 401) {
+  // Missing type guard!
   // ...
 }
 ```
 
 ✅ **Do this:**
+
 ```typescript
 catch (error: unknown) {
   console.error(getErrorMessage(error));

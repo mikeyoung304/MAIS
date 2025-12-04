@@ -17,17 +17,17 @@
  * - DELETE /v1/tenant-admin/availability-rules/:id - Delete rule
  */
 
-import { useState, useEffect } from "react";
-import type { AvailabilityRuleDto, ServiceDto } from "@macon/contracts";
-import { api } from "@/lib/api";
-import { logger } from "@/lib/logger";
-import { toast } from "sonner";
-import { SuccessMessage } from "@/components/shared/SuccessMessage";
-import { CreateRuleButton } from "./CreateRuleButton";
-import { RuleForm } from "./RuleForm";
-import { RulesList } from "./RulesList";
-import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
-import { useAvailabilityRulesManager } from "./useAvailabilityRulesManager";
+import { useState, useEffect } from 'react';
+import type { AvailabilityRuleDto, ServiceDto } from '@macon/contracts';
+import { api } from '@/lib/api';
+import { logger } from '@/lib/logger';
+import { toast } from 'sonner';
+import { SuccessMessage } from '@/components/shared/SuccessMessage';
+import { CreateRuleButton } from './CreateRuleButton';
+import { RuleForm } from './RuleForm';
+import { RulesList } from './RulesList';
+import { DeleteConfirmationDialog } from './DeleteConfirmationDialog';
+import { useAvailabilityRulesManager } from './useAvailabilityRulesManager';
 
 export function AvailabilityRulesManager() {
   const [rules, setRules] = useState<AvailabilityRuleDto[]>([]);
@@ -42,12 +42,12 @@ export function AvailabilityRulesManager() {
         setRules(result.body);
       }
     } catch (error) {
-      logger.error("Failed to fetch availability rules", {
+      logger.error('Failed to fetch availability rules', {
         error,
-        component: "AvailabilityRulesManager",
+        component: 'AvailabilityRulesManager',
       });
-      toast.error("Failed to load availability rules", {
-        description: "Please refresh the page or contact support.",
+      toast.error('Failed to load availability rules', {
+        description: 'Please refresh the page or contact support.',
       });
     } finally {
       setIsLoading(false);
@@ -63,12 +63,12 @@ export function AvailabilityRulesManager() {
         setServices(sortedServices);
       }
     } catch (error) {
-      logger.error("Failed to fetch services", {
+      logger.error('Failed to fetch services', {
         error,
-        component: "AvailabilityRulesManager",
+        component: 'AvailabilityRulesManager',
       });
-      toast.error("Failed to load services", {
-        description: "Service dropdown may be empty. Please refresh the page.",
+      toast.error('Failed to load services', {
+        description: 'Service dropdown may be empty. Please refresh the page.',
       });
     }
   };

@@ -1,14 +1,17 @@
 # Phase 2: Widget Implementation - Summary
 
 ## Implementation Date
+
 2025-11-06
 
 ## Overview
+
 Completed the React widget application that runs inside an iframe for the multi-tenant embeddable booking system. The widget is fully isolated and communicates with parent pages via postMessage API.
 
 ## Files Created
 
 ### 1. Widget Application Core
+
 - **`client/src/widget-main.tsx`** - Widget entry point, parses URL params and renders WidgetApp
 - **`client/src/widget/WidgetApp.tsx`** - Main widget component with branding and navigation
 - **`client/src/widget/WidgetMessenger.ts`** - Singleton service for postMessage communication
@@ -16,21 +19,26 @@ Completed the React widget application that runs inside an iframe for the multi-
 - **`client/src/widget/WidgetPackagePage.tsx`** - Widget version of package page (no router)
 
 ### 2. Build Configuration
+
 - **`client/widget.html`** - HTML template for widget build
 - **`client/widget-test.html`** - Test page for local widget development
 
 ### 3. Documentation
+
 - **`client/WIDGET_README.md`** - Comprehensive widget documentation
 
 ## Files Modified
 
 ### 1. Build System
+
 - **`client/vite.config.ts`** - Added multi-entry build config for main app + widget
 
 ### 2. API Client
+
 - **`client/src/lib/api.ts`** - Added `setTenantKey()` method and X-Tenant-Key header injection
 
 ### 3. Type Definitions
+
 - **`packages/contracts/src/dto.ts`** - Added TenantBrandingDto interface
 
 ## Architecture
@@ -79,6 +87,7 @@ Completed the React widget application that runs inside an iframe for the multi-
 ## Key Features Implemented
 
 ### 1. Widget Communication (WidgetMessenger)
+
 - **Singleton pattern** for consistent messaging
 - **Security**: Origin validation, explicit target origin
 - **Events sent to parent**:
@@ -90,12 +99,14 @@ Completed the React widget application that runs inside an iframe for the multi-
   - `NAVIGATION` - Route changed
 
 ### 2. Auto-Resize
+
 - Uses **ResizeObserver** to detect content changes
 - **Debounced** (100ms) to prevent spam
 - Skips resize if height change < 5px
 - Parent updates iframe height via postMessage handler
 
 ### 3. Tenant Branding
+
 - Fetches branding configuration from API
 - Applies CSS variables dynamically:
   - `--primary-color`
@@ -105,7 +116,9 @@ Completed the React widget application that runs inside an iframe for the multi-
 - Logo support (future)
 
 ### 4. Component Reuse
+
 Successfully reused existing components:
+
 - ✅ `CatalogGrid` logic (via `usePackages` hook)
 - ✅ `PackagePage` logic (via `usePackage` hook)
 - ✅ `DatePicker` component
@@ -114,11 +127,14 @@ Successfully reused existing components:
 - ✅ All UI components (Card, Button, Input, Label)
 
 ### 5. Multi-Entry Build
+
 Vite configured for two separate builds:
+
 - **Main app**: `dist/index.html`, `dist/assets/*`
 - **Widget**: `dist/widget.html`, `dist/widget/assets/*`
 
 ### 6. API Client Multi-Tenant Support
+
 - `api.setTenantKey(key)` - Set once per session
 - Automatically injects `X-Tenant-Key` header
 - Works alongside admin JWT authentication
@@ -127,9 +143,11 @@ Vite configured for two separate builds:
 ## Testing Setup
 
 ### Local Development Test Page
+
 Created `client/widget-test.html` for easy testing:
 
 **Features**:
+
 - Loads widget in iframe
 - Monitors all postMessage events
 - Real-time event log
@@ -137,31 +155,35 @@ Created `client/widget-test.html` for easy testing:
 - Configurable tenant/apiKey parameters
 
 **Usage**:
+
 1. Start dev server: `cd client && npm run dev`
 2. Open `widget-test.html` in browser
 3. Update config with valid tenant/apiKey
 4. Monitor events in real-time console
 
 ### Test Configuration
+
 ```javascript
 const config = {
   widgetUrl: 'http://localhost:3000/widget.html',
   tenant: 'demo-tenant',
   apiKey: 'pk_test_demo123',
   mode: 'embedded',
-  parentOrigin: window.location.origin
+  parentOrigin: window.location.origin,
 };
 ```
 
 ## Build Output
 
 ### Development
+
 ```bash
 npm run dev
 # Widget available at: http://localhost:3000/widget.html
 ```
 
 ### Production
+
 ```bash
 npm run build
 # Output:
@@ -189,7 +211,7 @@ Once SDK loader is implemented, parent pages will embed like this:
     onBookingComplete: (bookingId) => {
       console.log('Booking completed:', bookingId);
       // Track conversion, show success message, etc.
-    }
+    },
   });
 </script>
 ```
@@ -214,9 +236,11 @@ Once SDK loader is implemented, parent pages will embed like this:
 ## Known Issues & Workarounds
 
 ### Issue 1: TenantBrandingDto Import Error
+
 **Problem**: Contracts build fails due to pre-existing TypeScript errors
 
 **Workaround**: Defined `TenantBrandingDto` interface directly in WidgetApp.tsx
+
 ```typescript
 interface TenantBrandingDto {
   primaryColor?: string;
@@ -230,6 +254,7 @@ interface TenantBrandingDto {
 **Permanent Fix**: Once contracts build is fixed, import from `@elope/contracts`
 
 ### Issue 2: Badge Component Import
+
 **Problem**: Main app build fails due to empty Badge component
 
 **Impact**: Does not affect widget build (separate entry point)
@@ -239,21 +264,25 @@ interface TenantBrandingDto {
 ## API Endpoints Required (Server-Side)
 
 ### Implemented
+
 ✅ All existing catalog endpoints work with tenant isolation via `X-Tenant-Key` header
 
 ### Pending (for Phase 2 completion)
+
 ⏳ **GET `/api/v1/tenant/branding`** - Return tenant branding configuration
-  - Currently mocked in WidgetApp
-  - Should return `TenantBrandingDto` from tenant database record
+
+- Currently mocked in WidgetApp
+- Should return `TenantBrandingDto` from tenant database record
 
 Example implementation:
+
 ```typescript
 // server/src/routes/tenant.routes.ts
 router.get('/branding', requireTenant, async (req, res) => {
   const branding = req.tenant.branding || {
     primaryColor: '#7C3AED',
     secondaryColor: '#DDD6FE',
-    fontFamily: 'Inter, sans-serif'
+    fontFamily: 'Inter, sans-serif',
   };
   res.json({ branding });
 });
@@ -300,6 +329,7 @@ router.get('/branding', requireTenant, async (req, res) => {
 ## Lines of Code
 
 Approximate widget implementation:
+
 - **WidgetMessenger.ts**: ~120 lines
 - **widget-main.tsx**: ~50 lines
 - **WidgetApp.tsx**: ~180 lines
@@ -317,6 +347,7 @@ Approximate widget implementation:
 ## Dependencies
 
 No new npm packages required! All dependencies already present:
+
 - ✅ React, React-DOM
 - ✅ @tanstack/react-query
 - ✅ Vite
@@ -335,38 +366,48 @@ No new npm packages required! All dependencies already present:
 ## Deployment Checklist
 
 ### Build
+
 ```bash
 cd client
 npm run build
 ```
 
 ### Output Verification
+
 ```bash
 ls -la dist/widget.html           # Widget entry point
 ls -la dist/widget/assets/        # Widget assets
 ```
 
 ### CDN Upload
+
 Upload these files to your CDN:
+
 - `dist/widget.html` → `https://cdn.elope.com/widget.html`
 - `dist/widget/assets/*` → `https://cdn.elope.com/widget/assets/*`
 
 ### Environment Variables
+
 Ensure widget build has correct API URL:
+
 ```bash
 VITE_API_URL=https://api.elope.com npm run build
 ```
 
 ### CORS Configuration
+
 Server must allow widget domain:
+
 ```typescript
 // server/src/app.ts
-app.use(cors({
-  origin: [
-    'https://cdn.elope.com',  // Widget domain
-    // ... other allowed origins
-  ]
-}));
+app.use(
+  cors({
+    origin: [
+      'https://cdn.elope.com', // Widget domain
+      // ... other allowed origins
+    ],
+  })
+);
 ```
 
 ## Documentation

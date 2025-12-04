@@ -9,12 +9,12 @@
  * - Segment navigation (tabs to switch between segments)
  */
 
-import { useState, useCallback, useEffect, useMemo } from "react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,15 +24,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Loader2, Save, X, RefreshCw, AlertTriangle, CheckCircle, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
-import { api } from "@/lib/api";
-import { logger } from "@/lib/logger";
-import { useVisualEditor } from "./hooks/useVisualEditor";
-import { EditablePackageGrid } from "./components/EditablePackageGrid";
-import type { PackagePhoto, DraftUpdate } from "./hooks/useVisualEditor";
-import type { SegmentDto } from "@macon/contracts";
+} from '@/components/ui/alert-dialog';
+import { Loader2, Save, X, RefreshCw, AlertTriangle, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { api } from '@/lib/api';
+import { logger } from '@/lib/logger';
+import { useVisualEditor } from './hooks/useVisualEditor';
+import { EditablePackageGrid } from './components/EditablePackageGrid';
+import type { PackagePhoto, DraftUpdate } from './hooks/useVisualEditor';
+import type { SegmentDto } from '@macon/contracts';
 
 export function VisualEditorDashboard() {
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
@@ -74,9 +74,9 @@ export function VisualEditorDashboard() {
         // Check if this is an abort error (component unmounted)
         if (isCancelled) return;
         // Segments are optional, log but don't fail
-        logger.warn("Failed to load segments", {
+        logger.warn('Failed to load segments', {
           error,
-          component: "VisualEditorDashboard"
+          component: 'VisualEditorDashboard',
         });
       }
     };
@@ -90,7 +90,7 @@ export function VisualEditorDashboard() {
 
   // Filter packages by selected segment
   const filteredPackages = useMemo(() => {
-    if (!selectedSegmentId || selectedSegmentId === "all") {
+    if (!selectedSegmentId || selectedSegmentId === 'all') {
       return packages;
     }
     return packages.filter((pkg) => pkg.segmentId === selectedSegmentId);
@@ -144,12 +144,7 @@ export function VisualEditorDashboard() {
               <p className="font-medium text-destructive">Failed to load packages</p>
               <p className="text-sm text-muted-foreground">{error}</p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={loadPackages}
-              className="ml-auto"
-            >
+            <Button variant="outline" size="sm" onClick={loadPackages} className="ml-auto">
               <RefreshCw className="h-4 w-4 mr-1" />
               Retry
             </Button>
@@ -183,14 +178,14 @@ export function VisualEditorDashboard() {
           disabled={loading || isPublishing}
           title="Refresh packages"
         >
-          <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+          <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
         </Button>
       </div>
 
       {/* Segment tabs - only show when there are multiple segments */}
       {segments.length > 1 && (
         <Tabs
-          value={selectedSegmentId || "all"}
+          value={selectedSegmentId || 'all'}
           onValueChange={setSelectedSegmentId}
           className="w-full"
         >
@@ -216,10 +211,10 @@ export function VisualEditorDashboard() {
       {/* Floating action bar */}
       <div
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50",
-          "bg-background/95 backdrop-blur border-t shadow-lg",
-          "transform transition-transform duration-300",
-          draftCount === 0 && "translate-y-full"
+          'fixed bottom-0 left-0 right-0 z-50',
+          'bg-background/95 backdrop-blur border-t shadow-lg',
+          'transform transition-transform duration-300',
+          draftCount === 0 && 'translate-y-full'
         )}
       >
         <div className="container mx-auto px-4 py-3">
@@ -232,12 +227,18 @@ export function VisualEditorDashboard() {
                   Saving...
                 </Badge>
               ) : draftCount > 0 ? (
-                <Badge variant="outline" className="gap-1 bg-amber-50 text-amber-700 border-amber-300">
+                <Badge
+                  variant="outline"
+                  className="gap-1 bg-amber-50 text-amber-700 border-amber-300"
+                >
                   <AlertTriangle className="h-3 w-3" />
-                  {draftCount} unsaved {draftCount === 1 ? "change" : "changes"}
+                  {draftCount} unsaved {draftCount === 1 ? 'change' : 'changes'}
                 </Badge>
               ) : (
-                <Badge variant="outline" className="gap-1 bg-green-50 text-green-700 border-green-300">
+                <Badge
+                  variant="outline"
+                  className="gap-1 bg-green-50 text-green-700 border-green-300"
+                >
                   <CheckCircle className="h-3 w-3" />
                   All changes published
                 </Badge>
@@ -284,8 +285,8 @@ export function VisualEditorDashboard() {
           <AlertDialogHeader>
             <AlertDialogTitle>Discard Changes?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to discard changes to {draftCount} package{draftCount !== 1 ? "s" : ""}?
-              This action cannot be undone.
+              Are you sure you want to discard changes to {draftCount} package
+              {draftCount !== 1 ? 's' : ''}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

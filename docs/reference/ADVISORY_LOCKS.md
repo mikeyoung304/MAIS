@@ -9,6 +9,7 @@
 This document tracks all PostgreSQL advisory lock IDs used in the MAIS codebase to prevent collisions and provide a central registry for lock coordination across the application.
 
 Advisory locks are lightweight application-level locks that use 32-bit or 64-bit integers as lock identifiers. Proper management of these IDs is critical to prevent:
+
 - Lock ID collisions between different features
 - Deadlocks from conflicting lock acquisition patterns
 - Race conditions from incorrect lock scoping
@@ -19,11 +20,12 @@ Advisory locks are lightweight application-level locks that use 32-bit or 64-bit
 
 These locks use fixed integer values and coordinate across all tenants/resources.
 
-| Lock ID | Component | Purpose | Scope | Lock Type | File Reference |
-|---------|-----------|---------|-------|-----------|----------------|
+| Lock ID    | Component          | Purpose                        | Scope  | Lock Type                        | File Reference                                  |
+| ---------- | ------------------ | ------------------------------ | ------ | -------------------------------- | ----------------------------------------------- |
 | `42424242` | IdempotencyService | Cleanup scheduler coordination | Global | Session (`pg_try_advisory_lock`) | `server/src/services/idempotency.service.ts:41` |
 
 **Notes:**
+
 - `42424242` is used with `pg_try_advisory_lock()` (non-blocking, session-scoped)
 - Lock is acquired before cleanup, released with `pg_advisory_unlock()`
 - Prevents concurrent cleanup execution across multiple server instances
@@ -32,12 +34,13 @@ These locks use fixed integer values and coordinate across all tenants/resources
 
 These locks use FNV-1a hashing to generate deterministic lock IDs from tenant and resource identifiers.
 
-| Hash Input Pattern | Component | Purpose | Scope | Lock Type | File Reference |
-|-------------------|-----------|---------|-------|-----------|----------------|
-| `{tenantId}:{date}` | BookingRepository | Booking creation race prevention | Per tenant+date | Transaction (`pg_advisory_xact_lock`) | `server/src/adapters/prisma/booking.repository.ts:24-35` |
-| `{tenantId}:balance:{bookingId}` | BookingRepository | Balance payment coordination | Per tenant+booking | Transaction (`pg_advisory_xact_lock`) | `server/src/adapters/prisma/booking.repository.ts:41-51` |
+| Hash Input Pattern               | Component         | Purpose                          | Scope              | Lock Type                             | File Reference                                           |
+| -------------------------------- | ----------------- | -------------------------------- | ------------------ | ------------------------------------- | -------------------------------------------------------- |
+| `{tenantId}:{date}`              | BookingRepository | Booking creation race prevention | Per tenant+date    | Transaction (`pg_advisory_xact_lock`) | `server/src/adapters/prisma/booking.repository.ts:24-35` |
+| `{tenantId}:balance:{bookingId}` | BookingRepository | Balance payment coordination     | Per tenant+booking | Transaction (`pg_advisory_xact_lock`) | `server/src/adapters/prisma/booking.repository.ts:41-51` |
 
 **Notes:**
+
 - FNV-1a produces 32-bit signed integers compatible with PostgreSQL `bigint`
 - Transaction-scoped locks automatically released on commit/rollback
 - Hash collisions are theoretically possible but extremely unlikely in practice
@@ -80,6 +83,7 @@ function hashString(input: string): number {
 ```
 
 **Properties:**
+
 - Deterministic: Same input always produces same output
 - Fast: O(n) where n is string length
 - Good distribution: Low collision rate for similar inputs
@@ -90,12 +94,14 @@ function hashString(input: string): number {
 ### When to Use Advisory Locks
 
 Advisory locks are appropriate for:
+
 - Preventing race conditions in critical sections
 - Coordinating concurrent operations on shared resources
 - Avoiding deadlocks from row-level locking conflicts
 - Global coordination across multiple application instances
 
 Avoid advisory locks when:
+
 - Database constraints can enforce uniqueness (use `@@unique` instead)
 - Simple row-level locking is sufficient
 - Lock contention would be extremely high
@@ -103,33 +109,39 @@ Avoid advisory locks when:
 ### Choosing Lock ID Strategy
 
 #### Use Hardcoded IDs When:
+
 - Lock coordinates global operations (all tenants)
 - Lock ID is feature-specific and unique
 - No resource-specific scoping needed
 
 **Process:**
+
 1. Choose a unique 32-bit integer (avoid common values like 1, 100, etc.)
 2. Add to "Hardcoded Lock IDs" table in this document
 3. Document purpose and scope
 4. Use descriptive constant name in code
 
 **Example:**
+
 ```typescript
 private readonly IDEMPOTENCY_CLEANUP_LOCK = 42424242;
 ```
 
 #### Use FNV-1a Hashing When:
+
 - Lock is scoped to specific tenant/resource
 - Lock ID must be deterministic from runtime values
 - Many lock IDs needed (thousands of combinations)
 
 **Process:**
+
 1. Define hash input pattern: `{tenantId}:{resourceType}:{resourceId}`
 2. Add to "Dynamically Generated Lock IDs" table in this document
 3. Document hash pattern and purpose
 4. Implement FNV-1a hash function
 
 **Example:**
+
 ```typescript
 function hashTenantDate(tenantId: string, date: string): number {
   const str = `${tenantId}:${date}`;
@@ -147,6 +159,7 @@ function hashTenantDate(tenantId: string, date: string): number {
 ### Lock Acquisition Patterns
 
 #### Transaction-Scoped Lock (Recommended)
+
 ```typescript
 await this.prisma.$transaction(async (tx) => {
   // Acquire lock (automatically released on commit/rollback)
@@ -165,6 +178,7 @@ await this.prisma.$transaction(async (tx) => {
 ```
 
 #### Session-Scoped Lock (Schedulers)
+
 ```typescript
 // Try to acquire lock (non-blocking)
 const lockResult = await this.prisma.$queryRaw<Array<{ pg_try_advisory_lock: boolean }>>`
@@ -187,17 +201,20 @@ try {
 ## Collision Risk Analysis
 
 ### Hardcoded IDs
+
 - **Space:** 4.2 billion possible values (32-bit signed integer)
 - **Current Usage:** 1 lock ID
 - **Risk:** LOW - Manual coordination required
 
 ### FNV-1a Hashed IDs
+
 - **Space:** 4.2 billion possible values
 - **Current Patterns:** 2 hash patterns
 - **Collision Probability:** ~0.00000012% for 1000 unique inputs
 - **Risk:** EXTREMELY LOW - Birthday paradox threshold at ~77,000 inputs
 
 **Mitigation:**
+
 - Use tenant-scoped patterns (naturally partitions space)
 - Include resource type in hash input (e.g., `:balance:` prefix)
 - Monitor for lock timeouts in production (indicator of contention)
@@ -205,14 +222,15 @@ try {
 ## Testing Advisory Locks
 
 ### Unit Tests
+
 Mock Prisma `$queryRaw` and `$executeRaw` to test lock acquisition logic:
 
 ```typescript
-prismaMock.$queryRaw
-  .mockResolvedValueOnce([{ pg_try_advisory_lock: true }]); // Lock acquired
+prismaMock.$queryRaw.mockResolvedValueOnce([{ pg_try_advisory_lock: true }]); // Lock acquired
 ```
 
 ### Integration Tests
+
 Use actual database to test lock behavior:
 
 ```typescript
@@ -220,7 +238,7 @@ it('should prevent race condition with advisory lock', async () => {
   // Simulate concurrent requests
   const promises = [
     bookingRepo.create(tenantId, { date: '2025-01-15' }),
-    bookingRepo.create(tenantId, { date: '2025-01-15' })
+    bookingRepo.create(tenantId, { date: '2025-01-15' }),
   ];
 
   // One succeeds, one fails with BookingConflictError
@@ -231,6 +249,7 @@ it('should prevent race condition with advisory lock', async () => {
 ## Monitoring and Debugging
 
 ### Check Active Advisory Locks
+
 ```sql
 -- View all active advisory locks
 SELECT
@@ -245,6 +264,7 @@ WHERE locktype = 'advisory';
 ```
 
 ### Check Lock Wait Times
+
 ```sql
 -- Monitor lock contention
 SELECT
@@ -259,16 +279,19 @@ WHERE NOT granted AND locktype = 'advisory';
 ### Common Issues
 
 **Lock Never Released:**
+
 - Symptom: Transactions hang indefinitely
 - Cause: Session lock not released in error path
 - Solution: Always use try-finally or transaction-scoped locks
 
 **Deadlocks:**
+
 - Symptom: P2034 Prisma error
 - Cause: Multiple locks acquired in different orders
 - Solution: Always acquire locks in consistent order (e.g., sort by lock ID)
 
 **Lock Contention:**
+
 - Symptom: High transaction latency
 - Cause: Too many operations on same lock ID
 - Solution: Increase lock granularity or use optimistic locking
@@ -283,8 +306,8 @@ WHERE NOT granted AND locktype = 'advisory';
 
 ## Change History
 
-| Date | Change | Author |
-|------|--------|--------|
+| Date       | Change                   | Author           |
+| ---------- | ------------------------ | ---------------- |
 | 2025-12-03 | Initial registry created | Engineering Team |
 
 ---

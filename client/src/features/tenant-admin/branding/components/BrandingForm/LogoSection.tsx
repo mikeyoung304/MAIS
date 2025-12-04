@@ -4,10 +4,10 @@
  * Logo upload section with help tooltip
  */
 
-import { HelpCircle } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogoUploadButton } from "../LogoUploadButton";
+import { HelpCircle } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { LogoUploadButton } from '../LogoUploadButton';
 
 interface LogoSectionProps {
   logoUrl: string;
@@ -35,7 +35,7 @@ export function LogoSection({ logoUrl, disabled = false, onLogoUrlChange }: Logo
         onUploadError={(errorMsg) => {
           // Error will be shown in the component itself
           if (import.meta.env.DEV) {
-            console.error("Logo upload error:", errorMsg);
+            console.error('Logo upload error:', errorMsg);
           }
         }}
         disabled={disabled}
