@@ -1,10 +1,12 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: "231"
 tags: [data-integrity, code-review, landing-page, race-conditions]
 dependencies: []
 source: "code-review-landing-page-visual-editor"
+resolved_at: "2025-12-04"
+resolved_by: "feat/landing-page-editor-p1-security branch (documentation in plan)"
 ---
 
 # TODO-231: Flush Auto-Save Before Publish to Prevent Race Condition

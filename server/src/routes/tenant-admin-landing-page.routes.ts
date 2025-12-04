@@ -2,6 +2,12 @@
  * Tenant Admin Landing Page Routes
  * Protected routes for tenant administrators to manage their landing page configuration
  * Requires tenant admin authentication via JWT
+ *
+ * SECURITY:
+ * - All endpoints verify tenant isolation via res.locals.tenantAuth
+ * - Input sanitization applied to all text fields (XSS prevention)
+ * - Image URLs validated in repository layer (protocol validation)
+ * - Publish operation wrapped in transaction (atomicity)
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
@@ -10,6 +16,7 @@ import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repositor
 import { LandingPageConfigSchema } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
 import { NotFoundError, ValidationError } from '../lib/errors';
+import { sanitizeObject } from '../lib/sanitization';
 
 /**
  * Create tenant admin landing page routes
@@ -67,6 +74,10 @@ export function createTenantAdminLandingPageRoutes(
    *   finalCta?: { headline, subheadline, ctaText }
    * }
    *
+   * SECURITY:
+   * - Tenant isolation enforced via res.locals.tenantAuth
+   * - Input sanitization applied to all text fields (XSS prevention)
+   *
    * @returns 200 - Updated landing page configuration
    * @returns 400 - Validation error
    * @returns 401 - Missing or invalid authentication
@@ -84,8 +95,12 @@ export function createTenantAdminLandingPageRoutes(
       // Validate request body against LandingPageConfigSchema
       const data = LandingPageConfigSchema.parse(req.body);
 
+      // Sanitize all text fields (XSS prevention)
+      // Note: URL fields are preserved as-is (validated by SafeUrlSchema in contracts)
+      const sanitizedData = sanitizeObject(data, { allowHtml: [] });
+
       // Update landing page config
-      const updatedConfig = await tenantRepo.updateLandingPageConfig(tenantId, data);
+      const updatedConfig = await tenantRepo.updateLandingPageConfig(tenantId, sanitizedData);
 
       logger.info(
         { tenantId },
@@ -171,6 +186,173 @@ export function createTenantAdminLandingPageRoutes(
 
       res.json({ success: true });
     } catch (error) {
+      next(error);
+    }
+  });
+
+  // ============================================================================
+  // Draft System Endpoints
+  // ============================================================================
+
+  /**
+   * GET /v1/tenant-admin/landing-page/draft
+   * Get current draft and published landing page configuration
+   *
+   * SECURITY: Tenant isolation enforced via res.locals.tenantAuth
+   *
+   * @returns 200 - Draft wrapper with draft/published configs
+   * @returns 401 - Missing or invalid authentication
+   * @returns 404 - Tenant not found
+   * @returns 500 - Internal server error
+   */
+  router.get('/draft', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const { tenantId } = tenantAuth;
+
+      const draftWrapper = await tenantRepo.getLandingPageDraft(tenantId);
+      res.json(draftWrapper);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  /**
+   * PUT /v1/tenant-admin/landing-page/draft
+   * Save draft landing page configuration (auto-save target)
+   *
+   * SECURITY:
+   * - Tenant isolation enforced via res.locals.tenantAuth
+   * - Input sanitization applied to all text fields (XSS prevention)
+   * - Image URLs re-validated in repository layer (protocol validation)
+   *
+   * @returns 200 - Save result with timestamp
+   * @returns 400 - Validation error
+   * @returns 401 - Missing or invalid authentication
+   * @returns 404 - Tenant not found
+   * @returns 500 - Internal server error
+   */
+  router.put('/draft', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const { tenantId } = tenantAuth;
+
+      // Validate request body against LandingPageConfigSchema
+      const data = LandingPageConfigSchema.parse(req.body);
+
+      // Sanitize all text fields (XSS prevention)
+      const sanitizedData = sanitizeObject(data, { allowHtml: [] });
+
+      // Save draft (repository re-validates image URLs)
+      const result = await tenantRepo.saveLandingPageDraft(tenantId, sanitizedData);
+
+      logger.info({ tenantId }, 'Landing page draft saved by tenant admin');
+
+      res.json(result);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        res.status(400).json({
+          error: 'Validation error',
+          details: error.issues,
+        });
+        return;
+      }
+      if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
+      if (error instanceof ValidationError) {
+        res.status(400).json({ error: error.message });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  /**
+   * POST /v1/tenant-admin/landing-page/publish
+   * Publish draft to live landing page
+   *
+   * SECURITY:
+   * - Tenant isolation enforced via res.locals.tenantAuth
+   * - Atomic transaction ensures draft→published copy is all-or-nothing
+   *
+   * @returns 200 - Publish result with timestamp
+   * @returns 400 - No draft to publish
+   * @returns 401 - Missing or invalid authentication
+   * @returns 404 - Tenant not found
+   * @returns 500 - Internal server error
+   */
+  router.post('/publish', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const { tenantId } = tenantAuth;
+
+      const result = await tenantRepo.publishLandingPageDraft(tenantId);
+
+      logger.info({ tenantId }, 'Landing page draft published by tenant admin');
+
+      res.json(result);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
+      if (error instanceof ValidationError) {
+        // "No draft to publish" error
+        res.status(400).json({ error: error.message });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  /**
+   * DELETE /v1/tenant-admin/landing-page/draft
+   * Discard draft and revert to published configuration
+   *
+   * SECURITY: Tenant isolation enforced via res.locals.tenantAuth
+   *
+   * @returns 200 - Discard result
+   * @returns 401 - Missing or invalid authentication
+   * @returns 404 - Tenant not found
+   * @returns 500 - Internal server error
+   */
+  router.delete('/draft', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const { tenantId } = tenantAuth;
+
+      const result = await tenantRepo.discardLandingPageDraft(tenantId);
+
+      logger.info({ tenantId }, 'Landing page draft discarded by tenant admin');
+
+      res.json(result);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
       next(error);
     }
   });

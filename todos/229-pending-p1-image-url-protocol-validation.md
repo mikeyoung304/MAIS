@@ -1,10 +1,12 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: "229"
 tags: [security, code-review, landing-page, xss, images]
 dependencies: []
 source: "code-review-landing-page-visual-editor"
+resolved_at: "2025-12-04"
+resolved_by: "feat/landing-page-editor-p1-security branch"
 ---
 
 # TODO-229: Re-validate Image URLs in Repository Layer

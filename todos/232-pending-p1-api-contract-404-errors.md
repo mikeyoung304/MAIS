@@ -1,10 +1,12 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: "232"
 tags: [api, code-review, landing-page, ts-rest]
 dependencies: []
 source: "code-review-landing-page-visual-editor"
+resolved_at: "2025-12-04"
+resolved_by: "feat/landing-page-editor-p1-security branch"
 ---
 
 # TODO-232: Add Missing 404 Error Status Codes to Draft Contracts

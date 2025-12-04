@@ -1,10 +1,12 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: "227"
 tags: [security, code-review, landing-page, tenant-isolation]
 dependencies: []
 source: "code-review-landing-page-visual-editor"
+resolved_at: "2025-12-04"
+resolved_by: "feat/landing-page-editor-p1-security branch"
 ---
 
 # TODO-227: Draft Endpoints Must Verify Tenant Isolation
