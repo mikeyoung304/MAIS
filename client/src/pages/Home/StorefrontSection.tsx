@@ -80,8 +80,8 @@ export function StorefrontSection() {
 
         {/* Bottom line */}
         <p className="text-center text-text-muted mt-16 text-lg">
-          Your brand. Your packages. Your pricing.
-          <span className="block mt-1 text-text-primary font-medium">We handle the tech. You get the bookings.</span>
+          Need a new site? We'll build it. Already have one? We'll plug right in.
+          <span className="block mt-1 text-text-primary font-medium">Your brand. Your bookings. Zero tech headaches.</span>
         </p>
       </Container>
     </section>
