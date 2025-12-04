@@ -1,3 +1,11 @@
+---
+status: complete
+priority: p3
+issue_id: "095"
+tags: [todo]
+dependencies: []
+---
+
 # COMPLETED: Add constant-time response for tenant lookup (timing attack mitigation)
 
 **Priority:** P3 (Low)

@@ -1,3 +1,11 @@
+---
+status: complete
+priority: p2
+issue_id: "176"
+tags: [todo]
+dependencies: []
+---
+
 # TODO-176: useConfirmDialog Promise Never Resolves False on Cancel
 
 **Priority:** P2 (Code Quality)

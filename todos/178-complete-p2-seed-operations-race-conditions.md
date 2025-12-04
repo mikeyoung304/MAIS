@@ -1,3 +1,11 @@
+---
+status: complete
+priority: p2
+issue_id: "178"
+tags: [todo]
+dependencies: []
+---
+
 # TODO-178: Seed Operations Missing Transaction Wrapping
 
 **Priority:** P2 (Data Integrity)

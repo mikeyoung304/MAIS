@@ -1,3 +1,11 @@
+---
+status: complete
+priority: p2
+issue_id: "175"
+tags: [todo]
+dependencies: []
+---
+
 # TODO-175: Metrics Endpoint Exposes Sensitive Environment Data
 
 **Priority:** P2 (Security)

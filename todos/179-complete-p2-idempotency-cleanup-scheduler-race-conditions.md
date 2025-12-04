@@ -1,3 +1,11 @@
+---
+status: complete
+priority: p2
+issue_id: "179"
+tags: [todo]
+dependencies: []
+---
+
 # TODO-179: Idempotency Cleanup Scheduler Race Conditions
 
 **Priority:** P2 (Data Integrity)

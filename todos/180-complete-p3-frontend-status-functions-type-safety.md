@@ -1,3 +1,11 @@
+---
+status: complete
+priority: p3
+issue_id: "180"
+tags: [todo]
+dependencies: []
+---
+
 # TODO-180: Frontend Status Functions Accept String Instead of Typed Unions
 
 **Priority:** P3 (Type Safety)

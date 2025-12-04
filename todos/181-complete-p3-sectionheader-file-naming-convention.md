@@ -1,3 +1,11 @@
+---
+status: complete
+priority: p3
+issue_id: "181"
+tags: [todo]
+dependencies: []
+---
+
 # TODO-181: SectionHeader.tsx File Naming Inconsistency
 
 **Priority:** P3 (Code Consistency)
