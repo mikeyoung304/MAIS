@@ -64,7 +64,9 @@ export function HeroSection() {
           className="text-xl md:text-2xl lg:text-3xl text-text-muted font-light mb-16 leading-relaxed max-w-2xl mx-auto animate-fade-slide-up"
           style={{ animationDelay: "0.4s" }}
         >
-          The booking platform for creative professionals who'd rather be creating.
+          We build and host your website. Clients book and pay directly.
+          <br />
+          You focus on your craft.
         </p>
 
         {/* Email Form */}

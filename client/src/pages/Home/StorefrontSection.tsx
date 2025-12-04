@@ -21,12 +21,14 @@ export function StorefrontSection() {
             id="solution-heading"
             className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary mb-8 leading-[1.1] tracking-tight"
           >
-            One link. Complete booking system.
+            Your website. Your storefront.
+            <br />
+            <span className="text-sage">Done for you.</span>
           </h2>
           <p className="text-xl md:text-2xl text-text-muted font-light leading-relaxed">
-            Your clients choose a package, pick a date, and pay—all in one flow.
+            We design, build, and host a professional site with built-in booking.
             <br />
-            You get a text when someone books. That's it.
+            Clients choose a package, pick a date, and pay—all in one flow.
           </p>
         </div>
 
@@ -78,8 +80,8 @@ export function StorefrontSection() {
 
         {/* Bottom line */}
         <p className="text-center text-text-muted mt-16 text-lg">
-          Your packages. Your pricing. Your availability.
-          <span className="block mt-1 text-text-primary font-medium">Clients book and pay instantly.</span>
+          Your brand. Your packages. Your pricing.
+          <span className="block mt-1 text-text-primary font-medium">We handle the tech. You get the bookings.</span>
         </p>
       </Container>
     </section>
