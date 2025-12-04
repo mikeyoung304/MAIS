@@ -45,7 +45,7 @@ export function HeroSection() {
           className="text-sage text-sm font-medium tracking-[0.2em] uppercase mb-8 animate-fade-slide-up"
           style={{ animationDelay: "0.1s" }}
         >
-          For Creative Professionals
+          For Service Providers
         </p>
 
         {/* Headline */}
@@ -129,7 +129,7 @@ export function HeroSection() {
           className="text-sm text-text-muted/60 mt-6 animate-fade-slide-up"
           style={{ animationDelay: "0.7s" }}
         >
-          Join photographers, wedding planners, and event professionals.
+          For consultants, coaches, creatives, and side hustles ready to grow.
         </p>
       </div>
     </section>

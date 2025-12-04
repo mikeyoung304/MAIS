@@ -28,10 +28,12 @@ export function ProblemSection() {
           {/* Body - empowering framing */}
           <div className="text-xl md:text-2xl text-text-muted leading-relaxed space-y-6 font-light">
             <p>
-              You've built something real. Clients find you. They want to book.
+              Whether it's your full-time gig or your growing side hustle—
+              <br />
+              you've got the skills. People want what you offer.
             </p>
             <p>
-              Now it's time for your systems to match your talent.
+              Now it's time for your systems to match your ambition.
             </p>
           </div>
 
