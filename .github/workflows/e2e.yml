@@ -1,10 +1,14 @@
 name: E2E Tests
 
+# DISABLED: This workflow is outdated (uses pnpm instead of npm, wrong paths)
+# E2E tests are handled by main-pipeline.yml instead
+# TODO: Remove this workflow file after verifying main-pipeline E2E works
 on:
-  push:
-    branches: ['**']
-  pull_request:
-    branches: ['**']
+  workflow_dispatch:  # Only run manually
+  # push:
+  #   branches: ['**']
+  # pull_request:
+  #   branches: ['**']
 
 jobs:
   e2e:
