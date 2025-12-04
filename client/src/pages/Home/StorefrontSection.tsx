@@ -21,7 +21,9 @@ export function StorefrontSection() {
             id="solution-heading"
             className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary mb-8 leading-[1.1] tracking-tight"
           >
-            Your website. Your storefront.
+            Your website.
+            <br />
+            Your storefront.
             <br />
             <span className="text-sage">Done for you.</span>
           </h2>
