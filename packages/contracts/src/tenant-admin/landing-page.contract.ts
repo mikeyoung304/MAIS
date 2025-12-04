@@ -6,8 +6,61 @@
 import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
 import { LandingPageConfigSchema } from '../landing-page';
+import {
+  BadRequestErrorSchema,
+  UnauthorizedErrorSchema,
+  ForbiddenErrorSchema,
+  NotFoundErrorSchema,
+  InternalServerErrorSchema,
+} from '../dto';
 
 const c = initContract();
+
+// ============================================================================
+// Draft System Schemas
+// ============================================================================
+
+/**
+ * Draft wrapper schema - stores draft alongside published config
+ * Uses JSON field structure in Tenant.landingPageConfig
+ */
+export const LandingPageDraftResponseSchema = z.object({
+  draft: LandingPageConfigSchema.nullable(),
+  published: LandingPageConfigSchema.nullable(),
+  draftUpdatedAt: z.string().datetime().nullable(),
+  publishedAt: z.string().datetime().nullable(),
+});
+
+export type LandingPageDraftResponse = z.infer<typeof LandingPageDraftResponseSchema>;
+
+/**
+ * Save draft response
+ */
+export const SaveDraftResponseSchema = z.object({
+  success: z.boolean(),
+  draftUpdatedAt: z.string().datetime(),
+});
+
+export type SaveDraftResponse = z.infer<typeof SaveDraftResponseSchema>;
+
+/**
+ * Publish draft response
+ */
+export const PublishDraftResponseSchema = z.object({
+  success: z.boolean(),
+  publishedAt: z.string().datetime(),
+});
+
+export type PublishDraftResponse = z.infer<typeof PublishDraftResponseSchema>;
+
+/**
+ * Discard draft response
+ */
+export const DiscardDraftResponseSchema = z.object({
+  success: z.boolean(),
+});
+
+export type DiscardDraftResponse = z.infer<typeof DiscardDraftResponseSchema>;
 
 /**
  * Landing Page Admin Contract
@@ -17,14 +70,17 @@ export const landingPageAdminContract = c.router({
   /**
    * GET /v1/tenant-admin/landing-page
    * Fetch current landing page configuration for authenticated tenant
+   *
+   * SECURITY: Tenant isolation enforced via res.locals.tenantAuth
    */
   getLandingPage: {
     method: 'GET',
     path: '/v1/tenant-admin/landing-page',
     responses: {
       200: LandingPageConfigSchema.nullable(),
-      401: z.object({ error: z.string() }),
-      500: z.object({ error: z.string() }),
+      401: UnauthorizedErrorSchema,
+      404: NotFoundErrorSchema,
+      500: InternalServerErrorSchema,
     },
     summary: 'Get landing page configuration',
   },
@@ -33,6 +89,11 @@ export const landingPageAdminContract = c.router({
    * PUT /v1/tenant-admin/landing-page
    * Update landing page configuration for authenticated tenant
    * Replaces entire configuration (full update)
+   *
+   * SECURITY:
+   * - Tenant isolation enforced via res.locals.tenantAuth
+   * - Input sanitization applied to all text fields (XSS prevention)
+   * - Image URLs validated against SafeImageUrlSchema (protocol validation)
    */
   updateLandingPage: {
     method: 'PUT',
@@ -40,9 +101,10 @@ export const landingPageAdminContract = c.router({
     body: LandingPageConfigSchema,
     responses: {
       200: LandingPageConfigSchema,
-      400: z.object({ error: z.string(), details: z.array(z.any()).optional() }),
-      401: z.object({ error: z.string() }),
-      500: z.object({ error: z.string() }),
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema,
+      404: NotFoundErrorSchema,
+      500: InternalServerErrorSchema,
     },
     summary: 'Update landing page configuration',
   },
@@ -70,11 +132,98 @@ export const landingPageAdminContract = c.router({
     }),
     responses: {
       200: z.object({ success: z.boolean() }),
-      400: z.object({ error: z.string(), details: z.array(z.any()).optional() }),
-      401: z.object({ error: z.string() }),
-      404: z.object({ error: z.string() }),
-      500: z.object({ error: z.string() }),
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema,
+      404: NotFoundErrorSchema,
+      500: InternalServerErrorSchema,
     },
     summary: 'Toggle a section on/off',
+  },
+
+  // ============================================================================
+  // Draft System Endpoints
+  // ============================================================================
+
+  /**
+   * GET /v1/tenant-admin/landing-page/draft
+   * Get current draft and published landing page configuration
+   *
+   * SECURITY: Tenant isolation enforced via res.locals.tenantAuth
+   */
+  getDraft: {
+    method: 'GET',
+    path: '/v1/tenant-admin/landing-page/draft',
+    responses: {
+      200: LandingPageDraftResponseSchema,
+      401: UnauthorizedErrorSchema,
+      404: NotFoundErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Get draft and published landing page configuration',
+  },
+
+  /**
+   * PUT /v1/tenant-admin/landing-page/draft
+   * Save draft landing page configuration (auto-save target)
+   *
+   * SECURITY:
+   * - Tenant isolation enforced via res.locals.tenantAuth
+   * - Input sanitization applied to all text fields (XSS prevention)
+   * - Image URLs validated against SafeImageUrlSchema (protocol validation)
+   */
+  saveDraft: {
+    method: 'PUT',
+    path: '/v1/tenant-admin/landing-page/draft',
+    body: LandingPageConfigSchema,
+    responses: {
+      200: SaveDraftResponseSchema,
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema,
+      404: NotFoundErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Save draft landing page configuration',
+  },
+
+  /**
+   * POST /v1/tenant-admin/landing-page/publish
+   * Publish draft to live landing page
+   *
+   * SECURITY:
+   * - Tenant isolation enforced via res.locals.tenantAuth
+   * - Atomic transaction ensures draft→published copy is all-or-nothing
+   * - No partial failures possible
+   */
+  publishDraft: {
+    method: 'POST',
+    path: '/v1/tenant-admin/landing-page/publish',
+    body: z.object({}), // Empty body - publishes current draft
+    responses: {
+      200: PublishDraftResponseSchema,
+      400: BadRequestErrorSchema, // No draft to publish
+      401: UnauthorizedErrorSchema,
+      404: NotFoundErrorSchema, // Tenant not found
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Publish draft landing page to live',
+  },
+
+  /**
+   * DELETE /v1/tenant-admin/landing-page/draft
+   * Discard draft and revert to published configuration
+   *
+   * SECURITY: Tenant isolation enforced via res.locals.tenantAuth
+   */
+  discardDraft: {
+    method: 'DELETE',
+    path: '/v1/tenant-admin/landing-page/draft',
+    body: z.undefined(),
+    responses: {
+      200: DiscardDraftResponseSchema,
+      401: UnauthorizedErrorSchema,
+      404: NotFoundErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Discard draft and revert to published configuration',
   },
 });

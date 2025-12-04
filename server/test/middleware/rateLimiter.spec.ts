@@ -98,9 +98,14 @@ describe('Rate Limiter Middleware', () => {
       app.use(createPublicLimiter());
       app.get('/test', (_req, res) => res.json({ success: true }));
 
-      // Make 300 requests (the limit)
-      for (let i = 0; i < 300; i++) {
-        await request(app).get('/test');
+      // Make 300 requests concurrently in batches to avoid timeout
+      // Using Promise.all with batches is much faster than sequential requests
+      const batchSize = 50;
+      for (let batch = 0; batch < 6; batch++) {
+        const requests = Array.from({ length: batchSize }, () =>
+          request(app).get('/test')
+        );
+        await Promise.all(requests);
       }
 
       // 301st request should be rate limited
@@ -111,7 +116,7 @@ describe('Rate Limiter Middleware', () => {
         error: 'too_many_requests',
         message: 'Rate limit exceeded. Please try again later.',
       });
-    });
+    }, 30000); // Extended timeout for 300 requests
 
     it('should decrement remaining count with each request', async () => {
       const app = express();

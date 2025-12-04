@@ -4,9 +4,15 @@
  */
 
 import { PrismaClient, Tenant } from '../../generated/prisma';
-import { TenantPublicDtoSchema, ALLOWED_FONT_FAMILIES } from '@macon/contracts';
-import type { TenantPublicDto } from '@macon/contracts';
+import {
+  TenantPublicDtoSchema,
+  ALLOWED_FONT_FAMILIES,
+  SafeImageUrlSchema,
+  LandingPageConfigSchema,
+} from '@macon/contracts';
+import type { TenantPublicDto, LandingPageConfig } from '@macon/contracts';
 import { logger } from '../../lib/core/logger';
+import { NotFoundError, ValidationError } from '../../lib/errors';
 
 export interface CreateTenantInput {
   slug: string;
@@ -348,4 +354,276 @@ export class PrismaTenantRepository {
     // Save updated config
     return await this.updateLandingPageConfig(tenantId, config);
   }
+
+  // ============================================================================
+  // Draft System Methods
+  // ============================================================================
+
+  /**
+   * Landing page config wrapper type for draft system
+   */
+  private getLandingPageWrapper(config: any): LandingPageDraftWrapper {
+    if (!config || typeof config !== 'object') {
+      return {
+        draft: null,
+        published: null,
+        draftUpdatedAt: null,
+        publishedAt: null,
+      };
+    }
+
+    return {
+      draft: config.draft ?? null,
+      published: config.published ?? null,
+      draftUpdatedAt: config.draftUpdatedAt ?? null,
+      publishedAt: config.publishedAt ?? null,
+    };
+  }
+
+  /**
+   * Validate all image URLs in a landing page config
+   * Defense-in-depth against XSS via data: or javascript: URLs
+   *
+   * SECURITY: Re-validates URLs even after Zod schema validation
+   * to catch browser-modified payloads that bypass initial validation.
+   *
+   * @param config - Landing page configuration to validate
+   * @throws ValidationError if any URL uses a dangerous protocol
+   */
+  private validateImageUrls(config: LandingPageConfig): void {
+    const urlsToValidate: { path: string; url: string }[] = [];
+
+    // Collect all image URLs from config
+    if (config.hero?.backgroundImageUrl) {
+      urlsToValidate.push({
+        path: 'hero.backgroundImageUrl',
+        url: config.hero.backgroundImageUrl,
+      });
+    }
+
+    if (config.about?.imageUrl) {
+      urlsToValidate.push({
+        path: 'about.imageUrl',
+        url: config.about.imageUrl,
+      });
+    }
+
+    if (config.accommodation?.imageUrl) {
+      urlsToValidate.push({
+        path: 'accommodation.imageUrl',
+        url: config.accommodation.imageUrl,
+      });
+    }
+
+    if (config.gallery?.images) {
+      config.gallery.images.forEach((img, idx) => {
+        if (img.url) {
+          urlsToValidate.push({
+            path: `gallery.images[${idx}].url`,
+            url: img.url,
+          });
+        }
+      });
+    }
+
+    if (config.testimonials?.items) {
+      config.testimonials.items.forEach((item, idx) => {
+        if (item.imageUrl) {
+          urlsToValidate.push({
+            path: `testimonials.items[${idx}].imageUrl`,
+            url: item.imageUrl,
+          });
+        }
+      });
+    }
+
+    // Validate each URL
+    for (const { path, url } of urlsToValidate) {
+      const result = SafeImageUrlSchema.safeParse(url);
+      if (!result.success) {
+        logger.warn({ path, url: url.substring(0, 100) }, 'Invalid image URL rejected');
+        throw new ValidationError(`Invalid image URL at ${path}: ${result.error.issues[0]?.message}`);
+      }
+    }
+  }
+
+  /**
+   * Get draft and published landing page configuration
+   *
+   * SECURITY: Tenant isolation enforced via tenantId parameter
+   *
+   * @param tenantId - Tenant ID (REQUIRED for tenant isolation)
+   * @returns Draft wrapper with draft/published configs
+   */
+  async getLandingPageDraft(tenantId: string): Promise<LandingPageDraftWrapper> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { landingPageConfig: true },
+    });
+
+    if (!tenant) {
+      throw new NotFoundError('Tenant not found');
+    }
+
+    return this.getLandingPageWrapper(tenant.landingPageConfig);
+  }
+
+  /**
+   * Save draft landing page configuration
+   *
+   * SECURITY:
+   * - Tenant isolation enforced via tenantId parameter
+   * - Image URLs re-validated before storage (defense-in-depth)
+   *
+   * @param tenantId - Tenant ID (REQUIRED for tenant isolation)
+   * @param config - Draft configuration to save
+   * @returns Save result with timestamp
+   */
+  async saveLandingPageDraft(
+    tenantId: string,
+    config: LandingPageConfig
+  ): Promise<{ success: boolean; draftUpdatedAt: string }> {
+    // Re-validate all image URLs (defense-in-depth)
+    this.validateImageUrls(config);
+
+    const now = new Date().toISOString();
+
+    // Get current wrapper to preserve published config
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { landingPageConfig: true },
+    });
+
+    if (!tenant) {
+      throw new NotFoundError('Tenant not found');
+    }
+
+    const currentWrapper = this.getLandingPageWrapper(tenant.landingPageConfig);
+
+    // Update only draft, preserve published
+    const newWrapper: LandingPageDraftWrapper = {
+      ...currentWrapper,
+      draft: config,
+      draftUpdatedAt: now,
+    };
+
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { landingPageConfig: newWrapper as any },
+    });
+
+    logger.info({ tenantId }, 'Landing page draft saved');
+
+    return { success: true, draftUpdatedAt: now };
+  }
+
+  /**
+   * Publish draft to live landing page
+   *
+   * SECURITY:
+   * - Tenant isolation enforced via tenantId parameter
+   * - Atomic transaction ensures no partial failures
+   *
+   * DATA INTEGRITY:
+   * - Uses Prisma transaction wrapper for atomicity
+   * - Draft→Published copy is all-or-nothing
+   * - On failure, both draft and published remain unchanged
+   *
+   * @param tenantId - Tenant ID (REQUIRED for tenant isolation)
+   * @returns Publish result with timestamp
+   * @throws NotFoundError if no draft exists to publish
+   */
+  async publishLandingPageDraft(
+    tenantId: string
+  ): Promise<{ success: boolean; publishedAt: string }> {
+    return await this.prisma.$transaction(async (tx) => {
+      // Fetch current config within transaction
+      const tenant = await tx.tenant.findUnique({
+        where: { id: tenantId },
+        select: { landingPageConfig: true },
+      });
+
+      if (!tenant) {
+        throw new NotFoundError('Tenant not found');
+      }
+
+      const currentWrapper = this.getLandingPageWrapper(tenant.landingPageConfig);
+
+      if (!currentWrapper.draft) {
+        throw new ValidationError('No draft to publish');
+      }
+
+      const now = new Date().toISOString();
+
+      // Atomically copy draft to published, clear draft
+      const newWrapper: LandingPageDraftWrapper = {
+        draft: null,
+        draftUpdatedAt: null,
+        published: currentWrapper.draft,
+        publishedAt: now,
+      };
+
+      await tx.tenant.update({
+        where: { id: tenantId },
+        data: { landingPageConfig: newWrapper as any },
+      });
+
+      logger.info({ tenantId }, 'Landing page draft published');
+
+      return { success: true, publishedAt: now };
+    });
+  }
+
+  /**
+   * Discard draft and revert to published configuration
+   *
+   * SECURITY: Tenant isolation enforced via tenantId parameter
+   *
+   * @param tenantId - Tenant ID (REQUIRED for tenant isolation)
+   * @returns Discard result
+   */
+  async discardLandingPageDraft(tenantId: string): Promise<{ success: boolean }> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { landingPageConfig: true },
+    });
+
+    if (!tenant) {
+      throw new NotFoundError('Tenant not found');
+    }
+
+    const currentWrapper = this.getLandingPageWrapper(tenant.landingPageConfig);
+
+    // Clear draft, keep published
+    const newWrapper: LandingPageDraftWrapper = {
+      draft: null,
+      draftUpdatedAt: null,
+      published: currentWrapper.published,
+      publishedAt: currentWrapper.publishedAt,
+    };
+
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { landingPageConfig: newWrapper as any },
+    });
+
+    logger.info({ tenantId }, 'Landing page draft discarded');
+
+    return { success: true };
+  }
+}
+
+// ============================================================================
+// Types
+// ============================================================================
+
+/**
+ * Landing page draft wrapper type
+ * Stores both draft and published configs in JSON field
+ */
+export interface LandingPageDraftWrapper {
+  draft: LandingPageConfig | null;
+  published: LandingPageConfig | null;
+  draftUpdatedAt: string | null;
+  publishedAt: string | null;
 }

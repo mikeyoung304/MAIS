@@ -96,6 +96,122 @@ interface LandingPageEditorActions {
 }
 ```
 
+### Security & Data Integrity Patterns
+
+> **P1 Findings Implemented:** The following security measures have been implemented based on code review findings (TODOs 227-232).
+
+#### Tenant Isolation (TODO-227)
+
+All draft endpoints verify tenant ownership via `res.locals.tenantAuth`:
+
+```typescript
+// Pattern applied to all draft endpoints
+router.put('/draft', async (req: Request, res: Response, next: NextFunction) => {
+  const tenantAuth = res.locals.tenantAuth;
+  if (!tenantAuth) {
+    res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+    return;
+  }
+  const { tenantId } = tenantAuth;
+  // ... all repository methods require tenantId as first parameter
+});
+```
+
+#### Input Sanitization (TODO-228)
+
+All text fields are sanitized before storage to prevent XSS:
+
+```typescript
+import { sanitizeObject } from '../lib/sanitization';
+
+// In route handler
+const data = LandingPageConfigSchema.parse(req.body);
+const sanitizedData = sanitizeObject(data, { allowHtml: [] });
+await tenantRepo.saveLandingPageDraft(tenantId, sanitizedData);
+```
+
+#### Image URL Validation (TODO-229)
+
+Repository layer re-validates all image URLs against `SafeImageUrlSchema`:
+
+```typescript
+// Defense-in-depth: validates even after Zod schema validation
+private validateImageUrls(config: LandingPageConfig): void {
+  const urlsToValidate = [
+    config.hero?.backgroundImageUrl,
+    config.about?.imageUrl,
+    config.gallery?.images?.map(img => img.url),
+    // ... all image fields
+  ];
+
+  for (const url of urlsToValidate) {
+    SafeImageUrlSchema.parse(url); // Blocks data:, javascript: protocols
+  }
+}
+```
+
+#### Publish Atomicity (TODO-230)
+
+Publish operation uses Prisma transaction for atomicity:
+
+```typescript
+async publishLandingPageDraft(tenantId: string) {
+  return await this.prisma.$transaction(async (tx) => {
+    const tenant = await tx.tenant.findUnique({ where: { id: tenantId } });
+    if (!currentWrapper.draft) {
+      throw new ValidationError('No draft to publish');
+    }
+    // Atomically copy draft to published, clear draft
+    await tx.tenant.update({
+      where: { id: tenantId },
+      data: { landingPageConfig: { published: draft, draft: null } },
+    });
+  });
+}
+```
+
+#### Auto-Save Race Condition Prevention (TODO-231)
+
+The `useLandingPageEditor` hook must flush pending auto-saves before publish:
+
+```typescript
+const publishChanges = useCallback(async () => {
+  // CRITICAL: Cancel pending debounce and flush immediately
+  cancelDebounce();
+
+  if (hasChanges) {
+    await saveDraftImmediate(draftConfig); // Flush without debounce
+  }
+
+  // Now safe to publish
+  setIsPublishing(true);
+  try {
+    await apiClient.publishLandingPageDraft();
+    setPublishedConfig(draftConfig);
+    setDraftConfig(null);
+    setHasChanges(false);
+  } finally {
+    setIsPublishing(false);
+  }
+}, [draftConfig, hasChanges, cancelDebounce, saveDraftImmediate]);
+```
+
+#### API Contract Error Codes (TODO-232)
+
+All draft endpoints include complete error responses:
+
+```typescript
+saveDraft: {
+  responses: {
+    200: SaveDraftResponseSchema,
+    400: BadRequestErrorSchema,  // Validation errors
+    401: UnauthorizedErrorSchema, // No tenant auth
+    404: NotFoundErrorSchema,     // Tenant not found
+    500: InternalServerErrorSchema,
+  },
+}
+```
+
 ### Implementation Phases
 
 #### Phase 1: Core Infrastructure (1-2 days)
@@ -707,4 +823,5 @@ erDiagram
 ---
 
 *Plan created: 2024-12-04*
-*Status: Draft - Pending Review*
+*Updated: 2025-12-04 - P1 Security Findings Resolved*
+*Status: Ready for Implementation - Security patterns implemented in backend*
