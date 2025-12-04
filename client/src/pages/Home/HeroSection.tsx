@@ -45,7 +45,7 @@ export function HeroSection() {
           className="text-sage text-sm font-medium tracking-[0.2em] uppercase mb-8 animate-fade-slide-up"
           style={{ animationDelay: "0.1s" }}
         >
-          For Service Providers
+          From Idea to Booking
         </p>
 
         {/* Headline */}
