@@ -295,12 +295,14 @@ jobs:
         run: npm run test:integration -- --coverage
         env:
           NODE_ENV: test
+          ADAPTERS_PRESET: mock
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
           DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
           JWT_SECRET: test-jwt-secret-for-ci-pipeline-only-not-for-production-use
           TENANT_SECRETS_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           STRIPE_SECRET_KEY: sk_test_dummy_key_for_integration_tests_only
+          STRIPE_WEBHOOK_SECRET: whsec_test_dummy_webhook_secret_for_ci_only
 
       - name: Upload integration test coverage
         if: always()
@@ -435,6 +437,7 @@ jobs:
           NODE_ENV: development
           ADAPTERS_PRESET: mock
           JWT_SECRET: test-jwt-secret-for-e2e-testing-only
+          TENANT_SECRETS_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           API_PORT: 3001
           CORS_ORIGIN: http://localhost:5173
 
