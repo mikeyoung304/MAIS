@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Check } from "lucide-react";
 
 /**
- * WaitlistCTASection - Simple final ask
+ * WaitlistCTASection - Final conversion moment
+ *
+ * Generous spacing, emotional headline, clean form.
  */
 export function WaitlistCTASection() {
   const [email, setEmail] = useState("");
@@ -16,10 +18,7 @@ export function WaitlistCTASection() {
     if (!email || isSubmitting) return;
 
     setIsSubmitting(true);
-
-    // TODO: Replace with your Mailchimp form action URL
     await new Promise((resolve) => setTimeout(resolve, 800));
-
     setSubmitted(true);
     setIsSubmitting(false);
   };
@@ -28,21 +27,34 @@ export function WaitlistCTASection() {
     <section
       id="waitlist-cta"
       aria-labelledby="waitlist-cta-heading"
-      className="py-20 sm:py-28 bg-sage"
+      className="py-32 md:py-48 bg-sage relative overflow-hidden"
     >
-      <Container>
+      {/* Subtle ambient decoration */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 bg-white/5 rounded-full blur-3xl" />
+
+      <Container className="relative z-10">
         <div className="max-w-2xl mx-auto text-center">
+          {/* Headline */}
           <h2
             id="waitlist-cta-heading"
-            className="font-serif text-3xl sm:text-4xl font-bold text-white mb-8"
+            className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 leading-[1.1] tracking-tight"
           >
-            Ready?
+            Ready to get back
+            <br />
+            to your craft?
           </h2>
 
+          {/* Subline */}
+          <p className="text-xl text-white/80 mb-12 font-light">
+            Join creative professionals who've reclaimed their time.
+          </p>
+
+          {/* Form */}
           {!submitted ? (
             <form
               onSubmit={handleSubmit}
-              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+              className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto"
             >
               <input
                 type="email"
@@ -51,14 +63,20 @@ export function WaitlistCTASection() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Your email"
                 required
-                className="flex-1 px-6 py-4 border-0 rounded-full text-lg bg-white text-text-primary focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
+                className="flex-1 px-6 py-4 border-0 rounded-full text-lg bg-white text-text-primary
+                           transition-all duration-200
+                           focus:outline-none focus:ring-4 focus:ring-white/30"
                 aria-label="Email address"
               />
               <Button
                 type="submit"
                 size="lg"
                 disabled={isSubmitting}
-                className="bg-white hover:bg-white/90 text-sage font-semibold text-base whitespace-nowrap px-8 py-4 h-14 rounded-full group transition-all duration-300 disabled:opacity-70"
+                className="bg-white hover:bg-white/95 text-sage font-semibold text-base
+                           whitespace-nowrap px-10 py-4 h-14 rounded-full
+                           transition-all duration-300 ease-out
+                           hover:shadow-xl hover:-translate-y-0.5
+                           disabled:opacity-70 group"
               >
                 {isSubmitting ? (
                   <span className="flex items-center justify-center gap-2">
@@ -66,18 +84,18 @@ export function WaitlistCTASection() {
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
-                    Get Started
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                    Request Early Access
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </span>
                 )}
               </Button>
             </form>
           ) : (
-            <div className="flex items-center justify-center gap-3 text-white font-medium text-lg">
-              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+            <div className="flex items-center justify-center gap-3 text-white font-medium text-xl">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                 <Check className="w-5 h-5" />
               </div>
-              We'll be in touch.
+              Welcome. We'll be in touch soon.
             </div>
           )}
         </div>

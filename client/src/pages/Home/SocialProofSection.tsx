@@ -1,53 +1,86 @@
 import { Container } from "@/ui/Container";
 
-const stats = [
-  { value: "50+", label: "Businesses", highlight: false },
-  { value: "$2M+", label: "Revenue Managed", highlight: true },
-  { value: "4.9", label: "Member Rating", highlight: false, showStar: true },
+/**
+ * SocialProofSection - Trust indicators
+ *
+ * Pre-launch: aspirational positioning with placeholder testimonials
+ * Post-launch: replace with real quotes
+ */
+
+const testimonials = [
+  {
+    quote: "I went from chasing deposits to fully booked in six weeks.",
+    author: "Sarah Chen",
+    role: "Wedding Photographer, Portland",
+  },
+  {
+    quote: "My clients love how simple it is. I love that I never think about invoicing anymore.",
+    author: "Marcus Rivera",
+    role: "Event Planner, Austin",
+  },
+  {
+    quote: "It's like having an assistant who never sleeps.",
+    author: "Priya Patel",
+    role: "Portrait Photographer, Brooklyn",
+  },
 ];
 
 export function SocialProofSection() {
   return (
-    <section id="social-proof" aria-labelledby="social-proof-heading" className="py-16 bg-gradient-to-r from-macon-navy via-macon-navy-light to-macon-navy border-y-4 border-macon-orange relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,107,53,0.08),transparent_70%)]"></div>
+    <section
+      id="social-proof"
+      aria-labelledby="social-proof-heading"
+      className="py-32 md:py-40 bg-neutral-50"
+    >
+      <Container>
+        {/* Section header */}
+        <h2
+          id="social-proof-heading"
+          className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary text-center mb-16 leading-[1.1] tracking-tight"
+        >
+          Built for creative professionals
+          <br />
+          <span className="text-sage">who are booked.</span>
+        </h2>
 
-      <Container className="relative z-10">
-        <div className="text-center">
-          <h2 id="social-proof-heading" className="text-2xl text-white/90 mb-10 font-semibold">
-            Join businesses already growing with Macon AI
-          </h2>
-          <div className="flex justify-center items-stretch gap-6 flex-wrap max-w-4xl mx-auto">
-            {stats.map((stat, index) => (
-              <div
-                key={index}
-                className={`bg-white/10 backdrop-blur-md ${
-                  stat.highlight ? 'border-2 border-macon-orange/40' : 'border-2 border-white/20'
-                } px-10 py-6 rounded-2xl hover:bg-white/15 transition-all flex-1 min-w-[200px]`}
-              >
-                <div className="mb-1">
-                  {stat.showStar ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="text-5xl font-extrabold text-white">{stat.value}</div>
-                      <svg className="w-10 h-10 text-macon-orange fill-current" viewBox="0 0 20 20">
-                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
-                      </svg>
-                    </div>
-                  ) : stat.highlight ? (
-                    <div className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-macon-orange to-macon-orange-light">
-                      {stat.value}
-                    </div>
-                  ) : (
-                    <div className="text-5xl font-extrabold text-white">{stat.value}</div>
-                  )}
+        {/* Testimonial cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          {testimonials.map((testimonial) => (
+            <figure
+              key={testimonial.author}
+              className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100
+                         transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+            >
+              {/* Quote */}
+              <blockquote className="text-text-primary text-xl leading-relaxed mb-8 font-serif">
+                "{testimonial.quote}"
+              </blockquote>
+
+              {/* Author */}
+              <figcaption className="flex items-center gap-4">
+                {/* Avatar placeholder */}
+                <div className="w-12 h-12 rounded-full bg-sage/10 flex items-center justify-center">
+                  <span className="text-sage font-semibold text-lg">
+                    {testimonial.author.charAt(0)}
+                  </span>
                 </div>
-                <div className="text-sm text-white/80 font-medium uppercase tracking-wide">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
+                <cite className="not-italic">
+                  <div className="font-semibold text-text-primary">
+                    {testimonial.author}
+                  </div>
+                  <div className="text-sm text-text-muted">
+                    {testimonial.role}
+                  </div>
+                </cite>
+              </figcaption>
+            </figure>
+          ))}
         </div>
+
+        {/* Early access note */}
+        <p className="text-center text-text-muted mt-12 text-sm">
+          Early access rolling out Winter 2025.
+        </p>
       </Container>
     </section>
   );
