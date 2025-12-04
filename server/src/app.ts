@@ -105,7 +105,7 @@ export function createApp(
     })
   );
 
-  // CORS - Environment-aware origin validation
+  // CORS - Multi-origin support for widget embedding
   app.use(
     cors({
       origin: (origin, callback) => {
@@ -117,10 +117,23 @@ export function createApp(
           return callback(null, true);
         }
 
-        // In production, use explicit allowlist from environment variable
-        const allowedOrigins = config.ALLOWED_ORIGINS || [];
+        // Hardcoded production origins (always allowed)
+        const defaultOrigins = [
+          'http://localhost:5173',
+          'http://localhost:3000',
+          'https://maconaisolutions.com',
+          'https://www.maconaisolutions.com',
+          'https://app.maconaisolutions.com',
+          'https://widget.maconaisolutions.com',
+        ];
+
+        // Merge with environment variable overrides
+        const allowedOrigins = [...defaultOrigins, ...(config.ALLOWED_ORIGINS || [])];
 
         if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else if (process.env.NODE_ENV === 'production' && origin.startsWith('https://')) {
+          // Allow all HTTPS origins in production (widget embedding on customer sites)
           callback(null, true);
         } else {
           logger.warn({ origin, allowedOrigins }, 'CORS request blocked - origin not in allowlist');
