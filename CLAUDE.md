@@ -341,6 +341,7 @@ Optional (graceful fallbacks in real mode):
 - **docs/security/SECRET_ROTATION_GUIDE.md** - Secret rotation procedures
 - **docs/solutions/PREVENTION-STRATEGIES-INDEX.md** - Prevention strategies for avoiding critical issues
 - **docs/solutions/PREVENTION-QUICK-REFERENCE.md** - Quick reference cheat sheet (print and pin!)
+- **docs/design/BRAND_VOICE_GUIDE.md** - Brand voice, copy patterns, and UI/UX design system (MUST READ for any UI work)
 
 ## Documentation Conventions
 
@@ -403,6 +404,42 @@ export class BookingService {
     private readonly eventEmitter: EventEmitter
   ) {}
 }
+```
+
+## UI/UX Standards (Apple-Quality)
+
+**IMPORTANT:** Before any UI work, read `docs/design/BRAND_VOICE_GUIDE.md`.
+
+### Voice Principles
+- Lead with **transformation**, not features ("Book more clients" not "Automated invoicing")
+- Speak to **identity**, not pain ("You're a photographer, not a bookkeeper")
+- Be **specific** ("Instagram DM to final gallery" not "client communications")
+- **Confidence without arrogance** - no hype words (revolutionary, amazing, game-changing)
+
+### Design Principles
+- **Generous whitespace:** `py-32 md:py-40` section padding minimum
+- **80% neutral, 20% accent:** Sage is precious—use sparingly
+- **Typography:** Serif headlines (`font-serif`), tight tracking, light subheadlines
+- **Elevation:** Cards use `rounded-3xl shadow-lg`, buttons use `rounded-full`
+- **Hover states:** Always include `hover:shadow-xl hover:-translate-y-1 transition-all duration-300`
+- **When in doubt, remove** - Apple's mantra
+
+### Quick Reference
+```tsx
+// Section spacing
+<section className="py-32 md:py-40">
+
+// Card pattern
+<div className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100
+                transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+
+// Button pattern
+<Button className="bg-sage hover:bg-sage-hover text-white rounded-full px-10 py-4
+                   transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
+
+// Headline pattern
+<h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary
+               leading-[1.1] tracking-tight">
 ```
 
 ## Common Pitfalls
