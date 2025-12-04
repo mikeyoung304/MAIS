@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+.vite/
+
+# Coverage
+coverage/
+
+# Test template files with placeholder syntax
+server/test/templates/*.ts
+
+# Generated files
+*.generated.ts
+*.d.ts
+
+# Lock files
+package-lock.json
+pnpm-lock.yaml
+
+# Prisma
+server/prisma/migrations/**/*.sql
