@@ -51,8 +51,7 @@ export function HeroSection() {
           className="text-lg sm:text-xl md:text-[21px] text-text-muted mb-10 leading-relaxed max-w-2xl mx-auto animate-fade-slide-up"
           style={{ animationDelay: "0.4s" }}
         >
-          We build booking systems for select service businesses—so clients go
-          from inquiry to paid while you focus on your craft.
+          Booking systems for service businesses. Clients go from inquiry to paid while you focus on your craft.
         </p>
 
         {/* Email Form or Success State */}
@@ -118,11 +117,9 @@ export function HeroSection() {
           style={{ animationDelay: "0.8s" }}
         >
           <p className="text-base sm:text-lg text-text-muted/80 italic leading-relaxed">
-            Your calendar is fuller.
+            Fuller calendar. Quieter inbox.
             <br />
-            Your inbox is quieter.
-            <br />
-            You're back to doing what you love.
+            Back to doing what you love.
           </p>
         </div>
       </div>

@@ -68,7 +68,7 @@ export const AboutSection = memo(function AboutSection({ config }: AboutSectionP
               <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-[4/3]">
                 <img
                   src={safeImageUrl}
-                  alt={config.imageAlt || 'About our business'}
+                  alt={config.imageAlt || ''}
                   loading="lazy"
                   decoding="async"
                   className="w-full h-full object-cover"
@@ -97,7 +97,7 @@ export const AboutSection = memo(function AboutSection({ config }: AboutSectionP
               <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-[4/3]">
                 <img
                   src={safeImageUrl}
-                  alt={config.imageAlt || 'About our business'}
+                  alt={config.imageAlt || ''}
                   loading="lazy"
                   decoding="async"
                   className="w-full h-full object-cover"

@@ -118,7 +118,7 @@ export const AccommodationSection = memo(function AccommodationSection({ config 
               <div className="rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]">
                 <img
                   src={safeImageUrl}
-                  alt={config.imageAlt || 'Accommodation facilities'}
+                  alt={config.imageAlt || ''}
                   loading="lazy"
                   decoding="async"
                   className="w-full h-full object-cover"

@@ -151,7 +151,7 @@ export const TestimonialsSection = memo(function TestimonialsSection({ config }:
         {/* Header */}
         <div className="text-center mb-12">
           <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-900">
-            {config?.headline ?? 'What Our Customers Say'}
+            {config?.headline ?? 'Testimonials'}
           </h2>
         </div>
 

@@ -13,26 +13,26 @@ export function ServicesSection() {
     {
       icon: Store,
       title: "Custom Storefront",
-      subtitle: "Your 3-tier booking system",
+      subtitle: "3-tier booking system",
       description:
-        "A done-for-you online storefront with entry, core, and premium tiers. Clients choose, book, and pay—without the back-and-forth.",
-      features: ["Tiered pricing that converts", "Automated booking flow", "Integrated payments"],
+        "Done-for-you storefront with entry, core, and premium tiers. Clients choose, book, pay—no back-and-forth.",
+      features: ["Tiered pricing", "Automated booking", "Integrated payments"],
     },
     {
       icon: Brain,
       title: "AI Consulting",
-      subtitle: "Strategy meets implementation",
+      subtitle: "Strategy + implementation",
       description:
-        "We audit your current systems, identify automation opportunities, and implement AI workflows that actually save you time.",
-      features: ["Process automation", "AI-powered follow-ups", "Custom integrations"],
+        "We audit your systems, find automation opportunities, and implement AI workflows that save time.",
+      features: ["Process automation", "AI follow-ups", "Custom integrations"],
     },
     {
       icon: Users,
       title: "The Collective",
-      subtitle: "Your growth partnership",
+      subtitle: "Growth partnership",
       description:
-        "You're not just getting software—you're gaining a team. Product, UX, and AI specialists working on your business.",
-      features: ["Dedicated strategist", "Ongoing optimization", "Revenue-aligned incentives"],
+        "Not just software—a team. Product, UX, and AI specialists working on your business.",
+      features: ["Dedicated strategist", "Ongoing optimization", "Revenue-aligned"],
     },
   ];
 
@@ -51,8 +51,7 @@ export function ServicesSection() {
             What we build for you
           </h2>
           <p className="text-xl text-text-muted">
-            Three interconnected services designed to help service businesses
-            book more clients with less friction.
+            Three services. More clients. Less friction.
           </p>
         </div>
 

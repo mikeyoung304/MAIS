@@ -42,8 +42,7 @@ export function WaitlistCTASection() {
           </h2>
 
           <p className="text-lg sm:text-xl text-white/90 mb-10 max-w-2xl mx-auto">
-            We're selectively onboarding service businesses who are serious about
-            growth. Request early access to see if we're a fit.
+            Request early access.
           </p>
 
           {!submitted ? (

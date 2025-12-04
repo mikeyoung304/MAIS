@@ -26,10 +26,10 @@ export function FutureStateSection() {
           {/* Narrative */}
           <div className="bg-surface-alt rounded-2xl p-8 sm:p-12 mb-8">
             <p className="text-xl text-text-muted leading-relaxed mb-6">
-              A couple finds your elopement services. They land on a page with three clear options. They choose a package, see available dates, answer a few guided questions, sign the agreement, and pay a deposit—without a single email thread.
+              A couple finds you. Three clear options. They choose, book, sign, pay—no email thread.
             </p>
             <p className="text-2xl sm:text-3xl text-text-primary font-serif italic">
-              You wake up to a notification: "New booking confirmed." Your calendar is fuller. Your inbox is quieter.
+              "New booking confirmed." Fuller calendar. Quieter inbox.
             </p>
           </div>
         </div>

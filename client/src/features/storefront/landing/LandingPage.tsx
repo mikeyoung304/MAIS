@@ -184,10 +184,10 @@ function SegmentSelectorSection() {
         <div className="text-center py-16 bg-neutral-50 rounded-xl border border-neutral-200">
           <AlertTriangle className="w-12 h-12 mx-auto text-neutral-300 mb-4" />
           <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-            Unable to load experiences
+            Something went wrong
           </h3>
           <p className="text-neutral-600">
-            Please refresh the page to try again.
+            Refresh to try again.
           </p>
         </div>
       </Container>
@@ -210,11 +210,8 @@ function SegmentSelectorSection() {
       <Container>
         <div className="text-center mb-12">
           <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-900 mb-4">
-            What brings you here today?
+            Choose your experience
           </h2>
-          <p className="text-lg md:text-xl text-neutral-600 max-w-3xl mx-auto">
-            Choose the experience that best fits your needs
-          </p>
         </div>
 
         <ChoiceGrid itemCount={segments.length}>
@@ -223,11 +220,6 @@ function SegmentSelectorSection() {
           ))}
         </ChoiceGrid>
 
-        <div className="mt-8 text-center">
-          <p className="text-neutral-500">
-            Not sure which to choose? Pick the one that sounds closest to your needs.
-          </p>
-        </div>
       </Container>
     </section>
   );

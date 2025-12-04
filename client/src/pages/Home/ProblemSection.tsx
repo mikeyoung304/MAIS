@@ -27,13 +27,10 @@ export function ProblemSection() {
           {/* Body text */}
           <div className="text-xl text-text-muted leading-relaxed mb-12 text-center max-w-3xl mx-auto space-y-4">
             <p>
-              Your clients are ready to buy. They've found the right venue, date, or package.
+              Your clients are ready to buy—then things slow down. Emails, DMs, invoices, contracts.
             </p>
             <p>
-              Then things slow down: emails, DMs, questions, invoices, contracts, payment links.
-            </p>
-            <p>
-              You know AI and automation could streamline this, but you don't have the time—or interest—to become a tech team. Meanwhile, opportunities leak out of your pipeline every week.
+              You know automation could fix this, but you're not building a tech team. Meanwhile, opportunities slip away every week.
             </p>
           </div>
 
@@ -65,14 +62,14 @@ export function ProblemSection() {
               </div>
               <div>
                 <h3 className="font-semibold text-text-primary mb-1">Clients unsure</h3>
-                <p className="text-text-muted text-sm">Which option to choose or what happens next</p>
+                <p className="text-text-muted text-sm">What to choose, what happens next</p>
               </div>
             </div>
           </div>
 
           {/* Close */}
           <p className="text-xl text-text-primary text-center font-medium">
-            MaconAI turns that chaos into a clean, trustworthy storefront your clients can actually buy from.
+            MaconAI turns that chaos into a storefront clients can actually buy from.
           </p>
         </div>
       </Container>

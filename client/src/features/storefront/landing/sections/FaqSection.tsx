@@ -200,7 +200,7 @@ export const FaqSection = memo(function FaqSection({ config }: FaqSectionProps) 
           {/* Header */}
           <div className="text-center mb-12">
             <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-900">
-              {config?.headline ?? 'Frequently Asked Questions'}
+              {config?.headline ?? 'FAQ'}
             </h2>
           </div>
 

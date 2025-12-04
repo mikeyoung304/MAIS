@@ -26,13 +26,13 @@ export function CollectiveSection() {
 
           {/* Body */}
           <p className="text-xl text-text-muted text-center mb-16 max-w-3xl mx-auto">
-            When you join MaconAI Solutions, you're bringing on the skills of the collective—product, UX, and AI specialists who treat your booking flow like a revenue engine.
+            Product, UX, and AI specialists who treat your booking flow like a revenue engine.
           </p>
 
           {/* AI capabilities */}
           <div className="bg-surface-alt rounded-2xl p-8 sm:p-12 mb-12">
             <h3 className="text-lg font-semibold text-text-primary mb-8 text-center">
-              Behind the scenes, we use AI to:
+              Behind the scenes, AI handles:
             </h3>
             <div className="grid sm:grid-cols-3 gap-8">
               {/* Capability 1 */}
@@ -41,7 +41,7 @@ export function CollectiveSection() {
                   <UserCheck className="w-7 h-7 text-sage" />
                 </div>
                 <p className="text-text-primary font-medium">
-                  Qualify inquiries and collect key details before you ever get on a call
+                  Qualifying inquiries before you get on a call
                 </p>
               </div>
 
@@ -51,7 +51,7 @@ export function CollectiveSection() {
                   <MessageSquare className="w-7 h-7 text-sage" />
                 </div>
                 <p className="text-text-primary font-medium">
-                  Answer common questions so you're not repeating yourself
+                  Answering common questions automatically
                 </p>
               </div>
 
@@ -61,7 +61,7 @@ export function CollectiveSection() {
                   <Bell className="w-7 h-7 text-sage" />
                 </div>
                 <p className="text-text-primary font-medium">
-                  Trigger reminders and follow-ups so clients don't drift between "interested" and "paid"
+                  Sending reminders so clients don't drift
                 </p>
               </div>
             </div>
@@ -69,7 +69,7 @@ export function CollectiveSection() {
 
           {/* Close */}
           <p className="text-xl text-text-primary text-center font-medium max-w-3xl mx-auto">
-            You stay focused on delivering unforgettable experiences. We handle the invisible infrastructure.
+            You deliver experiences. We handle the infrastructure.
           </p>
         </div>
       </Container>

@@ -21,12 +21,12 @@ export function StorefrontSection() {
             id="storefront-heading"
             className="font-serif text-4xl sm:text-5xl font-bold text-text-primary text-center mb-6"
           >
-            A 3-tier storefront, designed for how people actually buy services
+            A 3-tier storefront built for how people buy
           </h2>
 
           {/* Intro */}
           <p className="text-xl text-text-muted text-center mb-16 max-w-3xl mx-auto">
-            We design and operate a custom storefront for your business so clients can choose, book, and pay in one place—without you chasing them.
+            Clients choose, book, and pay in one place. No chasing.
           </p>
 
           {/* 3 Tier Cards */}
@@ -40,7 +40,7 @@ export function StorefrontSection() {
                 Entry Offer
               </h3>
               <p className="text-text-muted leading-relaxed">
-                A low-friction way for new clients to start working with you, without a big commitment.
+                Low-friction way to start. No big commitment.
               </p>
             </div>
 
@@ -56,7 +56,7 @@ export function StorefrontSection() {
                 Core Package
               </h3>
               <p className="text-white/90 leading-relaxed">
-                Your primary revenue driver, clearly framed so clients instantly understand what's included and why it's the obvious choice.
+                Your primary revenue driver. Clear value. Obvious choice.
               </p>
             </div>
 
@@ -69,14 +69,14 @@ export function StorefrontSection() {
                 Premium Experience
               </h3>
               <p className="text-text-muted leading-relaxed">
-                A high-touch, high-ticket offer positioned for clients who want the full, elevated experience.
+                High-touch, high-ticket. The full experience.
               </p>
             </div>
           </div>
 
           {/* Supporting line */}
           <p className="text-lg text-text-muted text-center max-w-3xl mx-auto">
-            Each tier is backed by clear copy, smart intake forms, and automated follow-ups so fewer interested clients fall through the cracks.
+            Clear copy. Smart intake. Automated follow-ups. Fewer cracks to fall through.
           </p>
         </div>
       </Container>
