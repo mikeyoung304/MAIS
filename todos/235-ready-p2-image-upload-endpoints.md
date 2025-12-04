@@ -1,5 +1,5 @@
 ---
-status: pending
+status: ready
 priority: p2
 issue_id: '235'
 tags: [security, api, code-review, landing-page, images]

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: ready
 priority: p2
 issue_id: '233'
 tags: [performance, code-review, landing-page, react, memoization]

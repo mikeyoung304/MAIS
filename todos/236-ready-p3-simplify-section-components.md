@@ -1,5 +1,5 @@
 ---
-status: pending
+status: ready
 priority: p3
 issue_id: '236'
 tags: [simplification, code-review, landing-page, yagni]
