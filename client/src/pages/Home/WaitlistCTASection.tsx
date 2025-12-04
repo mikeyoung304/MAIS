@@ -40,14 +40,12 @@ export function WaitlistCTASection() {
             id="waitlist-cta-heading"
             className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 leading-[1.1] tracking-tight"
           >
-            Ready to get back
-            <br />
-            to your craft?
+            From idea to booked.
           </h2>
 
           {/* Subline */}
           <p className="text-xl text-white/80 mb-12 font-light">
-            Join creative professionals who've reclaimed their time.
+            Your business deserves a professional launch.
           </p>
 
           {/* Form */}

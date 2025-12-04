@@ -120,7 +120,7 @@ export const GallerySection = memo(function GallerySection({ config }: GallerySe
               href={`https://instagram.com/${safeInstagramHandle}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
+              className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
             >
               <Instagram className="w-5 h-5" />
               <span className="font-medium">@{safeInstagramHandle}</span>
@@ -160,7 +160,7 @@ export const GallerySection = memo(function GallerySection({ config }: GallerySe
               href={`https://instagram.com/${safeInstagramHandle}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white font-semibold px-6 py-3 rounded-lg transition-all hover:scale-105"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white font-semibold px-6 py-3 rounded-lg transition-all hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
             >
               <Instagram className="w-5 h-5" />
               Follow us on Instagram
