@@ -54,7 +54,7 @@ export function HeroSection() {
           className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-text-primary leading-[1.05] tracking-tight mb-8 animate-fade-slide-up"
           style={{ animationDelay: "0.2s" }}
         >
-          From idea to booked.
+          Launch tomorrow.
         </h1>
 
         {/* Subheadline */}
@@ -62,7 +62,9 @@ export function HeroSection() {
           className="text-xl md:text-2xl lg:text-3xl text-text-muted font-light mb-16 leading-relaxed max-w-2xl mx-auto animate-fade-slide-up"
           style={{ animationDelay: "0.4s" }}
         >
-          Your website. Your calendar. Your payments.
+          Professional website. Seamless booking and payments.
+          <br />
+          One subscription.
         </p>
 
         {/* Email Form */}
