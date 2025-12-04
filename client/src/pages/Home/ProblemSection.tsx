@@ -37,7 +37,7 @@ export function ProblemSection() {
 
           {/* Closing line - forward momentum */}
           <p className="mt-12 text-xl md:text-2xl text-text-primary font-medium">
-            Let's get you back behind the lens.
+            Let's get you back to doing what you love.
           </p>
         </div>
       </Container>
