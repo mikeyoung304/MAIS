@@ -197,6 +197,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build contracts package
+        run: npm run build --workspace=packages/contracts
+
       - name: Run unit tests with coverage
         run: npm run test:unit -- --coverage
         env:
@@ -266,6 +269,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build contracts package
+        run: npm run build --workspace=packages/contracts
+
       - name: Generate Prisma Client
         run: npm run --workspace=server prisma:generate
 
@@ -273,12 +279,14 @@ jobs:
         run: npx prisma migrate deploy --schema=./server/prisma/schema.prisma
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
 
       - name: Run integration tests with coverage
         run: npm run test:integration -- --coverage
         env:
           NODE_ENV: test
           DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
           JWT_SECRET: test-jwt-secret-for-ci-pipeline-only-not-for-production-use
           TENANT_SECRETS_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           STRIPE_SECRET_KEY: sk_test_dummy_key_for_integration_tests_only
