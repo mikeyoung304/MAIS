@@ -62,7 +62,8 @@ export function HeroSection() {
           className="text-xl md:text-2xl lg:text-3xl text-text-muted font-light mb-16 leading-relaxed max-w-2xl mx-auto animate-fade-slide-up"
           style={{ animationDelay: "0.4s" }}
         >
-          Professional website. Seamless booking&nbsp;and&nbsp;payments.<br />
+          Professional website.<br />
+          Seamless booking and payments.<br />
           One subscription.
         </p>
 
