@@ -285,15 +285,6 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
 
-      - name: Run manual SQL migrations (multi-tenancy, indexes, etc.)
-        run: |
-          for f in server/prisma/migrations/*.sql; do
-            echo "Running migration: $f"
-            psql "$DATABASE_URL" -f "$f" || true
-          done
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test
-
       - name: Run integration tests with coverage
         run: npm run test:integration -- --coverage
         env:
@@ -426,15 +417,6 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_e2e_test
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_e2e_test
-
-      - name: Run manual SQL migrations (multi-tenancy, indexes, etc.)
-        run: |
-          for f in server/prisma/migrations/*.sql; do
-            echo "Running migration: $f"
-            psql "$DATABASE_URL" -f "$f" || true
-          done
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_e2e_test
 
       - name: Start API server in mock mode (background)
         run: |
