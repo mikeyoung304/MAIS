@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Check } from "lucide-react";
 
 /**
- * WaitlistCTASection - Final call-to-action for email capture
- *
- * Matches the exclusive positioning from the hero.
+ * WaitlistCTASection - Simple final ask
  */
 export function WaitlistCTASection() {
   const [email, setEmail] = useState("");
@@ -30,20 +28,16 @@ export function WaitlistCTASection() {
     <section
       id="waitlist-cta"
       aria-labelledby="waitlist-cta-heading"
-      className="py-24 sm:py-32 bg-sage"
+      className="py-20 sm:py-28 bg-sage"
     >
       <Container>
-        <div className="max-w-3xl mx-auto text-center">
+        <div className="max-w-2xl mx-auto text-center">
           <h2
             id="waitlist-cta-heading"
-            className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6"
+            className="font-serif text-3xl sm:text-4xl font-bold text-white mb-8"
           >
-            Ready to stop chasing bookings?
+            Ready?
           </h2>
-
-          <p className="text-lg sm:text-xl text-white/90 mb-10 max-w-2xl mx-auto">
-            Request early access.
-          </p>
 
           {!submitted ? (
             <form
@@ -64,16 +58,15 @@ export function WaitlistCTASection() {
                 type="submit"
                 size="lg"
                 disabled={isSubmitting}
-                className="bg-white hover:bg-white/90 text-sage font-semibold text-base whitespace-nowrap px-8 py-4 h-14 min-w-[220px] rounded-full group transition-all duration-300 disabled:opacity-70"
+                className="bg-white hover:bg-white/90 text-sage font-semibold text-base whitespace-nowrap px-8 py-4 h-14 rounded-full group transition-all duration-300 disabled:opacity-70"
               >
                 {isSubmitting ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="w-4 h-4 border-2 border-sage/30 border-t-sage rounded-full animate-spin" />
-                    Sending...
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
-                    Request Early Access
+                    Get Started
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                   </span>
                 )}
@@ -84,13 +77,9 @@ export function WaitlistCTASection() {
               <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                 <Check className="w-5 h-5" />
               </div>
-              You're on the list. We'll be in touch.
+              We'll be in touch.
             </div>
           )}
-
-          <p className="text-sm text-white/70 mt-4">
-            Currently onboarding founding partners.
-          </p>
         </div>
       </Container>
     </section>

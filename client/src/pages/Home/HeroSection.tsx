@@ -41,9 +41,7 @@ export function HeroSection() {
           className="font-serif text-4xl sm:text-5xl md:text-[56px] font-bold text-text-primary leading-[1.1] tracking-tight mb-6 animate-fade-slide-up"
           style={{ animationDelay: "0.2s" }}
         >
-          Wake up to
-          <br />
-          <span className="text-sage">"New booking confirmed."</span>
+          Get more bookings.
         </h1>
 
         {/* Subheadline */}
@@ -51,7 +49,8 @@ export function HeroSection() {
           className="text-lg sm:text-xl md:text-[21px] text-text-muted mb-10 leading-relaxed max-w-2xl mx-auto animate-fade-slide-up"
           style={{ animationDelay: "0.4s" }}
         >
-          Booking systems for service businesses. Clients go from inquiry to paid while you focus on your craft.
+          We handle the emails, invoices, and follow-ups.<br />
+          You do what you're great at.
         </p>
 
         {/* Email Form or Success State */}
@@ -108,20 +107,8 @@ export function HeroSection() {
           className="text-sm text-text-muted mt-4 animate-fade-slide-up"
           style={{ animationDelay: "0.7s" }}
         >
-          Currently onboarding founding partners.
+          For photographers, planners, and creative professionals.
         </p>
-
-        {/* Transformation Whisper */}
-        <div
-          className="mt-16 animate-fade-slide-up"
-          style={{ animationDelay: "0.8s" }}
-        >
-          <p className="text-base sm:text-lg text-text-muted/80 italic leading-relaxed">
-            Fuller calendar. Quieter inbox.
-            <br />
-            Back to doing what you love.
-          </p>
-        </div>
       </div>
     </section>
   );
