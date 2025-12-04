@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "240"
 tags: [performance, landing-page, database]
@@ -11,7 +11,7 @@ source: "code-review-pr-14"
 
 ## Priority: P2 (Important - Should Fix Before Merge)
 
-## Status: Pending
+## Status: Complete
 
 ## Source: Code Review - PR #14 (Performance Oracle)
 
@@ -64,15 +64,29 @@ The read-modify-write pattern is acceptable for correctness. The performance imp
 
 ## Acceptance Criteria
 
-- [ ] Review each draft method for unnecessary queries
-- [ ] Document decision (optimize or accept current pattern)
-- [ ] If optimizing, ensure atomicity is maintained
+- [x] Review each draft method for unnecessary queries
+- [x] Document decision (optimize or accept current pattern)
+- [x] If optimizing, ensure atomicity is maintained
+
+## Resolution
+
+**Decision: Accept Current Pattern (Option B)**
+
+After architectural review, the read-modify-write pattern was accepted because:
+1. We must preserve the `published` config while updating only `draft` - reading first is necessary
+2. Prisma transaction already provides ACID guarantees
+3. Auto-save debouncing limits actual save frequency to ~1 per 2-5 seconds (not a hot path)
+4. Raw SQL would lose Prisma type safety for negligible performance gain
+5. The overhead of one extra SELECT is negligible vs correctness
+
+**Code Change:** Added performance documentation in JSDoc comment at `tenant.repository.ts:483-491`
 
 ## Work Log
 
 | Date | Action | Notes |
 |------|--------|-------|
 | 2025-12-04 | Created | Code review of PR #14 |
+| 2025-12-04 | Resolved | Accepted current pattern, documented rationale |
 
 ## Tags
 

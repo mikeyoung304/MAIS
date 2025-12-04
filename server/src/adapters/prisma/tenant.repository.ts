@@ -360,7 +360,34 @@ export class PrismaTenantRepository {
   // ============================================================================
 
   /**
-   * Landing page config wrapper type for draft system
+   * DESIGN DECISION: Single JSON column for draft/published (TODO-243)
+   *
+   * The landing page configuration uses a single JSON column (Tenant.landingPageConfig)
+   * with a wrapper structure containing both draft and published states.
+   *
+   * PROS:
+   * - Simple schema, no migrations needed for config field changes
+   * - Atomic draft/publish operations in single row update
+   * - No joins needed for common operations
+   *
+   * LIMITATIONS:
+   * - No version history (cannot revert to previous published version)
+   * - No diff view between historical versions
+   * - JSON column has no database-level schema evolution protection
+   *
+   * FUTURE: If versioning is needed, consider migrating to a separate
+   * LandingPageVersion table with proper version tracking.
+   * See docs/solutions/ for schema design documentation.
+   */
+
+  /**
+   * Parse raw JSON config into strongly-typed wrapper structure.
+   *
+   * Handles missing or malformed config by returning null values
+   * for all properties, ensuring consistent return type.
+   *
+   * @param config - Raw JSON from database (may be null, undefined, or malformed)
+   * @returns Normalized wrapper with all properties set (null if not present)
    */
   private getLandingPageWrapper(config: any): LandingPageDraftWrapper {
     if (!config || typeof config !== 'object') {
@@ -381,14 +408,28 @@ export class PrismaTenantRepository {
   }
 
   /**
-   * Validate all image URLs in a landing page config
-   * Defense-in-depth against XSS via data: or javascript: URLs
+   * Validates all image URLs in a landing page configuration.
    *
-   * SECURITY: Re-validates URLs even after Zod schema validation
-   * to catch browser-modified payloads that bypass initial validation.
+   * Checks that URLs use allowed protocols (https:, http:, blob:)
+   * and rejects dangerous protocols (javascript:, data:).
    *
-   * @param config - Landing page configuration to validate
-   * @throws ValidationError if any URL uses a dangerous protocol
+   * @param config - The landing page configuration to validate
+   * @throws ValidationError if any image URL uses a dangerous protocol
+   *
+   * @remarks
+   * This is a defense-in-depth measure. URLs are also validated by
+   * SafeImageUrlSchema in @macon/contracts, but this server-side check
+   * ensures malicious URLs can't be injected via:
+   * - Browser DevTools console modification
+   * - Proxy interception of API requests
+   * - Direct API calls bypassing the frontend
+   *
+   * Validated locations:
+   * - hero.backgroundImageUrl
+   * - about.imageUrl
+   * - accommodation.imageUrl
+   * - gallery.images[].url
+   * - testimonials.items[].imageUrl
    */
   private validateImageUrls(config: LandingPageConfig): void {
     const urlsToValidate: { path: string; url: string }[] = [];
@@ -480,6 +521,16 @@ export class PrismaTenantRepository {
    * - Concurrent saves from multiple tabs will serialize correctly
    * - On failure, no partial state is written
    *
+   * PERFORMANCE NOTE (TODO-240):
+   * The read-modify-write pattern inside the transaction is intentional.
+   * We must read currentWrapper to preserve the `published` config while
+   * updating only `draft`. Raw SQL (UPDATE...jsonb_set) was considered but
+   * rejected because:
+   * - Prisma type safety would be lost
+   * - Transaction already provides ACID guarantees
+   * - Auto-save debouncing limits actual save frequency to ~1 per 2-5 seconds
+   * - The overhead of one extra SELECT is negligible vs correctness
+   *
    * @param tenantId - Tenant ID (REQUIRED for tenant isolation)
    * @param config - Draft configuration to save
    * @returns Save result with timestamp
@@ -494,7 +545,7 @@ export class PrismaTenantRepository {
     return await this.prisma.$transaction(async (tx) => {
       const now = new Date().toISOString();
 
-      // Get current wrapper to preserve published config - inside transaction for consistency
+      // Read-modify-write is intentional: preserves `published` while updating `draft`
       const tenant = await tx.tenant.findUnique({
         where: { id: tenantId },
         select: { landingPageConfig: true },
@@ -626,7 +677,15 @@ export class PrismaTenantRepository {
 
 /**
  * Landing page draft wrapper type
- * Stores both draft and published configs in JSON field
+ *
+ * Stores both draft and published configs in a single JSON column.
+ * This is an intentional simplification for MVP - see TODO-243 for
+ * future versioning considerations.
+ *
+ * @property draft - Work-in-progress configuration (auto-saved)
+ * @property published - Live configuration visible to visitors
+ * @property draftUpdatedAt - ISO timestamp of last draft save
+ * @property publishedAt - ISO timestamp of last publish operation
  */
 export interface LandingPageDraftWrapper {
   draft: LandingPageConfig | null;

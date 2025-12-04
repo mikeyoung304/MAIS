@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: "241"
 tags: [architecture, landing-page, layering]
@@ -11,7 +11,7 @@ source: "code-review-pr-14"
 
 ## Priority: P2 (Important - Technical Debt)
 
-## Status: Pending
+## Status: Complete
 
 ## Source: Code Review - PR #14 (Architecture Strategist)
 
@@ -76,15 +76,42 @@ Accept that landing page routes are thin and the "business logic" is minimal (ju
 
 ## Acceptance Criteria
 
-- [ ] Decide: Add service layer or document exception
-- [ ] If adding service: Move sanitization logic to service
-- [ ] If documenting: Add comment in routes explaining pattern
+- [x] Decide: Add service layer or document exception
+- [x] If adding service: Move sanitization logic to service
+- [x] If documenting: Add comment in routes explaining pattern
+
+## Resolution
+
+**Decision: Add LandingPageService (Option A)**
+
+Created `server/src/services/landing-page.service.ts` following the same pattern as `PackageDraftService`:
+
+**Files Changed:**
+1. `server/src/services/landing-page.service.ts` - New service with:
+   - `getDraft()`, `saveDraft()`, `publish()`, `discardDraft()` - draft operations
+   - `getConfig()`, `updateConfig()`, `toggleSection()` - legacy operations
+   - Sanitization logic moved from routes to service
+   - Audit logging on all operations
+
+2. `server/src/routes/tenant-admin-landing-page.routes.ts` - Updated to:
+   - Accept `LandingPageService` instead of `TenantRepository`
+   - Remove `sanitizeObject` import (handled by service)
+   - Add architecture comment documenting the pattern
+
+3. `server/src/routes/index.ts` - Updated to:
+   - Pass `landingPageService` to route factory
+   - Add type to Services interface
+
+4. `server/src/di.ts` - Updated to:
+   - Create `LandingPageService` instance
+   - Add to Container interface and both mock/real builders
 
 ## Work Log
 
 | Date | Action | Notes |
 |------|--------|-------|
 | 2025-12-04 | Created | Code review of PR #14 |
+| 2025-12-04 | Resolved | Added LandingPageService for architectural consistency |
 
 ## Tags
 

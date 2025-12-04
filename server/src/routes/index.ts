@@ -62,6 +62,7 @@ import type { SchedulingAvailabilityService } from '../services/scheduling-avail
 import type { PackageDraftService } from '../services/package-draft.service';
 import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
 import type { ReminderService } from '../services/reminder.service';
+import type { LandingPageService } from '../services/landing-page.service';
 
 interface Controllers {
   packages: PackagesController;
@@ -85,6 +86,7 @@ interface Services {
   packageDraft?: PackageDraftService;
   tenantOnboarding?: TenantOnboardingService;
   reminder?: ReminderService;
+  landingPage?: LandingPageService;
 }
 
 interface Repositories {
@@ -456,9 +458,12 @@ export function createV1Router(
 
     // Register tenant admin landing page routes (for landing page configuration)
     // Requires tenant admin authentication
-    const tenantAdminLandingPageRoutes = createTenantAdminLandingPageRoutes(tenantRepo);
-    app.use('/v1/tenant-admin/landing-page', tenantAuthMiddleware, tenantAdminLandingPageRoutes);
-    logger.info('✅ Tenant admin landing page routes mounted at /v1/tenant-admin/landing-page');
+    // Uses LandingPageService for business logic (TODO-241: service layer consistency)
+    if (services.landingPage) {
+      const tenantAdminLandingPageRoutes = createTenantAdminLandingPageRoutes(services.landingPage);
+      app.use('/v1/tenant-admin/landing-page', tenantAuthMiddleware, tenantAdminLandingPageRoutes);
+      logger.info('✅ Tenant admin landing page routes mounted at /v1/tenant-admin/landing-page');
+    }
 
     // Register public scheduling routes (for customer booking widget)
     // Requires tenant context via X-Tenant-Key header

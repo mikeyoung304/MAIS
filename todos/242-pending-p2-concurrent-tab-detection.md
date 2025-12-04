@@ -1,9 +1,9 @@
 ---
-status: pending
+status: deferred
 priority: p2
 issue_id: "242"
 tags: [ux, landing-page, concurrency]
-dependencies: ["237"]
+dependencies: ["237", "frontend-landing-page-editor"]
 source: "code-review-pr-14"
 ---
 
@@ -11,7 +11,7 @@ source: "code-review-pr-14"
 
 ## Priority: P2 (Important - UX Enhancement)
 
-## Status: Pending
+## Status: Deferred (Blocked on Frontend)
 
 ## Source: Code Review - PR #14 (Data Integrity Guardian)
 
@@ -65,16 +65,56 @@ Use WebSockets to sync state across tabs. Overkill for current needs.
 
 ## Acceptance Criteria
 
-- [ ] Decide: Version field OR warning OR defer
+- [x] Decide: Version field OR warning OR defer
 - [ ] If version field: Add migration, update repository, update client
 - [ ] If warning: Add localStorage check in editor component
 - [ ] User informed when concurrent edit detected
+
+## Resolution
+
+**Decision: Defer - Blocked on Frontend**
+
+The frontend landing page editor component has not been built yet. Only the backend API exists (`/v1/tenant-admin/landing-page/*`).
+
+**When frontend is built, implement Option B (localStorage warning):**
+
+```typescript
+// In landing page editor component
+useEffect(() => {
+  const EDITOR_LOCK_KEY = 'mais:landingPageEditor:active';
+  const LOCK_TIMEOUT = 30000; // 30 seconds
+
+  const existingLock = localStorage.getItem(EDITOR_LOCK_KEY);
+  if (existingLock && Date.now() - parseInt(existingLock) < LOCK_TIMEOUT) {
+    toast.warning(
+      'This page may be open in another tab. Changes from multiple tabs can overwrite each other.',
+      { duration: 8000 }
+    );
+  }
+
+  localStorage.setItem(EDITOR_LOCK_KEY, Date.now().toString());
+  const interval = setInterval(() => {
+    localStorage.setItem(EDITOR_LOCK_KEY, Date.now().toString());
+  }, 10000);
+
+  return () => {
+    clearInterval(interval);
+    localStorage.removeItem(EDITOR_LOCK_KEY);
+  };
+}, []);
+```
+
+**Rationale:**
+- Simple frontend-only solution (no database changes)
+- Handles 90% of cases (user forgot they had tab open)
+- Can add optimistic locking later if real users report issues
 
 ## Work Log
 
 | Date | Action | Notes |
 |------|--------|-------|
 | 2025-12-04 | Created | Code review of PR #14 |
+| 2025-12-04 | Deferred | Frontend landing page editor not yet built |
 
 ## Tags
 

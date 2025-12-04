@@ -5,28 +5,32 @@
  *
  * SECURITY:
  * - All endpoints verify tenant isolation via res.locals.tenantAuth
- * - Input sanitization applied to all text fields (XSS prevention)
+ * - Input sanitization applied in service layer (XSS prevention)
  * - Image URLs validated in repository layer (protocol validation)
  * - Publish operation wrapped in transaction (atomicity)
+ *
+ * ARCHITECTURE (TODO-241):
+ * Routes are thin HTTP handlers that delegate to LandingPageService.
+ * Business logic (sanitization, validation) lives in the service layer.
+ * This follows the same pattern as booking, catalog, and scheduling.
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
+import type { LandingPageService } from '../services/landing-page.service';
 import { LandingPageConfigSchema } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
 import { NotFoundError, ValidationError } from '../lib/errors';
-import { sanitizeObject } from '../lib/sanitization';
 
 /**
  * Create tenant admin landing page routes
  * All routes require tenant admin authentication (applied via middleware)
  *
- * @param tenantRepo - Tenant repository instance
+ * @param landingPageService - Landing page service instance
  * @returns Express router with tenant admin landing page endpoints
  */
 export function createTenantAdminLandingPageRoutes(
-  tenantRepo: PrismaTenantRepository
+  landingPageService: LandingPageService
 ): Router {
   const router = Router();
 
@@ -47,9 +51,7 @@ export function createTenantAdminLandingPageRoutes(
       }
       const { tenantId } = tenantAuth;
 
-      // Fetch landing page config from repository
-      const config = await tenantRepo.getLandingPageConfig(tenantId);
-
+      const config = await landingPageService.getConfig(tenantId);
       res.json(config);
     } catch (error) {
       next(error);
@@ -62,21 +64,6 @@ export function createTenantAdminLandingPageRoutes(
    * Full configuration update (replaces entire config)
    *
    * Request body: LandingPageConfig (validated by Zod)
-   * {
-   *   sections: { hero: boolean, socialProofBar: boolean, ... },
-   *   hero?: { headline, subheadline, ctaText, backgroundImageUrl },
-   *   socialProofBar?: { items: [...] },
-   *   about?: { headline, content, imageUrl, imagePosition },
-   *   testimonials?: { headline, items: [...] },
-   *   accommodation?: { headline, description, imageUrl, ctaText, ctaUrl, highlights },
-   *   gallery?: { headline, images: [...], instagramHandle },
-   *   faq?: { headline, items: [...] },
-   *   finalCta?: { headline, subheadline, ctaText }
-   * }
-   *
-   * SECURITY:
-   * - Tenant isolation enforced via res.locals.tenantAuth
-   * - Input sanitization applied to all text fields (XSS prevention)
    *
    * @returns 200 - Updated landing page configuration
    * @returns 400 - Validation error
@@ -92,21 +79,11 @@ export function createTenantAdminLandingPageRoutes(
       }
       const { tenantId } = tenantAuth;
 
-      // Validate request body against LandingPageConfigSchema
+      // Validate request body against schema
       const data = LandingPageConfigSchema.parse(req.body);
 
-      // Sanitize all text fields (XSS prevention)
-      // Note: URL fields are preserved as-is (validated by SafeUrlSchema in contracts)
-      const sanitizedData = sanitizeObject(data, { allowHtml: [] });
-
-      // Update landing page config
-      const updatedConfig = await tenantRepo.updateLandingPageConfig(tenantId, sanitizedData);
-
-      logger.info(
-        { tenantId },
-        'Landing page configuration updated by tenant admin'
-      );
-
+      // Service handles sanitization and update
+      const updatedConfig = await landingPageService.updateConfig(tenantId, data);
       res.json(updatedConfig);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -125,12 +102,6 @@ export function createTenantAdminLandingPageRoutes(
    * Toggle individual section visibility on/off
    * Partial update - only affects the specified section
    *
-   * Request body:
-   * {
-   *   section: 'hero' | 'socialProofBar' | 'segmentSelector' | 'about' | 'testimonials' | 'accommodation' | 'gallery' | 'faq' | 'finalCta',
-   *   enabled: boolean
-   * }
-   *
    * @returns 200 - Success indicator
    * @returns 400 - Validation error
    * @returns 401 - Missing or invalid authentication
@@ -145,7 +116,6 @@ export function createTenantAdminLandingPageRoutes(
       }
       const { tenantId } = tenantAuth;
 
-      // Validate request body
       const { section, enabled } = req.body;
 
       const validSections = [
@@ -176,14 +146,7 @@ export function createTenantAdminLandingPageRoutes(
         return;
       }
 
-      // Toggle section
-      await tenantRepo.toggleLandingPageSection(tenantId, section, enabled);
-
-      logger.info(
-        { tenantId, section, enabled },
-        'Landing page section toggled by tenant admin'
-      );
-
+      await landingPageService.toggleSection(tenantId, section, enabled);
       res.json({ success: true });
     } catch (error) {
       next(error);
@@ -197,8 +160,6 @@ export function createTenantAdminLandingPageRoutes(
   /**
    * GET /v1/tenant-admin/landing-page/draft
    * Get current draft and published landing page configuration
-   *
-   * SECURITY: Tenant isolation enforced via res.locals.tenantAuth
    *
    * @returns 200 - Draft wrapper with draft/published configs
    * @returns 401 - Missing or invalid authentication
@@ -214,7 +175,7 @@ export function createTenantAdminLandingPageRoutes(
       }
       const { tenantId } = tenantAuth;
 
-      const draftWrapper = await tenantRepo.getLandingPageDraft(tenantId);
+      const draftWrapper = await landingPageService.getDraft(tenantId);
       res.json(draftWrapper);
     } catch (error) {
       if (error instanceof NotFoundError) {
@@ -228,11 +189,6 @@ export function createTenantAdminLandingPageRoutes(
   /**
    * PUT /v1/tenant-admin/landing-page/draft
    * Save draft landing page configuration (auto-save target)
-   *
-   * SECURITY:
-   * - Tenant isolation enforced via res.locals.tenantAuth
-   * - Input sanitization applied to all text fields (XSS prevention)
-   * - Image URLs re-validated in repository layer (protocol validation)
    *
    * @returns 200 - Save result with timestamp
    * @returns 400 - Validation error
@@ -249,17 +205,11 @@ export function createTenantAdminLandingPageRoutes(
       }
       const { tenantId } = tenantAuth;
 
-      // Validate request body against LandingPageConfigSchema
+      // Validate request body against schema
       const data = LandingPageConfigSchema.parse(req.body);
 
-      // Sanitize all text fields (XSS prevention)
-      const sanitizedData = sanitizeObject(data, { allowHtml: [] });
-
-      // Save draft (repository re-validates image URLs)
-      const result = await tenantRepo.saveLandingPageDraft(tenantId, sanitizedData);
-
-      logger.info({ tenantId }, 'Landing page draft saved by tenant admin');
-
+      // Service handles sanitization and save
+      const result = await landingPageService.saveDraft(tenantId, data);
       res.json(result);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -285,10 +235,6 @@ export function createTenantAdminLandingPageRoutes(
    * POST /v1/tenant-admin/landing-page/publish
    * Publish draft to live landing page
    *
-   * SECURITY:
-   * - Tenant isolation enforced via res.locals.tenantAuth
-   * - Atomic transaction ensures draft→published copy is all-or-nothing
-   *
    * @returns 200 - Publish result with timestamp
    * @returns 400 - No draft to publish
    * @returns 401 - Missing or invalid authentication
@@ -304,10 +250,7 @@ export function createTenantAdminLandingPageRoutes(
       }
       const { tenantId } = tenantAuth;
 
-      const result = await tenantRepo.publishLandingPageDraft(tenantId);
-
-      logger.info({ tenantId }, 'Landing page draft published by tenant admin');
-
+      const result = await landingPageService.publish(tenantId);
       res.json(result);
     } catch (error) {
       if (error instanceof NotFoundError) {
@@ -327,8 +270,6 @@ export function createTenantAdminLandingPageRoutes(
    * DELETE /v1/tenant-admin/landing-page/draft
    * Discard draft and revert to published configuration
    *
-   * SECURITY: Tenant isolation enforced via res.locals.tenantAuth
-   *
    * @returns 200 - Discard result
    * @returns 401 - Missing or invalid authentication
    * @returns 404 - Tenant not found
@@ -343,10 +284,7 @@ export function createTenantAdminLandingPageRoutes(
       }
       const { tenantId } = tenantAuth;
 
-      const result = await tenantRepo.discardLandingPageDraft(tenantId);
-
-      logger.info({ tenantId }, 'Landing page draft discarded by tenant admin');
-
+      const result = await landingPageService.discardDraft(tenantId);
       res.json(result);
     } catch (error) {
       if (error instanceof NotFoundError) {

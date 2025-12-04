@@ -22,6 +22,7 @@ import { GoogleCalendarService } from './services/google-calendar.service';
 import { SchedulingAvailabilityService } from './services/scheduling-availability.service';
 import { PackageDraftService } from './services/package-draft.service';
 import { ReminderService } from './services/reminder.service';
+import { LandingPageService } from './services/landing-page.service';
 import { UploadAdapter } from './adapters/upload.adapter';
 import { NodeFileSystemAdapter } from './adapters/filesystem.adapter';
 import { PackagesController } from './routes/packages.routes';
@@ -83,6 +84,7 @@ export interface Container {
     schedulingAvailability?: SchedulingAvailabilityService; // Scheduling slot generation
     packageDraft: PackageDraftService; // Visual editor draft management
     reminder: ReminderService; // Lazy reminder evaluation (Phase 2)
+    landingPage: LandingPageService; // Landing page visual editor (TODO-241)
   };
   repositories?: {
     service?: PrismaServiceRepository;
@@ -206,6 +208,9 @@ export function buildContainer(config: Config): Container {
     // Create PackageDraftService with mock catalog repository
     const packageDraftService = new PackageDraftService(adapters.catalogRepo, cacheAdapter);
 
+    // Create LandingPageService with mock tenant repository
+    const landingPageService = new LandingPageService(mockTenantRepo);
+
     const controllers = {
       packages: new PackagesController(catalogService),
       availability: new AvailabilityController(availabilityService),
@@ -240,6 +245,7 @@ export function buildContainer(config: Config): Container {
       schedulingAvailability: schedulingAvailabilityService,
       packageDraft: packageDraftService,
       reminder: reminderService,
+      landingPage: landingPageService,
     };
 
     const repositories = {
@@ -484,6 +490,9 @@ export function buildContainer(config: Config): Container {
   // Create PackageDraftService with real catalog repository
   const packageDraftService = new PackageDraftService(catalogRepo, cacheAdapter);
 
+  // Create LandingPageService with real tenant repository
+  const landingPageService = new LandingPageService(tenantRepo);
+
   // Create ReminderService with real adapters
   const reminderService = new ReminderService(
     bookingRepo,
@@ -590,6 +599,7 @@ export function buildContainer(config: Config): Container {
     schedulingAvailability: schedulingAvailabilityService,
     packageDraft: packageDraftService,
     reminder: reminderService,
+    landingPage: landingPageService,
   };
 
   const repositories = {
