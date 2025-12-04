@@ -135,13 +135,9 @@ test.describe('Admin Flow', () => {
     // 9. Delete the test package (cleanup)
     // Find the Delete button
     const finalPackageCard = page.locator('text=E2E Test Package (Updated)').locator('../..');
-    await finalPackageCard.getByRole('button', { name: 'Delete' }).click();
 
-    // Confirm deletion in dialog
+    // Set up dialog handler before clicking delete
     page.on('dialog', (dialog) => dialog.accept());
-    await page.waitForTimeout(500); // Wait for dialog to appear
-
-    // Click delete again (dialog handler already set)
     await finalPackageCard.getByRole('button', { name: 'Delete' }).click();
 
     // Wait for success message
@@ -177,11 +173,14 @@ test.describe('Admin Flow', () => {
     // 3. Click "Add" button
     await page.getByRole('button', { name: 'Add' }).click();
 
-    // 4. Wait for the table to reload and verify blackout appears
-    await page.waitForTimeout(1000); // Wait for API call
+    // 4. Wait for the API response and verify blackout appears
+    await page.waitForResponse(
+      (response) => response.url().includes('/blackout') && response.status() === 201,
+      { timeout: 10000 }
+    );
 
     // Verify blackout date appears in the table
-    await expect(page.getByText(blackoutDate)).toBeVisible();
+    await expect(page.getByText(blackoutDate)).toBeVisible({ timeout: 5000 });
     await expect(page.getByText('E2E Test Blackout - Holiday')).toBeVisible();
   });
 
