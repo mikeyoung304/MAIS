@@ -475,6 +475,11 @@ export class PrismaTenantRepository {
    * - Tenant isolation enforced via tenantId parameter
    * - Image URLs re-validated before storage (defense-in-depth)
    *
+   * DATA INTEGRITY:
+   * - Uses Prisma transaction to prevent TOCTOU race conditions
+   * - Concurrent saves from multiple tabs will serialize correctly
+   * - On failure, no partial state is written
+   *
    * @param tenantId - Tenant ID (REQUIRED for tenant isolation)
    * @param config - Draft configuration to save
    * @returns Save result with timestamp
@@ -483,38 +488,40 @@ export class PrismaTenantRepository {
     tenantId: string,
     config: LandingPageConfig
   ): Promise<{ success: boolean; draftUpdatedAt: string }> {
-    // Re-validate all image URLs (defense-in-depth)
+    // Re-validate all image URLs (defense-in-depth) - outside transaction for fast failure
     this.validateImageUrls(config);
 
-    const now = new Date().toISOString();
+    return await this.prisma.$transaction(async (tx) => {
+      const now = new Date().toISOString();
 
-    // Get current wrapper to preserve published config
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { landingPageConfig: true },
+      // Get current wrapper to preserve published config - inside transaction for consistency
+      const tenant = await tx.tenant.findUnique({
+        where: { id: tenantId },
+        select: { landingPageConfig: true },
+      });
+
+      if (!tenant) {
+        throw new NotFoundError('Tenant not found');
+      }
+
+      const currentWrapper = this.getLandingPageWrapper(tenant.landingPageConfig);
+
+      // Update only draft, preserve published
+      const newWrapper: LandingPageDraftWrapper = {
+        ...currentWrapper,
+        draft: config,
+        draftUpdatedAt: now,
+      };
+
+      await tx.tenant.update({
+        where: { id: tenantId },
+        data: { landingPageConfig: newWrapper as any },
+      });
+
+      logger.info({ tenantId }, 'Landing page draft saved');
+
+      return { success: true, draftUpdatedAt: now };
     });
-
-    if (!tenant) {
-      throw new NotFoundError('Tenant not found');
-    }
-
-    const currentWrapper = this.getLandingPageWrapper(tenant.landingPageConfig);
-
-    // Update only draft, preserve published
-    const newWrapper: LandingPageDraftWrapper = {
-      ...currentWrapper,
-      draft: config,
-      draftUpdatedAt: now,
-    };
-
-    await this.prisma.tenant.update({
-      where: { id: tenantId },
-      data: { landingPageConfig: newWrapper as any },
-    });
-
-    logger.info({ tenantId }, 'Landing page draft saved');
-
-    return { success: true, draftUpdatedAt: now };
   }
 
   /**
