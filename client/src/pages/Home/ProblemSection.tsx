@@ -3,8 +3,8 @@ import { Container } from "@/ui/Container";
 /**
  * ProblemSection - Hero's journey: empowerment over struggle
  *
- * Affirm their identity and expertise. Position admin as beneath them.
- * They're not struggling - they're just ready for the next level.
+ * Position us as the bridge - skip the complexity, get straight to bookings.
+ * Acknowledge the real costs and hassle of DIY.
  */
 export function ProblemSection() {
   return (
@@ -15,31 +15,33 @@ export function ProblemSection() {
     >
       <Container>
         <div className="max-w-3xl mx-auto text-center">
-          {/* Headline - affirms identity */}
+          {/* Headline - the real problem */}
           <h2
             id="problem-heading"
             className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary mb-10 leading-[1.1] tracking-tight"
           >
-            You didn't master your craft
+            You didn't start this
             <br />
-            <span className="text-sage">to spend it on spreadsheets.</span>
+            <span className="text-sage">to become a tech expert.</span>
           </h2>
 
-          {/* Body - empowering framing */}
+          {/* Body - the DIY trap */}
           <div className="text-xl md:text-2xl text-text-muted leading-relaxed space-y-6 font-light">
             <p>
-              Whether it's your full-time gig or your growing side hustle—
+              Squarespace. Acuity. Stripe. Analytics. SEO.
               <br />
-              you've got the skills. People want what you offer.
+              The subscriptions add up. The learning curve never ends.
             </p>
             <p>
-              Now it's time for your systems to match your ambition.
+              Whether it's your full-time business or a growing side hustle—
+              <br />
+              you need a professional online presence, not a second job.
             </p>
           </div>
 
-          {/* Closing line - forward momentum */}
+          {/* Closing line - we're the bridge */}
           <p className="mt-12 text-xl md:text-2xl text-text-primary font-medium">
-            Let's get you back to doing what you love.
+            One monthly fee. Everything handled. You focus on your craft.
           </p>
         </div>
       </Container>
