@@ -200,6 +200,9 @@ jobs:
       - name: Build contracts package
         run: npm run build --workspace=packages/contracts
 
+      - name: Generate Prisma Client
+        run: npm run --workspace=server prisma:generate
+
       - name: Run unit tests with coverage
         run: npm run test:unit -- --coverage
         env:
