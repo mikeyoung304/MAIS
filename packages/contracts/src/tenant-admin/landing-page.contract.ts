@@ -9,7 +9,6 @@ import { LandingPageConfigSchema } from '../landing-page';
 import {
   BadRequestErrorSchema,
   UnauthorizedErrorSchema,
-  ForbiddenErrorSchema,
   NotFoundErrorSchema,
   InternalServerErrorSchema,
 } from '../dto';

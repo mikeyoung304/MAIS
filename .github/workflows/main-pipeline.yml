@@ -358,6 +358,7 @@ jobs:
           npx prisma migrate deploy --schema=./prisma/schema.prisma
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_migration_test
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_migration_test
 
       - name: Generate Prisma Client
         run: npm run --workspace=server prisma:generate
