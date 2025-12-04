@@ -62,9 +62,11 @@ export function HeroSection() {
           className="text-xl md:text-2xl lg:text-3xl text-text-muted font-light mb-16 leading-relaxed max-w-2xl mx-auto animate-fade-slide-up"
           style={{ animationDelay: "0.4s" }}
         >
-          We build your website. Clients book and pay directly.
+          We build your website. We connect scheduling, booking, and payments
           <br />
-          You build your business.
+          directly to your Google Calendar and Stripe.
+          <br />
+          <span className="text-text-primary font-medium">Wake up to "Booking Confirmed."</span>
         </p>
 
         {/* Email Form */}
