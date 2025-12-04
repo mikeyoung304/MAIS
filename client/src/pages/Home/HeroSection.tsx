@@ -54,9 +54,7 @@ export function HeroSection() {
           className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-text-primary leading-[1.05] tracking-tight mb-8 animate-fade-slide-up"
           style={{ animationDelay: "0.2s" }}
         >
-          Book more clients.
-          <br />
-          <span className="text-sage">Build your business.</span>
+          From idea to booked.
         </h1>
 
         {/* Subheadline */}
@@ -64,9 +62,9 @@ export function HeroSection() {
           className="text-xl md:text-2xl lg:text-3xl text-text-muted font-light mb-16 leading-relaxed max-w-2xl mx-auto animate-fade-slide-up"
           style={{ animationDelay: "0.4s" }}
         >
-          We build and host your website. Clients book and pay directly.
+          We build your website. Clients book and pay directly.
           <br />
-          You focus on your craft.
+          You build your business.
         </p>
 
         {/* Email Form */}
@@ -129,7 +127,7 @@ export function HeroSection() {
           className="text-sm text-text-muted/60 mt-6 animate-fade-slide-up"
           style={{ animationDelay: "0.7s" }}
         >
-          For consultants, coaches, creatives, and side hustles ready to grow.
+          Empowering small business owners and startups to launch and grow.
         </p>
       </div>
     </section>
