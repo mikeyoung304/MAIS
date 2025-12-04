@@ -158,6 +158,9 @@ export function createSegmentsRouter(segmentService: SegmentService): Router {
           description: pkg.description || '',
           priceCents: pkg.basePrice,  // Map basePrice -> priceCents
           photoUrl,
+          // Include tier grouping fields for storefront display
+          grouping: pkg.grouping || null,
+          groupingOrder: pkg.groupingOrder ?? null,
           addOns: pkg.addOns?.map((pa) => ({
             id: pa.addOn.id,
             title: pa.addOn.name,

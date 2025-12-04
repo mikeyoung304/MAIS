@@ -29,6 +29,7 @@ export function getTierDisplayName(tierLevel: TierLevel): string {
 /**
  * Extract tiers from packages based on grouping field
  * Returns an object with budget, middle, luxury keys
+ * Accepts 'popular' as an alias for 'middle' tier
  */
 export function extractTiers(
   packages: PackageDto[]
@@ -41,8 +42,13 @@ export function extractTiers(
 
   for (const pkg of packages) {
     const grouping = pkg.grouping?.toLowerCase();
-    if (grouping && TIER_LEVELS.includes(grouping as TierLevel)) {
-      tiers[grouping as TierLevel] = pkg;
+    if (!grouping) continue;
+
+    // Map 'popular' to 'middle' tier
+    const normalizedGrouping = grouping === 'popular' ? 'middle' : grouping;
+
+    if (TIER_LEVELS.includes(normalizedGrouping as TierLevel)) {
+      tiers[normalizedGrouping as TierLevel] = pkg;
     }
   }
 
