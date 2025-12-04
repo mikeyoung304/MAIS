@@ -426,6 +426,7 @@ Use this checklist when performing manual QA:
   - [ ] Connected account balance shows net amount
 
 - [ ] Query database
+
   ```sql
   SELECT
     "totalPrice" / 100.0 as total,

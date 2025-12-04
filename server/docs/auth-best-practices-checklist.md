@@ -679,6 +679,6 @@ Use this checklist as a template for pull request reviews:
 - [ ] All tests passing
 - [ ] Security audit completed
 
-**Reviewed by:** ******\_\_\_******
-**Date:** ******\_\_\_******
+**Reviewed by:** **\*\***\_\_\_**\*\***
+**Date:** **\*\***\_\_\_**\*\***
 **Status:** ✅ Ready to merge / ❌ Needs changes

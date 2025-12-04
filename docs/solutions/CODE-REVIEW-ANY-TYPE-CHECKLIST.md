@@ -337,6 +337,7 @@ Then you can replace the `any` with the schema's inferred type.
    - NO → Likely safe removal
 
 4. **Run the build locally**
+
    ```bash
    npm run typecheck
    ```

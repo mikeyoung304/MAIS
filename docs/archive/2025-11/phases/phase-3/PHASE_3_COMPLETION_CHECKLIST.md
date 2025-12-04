@@ -382,10 +382,10 @@ grep -A 10 "verifyWebhook" src/routes/webhooks.routes.ts
 
 ### Team Sign-Off
 
-- [ ] Engineering Lead: ********\_********
-- [ ] Product Manager: ********\_********
-- [ ] Security Officer: ********\_********
-- [ ] DevOps/SRE: ********\_********
+- [ ] Engineering Lead: **\*\*\*\***\_**\*\*\*\***
+- [ ] Product Manager: **\*\*\*\***\_**\*\*\*\***
+- [ ] Security Officer: **\*\*\*\***\_**\*\*\*\***
+- [ ] DevOps/SRE: **\*\*\*\***\_**\*\*\*\***
 
 ---
 

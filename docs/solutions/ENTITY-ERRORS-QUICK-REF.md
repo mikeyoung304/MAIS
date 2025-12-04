@@ -7,7 +7,7 @@
 ## Modification Checklist (Copy & Paste)
 
 ```markdown
-## Entity Modified: ****\_\_\_****
+## Entity Modified: \***\*\_\_\_\*\***
 
 Step 1: Entity Definition
 

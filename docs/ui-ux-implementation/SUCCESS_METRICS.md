@@ -407,7 +407,7 @@ trackEvent('onboarding_skipped', { tourId, step });
 - [ ] Set up analytics tracking
 - [ ] Create metrics dashboard
 
-**Baseline Date:** ******\_******
+**Baseline Date:** **\*\***\_**\*\***
 
 **Notes:**
 

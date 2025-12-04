@@ -320,7 +320,7 @@ for (const tenant of tenants) {
 
 ---
 
-**Print Date:** ****\_\_\_****
-**Developer:** ********\_********
-**Reviewer:** ********\_********
-**Approval Date:** ****\_\_\_****
+**Print Date:** \***\*\_\_\_\*\***
+**Developer:** **\*\*\*\***\_**\*\*\*\***
+**Reviewer:** **\*\*\*\***\_**\*\*\*\***
+**Approval Date:** \***\*\_\_\_\*\***

@@ -528,11 +528,9 @@ export function createTenantAdminRoutes(
         try {
           await segmentService.getSegmentById(tenantId, data.segmentId);
         } catch {
-          res
-            .status(404)
-            .json({
-              error: 'Invalid segment: segment not found or does not belong to this tenant',
-            });
+          res.status(404).json({
+            error: 'Invalid segment: segment not found or does not belong to this tenant',
+          });
           return;
         }
       }
@@ -580,11 +578,9 @@ export function createTenantAdminRoutes(
         try {
           await segmentService.getSegmentById(tenantId, data.segmentId);
         } catch {
-          res
-            .status(404)
-            .json({
-              error: 'Invalid segment: segment not found or does not belong to this tenant',
-            });
+          res.status(404).json({
+            error: 'Invalid segment: segment not found or does not belong to this tenant',
+          });
           return;
         }
       }
@@ -1153,11 +1149,9 @@ export function createTenantAdminRoutes(
         // SECURITY: Validate package ownership - ensure packageId belongs to tenant
         const pkg = await catalogService.getPackageById(tenantId, data.packageId);
         if (!pkg) {
-          res
-            .status(404)
-            .json({
-              error: 'Invalid package: package not found or does not belong to this tenant',
-            });
+          res.status(404).json({
+            error: 'Invalid package: package not found or does not belong to this tenant',
+          });
           return;
         }
 
@@ -1195,11 +1189,9 @@ export function createTenantAdminRoutes(
         if (data.packageId) {
           const pkg = await catalogService.getPackageById(tenantId, data.packageId);
           if (!pkg) {
-            res
-              .status(404)
-              .json({
-                error: 'Invalid package: package not found or does not belong to this tenant',
-              });
+            res.status(404).json({
+              error: 'Invalid package: package not found or does not belong to this tenant',
+            });
             return;
           }
         }

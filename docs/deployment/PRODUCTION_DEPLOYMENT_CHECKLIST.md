@@ -316,6 +316,7 @@ Expected: 200 OK with package list (or empty array)
   - [ ] Verify commission calculation
 
 - [ ] **Test Widget Embed**
+
   ```html
   <iframe
     src="https://app.maconaisolutions.com/widget?tenant=demo-tenant"

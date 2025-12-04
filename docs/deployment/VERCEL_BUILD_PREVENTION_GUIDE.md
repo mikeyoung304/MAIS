@@ -535,6 +535,7 @@ Vercel requires environment variables to be set in the dashboard or `vercel.json
    - Should include: `"build": "tsc -b --force"`
 
 4. **Check for TypeScript errors:**
+
    ```bash
    npm run typecheck
    ```

@@ -27,6 +27,7 @@ Print this and pin it at your desk! Quick checklist for React component reviews.
   - NO → Continue
 
 - [ ] **Magic values:** Any hardcoded strings/numbers?
+
   ```bash
   grep -n "Essential\|Popular\|Premium" component.tsx
   grep -n "\b150\b\|\b300\b" component.tsx
