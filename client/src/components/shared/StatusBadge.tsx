@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Check, Clock, X, AlertCircle, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -48,10 +49,15 @@ function getVariantFromStatus(status: string): StatusVariant {
  * - Capitalizes status text automatically
  * - Consistent pill-shaped design with color-coded backgrounds
  * - Icons for WCAG 1.4.1 compliance (not relying solely on color)
+ * - Memoized to prevent unnecessary re-renders
  *
  * Accessibility:
  * - Icons have aria-hidden="true" (text provides the meaning)
  * - Status information conveyed through both icon and text
+ *
+ * Performance:
+ * - Wrapped in React.memo for shallow prop comparison
+ * - Prevents re-renders when parent components update
  *
  * Usage:
  * ```tsx
@@ -61,7 +67,7 @@ function getVariantFromStatus(status: string): StatusVariant {
  * <StatusBadge status="custom" variant="success" />
  * ```
  */
-export function StatusBadge({ status, variant, className }: StatusBadgeProps) {
+export const StatusBadge = memo(function StatusBadge({ status, variant, className }: StatusBadgeProps) {
   const resolvedVariant = variant || getVariantFromStatus(status);
   const displayText = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
   const Icon = variantIcons[resolvedVariant];
@@ -78,4 +84,4 @@ export function StatusBadge({ status, variant, className }: StatusBadgeProps) {
       <span>{displayText}</span>
     </span>
   );
-}
+});

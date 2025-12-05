@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { type LucideIcon } from 'lucide-react';
 
 interface EmptyStateProps {
@@ -13,8 +14,13 @@ interface EmptyStateProps {
  *
  * A reusable empty state component with consistent styling
  * Design: Matches landing page aesthetic with sage accents
+ *
+ * Performance:
+ * - Wrapped in React.memo for shallow prop comparison
+ * - Prevents re-renders when parent components update
+ * - Note: action prop should be memoized in parent to prevent re-renders
  */
-export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
+export const EmptyState = memo(function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
   return (
     <div
       className={`bg-surface-alt rounded-2xl border border-sage-light/20 p-12 text-center ${className || ''}`}
@@ -31,4 +37,4 @@ export function EmptyState({ icon: Icon, title, description, action, className }
       </div>
     </div>
   );
-}
+});
