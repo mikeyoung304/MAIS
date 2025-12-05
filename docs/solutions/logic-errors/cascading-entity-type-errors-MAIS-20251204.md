@@ -1,3 +1,28 @@
+---
+module: MAIS
+date: 2025-12-04
+problem_type: logic_error
+component: server/lib/entities.ts
+symptoms:
+  - Build failures when adding required fields to entity interfaces
+  - Type errors across multiple files (5-7 locations) after entity modification
+  - Runtime errors with null/undefined fields in mapped entities
+  - Missing fields in mock data creation
+  - Incomplete entity objects returned from repositories
+root_cause: Distributed entity mapping pattern requires changes in multiple locations (entities, contracts, ports, mocks, Prisma mappers, routes, services) when entity structure changes
+resolution_type: architectural_pattern
+severity: P1
+related_files:
+  - server/src/lib/entities.ts
+  - packages/contracts/*.ts
+  - server/src/lib/ports.ts
+  - server/src/adapters/mock/index.ts
+  - server/src/adapters/prisma/*.repository.ts
+  - server/src/services/*.service.ts
+  - server/src/routes/*.routes.ts
+tags: [typescript, entities, mapping, domain-model, prisma, type-safety]
+---
+
 # Prevention: Cascading Entity Type Errors
 
 **Problem:** When a TypeScript entity interface is modified (e.g., adding a required field to `Package`, `AddOn`, or `Booking`), the change cascades to 5-7 different locations across the codebase. Missing even one location causes build failures and confusing error messages.
@@ -366,7 +391,7 @@ When modifying an entity interface:
 
 ### Code Review Checklist (Reviewer)
 
-````markdown
+```markdown
 ## Entity Change Review
 
 When reviewing PRs with entity modifications:
@@ -406,9 +431,7 @@ npm run typecheck  # Catches type errors
 npm test           # Catches missing mappers/fields
 npm run build      # Full build verification
 ```
-````
-
-````
+```
 
 ---
 
@@ -430,7 +453,7 @@ npm run build      # Full build verification
     "noImplicitReturns": true
   }
 }
-````
+```
 
 **Prevents:** Many optional field bugs, implicit any types
 

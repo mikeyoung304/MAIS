@@ -1,9 +1,23 @@
 ---
-title: Database Client Mismatch Prevention Strategy
-category: prevention
-tags: [database, architecture, client-selection, prisma, supabase, integration]
-priority: P1
-severity: HIGH
+module: MAIS
+date: 2025-12-04
+problem_type: database_issue
+component: server/config/database.ts
+symptoms:
+  - Database verification fails during server startup
+  - "Relation not found" errors when querying via Supabase JS client
+  - Tenant table not exposed via Supabase REST API
+  - Confusing error messages about which database client to use
+  - Inconsistent data access patterns across codebase
+root_cause: Architecture mismatch - mixing two incompatible database access patterns (Supabase JS REST API vs Prisma connection pooling)
+resolution_type: architectural_pattern
+severity: P1
+related_files:
+  - server/src/config/database.ts
+  - server/src/index.ts
+  - server/src/adapters/upload.adapter.ts
+  - server/test/integration/database-startup.spec.ts
+tags: [database, prisma, supabase, architecture, client-selection]
 ---
 
 # Database Client Mismatch Prevention Strategy
@@ -526,7 +540,7 @@ Questions? Ask in #architecture channel
 
 ### Code Review Comment Template
 
-````markdown
+```markdown
 ### Database Client Issue Detected
 
 This PR uses `supabase.from()` for database operations, which:
@@ -545,11 +559,9 @@ const { data } = await supabase.from('Tenant').select('*');
 // After ✅
 const data = await prisma.tenant.findMany();
 ```
-````
 
 See [Database Client Guide](../../docs/solutions/PREVENTION-STRATEGY-DATABASE-CLIENT-MISMATCH.md)
-
-````
+```
 
 ---
 
@@ -573,7 +585,7 @@ grep -r "supabase\.from(" server/src --include="*.ts" \
   | grep -v "storage" | wc -l
 
 # Expected output: 0 (zero findings)
-````
+```
 
 ---
 
@@ -747,6 +759,6 @@ export class UploadAdapter implements StorageProvider {
 
 ---
 
-**Last Updated:** 2025-12-01
+**Last Updated:** 2025-12-04
 **Status:** ✅ Prevention Strategy Complete & Documented
 **Next Review:** Quarterly (Q1 2026)

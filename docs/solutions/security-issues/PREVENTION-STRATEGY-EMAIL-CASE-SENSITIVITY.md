@@ -1,3 +1,25 @@
+---
+module: MAIS
+date: 2025-12-04
+problem_type: security_issue
+component: server/src/adapters/prisma/tenant.repository.ts
+symptoms:
+  - Users report "Invalid credentials" login failures with correct email/password
+  - Authentication fails when email case differs from stored value
+  - Unique constraint violations when creating accounts with different case
+  - Login works for some users but not others with mixed-case emails
+root_cause: Email addresses stored and compared with case-sensitive string operations causing case mismatch between input and database
+resolution_type: fix_with_pattern
+severity: P0
+related_files:
+  - server/src/adapters/prisma/tenant.repository.ts
+  - server/src/services/tenant-auth.service.ts
+  - server/src/routes/auth.routes.ts
+  - server/prisma/schema.prisma
+  - server/test/integration/auth-prevention-tests.spec.ts
+tags: [authentication, email, case-sensitivity, security, normalization]
+---
+
 # Prevention Strategy: Email Case-Sensitivity in Authentication
 
 ## Problem Overview

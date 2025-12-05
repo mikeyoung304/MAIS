@@ -1,3 +1,22 @@
+---
+module: MAIS
+date: 2025-12-04
+problem_type: best_practice
+component: server/routes
+symptoms:
+  - Developer attempts to remove `any` from ts-rest handlers
+  - TypeScript build fails with TS2345 errors in routes
+  - Type safety concerns about `{ req: any }` pattern
+  - Uncertainty about when `any` is acceptable vs code smell
+root_cause: ts-rest v3 has type compatibility issues with Express 4.x/5.x
+resolution_type: reference_doc
+severity: P3
+related_files:
+  - server/src/routes/index.ts
+  - docs/solutions/best-practices/ts-rest-any-type-library-limitations-MAIS-20251204.md
+tags: [typescript, any-type, ts-rest, library-limitations, quick-reference]
+---
+
 # Quick Reference: When NOT to Remove `any` Types
 
 ## TL;DR: Library Limitations Always Win

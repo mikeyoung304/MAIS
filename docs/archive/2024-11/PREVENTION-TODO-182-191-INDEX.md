@@ -4,12 +4,20 @@ category: prevention
 tags: [index, 182-191, quick-links]
 priority: P1
 last_updated: 2025-12-03
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
+
+
+> **ARCHIVED:** This document was archived on 2025-12-04 as part of the PREVENTION files migration (Phase 3).
+> This was sprint-specific documentation from November 2024.
 
 # Prevention Strategies Index: TODO Categories 182-191
 
 This index guides you to the right prevention strategy documents for TODOs 182-191 resolved in commit 14374f7.
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Quick Navigation
@@ -21,6 +29,8 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 | [PREVENTION-TODO-182-191-QUICK-REF.md](./PREVENTION-TODO-182-191-QUICK-REF.md)         | All engineers         | 5 min     | **START HERE** - Cheat sheet with code samples |
 | [PREVENTION-TODO-182-191-COMPREHENSIVE.md](./PREVENTION-TODO-182-191-COMPREHENSIVE.md) | Tech leads, reviewers | 30 min    | Complete guide with checklist, ESLint, tests   |
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## The 10 Categories
@@ -35,6 +45,8 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 - Grep: `rg 'npm_package_version|NODE_ENV' server/src/routes`
 - Test: `/metrics` endpoint shouldn't expose version or environment
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### 2. Transaction Atomicity (183)
@@ -47,6 +59,8 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 - Grep: `rg 'crypto\.randomBytes' server/src/prisma/seeds -B 5 | grep -v '\$transaction'`
 - Test: Verify no orphaned secrets on transaction failure
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### 3. Memory Leak - Event Systems (184)
@@ -59,6 +73,8 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 - Grep: `rg 'subscribe.*:\s*void' server/src`
 - Test: Verify unsubscribe removes handler and prevents re-firing
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### 4. Type DRY Principle (185)
@@ -71,6 +87,8 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 - Grep: `rg "export type \w+ = '[A-Z_]+'.*\|" client/src`
 - Test: Verify compile error if contract changes
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### 5. Exhaustiveness Checking (186)
@@ -83,6 +101,8 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 - Grep: `rg 'switch\s*\([^)]+status' client/src -A 30 | grep -v 'default:'`
 - Test: TypeScript compile error on missing case
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### 6. Documentation Requirements (187)
@@ -95,6 +115,8 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 - Grep: `rg 'advisoryLock.*=.*\d+' server/src`
 - Test: Verify all lock IDs in registry, no duplicates
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### 7. React Hook Cleanup (188)
@@ -107,6 +129,8 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 - Grep: `rg 'useRef<.*Promise|Function' client/src -A 10 | grep -v 'useEffect'`
 - Test: Promise resolves false on component unmount
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### 8. Test Coverage - Infrastructure (189)
@@ -119,6 +143,8 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 - Grep: `find server/test -name "*.ts" ! -exec grep -q "describe\|it(" {} \; -print`
 - Test: Unit tests for error isolation, multiple handlers, cleanup
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### 9. Observability - Transaction Logging (190)
@@ -131,6 +157,8 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 - Grep: `rg '\$transaction' server/src/prisma/seeds -A 2 | grep -v logger`
 - Test: Verify start/completion logs, duration tracked
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### 10. File Organization (191)
@@ -143,6 +171,8 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 - Grep: `find server/test -name "*.ts" -exec grep -l "Example\|Documentation" {} \;`
 - Test: Documentation files should be in docs/, not test/
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## By Use Case
@@ -174,6 +204,8 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 3. Adapt to your code
 4. Verify tests pass
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Implementation Checklist
@@ -185,6 +217,8 @@ This index guides you to the right prevention strategy documents for TODOs 182-1
 - [ ] Write tests following provided patterns
 - [ ] Update documentation if rules apply to your code
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Metrics
@@ -198,6 +232,8 @@ All 10 categories resolved in commit **14374f7**:
 
 **Target:** Apply prevention strategies to all new code going forward
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Quick Links
@@ -208,6 +244,8 @@ All 10 categories resolved in commit **14374f7**:
 - [Related: PREVENTION-QUICK-REFERENCE.md](./PREVENTION-QUICK-REFERENCE.md)
 - [Related: PREVENTION-IMPLEMENTATION-ROADMAP.md](./PREVENTION-IMPLEMENTATION-ROADMAP.md)
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 **Created:** 2025-12-03

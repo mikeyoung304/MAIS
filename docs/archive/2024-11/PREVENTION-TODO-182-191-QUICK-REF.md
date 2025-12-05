@@ -4,12 +4,20 @@ category: prevention
 tags: [cheat-sheet, quick-ref, 182-191]
 priority: P1
 last_updated: 2025-12-03
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
+
+
+> **ARCHIVED:** This document was archived on 2025-12-04 as part of the PREVENTION files migration (Phase 3).
+> This was sprint-specific documentation from November 2024.
 
 # Quick Reference: TODO 182-191 Prevention Strategies
 
 **Print this and keep it handy!**
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 1. Information Disclosure (182)
@@ -38,6 +46,8 @@ const metrics = {
 
 **Test:** Verify `/metrics` endpoint doesn't expose version, environment, or system info
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 2. Transaction Atomicity (183)
@@ -71,6 +81,8 @@ if (secretKey) logger.warn(`Secret Key: ${secretKey}`);
 
 **Test:** Create test that verifies no orphaned secrets on transaction failure
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 3. Memory Leak - Event Systems (184)
@@ -103,6 +115,8 @@ unsub(); // Clean removal
 
 **Test:** Verify unsubscribe removes specific handler and prevents re-firing
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 4. Type DRY Principle (185)
@@ -133,6 +147,8 @@ export type BookingStatus = z.infer<typeof BookingDtoSchema>['status'];
 
 **Test:** Verify compile error if contract changes type but client doesn't update
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 5. Exhaustiveness Checking (186)
@@ -172,6 +188,8 @@ function getStatusVariant(status: BookingStatus): string {
 
 **Test:** Verify TypeScript compile error if union type adds value without handling
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 6. Documentation Requirements (187)
@@ -197,6 +215,8 @@ private readonly advisoryLockId = 42424242; // See docs/reference/ADVISORY_LOCKS
 
 **Test:** Verify all lock IDs in code appear in registry, no duplicates
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 7. React Hook Cleanup (188)
@@ -230,6 +250,8 @@ export function useConfirmDialog() {
 
 **Test:** Verify Promise resolves with false on component unmount
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 8. Test Coverage - Infrastructure (189)
@@ -254,6 +276,8 @@ server/test/type-safety-verification.ts (this is documentation, not a test!)
 
 **Grep:** `find server/test -name "*.ts" ! -exec grep -q "describe\|it(" {} \; -print`
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 9. Observability - Transaction Logging (190)
@@ -293,6 +317,8 @@ logger.info(
 
 **Grep:** `rg '\$transaction' server/src/prisma/seeds -A 2 | grep -v logger`
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 10. File Organization (191)
@@ -317,6 +343,8 @@ logger.info(
 - [ ] Updated file header comments
 - [ ] No broken references
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Testing Each Category
@@ -396,6 +424,8 @@ describe('TODO 182-191 Prevention', () => {
 });
 ```
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Code Review Checklist (Copy-Paste)
@@ -464,6 +494,8 @@ describe('TODO 182-191 Prevention', () => {
 - [ ] Examples in docs/examples/
 ```
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Common Violations
@@ -538,6 +570,8 @@ rg '\$transaction' server/src/prisma/seeds -A 2 | grep -v logger
 find server/test -name "*.ts" -exec grep -l "Example\|Documentation" {} \;
 ```
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Implementation Timeline
@@ -548,6 +582,8 @@ find server/test -name "*.ts" -exec grep -l "Example\|Documentation" {} \;
 **Week 2:** Create test templates
 **Week 3:** Documentation + examples
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 **Print this out and keep it on your desk!**

@@ -1,8 +1,17 @@
 ---
-title: Prevention Strategies Documentation Index
-category: prevention
-tags: [index, navigation, overview]
-priority: P0
+module: MAIS
+date: 2025-12-04
+problem_type: documentation_gap
+component: docs/solutions
+symptoms:
+  - Developers unsure which prevention doc to consult
+  - Duplicate prevention strategies across documents
+  - Missing navigation between related prevention docs
+  - Unclear which guide applies to specific use cases
+root_cause: Index and navigation hub for prevention strategies documentation
+resolution_type: reference_doc
+severity: P3
+tags: [index, navigation, overview, documentation-structure]
 ---
 
 # Prevention Strategies Documentation Index
@@ -278,6 +287,78 @@ async function ensureLoggedIn(page) {
 
 **Quick Reference:** [CRUD-QUICK-REFERENCE.md](./CRUD-QUICK-REFERENCE.md) (print and pin this!)
 
+#### [Schema Drift Prevention: Multi-Layer Defense](./database-issues/SCHEMA_DRIFT_PREVENTION_COMPREHENSIVE.md)
+
+**Purpose:** Prevent schema drift incidents (189 test failures from empty migrations, missing columns, undefined env vars)
+**Audience:** All engineers, especially database/backend team
+**Length:** ~8,000 words (actionable walkthroughs)
+**Severity:** P0 - Production blocking
+**Date:** 2025-12-04
+
+**What It Prevents:**
+
+- Empty migration directories created without migration.sql inside
+- Database missing columns that schema.prisma expects
+- Test configurations with undefined CONNECTION_LIMIT in URLs
+- Schema changes committed without migrations
+- Migrations failing on clean database deployments
+
+**Four-Layer Prevention System:**
+
+1. **Pre-Commit Checks** (`.claude/hooks/validate-schema.sh`)
+   - Detects empty migrations
+   - Verifies required models exist
+   - Checks multi-tenant isolation patterns
+   - Validates schema consistency
+
+2. **CI/CD Pipeline** (GitHub Actions)
+   - Schema syntax validation
+   - Empty migration detection
+   - Migration dry-run on clean database
+   - Environment variable validation
+
+3. **Development Workflow** (Process & Documentation)
+   - Safe migration creation checklist
+   - Pattern A (Prisma) vs Pattern B (Manual SQL) decision guide
+   - Idempotent SQL template
+   - Troubleshooting guide for common issues
+
+4. **Test Configuration** (Environment Setup)
+   - Environment variable validation before tests
+   - DATABASE_CONNECTION_LIMIT required
+   - Test configuration template (.env.test)
+   - Initialization checks prevent "undefined" in URLs
+
+**When to Read:**
+
+- Before modifying schema.prisma
+- When creating database migrations
+- During onboarding (database team focus)
+- After any migration-related incident
+
+**Quick Reference:**
+
+```bash
+# Safe workflow
+cd server
+npm exec prisma migrate dev --name add_my_field
+# Verify migration.sql was created (not empty)
+npm run test:integration
+git add server/prisma/
+git commit -m "feat(schema): add my_field"
+
+# For enums/indexes (Pattern B)
+touch server/prisma/migrations/NN_name.sql
+# Use IF EXISTS/IF NOT EXISTS for idempotency
+npm run test:integration
+git add server/prisma/migrations/NN_name.sql
+git commit -m "chore(schema): add my_index"
+```
+
+**Implementation Status:** Ready for immediate adoption
+**Files to Create:** Hook script, CI jobs, guide documents
+**Estimated Effort:** 2-3 hours for full implementation
+
 ---
 
 ### 2.5. Code Review Pattern Guides
@@ -415,6 +496,34 @@ cp server/test/templates/tenant-isolation.test.ts \
 ---
 
 ## 🎯 By Use Case
+
+### "I'm modifying database schema or migrations"
+
+**Read:**
+
+1. [Schema Drift Prevention - Comprehensive Guide](./database-issues/SCHEMA_DRIFT_PREVENTION_COMPREHENSIVE.md) (15-20 min)
+2. [CLAUDE.md - Database Schema Modifications](../../CLAUDE.md#when-modifying-database-schema) (5 min)
+
+**Checklist:**
+
+- [ ] Understand Pattern A (Prisma migrations) vs Pattern B (Manual SQL)
+- [ ] Created migration using `npm exec prisma migrate dev --name descriptive_name`
+- [ ] Verify migration.sql file exists and is NOT empty
+- [ ] Run `npm exec prisma generate` to regenerate Prisma Client
+- [ ] Tested on local database: `npm run test:integration`
+- [ ] Committed both `schema.prisma` AND migration files together
+- [ ] Pre-commit hook passed without warnings
+- [ ] Migration uses idempotent SQL (IF EXISTS/IF NOT EXISTS)
+
+**Common Mistakes to Avoid:**
+
+- Don't edit migration files manually after creation
+- Don't create empty migrations
+- Don't skip running tests after schema changes
+- Don't commit schema changes without migration files
+- Don't use `prisma migrate reset` in production
+
+---
 
 ### "I'm adding a new database query"
 

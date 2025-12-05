@@ -1,3 +1,11 @@
+---
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
+---
+
+> **ARCHIVED:** This document was archived on 2025-12-04 as part of the PREVENTION files migration (Phase 3).
+> This was sprint-specific documentation from November 2024.
+
 # Prevention Strategies - Quick Reference Guide
 
 ## Email Case-Sensitivity Login Failures

@@ -4,12 +4,20 @@ category: prevention
 tags: [security, type-safety, architecture, observability, testing, documentation]
 priority: P1
 last_updated: 2025-12-03
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
+
+
+> **ARCHIVED:** This document was archived on 2025-12-04 as part of the PREVENTION files migration (Phase 3).
+> This was sprint-specific documentation from November 2024.
 
 # Prevention Strategies for TODOs 182-191
 
 This document provides comprehensive prevention strategies for 10 critical categories identified and resolved in commit 14374f7. Each category includes code review checklists, ESLint rules, and test patterns to prevent regression.
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Table of Contents
@@ -25,6 +33,8 @@ This document provides comprehensive prevention strategies for 10 critical categ
 9. [Observability - Transaction Logging (190)](#9-observability---transaction-logging-190)
 10. [File Organization (191)](#10-file-organization-191)
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 1. Information Disclosure Prevention (182)
@@ -126,6 +136,8 @@ describe('GET /metrics', () => {
 3. **Logs:** Version/environment OK in server logs (ephemeral), not in database logs
 4. **Config:** Document which information is safe for public consumption
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 2. Transaction Atomicity (183)
@@ -230,6 +242,8 @@ describe('Seed Transaction Atomicity', () => {
 4. **Error handling:** Don't log or track secrets in error paths
 5. **Validation:** Verify resource persisted before logging
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 3. Memory Leak Prevention - Event Systems (184)
@@ -371,6 +385,8 @@ describe('Event Emitter Service Lifecycle', () => {
 4. **DI container:** Call unsubscribers during container cleanup
 5. **Testing:** Verify handler count decreases after unsubscribe
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 4. Type DRY Principle (185)
@@ -489,6 +505,8 @@ describe('UI Status Handling', () => {
 4. **No duplication:** Don't manually type union values
 5. **Testing:** Verify all contract values handled in switch statements
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 5. Exhaustiveness Checking (186)
@@ -608,6 +626,8 @@ describe('Exhaustive Status Handling', () => {
 4. **Testing:** Verify all union values handled
 5. **Documentation:** Comment why exhaustiveness check is needed
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 6. Documentation Requirements (187)
@@ -717,6 +737,8 @@ describe('Advisory Lock Registry', () => {
 | FNV-1a   | BookingRepository  | Race prevention    | Per booking | Hash of tenantId:date           |
 ```
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 7. React Hook Cleanup (188)
@@ -843,6 +865,8 @@ describe('useConfirmDialog Cleanup', () => {
 4. **Testing:** Verify unmount resolves promise and prevents hangs
 5. **Documentation:** Comment why cleanup is needed
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 8. Test Coverage - Infrastructure Code (189)
@@ -1036,6 +1060,8 @@ describe('InProcessEventEmitter - Unit Tests', () => {
 4. **Edge cases:** Test error handling, empty states, cleanup
 5. **Coverage target:** 80%+ for infrastructure code
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 9. Observability - Transaction Logging (190)
@@ -1177,6 +1203,8 @@ logger.info(
 );
 ```
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## 10. File Organization (191)
@@ -1320,6 +1348,8 @@ packages/
 └── shared/
 ```
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Summary: Prevention Implementation Roadmap
@@ -1354,6 +1384,8 @@ packages/
 2. Trend analysis
 3. Monthly review process
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Quick Reference: Which Category?
@@ -1371,6 +1403,8 @@ packages/
 | No transaction logging         | Observability (190)         | ✓         | ✓      | ✓    |
 | Docs in test/ directory        | File Organization (191)     | ✓         | ✓      | ✓    |
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Implementation Checklist
@@ -1386,6 +1420,8 @@ packages/
 - [ ] Set up metrics dashboard
 - [ ] Plan monthly review process
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 **Document Status:** Complete (2025-12-03)

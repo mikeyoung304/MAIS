@@ -1,3 +1,22 @@
+---
+module: MAIS
+date: 2025-12-04
+problem_type: best_practice
+component: server/routes
+symptoms:
+  - Build fails with TS2345 errors when replacing `any` with `Request` in ts-rest handlers
+  - Code quality tools flag `{ req: any }` as type safety violation
+  - Attempted type improvements cause compilation failures
+  - ts-rest route handlers cannot use Express Request type
+root_cause: ts-rest v3 has known type compatibility issues with Express 4.x/5.x middleware signatures
+resolution_type: architectural_pattern
+severity: P2
+related_files:
+  - server/src/routes/index.ts
+  - server/src/routes/*.routes.ts
+tags: [typescript, ts-rest, library-limitation, type-safety, express]
+---
+
 # Prevention Strategy: ts-rest Library Limitations & Type Safety
 
 ## Problem Summary

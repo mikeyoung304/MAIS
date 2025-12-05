@@ -487,9 +487,12 @@ export class BookingService {
 
 The following links prevent common mistakes from recurring:
 
-- **[PREVENTION-TS-REST-ANY-TYPE.md](docs/solutions/PREVENTION-TS-REST-ANY-TYPE.md)** - When `any` is acceptable (library limitations)
-- **[PREVENTION-ANY-TYPES-QUICK-REF.md](docs/solutions/PREVENTION-ANY-TYPES-QUICK-REF.md)** - 30-second decision tree
+- **[ts-rest-any-type-library-limitations](docs/solutions/best-practices/ts-rest-any-type-library-limitations-MAIS-20251204.md)** - When `any` is acceptable (library limitations)
+- **[any-types-quick-reference](docs/solutions/best-practices/any-types-quick-reference-MAIS-20251204.md)** - 30-second decision tree
 - **[CODE-REVIEW-ANY-TYPE-CHECKLIST.md](docs/solutions/CODE-REVIEW-ANY-TYPE-CHECKLIST.md)** - Detailed code review process
+- **[cascading-entity-type-errors](docs/solutions/logic-errors/cascading-entity-type-errors-MAIS-20251204.md)** - Preventing cascading type errors
+- **[database-client-mismatch](docs/solutions/database-issues/database-client-mismatch-MAIS-20251204.md)** - Database/client mismatch prevention
+- **[schema-drift-prevention](docs/solutions/database-issues/schema-drift-prevention-MAIS-20251204.md)** - Schema drift prevention (P0)
 
 **Key insight from Commit 417b8c0:** ts-rest has type compatibility issues with Express 4.x/5.x. The `{ req: any }` in route handlers is REQUIRED and must not be removed. Document library limitations instead of trying to "fix" them.
 

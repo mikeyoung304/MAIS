@@ -117,16 +117,22 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
     );
 
     // Initialize app with test config
+    // Pass through env vars for real mode, include connection pool defaults
     const config = {
       NODE_ENV: 'test',
       PORT: 3001,
       JWT_SECRET,
-      ADAPTERS_PRESET: 'real',
+      ADAPTERS_PRESET: process.env.ADAPTERS_PRESET || 'mock',
       DATABASE_URL: process.env.DATABASE_URL!,
+      DATABASE_CONNECTION_LIMIT: 1,
+      DATABASE_POOL_TIMEOUT: 10,
+      STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+      STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     };
 
     const container = buildContainer(config);
-    app = createApp(container);
+    const startTime = Date.now();
+    app = createApp(config, container, startTime);
   });
 
   afterAll(async () => {

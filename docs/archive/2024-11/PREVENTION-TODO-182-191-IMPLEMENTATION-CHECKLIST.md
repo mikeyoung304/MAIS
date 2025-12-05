@@ -4,12 +4,20 @@ category: prevention
 tags: [checklist, implementation, 182-191]
 priority: P1
 last_updated: 2025-12-03
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
+
+
+> **ARCHIVED:** This document was archived on 2025-12-04 as part of the PREVENTION files migration (Phase 3).
+> This was sprint-specific documentation from November 2024.
 
 # Implementation Checklist: TODO Categories 182-191
 
 Use this checklist to implement the 10 prevention strategies in your team.
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Phase 0: Preparation (Today - 30 minutes)
@@ -28,6 +36,8 @@ Use this checklist to implement the 10 prevention strategies in your team.
 - [ ] Tech lead identifies top 3 priority categories
 - [ ] Tech lead plans implementation timeline
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Phase 1: Team Training & Code Review Integration (Day 1-2)
@@ -79,6 +89,8 @@ Use this checklist to implement the 10 prevention strategies in your team.
 - [ ] Assign **Categories 183-185** to mid-level engineers
 - [ ] Assign **Categories 187-191** to junior engineers (learning opportunity)
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Phase 2: Individual Category Implementation (Days 3-10)
@@ -154,6 +166,8 @@ Each category owner completes their tasks:
   - [ ] Document false positives
   - [ ] Get tech lead approval
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### Category 183: Transaction Atomicity
@@ -183,6 +197,8 @@ Each category owner completes their tasks:
   - [ ] Verify accuracy
   - [ ] Document
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### Category 184: Memory Leak - Event Systems
@@ -210,6 +226,8 @@ Each category owner completes their tasks:
   - [ ] Test on codebase
   - [ ] Document
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### Category 185: Type DRY Principle
@@ -236,6 +254,8 @@ Each category owner completes their tasks:
   - [ ] Test accuracy
   - [ ] Document
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### Category 186: Exhaustiveness Checking
@@ -262,6 +282,8 @@ Each category owner completes their tasks:
   - [ ] Test on codebase
   - [ ] Verify catches missing cases
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### Category 187: Documentation Requirements
@@ -289,6 +311,8 @@ Each category owner completes their tasks:
   - [ ] Verify no duplicates
   - [ ] Add to test suite
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### Category 188: React Hook Cleanup
@@ -315,6 +339,8 @@ Each category owner completes their tasks:
   - [ ] Test on codebase
   - [ ] Document
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### Category 189: Test Coverage - Infrastructure
@@ -344,6 +370,8 @@ Each category owner completes their tasks:
   - [ ] Test accuracy
   - [ ] Document exemptions
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### Category 190: Observability - Transaction Logging
@@ -376,6 +404,8 @@ Each category owner completes their tasks:
   - [ ] Test on codebase
   - [ ] Document
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ### Category 191: File Organization
@@ -403,6 +433,8 @@ Each category owner completes their tasks:
   - [ ] Test on codebase
   - [ ] Document
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Phase 3: ESLint Rules Implementation (Week 2, Days 3-5)
@@ -428,6 +460,8 @@ Each category owner completes their tasks:
 - [ ] Weekly review of new violations
 - [ ] Plan rule escalation to `error` level
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Phase 4: Test Templates (Week 2-3)
@@ -454,6 +488,8 @@ server/test/templates/prevention-182-191/
 └── 191-file-organization.test.ts
 ```
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Phase 5: Documentation & Training (Week 3)
@@ -479,6 +515,8 @@ server/test/templates/prevention-182-191/
 - [ ] Link from project README
 - [ ] Email team with overview
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Phase 6: Monitoring & Feedback (Ongoing)
@@ -506,6 +544,8 @@ server/test/templates/prevention-182-191/
 - [ ] Update documentation
 - [ ] Plan next quarter
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Success Criteria
@@ -546,6 +586,8 @@ server/test/templates/prevention-182-191/
 - [ ] Prevention strategies updated based on feedback
 - [ ] **Target:** Culture of prevention embedded
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Role Assignments Template
@@ -565,6 +607,8 @@ Use this to assign responsibility:
 | 190      | [Name] | [Name]   | [ ] Pending | Observability Logging                      |
 | 191      | [Name] | [Name]   | [ ] Pending | File Organization                          |
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Communication Plan
@@ -618,6 +662,8 @@ Next week:
 Dashboard: [LINK]
 ```
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Troubleshooting
@@ -658,6 +704,8 @@ Dashboard: [LINK]
 3. Create issue to review exemption
 4. Report to tech lead
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Resources
@@ -668,6 +716,8 @@ Dashboard: [LINK]
 - **Dashboard:** [URL to be created in Phase 6]
 - **Issues:** Tag with `prevention-182-191` label
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 ## Questions?
@@ -677,6 +727,8 @@ Dashboard: [LINK]
 3. Ask in #prevention-strategies Slack channel
 4. Escalate to tech lead if needed
 
+archived: 2025-12-04
+archived_reason: Sprint-specific documentation from November 2024
 ---
 
 **Status:** Ready to implement

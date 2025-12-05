@@ -1,3 +1,25 @@
+---
+module: MAIS
+date: 2025-12-04
+problem_type: database_issue
+component: server/prisma/schema.prisma
+symptoms:
+  - Schema.prisma modified without corresponding migrations
+  - Build errors after database schema changes
+  - "Migration not found" errors when deploying
+  - AI agents running destructive database commands without user approval
+  - Schema drift between development and production environments
+root_cause: Schema.prisma changes made without using Prisma migrate dev or creating manual SQL migrations for PostgreSQL-specific features
+resolution_type: architectural_pattern
+severity: P0
+related_files:
+  - server/prisma/schema.prisma
+  - server/prisma/migrations/*
+  - .claude/hooks/validate-patterns.sh
+  - server/test/schema-consistency.test.ts
+tags: [database, prisma, migrations, schema-drift, postgresql, pre-commit-hooks]
+---
+
 # Schema Drift Prevention - Implementation Status
 
 **Created:** 2025-11-28
@@ -500,6 +522,6 @@ npm exec prisma studio
 
 ---
 
-**Last Updated:** 2025-11-28
+**Last Updated:** 2025-12-04
 **Status:** Fully Implemented and Tested
 **Next Review:** 2025-12-28
