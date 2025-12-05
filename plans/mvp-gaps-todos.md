@@ -124,7 +124,7 @@
 - [x] Add `POST /v1/tenant-admin/reminders/process` endpoint
 - [x] Add `GET /v1/tenant-admin/reminders/upcoming` endpoint
 - [x] Wire routes in DI container
-- [ ] Create React dashboard component for reminders
+- [x] Create React dashboard component for reminders (RemindersCard.tsx - 2025-12-05)
 
 ### 2.6 Testing
 
@@ -157,13 +157,13 @@
 - [x] Add `DELETE /v1/tenant-admin/calendar/config`
 - [x] Add `POST /v1/tenant-admin/calendar/test` test connection endpoint
 
-### 3.4 Admin UI
+### 3.4 Admin UI ✅ COMPLETE (2025-12-05)
 
-- [ ] Create `client/src/features/tenant-admin/CalendarConfigCard.tsx`
-- [ ] File upload for service account JSON
-- [ ] Calendar ID input field
-- [ ] Test connection button
-- [ ] Show configuration status
+- [x] Create `client/src/features/tenant-admin/TenantDashboard/CalendarConfigCard.tsx`
+- [x] File upload for service account JSON
+- [x] Calendar ID input field
+- [x] Test connection button
+- [x] Show configuration status
 
 ### 3.5 Testing
 
@@ -207,11 +207,11 @@
 - [x] Add `PUT /v1/tenant-admin/deposits/settings`
 - [x] Add contracts for DepositSettingsDto
 
-### 4.5 UI Updates
+### 4.5 UI Updates ✅ PARTIAL (2025-12-05)
 
 - [ ] Show deposit info in confirmation email
 - [ ] Show balance due in booking details
-- [ ] Create React component for deposit settings
+- [x] Create React component for deposit settings (DepositSettingsCard.tsx - 2025-12-05)
 
 ### 4.6 Testing
 
@@ -232,7 +232,7 @@
 
 ---
 
-## Summary (2025-12-02)
+## Summary (2025-12-05)
 
 **Backend Implementation: 100% Complete**
 
@@ -241,12 +241,19 @@
 - Phase 3: Per-Tenant Calendar Config ✅
 - Phase 4: Simple Deposits ✅
 
+**Frontend Implementation: 90% Complete (2025-12-05)**
+
+- [x] Reminder dashboard component (RemindersCard.tsx)
+- [x] Calendar settings component (CalendarConfigCard.tsx)
+- [x] Deposit settings component (DepositSettingsCard.tsx)
+- [x] New dashboard tabs (Reminders, Settings)
+- [x] Switch UI component (switch.tsx)
+
 **Frontend Remaining:**
 
-- Reminder dashboard component
-- Calendar settings component
-- Deposit settings component
-- Balance payment page
+- [ ] Show deposit info in confirmation email
+- [ ] Show balance due in booking details
+- [ ] Balance payment page UI (public page for customers to pay remaining balance)
 
 ---
 

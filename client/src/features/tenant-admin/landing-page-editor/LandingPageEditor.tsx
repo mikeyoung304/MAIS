@@ -118,39 +118,8 @@ export function LandingPageEditor() {
     (s) => !config?.sections?.[s] && s !== 'segmentSelector'
   );
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-surface">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-surface p-8">
-        <Card className="border-destructive bg-destructive/5 max-w-md">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              <div>
-                <p className="font-medium text-destructive">Failed to load landing page</p>
-                <p className="text-sm text-muted-foreground">{error}</p>
-              </div>
-              <Button variant="outline" size="sm" onClick={loadConfig} className="ml-auto">
-                <RefreshCw className="h-4 w-4 mr-1" />
-                Retry
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   // Memoized section update handlers for stable references
+  // IMPORTANT: All hooks must be called unconditionally before any early returns
   const sectionUpdateHandlers = useMemo(
     () => ({
       hero: (updates: Parameters<typeof updateSectionContent>[1]) =>
@@ -262,6 +231,38 @@ export function LandingPageEditor() {
     },
     [config, isPublishing, sectionUpdateHandlers]
   );
+
+  // Loading state - AFTER all hooks are called
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-surface">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Error state - AFTER all hooks are called
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-surface p-8">
+        <Card className="border-destructive bg-destructive/5 max-w-md">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <div>
+                <p className="font-medium text-destructive">Failed to load landing page</p>
+                <p className="text-sm text-muted-foreground">{error}</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={loadConfig} className="ml-auto">
+                <RefreshCw className="h-4 w-4 mr-1" />
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-surface">

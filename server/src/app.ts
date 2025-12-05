@@ -243,6 +243,7 @@ export function createApp(
       packageDraft: container.services.packageDraft,
       tenantOnboarding: container.services.tenantOnboarding,
       reminder: container.services.reminder,
+      landingPage: container.services.landingPage,
     },
     container.mailProvider,
     container.prisma,

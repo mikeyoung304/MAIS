@@ -325,6 +325,97 @@ Item.displayName = 'Item';
 
 **Quick Reference:** [REACT-MEMOIZATION-QUICK-REFERENCE.md](./react-performance/REACT-MEMOIZATION-QUICK-REFERENCE.md)
 
+#### [React Custom Hook Extraction Prevention Strategy](./react-performance/REACT-HOOK-EXTRACTION-PREVENTION.md)
+
+**Purpose:** Prevent component complexity by knowing when and how to extract custom hooks
+**Audience:** React component developers, code reviewers
+**Length:** ~7,000 words (comprehensive guide + patterns + checklist)
+**Date Solved:** 2025-12-05
+
+**Covers:**
+
+- When to extract hooks (decision tree)
+- Warning signs of over-complex components (6+ useState, 3+ useEffect, 200+ lines)
+- Four hook patterns (Manager, Data Fetching, Form State, Computed Values)
+- Testing requirements (80%+ coverage, test templates)
+- Hook implementation patterns with examples
+- Common mistakes and fixes
+- Code review checklist for hook PRs
+- ESLint rule suggestions
+
+**Issues Prevented:**
+
+- Component logic too tightly coupled to UI
+- Difficult to test business logic without rendering
+- Hooks reused in multiple components aren't extracted
+- Over-extraction of simple state (premature abstraction)
+- Missing tests for extracted hooks
+- Incomplete dependency arrays in memoized callbacks
+
+**Quick Rules:**
+
+```typescript
+// Extract when component has:
+// - 6+ useState calls
+// - 3+ useEffect calls
+// - API calls mixed with UI
+// - 200+ lines total
+// - Complex state-dependent operations
+
+// Pattern 1: Manager Hook
+export function useRemindersManager() {
+  const [status, setStatus] = useState(null);
+  const fetchStatus = useCallback(async () => { ... }, []);
+  useEffect(() => { fetchStatus(); }, []);
+  return { status, loading, error, fetchStatus, handleProcess };
+}
+
+// Pattern 2: Data Fetching Hook
+export function useDashboardData(activeTab) {
+  const [data, setData] = useState([]);
+  useEffect(() => { loadData(activeTab); }, [activeTab]);
+  const grouped = useMemo(() => group(data), [data]);
+  return { data, grouped, isLoading };
+}
+
+// Pattern 3: Form State Hook
+export function useCalendarForm() {
+  const [calendarId, setCalendarId] = useState('');
+  const [errors, setErrors] = useState({});
+  const handleSave = useCallback(async () => { ... }, [calendarId]);
+  return { calendarId, setCalendarId, errors, handleSave };
+}
+
+// Pattern 4: Computed Value Hook
+export function useBookingTotal(basePriceCents, selectedAddOnIds) {
+  return useMemo(() => {
+    let total = basePriceCents;
+    for (const id of selectedAddOnIds) {
+      total += addOns[id].price;
+    }
+    return total / 100;
+  }, [basePriceCents, selectedAddOnIds]);
+}
+```
+
+**When to Use:**
+
+- Adding multi-state features to components
+- Components with complex async operations
+- Logic that should be tested independently
+- State/logic reused across components
+- Components becoming hard to understand
+
+**Quick References:**
+- [REACT-HOOK-EXTRACTION-QUICK-REFERENCE.md](./react-performance/REACT-HOOK-EXTRACTION-QUICK-REFERENCE.md) (print & pin!)
+- [HOOK-EXTRACTION-CODE-REVIEW-CHECKLIST.md](./react-performance/HOOK-EXTRACTION-CODE-REVIEW-CHECKLIST.md) (for PR reviews)
+
+**Related Hooks in Codebase:**
+- `useRemindersManager` - Reminder status + processing operations
+- `useCalendarConfigManager` - Calendar config form + file upload + dialogs
+- `useDepositSettingsManager` - Deposit settings form + validation
+- `useDashboardData` - Parallel data fetching for dashboard tabs
+
 ---
 
 #### [Schema Drift Prevention: Multi-Layer Defense](./database-issues/SCHEMA_DRIFT_PREVENTION_COMPREHENSIVE.md)
@@ -711,6 +802,50 @@ cp server/test/templates/tenant-isolation.test.ts \
 - [ ] Accessibility test
 - [ ] Performance test (React DevTools Profiler - no unexpected re-renders)
 - [ ] List performance test (check memo works with 10+ items)
+
+---
+
+### "I'm extracting a custom hook from a complex component"
+
+**Read:**
+
+1. [React Custom Hook Extraction Prevention Strategy](./react-performance/REACT-HOOK-EXTRACTION-PREVENTION.md) (comprehensive guide)
+2. [REACT-HOOK-EXTRACTION-QUICK-REFERENCE.md](./react-performance/REACT-HOOK-EXTRACTION-QUICK-REFERENCE.md) (decision tree + patterns)
+3. [HOOK-EXTRACTION-CODE-REVIEW-CHECKLIST.md](./react-performance/HOOK-EXTRACTION-CODE-REVIEW-CHECKLIST.md) (PR review guide)
+
+**Planning (Before Coding):**
+
+- [ ] Identify what to extract: state + business logic + effects
+- [ ] Choose hook pattern: Manager, DataFetching, Form, or Computed
+- [ ] Plan return type interface (UseXxxManagerResult)
+- [ ] Plan test file location and coverage target (80%+)
+
+**Implementation:**
+
+- [ ] Hook file: `hooks/use{Feature}{Manager|State}.ts`
+- [ ] Return type interface defined and exported
+- [ ] All state related to feature grouped together
+- [ ] All callbacks use useCallback with complete dependencies
+- [ ] All derived values use useMemo
+- [ ] Appropriate logging/error handling
+- [ ] JSDoc comment on hook
+- [ ] Component simplified by 50%+ lines
+- [ ] Only UI rendering remains in component
+
+**Testing:**
+
+- [ ] Test file: `hooks/use{Feature}.test.ts`
+- [ ] Tests for: initialization, mount effects, all methods, errors, edge cases
+- [ ] Coverage >= 80%
+- [ ] Tests are deterministic (no flakiness)
+- [ ] Proper async patterns (renderHook, waitFor, act)
+
+**Code Review:**
+
+- [ ] Use [HOOK-EXTRACTION-CODE-REVIEW-CHECKLIST.md](./react-performance/HOOK-EXTRACTION-CODE-REVIEW-CHECKLIST.md) for review
+- [ ] Verify component size reduction
+- [ ] Check ESLint passes (exhaustive-deps)
+- [ ] Validate test coverage
 
 ---
 

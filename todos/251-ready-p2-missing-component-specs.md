@@ -1,5 +1,5 @@
 ---
-status: pending
+status: ready
 priority: p2
 issue_id: '251'
 tags: [code-review, landing-page, plan, components]

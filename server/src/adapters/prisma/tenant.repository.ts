@@ -643,37 +643,44 @@ export class PrismaTenantRepository {
    *
    * SECURITY: Tenant isolation enforced via tenantId parameter
    *
+   * DATA INTEGRITY:
+   * - Uses Prisma transaction to prevent TOCTOU race conditions
+   * - Concurrent operations will serialize correctly
+   * - On failure, no partial state is written
+   *
    * @param tenantId - Tenant ID (REQUIRED for tenant isolation)
    * @returns Discard result
    */
   async discardLandingPageDraft(tenantId: string): Promise<{ success: boolean }> {
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { landingPageConfig: true },
+    return await this.prisma.$transaction(async (tx) => {
+      const tenant = await tx.tenant.findUnique({
+        where: { id: tenantId },
+        select: { landingPageConfig: true },
+      });
+
+      if (!tenant) {
+        throw new NotFoundError('Tenant not found');
+      }
+
+      const currentWrapper = this.getLandingPageWrapper(tenant.landingPageConfig);
+
+      // Clear draft, keep published
+      const newWrapper: LandingPageDraftWrapper = {
+        draft: null,
+        draftUpdatedAt: null,
+        published: currentWrapper.published,
+        publishedAt: currentWrapper.publishedAt,
+      };
+
+      await tx.tenant.update({
+        where: { id: tenantId },
+        data: { landingPageConfig: newWrapper as any },
+      });
+
+      logger.info({ tenantId }, 'Landing page draft discarded');
+
+      return { success: true };
     });
-
-    if (!tenant) {
-      throw new NotFoundError('Tenant not found');
-    }
-
-    const currentWrapper = this.getLandingPageWrapper(tenant.landingPageConfig);
-
-    // Clear draft, keep published
-    const newWrapper: LandingPageDraftWrapper = {
-      draft: null,
-      draftUpdatedAt: null,
-      published: currentWrapper.published,
-      publishedAt: currentWrapper.publishedAt,
-    };
-
-    await this.prisma.tenant.update({
-      where: { id: tenantId },
-      data: { landingPageConfig: newWrapper as any },
-    });
-
-    logger.info({ tenantId }, 'Landing page draft discarded');
-
-    return { success: true };
   }
 }
 

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: '246'
 tags: [code-review, landing-page, plan, architecture]
@@ -88,6 +88,7 @@ The feature plan (`plans/feat-landing-page-visual-editor.md`) proposes creating 
 | Date       | Action  | Notes                                         |
 |------------|---------|-----------------------------------------------|
 | 2025-12-04 | Created | Plan review identified backend already exists |
+| 2025-12-05 | Closed  | Verified: endpoints at routes.ts:168-304, implementation predates todo (commit 1647a40) |
 
 ## Tags
 

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: '249'
 tags: [code-review, landing-page, security, rate-limiting]
@@ -109,6 +109,7 @@ router.delete('/draft', draftLimiterIP, async (req, res) => { ... });
 | Date       | Action  | Notes                                      |
 |------------|---------|-------------------------------------------|
 | 2025-12-04 | Created | Security review identified DoS risk       |
+| 2025-12-05 | Closed  | Verified: draftAutosaveLimiter at rateLimiter.ts:133, applied to all 3 routes |
 
 ## Tags
 

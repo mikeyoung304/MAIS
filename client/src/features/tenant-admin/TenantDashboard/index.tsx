@@ -18,6 +18,9 @@ import { BlackoutsManager } from '../BlackoutsManager';
 import { TenantBookingList } from '../TenantBookingList';
 import { BrandingEditor } from '../BrandingEditor';
 import { StripeConnectCard } from './StripeConnectCard';
+import { RemindersCard } from './RemindersCard';
+import { CalendarConfigCard } from './CalendarConfigCard';
+import { DepositSettingsCard } from './DepositSettingsCard';
 import { AdminLayout } from '../../../layouts/AdminLayout';
 import { MetricsCards } from './MetricsCards';
 import { TabNavigation, type DashboardTab } from './TabNavigation';
@@ -176,6 +179,15 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
             )}
 
             {activeTab === 'payments' && <StripeConnectCard />}
+
+            {activeTab === 'reminders' && <RemindersCard />}
+
+            {activeTab === 'settings' && (
+              <div className="space-y-10">
+                <CalendarConfigCard />
+                <DepositSettingsCard />
+              </div>
+            )}
           </section>
         </div>
       </div>

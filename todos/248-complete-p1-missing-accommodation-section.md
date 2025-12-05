@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: '248'
 tags: [code-review, landing-page, plan, schema-mismatch]
@@ -129,6 +129,7 @@ accommodation: {
 | Date       | Action  | Notes                                          |
 |------------|---------|------------------------------------------------|
 | 2025-12-04 | Created | Plan review identified missing accommodation   |
+| 2025-12-05 | Closed  | Verified: EditableAccommodationSection.tsx exists (182 lines, commit 1647a40) |
 
 ## Tags
 
