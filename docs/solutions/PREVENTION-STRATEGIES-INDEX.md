@@ -287,6 +287,46 @@ async function ensureLoggedIn(page) {
 
 **Quick Reference:** [CRUD-QUICK-REFERENCE.md](./CRUD-QUICK-REFERENCE.md) (print and pin this!)
 
+#### [React Memoization Prevention Strategy](./react-performance/REACT-MEMOIZATION-PREVENTION-STRATEGY.md)
+
+**Purpose:** Prevent unnecessary component re-renders by properly memoizing callback props and derived values
+**Audience:** React component developers
+**Key Patterns:** useCallback, useMemo, React.memo, dependency arrays
+
+**Issues Prevented:**
+
+- Cascading re-renders through component trees (100+ re-renders from 1 change)
+- Performance degradation in lists (slower than O(n))
+- Broken animation/focus state in child components
+- Unnecessary DOM diffing and layout thrashing
+
+**Quick Rules:**
+
+```typescript
+// 1. Callback props → useCallback()
+const handleChange = useCallback((e) => setState(e.target.value), []);
+
+// 2. Derived values → useMemo()
+const filtered = useMemo(() => items.filter(i => i.active), [items]);
+
+// 3. List items → React.memo()
+const Item = React.memo(function Item({ id, onSelect }) { ... });
+Item.displayName = 'Item';
+
+// 4. Complete dependency arrays
+// ESLint: react-hooks/exhaustive-deps must pass
+```
+
+**When to Use:**
+- Building list/grid components with 10+ items
+- Components receiving callback props
+- Computing filtered/sorted arrays or objects
+- Custom hooks returning callbacks or values
+
+**Quick Reference:** [REACT-MEMOIZATION-QUICK-REFERENCE.md](./react-performance/REACT-MEMOIZATION-QUICK-REFERENCE.md)
+
+---
+
 #### [Schema Drift Prevention: Multi-Layer Defense](./database-issues/SCHEMA_DRIFT_PREVENTION_COMPREHENSIVE.md)
 
 **Purpose:** Prevent schema drift incidents (189 test failures from empty migrations, missing columns, undefined env vars)
@@ -650,21 +690,27 @@ cp server/test/templates/tenant-isolation.test.ts \
 
 **Read:**
 
-1. [React UI Patterns & Audit Logging Review](./code-review-patterns/react-ui-patterns-audit-logging-review.md)
-2. [React Hooks Performance & WCAG Review](./code-review-patterns/react-hooks-performance-wcag-review.md)
+1. [React Memoization Prevention Strategy](./react-performance/REACT-MEMOIZATION-PREVENTION-STRATEGY.md) (memoization best practices)
+2. [React Memoization Quick Reference](./react-performance/REACT-MEMOIZATION-QUICK-REFERENCE.md) (quick checklist)
+3. [React UI Patterns & Audit Logging Review](./code-review-patterns/react-ui-patterns-audit-logging-review.md)
+4. [React Hooks Performance & WCAG Review](./code-review-patterns/react-hooks-performance-wcag-review.md)
 
 **Checklist:**
 
+- [ ] Callback props wrapped in `useCallback()`
+- [ ] Derived values (filter, map, sort) wrapped in `useMemo()`
+- [ ] List items (10+ items) wrapped in `React.memo()`
+- [ ] All memoized components have `displayName` for DevTools
 - [ ] No window.confirm/alert/prompt (use AlertDialog)
-- [ ] Derived values wrapped in useMemo()
-- [ ] Event handlers wrapped in useCallback()
 - [ ] WCAG focus indicators (focus-visible:ring-2)
 - [ ] Keyboard accessible (Escape, Tab navigation)
+- [ ] ESLint `react-hooks/exhaustive-deps` passes
 
 **Test:**
 
 - [ ] Accessibility test
-- [ ] Performance test (React DevTools Profiler)
+- [ ] Performance test (React DevTools Profiler - no unexpected re-renders)
+- [ ] List performance test (check memo works with 10+ items)
 
 ---
 
@@ -820,16 +866,27 @@ async function ensureLoggedIn(page) {
 
 **Prevention docs:**
 
+- [React Memoization Prevention Strategy](./react-performance/REACT-MEMOIZATION-PREVENTION-STRATEGY.md) (callback memoization, list optimization)
+- [React Memoization Quick Reference](./react-performance/REACT-MEMOIZATION-QUICK-REFERENCE.md) (quick checklist)
 - [React UI Patterns & Audit Logging Review](./code-review-patterns/react-ui-patterns-audit-logging-review.md)
 - [React Hooks Performance & WCAG Review](./code-review-patterns/react-hooks-performance-wcag-review.md)
 
 **Key patterns:**
 
+- `useCallback()` for callback props (prevents child re-renders)
+- `useMemo()` for derived values (filter, map, sort, object literals)
+- `React.memo()` for list items (10+ items to prevent cascading re-renders)
+- Always add `displayName` to memoized components for React DevTools
 - AlertDialog instead of window.confirm()
-- useMemo() for derived values
-- useCallback() for event handlers
 - WCAG focus indicators
 - Audit logging for mutations
+- Use React DevTools Profiler to measure effectiveness
+
+**When to read:**
+- Building list/grid components
+- Performance testing before production
+- Code reviewing React components
+- Debugging unnecessary re-renders
 
 ---
 

@@ -1,8 +1,11 @@
 # Feature: Landing Page Visual Editor
 
+> **IMPORTANT: Backend is 100% Complete**
+> All draft API endpoints, repository methods, and contracts already exist (TODO-202). This plan is **frontend-only implementation**. See "Backend Status" section below.
+
 ## Overview
 
-Build a WYSIWYG visual editor for tenant landing pages that mirrors the existing marketplace visual editor experience. Tenants can opt-in to pre-designed section templates (Hero, Testimonials, About, FAQ, Gallery, Final CTA), edit content inline, and publish changes when ready.
+Build a WYSIWYG visual editor for tenant landing pages that mirrors the existing marketplace visual editor experience. Tenants can opt-in to pre-designed section templates (Hero, Testimonials, About, FAQ, Gallery, Accommodation, Final CTA), edit content inline, and publish changes when ready.
 
 **Key Principles:**
 
@@ -16,10 +19,59 @@ Build a WYSIWYG visual editor for tenant landing pages that mirrors the existing
 
 Currently, tenants cannot customize their landing pages without manual database manipulation. The backend CRUD routes exist (TODO-202 complete), but there's no admin UI. Tenants need a simple, visual way to:
 
-1. Enable optional sections (Hero, About, Testimonials, FAQ, Gallery, Final CTA)
+1. Enable optional sections (Hero, About, Testimonials, FAQ, Gallery, Accommodation, Final CTA)
 2. Edit section content inline (WYSIWYG)
 3. Preview changes before publishing
 4. Maintain a clean, professional landing page without design skills
+
+---
+
+## Backend Status: COMPLETE ✅
+
+> **Code Review Finding (TODO-246):** The backend draft system is production-ready. Do NOT implement new backend endpoints.
+
+### Existing API Endpoints
+
+All endpoints are implemented at `server/src/routes/tenant-admin-landing-page.routes.ts`:
+
+| Endpoint | Method | Status | Description |
+|----------|--------|--------|-------------|
+| `/v1/tenant-admin/landing-page` | GET | ✅ Complete | Get published config |
+| `/v1/tenant-admin/landing-page` | PUT | ✅ Complete | Update full config |
+| `/v1/tenant-admin/landing-page/sections` | PATCH | ✅ Complete | Toggle section visibility |
+| `/v1/tenant-admin/landing-page/draft` | GET | ✅ Complete | Get draft + published config |
+| `/v1/tenant-admin/landing-page/draft` | PUT | ✅ Complete | Save draft (auto-save target) |
+| `/v1/tenant-admin/landing-page/publish` | POST | ✅ Complete | Publish draft to live |
+| `/v1/tenant-admin/landing-page/draft` | DELETE | ✅ Complete | Discard draft |
+
+### Existing Repository Methods
+
+All methods are implemented at `server/src/adapters/prisma/tenant.repository.ts`:
+
+- `getLandingPageDraft(tenantId)` - Returns `{ draft, published, draftUpdatedAt, publishedAt }`
+- `saveLandingPageDraft(tenantId, config)` - Transactional save with image URL validation
+- `publishLandingPageDraft(tenantId)` - Atomic draft→published copy
+- `discardLandingPageDraft(tenantId)` - Clears draft, preserves published
+
+### Existing Contracts
+
+All contracts defined at `packages/contracts/src/tenant-admin/landing-page.contract.ts` with complete error codes (400, 401, 404, 500).
+
+### Database Schema
+
+Uses nested JSON wrapper in `Tenant.landingPageConfig`:
+```typescript
+{
+  draft: LandingPageConfig | null,
+  published: LandingPageConfig | null,
+  draftUpdatedAt: string | null,
+  publishedAt: string | null,
+}
+```
+
+**No migration required** - structure already in production.
+
+---
 
 ## Technical Approach
 
@@ -56,57 +108,148 @@ The landing page editor will follow the same patterns as the existing `VisualEdi
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### State Management
+### State Management (CRITICAL - TODO-247)
+
+> **Code Review Finding:** The hook MUST include batching, rollback, and race condition prevention patterns from `useVisualEditor.ts`. A simple state object is insufficient.
 
 ```typescript
 // hooks/useLandingPageEditor.ts
+// COPY PATTERNS FROM: client/src/features/tenant-admin/visual-editor/hooks/useVisualEditor.ts
+
+// Required refs for race condition prevention
+const saveTimeout = useRef<NodeJS.Timeout | null>(null);
+const pendingChanges = useRef<Record<string, Partial<SectionConfig>>>({});
+const originalConfig = useRef<LandingPageConfig | null>(null);
+const saveInProgress = useRef<boolean>(false);
+
 interface LandingPageEditorState {
-  // Current draft configuration
   draftConfig: LandingPageConfig | null;
-
-  // Published (live) configuration for comparison
   publishedConfig: LandingPageConfig | null;
-
-  // Track if there are unsaved changes
   hasChanges: boolean;
-
-  // Loading/saving states
   isLoading: boolean;
   isSaving: boolean;
   isPublishing: boolean;
-
-  // Error state
   error: string | null;
 }
 
 interface LandingPageEditorActions {
-  // Load initial config
   loadConfig(): Promise<void>;
-
-  // Toggle section visibility (adds with demo data if new)
   toggleSection(section: SectionType, enabled: boolean): void;
-
-  // Update section content (auto-saves draft)
   updateSectionContent(section: SectionType, content: Partial<SectionConfig>): void;
-
-  // Publish all changes
   publishChanges(): Promise<void>;
-
-  // Discard all changes (revert to published)
   discardChanges(): void;
 }
+
+// CRITICAL: Batching function (from useVisualEditor lines 112-170)
+const flushPendingChanges = useCallback(async () => {
+  if (saveInProgress.current || Object.keys(pendingChanges.current).length === 0) {
+    return;
+  }
+
+  const changesToSave = { ...pendingChanges.current };
+  const configToRestore = originalConfig.current;
+  pendingChanges.current = {};
+
+  saveInProgress.current = true;
+  setIsSaving(true);
+
+  try {
+    const mergedConfig = mergeChangesIntoConfig(draftConfig, changesToSave);
+    const { status } = await api.tenantAdminSaveDraft({ body: mergedConfig });
+    if (status !== 200) throw new Error('Save failed');
+  } catch (err) {
+    // Rollback on failure
+    if (configToRestore) {
+      setDraftConfig(configToRestore);
+    }
+    toast.error('Failed to save changes', { description: 'Reverted to last saved state' });
+  } finally {
+    saveInProgress.current = false;
+    setIsSaving(false);
+  }
+}, [draftConfig]);
+
+// CRITICAL: Flush before publish
+const publishChanges = useCallback(async () => {
+  if (saveTimeout.current) {
+    clearTimeout(saveTimeout.current);
+    saveTimeout.current = null;
+  }
+  await flushPendingChanges();
+
+  setIsPublishing(true);
+  try {
+    const { status } = await api.tenantAdminPublishDraft({ body: {} });
+    if (status !== 200) throw new Error('Publish failed');
+    toast.success('Landing page published');
+    await loadConfig(); // Reload fresh state
+  } catch (err) {
+    toast.error('Failed to publish');
+  } finally {
+    setIsPublishing(false);
+  }
+}, [flushPendingChanges, loadConfig]);
+
+// CRITICAL: Cleanup on unmount
+useEffect(() => {
+  return () => {
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+  };
+}, []);
+
+// CRITICAL: Flush on tab blur/close (TODO-254)
+useEffect(() => {
+  const handleVisibilityChange = () => {
+    if (document.hidden && hasUnsavedChanges) {
+      flushPendingChanges();
+    }
+  };
+
+  const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    if (hasUnsavedChanges) {
+      flushPendingChanges();
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  };
+
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('beforeunload', handleBeforeUnload);
+
+  return () => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+  };
+}, [hasUnsavedChanges, flushPendingChanges]);
 ```
 
 ### Security & Data Integrity Patterns
 
 > **P1 Findings Implemented:** The following security measures have been implemented based on code review findings (TODOs 227-232).
 
+#### Rate Limiting (TODO-249 - REQUIRED)
+
+All draft endpoints must have rate limiting applied:
+
+```typescript
+// server/src/middleware/rate-limiter.ts - ADD THIS
+export const draftLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60, // 60 requests per minute (1 per second max)
+  message: { error: 'Too many save requests, please slow down' },
+});
+
+// Apply to routes in tenant-admin-landing-page.routes.ts
+router.put('/draft', draftLimiter, async (req, res) => { ... });
+router.post('/publish', draftLimiter, async (req, res) => { ... });
+router.delete('/draft', draftLimiter, async (req, res) => { ... });
+```
+
 #### Tenant Isolation (TODO-227)
 
 All draft endpoints verify tenant ownership via `res.locals.tenantAuth`:
 
 ```typescript
-// Pattern applied to all draft endpoints
 router.put('/draft', async (req: Request, res: Response, next: NextFunction) => {
   const tenantAuth = res.locals.tenantAuth;
   if (!tenantAuth) {
@@ -125,7 +268,6 @@ All text fields are sanitized before storage to prevent XSS:
 ```typescript
 import { sanitizeObject } from '../lib/sanitization';
 
-// In route handler
 const data = LandingPageConfigSchema.parse(req.body);
 const sanitizedData = sanitizeObject(data, { allowHtml: [] });
 await tenantRepo.saveLandingPageDraft(tenantId, sanitizedData);
@@ -136,13 +278,12 @@ await tenantRepo.saveLandingPageDraft(tenantId, sanitizedData);
 Repository layer re-validates all image URLs against `SafeImageUrlSchema`:
 
 ```typescript
-// Defense-in-depth: validates even after Zod schema validation
 private validateImageUrls(config: LandingPageConfig): void {
   const urlsToValidate = [
     config.hero?.backgroundImageUrl,
     config.about?.imageUrl,
+    config.accommodation?.imageUrl,
     config.gallery?.images?.map(img => img.url),
-    // ... all image fields
   ];
 
   for (const url of urlsToValidate) {
@@ -162,7 +303,6 @@ async publishLandingPageDraft(tenantId: string) {
     if (!currentWrapper.draft) {
       throw new ValidationError('No draft to publish');
     }
-    // Atomically copy draft to published, clear draft
     await tx.tenant.update({
       where: { id: tenantId },
       data: { landingPageConfig: { published: draft, draft: null } },
@@ -171,51 +311,11 @@ async publishLandingPageDraft(tenantId: string) {
 }
 ```
 
-#### Auto-Save Race Condition Prevention (TODO-231)
+---
 
-The `useLandingPageEditor` hook must flush pending auto-saves before publish:
+## Implementation Phases
 
-```typescript
-const publishChanges = useCallback(async () => {
-  // CRITICAL: Cancel pending debounce and flush immediately
-  cancelDebounce();
-
-  if (hasChanges) {
-    await saveDraftImmediate(draftConfig); // Flush without debounce
-  }
-
-  // Now safe to publish
-  setIsPublishing(true);
-  try {
-    await apiClient.publishLandingPageDraft();
-    setPublishedConfig(draftConfig);
-    setDraftConfig(null);
-    setHasChanges(false);
-  } finally {
-    setIsPublishing(false);
-  }
-}, [draftConfig, hasChanges, cancelDebounce, saveDraftImmediate]);
-```
-
-#### API Contract Error Codes (TODO-232)
-
-All draft endpoints include complete error responses:
-
-```typescript
-saveDraft: {
-  responses: {
-    200: SaveDraftResponseSchema,
-    400: BadRequestErrorSchema,  // Validation errors
-    401: UnauthorizedErrorSchema, // No tenant auth
-    404: NotFoundErrorSchema,     // Tenant not found
-    500: InternalServerErrorSchema,
-  },
-}
-```
-
-### Implementation Phases
-
-#### Phase 1: Core Infrastructure (1-2 days)
+### Phase 1: Core Infrastructure (1-2 days)
 
 **Files to Create:**
 
@@ -227,49 +327,105 @@ client/src/features/tenant-admin/landing-page-editor/
 │   ├── SectionCard.tsx                # Sidebar section card (toggle/add)
 │   └── EditorToolbar.tsx              # Publish/Discard buttons
 ├── hooks/
-│   └── useLandingPageEditor.ts        # State management hook
+│   └── useLandingPageEditor.ts        # State management hook (COPY useVisualEditor patterns!)
 └── index.ts                           # Barrel export
 ```
 
 **Tasks:**
 
 - [ ] Create `LandingPageEditor.tsx` main container with sidebar + preview layout
-- [ ] Create `useLandingPageEditor.ts` hook mirroring `useVisualEditor.ts` patterns
+- [ ] Create `useLandingPageEditor.ts` hook **copying `useVisualEditor.ts` patterns exactly** (batching, rollback, cleanup)
 - [ ] Create `EditorSidebar.tsx` with active/available section lists
-- [ ] Create `EditorToolbar.tsx` with Publish/Discard buttons
+- [ ] Create `EditorToolbar.tsx` with Publish/Discard buttons (floating bar pattern)
 - [ ] Add route `/tenant/landing-page` in `client/src/app/routes.tsx`
-- [ ] Add navigation link in tenant admin sidebar
+- [ ] Add navigation link in tenant admin sidebar/tabs
 
 **Acceptance Criteria:**
 
 - [ ] Editor page loads at `/tenant/landing-page`
-- [ ] Sidebar shows section toggles
-- [ ] Publish/Discard buttons visible in toolbar
-- [ ] Basic layout renders correctly
+- [ ] Sidebar shows section toggles for all 8 sections
+- [ ] Publish/Discard buttons visible in floating toolbar
+- [ ] Hook includes all refs: `saveTimeout`, `pendingChanges`, `originalConfig`, `saveInProgress`
 
-#### Phase 2: Editable Section Components (2-3 days)
+### Phase 2: Editable Section Components (2-3 days)
 
-**Files to Create/Modify:**
+**Files to Create:**
 
 ```
 client/src/features/tenant-admin/landing-page-editor/
 ├── sections/
-│   ├── EditableHeroSection.tsx        # Hero with inline editing
-│   ├── EditableSocialProofBar.tsx     # Social proof with inline editing
-│   ├── EditableAboutSection.tsx       # About with inline editing
-│   ├── EditableTestimonialsSection.tsx # Testimonials with inline editing
-│   ├── EditableGallerySection.tsx     # Gallery with photo management
-│   ├── EditableFaqSection.tsx         # FAQ with add/edit/remove
-│   └── EditableFinalCtaSection.tsx    # Final CTA with inline editing
+│   ├── EditableHeroSection.tsx           # Hero with inline editing
+│   ├── EditableSocialProofBar.tsx        # Social proof with inline editing
+│   ├── EditableAboutSection.tsx          # About with inline editing
+│   ├── EditableTestimonialsSection.tsx   # Testimonials with add/edit/remove
+│   ├── EditableAccommodationSection.tsx  # Accommodation with URL + highlights (TODO-248)
+│   ├── EditableGallerySection.tsx        # Gallery with photo management
+│   ├── EditableFaqSection.tsx            # FAQ with add/edit/remove
+│   └── EditableFinalCtaSection.tsx       # Final CTA with inline editing
 ├── components/
-│   ├── EditableText.tsx               # Reuse from visual-editor (or copy)
-│   ├── EditableImage.tsx              # Image upload/change component
-│   └── EditableList.tsx               # For testimonials, FAQ items
+│   ├── EditableText.tsx                  # Import from visual-editor
+│   ├── EditableImage.tsx                 # Single image upload (see spec below)
+│   └── EditableList.tsx                  # Array editing (see spec below)
 └── demo-data/
-    └── section-defaults.ts            # Demo content for new sections
+    └── section-defaults.ts               # Demo content for new sections
 ```
 
-**Demo Data Structure:**
+#### EditableImage Component Specification (TODO-251)
+
+```typescript
+interface EditableImageProps {
+  currentUrl: string | undefined;
+  onUpload: (url: string) => void;
+  onRemove: () => void;
+  aspectRatio?: 'auto' | '16/9' | '1/1' | '4/3';
+  placeholder?: string;
+  disabled?: boolean;
+}
+
+export function EditableImage({
+  currentUrl,
+  onUpload,
+  onRemove,
+  aspectRatio = 'auto',
+  placeholder = 'Click or drag to upload image',
+  disabled = false,
+}: EditableImageProps) {
+  // 1. Show current image with hover overlay for Change/Remove
+  // 2. Show drop zone when no image
+  // 3. Upload to storage API, return https URL
+  // 4. Use aspect-ratio CSS to prevent layout shift (TODO-255)
+}
+```
+
+#### EditableList Component Specification (TODO-251)
+
+```typescript
+interface EditableListProps<T> {
+  items: T[];
+  onUpdate: (items: T[]) => void;
+  renderItem: (item: T, index: number, onChange: (updated: T) => void) => React.ReactNode;
+  createNewItem: () => T;
+  maxItems?: number;
+  emptyMessage?: string;
+  disabled?: boolean;
+}
+
+export function EditableList<T>({
+  items,
+  onUpdate,
+  renderItem,
+  createNewItem,
+  maxItems = 20,
+  emptyMessage = 'No items yet',
+  disabled = false,
+}: EditableListProps<T>) {
+  // 1. Map items with remove button on each
+  // 2. Add button at bottom (if under max)
+  // 3. Call onUpdate with new array on any change
+}
+```
+
+#### Demo Data Structure
 
 ```typescript
 // demo-data/section-defaults.ts
@@ -278,13 +434,12 @@ export const SECTION_DEFAULTS = {
     headline: 'Welcome to Your Business',
     subheadline: 'Discover our amazing services and experiences',
     ctaText: 'Explore Our Offerings',
-    backgroundImageUrl: null, // Placeholder gradient
+    backgroundImageUrl: undefined,
   },
   about: {
     headline: 'About Us',
-    content:
-      'Tell your story here. What makes your business special? Share your journey, mission, and values with your customers.',
-    imageUrl: null,
+    content: 'Tell your story here. What makes your business special?',
+    imageUrl: undefined,
     imagePosition: 'right',
   },
   testimonials: {
@@ -294,6 +449,7 @@ export const SECTION_DEFAULTS = {
         quote: 'Amazing experience! Highly recommended.',
         author: 'Happy Customer',
         role: 'Verified Client',
+        imageUrl: undefined,
         rating: 5,
       },
     ],
@@ -305,10 +461,21 @@ export const SECTION_DEFAULTS = {
       { icon: 'calendar', text: 'Easy Booking' },
     ],
   },
+  // TODO-248: Accommodation section (was missing from original plan)
+  accommodation: {
+    headline: 'Local Accommodations',
+    description: 'We partner with excellent local accommodations for your stay.',
+    imageUrl: undefined,
+    ctaText: 'View Accommodations',
+    ctaUrl: 'https://airbnb.com',
+    highlights: ['Wifi', 'Free Parking', 'Pet Friendly'],
+  },
   gallery: {
     headline: 'Our Gallery',
-    images: [],
-    instagramHandle: null,
+    images: [
+      { url: 'https://via.placeholder.com/600x400', alt: 'Sample image' },
+    ],
+    instagramHandle: undefined,
   },
   faq: {
     headline: 'Frequently Asked Questions',
@@ -333,65 +500,39 @@ export const SECTION_DEFAULTS = {
 
 **Tasks:**
 
-- [ ] Create `EditableHeroSection.tsx` with EditableText for headline/subheadline, image upload
-- [ ] Create `EditableSocialProofBar.tsx` with editable stat items
-- [ ] Create `EditableAboutSection.tsx` with EditableText and image upload
-- [ ] Create `EditableTestimonialsSection.tsx` with add/edit/remove testimonials
-- [ ] Create `EditableGallerySection.tsx` with photo upload (reuse PhotoDropZone patterns)
-- [ ] Create `EditableFaqSection.tsx` with add/edit/remove FAQ items
-- [ ] Create `EditableFinalCtaSection.tsx` with EditableText
-- [ ] Create `section-defaults.ts` with demo content
-- [ ] Integrate editable sections into LandingPageEditor preview area
+- [ ] Import `EditableText` from visual-editor (do NOT copy)
+- [ ] Create `EditableImage.tsx` with aspect-ratio containers (TODO-255)
+- [ ] Create `EditableList.tsx` generic component
+- [ ] Create `EditableHeroSection.tsx`
+- [ ] Create `EditableSocialProofBar.tsx`
+- [ ] Create `EditableAboutSection.tsx`
+- [ ] Create `EditableTestimonialsSection.tsx`
+- [ ] Create `EditableAccommodationSection.tsx` (TODO-248 - includes URL validation for ctaUrl, highlights array)
+- [ ] Create `EditableGallerySection.tsx`
+- [ ] Create `EditableFaqSection.tsx`
+- [ ] Create `EditableFinalCtaSection.tsx`
+- [ ] Create `section-defaults.ts` with demo content for all 8 sections
 
 **Acceptance Criteria:**
 
-- [ ] Each section renders with demo data when first added
+- [ ] All 8 sections render with demo data when first added
 - [ ] Click-to-edit works on all text fields
-- [ ] Image upload works on Hero, About, Gallery
-- [ ] Add/remove works on Testimonials, FAQ items
-- [ ] Changes reflect immediately in preview
+- [ ] Image upload works on Hero, About, Accommodation, Gallery
+- [ ] Add/remove works on Testimonials, FAQ, SocialProofBar, Accommodation highlights
+- [ ] Aspect-ratio containers prevent layout shift (CLS < 0.1)
 
-#### Phase 3: Draft System & API Integration (1-2 days)
+### Phase 3: API Integration (0.5-1 day)
 
-**Files to Modify:**
-
-```
-packages/contracts/src/tenant-admin/landing-page.contract.ts  # Add draft endpoints
-server/src/routes/tenant-admin-landing-page.routes.ts          # Implement draft routes
-server/src/adapters/prisma/tenant.repository.ts               # Add draft methods
-```
-
-**New API Endpoints:**
-
-```typescript
-// Draft management
-GET  /v1/tenant-admin/landing-page/draft     # Get draft config
-PUT  /v1/tenant-admin/landing-page/draft     # Save draft (auto-save)
-POST /v1/tenant-admin/landing-page/publish   # Publish draft to live
-DELETE /v1/tenant-admin/landing-page/draft   # Discard draft
-```
-
-**Schema Extension:**
-
-```typescript
-// Extend Tenant model or add separate draft storage
-interface TenantLandingPageDraft {
-  draftConfig: LandingPageConfig | null;
-  draftUpdatedAt: Date | null;
-  publishedConfig: LandingPageConfig | null;
-  publishedAt: Date | null;
-}
-```
+> **Note:** Backend is complete. This phase is frontend integration only.
 
 **Tasks:**
 
-- [ ] Add draft endpoints to landing-page.contract.ts
-- [ ] Implement draft save/load in tenant.repository.ts
-- [ ] Create publish endpoint that copies draft to live config
-- [ ] Create discard endpoint that clears draft
-- [ ] Integrate API calls in useLandingPageEditor hook
-- [ ] Add auto-save with 1s debounce (matching visual editor)
-- [ ] Add optimistic updates with rollback on error
+- [ ] Wire `useLandingPageEditor` to existing API endpoints
+- [ ] Implement auto-save with 1s debounce using batching pattern
+- [ ] Implement optimistic updates with rollback on error
+- [ ] Add localStorage backup for browser crash recovery (TODO-253)
+- [ ] Add tab blur/close flush behavior (TODO-254)
+- [ ] Add concurrent tab warning using localStorage (TODO-242)
 
 **Acceptance Criteria:**
 
@@ -400,8 +541,9 @@ interface TenantLandingPageDraft {
 - [ ] Discard button reverts to published state
 - [ ] "Unsaved changes" indicator shows when draft differs from published
 - [ ] Page reload preserves draft state
+- [ ] Browser crash recovers from localStorage backup
 
-#### Phase 4: Polish & Testing (1-2 days)
+### Phase 4: Polish & Testing (1 day)
 
 **Tasks:**
 
@@ -409,10 +551,21 @@ interface TenantLandingPageDraft {
 - [ ] Add success/error toast notifications
 - [ ] Add confirmation dialog for discard action
 - [ ] Add "has changes" indicator in sidebar
-- [ ] Add section preview thumbnails in "Available Sections"
 - [ ] Write E2E tests for editor workflow
 - [ ] Test edge cases (empty config, partial saves, network errors)
-- [ ] Mobile-responsive sidebar (collapse to bottom drawer on mobile - future)
+- [ ] Test 50+ rapid edits without race conditions
+
+**E2E Test Cases:**
+
+```typescript
+// e2e/tests/landing-page-editor.spec.ts
+test('should load editor → add hero section → edit headline → publish → verify live');
+test('should add testimonials → add 2 items → remove 1 → publish → verify');
+test('should edit FAQ → discard changes → verify reverted');
+test('should handle network failure gracefully → draft preserved');
+test('should handle 50 rapid edits without race conditions');
+test('should recover from browser crash via localStorage');
+```
 
 **Acceptance Criteria:**
 
@@ -420,6 +573,9 @@ interface TenantLandingPageDraft {
 - [ ] Error states handled gracefully
 - [ ] E2E tests pass
 - [ ] TypeScript compilation passes
+- [ ] No race conditions under rapid editing
+
+---
 
 ## Component Specifications
 
@@ -429,11 +585,19 @@ interface TenantLandingPageDraft {
 export function LandingPageEditor() {
   const editor = useLandingPageEditor();
 
+  if (editor.isLoading) {
+    return <EditorSkeleton />;
+  }
+
+  if (editor.error) {
+    return <ErrorState error={editor.error} onRetry={editor.loadConfig} />;
+  }
+
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
       <EditorSidebar
-        activesSections={editor.activeSections}
+        activeSections={editor.activeSections}
         availableSections={editor.availableSections}
         onToggleSection={editor.toggleSection}
         hasChanges={editor.hasChanges}
@@ -453,13 +617,14 @@ export function LandingPageEditor() {
           {/* Segment Selector - Always visible */}
           <SegmentSelectorSection />
 
-          {/* ... other sections */}
+          {/* ... other 7 sections */}
         </div>
       </div>
 
-      {/* Bottom Toolbar */}
+      {/* Floating Bottom Toolbar */}
       <EditorToolbar
         hasChanges={editor.hasChanges}
+        isSaving={editor.isSaving}
         isPublishing={editor.isPublishing}
         onPublish={editor.publishChanges}
         onDiscard={editor.discardChanges}
@@ -469,220 +634,62 @@ export function LandingPageEditor() {
 }
 ```
 
-### EditorSidebar.tsx
+### EditorToolbar.tsx (Floating Bar Pattern)
 
 ```typescript
-interface EditorSidebarProps {
-  activeSections: SectionType[];
-  availableSections: SectionType[];
-  onToggleSection: (section: SectionType, enabled: boolean) => void;
-  hasChanges: boolean;
-}
-
-export function EditorSidebar({
-  activeSections,
-  availableSections,
-  onToggleSection,
+export function EditorToolbar({
   hasChanges,
-}: EditorSidebarProps) {
+  isSaving,
+  isPublishing,
+  onPublish,
+  onDiscard,
+}: EditorToolbarProps) {
   return (
-    <aside className="w-72 bg-white border-r flex flex-col">
-      <div className="p-4 border-b">
-        <h2 className="font-semibold text-lg">Landing Page Editor</h2>
-        {hasChanges && (
-          <span className="text-sm text-amber-600">Unsaved changes</span>
-        )}
-      </div>
-
-      {/* Active Sections */}
-      <div className="p-4">
-        <h3 className="text-sm font-medium text-gray-500 mb-2">Active Sections</h3>
-        <div className="space-y-2">
-          {activeSections.map((section) => (
-            <SectionCard
-              key={section}
-              section={section}
-              isActive={true}
-              onToggle={() => onToggleSection(section, false)}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Available Sections */}
-      <div className="p-4 border-t">
-        <h3 className="text-sm font-medium text-gray-500 mb-2">Add Sections</h3>
-        <div className="space-y-2">
-          {availableSections.map((section) => (
-            <SectionCard
-              key={section}
-              section={section}
-              isActive={false}
-              onToggle={() => onToggleSection(section, true)}
-            />
-          ))}
-        </div>
-      </div>
-    </aside>
-  );
-}
-```
-
-### EditableHeroSection.tsx
-
-```typescript
-interface EditableHeroSectionProps {
-  config: HeroSectionConfig;
-  onUpdate: (updates: Partial<HeroSectionConfig>) => void;
-}
-
-export const EditableHeroSection = memo(function EditableHeroSection({
-  config,
-  onUpdate,
-}: EditableHeroSectionProps) {
-  return (
-    <section
-      className="relative min-h-[600px] flex items-center justify-center"
-      style={{
-        backgroundImage: config.backgroundImageUrl
-          ? `url(${config.backgroundImageUrl})`
-          : 'linear-gradient(135deg, #1a365d 0%, #2d4a6f 100%)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
+    <div
+      className={cn(
+        'fixed bottom-0 left-0 right-0 z-50',
+        'bg-background/95 backdrop-blur border-t shadow-lg',
+        'transform transition-transform duration-300',
+        !hasChanges && 'translate-y-full' // Hide when no changes
+      )}
     >
-      {/* Image Upload Overlay (on hover) */}
-      <EditableImage
-        currentUrl={config.backgroundImageUrl}
-        onUpload={(url) => onUpdate({ backgroundImageUrl: url })}
-        className="absolute inset-0"
-      />
-
-      <div className="relative z-10 text-center text-white max-w-3xl px-4">
-        <EditableText
-          value={config.headline}
-          onChange={(headline) => onUpdate({ headline })}
-          className="text-5xl font-bold mb-4"
-          placeholder="Your Headline Here"
-        />
-
-        {config.subheadline !== undefined && (
-          <EditableText
-            value={config.subheadline || ''}
-            onChange={(subheadline) => onUpdate({ subheadline })}
-            className="text-xl mb-8 opacity-90"
-            placeholder="Your subheadline here"
-            multiline
-          />
-        )}
-
-        <EditableText
-          value={config.ctaText}
-          onChange={(ctaText) => onUpdate({ ctaText })}
-          className="inline-block bg-white text-gray-900 px-8 py-3 rounded-full font-semibold"
-          placeholder="Call to Action"
-        />
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+          <span className="text-sm text-muted-foreground">
+            {isSaving ? 'Saving...' : 'Unsaved changes'}
+          </span>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onDiscard} disabled={isPublishing}>
+            Discard
+          </Button>
+          <Button onClick={onPublish} disabled={isPublishing}>
+            {isPublishing ? 'Publishing...' : 'Publish'}
+          </Button>
+        </div>
       </div>
-    </section>
+    </div>
   );
-});
-```
-
-## Database Changes
-
-**Option A: Extend existing `landingPageConfig` field (Recommended)**
-
-Store draft alongside published in the JSON:
-
-```typescript
-// Tenant.landingPageConfig structure
-{
-  draft: LandingPageConfig | null,
-  published: LandingPageConfig | null,
-  draftUpdatedAt: string | null,
-  publishedAt: string | null,
 }
 ```
 
-**Migration:** None needed - JSON field is flexible.
-
-**Option B: Add separate draft column**
-
-```prisma
-model Tenant {
-  // ... existing fields
-  landingPageConfig     Json?  // Published config
-  landingPageDraftConfig Json? // Draft config (new)
-  landingPageDraftAt    DateTime? // Last draft save (new)
-  landingPagePublishedAt DateTime? // Last publish (new)
-}
-```
-
-**Recommendation:** Option A for simplicity (no migration required).
-
-## API Contract Updates
-
-```typescript
-// packages/contracts/src/tenant-admin/landing-page.contract.ts
-
-export const landingPageContract = c.router({
-  // Existing endpoints...
-
-  // New draft endpoints
-  getDraft: {
-    method: 'GET',
-    path: '/v1/tenant-admin/landing-page/draft',
-    responses: {
-      200: LandingPageConfigSchema.nullable(),
-    },
-  },
-
-  saveDraft: {
-    method: 'PUT',
-    path: '/v1/tenant-admin/landing-page/draft',
-    body: LandingPageConfigSchema,
-    responses: {
-      200: z.object({
-        success: z.boolean(),
-        draftUpdatedAt: z.string().datetime(),
-      }),
-    },
-  },
-
-  publishDraft: {
-    method: 'POST',
-    path: '/v1/tenant-admin/landing-page/publish',
-    body: z.object({}), // No body needed
-    responses: {
-      200: z.object({
-        success: z.boolean(),
-        publishedAt: z.string().datetime(),
-      }),
-    },
-  },
-
-  discardDraft: {
-    method: 'DELETE',
-    path: '/v1/tenant-admin/landing-page/draft',
-    responses: {
-      200: z.object({ success: z.boolean() }),
-    },
-  },
-});
-```
+---
 
 ## Acceptance Criteria
 
 ### Functional Requirements
 
 - [ ] Landing page editor accessible at `/tenant/landing-page`
+- [ ] Navigation link visible in tenant admin dashboard
 - [ ] Sidebar shows active sections with ability to remove
 - [ ] Sidebar shows available sections with ability to add
 - [ ] Adding a section initializes it with demo data
+- [ ] All 8 section types editable (Hero, SocialProof, About, Testimonials, Accommodation, Gallery, FAQ, FinalCTA)
 - [ ] Click-to-edit works on all text fields
-- [ ] Image upload works on Hero, About, Gallery sections
-- [ ] Add/remove items works on Testimonials and FAQ sections
-- [ ] Changes auto-save as drafts (1s debounce)
+- [ ] Image upload works on Hero, About, Accommodation, Gallery sections
+- [ ] Add/remove items works on Testimonials, FAQ, SocialProofBar, Accommodation highlights
+- [ ] Changes auto-save as drafts (1s debounce with batching)
 - [ ] Publish button makes draft live
 - [ ] Discard button reverts to published state
 - [ ] Segment Selector always visible (cannot be removed)
@@ -690,8 +697,8 @@ export const landingPageContract = c.router({
 ### Non-Functional Requirements
 
 - [ ] Page load under 2 seconds
-- [ ] Auto-save completes within 500ms
-- [ ] No layout shift during editing
+- [ ] Auto-save completes within 500ms (note: large configs may be slower, see TODO-250)
+- [ ] No layout shift during image loading (aspect-ratio containers)
 - [ ] TypeScript strict mode compliance
 - [ ] All existing tests continue to pass
 
@@ -699,37 +706,27 @@ export const landingPageContract = c.router({
 
 - [ ] E2E tests for complete editor workflow
 - [ ] Unit tests for useLandingPageEditor hook
-- [ ] Code review approved
+- [ ] 50 rapid edits test passes without race conditions
 - [ ] No TypeScript errors
-- [ ] Lighthouse accessibility score > 90
+- [ ] Lighthouse CLS score < 0.1
 
-## Dependencies & Prerequisites
-
-**Completed:**
-
-- ✅ TODO-202: Backend landing page CRUD routes
-- ✅ Landing page section components (HeroSection, AboutSection, etc.)
-- ✅ Visual editor patterns (useVisualEditor, EditableText, etc.)
-- ✅ Landing page schema with validation
-
-**Required:**
-
-- Photo upload API (existing - reuse from package photos)
-- Toast notification system (existing)
-- Confirmation dialog component (existing)
+---
 
 ## Risk Analysis & Mitigation
 
-| Risk                             | Impact | Likelihood | Mitigation                               |
-| -------------------------------- | ------ | ---------- | ---------------------------------------- |
-| Draft data loss on browser crash | Medium | Low        | Auto-save every change with 1s debounce  |
-| Concurrent editing conflicts     | Low    | Low        | Single admin per tenant (MVP acceptable) |
-| Large image uploads slow editor  | Medium | Medium     | Image compression, loading states        |
-| Complex state management         | Medium | Medium     | Follow proven useVisualEditor patterns   |
+| Risk | Impact | Likelihood | Mitigation |
+|------|--------|------------|------------|
+| Draft data loss on browser crash | Medium | Low | localStorage backup (TODO-253) |
+| Race conditions during rapid editing | High | Medium | Batching + saveInProgress flag (TODO-247) |
+| Concurrent editing conflicts | Low | Low | localStorage tab warning (TODO-242) |
+| Large image uploads slow editor | Medium | Medium | Aspect-ratio containers, loading states |
+| Large config payloads exceed 500ms | Medium | Medium | Accept for MVP, optimize later (TODO-250) |
+
+---
 
 ## File Changes Summary
 
-### New Files (14)
+### New Files (16)
 
 ```
 client/src/features/tenant-admin/landing-page-editor/
@@ -745,6 +742,7 @@ client/src/features/tenant-admin/landing-page-editor/
 │   ├── EditableSocialProofBar.tsx
 │   ├── EditableAboutSection.tsx
 │   ├── EditableTestimonialsSection.tsx
+│   ├── EditableAccommodationSection.tsx    # TODO-248: Was missing
 │   ├── EditableGallerySection.tsx
 │   ├── EditableFaqSection.tsx
 │   └── EditableFinalCtaSection.tsx
@@ -755,85 +753,55 @@ client/src/features/tenant-admin/landing-page-editor/
 └── index.ts
 ```
 
-### Modified Files (5)
+### Modified Files (3)
 
 ```
 client/src/app/routes.tsx                           # Add editor route
 client/src/features/tenant-admin/TenantAdminNav.tsx # Add nav link
-packages/contracts/src/tenant-admin/landing-page.contract.ts # Draft endpoints
-server/src/routes/tenant-admin-landing-page.routes.ts # Implement draft routes
-server/src/adapters/prisma/tenant.repository.ts    # Draft repository methods
+server/src/routes/tenant-admin-landing-page.routes.ts # Add rate limiting (TODO-249)
 ```
+
+---
 
 ## Estimated Effort
 
-| Phase                        | Duration     | Notes                                       |
-| ---------------------------- | ------------ | ------------------------------------------- |
-| Phase 1: Core Infrastructure | 1-2 days     | Route, layout, sidebar, toolbar             |
-| Phase 2: Editable Sections   | 2-3 days     | 7 section components with inline editing    |
-| Phase 3: Draft System        | 1-2 days     | API integration, auto-save, publish/discard |
-| Phase 4: Polish & Testing    | 1-2 days     | Edge cases, E2E tests, error handling       |
-| **Total**                    | **5-9 days** |                                             |
+| Phase | Duration | Notes |
+|-------|----------|-------|
+| Phase 1: Core Infrastructure | 1-2 days | Route, layout, sidebar, hook with batching |
+| Phase 2: Editable Sections | 2-3 days | 8 section components, EditableImage, EditableList |
+| Phase 3: API Integration | 0.5-1 day | Wire to existing backend, localStorage backup |
+| Phase 4: Polish & Testing | 1 day | E2E tests, edge cases, error handling |
+| **Total** | **4.5-7 days** | Reduced from 5-9 days (backend already complete) |
+
+---
 
 ## References
 
 ### Internal References
 
 - Visual Editor Dashboard: `client/src/features/tenant-admin/visual-editor/VisualEditorDashboard.tsx`
-- useVisualEditor Hook: `client/src/features/tenant-admin/visual-editor/hooks/useVisualEditor.ts`
+- **useVisualEditor Hook (COPY THIS)**: `client/src/features/tenant-admin/visual-editor/hooks/useVisualEditor.ts`
 - EditableText Component: `client/src/features/tenant-admin/visual-editor/components/EditableText.tsx`
 - Landing Page Schema: `packages/contracts/src/landing-page.ts`
 - Landing Page Routes: `server/src/routes/tenant-admin-landing-page.routes.ts`
-- TODO-205: `todos/205-pending-p1-missing-tenant-admin-landing-page-ui.md`
+- Landing Page Repository: `server/src/adapters/prisma/tenant.repository.ts`
 
-### External References
+### Related TODOs
 
-- React Intersection Observer: https://github.com/thebuilder/react-intersection-observer
-- dnd-kit (if drag-drop reordering added later): https://dndkit.com/
-
----
-
-## ERD Diagram
-
-```mermaid
-erDiagram
-    Tenant ||--o| LandingPageConfig : has
-
-    LandingPageConfig {
-        json draft "Draft configuration (nullable)"
-        json published "Published configuration (nullable)"
-        datetime draftUpdatedAt "Last draft save timestamp"
-        datetime publishedAt "Last publish timestamp"
-    }
-
-    LandingPageConfig ||--o| HeroSection : contains
-    LandingPageConfig ||--o| SocialProofBar : contains
-    LandingPageConfig ||--o| AboutSection : contains
-    LandingPageConfig ||--o| TestimonialsSection : contains
-    LandingPageConfig ||--o| GallerySection : contains
-    LandingPageConfig ||--o| FaqSection : contains
-    LandingPageConfig ||--o| FinalCtaSection : contains
-
-    HeroSection {
-        string headline
-        string subheadline
-        string ctaText
-        string backgroundImageUrl
-    }
-
-    TestimonialsSection {
-        string headline
-        array items "testimonial objects"
-    }
-
-    FaqSection {
-        string headline
-        array items "question/answer pairs"
-    }
-```
+- TODO-246: Plan backend already exists (this plan updated)
+- TODO-247: Hook missing batching/rollback (addressed in State Management section)
+- TODO-248: Missing EditableAccommodationSection (added to Phase 2)
+- TODO-249: Rate limiting draft endpoints (backend fix required)
+- TODO-250: Performance full config saves (documented as known limitation)
+- TODO-251: Missing component specs (added EditableImage/EditableList specs)
+- TODO-252: Discard missing transaction (backend fix)
+- TODO-253: localStorage draft recovery (added to Phase 3)
+- TODO-254: Flush on tab blur (added to hook specification)
+- TODO-255: Layout shift prevention (added to EditableImage spec)
+- TODO-256: Simplify by reusing display components (optional future optimization)
 
 ---
 
 _Plan created: 2024-12-04_
-_Updated: 2025-12-04 - P1 Security Findings Resolved_
-_Status: Ready for Implementation - Security patterns implemented in backend_
+_Updated: 2025-12-04 - Major revision after code review_
+_Status: Ready for Implementation - Frontend only, backend complete_
