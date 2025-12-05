@@ -86,6 +86,13 @@ const TenantVisualEditorPage = lazy(() =>
   import('./pages/tenant/TenantVisualEditor').then((m) => ({ default: m.TenantVisualEditorPage }))
 );
 
+// Landing page editor
+const TenantLandingPageEditorPage = lazy(() =>
+  import('./pages/tenant/TenantLandingPageEditor').then((m) => ({
+    default: m.TenantLandingPageEditorPage,
+  }))
+);
+
 // Public booking management (customer self-service)
 const ManageBookingPage = lazy(() =>
   import('./pages/booking-management').then((m) => ({ default: m.ManageBookingPage }))
@@ -400,6 +407,15 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedSuspenseWrapper allowedRoles={['TENANT_ADMIN']}>
         <TenantVisualEditorPage />
+      </ProtectedSuspenseWrapper>
+    ),
+  },
+  // Landing page editor route
+  {
+    path: 'tenant/landing-page',
+    element: (
+      <ProtectedSuspenseWrapper allowedRoles={['TENANT_ADMIN']}>
+        <TenantLandingPageEditorPage />
       </ProtectedSuspenseWrapper>
     ),
   },

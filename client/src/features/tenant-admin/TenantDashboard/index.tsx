@@ -12,7 +12,7 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, Sparkles, Pencil } from 'lucide-react';
+import { ArrowUpRight, Sparkles, Pencil, LayoutTemplate } from 'lucide-react';
 import { TenantPackagesManager } from '../TenantPackagesManager';
 import { BlackoutsManager } from '../BlackoutsManager';
 import { TenantBookingList } from '../TenantBookingList';
@@ -86,6 +86,13 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
               </div>
 
               <div className="flex items-center gap-3">
+                <Link
+                  to="/tenant/landing-page"
+                  className={`group inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-sage-light/20 text-sage border border-sage/30 text-sm font-medium rounded-full ${ANIMATION_TRANSITION.HOVER} shadow-soft hover:shadow-medium`}
+                >
+                  <LayoutTemplate className="w-4 h-4" aria-hidden="true" />
+                  Landing Page
+                </Link>
                 <Link
                   to="/tenant/editor"
                   className={`group inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-sage-light/20 text-sage border border-sage/30 text-sm font-medium rounded-full ${ANIMATION_TRANSITION.HOVER} shadow-soft hover:shadow-medium`}

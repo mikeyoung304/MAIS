@@ -21,6 +21,7 @@ import type { LandingPageService } from '../services/landing-page.service';
 import { LandingPageConfigSchema } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
 import { NotFoundError, ValidationError } from '../lib/errors';
+import { draftAutosaveLimiter } from '../middleware/rateLimiter';
 
 /**
  * Create tenant admin landing page routes
@@ -188,13 +189,16 @@ export function createTenantAdminLandingPageRoutes(landingPageService: LandingPa
    * PUT /v1/tenant-admin/landing-page/draft
    * Save draft landing page configuration (auto-save target)
    *
+   * RATE LIMITED: 120 saves per minute per tenant (TODO-249)
+   *
    * @returns 200 - Save result with timestamp
    * @returns 400 - Validation error
    * @returns 401 - Missing or invalid authentication
    * @returns 404 - Tenant not found
+   * @returns 429 - Rate limit exceeded
    * @returns 500 - Internal server error
    */
-  router.put('/draft', async (req: Request, res: Response, next: NextFunction) => {
+  router.put('/draft', draftAutosaveLimiter, async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -233,13 +237,16 @@ export function createTenantAdminLandingPageRoutes(landingPageService: LandingPa
    * POST /v1/tenant-admin/landing-page/publish
    * Publish draft to live landing page
    *
+   * RATE LIMITED: 120 requests per minute per tenant (TODO-249)
+   *
    * @returns 200 - Publish result with timestamp
    * @returns 400 - No draft to publish
    * @returns 401 - Missing or invalid authentication
    * @returns 404 - Tenant not found
+   * @returns 429 - Rate limit exceeded
    * @returns 500 - Internal server error
    */
-  router.post('/publish', async (req: Request, res: Response, next: NextFunction) => {
+  router.post('/publish', draftAutosaveLimiter, async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -268,12 +275,15 @@ export function createTenantAdminLandingPageRoutes(landingPageService: LandingPa
    * DELETE /v1/tenant-admin/landing-page/draft
    * Discard draft and revert to published configuration
    *
+   * RATE LIMITED: 120 requests per minute per tenant (TODO-249)
+   *
    * @returns 200 - Discard result
    * @returns 401 - Missing or invalid authentication
    * @returns 404 - Tenant not found
+   * @returns 429 - Rate limit exceeded
    * @returns 500 - Internal server error
    */
-  router.delete('/draft', async (req: Request, res: Response, next: NextFunction) => {
+  router.delete('/draft', draftAutosaveLimiter, async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
