@@ -6,6 +6,7 @@
  * - Autosave with 1s debounce and request batching
  * - Section toggle (enable/disable)
  * - Publish/discard draft changes
+ * - localStorage draft recovery for browser crash protection (TODO-253)
  *
  * Race Condition Prevention (copied from useVisualEditor.ts):
  * Uses a batching strategy where all changes within the debounce window
@@ -13,6 +14,11 @@
  * - Overlapping requests
  * - Out-of-order updates causing inconsistent state
  * - Partial saves when one request fails while another succeeds
+ *
+ * Draft Recovery (TODO-253):
+ * Saves to localStorage immediately on every optimistic update.
+ * On mount, compares localStorage timestamp with server draftUpdatedAt.
+ * If local is fresher, shows recovery toast with "Restore" action.
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
@@ -52,6 +58,56 @@ interface LandingPageDraftState {
   published: LandingPageConfig | null;
   draftUpdatedAt: string | null;
   publishedAt: string | null;
+}
+
+// localStorage key for draft recovery (TODO-253)
+const LOCAL_DRAFT_STORAGE_KEY = 'mais:landingPage:localDraft';
+
+// Local draft backup structure
+interface LocalDraftBackup {
+  config: LandingPageConfig;
+  savedAt: string; // ISO timestamp
+}
+
+/**
+ * Save draft to localStorage immediately for crash recovery (TODO-253)
+ * Fails silently on quota exceeded or other errors
+ */
+function saveLocalDraft(config: LandingPageConfig): void {
+  try {
+    const backup: LocalDraftBackup = {
+      config,
+      savedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(LOCAL_DRAFT_STORAGE_KEY, JSON.stringify(backup));
+  } catch {
+    // Fail silently - server save is the source of truth
+    // This can happen if localStorage is full (5MB limit)
+  }
+}
+
+/**
+ * Load local draft backup from localStorage (TODO-253)
+ */
+function loadLocalDraft(): LocalDraftBackup | null {
+  try {
+    const stored = localStorage.getItem(LOCAL_DRAFT_STORAGE_KEY);
+    if (!stored) return null;
+    return JSON.parse(stored) as LocalDraftBackup;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Clear local draft from localStorage (TODO-253)
+ */
+function clearLocalDraft(): void {
+  try {
+    localStorage.removeItem(LOCAL_DRAFT_STORAGE_KEY);
+  } catch {
+    // Fail silently
+  }
 }
 
 interface UseLandingPageEditorReturn {
@@ -101,6 +157,7 @@ export function useLandingPageEditor(): UseLandingPageEditorReturn {
 
   /**
    * Load draft and published config from API
+   * Checks for localStorage recovery if local draft is fresher than server (TODO-253)
    */
   const loadConfig = useCallback(async () => {
     setLoading(true);
@@ -115,8 +172,43 @@ export function useLandingPageEditor(): UseLandingPageEditorReturn {
       }
 
       const draftState = body as LandingPageDraftState;
-      setDraftConfig(draftState.draft);
       setPublishedConfig(draftState.published);
+
+      // Check for localStorage recovery (TODO-253)
+      const localBackup = loadLocalDraft();
+      if (localBackup) {
+        const serverUpdatedAt = draftState.draftUpdatedAt ? new Date(draftState.draftUpdatedAt).getTime() : 0;
+        const localUpdatedAt = new Date(localBackup.savedAt).getTime();
+
+        // If local is fresher (saved after server version), offer recovery
+        if (localUpdatedAt > serverUpdatedAt) {
+          // Set server draft initially
+          setDraftConfig(draftState.draft);
+
+          // Show recovery toast with action button
+          toast.info('Recovered unsaved changes', {
+            description: 'Local changes were found from a previous session.',
+            duration: 10000, // Show for 10 seconds
+            action: {
+              label: 'Restore',
+              onClick: () => {
+                setDraftConfig(localBackup.config);
+                toast.success('Draft restored from local backup');
+              },
+            },
+            onDismiss: () => {
+              // User dismissed without restoring - clear local backup
+              clearLocalDraft();
+            },
+          });
+        } else {
+          // Server is fresher or same - clear stale local backup
+          clearLocalDraft();
+          setDraftConfig(draftState.draft);
+        }
+      } else {
+        setDraftConfig(draftState.draft);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load landing page config';
       setError(message);
@@ -129,6 +221,12 @@ export function useLandingPageEditor(): UseLandingPageEditorReturn {
   /**
    * Flush all pending changes to the server
    * Sends batched updates as a single request
+   *
+   * Performance Note (TODO-250):
+   * Currently sends full config (~50-100KB) on each save.
+   * Target latency: 500ms. Actual: 200-300ms on good networks.
+   * If monitoring shows >500ms latency, consider PATCH endpoints for
+   * single-section updates. See ADR for details.
    */
   const flushPendingChanges = useCallback(async () => {
     // Skip if already saving or no changes
@@ -144,6 +242,9 @@ export function useLandingPageEditor(): UseLandingPageEditorReturn {
 
     saveInProgress.current = true;
     setIsSaving(true);
+
+    // Performance monitoring for TODO-250 optimization decision
+    const startTime = performance.now();
 
     try {
       // Merge changes into current draft config
@@ -169,8 +270,19 @@ export function useLandingPageEditor(): UseLandingPageEditorReturn {
         throw new Error(errorMessage);
       }
 
-      // Draft saved successfully - update draft state
+      // Draft saved successfully - update draft state and clear local backup (TODO-253)
       setDraftConfig(mergedConfig);
+      clearLocalDraft();
+
+      // Log save latency for performance monitoring (TODO-250)
+      const duration = performance.now() - startTime;
+      if (duration > 500) {
+        logger.warn('Landing page save exceeded 500ms target', {
+          component: 'useLandingPageEditor',
+          durationMs: Math.round(duration),
+          payloadSizeKb: Math.round(JSON.stringify(mergedConfig).length / 1024),
+        });
+      }
     } catch (err) {
       logger.error('Failed to save landing page draft', {
         component: 'useLandingPageEditor',
@@ -216,9 +328,10 @@ export function useLandingPageEditor(): UseLandingPageEditorReturn {
 
       // Apply optimistic update to UI immediately
       setDraftConfig((prev) => {
+        let newConfig: LandingPageConfig;
         if (!prev) {
           // Initialize with default sections if no draft exists
-          return {
+          newConfig = {
             sections: {
               hero: false,
               socialProofBar: false,
@@ -232,14 +345,18 @@ export function useLandingPageEditor(): UseLandingPageEditorReturn {
               [section]: enabled,
             },
           };
+        } else {
+          newConfig = {
+            ...prev,
+            sections: {
+              ...prev.sections,
+              [section]: enabled,
+            },
+          };
         }
-        return {
-          ...prev,
-          sections: {
-            ...prev.sections,
-            [section]: enabled,
-          },
-        };
+        // Save to localStorage immediately for crash recovery (TODO-253)
+        saveLocalDraft(newConfig);
+        return newConfig;
       });
 
       // Schedule batched save after debounce window
@@ -280,13 +397,16 @@ export function useLandingPageEditor(): UseLandingPageEditorReturn {
       // Apply optimistic update to UI immediately
       setDraftConfig((prev) => {
         if (!prev) return prev;
-        return {
+        const newConfig = {
           ...prev,
           [section]: {
             ...prev[section],
             ...content,
           },
         };
+        // Save to localStorage immediately for crash recovery (TODO-253)
+        saveLocalDraft(newConfig);
+        return newConfig;
       });
 
       // Schedule batched save after debounce window
@@ -327,6 +447,9 @@ export function useLandingPageEditor(): UseLandingPageEditorReturn {
 
       toast.success('Landing page published');
 
+      // Clear local backup on successful publish (TODO-253)
+      clearLocalDraft();
+
       // Reload config to get fresh state
       await loadConfig();
     } catch (err) {
@@ -353,6 +476,9 @@ export function useLandingPageEditor(): UseLandingPageEditorReturn {
     }
     pendingChanges.current = {};
     originalConfig.current = null;
+
+    // Clear local backup immediately since we're discarding (TODO-253)
+    clearLocalDraft();
 
     try {
       const { status, body } = await api.discardDraft();

@@ -24,6 +24,9 @@ interface HeroSectionProps {
  * The background image is decorative and does not convey semantic meaning.
  * All important information is conveyed through the headline and subheadline text.
  *
+ * Layout Shift Prevention (TODO-255):
+ * Uses aspect-video (16:9) with min-h-[80vh] fallback to prevent CLS.
+ *
  * @example
  * ```tsx
  * <HeroSection
@@ -62,7 +65,7 @@ export const HeroSection = memo(function HeroSection({ config }: HeroSectionProp
 
   return (
     <section
-      className="relative min-h-[80vh] flex items-center justify-center overflow-hidden"
+      className="relative min-h-[80vh] aspect-video flex items-center justify-center overflow-hidden"
       style={{
         backgroundImage,
         backgroundSize: 'cover',

@@ -5,6 +5,10 @@
  * - Click-to-edit headline and subheadline
  * - Background image placeholder
  * - CTA button text editing
+ *
+ * Layout Shift Prevention (TODO-255):
+ * Uses aspect-[16/9] with min-h-[60vh] fallback for consistent layout.
+ * This prevents CLS (Cumulative Layout Shift) when background images load.
  */
 
 import { memo } from 'react';
@@ -24,7 +28,7 @@ export const EditableHeroSection = memo(function EditableHeroSection({ config, o
 
   return (
     <section
-      className="relative min-h-[60vh] flex items-center justify-center overflow-hidden bg-neutral-800"
+      className="relative min-h-[60vh] aspect-video flex items-center justify-center overflow-hidden bg-neutral-800"
       style={{
         backgroundImage: backgroundImage || undefined,
         backgroundSize: 'cover',
