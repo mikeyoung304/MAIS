@@ -68,6 +68,13 @@ import {
   // Reminder DTOs (MVP Gaps Phase 2)
   ReminderStatusResponseSchema,
   ProcessRemindersResponseSchema,
+  // Calendar DTOs (MVP Gaps Phase 3)
+  CalendarStatusResponseSchema,
+  CalendarConfigInputSchema,
+  CalendarTestResponseSchema,
+  // Deposit DTOs (MVP Gaps Phase 4)
+  DepositSettingsDtoSchema,
+  UpdateDepositSettingsDtoSchema,
   // Error response schemas
   BadRequestErrorSchema,
   UnauthorizedErrorSchema,
@@ -78,6 +85,13 @@ import {
   UnprocessableEntityErrorSchema,
   InternalServerErrorSchema,
 } from './dto';
+import { LandingPageConfigSchema } from './landing-page';
+import {
+  LandingPageDraftResponseSchema,
+  SaveDraftResponseSchema,
+  PublishDraftResponseSchema,
+  DiscardDraftResponseSchema,
+} from './tenant-admin/landing-page.contract';
 
 const c = initContract();
 
@@ -1681,5 +1695,199 @@ export const Contracts = c.router({
       500: InternalServerErrorSchema,
     },
     summary: 'Process pending reminders (requires tenant admin authentication)',
+  },
+
+  // ============================================================================
+  // Tenant Admin Calendar Endpoints (MVP Gaps Phase 3)
+  // Per-tenant Google Calendar integration configuration
+  // ============================================================================
+
+  /**
+   * Get calendar configuration status
+   * GET /v1/tenant-admin/calendar/status
+   *
+   * Returns whether calendar is configured and the calendar ID if so.
+   */
+  tenantAdminGetCalendarStatus: {
+    method: 'GET',
+    path: '/v1/tenant-admin/calendar/status',
+    responses: {
+      200: CalendarStatusResponseSchema,
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Get calendar configuration status',
+  },
+
+  /**
+   * Save calendar configuration
+   * POST /v1/tenant-admin/calendar/config
+   *
+   * Stores encrypted Google Calendar service account credentials.
+   */
+  tenantAdminSaveCalendarConfig: {
+    method: 'POST',
+    path: '/v1/tenant-admin/calendar/config',
+    body: CalendarConfigInputSchema,
+    responses: {
+      200: z.object({ success: z.boolean(), message: z.string().optional() }),
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Save calendar configuration',
+  },
+
+  /**
+   * Test calendar connection
+   * POST /v1/tenant-admin/calendar/test
+   *
+   * Tests connection to Google Calendar using stored credentials.
+   */
+  tenantAdminTestCalendar: {
+    method: 'POST',
+    path: '/v1/tenant-admin/calendar/test',
+    body: z.undefined(),
+    responses: {
+      200: CalendarTestResponseSchema,
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Test calendar connection',
+  },
+
+  /**
+   * Delete calendar configuration
+   * DELETE /v1/tenant-admin/calendar/config
+   *
+   * Removes stored calendar credentials.
+   */
+  tenantAdminDeleteCalendarConfig: {
+    method: 'DELETE',
+    path: '/v1/tenant-admin/calendar/config',
+    body: z.undefined(),
+    responses: {
+      200: z.object({ success: z.boolean() }),
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Delete calendar configuration',
+  },
+
+  // ============================================================================
+  // Tenant Admin Deposit Settings Endpoints (MVP Gaps Phase 4)
+  // Configure deposit requirements for bookings
+  // ============================================================================
+
+  /**
+   * Get deposit settings
+   * GET /v1/tenant-admin/settings/deposits
+   */
+  tenantAdminGetDepositSettings: {
+    method: 'GET',
+    path: '/v1/tenant-admin/settings/deposits',
+    responses: {
+      200: DepositSettingsDtoSchema,
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Get deposit settings',
+  },
+
+  /**
+   * Update deposit settings
+   * PUT /v1/tenant-admin/settings/deposits
+   */
+  tenantAdminUpdateDepositSettings: {
+    method: 'PUT',
+    path: '/v1/tenant-admin/settings/deposits',
+    body: UpdateDepositSettingsDtoSchema,
+    responses: {
+      200: DepositSettingsDtoSchema,
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema,
+      403: ForbiddenErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Update deposit settings',
+  },
+
+  // ============================================================================
+  // Tenant Admin Landing Page Draft Endpoints
+  // ============================================================================
+
+  /**
+   * GET /v1/tenant-admin/landing-page/draft
+   * Get current draft and published landing page configuration
+   */
+  getDraft: {
+    method: 'GET',
+    path: '/v1/tenant-admin/landing-page/draft',
+    responses: {
+      200: LandingPageDraftResponseSchema,
+      401: UnauthorizedErrorSchema,
+      404: NotFoundErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Get draft and published landing page configuration',
+  },
+
+  /**
+   * PUT /v1/tenant-admin/landing-page/draft
+   * Save draft landing page configuration (auto-save target)
+   */
+  saveDraft: {
+    method: 'PUT',
+    path: '/v1/tenant-admin/landing-page/draft',
+    body: LandingPageConfigSchema,
+    responses: {
+      200: SaveDraftResponseSchema,
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema,
+      404: NotFoundErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Save draft landing page configuration',
+  },
+
+  /**
+   * POST /v1/tenant-admin/landing-page/publish
+   * Publish draft to live landing page
+   */
+  publishDraft: {
+    method: 'POST',
+    path: '/v1/tenant-admin/landing-page/publish',
+    body: z.object({}),
+    responses: {
+      200: PublishDraftResponseSchema,
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema,
+      404: NotFoundErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Publish draft landing page to live',
+  },
+
+  /**
+   * DELETE /v1/tenant-admin/landing-page/draft
+   * Discard draft and revert to published configuration
+   */
+  discardDraft: {
+    method: 'DELETE',
+    path: '/v1/tenant-admin/landing-page/draft',
+    body: z.undefined(),
+    responses: {
+      200: DiscardDraftResponseSchema,
+      401: UnauthorizedErrorSchema,
+      404: NotFoundErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Discard draft and revert to published configuration',
   },
 });
