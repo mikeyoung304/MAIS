@@ -1,6 +1,7 @@
 import { HeroSection } from './HeroSection';
 import { ProblemSection } from './ProblemSection';
 import { StorefrontSection } from './StorefrontSection';
+import { HowItWorksSection } from './HowItWorksSection';
 import { WaitlistCTASection } from './WaitlistCTASection';
 
 /**
@@ -10,7 +11,8 @@ import { WaitlistCTASection } from './WaitlistCTASection';
  * 1. Hero - Transformation promise: Book more clients. Build your business.
  * 2. Problem - Identity recognition: You're a photographer, not a bookkeeper.
  * 3. Solution - The product: One link. Complete booking system.
- * 4. CTA - Action: Ready to get back to your craft?
+ * 4. How It Works - Dual-panel: Your dashboard vs client storefront.
+ * 5. CTA - Action: Ready to get back to your craft?
  *
  * Design principles:
  * - Generous whitespace (py-32 md:py-40)
@@ -26,6 +28,7 @@ export function Home() {
       <HeroSection />
       <ProblemSection />
       <StorefrontSection />
+      <HowItWorksSection />
       <WaitlistCTASection />
     </main>
   );
