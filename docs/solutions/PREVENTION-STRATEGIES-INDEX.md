@@ -1225,11 +1225,144 @@ Prevention Strategies Index (you are here)
 │   ├── Phase 4: Documentation & Training
 │   └── Phase 5: Monitoring & Metrics
 │
+├── Workflow Optimization Guides
+│   ├── Todo Staleness Prevention
+│   ├── Parallel Agent Workflows
+│   └── Quick References
+│
 └── Specific Prevention Guides
     ├── Email Case-Sensitivity Prevention
     ├── Missing Input Validation Prevention
+    ├── Stale Todo Prevention
+    ├── Parallel Agent Workflow Best Practices
     └── [Future guides...]
 ```
+
+---
+
+### 3. Workflow & Process Prevention Guides
+
+#### [Todo Staleness Prevention](./TODO-STALENESS-PREVENTION.md)
+
+**Purpose:** Prevent creating todos for work already completed
+**Audience:** Code reviewers, plan reviewers, tech leads
+**Length:** ~4,000 words
+**When to read:** Before conducting plan reviews or code reviews
+
+**Problem Solved:**
+- Creating todos for already-implemented features
+- 30+ second timing gaps between implementation and todo creation
+- 3+ hours wasted verifying/closing stale todos
+- Confusion about what work remains
+
+**Key Learning (2025-12-05):**
+```
+22:59:24 → Implementation complete (commit 1647a40)
+22:59:54 → Todos created describing same work (commit c4c8baf)
++17 hours → Todos closed as already implemented (commit 62f54ab)
+
+Gap: Implementation predated todo creation by 30 seconds
+Cost: 3+ hours of verification work in next session
+```
+
+**Prevention Strategies:**
+1. Verify before creating (always search code first)
+2. Distinguish implementation/verification/audit todos
+3. Use parallel agent workflow with verification-first
+4. Implement deferral criteria
+5. Use time-aware todo status
+6. Plan review checklist with Glob/Grep
+7. Batch verification instead of batch creation
+8. Todo type templates
+9. Integration with parallel agent workflow
+
+**Quick Rules:**
+
+```markdown
+Before creating TODO from plan:
+- [ ] glob '**/*ComponentName*'
+- [ ] grep -r 'functionName'
+- [ ] git log -p -S 'ComponentName' (last 50)
+- [ ] Check: Is code < 24h old? → SKIP
+- [ ] Check: Is code tested? → SKIP
+- [ ] Create only for: missing code OR verified gaps
+```
+
+**Expected Benefit:** 80% fewer stale todos, 3.5 hours faster plan reviews
+
+#### [Parallel Agent Workflow Best Practices](./PARALLEL-AGENT-WORKFLOW-BEST-PRACTICES.md)
+
+**Purpose:** Optimize multi-agent workflows to avoid stale todos and duplicate work
+**Audience:** Tech leads, code reviewers using parallel agents
+**Length:** ~5,000 words
+**When to read:** Before running `/workflows:plan`, `/workflows:review`, `/workflows:work` in sequence
+
+**Problem Solved:**
+- Information asymmetry between review agent and implementation agent
+- Agents creating todos based on assumptions, not code reality
+- Duplicate verification work across multiple agents
+- Timing gaps between plan/review/implementation creating stale artifacts
+
+**10 Core Principles:**
+
+1. **Verification Before Creation** - Always check code existence before creating todos
+2. **Shared Context Between Agents** - Use intermediate artifacts (verification.json)
+3. **Todo Creation Deferral Rules** - Skip todos for same-session work
+4. **Agent Specialization** - Clear roles for Plan/Review/Work/Codify agents
+5. **Parallel vs Sequential** - Use sequential for same-feature, parallel for different features
+6. **Decision Consistency** - Establish decision records early
+7. **Consensus Building** - Process for resolving agent disagreements
+8. **Dependency Tracking** - Explicit dependencies between todos
+9. **Verification Handoff Format** - Standardized JSON format for passing verification results
+10. **Session Boundary Recognition** - Tag artifacts with session markers
+
+**Key Workflow:**
+
+```bash
+# Standard sequence (sequential)
+/workflows:plan feature-description
+  ↓ outputs plan.md
+/workflows:review plan.md --output=verification.json
+  ↓ outputs verification.json with verified/missing/gaps
+/workflows:work plan.md --use-verification=verification.json
+  ↓ implements only from "missing" section
+```
+
+**Expected Benefit:** 50% faster plan reviews, 80% fewer stale todos
+
+#### [Stale Todos Quick Reference](./STALE-TODOS-QUICK-REFERENCE.md)
+
+**Purpose:** Quick decision tree for todo creation (5-minute guide)
+**Audience:** All engineers creating todos
+**Length:** ~2,000 words (print-friendly)
+**When to use:** Before creating any todo from a plan or review
+
+**Contains:**
+- 5-minute decision tree
+- Quick checklist
+- Git commands (copy-paste ready)
+- 4 common scenarios with examples
+- Red flag warnings
+- Cheat sheet for printing
+
+**Quick Decision Tree:**
+
+```
+Are you creating a todo based on a plan?
+├─ Search: glob + grep + git log
+├─ Code exists?
+│  ├─ YES, < 24h old? → SKIP
+│  ├─ YES, > 24h old? → VERIFY todo
+│  └─ NO? → IMPL todo
+└─ Complete deferral checklist
+```
+
+**Quick Status Codes:**
+- `pending` = Code doesn't exist, needs implementation
+- `verify` = Code exists, verify it matches plan
+- `audit` = Code exists, compliance/pattern check
+
+**Expected Use:** Improves todo quality by 80% on first use
 
 ---
 
@@ -1255,6 +1388,7 @@ Prevention Strategies Index (you are here)
 
 ---
 
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-12-05
+**Recent Additions:** Todo staleness prevention, parallel agent workflow best practices (session learning)
 **Maintainer:** Tech Lead
 **Status:** Active
