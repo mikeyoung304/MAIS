@@ -368,8 +368,8 @@ describe('HealthCheckService', () => {
       // Clear cache
       service.clearCache();
 
-      // Wait 1ms to ensure new timestamp
-      await new Promise((resolve) => setTimeout(resolve, 1));
+      // Wait 10ms to ensure new timestamp (1ms can be flaky in fast CI environments)
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Second call - should NOT use cache (new timestamp)
       const result2 = await service.checkStripe();
