@@ -16,6 +16,7 @@
 import jwt from 'jsonwebtoken';
 import { loadConfig, getBookingTokenSecret } from './core/config';
 import { logger } from './core/logger';
+import type { BookingRepository } from './ports';
 
 /**
  * Booking token actions
@@ -49,7 +50,7 @@ export interface BookingTokenPayload {
  * @param bookingId - The booking ID this token grants access to
  * @param tenantId - The tenant ID for isolation
  * @param action - The permitted action(s)
- * @param expiresInDays - Token validity period (default: 7 days)
+ * @param expiresInDays - Token validity period (default: 2 days, reduced from 7 for security)
  * @returns Signed JWT token string
  *
  * @example
@@ -62,7 +63,7 @@ export function generateBookingToken(
   bookingId: string,
   tenantId: string,
   action: BookingTokenAction,
-  expiresInDays: number = 7
+  expiresInDays: number = 2
 ): string {
   const config = loadConfig();
 
@@ -90,41 +91,51 @@ export interface TokenValidationResult {
 
 export interface TokenValidationError {
   valid: false;
-  error: 'expired' | 'invalid' | 'wrong_action' | 'malformed';
+  error: 'expired' | 'invalid' | 'wrong_action' | 'malformed' | 'booking_not_found' | 'booking_canceled' | 'booking_completed';
   message: string;
 }
 
 export type ValidateTokenResult = TokenValidationResult | TokenValidationError;
 
 /**
- * Validates a booking management token
+ * Validates a booking management token with optional state validation
  *
  * Verification includes:
  * - JWT signature verification
  * - Expiration check
  * - Optional action type validation
+ * - Optional booking state validation (prevents business logic bypass)
  *
- * NOTE: This does NOT verify booking status. Caller must check if booking
- * is still valid (not already cancelled, etc.) after token validation.
+ * State validation (when bookingRepo provided):
+ * - Blocks operations on non-existent bookings
+ * - Blocks modifications on CANCELED bookings (except 'manage' for viewing)
+ * - Blocks reschedule on FULFILLED bookings
+ * - Validates against real-time booking state
  *
  * @param token - The JWT token to validate
  * @param expectedAction - Optional: Require specific action type
+ * @param bookingRepo - Optional: Repository for state validation (recommended for security)
  * @returns Validation result with payload or error
  *
  * @example
  * ```typescript
+ * // Without state validation (backward compatible)
  * const result = validateBookingToken(token, 'cancel');
+ *
+ * // With state validation (recommended)
+ * const result = await validateBookingToken(token, 'cancel', bookingRepo);
  * if (result.valid) {
- *   // result.payload.bookingId, result.payload.tenantId available
- * } else {
- *   // result.error, result.message describe the failure
+ *   // Token is valid AND booking is in valid state
+ * } else if (result.error === 'booking_canceled') {
+ *   // Booking was canceled, link is no longer valid
  * }
  * ```
  */
-export function validateBookingToken(
+export async function validateBookingToken(
   token: string,
-  expectedAction?: BookingTokenAction
-): ValidateTokenResult {
+  expectedAction?: BookingTokenAction,
+  bookingRepo?: BookingRepository
+): Promise<ValidateTokenResult> {
   const config = loadConfig();
 
   try {
@@ -151,13 +162,91 @@ export function validateBookingToken(
       }
     }
 
+    // State validation (defense against business logic bypass)
+    if (bookingRepo) {
+      const booking = await bookingRepo.findById(payload.tenantId, payload.bookingId);
+
+      // Booking must exist
+      if (!booking) {
+        logger.warn(
+          { bookingId: payload.bookingId, tenantId: payload.tenantId },
+          'Token validation failed: booking not found'
+        );
+        return {
+          valid: false,
+          error: 'booking_not_found',
+          message: 'This booking no longer exists',
+        };
+      }
+
+      // Block modifications on canceled bookings (view-only access allowed)
+      if (booking.status === 'CANCELED') {
+        // Allow 'manage' action for viewing canceled bookings
+        if (payload.action !== 'manage') {
+          logger.info(
+            { bookingId: booking.id, action: payload.action, status: booking.status },
+            'Token validation failed: cannot modify canceled booking'
+          );
+          return {
+            valid: false,
+            error: 'booking_canceled',
+            message: 'This booking has been canceled and cannot be modified',
+          };
+        }
+      }
+
+      // Block reschedule on fulfilled bookings (event already happened)
+      if (booking.status === 'FULFILLED' && payload.action === 'reschedule') {
+        logger.info(
+          { bookingId: booking.id, action: payload.action, status: booking.status },
+          'Token validation failed: cannot reschedule completed booking'
+        );
+        return {
+          valid: false,
+          error: 'booking_completed',
+          message: 'This booking has been completed and cannot be rescheduled',
+        };
+      }
+
+      // Block cancel on fulfilled bookings (event already happened)
+      if (booking.status === 'FULFILLED' && payload.action === 'cancel') {
+        logger.info(
+          { bookingId: booking.id, action: payload.action, status: booking.status },
+          'Token validation failed: cannot cancel completed booking'
+        );
+        return {
+          valid: false,
+          error: 'booking_completed',
+          message: 'This booking has been completed and cannot be canceled',
+        };
+      }
+
+      // Block cancel on refunded bookings (already processed)
+      if (booking.status === 'REFUNDED' && payload.action === 'cancel') {
+        logger.info(
+          { bookingId: booking.id, action: payload.action, status: booking.status },
+          'Token validation failed: cannot cancel refunded booking'
+        );
+        return {
+          valid: false,
+          error: 'booking_canceled',
+          message: 'This booking has already been refunded',
+        };
+      }
+
+      logger.debug(
+        { bookingId: booking.id, action: payload.action, status: booking.status },
+        'Token validated with booking state check'
+      );
+    }
+
     return { valid: true, payload };
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
       return {
         valid: false,
         error: 'expired',
-        message: 'Token has expired',
+        message: 'This link has expired. Please contact us for assistance.',
       };
     }
 
@@ -169,6 +258,7 @@ export function validateBookingToken(
       };
     }
 
+    logger.error({ error }, 'Token validation failed with unexpected error');
     return {
       valid: false,
       error: 'invalid',

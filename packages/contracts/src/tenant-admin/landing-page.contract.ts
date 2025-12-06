@@ -225,4 +225,49 @@ export const landingPageAdminContract = c.router({
     },
     summary: 'Discard draft and revert to published configuration',
   },
+
+  // ============================================================================
+  // Image Upload Endpoint (TODO-235)
+  // ============================================================================
+
+  /**
+   * POST /v1/tenant-admin/landing-page/images
+   * Upload image for landing page sections (hero, about, gallery, etc.)
+   *
+   * Content-Type: multipart/form-data
+   * Body: FormData with 'image' field
+   *
+   * SECURITY:
+   * - Tenant isolation enforced via res.locals.tenantAuth
+   * - File validation (MIME type, size, magic bytes)
+   * - Tenant-scoped storage paths prevent cross-tenant access
+   * - Rate limited (50 uploads/hour per tenant)
+   *
+   * @returns 200 - Upload successful with URL and filename
+   * @returns 400 - No file uploaded or validation error
+   * @returns 401 - Missing or invalid authentication
+   * @returns 413 - File too large (max 5MB)
+   * @returns 429 - Rate limit exceeded
+   * @returns 500 - Internal server error
+   */
+  uploadImage: {
+    method: 'POST',
+    path: '/v1/tenant-admin/landing-page/images',
+    contentType: 'multipart/form-data',
+    body: z.any(), // Multipart form data handled by multer middleware
+    responses: {
+      200: z.object({
+        url: z.string().url(),
+        filename: z.string(),
+        size: z.number(),
+        mimetype: z.string(),
+      }),
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema,
+      413: z.object({ error: z.string() }), // Payload too large
+      429: z.object({ error: z.string() }), // Rate limit exceeded
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Upload image for landing page sections',
+  },
 });

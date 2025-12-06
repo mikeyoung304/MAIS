@@ -260,8 +260,44 @@ export const addonWriteLimiter = rateLimit({
     }),
 });
 
+/**
+ * TODO-273 FIX: Rate limiter for Stripe webhook endpoint
+ * 100 requests per minute - prevents DoS attacks on webhook processing
+ *
+ * IMPORTANT: Returns HTTP 200 (not 429) on rate limit to prevent Stripe retry storms.
+ * Stripe interprets non-200 responses as failures and will retry aggressively,
+ * which could lead to retry accumulation and further overwhelm the system.
+ *
+ * Protects against:
+ * - Database exhaustion via WebhookEvent record creation attempts
+ * - Advisory lock DoS (each webhook acquires locks during processing)
+ * - CPU exhaustion from cryptographic signature verification
+ */
+export const webhookLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: isTestEnvironment ? 500 : 100, // 100 requests per minute (Stripe typically sends < 10/min per tenant)
+  standardHeaders: false, // Don't leak rate limit info to potential attackers
+  legacyHeaders: false,
+  // Use IP for rate limiting (webhooks don't have tenant authentication)
+  keyGenerator: (req) => normalizeIp(req.ip),
+  validate: false, // Disable validation - we handle IPv6 with normalizeIp()
+  // Return 200 to prevent Stripe retries on rate limit
+  handler: (_req: Request, res: Response) => {
+    logger.warn(
+      { ip: normalizeIp(_req.ip) },
+      'Webhook rate limit exceeded - returning 200 to prevent Stripe retries'
+    );
+    res.status(200).send('OK');
+  },
+});
+
 export const skipIfHealth = (req: Request, _res: Response, next: NextFunction) => {
+  // Skip rate limiting for health/ready endpoints
   if (req.path === '/health' || req.path === '/ready') {
+    return next();
+  }
+  // Skip public limiter for webhooks (they have their own dedicated limiter)
+  if (req.path.startsWith('/v1/webhooks')) {
     return next();
   }
   return publicLimiter(req, _res, next);

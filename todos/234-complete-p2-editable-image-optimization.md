@@ -1,5 +1,5 @@
 ---
-status: ready
+status: complete
 priority: p2
 issue_id: '234'
 tags: [performance, code-review, landing-page, images]

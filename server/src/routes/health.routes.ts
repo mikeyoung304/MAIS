@@ -11,11 +11,13 @@ import type { Express, Request, Response } from 'express';
 import { logger } from '../lib/core/logger';
 import type { PrismaClient } from '../generated/prisma';
 import type { Config } from '../lib/core/config';
+import type { HealthCheckService } from '../services/health-check.service';
 
 export interface HealthCheckDeps {
   prisma?: PrismaClient;
   config: Config;
   startTime: number;
+  healthCheckService?: HealthCheckService;
 }
 
 export function registerHealthRoutes(app: Express, deps: HealthCheckDeps): void {
@@ -113,9 +115,60 @@ export function registerHealthRoutes(app: Express, deps: HealthCheckDeps): void 
   });
 
   /**
-   * Legacy health endpoint - maps to liveness for backward compatibility
+   * Legacy health endpoint with optional deep check
+   * - GET /health - Basic liveness check (backward compatible)
+   * - GET /health?deep=true - Extended health check with external services
+   *
+   * Deep check verifies connectivity to:
+   * - Stripe (payment processing)
+   * - Postmark (email delivery)
+   * - Google Calendar (calendar sync)
+   *
+   * Response caching: 60 seconds per service to avoid rate limiting
+   * Timeout: 5 seconds per service check
    */
-  app.get('/health', (_req: Request, res: Response) => {
-    res.status(200).json({ ok: true });
+  app.get('/health', async (req: Request, res: Response): Promise<void> => {
+    const isDeepCheck = req.query.deep === 'true';
+
+    // Basic health check (backward compatible)
+    if (!isDeepCheck) {
+      res.status(200).json({ ok: true });
+      return;
+    }
+
+    // Deep health check (external services)
+    if (!deps.healthCheckService) {
+      res.status(503).json({
+        status: 'degraded',
+        error: 'Deep health checks not available (service not configured)',
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    // Run all external service checks in parallel
+    const [stripeCheck, postmarkCheck, calendarCheck] = await Promise.all([
+      deps.healthCheckService.checkStripe(),
+      deps.healthCheckService.checkPostmark(),
+      deps.healthCheckService.checkGoogleCalendar(),
+    ]);
+
+    const checks = {
+      stripe: stripeCheck,
+      postmark: postmarkCheck,
+      googleCalendar: calendarCheck,
+    };
+
+    // Determine overall health (unhealthy if ANY service is unhealthy)
+    const allHealthy = Object.values(checks).every((check) => check.status === 'healthy');
+    const status = allHealthy ? 'healthy' : 'degraded';
+    const statusCode = allHealthy ? 200 : 503;
+
+    res.status(statusCode).json({
+      status,
+      checks,
+      timestamp: new Date().toISOString(),
+      mode: deps.config.ADAPTERS_PRESET,
+    });
   });
 }

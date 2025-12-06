@@ -10,6 +10,7 @@
 import { Router } from 'express';
 import type { BookingService } from '../services/booking.service';
 import type { CatalogService } from '../services/catalog.service';
+import type { BookingRepository } from '../lib/ports';
 import { validateBookingToken, type BookingTokenPayload } from '../lib/booking-tokens';
 import { logger } from '../lib/core/logger';
 import { handlePublicRouteError } from '../lib/public-route-error-handler';
@@ -25,7 +26,8 @@ import { handlePublicRouteError } from '../lib/public-route-error-handler';
 export class PublicBookingManagementController {
   constructor(
     private readonly bookingService: BookingService,
-    private readonly catalogService: CatalogService
+    private readonly catalogService: CatalogService,
+    private readonly bookingRepo: BookingRepository
   ) {}
 
   /**
@@ -40,8 +42,8 @@ export class PublicBookingManagementController {
     packageTitle: string;
     addOnTitles: string[];
   }> {
-    // Validate token
-    const result = validateBookingToken(token, 'manage');
+    // Validate token with state validation
+    const result = await validateBookingToken(token, 'manage', this.bookingRepo);
     if (!result.valid) {
       throw new Error(`Token validation failed: ${result.message}`);
     }
@@ -89,8 +91,8 @@ export class PublicBookingManagementController {
    * POST /v1/public/bookings/reschedule?token=xxx
    */
   async rescheduleBooking(token: string, newDate: string): Promise<any> {
-    // Validate token (allow 'manage' or 'reschedule' action)
-    const result = validateBookingToken(token, 'reschedule');
+    // Validate token with state validation (allow 'manage' or 'reschedule' action)
+    const result = await validateBookingToken(token, 'reschedule', this.bookingRepo);
     if (!result.valid) {
       throw new Error(`Token validation failed: ${result.message}`);
     }
@@ -114,8 +116,8 @@ export class PublicBookingManagementController {
    * POST /v1/public/bookings/cancel?token=xxx
    */
   async cancelBooking(token: string, reason?: string): Promise<any> {
-    // Validate token (allow 'manage' or 'cancel' action)
-    const result = validateBookingToken(token, 'cancel');
+    // Validate token with state validation (allow 'manage' or 'cancel' action)
+    const result = await validateBookingToken(token, 'cancel', this.bookingRepo);
     if (!result.valid) {
       throw new Error(`Token validation failed: ${result.message}`);
     }

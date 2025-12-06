@@ -33,6 +33,7 @@ import type {
   ServiceRepository,
   AvailabilityRuleRepository,
   BookingRepository,
+  WebhookSubscriptionRepository,
 } from '../lib/ports';
 import type { Request } from 'express';
 import { createAdminTenantsRoutes } from './admin/tenants.routes';
@@ -50,6 +51,7 @@ import { createTenantAdminSegmentsRouter } from './tenant-admin-segments.routes'
 import { createPublicSchedulingRoutes } from './public-scheduling.routes';
 import { createTenantAdminSchedulingRoutes } from './tenant-admin-scheduling.routes';
 import { createPublicTenantRoutes } from './public-tenant.routes';
+import { createTenantAdminWebhookRoutes } from './tenant-admin-webhooks.routes';
 import {
   createPublicBookingManagementRouter,
   PublicBookingManagementController,
@@ -72,6 +74,7 @@ import type { PackageDraftService } from '../services/package-draft.service';
 import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
 import type { ReminderService } from '../services/reminder.service';
 import type { LandingPageService } from '../services/landing-page.service';
+import type { WebhookDeliveryService } from '../services/webhook-delivery.service';
 
 interface Controllers {
   packages: PackagesController;
@@ -96,12 +99,14 @@ interface Services {
   tenantOnboarding?: TenantOnboardingService;
   reminder?: ReminderService;
   landingPage?: LandingPageService;
+  webhookDelivery?: WebhookDeliveryService;
 }
 
 interface Repositories {
   service?: ServiceRepository;
   availabilityRule?: AvailabilityRuleRepository;
   booking?: BookingRepository;
+  webhookSubscription?: WebhookSubscriptionRepository;
 }
 
 export function createV1Router(
@@ -489,9 +494,14 @@ export function createV1Router(
     // Register public booking management routes (for customer self-service)
     // NO authentication required - uses JWT tokens in query params for access
     // Allows customers to reschedule/cancel bookings via links in confirmation emails
+    // P2-284 FIX: Inject bookingRepo for token state validation (prevents business logic bypass)
+    if (!repositories?.booking) {
+      throw new Error('BookingRepository is required for public booking management');
+    }
     const publicBookingManagementController = new PublicBookingManagementController(
       services.booking,
-      services.catalog
+      services.catalog,
+      repositories.booking
     );
     const publicBookingManagementRouter = createPublicBookingManagementRouter(
       publicBookingManagementController
@@ -586,6 +596,17 @@ export function createV1Router(
         app.use('/v1/tenant-admin', tenantAuthMiddleware, tenantAdminSchedulingRouter);
         logger.info('✅ Tenant admin scheduling routes mounted at /v1/tenant-admin');
       }
+    }
+
+    // Register tenant admin webhook routes (for custom webhook subscriptions - TODO-278)
+    // Requires tenant admin authentication
+    if (repositories.webhookSubscription && services.webhookDelivery) {
+      const tenantAdminWebhookRoutes = createTenantAdminWebhookRoutes(
+        repositories.webhookSubscription,
+        services.webhookDelivery
+      );
+      app.use('/v1/tenant-admin/webhooks', tenantAuthMiddleware, tenantAdminWebhookRoutes);
+      logger.info('✅ Tenant admin webhook routes mounted at /v1/tenant-admin/webhooks');
     }
   }
 }

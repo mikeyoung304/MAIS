@@ -3,6 +3,11 @@
  *
  * Generates available time slots for time-based scheduling (Acuity-like booking).
  * Handles timezone conversion, rule-based slot generation, and conflict detection.
+ *
+ * Two-way calendar sync:
+ * - Filters slots against MAIS bookings (database)
+ * - Filters slots against Google Calendar busy times (external)
+ * - Provides graceful degradation if Google Calendar is unavailable
  */
 
 import type {
@@ -11,9 +16,13 @@ import type {
   AvailabilityRuleRepository,
   AvailabilityRule,
   TimeslotBooking,
+  CacheServicePort,
+  BusyTimeBlock,
 } from '../lib/ports';
 import type { Service } from '../lib/entities';
+import type { GoogleCalendarService } from './google-calendar.service';
 import { logger } from '../lib/core/logger';
+import { cachedOperation, buildCacheKey } from '../lib/cache-helpers';
 
 // Re-export TimeslotBooking from ports for external consumers
 export type { TimeslotBooking as TimeSlotBooking } from '../lib/ports';
@@ -51,7 +60,9 @@ export class SchedulingAvailabilityService {
   constructor(
     private readonly serviceRepo: ServiceRepository,
     private readonly availabilityRuleRepo: AvailabilityRuleRepository,
-    private readonly bookingRepo: BookingRepository
+    private readonly bookingRepo: BookingRepository,
+    private readonly googleCalendarService?: GoogleCalendarService,
+    private readonly cache?: CacheServicePort
   ) {}
 
   /**
@@ -65,6 +76,8 @@ export class SchedulingAvailabilityService {
    * 3. Generate all possible slots based on rules
    * 4. Fetch existing bookings for that date
    * 5. Mark slots as unavailable if they conflict with bookings
+   * 6. Fetch Google Calendar busy times (two-way sync)
+   * 7. Mark slots as unavailable if they conflict with Google Calendar events
    *
    * @param params - Service, tenant, and date parameters
    * @returns Array of time slots with availability status
@@ -118,14 +131,100 @@ export class SchedulingAvailabilityService {
     }
 
     // 4. Get existing bookings for this date
-    // We need to get all TIMESLOT bookings for this tenant on this date
-    // Note: BookingRepository needs a method for this, using placeholder here
     const existingBookings = await this.getTimeslotBookings(tenantId, date);
 
-    // 5. Filter out conflicting slots
-    const availableSlots = this.filterConflictingSlots(allSlots, existingBookings);
+    // 5. Filter out slots that conflict with MAIS bookings
+    let availableSlots = this.filterConflictingSlots(allSlots, existingBookings);
+
+    // 6. Filter out slots that conflict with Google Calendar events (two-way sync)
+    if (this.googleCalendarService) {
+      availableSlots = await this.filterGoogleCalendarConflicts(
+        tenantId,
+        date,
+        availableSlots
+      );
+    }
 
     return availableSlots;
+  }
+
+  /**
+   * Filter slots that conflict with Google Calendar events
+   *
+   * Fetches busy times from Google Calendar and marks slots as unavailable
+   * if they overlap with external calendar events. Uses caching to reduce
+   * API calls (5 minute TTL).
+   *
+   * Gracefully degrades on error - returns original slots if Google Calendar
+   * API is unavailable.
+   *
+   * @param tenantId - Tenant ID for multi-tenant isolation
+   * @param date - Date being checked
+   * @param slots - Slots to filter
+   * @returns Slots with availability updated based on Google Calendar conflicts
+   *
+   * @private
+   */
+  private async filterGoogleCalendarConflicts(
+    tenantId: string,
+    date: Date,
+    slots: TimeSlot[]
+  ): Promise<TimeSlot[]> {
+    try {
+      // Calculate date range for the entire day
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      // Fetch busy times with caching (5 minute TTL)
+      const busyTimes = await cachedOperation<BusyTimeBlock[]>(
+        this.cache,
+        {
+          prefix: 'gcal-busy',
+          keyParts: [tenantId, date.toISOString().split('T')[0]], // Cache by date (YYYY-MM-DD)
+          ttl: 300, // 5 minutes
+        },
+        async () => {
+          if (!this.googleCalendarService) {
+            return [];
+          }
+          return this.googleCalendarService.getBusyTimes(tenantId, startOfDay, endOfDay);
+        }
+      );
+
+      // If no busy times, return all slots as-is
+      if (busyTimes.length === 0) {
+        return slots;
+      }
+
+      // Filter slots that conflict with Google Calendar busy times
+      return slots.map((slot) => {
+        // Check if this slot conflicts with any busy time block
+        const hasConflict = busyTimes.some((busy) => {
+          // Slots conflict if they overlap in time
+          // Overlap occurs if: slot.start < busy.end AND slot.end > busy.start
+          return slot.startTime < busy.end && slot.endTime > busy.start;
+        });
+
+        return {
+          ...slot,
+          available: slot.available && !hasConflict, // Only mark unavailable if both checks pass
+        };
+      });
+    } catch (error) {
+      logger.warn(
+        {
+          error,
+          tenantId,
+          date: date.toISOString(),
+        },
+        'Failed to filter Google Calendar conflicts - continuing without two-way sync'
+      );
+      // Graceful degradation - return original slots on error
+      return slots;
+    }
   }
 
   /**

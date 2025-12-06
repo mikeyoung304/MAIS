@@ -867,6 +867,7 @@ export class BookingService {
       endTime: input.endTime.toISOString(),
       totalCents: input.totalCents,
       notes: input.notes,
+      timezone: input.clientTimezone,
     });
 
     return created;
@@ -1054,9 +1055,88 @@ export class BookingService {
       cancelledBy,
       reason,
       needsRefund: booking.status === 'PAID',
+      googleEventId: cancelled.googleEventId ?? undefined,
     });
 
     return cancelled;
+  }
+
+  /**
+   * Mark a booking's payment as failed
+   *
+   * Called by Stripe webhook handler when payment_intent.payment_failed is received.
+   * This handles payment failures for balance payments or appointment bookings where
+   * a booking already exists but the payment failed.
+   *
+   * @param tenantId - Tenant ID for data isolation
+   * @param bookingId - Booking identifier
+   * @param failureDetails - Details about the payment failure
+   * @param failureDetails.reason - Human-readable failure reason
+   * @param failureDetails.code - Stripe error code
+   * @param failureDetails.paymentIntentId - Stripe PaymentIntent ID that failed
+   *
+   * @returns Updated booking with failure details
+   *
+   * @throws {NotFoundError} If booking doesn't exist
+   *
+   * @example
+   * ```typescript
+   * const booking = await bookingService.markPaymentFailed(
+   *   'tenant_123',
+   *   'booking_abc',
+   *   {
+   *     reason: 'Your card was declined',
+   *     code: 'card_declined',
+   *     paymentIntentId: 'pi_123'
+   *   }
+   * );
+   * ```
+   */
+  async markPaymentFailed(
+    tenantId: string,
+    bookingId: string,
+    failureDetails: {
+      reason: string;
+      code: string;
+      paymentIntentId: string;
+    }
+  ): Promise<Booking> {
+    // Validate booking exists
+    const booking = await this.bookingRepo.findById(tenantId, bookingId);
+    if (!booking) {
+      throw new NotFoundError(`Booking ${bookingId} not found`);
+    }
+
+    // Log the payment failure
+    // Note: We don't update the booking record for payment failures
+    // because the booking is still valid (e.g., a balance payment failure
+    // doesn't cancel the booking - the customer can retry)
+    // The webhook handler already logs the failure details
+
+    logger.warn(
+      {
+        bookingId,
+        tenantId,
+        paymentIntentId: failureDetails.paymentIntentId,
+        failureCode: failureDetails.code,
+        failureReason: failureDetails.reason,
+      },
+      'Payment failure marked for booking'
+    );
+
+    // Emit event for notifications (send email to tenant and customer)
+    await this._eventEmitter.emit(BookingEvents.PAYMENT_FAILED, {
+      bookingId: booking.id,
+      tenantId,
+      email: booking.email,
+      coupleName: booking.coupleName,
+      eventDate: booking.eventDate,
+      failureReason: failureDetails.reason,
+      failureCode: failureDetails.code,
+      paymentIntentId: failureDetails.paymentIntentId,
+    });
+
+    return booking;
   }
 
   /**

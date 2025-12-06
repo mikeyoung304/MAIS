@@ -16,12 +16,46 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
+import multer from 'multer';
 import { ZodError } from 'zod';
 import type { LandingPageService } from '../services/landing-page.service';
 import { LandingPageConfigSchema } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
-import { NotFoundError, ValidationError } from '../lib/errors';
-import { draftAutosaveLimiter } from '../middleware/rateLimiter';
+import { NotFoundError, ValidationError, TooManyRequestsError } from '../lib/errors';
+import {
+  draftAutosaveLimiter,
+  uploadLimiterIP,
+  uploadLimiterTenant,
+} from '../middleware/rateLimiter';
+import {
+  uploadService,
+  checkUploadConcurrency,
+  releaseUploadConcurrency,
+} from '../services/upload.service';
+
+// Configure multer for landing page images (5MB)
+const uploadLandingPageImage = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB for landing page images
+  },
+});
+
+/**
+ * Multer error handler middleware
+ * Converts multer-specific errors to proper HTTP status codes
+ */
+function handleMulterError(error: unknown, req: Request, res: Response, next: NextFunction): void {
+  if (error instanceof multer.MulterError) {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      res.status(413).json({ error: 'File too large (max 5MB)' });
+      return;
+    }
+    res.status(400).json({ error: error.message });
+    return;
+  }
+  next(error);
+}
 
 /**
  * Create tenant admin landing page routes
@@ -302,6 +336,83 @@ export function createTenantAdminLandingPageRoutes(landingPageService: LandingPa
       next(error);
     }
   });
+
+  // ============================================================================
+  // Image Upload Endpoint (TODO-235)
+  // ============================================================================
+
+  /**
+   * POST /v1/tenant-admin/landing-page/images
+   * Upload image for landing page sections (hero, about, gallery, etc.)
+   *
+   * RATE LIMITED: 200/hour per IP (DDoS protection), 50/hour per tenant (quota enforcement)
+   *
+   * @returns 200 - Image successfully uploaded with URL and filename
+   * @returns 400 - No file uploaded or invalid file type
+   * @returns 401 - No tenant authentication
+   * @returns 413 - File too large (>5MB, handled by multer middleware)
+   * @returns 429 - Rate limit exceeded (IP or tenant) or concurrent upload limit exceeded
+   * @returns 500 - Internal server error
+   */
+  router.post(
+    '/images',
+    uploadLimiterIP, // IP-level DDoS protection (200/hour)
+    uploadLimiterTenant, // Tenant-level quota enforcement (50/hour)
+    uploadLandingPageImage.single('image'),
+    handleMulterError,
+    async (req: Request, res: Response, next: NextFunction) => {
+      const tenantAuth = res.locals.tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+      const tenantId = tenantAuth.tenantId;
+
+      try {
+        // Check concurrency limit BEFORE processing file (memory exhaustion protection)
+        checkUploadConcurrency(tenantId);
+
+        // Check if file was uploaded
+        if (!req.file) {
+          releaseUploadConcurrency(tenantId);
+          res.status(400).json({ error: 'No image uploaded' });
+          return;
+        }
+
+        // Upload landing page image
+        const uploadResult = await uploadService.uploadLandingPageImage(
+          req.file as Express.Multer.File,
+          tenantId
+        );
+
+        logger.info(
+          { tenantId, filename: uploadResult.filename },
+          'Landing page image uploaded'
+        );
+
+        releaseUploadConcurrency(tenantId);
+        res.status(200).json(uploadResult);
+      } catch (error) {
+        releaseUploadConcurrency(tenantId);
+        logger.error({ error }, 'Error uploading landing page image');
+
+        // Handle concurrency limit exceeded
+        if (error instanceof TooManyRequestsError) {
+          res.status(429).json({ error: error.message });
+          return;
+        }
+
+        // Handle generic errors from upload service (file validation)
+        if (error instanceof Error) {
+          res.status(400).json({ error: error.message });
+          return;
+        }
+
+        // Pass unknown errors to global error handler
+        next(error);
+      }
+    }
+  );
 
   return router;
 }

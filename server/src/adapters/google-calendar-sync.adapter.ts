@@ -1,11 +1,13 @@
 /**
- * Google Calendar Sync Adapter - One-way sync to Google Calendar
+ * Google Calendar Sync Adapter - Two-way sync with Google Calendar
  *
- * Extends GoogleCalendarAdapter with event creation and deletion capabilities.
+ * Extends GoogleCalendarAdapter with:
+ * - Event creation and deletion (one-way sync: MAIS → Google)
+ * - FreeBusy API integration (two-way sync: reads Google Calendar busy times)
  * Uses Google Calendar API v3 with service account authentication.
  */
 
-import type { CalendarProvider } from '../lib/ports';
+import type { CalendarProvider, BusyTimeBlock } from '../lib/ports';
 import { GoogleCalendarAdapter } from './gcal.adapter';
 import { createGServiceAccountJWT } from './gcal.jwt';
 import { logger } from '../lib/core/logger';
@@ -29,12 +31,30 @@ interface EventResponse {
   end: { dateTime: string };
 }
 
+interface FreeBusyRequest {
+  timeMin: string;
+  timeMax: string;
+  items: Array<{ id: string }>;
+}
+
+interface FreeBusyResponse {
+  calendars: {
+    [calendarId: string]: {
+      busy: Array<{
+        start: string;
+        end: string;
+      }>;
+    };
+  };
+}
+
 /**
  * Google Calendar Sync Adapter
  *
- * Provides one-way sync from MAIS to Google Calendar:
- * - Create events when appointments are booked
- * - Delete events when appointments are cancelled
+ * Provides two-way sync with Google Calendar:
+ * - Create events when appointments are booked (MAIS → Google)
+ * - Delete events when appointments are cancelled (MAIS → Google)
+ * - Read busy times to prevent double-booking (Google → MAIS)
  *
  * Inherits date availability checking from GoogleCalendarAdapter.
  * Supports per-tenant calendar configuration via tenant secrets.
@@ -81,6 +101,7 @@ export class GoogleCalendarSyncAdapter extends GoogleCalendarAdapter implements 
     endTime: Date;
     attendees?: { email: string; name?: string }[];
     metadata?: Record<string, string>;
+    timezone?: string;
   }): Promise<{ eventId: string } | null> {
     try {
       // Parse service account JSON from base64
@@ -94,16 +115,19 @@ export class GoogleCalendarSyncAdapter extends GoogleCalendarAdapter implements 
       ]);
 
       // Build event payload
+      // Use client timezone if provided, otherwise fall back to America/New_York
+      const timeZone = input.timezone || 'America/New_York';
+
       const event: CalendarEvent = {
         summary: input.summary,
         description: input.description,
         start: {
           dateTime: input.startTime.toISOString(),
-          timeZone: 'UTC',
+          timeZone,
         },
         end: {
           dateTime: input.endTime.toISOString(),
-          timeZone: 'UTC',
+          timeZone,
         },
         attendees: input.attendees?.map((a) => ({
           email: a.email,
@@ -232,6 +256,117 @@ export class GoogleCalendarSyncAdapter extends GoogleCalendarAdapter implements 
     } catch (error) {
       logger.error({ error, tenantId, eventId }, 'Error deleting Google Calendar event');
       return false;
+    }
+  }
+
+  /**
+   * Get busy time blocks from Google Calendar
+   *
+   * Uses Google Calendar API v3 freebusy.query endpoint to fetch busy times.
+   * This enables two-way sync by preventing MAIS from offering slots that
+   * conflict with existing Google Calendar events.
+   *
+   * Gracefully degrades on error - returns empty array to allow booking to continue.
+   *
+   * @param tenantId - Tenant ID (for logging/auditing)
+   * @param startDate - Start of time range to check
+   * @param endDate - End of time range to check
+   * @returns Array of busy time blocks, or empty array on error
+   *
+   * @example
+   * ```typescript
+   * const busyTimes = await adapter.getBusyTimes(
+   *   'tenant_123',
+   *   new Date('2025-06-15T00:00:00Z'),
+   *   new Date('2025-06-15T23:59:59Z')
+   * );
+   * // Returns: [
+   * //   { start: Date('2025-06-15T14:00:00Z'), end: Date('2025-06-15T15:00:00Z') },
+   * //   { start: Date('2025-06-15T16:30:00Z'), end: Date('2025-06-15T17:30:00Z') }
+   * // ]
+   * ```
+   */
+  async getBusyTimes(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<BusyTimeBlock[]> {
+    try {
+      // Parse service account JSON from base64
+      const serviceAccountJson = JSON.parse(
+        Buffer.from(this.serviceAccountJsonBase64, 'base64').toString('utf8')
+      );
+
+      // Get access token via JWT
+      const accessToken = await createGServiceAccountJWT(serviceAccountJson, [
+        'https://www.googleapis.com/auth/calendar',
+      ]);
+
+      // Build FreeBusy query request
+      const requestBody: FreeBusyRequest = {
+        timeMin: startDate.toISOString(),
+        timeMax: endDate.toISOString(),
+        items: [{ id: this.calendarId }],
+      };
+
+      // Query FreeBusy API
+      const response = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        logger.warn(
+          {
+            status: response.status,
+            error: errorText,
+            tenantId,
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
+          },
+          'Google Calendar FreeBusy query failed - returning empty busy times'
+        );
+        return [];
+      }
+
+      const data = (await response.json()) as FreeBusyResponse;
+
+      // Extract busy times for our calendar
+      const calendarBusyTimes = data.calendars[this.calendarId]?.busy || [];
+
+      // Convert to BusyTimeBlock format
+      const busyBlocks: BusyTimeBlock[] = calendarBusyTimes.map((busy) => ({
+        start: new Date(busy.start),
+        end: new Date(busy.end),
+      }));
+
+      logger.debug(
+        {
+          tenantId,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          busyBlocksCount: busyBlocks.length,
+        },
+        'Google Calendar busy times fetched'
+      );
+
+      return busyBlocks;
+    } catch (error) {
+      logger.warn(
+        {
+          error,
+          tenantId,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+        },
+        'Error fetching Google Calendar busy times - returning empty array for graceful degradation'
+      );
+      return [];
     }
   }
 }

@@ -41,6 +41,12 @@ export const queryKeys = {
       ['availability', 'range', startDate, endDate] as const,
     singleDate: (date: string) => ['availability', 'date', date] as const,
   },
+  // Tenant admin dashboard queries
+  tenantAdmin: {
+    calendarStatus: ['tenant-admin', 'calendar', 'status'] as const,
+    depositSettings: ['tenant-admin', 'deposit', 'settings'] as const,
+    reminderStatus: ['tenant-admin', 'reminder', 'status'] as const,
+  },
 } as const;
 
 /**

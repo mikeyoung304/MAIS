@@ -3,10 +3,14 @@
  *
  * Manages deposit settings state and operations for the tenant dashboard.
  * Extracted from DepositSettingsCard for testability and reusability.
+ *
+ * Uses React Query for optimized caching and instant tab switching.
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { queryKeys } from '@/lib/queryClient';
 import { logger } from '@/lib/logger';
 
 export interface DepositSettings {
@@ -36,10 +40,28 @@ export interface UseDepositSettingsManagerResult {
 }
 
 export function useDepositSettingsManager(): UseDepositSettingsManagerResult {
-  const [settings, setSettings] = useState<DepositSettings | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  // React Query for deposit settings
+  const {
+    data: settings = null,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery({
+    queryKey: queryKeys.tenantAdmin.depositSettings,
+    queryFn: async () => {
+      const result = await api.tenantAdminGetDepositSettings();
+      if (result.status === 200 && result.body) {
+        return result.body;
+      }
+      throw new Error('Failed to fetch deposit settings');
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+  });
+
+  // Local state for mutations and UI
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   // Editable state
@@ -59,92 +81,70 @@ export function useDepositSettingsManager(): UseDepositSettingsManagerResult {
     };
   }, []);
 
-  // Fetch deposit settings on mount
+  // Sync editable state when settings are loaded
   useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const result = await api.tenantAdminGetDepositSettings();
-
-      if (result.status === 200 && result.body) {
-        const data = result.body;
-        setSettings(data);
-
-        // Set editable state
-        setDepositsEnabled(data.depositPercent !== null);
-        setDepositPercent(data.depositPercent?.toString() || '50');
-        setBalanceDueDays(data.balanceDueDays.toString());
-      } else {
-        setError('Failed to fetch deposit settings');
-      }
-    } catch (err) {
-      logger.error('Error fetching deposit settings:', {
-        error: err,
-        component: 'useDepositSettingsManager',
-      });
-      setError('Failed to fetch deposit settings');
-    } finally {
-      setLoading(false);
+    if (settings) {
+      setDepositsEnabled(settings.depositPercent !== null);
+      setDepositPercent(settings.depositPercent?.toString() || '50');
+      setBalanceDueDays(settings.balanceDueDays.toString());
     }
-  }, []);
+  }, [settings]);
 
-  const handleSave = useCallback(async () => {
-    setSaving(true);
-    setError(null);
-    setSaved(false);
-
-    try {
-      const percentNum = depositsEnabled ? parseFloat(depositPercent) : null;
-      const daysNum = parseInt(balanceDueDays, 10);
-
-      // Validate
-      if (depositsEnabled && (isNaN(percentNum!) || percentNum! < 0 || percentNum! > 100)) {
-        setError('Deposit percentage must be between 0 and 100');
-        setSaving(false);
-        return;
-      }
-
-      if (isNaN(daysNum) || daysNum < 1 || daysNum > 90) {
-        setError('Balance due days must be between 1 and 90');
-        setSaving(false);
-        return;
-      }
-
+  // Mutation for saving deposit settings
+  const saveSettingsMutation = useMutation({
+    mutationFn: async (data: { depositPercent: number | null; balanceDueDays: number }) => {
       const result = await api.tenantAdminUpdateDepositSettings({
-        body: {
-          depositPercent: percentNum,
-          balanceDueDays: daysNum,
-        },
+        body: data,
       });
-
       if (result.status === 200 && result.body) {
-        setSettings(result.body);
-        setSaved(true);
-
-        // Clear saved indicator after 3 seconds (with cleanup on unmount)
-        if (savedTimeoutRef.current) {
-          clearTimeout(savedTimeoutRef.current);
-        }
-        savedTimeoutRef.current = setTimeout(() => setSaved(false), 3000);
-      } else {
-        const errorBody = result.body as { error?: string } | undefined;
-        setError(errorBody?.error || 'Failed to save deposit settings');
+        return result.body;
       }
-    } catch (err) {
+      const errorBody = result.body as { error?: string } | undefined;
+      throw new Error(errorBody?.error || 'Failed to save deposit settings');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.tenantAdmin.depositSettings });
+      setSaved(true);
+      setError(null);
+
+      // Clear saved indicator after 3 seconds
+      if (savedTimeoutRef.current) {
+        clearTimeout(savedTimeoutRef.current);
+      }
+      savedTimeoutRef.current = setTimeout(() => setSaved(false), 3000);
+    },
+    onError: (err: Error) => {
       logger.error('Error saving deposit settings:', {
         error: err,
         component: 'useDepositSettingsManager',
       });
-      setError('Failed to save deposit settings');
-    } finally {
-      setSaving(false);
+      setError(err.message);
+    },
+  });
+
+  const handleSave = useCallback(async () => {
+    setError(null);
+    setSaved(false);
+
+    const percentNum = depositsEnabled ? parseFloat(depositPercent) : null;
+    const daysNum = parseInt(balanceDueDays, 10);
+
+    // Validate
+    if (depositsEnabled && (isNaN(percentNum!) || percentNum! < 0 || percentNum! > 100)) {
+      setError('Deposit percentage must be between 0 and 100');
+      return;
     }
-  }, [depositsEnabled, depositPercent, balanceDueDays]);
+
+    if (isNaN(daysNum) || daysNum < 1 || daysNum > 90) {
+      setError('Balance due days must be between 1 and 90');
+      return;
+    }
+
+    await saveSettingsMutation.mutateAsync({
+      depositPercent: percentNum,
+      balanceDueDays: daysNum,
+    });
+  }, [depositsEnabled, depositPercent, balanceDueDays, saveSettingsMutation]);
 
   const hasChanges = useCallback(() => {
     if (!settings) return false;
@@ -161,11 +161,11 @@ export function useDepositSettingsManager(): UseDepositSettingsManagerResult {
   }, [settings, depositsEnabled, depositPercent, balanceDueDays]);
 
   return {
-    // Server state
+    // Server state (from React Query)
     settings,
     loading,
-    error,
-    saving,
+    error: error || (queryError ? String(queryError) : null),
+    saving: saveSettingsMutation.isPending,
     saved,
 
     // Form state

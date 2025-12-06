@@ -10,6 +10,7 @@ import { registerGracefulShutdown } from './lib/shutdown';
 import { buildContainer } from './di';
 import { validateEnv } from './config/env.schema';
 import { closeSupabaseConnections } from './config/database';
+import { initializeScheduler } from './scheduler';
 import type { PrismaClient } from './generated/prisma';
 
 /**
@@ -75,6 +76,13 @@ async function main(): Promise<void> {
       logger.info(`🔒 CORS_ORIGIN: ${config.CORS_ORIGIN}`);
       logger.info(`✅ Health checks: /health/live, /health/ready`);
     });
+
+    // Initialize scheduled tasks (only in real mode with database)
+    if (config.ADAPTERS_PRESET === 'real' && container.prisma) {
+      const cronSchedule = process.env.REMINDER_CRON_SCHEDULE || '0 9 * * *';
+      initializeScheduler(container, cronSchedule);
+      logger.info('⏰ Scheduled tasks initialized');
+    }
 
     // Set server timeouts
     server.keepAliveTimeout = 65000; // > ALB idle timeout (60s)

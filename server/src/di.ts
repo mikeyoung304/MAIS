@@ -23,6 +23,8 @@ import { SchedulingAvailabilityService } from './services/scheduling-availabilit
 import { PackageDraftService } from './services/package-draft.service';
 import { ReminderService } from './services/reminder.service';
 import { LandingPageService } from './services/landing-page.service';
+import { HealthCheckService } from './services/health-check.service';
+import { WebhookDeliveryService } from './services/webhook-delivery.service';
 import { UploadAdapter } from './adapters/upload.adapter';
 import { NodeFileSystemAdapter } from './adapters/filesystem.adapter';
 import { PackagesController } from './routes/packages.routes';
@@ -44,6 +46,7 @@ import {
   PrismaBlackoutRepository,
   PrismaUserRepository,
   PrismaWebhookRepository,
+  PrismaWebhookSubscriptionRepository,
   PrismaTenantRepository,
   PrismaSegmentRepository,
   PrismaServiceRepository,
@@ -85,15 +88,18 @@ export interface Container {
     packageDraft: PackageDraftService; // Visual editor draft management
     reminder: ReminderService; // Lazy reminder evaluation (Phase 2)
     landingPage: LandingPageService; // Landing page visual editor (TODO-241)
+    webhookDelivery?: WebhookDeliveryService; // Outbound webhook delivery (TODO-278)
   };
   repositories?: {
     service?: PrismaServiceRepository;
     availabilityRule?: PrismaAvailabilityRuleRepository;
     booking?: PrismaBookingRepository;
+    webhookSubscription?: PrismaWebhookSubscriptionRepository; // Webhook subscription management (TODO-278)
   };
   mailProvider?: PostmarkMailAdapter; // Export mail provider for password reset emails
   storageProvider: UploadAdapter; // Export storage provider for file uploads
   cacheAdapter: CacheServicePort; // Export cache adapter for health checks
+  healthCheckService?: HealthCheckService; // Export health check service for deep checks
   prisma?: PrismaClient; // Export Prisma instance for shutdown
   eventEmitter?: InProcessEventEmitter; // Export event emitter for cleanup
   /**
@@ -129,6 +135,7 @@ export function buildContainer(config: Config): Container {
         logoUploadDir: path.join(process.cwd(), 'uploads', 'logos'),
         packagePhotoUploadDir: path.join(process.cwd(), 'uploads', 'packages'),
         segmentImageUploadDir: path.join(process.cwd(), 'uploads', 'segments'),
+        landingPageImageUploadDir: path.join(process.cwd(), 'uploads', 'landing-pages'),
         maxFileSizeMB: 2,
         maxPackagePhotoSizeMB: 5,
         allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml', 'image/webp'],
@@ -196,7 +203,9 @@ export function buildContainer(config: Config): Container {
     const schedulingAvailabilityService = new SchedulingAvailabilityService(
       serviceRepo,
       availabilityRuleRepo,
-      adapters.bookingRepo
+      adapters.bookingRepo,
+      googleCalendarService, // Two-way sync with Google Calendar
+      cacheAdapter // Cache for Google Calendar busy times (5 min TTL)
     );
 
     // Create PackageDraftService with mock catalog repository
@@ -204,6 +213,13 @@ export function buildContainer(config: Config): Container {
 
     // Create LandingPageService with mock tenant repository
     const landingPageService = new LandingPageService(mockTenantRepo);
+
+    // Create HealthCheckService with mock adapters (won't be used in mock mode)
+    const healthCheckService = new HealthCheckService({
+      stripeAdapter: undefined, // Mock mode doesn't use real adapters
+      mailAdapter: undefined,
+      calendarAdapter: undefined,
+    });
 
     const controllers = {
       packages: new PackagesController(catalogService),
@@ -291,6 +307,7 @@ export function buildContainer(config: Config): Container {
       mailProvider: undefined,
       storageProvider,
       cacheAdapter,
+      healthCheckService,
       prisma: mockPrisma,
       eventEmitter,
       cleanup,
@@ -351,6 +368,7 @@ export function buildContainer(config: Config): Container {
   const blackoutRepo = new PrismaBlackoutRepository(prisma);
   const userRepo = new PrismaUserRepository(prisma);
   const webhookRepo = new PrismaWebhookRepository(prisma);
+  const webhookSubscriptionRepo = new PrismaWebhookSubscriptionRepository(prisma);
   const tenantRepo = new PrismaTenantRepository(prisma);
   const segmentRepo = new PrismaSegmentRepository(prisma);
 
@@ -432,6 +450,7 @@ export function buildContainer(config: Config): Container {
       logoUploadDir: process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads', 'logos'),
       packagePhotoUploadDir: path.join(process.cwd(), 'uploads', 'packages'),
       segmentImageUploadDir: path.join(process.cwd(), 'uploads', 'segments'),
+      landingPageImageUploadDir: path.join(process.cwd(), 'uploads', 'landing-pages'),
       maxFileSizeMB: parseInt(process.env.MAX_UPLOAD_SIZE_MB || '2', 10),
       maxPackagePhotoSizeMB: 5,
       allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml', 'image/webp'],
@@ -481,7 +500,9 @@ export function buildContainer(config: Config): Container {
   const schedulingAvailabilityService = new SchedulingAvailabilityService(
     serviceRepo,
     availabilityRuleRepo,
-    bookingRepo
+    bookingRepo,
+    googleCalendarService, // Two-way sync with Google Calendar
+    cacheAdapter // Cache for Google Calendar busy times (5 min TTL)
   );
 
   // Create PackageDraftService with real catalog repository
@@ -492,6 +513,19 @@ export function buildContainer(config: Config): Container {
 
   // Create ReminderService with real adapters
   const reminderService = new ReminderService(bookingRepo, catalogRepo, eventEmitter);
+
+  // Create WebhookDeliveryService for outbound webhook delivery (TODO-278)
+  const webhookDeliveryService = new WebhookDeliveryService(
+    webhookSubscriptionRepo,
+    eventEmitter
+  );
+
+  // Create HealthCheckService with real adapters
+  const healthCheckService = new HealthCheckService({
+    stripeAdapter: paymentProvider,
+    mailAdapter: mailProvider,
+    calendarAdapter: calendarProvider,
+  });
 
   // ============================================================================
   // Event Subscriptions - Type-safe event handlers
@@ -545,6 +579,7 @@ export function buildContainer(config: Config): Container {
         startTime: new Date(payload.startTime),
         endTime: new Date(payload.endTime),
         notes: payload.notes,
+        timezone: payload.timezone,
       });
 
       if (result?.eventId) {
@@ -560,6 +595,30 @@ export function buildContainer(config: Config): Container {
       logger.error(
         { err, bookingId: payload.bookingId },
         'Failed to sync appointment to Google Calendar'
+      );
+    }
+  });
+
+  // Subscribe to BookingCancelled events to delete from Google Calendar
+  eventEmitter.subscribe(BookingEvents.CANCELLED, async (payload) => {
+    try {
+      if (payload.googleEventId) {
+        const deleted = await googleCalendarService.cancelAppointmentEvent(
+          payload.tenantId,
+          payload.googleEventId
+        );
+        if (deleted) {
+          logger.info(
+            { bookingId: payload.bookingId, googleEventId: payload.googleEventId },
+            'Deleted Google Calendar event for cancelled booking'
+          );
+        }
+      }
+    } catch (err) {
+      // Log error but don't fail the cancellation - calendar sync is non-critical
+      logger.error(
+        { err, bookingId: payload.bookingId },
+        'Failed to delete Google Calendar event for cancelled booking'
       );
     }
   });
@@ -593,12 +652,14 @@ export function buildContainer(config: Config): Container {
     packageDraft: packageDraftService,
     reminder: reminderService,
     landingPage: landingPageService,
+    webhookDelivery: webhookDeliveryService,
   };
 
   const repositories = {
     service: serviceRepo,
     availabilityRule: availabilityRuleRepo,
     booking: bookingRepo,
+    webhookSubscription: webhookSubscriptionRepo,
   };
 
   // Cleanup function for real mode
@@ -640,6 +701,7 @@ export function buildContainer(config: Config): Container {
     mailProvider,
     storageProvider,
     cacheAdapter,
+    healthCheckService,
     prisma,
     eventEmitter,
     cleanup,

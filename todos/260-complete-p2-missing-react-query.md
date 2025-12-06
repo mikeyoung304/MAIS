@@ -1,5 +1,5 @@
 ---
-status: ready
+status: complete
 priority: p2
 issue_id: "260"
 tags: [code-review, performance, react-query, tenant-dashboard]

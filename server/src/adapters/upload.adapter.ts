@@ -25,6 +25,7 @@ export interface UploadAdapterConfig {
   logoUploadDir: string;
   packagePhotoUploadDir: string;
   segmentImageUploadDir: string;
+  landingPageImageUploadDir: string;
   maxFileSizeMB: number;
   maxPackagePhotoSizeMB: number;
   allowedMimeTypes: string[];
@@ -76,6 +77,7 @@ export class UploadAdapter implements StorageProvider {
       this.ensureUploadDir(config.logoUploadDir);
       this.ensureUploadDir(config.packagePhotoUploadDir);
       this.ensureUploadDir(config.segmentImageUploadDir);
+      this.ensureUploadDir(config.landingPageImageUploadDir);
     }
   }
 
@@ -208,7 +210,7 @@ export class UploadAdapter implements StorageProvider {
   private async upload(
     file: UploadedFile,
     tenantId: string,
-    category: 'logos' | 'packages' | 'segments',
+    category: 'logos' | 'packages' | 'segments' | 'landing-pages',
     options: {
       maxSizeMB?: number;
       logContext?: Record<string, unknown>;
@@ -219,8 +221,8 @@ export class UploadAdapter implements StorageProvider {
       // Validate file with category-specific size limit
       await this.validateFile(file, options.maxSizeMB);
 
-      // Generate category-specific filename (e.g., 'logo-', 'package-', 'segment-')
-      const prefix = category.slice(0, -1); // Remove trailing 's' (logos -> logo)
+      // Generate category-specific filename (e.g., 'logo-', 'package-', 'segment-', 'landing-page-')
+      const prefix = category === 'landing-pages' ? 'landing-page' : category.slice(0, -1); // Remove trailing 's'
       const filename = this.generateFilename(file.originalname, prefix);
 
       // Upload to Supabase in real mode
@@ -233,12 +235,16 @@ export class UploadAdapter implements StorageProvider {
         logos: this.config.logoUploadDir,
         packages: this.config.packagePhotoUploadDir,
         segments: this.config.segmentImageUploadDir,
+        'landing-pages': this.config.landingPageImageUploadDir,
       };
 
       const filepath = path.join(uploadDirMap[category], filename);
       await this.fileSystem.writeFile(filepath, file.buffer);
 
-      const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1, -1); // 'logos' -> 'Logo'
+      const categoryLabel =
+        category === 'landing-pages'
+          ? 'Landing page image'
+          : category.charAt(0).toUpperCase() + category.slice(1, -1); // 'logos' -> 'Logo'
       logger.info(
         { tenantId, filename, size: file.size, mimetype: file.mimetype, ...options.logContext },
         `${categoryLabel} uploaded successfully`
@@ -251,7 +257,10 @@ export class UploadAdapter implements StorageProvider {
         mimetype: file.mimetype,
       };
     } catch (error) {
-      const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1, -1);
+      const categoryLabel =
+        category === 'landing-pages'
+          ? 'Landing page image'
+          : category.charAt(0).toUpperCase() + category.slice(1, -1);
       logger.error(
         { error, tenantId, ...options.errorContext },
         `Error uploading ${categoryLabel.toLowerCase()}`
@@ -283,6 +292,12 @@ export class UploadAdapter implements StorageProvider {
   async uploadSegmentImage(file: UploadedFile, tenantId: string): Promise<UploadResult> {
     return this.upload(file, tenantId, 'segments', {
       maxSizeMB: this.config.maxPackagePhotoSizeMB,
+    });
+  }
+
+  async uploadLandingPageImage(file: UploadedFile, tenantId: string): Promise<UploadResult> {
+    return this.upload(file, tenantId, 'landing-pages', {
+      maxSizeMB: this.config.maxPackagePhotoSizeMB, // 5MB for landing page images
     });
   }
 
@@ -374,6 +389,53 @@ export class UploadAdapter implements StorageProvider {
     }
   }
 
+  async deleteLandingPageImage(url: string, tenantId: string): Promise<void> {
+    if (!url) return;
+
+    try {
+      if (this.config.isRealMode && url.includes('supabase')) {
+        const storagePath = this.extractStoragePathFromUrl(url);
+
+        if (!storagePath.startsWith(`${tenantId}/`)) {
+          logger.error(
+            { tenantId, storagePath, url },
+            'SECURITY: Attempted cross-tenant file deletion blocked'
+          );
+          return;
+        }
+
+        if (!this.config.supabaseClient) {
+          throw new Error('Supabase client not configured for real mode');
+        }
+
+        const { error } = await this.config.supabaseClient.storage
+          .from('images')
+          .remove([storagePath]);
+
+        if (error) {
+          logger.warn(
+            { error: error.message, storagePath },
+            'Supabase delete failed - file may already be deleted'
+          );
+        } else {
+          logger.info(
+            { tenantId, storagePath },
+            'Landing page image deleted from Supabase storage'
+          );
+        }
+      } else {
+        const filename = path.basename(new URL(url).pathname);
+        const filepath = path.join(this.config.landingPageImageUploadDir, filename);
+        if (this.fileSystem.existsSync(filepath)) {
+          await this.fileSystem.unlink(filepath);
+          logger.info({ filename }, 'Landing page image deleted from local storage');
+        }
+      }
+    } catch (error) {
+      logger.warn({ error, url, tenantId }, 'Error deleting landing page image - continuing');
+    }
+  }
+
   getLogoUploadDir(): string {
     return this.config.logoUploadDir;
   }
@@ -384,5 +446,9 @@ export class UploadAdapter implements StorageProvider {
 
   getSegmentImageUploadDir(): string {
     return this.config.segmentImageUploadDir;
+  }
+
+  getLandingPageImageUploadDir(): string {
+    return this.config.landingPageImageUploadDir;
   }
 }

@@ -22,7 +22,10 @@ const ConfigSchema = z.object({
       return val.split(',').map((origin) => origin.trim());
     }),
   JWT_SECRET: z.string().min(1),
-  BOOKING_TOKEN_SECRET: z.string().optional(),
+  BOOKING_TOKEN_SECRET: z
+    .string()
+    .min(32, 'BOOKING_TOKEN_SECRET must be at least 32 characters. Generate with: openssl rand -hex 32')
+    .describe('Required for booking management tokens - must be separate from JWT_SECRET'),
   // Real mode only (optional for mock preset)
   DATABASE_URL: z.string().optional(),
   // Connection pooling configuration for serverless (Supabase/Vercel)
@@ -54,9 +57,19 @@ export function loadConfig(): Config {
 }
 
 /**
- * Get booking token secret with fallback to JWT_SECRET
+ * Get booking token secret
  * Separate secret for booking tokens allows key rotation without invalidating tenant sessions
+ *
+ * SECURITY: This must be a separate secret from JWT_SECRET to prevent privilege escalation
+ * if the tenant admin JWT is compromised. No fallback to JWT_SECRET is allowed.
+ *
+ * @throws Error if BOOKING_TOKEN_SECRET is not set (should never happen due to Zod validation)
  */
 export function getBookingTokenSecret(config: Config): string {
-  return config.BOOKING_TOKEN_SECRET || config.JWT_SECRET;
+  if (!config.BOOKING_TOKEN_SECRET) {
+    throw new Error(
+      'BOOKING_TOKEN_SECRET is required for production. Generate with: openssl rand -hex 32'
+    );
+  }
+  return config.BOOKING_TOKEN_SECRET;
 }

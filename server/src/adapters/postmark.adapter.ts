@@ -8,7 +8,111 @@ import type { EmailProvider } from '../lib/ports';
 import { logger } from '../lib/core/logger';
 
 export class PostmarkMailAdapter implements EmailProvider {
+  private readonly maxRetries = 3;
+  private readonly baseDelayMs = 1000;
+
   constructor(private cfg: { serverToken?: string; fromEmail: string }) {}
+
+  /**
+   * Determines if an error is retryable based on error type and status code
+   */
+  private isRetryableError(error: any): boolean {
+    // Network errors (connection reset, timeout, etc.)
+    if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT' || error.code === 'ENOTFOUND') {
+      return true;
+    }
+
+    // Rate limiting
+    if (error.statusCode === 429) {
+      return true;
+    }
+
+    // Server errors (5xx) are retryable
+    if (error.statusCode >= 500 && error.statusCode < 600) {
+      return true;
+    }
+
+    // HTTP response errors with status
+    if (error.status === 429 || (error.status >= 500 && error.status < 600)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Sends email with retry logic and exponential backoff
+   */
+  private async sendWithRetry(
+    to: string,
+    emailPayload: {
+      From: string;
+      To: string;
+      Subject: string;
+      HtmlBody?: string;
+      TextBody?: string;
+    },
+    context: string
+  ): Promise<void> {
+    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+      try {
+        const resp = await fetch('https://api.postmarkapp.com/email', {
+          method: 'POST',
+          headers: {
+            'X-Postmark-Server-Token': this.cfg.serverToken!,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(emailPayload),
+        });
+
+        if (!resp.ok) {
+          const text = await resp.text().catch(() => '');
+          const error: any = new Error('MailSendFailed');
+          error.status = resp.status;
+          error.statusCode = resp.status;
+          error.responseText = text;
+
+          const isRetryable = this.isRetryableError(error);
+
+          if (!isRetryable || attempt === this.maxRetries) {
+            logger.error(
+              { status: resp.status, text, attempt, to, context },
+              `Postmark ${context} send failed`
+            );
+            throw error;
+          }
+
+          const delay = this.baseDelayMs * Math.pow(2, attempt - 1);
+          logger.warn(
+            { attempt, delay, to, status: resp.status, context },
+            `Retrying Postmark ${context} send`
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+
+        // Success
+        if (attempt > 1) {
+          logger.info(
+            { attempt, to, context },
+            `Postmark ${context} send succeeded after retry`
+          );
+        }
+        return;
+      } catch (error: any) {
+        const isRetryable = this.isRetryableError(error);
+
+        if (!isRetryable || attempt === this.maxRetries) {
+          logger.error({ error, attempt, to, context }, `Postmark ${context} send failed`);
+          throw error;
+        }
+
+        const delay = this.baseDelayMs * Math.pow(2, attempt - 1);
+        logger.warn({ attempt, delay, to, error: error.message, context }, `Retrying Postmark ${context} send`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
 
   async sendEmail(input: { to: string; subject: string; html: string }): Promise<void> {
     if (!this.cfg.serverToken) {
@@ -25,25 +129,17 @@ export class PostmarkMailAdapter implements EmailProvider {
       return;
     }
 
-    // Real Postmark send
-    const resp = await fetch('https://api.postmarkapp.com/email', {
-      method: 'POST',
-      headers: {
-        'X-Postmark-Server-Token': this.cfg.serverToken,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    // Real Postmark send with retry logic
+    await this.sendWithRetry(
+      input.to,
+      {
         From: this.cfg.fromEmail,
         To: input.to,
         Subject: input.subject,
         HtmlBody: input.html,
-      }),
-    });
-    if (!resp.ok) {
-      const text = await resp.text().catch(() => '');
-      logger.error({ status: resp.status, text }, 'Postmark send failed');
-      throw new Error('MailSendFailed');
-    }
+      },
+      'email'
+    );
   }
 
   async sendBookingConfirm(
@@ -79,25 +175,17 @@ export class PostmarkMailAdapter implements EmailProvider {
       return;
     }
 
-    // Real Postmark send
-    const resp = await fetch('https://api.postmarkapp.com/email', {
-      method: 'POST',
-      headers: {
-        'X-Postmark-Server-Token': this.cfg.serverToken,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    // Real Postmark send with retry logic
+    await this.sendWithRetry(
+      to,
+      {
         From: this.cfg.fromEmail,
         To: to,
         Subject: subject,
         TextBody: body,
-      }),
-    });
-    if (!resp.ok) {
-      const text = await resp.text().catch(() => '');
-      logger.error({ status: resp.status, text }, 'Postmark send failed');
-      throw new Error('MailSendFailed');
-    }
+      },
+      'booking confirmation'
+    );
   }
 
   async sendPasswordReset(to: string, resetToken: string, resetUrl: string): Promise<void> {
@@ -165,26 +253,18 @@ export class PostmarkMailAdapter implements EmailProvider {
       return;
     }
 
-    // Real Postmark send
-    const resp = await fetch('https://api.postmarkapp.com/email', {
-      method: 'POST',
-      headers: {
-        'X-Postmark-Server-Token': this.cfg.serverToken,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    // Real Postmark send with retry logic
+    await this.sendWithRetry(
+      to,
+      {
         From: this.cfg.fromEmail,
         To: to,
         Subject: subject,
         HtmlBody: htmlBody,
         TextBody: textBody,
-      }),
-    });
-    if (!resp.ok) {
-      const text = await resp.text().catch(() => '');
-      logger.error({ status: resp.status, text }, 'Postmark password reset send failed');
-      throw new Error('MailSendFailed');
-    }
+      },
+      'password reset'
+    );
   }
 
   /**
@@ -284,25 +364,17 @@ export class PostmarkMailAdapter implements EmailProvider {
       return;
     }
 
-    // Real Postmark send
-    const resp = await fetch('https://api.postmarkapp.com/email', {
-      method: 'POST',
-      headers: {
-        'X-Postmark-Server-Token': this.cfg.serverToken,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    // Real Postmark send with retry logic
+    await this.sendWithRetry(
+      to,
+      {
         From: this.cfg.fromEmail,
         To: to,
         Subject: subject,
         HtmlBody: htmlBody,
         TextBody: textBody,
-      }),
-    });
-    if (!resp.ok) {
-      const text = await resp.text().catch(() => '');
-      logger.error({ status: resp.status, text }, 'Postmark booking reminder send failed');
-      throw new Error('MailSendFailed');
-    }
+      },
+      'booking reminder'
+    );
   }
 }

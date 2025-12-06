@@ -3,10 +3,14 @@
  *
  * Manages calendar configuration state and operations for the tenant dashboard.
  * Extracted from CalendarConfigCard for testability and reusability.
+ *
+ * Uses React Query for optimized caching and instant tab switching.
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { queryKeys } from '@/lib/queryClient';
 import { logger } from '@/lib/logger';
 
 export interface CalendarStatus {
@@ -27,7 +31,7 @@ export interface ConfigErrors {
 }
 
 export interface UseCalendarConfigManagerResult {
-  // Server state
+  // Server state (from React Query)
   status: CalendarStatus | null;
   loading: boolean;
   error: string | null;
@@ -49,7 +53,6 @@ export interface UseCalendarConfigManagerResult {
   fileInputRef: React.RefObject<HTMLInputElement | null>;
 
   // Actions
-  fetchStatus: () => Promise<void>;
   handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleOpenConfigDialog: () => void;
   handleCloseConfigDialog: () => void;
@@ -65,14 +68,30 @@ export interface UseCalendarConfigManagerResult {
 const MAX_FILE_SIZE = 50 * 1024; // 50KB
 
 export function useCalendarConfigManager(): UseCalendarConfigManagerResult {
-  // Server state
-  const [status, setStatus] = useState<CalendarStatus | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  // React Query for calendar status
+  const {
+    data: status = null,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery({
+    queryKey: queryKeys.tenantAdmin.calendarStatus,
+    queryFn: async () => {
+      const result = await api.tenantAdminGetCalendarStatus();
+      if (result.status === 200 && result.body) {
+        return result.body;
+      }
+      throw new Error('Failed to fetch calendar status');
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+  });
+
+  // Local state for mutations and UI
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
   // Dialog state
   const [showConfigDialog, setShowConfigDialog] = useState(false);
@@ -86,33 +105,57 @@ export function useCalendarConfigManager(): UseCalendarConfigManagerResult {
   // File input ref
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch calendar status on mount
-  useEffect(() => {
-    fetchStatus();
-  }, []);
-
-  const fetchStatus = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const result = await api.tenantAdminGetCalendarStatus();
-
-      if (result.status === 200 && result.body) {
-        setStatus(result.body);
-      } else {
-        setError('Failed to fetch calendar status');
+  // Mutation for saving calendar config
+  const saveConfigMutation = useMutation({
+    mutationFn: async (data: { calendarId: string; serviceAccountJson: string }) => {
+      const result = await api.tenantAdminSaveCalendarConfig({
+        body: data,
+      });
+      if (result.status === 200 && result.body?.success) {
+        return result.body;
       }
-    } catch (err) {
-      logger.error('Error fetching calendar status:', {
+      const errorBody = result.body as { error?: string } | undefined;
+      throw new Error(errorBody?.error || 'Failed to save calendar configuration');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.tenantAdmin.calendarStatus });
+      setShowConfigDialog(false);
+      setError(null);
+    },
+    onError: (err: Error) => {
+      logger.error('Error saving calendar config:', {
         error: err,
         component: 'useCalendarConfigManager',
       });
-      setError('Failed to fetch calendar status');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      setError(err.message);
+    },
+  });
+
+  // Mutation for deleting calendar config
+  const deleteConfigMutation = useMutation({
+    mutationFn: async () => {
+      const result = await api.tenantAdminDeleteCalendarConfig({
+        body: undefined,
+      });
+      if (result.status === 200 && result.body?.success) {
+        return result.body;
+      }
+      throw new Error('Failed to remove calendar configuration');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.tenantAdmin.calendarStatus });
+      setShowDeleteDialog(false);
+      setTestResult(null);
+      setError(null);
+    },
+    onError: (err: Error) => {
+      logger.error('Error deleting calendar config:', {
+        error: err,
+        component: 'useCalendarConfigManager',
+      });
+      setError(err.message);
+    },
+  });
 
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -178,34 +221,12 @@ export function useCalendarConfigManager(): UseCalendarConfigManagerResult {
       return;
     }
 
-    setSaving(true);
     setError(null);
-
-    try {
-      const result = await api.tenantAdminSaveCalendarConfig({
-        body: {
-          calendarId: calendarId.trim(),
-          serviceAccountJson: serviceAccountJson.trim(),
-        },
-      });
-
-      if (result.status === 200 && result.body?.success) {
-        setShowConfigDialog(false);
-        await fetchStatus();
-      } else {
-        const errorBody = result.body as { error?: string } | undefined;
-        setError(errorBody?.error || 'Failed to save calendar configuration');
-      }
-    } catch (err) {
-      logger.error('Error saving calendar config:', {
-        error: err,
-        component: 'useCalendarConfigManager',
-      });
-      setError('Failed to save calendar configuration');
-    } finally {
-      setSaving(false);
-    }
-  }, [calendarId, serviceAccountJson, fetchStatus]);
+    await saveConfigMutation.mutateAsync({
+      calendarId: calendarId.trim(),
+      serviceAccountJson: serviceAccountJson.trim(),
+    });
+  }, [calendarId, serviceAccountJson, saveConfigMutation]);
 
   const handleTestConnection = useCallback(async () => {
     setTesting(true);
@@ -242,31 +263,9 @@ export function useCalendarConfigManager(): UseCalendarConfigManagerResult {
   }, []);
 
   const handleDeleteConfig = useCallback(async () => {
-    setDeleting(true);
     setError(null);
-
-    try {
-      const result = await api.tenantAdminDeleteCalendarConfig({
-        body: undefined,
-      });
-
-      if (result.status === 200 && result.body?.success) {
-        setShowDeleteDialog(false);
-        setTestResult(null);
-        await fetchStatus();
-      } else {
-        setError('Failed to remove calendar configuration');
-      }
-    } catch (err) {
-      logger.error('Error deleting calendar config:', {
-        error: err,
-        component: 'useCalendarConfigManager',
-      });
-      setError('Failed to remove calendar configuration');
-    } finally {
-      setDeleting(false);
-    }
-  }, [fetchStatus]);
+    await deleteConfigMutation.mutateAsync();
+  }, [deleteConfigMutation]);
 
   const clearCalendarIdError = useCallback(() => {
     if (configErrors.calendarId) {
@@ -275,14 +274,14 @@ export function useCalendarConfigManager(): UseCalendarConfigManagerResult {
   }, [configErrors.calendarId]);
 
   return {
-    // Server state
+    // Server state (from React Query)
     status,
     loading,
-    error,
-    saving,
+    error: error || (queryError ? String(queryError) : null),
+    saving: saveConfigMutation.isPending,
     testing,
     testResult,
-    deleting,
+    deleting: deleteConfigMutation.isPending,
 
     // Dialog state
     showConfigDialog,
@@ -297,7 +296,6 @@ export function useCalendarConfigManager(): UseCalendarConfigManagerResult {
     fileInputRef,
 
     // Actions
-    fetchStatus,
     handleFileUpload,
     handleOpenConfigDialog,
     handleCloseConfigDialog,

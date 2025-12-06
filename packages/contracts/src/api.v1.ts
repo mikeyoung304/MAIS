@@ -1517,6 +1517,9 @@ export const Contracts = c.router({
   /**
    * Get all time-slot appointments for authenticated tenant
    * GET /v1/tenant-admin/appointments
+   *
+   * P1 #276 FIX: Pagination enforced to prevent unbounded queries
+   * Default limit: 100, Max limit: 500
    */
   tenantAdminGetAppointments: {
     method: 'GET',
@@ -1543,6 +1546,8 @@ export const Contracts = c.router({
           .string()
           .regex(/^\d{4}-\d{2}-\d{2}$/)
           .optional(),
+        limit: z.coerce.number().int().min(1).max(500).optional(),
+        offset: z.coerce.number().int().min(0).optional(),
       })
       .optional(),
     responses: {
@@ -1553,7 +1558,7 @@ export const Contracts = c.router({
       500: InternalServerErrorSchema,
     },
     summary:
-      'Get all appointments (time-slot bookings) for tenant with optional filters (requires tenant admin authentication)',
+      'Get all appointments (time-slot bookings) for tenant with optional filters and pagination (requires tenant admin authentication)',
   },
 
   /**

@@ -99,6 +99,7 @@ model Tenant {
   payments         Payment[] // Tenant-scoped payments
   blackoutDates    BlackoutDate[]
   webhookEvents    WebhookEvent[]
+  webhookSubscriptions WebhookSubscription[] // Custom webhook subscriptions (TODO-278)
   configChangeLogs ConfigChangeLog[] // Audit trail for config changes
   services         Service[] // Scheduling services (e.g., "30-Minute Consultation")
   availabilityRules AvailabilityRule[] // Scheduling availability rules
@@ -362,6 +363,11 @@ model Booking {
   // Note: Partial index for reminder queries exists via manual migration 08
   // CREATE INDEX idx_booking_reminder_due ON Booking (tenantId, reminderDueDate)
   // WHERE reminderSentAt IS NULL AND status = 'CONFIRMED'
+
+  // Performance indexes (TODO-275) - applied via manual migration 10
+  @@index([tenantId, bookingType, startTime, endTime]) // Timeslot availability queries
+  @@index([tenantId, serviceId, startTime]) // Service-specific queries
+  @@index([tenantId, bookingType, startTime, status]) // Appointment pagination
 }
 
 enum BookingStatus {
@@ -592,4 +598,48 @@ model IdempotencyKey {
   expiresAt DateTime // Automatic expiration (24 hours from creation)
 
   @@index([expiresAt]) // For efficient cleanup of expired keys
+}
+
+// ============================================================================
+// Custom Webhook Subscriptions (Acuity Parity - TODO-278)
+// ============================================================================
+
+// WebhookSubscription - Tenant-configured webhook endpoints for outbound events
+// Allows tenants to receive real-time notifications for appointment lifecycle events
+model WebhookSubscription {
+  id        String   @id @default(cuid())
+  tenantId  String   // Tenant isolation
+  url       String   // Webhook endpoint URL
+  events    String[] // Event types to subscribe to (e.g., ['appointment.created', 'appointment.canceled'])
+  secret    String   // HMAC signing secret for payload verification
+  active    Boolean  @default(true) // Whether subscription is enabled
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant     Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+
+  @@unique([tenantId, url]) // One subscription per URL per tenant
+  @@index([tenantId, active]) // Query active subscriptions
+  @@index([tenantId])
+}
+
+// WebhookDelivery - Outbound webhook delivery tracking and retry logic
+model WebhookDelivery {
+  id             String   @id @default(cuid())
+  subscriptionId String   // Which subscription this delivery belongs to
+  event          String   // Event type (e.g., 'appointment.created')
+  payload        Json     // Event payload to deliver
+  status         String   @default("pending") // 'pending', 'delivered', 'failed'
+  attempts       Int      @default(0) // Number of delivery attempts
+  lastAttemptAt  DateTime? // When last delivery attempt was made
+  deliveredAt    DateTime? // When successfully delivered
+  lastError      String?   @db.Text // Last error message if delivery failed
+  createdAt      DateTime @default(now())
+
+  subscription   WebhookSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId, status]) // Query pending/failed deliveries
+  @@index([status, createdAt]) // Query deliveries by status chronologically
+  @@index([subscriptionId])
 }

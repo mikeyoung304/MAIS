@@ -582,7 +582,8 @@ export function createTenantAdminSchedulingRoutes(
    * List all time-slot appointments for authenticated tenant
    * Query params: ?status=CONFIRMED&serviceId=xyz&startDate=2025-01-01&endDate=2025-12-31&limit=50&offset=0
    *
-   * P2 #052 FIX: Added pagination support to prevent DoS via unbounded queries
+   * P1 #276 FIX: Enforce pagination defaults at route level to prevent DoS via unbounded queries
+   * Defense-in-depth: Route enforces limits, repository also enforces for safety
    *
    * @query status - Optional booking status filter (PENDING, CONFIRMED, CANCELED, FULFILLED)
    * @query serviceId - Optional service ID filter
@@ -604,6 +605,10 @@ export function createTenantAdminSchedulingRoutes(
       }
       const tenantId = tenantAuth.tenantId;
 
+      // P1 #276: Pagination constants - aligned with repository layer (defense-in-depth)
+      const DEFAULT_LIMIT = 100;
+      const MAX_LIMIT = 500;
+
       const { status, serviceId, startDate, endDate, limit, offset } = req.query;
 
       // Validate date formats if provided
@@ -616,15 +621,30 @@ export function createTenantAdminSchedulingRoutes(
         return;
       }
 
-      // Validate pagination parameters
-      let parsedLimit: number | undefined;
-      let parsedOffset: number | undefined;
+      // Validate and enforce pagination parameters with defaults
+      let parsedLimit: number = DEFAULT_LIMIT;
+      let parsedOffset: number = 0;
 
       if (limit !== undefined) {
-        parsedLimit = parseInt(limit as string, 10);
-        if (isNaN(parsedLimit) || parsedLimit < 1) {
+        const limitValue = parseInt(limit as string, 10);
+        if (isNaN(limitValue) || limitValue < 1) {
           res.status(400).json({ error: 'Invalid limit parameter. Must be a positive integer' });
           return;
+        }
+        // Cap at MAX_LIMIT even if client requests more
+        parsedLimit = Math.min(limitValue, MAX_LIMIT);
+
+        // Log when limit exceeds maximum (for monitoring potential abuse)
+        if (limitValue > MAX_LIMIT) {
+          logger.warn(
+            {
+              tenantId,
+              requestedLimit: limitValue,
+              enforcedLimit: MAX_LIMIT,
+              context: 'appointments_endpoint',
+            },
+            'Client requested limit exceeds maximum, capped at MAX_LIMIT'
+          );
         }
       }
 

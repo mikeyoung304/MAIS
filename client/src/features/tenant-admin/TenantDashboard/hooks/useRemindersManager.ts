@@ -3,10 +3,14 @@
  *
  * Manages booking reminder state and operations for the tenant dashboard.
  * Extracted from RemindersCard for testability and reusability.
+ *
+ * Uses React Query for optimized caching and instant tab switching.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { queryKeys } from '@/lib/queryClient';
 import { logger } from '@/lib/logger';
 
 export interface UpcomingReminder {
@@ -28,7 +32,7 @@ export interface ProcessResult {
 }
 
 export interface UseRemindersManagerResult {
-  // State
+  // State (from React Query)
   status: ReminderStatus | null;
   loading: boolean;
   error: string | null;
@@ -36,67 +40,71 @@ export interface UseRemindersManagerResult {
   processResult: ProcessResult | null;
 
   // Actions
-  fetchStatus: () => Promise<void>;
+  fetchStatus: () => void;
   handleProcessReminders: () => Promise<void>;
   formatDate: (dateStr: string) => string;
 }
 
 export function useRemindersManager(): UseRemindersManagerResult {
-  const [status, setStatus] = useState<ReminderStatus | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  // React Query for reminder status
+  const {
+    data: status = null,
+    isLoading: loading,
+    error: queryError,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.tenantAdmin.reminderStatus,
+    queryFn: async () => {
+      const result = await api.tenantAdminGetReminderStatus();
+      if (result.status === 200 && result.body) {
+        return result.body;
+      }
+      throw new Error('Failed to fetch reminder status');
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+  });
+
+  // Local state for mutations and UI
   const [error, setError] = useState<string | null>(null);
-  const [processing, setProcessing] = useState(false);
   const [processResult, setProcessResult] = useState<ProcessResult | null>(null);
 
-  // Fetch reminder status on mount
-  useEffect(() => {
-    fetchStatus();
-  }, []);
-
-  const fetchStatus = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const result = await api.tenantAdminGetReminderStatus();
-
-      if (result.status === 200 && result.body) {
-        setStatus(result.body);
-      } else {
-        setError('Failed to fetch reminder status');
-      }
-    } catch (err) {
-      logger.error('Error fetching reminder status:', { error: err, component: 'useRemindersManager' });
-      setError('Failed to fetch reminder status');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const handleProcessReminders = useCallback(async () => {
-    setProcessing(true);
-    setError(null);
-    setProcessResult(null);
-
-    try {
+  // Mutation for processing reminders
+  const processRemindersMutation = useMutation({
+    mutationFn: async () => {
       const result = await api.tenantAdminProcessReminders({
         body: undefined,
       });
-
       if (result.status === 200 && result.body) {
-        setProcessResult(result.body);
-        // Refresh status after processing
-        await fetchStatus();
-      } else {
-        setError('Failed to process reminders');
+        return result.body;
       }
-    } catch (err) {
-      logger.error('Error processing reminders:', { error: err, component: 'useRemindersManager' });
-      setError('Failed to process reminders');
-    } finally {
-      setProcessing(false);
-    }
-  }, [fetchStatus]);
+      throw new Error('Failed to process reminders');
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.tenantAdmin.reminderStatus });
+      setProcessResult(data);
+      setError(null);
+    },
+    onError: (err: Error) => {
+      logger.error('Error processing reminders:', {
+        error: err,
+        component: 'useRemindersManager'
+      });
+      setError(err.message);
+    },
+  });
+
+  const fetchStatus = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  const handleProcessReminders = useCallback(async () => {
+    setError(null);
+    setProcessResult(null);
+    await processRemindersMutation.mutateAsync();
+  }, [processRemindersMutation]);
 
   const formatDate = useCallback((dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
@@ -107,11 +115,11 @@ export function useRemindersManager(): UseRemindersManagerResult {
   }, []);
 
   return {
-    // State
+    // State (from React Query)
     status,
     loading,
-    error,
-    processing,
+    error: error || (queryError ? String(queryError) : null),
+    processing: processRemindersMutation.isPending,
     processResult,
 
     // Actions

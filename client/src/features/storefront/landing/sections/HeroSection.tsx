@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { ArrowDown } from 'lucide-react';
 import { Container } from '@/ui/Container';
 import { sanitizeBackgroundUrl } from '@/lib/sanitize-url';
+import { EditableText } from '@/features/tenant-admin/visual-editor/components/EditableText';
 
 interface HeroConfig {
   headline: string;
@@ -12,6 +13,9 @@ interface HeroConfig {
 
 interface HeroSectionProps {
   config: HeroConfig;
+  editable?: boolean;
+  onUpdate?: (updates: Partial<HeroConfig>) => void;
+  disabled?: boolean;
 }
 
 /**
@@ -27,8 +31,13 @@ interface HeroSectionProps {
  * Layout Shift Prevention (TODO-255):
  * Uses aspect-video (16:9) with min-h-[80vh] fallback to prevent CLS.
  *
+ * Editable Mode (TODO-256):
+ * When editable={true}, wraps text in EditableText components for inline editing.
+ * This eliminates the need for duplicate "EditableHeroSection" components.
+ *
  * @example
  * ```tsx
+ * // Display mode
  * <HeroSection
  *   config={{
  *     headline: "Welcome to Mountain View Farm",
@@ -37,6 +46,14 @@ interface HeroSectionProps {
  *     backgroundImageUrl: "https://example.com/hero-bg.jpg"
  *   }}
  * />
+ *
+ * // Editable mode
+ * <HeroSection
+ *   config={config}
+ *   editable={true}
+ *   onUpdate={(updates) => handleUpdate(updates)}
+ *   disabled={isSaving}
+ * />
  * ```
  *
  * @param props.config - Hero section configuration from tenant branding
@@ -44,11 +61,19 @@ interface HeroSectionProps {
  * @param props.config.subheadline - Supporting text below headline (optional)
  * @param props.config.ctaText - Call-to-action button text (required)
  * @param props.config.backgroundImageUrl - Background image URL, sanitized before rendering (optional)
+ * @param props.editable - Enable inline editing mode (default: false)
+ * @param props.onUpdate - Callback when content is updated in editable mode
+ * @param props.disabled - Disable editing in editable mode (e.g., during save)
  *
  * @see HeroSectionConfigSchema in @macon/contracts for Zod validation
  * @see TODO-212 for background image accessibility decision
  */
-export const HeroSection = memo(function HeroSection({ config }: HeroSectionProps) {
+export const HeroSection = memo(function HeroSection({
+  config,
+  editable = false,
+  onUpdate,
+  disabled = false
+}: HeroSectionProps) {
   const scrollToExperiences = () => {
     const experiencesSection = document.getElementById('experiences');
     if (experiencesSection) {
@@ -89,23 +114,61 @@ export const HeroSection = memo(function HeroSection({ config }: HeroSectionProp
 
       {/* Content */}
       <Container className="relative z-10 text-center py-20">
-        <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-6 leading-tight">
-          {config.headline}
-        </h1>
-
-        {config.subheadline && (
-          <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-10">
-            {config.subheadline}
-          </p>
+        {editable ? (
+          <EditableText
+            value={config.headline}
+            onChange={(value) => onUpdate?.({ headline: value })}
+            placeholder="Enter headline"
+            disabled={disabled}
+            className="text-white text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-tight"
+            inputClassName="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-center bg-white/20 text-white placeholder:text-white/50"
+            aria-label="Hero headline"
+          />
+        ) : (
+          <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-6 leading-tight">
+            {config.headline}
+          </h1>
         )}
 
-        <button
-          onClick={scrollToExperiences}
-          className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-lg text-lg transition-all hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-        >
-          {config.ctaText}
-          <ArrowDown className="w-5 h-5 animate-bounce" />
-        </button>
+        {editable ? (
+          <EditableText
+            value={config.subheadline ?? ''}
+            onChange={(value) => onUpdate?.({ subheadline: value || undefined })}
+            placeholder="Enter subheadline (optional)"
+            disabled={disabled}
+            className="text-white/90 text-xl md:text-2xl max-w-3xl mx-auto mb-10"
+            inputClassName="text-xl md:text-2xl text-center bg-white/20 text-white placeholder:text-white/50"
+            aria-label="Hero subheadline"
+          />
+        ) : (
+          config.subheadline && (
+            <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-10">
+              {config.subheadline}
+            </p>
+          )
+        )}
+
+        {editable ? (
+          <div className="inline-flex items-center gap-2 bg-primary/80 text-white font-semibold px-8 py-4 rounded-lg text-lg">
+            <EditableText
+              value={config.ctaText}
+              onChange={(value) => onUpdate?.({ ctaText: value })}
+              placeholder="Button text"
+              disabled={disabled}
+              className="text-white"
+              inputClassName="text-center bg-transparent text-white placeholder:text-white/50"
+              aria-label="Call to action text"
+            />
+          </div>
+        ) : (
+          <button
+            onClick={scrollToExperiences}
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-lg text-lg transition-all hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            {config.ctaText}
+            <ArrowDown className="w-5 h-5 animate-bounce" />
+          </button>
+        )}
       </Container>
 
       {/* Decorative bottom gradient fade */}

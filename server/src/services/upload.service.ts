@@ -58,8 +58,9 @@ function createUploadConfig(): UploadAdapterConfig {
     logoUploadDir: process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads', 'logos'),
     packagePhotoUploadDir: path.join(process.cwd(), 'uploads', 'packages'),
     segmentImageUploadDir: path.join(process.cwd(), 'uploads', 'segments'),
+    landingPageImageUploadDir: path.join(process.cwd(), 'uploads', 'landing-pages'),
     maxFileSizeMB: parseInt(process.env.MAX_UPLOAD_SIZE_MB || '2', 10),
-    maxPackagePhotoSizeMB: 5, // 5MB for package photos and segment images
+    maxPackagePhotoSizeMB: 5, // 5MB for package photos, segment images, and landing page images
     allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml', 'image/webp'],
     baseUrl: process.env.API_BASE_URL || 'http://localhost:5000',
     isRealMode,
@@ -96,6 +97,10 @@ export class UploadService implements StorageProvider {
     return this.adapter.uploadSegmentImage(file, tenantId);
   }
 
+  async uploadLandingPageImage(file: UploadedFile, tenantId: string): Promise<UploadResult> {
+    return this.adapter.uploadLandingPageImage(file, tenantId);
+  }
+
   async deleteLogo(filename: string): Promise<void> {
     return this.adapter.deleteLogo(filename);
   }
@@ -108,6 +113,10 @@ export class UploadService implements StorageProvider {
     return this.adapter.deleteSegmentImage(url, tenantId);
   }
 
+  async deleteLandingPageImage(url: string, tenantId: string): Promise<void> {
+    return this.adapter.deleteLandingPageImage(url, tenantId);
+  }
+
   getLogoUploadDir(): string {
     return this.adapter.getLogoUploadDir();
   }
@@ -118,6 +127,10 @@ export class UploadService implements StorageProvider {
 
   getSegmentImageUploadDir(): string {
     return this.adapter.getSegmentImageUploadDir();
+  }
+
+  getLandingPageImageUploadDir(): string {
+    return this.adapter.getLandingPageImageUploadDir();
   }
 }
 

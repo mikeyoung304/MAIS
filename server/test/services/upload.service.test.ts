@@ -196,8 +196,8 @@ describe('UploadService', () => {
 
   describe('Constructor & Initialization', () => {
     it('should create upload directories on initialization', () => {
-      // Creates logos, packages, and segments directories
-      expect(mockMkdirSync).toHaveBeenCalledTimes(3);
+      // Creates logos, packages, segments, and landing-pages directories
+      expect(mockMkdirSync).toHaveBeenCalledTimes(4);
       const calls = mockMkdirSync.mock.calls;
       expect(calls[0][0]).toContain('uploads');
       expect(calls[0][1]).toEqual({ recursive: true });

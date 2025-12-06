@@ -366,6 +366,59 @@ export class WebhooksController {
             'Booking created successfully'
           );
         }
+      } else if (event.type === 'payment_intent.payment_failed') {
+        // Handle payment failures for booking checkout sessions
+        const failedIntent = event.data.object as Stripe.PaymentIntent;
+        const metadata = failedIntent.metadata;
+
+        // Extract bookingId if available (for balance payments or appointment bookings)
+        const bookingId = metadata?.bookingId;
+
+        if (bookingId && tenantId) {
+          // This is a payment for an existing booking - mark it as failed
+          try {
+            await this.bookingService.markPaymentFailed(tenantId, bookingId, {
+              reason: failedIntent.last_payment_error?.message || 'Payment failed',
+              code: failedIntent.last_payment_error?.code || 'unknown',
+              paymentIntentId: failedIntent.id,
+            });
+
+            logger.warn(
+              {
+                bookingId,
+                tenantId,
+                paymentIntentId: failedIntent.id,
+                errorCode: failedIntent.last_payment_error?.code,
+                errorMessage: failedIntent.last_payment_error?.message,
+              },
+              'Payment failed for existing booking'
+            );
+          } catch (error) {
+            // Log error but don't fail webhook - booking might not exist yet
+            logger.error(
+              {
+                bookingId,
+                tenantId,
+                paymentIntentId: failedIntent.id,
+                error: error instanceof Error ? error.message : String(error),
+              },
+              'Failed to mark booking payment as failed'
+            );
+          }
+        } else {
+          // This is a payment failure for a new booking (checkout not completed)
+          // Log for monitoring but no action needed - booking doesn't exist yet
+          logger.info(
+            {
+              paymentIntentId: failedIntent.id,
+              tenantId: tenantId || metadata?.tenantId,
+              email: metadata?.email,
+              errorCode: failedIntent.last_payment_error?.code,
+              errorMessage: failedIntent.last_payment_error?.message,
+            },
+            'Payment failed during checkout - no booking created'
+          );
+        }
       } else {
         logger.info(
           { eventId: event.id, type: event.type },

@@ -76,9 +76,16 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
     });
     anotherTenantId = anotherTenant.id;
 
-    // Create a test service for the first tenant
-    const service = await prisma.service.create({
-      data: {
+    // Create a test service for the first tenant (use upsert to handle reruns)
+    const service = await prisma.service.upsert({
+      where: {
+        tenantId_slug: {
+          tenantId: testTenantId,
+          slug: 'test-service',
+        },
+      },
+      update: {},
+      create: {
         tenantId: testTenantId,
         slug: 'test-service',
         name: 'Test Service',
@@ -427,6 +434,276 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
         .set('Authorization', `Bearer ${validToken}`);
 
       expect(response.status).toBe(404);
+    });
+  });
+
+  describe('GET /v1/tenant-admin/appointments (P1 #276 - Pagination)', () => {
+    let appointmentIds: string[] = [];
+    let testPackageId: string;
+
+    beforeAll(async () => {
+      // Create a test package (required for bookings)
+      const pkg = await prisma.package.create({
+        data: {
+          tenantId: testTenantId,
+          slug: 'test-appointment-package',
+          name: 'Test Appointment Package',
+          description: 'Package for appointment testing',
+          basePrice: 5000,
+          active: true,
+        },
+      });
+      testPackageId = pkg.id;
+
+      // Create a customer for appointments
+      const customer = await prisma.customer.create({
+        data: {
+          tenantId: testTenantId,
+          email: 'customer@appointmenttest.com',
+          name: 'Appointment Test',
+        },
+      });
+
+      // Create multiple appointments for pagination testing
+      const appointmentPromises = [];
+      for (let i = 0; i < 10; i++) {
+        const appointmentDate = new Date('2025-06-01');
+        appointmentDate.setDate(appointmentDate.getDate() + i);
+
+        appointmentPromises.push(
+          prisma.booking.create({
+            data: {
+              tenantId: testTenantId,
+              customerId: customer.id,
+              packageId: testPackageId,
+              serviceId: testServiceId,
+              bookingType: 'TIMESLOT',
+              status: 'CONFIRMED',
+              date: appointmentDate,
+              startTime: appointmentDate,
+              endTime: new Date(appointmentDate.getTime() + 60 * 60 * 1000), // +1 hour
+              totalPrice: 5000, // Match the service price
+              notes: `Test appointment ${i + 1}`,
+            },
+          })
+        );
+      }
+
+      const appointments = await Promise.all(appointmentPromises);
+      appointmentIds = appointments.map((a) => a.id);
+    });
+
+    afterAll(async () => {
+      // Cleanup appointments
+      await prisma.booking.deleteMany({
+        where: {
+          id: { in: appointmentIds },
+        },
+      });
+
+      // Cleanup customer
+      await prisma.customer.deleteMany({
+        where: {
+          tenantId: testTenantId,
+          email: 'customer@appointmenttest.com',
+        },
+      });
+
+      // Cleanup package
+      await prisma.package.deleteMany({
+        where: {
+          id: testPackageId,
+        },
+      });
+    });
+
+    it('should apply default limit of 100 when not specified', async () => {
+      const response = await request(app)
+        .get('/v1/tenant-admin/appointments')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body)).toBe(true);
+      // Should return at most 100 results (we only created 10, so should see all)
+      expect(response.body.length).toBeLessThanOrEqual(100);
+    });
+
+    it('should respect custom limit when provided', async () => {
+      const response = await request(app)
+        .get('/v1/tenant-admin/appointments?limit=5')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body.length).toBeLessThanOrEqual(5);
+    });
+
+    it('should enforce maximum limit of 500', async () => {
+      const response = await request(app)
+        .get('/v1/tenant-admin/appointments?limit=1000')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body)).toBe(true);
+      // Should be capped at 500, but we only have 10 appointments
+      expect(response.body.length).toBeLessThanOrEqual(500);
+    });
+
+    it('should support offset for pagination', async () => {
+      const response1 = await request(app)
+        .get('/v1/tenant-admin/appointments?limit=5&offset=0')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      const response2 = await request(app)
+        .get('/v1/tenant-admin/appointments?limit=5&offset=5')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response1.status).toBe(200);
+      expect(response2.status).toBe(200);
+
+      // Results should be different (if we have enough data)
+      if (response1.body.length > 0 && response2.body.length > 0) {
+        expect(response1.body[0].id).not.toBe(response2.body[0].id);
+      }
+    });
+
+    it('should reject invalid limit parameter', async () => {
+      const response = await request(app)
+        .get('/v1/tenant-admin/appointments?limit=invalid')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('Invalid limit parameter');
+    });
+
+    it('should reject negative limit', async () => {
+      const response = await request(app)
+        .get('/v1/tenant-admin/appointments?limit=-10')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('Invalid limit parameter');
+    });
+
+    it('should reject zero limit', async () => {
+      const response = await request(app)
+        .get('/v1/tenant-admin/appointments?limit=0')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('Invalid limit parameter');
+    });
+
+    it('should reject invalid offset parameter', async () => {
+      const response = await request(app)
+        .get('/v1/tenant-admin/appointments?offset=invalid')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('Invalid offset parameter');
+    });
+
+    it('should reject negative offset', async () => {
+      const response = await request(app)
+        .get('/v1/tenant-admin/appointments?offset=-5')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('Invalid offset parameter');
+    });
+
+    it('should accept offset of zero', async () => {
+      const response = await request(app)
+        .get('/v1/tenant-admin/appointments?offset=0')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body)).toBe(true);
+    });
+
+    it('should filter by status', async () => {
+      const response = await request(app)
+        .get('/v1/tenant-admin/appointments?status=CONFIRMED')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body)).toBe(true);
+      response.body.forEach((appt: any) => {
+        expect(appt.status).toBe('CONFIRMED');
+      });
+    });
+
+    it('should filter by serviceId', async () => {
+      const response = await request(app)
+        .get(`/v1/tenant-admin/appointments?serviceId=${testServiceId}`)
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body)).toBe(true);
+      response.body.forEach((appt: any) => {
+        expect(appt.serviceId).toBe(testServiceId);
+      });
+    });
+
+    it('should filter by date range', async () => {
+      const response = await request(app)
+        .get('/v1/tenant-admin/appointments?startDate=2025-06-01&endDate=2025-06-05')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body)).toBe(true);
+      // Verify dates are within range
+      response.body.forEach((appt: any) => {
+        const apptDate = new Date(appt.date);
+        expect(apptDate.getTime()).toBeGreaterThanOrEqual(new Date('2025-06-01').getTime());
+        expect(apptDate.getTime()).toBeLessThanOrEqual(new Date('2025-06-05').getTime());
+      });
+    });
+
+    it('should validate date format for startDate', async () => {
+      const response = await request(app)
+        .get('/v1/tenant-admin/appointments?startDate=invalid-date')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('Invalid startDate format');
+    });
+
+    it('should validate date format for endDate', async () => {
+      const response = await request(app)
+        .get('/v1/tenant-admin/appointments?endDate=2025/06/01')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('Invalid endDate format');
+    });
+
+    it('should enforce 90-day maximum date range', async () => {
+      const response = await request(app)
+        .get('/v1/tenant-admin/appointments?startDate=2025-01-01&endDate=2025-12-31')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('Date range cannot exceed 90 days');
+    });
+
+    it('should enforce tenant isolation', async () => {
+      const response = await request(app)
+        .get('/v1/tenant-admin/appointments')
+        .set('Authorization', `Bearer ${anotherTenantToken}`);
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body)).toBe(true);
+      // Should not see appointments from testTenantId
+      response.body.forEach((appt: any) => {
+        expect(appt.tenantId).not.toBe(testTenantId);
+      });
+    });
+
+    it('should require authentication', async () => {
+      const response = await request(app).get('/v1/tenant-admin/appointments');
+
+      expect(response.status).toBe(401);
     });
   });
 });

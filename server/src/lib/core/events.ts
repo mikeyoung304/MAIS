@@ -69,6 +69,7 @@ import { logger } from './logger';
 
 export const BookingEvents = {
   PAID: 'BookingPaid',
+  PAYMENT_FAILED: 'BookingPaymentFailed',
   RESCHEDULED: 'BookingRescheduled',
   CANCELLED: 'BookingCancelled',
   REMINDER_DUE: 'BookingReminderDue',
@@ -104,6 +105,16 @@ export interface BookingEventPayloads {
     addOnTitles: string[];
     totalCents: number;
   };
+  [BookingEvents.PAYMENT_FAILED]: {
+    bookingId: string;
+    tenantId: string;
+    email: string;
+    coupleName: string;
+    eventDate: string; // YYYY-MM-DD format
+    failureReason: string;
+    failureCode: string;
+    paymentIntentId: string;
+  };
   [BookingEvents.RESCHEDULED]: {
     bookingId: string;
     tenantId: string;
@@ -122,6 +133,7 @@ export interface BookingEventPayloads {
     cancelledBy: string;
     reason?: string;
     needsRefund: boolean;
+    googleEventId?: string; // Google Calendar event ID for calendar sync deletion
   };
   [BookingEvents.REMINDER_DUE]: {
     bookingId: string;
@@ -168,6 +180,7 @@ export interface AppointmentEventPayloads {
     endTime: string;
     totalCents: number;
     notes?: string;
+    timezone?: string; // Client timezone (e.g., "America/New_York")
   };
 }
 

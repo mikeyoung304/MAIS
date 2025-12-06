@@ -15,7 +15,7 @@ import type { Container } from './di';
 import { createV1Router } from './routes/index';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { requestLogger } from './middleware/request-logger';
-import { skipIfHealth, adminLimiter } from './middleware/rateLimiter';
+import { skipIfHealth, adminLimiter, webhookLimiter } from './middleware/rateLimiter';
 import { openApiSpec } from './api-docs';
 import { uploadService } from './services/upload.service';
 import { sentryRequestHandler, sentryErrorHandler } from './lib/errors/sentry';
@@ -23,6 +23,7 @@ import { registerHealthRoutes } from './routes/health.routes';
 import { registerMetricsRoutes } from './routes/metrics.routes';
 import { sanitizeInput } from './middleware/sanitize';
 import { cspViolationsRouter } from './routes/csp-violations.routes';
+import { createStripeConnectWebhookRoutes } from './routes/stripe-connect-webhooks.routes';
 
 export function createApp(
   config: Config,
@@ -153,7 +154,22 @@ export function createApp(
   // Body parsing
   // IMPORTANT: Stripe webhook needs raw body for signature verification
   // Apply raw body parser to webhook endpoint BEFORE json() middleware
-  app.use('/v1/webhooks/stripe', express.raw({ type: 'application/json' }), requestLogger);
+  // TODO-273 FIX: Apply rate limiting BEFORE parsing to protect against DoS
+  app.use(
+    '/v1/webhooks/stripe',
+    webhookLimiter,
+    express.raw({ type: 'application/json' }),
+    requestLogger
+  );
+
+  // Stripe Connect webhook endpoint (separate from payment webhooks)
+  // Uses a separate webhook secret for Connect account events
+  app.use(
+    '/v1/webhooks/stripe/connect',
+    webhookLimiter,
+    express.raw({ type: 'application/json' }),
+    requestLogger
+  );
 
   // Apply JSON parsing to all other routes
   app.use(express.json());
@@ -194,6 +210,7 @@ export function createApp(
     prisma: container.prisma,
     config,
     startTime,
+    healthCheckService: container.healthCheckService,
   });
 
   // Register metrics endpoint for monitoring systems (Prometheus, Datadog)
@@ -249,6 +266,26 @@ export function createApp(
     container.prisma,
     container.repositories
   );
+
+  // Register Stripe Connect webhook route (only in real mode with secrets configured)
+  if (
+    config.ADAPTERS_PRESET === 'real' &&
+    config.STRIPE_SECRET_KEY &&
+    process.env.STRIPE_CONNECT_WEBHOOK_SECRET &&
+    container.prisma
+  ) {
+    const connectWebhookHandler = createStripeConnectWebhookRoutes(
+      container.prisma,
+      config.STRIPE_SECRET_KEY,
+      process.env.STRIPE_CONNECT_WEBHOOK_SECRET
+    );
+    app.post('/v1/webhooks/stripe/connect', connectWebhookHandler);
+    logger.info('✅ Stripe Connect webhook endpoint registered at /v1/webhooks/stripe/connect');
+  } else if (config.ADAPTERS_PRESET === 'real') {
+    logger.warn(
+      '⚠️  Stripe Connect webhook endpoint not registered - missing STRIPE_SECRET_KEY or STRIPE_CONNECT_WEBHOOK_SECRET'
+    );
+  }
 
   // Mount dev routes (mock mode only)
   if (config.ADAPTERS_PRESET === 'mock' && container.controllers.dev) {

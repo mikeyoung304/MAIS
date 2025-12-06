@@ -1,14 +1,16 @@
 /**
- * Google Calendar Service - One-way sync from MAIS to Google Calendar
+ * Google Calendar Service - Two-way sync with Google Calendar
  *
  * Pushes appointment events to Google Calendar when:
  * - New appointment is booked (paid)
  * - Appointment is cancelled
  *
- * This is ONE-WAY sync only - we don't read from Google Calendar
+ * Reads busy times from Google Calendar to:
+ * - Prevent double-booking with existing calendar events
+ * - Enable two-way calendar sync (Acuity parity)
  */
 
-import type { CalendarProvider } from '../lib/ports';
+import type { CalendarProvider, BusyTimeBlock } from '../lib/ports';
 import { logger } from '../lib/core/logger';
 
 export class GoogleCalendarService {
@@ -51,6 +53,7 @@ export class GoogleCalendarService {
       startTime: Date;
       endTime: Date;
       notes?: string;
+      timezone?: string;
     }
   ): Promise<{ eventId: string } | null> {
     // Check if calendar provider supports event creation
@@ -82,6 +85,7 @@ export class GoogleCalendarService {
           bookingId: appointment.id,
           source: 'mais-scheduling',
         },
+        timezone: appointment.timezone,
       });
 
       if (result) {
@@ -162,6 +166,73 @@ export class GoogleCalendarService {
         'Failed to delete Google Calendar event - continuing without sync'
       );
       return false;
+    }
+  }
+
+  /**
+   * Get busy time blocks from Google Calendar
+   *
+   * Used for two-way sync to prevent double-booking when external calendar
+   * events already exist. Gracefully degrades if calendar provider doesn't
+   * support FreeBusy API or on error.
+   *
+   * @param tenantId - Tenant ID for multi-tenant isolation
+   * @param startDate - Start of time range to check
+   * @param endDate - End of time range to check
+   * @returns Array of busy time blocks, or empty array if not supported/error
+   *
+   * @example
+   * ```typescript
+   * const busyTimes = await googleCalendarService.getBusyTimes(
+   *   'tenant_123',
+   *   new Date('2025-06-15T00:00:00Z'),
+   *   new Date('2025-06-15T23:59:59Z')
+   * );
+   * // Returns: [
+   * //   { start: Date('2025-06-15T14:00:00Z'), end: Date('2025-06-15T15:00:00Z') },
+   * //   { start: Date('2025-06-15T16:30:00Z'), end: Date('2025-06-15T17:30:00Z') }
+   * // ]
+   * ```
+   */
+  async getBusyTimes(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<BusyTimeBlock[]> {
+    // Check if calendar provider supports busy time queries
+    if (!this.calendarProvider.getBusyTimes) {
+      logger.debug(
+        { tenantId, startDate: startDate.toISOString(), endDate: endDate.toISOString() },
+        'Calendar provider does not support getBusyTimes - skipping two-way sync'
+      );
+      return [];
+    }
+
+    try {
+      const busyTimes = await this.calendarProvider.getBusyTimes(tenantId, startDate, endDate);
+
+      logger.debug(
+        {
+          tenantId,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          busyTimesCount: busyTimes.length,
+        },
+        'Fetched Google Calendar busy times'
+      );
+
+      return busyTimes;
+    } catch (error) {
+      logger.warn(
+        {
+          error,
+          tenantId,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+        },
+        'Failed to fetch Google Calendar busy times - continuing without two-way sync'
+      );
+      return [];
     }
   }
 
