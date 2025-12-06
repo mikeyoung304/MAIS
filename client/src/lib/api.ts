@@ -41,10 +41,6 @@ interface ExtendedApiClient extends ReturnType<typeof initClient> {
   setTenantKey: (key: string | null) => void;
   setTenantToken: (token: string | null) => void;
   logoutTenant: () => void;
-  requestEarlyAccess: (email: string) => Promise<{
-    status: number;
-    body: { message: string } | { error: string } | null;
-  }>;
   adminGetTenants: () => Promise<{
     status: number;
     body: {
@@ -213,22 +209,6 @@ api.setTenantToken = (token: string | null) => {
 api.logoutTenant = () => {
   tenantToken = null;
   localStorage.removeItem('tenantToken');
-};
-
-/**
- * Request early access (public - sends notification to platform owner)
- * Uses ts-rest contract for type-safe validation
- */
-api.requestEarlyAccess = async (email: string) => {
-  // Use the type-safe contract endpoint
-  const result = await (api as ReturnType<typeof initClient>).requestEarlyAccess({
-    body: { email },
-  });
-
-  return {
-    status: result.status,
-    body: result.body as { message: string } | { error: string } | null,
-  };
 };
 
 /**

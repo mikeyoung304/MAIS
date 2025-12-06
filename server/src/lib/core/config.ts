@@ -39,6 +39,7 @@ const ConfigSchema = z.object({
   STRIPE_CANCEL_URL: z.string().url().optional().default('http://localhost:5173'),
   POSTMARK_SERVER_TOKEN: z.string().optional(),
   POSTMARK_FROM_EMAIL: z.string().email().optional(),
+  EARLY_ACCESS_NOTIFICATION_EMAIL: z.string().email().optional().default('mike@maconheadshots.com'),
   GOOGLE_CALENDAR_ID: z.string().optional(),
   GOOGLE_SERVICE_ACCOUNT_JSON_BASE64: z.string().optional(),
   // Graceful shutdown timeout (milliseconds)

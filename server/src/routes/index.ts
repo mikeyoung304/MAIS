@@ -3,6 +3,7 @@
  */
 
 import type { Application } from 'express';
+import type { Config } from '../lib/core/config';
 import { createExpressEndpoints, initServer } from '@ts-rest/express';
 import { Contracts } from '@macon/contracts';
 import type { PackagesController } from './packages.routes';
@@ -113,6 +114,7 @@ export function createV1Router(
   controllers: Controllers,
   identityService: IdentityService,
   app: Application,
+  config: Config,
   services?: Services,
   mailProvider?: {
     sendPasswordReset: (to: string, resetToken: string, resetUrl: string) => Promise<void>;
@@ -479,6 +481,9 @@ export function createV1Router(
       tenantAuthService: services.tenantAuth,
       tenantRepo,
       apiKeyService,
+      config: {
+        earlyAccessNotificationEmail: config.EARLY_ACCESS_NOTIFICATION_EMAIL,
+      },
       mailProvider,
       tenantOnboardingService: services?.tenantOnboarding,
     });

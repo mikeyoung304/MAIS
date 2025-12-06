@@ -33,25 +33,25 @@ describe('Early Access - HTTP Tests', () => {
     });
 
     it('should reject invalid email format with 400', async () => {
-      // The sanitization middleware converts invalid emails to empty strings,
-      // which then triggers the "Email is required" validation
+      // Zod .email() validation rejects invalid email format
       const response = await request(app)
         .post('/v1/auth/early-access')
         .send({ email: 'not-an-email' })
         .expect(400);
 
-      // Invalid emails are sanitized to empty string, triggering "required" check
-      expect(response.body.message).toContain('Email is required');
+      // Zod email validation returns "Invalid email" error
+      expect(response.body.message).toContain('Invalid email');
     });
 
     it('should reject missing email with 400', async () => {
       const response = await request(app).post('/v1/auth/early-access').send({}).expect(400);
 
-      expect(response.body.message).toContain('Email is required');
+      // Zod required validation returns "Required" error
+      expect(response.body.message).toContain('Required');
     });
 
     it('should sanitize XSS payloads in email field', async () => {
-      // XSS payloads are not valid emails, so they get sanitized to empty string
+      // XSS payloads are not valid emails - Zod rejects them
       const xssPayload = '<script>alert("xss")</script>';
 
       const response = await request(app)
@@ -59,13 +59,12 @@ describe('Early Access - HTTP Tests', () => {
         .send({ email: xssPayload })
         .expect(400);
 
-      // Invalid emails are sanitized to empty string, triggering "required" check
-      expect(response.body.message).toContain('Email is required');
+      // Zod email validation rejects invalid format
+      expect(response.body.message).toContain('Invalid email');
     });
 
     it('should handle email with CRLF injection attempt', async () => {
-      // CRLF injection attempt - the sanitization middleware converts this to empty string
-      // because validator.normalizeEmail fails on invalid characters
+      // CRLF injection attempt - Zod .email() validation rejects this
       const crlfPayload = 'test@example.com\r\nBcc: attacker@evil.com';
 
       const response = await request(app)
@@ -73,8 +72,8 @@ describe('Early Access - HTTP Tests', () => {
         .send({ email: crlfPayload })
         .expect(400);
 
-      // Invalid emails are sanitized to empty string, triggering "required" check
-      expect(response.body.message).toContain('Email is required');
+      // Zod email validation blocks CRLF injection
+      expect(response.body.message).toContain('Invalid email');
     });
 
     it('should normalize email (lowercase, trim)', async () => {

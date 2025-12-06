@@ -16,6 +16,7 @@ import { loginLimiter, signupLimiter } from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
 import { UnauthorizedError, ConflictError, ValidationError } from '../lib/errors';
 import { sanitizePlainText } from '../lib/sanitization';
+import { EarlyAccessRequestDtoSchema } from '@macon/contracts';
 
 // Shared Prisma instance for early access requests
 const prisma = new PrismaClient();
@@ -29,6 +30,9 @@ export interface UnifiedAuthRoutesOptions {
   tenantAuthService: TenantAuthService;
   tenantRepo: PrismaTenantRepository;
   apiKeyService: ApiKeyService;
+  config: {
+    earlyAccessNotificationEmail?: string;
+  };
   mailProvider?: {
     sendPasswordReset: (to: string, resetToken: string, resetUrl: string) => Promise<void>;
     sendEmail: (input: { to: string; subject: string; html: string }) => Promise<void>;
@@ -257,6 +261,7 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
     tenantAuthService,
     tenantRepo,
     apiKeyService,
+    config,
     mailProvider,
     tenantOnboardingService,
   } = options;
@@ -782,7 +787,7 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
   /**
    * POST /early-access
    * Request early access notification
-   * Sends email to the platform owner (mike@maconheadshots.com)
+   * Sends email to the platform owner (configured via EARLY_ACCESS_NOTIFICATION_EMAIL)
    *
    * Request body:
    * {
@@ -799,18 +804,14 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
     signupLimiter,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { email } = req.body;
-
-        if (!email) {
-          throw new ValidationError('Email is required');
+        // Use Zod validation from contract
+        const parseResult = EarlyAccessRequestDtoSchema.safeParse(req.body);
+        if (!parseResult.success) {
+          const errorMessage = parseResult.error.errors[0]?.message || 'Invalid email format';
+          throw new ValidationError(errorMessage);
         }
 
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-          throw new ValidationError('Invalid email format');
-        }
-
+        const { email } = parseResult.data;
         const normalizedEmail = email.toLowerCase().trim();
         const sanitizedEmail = sanitizePlainText(normalizedEmail);
 
@@ -831,7 +832,7 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
         if (mailProvider && isNewRequest) {
           try {
             await mailProvider.sendEmail({
-              to: 'mike@maconheadshots.com',
+              to: config.earlyAccessNotificationEmail || 'mike@maconheadshots.com',
               subject: `Early Access Request from ${sanitizedEmail}`,
               html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

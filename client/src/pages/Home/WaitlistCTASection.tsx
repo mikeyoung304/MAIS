@@ -23,12 +23,13 @@ export function WaitlistCTASection() {
     setError(null);
 
     try {
-      const response = await api.requestEarlyAccess(email);
-      if (response.status === 200) {
+      // Call ts-rest contract directly for type safety
+      const result = await api.requestEarlyAccess({ body: { email } });
+      if (result.status === 200) {
         setSubmitted(true);
-      } else if (response.status === 429) {
+      } else if (result.status === 429) {
         setError('Too many requests. Please try again later.');
-      } else if (response.status === 400) {
+      } else if (result.status === 400) {
         setError('Please enter a valid email address.');
       } else {
         setError('Something went wrong. Please try again.');
@@ -70,6 +71,7 @@ export function WaitlistCTASection() {
             <div className="max-w-lg mx-auto">
               <form
                 onSubmit={handleSubmit}
+                aria-label="Early access request form"
                 className="flex flex-col sm:flex-row gap-4"
               >
                 <input
@@ -83,6 +85,8 @@ export function WaitlistCTASection() {
                              transition-all duration-200
                              focus:outline-none focus:ring-4 focus:ring-white/30"
                   aria-label="Email address"
+                  aria-describedby={error ? "email-error" : undefined}
+                  aria-invalid={!!error}
                 />
                 <Button
                   type="submit"
@@ -107,15 +111,25 @@ export function WaitlistCTASection() {
                 </Button>
               </form>
               {error && (
-                <p role="alert" className="mt-4 text-white/90 text-sm text-center">
+                <p
+                  id="email-error"
+                  role="alert"
+                  aria-live="polite"
+                  aria-atomic="true"
+                  className="mt-4 text-white/90 text-sm text-center"
+                >
                   {error}
                 </p>
               )}
             </div>
           ) : (
-            <div className="flex items-center justify-center gap-3 text-white font-medium text-xl">
+            <div
+              role="status"
+              aria-live="polite"
+              className="flex items-center justify-center gap-3 text-white font-medium text-xl"
+            >
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <Check className="w-5 h-5" />
+                <Check className="w-5 h-5" aria-hidden="true" />
               </div>
               Welcome. We'll be in touch soon.
             </div>

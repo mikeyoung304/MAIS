@@ -250,6 +250,7 @@ export function createApp(
     container.controllers,
     container.services.identity,
     app,
+    config,
     {
       catalog: container.services.catalog,
       booking: container.services.booking,
