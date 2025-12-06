@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" fill="none">
+  <defs>
+    <!-- Shadows -->
+    <filter id="macShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="20" stdDeviation="30" flood-opacity="0.15"/>
+    </filter>
+    <filter id="phoneShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="15" stdDeviation="20" flood-opacity="0.2"/>
+    </filter>
+
+    <!-- Sage color -->
+    <linearGradient id="sageGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5B8A7A"/>
+      <stop offset="100%" style="stop-color:#4A7C6F"/>
+    </linearGradient>
+  </defs>
+
+  <!-- MacBook Pro -->
+  <g filter="url(#macShadow)" transform="translate(50, 80)">
+    <!-- Screen bezel -->
+    <rect x="0" y="0" width="700" height="450" rx="16" fill="#1a1a1a"/>
+
+    <!-- Screen -->
+    <rect x="12" y="12" width="676" height="400" rx="4" fill="#ffffff"/>
+
+    <!-- Dashboard UI inside screen -->
+    <g transform="translate(12, 12)">
+      <!-- Top nav bar -->
+      <rect x="0" y="0" width="676" height="48" fill="#fafafa"/>
+      <rect x="0" y="47" width="676" height="1" fill="#e5e5e5"/>
+
+      <!-- Logo area -->
+      <circle cx="28" cy="24" r="12" fill="url(#sageGradient)"/>
+      <text x="48" y="28" font-family="system-ui" font-size="14" font-weight="600" fill="#1a1a1a">MaconAI</text>
+
+      <!-- Nav items -->
+      <text x="140" y="28" font-family="system-ui" font-size="12" fill="#4A7C6F" font-weight="500">Dashboard</text>
+      <text x="220" y="28" font-family="system-ui" font-size="12" fill="#6b7280">Bookings</text>
+      <text x="290" y="28" font-family="system-ui" font-size="12" fill="#6b7280">Packages</text>
+      <text x="360" y="28" font-family="system-ui" font-size="12" fill="#6b7280">Clients</text>
+
+      <!-- Sidebar -->
+      <rect x="0" y="48" width="180" height="352" fill="#fafafa"/>
+      <rect x="179" y="48" width="1" height="352" fill="#e5e5e5"/>
+
+      <!-- Sidebar items -->
+      <rect x="12" y="64" width="156" height="36" rx="8" fill="#4A7C6F" opacity="0.1"/>
+      <text x="44" y="87" font-family="system-ui" font-size="12" fill="#4A7C6F" font-weight="500">Overview</text>
+      <text x="44" y="120" font-family="system-ui" font-size="12" fill="#6b7280">Calendar</text>
+      <text x="44" y="152" font-family="system-ui" font-size="12" fill="#6b7280">Revenue</text>
+      <text x="44" y="184" font-family="system-ui" font-size="12" fill="#6b7280">Messages</text>
+      <text x="44" y="216" font-family="system-ui" font-size="12" fill="#6b7280">Settings</text>
+
+      <!-- Main content area -->
+      <g transform="translate(196, 64)">
+        <!-- Stats cards row -->
+        <rect x="0" y="0" width="140" height="72" rx="12" fill="#ffffff" stroke="#e5e5e5" stroke-width="1"/>
+        <text x="16" y="24" font-family="system-ui" font-size="11" fill="#9ca3af">This Month</text>
+        <text x="16" y="50" font-family="system-ui" font-size="22" font-weight="600" fill="#1a1a1a">$4,280</text>
+
+        <rect x="156" y="0" width="140" height="72" rx="12" fill="#ffffff" stroke="#e5e5e5" stroke-width="1"/>
+        <text x="172" y="24" font-family="system-ui" font-size="11" fill="#9ca3af">Bookings</text>
+        <text x="172" y="50" font-family="system-ui" font-size="22" font-weight="600" fill="#1a1a1a">12</text>
+
+        <rect x="312" y="0" width="140" height="72" rx="12" fill="#ffffff" stroke="#e5e5e5" stroke-width="1"/>
+        <text x="328" y="24" font-family="system-ui" font-size="11" fill="#9ca3af">Clients</text>
+        <text x="328" y="50" font-family="system-ui" font-size="22" font-weight="600" fill="#1a1a1a">8</text>
+
+        <!-- Chart area -->
+        <rect x="0" y="88" width="296" height="180" rx="12" fill="#ffffff" stroke="#e5e5e5" stroke-width="1"/>
+        <text x="16" y="112" font-family="system-ui" font-size="12" font-weight="500" fill="#1a1a1a">Revenue</text>
+
+        <!-- Simple bar chart -->
+        <rect x="30" y="140" width="24" height="80" rx="4" fill="#e5e5e5"/>
+        <rect x="30" y="170" width="24" height="50" rx="4" fill="url(#sageGradient)"/>
+
+        <rect x="66" y="140" width="24" height="80" rx="4" fill="#e5e5e5"/>
+        <rect x="66" y="155" width="24" height="65" rx="4" fill="url(#sageGradient)"/>
+
+        <rect x="102" y="140" width="24" height="80" rx="4" fill="#e5e5e5"/>
+        <rect x="102" y="145" width="24" height="75" rx="4" fill="url(#sageGradient)"/>
+
+        <rect x="138" y="140" width="24" height="80" rx="4" fill="#e5e5e5"/>
+        <rect x="138" y="160" width="24" height="60" rx="4" fill="url(#sageGradient)"/>
+
+        <rect x="174" y="140" width="24" height="80" rx="4" fill="#e5e5e5"/>
+        <rect x="174" y="135" width="24" height="85" rx="4" fill="url(#sageGradient)"/>
+
+        <rect x="210" y="140" width="24" height="80" rx="4" fill="#e5e5e5"/>
+        <rect x="210" y="150" width="24" height="70" rx="4" fill="url(#sageGradient)"/>
+
+        <rect x="246" y="140" width="24" height="80" rx="4" fill="#e5e5e5"/>
+        <rect x="246" y="165" width="24" height="55" rx="4" fill="url(#sageGradient)"/>
+
+        <!-- Recent bookings -->
+        <rect x="312" y="88" width="140" height="180" rx="12" fill="#ffffff" stroke="#e5e5e5" stroke-width="1"/>
+        <text x="328" y="112" font-family="system-ui" font-size="12" font-weight="500" fill="#1a1a1a">Upcoming</text>
+
+        <!-- Booking items -->
+        <rect x="324" y="124" width="116" height="44" rx="8" fill="#fafafa"/>
+        <text x="336" y="142" font-family="system-ui" font-size="11" font-weight="500" fill="#1a1a1a">Sarah M.</text>
+        <text x="336" y="158" font-family="system-ui" font-size="10" fill="#6b7280">Dec 8 - Portrait</text>
+
+        <rect x="324" y="176" width="116" height="44" rx="8" fill="#fafafa"/>
+        <text x="336" y="194" font-family="system-ui" font-size="11" font-weight="500" fill="#1a1a1a">James K.</text>
+        <text x="336" y="210" font-family="system-ui" font-size="10" fill="#6b7280">Dec 12 - Headshot</text>
+
+        <rect x="324" y="228" width="116" height="44" rx="8" fill="#fafafa"/>
+        <text x="336" y="246" font-family="system-ui" font-size="11" font-weight="500" fill="#1a1a1a">Emily R.</text>
+        <text x="336" y="262" font-family="system-ui" font-size="10" fill="#6b7280">Dec 15 - Event</text>
+      </g>
+    </g>
+
+    <!-- MacBook base/keyboard -->
+    <path d="M -20 450 L 720 450 L 740 480 L -40 480 Z" fill="#e5e5e5"/>
+    <rect x="-40" y="476" width="780" height="8" rx="4" fill="#d4d4d4"/>
+
+    <!-- Trackpad notch -->
+    <rect x="300" y="452" width="100" height="4" rx="2" fill="#c4c4c4"/>
+  </g>
+
+  <!-- iPhone -->
+  <g filter="url(#phoneShadow)" transform="translate(820, 140)">
+    <!-- Phone frame -->
+    <rect x="0" y="0" width="260" height="520" rx="40" fill="#1a1a1a"/>
+
+    <!-- Screen -->
+    <rect x="8" y="8" width="244" height="504" rx="32" fill="#ffffff"/>
+
+    <!-- Dynamic Island -->
+    <rect x="82" y="16" width="96" height="28" rx="14" fill="#1a1a1a"/>
+
+    <!-- Storefront UI -->
+    <g transform="translate(8, 8)">
+      <!-- Status bar -->
+      <text x="24" y="24" font-family="system-ui" font-size="11" font-weight="500" fill="#1a1a1a">9:41</text>
+      <text x="200" y="24" font-family="system-ui" font-size="11" fill="#1a1a1a">100%</text>
+
+      <!-- Header -->
+      <rect x="0" y="50" width="244" height="60" fill="#fafafa"/>
+      <circle cx="32" cy="80" r="18" fill="url(#sageGradient)"/>
+      <text x="58" y="76" font-family="system-ui" font-size="14" font-weight="600" fill="#1a1a1a">Sarah's Studio</text>
+      <text x="58" y="92" font-family="system-ui" font-size="11" fill="#6b7280">Portrait Photography</text>
+
+      <!-- Package cards -->
+      <text x="16" y="134" font-family="system-ui" font-size="13" font-weight="600" fill="#1a1a1a">Select a Package</text>
+
+      <!-- Package 1 -->
+      <rect x="12" y="148" width="220" height="100" rx="16" fill="#ffffff" stroke="#e5e5e5" stroke-width="1"/>
+      <text x="24" y="172" font-family="system-ui" font-size="12" font-weight="600" fill="#1a1a1a">Basic Portrait</text>
+      <text x="24" y="190" font-family="system-ui" font-size="11" fill="#6b7280">30 min session, 5 edited photos</text>
+      <text x="24" y="230" font-family="system-ui" font-size="16" font-weight="600" fill="#4A7C6F">$150</text>
+      <rect x="148" y="214" width="72" height="28" rx="14" fill="url(#sageGradient)"/>
+      <text x="168" y="233" font-family="system-ui" font-size="11" font-weight="500" fill="#ffffff">Book</text>
+
+      <!-- Package 2 (selected state) -->
+      <rect x="12" y="260" width="220" height="100" rx="16" fill="#ffffff" stroke="#4A7C6F" stroke-width="2"/>
+      <rect x="190" y="268" width="36" height="18" rx="9" fill="url(#sageGradient)"/>
+      <text x="196" y="281" font-family="system-ui" font-size="9" font-weight="500" fill="#ffffff">Best</text>
+      <text x="24" y="284" font-family="system-ui" font-size="12" font-weight="600" fill="#1a1a1a">Premium Portrait</text>
+      <text x="24" y="302" font-family="system-ui" font-size="11" fill="#6b7280">1 hr session, 15 edited photos</text>
+      <text x="24" y="342" font-family="system-ui" font-size="16" font-weight="600" fill="#4A7C6F">$350</text>
+      <rect x="148" y="326" width="72" height="28" rx="14" fill="url(#sageGradient)"/>
+      <text x="168" y="345" font-family="system-ui" font-size="11" font-weight="500" fill="#ffffff">Book</text>
+
+      <!-- Package 3 -->
+      <rect x="12" y="372" width="220" height="100" rx="16" fill="#ffffff" stroke="#e5e5e5" stroke-width="1"/>
+      <text x="24" y="396" font-family="system-ui" font-size="12" font-weight="600" fill="#1a1a1a">Full Experience</text>
+      <text x="24" y="414" font-family="system-ui" font-size="11" fill="#6b7280">2 hr session, 30 edited photos</text>
+      <text x="24" y="454" font-family="system-ui" font-size="16" font-weight="600" fill="#4A7C6F">$600</text>
+      <rect x="148" y="438" width="72" height="28" rx="14" fill="url(#sageGradient)"/>
+      <text x="168" y="457" font-family="system-ui" font-size="11" font-weight="500" fill="#ffffff">Book</text>
+
+      <!-- Home indicator -->
+      <rect x="86" y="488" width="72" height="4" rx="2" fill="#1a1a1a"/>
+    </g>
+  </g>
+</svg>

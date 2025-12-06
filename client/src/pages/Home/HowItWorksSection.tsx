@@ -1,16 +1,5 @@
 import { Container } from '@/ui/Container';
 import { AnimatedSection } from '@/components/AnimatedSection';
-import {
-  Calendar,
-  Package,
-  CreditCard,
-  BarChart,
-  Bell,
-  Zap,
-  CheckCircle,
-  Smartphone,
-  Mail,
-} from 'lucide-react';
 
 export function HowItWorksSection() {
   return (
@@ -20,100 +9,49 @@ export function HowItWorksSection() {
       className="py-32 md:py-40 bg-neutral-50"
     >
       <Container>
-        {/* Header */}
-        <div className="max-w-3xl mx-auto text-center mb-16 md:mb-20">
+        {/* Header - tight and confident */}
+        <div className="max-w-2xl mx-auto text-center mb-16 md:mb-20">
           <span className="inline-block bg-sage/10 text-sage text-sm font-semibold px-4 py-2 rounded-full mb-6">
             The Platform
           </span>
           <h2
             id="how-it-works-heading"
-            className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary mb-6 leading-[1.1]"
+            className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-[1.1] tracking-tight"
           >
-            Your command center. Their booking paradise.
+            One link.
+            <br />
+            Two experiences.
           </h2>
-          <p className="text-xl md:text-2xl text-text-muted font-light">
-            One platform, two experiences.
-          </p>
         </div>
 
-        {/* Dual Panels */}
+        {/* Device mockup showcase */}
         <AnimatedSection animation="fade-in-up">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 max-w-6xl mx-auto">
-            {/* What You See */}
-            <div className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100 h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-              <span className="inline-block bg-sage text-white text-sm font-semibold px-4 py-2 rounded-full shadow-md mb-6">
-                What You See
+          <div className="max-w-5xl mx-auto relative">
+            <img
+              src="/images/product/dual-device-mockup.svg"
+              alt="MaconAI dashboard on laptop showing revenue analytics and upcoming bookings, alongside mobile storefront with package selection"
+              className="w-full h-auto"
+            />
+
+            {/* Subtle floating labels */}
+            <div className="hidden md:flex absolute bottom-4 left-0 right-0 justify-between px-[8%]">
+              <span className="text-sm text-text-muted font-medium">
+                Your dashboard.
               </span>
-
-              <div className="mb-6 rounded-2xl overflow-hidden bg-neutral-100">
-                <img
-                  src="/images/screenshots/dashboard-tenant-placeholder.svg"
-                  alt="MAIS tenant dashboard showing package management, booking calendar, and revenue analytics"
-                  loading="lazy"
-                  className="w-full h-auto"
-                />
-              </div>
-
-              <p className="text-lg text-text-muted mb-6 leading-relaxed">
-                Manage packages, bookings, and revenue from one clean dashboard.
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { icon: Calendar, label: 'Real-time availability' },
-                  { icon: CreditCard, label: 'Instant Stripe payouts' },
-                  { icon: Mail, label: 'Client communication hub' },
-                  { icon: BarChart, label: 'Revenue analytics' },
-                  { icon: Bell, label: 'Automated reminders' },
-                ].map(({ icon: Icon, label }) => (
-                  <span
-                    key={label}
-                    className="inline-flex items-center gap-2 bg-sage/10 text-sage px-3 py-1.5 rounded-full text-sm font-medium"
-                  >
-                    <Icon className="w-4 h-4" />
-                    {label}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* What Your Clients See */}
-            <div className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100 h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-              <span className="inline-block bg-sage text-white text-sm font-semibold px-4 py-2 rounded-full shadow-md mb-6">
-                What Your Clients See
+              <span className="text-sm text-text-muted font-medium">
+                Their storefront.
               </span>
-
-              <div className="mb-6 rounded-2xl overflow-hidden bg-neutral-100">
-                <img
-                  src="/images/screenshots/storefront-client-placeholder.svg"
-                  alt="MAIS storefront showing professional package cards with book now buttons"
-                  loading="lazy"
-                  className="w-full h-auto"
-                />
-              </div>
-
-              <p className="text-lg text-text-muted mb-6 leading-relaxed">
-                A branded storefront that turns browsers into bookers.
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { icon: Package, label: 'Your packages, their pace' },
-                  { icon: Zap, label: '3-click checkout' },
-                  { icon: CheckCircle, label: 'Instant confirmation' },
-                  { icon: Bell, label: 'Booking reminders' },
-                  { icon: Smartphone, label: 'Mobile-optimized' },
-                ].map(({ icon: Icon, label }) => (
-                  <span
-                    key={label}
-                    className="inline-flex items-center gap-2 bg-sage/10 text-sage px-3 py-1.5 rounded-full text-sm font-medium"
-                  >
-                    <Icon className="w-4 h-4" />
-                    {label}
-                  </span>
-                ))}
-              </div>
             </div>
+          </div>
+
+          {/* Mobile-only labels */}
+          <div className="flex md:hidden justify-center gap-8 mt-6">
+            <span className="text-sm text-text-muted font-medium">
+              Your dashboard.
+            </span>
+            <span className="text-sm text-text-muted font-medium">
+              Their storefront.
+            </span>
           </div>
         </AnimatedSection>
       </Container>
