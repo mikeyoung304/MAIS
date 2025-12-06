@@ -116,6 +116,7 @@ export function createV1Router(
   services?: Services,
   mailProvider?: {
     sendPasswordReset: (to: string, resetToken: string, resetUrl: string) => Promise<void>;
+    sendEmail: (input: { to: string; subject: string; html: string }) => Promise<void>;
   },
   prisma?: PrismaClient,
   repositories?: Repositories

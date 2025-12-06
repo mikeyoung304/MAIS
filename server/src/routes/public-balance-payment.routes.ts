@@ -32,7 +32,7 @@ export class PublicBalancePaymentController {
     balanceAmountCents: number;
   }> {
     // Validate token (must be 'pay_balance' action)
-    const result = validateBookingToken(token, 'pay_balance');
+    const result = await validateBookingToken(token, 'pay_balance');
     if (!result.valid) {
       throw new Error(`Token validation failed: ${result.message}`);
     }

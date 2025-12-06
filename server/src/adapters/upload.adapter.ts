@@ -159,7 +159,7 @@ export class UploadAdapter implements StorageProvider {
 
   private async uploadToSupabase(
     tenantId: string,
-    folder: 'logos' | 'packages' | 'segments',
+    folder: 'logos' | 'packages' | 'segments' | 'landing-pages',
     filename: string,
     file: UploadedFile
   ): Promise<UploadResult> {

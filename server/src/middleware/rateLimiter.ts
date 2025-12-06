@@ -1,5 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import type { Request, Response, NextFunction } from 'express';
+import { logger } from '../lib/core/logger';
 
 /**
  * Helper to normalize IP addresses for rate limiting
