@@ -193,6 +193,20 @@ export const ForgotPasswordDtoSchema = z.object({
 
 export type ForgotPasswordDto = z.infer<typeof ForgotPasswordDtoSchema>;
 
+// Early Access Request DTO
+export const EarlyAccessRequestDtoSchema = z.object({
+  email: z.string().email().max(254, 'Email must be 254 characters or less'),
+});
+
+export type EarlyAccessRequestDto = z.infer<typeof EarlyAccessRequestDtoSchema>;
+
+// Early Access Response DTO
+export const EarlyAccessResponseDtoSchema = z.object({
+  message: z.string(),
+});
+
+export type EarlyAccessResponseDto = z.infer<typeof EarlyAccessResponseDtoSchema>;
+
 // Password Reset DTO
 export const ResetPasswordDtoSchema = z.object({
   token: z.string().min(1),

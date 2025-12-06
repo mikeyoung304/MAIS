@@ -217,19 +217,17 @@ api.logoutTenant = () => {
 
 /**
  * Request early access (public - sends notification to platform owner)
+ * Uses ts-rest contract for type-safe validation
  */
 api.requestEarlyAccess = async (email: string) => {
-  const response = await fetch(`${baseUrl}/v1/auth/early-access`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ email }),
+  // Use the type-safe contract endpoint
+  const result = await (api as ReturnType<typeof initClient>).requestEarlyAccess({
+    body: { email },
   });
 
   return {
-    status: response.status,
-    body: await response.json().catch(() => null),
+    status: result.status,
+    body: result.body as { message: string } | { error: string } | null,
   };
 };
 

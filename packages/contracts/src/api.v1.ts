@@ -13,6 +13,8 @@ import {
   TenantSignupResponseSchema,
   ForgotPasswordDtoSchema,
   ResetPasswordDtoSchema,
+  EarlyAccessRequestDtoSchema,
+  EarlyAccessResponseDtoSchema,
   BookingDtoSchema,
   CreatePackageDtoSchema,
   UpdatePackageDtoSchema,
@@ -271,6 +273,20 @@ export const Contracts = c.router({
       500: InternalServerErrorSchema,
     },
     summary: 'Reset password with token',
+  },
+
+  // Early access request
+  requestEarlyAccess: {
+    method: 'POST',
+    path: '/v1/auth/early-access',
+    body: EarlyAccessRequestDtoSchema,
+    responses: {
+      200: EarlyAccessResponseDtoSchema,
+      400: BadRequestErrorSchema,
+      429: TooManyRequestsErrorSchema,
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Request early access notification',
   },
 
   // ============================================================================

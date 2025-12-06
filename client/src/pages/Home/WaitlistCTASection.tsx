@@ -13,17 +13,28 @@ export function WaitlistCTASection() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || isSubmitting) return;
 
     setIsSubmitting(true);
+    setError(null);
+
     try {
       const response = await api.requestEarlyAccess(email);
       if (response.status === 200) {
         setSubmitted(true);
+      } else if (response.status === 429) {
+        setError('Too many requests. Please try again later.');
+      } else if (response.status === 400) {
+        setError('Please enter a valid email address.');
+      } else {
+        setError('Something went wrong. Please try again.');
       }
+    } catch {
+      setError('Network error. Please check your connection.');
     } finally {
       setIsSubmitting(false);
     }
@@ -56,44 +67,51 @@ export function WaitlistCTASection() {
 
           {/* Form */}
           {!submitted ? (
-            <form
-              onSubmit={handleSubmit}
-              className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto"
-            >
-              <input
-                type="email"
-                name="EMAIL"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your email"
-                required
-                className="flex-1 px-6 py-4 border-0 rounded-full text-lg bg-white text-text-primary
-                           transition-all duration-200
-                           focus:outline-none focus:ring-4 focus:ring-white/30"
-                aria-label="Email address"
-              />
-              <Button
-                type="submit"
-                size="lg"
-                disabled={isSubmitting}
-                className="bg-white hover:bg-white/95 text-sage font-semibold text-base
-                           whitespace-nowrap px-10 py-4 h-14 rounded-full
-                           transition-all duration-300 ease-out
-                           hover:shadow-xl hover:-translate-y-0.5
-                           disabled:opacity-70 group"
+            <div className="max-w-lg mx-auto">
+              <form
+                onSubmit={handleSubmit}
+                className="flex flex-col sm:flex-row gap-4"
               >
-                {isSubmitting ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-sage/30 border-t-sage rounded-full animate-spin" />
-                  </span>
-                ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    Request Early Access
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </span>
-                )}
-              </Button>
-            </form>
+                <input
+                  type="email"
+                  name="EMAIL"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Your email"
+                  required
+                  className="flex-1 px-6 py-4 border-0 rounded-full text-lg bg-white text-text-primary
+                             transition-all duration-200
+                             focus:outline-none focus:ring-4 focus:ring-white/30"
+                  aria-label="Email address"
+                />
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={isSubmitting}
+                  className="bg-white hover:bg-white/95 text-sage font-semibold text-base
+                             whitespace-nowrap px-10 py-4 h-14 rounded-full
+                             transition-all duration-300 ease-out
+                             hover:shadow-xl hover:-translate-y-0.5
+                             disabled:opacity-70 group"
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-sage/30 border-t-sage rounded-full animate-spin" />
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      Request Early Access
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  )}
+                </Button>
+              </form>
+              {error && (
+                <p role="alert" className="mt-4 text-white/90 text-sm text-center">
+                  {error}
+                </p>
+              )}
+            </div>
           ) : (
             <div className="flex items-center justify-center gap-3 text-white font-medium text-xl">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">

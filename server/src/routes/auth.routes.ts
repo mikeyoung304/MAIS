@@ -14,6 +14,7 @@ import type { ApiKeyService } from '../lib/api-key.service';
 import { loginLimiter, signupLimiter } from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
 import { UnauthorizedError, ConflictError, ValidationError } from '../lib/errors';
+import { sanitizePlainText } from '../lib/sanitization';
 
 /**
  * Options for creating unified auth routes
@@ -811,15 +812,17 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
         // Send notification email to platform owner
         if (mailProvider) {
           try {
+            // Sanitize email before injecting into HTML to prevent XSS
+            const sanitizedEmail = sanitizePlainText(normalizedEmail);
             await mailProvider.sendEmail({
               to: 'mike@maconheadshots.com',
-              subject: `Early Access Request from ${normalizedEmail}`,
+              subject: `Early Access Request from ${sanitizedEmail}`,
               html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                   <h2 style="color: #2c5f4e;">New Early Access Request</h2>
                   <p>Someone wants early access to MaconAI!</p>
                   <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <p style="margin: 0;"><strong>Email:</strong> ${normalizedEmail}</p>
+                    <p style="margin: 0;"><strong>Email:</strong> ${sanitizedEmail}</p>
                     <p style="margin: 8px 0 0;"><strong>Time:</strong> ${new Date().toISOString()}</p>
                   </div>
                   <p style="color: #666;">Reply to this email to reach out to them.</p>
