@@ -11,10 +11,14 @@ import type { TenantAuthService } from '../services/tenant-auth.service';
 import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import type { ApiKeyService } from '../lib/api-key.service';
+import { PrismaClient } from '../generated/prisma';
 import { loginLimiter, signupLimiter } from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
 import { UnauthorizedError, ConflictError, ValidationError } from '../lib/errors';
 import { sanitizePlainText } from '../lib/sanitization';
+
+// Shared Prisma instance for early access requests
+const prisma = new PrismaClient();
 
 /**
  * Options for creating unified auth routes
@@ -808,12 +812,24 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
         }
 
         const normalizedEmail = email.toLowerCase().trim();
+        const sanitizedEmail = sanitizePlainText(normalizedEmail);
 
-        // Send notification email to platform owner
-        if (mailProvider) {
+        // Store request in database (upsert to handle duplicates gracefully)
+        const earlyAccessRequest = await prisma.earlyAccessRequest.upsert({
+          where: { email: normalizedEmail },
+          update: { updatedAt: new Date() }, // Just update timestamp if already exists
+          create: {
+            email: normalizedEmail,
+            source: 'homepage',
+            status: 'pending',
+          },
+        });
+
+        const isNewRequest = earlyAccessRequest.createdAt.getTime() === earlyAccessRequest.updatedAt.getTime();
+
+        // Send notification email to platform owner (only for new requests)
+        if (mailProvider && isNewRequest) {
           try {
-            // Sanitize email before injecting into HTML to prevent XSS
-            const sanitizedEmail = sanitizePlainText(normalizedEmail);
             await mailProvider.sendEmail({
               to: 'mike@maconheadshots.com',
               subject: `Early Access Request from ${sanitizedEmail}`,
@@ -832,7 +848,8 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
             logger.info(
               {
                 event: 'early_access_request',
-                email: normalizedEmail,
+                email: sanitizedEmail,
+                requestId: earlyAccessRequest.id,
               },
               'Early access request received and notification sent'
             );
@@ -840,19 +857,30 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
             logger.error(
               {
                 event: 'early_access_email_failed',
-                email: normalizedEmail,
+                email: sanitizedEmail,
+                requestId: earlyAccessRequest.id,
                 error: emailError instanceof Error ? emailError.message : 'Unknown error',
               },
               'Failed to send early access notification email'
             );
             // Continue - don't fail the request
           }
+        } else if (!isNewRequest) {
+          logger.info(
+            {
+              event: 'early_access_request_duplicate',
+              email: sanitizedEmail,
+              requestId: earlyAccessRequest.id,
+            },
+            'Duplicate early access request (already in database)'
+          );
         } else {
           // Development mode - just log the request
           logger.info(
             {
               event: 'early_access_request',
-              email: normalizedEmail,
+              email: sanitizedEmail,
+              requestId: earlyAccessRequest.id,
             },
             'Early access request received (no mail provider configured)'
           );

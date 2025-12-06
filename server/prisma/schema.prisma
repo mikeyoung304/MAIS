@@ -547,6 +547,25 @@ enum WebhookStatus {
   DUPLICATE
 }
 
+// ============================================================================
+// Early Access Requests (Waitlist)
+// ============================================================================
+
+// Platform-level table (not tenant-scoped) for tracking early access requests
+// before users become tenants
+model EarlyAccessRequest {
+  id        String   @id @default(cuid())
+  email     String   @unique // Prevent duplicate submissions
+  status    String   @default("pending") // pending, contacted, converted, unsubscribed
+  source    String?  // Where they signed up from (e.g., "homepage", "blog", "referral")
+  notes     String?  @db.Text // Admin notes for follow-up
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status]) // Query by status
+  @@index([createdAt]) // Query chronologically
+}
+
 // Audit Log for Config-Driven System (Sprint 2.1)
 // Tracks all configuration changes and legacy CRUD during migration
 model ConfigChangeLog {
