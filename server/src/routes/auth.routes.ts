@@ -26,6 +26,7 @@ export interface UnifiedAuthRoutesOptions {
   apiKeyService: ApiKeyService;
   mailProvider?: {
     sendPasswordReset: (to: string, resetToken: string, resetUrl: string) => Promise<void>;
+    sendEmail: (input: { to: string; subject: string; html: string }) => Promise<void>;
   };
   tenantOnboardingService?: TenantOnboardingService;
 }
@@ -772,6 +773,96 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
       next(error);
     }
   });
+
+  /**
+   * POST /early-access
+   * Request early access notification
+   * Sends email to the platform owner (mike@maconheadshots.com)
+   *
+   * Request body:
+   * {
+   *   "email": "interested@example.com"
+   * }
+   *
+   * Response:
+   * {
+   *   "message": "Thanks! We'll be in touch soon."
+   * }
+   */
+  router.post(
+    '/early-access',
+    signupLimiter,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { email } = req.body;
+
+        if (!email) {
+          throw new ValidationError('Email is required');
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          throw new ValidationError('Invalid email format');
+        }
+
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // Send notification email to platform owner
+        if (mailProvider) {
+          try {
+            await mailProvider.sendEmail({
+              to: 'mike@maconheadshots.com',
+              subject: `Early Access Request from ${normalizedEmail}`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #2c5f4e;">New Early Access Request</h2>
+                  <p>Someone wants early access to MaconAI!</p>
+                  <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 0;"><strong>Email:</strong> ${normalizedEmail}</p>
+                    <p style="margin: 8px 0 0;"><strong>Time:</strong> ${new Date().toISOString()}</p>
+                  </div>
+                  <p style="color: #666;">Reply to this email to reach out to them.</p>
+                </div>
+              `,
+            });
+            logger.info(
+              {
+                event: 'early_access_request',
+                email: normalizedEmail,
+              },
+              'Early access request received and notification sent'
+            );
+          } catch (emailError) {
+            logger.error(
+              {
+                event: 'early_access_email_failed',
+                email: normalizedEmail,
+                error: emailError instanceof Error ? emailError.message : 'Unknown error',
+              },
+              'Failed to send early access notification email'
+            );
+            // Continue - don't fail the request
+          }
+        } else {
+          // Development mode - just log the request
+          logger.info(
+            {
+              event: 'early_access_request',
+              email: normalizedEmail,
+            },
+            'Early access request received (no mail provider configured)'
+          );
+        }
+
+        res.status(200).json({
+          message: "Thanks! We'll be in touch soon.",
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
 
   return router;
 }

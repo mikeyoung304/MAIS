@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Container } from '@/ui/Container';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Check } from 'lucide-react';
+import { api } from '@/lib/api';
 
 /**
  * WaitlistCTASection - Final conversion moment
@@ -18,9 +19,14 @@ export function WaitlistCTASection() {
     if (!email || isSubmitting) return;
 
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    setSubmitted(true);
-    setIsSubmitting(false);
+    try {
+      const response = await api.requestEarlyAccess(email);
+      if (response.status === 200) {
+        setSubmitted(true);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

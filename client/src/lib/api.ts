@@ -41,6 +41,10 @@ interface ExtendedApiClient extends ReturnType<typeof initClient> {
   setTenantKey: (key: string | null) => void;
   setTenantToken: (token: string | null) => void;
   logoutTenant: () => void;
+  requestEarlyAccess: (email: string) => Promise<{
+    status: number;
+    body: { message: string } | { error: string } | null;
+  }>;
   adminGetTenants: () => Promise<{
     status: number;
     body: {
@@ -209,6 +213,24 @@ api.setTenantToken = (token: string | null) => {
 api.logoutTenant = () => {
   tenantToken = null;
   localStorage.removeItem('tenantToken');
+};
+
+/**
+ * Request early access (public - sends notification to platform owner)
+ */
+api.requestEarlyAccess = async (email: string) => {
+  const response = await fetch(`${baseUrl}/v1/auth/early-access`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  return {
+    status: response.status,
+    body: await response.json().catch(() => null),
+  };
 };
 
 /**

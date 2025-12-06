@@ -78,10 +78,10 @@ export function AppShell() {
               &copy; {new Date().getFullYear()} MaconAI Solutions
             </p>
             <a
-              href="mailto:hello@maconaisolutions.com"
+              href="mailto:mike@maconheadshots.com"
               className="text-sm text-text-muted hover:text-sage transition-colors"
             >
-              hello@maconaisolutions.com
+              mike@maconheadshots.com
             </a>
           </div>
         </Container>

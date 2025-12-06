@@ -52,7 +52,7 @@ export function Contact() {
             </a>
 
             <a
-              href="mailto:hello@maconaisolutions.com"
+              href="mailto:mike@maconheadshots.com"
               className="flex items-center gap-4 p-6 bg-surface-alt rounded-xl hover:bg-sage-light/10 transition-colors group"
             >
               <div className="w-12 h-12 bg-sage-light/20 rounded-full flex items-center justify-center group-hover:bg-sage-light/30 transition-colors">
@@ -60,7 +60,7 @@ export function Contact() {
               </div>
               <div className="flex-1">
                 <h2 className="font-semibold text-text-primary text-lg">Send an email</h2>
-                <p className="text-text-muted">hello@maconaisolutions.com</p>
+                <p className="text-text-muted">mike@maconheadshots.com</p>
               </div>
             </a>
           </div>
