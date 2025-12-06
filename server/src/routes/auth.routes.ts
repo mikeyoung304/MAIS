@@ -945,27 +945,26 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
         // Send emails - customer always gets confirmation, internal notification for new requests
         if (mailProvider) {
           try {
-            const emailPromises = [
-              // Customer confirmation (always sent - reassures them even on duplicate)
-              mailProvider.sendEmail({
-                to: sanitizedEmail,
-                subject: "You're in.",
-                html: customerConfirmationHtml,
-              }),
-            ];
+            // Send customer confirmation
+            logger.info({ to: sanitizedEmail }, 'Sending customer confirmation email');
+            await mailProvider.sendEmail({
+              to: sanitizedEmail,
+              subject: "You're in.",
+              html: customerConfirmationHtml,
+            });
+            logger.info({ to: sanitizedEmail }, 'Customer confirmation email sent successfully');
 
-            // Internal notification only for new requests
+            // Send internal notification only for new requests
             if (isNewRequest) {
-              emailPromises.push(
-                mailProvider.sendEmail({
-                  to: config.earlyAccessNotificationEmail || 'mike@maconheadshots.com',
-                  subject: `Early Access: ${sanitizedEmail}`,
-                  html: internalNotificationHtml,
-                })
-              );
+              const notificationEmail = config.earlyAccessNotificationEmail || 'mike@maconheadshots.com';
+              logger.info({ to: notificationEmail }, 'Sending internal notification email');
+              await mailProvider.sendEmail({
+                to: notificationEmail,
+                subject: `Early Access: ${sanitizedEmail}`,
+                html: internalNotificationHtml,
+              });
+              logger.info({ to: notificationEmail }, 'Internal notification email sent successfully');
             }
-
-            await Promise.all(emailPromises);
 
             logger.info(
               {
