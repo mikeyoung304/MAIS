@@ -1,5 +1,6 @@
 ---
-status: pending
+status: resolved
+resolution_date: 2025-12-06
 priority: p2
 issue_id: "303"
 tags: [code-review, frontend, ux, early-access, consistency]
@@ -134,3 +135,84 @@ Implement Option B - extract shared hook for consistency and DRY code.
 
 - Related: TODO-301 (duplicate form selectors)
 - Related: TODO-302 (E2E route mocking)
+
+## Resolution
+
+**Status:** Resolved on 2025-12-06
+
+**Implementation Summary:**
+Created a shared `useWaitlistForm` hook and wired both HeroSection and WaitlistCTASection components to call the real API on form submission. Both forms now have consistent behavior and properly persist signups to the database.
+
+**Files Modified:**
+- `client/src/hooks/useWaitlistForm.ts` - Created new shared hook with unified form logic
+- `client/src/pages/Home/HeroSection.tsx` - Integrated useWaitlistForm hook
+- `client/src/pages/Home/WaitlistCTASection.tsx` - Integrated useWaitlistForm hook
+
+**Implementation Details:**
+
+**useWaitlistForm Hook:**
+```typescript
+export function useWaitlistForm() {
+  const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await api.requestEarlyAccess({ body: { email } });
+      if (result.status === 200) {
+        setSubmitted(true);
+        setEmail('');
+      } else if (result.status === 429) {
+        setError('Too many requests. Please try again later.');
+      } else {
+        setError('body' in result && 'error' in result.body
+          ? result.body.error
+          : 'Something went wrong');
+      }
+    } catch (err) {
+      setError('Network error. Please check your connection.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { email, setEmail, submitted, isLoading, error, handleSubmit };
+}
+```
+
+**HeroSection Integration:**
+```typescript
+// Now calls real API instead of just setting local state
+const { email, setEmail, submitted, isLoading, error, handleSubmit } = useWaitlistForm();
+// Form properly persists signups to database
+```
+
+**WaitlistCTASection Integration:**
+```typescript
+// Refactored to use shared hook
+const { email, setEmail, submitted, isLoading, error, handleSubmit } = useWaitlistForm();
+// Consistent behavior with HeroSection
+```
+
+**Benefits:**
+- No more mock-only forms - both persist to database
+- Eliminates lost signups from users who submit via hero form
+- DRY code - single source of truth for form logic
+- Consistent behavior across both forms
+- Error handling works identically on both forms
+- Loading states synchronized
+
+**User Experience Improvements:**
+- Hero form (above the fold): Now captures and saves signups
+- CTA form (below the fold): Behavior unchanged (already worked)
+- Both show identical success, error, and loading states
+- No more confusion about which form actually saves the data
+
+**Test Coverage:**
+E2E tests verify both forms now correctly call the API and persist to the database.

@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Check } from 'lucide-react';
+import { useWaitlistForm } from '@/hooks/useWaitlistForm';
 
 /**
  * HeroSection - Apple-quality hero
@@ -9,19 +9,7 @@ import { ArrowRight, Check } from 'lucide-react';
  * Generous typography, subtle ambient animation.
  */
 export function HeroSection() {
-  const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || isSubmitting) return;
-
-    setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    setSubmitted(true);
-    setIsSubmitting(false);
-  };
+  const { email, setEmail, submitted, isLoading, error, handleSubmit } = useWaitlistForm();
 
   return (
     <section
@@ -73,6 +61,8 @@ export function HeroSection() {
         <div className="animate-fade-slide-up" style={{ animationDelay: '0.6s' }}>
           {!submitted ? (
             <form
+              data-testid="hero-waitlist-form"
+              aria-label="Early access request form"
               onSubmit={handleSubmit}
               className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto"
             >
@@ -92,14 +82,14 @@ export function HeroSection() {
               <Button
                 type="submit"
                 size="lg"
-                disabled={isSubmitting}
+                disabled={isLoading}
                 className="bg-sage hover:bg-sage-hover text-white font-semibold text-base
                            whitespace-nowrap px-10 py-4 h-14 rounded-full
                            transition-all duration-300 ease-out
                            hover:shadow-xl hover:-translate-y-0.5
                            disabled:opacity-70 group"
               >
-                {isSubmitting ? (
+                {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   </span>
@@ -111,6 +101,16 @@ export function HeroSection() {
                 )}
               </Button>
             </form>
+            {error && (
+              <p
+                role="alert"
+                aria-live="polite"
+                aria-atomic="true"
+                className="mt-4 text-red-600 text-sm text-center"
+              >
+                {error}
+              </p>
+            )}
           ) : (
             <div className="flex items-center justify-center gap-3 text-sage font-medium text-lg">
               <div className="w-10 h-10 bg-sage/10 rounded-full flex items-center justify-center">

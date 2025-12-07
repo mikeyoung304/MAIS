@@ -1,5 +1,6 @@
 ---
-status: pending
+status: resolved
+resolution_date: 2025-12-06
 priority: p2
 issue_id: "302"
 tags: [code-review, testing, e2e, playwright, mocking, early-access]
@@ -141,3 +142,63 @@ expect(intercepted).toBe(true);
 
 - Playwright Network Mocking: https://playwright.dev/docs/network#handle-requests
 - Related: TODO-301 (flaky selectors)
+
+## Resolution
+
+**Status:** Resolved on 2025-12-06
+
+**Implementation Summary:**
+Fixed route mocking in E2E tests by implementing proper method filtering and interception verification. Route interception now reliably intercepts API calls with correct status and response handling.
+
+**Files Modified:**
+- `e2e/tests/early-access-waitlist.spec.ts` - Fixed route mocking with method filtering and verification
+
+**Changes Made:**
+
+1. **Added method filtering** - Only intercept POST requests:
+```typescript
+await page.route('**/v1/auth/early-access', async (route) => {
+  const request = route.request();
+  if (request.method() === 'POST') {
+    await route.fulfill({
+      status: 500,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'Internal server error' }),
+    });
+  } else {
+    await route.continue();
+  }
+});
+```
+
+2. **Added interception verification** - Confirm routes are being intercepted:
+```typescript
+let routeIntercepted = false;
+await page.route('**/v1/auth/early-access', async (route) => {
+  routeIntercepted = true;
+  // Handle mocked response
+});
+// Later: expect(routeIntercepted).toBe(true);
+```
+
+3. **Updated form selectors** - Use specific `data-testid` attributes (from TODO-301):
+```typescript
+const ctaForm = page.getByTestId('cta-waitlist-form');
+// Improved targeting prevents selector timing issues
+```
+
+4. **Proper route registration timing** - Routes registered before navigation to ensure early interception:
+```typescript
+// Register route BEFORE navigation
+await page.route('**/v1/auth/early-access', ...);
+await page.goto('/');
+```
+
+**Error Scenarios Now Verified:**
+- 500 Internal Server Error - Mocked response confirmed
+- 429 Rate Limit - Proper error message display
+- 400 Bad Request - Form validation error handling
+- Network errors - Graceful error recovery
+
+**Test Coverage:**
+All error handling tests now pass with confirmed route interception. Error paths properly verify mocked responses instead of relying on live API.

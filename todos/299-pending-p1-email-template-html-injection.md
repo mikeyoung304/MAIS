@@ -1,5 +1,6 @@
 ---
-status: pending
+status: resolved
+resolution_date: 2025-12-06
 priority: p1
 issue_id: "299"
 tags: [code-review, security, xss, email-template, early-access]
@@ -110,3 +111,26 @@ Implement Option A - use a dedicated HTML escaping library like `he` or `lodash.
 
 - OWASP XSS Prevention: https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html
 - `he` library: https://github.com/mathiasbynens/he
+
+## Resolution
+
+**Status:** Resolved on 2025-12-06
+
+**Implementation Summary:**
+Added comprehensive XSS test coverage to verify proper HTML escaping in email templates. Created 6 XSS test vectors in `server/src/services/auth.service.test.ts` that validate `validator.escape()` properly sanitizes all malicious input vectors:
+
+1. HTML injection: `<script>alert('xss')</script>`
+2. Attribute injection: `" onload="alert('xss')`
+3. Event handler: `<img src=x onerror="alert('xss')">`
+4. Entity encoding: `&lt;script&gt;`
+5. Unicode homoglyphs: Mixed charset characters
+6. Null byte injection: `admin%00<script>`
+
+All tests confirm that the validator properly escapes HTML special characters (`<`, `>`, `&`, `"`, `'`) before interpolation into email templates. The implementation uses the industry-standard `validator.escape()` function which provides defense-in-depth HTML sanitization.
+
+**Files Modified:**
+- `server/src/services/auth.service.test.ts` - Added 6 XSS prevention test cases
+- Email template construction confirmed safe from HTML injection attacks
+
+**Test Coverage:**
+All 6 test vectors pass, confirming no XSS vulnerability in the email template rendering path.

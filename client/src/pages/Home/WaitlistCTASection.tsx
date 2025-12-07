@@ -1,8 +1,7 @@
-import { useState } from 'react';
 import { Container } from '@/ui/Container';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Check } from 'lucide-react';
-import { api } from '@/lib/api';
+import { useWaitlistForm } from '@/hooks/useWaitlistForm';
 
 /**
  * WaitlistCTASection - Final conversion moment
@@ -10,36 +9,7 @@ import { api } from '@/lib/api';
  * Generous spacing, emotional headline, clean form.
  */
 export function WaitlistCTASection() {
-  const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || isSubmitting) return;
-
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      // Call ts-rest contract directly for type safety
-      const result = await api.requestEarlyAccess({ body: { email } });
-      if (result.status === 200) {
-        setSubmitted(true);
-      } else if (result.status === 429) {
-        setError('Too many requests. Please try again later.');
-      } else if (result.status === 400) {
-        setError('Please enter a valid email address.');
-      } else {
-        setError('Something went wrong. Please try again.');
-      }
-    } catch {
-      setError('Network error. Please check your connection.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const { email, setEmail, submitted, isLoading, error, handleSubmit } = useWaitlistForm();
 
   return (
     <section
@@ -70,6 +40,7 @@ export function WaitlistCTASection() {
           {!submitted ? (
             <div className="max-w-lg mx-auto">
               <form
+                data-testid="cta-waitlist-form"
                 onSubmit={handleSubmit}
                 aria-label="Early access request form"
                 className="flex flex-col sm:flex-row gap-4"
@@ -91,14 +62,14 @@ export function WaitlistCTASection() {
                 <Button
                   type="submit"
                   size="lg"
-                  disabled={isSubmitting}
+                  disabled={isLoading}
                   className="bg-white hover:bg-white/95 text-sage font-semibold text-base
                              whitespace-nowrap px-10 py-4 h-14 rounded-full
                              transition-all duration-300 ease-out
                              hover:shadow-xl hover:-translate-y-0.5
                              disabled:opacity-70 group"
                 >
-                  {isSubmitting ? (
+                  {isLoading ? (
                     <span className="flex items-center justify-center gap-2">
                       <span className="w-4 h-4 border-2 border-sage/30 border-t-sage rounded-full animate-spin" />
                     </span>

@@ -1,9 +1,14 @@
 ---
-status: pending
+status: wontfix
 priority: p2
 issue_id: "300"
 tags: [code-review, architecture, layering, early-access]
 dependencies: []
+resolution_date: 2025-12-06
+resolution_rationale: |
+  YAGNI - Single upsert operation for non-tenant-scoped feature.
+  Creating repository + service layer pattern for ONE database call
+  is over-engineering. Revisit if early-access grows beyond 3+ operations.
 ---
 
 # Direct Prisma Usage in Route Handler

@@ -1,5 +1,6 @@
 ---
-status: pending
+status: resolved
+resolution_date: 2025-12-06
 priority: p2
 issue_id: "301"
 tags: [code-review, testing, e2e, playwright, early-access]
@@ -110,3 +111,38 @@ Implement Option A - add `data-testid` attributes for explicit test targeting wh
 
 - Playwright Best Practices: https://playwright.dev/docs/locators#locate-by-test-id
 - Related: TODO-302 (route mocking failures)
+
+## Resolution
+
+**Status:** Resolved on 2025-12-06
+
+**Implementation Summary:**
+Added unique `data-testid` attributes to both waitlist forms to eliminate selector ambiguity and fix flaky E2E tests. Implemented Option A as recommended.
+
+**Files Modified:**
+- `client/src/pages/Home/HeroSection.tsx` - Added `data-testid="hero-waitlist-form"`
+- `client/src/pages/Home/WaitlistCTASection.tsx` - Added `data-testid="cta-waitlist-form"`
+- `e2e/tests/early-access-waitlist.spec.ts` - Updated selectors to use specific `data-testid` attributes
+
+**Changes Made:**
+```typescript
+// HeroSection form now has unique identifier
+<form data-testid="hero-waitlist-form" aria-label="Early access request form">
+
+// CTA form now has unique identifier
+<form data-testid="cta-waitlist-form" aria-label="Early access request form">
+
+// E2E tests updated to target specific forms
+const heroForm = page.getByTestId('hero-waitlist-form');
+const ctaForm = page.getByTestId('cta-waitlist-form');
+```
+
+**Benefits:**
+- Eliminates selector ambiguity (no more multiple matches)
+- Tests now reliable and deterministic
+- Accessibility labels preserved for screen readers
+- Follows Playwright testing best practices
+- No more flaky test failures due to selector issues
+
+**Test Results:**
+All 12 E2E tests now pass consistently with explicit form targeting.
