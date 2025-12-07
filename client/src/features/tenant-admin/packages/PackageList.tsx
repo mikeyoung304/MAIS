@@ -78,15 +78,16 @@ export const PackageList = memo(function PackageList({
             animationDelay: `${index * 0.05}s`,
           }}
         >
-          <div className="flex items-stretch">
-            {/* Photo */}
-            <div className="relative w-32 sm:w-40 flex-shrink-0">
+          {/* Mobile: Stack vertically | Desktop: Horizontal layout */}
+          <div className="flex flex-col sm:flex-row sm:items-stretch">
+            {/* Photo - Full width on mobile, fixed width on desktop */}
+            <div className="relative w-full sm:w-40 flex-shrink-0">
               {pkg.photos && pkg.photos.length > 0 ? (
                 <>
                   <img
                     src={sanitizeImageUrl(pkg.photos[0].url) || undefined}
                     alt={`${pkg.title} preview`}
-                    className="w-full h-full object-cover min-h-[120px]"
+                    className="w-full h-48 sm:h-full object-cover sm:min-h-[120px]"
                     onError={(e) => {
                       // Fallback to placeholder on image load error
                       e.currentTarget.style.display = 'none';
@@ -96,7 +97,7 @@ export const PackageList = memo(function PackageList({
                       }
                     }}
                   />
-                  <div className="hidden w-full h-full min-h-[120px] bg-sage-light/10 items-center justify-center">
+                  <div className="hidden w-full h-48 sm:h-full sm:min-h-[120px] bg-sage-light/10 items-center justify-center">
                     <Image className="w-10 h-10 text-sage-light/50" aria-hidden="true" />
                   </div>
                   {pkg.photos.length > 1 && (
@@ -108,77 +109,76 @@ export const PackageList = memo(function PackageList({
                   )}
                 </>
               ) : (
-                <div className="w-full h-full min-h-[120px] bg-sage-light/10 flex items-center justify-center">
+                <div className="w-full h-48 sm:h-full sm:min-h-[120px] bg-sage-light/10 flex items-center justify-center">
                   <Image className="w-10 h-10 text-sage-light/50" aria-hidden="true" />
                 </div>
               )}
+
+              {/* Mobile: Action dropdown overlay on image */}
+              <div className="absolute top-2 right-2 sm:hidden">
+                <MobileActionDropdown
+                  actions={[
+                    {
+                      label: 'Edit',
+                      icon: Pencil,
+                      onClick: () => onEdit(pkg),
+                    },
+                    {
+                      label: 'Delete',
+                      icon: Trash2,
+                      onClick: () => handleDeleteClick(pkg),
+                      variant: 'danger',
+                    },
+                  ]}
+                />
+              </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 p-5 flex flex-col justify-center min-w-0">
-              <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 p-4 sm:p-5 flex flex-col justify-center min-w-0">
+              <div className="flex items-start justify-between gap-3 sm:gap-4">
                 <div className="min-w-0 flex-1">
                   {/* Title and Status */}
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h3 className="font-serif text-xl font-bold text-text-primary truncate">
+                  <div className="flex items-start sm:items-center gap-2 sm:gap-3 flex-wrap">
+                    <h3 className="font-serif text-lg sm:text-xl font-bold text-text-primary leading-tight">
                       {pkg.title}
                     </h3>
                     <StatusBadge status={pkg.isActive !== false ? 'Active' : 'Inactive'} />
                   </div>
 
-                  {/* Description */}
-                  <p className="text-text-muted text-sm mt-1.5 line-clamp-2 leading-relaxed">
+                  {/* Description - More visible on mobile */}
+                  <p className="text-text-muted text-sm mt-2 line-clamp-2 sm:line-clamp-2 leading-relaxed">
                     {pkg.description}
                   </p>
 
                   {/* Price */}
                   <div className="mt-3">
-                    <span className="font-serif text-lg font-bold text-sage">
+                    <span className="font-serif text-xl sm:text-lg font-bold text-sage">
                       {formatCurrency(pkg.priceCents)}
                     </span>
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {/* Desktop actions */}
-                  <div className="hidden sm:flex items-center gap-2">
-                    <Button
-                      onClick={() => onEdit(pkg)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-text-muted hover:text-sage hover:bg-sage/10 transition-colors"
-                      aria-label={`Edit package: ${pkg.title}`}
-                    >
-                      <Pencil className="w-4 h-4" aria-label="Edit" />
-                    </Button>
-                    <Button
-                      onClick={() => handleDeleteClick(pkg)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-text-muted hover:text-danger-600 hover:bg-danger-50 transition-colors"
-                      aria-label={`Delete package: ${pkg.title}`}
-                    >
-                      <Trash2 className="w-4 h-4" aria-label="Delete" />
-                    </Button>
-                  </div>
-
-                  {/* Mobile dropdown */}
-                  <MobileActionDropdown
-                    actions={[
-                      {
-                        label: 'Edit',
-                        icon: Pencil,
-                        onClick: () => onEdit(pkg),
-                      },
-                      {
-                        label: 'Delete',
-                        icon: Trash2,
-                        onClick: () => handleDeleteClick(pkg),
-                        variant: 'danger',
-                      },
-                    ]}
-                  />
+                {/* Desktop actions only - Mobile uses overlay dropdown */}
+                <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+                  <Button
+                    onClick={() => onEdit(pkg)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-text-muted hover:text-sage hover:bg-sage/10 transition-colors"
+                    aria-label={`Edit package: ${pkg.title}`}
+                  >
+                    <Pencil className="w-4 h-4" aria-label="Edit" />
+                  </Button>
+                  <Button
+                    onClick={() => handleDeleteClick(pkg)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-text-muted hover:text-danger-600 hover:bg-danger-50 transition-colors"
+                    aria-label={`Delete package: ${pkg.title}`}
+                  >
+                    <Trash2 className="w-4 h-4" aria-label="Delete" />
+                  </Button>
                 </div>
               </div>
             </div>
