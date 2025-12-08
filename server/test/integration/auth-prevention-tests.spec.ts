@@ -19,7 +19,7 @@ import { loadConfig } from '../../src/lib/core/config';
 import { createApp } from '../../src/app';
 import { buildContainer } from '../../src/di';
 import { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.repository';
-import { TenantAuthService } from '../../src/services/tenant-auth.service';
+import type { TenantAuthService } from '../../src/services/tenant-auth.service';
 
 // Shared test data
 const prisma = new PrismaClient();
@@ -28,7 +28,13 @@ let tenantRepo: PrismaTenantRepository;
 let authService: TenantAuthService;
 
 beforeAll(async () => {
+  // Ensure required env vars are set for tests
+  if (!process.env.BOOKING_TOKEN_SECRET) {
+    process.env.BOOKING_TOKEN_SECRET = 'test-booking-token-secret-for-ci-min-32-chars';
+  }
+
   const config = loadConfig();
+  // Use real preset for integration tests that need database access
   const container = buildContainer({ ...config, ADAPTERS_PRESET: 'real' });
   const startTime = Date.now();
   app = createApp(config, container, startTime);
@@ -132,11 +138,12 @@ describe('Issue 1: Password Hash Synchronization', () => {
         where: { id: tenantId },
       });
 
-      expect(tenant?.passwordHash).toBeDefined();
-      expect(tenant?.passwordHash).not.toBe(password);
+      expect(tenant).toBeDefined();
+      expect(tenant!.passwordHash).toBeDefined();
+      expect(tenant!.passwordHash).not.toBe(password);
 
       // Password should verify against the hash
-      expect(await bcrypt.compare(password, tenant?.passwordHash!)).toBe(true);
+      expect(await bcrypt.compare(password, tenant!.passwordHash)).toBe(true);
 
       // Cleanup
       await prisma.tenant.delete({ where: { id: tenantId } });
@@ -517,8 +524,9 @@ describe('Issue 3: Demo/Dev Credentials Sync', () => {
         where: { id: signupRes.body.tenantId },
       });
 
-      expect(tenant?.email).toBe(email.toLowerCase());
-      expect(await bcrypt.compare(password, tenant?.passwordHash!)).toBe(true);
+      expect(tenant).toBeDefined();
+      expect(tenant!.email).toBe(email.toLowerCase());
+      expect(await bcrypt.compare(password, tenant!.passwordHash)).toBe(true);
 
       // Cleanup
       await prisma.tenant.delete({ where: { id: signupRes.body.tenantId } });
@@ -637,8 +645,9 @@ describe('Auth Prevention Regression Tests', () => {
     const tenant = await prisma.tenant.findUnique({
       where: { id: tenantId },
     });
-    expect(tenant?.passwordHash).not.toBe(password);
-    expect(await bcrypt.compare(password, tenant?.passwordHash!)).toBe(true);
+    expect(tenant).toBeDefined();
+    expect(tenant!.passwordHash).not.toBe(password);
+    expect(await bcrypt.compare(password, tenant!.passwordHash)).toBe(true);
 
     // 3. Login with different case
     const loginRes = await request(app)

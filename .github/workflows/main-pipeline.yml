@@ -213,6 +213,7 @@ jobs:
           TENANT_SECRETS_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           STRIPE_SECRET_KEY: sk_test_dummy_key_for_unit_tests_only
           JWT_SECRET: test-jwt-secret-for-unit-tests-only
+          BOOKING_TOKEN_SECRET: test-booking-token-secret-for-unit-tests-32chars
 
       - name: Upload unit test coverage
         if: always()
@@ -300,6 +301,7 @@ jobs:
           DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
           JWT_SECRET: test-jwt-secret-for-ci-pipeline-only-not-for-production-use
+          BOOKING_TOKEN_SECRET: test-booking-token-secret-for-ci-pipeline-32chars
           TENANT_SECRETS_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           STRIPE_SECRET_KEY: sk_test_dummy_key_for_integration_tests_only
           STRIPE_WEBHOOK_SECRET: whsec_test_dummy_webhook_secret_for_ci_only
@@ -437,6 +439,7 @@ jobs:
           NODE_ENV: development
           ADAPTERS_PRESET: mock
           JWT_SECRET: test-jwt-secret-for-e2e-testing-only
+          BOOKING_TOKEN_SECRET: test-booking-token-secret-for-e2e-tests-32chars
           TENANT_SECRETS_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_e2e_test
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_e2e_test
@@ -457,6 +460,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_e2e_test
           JWT_SECRET: test-jwt-secret-for-e2e-testing-only
+          BOOKING_TOKEN_SECRET: test-booking-token-secret-for-e2e-tests-32chars
 
       - name: Run E2E tests
         run: npm run test:e2e
