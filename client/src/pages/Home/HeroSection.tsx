@@ -60,57 +60,59 @@ export function HeroSection() {
         {/* Email Form */}
         <div className="animate-fade-slide-up" style={{ animationDelay: '0.6s' }}>
           {!submitted ? (
-            <form
-              data-testid="hero-waitlist-form"
-              aria-label="Early access request form"
-              onSubmit={handleSubmit}
-              className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto"
-            >
-              <input
-                type="email"
-                name="EMAIL"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your email"
-                required
-                className="flex-1 px-6 py-4 border-2 border-neutral-200 rounded-full text-lg bg-white
-                           transition-all duration-200
-                           focus:border-sage focus:ring-4 focus:ring-sage/10 focus:outline-none
-                           hover:border-neutral-300"
-                aria-label="Email address"
-              />
-              <Button
-                type="submit"
-                size="lg"
-                disabled={isLoading}
-                className="bg-sage hover:bg-sage-hover text-white font-semibold text-base
-                           whitespace-nowrap px-10 py-4 h-14 rounded-full
-                           transition-all duration-300 ease-out
-                           hover:shadow-xl hover:-translate-y-0.5
-                           disabled:opacity-70 group"
+            <>
+              <form
+                data-testid="hero-waitlist-form"
+                aria-label="Early access request form"
+                onSubmit={handleSubmit}
+                className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto"
               >
-                {isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  </span>
-                ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    Request Early Access
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </span>
-                )}
-              </Button>
-            </form>
-            {error && (
-              <p
-                role="alert"
-                aria-live="polite"
-                aria-atomic="true"
-                className="mt-4 text-red-600 text-sm text-center"
-              >
-                {error}
-              </p>
-            )}
+                <input
+                  type="email"
+                  name="EMAIL"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Your email"
+                  required
+                  className="flex-1 px-6 py-4 border-2 border-neutral-200 rounded-full text-lg bg-white
+                             transition-all duration-200
+                             focus:border-sage focus:ring-4 focus:ring-sage/10 focus:outline-none
+                             hover:border-neutral-300"
+                  aria-label="Email address"
+                />
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={isLoading}
+                  className="bg-sage hover:bg-sage-hover text-white font-semibold text-base
+                             whitespace-nowrap px-10 py-4 h-14 rounded-full
+                             transition-all duration-300 ease-out
+                             hover:shadow-xl hover:-translate-y-0.5
+                             disabled:opacity-70 group"
+                >
+                  {isLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      Request Early Access
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  )}
+                </Button>
+              </form>
+              {error && (
+                <p
+                  role="alert"
+                  aria-live="polite"
+                  aria-atomic="true"
+                  className="mt-4 text-red-600 text-sm text-center"
+                >
+                  {error}
+                </p>
+              )}
+            </>
           ) : (
             <div className="flex items-center justify-center gap-3 text-sage font-medium text-lg">
               <div className="w-10 h-10 bg-sage/10 rounded-full flex items-center justify-center">
