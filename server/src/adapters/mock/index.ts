@@ -11,6 +11,7 @@ import type { BlackoutRepository, CalendarProvider, WebhookRepository } from '..
 import type { PaymentProvider, CheckoutSession } from '../lib/ports';
 import type { EmailProvider } from '../lib/ports';
 import type { User, UserRepository } from '../lib/ports';
+import type { EarlyAccessRepository, EarlyAccessRequest } from '../lib/ports';
 import { BookingConflictError, NotFoundError } from '../../lib/errors';
 import bcrypt from 'bcryptjs';
 import type Stripe from 'stripe';
@@ -35,6 +36,7 @@ const webhookEvents = new Map<
     status: 'PENDING' | 'PROCESSED' | 'FAILED' | 'DUPLICATE';
   }
 >();
+const earlyAccessRequests = new Map<string, EarlyAccessRequest>();
 
 // Seed data on module load
 function seedData(): void {
@@ -1080,6 +1082,37 @@ export class MockWebhookRepository implements WebhookRepository {
   }
 }
 
+// Mock Early Access Repository
+export class MockEarlyAccessRepository implements EarlyAccessRepository {
+  async upsert(
+    email: string,
+    source: string
+  ): Promise<{ request: EarlyAccessRequest; isNew: boolean }> {
+    const existing = earlyAccessRequests.get(email);
+    const now = new Date();
+
+    if (existing) {
+      // Update timestamp
+      existing.updatedAt = now;
+      logger.debug({ email }, 'Mock early access request updated');
+      return { request: existing, isNew: false };
+    }
+
+    // Create new
+    const request: EarlyAccessRequest = {
+      id: `ear_${Date.now()}`,
+      email,
+      source,
+      status: 'pending',
+      createdAt: now,
+      updatedAt: now,
+    };
+    earlyAccessRequests.set(email, request);
+    logger.debug({ email, id: request.id }, 'Mock early access request created');
+    return { request, isNew: true };
+  }
+}
+
 // Export builder function
 export function buildMockAdapters() {
   return {
@@ -1091,6 +1124,7 @@ export function buildMockAdapters() {
     emailProvider: new MockEmailProvider(),
     userRepo: new MockUserRepository(),
     webhookRepo: new MockWebhookRepository(),
+    earlyAccessRepo: new MockEarlyAccessRepository(),
   };
 }
 
@@ -1110,12 +1144,13 @@ export function getMockState() {
  * Reset mock state to initial seeded state (E2E test determinism)
  */
 export function resetMockState() {
-  // Clear dynamic data (bookings, blackouts, calendar, webhooks)
+  // Clear dynamic data (bookings, blackouts, calendar, webhooks, early access)
   bookings.clear();
   bookingsByDate.clear();
   blackouts.clear();
   calendarBusyDates.clear();
   webhookEvents.clear();
+  earlyAccessRequests.clear();
 
   logger.debug('Mock state reset to seed data');
 }

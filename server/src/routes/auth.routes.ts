@@ -11,15 +11,12 @@ import type { TenantAuthService } from '../services/tenant-auth.service';
 import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import type { ApiKeyService } from '../lib/api-key.service';
-import { PrismaClient } from '../generated/prisma';
+import type { EarlyAccessRepository } from '../lib/ports';
 import { loginLimiter, signupLimiter } from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
 import { UnauthorizedError, ConflictError, ValidationError } from '../lib/errors';
 import { sanitizePlainText } from '../lib/sanitization';
 import { EarlyAccessRequestDtoSchema } from '@macon/contracts';
-
-// Shared Prisma instance for early access requests
-const prisma = new PrismaClient();
 
 /**
  * Options for creating unified auth routes
@@ -38,6 +35,7 @@ export interface UnifiedAuthRoutesOptions {
     sendEmail: (input: { to: string; subject: string; html: string }) => Promise<void>;
   };
   tenantOnboardingService?: TenantOnboardingService;
+  earlyAccessRepo?: EarlyAccessRepository;
 }
 
 /**
@@ -264,6 +262,7 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
     config,
     mailProvider,
     tenantOnboardingService,
+    earlyAccessRepo,
   } = options;
 
   const router = Router();
@@ -815,18 +814,16 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
         const normalizedEmail = email.toLowerCase().trim();
         const sanitizedEmail = sanitizePlainText(normalizedEmail);
 
-        // Store request in database (upsert to handle duplicates gracefully)
-        const earlyAccessRequest = await prisma.earlyAccessRequest.upsert({
-          where: { email: normalizedEmail },
-          update: { updatedAt: new Date() }, // Just update timestamp if already exists
-          create: {
-            email: normalizedEmail,
-            source: 'homepage',
-            status: 'pending',
-          },
-        });
+        // Early access repo is required for this endpoint
+        if (!earlyAccessRepo) {
+          throw new Error('Early access repository not configured');
+        }
 
-        const isNewRequest = earlyAccessRequest.createdAt.getTime() === earlyAccessRequest.updatedAt.getTime();
+        // Store request in database (upsert to handle duplicates gracefully)
+        const { request: earlyAccessRequest, isNew: isNewRequest } = await earlyAccessRepo.upsert(
+          normalizedEmail,
+          'homepage'
+        );
 
         // Format timestamp for internal notification (human-readable)
         const formattedDate = new Date().toLocaleDateString('en-US', {

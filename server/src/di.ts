@@ -51,6 +51,7 @@ import {
   PrismaSegmentRepository,
   PrismaServiceRepository,
   PrismaAvailabilityRuleRepository,
+  PrismaEarlyAccessRepository,
 } from './adapters/prisma';
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { PostmarkMailAdapter } from './adapters/postmark.adapter';
@@ -95,6 +96,7 @@ export interface Container {
     availabilityRule?: PrismaAvailabilityRuleRepository;
     booking?: PrismaBookingRepository;
     webhookSubscription?: PrismaWebhookSubscriptionRepository; // Webhook subscription management (TODO-278)
+    earlyAccess?: PrismaEarlyAccessRepository; // Early access request persistence
   };
   mailProvider?: PostmarkMailAdapter; // Export mail provider for password reset emails
   storageProvider: UploadAdapter; // Export storage provider for file uploads
@@ -266,6 +268,7 @@ export function buildContainer(config: Config): Container {
       service: serviceRepo,
       availabilityRule: availabilityRuleRepo,
       booking: adapters.bookingRepo as any, // Mock booking repo - type compatibility
+      earlyAccess: adapters.earlyAccessRepo as any, // Mock early access repo
     };
 
     // Cleanup function for mock mode
@@ -655,11 +658,15 @@ export function buildContainer(config: Config): Container {
     webhookDelivery: webhookDeliveryService,
   };
 
+  // Create EarlyAccessRepository for early access request persistence
+  const earlyAccessRepo = new PrismaEarlyAccessRepository(prisma);
+
   const repositories = {
     service: serviceRepo,
     availabilityRule: availabilityRuleRepo,
     booking: bookingRepo,
     webhookSubscription: webhookSubscriptionRepo,
+    earlyAccess: earlyAccessRepo,
   };
 
   // Cleanup function for real mode

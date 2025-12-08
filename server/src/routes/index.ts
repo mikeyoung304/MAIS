@@ -35,6 +35,7 @@ import type {
   AvailabilityRuleRepository,
   BookingRepository,
   WebhookSubscriptionRepository,
+  EarlyAccessRepository,
 } from '../lib/ports';
 import type { Request } from 'express';
 import { createAdminTenantsRoutes } from './admin/tenants.routes';
@@ -108,6 +109,7 @@ interface Repositories {
   availabilityRule?: AvailabilityRuleRepository;
   booking?: BookingRepository;
   webhookSubscription?: WebhookSubscriptionRepository;
+  earlyAccess?: EarlyAccessRepository;
 }
 
 export function createV1Router(
@@ -476,6 +478,7 @@ export function createV1Router(
     // /v1/auth/signup - public - self-service tenant signup
     // /v1/auth/forgot-password - public - request password reset
     // /v1/auth/reset-password - public - complete password reset
+    // /v1/auth/early-access - public - early access waitlist signup
     const unifiedAuthRoutes = createUnifiedAuthRoutes({
       identityService,
       tenantAuthService: services.tenantAuth,
@@ -486,6 +489,7 @@ export function createV1Router(
       },
       mailProvider,
       tenantOnboardingService: services?.tenantOnboarding,
+      earlyAccessRepo: repositories?.earlyAccess,
     });
     app.use('/v1/auth', unifiedAuthRoutes);
 

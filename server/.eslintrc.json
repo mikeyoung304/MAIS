@@ -37,6 +37,23 @@
       "rules": {
         "@typescript-eslint/no-explicit-any": "warn"
       }
+    },
+    {
+      // PREVENTION: Prevent direct PrismaClient instantiation in route files
+      // Routes must receive dependencies via DI, not create their own database clients
+      // This prevents CI failures when tests run in mock mode without DATABASE_URL
+      // Fix: Use repository pattern - inject via options object in route factory
+      "files": ["**/routes/**/*.ts"],
+      "excludedFiles": ["**/routes/index.ts"],
+      "rules": {
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "NewExpression[callee.name='PrismaClient']",
+            "message": "Direct PrismaClient instantiation in routes is forbidden. Use repository pattern: inject via DI options object instead. See docs/solutions/PREVENTION-INDEX.md"
+          }
+        ]
+      }
     }
   ]
 }
