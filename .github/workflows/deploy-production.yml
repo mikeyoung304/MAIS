@@ -136,8 +136,10 @@ jobs:
       - name: Generate Prisma Client
         run: npm run --workspace=server prisma:generate
 
-      - name: Build contracts package
-        run: npm run build --workspace=packages/contracts
+      - name: Build workspace packages
+        run: |
+          npm run build --workspace=packages/contracts
+          npm run build --workspace=packages/shared
 
       - name: Run database migrations
         run: npx prisma migrate deploy --schema=./server/prisma/schema.prisma
