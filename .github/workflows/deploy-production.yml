@@ -151,12 +151,10 @@ jobs:
         run: npm run test:unit
         env:
           NODE_ENV: test
-          # Required by encryption.service.spec.ts and stripe-connect.service.spec.ts
-          TENANT_SECRETS_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          STRIPE_SECRET_KEY: sk_test_placeholder_for_ci_unit_tests
-          # Required by booking-tokens.test.ts (P2-284 security feature)
-          JWT_SECRET: test-jwt-secret-for-ci-deploy-unit-tests
-          BOOKING_TOKEN_SECRET: test-booking-token-secret-for-ci-deploy-32chars
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          BOOKING_TOKEN_SECRET: ${{ secrets.BOOKING_TOKEN_SECRET }}
+          TENANT_SECRETS_ENCRYPTION_KEY: ${{ secrets.TENANT_SECRETS_ENCRYPTION_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
 
       - name: Run integration tests with coverage
         run: npm run test:integration -- --coverage
@@ -165,10 +163,10 @@ jobs:
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test
-          JWT_SECRET: test-jwt-secret-production
-          TENANT_SECRETS_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          STRIPE_SECRET_KEY: sk_test_placeholder_for_ci_integration
-          BOOKING_TOKEN_SECRET: test-booking-token-secret-for-ci-integration-32chars
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          BOOKING_TOKEN_SECRET: ${{ secrets.BOOKING_TOKEN_SECRET }}
+          TENANT_SECRETS_ENCRYPTION_KEY: ${{ secrets.TENANT_SECRETS_ENCRYPTION_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -181,13 +179,13 @@ jobs:
         continue-on-error: true  # E2E tests need running servers - TODO: fix CI E2E setup
         env:
           CI: true
+          NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test
-          JWT_SECRET: test-jwt-secret-production
-          TENANT_SECRETS_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          STRIPE_SECRET_KEY: sk_test_placeholder_for_ci
-          BOOKING_TOKEN_SECRET: test-booking-token-secret-for-ci-e2e-deploy-32chars
-          NODE_ENV: test
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          BOOKING_TOKEN_SECRET: ${{ secrets.BOOKING_TOKEN_SECRET }}
+          TENANT_SECRETS_ENCRYPTION_KEY: ${{ secrets.TENANT_SECRETS_ENCRYPTION_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
