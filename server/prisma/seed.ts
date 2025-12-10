@@ -7,9 +7,10 @@
  *   npm run db:seed:e2e          # E2E test tenant with fixed keys
  *   npm run db:seed:demo         # Rich demo data for development
  *   npm run db:seed:dev          # Platform + Demo (typical dev setup)
+ *   npm run db:seed:tenant -- --tenant=la-petit-mariage  # Specific tenant seed
  *
  * Environment Variables:
- *   SEED_MODE: 'production' | 'e2e' | 'demo' | 'dev' | 'all'
+ *   SEED_MODE: 'production' | 'e2e' | 'demo' | 'dev' | 'all' | 'la-petit-mariage'
  *   NODE_ENV: Used as fallback if SEED_MODE not set
  *   ADMIN_EMAIL: Required for production/dev seeds
  *   ADMIN_DEFAULT_PASSWORD: Required for production/dev seeds (min 12 chars)
@@ -20,16 +21,17 @@ import { PrismaClient } from '../src/generated/prisma';
 import { seedPlatform } from './seeds/platform';
 import { seedE2E } from './seeds/e2e';
 import { seedDemo } from './seeds/demo';
+import { seedLaPetitMarriage } from './seeds/la-petit-mariage';
 import { logger } from '../src/lib/core/logger';
 
 const prisma = new PrismaClient();
 
-type SeedMode = 'production' | 'e2e' | 'demo' | 'dev' | 'all';
+type SeedMode = 'production' | 'e2e' | 'demo' | 'dev' | 'all' | 'la-petit-mariage';
 
 function getSeedMode(): SeedMode {
   // Explicit SEED_MODE takes priority
   const explicitMode = process.env.SEED_MODE as SeedMode | undefined;
-  if (explicitMode && ['production', 'e2e', 'demo', 'dev', 'all'].includes(explicitMode)) {
+  if (explicitMode && ['production', 'e2e', 'demo', 'dev', 'all', 'la-petit-mariage'].includes(explicitMode)) {
     return explicitMode;
   }
 
@@ -78,6 +80,12 @@ async function main() {
         await seedPlatform(prisma);
         await seedE2E(prisma);
         await seedDemo(prisma);
+        await seedLaPetitMarriage(prisma);
+        break;
+
+      case 'la-petit-mariage':
+        // La Petit Mariage: Wedding/elopement tenant only
+        await seedLaPetitMarriage(prisma);
         break;
     }
 
