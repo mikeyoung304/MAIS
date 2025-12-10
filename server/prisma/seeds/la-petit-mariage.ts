@@ -219,15 +219,15 @@ export async function seedLaPetitMarriage(prisma: PrismaClient): Promise<void> {
       const tenant = await createOrUpdateTenant(tx, {
         slug: TENANT_SLUG,
         name: 'La Petit Mariage',
-        email: 'hello@lapetitmariage.com',
+        email: 'info@elopetomaconga.com',
         commissionPercent: 8.0, // Wedding industry standard
         apiKeyPublic: publicKey,
         apiKeySecret: secretKey ?? undefined,
-        // Elegant wedding brand colors
-        primaryColor: '#2d3436', // Charcoal for sophistication
-        secondaryColor: '#b8860b', // Gold accent
-        accentColor: '#dfe6e9', // Soft silver
-        backgroundColor: '#fdfbf7', // Warm off-white
+        // Brand colors from elopetomaconga.com
+        primaryColor: '#3b4672', // Navy blue (text/headings)
+        secondaryColor: '#c1c7dc', // Lavender (hero background)
+        accentColor: '#1e2339', // Dark navy (dark sections)
+        backgroundColor: '#ffffff', // White
       });
 
       publicKeyForLogging = publicKey;
