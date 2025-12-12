@@ -1,7 +1,7 @@
 import { AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { formatCurrency } from '@/lib/utils';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import type { PackageFormData } from '../hooks/usePackageForm';
 
 interface PricingSectionProps {
@@ -17,7 +17,7 @@ interface PricingSectionProps {
  * PricingSection Component
  *
  * Handles pricing and timing configuration fields:
- * - Price (in cents)
+ * - Price (in dollars, stored as cents internally)
  * - Minimum lead days
  * - Active status
  */
@@ -29,48 +29,47 @@ export function PricingSection({
   validateField,
   isSaving,
 }: PricingSectionProps) {
+  // Handle price change and clear errors
+  const handlePriceChange = (centsValue: string) => {
+    setForm({ ...form, priceCents: centsValue });
+    if (fieldErrors.priceCents) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { priceCents, ...rest } = fieldErrors;
+      setFieldErrors(rest);
+    }
+  };
+
   return (
     <>
       {/* Pricing Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Price Field */}
         <div className="space-y-2">
-          <Label htmlFor="priceCents" className="text-white/90 text-lg">
-            Price (cents) <span className="text-red-400">*</span>
+          <Label htmlFor="priceDollars" className="text-white/90 text-lg">
+            Price <span className="text-red-400">*</span>
           </Label>
-          <Input
-            id="priceCents"
-            type="number"
+          <CurrencyInput
+            id="priceDollars"
             value={form.priceCents}
-            onChange={(e) => {
-              setForm({ ...form, priceCents: e.target.value });
-              if (fieldErrors.priceCents) {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { priceCents, ...rest } = fieldErrors;
-                setFieldErrors(rest);
-              }
-            }}
-            onBlur={(e) => validateField('priceCents', e.target.value)}
-            placeholder="50000"
-            min="0"
+            onChange={handlePriceChange}
+            onBlur={() => validateField('priceCents', form.priceCents)}
+            placeholder="500.00"
             disabled={isSaving}
             className={`bg-macon-navy-900 border-white/20 text-white placeholder:text-white/50 focus:border-white/30 text-lg h-12 ${
               fieldErrors.priceCents ? 'border-danger-600' : ''
             }`}
             aria-invalid={!!fieldErrors.priceCents}
-            aria-describedby={fieldErrors.priceCents ? 'priceCents-error' : 'priceCents-help'}
+            aria-describedby={fieldErrors.priceCents ? 'priceDollars-error' : 'priceDollars-help'}
             required
           />
           {fieldErrors.priceCents ? (
-            <p id="priceCents-error" className="text-sm text-danger-700 flex items-center gap-1">
-              <AlertCircle className="w-4 h-4" />
+            <p id="priceDollars-error" className="text-sm text-danger-700 flex items-center gap-1" role="alert">
+              <AlertCircle className="w-4 h-4" aria-hidden="true" />
               {fieldErrors.priceCents}
             </p>
           ) : (
-            <p id="priceCents-help" className="text-base text-white/70">
-              {form.priceCents && !isNaN(parseInt(form.priceCents, 10))
-                ? formatCurrency(parseInt(form.priceCents, 10))
-                : 'Enter price in cents (e.g., 50000 = $500.00)'}
+            <p id="priceDollars-help" className="text-base text-white/70">
+              Enter the package price in dollars
             </p>
           )}
         </div>

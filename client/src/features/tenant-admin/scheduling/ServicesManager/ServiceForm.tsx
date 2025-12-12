@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { InputEnhanced } from '@/components/ui/input-enhanced';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Loader2 } from 'lucide-react';
 import type { ServiceFormProps } from './types';
 
@@ -106,17 +107,16 @@ export function ServiceForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-semibold text-white/90 mb-2">
-            Price (cents) <span className="text-red-500">*</span>
+            Price <span className="text-red-500">*</span>
           </label>
-          <InputEnhanced
-            type="number"
+          <CurrencyInput
             value={serviceForm.priceCents}
-            onChange={(e) => onFormChange({ ...serviceForm, priceCents: e.target.value })}
-            placeholder="10000"
+            onChange={(centsValue) => onFormChange({ ...serviceForm, priceCents: centsValue })}
+            placeholder="100.00"
             required
-            min={0}
-            helperText="Price in cents (e.g., 10000 = $100.00)"
+            className="h-14 rounded-lg border border-white/20 bg-white/5 text-white placeholder:text-white/40 focus:border-macon-orange focus:outline-none focus:ring-2 focus:ring-macon-orange/30"
           />
+          <p className="mt-1.5 text-sm text-neutral-500">Enter the service price in dollars</p>
         </div>
 
         <div>

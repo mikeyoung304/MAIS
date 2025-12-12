@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import {
   Select,
   SelectContent,
@@ -14,7 +15,6 @@ import {
 } from '@/components/ui/select';
 import { ImageUploadField } from '@/components/ImageUploadField';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { formatCurrency } from '@/lib/utils';
 import { baseUrl } from '@/lib/api';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
@@ -148,24 +148,20 @@ export function PackageForm({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="priceCents" className="text-white/90 text-lg">
-                Price (cents) <span className="text-destructive">*</span>
+              <Label htmlFor="priceDollars" className="text-white/90 text-lg">
+                Price <span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="priceCents"
-                type="number"
+              <CurrencyInput
+                id="priceDollars"
                 value={packageForm.priceCents}
-                onChange={(e) => onFormChange({ ...packageForm, priceCents: e.target.value })}
-                placeholder="50000"
-                min="0"
+                onChange={(centsValue) => onFormChange({ ...packageForm, priceCents: centsValue })}
+                placeholder="500.00"
                 disabled={isSaving}
                 className="bg-macon-navy-900 border-white/20 text-white placeholder:text-white/50 focus:border-white/30 text-lg h-12"
                 required
               />
               <p className="text-base text-white/70">
-                {packageForm.priceCents && !isNaN(parseInt(packageForm.priceCents, 10))
-                  ? formatCurrency(parseInt(packageForm.priceCents, 10))
-                  : 'Enter price in cents (e.g., 50000 = $500.00)'}
+                Enter the package price in dollars
               </p>
             </div>
           </div>

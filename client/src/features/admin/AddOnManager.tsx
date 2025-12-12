@@ -2,6 +2,7 @@ import { Plus, Edit, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import {
   Select,
   SelectContent,
@@ -56,15 +57,13 @@ export function AddOnManager({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="addOnPrice" className="text-base text-white/90">
-                  Price (cents) <span className="text-destructive">*</span>
+                  Price <span className="text-destructive">*</span>
                 </Label>
-                <Input
+                <CurrencyInput
                   id="addOnPrice"
-                  type="number"
                   value={addOnForm.priceCents}
-                  onChange={(e) => onFormChange({ ...addOnForm, priceCents: e.target.value })}
-                  placeholder="10000"
-                  min="0"
+                  onChange={(centsValue) => onFormChange({ ...addOnForm, priceCents: centsValue })}
+                  placeholder="100.00"
                   disabled={isSaving}
                   className="bg-macon-navy-900 border-white/20 text-white placeholder:text-white/50 focus:border-white/30 text-lg h-12"
                   required
