@@ -27,9 +27,37 @@ export function getTierDisplayName(tierLevel: TierLevel): string {
 }
 
 /**
+ * Normalize grouping names to standard tier levels
+ * Supports multiple naming conventions:
+ * - budget/good/essential → budget
+ * - middle/better/popular → middle
+ * - luxury/best/premium → luxury
+ */
+function normalizeGrouping(grouping: string): TierLevel | null {
+  const lower = grouping.toLowerCase();
+
+  // Budget tier aliases
+  if (['budget', 'good', 'essential', 'basic', 'starter'].includes(lower)) {
+    return 'budget';
+  }
+
+  // Middle tier aliases
+  if (['middle', 'better', 'popular', 'standard', 'recommended'].includes(lower)) {
+    return 'middle';
+  }
+
+  // Luxury tier aliases
+  if (['luxury', 'best', 'premium', 'deluxe', 'ultimate'].includes(lower)) {
+    return 'luxury';
+  }
+
+  return null;
+}
+
+/**
  * Extract tiers from packages based on grouping field
  * Returns an object with budget, middle, luxury keys
- * Accepts 'popular' as an alias for 'middle' tier
+ * Accepts multiple naming conventions (good/better/best, budget/middle/luxury, etc.)
  */
 export function extractTiers(packages: PackageDto[]): Record<TierLevel, PackageDto | undefined> {
   const tiers: Record<TierLevel, PackageDto | undefined> = {
@@ -39,14 +67,11 @@ export function extractTiers(packages: PackageDto[]): Record<TierLevel, PackageD
   };
 
   for (const pkg of packages) {
-    const grouping = pkg.grouping?.toLowerCase();
-    if (!grouping) continue;
+    if (!pkg.grouping) continue;
 
-    // Map 'popular' to 'middle' tier
-    const normalizedGrouping = grouping === 'popular' ? 'middle' : grouping;
-
-    if (TIER_LEVELS.includes(normalizedGrouping as TierLevel)) {
-      tiers[normalizedGrouping as TierLevel] = pkg;
+    const tierLevel = normalizeGrouping(pkg.grouping);
+    if (tierLevel) {
+      tiers[tierLevel] = pkg;
     }
   }
 
