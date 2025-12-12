@@ -7,10 +7,11 @@
  *   npm run db:seed:e2e          # E2E test tenant with fixed keys
  *   npm run db:seed:demo         # Rich demo data for development
  *   npm run db:seed:dev          # Platform + Demo (typical dev setup)
- *   npm run db:seed:tenant -- --tenant=la-petit-mariage  # Specific tenant seed
+ *   SEED_MODE=la-petit-mariage npm exec prisma db seed  # La Petit Mariage tenant
+ *   SEED_MODE=little-bit-farm npm exec prisma db seed   # Little Bit Horse Farm tenant
  *
  * Environment Variables:
- *   SEED_MODE: 'production' | 'e2e' | 'demo' | 'dev' | 'all' | 'la-petit-mariage'
+ *   SEED_MODE: 'production' | 'e2e' | 'demo' | 'dev' | 'all' | 'la-petit-mariage' | 'little-bit-farm'
  *   NODE_ENV: Used as fallback if SEED_MODE not set
  *   ADMIN_EMAIL: Required for production/dev seeds
  *   ADMIN_DEFAULT_PASSWORD: Required for production/dev seeds (min 12 chars)
@@ -22,16 +23,17 @@ import { seedPlatform } from './seeds/platform';
 import { seedE2E } from './seeds/e2e';
 import { seedDemo } from './seeds/demo';
 import { seedLaPetitMarriage } from './seeds/la-petit-mariage';
+import { seedLittleBitHorseFarm } from './seeds/little-bit-horse-farm';
 import { logger } from '../src/lib/core/logger';
 
 const prisma = new PrismaClient();
 
-type SeedMode = 'production' | 'e2e' | 'demo' | 'dev' | 'all' | 'la-petit-mariage';
+type SeedMode = 'production' | 'e2e' | 'demo' | 'dev' | 'all' | 'la-petit-mariage' | 'little-bit-farm';
 
 function getSeedMode(): SeedMode {
   // Explicit SEED_MODE takes priority
   const explicitMode = process.env.SEED_MODE as SeedMode | undefined;
-  if (explicitMode && ['production', 'e2e', 'demo', 'dev', 'all', 'la-petit-mariage'].includes(explicitMode)) {
+  if (explicitMode && ['production', 'e2e', 'demo', 'dev', 'all', 'la-petit-mariage', 'little-bit-farm'].includes(explicitMode)) {
     return explicitMode;
   }
 
@@ -81,11 +83,17 @@ async function main() {
         await seedE2E(prisma);
         await seedDemo(prisma);
         await seedLaPetitMarriage(prisma);
+        await seedLittleBitHorseFarm(prisma);
         break;
 
       case 'la-petit-mariage':
         // La Petit Mariage: Wedding/elopement tenant only
         await seedLaPetitMarriage(prisma);
+        break;
+
+      case 'little-bit-farm':
+        // Little Bit Horse Farm: Corporate wellness retreats
+        await seedLittleBitHorseFarm(prisma);
         break;
     }
 
