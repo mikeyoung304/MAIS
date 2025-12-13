@@ -187,6 +187,16 @@ async function linkAddOnsToPackage(
 }
 
 export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void> {
+  // Production guard - prevent accidental data destruction
+  if (
+    process.env.NODE_ENV === 'production' &&
+    process.env.ALLOW_PRODUCTION_SEED !== 'true'
+  ) {
+    throw new Error(
+      'Production seed blocked. Set ALLOW_PRODUCTION_SEED=true to override.'
+    );
+  }
+
   // Check if tenant already exists (outside transaction for read-only check)
   const existingTenant = await prisma.tenant.findUnique({
     where: { slug: TENANT_SLUG },
@@ -297,6 +307,14 @@ Duration: 3.5-4 hours`,
         basePrice: 45000, // $450
         grouping: 'Good',
         groupingOrder: 1,
+        photos: [
+          {
+            url: 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a',
+            filename: 'grounding-reset.jpg',
+            size: 0,
+            order: 0,
+          },
+        ],
       });
 
       // Better: The Team Recharge
@@ -316,6 +334,14 @@ Duration: 6-7 hours`,
         basePrice: 65000, // $650
         grouping: 'Better',
         groupingOrder: 2,
+        photos: [
+          {
+            url: 'https://images.unsplash.com/photo-1508672019048-805c876b67e2',
+            filename: 'team-recharge.jpg',
+            size: 0,
+            order: 0,
+          },
+        ],
       });
 
       // Best: The Executive Reset
@@ -336,6 +362,14 @@ Duration: 7-8 hours + prep/recap`,
         basePrice: 95000, // $950
         grouping: 'Best',
         groupingOrder: 3,
+        photos: [
+          {
+            url: 'https://images.unsplash.com/photo-1450052590821-8bf91254a353',
+            filename: 'executive-reset.jpg',
+            size: 0,
+            order: 0,
+          },
+        ],
       });
 
       logger.info(
@@ -512,14 +546,15 @@ Duration: 7-8 hours + prep/recap`,
 
       // =====================================================================
       // BLACKOUT DATES (holidays)
+      // Use date-only strings to avoid timezone interpretation issues
       // =====================================================================
       const holidays = [
-        { date: new Date('2025-12-24T00:00:00Z'), reason: 'Christmas Eve' },
-        { date: new Date('2025-12-25T00:00:00Z'), reason: 'Christmas Day' },
-        { date: new Date('2025-12-31T00:00:00Z'), reason: "New Year's Eve" },
-        { date: new Date('2026-01-01T00:00:00Z'), reason: "New Year's Day" },
-        { date: new Date('2026-07-04T00:00:00Z'), reason: 'Independence Day' },
-        { date: new Date('2026-11-26T00:00:00Z'), reason: 'Thanksgiving' },
+        { date: new Date('2025-12-24'), reason: 'Christmas Eve' },
+        { date: new Date('2025-12-25'), reason: 'Christmas Day' },
+        { date: new Date('2025-12-31'), reason: "New Year's Eve" },
+        { date: new Date('2026-01-01'), reason: "New Year's Day" },
+        { date: new Date('2026-07-04'), reason: 'Independence Day' },
+        { date: new Date('2026-11-26'), reason: 'Thanksgiving' },
       ];
 
       await Promise.all(

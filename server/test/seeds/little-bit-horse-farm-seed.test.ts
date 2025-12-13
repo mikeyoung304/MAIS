@@ -253,6 +253,40 @@ describe('Little Bit Horse Farm Seed', () => {
       expect(reasons).toContain("New Year's Day");
     });
   });
+
+  describe('Production Guard', () => {
+    it('should throw error in production without ALLOW_PRODUCTION_SEED', async () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      delete process.env.ALLOW_PRODUCTION_SEED;
+
+      const mockPrisma = createMockPrisma(null);
+
+      await expect(seedLittleBitHorseFarm(mockPrisma)).rejects.toThrow(
+        'Production seed blocked. Set ALLOW_PRODUCTION_SEED=true to override.'
+      );
+
+      process.env.NODE_ENV = originalNodeEnv;
+    });
+
+    it('should proceed in production with ALLOW_PRODUCTION_SEED=true', async () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      const originalAllowSeed = process.env.ALLOW_PRODUCTION_SEED;
+      process.env.NODE_ENV = 'production';
+      process.env.ALLOW_PRODUCTION_SEED = 'true';
+
+      const mockPrisma = createMockPrisma(null);
+
+      await expect(seedLittleBitHorseFarm(mockPrisma)).resolves.not.toThrow();
+
+      process.env.NODE_ENV = originalNodeEnv;
+      if (originalAllowSeed !== undefined) {
+        process.env.ALLOW_PRODUCTION_SEED = originalAllowSeed;
+      } else {
+        delete process.env.ALLOW_PRODUCTION_SEED;
+      }
+    });
+  });
 });
 
 /**
