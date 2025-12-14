@@ -188,6 +188,16 @@ async function linkAddOnsToPackage(
 }
 
 export async function seedLaPetitMarriage(prisma: PrismaClient): Promise<void> {
+  // Production guard - prevent accidental data destruction
+  if (
+    process.env.NODE_ENV === 'production' &&
+    process.env.ALLOW_PRODUCTION_SEED !== 'true'
+  ) {
+    throw new Error(
+      'Production seed blocked. Set ALLOW_PRODUCTION_SEED=true to override.'
+    );
+  }
+
   // Check if tenant already exists (outside transaction for read-only check)
   const existingTenant = await prisma.tenant.findUnique({
     where: { slug: TENANT_SLUG },
@@ -265,7 +275,7 @@ meaningful ceremony that reflects your unique story. Simple, heartfelt, and unfo
 
 Perfect for couples who want to keep it simple and meaningful.`,
         basePrice: 20000, // $200
-        grouping: 'Elopement',
+        grouping: 'tier_1',
         groupingOrder: 1,
       });
 
@@ -281,7 +291,7 @@ Perfect for couples who want to keep it simple and meaningful.`,
 
 Everything you need for a beautiful, intimate celebration.`,
         basePrice: 59500, // $595
-        grouping: 'Elopement',
+        grouping: 'tier_2',
         groupingOrder: 2,
       });
 
@@ -298,7 +308,7 @@ Everything you need for a beautiful, intimate celebration.`,
 
 The ultimate stress-free elopement experience.`,
         basePrice: 79500, // $795
-        grouping: 'Elopement',
+        grouping: 'tier_3',
         groupingOrder: 3,
       });
 
@@ -335,7 +345,7 @@ wedding, scaled down to focus on what matters most—your love story.`,
 
 Perfect for couples planning their own reception elsewhere.`,
         basePrice: 150000, // $1,500
-        grouping: 'Micro Wedding',
+        grouping: 'tier_1',
         groupingOrder: 1,
       });
 
@@ -352,7 +362,7 @@ Perfect for couples planning their own reception elsewhere.`,
 
 All the magic of a wedding day, thoughtfully scaled down.`,
         basePrice: 250000, // $2,500
-        grouping: 'Micro Wedding',
+        grouping: 'tier_2',
         groupingOrder: 2,
       });
 
@@ -369,7 +379,7 @@ All the magic of a wedding day, thoughtfully scaled down.`,
 
 Everything handled, so you can simply enjoy your day.`,
         basePrice: 350000, // $3,500
-        grouping: 'Micro Wedding',
+        grouping: 'tier_3',
         groupingOrder: 3,
       });
 
@@ -406,7 +416,7 @@ handle the details while you focus on making memories.`,
 
 A beautiful start to your celebration.`,
         basePrice: 250000, // $2,500
-        grouping: 'Full Wedding',
+        grouping: 'tier_1',
         groupingOrder: 1,
       });
 
@@ -423,7 +433,7 @@ A beautiful start to your celebration.`,
 
 Everything you need for your perfect day.`,
         basePrice: 450000, // $4,500
-        grouping: 'Full Wedding',
+        grouping: 'tier_2',
         groupingOrder: 2,
       });
 
@@ -441,7 +451,7 @@ Everything you need for your perfect day.`,
 
 The ultimate wedding experience, fully handled.`,
         basePrice: 750000, // $7,500
-        grouping: 'Full Wedding',
+        grouping: 'tier_3',
         groupingOrder: 3,
       });
 

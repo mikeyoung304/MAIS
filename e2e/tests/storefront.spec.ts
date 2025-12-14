@@ -323,6 +323,23 @@ test.describe('Responsive Layout', () => {
   });
 });
 
+test.describe('Legacy Tier URL Redirects', () => {
+  // DHH-style: One parameterized test covers all legacy alias redirects
+  const legacyRedirects = [
+    ['budget', 'tier_1'],
+    ['middle', 'tier_2'],
+    ['luxury', 'tier_3'],
+  ] as const;
+
+  legacyRedirects.forEach(([legacy, canonical]) => {
+    test(`redirects /tiers/${legacy} to /tiers/${canonical}`, async ({ page }) => {
+      await page.goto(`/tiers/${legacy}`);
+      await page.waitForURL(new RegExp(`/tiers/${canonical}`));
+      expect(page.url()).toContain(`/tiers/${canonical}`);
+    });
+  });
+});
+
 test.describe('Image Handling', () => {
   test('shows fallback gradient when no image URL', async ({ page }) => {
     // Mock API to return package without photos
