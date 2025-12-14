@@ -240,6 +240,12 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
         secondaryColor: '#68d391', // Sage green
         accentColor: '#9f7aea', // Soft purple
         backgroundColor: '#faf5f0', // Warm cream
+        // Tier display names - customize how tiers appear in storefront
+        tierDisplayNames: {
+          tier_1: 'The Grounding Reset',
+          tier_2: 'The Team Recharge',
+          tier_3: 'The Executive Reset',
+        },
       });
 
       publicKeyForLogging = publicKey;
@@ -305,7 +311,7 @@ Includes:
 Minimum 4 participants. Pricing is per person.
 Duration: 3.5-4 hours`,
         basePrice: 45000, // $450
-        grouping: 'Good',
+        grouping: 'tier_1',
         groupingOrder: 1,
         photos: [
           {
@@ -332,7 +338,7 @@ Everything in The Grounding Reset, plus:
 Minimum 4 participants. Pricing is per person.
 Duration: 6-7 hours`,
         basePrice: 65000, // $650
-        grouping: 'Better',
+        grouping: 'tier_2',
         groupingOrder: 2,
         photos: [
           {
@@ -360,7 +366,7 @@ Everything in The Team Recharge, plus:
 Minimum 4 participants. Pricing is per person.
 Duration: 7-8 hours + prep/recap`,
         basePrice: 95000, // $950
-        grouping: 'Best',
+        grouping: 'tier_3',
         groupingOrder: 3,
         photos: [
           {

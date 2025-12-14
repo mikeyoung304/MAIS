@@ -847,6 +847,19 @@ export const ALLOWED_FONT_FAMILIES = [
 ] as const;
 
 /**
+ * Tier display names - tenant customization for tier labels
+ * Structure: {"tier_1": "The Grounding Reset", "tier_2": "The Team Recharge", "tier_3": "The Executive Reset"}
+ * If not provided, defaults to Essential/Popular/Premium
+ */
+export const TierDisplayNamesSchema = z.object({
+  tier_1: z.string().max(50).optional(),
+  tier_2: z.string().max(50).optional(),
+  tier_3: z.string().max(50).optional(),
+});
+
+export type TierDisplayNames = z.infer<typeof TierDisplayNamesSchema>;
+
+/**
  * Public tenant info for storefront routing
  * SECURITY: Only safe public fields - never expose secrets, Stripe IDs, or PII
  */
@@ -868,6 +881,8 @@ export const TenantPublicDtoSchema = z.object({
       landingPage: LandingPageConfigSchema.optional(),
     })
     .optional(),
+  // Tier display names - tenant customization for tier labels
+  tierDisplayNames: TierDisplayNamesSchema.optional(),
 });
 
 export type TenantPublicDto = z.infer<typeof TenantPublicDtoSchema>;

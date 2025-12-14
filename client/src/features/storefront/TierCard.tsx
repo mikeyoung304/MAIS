@@ -16,16 +16,12 @@
 import { memo } from 'react';
 import type { PackageDto } from '@macon/contracts';
 import { ChoiceCardBase } from './ChoiceCardBase';
-import {
-  getTierDisplayName,
-  truncateText,
-  CARD_DESCRIPTION_MAX_LENGTH,
-  type TierLevel,
-} from './utils';
+import { useTierDisplayName } from './hooks';
+import { truncateText, CARD_DESCRIPTION_MAX_LENGTH, type TierLevel } from './utils';
 
 interface TierCardProps {
   package: PackageDto;
-  /** The tier level: budget, middle, or luxury */
+  /** The tier level: tier_1, tier_2, or tier_3 */
   tierLevel: TierLevel;
   /** Optional segment slug for routing */
   segmentSlug?: string;
@@ -39,8 +35,11 @@ export const TierCard = memo(function TierCard({
   segmentSlug,
   totalTierCount,
 }: TierCardProps) {
+  // Get display name using tenant's custom names or defaults
+  const tierDisplayName = useTierDisplayName(tierLevel);
+
   // Only highlight middle tier when exactly 3 tiers exist
-  const isHighlighted = totalTierCount === 3 && tierLevel === 'middle';
+  const isHighlighted = totalTierCount === 3 && tierLevel === 'tier_2';
 
   // Build relative link based on whether we're in a segment context
   // Relative paths resolve correctly within /t/:tenantSlug routes
@@ -54,8 +53,8 @@ export const TierCard = memo(function TierCard({
       title={pkg.title}
       description={truncateText(pkg.description, CARD_DESCRIPTION_MAX_LENGTH)}
       imageUrl={imageUrl}
-      imageAlt={`${getTierDisplayName(tierLevel)} tier: ${pkg.title}`}
-      categoryLabel={getTierDisplayName(tierLevel)}
+      imageAlt={`${tierDisplayName} tier: ${pkg.title}`}
+      categoryLabel={tierDisplayName}
       price={pkg.priceCents}
       cta="View Details"
       href={href}

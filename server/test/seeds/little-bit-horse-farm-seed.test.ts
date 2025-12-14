@@ -3,7 +3,7 @@
  *
  * Tests:
  * - Segment creation (Corporate Wellness Retreat)
- * - 3-tier package creation (Good/Better/Best)
+ * - 3-tier package creation (tier_1/tier_2/tier_3)
  * - 18 add-ons creation (global scope)
  * - PackageAddOn links (54 total)
  * - Idempotency (safe to run multiple times)
@@ -75,7 +75,7 @@ describe('Little Bit Horse Farm Seed', () => {
       expect(mockPrisma.package.upsert).toHaveBeenCalledTimes(3);
     });
 
-    it('should create Grounding Reset (Good tier) at $450', async () => {
+    it('should create Grounding Reset (tier_1) at $450', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
@@ -86,11 +86,11 @@ describe('Little Bit Horse Farm Seed', () => {
       expect(groundingReset).toBeDefined();
       expect(groundingReset![0].create.name).toBe('The Grounding Reset');
       expect(groundingReset![0].create.basePrice).toBe(45000); // $450
-      expect(groundingReset![0].create.grouping).toBe('Good');
+      expect(groundingReset![0].create.grouping).toBe('tier_1');
       expect(groundingReset![0].create.groupingOrder).toBe(1);
     });
 
-    it('should create Team Recharge (Better tier) at $650', async () => {
+    it('should create Team Recharge (tier_2) at $650', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
@@ -101,11 +101,11 @@ describe('Little Bit Horse Farm Seed', () => {
       expect(teamRecharge).toBeDefined();
       expect(teamRecharge![0].create.name).toBe('The Team Recharge');
       expect(teamRecharge![0].create.basePrice).toBe(65000); // $650
-      expect(teamRecharge![0].create.grouping).toBe('Better');
+      expect(teamRecharge![0].create.grouping).toBe('tier_2');
       expect(teamRecharge![0].create.groupingOrder).toBe(2);
     });
 
-    it('should create Executive Reset (Best tier) at $950', async () => {
+    it('should create Executive Reset (tier_3) at $950', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
@@ -116,7 +116,7 @@ describe('Little Bit Horse Farm Seed', () => {
       expect(executiveReset).toBeDefined();
       expect(executiveReset![0].create.name).toBe('The Executive Reset');
       expect(executiveReset![0].create.basePrice).toBe(95000); // $950
-      expect(executiveReset![0].create.grouping).toBe('Best');
+      expect(executiveReset![0].create.grouping).toBe('tier_3');
       expect(executiveReset![0].create.groupingOrder).toBe(3);
     });
   });

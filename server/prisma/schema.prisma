@@ -88,6 +88,11 @@ model Tenant {
   // Landing Page Configuration
   landingPageConfig Json? // Stores tenant's landing page configuration (sections, hero, testimonials, etc.)
 
+  // Tier Display Names - Tenant customization for tier labels
+  // Structure: {"tier_1": "The Grounding Reset", "tier_2": "The Team Recharge", "tier_3": "The Executive Reset"}
+  // Default display names (Essential/Popular/Premium) are used if not specified
+  tierDisplayNames Json? @default("{}")
+
   // Relations
   users            User[] // Tenant admin users
   customers        Customer[] // Tenant-scoped customers

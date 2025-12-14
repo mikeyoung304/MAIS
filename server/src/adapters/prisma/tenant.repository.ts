@@ -223,6 +223,7 @@ export class PrismaTenantRepository {
    * - id, slug, name - Public identifiers
    * - apiKeyPublic - Read-only API key for X-Tenant-Key header
    * - branding - Visual customization (validated with Zod)
+   * - tierDisplayNames - Tier display customization (validated with Zod)
    *
    * @param slug - URL-safe tenant identifier
    * @returns TenantPublicDto or null if not found/inactive
@@ -239,6 +240,7 @@ export class PrismaTenantRepository {
         name: true,
         apiKeyPublic: true,
         branding: true,
+        tierDisplayNames: true,
       },
     });
 
@@ -253,6 +255,9 @@ export class PrismaTenantRepository {
       name: tenant.name,
       apiKeyPublic: tenant.apiKeyPublic,
       branding: tenant.branding,
+      tierDisplayNames: tenant.tierDisplayNames as
+        | { tier_1?: string; tier_2?: string; tier_3?: string }
+        | undefined,
     };
 
     // Validate entire response with Zod schema (including branding)
@@ -269,13 +274,14 @@ export class PrismaTenantRepository {
         'Invalid tenant data during public lookup'
       );
 
-      // Return response with branding set to undefined (graceful degradation)
+      // Return response with branding/tierDisplayNames set to undefined (graceful degradation)
       return {
         id: tenant.id,
         slug: tenant.slug,
         name: tenant.name,
         apiKeyPublic: tenant.apiKeyPublic,
         branding: undefined,
+        tierDisplayNames: undefined,
       };
     }
 

@@ -14,7 +14,7 @@
 
 import { useMemo } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
-import { TierDetail, TIER_LEVELS, type TierLevel } from '@/features/storefront';
+import { TierDetail, TIER_LEVELS, LEGACY_TIER_ALIASES, normalizeGrouping, type TierLevel } from '@/features/storefront';
 import { Loading } from '@/ui/Loading';
 import { FeatureErrorBoundary } from '@/components/errors';
 import { useSegmentWithPackages, usePackages } from '@/features/catalog/hooks';
@@ -32,8 +32,14 @@ function SegmentTierDetailContent() {
     return <Navigate to=".." replace />;
   }
 
+  // Handle legacy URL redirects (budget→tier_1, middle→tier_2, luxury→tier_3, etc.)
+  const lowerTier = tier.toLowerCase();
+  if (lowerTier in LEGACY_TIER_ALIASES) {
+    return <Navigate to={`../${LEGACY_TIER_ALIASES[lowerTier]}`} replace />;
+  }
+
   // Validate tier level - go back to segment tiers page if invalid
-  const tierLevel = tier.toLowerCase();
+  const tierLevel = lowerTier;
   if (!TIER_LEVELS.includes(tierLevel as TierLevel)) {
     return <Navigate to=".." replace />;
   }
@@ -50,8 +56,11 @@ function SegmentTierDetailContent() {
 
   const packages = segment.packages || [];
 
-  // Find the package matching this tier
-  const pkg = packages.find((p: PackageDto) => p.grouping?.toLowerCase() === tierLevel);
+  // Find the package matching this tier (using normalizeGrouping to handle naming conventions)
+  const pkg = packages.find((p: PackageDto) => {
+    if (!p.grouping) return false;
+    return normalizeGrouping(p.grouping) === tierLevel;
+  });
 
   if (!pkg) {
     return <Navigate to=".." replace />;
@@ -80,8 +89,14 @@ function RootTierDetailContent() {
     return <Navigate to=".." replace />;
   }
 
+  // Handle legacy URL redirects (budget→tier_1, middle→tier_2, luxury→tier_3, etc.)
+  const lowerTier = tier.toLowerCase();
+  if (lowerTier in LEGACY_TIER_ALIASES) {
+    return <Navigate to={`../${LEGACY_TIER_ALIASES[lowerTier]}`} replace />;
+  }
+
   // Validate tier level - use ".." to go back to tiers list
-  const tierLevel = tier.toLowerCase();
+  const tierLevel = lowerTier;
   if (!TIER_LEVELS.includes(tierLevel as TierLevel)) {
     return <Navigate to=".." replace />;
   }
@@ -97,17 +112,21 @@ function RootTierDetailContent() {
   }
 
   // Filter to root packages (no segment) with valid tier groupings - memoized
+  // Use normalizeGrouping to handle various naming conventions (Good/Better/Best, etc.)
   const rootPackages = useMemo(
     () =>
       packages.filter(
         (p: PackageDto) =>
-          !p.segmentId && p.grouping && TIER_LEVELS.includes(p.grouping.toLowerCase() as TierLevel)
+          !p.segmentId && p.grouping && normalizeGrouping(p.grouping) !== null
       ),
     [packages]
   );
 
-  // Find the package matching this tier
-  const pkg = rootPackages.find((p: PackageDto) => p.grouping?.toLowerCase() === tierLevel);
+  // Find the package matching this tier (using normalizeGrouping to handle naming conventions)
+  const pkg = rootPackages.find((p: PackageDto) => {
+    if (!p.grouping) return false;
+    return normalizeGrouping(p.grouping) === tierLevel;
+  });
 
   if (!pkg) {
     return <Navigate to=".." replace />;

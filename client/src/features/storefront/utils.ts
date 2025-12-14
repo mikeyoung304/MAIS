@@ -3,52 +3,83 @@
  *
  * Shared constants and functions for the 3-tier pricing system.
  * Extracted to avoid duplication across TierCard, TierSelector, and TierDetail.
+ *
+ * Canonical tier names: tier_1, tier_2, tier_3
+ * Display names (default): Essential, Popular, Premium
+ * Tenants can customize display names via tierDisplayNames config.
  */
 
 import type { PackageDto } from '@macon/contracts';
 
-/** Standard tier levels in display order */
-export const TIER_LEVELS = ['budget', 'middle', 'luxury'] as const;
+/**
+ * Standard tier levels in display order (canonical names)
+ * tier_1 = Entry level / Essential
+ * tier_2 = Mid tier / Popular (recommended)
+ * tier_3 = Premium tier
+ */
+export const TIER_LEVELS = ['tier_1', 'tier_2', 'tier_3'] as const;
 export type TierLevel = (typeof TIER_LEVELS)[number];
 
 /**
+ * Legacy tier level aliases for backward compatibility during migration
+ * Maps old URL slugs to canonical tier names
+ */
+export const LEGACY_TIER_ALIASES: Record<string, TierLevel> = {
+  // Old URL slugs
+  budget: 'tier_1',
+  middle: 'tier_2',
+  luxury: 'tier_3',
+  // Common naming conventions (will be removed after DB migration)
+  good: 'tier_1',
+  better: 'tier_2',
+  best: 'tier_3',
+  essential: 'tier_1',
+  popular: 'tier_2',
+  premium: 'tier_3',
+  basic: 'tier_1',
+  standard: 'tier_2',
+  deluxe: 'tier_3',
+  starter: 'tier_1',
+  recommended: 'tier_2',
+  ultimate: 'tier_3',
+};
+
+/**
  * Get tier display name based on tier level
- * budget → Essential, middle → Popular, luxury → Premium
+ * tier_1 → Essential, tier_2 → Popular, tier_3 → Premium
+ *
+ * Note: Tenants can override these via tierDisplayNames config
  */
 export function getTierDisplayName(tierLevel: TierLevel): string {
   switch (tierLevel) {
-    case 'budget':
+    case 'tier_1':
       return 'Essential';
-    case 'middle':
+    case 'tier_2':
       return 'Popular';
-    case 'luxury':
+    case 'tier_3':
       return 'Premium';
   }
 }
 
 /**
  * Normalize grouping names to standard tier levels
- * Supports multiple naming conventions:
- * - budget/good/essential → budget
- * - middle/better/popular → middle
- * - luxury/best/premium → luxury
+ * Supports canonical names (tier_1/tier_2/tier_3) and legacy aliases
+ * for backward compatibility during migration.
+ *
+ * After DB migration is complete, this will only need to handle
+ * canonical tier names.
  */
-function normalizeGrouping(grouping: string): TierLevel | null {
-  const lower = grouping.toLowerCase();
+export function normalizeGrouping(grouping: string): TierLevel | null {
+  const lower = grouping.trim().toLowerCase();
 
-  // Budget tier aliases
-  if (['budget', 'good', 'essential', 'basic', 'starter'].includes(lower)) {
-    return 'budget';
+  // Check canonical names first
+  if (TIER_LEVELS.includes(lower as TierLevel)) {
+    return lower as TierLevel;
   }
 
-  // Middle tier aliases
-  if (['middle', 'better', 'popular', 'standard', 'recommended'].includes(lower)) {
-    return 'middle';
-  }
-
-  // Luxury tier aliases
-  if (['luxury', 'best', 'premium', 'deluxe', 'ultimate'].includes(lower)) {
-    return 'luxury';
+  // Check legacy aliases for backward compatibility
+  if (lower in LEGACY_TIER_ALIASES) {
+    return LEGACY_TIER_ALIASES[lower];
   }
 
   return null;
@@ -56,14 +87,14 @@ function normalizeGrouping(grouping: string): TierLevel | null {
 
 /**
  * Extract tiers from packages based on grouping field
- * Returns an object with budget, middle, luxury keys
- * Accepts multiple naming conventions (good/better/best, budget/middle/luxury, etc.)
+ * Returns an object with tier_1, tier_2, tier_3 keys
+ * Accepts both canonical and legacy naming conventions
  */
 export function extractTiers(packages: PackageDto[]): Record<TierLevel, PackageDto | undefined> {
   const tiers: Record<TierLevel, PackageDto | undefined> = {
-    budget: undefined,
-    middle: undefined,
-    luxury: undefined,
+    tier_1: undefined,
+    tier_2: undefined,
+    tier_3: undefined,
   };
 
   for (const pkg of packages) {

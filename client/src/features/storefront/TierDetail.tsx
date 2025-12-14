@@ -21,7 +21,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { PackageDto } from '@macon/contracts';
 import { formatCurrency } from '@/lib/utils';
-import { TIER_LEVELS, getTierDisplayName, extractTiers, type TierLevel } from './utils';
+import { TIER_LEVELS, extractTiers, type TierLevel } from './utils';
+import { useTenant, getTierDisplayNameWithFallback } from './hooks';
 
 interface TierDetailProps {
   /** The package/tier to display */
@@ -44,6 +45,11 @@ export function TierDetail({
   segmentName,
 }: TierDetailProps) {
   const navigate = useNavigate();
+  const tenant = useTenant();
+
+  // Get display name helper using tenant's custom names or defaults
+  const getDisplayName = (level: TierLevel) =>
+    getTierDisplayNameWithFallback(level, tenant?.tierDisplayNames);
 
   // Extract all tiers for navigation
   const tiers = useMemo(() => extractTiers(allPackages), [allPackages]);
@@ -61,17 +67,21 @@ export function TierDetail({
   }, [tierLevel, tiers]);
 
   // Build relative navigation links for tenant storefront compatibility
-  // When inside segment: we're at /t/slug/s/segment/tier, so just use tier name
-  // When at root tiers: we're at /t/slug/tiers/tier, so just use tier name
-  const buildTierLink = (level: TierLevel) => level;
+  // React Router relative paths go to parent *route*, not parent path segment
+  // So we need to include the full path from the tenant layout root
+  // In segment context: /s/:slug/:tier → build as s/segment/tier_X
+  // In root context: /tiers/:tier → build as tiers/tier_X
+  const buildTierLink = (level: TierLevel) =>
+    segmentSlug ? `../s/${segmentSlug}/${level}` : `../tiers/${level}`;
 
-  // Back link: ".." goes up one level in the path hierarchy
-  const backLink = '..';
+  // Back link: Go back to the tier selector page
+  // In segment context: go to /s/segment (tier selector)
+  // In root context: go to /tiers (root tier selector)
+  const backLink = segmentSlug ? `../s/${segmentSlug}` : '../tiers';
 
   // Booking link: Navigate to book page within tenant storefront
-  // From /t/slug/s/segment/tier or /t/slug/tiers/tier, we need to go to /t/slug/book
-  // Use relative path with enough ".." to get to tenant root, then "book"
-  const bookingLink = segmentSlug ? '../../../book' : '../../book';
+  // From tenant layout root, go to "book"
+  const bookingLink = '../book';
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -95,11 +105,11 @@ export function TierDetail({
         <Container className="absolute bottom-0 left-0 right-0 pb-8">
           <Badge
             className={`
-              ${tierLevel === 'middle' ? 'bg-macon-orange' : 'bg-macon-navy'}
+              ${tierLevel === 'tier_2' ? 'bg-macon-orange' : 'bg-macon-navy'}
               text-white border-0 text-lg px-4 py-1
             `}
           >
-            {getTierDisplayName(tierLevel)} Tier
+            {getDisplayName(tierLevel)} Tier
           </Badge>
         </Container>
       </section>
@@ -154,7 +164,7 @@ export function TierDetail({
                         <div>
                           <div className="text-sm text-neutral-500">Previous</div>
                           <div className="font-medium text-neutral-900">
-                            {getTierDisplayName(navigation.prev.level)}
+                            {getDisplayName(navigation.prev.level)}
                           </div>
                           <div className="text-sm text-macon-orange">
                             {navigation.prev.pkg && formatCurrency(navigation.prev.pkg.priceCents)}
@@ -176,7 +186,7 @@ export function TierDetail({
                         <div>
                           <div className="text-sm text-neutral-500">Next</div>
                           <div className="font-medium text-neutral-900">
-                            {getTierDisplayName(navigation.next.level)}
+                            {getDisplayName(navigation.next.level)}
                           </div>
                           <div className="text-sm text-macon-orange">
                             {navigation.next.pkg && formatCurrency(navigation.next.pkg.priceCents)}
@@ -202,7 +212,7 @@ export function TierDetail({
                     Ready to book?
                   </h3>
                   <p className="text-neutral-600 mb-6">
-                    Secure your spot with this {getTierDisplayName(tierLevel).toLowerCase()}{' '}
+                    Secure your spot with this {getDisplayName(tierLevel).toLowerCase()}{' '}
                     package.
                   </p>
 
@@ -254,7 +264,7 @@ export function TierDetail({
                           <span
                             className={`text-sm ${isCurrent ? 'font-medium text-macon-orange' : 'text-neutral-600'}`}
                           >
-                            {getTierDisplayName(level)}
+                            {getDisplayName(level)}
                           </span>
                           <span
                             className={`text-sm ${isCurrent ? 'font-medium text-macon-orange' : 'text-neutral-500'}`}

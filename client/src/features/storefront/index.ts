@@ -27,12 +27,21 @@ export { TierDetail } from './TierDetail';
 // Export shared utilities
 export {
   TIER_LEVELS,
+  LEGACY_TIER_ALIASES,
   getTierDisplayName,
   extractTiers,
+  normalizeGrouping,
   truncateText,
   CARD_DESCRIPTION_MAX_LENGTH,
   type TierLevel,
 } from './utils';
+
+// Export hooks
+export {
+  useTenant,
+  useTierDisplayName,
+  getTierDisplayNameWithFallback,
+} from './hooks';
 
 // Export shared styles
 export { cardStyles } from './cardStyles';

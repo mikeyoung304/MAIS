@@ -11,9 +11,9 @@ import type { SegmentDto } from '@macon/contracts';
 
 /** Tier levels for the 3-tier pricing model */
 const TIER_OPTIONS = [
-  { value: 'budget', label: 'Budget (Essential)', order: 0 },
-  { value: 'middle', label: 'Middle (Popular)', order: 1 },
-  { value: 'luxury', label: 'Luxury (Premium)', order: 2 },
+  { value: 'tier_1', label: 'Good (Essential)', order: 0 },
+  { value: 'tier_2', label: 'Better (Popular)', order: 1 },
+  { value: 'tier_3', label: 'Best (Premium)', order: 2 },
 ] as const;
 
 interface OrganizationSectionProps {
@@ -137,12 +137,12 @@ export function OrganizationSection({
         <div className="p-3 bg-macon-orange/10 border border-macon-orange/20 rounded-lg">
           <p className="text-sm text-white/80">
             <span className="font-medium text-macon-orange">Tip:</span>{' '}
-            {form.grouping === 'budget' &&
-              'Budget tier should be your most affordable option - the entry point for price-conscious customers.'}
-            {form.grouping === 'middle' &&
-              "Middle tier is highlighted as 'Most Popular' - this should be your best value for most customers."}
-            {form.grouping === 'luxury' &&
-              'Luxury tier should be your premium offering - maximum features and personalization.'}
+            {form.grouping === 'tier_1' &&
+              'Good tier should be your most affordable option - the entry point for price-conscious customers.'}
+            {form.grouping === 'tier_2' &&
+              "Better tier is highlighted as 'Most Popular' - this should be your best value for most customers."}
+            {form.grouping === 'tier_3' &&
+              'Best tier should be your premium offering - maximum features and personalization.'}
           </p>
         </div>
       )}
