@@ -3,6 +3,7 @@
  *
  * Provides per-test tenant isolation for E2E tests.
  * Each test gets its own authenticated tenant context.
+ * Automatically cleans up created tenants after each test.
  *
  * Usage:
  * ```typescript
@@ -10,7 +11,7 @@
  *
  * test('my test', async ({ authenticatedPage, testTenant }) => {
  *   await authenticatedPage.goto('/tenant/dashboard');
- *   // testTenant has: email, password, businessName, token
+ *   // testTenant has: email, password, businessName, slug
  * });
  * ```
  */
@@ -20,6 +21,7 @@ export interface TestTenant {
   email: string;
   password: string;
   businessName: string;
+  slug: string;
   token: string | null;
 }
 
@@ -29,17 +31,19 @@ export const test = base.extend<{
 }>({
   /**
    * Test tenant info - unique per test
+   * Slug follows pattern: e2e-test-{testHash}-{timestamp}
    */
   testTenant: async ({}, use, testInfo) => {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(7);
     // Include test name hash for uniqueness across parallel tests
-    const testHash = testInfo.title.replace(/\s+/g, '-').substring(0, 10);
+    const testHash = testInfo.title.replace(/\s+/g, '-').substring(0, 10).toLowerCase();
 
     const tenant: TestTenant = {
       email: `e2e-${testHash}-${timestamp}-${random}@example.com`,
       password: 'SecurePass123!',
       businessName: `E2E Test ${testHash} ${timestamp}`,
+      slug: `e2e-test-${testHash}-${timestamp}`, // Predictable slug for cleanup
       token: null,
     };
 

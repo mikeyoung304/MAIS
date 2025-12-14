@@ -9,6 +9,9 @@ export default defineConfig({
   testMatch: /.*\.spec\.ts$/,
   testDir: './tests',
 
+  // Clean up test tenants after all tests complete
+  globalTeardown: './global-teardown.ts',
+
   // Maximum time one test can run
   timeout: 30 * 1000,
 

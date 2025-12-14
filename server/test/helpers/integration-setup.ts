@@ -177,54 +177,47 @@ export function createMultiTenantSetup(
     return tenant;
   };
 
-  const cleanupTenantData = async (tenantIds: string[]) => {
-    if (tenantIds.length === 0) return;
+  /**
+   * Delete tenant records completely (ON DELETE CASCADE handles related data)
+   * This prevents test tenants from accumulating in the database
+   */
+  const deleteTenants = async (slugs: string[]) => {
+    if (slugs.length === 0) return;
 
-    // Delete in correct order to respect foreign keys
-    await prisma.webhookEvent.deleteMany({ where: { tenantId: { in: tenantIds } } });
-    await prisma.bookingAddOn.deleteMany({
+    // Delete tenant records - CASCADE handles all related data automatically
+    await prisma.tenant.deleteMany({
       where: {
-        booking: { tenantId: { in: tenantIds } },
+        slug: { in: slugs },
       },
     });
-    await prisma.booking.deleteMany({ where: { tenantId: { in: tenantIds } } });
-    await prisma.packageAddOn.deleteMany({
-      where: {
-        package: { tenantId: { in: tenantIds } },
-      },
-    });
-    await prisma.addOn.deleteMany({ where: { tenantId: { in: tenantIds } } });
-    await prisma.package.deleteMany({ where: { tenantId: { in: tenantIds } } });
-    await prisma.segment.deleteMany({ where: { tenantId: { in: tenantIds } } });
   };
 
   const cleanupTenantA = async () => {
     if (tenantA_id) {
-      await cleanupTenantData([tenantA_id]);
+      await deleteTenants([tenantASlug]);
+      tenantA_id = '';
+      tenantA_data = null;
     }
   };
 
   const cleanupTenantB = async () => {
     if (tenantB_id) {
-      await cleanupTenantData([tenantB_id]);
+      await deleteTenants([tenantBSlug]);
+      tenantB_id = '';
+      tenantB_data = null;
     }
   };
 
+  /**
+   * Clean up all test tenants created by this setup
+   * Deletes tenant records completely (ON DELETE CASCADE handles related data)
+   */
   const cleanupTenants = async () => {
-    // Find tenants by slug
-    const tenants = await prisma.tenant.findMany({
-      where: {
-        slug: {
-          in: [tenantASlug, tenantBSlug],
-        },
-      },
-      select: { id: true },
-    });
-
-    if (tenants.length > 0) {
-      const tenantIds = tenants.map((t) => t.id);
-      await cleanupTenantData(tenantIds);
-    }
+    await deleteTenants([tenantASlug, tenantBSlug]);
+    tenantA_id = '';
+    tenantB_id = '';
+    tenantA_data = null;
+    tenantB_data = null;
   };
 
   const getTenantIds = () => {
