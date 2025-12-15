@@ -12,6 +12,7 @@ import { PackageCardSkeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { usePackages } from '@/features/catalog/hooks';
 import { FeatureErrorBoundary } from '@/components/errors';
+import { getTierDisplayName, type TierLevel } from '@/features/storefront/utils';
 import type { PackageDto } from '@macon/contracts';
 
 function PackageCatalogContent() {
@@ -94,11 +95,13 @@ function PackageCatalogContent() {
   if (isLoading) {
     return (
       <Container className="py-12">
-        <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold mb-3 text-neutral-900">
-          Browse Packages
+        <h1 className="font-serif text-5xl md:text-6xl font-bold text-text-primary leading-tight tracking-tight">
+          Your packages.
+          <br />
+          Your experience.
         </h1>
-        <p className="text-xl md:text-2xl text-neutral-700 mb-12 leading-relaxed">
-          Find the perfect package for your special day
+        <p className="text-xl md:text-2xl text-text-muted font-light mt-6 mb-12">
+          Choose what feels right. Book instantly.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -113,8 +116,8 @@ function PackageCatalogContent() {
   if (error) {
     return (
       <Container className="py-12">
-        <h1 className="font-heading text-5xl md:text-6xl font-bold mb-6 text-macon-navy">
-          Browse Packages
+        <h1 className="font-serif text-5xl md:text-6xl font-bold text-text-primary leading-tight tracking-tight">
+          Your packages.
         </h1>
         <div className="bg-danger-50 border-2 border-danger-200 rounded-xl p-8 max-w-2xl">
           <p className="text-xl text-danger-700 mb-4 font-medium">
@@ -132,8 +135,8 @@ function PackageCatalogContent() {
   if (!packages || packages.length === 0) {
     return (
       <Container className="py-12">
-        <h1 className="font-heading text-5xl md:text-6xl font-bold mb-6 text-neutral-900">
-          Browse Packages
+        <h1 className="font-serif text-5xl md:text-6xl font-bold text-text-primary leading-tight tracking-tight mb-6">
+          Your packages.
         </h1>
         <div className="text-center py-16 bg-neutral-50 rounded-xl border border-neutral-200">
           <Package className="w-12 h-12 mx-auto text-neutral-300 mb-4" />
@@ -150,11 +153,13 @@ function PackageCatalogContent() {
 
     return (
       <Container className="py-12">
-        <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold mb-3 text-neutral-900">
-          Browse Packages
+        <h1 className="font-serif text-5xl md:text-6xl font-bold text-text-primary leading-tight tracking-tight">
+          Your packages.
+          <br />
+          Your experience.
         </h1>
-        <p className="text-xl md:text-2xl text-neutral-700 mb-12 leading-relaxed">
-          Find the perfect package for your special day
+        <p className="text-xl md:text-2xl text-text-muted font-light mt-6 mb-12">
+          Choose what feels right. Book instantly.
         </p>
 
         <CatalogFilters
@@ -191,11 +196,13 @@ function PackageCatalogContent() {
   // Main catalog view
   return (
     <Container className="py-12">
-      <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold mb-3 text-neutral-900">
-        Browse Packages
+      <h1 className="font-serif text-5xl md:text-6xl font-bold text-text-primary leading-tight tracking-tight">
+        Your packages.
+        <br />
+        Your experience.
       </h1>
-      <p className="text-xl md:text-2xl text-neutral-700 mb-12 leading-relaxed">
-        Find the perfect package for your special day
+      <p className="text-xl md:text-2xl text-text-muted font-light mt-6 mb-12">
+        Choose what feels right. Book instantly.
       </p>
 
       <CatalogFilters
@@ -215,10 +222,12 @@ function PackageCatalogContent() {
 
         {hasTiers ? (
           // Grouped by tier display
-          <div className="space-y-12">
+          <div className="space-y-20">
             {Object.entries(packagesByTier).map(([tier, tierPackages]) => (
               <section key={tier}>
-                <h2 className="text-2xl md:text-3xl font-bold text-macon-navy mb-6">{tier}</h2>
+                <h2 className="font-serif text-3xl md:text-4xl font-bold text-text-primary mb-8 tracking-tight">
+                  {getTierDisplayName(tier as TierLevel)}
+                </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                   {tierPackages.map((pkg: PackageDto) => (
                     <PackageCard key={pkg.id} package={pkg} />

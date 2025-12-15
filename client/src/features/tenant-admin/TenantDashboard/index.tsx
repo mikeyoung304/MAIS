@@ -12,7 +12,7 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, Sparkles, Pencil, LayoutTemplate } from 'lucide-react';
+import { ArrowUpRight, Sparkles, Pencil, LayoutTemplate, ExternalLink } from 'lucide-react';
 import { TenantPackagesManager } from '../TenantPackagesManager';
 import { BlackoutsManager } from '../BlackoutsManager';
 import { TenantBookingList } from '../TenantBookingList';
@@ -103,16 +103,18 @@ export function TenantDashboard({ tenantInfo }: TenantDashboardProps) {
                   <Pencil className="w-4 h-4" aria-hidden="true" />
                   Visual Editor
                 </Link>
-                <Link
-                  to="/packages"
+                <a
+                  href={tenantInfo ? `/t/${tenantInfo.slug}/packages` : '/packages'}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={`group inline-flex items-center gap-2 px-5 py-2.5 bg-sage hover:bg-sage-hover text-white text-sm font-medium rounded-full ${ANIMATION_TRANSITION.HOVER} shadow-soft hover:shadow-medium`}
                 >
-                  View Storefront
-                  <ArrowUpRight
+                  Preview Storefront
+                  <ExternalLink
                     className={`w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${ANIMATION_TRANSITION.TRANSFORM}`}
                     aria-hidden="true"
                   />
-                </Link>
+                </a>
               </div>
             </div>
           </header>

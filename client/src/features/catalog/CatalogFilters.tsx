@@ -56,14 +56,14 @@ export function CatalogFilters({
   };
 
   return (
-    <div className="bg-white rounded-xl border-2 border-neutral-200 p-6 shadow-elevation-1">
+    <div className="bg-white rounded-3xl border border-neutral-100 p-6 shadow-lg">
       {/* Main Filters Row */}
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Search Input */}
         <div className="flex-1">
           <div className="relative">
             <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 w-5 h-5"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted w-5 h-5"
               aria-hidden="true"
             />
             <Input
@@ -71,7 +71,7 @@ export function CatalogFilters({
               placeholder="Search packages by name or description..."
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              className="pl-12 min-h-[44px] text-lg border-neutral-300 focus:border-macon-orange focus:ring-macon-orange/20"
+              className="pl-12 min-h-[44px] text-lg rounded-full border-neutral-200 focus:border-sage focus:ring-4 focus:ring-sage/10"
               aria-label="Search packages"
             />
           </div>
@@ -83,7 +83,7 @@ export function CatalogFilters({
             value={sortBy}
             onValueChange={(value) => onSortChange(value as 'price-asc' | 'price-desc')}
           >
-            <SelectTrigger className="min-h-[44px] text-lg border-neutral-300 focus:border-macon-orange focus:ring-macon-orange/20">
+            <SelectTrigger className="min-h-[44px] text-lg rounded-full border-neutral-200 focus:border-sage focus:ring-4 focus:ring-sage/10">
               <SelectValue placeholder="Sort by..." />
             </SelectTrigger>
             <SelectContent>
@@ -146,12 +146,12 @@ export function CatalogFilters({
                         min: Number(e.target.value) || 0,
                       })
                     }
-                    className="min-h-[44px] text-lg border-neutral-300 focus:border-macon-orange focus:ring-macon-orange/20"
+                    className="min-h-[44px] text-lg rounded-full border-neutral-200 focus:border-sage focus:ring-4 focus:ring-sage/10"
                     aria-label="Minimum price"
                     min="0"
                   />
                 </div>
-                <span className="text-neutral-400 font-medium">to</span>
+                <span className="text-text-muted font-medium">to</span>
                 <div className="flex-1">
                   <Input
                     type="number"
@@ -163,7 +163,7 @@ export function CatalogFilters({
                         max: Number(e.target.value) || Infinity,
                       })
                     }
-                    className="min-h-[44px] text-lg border-neutral-300 focus:border-macon-orange focus:ring-macon-orange/20"
+                    className="min-h-[44px] text-lg rounded-full border-neutral-200 focus:border-sage focus:ring-4 focus:ring-sage/10"
                     aria-label="Maximum price"
                     min="0"
                   />
