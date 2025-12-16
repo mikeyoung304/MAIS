@@ -78,6 +78,10 @@ export const AddOnDtoSchema = z.object({
 
 export type AddOnDto = z.infer<typeof AddOnDtoSchema>;
 
+// Booking Type enum - matches Prisma BookingType enum
+export const BookingTypeSchema = z.enum(['DATE', 'TIMESLOT']);
+export type BookingType = z.infer<typeof BookingTypeSchema>;
+
 // Package DTO
 export const PackageDtoSchema = z.object({
   id: z.string(),
@@ -102,6 +106,8 @@ export const PackageDtoSchema = z.object({
       })
     )
     .default([]),
+  // Booking configuration - determines which booking flow to use
+  bookingType: BookingTypeSchema.default('DATE'),
 });
 
 export type PackageDto = z.infer<typeof PackageDtoSchema>;
@@ -156,6 +162,19 @@ export const CreateCheckoutDtoSchema = z.object({
 });
 
 export type CreateCheckoutDto = z.infer<typeof CreateCheckoutDtoSchema>;
+
+// Create Date Booking DTO (for DATE booking type packages)
+export const CreateDateBookingDtoSchema = z.object({
+  packageId: z.string().min(1, 'Package ID is required'),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  customerName: z.string().min(1, 'Customer name is required').max(100),
+  customerEmail: z.string().email('Valid email is required'),
+  customerPhone: z.string().optional(),
+  notes: z.string().max(500).optional(),
+  addOnIds: z.array(z.string()).optional(),
+});
+
+export type CreateDateBookingDto = z.infer<typeof CreateDateBookingDtoSchema>;
 
 // Admin Login DTO (request body)
 export const AdminLoginDtoSchema = z.object({

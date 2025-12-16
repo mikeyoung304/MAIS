@@ -65,6 +65,9 @@ const RootTierDetail = lazy(() =>
 const AppointmentBookingPage = lazy(() =>
   import('./pages/AppointmentBooking').then((m) => ({ default: m.AppointmentBookingPage }))
 );
+const DateBookingPage = lazy(() =>
+  import('./pages/DateBookingPage').then((m) => ({ default: m.DateBookingPage }))
+);
 const TenantSchedulingServicesPage = lazy(() =>
   import('./pages/tenant/TenantSchedulingServices').then((m) => ({
     default: m.TenantSchedulingServicesPage,
@@ -177,6 +180,14 @@ export const router = createBrowserRouter([
         element: (
           <SuspenseWrapper>
             <AppointmentBookingPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'book/date/:packageSlug',
+        element: (
+          <SuspenseWrapper>
+            <DateBookingPage />
           </SuspenseWrapper>
         ),
       },
@@ -315,6 +326,15 @@ export const router = createBrowserRouter([
         element: (
           <SuspenseWrapper>
             <AppointmentBookingPage />
+          </SuspenseWrapper>
+        ),
+      },
+      // Public date booking route (for DATE type packages)
+      {
+        path: 'book/date/:packageSlug',
+        element: (
+          <SuspenseWrapper>
+            <DateBookingPage />
           </SuspenseWrapper>
         ),
       },

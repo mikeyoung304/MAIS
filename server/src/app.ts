@@ -254,6 +254,7 @@ export function createApp(
     {
       catalog: container.services.catalog,
       booking: container.services.booking,
+      availability: container.services.availability,
       tenantAuth: container.services.tenantAuth,
       segment: container.services.segment,
       stripeConnect: container.services.stripeConnect,

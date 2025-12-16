@@ -34,6 +34,7 @@ import type {
   ServiceRepository,
   AvailabilityRuleRepository,
   BookingRepository,
+  CatalogRepository,
   WebhookSubscriptionRepository,
   EarlyAccessRepository,
 } from '../lib/ports';
@@ -62,6 +63,7 @@ import {
   createPublicBalancePaymentRouter,
   PublicBalancePaymentController,
 } from './public-balance-payment.routes';
+import { createPublicDateBookingRoutes } from './public-date-booking.routes';
 import {
   loginLimiter,
   publicTenantLookupLimiter,
@@ -77,6 +79,7 @@ import type { TenantOnboardingService } from '../services/tenant-onboarding.serv
 import type { ReminderService } from '../services/reminder.service';
 import type { LandingPageService } from '../services/landing-page.service';
 import type { WebhookDeliveryService } from '../services/webhook-delivery.service';
+import type { AvailabilityService } from '../services/availability.service';
 
 interface Controllers {
   packages: PackagesController;
@@ -93,6 +96,7 @@ interface Controllers {
 interface Services {
   catalog: CatalogService;
   booking: BookingService;
+  availability: AvailabilityService;
   tenantAuth: TenantAuthService;
   segment: SegmentService;
   stripeConnect?: StripeConnectService;
@@ -108,6 +112,7 @@ interface Repositories {
   service?: ServiceRepository;
   availabilityRule?: AvailabilityRuleRepository;
   booking?: BookingRepository;
+  catalog?: CatalogRepository;
   webhookSubscription?: WebhookSubscriptionRepository;
   earlyAccess?: EarlyAccessRepository;
 }
@@ -593,6 +598,18 @@ export function createV1Router(
       );
       app.use('/v1/public', tenantMiddleware, requireTenant, publicSchedulingRouter);
       logger.info('✅ Public scheduling routes mounted at /v1/public');
+
+      // Register public date booking routes (for DATE type package bookings)
+      // Requires tenant context via X-Tenant-Key header
+      if (repositories.catalog && services.availability) {
+        const publicDateBookingRouter = createPublicDateBookingRoutes(
+          repositories.catalog,
+          services.booking,
+          services.availability
+        );
+        app.use('/v1/public', tenantMiddleware, requireTenant, publicDateBookingRouter);
+        logger.info('✅ Public date booking routes mounted at /v1/public/bookings/date');
+      }
 
       // Register tenant admin scheduling routes (for service and availability management)
       // Requires tenant admin authentication and all scheduling repositories

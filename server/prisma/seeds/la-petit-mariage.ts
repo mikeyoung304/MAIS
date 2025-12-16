@@ -104,9 +104,10 @@ async function createOrUpdatePackageWithSegment(
     grouping?: string;
     groupingOrder?: number;
     photos?: Array<{ url: string; filename: string; size: number; order: number }>;
+    bookingType?: 'DATE' | 'TIMESLOT';
   }
 ): Promise<Package> {
-  const { slug, name, description, basePrice, grouping, groupingOrder, photos = [] } = options;
+  const { slug, name, description, basePrice, grouping, groupingOrder, photos = [], bookingType = 'DATE' } = options;
 
   return prisma.package.upsert({
     where: { tenantId_slug: { slug, tenantId } },
@@ -118,6 +119,7 @@ async function createOrUpdatePackageWithSegment(
       grouping,
       groupingOrder,
       photos: JSON.stringify(photos),
+      bookingType,
     },
     create: {
       tenantId,
@@ -129,6 +131,7 @@ async function createOrUpdatePackageWithSegment(
       grouping,
       groupingOrder,
       photos: JSON.stringify(photos),
+      bookingType,
     },
   });
 }

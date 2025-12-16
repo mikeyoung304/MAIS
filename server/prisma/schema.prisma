@@ -225,6 +225,11 @@ model Package {
   hasDraft         Boolean   @default(false)
   draftUpdatedAt   DateTime?
 
+  // Booking configuration - determines which booking flow to use
+  // DATE: Simple date picker (weddings, events) - default
+  // TIMESLOT: Time slot scheduling (consultations, appointments)
+  bookingType BookingType @default(DATE)
+
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
   tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)

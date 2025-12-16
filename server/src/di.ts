@@ -81,6 +81,7 @@ export interface Container {
     tenantAuth: TenantAuthService;
     catalog: CatalogService;
     booking: BookingService;
+    availability: AvailabilityService; // Date availability checking
     audit: AuditService;
     segment: SegmentService;
     tenantOnboarding: TenantOnboardingService; // Tenant signup default data creation
@@ -95,6 +96,7 @@ export interface Container {
     service?: PrismaServiceRepository;
     availabilityRule?: PrismaAvailabilityRuleRepository;
     booking?: PrismaBookingRepository;
+    catalog?: PrismaCatalogRepository; // Catalog repository for package lookups
     webhookSubscription?: PrismaWebhookSubscriptionRepository; // Webhook subscription management (TODO-278)
     earlyAccess?: PrismaEarlyAccessRepository; // Early access request persistence
   };
@@ -254,6 +256,7 @@ export function buildContainer(config: Config): Container {
       tenantAuth: tenantAuthService,
       catalog: catalogService,
       booking: bookingService,
+      availability: availabilityService,
       audit: auditService,
       segment: segmentService,
       tenantOnboarding: tenantOnboardingService,
@@ -268,6 +271,7 @@ export function buildContainer(config: Config): Container {
       service: serviceRepo,
       availabilityRule: availabilityRuleRepo,
       booking: adapters.bookingRepo as any, // Mock booking repo - type compatibility
+      catalog: adapters.catalogRepo as any, // Mock catalog repo
       earlyAccess: adapters.earlyAccessRepo as any, // Mock early access repo
     };
 
@@ -647,6 +651,7 @@ export function buildContainer(config: Config): Container {
     tenantAuth: tenantAuthService,
     catalog: catalogService,
     booking: bookingService,
+    availability: availabilityService,
     audit: auditService,
     segment: segmentService,
     tenantOnboarding: tenantOnboardingService,
@@ -665,6 +670,7 @@ export function buildContainer(config: Config): Container {
     service: serviceRepo,
     availabilityRule: availabilityRuleRepo,
     booking: bookingRepo,
+    catalog: catalogRepo,
     webhookSubscription: webhookSubscriptionRepo,
     earlyAccess: earlyAccessRepo,
   };

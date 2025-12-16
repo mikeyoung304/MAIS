@@ -14,6 +14,8 @@ export interface PackagePhoto {
   altText?: string; // Alt text for accessibility
 }
 
+export type BookingType = 'DATE' | 'TIMESLOT';
+
 export interface Package {
   id: string;
   tenantId: string; // Multi-tenant isolation
@@ -28,6 +30,8 @@ export interface Package {
   grouping?: string | null;
   groupingOrder?: number | null;
   active?: boolean; // Package active status (maps to DB 'active' field)
+  // Booking configuration
+  bookingType?: BookingType; // DATE for weddings, TIMESLOT for appointments
 }
 
 export interface AddOn {

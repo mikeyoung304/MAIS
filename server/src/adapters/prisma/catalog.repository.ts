@@ -592,6 +592,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
     grouping?: string | null;
     groupingOrder?: number | null;
     photos?: Prisma.JsonValue;
+    bookingType?: 'DATE' | 'TIMESLOT';
   }): Package {
     return {
       id: pkg.id,
@@ -606,6 +607,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
       segmentId: pkg.segmentId,
       grouping: pkg.grouping,
       groupingOrder: pkg.groupingOrder,
+      bookingType: pkg.bookingType || 'DATE',
     };
   }
 

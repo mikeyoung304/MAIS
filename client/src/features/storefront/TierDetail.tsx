@@ -79,9 +79,13 @@ export function TierDetail({
   // In root context: go to /tiers (root tier selector)
   const backLink = segmentSlug ? `../s/${segmentSlug}` : '../tiers';
 
-  // Booking link: Navigate to book page within tenant storefront
-  // From tenant layout root, go to "book"
-  const bookingLink = '../book';
+  // Booking link: Smart routing based on package bookingType
+  // DATE packages: Go to date booking wizard with package slug
+  // TIMESLOT packages: Go to appointment scheduling
+  const bookingType = (pkg as PackageDto & { bookingType?: string }).bookingType || 'DATE';
+  const bookingLink = bookingType === 'DATE'
+    ? `../book/date/${pkg.slug}`
+    : '../book';
 
   return (
     <div className="min-h-screen bg-neutral-50">

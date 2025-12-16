@@ -8,6 +8,7 @@ import {
   PackageDtoSchema,
   AvailabilityDtoSchema,
   CreateCheckoutDtoSchema,
+  CreateDateBookingDtoSchema,
   AdminLoginDtoSchema,
   TenantSignupDtoSchema,
   TenantSignupResponseSchema,
@@ -1358,6 +1359,31 @@ export const Contracts = c.router({
       500: InternalServerErrorSchema,
     },
     summary: 'Create checkout session for appointment booking (public, requires X-Tenant-Key)',
+  },
+
+  /**
+   * Create a checkout session for DATE booking type packages
+   * POST /v1/public/bookings/date
+   *
+   * Public endpoint for customers to book DATE packages (e.g., weddings).
+   * Creates a Stripe checkout session and returns the checkout URL.
+   * Validates package is DATE type, date is available, and deposit is valid.
+   */
+  createDateBooking: {
+    method: 'POST',
+    path: '/v1/public/bookings/date',
+    body: CreateDateBookingDtoSchema,
+    responses: {
+      200: z.object({
+        checkoutUrl: z.string().url(),
+      }),
+      400: BadRequestErrorSchema,
+      401: UnauthorizedErrorSchema, // Missing or invalid X-Tenant-Key
+      404: NotFoundErrorSchema, // Package not found
+      409: ConflictErrorSchema, // Date already booked
+      500: InternalServerErrorSchema,
+    },
+    summary: 'Create checkout session for DATE booking (public, requires X-Tenant-Key)',
   },
 
   // =========================================================================
