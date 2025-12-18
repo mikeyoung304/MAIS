@@ -58,6 +58,7 @@ export function mapPackageToDto(pkg: PackageWithAddOns): PackageDto {
     segmentId: pkg.segmentId ?? null,
     grouping: pkg.grouping ?? null,
     groupingOrder: pkg.groupingOrder ?? null,
+    bookingType: pkg.bookingType ?? 'DATE',
     addOns: pkg.addOns.map(mapAddOn),
   };
 }

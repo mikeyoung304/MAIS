@@ -64,8 +64,8 @@ export class BookingExpiredError extends BookingError {
  * Booking conflict - date is already booked
  */
 export class BookingConflictError extends AppError {
-  constructor(date: string) {
-    super(`Date ${date} is already booked`, 'BOOKING_CONFLICT', 409, true);
+  constructor(date: string, message?: string) {
+    super(message ?? `Date ${date} is already booked`, 'BOOKING_CONFLICT', 409, true);
     this.name = 'BookingConflictError';
   }
 }
