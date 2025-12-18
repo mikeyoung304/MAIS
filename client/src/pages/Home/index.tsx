@@ -3,6 +3,7 @@ import { ProblemSection } from './ProblemSection';
 import { StorefrontSection } from './StorefrontSection';
 import { HowItWorksSection } from './HowItWorksSection';
 import { WaitlistCTASection } from './WaitlistCTASection';
+import { WhoItsForSection } from './WhoItsForSection';
 
 /**
  * Home page - Apple-quality landing page
@@ -26,6 +27,7 @@ export function Home() {
   return (
     <main>
       <HeroSection />
+      <WhoItsForSection />
       <ProblemSection />
       <StorefrontSection />
       <HowItWorksSection />

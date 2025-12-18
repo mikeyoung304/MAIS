@@ -23,11 +23,15 @@ export function StorefrontSection() {
             <br />
             <span className="text-sage">Done for you.</span>
           </h2>
-          <p className="text-xl md:text-2xl text-text-muted font-light leading-relaxed">
-            We design, build, and host a professional site with built-in booking.
-            <br />
-            Clients choose a package, pick a date, and pay—all in one flow.
-          </p>
+          <div className="text-xl md:text-2xl text-text-muted font-light leading-relaxed space-y-4">
+            <p>
+              We design, build, and host a professional site with built-in booking and payments.
+            </p>
+            <p>
+              Clients choose a package, pick a date, and pay — all in one flow.
+            </p>
+            <p>No plugins to manage. No tools to stitch together. No tech headaches.</p>
+          </div>
         </div>
 
         {/* 3-Tier Cards with elevation */}
@@ -37,9 +41,15 @@ export function StorefrontSection() {
             <div className="transform md:scale-[0.92] md:translate-y-6">
               <TierCard
                 name="Entry"
-                tagline="The essentials"
-                features={['Quick consultation', 'Basic deliverables', 'Email support']}
+                tagline="Get launched"
+                features={[
+                  'Professional one-page site',
+                  'Core booking flow (packages, calendar, payments)',
+                  'Guided setup consultation',
+                  'Email support',
+                ]}
                 emphasized={false}
+                bestFor="Best for: getting online with confidence"
               />
             </div>
 
@@ -60,13 +70,16 @@ export function StorefrontSection() {
 
               <TierCard
                 name="Core"
-                tagline="Everything you need"
+                tagline="Get booked consistently"
                 features={[
-                  'Full service package',
-                  'Priority scheduling',
-                  'All deliverables included',
+                  'Everything in Entry',
+                  'Multi-page site tailored to your offers',
+                  'Optimized booking + deposit flow',
+                  'Automated confirmations & follow-ups',
+                  'Priority support',
                 ]}
                 emphasized={true}
+                bestFor="Best for: turning consistent inquiries into paid bookings"
               />
             </div>
 
@@ -74,9 +87,16 @@ export function StorefrontSection() {
             <div className="transform md:scale-[0.92] md:translate-y-6">
               <TierCard
                 name="Premium"
-                tagline="The full experience"
-                features={['VIP treatment', 'Extended coverage', 'Unlimited revisions']}
+                tagline="Get leverage"
+                features={[
+                  'Everything in Core',
+                  'Offer & pricing refinement',
+                  'Conversion optimization',
+                  'Advanced automations',
+                  'Ongoing priority support & revisions',
+                ]}
                 emphasized={false}
+                bestFor="Best for: maximizing revenue per inquiry"
               />
             </div>
           </div>
@@ -84,7 +104,7 @@ export function StorefrontSection() {
 
         {/* Bottom line */}
         <p className="text-center text-text-muted mt-16 text-lg">
-          Need a new site? We'll build it. Already have one? We'll plug right in.
+          Need a new site? We&apos;ll build it. Already have one? We&apos;ll plug right in.
           <span className="block mt-1 text-text-primary font-medium">
             Your brand. Your bookings. Zero tech headaches.
           </span>
@@ -99,9 +119,10 @@ interface TierCardProps {
   tagline: string;
   features: string[];
   emphasized: boolean;
+  bestFor?: string;
 }
 
-function TierCard({ name, tagline, features, emphasized }: TierCardProps) {
+function TierCard({ name, tagline, features, emphasized, bestFor }: TierCardProps) {
   return (
     <div
       className={`rounded-3xl p-8 transition-all duration-300 h-full
@@ -131,6 +152,12 @@ function TierCard({ name, tagline, features, emphasized }: TierCardProps) {
           </li>
         ))}
       </ul>
+
+      {bestFor && (
+        <p className="mt-6 text-sm text-text-muted/80 italic">
+          {bestFor}
+        </p>
+      )}
     </div>
   );
 }

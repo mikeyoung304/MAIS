@@ -33,7 +33,7 @@ export function WaitlistCTASection() {
 
           {/* Subline */}
           <p className="text-xl text-white/80 mb-12 font-light">
-            Your business deserves a professional launch.
+            Your business deserves a professional launch — and a system that respects your time.
           </p>
 
           {/* Form */}
@@ -75,7 +75,7 @@ export function WaitlistCTASection() {
                     </span>
                   ) : (
                     <span className="flex items-center justify-center gap-2">
-                      Request Early Access
+                      Apply for Early Access
                       <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                     </span>
                   )}

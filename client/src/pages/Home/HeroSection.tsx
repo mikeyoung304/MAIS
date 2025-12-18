@@ -42,19 +42,31 @@ export function HeroSection() {
           className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-text-primary leading-[1.05] tracking-tight mb-8 animate-fade-slide-up"
           style={{ animationDelay: '0.2s' }}
         >
-          Launch tomorrow.
+          You didn&apos;t start this
+          <br />
+          <span className="text-sage">to become a tech expert.</span>
         </h1>
 
         {/* Subheadline */}
         <p
-          className="text-xl md:text-2xl lg:text-3xl text-text-muted font-light mb-16 leading-relaxed max-w-2xl mx-auto animate-fade-slide-up"
+          className="text-xl md:text-2xl lg:text-3xl text-text-muted font-light mb-8 leading-relaxed max-w-2xl mx-auto animate-fade-slide-up"
           style={{ animationDelay: '0.4s' }}
         >
-          Professional website.
+          Squarespace. Acuity. Stripe. Analytics. SEO.
           <br />
-          Seamless booking and payments.
+          The subscriptions add up. The learning curve never ends.
           <br />
-          One subscription.
+          <br />
+          Whether this is your full-time business or a growing side hustle,
+          <br />
+          you need a professional online presence — not a second job.
+        </p>
+
+        <p
+          className="text-lg md:text-xl text-text-primary font-semibold mb-8 animate-fade-slide-up"
+          style={{ animationDelay: '0.5s' }}
+        >
+          One monthly fee. Everything handled. You focus on your craft.
         </p>
 
         {/* Email Form */}
@@ -96,7 +108,7 @@ export function HeroSection() {
                     </span>
                   ) : (
                     <span className="flex items-center justify-center gap-2">
-                      Request Early Access
+                      Apply for Early Access
                       <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                     </span>
                   )}

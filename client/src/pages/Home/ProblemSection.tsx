@@ -20,29 +20,20 @@ export function ProblemSection() {
             id="problem-heading"
             className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary mb-10 leading-[1.1] tracking-tight"
           >
-            You didn't start this
-            <br />
-            <span className="text-sage">to become a tech expert.</span>
+            You need a professional online presence — not a second job.
           </h2>
 
           {/* Body - the DIY trap */}
           <div className="text-xl md:text-2xl text-text-muted leading-relaxed space-y-6 font-light">
             <p>
-              Squarespace. Acuity. Stripe. Analytics. SEO.
+              Most creators end up duct-taping together booking tools, payments, websites, and follow-up.
               <br />
-              The subscriptions add up. The learning curve never ends.
+              It works… until it doesn&apos;t.
             </p>
             <p>
-              Whether it's your full-time business or a growing side hustle—
-              <br />
-              you need a professional online presence, not a second job.
+              Mais replaces the stack with one clean system — built and managed for you.
             </p>
           </div>
-
-          {/* Closing line - we're the bridge */}
-          <p className="mt-12 text-xl md:text-2xl text-text-primary font-medium">
-            One monthly fee. Everything handled. You focus on your craft.
-          </p>
         </div>
       </Container>
     </section>
