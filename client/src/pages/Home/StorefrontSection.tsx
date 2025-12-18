@@ -9,13 +9,13 @@ import { Check } from 'lucide-react';
  */
 export function StorefrontSection() {
   return (
-    <section id="solution" aria-labelledby="solution-heading" className="py-32 md:py-40 bg-white">
+    <section id="solution" aria-labelledby="solution-heading" className="py-28 md:py-36 bg-white">
       <Container>
         {/* Section header */}
         <div className="max-w-3xl mx-auto text-center mb-20">
           <h2
             id="solution-heading"
-            className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary mb-8 leading-[1.1] tracking-tight"
+            className="font-serif text-3xl sm:text-4xl md:text-5xl font-semibold text-text-primary mb-6 leading-tight"
           >
             Your website.
             <br />
@@ -23,15 +23,11 @@ export function StorefrontSection() {
             <br />
             <span className="text-sage">Done for you.</span>
           </h2>
-          <div className="text-xl md:text-2xl text-text-muted font-light leading-relaxed space-y-4">
-            <p>
-              We design, build, and host a professional site with built-in booking and payments.
-            </p>
-            <p>
-              Clients choose a package, pick a date, and pay — all in one flow.
-            </p>
-            <p>No plugins to manage. No tools to stitch together. No tech headaches.</p>
-          </div>
+          <p className="text-lg md:text-xl text-text-muted font-light leading-relaxed space-y-1">
+            We design, build, and host a professional site with booking and payments built in.
+            <br />
+            Clients choose a package, pick a date, and pay — in one flow.
+          </p>
         </div>
 
         {/* 3-Tier Cards with elevation */}
@@ -42,14 +38,8 @@ export function StorefrontSection() {
               <TierCard
                 name="Entry"
                 tagline="Get launched"
-                features={[
-                  'Professional one-page site',
-                  'Core booking flow (packages, calendar, payments)',
-                  'Guided setup consultation',
-                  'Email support',
-                ]}
+                features={['Professional one-page site', 'Booking + payments flow', 'Guided setup']}
                 emphasized={false}
-                bestFor="Best for: getting online with confidence"
               />
             </div>
 
@@ -71,15 +61,8 @@ export function StorefrontSection() {
               <TierCard
                 name="Core"
                 tagline="Get booked consistently"
-                features={[
-                  'Everything in Entry',
-                  'Multi-page site tailored to your offers',
-                  'Optimized booking + deposit flow',
-                  'Automated confirmations & follow-ups',
-                  'Priority support',
-                ]}
+                features={['Custom multi-page site', 'Optimized booking + deposit', 'Automated follow-ups']}
                 emphasized={true}
-                bestFor="Best for: turning consistent inquiries into paid bookings"
               />
             </div>
 
@@ -88,27 +71,20 @@ export function StorefrontSection() {
               <TierCard
                 name="Premium"
                 tagline="Get leverage"
-                features={[
-                  'Everything in Core',
-                  'Offer & pricing refinement',
-                  'Conversion optimization',
-                  'Advanced automations',
-                  'Ongoing priority support & revisions',
-                ]}
+                features={['Offer & pricing refinement', 'Conversion optimization', 'Advanced automations']}
                 emphasized={false}
-                bestFor="Best for: maximizing revenue per inquiry"
               />
             </div>
           </div>
         </div>
 
         {/* Bottom line */}
-        <p className="text-center text-text-muted mt-16 text-lg">
-          Need a new site? We&apos;ll build it. Already have one? We&apos;ll plug right in.
-          <span className="block mt-1 text-text-primary font-medium">
-            Your brand. Your bookings. Zero tech headaches.
-          </span>
-        </p>
+        <div className="text-center mt-14 space-y-2">
+          <p className="text-sm md:text-base text-text-muted">
+            Need a new site? We&apos;ll build it. Already have one? We&apos;ll plug right in.
+          </p>
+          <p className="text-sm text-text-primary/80">Your brand. Your bookings. Zero tech headaches.</p>
+        </div>
       </Container>
     </section>
   );
@@ -119,10 +95,9 @@ interface TierCardProps {
   tagline: string;
   features: string[];
   emphasized: boolean;
-  bestFor?: string;
 }
 
-function TierCard({ name, tagline, features, emphasized, bestFor }: TierCardProps) {
+function TierCard({ name, tagline, features, emphasized }: TierCardProps) {
   return (
     <div
       className={`rounded-3xl p-8 transition-all duration-300 h-full
@@ -153,11 +128,6 @@ function TierCard({ name, tagline, features, emphasized, bestFor }: TierCardProp
         ))}
       </ul>
 
-      {bestFor && (
-        <p className="mt-6 text-sm text-text-muted/80 italic">
-          {bestFor}
-        </p>
-      )}
     </div>
   );
 }

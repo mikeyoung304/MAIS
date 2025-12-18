@@ -8,32 +8,22 @@ import { Container } from '@/ui/Container';
  */
 export function ProblemSection() {
   return (
-    <section
-      id="problem"
-      aria-labelledby="problem-heading"
-      className="py-32 md:py-40 bg-neutral-50"
-    >
+    <section id="problem" aria-labelledby="problem-heading" className="py-28 md:py-36 bg-neutral-50">
       <Container>
         <div className="max-w-3xl mx-auto text-center">
           {/* Headline - the real problem */}
           <h2
             id="problem-heading"
-            className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary mb-10 leading-[1.1] tracking-tight"
+            className="font-serif text-3xl sm:text-4xl md:text-5xl font-semibold text-text-primary mb-8 leading-tight"
           >
-            You need a professional online presence — not a second job.
+            A professional presence — without the overhead.
           </h2>
 
           {/* Body - the DIY trap */}
-          <div className="text-xl md:text-2xl text-text-muted leading-relaxed space-y-6 font-light">
-            <p>
-              Most creators end up duct-taping together booking tools, payments, websites, and follow-up.
-              <br />
-              It works… until it doesn&apos;t.
-            </p>
-            <p>
-              Mais replaces the stack with one clean system — built and managed for you.
-            </p>
-          </div>
+          <p className="text-lg md:text-xl text-text-muted leading-relaxed font-light">
+            Disconnected tools turn simple bookings into ongoing work. Mais replaces the stack with one
+            clean system, built and managed for you.
+          </p>
         </div>
       </Container>
     </section>

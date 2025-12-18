@@ -49,7 +49,7 @@ export function HeroSection() {
 
         {/* Subheadline */}
         <p
-          className="text-xl md:text-2xl lg:text-3xl text-text-muted font-light mb-8 leading-relaxed max-w-2xl mx-auto animate-fade-slide-up"
+          className="text-xl md:text-2xl text-text-muted font-light mb-6 leading-relaxed max-w-2xl mx-auto animate-fade-slide-up"
           style={{ animationDelay: '0.4s' }}
         >
           Squarespace. Acuity. Stripe. Analytics. SEO.
@@ -57,13 +57,11 @@ export function HeroSection() {
           The subscriptions add up. The learning curve never ends.
           <br />
           <br />
-          Whether this is your full-time business or a growing side hustle,
-          <br />
-          you need a professional online presence — not a second job.
+          You need a professional online presence — not a second job.
         </p>
 
         <p
-          className="text-lg md:text-xl text-text-primary font-semibold mb-8 animate-fade-slide-up"
+          className="text-base md:text-lg text-text-muted mb-10 animate-fade-slide-up"
           style={{ animationDelay: '0.5s' }}
         >
           One monthly fee. Everything handled. You focus on your craft.

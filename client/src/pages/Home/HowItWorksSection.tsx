@@ -11,13 +11,13 @@ export function HowItWorksSection() {
       <Container>
         {/* Header - tight and confident */}
         <AnimatedSection animation="fade-in-up">
-          <div className="max-w-2xl mx-auto text-center mb-20 md:mb-24">
+          <div className="max-w-2xl mx-auto text-center mb-16 md:mb-20">
             <span className="inline-block bg-sage/10 text-sage text-sm font-semibold px-5 py-2 rounded-full mb-8 tracking-wide">
               The Platform
             </span>
             <h2
               id="how-it-works-heading"
-              className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary leading-[1.05] tracking-tight"
+              className="font-serif text-3xl sm:text-4xl md:text-5xl font-semibold text-text-primary leading-tight"
             >
               One link.
               <br />
@@ -78,9 +78,10 @@ export function HowItWorksSection() {
 
         {/* Supporting copy - adds context */}
         <AnimatedSection animation="fade-in-up" delay={300}>
-          <p className="text-center text-lg md:text-xl text-text-muted font-light max-w-2xl mx-auto mt-20 md:mt-28 leading-relaxed">
-            Your dashboard shows bookings, revenue, and performance at a glance. Their storefront is a clean,
-            branded booking experience that makes it easy to say yes.
+          <p className="text-center text-base md:text-lg text-text-muted font-light max-w-xl mx-auto mt-16 md:mt-24 leading-relaxed">
+            Everything you need to manage your business.
+            <br />
+            Nothing your clients don&apos;t.
           </p>
         </AnimatedSection>
       </Container>
