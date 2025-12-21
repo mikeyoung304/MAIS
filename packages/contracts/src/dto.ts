@@ -166,7 +166,25 @@ export type CreateCheckoutDto = z.infer<typeof CreateCheckoutDtoSchema>;
 // Create Date Booking DTO (for DATE booking type packages)
 export const CreateDateBookingDtoSchema = z.object({
   packageId: z.string().min(1, 'Package ID is required'),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+    .refine(
+      (val) => {
+        const date = new Date(val + 'T00:00:00Z');
+        return !isNaN(date.getTime());
+      },
+      { message: 'Invalid calendar date' }
+    )
+    .refine(
+      (val) => {
+        const date = new Date(val + 'T00:00:00Z');
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        return date >= now;
+      },
+      { message: 'Date must be in the future' }
+    ),
   customerName: z.string().min(1, 'Customer name is required').max(100),
   customerEmail: z.string().email('Valid email is required'),
   customerPhone: z.string().optional(),

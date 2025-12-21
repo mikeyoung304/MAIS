@@ -601,15 +601,10 @@ export function createV1Router(
 
       // Register public date booking routes (for DATE type package bookings)
       // Requires tenant context via X-Tenant-Key header
-      if (repositories.catalog && services.availability) {
-        const publicDateBookingRouter = createPublicDateBookingRoutes(
-          repositories.catalog,
-          services.booking,
-          services.availability
-        );
-        app.use('/v1/public', tenantMiddleware, requireTenant, publicDateBookingRouter);
-        logger.info('✅ Public date booking routes mounted at /v1/public/bookings/date');
-      }
+      // Phase 2 Refactor: BookingService now handles availability checking internally
+      const publicDateBookingRouter = createPublicDateBookingRoutes(services.booking);
+      app.use('/v1/public', tenantMiddleware, requireTenant, publicDateBookingRouter);
+      logger.info('✅ Public date booking routes mounted at /v1/public/bookings/date');
 
       // Register tenant admin scheduling routes (for service and availability management)
       // Requires tenant admin authentication and all scheduling repositories

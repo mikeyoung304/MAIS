@@ -104,6 +104,7 @@ export interface CreateBookingInput {
   email: string;
   coupleName: string;
   addOnIds?: string[];
+  bookingType?: BookingType; // DATE for weddings, TIMESLOT for appointments
 }
 
 // ============================================================================

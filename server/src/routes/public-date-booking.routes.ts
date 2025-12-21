@@ -5,17 +5,18 @@
  *
  * These routes should be mounted at /v1/public to match the contract paths:
  * - POST /v1/public/bookings/date
+ *
+ * Phase 2 Refactor (#305): Route handler simplified to delegate business logic
+ * to BookingService.createDateBooking() for better testability.
  */
 
 import { Router, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import type { TenantRequest } from '../middleware/tenant';
-import type { CatalogRepository } from '../lib/ports';
 import type { BookingService } from '../services/booking.service';
-import type { AvailabilityService } from '../services/availability.service';
 import { CreateDateBookingDtoSchema } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
-import { NotFoundError, BookingConflictError } from '../lib/errors';
+import { NotFoundError, BookingConflictError, InvalidBookingTypeError } from '../lib/errors';
 import { publicSchedulingLimiter } from '../middleware/rateLimiter';
 
 /**
@@ -23,16 +24,13 @@ import { publicSchedulingLimiter } from '../middleware/rateLimiter';
  *
  * Mount at /v1/public to match contract paths
  *
- * @param catalogRepo - Catalog repository for package lookups
+ * Phase 2 Refactor: Simplified to only require BookingService, which now
+ * handles package lookup, type validation, and availability checking internally.
+ *
  * @param bookingService - Booking service for checkout session creation
- * @param availabilityService - Availability service for date validation
  * @returns Express router with public date booking endpoints
  */
-export function createPublicDateBookingRoutes(
-  catalogRepo: CatalogRepository,
-  bookingService: BookingService,
-  availabilityService: AvailabilityService
-): Router {
+export function createPublicDateBookingRoutes(bookingService: BookingService): Router {
   const router = Router();
 
   // Apply rate limiting to prevent abuse
@@ -42,10 +40,7 @@ export function createPublicDateBookingRoutes(
    * POST /v1/public/bookings/date
    * Create checkout session for DATE booking type packages
    *
-   * Validates:
-   * - Package exists and belongs to tenant
-   * - Package has bookingType = 'DATE'
-   * - Date is available (not blackout, not already booked)
+   * Phase 2 Refactor: Business logic moved to BookingService.createDateBooking()
    *
    * @returns 200 - Checkout URL for Stripe payment
    * @returns 400 - Validation error (invalid input, wrong package type)
@@ -65,50 +60,19 @@ export function createPublicDateBookingRoutes(
       // Validate request body
       const input = CreateDateBookingDtoSchema.parse(req.body);
 
-      // 1. Fetch package and validate it exists
-      const pkg = await catalogRepo.getPackageById(tenantId, input.packageId);
-      if (!pkg) {
-        throw new NotFoundError(`Package not found: ${input.packageId}`);
-      }
-
-      // 2. Validate package is DATE type
-      if (pkg.bookingType !== 'DATE') {
-        res.status(400).json({
-          error: 'Invalid package type',
-          details: `Package "${pkg.title}" uses ${pkg.bookingType} booking type. Use the appropriate booking endpoint.`,
-        });
-        return;
-      }
-
-      // 3. Check date availability
-      const availability = await availabilityService.checkAvailability(tenantId, input.date);
-      if (!availability.available) {
-        throw new BookingConflictError(
-          input.date,
-          availability.reason === 'blackout'
-            ? 'This date is not available for booking'
-            : availability.reason === 'booked'
-              ? 'This date is already booked'
-              : 'This date is not available'
-        );
-      }
-
-      // 4. Create checkout session using existing booking service
-      // The booking service expects packageId as slug, but we have the ID
-      // Use the package slug for the createCheckout call
-      const checkout = await bookingService.createCheckout(tenantId, {
-        packageId: pkg.slug, // Use slug as expected by booking service
-        eventDate: input.date,
-        email: input.customerEmail,
-        coupleName: input.customerName,
+      // Delegate all business logic to service layer
+      const checkout = await bookingService.createDateBooking(tenantId, {
+        packageId: input.packageId,
+        date: input.date,
+        customerName: input.customerName,
+        customerEmail: input.customerEmail,
         addOnIds: input.addOnIds,
       });
 
       logger.info(
         {
           tenantId,
-          packageId: pkg.id,
-          packageSlug: pkg.slug,
+          packageId: input.packageId,
           date: input.date,
           customerEmail: input.customerEmail,
         },
@@ -128,6 +92,13 @@ export function createPublicDateBookingRoutes(
       }
       if (error instanceof NotFoundError) {
         res.status(404).json({ error: error.message });
+        return;
+      }
+      if (error instanceof InvalidBookingTypeError) {
+        res.status(400).json({
+          error: 'Invalid package type',
+          details: error.message,
+        });
         return;
       }
       if (error instanceof BookingConflictError) {

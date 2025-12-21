@@ -9,18 +9,29 @@
  * 4. Pay - Review and proceed to checkout
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { DayPicker } from 'react-day-picker';
+import { useQuery } from '@tanstack/react-query';
+import { z } from 'zod';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { InputEnhanced } from '@/components/ui/input-enhanced';
 import { Stepper, type Step } from '@/components/ui/Stepper';
 import { api, baseUrl } from '@/lib/api';
 import { toast } from 'sonner';
-import { User, Mail, Phone, ArrowLeft, Calendar, CheckCircle } from 'lucide-react';
+import { User, Mail, Phone, ArrowLeft, Calendar, CheckCircle, Loader2 } from 'lucide-react';
 import type { PackageDto } from '@macon/contracts';
 import { formatCurrency } from '@/lib/utils';
 import 'react-day-picker/style.css';
+
+// Phase 3.2 (#323): Zod schema for customer form validation
+// Matches server-side validation for consistency
+const customerDetailsSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email address'),
+  phone: z.string().optional(),
+  notes: z.string().max(500, 'Notes must be 500 characters or less').optional(),
+});
 
 interface CustomerDetails {
   name: string;
@@ -47,7 +58,36 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
     notes: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [unavailableDates, setUnavailableDates] = useState<Date[]>([]);
+
+  // Fetch unavailable dates for the calendar
+  // Phase 3.1 (#307): Query unavailable dates to prevent booking conflicts
+  const today = new Date();
+  const sixMonthsFromNow = new Date(today);
+  sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+
+  const { data: unavailableDatesData, isLoading: isLoadingDates } = useQuery({
+    queryKey: ['unavailable-dates', today.toISOString().split('T')[0]],
+    queryFn: async () => {
+      const startDate = today.toISOString().split('T')[0];
+      const endDate = sixMonthsFromNow.toISOString().split('T')[0];
+
+      const response = await api.getUnavailableDates({
+        query: { startDate, endDate },
+      });
+
+      if (response.status === 200) {
+        return response.body.dates;
+      }
+      return [];
+    },
+    staleTime: 30 * 1000, // 30 seconds - dates can change as other users book
+  });
+
+  // Convert date strings to Date objects for DayPicker
+  const unavailableDates = useMemo(() => {
+    if (!unavailableDatesData) return [];
+    return unavailableDatesData.map((dateStr) => new Date(dateStr + 'T00:00:00'));
+  }, [unavailableDatesData]);
 
   // Define steps
   const steps: Step[] = useMemo(() => {
@@ -100,15 +140,28 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
     }));
   };
 
+  // Phase 3.2 (#323): Use Zod for form validation
+  const formValidation = useMemo(() => {
+    const result = customerDetailsSchema.safeParse(customerDetails);
+    if (result.success) {
+      return { isValid: true, errors: {} as Record<string, string> };
+    }
+    const errors: Record<string, string> = {};
+    for (const issue of result.error.issues) {
+      const field = issue.path[0] as string;
+      if (!errors[field]) {
+        errors[field] = issue.message;
+      }
+    }
+    return { isValid: false, errors };
+  }, [customerDetails]);
+
+  // Legacy helper for backward compatibility
   const isValidEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return z.string().email().safeParse(email).success;
   };
 
-  const canProceedFromStep2 =
-    customerDetails.name.trim() !== '' &&
-    customerDetails.email.trim() !== '' &&
-    isValidEmail(customerDetails.email);
+  const canProceedFromStep2 = formValidation.isValid;
 
   // Step 4: Submit to Checkout
   const handleCheckout = async () => {
@@ -232,22 +285,29 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
             </CardHeader>
             <CardContent>
               <div className="flex justify-center">
-                <DayPicker
-                  mode="single"
-                  selected={selectedDate || undefined}
-                  onSelect={handleDateSelect}
-                  disabled={[
-                    { before: new Date() },
-                    ...unavailableDates,
-                  ]}
-                  className="border border-neutral-300 rounded-xl p-4 bg-white"
-                  modifiersStyles={{
-                    selected: {
-                      backgroundColor: '#F97316', // macon-orange
-                      color: 'white',
-                    },
-                  }}
-                />
+                {isLoadingDates ? (
+                  <div className="flex flex-col items-center py-8">
+                    <Loader2 className="w-8 h-8 text-macon-orange animate-spin" />
+                    <p className="mt-2 text-neutral-500">Loading available dates...</p>
+                  </div>
+                ) : (
+                  <DayPicker
+                    mode="single"
+                    selected={selectedDate || undefined}
+                    onSelect={handleDateSelect}
+                    disabled={[
+                      { before: new Date() },
+                      ...unavailableDates,
+                    ]}
+                    className="border border-neutral-300 rounded-xl p-4 bg-white"
+                    modifiersStyles={{
+                      selected: {
+                        backgroundColor: '#F97316', // macon-orange
+                        color: 'white',
+                      },
+                    }}
+                  />
+                )}
               </div>
               {selectedDate && (
                 <p className="text-center mt-4 text-lg font-medium text-neutral-900">
@@ -286,6 +346,7 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
                   clearable
                   onClear={() => updateCustomerDetails('name', '')}
                   required
+                  error={customerDetails.name && formValidation.errors.name}
                 />
                 <InputEnhanced
                   id="email"
@@ -299,11 +360,7 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
                   clearable
                   onClear={() => updateCustomerDetails('email', '')}
                   required
-                  error={
-                    customerDetails.email && !isValidEmail(customerDetails.email)
-                      ? 'Please enter a valid email address'
-                      : undefined
-                  }
+                  error={customerDetails.email && formValidation.errors.email}
                 />
                 <InputEnhanced
                   id="phone"

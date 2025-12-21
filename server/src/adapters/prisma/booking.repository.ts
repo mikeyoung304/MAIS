@@ -184,9 +184,14 @@ export class PrismaBookingRepository implements BookingRepository {
             const lockId = hashTenantDate(tenantId, booking.eventDate);
             await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-            // Check if date is already booked for this tenant
+            // Check if date is already booked for this tenant and booking type
+            // DATE bookings are exclusive per day, TIMESLOT bookings allow multiple per day
             const existing = await tx.booking.findFirst({
-              where: { tenantId, date: new Date(booking.eventDate) },
+              where: {
+                tenantId,
+                date: new Date(booking.eventDate),
+                bookingType: booking.bookingType || 'DATE',
+              },
             });
 
             if (existing) {

@@ -12,11 +12,13 @@ import {
   BookingAlreadyCancelledError,
   BookingCannotBeRescheduledError,
   BookingConflictError,
+  InvalidBookingTypeError,
 } from '../lib/errors';
 import { CommissionService } from './commission.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import { IdempotencyService } from './idempotency.service';
 import type { SchedulingAvailabilityService } from './scheduling-availability.service';
+import type { AvailabilityService } from './availability.service';
 import { logger } from '../lib/core/logger';
 
 // ============================================================================
@@ -76,7 +78,8 @@ export class BookingService {
     private readonly tenantRepo: PrismaTenantRepository,
     private readonly idempotencyService: IdempotencyService,
     private readonly schedulingAvailabilityService?: SchedulingAvailabilityService,
-    private readonly serviceRepo?: ServiceRepository
+    private readonly serviceRepo?: ServiceRepository,
+    private readonly availabilityService?: AvailabilityService
   ) {}
 
   // ============================================================================
@@ -266,6 +269,7 @@ export class BookingService {
       email: input.email,
       coupleName: input.coupleName,
       addOnIds: JSON.stringify(input.addOnIds || []),
+      bookingType: input.bookingType || 'DATE', // Default to DATE for backward compatibility
       commissionAmount: String(calculation.commissionAmount), // Total commission (for reference)
       depositCommissionAmount: String(depositCommissionAmount), // Commission on deposit
       balanceCommissionAmount: String(balanceCommissionAmount), // Commission on balance
@@ -283,6 +287,92 @@ export class BookingService {
       metadata,
       applicationFeeAmount: isDeposit ? depositCommissionAmount : calculation.commissionAmount,
       idempotencyKeyParts: [tenantId, input.email, pkg.id, input.eventDate, Date.now()],
+    });
+  }
+
+  /**
+   * Creates a Stripe checkout session for a DATE booking (e.g., weddings)
+   *
+   * MULTI-TENANT: Accepts tenantId for data isolation
+   * Consolidates package lookup, booking type validation, availability check,
+   * and checkout creation into a single service method.
+   *
+   * Phase 2 Refactor (#305): Moves business logic from route handler to service layer
+   * for better testability and separation of concerns.
+   *
+   * @param tenantId - Tenant ID for data isolation
+   * @param input - Date booking creation data
+   * @param input.packageId - Package ID (not slug)
+   * @param input.date - Event date in YYYY-MM-DD format
+   * @param input.customerName - Customer/couple name
+   * @param input.customerEmail - Customer email address
+   * @param input.customerPhone - Optional customer phone
+   * @param input.notes - Optional booking notes
+   * @param input.addOnIds - Optional array of add-on IDs to include
+   *
+   * @returns Object containing the Stripe checkout URL
+   *
+   * @throws {NotFoundError} If package doesn't exist
+   * @throws {InvalidBookingTypeError} If package doesn't support DATE booking
+   * @throws {BookingConflictError} If date is unavailable
+   *
+   * @example
+   * ```typescript
+   * const checkout = await bookingService.createDateBooking('tenant_123', {
+   *   packageId: 'pkg_abc123',
+   *   date: '2025-06-15',
+   *   customerName: 'Jane & John',
+   *   customerEmail: 'couple@example.com',
+   *   addOnIds: ['addon_photography']
+   * });
+   * // Returns: { checkoutUrl: 'https://checkout.stripe.com/...' }
+   * ```
+   */
+  async createDateBooking(
+    tenantId: string,
+    input: {
+      packageId: string;
+      date: string;
+      customerName: string;
+      customerEmail: string;
+      customerPhone?: string;
+      notes?: string;
+      addOnIds?: string[];
+    }
+  ): Promise<{ checkoutUrl: string }> {
+    // 1. Fetch package by ID
+    const pkg = await this.catalogRepo.getPackageById(tenantId, input.packageId);
+    if (!pkg) {
+      throw new NotFoundError(`Package not found: ${input.packageId}`);
+    }
+
+    // 2. Validate package is DATE type
+    if (pkg.bookingType !== 'DATE') {
+      throw new InvalidBookingTypeError(pkg.title, 'DATE');
+    }
+
+    // 3. Check availability using injected AvailabilityService
+    if (this.availabilityService) {
+      const availability = await this.availabilityService.checkAvailability(tenantId, input.date);
+      if (!availability.available) {
+        const reason =
+          availability.reason === 'blackout'
+            ? 'This date is not available for booking'
+            : availability.reason === 'booked'
+              ? 'This date is already booked'
+              : 'This date is not available';
+        throw new BookingConflictError(input.date, reason);
+      }
+    }
+
+    // 4. Delegate to createCheckout with DATE booking type
+    return this.createCheckout(tenantId, {
+      packageId: pkg.slug, // createCheckout expects slug
+      eventDate: input.date,
+      email: input.customerEmail,
+      coupleName: input.customerName,
+      addOnIds: input.addOnIds,
+      bookingType: 'DATE',
     });
   }
 
@@ -563,6 +653,7 @@ export class BookingService {
       totalCents: number;
       commissionAmount?: number;
       commissionPercent?: number;
+      bookingType?: 'DATE' | 'TIMESLOT';
       isDeposit?: boolean;
       depositPercent?: number;
     }
@@ -624,6 +715,7 @@ export class BookingService {
       totalCents: input.totalCents,
       commissionAmount: input.commissionAmount,
       commissionPercent: input.commissionPercent,
+      bookingType: input.bookingType || 'DATE', // Default to DATE for backward compatibility
       status: bookingStatus,
       createdAt: new Date().toISOString(),
       reminderDueDate,

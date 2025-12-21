@@ -499,6 +499,170 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
     });
   });
 
+  describe('DATE Booking Type Race Condition Prevention', () => {
+    it('prevents double-booking via database constraint for DATE bookings', async () => {
+      await withDatabaseRetry(async () => {
+        const uniqueSuffix = Date.now();
+        const eventDate = `2025-06-${String((uniqueSuffix % 28) + 1).padStart(2, '0')}`;
+
+        // First booking succeeds
+        const booking1: Booking = {
+          id: `date-type-1-${uniqueSuffix}`,
+          packageId: testPackageId,
+          coupleName: 'Wedding Couple 1',
+          email: `wedding1-${uniqueSuffix}@example.com`,
+          eventDate,
+          addOnIds: [],
+          totalCents: 250000,
+          status: 'PAID',
+          bookingType: 'DATE',
+          createdAt: new Date().toISOString(),
+        };
+
+        const created = await bookingRepo.create(testTenantId, booking1);
+        expect(created).toBeDefined();
+        expect(created.bookingType).toBe('DATE');
+
+        // Second DATE booking for same date should fail
+        const booking2: Booking = {
+          id: `date-type-2-${uniqueSuffix}`,
+          packageId: testPackageId,
+          coupleName: 'Wedding Couple 2',
+          email: `wedding2-${uniqueSuffix}@example.com`,
+          eventDate,
+          addOnIds: [],
+          totalCents: 250000,
+          status: 'PAID',
+          bookingType: 'DATE',
+          createdAt: new Date().toISOString(),
+        };
+
+        await expect(bookingRepo.create(testTenantId, booking2)).rejects.toThrow(
+          BookingConflictError
+        );
+
+        // Verify only one DATE booking exists for this date
+        const bookings = await ctx.prisma.booking.findMany({
+          where: {
+            tenantId: testTenantId,
+            date: new Date(eventDate),
+            bookingType: 'DATE',
+          },
+        });
+        expect(bookings).toHaveLength(1);
+      });
+    });
+
+    it('allows TIMESLOT booking on same date as DATE booking', async () => {
+      await withDatabaseRetry(async () => {
+        const uniqueSuffix = Date.now();
+        const eventDate = `2025-06-${String((uniqueSuffix % 28) + 1).padStart(2, '0')}`;
+
+        // Create DATE booking first
+        const dateBooking: Booking = {
+          id: `date-timeslot-date-${uniqueSuffix}`,
+          packageId: testPackageId,
+          coupleName: 'Wedding Couple',
+          email: `wedding-${uniqueSuffix}@example.com`,
+          eventDate,
+          addOnIds: [],
+          totalCents: 250000,
+          status: 'PAID',
+          bookingType: 'DATE',
+          createdAt: new Date().toISOString(),
+        };
+
+        await bookingRepo.create(testTenantId, dateBooking);
+
+        // TIMESLOT booking on same date should succeed
+        const timeslotBooking: Booking = {
+          id: `date-timeslot-slot-${uniqueSuffix}`,
+          packageId: testPackageId,
+          coupleName: 'Appointment Client',
+          email: `appt-${uniqueSuffix}@example.com`,
+          eventDate,
+          addOnIds: [],
+          totalCents: 15000,
+          status: 'PAID',
+          bookingType: 'TIMESLOT',
+          startTime: `${eventDate}T14:00:00Z`,
+          endTime: `${eventDate}T15:00:00Z`,
+          createdAt: new Date().toISOString(),
+        };
+
+        const created = await bookingRepo.create(testTenantId, timeslotBooking);
+        expect(created).toBeDefined();
+        expect(created.bookingType).toBe('TIMESLOT');
+
+        // Verify both bookings exist
+        const allBookings = await ctx.prisma.booking.findMany({
+          where: {
+            tenantId: testTenantId,
+            date: new Date(eventDate),
+          },
+        });
+        expect(allBookings).toHaveLength(2);
+        expect(allBookings.map((b) => b.bookingType).sort()).toEqual(['DATE', 'TIMESLOT']);
+      });
+    });
+
+    it('prevents double DATE booking via concurrent requests', async () => {
+      await withConcurrencyRetry(async () => {
+        const uniqueSuffix = Date.now();
+        const eventDate = `2025-07-${String((uniqueSuffix % 28) + 1).padStart(2, '0')}`;
+
+        const booking1: Booking = {
+          id: `concurrent-date-1-${uniqueSuffix}`,
+          packageId: testPackageId,
+          coupleName: 'Concurrent Wedding 1',
+          email: `concurrent1-${uniqueSuffix}@example.com`,
+          eventDate,
+          addOnIds: [],
+          totalCents: 250000,
+          status: 'PAID',
+          bookingType: 'DATE',
+          createdAt: new Date().toISOString(),
+        };
+
+        const booking2: Booking = {
+          id: `concurrent-date-2-${uniqueSuffix}`,
+          packageId: testPackageId,
+          coupleName: 'Concurrent Wedding 2',
+          email: `concurrent2-${uniqueSuffix}@example.com`,
+          eventDate,
+          addOnIds: [],
+          totalCents: 250000,
+          status: 'PAID',
+          bookingType: 'DATE',
+          createdAt: new Date().toISOString(),
+        };
+
+        // Fire two DATE booking requests concurrently
+        const results = await Promise.allSettled([
+          bookingRepo.create(testTenantId, booking1),
+          bookingRepo.create(testTenantId, booking2),
+        ]);
+
+        // One succeeds, one fails
+        const succeeded = results.filter((r) => r.status === 'fulfilled');
+        const failed = results.filter((r) => r.status === 'rejected');
+
+        expect(succeeded).toHaveLength(1);
+        expect(failed).toHaveLength(1);
+
+        // Verify only one DATE booking exists
+        const bookings = await ctx.prisma.booking.findMany({
+          where: {
+            tenantId: testTenantId,
+            date: new Date(eventDate),
+            bookingType: 'DATE',
+          },
+        });
+        expect(bookings).toHaveLength(1);
+      });
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle bookings with add-ons during race conditions', async () => {
       await withConcurrencyRetry(async () => {

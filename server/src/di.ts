@@ -181,7 +181,10 @@ export function buildContainer(config: Config): Container {
       adapters.paymentProvider,
       commissionService,
       mockTenantRepo,
-      idempotencyService
+      idempotencyService,
+      undefined, // schedulingAvailabilityService - set later
+      undefined, // serviceRepo - set later
+      availabilityService // DATE booking availability checking
     );
     const identityService = new IdentityService(adapters.userRepo, config.JWT_SECRET);
 
@@ -485,7 +488,10 @@ export function buildContainer(config: Config): Container {
     paymentProvider,
     commissionService,
     tenantRepo,
-    idempotencyService
+    idempotencyService,
+    undefined, // schedulingAvailabilityService - set later
+    undefined, // serviceRepo - set later
+    availabilityService // DATE booking availability checking
   );
   const identityService = new IdentityService(userRepo, config.JWT_SECRET);
 

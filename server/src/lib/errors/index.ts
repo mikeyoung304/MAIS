@@ -65,6 +65,7 @@ export {
   PackageError,
   PackageNotAvailableError,
   PackageQuotaExceededError,
+  InvalidBookingTypeError,
   TenantError,
   TenantNotActiveError,
   TenantQuotaExceededError,

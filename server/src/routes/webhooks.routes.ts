@@ -52,6 +52,8 @@ const MetadataSchema = z.object({
   addOnIds: z.string().optional(),
   commissionAmount: z.string().optional(),
   commissionPercent: z.string().optional(),
+  // Booking type field
+  bookingType: z.enum(['DATE', 'TIMESLOT']).optional(), // DATE for weddings, TIMESLOT for appointments
   // Deposit fields
   isDeposit: z.string().optional(),
   totalCents: z.string().optional(), // Full total for deposit bookings
@@ -246,6 +248,7 @@ export class WebhooksController {
           addOnIds,
           commissionAmount,
           commissionPercent,
+          bookingType,
           isDeposit,
           totalCents: metadataTotalCents,
           depositPercent,
@@ -357,6 +360,7 @@ export class WebhooksController {
             totalCents,
             commissionAmount: commissionAmountNum,
             commissionPercent: commissionPercentNum,
+            bookingType: bookingType || 'DATE', // Default to DATE for backward compatibility
             isDeposit: isDeposit === 'true',
             depositPercent: depositPercent ? parseFloat(depositPercent) : undefined,
           });

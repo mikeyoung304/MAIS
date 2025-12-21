@@ -178,6 +178,20 @@ export class PackageNotAvailableError extends PackageError {
 }
 
 /**
+ * Invalid booking type for package
+ * Use when a package doesn't support the requested booking type (DATE vs TIMESLOT)
+ */
+export class InvalidBookingTypeError extends PackageError {
+  constructor(packageTitle: string, expectedType: string) {
+    super(
+      `Package "${packageTitle}" does not support ${expectedType} booking type`,
+      'INVALID_BOOKING_TYPE'
+    );
+    this.name = 'InvalidBookingTypeError';
+  }
+}
+
+/**
  * Package quota exceeded
  */
 export class PackageQuotaExceededError extends PackageError {
