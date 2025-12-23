@@ -178,13 +178,35 @@ export function createMultiTenantSetup(
   };
 
   /**
-   * Delete tenant records completely (ON DELETE CASCADE handles related data)
-   * This prevents test tenants from accumulating in the database
+   * Delete tenant records completely
+   *
+   * Note: BookingAddOn has onDelete: Restrict for addOnId, so we must
+   * manually delete BookingAddOns before cascade can work properly.
+   * This prevents test tenants from accumulating in the database.
    */
   const deleteTenants = async (slugs: string[]) => {
     if (slugs.length === 0) return;
 
-    // Delete tenant records - CASCADE handles all related data automatically
+    // First, get all tenant IDs for these slugs
+    const tenants = await prisma.tenant.findMany({
+      where: { slug: { in: slugs } },
+      select: { id: true },
+    });
+    const tenantIds = tenants.map(t => t.id);
+
+    if (tenantIds.length === 0) return;
+
+    // Delete BookingAddOns first (has onDelete: Restrict on addOnId)
+    // This must be done before AddOns can be deleted via cascade
+    await prisma.bookingAddOn.deleteMany({
+      where: {
+        booking: {
+          tenantId: { in: tenantIds },
+        },
+      },
+    });
+
+    // Now tenant deletion will cascade properly
     await prisma.tenant.deleteMany({
       where: {
         slug: { in: slugs },

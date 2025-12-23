@@ -994,6 +994,12 @@ export class PrismaBookingRepository implements BookingRepository {
       phone: string | null;
     };
     addOns: { addOnId: string }[];
+    // Booking type (DATE vs TIMESLOT)
+    bookingType?: string | null;
+    // Time slot fields (for TIMESLOT bookings)
+    startTime?: Date | null;
+    endTime?: Date | null;
+    serviceId?: string | null;
     // New booking management fields
     cancelledBy?: string | null;
     cancellationReason?: string | null;
@@ -1043,6 +1049,8 @@ export class PrismaBookingRepository implements BookingRepository {
       commissionPercent: Number(booking.commissionPercent),
       status: mapStatus(booking.status),
       createdAt: booking.createdAt.toISOString(),
+      // Include bookingType for proper DATE vs TIMESLOT handling
+      bookingType: (booking.bookingType as Booking['bookingType']) || 'DATE',
     };
 
     // Add optional phone
@@ -1092,6 +1100,17 @@ export class PrismaBookingRepository implements BookingRepository {
     }
     if (booking.balancePaidAt) {
       domainBooking.balancePaidAt = booking.balancePaidAt.toISOString();
+    }
+
+    // Add TIMESLOT-specific fields if present
+    if (booking.startTime) {
+      domainBooking.startTime = booking.startTime.toISOString();
+    }
+    if (booking.endTime) {
+      domainBooking.endTime = booking.endTime.toISOString();
+    }
+    if (booking.serviceId) {
+      domainBooking.serviceId = booking.serviceId;
     }
 
     return domainBooking;
