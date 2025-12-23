@@ -33,7 +33,8 @@
     "create-tenant": "tsx scripts/create-tenant.ts",
     "create-tenant-with-stripe": "tsx scripts/create-tenant-with-stripe.ts",
     "test:commission": "tsx scripts/test-commission.ts",
-    "test:stripe-connect": "tsx scripts/test-stripe-connect.ts"
+    "test:stripe-connect": "tsx scripts/test-stripe-connect.ts",
+    "db:diagnose": "tsx scripts/diagnose-database.ts"
   },
   "dependencies": {
     "@macon/contracts": "*",

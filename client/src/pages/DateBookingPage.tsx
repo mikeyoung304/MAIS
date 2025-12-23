@@ -34,6 +34,8 @@ export function DateBookingPage() {
       return response.body as PackageDto;
     },
     enabled: !!packageSlug,
+    staleTime: 5 * 60 * 1000, // 5 minutes - package data is relatively static
+    gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache for navigation
   });
 
   if (isLoading) {

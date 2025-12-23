@@ -119,7 +119,7 @@ describe('WebhooksController', () => {
       await controller.handleStripeWebhook(rawBody, 'valid_signature');
 
       // Assert: Booking created
-      const bookings = await bookingRepo.findAll();
+      const bookings = await bookingRepo.findAll('test-tenant');
       expect(bookings.length).toBe(1);
       expect(bookings[0]?.eventDate).toBe('2025-06-15');
       expect(bookings[0]?.email).toBe('couple@example.com');
@@ -161,7 +161,7 @@ describe('WebhooksController', () => {
       // Process first time
       await controller.handleStripeWebhook(rawBody, 'valid_signature');
 
-      const bookingsAfterFirst = await bookingRepo.findAll();
+      const bookingsAfterFirst = await bookingRepo.findAll('test-tenant');
       expect(bookingsAfterFirst.length).toBe(1);
 
       // Act: Process same webhook again (duplicate) - should not throw
@@ -170,7 +170,7 @@ describe('WebhooksController', () => {
       ).resolves.toBeUndefined();
 
       // Assert: Still only one booking (webhook deduplication prevented second booking)
-      const bookingsAfterDuplicate = await bookingRepo.findAll();
+      const bookingsAfterDuplicate = await bookingRepo.findAll('test-tenant');
       expect(bookingsAfterDuplicate.length).toBe(1);
 
       // Webhook should be recorded only once
@@ -307,7 +307,7 @@ describe('WebhooksController', () => {
       ).resolves.toBeUndefined();
 
       // Assert: No bookings created
-      const bookings = await bookingRepo.findAll();
+      const bookings = await bookingRepo.findAll('test-tenant');
       expect(bookings.length).toBe(0);
     });
 
@@ -358,7 +358,7 @@ describe('WebhooksController', () => {
       await controller.handleStripeWebhook(rawBody, 'valid_signature');
 
       // Assert
-      const bookings = await bookingRepo.findAll();
+      const bookings = await bookingRepo.findAll('test-tenant');
       expect(bookings.length).toBe(1);
       expect(bookings[0]?.addOnIds).toEqual(['addon_1']);
       expect(bookings[0]?.totalCents).toBe(120000);

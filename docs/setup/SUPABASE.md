@@ -253,12 +253,34 @@ CREATE INDEX IF NOT EXISTS "idx_name" ON "Table"("column");
 
 ### Connection Issues
 
-**"Can't reach database server"**
+**"Can't reach database server" / P1001 Error**
 
 - Check Supabase project status (paused?)
 - Verify password URL-encoding (@ = %40)
 - Test connection in SQL Editor first
-- Check if IPv6 is enabled (some networks block it)
+- **Most common cause: IPv6 not supported on your network**
+
+**IPv6 Connection Fix (RECOMMENDED):**
+
+Supabase direct connections (`db.*.supabase.co`) are **IPv6-only**. If your network doesn't support IPv6, use the **Session Pooler** instead:
+
+1. Go to Supabase Dashboard → Connect → Session Pooler
+2. Update your `.env`:
+
+```bash
+# Before (IPv6-only - fails on many networks)
+DATABASE_URL=postgresql://postgres:[PASS]@db.[REF].supabase.co:5432/postgres
+
+# After (IPv4 + IPv6 - works everywhere)
+DATABASE_URL=postgresql://postgres.[REF]:[PASS]@aws-1-us-east-2.pooler.supabase.com:5432/postgres?pgbouncer=true&connection_limit=5
+```
+
+**Key differences:**
+- Hostname: `db.[REF].supabase.co` → `aws-1-[REGION].pooler.supabase.com`
+- Username: `postgres` → `postgres.[REF]`
+- Add: `?pgbouncer=true&connection_limit=5`
+
+See full guide: [docs/solutions/database-issues/supabase-ipv6-session-pooler-connection.md](../solutions/database-issues/supabase-ipv6-session-pooler-connection.md)
 
 **"Too many connections"**
 

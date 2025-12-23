@@ -16,42 +16,61 @@ import type { EventEmitter } from '../../src/lib/core/events';
 // --- Fake Repositories ---
 
 export class FakeBookingRepository implements BookingRepository {
-  private bookings: Booking[] = [];
+  private bookings: Array<Booking & { tenantId: string }> = [];
 
   async create(tenantId: string, booking: Booking): Promise<Booking> {
-    // Enforce unique-by-date constraint
-    const exists = this.bookings.some((b) => b.eventDate === booking.eventDate);
+    // P1 fix: Enforce unique-by-date constraint WITH tenant isolation
+    // Matches real repository behavior: @@unique([tenantId, date, bookingType])
+    const bookingType = booking.bookingType || 'DATE';
+    const exists = this.bookings.some(
+      (b) =>
+        b.tenantId === tenantId &&
+        b.eventDate === booking.eventDate &&
+        (b.bookingType || 'DATE') === bookingType
+    );
     if (exists) {
       throw new BookingConflictError(booking.eventDate);
     }
-    this.bookings.push(booking);
+    this.bookings.push({ ...booking, tenantId });
     return booking;
   }
 
   async findById(tenantId: string, id: string): Promise<Booking | null> {
-    return this.bookings.find((b) => b.id === id) || null;
+    // P1 fix: Filter by tenantId for proper isolation
+    const found = this.bookings.find((b) => b.tenantId === tenantId && b.id === id);
+    return found ? this.stripTenantId(found) : null;
   }
 
   async findAll(tenantId: string): Promise<Booking[]> {
-    return [...this.bookings];
+    // P1 fix: Filter by tenantId for proper isolation
+    return this.bookings.filter((b) => b.tenantId === tenantId).map(this.stripTenantId);
   }
 
   async isDateBooked(tenantId: string, date: string): Promise<boolean> {
-    return this.bookings.some((b) => b.eventDate === date);
+    // P1 fix: Filter by tenantId for proper isolation
+    return this.bookings.some((b) => b.tenantId === tenantId && b.eventDate === date);
   }
 
   async getUnavailableDates(tenantId: string, startDate: Date, endDate: Date): Promise<Date[]> {
+    // P1 fix: Filter by tenantId for proper isolation
     return this.bookings
       .filter((b) => {
+        if (b.tenantId !== tenantId) return false;
         const bookingDate = new Date(b.eventDate);
         return bookingDate >= startDate && bookingDate <= endDate;
       })
       .map((b) => new Date(b.eventDate));
   }
 
-  // Test helper
-  addBooking(booking: Booking): void {
-    this.bookings.push(booking);
+  // Helper to remove tenantId from returned booking (matches domain entity)
+  private stripTenantId(booking: Booking & { tenantId: string }): Booking {
+    const { tenantId: _, ...rest } = booking;
+    return rest;
+  }
+
+  // Test helper - now requires tenantId for proper isolation
+  addBooking(booking: Booking, tenantId: string = 'test-tenant'): void {
+    this.bookings.push({ ...booking, tenantId });
   }
 
   clear(): void {

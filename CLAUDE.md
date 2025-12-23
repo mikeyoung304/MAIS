@@ -601,6 +601,16 @@ psql $DATABASE_URL -c "SELECT 1;"
 cd server && npm exec prisma migrate reset
 ```
 
+**Supabase "Can't reach database" (IPv6 issue):**
+
+If you get `P1001: Can't reach database server` or `ENETUNREACH` errors with Supabase, your network likely doesn't support IPv6. Supabase direct connections (`db.*.supabase.co`) are IPv6-only.
+
+**Fix:** Use Session Pooler instead of Direct Connection:
+1. Supabase Dashboard → Connect → Session Pooler
+2. Update `DATABASE_URL` in `.env` to use `*.pooler.supabase.com`
+
+See: `docs/solutions/database-issues/supabase-ipv6-session-pooler-connection.md`
+
 **Test failures after schema change:**
 
 ```bash

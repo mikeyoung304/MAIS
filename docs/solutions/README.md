@@ -36,6 +36,13 @@ This directory contains problem-solution documentation, prevention strategies, a
 | [SCHEMA_DRIFT_PREVENTION.md](./SCHEMA_DRIFT_PREVENTION.md)                   | Prevent schema drift             |
 | [TENANT-SCOPED-QUERIES-CHECKLIST.md](./TENANT-SCOPED-QUERIES-CHECKLIST.md)   | Ensure tenant isolation          |
 
+**New:** Network & Connection Issues
+
+| Document                                                                                                    | Purpose                         |
+| ----------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| [database-issues/SUPABASE_IPV6_CONNECTION_PREVENTION.md](./database-issues/SUPABASE_IPV6_CONNECTION_PREVENTION.md) | Supabase IPv6 connection issues |
+| [database-issues/SUPABASE_IPV6_QUICK_REFERENCE.md](./database-issues/SUPABASE_IPV6_QUICK_REFERENCE.md)       | Quick fix for IPv6 errors       |
+
 **Subdirectory:** [database-issues/](./database-issues/)
 
 ### E2E Testing
@@ -186,13 +193,13 @@ Each solution document should include:
 
 ## Statistics
 
-- **Total Solution Documents:** 87 markdown files
+- **Total Solution Documents:** 89 markdown files
 - **Total Categories:** 11 subdirectories
 - **Index Files:** 37 navigation indexes
-- **Quick References:** 15 cheat sheets
+- **Quick References:** 17 cheat sheets
 
 ---
 
-**Last Updated:** 2025-12-02
+**Last Updated:** 2025-12-23
 **Maintainer:** Technical Lead
 **Purpose:** Problem-solution documentation following Diátaxis "How-to Guide" pattern

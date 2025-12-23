@@ -17,7 +17,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { InputEnhanced } from '@/components/ui/input-enhanced';
 import { Stepper, type Step } from '@/components/ui/Stepper';
-import { api, baseUrl } from '@/lib/api';
+import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { User, Mail, Phone, ArrowLeft, Calendar, CheckCircle, Loader2 } from 'lucide-react';
 import type { PackageDto } from '@macon/contracts';
@@ -68,8 +68,11 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
   const sixMonthsFromNow = new Date(today);
   sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
 
+  // Get tenant key for cache isolation (P1 fix: prevent cross-tenant cache collision)
+  const tenantKey = localStorage.getItem('impersonationTenantKey') || 'default';
+
   const { data: unavailableDatesData, isLoading: isLoadingDates } = useQuery({
-    queryKey: ['unavailable-dates', today.toISOString().split('T')[0]],
+    queryKey: ['unavailable-dates', tenantKey, today.toISOString().split('T')[0]],
     queryFn: async () => {
       const startDate = today.toISOString().split('T')[0];
       const endDate = sixMonthsFromNow.toISOString().split('T')[0];
@@ -150,11 +153,6 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
     return { isValid: false, errors };
   }, [customerDetails]);
 
-  // Legacy helper for backward compatibility
-  const isValidEmail = (email: string) => {
-    return z.string().email().safeParse(email).success;
-  };
-
   const canProceedFromStep2 = formValidation.isValid;
 
   // Step 4: Submit to Checkout
@@ -171,39 +169,34 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
       // Format date as YYYY-MM-DD
       const dateStr = selectedDate.toISOString().split('T')[0];
 
-      // Make direct fetch call to the new endpoint since ts-rest may not have picked it up yet
-      const response = await fetch(`${baseUrl}/v1/public/bookings/date`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(localStorage.getItem('impersonationTenantKey')
-            ? { 'X-Tenant-Key': localStorage.getItem('impersonationTenantKey')! }
-            : {}),
-        },
-        body: JSON.stringify({
+      // P1 fix: Use typed ts-rest API client for type safety
+      // The api client automatically handles X-Tenant-Key header injection
+      const response = await api.createDateBooking({
+        body: {
           packageId: pkg.id,
           date: dateStr,
           customerName: customerDetails.name.trim(),
           customerEmail: customerDetails.email.trim(),
           customerPhone: customerDetails.phone.trim() || undefined,
           notes: customerDetails.notes.trim() || undefined,
-        }),
+        },
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        if (response.status === 409) {
-          toast.error('Date unavailable', {
-            description: 'This date is already booked. Please select a different date.',
-          });
-          setCurrentStepIndex(1); // Go back to date selection
-          setIsSubmitting(false);
-          return;
-        }
-        throw new Error(errorData?.error || 'Failed to create checkout session');
+      if (response.status === 409) {
+        toast.error('Date unavailable', {
+          description: 'This date is already booked. Please select a different date.',
+        });
+        setCurrentStepIndex(1); // Go back to date selection
+        setIsSubmitting(false);
+        return;
       }
 
-      const data = await response.json();
+      if (response.status !== 201) {
+        const errorBody = response.body as { error?: string } | null;
+        throw new Error(errorBody?.error || 'Failed to create checkout session');
+      }
+
+      const data = response.body;
 
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
