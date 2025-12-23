@@ -530,7 +530,11 @@ export function createV1Router(
     // Register public balance payment routes (for deposit payment flow)
     // NO authentication required - uses JWT tokens in query params for access
     // Allows customers to pay remaining balance via links in confirmation emails
-    const publicBalancePaymentController = new PublicBalancePaymentController(services.booking);
+    // P2-284 FIX: Inject bookingRepo for token state validation (prevents business logic bypass)
+    const publicBalancePaymentController = new PublicBalancePaymentController(
+      services.booking,
+      repositories.booking
+    );
     const publicBalancePaymentRouter = createPublicBalancePaymentRouter(
       publicBalancePaymentController
     );

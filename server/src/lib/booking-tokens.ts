@@ -234,6 +234,73 @@ export async function validateBookingToken(
         };
       }
 
+      // Block pay_balance on invalid statuses
+      if (payload.action === 'pay_balance') {
+        // Only DEPOSIT_PAID bookings can have balance paid
+        if (booking.status !== 'DEPOSIT_PAID') {
+          // Different messages based on status
+          if (booking.status === 'PAID' || booking.status === 'CONFIRMED') {
+            logger.info(
+              { bookingId: booking.id, action: payload.action, status: booking.status },
+              'Token validation failed: balance already paid'
+            );
+            return {
+              valid: false,
+              error: 'booking_completed',
+              message: 'The balance for this booking has already been paid',
+            };
+          }
+
+          if (booking.status === 'CANCELED') {
+            logger.info(
+              { bookingId: booking.id, action: payload.action, status: booking.status },
+              'Token validation failed: cannot pay balance on canceled booking'
+            );
+            return {
+              valid: false,
+              error: 'booking_canceled',
+              message: 'This booking has been canceled and cannot accept payments',
+            };
+          }
+
+          if (booking.status === 'FULFILLED') {
+            logger.info(
+              { bookingId: booking.id, action: payload.action, status: booking.status },
+              'Token validation failed: cannot pay balance on completed booking'
+            );
+            return {
+              valid: false,
+              error: 'booking_completed',
+              message: 'This booking has been completed',
+            };
+          }
+
+          if (booking.status === 'REFUNDED') {
+            logger.info(
+              { bookingId: booking.id, action: payload.action, status: booking.status },
+              'Token validation failed: cannot pay balance on refunded booking'
+            );
+            return {
+              valid: false,
+              error: 'booking_canceled',
+              message: 'This booking has been refunded',
+            };
+          }
+
+          if (booking.status === 'PENDING') {
+            logger.info(
+              { bookingId: booking.id, action: payload.action, status: booking.status },
+              'Token validation failed: no deposit paid yet'
+            );
+            return {
+              valid: false,
+              error: 'invalid',
+              message: 'No deposit has been paid for this booking yet',
+            };
+          }
+        }
+      }
+
       logger.debug(
         { bookingId: booking.id, action: payload.action, status: booking.status },
         'Token validated with booking state check'

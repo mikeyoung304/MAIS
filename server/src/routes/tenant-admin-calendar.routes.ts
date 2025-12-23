@@ -10,6 +10,9 @@ import { encryptionService } from '../lib/encryption.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import type { TenantCalendarConfig } from '../adapters/gcal.adapter';
 
+// Constants
+const MAX_JSON_SIZE = 50 * 1024; // 50KB - service account JSON files are typically ~2KB
+
 // Validation schemas
 const calendarConfigSchema = z.object({
   calendarId: z.string().min(1, 'Calendar ID is required'),
@@ -100,6 +103,14 @@ export function createTenantAdminCalendarRoutes(
       }
 
       const { calendarId, serviceAccountJson } = validation.data;
+
+      // Validate service account JSON size (defense-in-depth, client also validates)
+      if (serviceAccountJson.length > MAX_JSON_SIZE) {
+        res.status(400).json({
+          error: 'Service account JSON too large. Maximum size is 50KB.',
+        });
+        return;
+      }
 
       // Validate service account JSON is valid JSON
       try {

@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: "284"
 tags: [code-review, security, jwt, tokens, booking-management]
 dependencies: []
+resolved_at: "2025-12-23"
+resolved_by: "added pay_balance state validation with 9 new tests"
 ---
 
 # Missing Token Revocation for Booking Management Links

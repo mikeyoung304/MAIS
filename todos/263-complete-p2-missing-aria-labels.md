@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: "263"
 tags: [code-review, accessibility, tenant-dashboard]
 dependencies: []
+resolved_at: "2025-12-23"
+resolved_by: "already fixed - ARIA labels present in both RemindersCard and CalendarConfigCard"
 ---
 
 # Missing ARIA Labels for Interactive Elements

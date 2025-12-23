@@ -4,11 +4,17 @@
  * Customer-facing endpoint for paying remaining balance after deposit.
  * Uses JWT tokens in query params for authentication (no login required).
  *
+ * P2-284 FIX: Added booking state validation to prevent business logic bypass.
+ * Tokens are now validated against the actual booking state to ensure:
+ * - Only DEPOSIT_PAID bookings can have balance paid
+ * - Canceled/fulfilled/refunded bookings reject payment attempts
+ *
  * @see plans/mvp-gaps-phased-implementation.md
  */
 
 import { Router } from 'express';
 import type { BookingService } from '../services/booking.service';
+import type { BookingRepository } from '../lib/ports';
 import { validateBookingToken } from '../lib/booking-tokens';
 import { logger } from '../lib/core/logger';
 import { handlePublicRouteError } from '../lib/public-route-error-handler';
@@ -18,21 +24,33 @@ import { handlePublicRouteError } from '../lib/public-route-error-handler';
  *
  * Handles customer-facing balance payment operations:
  * - Create Stripe checkout for balance payment
+ *
+ * P2-284: Requires BookingRepository for token state validation
  */
 export class PublicBalancePaymentController {
-  constructor(private readonly bookingService: BookingService) {}
+  constructor(
+    private readonly bookingService: BookingService,
+    private readonly bookingRepo: BookingRepository
+  ) {}
 
   /**
    * Create balance payment checkout
    *
    * POST /v1/public/bookings/pay-balance?token=xxx
+   *
+   * P2-284: Now validates booking state before allowing checkout creation.
+   * Only DEPOSIT_PAID bookings can proceed with balance payment.
    */
   async createBalancePaymentCheckout(token: string): Promise<{
     checkoutUrl: string;
     balanceAmountCents: number;
   }> {
-    // Validate token (must be 'pay_balance' action)
-    const result = await validateBookingToken(token, 'pay_balance');
+    // P2-284 FIX: Validate token WITH state validation
+    // This prevents:
+    // - Paying balance on canceled bookings
+    // - Paying balance on already-paid bookings
+    // - Paying balance on fulfilled/refunded bookings
+    const result = await validateBookingToken(token, 'pay_balance', this.bookingRepo);
     if (!result.valid) {
       throw new Error(`Token validation failed: ${result.message}`);
     }

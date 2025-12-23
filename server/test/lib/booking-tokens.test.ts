@@ -442,4 +442,157 @@ describe('Booking Tokens', () => {
       expect(result.valid).toBe(true);
     });
   });
+
+  describe('P2-284: pay_balance State Validation', () => {
+    let mockBookingRepo: BookingRepository;
+    let mockBooking: Booking;
+    const mockTenantId = 'tenant_test_balance';
+    const mockBookingId = 'booking_test_balance';
+
+    beforeEach(() => {
+      process.env.JWT_SECRET = 'test-jwt-secret-32chars-0123456789abcdef';
+      process.env.BOOKING_TOKEN_SECRET = 'test-booking-secret-32chars-0123456789abcdef';
+
+      // Create mock booking with DEPOSIT_PAID status (valid for balance payment)
+      mockBooking = {
+        id: mockBookingId,
+        tenantId: mockTenantId,
+        packageId: 'pkg_123',
+        eventDate: '2025-06-15',
+        coupleName: 'John & Jane Doe',
+        email: 'john@example.com',
+        totalCents: 150000,
+        status: 'DEPOSIT_PAID',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as Booking;
+
+      // Create mock repository
+      mockBookingRepo = {
+        findById: async (tenantId: string, id: string) => {
+          if (tenantId === mockTenantId && id === mockBookingId) {
+            return mockBooking;
+          }
+          return null;
+        },
+      } as BookingRepository;
+    });
+
+    it('should allow pay_balance on DEPOSIT_PAID bookings', async () => {
+      mockBooking.status = 'DEPOSIT_PAID';
+      const token = generateBookingToken(mockBookingId, mockTenantId, 'pay_balance');
+      const result = await validateBookingToken(token, 'pay_balance', mockBookingRepo);
+
+      expect(result.valid).toBe(true);
+    });
+
+    it('should reject pay_balance on PAID bookings', async () => {
+      mockBooking.status = 'PAID';
+      const token = generateBookingToken(mockBookingId, mockTenantId, 'pay_balance');
+      const result = await validateBookingToken(token, 'pay_balance', mockBookingRepo);
+
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.error).toBe('booking_completed');
+        expect(result.message).toContain('already been paid');
+      }
+    });
+
+    it('should reject pay_balance on CONFIRMED bookings', async () => {
+      mockBooking.status = 'CONFIRMED';
+      const token = generateBookingToken(mockBookingId, mockTenantId, 'pay_balance');
+      const result = await validateBookingToken(token, 'pay_balance', mockBookingRepo);
+
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.error).toBe('booking_completed');
+        expect(result.message).toContain('already been paid');
+      }
+    });
+
+    it('should reject pay_balance on CANCELED bookings', async () => {
+      mockBooking.status = 'CANCELED';
+      const token = generateBookingToken(mockBookingId, mockTenantId, 'pay_balance');
+      const result = await validateBookingToken(token, 'pay_balance', mockBookingRepo);
+
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.error).toBe('booking_canceled');
+        expect(result.message).toContain('canceled');
+      }
+    });
+
+    it('should reject pay_balance on FULFILLED bookings', async () => {
+      mockBooking.status = 'FULFILLED';
+      const token = generateBookingToken(mockBookingId, mockTenantId, 'pay_balance');
+      const result = await validateBookingToken(token, 'pay_balance', mockBookingRepo);
+
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.error).toBe('booking_completed');
+        expect(result.message).toContain('completed');
+      }
+    });
+
+    it('should reject pay_balance on REFUNDED bookings', async () => {
+      mockBooking.status = 'REFUNDED';
+      const token = generateBookingToken(mockBookingId, mockTenantId, 'pay_balance');
+      const result = await validateBookingToken(token, 'pay_balance', mockBookingRepo);
+
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.error).toBe('booking_canceled');
+        expect(result.message).toContain('refunded');
+      }
+    });
+
+    it('should reject pay_balance on PENDING bookings (no deposit yet)', async () => {
+      mockBooking.status = 'PENDING';
+      const token = generateBookingToken(mockBookingId, mockTenantId, 'pay_balance');
+      const result = await validateBookingToken(token, 'pay_balance', mockBookingRepo);
+
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.error).toBe('invalid');
+        expect(result.message).toContain('No deposit');
+      }
+    });
+
+    it('ATTACK SCENARIO: should prevent paying balance after cancellation', async () => {
+      // Step 1: Booking with deposit paid
+      mockBooking.status = 'DEPOSIT_PAID';
+      const payBalanceToken = generateBookingToken(mockBookingId, mockTenantId, 'pay_balance');
+
+      // Step 2: Token is valid initially
+      const validResult = await validateBookingToken(payBalanceToken, 'pay_balance', mockBookingRepo);
+      expect(validResult.valid).toBe(true);
+
+      // Step 3: Customer cancels booking
+      mockBooking.status = 'CANCELED';
+
+      // Step 4: Customer tries to use old pay-balance link (should fail)
+      const invalidResult = await validateBookingToken(payBalanceToken, 'pay_balance', mockBookingRepo);
+      expect(invalidResult.valid).toBe(false);
+      if (!invalidResult.valid) {
+        expect(invalidResult.error).toBe('booking_canceled');
+      }
+    });
+
+    it('ATTACK SCENARIO: should prevent double payment via old balance link', async () => {
+      // Step 1: Customer pays deposit
+      mockBooking.status = 'DEPOSIT_PAID';
+      const payBalanceToken = generateBookingToken(mockBookingId, mockTenantId, 'pay_balance');
+
+      // Step 2: Customer pays balance
+      mockBooking.status = 'PAID';
+
+      // Step 3: Customer tries to pay again with old link (should fail)
+      const result = await validateBookingToken(payBalanceToken, 'pay_balance', mockBookingRepo);
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.error).toBe('booking_completed');
+        expect(result.message).toContain('already been paid');
+      }
+    });
+  });
 });
