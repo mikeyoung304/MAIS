@@ -87,18 +87,16 @@ describe('BookingService.createDateBooking', () => {
     idempotencyService = createMockIdempotencyService();
     availabilityService = createMockAvailabilityService();
 
-    service = new BookingService(
+    service = new BookingService({
       bookingRepo,
       catalogRepo,
       eventEmitter,
       paymentProvider,
-      commissionService as any,
-      tenantRepo as any,
-      idempotencyService as any,
-      undefined, // schedulingAvailabilityService
-      undefined, // serviceRepo
-      availabilityService as any
-    );
+      commissionService: commissionService as any,
+      tenantRepo: tenantRepo as any,
+      idempotencyService: idempotencyService as any,
+      availabilityService: availabilityService as any,
+    });
   });
 
   describe('Error Handling', () => {
@@ -260,18 +258,16 @@ describe('BookingService.createDateBooking', () => {
   describe('Availability Service Integration', () => {
     it('skips availability check when service not injected', async () => {
       // Arrange - create service without availability service
-      const serviceWithoutAvailability = new BookingService(
+      const serviceWithoutAvailability = new BookingService({
         bookingRepo,
         catalogRepo,
         eventEmitter,
         paymentProvider,
-        commissionService as any,
-        tenantRepo as any,
-        idempotencyService as any,
-        undefined, // schedulingAvailabilityService
-        undefined, // serviceRepo
-        undefined // availabilityService - not provided
-      );
+        commissionService: commissionService as any,
+        tenantRepo: tenantRepo as any,
+        idempotencyService: idempotencyService as any,
+        // availabilityService not provided - should be skipped
+      });
 
       const pkg = buildPackage({
         id: 'pkg_wedding',

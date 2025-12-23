@@ -358,6 +358,7 @@ model Booking {
   @@unique([tenantId, date, bookingType]) // Composite unique for date-only bookings
   @@index([tenantId, status])
   @@index([tenantId, date])
+  @@index([tenantId, date, bookingType]) // DATE booking availability queries (TODO-327)
   @@index([tenantId, startTime]) // For time-slot queries
   @@index([tenantId, status, date])
   @@index([tenantId])

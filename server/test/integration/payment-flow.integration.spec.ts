@@ -127,15 +127,15 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
     eventEmitter = new FakeEventEmitter();
     commissionService = new CommissionService(ctx.prisma);
     idempotencyService = new IdempotencyService(ctx.prisma);
-    bookingService = new BookingService(
+    bookingService = new BookingService({
       bookingRepo,
       catalogRepo,
       eventEmitter,
-      mockPaymentProvider,
+      paymentProvider: mockPaymentProvider,
       commissionService,
       tenantRepo,
-      idempotencyService
-    );
+      idempotencyService,
+    });
 
     // Initialize webhook controller
     webhooksController = new WebhooksController(mockPaymentProvider, bookingService, webhookRepo);

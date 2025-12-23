@@ -174,18 +174,35 @@ export function buildContainer(config: Config): Container {
     // Mock TenantRepository
     const mockTenantRepo = new PrismaTenantRepository(mockPrisma);
 
-    const bookingService = new BookingService(
+    // Create scheduling repositories and service for TIMESLOT bookings
+    const serviceRepo = new PrismaServiceRepository(mockPrisma);
+    const availabilityRuleRepo = new PrismaAvailabilityRuleRepository(mockPrisma);
+
+    // Create GoogleCalendarService with mock calendar provider (needed by SchedulingAvailabilityService)
+    const googleCalendarService = new GoogleCalendarService(adapters.calendarProvider);
+
+    const schedulingAvailabilityService = new SchedulingAvailabilityService(
+      serviceRepo,
+      availabilityRuleRepo,
       adapters.bookingRepo,
-      adapters.catalogRepo,
-      eventEmitter,
-      adapters.paymentProvider,
-      commissionService,
-      mockTenantRepo,
-      idempotencyService,
-      undefined, // schedulingAvailabilityService - set later
-      undefined, // serviceRepo - set later
-      availabilityService // DATE booking availability checking
+      googleCalendarService, // Two-way sync with Google Calendar
+      cacheAdapter // Cache for Google Calendar busy times (5 min TTL)
     );
+
+    // P3-342 FIX: Use options object pattern to avoid undefined placeholders
+    const bookingService = new BookingService({
+      bookingRepo: adapters.bookingRepo,
+      catalogRepo: adapters.catalogRepo,
+      eventEmitter,
+      paymentProvider: adapters.paymentProvider,
+      commissionService,
+      tenantRepo: mockTenantRepo,
+      idempotencyService,
+      // Optional dependencies now properly passed (not undefined placeholders)
+      schedulingAvailabilityService,
+      serviceRepo,
+      availabilityService,
+    });
     const identityService = new IdentityService(adapters.userRepo, config.JWT_SECRET);
 
     // Create StripeConnectService with mock Prisma
@@ -200,20 +217,6 @@ export function buildContainer(config: Config): Container {
 
     // Create TenantOnboardingService with mock Prisma
     const tenantOnboardingService = new TenantOnboardingService(mockPrisma);
-
-    // Create GoogleCalendarService with mock calendar provider
-    const googleCalendarService = new GoogleCalendarService(adapters.calendarProvider);
-
-    // Create scheduling repositories and service with mock Prisma
-    const serviceRepo = new PrismaServiceRepository(mockPrisma);
-    const availabilityRuleRepo = new PrismaAvailabilityRuleRepository(mockPrisma);
-    const schedulingAvailabilityService = new SchedulingAvailabilityService(
-      serviceRepo,
-      availabilityRuleRepo,
-      adapters.bookingRepo,
-      googleCalendarService, // Two-way sync with Google Calendar
-      cacheAdapter // Cache for Google Calendar busy times (5 min TTL)
-    );
 
     // Create PackageDraftService with mock catalog repository
     const packageDraftService = new PackageDraftService(adapters.catalogRepo, cacheAdapter);
@@ -481,7 +484,8 @@ export function buildContainer(config: Config): Container {
   // Build domain services with caching and audit logging
   const catalogService = new CatalogService(catalogRepo, cacheAdapter, auditService);
   const availabilityService = new AvailabilityService(calendarProvider, blackoutRepo, bookingRepo);
-  const bookingService = new BookingService(
+  // P3-342 FIX: Use options object pattern to avoid undefined placeholders
+  const bookingService = new BookingService({
     bookingRepo,
     catalogRepo,
     eventEmitter,
@@ -489,10 +493,9 @@ export function buildContainer(config: Config): Container {
     commissionService,
     tenantRepo,
     idempotencyService,
-    undefined, // schedulingAvailabilityService - set later
-    undefined, // serviceRepo - set later
-    availabilityService // DATE booking availability checking
-  );
+    // Optional dependencies - will be set up after scheduling service is created
+    availabilityService,
+  });
   const identityService = new IdentityService(userRepo, config.JWT_SECRET);
 
   // Create TenantAuthService with real Prisma tenant repo

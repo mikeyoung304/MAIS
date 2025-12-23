@@ -68,19 +68,55 @@ export interface GetAppointmentsFilters {
   offset?: number;
 }
 
+/**
+ * Configuration options for BookingService constructor
+ *
+ * Uses options object pattern to avoid undefined placeholder parameters
+ * and improve maintainability when adding/removing optional dependencies.
+ */
+export interface BookingServiceOptions {
+  // Required dependencies
+  bookingRepo: BookingRepository;
+  catalogRepo: CatalogRepository;
+  eventEmitter: EventEmitter;
+  paymentProvider: PaymentProvider;
+  commissionService: CommissionService;
+  tenantRepo: PrismaTenantRepository;
+  idempotencyService: IdempotencyService;
+
+  // Optional dependencies (omit rather than pass undefined)
+  /** Scheduling availability service for TIMESLOT bookings */
+  schedulingAvailabilityService?: SchedulingAvailabilityService;
+  /** Service repository for TIMESLOT bookings */
+  serviceRepo?: ServiceRepository;
+  /** Availability service for DATE booking availability checks */
+  availabilityService?: AvailabilityService;
+}
+
 export class BookingService {
-  constructor(
-    private readonly bookingRepo: BookingRepository,
-    private readonly catalogRepo: CatalogRepository,
-    private readonly _eventEmitter: EventEmitter,
-    private readonly paymentProvider: PaymentProvider,
-    private readonly commissionService: CommissionService,
-    private readonly tenantRepo: PrismaTenantRepository,
-    private readonly idempotencyService: IdempotencyService,
-    private readonly schedulingAvailabilityService?: SchedulingAvailabilityService,
-    private readonly serviceRepo?: ServiceRepository,
-    private readonly availabilityService?: AvailabilityService
-  ) {}
+  private readonly bookingRepo: BookingRepository;
+  private readonly catalogRepo: CatalogRepository;
+  private readonly _eventEmitter: EventEmitter;
+  private readonly paymentProvider: PaymentProvider;
+  private readonly commissionService: CommissionService;
+  private readonly tenantRepo: PrismaTenantRepository;
+  private readonly idempotencyService: IdempotencyService;
+  private readonly schedulingAvailabilityService?: SchedulingAvailabilityService;
+  private readonly serviceRepo?: ServiceRepository;
+  private readonly availabilityService?: AvailabilityService;
+
+  constructor(options: BookingServiceOptions) {
+    this.bookingRepo = options.bookingRepo;
+    this.catalogRepo = options.catalogRepo;
+    this._eventEmitter = options.eventEmitter;
+    this.paymentProvider = options.paymentProvider;
+    this.commissionService = options.commissionService;
+    this.tenantRepo = options.tenantRepo;
+    this.idempotencyService = options.idempotencyService;
+    this.schedulingAvailabilityService = options.schedulingAvailabilityService;
+    this.serviceRepo = options.serviceRepo;
+    this.availabilityService = options.availabilityService;
+  }
 
   // ============================================================================
   // Shared Checkout Logic (P2 #156 FIX)

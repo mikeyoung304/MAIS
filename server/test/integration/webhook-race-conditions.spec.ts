@@ -50,14 +50,20 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
 
     // Initialize services
     const commissionService = new CommissionService(catalogRepo);
-    bookingService = new BookingService(
+    bookingService = new BookingService({
       bookingRepo,
       catalogRepo,
       eventEmitter,
       paymentProvider,
       commissionService,
-      tenantRepo
-    );
+      tenantRepo,
+      idempotencyService: {
+        generateCheckoutKey: () => 'test_key',
+        checkAndStore: async () => true,
+        getStoredResponse: async () => null,
+        updateResponse: async () => {},
+      } as any,
+    });
 
     webhooksController = new WebhooksController(paymentProvider, bookingService, webhookRepo);
 

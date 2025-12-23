@@ -243,6 +243,9 @@ export class PrismaBookingRepository implements BookingRepository {
                 date: new Date(booking.eventDate),
                 totalPrice: booking.totalCents,
                 status: this.mapToPrismaStatus(booking.status),
+                // P1-310 FIX: Explicit bookingType field to ensure consistency with domain entity
+                // Defaults to 'DATE' for backward compatibility with existing booking flows
+                bookingType: booking.bookingType || 'DATE',
                 commissionAmount: booking.commissionAmount ?? 0,
                 commissionPercent: booking.commissionPercent ?? 0,
                 // Reminder fields

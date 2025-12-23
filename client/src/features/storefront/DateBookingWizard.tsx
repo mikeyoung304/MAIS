@@ -9,7 +9,7 @@
  * 4. Pay - Review and proceed to checkout
  */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { DayPicker } from 'react-day-picker';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -46,6 +46,9 @@ interface DateBookingWizardProps {
   /** Optional callback when booking starts */
   onBookingStart?: () => void;
 }
+
+// Step labels for the booking wizard - defined outside component to avoid recreation
+const STEP_LABELS = ['Confirm', 'Date', 'Details', 'Pay'] as const;
 
 export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingWizardProps) {
   // State management
@@ -89,25 +92,16 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
     return unavailableDatesData.map((dateStr) => new Date(dateStr + 'T00:00:00'));
   }, [unavailableDatesData]);
 
-  // Define steps
-  const steps: Step[] = useMemo(() => {
-    const stepList = [
-      { label: 'Confirm', status: 'upcoming' as const },
-      { label: 'Date', status: 'upcoming' as const },
-      { label: 'Details', status: 'upcoming' as const },
-      { label: 'Pay', status: 'upcoming' as const },
-    ];
-
-    return stepList.map((step, index) => ({
-      ...step,
-      status:
-        index < currentStepIndex
-          ? ('complete' as const)
-          : index === currentStepIndex
-            ? ('current' as const)
-            : ('upcoming' as const),
-    }));
-  }, [currentStepIndex]);
+  // Define steps - trivial computation, no useMemo needed
+  const steps: Step[] = STEP_LABELS.map((label, index) => ({
+    label,
+    status:
+      index < currentStepIndex
+        ? ('complete' as const)
+        : index === currentStepIndex
+          ? ('current' as const)
+          : ('upcoming' as const),
+  }));
 
   // Navigation handlers
   const goToNextStep = () => {

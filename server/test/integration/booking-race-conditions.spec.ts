@@ -49,7 +49,37 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
     paymentProvider = new FakePaymentProvider();
 
     // Initialize service
-    bookingService = new BookingService(bookingRepo, catalogRepo, eventEmitter, paymentProvider);
+    bookingService = new BookingService({
+      bookingRepo,
+      catalogRepo,
+      eventEmitter,
+      paymentProvider,
+      commissionService: {
+        calculateBookingTotal: async () => ({
+          basePrice: 250000,
+          addOnsTotal: 0,
+          subtotal: 250000,
+          commissionAmount: 30000,
+          commissionPercent: 12,
+          platformFeeCents: 30000,
+          vendorPayoutCents: 220000,
+          customerTotalCents: 250000,
+        }),
+      } as any,
+      tenantRepo: {
+        findById: async () => ({
+          id: 'test_tenant_id',
+          stripeOnboarded: false,
+          name: 'Test Tenant',
+        }),
+      } as any,
+      idempotencyService: {
+        generateCheckoutKey: () => 'test_key',
+        checkAndStore: async () => true,
+        getStoredResponse: async () => null,
+        updateResponse: async () => {},
+      } as any,
+    });
 
     // Create test package using catalog repository
     const pkg = ctx.factories.package.create({ title: 'Test Package Race', priceCents: 250000 });

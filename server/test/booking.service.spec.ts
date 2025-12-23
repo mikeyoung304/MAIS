@@ -63,15 +63,15 @@ describe('BookingService', () => {
       updateResponse: vi.fn().mockResolvedValue(undefined),
     };
 
-    service = new BookingService(
+    service = new BookingService({
       bookingRepo,
       catalogRepo,
       eventEmitter,
       paymentProvider,
       commissionService,
       tenantRepo,
-      idempotencyService
-    );
+      idempotencyService,
+    });
   });
 
   describe('createCheckout', () => {

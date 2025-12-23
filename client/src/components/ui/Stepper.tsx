@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Check } from 'lucide-react';
 
 export interface Step {
@@ -23,6 +24,7 @@ interface StepperProps {
  * - Checkmarks for completed steps
  * - Highlight current step
  * - Accessible with proper ARIA labels
+ * - Memoized to prevent unnecessary re-renders when parent state changes
  *
  * @example
  * ```tsx
@@ -35,7 +37,7 @@ interface StepperProps {
  * <Stepper steps={steps} currentStep={1} />
  * ```
  */
-export function Stepper({ steps, currentStep, className = '' }: StepperProps) {
+export const Stepper = memo(function Stepper({ steps, currentStep, className = '' }: StepperProps) {
   return (
     <nav aria-label="Progress" className={className}>
       <ol className="flex items-center justify-between">
@@ -127,4 +129,4 @@ export function Stepper({ steps, currentStep, className = '' }: StepperProps) {
       </div>
     </nav>
   );
-}
+});

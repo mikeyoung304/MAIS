@@ -32,15 +32,15 @@ describe('BookingService.markPaymentFailed', () => {
 
     mockPaymentProvider = {} as any;
 
-    bookingService = new BookingService(
-      mockBookingRepo,
-      mockCatalogRepo,
-      mockEventEmitter,
-      mockPaymentProvider,
-      {} as any, // commissionService
-      {} as any, // tenantRepo
-      {} as any // idempotencyService
-    );
+    bookingService = new BookingService({
+      bookingRepo: mockBookingRepo,
+      catalogRepo: mockCatalogRepo,
+      eventEmitter: mockEventEmitter,
+      paymentProvider: mockPaymentProvider,
+      commissionService: {} as any,
+      tenantRepo: {} as any,
+      idempotencyService: {} as any,
+    });
   });
 
   it('should mark payment as failed and emit event', async () => {

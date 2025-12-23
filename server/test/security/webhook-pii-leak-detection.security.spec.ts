@@ -70,14 +70,20 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
       }),
     };
 
-    bookingService = new BookingService(
+    bookingService = new BookingService({
       bookingRepo,
       catalogRepo,
       eventEmitter,
       paymentProvider,
       commissionService,
-      tenantRepo
-    );
+      tenantRepo,
+      idempotencyService: {
+        generateCheckoutKey: () => 'test_key',
+        checkAndStore: async () => true,
+        getStoredResponse: async () => null,
+        updateResponse: async () => {},
+      } as any,
+    });
     controller = new WebhooksController(paymentProvider, bookingService, webhookRepo);
   });
 

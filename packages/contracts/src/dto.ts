@@ -158,7 +158,7 @@ export const CreateCheckoutDtoSchema = z.object({
   eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
   coupleName: z.string(),
   email: z.string().email(),
-  addOnIds: z.array(z.string()).optional(),
+  addOnIds: z.array(z.string()).max(20, 'Maximum 20 add-ons allowed').optional(),
 });
 
 export type CreateCheckoutDto = z.infer<typeof CreateCheckoutDtoSchema>;
@@ -189,7 +189,7 @@ export const CreateDateBookingDtoSchema = z.object({
   customerEmail: z.string().email('Valid email is required'),
   customerPhone: z.string().optional(),
   notes: z.string().max(500).optional(),
-  addOnIds: z.array(z.string()).optional(),
+  addOnIds: z.array(z.string()).max(20, 'Maximum 20 add-ons allowed').optional(),
 });
 
 export type CreateDateBookingDto = z.infer<typeof CreateDateBookingDtoSchema>;
