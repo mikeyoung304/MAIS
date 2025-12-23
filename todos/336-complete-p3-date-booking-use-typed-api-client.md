@@ -1,7 +1,7 @@
 # P3: Use Typed API Client Instead of Raw Fetch
 
 ## Priority: P3 Nice-to-have
-## Status: ready
+## Status: complete
 ## Feature: DATE Booking Flow
 ## Category: Code Simplicity
 
