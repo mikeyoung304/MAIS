@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: "257"
 tags: [code-review, security, architecture, tenant-dashboard]
 dependencies: []
+resolved_at: "2025-12-23"
+resolved_by: "previous refactoring - components now use typed API client via hooks"
 ---
 
 # Duplicate Auth Logic in Dashboard Components

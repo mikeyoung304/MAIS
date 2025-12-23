@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: "258"
 tags: [code-review, architecture, contracts, tenant-dashboard]
 dependencies: []
+resolved_at: "2025-12-23"
+resolved_by: "contracts already existed, added missing 404 error responses"
 ---
 
 # Missing API Contracts for Calendar and Deposit Endpoints

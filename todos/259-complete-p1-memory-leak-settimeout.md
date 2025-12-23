@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: "259"
 tags: [code-review, performance, memory-leak, tenant-dashboard]
 dependencies: []
+resolved_at: "2025-12-23"
+resolved_by: "already fixed in useDepositSettingsManager.ts with ref-based timeout cleanup"
 ---
 
 # Memory Leak: Uncleaned setTimeout in DepositSettingsCard
