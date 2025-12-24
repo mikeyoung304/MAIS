@@ -39,6 +39,22 @@ yarn-error.log*
 # Temp
 .tmp
 .temp
+server/tmp/
+
+# Build cache
+**/*.tsbuildinfo
+
+# Diagnostic/test scripts (root level)
+/test-*.js
+/test-*.mjs
+/capture-*.js
+/check-users.js
+/view-app.js
+/verify-design.js
+
+# Screenshot artifacts (root level)
+/*.png
+/*.jpg
 
 # Claude Code
 .claude/settings.local.json
