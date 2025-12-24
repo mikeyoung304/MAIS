@@ -294,10 +294,16 @@ jobs:
 
       - name: Apply manual SQL migrations
         run: |
-          # Apply all manual SQL migrations in order (00_ through 14_)
-          # These are idempotent PostgreSQL-specific migrations
+          # Apply manual SQL migrations in order (01_ through 14_)
+          # SKIP 00_supabase_reset.sql - it's a destructive legacy migration that
+          # drops tables and recreates them with fewer columns than Prisma migrations
           for file in server/prisma/migrations/[0-9][0-9]_*.sql; do
             if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              if [ "$filename" = "00_supabase_reset.sql" ]; then
+                echo "Skipping destructive migration: $file"
+                continue
+              fi
               echo "Applying: $file"
               PGPASSWORD=postgres psql -h localhost -U postgres -d mais_test -f "$file"
             fi
@@ -388,10 +394,16 @@ jobs:
 
       - name: Apply manual SQL migrations
         run: |
-          # Apply all manual SQL migrations in order (00_ through 14_)
-          # These are idempotent PostgreSQL-specific migrations
+          # Apply manual SQL migrations in order (01_ through 14_)
+          # SKIP 00_supabase_reset.sql - it's a destructive legacy migration that
+          # drops tables and recreates them with fewer columns than Prisma migrations
           for file in server/prisma/migrations/[0-9][0-9]_*.sql; do
             if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              if [ "$filename" = "00_supabase_reset.sql" ]; then
+                echo "Skipping destructive migration: $file"
+                continue
+              fi
               echo "Applying: $file"
               PGPASSWORD=postgres psql -h localhost -U postgres -d mais_migration_test -f "$file"
             fi
@@ -455,10 +467,16 @@ jobs:
 
       - name: Apply manual SQL migrations
         run: |
-          # Apply all manual SQL migrations in order (00_ through 14_)
-          # These are idempotent PostgreSQL-specific migrations
+          # Apply manual SQL migrations in order (01_ through 14_)
+          # SKIP 00_supabase_reset.sql - it's a destructive legacy migration that
+          # drops tables and recreates them with fewer columns than Prisma migrations
           for file in server/prisma/migrations/[0-9][0-9]_*.sql; do
             if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              if [ "$filename" = "00_supabase_reset.sql" ]; then
+                echo "Skipping destructive migration: $file"
+                continue
+              fi
               echo "Applying: $file"
               PGPASSWORD=postgres psql -h localhost -U postgres -d mais_e2e_test -f "$file"
             fi
