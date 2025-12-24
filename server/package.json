@@ -55,6 +55,7 @@
     "@types/swagger-ui-express": "^4.1.8",
     "@types/validator": "^13.15.10",
     "bcryptjs": "^3.0.2",
+    "bullmq": "^5.66.2",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",

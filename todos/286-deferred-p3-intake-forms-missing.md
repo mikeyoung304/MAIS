@@ -2,8 +2,10 @@
 status: pending
 priority: p3
 issue_id: "286"
-tags: [code-review, feature-gap, intake-forms, custom-fields, acuity-parity]
+tags: [deferred, code-review, feature-gap, intake-forms, custom-fields, acuity-parity]
 dependencies: []
+next_review: "2026-01-23"
+revisit_trigger: "3 customer requests"
 ---
 
 # Custom Intake Forms Not Implemented (Acuity Parity)

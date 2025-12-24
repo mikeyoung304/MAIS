@@ -1,14 +1,27 @@
 ---
-status: pending
+status: wontfix
 priority: p3
 issue_id: '012'
 tags: [documentation, archive, compliance]
 dependencies: ['001', '002', '005', '006']
 deferred_until: '2026-Q1'
 deferred_reason: 'Batch migration of 220+ files requires dedicated documentation cleanup sprint'
+resolved_at: "2025-12-23"
+resolution: yagni
 ---
 
 # Fix Archive File Naming Compliance
+
+## Resolution
+
+**Status: WONTFIX** - Closed 2025-12-23
+
+This TODO has been closed as WONTFIX for the following reasons:
+
+1. **Zero business value**: Archive file naming is purely organizational and has no impact on product functionality, user experience, or developer productivity
+2. **High effort, no ROI**: 4-6 hours of work to rename 220+ files provides no measurable benefit
+3. **Files are findable**: The current directory-level organization (YYYY-MM folders) is sufficient for locating archived documents
+4. **Not blocking anything**: No other work depends on this cleanup
 
 ## Problem Statement
 

@@ -1,12 +1,25 @@
 ---
-status: pending
+status: wontfix
 priority: p3
 issue_id: '220'
 tags: [documentation, storybook, components, landing-page]
 dependencies: []
+resolved_at: "2025-12-23"
+resolution: no-infrastructure
 ---
 
 # TODO-220: Missing Storybook Stories for Landing Page Sections
+
+## Resolution
+
+**Status: WONTFIX** - Closed 2025-12-23
+
+This TODO has been closed as WONTFIX for the following reasons:
+
+1. **No Storybook infrastructure**: The project does not have Storybook configured - no `.storybook/` directory or `@storybook/*` dependencies exist
+2. **Not blocking anything**: Landing page components are working in production without Storybook documentation
+3. **Infrastructure investment required**: Would require setting up Storybook from scratch before any stories could be written
+4. **Low priority**: P3 nice-to-have that provides no immediate value to the product or team
 
 ## Priority: P3 (Nice-to-have)
 

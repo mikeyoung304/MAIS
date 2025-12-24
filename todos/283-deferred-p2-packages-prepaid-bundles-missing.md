@@ -2,8 +2,10 @@
 status: pending
 priority: p2
 issue_id: "283"
-tags: [code-review, feature-gap, packages, prepaid, acuity-parity]
+tags: [deferred, code-review, feature-gap, packages, prepaid, acuity-parity]
 dependencies: []
+next_review: "2026-01-23"
+revisit_trigger: "3 customer requests"
 ---
 
 # Prepaid Package Bundles Not Implemented (Acuity Parity)

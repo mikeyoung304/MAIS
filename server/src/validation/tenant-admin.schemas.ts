@@ -8,12 +8,23 @@ import { z } from 'zod';
 // Hex color validation regex
 const hexColorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
 
+/**
+ * Maximum price in cents: $999,999.99
+ * Aligned with Stripe's maximum charge amount
+ * @see https://stripe.com/docs/currencies#minimum-and-maximum-charge-amounts
+ */
+const MAX_PRICE_CENTS = 99999999;
+
 // Package Management Schemas
 export const createPackageSchema = z.object({
   slug: z.string().min(1, 'Slug is required'),
   title: z.string().min(1, 'Title is required'),
   description: z.string().min(1, 'Description is required'),
-  priceCents: z.number().int().min(0, 'Price must be non-negative'),
+  priceCents: z
+    .number()
+    .int()
+    .min(0, 'Price must be non-negative')
+    .max(MAX_PRICE_CENTS, 'Price exceeds maximum allowed value ($999,999.99)'),
   photoUrl: z.string().url().optional(),
   // Tier/segment organization fields (added for security validation)
   segmentId: z.string().min(1).nullable().optional(),
@@ -36,7 +47,12 @@ export const updatePackageSchema = z.object({
   slug: z.string().min(1).optional(),
   title: z.string().min(1).optional(),
   description: z.string().min(1).optional(),
-  priceCents: z.number().int().min(0).optional(),
+  priceCents: z
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_PRICE_CENTS, 'Price exceeds maximum allowed value ($999,999.99)')
+    .optional(),
   photoUrl: z.string().url().optional(),
   // Tier/segment organization fields (added for security validation)
   segmentId: z.string().min(1).nullable().optional(),

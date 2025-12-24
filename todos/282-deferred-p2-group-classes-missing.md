@@ -2,8 +2,10 @@
 status: pending
 priority: p2
 issue_id: "282"
-tags: [code-review, feature-gap, group-classes, capacity, acuity-parity]
+tags: [deferred, code-review, feature-gap, group-classes, capacity, acuity-parity]
 dependencies: []
+next_review: "2026-01-23"
+revisit_trigger: "3 customer requests"
 ---
 
 # Group Classes/Sessions Not Implemented (Acuity Parity)

@@ -1,12 +1,23 @@
 ---
-status: pending
+status: wontfix
 priority: p3
 issue_id: "287"
 tags: [code-review, refactoring, architecture, code-quality]
 dependencies: []
+resolved_at: "2025-12-23"
+resolution: duplicate
+duplicate_of: "155"
 ---
 
 # BookingService Too Large (1,171 LOC) - SRP Violation
+
+## Resolution
+
+**Status: WONTFIX** - Closed 2025-12-23
+
+This TODO has been closed as WONTFIX because it is a **duplicate of TODO-155**.
+
+TODO-155 already tracks the BookingService refactoring work with the same scope and proposed solutions. Consolidating to a single TODO to avoid duplicate tracking and potential conflicting work.
 
 ## Problem Statement
 

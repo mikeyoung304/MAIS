@@ -13,7 +13,7 @@ export const MAX_PRICE_CENTS = 99999999;
 
 /**
  * Validate price is non-negative and within Stripe limits
- * TODO-198 FIX: Add upper bound to prevent integer overflow and align with Stripe
+ * Prevents integer overflow and aligns with Stripe's $999,999.99 maximum
  */
 export function validatePrice(priceCents: number, fieldName: string = 'price'): void {
   if (priceCents < 0) {

@@ -2,8 +2,10 @@
 status: pending
 priority: p3
 issue_id: "285"
-tags: [code-review, feature-gap, sms, reminders, acuity-parity]
+tags: [deferred, code-review, feature-gap, sms, reminders, acuity-parity]
 dependencies: []
+next_review: "2026-01-23"
+revisit_trigger: "3 customer requests"
 ---
 
 # SMS Reminders Not Implemented (Acuity Parity)

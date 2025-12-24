@@ -2,8 +2,10 @@
 status: pending
 priority: p2
 issue_id: "280"
-tags: [code-review, performance, algorithm, availability, scheduling]
+tags: [deferred, code-review, performance, algorithm, availability, scheduling]
 dependencies: ["275"]
+next_review: "2026-01-23"
+revisit_trigger: "P99 > 100ms in production"
 ---
 
 # Slot Generation Algorithm O(n*m) Complexity

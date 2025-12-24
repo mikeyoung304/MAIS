@@ -31,6 +31,7 @@ import { PackagesController } from './routes/packages.routes';
 import { AvailabilityController } from './routes/availability.routes';
 import { BookingsController } from './routes/bookings.routes';
 import { WebhooksController } from './routes/webhooks.routes';
+import { WebhookQueue, createWebhookQueue } from './jobs/webhook-queue';
 import { AdminController } from './routes/admin.routes';
 import { BlackoutsController } from './routes/blackouts.routes';
 import { AdminPackagesController } from './routes/admin-packages.routes';
@@ -106,6 +107,7 @@ export interface Container {
   healthCheckService?: HealthCheckService; // Export health check service for deep checks
   prisma?: PrismaClient; // Export Prisma instance for shutdown
   eventEmitter?: InProcessEventEmitter; // Export event emitter for cleanup
+  webhookQueue?: WebhookQueue; // Export webhook queue for shutdown
   /**
    * Cleanup method to properly dispose of services and close connections
    * Call this during application shutdown to prevent memory leaks
@@ -231,6 +233,8 @@ export function buildContainer(config: Config): Container {
       calendarAdapter: undefined,
     });
 
+    // Note: No webhook queue in mock mode - processing is always synchronous
+    // This keeps mock mode simple and fast for testing
     const controllers = {
       packages: new PackagesController(catalogService),
       availability: new AvailabilityController(availabilityService),
@@ -238,7 +242,8 @@ export function buildContainer(config: Config): Container {
       webhooks: new WebhooksController(
         adapters.paymentProvider,
         bookingService,
-        adapters.webhookRepo
+        adapters.webhookRepo,
+        undefined // No queue in mock mode - sync processing
       ),
       admin: new AdminController(identityService, bookingService),
       blackouts: new BlackoutsController(adapters.blackoutRepo),
@@ -323,6 +328,7 @@ export function buildContainer(config: Config): Container {
       healthCheckService,
       prisma: mockPrisma,
       eventEmitter,
+      webhookQueue: undefined, // No queue in mock mode
       cleanup,
     };
   }
@@ -639,12 +645,15 @@ export function buildContainer(config: Config): Container {
     }
   });
 
+  // Create webhook queue for async processing (will be initialized in index.ts)
+  const webhookQueue = createWebhookQueue(webhookRepo, paymentProvider, bookingService);
+
   // Build controllers
   const controllers = {
     packages: new PackagesController(catalogService),
     availability: new AvailabilityController(availabilityService),
     bookings: new BookingsController(bookingService),
-    webhooks: new WebhooksController(paymentProvider, bookingService, webhookRepo),
+    webhooks: new WebhooksController(paymentProvider, bookingService, webhookRepo, webhookQueue),
     admin: new AdminController(identityService, bookingService),
     blackouts: new BlackoutsController(blackoutRepo),
     adminPackages: new AdminPackagesController(catalogService),
@@ -689,23 +698,29 @@ export function buildContainer(config: Config): Container {
     logger.info('Starting DI container cleanup (real mode)');
 
     try {
-      // 1. Stop idempotency cleanup scheduler
+      // 1. Stop webhook queue (stop accepting new jobs, wait for current to finish)
+      if (webhookQueue) {
+        await webhookQueue.shutdown();
+        logger.info('Webhook queue shutdown');
+      }
+
+      // 2. Stop idempotency cleanup scheduler
       await idempotencyService.stopCleanupScheduler();
       logger.info('Idempotency cleanup scheduler stopped');
 
-      // 2. Disconnect Prisma
+      // 3. Disconnect Prisma
       if (prisma) {
         await prisma.$disconnect();
         logger.info('Prisma disconnected');
       }
 
-      // 3. Disconnect cache adapter (Redis or in-memory)
+      // 4. Disconnect cache adapter (Redis or in-memory)
       if (cacheAdapter && 'disconnect' in cacheAdapter) {
         await (cacheAdapter as any).disconnect();
         logger.info('Cache adapter disconnected');
       }
 
-      // 4. Clear event emitter subscriptions to prevent memory leaks
+      // 5. Clear event emitter subscriptions to prevent memory leaks
       eventEmitter.clearAll();
       logger.info('Event emitter subscriptions cleared');
 
@@ -726,6 +741,7 @@ export function buildContainer(config: Config): Container {
     healthCheckService,
     prisma,
     eventEmitter,
+    webhookQueue,
     cleanup,
   };
 }

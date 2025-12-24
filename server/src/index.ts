@@ -11,6 +11,7 @@ import { buildContainer } from './di';
 import { validateEnv } from './config/env.schema';
 import { closeSupabaseConnections } from './config/database';
 import { initializeScheduler } from './scheduler';
+import { initializeWebhookQueue } from './jobs/webhook-queue';
 import type { PrismaClient } from './generated/prisma';
 
 /**
@@ -82,6 +83,18 @@ async function main(): Promise<void> {
       const cronSchedule = process.env.REMINDER_CRON_SCHEDULE || '0 9 * * *';
       initializeScheduler(container, cronSchedule);
       logger.info('⏰ Scheduled tasks initialized');
+    }
+
+    // Initialize webhook queue for async processing (only in real mode)
+    if (config.ADAPTERS_PRESET === 'real' && container.webhookQueue) {
+      const processor = container.controllers.webhooks.getProcessor();
+      await initializeWebhookQueue(container.webhookQueue, processor, process.env.REDIS_URL);
+
+      if (container.webhookQueue.isAsyncAvailable()) {
+        logger.info('📨 Webhook queue initialized (async mode)');
+      } else {
+        logger.info('📨 Webhook queue fallback (sync mode - Redis not available)');
+      }
     }
 
     // Set server timeouts

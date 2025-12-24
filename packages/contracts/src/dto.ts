@@ -257,7 +257,11 @@ export const CreatePackageDtoSchema = z.object({
   slug: z.string().min(1),
   title: z.string().min(1),
   description: z.string().min(1),
-  priceCents: z.number().int().min(0),
+  priceCents: z
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' }),
   photoUrl: z.string().url().optional(),
   // Tier/segment organization fields
   segmentId: z.string().nullable().optional(),
@@ -271,7 +275,12 @@ export const UpdatePackageDtoSchema = z.object({
   slug: z.string().min(1).optional(),
   title: z.string().min(1).optional(),
   description: z.string().min(1).optional(),
-  priceCents: z.number().int().min(0).optional(),
+  priceCents: z
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' })
+    .optional(),
   photoUrl: z.string().url().optional(),
   // Tier/segment organization fields
   segmentId: z.string().nullable().optional(),
@@ -295,7 +304,7 @@ export type PackageResponseDto = z.infer<typeof PackageResponseDtoSchema>;
 /**
  * Maximum price in cents: $999,999.99
  * Aligned with Stripe's maximum charge amount
- * TODO-198 FIX: Add upper bound to prevent integer overflow
+ * @see https://stripe.com/docs/currencies#minimum-and-maximum-charge-amounts
  */
 const MAX_PRICE_CENTS = 99999999;
 
@@ -433,7 +442,12 @@ export type PackageWithDraftDto = z.infer<typeof PackageWithDraftDtoSchema>;
 export const UpdatePackageDraftDtoSchema = z.object({
   title: z.string().max(100).optional(),
   description: z.string().max(500).optional(),
-  priceCents: z.number().int().min(0).optional(),
+  priceCents: z
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' })
+    .optional(),
   photos: z.array(PackagePhotoDtoSchema).optional(),
 });
 
@@ -666,7 +680,11 @@ export const ServiceDtoSchema = z.object({
   description: z.string().nullable(),
   durationMinutes: z.number().int().positive(),
   bufferMinutes: z.number().int().min(0).default(0),
-  priceCents: z.number().int().min(0),
+  priceCents: z
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' }),
   timezone: z.string().default('America/New_York'),
   active: z.boolean().default(true),
   sortOrder: z.number().int().default(0),
@@ -695,7 +713,11 @@ export const CreateServiceDtoSchema = z.object({
   description: z.string().max(2000).optional(),
   durationMinutes: z.number().int().positive().min(5).max(480), // 5 min to 8 hours
   bufferMinutes: z.number().int().min(0).max(240).default(0), // 0 to 4 hours
-  priceCents: z.number().int().min(0),
+  priceCents: z
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' }),
   timezone: z.string().default('America/New_York'),
   sortOrder: z.number().int().default(0),
   segmentId: z.string().nullable().optional(),
@@ -714,7 +736,12 @@ export const UpdateServiceDtoSchema = z.object({
   description: z.string().max(2000).optional(),
   durationMinutes: z.number().int().positive().min(5).max(480).optional(),
   bufferMinutes: z.number().int().min(0).max(240).optional(),
-  priceCents: z.number().int().min(0).optional(),
+  priceCents: z
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' })
+    .optional(),
   timezone: z.string().optional(),
   active: z.boolean().optional(),
   sortOrder: z.number().int().optional(),

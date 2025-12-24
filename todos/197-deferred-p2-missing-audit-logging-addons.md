@@ -2,9 +2,11 @@
 status: pending
 priority: p2
 issue_id: '197'
-tags: [code-review, audit, consistency]
+tags: [deferred, code-review, audit, consistency]
 dependencies: []
 deferred_reason: 'YAGNI - Audit logs not yet production-critical per DHH review'
+next_review: "2026-01-23"
+revisit_trigger: "Compliance requirement"
 ---
 
 # Missing Audit Logging for Add-On Operations

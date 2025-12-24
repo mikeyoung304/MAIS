@@ -2,8 +2,10 @@
 status: pending
 priority: p2
 issue_id: "281"
-tags: [code-review, feature-gap, recurring, appointments, acuity-parity]
+tags: [deferred, code-review, feature-gap, recurring, appointments, acuity-parity]
 dependencies: []
+next_review: "2026-01-23"
+revisit_trigger: "3 customer requests"
 ---
 
 # Recurring Appointments Not Implemented (Acuity Parity)
