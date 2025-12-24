@@ -1,11 +1,11 @@
 # ADR-008: Pessimistic Locking for Booking Race Conditions
 
 **Date:** 2025-10-29
-**Status:** Superseded by ADR-012
+**Status:** Superseded by ADR-013
 **Decision Makers:** Engineering Team
 **Category:** Concurrency Control
 **Related Issues:** Phase 2B - Double-Booking Prevention
-**Superseded By:** ADR-012 (PostgreSQL Advisory Locks)
+**Superseded By:** ADR-013 (PostgreSQL Advisory Locks)
 
 ## Context
 

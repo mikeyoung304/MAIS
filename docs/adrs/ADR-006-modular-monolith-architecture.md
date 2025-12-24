@@ -222,5 +222,5 @@ If future scale requires extraction to microservices:
 ## Related ADRs
 
 - ADR-007: Mock-First Development
-- ADR-005: PaymentProvider Interface (example of ports pattern)
+- ADR-011: PaymentProvider Interface (example of ports pattern)
 - ADR-002: Database-Based Webhook DLQ (shared database advantage)

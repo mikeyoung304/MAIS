@@ -162,27 +162,26 @@ model Booking {
 
 Primary defense: PostgreSQL ensures only one booking per date per tenant at database level.
 
-**Layer 2: Pessimistic Locking**
+**Layer 2: Advisory Locks**
 
 ```typescript
 await prisma.$transaction(async (tx) => {
-  // SELECT FOR UPDATE locks the row (or absence of row)
-  const booking = await tx.$queryRaw`
-    SELECT id FROM bookings
-    WHERE date = ${new Date(date)}
-    FOR UPDATE
-  `;
+  // Acquire advisory lock (automatically released on commit/abort)
+  const lockId = hashTenantDate(tenantId, date);
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-  if (booking.length > 0) {
-    throw new BookingConflictError(date);
-  }
+  // Check if date is already booked
+  const existing = await tx.booking.findFirst({
+    where: { tenantId, date: new Date(date) }
+  });
+  if (existing) throw new BookingConflictError(date);
 
   // Create booking within same transaction
-  await tx.booking.create({ data: { date, ... } });
+  await tx.booking.create({ data: { tenantId, date, ... } });
 });
 ```
 
-Application-level defense: First request acquires lock, second request waits. See **DECISIONS.md ADR-001** for rationale.
+Application-level defense: First request acquires lock, second request waits. See **ADR-013** for rationale (supersedes ADR-008).
 
 **Layer 3: Graceful Error Handling**
 
@@ -203,15 +202,15 @@ Fallback defense: If both layers fail, catch Prisma error and convert to domain 
 
 **Problem:** Two users can both pass availability check, then both attempt booking.
 
-**Solution:** Wrap availability check + booking creation in database transaction with row-level lock.
+**Solution:** Wrap availability check + booking creation in database transaction with advisory lock.
 
 **Files:**
 
 - `server/src/services/availability.service.ts` - Transaction-aware availability check
 - `server/src/services/booking.service.ts` - Transaction wrapper
-- `server/src/adapters/prisma/booking.repository.ts` - Transaction support
+- `server/src/adapters/prisma/booking.repository.ts` - Advisory lock implementation
 
-**See Also:** DECISIONS.md ADR-001 (Pessimistic Locking), IMPROVEMENT-ROADMAP.md P0-3
+**See Also:** ADR-013 (Advisory Locks)
 
 ## Webhook Processing
 
@@ -284,7 +283,7 @@ await prisma.$transaction(async (tx) => {
 - If either fails, entire transaction rolls back
 - No partial state (booking created but date unavailable)
 
-**See Also:** DECISIONS.md ADR-001 (Pessimistic Locking)
+**See Also:** ADR-013 (Advisory Locks)
 
 ## Multi-Tenant Data Isolation
 

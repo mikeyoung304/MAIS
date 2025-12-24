@@ -180,20 +180,24 @@ const packages = await apiClient.getPackages();
 
 ### Double-Booking Prevention
 
-Three-layer defense (see DECISIONS.md ADR-001):
+Three-layer defense (see ADR-013 for current implementation):
 
 1. **Database constraint:** `@@unique([tenantId, date])` on Booking model
-2. **Pessimistic locking:** `SELECT FOR UPDATE` in transactions
+2. **Advisory locks:** `pg_advisory_xact_lock()` for transaction serialization
 3. **Graceful errors:** Catch unique violation, return clear error
 
 ```typescript
-// Wrap availability check + booking creation in transaction
+// Wrap availability check + booking creation in transaction with advisory lock
 await prisma.$transaction(async (tx) => {
-  // Lock the date row
-  const existing = await tx.$queryRaw`
-    SELECT id FROM bookings WHERE tenantId = ${tenantId} AND date = ${date} FOR UPDATE
-  `;
-  if (existing.length > 0) throw new BookingConflictError(date);
+  // Acquire advisory lock (automatically released on commit/abort)
+  const lockId = hashTenantDate(tenantId, date);
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
+
+  // Check if date is already booked
+  const existing = await tx.booking.findFirst({
+    where: { tenantId, date: new Date(date) }
+  });
+  if (existing) throw new BookingConflictError(date);
 
   // Create booking within same transaction
   await tx.booking.create({ data: { tenantId, date, ... } });

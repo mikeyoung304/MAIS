@@ -415,4 +415,4 @@ test.describe('Booking Flow (Mock Mode)', () => {
 ## Related ADRs
 
 - ADR-006: Modular Monolith Architecture (enables clean adapter swapping)
-- ADR-005: PaymentProvider Interface (example of mockable port)
+- ADR-011: PaymentProvider Interface (example of mockable port)
