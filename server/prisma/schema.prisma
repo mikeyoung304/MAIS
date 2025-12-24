@@ -391,9 +391,19 @@ enum BookingStatus {
   FULFILLED     // Event completed
 }
 
+/// Determines the booking flow and availability constraints for a package
 enum BookingType {
-  DATE     // Legacy date-only bookings (weddings)
-  TIMESLOT // Time-slot based scheduling
+  /// Date-only bookings: Customer selects a single day (e.g., wedding on June 15)
+  /// - Enforces one booking per tenant per date via unique constraint
+  /// - Used by: wedding venues, event spaces, full-day rentals
+  /// - Flow: TierDetail → DateBookingWizard → Stripe checkout
+  DATE
+
+  /// Time-slot bookings: Customer selects specific time slots (e.g., 2:00pm-3:00pm)
+  /// - Multiple bookings allowed per day with different time slots
+  /// - Used by: consultations, appointments, hourly services
+  /// - Flow: ServiceSelection → TimeSlotPicker → Stripe checkout
+  TIMESLOT
 }
 
 // MVP Gaps Phase 1: Cancellation tracking

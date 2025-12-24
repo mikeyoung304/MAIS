@@ -8,16 +8,36 @@
  *
  * Phase 2 Refactor (#305): Route handler simplified to delegate business logic
  * to BookingService.createDateBooking() for better testability.
+ *
+ * TODO-329: Added request-level idempotency via X-Idempotency-Key header
+ * to prevent duplicate checkout session creation from network retries.
  */
 
 import { Router, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import type { TenantRequest } from '../middleware/tenant';
 import type { BookingService } from '../services/booking.service';
+import type { CacheServicePort } from '../lib/ports';
 import { CreateDateBookingDtoSchema } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
-import { NotFoundError, BookingConflictError, InvalidBookingTypeError } from '../lib/errors';
+import { NotFoundError, BookingConflictError, InvalidBookingTypeError, PackageNotAvailableError } from '../lib/errors';
 import { publicSchedulingLimiter } from '../middleware/rateLimiter';
+
+/** TTL for idempotency cache entries (1 hour in seconds) */
+const IDEMPOTENCY_TTL_SECONDS = 3600;
+
+/** Response type for cached idempotency results */
+interface CachedCheckoutResponse {
+  checkoutUrl: string;
+}
+
+/**
+ * Build idempotency cache key
+ * Includes tenantId for multi-tenant isolation
+ */
+function buildIdempotencyKey(tenantId: string, idempotencyKey: string): string {
+  return `idempotency:date-booking:${tenantId}:${idempotencyKey}`;
+}
 
 /**
  * Create public date booking routes
@@ -27,10 +47,17 @@ import { publicSchedulingLimiter } from '../middleware/rateLimiter';
  * Phase 2 Refactor: Simplified to only require BookingService, which now
  * handles package lookup, type validation, and availability checking internally.
  *
+ * TODO-329: Added optional cacheService for request-level idempotency handling.
+ * If cacheService is not provided, idempotency is disabled (graceful degradation).
+ *
  * @param bookingService - Booking service for checkout session creation
+ * @param cacheService - Optional cache service for idempotency (1-hour TTL)
  * @returns Express router with public date booking endpoints
  */
-export function createPublicDateBookingRoutes(bookingService: BookingService): Router {
+export function createPublicDateBookingRoutes(
+  bookingService: BookingService,
+  cacheService?: CacheServicePort
+): Router {
   const router = Router();
 
   // Apply rate limiting to prevent abuse
@@ -42,6 +69,10 @@ export function createPublicDateBookingRoutes(bookingService: BookingService): R
    *
    * Phase 2 Refactor: Business logic moved to BookingService.createDateBooking()
    *
+   * TODO-329: Supports X-Idempotency-Key header for request deduplication.
+   * If the same idempotency key is received within 1 hour, returns cached result.
+   *
+   * @header X-Idempotency-Key - Optional unique key for request deduplication
    * @returns 200 - Checkout URL for Stripe payment
    * @returns 400 - Validation error (invalid input, wrong package type)
    * @returns 401 - Missing or invalid tenant key
@@ -57,8 +88,43 @@ export function createPublicDateBookingRoutes(bookingService: BookingService): R
         return;
       }
 
+      // TODO-329: Check for idempotency key header
+      const idempotencyKey = req.headers['x-idempotency-key'] as string | undefined;
+
+      // If idempotency key provided and cache available, check for existing result
+      if (idempotencyKey && cacheService) {
+        const cacheKey = buildIdempotencyKey(tenantId, idempotencyKey);
+        const cachedResult = await cacheService.get<CachedCheckoutResponse>(cacheKey);
+
+        if (cachedResult) {
+          logger.info(
+            { tenantId, idempotencyKey },
+            'Returning cached checkout result for idempotency key'
+          );
+          res.status(200).json(cachedResult);
+          return;
+        }
+      }
+
       // Validate request body
       const input = CreateDateBookingDtoSchema.parse(req.body);
+
+      // TODO-330: Honeypot bot protection
+      // If honeypot field is filled, it's likely a bot - silently reject
+      // Return 200 success to not alert the bot that it was detected
+      if (input.website) {
+        logger.warn(
+          { tenantId, packageId: input.packageId },
+          'Honeypot triggered - likely bot submission, silently rejecting'
+        );
+        res.status(200).json({ checkoutUrl: 'https://example.com/thank-you' });
+        return;
+      }
+
+      logger.info(
+        { tenantId, packageId: input.packageId, date: input.date, hasIdempotencyKey: !!idempotencyKey },
+        'Date booking checkout initiated'
+      );
 
       // Delegate all business logic to service layer
       const checkout = await bookingService.createDateBooking(tenantId, {
@@ -69,21 +135,39 @@ export function createPublicDateBookingRoutes(bookingService: BookingService): R
         addOnIds: input.addOnIds,
       });
 
+      const result: CachedCheckoutResponse = { checkoutUrl: checkout.checkoutUrl };
+
+      // TODO-329: Cache result if idempotency key provided
+      if (idempotencyKey && cacheService) {
+        const cacheKey = buildIdempotencyKey(tenantId, idempotencyKey);
+        await cacheService.set(cacheKey, result, IDEMPOTENCY_TTL_SECONDS);
+        logger.debug({ tenantId, idempotencyKey }, 'Cached checkout result for idempotency key');
+      }
+
       logger.info(
         {
           tenantId,
           packageId: input.packageId,
           date: input.date,
           customerEmail: input.customerEmail,
+          addOnIds: input.addOnIds,
+          addOnCount: input.addOnIds?.length || 0,
+          clientIp: req.ip || req.headers['x-forwarded-for'],
+          userAgent: req.get('user-agent')?.substring(0, 200), // Truncate for safety
         },
         'Date booking checkout session created'
       );
 
-      res.status(200).json({
-        checkoutUrl: checkout.checkoutUrl,
-      });
+      res.status(200).json(result);
     } catch (error) {
+      const tenantId = req.tenantId;
+      const packageId = req.body?.packageId;
+
       if (error instanceof ZodError) {
+        logger.warn(
+          { tenantId, packageId, issues: error.issues },
+          'Date booking validation failed'
+        );
         res.status(400).json({
           error: 'Validation error',
           details: error.issues,
@@ -91,20 +175,45 @@ export function createPublicDateBookingRoutes(bookingService: BookingService): R
         return;
       }
       if (error instanceof NotFoundError) {
+        logger.warn({ tenantId, packageId }, 'Date booking package not found');
         res.status(404).json({ error: error.message });
         return;
       }
       if (error instanceof InvalidBookingTypeError) {
+        logger.warn(
+          { tenantId, packageId, error: error.message },
+          'Date booking invalid package type'
+        );
         res.status(400).json({
-          error: 'Invalid package type',
-          details: error.message,
+          error: 'Booking method not supported',
+          message:
+            'This package requires appointment scheduling. Please visit our appointment booking page.',
+        });
+        return;
+      }
+      if (error instanceof PackageNotAvailableError) {
+        logger.warn(
+          { tenantId, packageId },
+          'Date booking attempted with inactive package'
+        );
+        res.status(400).json({
+          error: 'Package not available',
+          message: 'This package is no longer available for booking.',
         });
         return;
       }
       if (error instanceof BookingConflictError) {
+        logger.warn(
+          { tenantId, packageId, date: req.body?.date },
+          'Date booking conflict - date already booked'
+        );
         res.status(409).json({ error: error.message });
         return;
       }
+      logger.error(
+        { tenantId, packageId, error: error instanceof Error ? error.message : String(error) },
+        'Date booking checkout failed'
+      );
       next(error);
     }
   });

@@ -9,7 +9,7 @@
  * 4. Pay - Review and proceed to checkout
  */
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { DayPicker } from 'react-day-picker';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -21,7 +21,7 @@ import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { User, Mail, Phone, ArrowLeft, Calendar, CheckCircle, Loader2 } from 'lucide-react';
 import type { PackageDto } from '@macon/contracts';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import 'react-day-picker/style.css';
 
 // Phase 3.2 (#323): Zod schema for customer form validation
@@ -50,6 +50,259 @@ interface DateBookingWizardProps {
 // Step labels for the booking wizard - defined outside component to avoid recreation
 const STEP_LABELS = ['Confirm', 'Date', 'Details', 'Pay'] as const;
 
+// =============================================================================
+// Memoized Step Components (#320: React.memo optimization)
+// These prevent unnecessary re-renders when parent state changes
+// =============================================================================
+
+interface ConfirmStepProps {
+  pkg: PackageDto;
+}
+
+const ConfirmStep = React.memo(({ pkg }: ConfirmStepProps) => (
+  <Card className="border-neutral-200 shadow-elevation-1">
+    <CardHeader>
+      <CardTitle className="text-2xl font-heading">Confirm Your Selection</CardTitle>
+    </CardHeader>
+    <CardContent className="space-y-6">
+      {/* Package Hero */}
+      {pkg.photoUrl && (
+        <div className="relative h-48 rounded-xl overflow-hidden">
+          <img src={pkg.photoUrl} alt={pkg.title} className="w-full h-full object-cover" />
+        </div>
+      )}
+
+      {/* Package Details */}
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-2xl font-heading font-bold text-neutral-900">{pkg.title}</h3>
+          <p className="text-3xl font-heading font-bold text-macon-orange mt-2">
+            {formatCurrency(pkg.priceCents)}
+          </p>
+        </div>
+
+        <p className="text-neutral-600 whitespace-pre-wrap">{pkg.description}</p>
+      </div>
+
+      {/* Confirmation Message */}
+      <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+        <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="font-medium text-green-900">Great choice!</p>
+          <p className="text-sm text-green-700">Click "Continue" to select your event date.</p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+));
+ConfirmStep.displayName = 'ConfirmStep';
+
+interface DateSelectionStepProps {
+  selectedDate: Date | null;
+  isLoadingDates: boolean;
+  unavailableDates: Date[];
+  onDateSelect: (date: Date | undefined) => void;
+}
+
+const DateSelectionStep = React.memo(
+  ({ selectedDate, isLoadingDates, unavailableDates, onDateSelect }: DateSelectionStepProps) => (
+    <Card className="border-neutral-200 shadow-elevation-1">
+      <CardHeader>
+        <CardTitle className="text-2xl font-heading">
+          <Calendar className="inline-block w-6 h-6 mr-2 text-macon-orange" />
+          Choose Your Date
+        </CardTitle>
+        <p className="text-neutral-500 text-base mt-1">Select the date for your event</p>
+      </CardHeader>
+      <CardContent>
+        <div className="flex justify-center">
+          {isLoadingDates ? (
+            <div className="flex flex-col items-center py-8">
+              <Loader2 className="w-8 h-8 text-macon-orange animate-spin" />
+              <p className="mt-2 text-neutral-500">Loading available dates...</p>
+            </div>
+          ) : (
+            <DayPicker
+              mode="single"
+              selected={selectedDate || undefined}
+              onSelect={onDateSelect}
+              disabled={[{ before: new Date() }, ...unavailableDates]}
+              className="border border-neutral-300 rounded-xl p-4 bg-white"
+              modifiersStyles={{
+                selected: {
+                  backgroundColor: '#F97316', // macon-orange
+                  color: 'white',
+                },
+              }}
+            />
+          )}
+        </div>
+        {selectedDate && (
+          <p className="text-center mt-4 text-lg font-medium text-neutral-900">
+            Selected: {formatDate(selectedDate)}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  )
+);
+DateSelectionStep.displayName = 'DateSelectionStep';
+
+interface DetailsStepProps {
+  customerDetails: CustomerDetails;
+  formValidation: { errors: Record<string, string> };
+  onUpdateField: (field: keyof CustomerDetails, value: string) => void;
+  honeypot: string;
+  onHoneypotChange: (value: string) => void;
+}
+
+const DetailsStep = React.memo(
+  ({
+    customerDetails,
+    formValidation,
+    onUpdateField,
+    honeypot,
+    onHoneypotChange,
+  }: DetailsStepProps) => (
+    <Card className="border-neutral-200 shadow-elevation-1">
+      <CardHeader>
+        <CardTitle className="text-2xl font-heading">Your Information</CardTitle>
+        <p className="text-neutral-500 text-base mt-1">
+          We'll use this to send your confirmation
+        </p>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          <InputEnhanced
+            id="name"
+            type="text"
+            value={customerDetails.name}
+            onChange={(e) => onUpdateField('name', e.target.value)}
+            placeholder="Jane & John Smith"
+            label="Name(s)"
+            floatingLabel
+            leftIcon={<User className="w-5 h-5" />}
+            clearable
+            onClear={() => onUpdateField('name', '')}
+            required
+            error={customerDetails.name && formValidation.errors.name}
+          />
+          <InputEnhanced
+            id="email"
+            type="email"
+            value={customerDetails.email}
+            onChange={(e) => onUpdateField('email', e.target.value)}
+            placeholder="your.email@example.com"
+            label="Email Address"
+            floatingLabel
+            leftIcon={<Mail className="w-5 h-5" />}
+            clearable
+            onClear={() => onUpdateField('email', '')}
+            required
+            error={customerDetails.email && formValidation.errors.email}
+          />
+          <InputEnhanced
+            id="phone"
+            type="tel"
+            value={customerDetails.phone}
+            onChange={(e) => onUpdateField('phone', e.target.value)}
+            placeholder="(555) 123-4567"
+            label="Phone Number (optional)"
+            floatingLabel
+            leftIcon={<Phone className="w-5 h-5" />}
+            clearable
+            onClear={() => onUpdateField('phone', '')}
+          />
+          <div>
+            <label htmlFor="notes" className="block text-sm font-semibold text-neutral-800 mb-2">
+              Additional Notes (Optional)
+            </label>
+            <textarea
+              id="notes"
+              value={customerDetails.notes}
+              onChange={(e) => onUpdateField('notes', e.target.value)}
+              placeholder="Any special requests or information..."
+              className="w-full h-24 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-base text-neutral-900 placeholder:text-neutral-500 focus:border-macon-orange focus:outline-none focus:ring-4 focus:ring-macon-orange/30 transition-all"
+              maxLength={500}
+            />
+          </div>
+          {/* Honeypot field for bot protection - hidden from real users */}
+          {/* Bots often auto-fill fields named "website" or "url" */}
+          <input
+            type="text"
+            name="website"
+            value={honeypot}
+            onChange={(e) => onHoneypotChange(e.target.value)}
+            style={{ display: 'none' }}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+          />
+        </div>
+      </CardContent>
+    </Card>
+  )
+);
+DetailsStep.displayName = 'DetailsStep';
+
+interface ReviewStepProps {
+  pkg: PackageDto;
+  selectedDate: Date;
+  customerDetails: CustomerDetails;
+}
+
+const ReviewStep = React.memo(({ pkg, selectedDate, customerDetails }: ReviewStepProps) => (
+  <Card className="border-neutral-200 shadow-elevation-1">
+    <CardHeader>
+      <CardTitle className="text-2xl font-heading">Review & Pay</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-6">
+        {/* Package Summary */}
+        <div className="border-b border-neutral-200 pb-4">
+          <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">Package</h3>
+          <p className="text-lg font-semibold text-neutral-900">{pkg.title}</p>
+        </div>
+
+        {/* Date Summary */}
+        <div className="border-b border-neutral-200 pb-4">
+          <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">Event Date</h3>
+          <p className="text-lg font-semibold text-neutral-900">{formatDate(selectedDate)}</p>
+        </div>
+
+        {/* Customer Info Summary */}
+        <div className="border-b border-neutral-200 pb-4">
+          <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">
+            Contact Information
+          </h3>
+          <p className="text-neutral-900 font-medium">{customerDetails.name}</p>
+          <p className="text-neutral-600">{customerDetails.email}</p>
+          {customerDetails.phone && <p className="text-neutral-600">{customerDetails.phone}</p>}
+          {customerDetails.notes && (
+            <p className="text-neutral-600 mt-2 text-sm italic">"{customerDetails.notes}"</p>
+          )}
+        </div>
+
+        {/* Total */}
+        <div className="pt-4">
+          <div className="flex items-baseline justify-between">
+            <span className="text-lg text-neutral-600">Total:</span>
+            <span className="text-3xl font-heading font-bold text-macon-orange">
+              {formatCurrency(pkg.priceCents)}
+            </span>
+          </div>
+          <p className="text-sm text-neutral-500 mt-2">Secure payment powered by Stripe</p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+));
+ReviewStep.displayName = 'ReviewStep';
+
+// =============================================================================
+// Main Component
+// =============================================================================
+
 export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingWizardProps) {
   // State management
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -61,6 +314,8 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
     notes: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Honeypot field for bot protection - should never be filled by real users
+  const [honeypot, setHoneypot] = useState('');
 
   // Fetch unavailable dates for the calendar
   // Phase 3.1 (#307): Query unavailable dates to prevent booking conflicts
@@ -90,12 +345,14 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
   });
 
   // Convert date strings to Date objects for DayPicker
+  // Use UTC suffix to ensure consistent timezone handling across client/server
   const unavailableDates = useMemo(() => {
     if (!unavailableDatesData) return [];
-    return unavailableDatesData.map((dateStr) => new Date(dateStr + 'T00:00:00'));
+    return unavailableDatesData.map((dateStr) => new Date(dateStr + 'T00:00:00Z'));
   }, [unavailableDatesData]);
 
-  // Define steps - trivial computation, no useMemo needed
+  // Steps array - inline computation since it depends on currentStepIndex anyway
+  // No useMemo needed: recalculates on every step change which is expected behavior
   const steps: Step[] = STEP_LABELS.map((label, index) => ({
     label,
     status:
@@ -122,20 +379,25 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
   // Step 1: Package confirmed, proceed
   const canProceedFromStep0 = true;
 
-  // Step 2: Date Selection
-  const handleDateSelect = (date: Date | undefined) => {
+  // Step 2: Date Selection - memoized to prevent re-renders of DateSelectionStep
+  const handleDateSelect = useCallback((date: Date | undefined) => {
     setSelectedDate(date || null);
-  };
+  }, []);
 
   const canProceedFromStep1 = selectedDate !== null;
 
-  // Step 3: Customer Details
-  const updateCustomerDetails = (field: keyof CustomerDetails, value: string) => {
+  // Step 3: Customer Details - memoized to prevent re-renders of DetailsStep
+  const updateCustomerDetails = useCallback((field: keyof CustomerDetails, value: string) => {
     setCustomerDetails((prev) => ({
       ...prev,
       [field]: value,
     }));
-  };
+  }, []);
+
+  // Memoized honeypot handler for DetailsStep
+  const handleHoneypotChange = useCallback((value: string) => {
+    setHoneypot(value);
+  }, []);
 
   // Phase 3.2 (#323): Use Zod for form validation
   const formValidation = useMemo(() => {
@@ -179,6 +441,8 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
           customerEmail: customerDetails.email.trim(),
           customerPhone: customerDetails.phone.trim() || undefined,
           notes: customerDetails.notes.trim() || undefined,
+          // Honeypot field for bot protection - only send if filled (indicates bot)
+          website: honeypot || undefined,
         },
       });
 
@@ -212,167 +476,31 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
     }
   };
 
-  // Render current step content
+  // Render current step content using memoized components (#320)
   const renderStepContent = () => {
     switch (currentStepIndex) {
       case 0:
-        return (
-          <Card className="border-neutral-200 shadow-elevation-1">
-            <CardHeader>
-              <CardTitle className="text-2xl font-heading">Confirm Your Selection</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Package Hero */}
-              {pkg.photoUrl && (
-                <div className="relative h-48 rounded-xl overflow-hidden">
-                  <img src={pkg.photoUrl} alt={pkg.title} className="w-full h-full object-cover" />
-                </div>
-              )}
-
-              {/* Package Details */}
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-2xl font-heading font-bold text-neutral-900">{pkg.title}</h3>
-                  <p className="text-3xl font-heading font-bold text-macon-orange mt-2">
-                    {formatCurrency(pkg.priceCents)}
-                  </p>
-                </div>
-
-                <p className="text-neutral-600 whitespace-pre-wrap">{pkg.description}</p>
-              </div>
-
-              {/* Confirmation Message */}
-              <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium text-green-900">Great choice!</p>
-                  <p className="text-sm text-green-700">
-                    Click "Continue" to select your event date.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        );
+        return <ConfirmStep pkg={pkg} />;
 
       case 1:
         return (
-          <Card className="border-neutral-200 shadow-elevation-1">
-            <CardHeader>
-              <CardTitle className="text-2xl font-heading">
-                <Calendar className="inline-block w-6 h-6 mr-2 text-macon-orange" />
-                Choose Your Date
-              </CardTitle>
-              <p className="text-neutral-500 text-base mt-1">Select the date for your event</p>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-center">
-                {isLoadingDates ? (
-                  <div className="flex flex-col items-center py-8">
-                    <Loader2 className="w-8 h-8 text-macon-orange animate-spin" />
-                    <p className="mt-2 text-neutral-500">Loading available dates...</p>
-                  </div>
-                ) : (
-                  <DayPicker
-                    mode="single"
-                    selected={selectedDate || undefined}
-                    onSelect={handleDateSelect}
-                    disabled={[{ before: new Date() }, ...unavailableDates]}
-                    className="border border-neutral-300 rounded-xl p-4 bg-white"
-                    modifiersStyles={{
-                      selected: {
-                        backgroundColor: '#F97316', // macon-orange
-                        color: 'white',
-                      },
-                    }}
-                  />
-                )}
-              </div>
-              {selectedDate && (
-                <p className="text-center mt-4 text-lg font-medium text-neutral-900">
-                  Selected:{' '}
-                  {selectedDate.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          <DateSelectionStep
+            selectedDate={selectedDate}
+            isLoadingDates={isLoadingDates}
+            unavailableDates={unavailableDates}
+            onDateSelect={handleDateSelect}
+          />
         );
 
       case 2:
         return (
-          <Card className="border-neutral-200 shadow-elevation-1">
-            <CardHeader>
-              <CardTitle className="text-2xl font-heading">Your Information</CardTitle>
-              <p className="text-neutral-500 text-base mt-1">
-                We'll use this to send your confirmation
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <InputEnhanced
-                  id="name"
-                  type="text"
-                  value={customerDetails.name}
-                  onChange={(e) => updateCustomerDetails('name', e.target.value)}
-                  placeholder="Jane & John Smith"
-                  label="Name(s)"
-                  floatingLabel
-                  leftIcon={<User className="w-5 h-5" />}
-                  clearable
-                  onClear={() => updateCustomerDetails('name', '')}
-                  required
-                  error={customerDetails.name && formValidation.errors.name}
-                />
-                <InputEnhanced
-                  id="email"
-                  type="email"
-                  value={customerDetails.email}
-                  onChange={(e) => updateCustomerDetails('email', e.target.value)}
-                  placeholder="your.email@example.com"
-                  label="Email Address"
-                  floatingLabel
-                  leftIcon={<Mail className="w-5 h-5" />}
-                  clearable
-                  onClear={() => updateCustomerDetails('email', '')}
-                  required
-                  error={customerDetails.email && formValidation.errors.email}
-                />
-                <InputEnhanced
-                  id="phone"
-                  type="tel"
-                  value={customerDetails.phone}
-                  onChange={(e) => updateCustomerDetails('phone', e.target.value)}
-                  placeholder="(555) 123-4567"
-                  label="Phone Number (optional)"
-                  floatingLabel
-                  leftIcon={<Phone className="w-5 h-5" />}
-                  clearable
-                  onClear={() => updateCustomerDetails('phone', '')}
-                />
-                <div>
-                  <label
-                    htmlFor="notes"
-                    className="block text-sm font-semibold text-neutral-800 mb-2"
-                  >
-                    Additional Notes (Optional)
-                  </label>
-                  <textarea
-                    id="notes"
-                    value={customerDetails.notes}
-                    onChange={(e) => updateCustomerDetails('notes', e.target.value)}
-                    placeholder="Any special requests or information..."
-                    className="w-full h-24 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-base text-neutral-900 placeholder:text-neutral-500 focus:border-macon-orange focus:outline-none focus:ring-4 focus:ring-macon-orange/30 transition-all"
-                    maxLength={500}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <DetailsStep
+            customerDetails={customerDetails}
+            formValidation={formValidation}
+            onUpdateField={updateCustomerDetails}
+            honeypot={honeypot}
+            onHoneypotChange={handleHoneypotChange}
+          />
         );
 
       case 3:
@@ -380,63 +508,11 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
           return null;
         }
         return (
-          <Card className="border-neutral-200 shadow-elevation-1">
-            <CardHeader>
-              <CardTitle className="text-2xl font-heading">Review & Pay</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {/* Package Summary */}
-                <div className="border-b border-neutral-200 pb-4">
-                  <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">Package</h3>
-                  <p className="text-lg font-semibold text-neutral-900">{pkg.title}</p>
-                </div>
-
-                {/* Date Summary */}
-                <div className="border-b border-neutral-200 pb-4">
-                  <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">
-                    Event Date
-                  </h3>
-                  <p className="text-lg font-semibold text-neutral-900">
-                    {selectedDate.toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </p>
-                </div>
-
-                {/* Customer Info Summary */}
-                <div className="border-b border-neutral-200 pb-4">
-                  <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">
-                    Contact Information
-                  </h3>
-                  <p className="text-neutral-900 font-medium">{customerDetails.name}</p>
-                  <p className="text-neutral-600">{customerDetails.email}</p>
-                  {customerDetails.phone && (
-                    <p className="text-neutral-600">{customerDetails.phone}</p>
-                  )}
-                  {customerDetails.notes && (
-                    <p className="text-neutral-600 mt-2 text-sm italic">
-                      "{customerDetails.notes}"
-                    </p>
-                  )}
-                </div>
-
-                {/* Total */}
-                <div className="pt-4">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-lg text-neutral-600">Total:</span>
-                    <span className="text-3xl font-heading font-bold text-macon-orange">
-                      {formatCurrency(pkg.priceCents)}
-                    </span>
-                  </div>
-                  <p className="text-sm text-neutral-500 mt-2">Secure payment powered by Stripe</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <ReviewStep
+            pkg={pkg}
+            selectedDate={selectedDate}
+            customerDetails={customerDetails}
+          />
         );
 
       default:

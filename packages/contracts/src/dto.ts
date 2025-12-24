@@ -17,6 +17,35 @@ import { LandingPageConfigSchema } from './landing-page';
 const MAX_PRICE_CENTS = 99999999;
 
 // ============================================================================
+// Shared Validation Schemas
+// ============================================================================
+
+/**
+ * Customer/Couple Name Validation Schema
+ * Used for all customer-facing name inputs (bookings, appointments, checkouts)
+ *
+ * Validation rules:
+ * - Min 2 characters (prevents single-letter abuse)
+ * - Max 100 characters (reasonable limit for full names)
+ * - Allowed characters: Unicode letters, combining marks, space separators,
+ *   apostrophes, hyphens, periods (supports names like "O'Brien", "Mary-Jane",
+ *   "Dr. Smith", "José García", and names with diacritical marks)
+ * - Trimmed to reject whitespace-only inputs
+ *
+ * @example Valid: "John Smith", "Mary O'Brien", "Jean-Pierre Dubois", "Dr. Jane Doe"
+ * @example Invalid: "", " ", "A", "John123", "Test@User"
+ */
+const CustomerNameSchema = z
+  .string()
+  .trim()
+  .min(2, 'Name must be at least 2 characters')
+  .max(100, 'Name must be less than 100 characters')
+  .regex(
+    /^[\p{L}\p{M}\p{Zs}'\-\.]+$/u,
+    'Name contains invalid characters'
+  );
+
+// ============================================================================
 // Error Response Schemas
 // ============================================================================
 
@@ -89,7 +118,23 @@ export const AddOnDtoSchema = z.object({
 
 export type AddOnDto = z.infer<typeof AddOnDtoSchema>;
 
-// Booking Type enum - matches Prisma BookingType enum
+/**
+ * BookingType determines the booking flow for a package:
+ * - DATE: Customer selects a calendar date (weddings, events, retreats)
+ * - TIMESLOT: Customer selects a specific time slot (appointments, sessions)
+ *
+ * This enum matches Prisma BookingType and controls which booking UI is shown.
+ *
+ * @example
+ * // Wedding photography package - customer picks their wedding date
+ * { bookingType: 'DATE', ... }
+ *
+ * // Headshot session - customer picks a 30-minute slot
+ * { bookingType: 'TIMESLOT', ... }
+ *
+ * // Wellness retreat - customer picks a weekend date
+ * { bookingType: 'DATE', ... }
+ */
 export const BookingTypeSchema = z.enum(['DATE', 'TIMESLOT']);
 export type BookingType = z.infer<typeof BookingTypeSchema>;
 
@@ -167,7 +212,7 @@ export type BookingDto = z.infer<typeof BookingDtoSchema>;
 export const CreateCheckoutDtoSchema = z.object({
   packageId: z.string(),
   eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
-  coupleName: z.string(),
+  coupleName: CustomerNameSchema,
   email: z.string().email(),
   addOnIds: z.array(z.string()).max(20, 'Maximum 20 add-ons allowed').optional(),
 });
@@ -191,16 +236,20 @@ export const CreateDateBookingDtoSchema = z.object({
       (val) => {
         const date = new Date(val + 'T00:00:00Z');
         const now = new Date();
-        now.setHours(0, 0, 0, 0);
-        return date >= now;
+        // Use UTC for comparison to match the UTC date parsing above
+        const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+        return date >= todayUTC;
       },
       { message: 'Date must be in the future' }
     ),
-  customerName: z.string().min(1, 'Customer name is required').max(100),
+  customerName: CustomerNameSchema,
   customerEmail: z.string().email('Valid email is required'),
   customerPhone: z.string().optional(),
   notes: z.string().max(500).optional(),
   addOnIds: z.array(z.string()).max(20, 'Maximum 20 add-ons allowed').optional(),
+  // Honeypot field for bot protection - should never be filled by real users
+  // Named "website" as bots commonly auto-fill this field
+  website: z.string().optional(),
 });
 
 export type CreateDateBookingDto = z.infer<typeof CreateDateBookingDtoSchema>;
@@ -865,10 +914,7 @@ export const CreateAppointmentCheckoutDtoSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
   startTime: z.string().datetime({ message: 'Start time must be a valid ISO datetime' }),
   endTime: z.string().datetime({ message: 'End time must be a valid ISO datetime' }),
-  customerName: z
-    .string()
-    .min(1, 'Customer name is required')
-    .max(100, 'Name must be 100 characters or less'),
+  customerName: CustomerNameSchema,
   customerEmail: z.string().email('Valid email is required'),
   customerPhone: z.string().optional(),
   notes: z.string().max(1000, 'Notes must be 1000 characters or less').optional(),
