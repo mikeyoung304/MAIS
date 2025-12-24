@@ -33,11 +33,24 @@ const tier1Schema = z.object({
       .optional()
   ),
 
-  // Supabase
-  SUPABASE_URL: z.string().url('SUPABASE_URL must be a valid URL'),
-  SUPABASE_ANON_KEY: z.string().startsWith('eyJ', 'SUPABASE_ANON_KEY must be a valid JWT'),
-  SUPABASE_SERVICE_KEY: z.string().startsWith('eyJ', 'SUPABASE_SERVICE_KEY must be a valid JWT'),
-  SUPABASE_JWT_SECRET: z.string().min(32, 'SUPABASE_JWT_SECRET must be at least 32 characters'),
+  // Supabase - Optional in mock mode, required in real mode
+  // (validated in validateEnv() when ADAPTERS_PRESET=real)
+  SUPABASE_URL: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.string().url('SUPABASE_URL must be a valid URL').optional()
+  ),
+  SUPABASE_ANON_KEY: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.string().startsWith('eyJ', 'SUPABASE_ANON_KEY must be a valid JWT').optional()
+  ),
+  SUPABASE_SERVICE_KEY: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.string().startsWith('eyJ', 'SUPABASE_SERVICE_KEY must be a valid JWT').optional()
+  ),
+  SUPABASE_JWT_SECRET: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.string().min(32, 'SUPABASE_JWT_SECRET must be at least 32 characters').optional()
+  ),
 
   // Security
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
@@ -148,11 +161,27 @@ export function validateEnv(): Env {
     }
   }
 
-  // Real mode validation (requires Stripe)
-  if (env.ADAPTERS_PRESET === 'real' && !env.STRIPE_SECRET_KEY) {
-    logger.error('ADAPTERS_PRESET=real requires STRIPE_SECRET_KEY');
-    logger.error('Either set STRIPE_SECRET_KEY or use ADAPTERS_PRESET=mock');
-    process.exit(1);
+  // Real mode validation (requires Stripe and Supabase)
+  if (env.ADAPTERS_PRESET === 'real') {
+    if (!env.STRIPE_SECRET_KEY) {
+      logger.error('ADAPTERS_PRESET=real requires STRIPE_SECRET_KEY');
+      logger.error('Either set STRIPE_SECRET_KEY or use ADAPTERS_PRESET=mock');
+      process.exit(1);
+    }
+
+    const supabaseRequired = [
+      'SUPABASE_URL',
+      'SUPABASE_ANON_KEY',
+      'SUPABASE_SERVICE_KEY',
+      'SUPABASE_JWT_SECRET',
+    ] as const;
+
+    const missingSupa = supabaseRequired.filter((key) => !env[key]);
+    if (missingSupa.length > 0) {
+      logger.error({ missing: missingSupa }, 'ADAPTERS_PRESET=real requires Supabase variables');
+      logger.error('Either set Supabase variables or use ADAPTERS_PRESET=mock');
+      process.exit(1);
+    }
   }
 
   logger.info('✅ Environment validation passed');

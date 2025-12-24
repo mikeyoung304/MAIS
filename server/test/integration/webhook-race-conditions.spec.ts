@@ -267,11 +267,12 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
       const rawBody2 = JSON.stringify(stripeEvent2);
       const signature = 'test_signature';
 
-      // Mock payment provider to return different events
-      let callCount = 0;
-      paymentProvider.verifyWebhook = async () => {
-        callCount++;
-        return callCount === 1 ? stripeEvent1 : stripeEvent2;
+      // Mock payment provider to return event based on rawBody content
+      // Note: verifyWebhook is called twice per request (route + processor)
+      // so we can't use a simple counter
+      paymentProvider.verifyWebhook = async (rawBody: string) => {
+        const parsed = JSON.parse(rawBody);
+        return parsed.id === event1Id ? stripeEvent1 : stripeEvent2;
       };
 
       // Act: Process two different webhooks for same date concurrently
