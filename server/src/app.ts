@@ -266,7 +266,8 @@ export function createApp(
     },
     container.mailProvider,
     container.prisma,
-    container.repositories
+    container.repositories,
+    container.cacheAdapter // TODO-329: Pass cache adapter for date booking idempotency
   );
 
   // Register Stripe Connect webhook route (only in real mode with secrets configured)

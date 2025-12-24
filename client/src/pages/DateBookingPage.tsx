@@ -73,8 +73,8 @@ export function DateBookingPage() {
   }
 
   // Check if package supports DATE booking
-  const bookingType = (packageData as PackageDto & { bookingType?: string }).bookingType;
-  if (bookingType && bookingType !== 'DATE') {
+  const bookingType = packageData.bookingType || 'DATE';
+  if (bookingType !== 'DATE') {
     return (
       <div className="min-h-screen bg-neutral-50 py-12">
         <Container className="max-w-2xl">

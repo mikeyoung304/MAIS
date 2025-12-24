@@ -63,6 +63,48 @@ export class PrismaCatalogRepository implements CatalogRepository {
     return pkg ? this.toDomainPackage(pkg) : null;
   }
 
+  /**
+   * Get package by slug with add-ons in a single query
+   *
+   * PERFORMANCE FIX: Eliminates N+1 query pattern by fetching package and add-ons together.
+   * Used by onPaymentCompleted to avoid separate getPackageBySlug + getAddOnsByPackageId calls.
+   *
+   * @param tenantId - Tenant ID for isolation
+   * @param slug - Package slug identifier
+   * @returns Package with add-ons, or null if not found
+   */
+  async getPackageBySlugWithAddOns(
+    tenantId: string,
+    slug: string
+  ): Promise<(Package & { addOns: AddOn[] }) | null> {
+    const pkg = await this.prisma.package.findUnique({
+      where: { tenantId_slug: { tenantId, slug } },
+      include: {
+        addOns: {
+          include: {
+            addOn: true,
+          },
+        },
+      },
+    });
+
+    if (!pkg) {
+      return null;
+    }
+
+    return {
+      ...this.toDomainPackage(pkg),
+      addOns: pkg.addOns.map((pa) =>
+        this.toDomainAddOn({
+          id: pa.addOn.id,
+          name: pa.addOn.name,
+          price: pa.addOn.price,
+          packages: [{ packageId: pkg.id }],
+        })
+      ),
+    };
+  }
+
   async getPackageById(tenantId: string, id: string): Promise<Package | null> {
     const pkg = await this.prisma.package.findFirst({
       where: { tenantId, id },

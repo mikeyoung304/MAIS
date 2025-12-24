@@ -1561,7 +1561,7 @@ export const Contracts = c.router({
    * GET /v1/tenant-admin/appointments
    *
    * P1 #276 FIX: Pagination enforced to prevent unbounded queries
-   * Default limit: 100, Max limit: 500
+   * Default limit: 50, Max limit: 500
    */
   tenantAdminGetAppointments: {
     method: 'GET',
@@ -1588,8 +1588,8 @@ export const Contracts = c.router({
           .string()
           .regex(/^\d{4}-\d{2}-\d{2}$/)
           .optional(),
-        limit: z.coerce.number().int().min(1).max(500).optional(),
-        offset: z.coerce.number().int().min(0).optional(),
+        limit: z.coerce.number().int().min(1).max(500).default(50),
+        offset: z.coerce.number().int().min(0).default(0),
       })
       .optional(),
     responses: {

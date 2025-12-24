@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **API Breaking Change**: Pagination default for `GET /v1/tenant-admin/appointments` changed from 100 to 50 items
+  - Max limit remains 500
+  - Clients relying on default behavior should explicitly pass `limit` parameter
+  - Improves response times and reduces payload sizes by 50%
+
+### Security
+
+- **P2-344**: Generic error messages for package availability (prevents ID enumeration)
+- **P2-345**: Generic error messages for package not found (prevents slug enumeration)
+
+### Fixed
+
+- **N+1 Query**: `onPaymentCompleted` now uses single query for package with add-ons
+
+---
+
 ## [Sprint 6] - 2024-11-12
 
 ### Changed - Test Stabilization

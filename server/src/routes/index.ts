@@ -37,6 +37,7 @@ import type {
   CatalogRepository,
   WebhookSubscriptionRepository,
   EarlyAccessRepository,
+  CacheServicePort,
 } from '../lib/ports';
 import type { Request } from 'express';
 import { createAdminTenantsRoutes } from './admin/tenants.routes';
@@ -128,7 +129,8 @@ export function createV1Router(
     sendEmail: (input: { to: string; subject: string; html: string }) => Promise<void>;
   },
   prisma?: PrismaClient,
-  repositories?: Repositories
+  repositories?: Repositories,
+  cacheAdapter?: CacheServicePort
 ): void {
   // Require PrismaClient from DI - fail fast if misconfigured
   if (!prisma) {
@@ -606,7 +608,8 @@ export function createV1Router(
       // Register public date booking routes (for DATE type package bookings)
       // Requires tenant context via X-Tenant-Key header
       // Phase 2 Refactor: BookingService now handles availability checking internally
-      const publicDateBookingRouter = createPublicDateBookingRoutes(services.booking);
+      // TODO-329: Pass cacheAdapter for request-level idempotency via X-Idempotency-Key header
+      const publicDateBookingRouter = createPublicDateBookingRoutes(services.booking, cacheAdapter);
       app.use('/v1/public', tenantMiddleware, requireTenant, publicDateBookingRouter);
       logger.info('✅ Public date booking routes mounted at /v1/public/bookings/date');
 

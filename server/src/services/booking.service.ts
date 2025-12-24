@@ -13,6 +13,7 @@ import {
   BookingCannotBeRescheduledError,
   BookingConflictError,
   InvalidBookingTypeError,
+  PackageNotAvailableError,
 } from '../lib/errors';
 import { CommissionService } from './commission.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
@@ -379,7 +380,9 @@ export class BookingService {
     // 1. Fetch package by ID
     const pkg = await this.catalogRepo.getPackageById(tenantId, input.packageId);
     if (!pkg) {
-      throw new NotFoundError(`Package not found: ${input.packageId}`);
+      // P2-345 FIX: Log package ID internally but return generic error message
+      logger.warn({ tenantId, packageId: input.packageId }, 'Package not found in date booking flow');
+      throw new NotFoundError('The requested resource was not found');
     }
 
     // 2. Validate package is DATE type
@@ -387,7 +390,14 @@ export class BookingService {
       throw new InvalidBookingTypeError(pkg.title, 'DATE');
     }
 
-    // 3. Check availability using injected AvailabilityService
+    // 3. Check if package is active
+    if (!pkg.active) {
+      // P2-344 FIX: Log package ID internally but return generic error message
+      logger.warn({ tenantId, packageId: input.packageId }, 'Inactive package requested in booking flow');
+      throw new PackageNotAvailableError();
+    }
+
+    // 4. Check availability using injected AvailabilityService
     if (this.availabilityService) {
       const availability = await this.availabilityService.checkAvailability(tenantId, input.date);
       if (!availability.available) {
@@ -694,17 +704,22 @@ export class BookingService {
       depositPercent?: number;
     }
   ): Promise<Booking> {
-    // Fetch package details for event payload
-    const pkg = await this.catalogRepo.getPackageBySlug(tenantId, input.packageId);
-    if (!pkg) {
-      throw new NotFoundError(`Package ${input.packageId} not found`);
+    // PERFORMANCE FIX: Fetch package with add-ons in single query (eliminates N+1)
+    const pkgWithAddOns = await this.catalogRepo.getPackageBySlugWithAddOns(
+      tenantId,
+      input.packageId
+    );
+    if (!pkgWithAddOns) {
+      // P2-345 FIX: Log package ID internally but return generic error message
+      logger.warn({ tenantId, packageId: input.packageId }, 'Package not found in payment completion flow');
+      throw new NotFoundError('The requested resource was not found');
     }
+    const pkg = pkgWithAddOns;
 
-    // Fetch add-on details
+    // Extract add-on titles from the already-fetched add-ons
     const addOnTitles: string[] = [];
     if (input.addOnIds && input.addOnIds.length > 0) {
-      const addOns = await this.catalogRepo.getAddOnsByPackageId(tenantId, pkg.id);
-      const selectedAddOns = addOns.filter((a) => input.addOnIds?.includes(a.id));
+      const selectedAddOns = pkgWithAddOns.addOns.filter((a) => input.addOnIds?.includes(a.id));
       addOnTitles.push(...selectedAddOns.map((a) => a.title));
     }
 

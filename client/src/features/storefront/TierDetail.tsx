@@ -82,7 +82,7 @@ export function TierDetail({
   // Booking link: Smart routing based on package bookingType
   // DATE packages: Go to date booking wizard with package slug
   // TIMESLOT packages: Go to appointment scheduling
-  const bookingType = (pkg as PackageDto & { bookingType?: string }).bookingType || 'DATE';
+  const bookingType = pkg.bookingType || 'DATE';
   const bookingLink = bookingType === 'DATE' ? `../book/date/${pkg.slug}` : '../book';
 
   return (

@@ -14,7 +14,7 @@ import {
   FakePaymentProvider,
   buildPackage,
 } from '../helpers/fakes';
-import { NotFoundError, BookingConflictError, InvalidBookingTypeError } from '../../src/lib/errors';
+import { NotFoundError, BookingConflictError, InvalidBookingTypeError, PackageNotAvailableError } from '../../src/lib/errors';
 
 describe('BookingService.createDateBooking', () => {
   let service: BookingService;
@@ -127,6 +127,28 @@ describe('BookingService.createDateBooking', () => {
           customerEmail: 'test@example.com',
         })
       ).rejects.toThrow(InvalidBookingTypeError);
+    });
+
+    it('throws PackageNotAvailableError for inactive package', async () => {
+      // Arrange
+      const pkg = buildPackage({
+        id: 'pkg_inactive',
+        slug: 'inactive-wedding-package',
+        priceCents: 250000,
+        bookingType: 'DATE',
+        active: false,
+      });
+      catalogRepo.addPackage(pkg);
+
+      // Act & Assert
+      await expect(
+        service.createDateBooking(tenantId, {
+          packageId: 'pkg_inactive',
+          date: '2025-06-15',
+          customerName: 'Test Couple',
+          customerEmail: 'test@example.com',
+        })
+      ).rejects.toThrow(PackageNotAvailableError);
     });
 
     it('throws BookingConflictError when date is unavailable (booked)', async () => {

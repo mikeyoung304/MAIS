@@ -589,7 +589,7 @@ export function createTenantAdminSchedulingRoutes(
    * @query serviceId - Optional service ID filter
    * @query startDate - Optional start date filter (YYYY-MM-DD)
    * @query endDate - Optional end date filter (YYYY-MM-DD)
-   * @query limit - Maximum results to return (default 100, max 500)
+   * @query limit - Maximum results to return (default 50, max 500)
    * @query offset - Number of results to skip for pagination (default 0)
    * @returns 200 - Array of appointment bookings
    * @returns 400 - Validation error (invalid date format or pagination params)
@@ -606,7 +606,7 @@ export function createTenantAdminSchedulingRoutes(
       const tenantId = tenantAuth.tenantId;
 
       // P1 #276: Pagination constants - aligned with repository layer (defense-in-depth)
-      const DEFAULT_LIMIT = 100;
+      const DEFAULT_LIMIT = 50;
       const MAX_LIMIT = 500;
 
       const { status, serviceId, startDate, endDate, limit, offset } = req.query;

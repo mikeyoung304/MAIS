@@ -12,7 +12,7 @@
  * will preserve existing keys to avoid breaking environments.
  */
 
-import { PrismaClient, Segment, Package, AddOn } from '../../src/generated/prisma';
+import { PrismaClient, Segment, Package, AddOn, BookingType } from '../../src/generated/prisma';
 import * as crypto from 'crypto';
 import { logger } from '../../src/lib/core/logger';
 import { createOrUpdateTenant } from './utils';
@@ -104,7 +104,7 @@ async function createOrUpdatePackageWithSegment(
     grouping?: string;
     groupingOrder?: number;
     photos?: Array<{ url: string; filename: string; size: number; order: number }>;
-    bookingType?: 'DATE' | 'TIMESLOT';
+    bookingType?: BookingType;
   }
 ): Promise<Package> {
   const {
@@ -115,8 +115,13 @@ async function createOrUpdatePackageWithSegment(
     grouping,
     groupingOrder,
     photos = [],
-    bookingType = 'DATE',
+    bookingType = BookingType.DATE,
   } = options;
+
+  // Runtime validation: ensure bookingType is a valid enum member
+  if (!Object.values(BookingType).includes(bookingType)) {
+    throw new Error(`Invalid bookingType: ${bookingType}`);
+  }
 
   return prisma.package.upsert({
     where: { tenantId_slug: { slug, tenantId } },

@@ -169,10 +169,11 @@ export class PackageError extends AppError {
 
 /**
  * Package not available
+ * P2-344 FIX: Generic message to prevent package ID enumeration
  */
 export class PackageNotAvailableError extends PackageError {
-  constructor(packageId: string) {
-    super(`Package ${packageId} is not available`, 'PACKAGE_NOT_AVAILABLE');
+  constructor() {
+    super('The requested package is not available for booking', 'PACKAGE_NOT_AVAILABLE');
     this.name = 'PackageNotAvailableError';
   }
 }

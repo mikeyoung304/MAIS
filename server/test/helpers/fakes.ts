@@ -97,6 +97,20 @@ export class FakeCatalogRepository implements CatalogRepository {
     return this.packages.find((p) => p.slug === slug) || null;
   }
 
+  async getPackageBySlugWithAddOns(
+    tenantId: string,
+    slug: string
+  ): Promise<(Package & { addOns: AddOn[] }) | null> {
+    const pkg = this.packages.find((p) => p.slug === slug);
+    if (!pkg) {
+      return null;
+    }
+    return {
+      ...pkg,
+      addOns: this.addOns.filter((a) => a.packageId === pkg.id),
+    };
+  }
+
   async getPackageById(tenantId: string, id: string): Promise<Package | null> {
     return this.packages.find((p) => p.id === id) || null;
   }
@@ -354,6 +368,7 @@ export function buildPackage(overrides?: Partial<Package>): Package {
     title: 'Basic Package',
     description: 'A basic photography package',
     priceCents: 100000,
+    active: true,
     ...overrides,
   };
 }
