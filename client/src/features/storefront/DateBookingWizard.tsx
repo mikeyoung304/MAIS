@@ -205,7 +205,8 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
       }
     } catch (error) {
       toast.error('Unable to create checkout session', {
-        description: error instanceof Error ? error.message : 'Please try again or contact support.',
+        description:
+          error instanceof Error ? error.message : 'Please try again or contact support.',
       });
       setIsSubmitting(false);
     }
@@ -224,11 +225,7 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
               {/* Package Hero */}
               {pkg.photoUrl && (
                 <div className="relative h-48 rounded-xl overflow-hidden">
-                  <img
-                    src={pkg.photoUrl}
-                    alt={pkg.title}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={pkg.photoUrl} alt={pkg.title} className="w-full h-full object-cover" />
                 </div>
               )}
 
@@ -266,9 +263,7 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
                 <Calendar className="inline-block w-6 h-6 mr-2 text-macon-orange" />
                 Choose Your Date
               </CardTitle>
-              <p className="text-neutral-500 text-base mt-1">
-                Select the date for your event
-              </p>
+              <p className="text-neutral-500 text-base mt-1">Select the date for your event</p>
             </CardHeader>
             <CardContent>
               <div className="flex justify-center">
@@ -282,10 +277,7 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
                     mode="single"
                     selected={selectedDate || undefined}
                     onSelect={handleDateSelect}
-                    disabled={[
-                      { before: new Date() },
-                      ...unavailableDates,
-                    ]}
+                    disabled={[{ before: new Date() }, ...unavailableDates]}
                     className="border border-neutral-300 rounded-xl p-4 bg-white"
                     modifiersStyles={{
                       selected: {
@@ -298,7 +290,8 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
               </div>
               {selectedDate && (
                 <p className="text-center mt-4 text-lg font-medium text-neutral-900">
-                  Selected: {selectedDate.toLocaleDateString('en-US', {
+                  Selected:{' '}
+                  {selectedDate.toLocaleDateString('en-US', {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
@@ -439,9 +432,7 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
                       {formatCurrency(pkg.priceCents)}
                     </span>
                   </div>
-                  <p className="text-sm text-neutral-500 mt-2">
-                    Secure payment powered by Stripe
-                  </p>
+                  <p className="text-sm text-neutral-500 mt-2">Secure payment powered by Stripe</p>
                 </div>
               </div>
             </CardContent>

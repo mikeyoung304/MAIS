@@ -1,8 +1,11 @@
 # P2: Unbounded Add-On IDs Array in DTO
 
 ## Priority: P2 Important
+
 ## Status: complete
+
 ## Feature: DATE Booking Flow
+
 ## Category: Security
 
 ## Issue
@@ -26,6 +29,7 @@ addOnIds: z.array(z.string()).optional(),
 ```
 
 An attacker could send thousands of add-on IDs to:
+
 1. Cause excessive database queries in `catalogRepo.getAddOnsByPackageId()`
 2. Inflate Stripe metadata beyond limits (500 chars per value)
 3. Exhaust server memory with large request bodies
@@ -43,16 +47,17 @@ addOnIds: z.array(z.string())
 - Send request with 100+ add-on IDs, verify rejection
 - Verify error message is user-friendly
 
-
-
 ## Work Log
 
 ### 2025-12-21 - Approved for Work
+
 **By:** Claude Triage System
 **Actions:**
+
 - Issue approved during triage session (bulk approval)
 - Status changed from pending → ready
 - Ready to be picked up and worked on
 
 ## Review Reference
+
 - Security Review Finding P2-002 (Unbounded Add-On IDs Array)

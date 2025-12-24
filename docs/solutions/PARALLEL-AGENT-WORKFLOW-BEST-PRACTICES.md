@@ -59,7 +59,7 @@ async function verifyPlanItems(plan: PlanFile): Promise<VerificationReport> {
   const report: VerificationReport = {
     exists: [],
     missing: [],
-    needsVerification: []
+    needsVerification: [],
   };
 
   for (const item of plan.tasks) {
@@ -142,6 +142,7 @@ verification.json:
 ```
 
 **Benefits:**
+
 - No duplicate verification work
 - Clear distinction between implemented and missing
 - Reduced stale todos by ~80%
@@ -176,25 +177,25 @@ Previous day → Review: Created todos
 
 ```yaml
 DeferralCriteria:
-  - name: "Same-minute implementation"
+  - name: 'Same-minute implementation'
     gap_minutes: 0-5
-    decision: "Skip todo. Mark as found in code."
-    reason: "Likely concurrent work (implementation during review)"
+    decision: 'Skip todo. Mark as found in code.'
+    reason: 'Likely concurrent work (implementation during review)'
 
-  - name: "Same-hour continuation"
+  - name: 'Same-hour continuation'
     gap_minutes: 5-60
-    decision: "Check git log. If related, skip. Otherwise create verify todo."
-    reason: "Could be continuation of same work or independent feature"
+    decision: 'Check git log. If related, skip. Otherwise create verify todo.'
+    reason: 'Could be continuation of same work or independent feature'
 
-  - name: "Same-day follow-up"
+  - name: 'Same-day follow-up'
     gap_hours: 1-16
     decision: "Create verify todo only. Don't create implementation todo."
-    reason: "Code exists. Audit or verification needed."
+    reason: 'Code exists. Audit or verification needed.'
 
-  - name: "Cross-session work"
-    gap_hours: ">16"
+  - name: 'Cross-session work'
+    gap_hours: '>16'
     decision: "Create full implementation todo if code doesn't exist"
-    reason: "Clearly different work sessions"
+    reason: 'Clearly different work sessions'
 ```
 
 **Example Decision Tree:**
@@ -257,6 +258,7 @@ Agent:Codify
 ## Principle 5: Parallel vs Sequential Execution
 
 **When to use parallel:**
+
 ```
 Agents that DON'T depend on each other:
 - Agent:Plan + Agent:Review different features in parallel ✓
@@ -298,6 +300,7 @@ Agent:Plan landing-page        Agent:Review landing-page
 **Problem:** When multiple agents tackle the same problem, they might disagree.
 
 **Example:**
+
 ```
 Agent 1 (Review): "EditableAccommodationSection should be priority P1"
 Agent 2 (Work): "I'll implement it as P2 because accommodation is secondary"
@@ -312,30 +315,29 @@ Agent 3 (Codify): "This was clearly a P3 feature based on timeline"
 # decision-record.yaml - Created after Agent:Review, used by Agent:Work
 
 decisions:
-  - id: "230-accommodation-priority"
-    question: "What priority for accommodation section?"
+  - id: '230-accommodation-priority'
+    question: 'What priority for accommodation section?'
     evidence:
-      - "Plan lists as last section (lowest priority)"
-      - "Backend implementation created same time as hero section"
-      - "No E2E test coverage (vs full coverage for hero)"
-    decision: "P2 - implement after core 6 sections"
+      - 'Plan lists as last section (lowest priority)'
+      - 'Backend implementation created same time as hero section'
+      - 'No E2E test coverage (vs full coverage for hero)'
+    decision: 'P2 - implement after core 6 sections'
 
-  - id: "231-hook-batching-pattern"
-    question: "Should landing page editor use batching like visual editor?"
+  - id: '231-hook-batching-pattern'
+    question: 'Should landing page editor use batching like visual editor?'
     evidence:
-      - "useVisualEditor has 354 lines with batching, rollback, cleanup"
-      - "useLandingPageEditor would have 80 lines without batching"
-      - "Risk: race conditions in rapid editing"
-    decision: "YES - copy useVisualEditor pattern exactly"
+      - 'useVisualEditor has 354 lines with batching, rollback, cleanup'
+      - 'useLandingPageEditor would have 80 lines without batching'
+      - 'Risk: race conditions in rapid editing'
+    decision: 'YES - copy useVisualEditor pattern exactly'
 
-  - id: "232-rate-limiting-strategy"
-    question: "Per-IP or per-tenant rate limiting for draft saves?"
+  - id: '232-rate-limiting-strategy'
+    question: 'Per-IP or per-tenant rate limiting for draft saves?'
     evidence:
-      - "Existing pattern uses per-IP (see loginLimiter)"
-      - "Shared infrastructure (one tenant can affect others)"
-      - "60 requests/minute per IP is reasonable for auto-save"
-    decision: "Per-IP (60/min) - matches existing pattern"
-
+      - 'Existing pattern uses per-IP (see loginLimiter)'
+      - 'Shared infrastructure (one tenant can affect others)'
+      - '60 requests/minute per IP is reasonable for auto-save'
+    decision: 'Per-IP (60/min) - matches existing pattern'
 # Agent:Work reads decisions and implements according to them
 # Agent:Codify documents why decisions were made
 ```
@@ -378,20 +380,19 @@ consensus:
 ```yaml
 verification.json:
   missing:
-    - item: "EditableImage component"
-      id: "230"
+    - item: 'EditableImage component'
+      id: '230'
       dependencies:
-        - "Image upload endpoints (not yet created)"
-        - "SafeImageUrl validation contract (exists)"
-      blocking: ["231", "232"]  # These todos need this one first
+        - 'Image upload endpoints (not yet created)'
+        - 'SafeImageUrl validation contract (exists)'
+      blocking: ['231', '232'] # These todos need this one first
 
-    - item: "EditableAccommodationSection"
-      id: "231"
+    - item: 'EditableAccommodationSection'
+      id: '231'
       dependencies:
-        - "EditableImage (todo 230)"
-        - "EditableList component (missing)"
-      blocking: ["240"]
-
+        - 'EditableImage (todo 230)'
+        - 'EditableList component (missing)'
+      blocking: ['240']
 # Agent:Work reads dependencies and orders work:
 # 1. Implement 230 (EditableImage) first - blocks others
 # 2. Implement EditableList (indirect dependency)
@@ -405,10 +406,10 @@ verification.json:
 ---
 status: pending
 dependencies:
-  - "todo-xxx: EditableImage component"
-  - "contracts updated with SafeImageUrl"
+  - 'todo-xxx: EditableImage component'
+  - 'contracts updated with SafeImageUrl'
 blocking:
-  - "todo-yyy: EditableAccommodationSection"
+  - 'todo-yyy: EditableAccommodationSection'
 ---
 ```
 
@@ -466,6 +467,7 @@ blocking:
 ```
 
 **Benefits:**
+
 - Other agents can read standardized format
 - Clear distinction between verified, missing, and gaps
 - Evidence trail for future decisions
@@ -482,30 +484,29 @@ blocking:
 ```yaml
 # session.yaml - Created at start of work session
 session:
-  id: "2025-12-04_landing-page-editor"
-  started_at: "2025-12-04T20:00:00Z"
+  id: '2025-12-04_landing-page-editor'
+  started_at: '2025-12-04T20:00:00Z'
 
   goals:
-    - "Plan landing page editor feature"
-    - "Review plan against codebase"
-    - "Implement Phase 1 (hero section)"
+    - 'Plan landing page editor feature'
+    - 'Review plan against codebase'
+    - 'Implement Phase 1 (hero section)'
 
   agents:
-    - "Agent:Plan"
-    - "Agent:Review"
-    - "Agent:Work"
+    - 'Agent:Plan'
+    - 'Agent:Review'
+    - 'Agent:Work'
 
-  expected_end: "2025-12-04T23:59:59Z"
+  expected_end: '2025-12-04T23:59:59Z'
 
 # Each artifact is tagged:
 plan.md:
-  session_id: "2025-12-04_landing-page-editor"
-  created_at: "2025-12-04T20:15:00Z"
+  session_id: '2025-12-04_landing-page-editor'
+  created_at: '2025-12-04T20:15:00Z'
 
 verification.json:
-  session_id: "2025-12-04_landing-page-editor"
-  created_at: "2025-12-04T22:30:00Z"
-
+  session_id: '2025-12-04_landing-page-editor'
+  created_at: '2025-12-04T22:30:00Z'
 # When Agent:Review creates todos, it checks:
 # if (todo.work_created_before < verification.created_at) {
 #   // Work was done BEFORE review - mark as found, don't create todo
@@ -538,23 +539,23 @@ verification.json:
 metrics:
   stale_todo_rate:
     definition: "Todos closed as 'already implemented' / Total todos created"
-    target: "< 5% (currently ~33% from 246-249)"
+    target: '< 5% (currently ~33% from 246-249)'
 
   verification_coverage:
-    definition: "Number of code items verified before todo creation"
-    target: "> 80%"
+    definition: 'Number of code items verified before todo creation'
+    target: '> 80%'
 
   session_boundary_accuracy:
-    definition: "% of todos correctly deferred due to same-session implementation"
-    target: "> 95%"
+    definition: '% of todos correctly deferred due to same-session implementation'
+    target: '> 95%'
 
   agent_handoff_efficiency:
-    definition: "% of Agent:Work tasks using verification.json to avoid duplicates"
-    target: "> 90%"
+    definition: '% of Agent:Work tasks using verification.json to avoid duplicates'
+    target: '> 90%'
 
   todo_creation_speed:
-    definition: "Time from plan creation to final todo list"
-    target: "< 1 hour (currently 1.5 hours with rework)"
+    definition: 'Time from plan creation to final todo list'
+    target: '< 1 hour (currently 1.5 hours with rework)'
 ```
 
 ## Related Documents
@@ -570,6 +571,7 @@ metrics:
 **Key Insight:** Implement verification-before-creation to eliminate 80% of stale todos
 
 **Timeline:**
+
 - 22:59:24 - Implementation complete (1647a40)
 - 22:59:54 - Todos created (c4c8baf) - 30 second gap
 - +17 hours - Todos closed as already implemented (62f54ab)

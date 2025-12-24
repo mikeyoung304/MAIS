@@ -43,11 +43,11 @@ Is the code already implemented?
 
 ## Implementation Type Reference
 
-| Type | Effort | Pattern | Example |
-|------|--------|---------|---------|
-| **Verify** | 5-15 min | Cite file:line, test, mark complete | TODO-246: Routes exist at routes.ts:168 |
-| **Quick Win** | 20-45 min | Implement, test, batch in 1 commit | TODO-264: Create ErrorAlert component |
-| **Defer** | 1-2 hours planning | Document scope, deps, estimate | TODO-234: EditableImage component |
+| Type          | Effort             | Pattern                             | Example                                 |
+| ------------- | ------------------ | ----------------------------------- | --------------------------------------- |
+| **Verify**    | 5-15 min           | Cite file:line, test, mark complete | TODO-246: Routes exist at routes.ts:168 |
+| **Quick Win** | 20-45 min          | Implement, test, batch in 1 commit  | TODO-264: Create ErrorAlert component   |
+| **Defer**     | 1-2 hours planning | Document scope, deps, estimate      | TODO-234: EditableImage component       |
 
 ---
 
@@ -56,6 +56,7 @@ Is the code already implemented?
 **When:** Code exists, just need confirmation
 
 **Checklist:**
+
 ```bash
 # 1. Find code
 rg 'function name|const name' src/
@@ -85,6 +86,7 @@ verification: 'Confirmed in HASH'
 **When:** Small, self-contained feature < 1 hour
 
 **Checklist:**
+
 ```bash
 # 1. Create/modify file(s)
 touch client/src/components/shared/ErrorAlert.tsx
@@ -125,6 +127,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 **When:** Large feature 4+ hours, architectural change, or lower priority
 
 **Checklist:**
+
 ```yaml
 ---
 status: pending
@@ -138,6 +141,7 @@ estimated_sprint: '2025-12-12'
 ```
 
 **Don't forget:**
+
 - [ ] Clear scope (what needs to be done)
 - [ ] Effort estimate (hours)
 - [ ] Dependencies (what must happen first)
@@ -150,6 +154,7 @@ estimated_sprint: '2025-12-12'
 **When:** Code repeated 2+ times
 
 **Pattern:**
+
 ```typescript
 // 1. Extract to shared/
 export function ErrorAlert({ message }: { message: string | null }) {
@@ -170,6 +175,7 @@ import { ErrorAlert } from '@/components/shared/ErrorAlert';
 ```
 
 **Benefits:**
+
 - Single source of truth
 - Consistency guaranteed
 - Maintenance easy
@@ -181,6 +187,7 @@ import { ErrorAlert } from '@/components/shared/ErrorAlert';
 **When:** Pure component in list (10+ items) or receives callback props
 
 **Pattern:**
+
 ```typescript
 // 1. Wrap in memo with named function
 export const StatusBadge = memo(function StatusBadge({ status, variant }: Props) {
@@ -195,6 +202,7 @@ Item.displayName = 'Item';
 ```
 
 **Parent must memoize callback props:**
+
 ```typescript
 function Parent() {
   // ❌ DON'T - new function every render
@@ -207,6 +215,7 @@ function Parent() {
 ```
 
 **Verify it works:**
+
 ```javascript
 // React DevTools Profiler
 // 1. Record
@@ -221,6 +230,7 @@ function Parent() {
 **When:** Read-then-write, multiple operations must stay together
 
 **Pattern:**
+
 ```typescript
 async discardDraft(tenantId: string) {
   return await this.prisma.$transaction(async (tx) => {
@@ -237,6 +247,7 @@ async discardDraft(tenantId: string) {
 ```
 
 **Remember:**
+
 - Use `tx`, not `this.prisma` inside
 - All operations atomic (all succeed or all fail)
 - Catch errors outside transaction
@@ -248,6 +259,7 @@ async discardDraft(tenantId: string) {
 **When:** Resolving 3+ todos in one session
 
 **Commit Message:**
+
 ```
 chore(todos): resolve P1/P2 todos, add components, close stale
 
@@ -267,6 +279,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 **Benefits:**
+
 - Trackable (single commit = easy PR)
 - Organized (grouped by status)
 - Searchable (git log --grep="todos")
@@ -276,6 +289,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ## Todo File Template
 
 **For Verification:**
+
 ```yaml
 ---
 status: complete
@@ -293,7 +307,8 @@ No implementation work needed.
 ```
 
 **For Quick Win:**
-```yaml
+
+````yaml
 ---
 status: complete
 priority: p3
@@ -315,8 +330,9 @@ Created `client/src/components/shared/ErrorAlert.tsx`
 
 ```bash
 npm test -- client/src/components/shared/
-```
-```
+````
+
+````
 
 **For Deferral:**
 ```yaml
@@ -340,7 +356,7 @@ estimated_sprint: '2025-12-12'
 ## Next Sprint
 
 Ready to pick up when resources available.
-```
+````
 
 ---
 
@@ -374,14 +390,14 @@ Combine results → Decision (verify/fix/defer)
 
 ## Quick Wins - Common Examples
 
-| Quick Win | Time | Pattern |
-|-----------|------|---------|
-| Extract component (duplication) | 20 min | Create file, move markup, import in 3+ places |
-| Add React.memo to component | 10 min | Wrap in memo, use named function |
-| Add transaction wrapper | 15 min | Wrap `$transaction`, use `tx` instead of `this.prisma` |
-| Fix console.log → logger | 5 min | Search & replace, verify no logging breaks |
-| Add aria-hidden to icon | 5 min | Search icons in component, add attribute |
-| Extract constant/utility | 10 min | Move repeated logic to separate file, import |
+| Quick Win                       | Time   | Pattern                                                |
+| ------------------------------- | ------ | ------------------------------------------------------ |
+| Extract component (duplication) | 20 min | Create file, move markup, import in 3+ places          |
+| Add React.memo to component     | 10 min | Wrap in memo, use named function                       |
+| Add transaction wrapper         | 15 min | Wrap `$transaction`, use `tx` instead of `this.prisma` |
+| Fix console.log → logger        | 5 min  | Search & replace, verify no logging breaks             |
+| Add aria-hidden to icon         | 5 min  | Search icons in component, add attribute               |
+| Extract constant/utility        | 10 min | Move repeated logic to separate file, import           |
 
 **Total for 6 quick wins:** 45-60 min
 
@@ -389,15 +405,15 @@ Combine results → Decision (verify/fix/defer)
 
 ## Deferral - Common Reasons
 
-| Reason | Action |
-|--------|--------|
-| "Needs new component" | Defer if file doesn't exist + 2+ hours work |
-| "Needs backend endpoint" | Defer if 3+ hours backend + frontend integration |
-| "Needs database migration" | Defer if requires schema changes + testing |
-| "Needs refactor" | Defer if affects 3+ existing components |
-| "Complex async logic" | Defer if 2+ services/hooks need coordination |
-| "Lower priority (P3)" | Defer if P1/P2 todos pending |
-| "Blocked by other todo" | Defer with clear dependency noted |
+| Reason                     | Action                                           |
+| -------------------------- | ------------------------------------------------ |
+| "Needs new component"      | Defer if file doesn't exist + 2+ hours work      |
+| "Needs backend endpoint"   | Defer if 3+ hours backend + frontend integration |
+| "Needs database migration" | Defer if requires schema changes + testing       |
+| "Needs refactor"           | Defer if affects 3+ existing components          |
+| "Complex async logic"      | Defer if 2+ services/hooks need coordination     |
+| "Lower priority (P3)"      | Defer if P1/P2 todos pending                     |
+| "Blocked by other todo"    | Defer with clear dependency noted                |
 
 **When in doubt:** Document as pending, make decision next sprint
 
@@ -433,28 +449,28 @@ git commit -m "..."
 
 ## File Locations
 
-| What | Where |
-|------|-------|
-| Shared components | `client/src/components/shared/` |
-| Hooks | `client/src/hooks/` |
-| Services | `server/src/services/` |
-| Routes | `server/src/routes/` |
-| Adapters | `server/src/adapters/` |
-| Tests | `server/test/` or `client/src/**/__tests__/` |
-| Todos | `todos/NNN-status-title.md` |
+| What              | Where                                        |
+| ----------------- | -------------------------------------------- |
+| Shared components | `client/src/components/shared/`              |
+| Hooks             | `client/src/hooks/`                          |
+| Services          | `server/src/services/`                       |
+| Routes            | `server/src/routes/`                         |
+| Adapters          | `server/src/adapters/`                       |
+| Tests             | `server/test/` or `client/src/**/__tests__/` |
+| Todos             | `todos/NNN-status-title.md`                  |
 
 ---
 
 ## Common Errors & Fixes
 
-| Error | Fix |
-|-------|-----|
-| "Anonymous component in DevTools" | Use named function: `memo(function Name() {})` |
-| "Memo not working" | Check parent isn't passing new object every render |
-| "Transaction lock timeout" | Reduce transaction scope or add timeout |
-| "Type mismatch in tx operation" | Use `tx.model` not `this.prisma.model` |
-| "Component re-renders too much" | Add React.memo or useCallback in parent |
-| "Duplicate error display" | Extract to ErrorAlert shared component |
+| Error                             | Fix                                                |
+| --------------------------------- | -------------------------------------------------- |
+| "Anonymous component in DevTools" | Use named function: `memo(function Name() {})`     |
+| "Memo not working"                | Check parent isn't passing new object every render |
+| "Transaction lock timeout"        | Reduce transaction scope or add timeout            |
+| "Type mismatch in tx operation"   | Use `tx.model` not `this.prisma.model`             |
+| "Component re-renders too much"   | Add React.memo or useCallback in parent            |
+| "Duplicate error display"         | Extract to ErrorAlert shared component             |
 
 ---
 
@@ -476,15 +492,15 @@ Todo looks important?
 
 ## Time Budget
 
-| Activity | Time |
-|----------|------|
-| Review 8-10 todos | 15 min |
-| Parallel verification agents | 30 min |
-| Implement 6 quick wins | 45 min |
-| Testing + manual QA | 15 min |
-| Batch commit + cleanup | 5 min |
-| Update todo files | 10 min |
-| **Total** | **120 min (2 hours)** |
+| Activity                     | Time                  |
+| ---------------------------- | --------------------- |
+| Review 8-10 todos            | 15 min                |
+| Parallel verification agents | 30 min                |
+| Implement 6 quick wins       | 45 min                |
+| Testing + manual QA          | 15 min                |
+| Batch commit + cleanup       | 5 min                 |
+| Update todo files            | 10 min                |
+| **Total**                    | **120 min (2 hours)** |
 
 ---
 

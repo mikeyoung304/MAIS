@@ -41,12 +41,11 @@ async function discardDraftsIfAny(page: Page): Promise<void> {
     await expect(confirmButton).toBeVisible({ timeout: 5000 });
     await confirmButton.click();
     // Wait for discard API response
-    await page.waitForResponse(
-      (response) => response.url().includes('/drafts/discard'),
-      { timeout: 10000 }
-    ).catch(() => {
-      // No draft to discard - that's fine
-    });
+    await page
+      .waitForResponse((response) => response.url().includes('/drafts/discard'), { timeout: 10000 })
+      .catch(() => {
+        // No draft to discard - that's fine
+      });
   }
 }
 
@@ -55,12 +54,14 @@ async function discardDraftsIfAny(page: Page): Promise<void> {
  */
 async function waitForAutoSave(page: Page): Promise<void> {
   // Wait for the draft save API response
-  await page.waitForResponse(
-    (response) => response.url().includes('/drafts') && response.request().method() === 'PUT',
-    { timeout: 10000 }
-  ).catch(() => {
-    // Draft might already be saved or debounce not triggered yet
-  });
+  await page
+    .waitForResponse(
+      (response) => response.url().includes('/drafts') && response.request().method() === 'PUT',
+      { timeout: 10000 }
+    )
+    .catch(() => {
+      // Draft might already be saved or debounce not triggered yet
+    });
 }
 
 test.describe('Visual Editor', () => {
@@ -90,7 +91,9 @@ test.describe('Visual Editor', () => {
     await input.blur();
 
     // Verify draft indicator appears
-    await expect(authenticatedPage.getByText('Unsaved changes').first()).toBeVisible({ timeout: 5000 });
+    await expect(authenticatedPage.getByText('Unsaved changes').first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test('edits package price inline', async ({ authenticatedPage }) => {
@@ -106,7 +109,9 @@ test.describe('Visual Editor', () => {
     await input.fill('149.99');
     await input.blur();
 
-    await expect(authenticatedPage.getByText('Unsaved changes').first()).toBeVisible({ timeout: 5000 });
+    await expect(authenticatedPage.getByText('Unsaved changes').first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test('edits package description inline (multiline)', async ({ authenticatedPage }) => {
@@ -122,7 +127,9 @@ test.describe('Visual Editor', () => {
     await textarea.fill('This is an updated description.\nIt spans multiple lines.');
     await textarea.blur();
 
-    await expect(authenticatedPage.getByText('Unsaved changes').first()).toBeVisible({ timeout: 5000 });
+    await expect(authenticatedPage.getByText('Unsaved changes').first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test('auto-saves draft after debounce and persists on reload', async ({ authenticatedPage }) => {
@@ -201,7 +208,9 @@ test.describe('Visual Editor', () => {
     await waitForAutoSave(authenticatedPage);
 
     // Verify draft exists
-    await expect(authenticatedPage.getByText('Unsaved changes').first()).toBeVisible({ timeout: 5000 });
+    await expect(authenticatedPage.getByText('Unsaved changes').first()).toBeVisible({
+      timeout: 5000,
+    });
 
     // Click Discard
     const discardButton = authenticatedPage.getByRole('button', { name: /Discard/i }).first();

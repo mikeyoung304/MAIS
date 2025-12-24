@@ -1,7 +1,7 @@
 ---
 status: resolved
 priority: p1
-issue_id: "290"
+issue_id: '290'
 tags: [code-review, ux, error-handling, early-access, frontend]
 dependencies: []
 resolved_at: 2025-12-06
@@ -39,6 +39,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 ```
 
 **Affected scenarios:**
+
 - API returns 400 (validation error) → silent failure
 - API returns 429 (rate limit) → silent failure
 - API returns 500 (server error) → silent failure
@@ -47,6 +48,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 ## Proposed Solutions
 
 ### Option A: Add Error State (Recommended)
+
 **Pros:** Complete user feedback
 **Cons:** Additional state management
 **Effort:** Small (20 min)
@@ -93,6 +95,7 @@ Implement Option A - add error state and display.
 ## Technical Details
 
 **Affected files:**
+
 - `client/src/pages/Home/WaitlistCTASection.tsx`
 
 **Pattern reference:** `client/src/features/auth/SignupForm.tsx` (lines 141-147) shows proper error handling
@@ -107,8 +110,8 @@ Implement Option A - add error state and display.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                  |
+| ---------- | ------------------------ | ------------------------------------------ |
 | 2025-12-06 | Created from code review | UX agent identified silent failure pattern |
 
 ## Resources

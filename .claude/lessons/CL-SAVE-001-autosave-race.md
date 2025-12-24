@@ -12,12 +12,12 @@ Auto-save features that debounce user input can lose data when multiple saves fi
 // BROKEN: No version tracking - last write wins (even if stale)
 const handleChange = async (field: string, value: string) => {
   setConfig({ ...config, [field]: value });
-  debouncedSave({ ...config, [field]: value });  // Race condition!
+  debouncedSave({ ...config, [field]: value }); // Race condition!
 };
 
 // BROKEN: Fire-and-forget saves lose user's recent changes
 const debouncedSave = debounce(async (data) => {
-  await api.saveDraft(data);  // No version check
+  await api.saveDraft(data); // No version check
 }, 1000);
 ```
 

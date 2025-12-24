@@ -71,7 +71,11 @@ describe('BookingService.markPaymentFailed', () => {
     };
 
     // Act
-    const result = await bookingService.markPaymentFailed('tenant_123', 'booking_123', failureDetails);
+    const result = await bookingService.markPaymentFailed(
+      'tenant_123',
+      'booking_123',
+      failureDetails
+    );
 
     // Assert
     expect(result).toEqual(mockBooking);
@@ -186,7 +190,11 @@ describe('BookingService.markPaymentFailed', () => {
     };
 
     // Act
-    const result = await bookingService.markPaymentFailed('tenant_123', 'booking_123', failureDetails);
+    const result = await bookingService.markPaymentFailed(
+      'tenant_123',
+      'booking_123',
+      failureDetails
+    );
 
     // Assert - status should remain DEPOSIT_PAID
     expect(result.status).toBe('DEPOSIT_PAID');

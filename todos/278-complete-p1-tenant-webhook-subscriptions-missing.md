@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "278"
+issue_id: '278'
 tags: [code-review, feature-gap, webhooks, api, acuity-parity]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 Only Stripe webhooks are supported. Tenants cannot register their own webhook URLs to receive appointment lifecycle events. This prevents third-party integrations and is a critical gap vs. Acuity.
 
 **Why it matters:**
+
 - Tenants cannot integrate MAIS with their CRM, email tools, or custom apps
 - No way to react to appointment.created, appointment.canceled events
 - Acuity has this as a core feature
@@ -21,6 +22,7 @@ Only Stripe webhooks are supported. Tenants cannot register their own webhook UR
 ## Findings
 
 ### Agent: api-design-reviewer
+
 - **Location:** `server/src/routes/webhooks.routes.ts`
 - **Evidence:** Only Stripe webhook handling exists; no tenant webhook registration or delivery
 - **Missing Events:**
@@ -32,6 +34,7 @@ Only Stripe webhooks are supported. Tenants cannot register their own webhook UR
   - `payment.failed`
 
 ### Acuity Webhook Capabilities:
+
 ```bash
 # Tenant registers webhook URL
 POST /api/v1/webhooks
@@ -53,9 +56,11 @@ POST https://mycorp.com/webhooks
 ## Proposed Solutions
 
 ### Option A: Basic Webhook Subscription System (Recommended for MVP)
+
 **Description:** Allow tenants to register webhook URLs and receive appointment events
 
 **Schema:**
+
 ```prisma
 model WebhookSubscription {
   id        String   @id @default(cuid())
@@ -86,6 +91,7 @@ model WebhookDelivery {
 ```
 
 **API Endpoints:**
+
 ```typescript
 // Register webhook
 POST /v1/tenant-admin/webhooks
@@ -102,6 +108,7 @@ POST /v1/tenant-admin/webhooks/:id/test
 ```
 
 **Event Emission:**
+
 ```typescript
 // In booking.service.ts
 async onAppointmentPaymentCompleted(...) {
@@ -122,6 +129,7 @@ async onAppointmentPaymentCompleted(...) {
 ```
 
 **Delivery with Retry:**
+
 ```typescript
 class WebhookDeliveryService {
   async deliverWithRetry(delivery: WebhookDelivery) {
@@ -149,11 +157,13 @@ class WebhookDeliveryService {
 ```
 
 **Pros:**
+
 - Achieves Acuity parity for webhook functionality
 - Enables third-party integrations
 - HMAC signature prevents tampering
 
 **Cons:**
+
 - Requires background job system for reliable delivery
 - Adds operational complexity (retries, dead letter queue)
 
@@ -161,6 +171,7 @@ class WebhookDeliveryService {
 **Risk:** Medium
 
 ### Option B: Simple Fire-and-Forget Webhooks
+
 **Description:** Send webhooks synchronously without retry (MVP-lite)
 
 **Effort:** Medium (1-2 days)
@@ -173,6 +184,7 @@ Implement Option A with a simple job queue (BullMQ or database-backed). This is 
 ## Technical Details
 
 **Affected Files:**
+
 - NEW: `server/src/services/webhook-delivery.service.ts`
 - NEW: `server/src/routes/tenant-admin-webhooks.routes.ts`
 - NEW: `server/src/adapters/prisma/webhook-subscription.repository.ts`
@@ -181,11 +193,13 @@ Implement Option A with a simple job queue (BullMQ or database-backed). This is 
 - `server/src/di.ts`
 
 **Events to Support (Phase 1):**
+
 - `appointment.created`
 - `appointment.rescheduled`
 - `appointment.canceled`
 
 **Events to Support (Phase 2):**
+
 - `payment.completed`
 - `payment.failed`
 - `service.created`
@@ -203,8 +217,8 @@ Implement Option A with a simple job queue (BullMQ or database-backed). This is 
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                  | Learnings                |
+| ---------- | ----------------------- | ------------------------ |
 | 2025-12-05 | Created from API review | Critical integration gap |
 
 ## Resources

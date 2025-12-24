@@ -14,11 +14,7 @@ import {
   FakePaymentProvider,
   buildPackage,
 } from '../helpers/fakes';
-import {
-  NotFoundError,
-  BookingConflictError,
-  InvalidBookingTypeError,
-} from '../../src/lib/errors';
+import { NotFoundError, BookingConflictError, InvalidBookingTypeError } from '../../src/lib/errors';
 
 describe('BookingService.createDateBooking', () => {
   let service: BookingService;

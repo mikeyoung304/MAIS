@@ -1,8 +1,11 @@
 # P3: Add Request Idempotency for DATE Booking
 
 ## Priority: P3 Nice-to-have
+
 ## Status: ready
+
 ## Feature: DATE Booking Flow
+
 ## Category: Security
 
 ## Issue
@@ -40,16 +43,17 @@ router.post('/bookings/date', async (req: TenantRequest, res: Response) => {
 
 The `BookingService.createCheckout` already has some idempotency via `idempotencyService`. This would add another layer at the route level.
 
-
-
 ## Work Log
 
 ### 2025-12-21 - Approved for Work
+
 **By:** Claude Triage System
 **Actions:**
+
 - Issue approved during triage session (bulk approval)
 - Status changed from pending → ready
 - Ready to be picked up and worked on
 
 ## Review Reference
+
 - Security Review Finding P3-001 (Add Request Idempotency)

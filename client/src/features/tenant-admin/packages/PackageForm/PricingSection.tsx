@@ -63,7 +63,11 @@ export function PricingSection({
             required
           />
           {fieldErrors.priceCents ? (
-            <p id="priceDollars-error" className="text-sm text-danger-700 flex items-center gap-1" role="alert">
+            <p
+              id="priceDollars-error"
+              className="text-sm text-danger-700 flex items-center gap-1"
+              role="alert"
+            >
               <AlertCircle className="w-4 h-4" aria-hidden="true" />
               {fieldErrors.priceCents}
             </p>

@@ -3,6 +3,7 @@
 **Document Purpose:** Prevent recurring issues where todos are created for work already completed or planned work that's already implemented.
 
 **Root Cause Analysis:**
+
 - Plan review created 30+ todos based on plan assumptions, not code reality
 - Implementation happened before code review (commits 1647a40, b4598f8)
 - Plan review created todos 246-249 without verifying implementation (22:59:54 Dec 4)
@@ -49,8 +50,8 @@ When reviewing plans or specifications, it's tempting to create todos for work d
 ```typescript
 // DON'T do this:
 const todo = {
-  title: "Create EditableAccommodationSection component",
-  source: "plan review"
+  title: 'Create EditableAccommodationSection component',
+  source: 'plan review',
 };
 // Then later discover it exists at /client/src/features/tenant-admin/landing-page-editor/sections/EditableAccommodationSection.tsx
 
@@ -60,10 +61,10 @@ const exists = await glob('**/*Accommodation*.tsx');
 
 // 2. If found, note it in todo metadata:
 const todo = {
-  title: "Verify EditableAccommodationSection implementation matches plan",
-  status: "verify", // New status - verification needed
-  source: "plan review",
-  evidence: "Found at client/src/features/.../EditableAccommodationSection.tsx (182 lines)"
+  title: 'Verify EditableAccommodationSection implementation matches plan',
+  status: 'verify', // New status - verification needed
+  source: 'plan review',
+  evidence: 'Found at client/src/features/.../EditableAccommodationSection.tsx (182 lines)',
 };
 
 // 3. Create todo ONLY if verification needed, not implementation
@@ -74,7 +75,7 @@ const todo = {
 ```markdown
 Before creating a todo from a plan:
 
-- [ ] Search codebase for related files (Glob for *.tsx, *.ts, *.sql)
+- [ ] Search codebase for related files (Glob for _.tsx, _.ts, \*.sql)
 - [ ] Search for function/component names (Grep for exact matches)
 - [ ] Check git log for recent commits (git log --all -p -S "ComponentName")
 - [ ] Check tests to see if feature is tested (implies it's implemented)
@@ -111,8 +112,8 @@ example: "Audit rate limiting on draft endpoints (TODO-249)"
 
 ```yaml
 ---
-status: verify  # NOT "pending" - this is different
-type: verification  # NEW field
+status: verify # NOT "pending" - this is different
+type: verification # NEW field
 source: 'plan-review-2025-12-04'
 evidence_paths:
   - 'client/src/features/tenant-admin/.../EditableAccommodationSection.tsx'
@@ -161,6 +162,7 @@ D. Check test files (if tested, it's implemented)
 
 ```markdown
 DEFER (don't create todo) when:
+
 - [ ] Code already exists and matches plan
 - [ ] Feature is tested (implies implementation complete)
 - [ ] Recent commit implements the feature
@@ -168,6 +170,7 @@ DEFER (don't create todo) when:
 - [ ] Closure of todo in next session is guaranteed
 
 CREATE TODO when:
+
 - [ ] Code doesn't exist
 - [ ] Existing code is incomplete/broken
 - [ ] Verification is genuinely needed
@@ -178,12 +181,14 @@ CREATE TODO when:
 
 ```markdown
 DON'T create todos for plan items when:
+
 - [ ] Implementation commit is visible in git log
 - [ ] Feature appears in recent E2E tests
 - [ ] Related files are modified in last commit
 - [ ] Code review happens within 30 minutes of implementation
 
 DO create todos when:
+
 - [ ] Plan describes future work (> 1 day in future)
 - [ ] Plan was written BEFORE implementation
 - [ ] Implementation needs verification/audit
@@ -203,14 +208,14 @@ source: 'plan-review-2025-12-04'
 # NEW fields:
 created_timestamp: '2025-12-04 22:59:54'
 implementation_timestamp: '2025-12-04 22:59:24'
-gap_seconds: -30  # Negative = implementation predated todo!
+gap_seconds: -30 # Negative = implementation predated todo!
 
 findings:
-  - "TODO created 30 seconds AFTER implementation"
-  - "Plan review happened in real-time with implementation"
-  - "Verification should have checked git history"
+  - 'TODO created 30 seconds AFTER implementation'
+  - 'Plan review happened in real-time with implementation'
+  - 'Verification should have checked git history'
 
-prevention_note: "For future reviews: check git log -1 for commit within last hour"
+prevention_note: 'For future reviews: check git log -1 for commit within last hour'
 ---
 ```
 
@@ -224,6 +229,7 @@ prevention_note: "For future reviews: check git log -1 for commit within last ho
 # Plan Review Pre-Todo Checklist
 
 For each item in plan:
+
 - [ ] Is this feature already in the codebase?
   - [ ] Search: `glob "**/*FeatureName*"`
   - [ ] Search: `grep -r "functionName" --include="*.ts"`
@@ -239,6 +245,7 @@ For each item in plan:
   - [ ] No todo needed if in last commit
 
 Only create todo if:
+
 - [ ] Feature doesn't exist OR
 - [ ] Feature is incomplete/broken OR
 - [ ] Verification/audit is genuinely needed
@@ -247,6 +254,7 @@ Only create todo if:
 ### Strategy 7: Batch Verification Instead of Batch Creation
 
 **Instead of:**
+
 ```
 1. Review plan  (30 min)
 2. Create 20 todos from plan findings (30 min)
@@ -254,6 +262,7 @@ Only create todo if:
 ```
 
 **Do:**
+
 ```
 1. Review plan items (30 min)
 2. For EACH item:
@@ -264,6 +273,7 @@ Only create todo if:
 ```
 
 **Cost Comparison:**
+
 - Old way: 30 + 30 + 240 = 300 minutes
 - New way: 30 + 60 = 90 minutes
 - **Savings: 210 minutes (3.5 hours) per plan review**
@@ -427,6 +437,7 @@ metrics:
 ```
 
 **Success Indicators:**
+
 - Todos 246-249 pattern doesn't repeat
 - Plan reviews consistently find existing code
 - Todo statuses accurately reflect work state
@@ -434,14 +445,14 @@ metrics:
 
 ## Quick Reference
 
-| Scenario | Action | Effort | Todo Type |
-|----------|--------|--------|-----------|
-| Plan says "create X", X exists in code | Add evidence_paths, verify matches plan | 30 min | verify |
-| Plan says "create X", X doesn't exist | Create implementation todo | - | pending |
-| Code exists, plan is outdated | Create audit todo to verify compliance | 1-2 hrs | audit |
-| Implementation within 1 hour of review | Don't create todo, mark as found | - | N/A |
-| Implementation within 24 hours of review | Create verify todo only | 30 min | verify |
-| Implementation > 24 hours old | Create full impl todo if feature incomplete | - | pending |
+| Scenario                                 | Action                                      | Effort  | Todo Type |
+| ---------------------------------------- | ------------------------------------------- | ------- | --------- |
+| Plan says "create X", X exists in code   | Add evidence_paths, verify matches plan     | 30 min  | verify    |
+| Plan says "create X", X doesn't exist    | Create implementation todo                  | -       | pending   |
+| Code exists, plan is outdated            | Create audit todo to verify compliance      | 1-2 hrs | audit     |
+| Implementation within 1 hour of review   | Don't create todo, mark as found            | -       | N/A       |
+| Implementation within 24 hours of review | Create verify todo only                     | 30 min  | verify    |
+| Implementation > 24 hours old            | Create full impl todo if feature incomplete | -       | pending   |
 
 ## Related Documents
 
@@ -457,6 +468,7 @@ metrics:
 **Cost:** 3+ hours of verification work in next session
 
 **Commits Involved:**
+
 - `1647a40` (22:59:24) - Implementation: landing page visual editor + routes + hooks
 - `c4c8baf` (22:59:54) - Todo creation: describing same work
 - `62f54ab` (17:41:47 next day) - Todo closure: marking as complete

@@ -67,10 +67,7 @@ export class WebhookDeliveryService {
       );
 
       if (subscriptions.length === 0) {
-        logger.debug(
-          { tenantId, eventType },
-          'No active webhook subscriptions for event'
-        );
+        logger.debug({ tenantId, eventType }, 'No active webhook subscriptions for event');
         return;
       }
 
@@ -93,20 +90,21 @@ export class WebhookDeliveryService {
       // Immediately attempt delivery (async, fire-and-forget)
       // In production, this would be handled by a background worker
       subscriptions.forEach((subscription) => {
-        this.deliverWebhook(subscription.id, subscription.url, subscription.secret, eventType, payload).catch(
-          (error) => {
-            logger.error(
-              { error, subscriptionId: subscription.id, eventType },
-              'Failed to deliver webhook'
-            );
-          }
-        );
+        this.deliverWebhook(
+          subscription.id,
+          subscription.url,
+          subscription.secret,
+          eventType,
+          payload
+        ).catch((error) => {
+          logger.error(
+            { error, subscriptionId: subscription.id, eventType },
+            'Failed to deliver webhook'
+          );
+        });
       });
     } catch (error) {
-      logger.error(
-        { error, tenantId, eventType },
-        'Failed to queue webhook deliveries'
-      );
+      logger.error({ error, tenantId, eventType }, 'Failed to queue webhook deliveries');
     }
   }
 
@@ -186,10 +184,7 @@ export class WebhookDeliveryService {
       // Mark as failed
       const errorMessage = error instanceof Error ? error.message : String(error);
       await this.webhookSubscriptionRepo.markFailed(deliveryId, errorMessage);
-      logger.error(
-        { error, subscriptionId, url, eventType },
-        'Webhook delivery error'
-      );
+      logger.error({ error, subscriptionId, url, eventType }, 'Webhook delivery error');
     }
   }
 
@@ -215,11 +210,7 @@ export class WebhookDeliveryService {
    * @param secret - HMAC signing secret
    * @returns True if signature is valid
    */
-  verifyHmacSignature(
-    payload: Record<string, any>,
-    signature: string,
-    secret: string
-  ): boolean {
+  verifyHmacSignature(payload: Record<string, any>, signature: string, secret: string): boolean {
     const expectedSignature = this.generateHmacSignature(payload, secret);
     return crypto.timingSafeEqual(
       Buffer.from(signature, 'hex'),
@@ -239,10 +230,7 @@ export class WebhookDeliveryService {
     subscriptionId: string
   ): Promise<{ success: boolean; message: string; statusCode?: number }> {
     // Find subscription
-    const subscription = await this.webhookSubscriptionRepo.findById(
-      tenantId,
-      subscriptionId
-    );
+    const subscription = await this.webhookSubscriptionRepo.findById(tenantId, subscriptionId);
 
     if (!subscription) {
       return { success: false, message: 'Webhook subscription not found' };

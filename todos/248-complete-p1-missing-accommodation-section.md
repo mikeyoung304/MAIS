@@ -31,21 +31,24 @@ The feature plan lists 7 editable section components but **omits `EditableAccomm
 ### Evidence of Accommodation Section in Schema
 
 **1. Contract defines accommodation (landing-page.ts lines 157-166):**
+
 ```typescript
 export const AccommodationSectionConfigSchema = z.object({
   headline: z.string().min(1).max(200),
   description: z.string().min(1).max(1000),
   imageUrl: SafeImageUrlOptionalSchema,
   ctaText: z.string().min(1).max(50),
-  ctaUrl: SafeUrlSchema,  // External URL to booking platform
+  ctaUrl: SafeUrlSchema, // External URL to booking platform
   highlights: z.array(z.string().max(100)).max(8),
 });
 ```
 
 **2. Backend validates accommodation as valid section:**
+
 - `tenant-admin-landing-page.routes.ts` line 125 includes 'accommodation' in section enum
 
 **3. Read-only component exists:**
+
 - `client/src/features/storefront/landing/sections/AccommodationSection.tsx`
 
 ### Plan Lists Only 7 Sections (line 255-263)
@@ -62,6 +65,7 @@ export const AccommodationSectionConfigSchema = z.object({
 ### Unique Requirements for Accommodation
 
 Unlike other sections, accommodation has:
+
 - `ctaUrl` - External URL to booking platform (needs URL validation UI)
 - `highlights` - Array of string bullets (needs EditableList)
 - `imageUrl` - Background image (needs EditableImage)
@@ -69,6 +73,7 @@ Unlike other sections, accommodation has:
 ## Proposed Solutions
 
 ### Option A: Add to Plan Phase 2 (Recommended)
+
 - **Effort:** 3-4 hours implementation
 - **Risk:** Low
 - Add `EditableAccommodationSection.tsx` to Phase 2 file list
@@ -77,6 +82,7 @@ Unlike other sections, accommodation has:
 - **Cons:** Slightly extends Phase 2
 
 ### Option B: Defer to Future Phase
+
 - **Effort:** 30 minutes documentation
 - **Risk:** Medium
 - Document as known gap
@@ -93,7 +99,7 @@ Unlike other sections, accommodation has:
 
 client/src/features/tenant-admin/landing-page-editor/
 ├── sections/
-│   ├── EditableAccommodationSection.tsx  # NEW
+│ ├── EditableAccommodationSection.tsx # NEW
 
 ### Phase 2 Tasks (add):
 
@@ -107,12 +113,12 @@ client/src/features/tenant-admin/landing-page-editor/
 ### Demo Data (add to section-defaults.ts):
 
 accommodation: {
-  headline: 'Local Accommodations',
-  description: 'We partner with these excellent local accommodations for your stay.',
-  imageUrl: undefined,
-  ctaText: 'View Accommodations',
-  ctaUrl: 'https://airbnb.com',
-  highlights: ['Wifi', 'Free Parking', 'Pet Friendly'],
+headline: 'Local Accommodations',
+description: 'We partner with these excellent local accommodations for your stay.',
+imageUrl: undefined,
+ctaText: 'View Accommodations',
+ctaUrl: 'https://airbnb.com',
+highlights: ['Wifi', 'Free Parking', 'Pet Friendly'],
 },
 ```
 
@@ -126,9 +132,9 @@ accommodation: {
 
 ## Work Log
 
-| Date       | Action  | Notes                                          |
-|------------|---------|------------------------------------------------|
-| 2025-12-04 | Created | Plan review identified missing accommodation   |
+| Date       | Action  | Notes                                                                         |
+| ---------- | ------- | ----------------------------------------------------------------------------- |
+| 2025-12-04 | Created | Plan review identified missing accommodation                                  |
 | 2025-12-05 | Closed  | Verified: EditableAccommodationSection.tsx exists (182 lines, commit 1647a40) |
 
 ## Tags

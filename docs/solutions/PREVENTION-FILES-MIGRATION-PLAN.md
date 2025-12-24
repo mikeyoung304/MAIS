@@ -14,29 +14,29 @@ severity: P2
 tags: [documentation, migration, compounding-engineering]
 ---
 
-# Migration Plan: PREVENTION-*.md Files to Compounding Engineering Schema
+# Migration Plan: PREVENTION-\*.md Files to Compounding Engineering Schema
 
 ## Overview
 
-This plan migrates 15 existing PREVENTION-*.md files to the Compounding Engineering v2.4.1 schema format with proper YAML frontmatter and category-based organization.
+This plan migrates 15 existing PREVENTION-\*.md files to the Compounding Engineering v2.4.1 schema format with proper YAML frontmatter and category-based organization.
 
 ## Current State Analysis
 
 ### Files to Migrate (15 total)
 
-| Current File | Status | Target Category | Target Name |
-|--------------|--------|-----------------|-------------|
-| `PREVENTION-TS-REST-ANY-TYPE.md` | No YAML | `best-practices/` | `ts-rest-any-type-MAIS-*.md` |
-| `PREVENTION-ANY-TYPES-QUICK-REF.md` | No YAML | `best-practices/` | `any-types-quick-ref-MAIS-*.md` |
-| `PREVENTION-ENTITY-TYPE-ERRORS.md` | No YAML | `logic-errors/` | `cascading-entity-type-errors-MAIS-*.md` |
-| `PREVENTION-STRATEGY-DATABASE-CLIENT-MISMATCH.md` | Has YAML (partial) | `database-issues/` | `database-client-mismatch-MAIS-*.md` |
-| `PREVENTION-SCHEMA-DRIFT-IMPLEMENTATION.md` | No YAML | `database-issues/` | `schema-drift-prevention-MAIS-*.md` |
-| `PREVENTION-IMPLEMENTATION-ROADMAP.md` | No YAML | Archive | N/A (meta-doc) |
-| `PREVENTION-QUICK-REFERENCE.md` | No YAML | Keep as index | N/A |
-| `PREVENTION-STRATEGIES-INDEX.md` | No YAML | Keep as index | N/A |
-| `PREVENTION-STRATEGIES-QUICK-REFERENCE.md` | No YAML | Merge with above | N/A |
-| `PREVENTION-TODO-182-191-*.md` (5 files) | No YAML | Archive | N/A (sprint-specific) |
-| `security-issues/PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md` | Unknown | `security-issues/` | Already correct path |
+| Current File                                                    | Status             | Target Category    | Target Name                              |
+| --------------------------------------------------------------- | ------------------ | ------------------ | ---------------------------------------- |
+| `PREVENTION-TS-REST-ANY-TYPE.md`                                | No YAML            | `best-practices/`  | `ts-rest-any-type-MAIS-*.md`             |
+| `PREVENTION-ANY-TYPES-QUICK-REF.md`                             | No YAML            | `best-practices/`  | `any-types-quick-ref-MAIS-*.md`          |
+| `PREVENTION-ENTITY-TYPE-ERRORS.md`                              | No YAML            | `logic-errors/`    | `cascading-entity-type-errors-MAIS-*.md` |
+| `PREVENTION-STRATEGY-DATABASE-CLIENT-MISMATCH.md`               | Has YAML (partial) | `database-issues/` | `database-client-mismatch-MAIS-*.md`     |
+| `PREVENTION-SCHEMA-DRIFT-IMPLEMENTATION.md`                     | No YAML            | `database-issues/` | `schema-drift-prevention-MAIS-*.md`      |
+| `PREVENTION-IMPLEMENTATION-ROADMAP.md`                          | No YAML            | Archive            | N/A (meta-doc)                           |
+| `PREVENTION-QUICK-REFERENCE.md`                                 | No YAML            | Keep as index      | N/A                                      |
+| `PREVENTION-STRATEGIES-INDEX.md`                                | No YAML            | Keep as index      | N/A                                      |
+| `PREVENTION-STRATEGIES-QUICK-REFERENCE.md`                      | No YAML            | Merge with above   | N/A                                      |
+| `PREVENTION-TODO-182-191-*.md` (5 files)                        | No YAML            | Archive            | N/A (sprint-specific)                    |
+| `security-issues/PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md` | Unknown            | `security-issues/` | Already correct path                     |
 
 ### Required Changes per File
 
@@ -102,13 +102,13 @@ Move to archive with date prefix.
 ---
 module: MAIS
 date: 2025-12-04
-problem_type: best_practice  # Or: logic_error, database_issue, security_issue, etc.
-component: server/routes     # Or: client/features, prisma/schema, etc.
+problem_type: best_practice # Or: logic_error, database_issue, security_issue, etc.
+component: server/routes # Or: client/features, prisma/schema, etc.
 symptoms:
   - First detection signal
   - Second detection signal
 root_cause: One-line explanation of why this happens
-resolution_type: fix_with_pattern  # Or: architectural_pattern, hotfix, workaround
+resolution_type: fix_with_pattern # Or: architectural_pattern, hotfix, workaround
 severity: P1
 related_files:
   - path/to/related/file.ts
@@ -156,13 +156,13 @@ After each migration:
 
 ## Estimated Effort
 
-| Phase | Files | Time |
-|-------|-------|------|
-| Phase 1 | 5 | 30 min |
-| Phase 2 | 3 | 15 min |
-| Phase 3 | 6 | 20 min |
-| CLAUDE.md updates | 1 | 10 min |
-| **Total** | **15** | **~1.25 hours** |
+| Phase             | Files  | Time            |
+| ----------------- | ------ | --------------- |
+| Phase 1           | 5      | 30 min          |
+| Phase 2           | 3      | 15 min          |
+| Phase 3           | 6      | 20 min          |
+| CLAUDE.md updates | 1      | 10 min          |
+| **Total**         | **15** | **~1.25 hours** |
 
 ## Decision: Execute Now or Defer?
 
@@ -178,33 +178,39 @@ This preserves critical prevention knowledge in schema-compliant format while ke
 
 ### Execution Summary
 
-| Phase | Files | Status |
-|-------|-------|--------|
-| Phase 1 | 5 | ✅ Complete |
-| Phase 2 | 3 | ✅ Complete |
-| Phase 3 | 7 | ✅ Complete |
-| CLAUDE.md | 1 | ✅ Complete |
-| Cleanup | 12 | ✅ Complete |
+| Phase     | Files | Status      |
+| --------- | ----- | ----------- |
+| Phase 1   | 5     | ✅ Complete |
+| Phase 2   | 3     | ✅ Complete |
+| Phase 3   | 7     | ✅ Complete |
+| CLAUDE.md | 1     | ✅ Complete |
+| Cleanup   | 12    | ✅ Complete |
 
 ### Files Migrated
 
 **best-practices/**
+
 - `ts-rest-any-type-library-limitations-MAIS-20251204.md`
 - `any-types-quick-reference-MAIS-20251204.md`
 
 **logic-errors/**
+
 - `cascading-entity-type-errors-MAIS-20251204.md`
 
 **database-issues/**
+
 - `database-client-mismatch-MAIS-20251204.md`
 - `schema-drift-prevention-MAIS-20251204.md`
 
 **security-issues/**
+
 - `PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md` (frontmatter added)
 
 **archive/2024-11/**
+
 - 5 TODO-182-191 files + 2 meta-docs archived
 
 ### Remaining Index Files (Kept in Place)
+
 - `PREVENTION-QUICK-REFERENCE.md` - Updated with YAML frontmatter
 - `PREVENTION-STRATEGIES-INDEX.md` - Updated with YAML frontmatter

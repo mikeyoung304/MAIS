@@ -13,6 +13,7 @@ The current `HowItWorksSection.tsx` uses abstract language ("personalized system
 ## Proposed Solution
 
 Replace the existing section with a simple dual-panel layout:
+
 - **Left Panel:** "What You See" - Dashboard screenshot + 5 feature badges (sage accent)
 - **Right Panel:** "What Your Clients See" - Storefront screenshot + 5 feature badges (sage accent)
 
@@ -153,6 +154,7 @@ export function HowItWorksSection() {
 Create two simple wireframe placeholders:
 
 **`/public/images/screenshots/dashboard-tenant-placeholder.svg`**
+
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" fill="none">
   <rect width="1200" height="800" fill="#F5F5F5"/>
@@ -166,6 +168,7 @@ Create two simple wireframe placeholders:
 ```
 
 **`/public/images/screenshots/storefront-client-placeholder.svg`**
+
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" fill="none">
   <rect width="1200" height="800" fill="#F5F5F5"/>
@@ -239,4 +242,4 @@ When ready to replace placeholders with real screenshots:
 
 ---
 
-*Simplified plan based on reviewer feedback. ~110 lines of code, 1 file, 2-3 hours.*
+_Simplified plan based on reviewer feedback. ~110 lines of code, 1 file, 2-3 hours._

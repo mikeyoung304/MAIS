@@ -7,8 +7,8 @@ status: solved
 last_verified: 2025-12-23
 date_created: 2025-12-23
 sessions_involved:
-  - "2025-12-23 Session 1: P1 TODOs (API contracts, auth logic, memory leaks)"
-  - "2025-12-23 Session 2: P2 TODOs (file upload, ARIA labels, token validation)"
+  - '2025-12-23 Session 1: P1 TODOs (API contracts, auth logic, memory leaks)'
+  - '2025-12-23 Session 2: P2 TODOs (file upload, ARIA labels, token validation)'
 symptoms:
   - Many pending TODOs accumulating in /todos directory
   - Manual sequential resolution is slow and error-prone
@@ -37,6 +37,7 @@ related_documents:
 ## Problem Statement
 
 When many TODOs accumulate in the `/todos/*.md` directory, resolving them manually one-by-one is:
+
 - **Slow**: Sequential resolution wastes time on context switching
 - **Error-prone**: Dependencies between TODOs can cause failed resolutions
 - **Inefficient**: Many TODOs are already implemented but not marked resolved
@@ -90,27 +91,27 @@ Launch independent TODOs in a **single message** with multiple Task calls:
 
 ```typescript
 // Launch all independent agents at once
-Task("TODO-262: Add file upload size validation", {
-  subagent_type: "general-purpose",
-  run_in_background: true
-})
-Task("TODO-263: Add ARIA labels", {
-  subagent_type: "general-purpose",
-  run_in_background: true
-})
-Task("TODO-284: Add token validation", {
-  subagent_type: "general-purpose",
-  run_in_background: true
-})
+Task('TODO-262: Add file upload size validation', {
+  subagent_type: 'general-purpose',
+  run_in_background: true,
+});
+Task('TODO-263: Add ARIA labels', {
+  subagent_type: 'general-purpose',
+  run_in_background: true,
+});
+Task('TODO-284: Add token validation', {
+  subagent_type: 'general-purpose',
+  run_in_background: true,
+});
 ```
 
 ### Phase 4: Wait and Collect Results
 
 ```typescript
 // Wait for all agents to complete
-TaskOutput(agent1_id, { block: true, timeout: 300000 })
-TaskOutput(agent2_id, { block: true, timeout: 300000 })
-TaskOutput(agent3_id, { block: true, timeout: 300000 })
+TaskOutput(agent1_id, { block: true, timeout: 300000 });
+TaskOutput(agent2_id, { block: true, timeout: 300000 });
+TaskOutput(agent3_id, { block: true, timeout: 300000 });
 ```
 
 ### Phase 5: Update TODO Status
@@ -121,13 +122,12 @@ TaskOutput(agent3_id, { block: true, timeout: 300000 })
 status: pending
 priority: p2
 ---
-
 # After
 ---
 status: resolved
 priority: p2
-resolved_at: "2025-12-23"
-resolved_by: "description of what was done"
+resolved_at: '2025-12-23'
+resolved_by: 'description of what was done'
 ---
 ```
 
@@ -154,17 +154,18 @@ git push
 
 During our session, we found:
 
-| TODO | Expected Work | Actual State |
-|------|--------------|--------------|
+| TODO     | Expected Work         | Actual State               |
+| -------- | --------------------- | -------------------------- |
 | TODO-257 | Refactor to typed API | Already done - using hooks |
-| TODO-259 | Fix setTimeout leak | Already fixed in hook |
-| TODO-263 | Add ARIA labels | Already present in code |
+| TODO-259 | Fix setTimeout leak   | Already fixed in hook      |
+| TODO-263 | Add ARIA labels       | Already present in code    |
 
 **Lesson**: Always verify implementation state before coding.
 
 ### Verification-First Approach
 
 Before implementing, each agent should:
+
 1. Read the affected files
 2. Search for existing implementation
 3. Run typecheck to verify current state
@@ -172,13 +173,13 @@ Before implementing, each agent should:
 
 ### Session Metrics
 
-| Metric | Value |
-|--------|-------|
-| TODOs Reviewed | 6 |
-| Already Complete | 3 (50%) |
-| Actually Implemented | 3 |
-| Time Invested | ~45 minutes |
-| Agents Used | 6 parallel |
+| Metric               | Value       |
+| -------------------- | ----------- |
+| TODOs Reviewed       | 6           |
+| Already Complete     | 3 (50%)     |
+| Actually Implemented | 3           |
+| Time Invested        | ~45 minutes |
+| Agents Used          | 6 parallel  |
 
 ## Prevention Strategies
 
@@ -237,7 +238,7 @@ const MAX_JSON_SIZE = 50 * 1024; // 50KB
 
 if (serviceAccountJson.length > MAX_JSON_SIZE) {
   return res.status(400).json({
-    error: 'Service account JSON too large. Maximum size is 50KB.'
+    error: 'Service account JSON too large. Maximum size is 50KB.',
   });
 }
 ```
@@ -251,7 +252,7 @@ if (payload.action === 'pay_balance') {
     return {
       valid: false,
       error: 'booking_completed',
-      message: 'The balance has already been paid'
+      message: 'The balance has already been paid',
     };
   }
 }

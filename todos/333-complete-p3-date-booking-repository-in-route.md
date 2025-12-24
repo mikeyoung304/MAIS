@@ -1,8 +1,11 @@
 # P3: Repository Passed to Route Layer
 
 ## Priority: P3 Nice-to-have
+
 ## Status: pending
+
 ## Feature: DATE Booking Flow
+
 ## Category: Architecture
 
 ## Issue
@@ -13,7 +16,7 @@ Routes should only receive services, not repositories. Repositories are implemen
 
 ```typescript
 const publicDateBookingRouter = createPublicDateBookingRoutes(
-  repositories.catalog,  // ❌ Repository passed to route layer
+  repositories.catalog, // ❌ Repository passed to route layer
   services.booking,
   services.availability
 );
@@ -53,4 +56,5 @@ Move the `catalogRepo.getPackageById` call into `BookingService.createDateBookin
 - #305 (Layered Architecture Violation) - This is part of that larger refactor
 
 ## Review Reference
+
 - Architecture Review Finding P3 (Repository Passed to Route Layer)

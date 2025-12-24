@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "264"
+issue_id: '264'
 tags: [code-review, code-quality, components, tenant-dashboard]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 All three dashboard components repeat 7-10 lines of identical error display markup. This should be extracted to a shared component.
 
 **Why it matters:**
+
 - DRY violation
 - Inconsistent error styling risk
 - Maintenance burden
@@ -20,6 +21,7 @@ All three dashboard components repeat 7-10 lines of identical error display mark
 ## Findings
 
 ### Agent: code-simplicity-reviewer
+
 - **Location:** All three components
 - **Evidence:** Identical error display pattern repeated 3x
 - **Impact:** LOW - Code duplication
@@ -27,6 +29,7 @@ All three dashboard components repeat 7-10 lines of identical error display mark
 ## Proposed Solutions
 
 ### Option A: Create Shared ErrorAlert (Recommended)
+
 **Description:** Extract to `client/src/components/shared/ErrorAlert.tsx`
 
 ```tsx
@@ -52,6 +55,6 @@ export function ErrorAlert({ message }: { message: string | null }) {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                |
+| ---------- | ------------------------ | ---------------------------------------- |
 | 2025-12-05 | Created from code review | Pattern also exists in StripeConnectCard |

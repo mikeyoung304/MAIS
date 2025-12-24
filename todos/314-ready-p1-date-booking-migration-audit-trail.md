@@ -1,13 +1,17 @@
 # P1: Migration Missing Audit Trail and Rollback Safety
 
 ## Priority: P1 Critical
+
 ## Status: ready
+
 ## Feature: DATE Booking Flow
+
 ## Category: Data Integrity
 
 ## Issue
 
 The migration backfills NULL `bookingType` values to `'DATE'` without:
+
 1. Checking if existing `Booking` records reference these packages
 2. Validating that setting packages to `DATE` is semantically correct
 3. Logging which packages were backfilled
@@ -60,22 +64,24 @@ END $$;
 ## Also Required
 
 Add to migration file documentation:
+
 ```sql
 -- CRITICAL: After applying this migration, run:
 -- npm exec prisma generate
 ```
 
-
-
 ## Work Log
 
 ### 2025-12-21 - Approved for Work
+
 **By:** Claude Triage System
 **Actions:**
+
 - Issue approved during triage session (bulk approval)
 - Status changed from pending → ready
 - Ready to be picked up and worked on
 
 ## Review Reference
+
 - Data Integrity Review Finding P1-003 (Migration does not regenerate Prisma Client)
 - Data Integrity Review Finding P1-005 (No backward compatibility check)

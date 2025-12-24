@@ -73,9 +73,7 @@ describe('validatePrice', () => {
 
   describe('custom field name', () => {
     it('uses custom field name in error message', () => {
-      expect(() => validatePrice(-1, 'packagePrice')).toThrow(
-        'packagePrice must be non-negative'
-      );
+      expect(() => validatePrice(-1, 'packagePrice')).toThrow('packagePrice must be non-negative');
     });
 
     it('uses custom field name for upper bound error', () => {
@@ -138,9 +136,9 @@ describe('validateRequiredFields', () => {
   });
 
   it('fails when required field is missing', () => {
-    expect(() =>
-      validateRequiredFields({ name: 'Test' }, ['name', 'email'], 'User')
-    ).toThrow(ValidationError);
+    expect(() => validateRequiredFields({ name: 'Test' }, ['name', 'email'], 'User')).toThrow(
+      ValidationError
+    );
   });
 });
 

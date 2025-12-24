@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "266"
+issue_id: '266'
 tags: [code-review, backend-audit, stripe, webhooks, payments]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The webhook handler in `webhooks.routes.ts` only handles `checkout.session.completed` events. Failed payments are not tracked in the system, leaving users and admins unaware when payment attempts fail.
 
 **Why it matters:**
+
 - Failed payments go unnoticed by the system
 - No user notification for payment failures
 - No ability to retry or follow up on failed payments
@@ -21,6 +22,7 @@ The webhook handler in `webhooks.routes.ts` only handles `checkout.session.compl
 ## Findings
 
 ### Agent: backend-audit
+
 - **Location:** `server/src/routes/webhooks.routes.ts`
 - **Evidence:** Only `checkout.session.completed` case in switch statement
 - **Impact:** HIGH - Users experience silent payment failures
@@ -28,6 +30,7 @@ The webhook handler in `webhooks.routes.ts` only handles `checkout.session.compl
 ## Proposed Solutions
 
 ### Option A: Add payment_intent.failed Handler (Recommended)
+
 **Description:** Add handler for payment failure events, update booking status, and notify user
 
 ```typescript
@@ -52,9 +55,11 @@ case 'payment_intent.payment_failed':
 **Risk:** Low
 
 ### Option B: Add Multiple Failure Handlers
+
 **Description:** Handle all payment-related failure events comprehensively
 
 Events to handle:
+
 - `payment_intent.payment_failed`
 - `checkout.session.expired`
 - `charge.failed`
@@ -69,6 +74,7 @@ Implement Option A first as minimum viable solution, then expand to Option B.
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/routes/webhooks.routes.ts`
 - `server/src/services/booking.service.ts` (add `markPaymentFailed` method)
 
@@ -83,8 +89,8 @@ Implement Option A first as minimum viable solution, then expand to Option B.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                     | Learnings                    |
+| ---------- | -------------------------- | ---------------------------- |
 | 2025-12-05 | Created from backend audit | Critical gap in payment flow |
 
 ## Resources

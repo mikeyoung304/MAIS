@@ -1,11 +1,11 @@
 ---
 status: pending
 priority: p2
-issue_id: "281"
+issue_id: '281'
 tags: [deferred, code-review, feature-gap, recurring, appointments, acuity-parity]
 dependencies: []
-next_review: "2026-01-23"
-revisit_trigger: "3 customer requests"
+next_review: '2026-01-23'
+revisit_trigger: '3 customer requests'
 ---
 
 # Recurring Appointments Not Implemented (Acuity Parity)
@@ -15,6 +15,7 @@ revisit_trigger: "3 customer requests"
 Acuity supports recurring appointments (weekly, bi-weekly, monthly). MAIS only supports single appointments. This is a significant feature gap for service providers with regular clients.
 
 **Why it matters:**
+
 - Therapists, coaches, tutors need weekly recurring sessions
 - Hair stylists need monthly recurring appointments
 - Personal trainers need bi-weekly sessions
@@ -23,6 +24,7 @@ Acuity supports recurring appointments (weekly, bi-weekly, monthly). MAIS only s
 ## Findings
 
 ### Agent: architecture-strategist
+
 - **Location:** `server/src/services/booking.service.ts`, `server/prisma/schema.prisma`
 - **Evidence:** No recurrence fields in Booking model, no recurring booking logic
 - **Missing:**
@@ -32,6 +34,7 @@ Acuity supports recurring appointments (weekly, bi-weekly, monthly). MAIS only s
   - UI for selecting recurrence pattern
 
 ### Acuity Recurring Features:
+
 - Weekly (every Monday at 10am)
 - Bi-weekly (every other Tuesday)
 - Monthly (first Wednesday of month)
@@ -41,9 +44,11 @@ Acuity supports recurring appointments (weekly, bi-weekly, monthly). MAIS only s
 ## Proposed Solutions
 
 ### Option A: RRULE-Based Recurrence (Recommended)
+
 **Description:** Use iCal RRULE format for flexible recurrence patterns
 
 **Schema:**
+
 ```prisma
 model Booking {
   // Existing fields...
@@ -60,6 +65,7 @@ model Booking {
 ```
 
 **Service Logic:**
+
 ```typescript
 import { RRule } from 'rrule';
 
@@ -103,6 +109,7 @@ async createRecurringAppointment(input: CreateRecurringAppointmentInput): Promis
 ```
 
 **API Endpoints:**
+
 ```typescript
 // Create recurring series
 POST /v1/bookings/appointment/recurring/checkout
@@ -130,11 +137,13 @@ PATCH /v1/public/bookings/:id?token=X&mode=thisAndFuture
 ```
 
 **Pros:**
+
 - Industry-standard RRULE format
 - Flexible recurrence patterns
 - Compatible with calendar exports
 
 **Cons:**
+
 - Complex cancellation/reschedule logic
 - Payment complexity (pay upfront vs per session?)
 - Large schema change
@@ -143,6 +152,7 @@ PATCH /v1/public/bookings/:id?token=X&mode=thisAndFuture
 **Risk:** Medium
 
 ### Option B: Simple Weekly Recurrence Only
+
 **Description:** MVP with just weekly recurring appointments
 
 **Effort:** Large (3-5 days)
@@ -155,6 +165,7 @@ Defer to Phase 2. Focus on core booking flow first, then add recurring as enhanc
 ## Technical Details
 
 **Affected Files:**
+
 - `server/prisma/schema.prisma`
 - `server/src/services/booking.service.ts`
 - NEW: `server/src/services/recurring-booking.service.ts`
@@ -162,9 +173,11 @@ Defer to Phase 2. Focus on core booking flow first, then add recurring as enhanc
 - NEW: UI components for recurrence picker
 
 **Dependencies:**
+
 - `rrule` npm package for RRULE parsing
 
 **Payment Considerations:**
+
 - Prepaid packages: Charge upfront for all sessions
 - Pay-as-you-go: Charge per session
 - Subscription: Monthly billing regardless of sessions
@@ -181,8 +194,8 @@ Defer to Phase 2. Focus on core booking flow first, then add recurring as enhanc
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                         | Learnings        |
+| ---------- | ------------------------------ | ---------------- |
 | 2025-12-05 | Created from Acuity comparison | Defer to Phase 2 |
 
 ## Resources

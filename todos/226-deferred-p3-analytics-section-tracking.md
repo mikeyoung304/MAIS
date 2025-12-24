@@ -4,8 +4,8 @@ priority: p3
 issue_id: '226'
 tags: [deferred, analytics, tracking, landing-page, conversion]
 dependencies: []
-next_review: "2026-01-23"
-revisit_trigger: "Analytics provider decision"
+next_review: '2026-01-23'
+revisit_trigger: 'Analytics provider decision'
 ---
 
 # TODO-226: Missing Analytics Events for Landing Page Sections

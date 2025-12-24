@@ -11,6 +11,7 @@ This document captures the solution pattern for extracting complex component sta
 ### Problem Statement
 
 Components like `DepositSettingsCard`, `RemindersCard`, and `CalendarConfigCard` had become "god components":
+
 - Multiple state variables mixed with server state, form state, and UI state
 - Complex logic spread across useEffect and event handlers
 - Difficult to test because logic was tightly coupled to JSX
@@ -125,6 +126,7 @@ const handleSave = useCallback(async () => {
 ```
 
 **Why this works:**
+
 - `useRef` persists across renders without causing re-renders
 - Cleanup effect runs when component unmounts, clearing any pending timeout
 - Clearing before setting prevents accumulating multiple pending timeouts
@@ -166,6 +168,7 @@ export interface UseManagerResult {
 ```
 
 **Benefits:**
+
 - Self-documenting: Clear what the hook provides
 - IDE autocomplete: All properties visible in one interface
 - Backward compatible: Easy to add new properties without breaking existing code
@@ -240,6 +243,7 @@ export function DepositSettingsCard() {
 ```
 
 **Problems:**
+
 - 7 useState calls = hard to reason about state flow
 - Fetch logic mixed with component lifecycle
 - Memory leak from uncleared setTimeout
@@ -434,6 +438,7 @@ export function DepositSettingsCard() {
 ```
 
 **Benefits:**
+
 - Component is now 95% pure UI - just rendering from props
 - Logic is testable without React (pure function that returns state)
 - Memory leak fixed with proper cleanup
@@ -449,12 +454,14 @@ export function DepositSettingsCard() {
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/features/tenant-admin/TenantDashboard/hooks/useDepositSettingsManager.ts`
 
 **Pattern highlights:**
+
 - Memory leak prevention: `savedTimeoutRef` with cleanup effect
 - Server state sync: `settings` synchronized from API response to form state
 - Change detection: `hasChanges()` compares current vs saved state
 - Validation: Inline in `handleSave` before API call
 
 **Key metrics:**
+
 - Component reduced from ~150 lines to ~50 lines
 - Logic reusable across multiple components
 
@@ -463,6 +470,7 @@ export function DepositSettingsCard() {
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/features/tenant-admin/TenantDashboard/hooks/useCalendarConfigManager.ts`
 
 **Pattern highlights:**
+
 - File input handling: `fileInputRef` stored in hook, UI refs it
 - Dialog state management: `showConfigDialog` and `showDeleteDialog`
 - Async operations: `testing`, `saving`, `deleting` flags
@@ -470,6 +478,7 @@ export function DepositSettingsCard() {
 - File validation: Size check + JSON parsing with error handling
 
 **Key metrics:**
+
 - Component reduced from ~250 lines to ~100 lines
 - Extracted dialog is small and reusable
 
@@ -478,12 +487,14 @@ export function DepositSettingsCard() {
 **File:** `/Users/mikeyoung/CODING/MAIS/client/src/features/tenant-admin/TenantDashboard/hooks/useRemindersManager.ts`
 
 **Pattern highlights:**
+
 - Simple hook without complex validation
 - Refresh action: `fetchStatus()` called after operations
 - Formatting logic: `formatDate()` utility exported from hook
 - No form state (read-only display component)
 
 **Key metrics:**
+
 - Component reduced from ~100 lines to ~70 lines
 - No memory leak concerns (no timeouts)
 
@@ -684,6 +695,7 @@ useEffect(() => {
 ### Q: When should I add a manager hook vs using useState directly?
 
 **A:**
+
 - Use manager hook when: Multiple related state variables, async operations, side effects, logic that spans multiple handlers
 - Use useState directly when: Single simple value, no side effects, doesn't interact with other state
 
@@ -697,14 +709,14 @@ useEffect(() => {
 
 **Phase 5.2 Refactoring Results:**
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| DepositSettingsCard lines | 206 | 50 | -76% |
-| RemindersCard lines | 180 | 70 | -61% |
-| CalendarConfigCard lines | 368 | 100 | -73% |
-| Memory leaks | 3 (uncleared setTimeout) | 0 | -100% |
-| Testable units | 0 | 3 | Infinite |
-| Code duplication potential | High | Zero (reusable) | Eliminated |
+| Metric                     | Before                   | After           | Improvement |
+| -------------------------- | ------------------------ | --------------- | ----------- |
+| DepositSettingsCard lines  | 206                      | 50              | -76%        |
+| RemindersCard lines        | 180                      | 70              | -61%        |
+| CalendarConfigCard lines   | 368                      | 100             | -73%        |
+| Memory leaks               | 3 (uncleared setTimeout) | 0               | -100%       |
+| Testable units             | 0                        | 3               | Infinite    |
+| Code duplication potential | High                     | Zero (reusable) | Eliminated  |
 
 ---
 

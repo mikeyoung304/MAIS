@@ -24,7 +24,10 @@ const ConfigSchema = z.object({
   JWT_SECRET: z.string().min(1),
   BOOKING_TOKEN_SECRET: z
     .string()
-    .min(32, 'BOOKING_TOKEN_SECRET must be at least 32 characters. Generate with: openssl rand -hex 32')
+    .min(
+      32,
+      'BOOKING_TOKEN_SECRET must be at least 32 characters. Generate with: openssl rand -hex 32'
+    )
     .describe('Required for booking management tokens - must be separate from JWT_SECRET'),
   // Real mode only (optional for mock preset)
   DATABASE_URL: z.string().optional(),

@@ -57,6 +57,7 @@ client/src/features/tenant-admin/landing-page-editor/sections/
 ## Proposed Solutions
 
 ### Option A: Add `editable` Prop to Existing Components (Recommended)
+
 - **Effort:** 4-6 hours refactor
 - **Risk:** Low
 - Add `editable?: boolean` and `onUpdate?: (updates) => void` props
@@ -66,6 +67,7 @@ client/src/features/tenant-admin/landing-page-editor/sections/
 - **Cons:** Existing components get slightly more complex
 
 ### Option B: Keep Separate Components
+
 - **Effort:** 8-12 hours for new components
 - **Risk:** Medium (maintenance burden)
 - Create all editable components as planned
@@ -87,7 +89,7 @@ interface HeroSectionProps {
 export const HeroSection = memo(function HeroSection({
   config,
   editable = false,
-  onUpdate
+  onUpdate,
 }: HeroSectionProps) {
   return (
     <section className="relative min-h-[600px] ...">
@@ -149,8 +151,8 @@ export const HeroSection = memo(function HeroSection({
 
 ## Work Log
 
-| Date       | Action  | Notes                                               |
-|------------|---------|-----------------------------------------------------|
+| Date       | Action  | Notes                                                |
+| ---------- | ------- | ---------------------------------------------------- |
 | 2025-12-04 | Created | Simplicity review identified duplication opportunity |
 
 ## Tags

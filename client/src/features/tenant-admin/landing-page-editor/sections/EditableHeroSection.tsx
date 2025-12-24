@@ -23,7 +23,11 @@ interface EditableHeroSectionProps {
   disabled?: boolean;
 }
 
-export const EditableHeroSection = memo(function EditableHeroSection({ config, onUpdate, disabled = false }: EditableHeroSectionProps) {
+export const EditableHeroSection = memo(function EditableHeroSection({
+  config,
+  onUpdate,
+  disabled = false,
+}: EditableHeroSectionProps) {
   const backgroundImage = sanitizeBackgroundUrl(config?.backgroundImageUrl);
 
   return (

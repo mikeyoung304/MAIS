@@ -29,12 +29,14 @@ This index guides you to the right documentation for handling todo resolution se
 ## Documentation Map
 
 ### 1. Quick Reference (Cheat Sheet)
+
 **File:** `TODO-RESOLUTION-QUICK-REFERENCE.md`
 **Length:** ~2,000 words
 **Best for:** Daily workflow, decision-making during implementation
 **Should read:** Everyone, before every session
 
 **Contains:**
+
 - 5-minute decision tree (verify vs implement vs defer)
 - Implementation type reference table
 - Pattern 1-3 checklists (verify, quick win, deferral)
@@ -44,12 +46,14 @@ This index guides you to the right documentation for handling todo resolution se
 - Time budgets
 
 **When to consult:**
+
 - Starting a todo resolution session
 - Deciding whether to implement or defer
 - Remembering the quick reference syntax
 - Before committing
 
 **Quick Links:**
+
 - [Decision Tree](#5-minute-decision-tree)
 - [Pattern Reference](#pattern-1-verify-already-implemented)
 - [Common Errors](#common-errors--fixes)
@@ -57,12 +61,14 @@ This index guides you to the right documentation for handling todo resolution se
 ---
 
 ### 2. Comprehensive Guide (Deep Dive)
+
 **File:** `TODO-RESOLUTION-SESSION-PATTERNS.md`
 **Length:** ~8,000 words
 **Best for:** Understanding patterns deeply, learning the approach
 **Should read:** Code reviewers, team leads, during onboarding
 
 **Contains (10 Parts):**
+
 1. Parallel Verification Pattern
    - Why use parallel agents
    - How to set up 4 agents
@@ -119,12 +125,14 @@ This index guides you to the right documentation for handling todo resolution se
     - Deferral template
 
 **When to consult:**
+
 - Learning the methodology
 - Code reviewing a todo resolution PR
 - Training new team members
 - Understanding why patterns exist
 
 **Quick Links:**
+
 - [Part 1: Parallel Verification](./TODO-RESOLUTION-SESSION-PATTERNS.md#part-1-parallel-verification-pattern)
 - [Part 4: React.memo](./TODO-RESOLUTION-SESSION-PATTERNS.md#part-4-react-memo-pattern---performance-optimization)
 - [Part 5: Transactions](./TODO-RESOLUTION-SESSION-PATTERNS.md#part-5-transaction-wrapper-pattern---data-integrity)
@@ -132,12 +140,14 @@ This index guides you to the right documentation for handling todo resolution se
 ---
 
 ### 3. Code Examples (Real Solutions)
+
 **File:** `TODO-RESOLUTION-CODE-EXAMPLES.md`
 **Length:** ~2,500 words
 **Best for:** Copy-paste solutions, before/after comparisons, testing patterns
 **Should read:** Developers implementing similar patterns
 
 **Contains (6 Examples):**
+
 1. ErrorAlert.tsx
    - Shared component extraction
    - Before/after code
@@ -170,12 +180,14 @@ This index guides you to the right documentation for handling todo resolution se
    - Files changed
 
 **When to consult:**
+
 - Implementing ErrorAlert in new features
 - Adding React.memo to components
 - Adding transaction wrappers
 - Copy-pasting commit message format
 
 **Quick Links:**
+
 - [ErrorAlert Code](#1-shared-component-erroralerttsx)
 - [React.memo Pattern](#2-react-memo-statustsbadgetsx)
 - [Transaction Wrapper](#4-transaction-wrapper-discardlandingpagedraft)
@@ -239,29 +251,32 @@ This index guides you to the right documentation for handling todo resolution se
 
 ### By Name
 
-| Pattern | Where | Time | Use Case |
-|---------|-------|------|----------|
-| Parallel Verification | Full Guide Part 1 | 30 min | Verify 4+ P1 todos |
-| Verify Implemented | Quick Ref | 5-15 min | Code already exists |
-| Quick Win | Quick Ref | 20-45 min | Small feature <1 hour |
-| Deferral | Full Guide Part 8 | 1-2 hours planning | Feature 4+ hours |
-| Shared Component | Code Ex #1 | 20 min | 2+ code duplication |
-| React.memo | Code Ex #2-3 | 10-15 min | Pure component in list |
-| Transaction | Code Ex #4 | 15 min | Read-then-write |
-| Batch Commit | Quick Ref | 5 min | 3-10 todos resolved |
+| Pattern               | Where             | Time               | Use Case               |
+| --------------------- | ----------------- | ------------------ | ---------------------- |
+| Parallel Verification | Full Guide Part 1 | 30 min             | Verify 4+ P1 todos     |
+| Verify Implemented    | Quick Ref         | 5-15 min           | Code already exists    |
+| Quick Win             | Quick Ref         | 20-45 min          | Small feature <1 hour  |
+| Deferral              | Full Guide Part 8 | 1-2 hours planning | Feature 4+ hours       |
+| Shared Component      | Code Ex #1        | 20 min             | 2+ code duplication    |
+| React.memo            | Code Ex #2-3      | 10-15 min          | Pure component in list |
+| Transaction           | Code Ex #4        | 15 min             | Read-then-write        |
+| Batch Commit          | Quick Ref         | 5 min              | 3-10 todos resolved    |
 
 ### By Implementation Type
 
 **Verification (Already Implemented)**
+
 - Document: [Quick Ref Pattern 1](./TODO-RESOLUTION-QUICK-REFERENCE.md#pattern-1-verify-already-implemented)
 - Full: [Full Guide Part 1](./TODO-RESOLUTION-SESSION-PATTERNS.md#part-1-parallel-verification-pattern)
 
 **Quick Wins (Small Features)**
+
 - Document: [Quick Ref Pattern 2](./TODO-RESOLUTION-QUICK-REFERENCE.md#pattern-2-quick-win-implementation)
 - Full: [Full Guide Part 2](./TODO-RESOLUTION-SESSION-PATTERNS.md#part-2-distinguishing-implementation-types)
 - Code: [Code Examples 1-4](./TODO-RESOLUTION-CODE-EXAMPLES.md)
 
 **Deferrals (Larger Features)**
+
 - Document: [Quick Ref Pattern 3](./TODO-RESOLUTION-QUICK-REFERENCE.md#pattern-3-deferral)
 - Full: [Full Guide Part 8](./TODO-RESOLUTION-SESSION-PATTERNS.md#part-8-deferral-strategy)
 
@@ -323,15 +338,18 @@ This index guides you to the right documentation for handling todo resolution se
 ## Related Documentation
 
 ### Prevention Strategies
+
 - [Prevention Strategies Index](./PREVENTION-STRATEGIES-INDEX.md) - Root cause prevention patterns
 - [React Custom Hook Extraction](./react-performance/REACT-HOOK-EXTRACTION-PREVENTION.md) - When/how to extract hooks
 - [React Memoization Prevention](./react-performance/REACT-MEMOIZATION-PREVENTION-STRATEGY.md) - Detailed memoization patterns
 
 ### Architecture
+
 - [CLAUDE.md](../../CLAUDE.md) - Project-wide standards
 - [Architecture Guide](../reference/ARCHITECTURE.md) - System design
 
 ### Testing
+
 - [Testing Prevention Strategies](./TEST-FAILURE-PREVENTION-STRATEGIES.md) - Test patterns
 - [Testing Quick Reference](./TESTING-QUICK-REFERENCE.md) - Testing checklist
 
@@ -365,12 +383,12 @@ This index guides you to the right documentation for handling todo resolution se
 
 ## Document Statistics
 
-| Document | Words | Lines | Read Time | Best For |
-|----------|-------|-------|-----------|----------|
-| Quick Reference | ~2,000 | 505 | 5 min | Decision-making |
-| Code Examples | ~2,500 | 619 | 10 min | Implementation |
-| Full Guide | ~8,000 | 1,002 | 30 min | Learning |
-| **Total** | **~12,500** | **~2,100** | **~45 min** | **Full understanding** |
+| Document        | Words       | Lines      | Read Time   | Best For               |
+| --------------- | ----------- | ---------- | ----------- | ---------------------- |
+| Quick Reference | ~2,000      | 505        | 5 min       | Decision-making        |
+| Code Examples   | ~2,500      | 619        | 10 min      | Implementation         |
+| Full Guide      | ~8,000      | 1,002      | 30 min      | Learning               |
+| **Total**       | **~12,500** | **~2,100** | **~45 min** | **Full understanding** |
 
 ---
 
@@ -394,6 +412,7 @@ This index guides you to the right documentation for handling todo resolution se
 **Related Commits:** 62f54ab, fc63985
 
 **Version History:**
+
 - v1.0 - Created 2025-12-05 with 3 documents covering session patterns, quick reference, code examples
 
 ---

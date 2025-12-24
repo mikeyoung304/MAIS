@@ -107,7 +107,16 @@ async function createOrUpdatePackageWithSegment(
     bookingType?: 'DATE' | 'TIMESLOT';
   }
 ): Promise<Package> {
-  const { slug, name, description, basePrice, grouping, groupingOrder, photos = [], bookingType = 'DATE' } = options;
+  const {
+    slug,
+    name,
+    description,
+    basePrice,
+    grouping,
+    groupingOrder,
+    photos = [],
+    bookingType = 'DATE',
+  } = options;
 
   return prisma.package.upsert({
     where: { tenantId_slug: { slug, tenantId } },
@@ -192,13 +201,8 @@ async function linkAddOnsToPackage(
 
 export async function seedLaPetitMarriage(prisma: PrismaClient): Promise<void> {
   // Production guard - prevent accidental data destruction
-  if (
-    process.env.NODE_ENV === 'production' &&
-    process.env.ALLOW_PRODUCTION_SEED !== 'true'
-  ) {
-    throw new Error(
-      'Production seed blocked. Set ALLOW_PRODUCTION_SEED=true to override.'
-    );
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
+    throw new Error('Production seed blocked. Set ALLOW_PRODUCTION_SEED=true to override.');
   }
 
   // Check if tenant already exists (outside transaction for read-only check)
@@ -210,7 +214,10 @@ export async function seedLaPetitMarriage(prisma: PrismaClient): Promise<void> {
   let publicKeyForLogging: string;
   let secretKeyForLogging: string | null = null;
 
-  logger.info({ slug: TENANT_SLUG, operations: 'segments+packages+addons' }, 'Starting La Petit Mariage seed transaction');
+  logger.info(
+    { slug: TENANT_SLUG, operations: 'segments+packages+addons' },
+    'Starting La Petit Mariage seed transaction'
+  );
   const startTime = Date.now();
 
   await prisma.$transaction(
@@ -260,32 +267,42 @@ export async function seedLaPetitMarriage(prisma: PrismaClient): Promise<void> {
 Whether it's just the two of you or a handful of your closest people, we'll create a
 meaningful ceremony that reflects your unique story. Simple, heartfelt, and unforgettable.`,
         metaTitle: 'Elopement Packages | La Petit Mariage at Tanglewood',
-        metaDescription: 'Intimate elopement ceremonies for 0-12 guests at Tanglewood Art Studios. From $200. Photography, custom ceremonies, and more.',
+        metaDescription:
+          'Intimate elopement ceremonies for 0-12 guests at Tanglewood Art Studios. From $200. Photography, custom ceremonies, and more.',
         sortOrder: 0,
       });
 
       logger.info(`Segment created: ${elopementSegment.name}`);
 
       // Elopement Packages
-      const simpleVows = await createOrUpdatePackageWithSegment(tx, tenant.id, elopementSegment.id, {
-        slug: 'simple-vows',
-        name: 'Simple Vows',
-        description: `A short, sweet "just us" ceremony.
+      const simpleVows = await createOrUpdatePackageWithSegment(
+        tx,
+        tenant.id,
+        elopementSegment.id,
+        {
+          slug: 'simple-vows',
+          name: 'Simple Vows',
+          description: `A short, sweet "just us" ceremony.
 
 • 30-minute simple ceremony at Tanglewood Art Studios
 • Choice of secular or spiritual wording
 • Guidance on marriage license + quick timeline review
 
 Perfect for couples who want to keep it simple and meaningful.`,
-        basePrice: 20000, // $200
-        grouping: 'tier_1',
-        groupingOrder: 1,
-      });
+          basePrice: 20000, // $200
+          grouping: 'tier_1',
+          groupingOrder: 1,
+        }
+      );
 
-      const essentialElopement = await createOrUpdatePackageWithSegment(tx, tenant.id, elopementSegment.id, {
-        slug: 'essential-elopement',
-        name: 'Essential Elopement',
-        description: `Our most popular elopement experience.
+      const essentialElopement = await createOrUpdatePackageWithSegment(
+        tx,
+        tenant.id,
+        elopementSegment.id,
+        {
+          slug: 'essential-elopement',
+          name: 'Essential Elopement',
+          description: `Our most popular elopement experience.
 
 • Personalized ceremony at Tanglewood for up to 12 guests
 • 1 hour of photography (ceremony + portraits)
@@ -293,15 +310,20 @@ Perfect for couples who want to keep it simple and meaningful.`,
 • Marriage license + timeline support
 
 Everything you need for a beautiful, intimate celebration.`,
-        basePrice: 59500, // $595
-        grouping: 'tier_2',
-        groupingOrder: 2,
-      });
+          basePrice: 59500, // $595
+          grouping: 'tier_2',
+          groupingOrder: 2,
+        }
+      );
 
-      const allInclusiveElopement = await createOrUpdatePackageWithSegment(tx, tenant.id, elopementSegment.id, {
-        slug: 'all-inclusive-elopement',
-        name: 'All-Inclusive Elopement',
-        description: `Show up dressed; we'll handle the rest.
+      const allInclusiveElopement = await createOrUpdatePackageWithSegment(
+        tx,
+        tenant.id,
+        elopementSegment.id,
+        {
+          slug: 'all-inclusive-elopement',
+          name: 'All-Inclusive Elopement',
+          description: `Show up dressed; we'll handle the rest.
 
 • Everything in Essential Elopement
 • Fully custom ceremony script
@@ -310,12 +332,15 @@ Everything you need for a beautiful, intimate celebration.`,
 • Keepsake vow books + select prints
 
 The ultimate stress-free elopement experience.`,
-        basePrice: 79500, // $795
-        grouping: 'tier_3',
-        groupingOrder: 3,
-      });
+          basePrice: 79500, // $795
+          grouping: 'tier_3',
+          groupingOrder: 3,
+        }
+      );
 
-      logger.info(`Elopement packages created: ${[simpleVows, essentialElopement, allInclusiveElopement].length}`);
+      logger.info(
+        `Elopement packages created: ${[simpleVows, essentialElopement, allInclusiveElopement].length}`
+      );
 
       // =====================================================================
       // SEGMENT 2: MICRO WEDDINGS AT TANGLEWOOD (up to ~40 guests)
@@ -329,17 +354,22 @@ The ultimate stress-free elopement experience.`,
 meaningful. Our micro wedding packages give you all the beauty of a traditional
 wedding, scaled down to focus on what matters most—your love story.`,
         metaTitle: 'Micro Wedding Packages | La Petit Mariage at Tanglewood',
-        metaDescription: 'Intimate micro weddings for up to 40 guests at Tanglewood. From $1,500. Full coordination, photography, and florals included.',
+        metaDescription:
+          'Intimate micro weddings for up to 40 guests at Tanglewood. From $1,500. Full coordination, photography, and florals included.',
         sortOrder: 1,
       });
 
       logger.info(`Segment created: ${microWeddingSegment.name}`);
 
       // Micro Wedding Packages
-      const ceremonyAndPortraits = await createOrUpdatePackageWithSegment(tx, tenant.id, microWeddingSegment.id, {
-        slug: 'ceremony-and-portraits-micro',
-        name: 'Ceremony & Portraits',
-        description: `An intimate wedding with your closest people.
+      const ceremonyAndPortraits = await createOrUpdatePackageWithSegment(
+        tx,
+        tenant.id,
+        microWeddingSegment.id,
+        {
+          slug: 'ceremony-and-portraits-micro',
+          name: 'Ceremony & Portraits',
+          description: `An intimate wedding with your closest people.
 
 • Ceremony setup at Tanglewood (up to ~40 guests)
 • Simple florals for ceremony + personals
@@ -347,15 +377,20 @@ wedding, scaled down to focus on what matters most—your love story.`,
 • Ceremony coordination and lineup
 
 Perfect for couples planning their own reception elsewhere.`,
-        basePrice: 150000, // $1,500
-        grouping: 'tier_1',
-        groupingOrder: 1,
-      });
+          basePrice: 150000, // $1,500
+          grouping: 'tier_1',
+          groupingOrder: 1,
+        }
+      );
 
-      const microCelebration = await createOrUpdatePackageWithSegment(tx, tenant.id, microWeddingSegment.id, {
-        slug: 'micro-celebration',
-        name: 'Micro Celebration',
-        description: `A small wedding that still feels like a full day.
+      const microCelebration = await createOrUpdatePackageWithSegment(
+        tx,
+        tenant.id,
+        microWeddingSegment.id,
+        {
+          slug: 'micro-celebration',
+          name: 'Micro Celebration',
+          description: `A small wedding that still feels like a full day.
 
 • Everything in Ceremony & Portraits
 • "Mini reception" time for cake, toasts, and photos
@@ -364,15 +399,20 @@ Perfect for couples planning their own reception elsewhere.`,
 • Timeline creation + day-of coordination
 
 All the magic of a wedding day, thoughtfully scaled down.`,
-        basePrice: 250000, // $2,500
-        grouping: 'tier_2',
-        groupingOrder: 2,
-      });
+          basePrice: 250000, // $2,500
+          grouping: 'tier_2',
+          groupingOrder: 2,
+        }
+      );
 
-      const allInclusiveMicro = await createOrUpdatePackageWithSegment(tx, tenant.id, microWeddingSegment.id, {
-        slug: 'all-inclusive-micro',
-        name: 'All-Inclusive Micro',
-        description: `All the essentials of a traditional wedding, scaled down.
+      const allInclusiveMicro = await createOrUpdatePackageWithSegment(
+        tx,
+        tenant.id,
+        microWeddingSegment.id,
+        {
+          slug: 'all-inclusive-micro',
+          name: 'All-Inclusive Micro',
+          description: `All the essentials of a traditional wedding, scaled down.
 
 • Ceremony + reception at Tanglewood
 • 6 hours of photography
@@ -381,12 +421,15 @@ All the magic of a wedding day, thoughtfully scaled down.`,
 • Full vendor coordination + day-of management
 
 Everything handled, so you can simply enjoy your day.`,
-        basePrice: 350000, // $3,500
-        grouping: 'tier_3',
-        groupingOrder: 3,
-      });
+          basePrice: 350000, // $3,500
+          grouping: 'tier_3',
+          groupingOrder: 3,
+        }
+      );
 
-      logger.info(`Micro wedding packages created: ${[ceremonyAndPortraits, microCelebration, allInclusiveMicro].length}`);
+      logger.info(
+        `Micro wedding packages created: ${[ceremonyAndPortraits, microCelebration, allInclusiveMicro].length}`
+      );
 
       // =====================================================================
       // SEGMENT 3: FULL WEDDINGS AT TANGLEWOOD (50-120+ guests)
@@ -400,17 +443,22 @@ Everything handled, so you can simply enjoy your day.`,
 wedding packages provide comprehensive support and stunning execution. Let us
 handle the details while you focus on making memories.`,
         metaTitle: 'Full Wedding Packages | La Petit Mariage at Tanglewood',
-        metaDescription: 'Complete wedding packages for 50-120+ guests at Tanglewood. From $2,500. Full coordination, photography, florals, and more.',
+        metaDescription:
+          'Complete wedding packages for 50-120+ guests at Tanglewood. From $2,500. Full coordination, photography, florals, and more.',
         sortOrder: 2,
       });
 
       logger.info(`Segment created: ${fullWeddingSegment.name}`);
 
       // Full Wedding Packages
-      const ceremonyPortraitsFull = await createOrUpdatePackageWithSegment(tx, tenant.id, fullWeddingSegment.id, {
-        slug: 'ceremony-and-portraits-full',
-        name: 'Ceremony & Portraits',
-        description: `For couples planning their own reception elsewhere.
+      const ceremonyPortraitsFull = await createOrUpdatePackageWithSegment(
+        tx,
+        tenant.id,
+        fullWeddingSegment.id,
+        {
+          slug: 'ceremony-and-portraits-full',
+          name: 'Ceremony & Portraits',
+          description: `For couples planning their own reception elsewhere.
 
 • Ceremony at Tanglewood
 • Basic ceremony florals + personals
@@ -418,15 +466,20 @@ handle the details while you focus on making memories.`,
 • Ceremony planning + coordination
 
 A beautiful start to your celebration.`,
-        basePrice: 250000, // $2,500
-        grouping: 'tier_1',
-        groupingOrder: 1,
-      });
+          basePrice: 250000, // $2,500
+          grouping: 'tier_1',
+          groupingOrder: 1,
+        }
+      );
 
-      const classicWeddingDay = await createOrUpdatePackageWithSegment(tx, tenant.id, fullWeddingSegment.id, {
-        slug: 'classic-wedding-day',
-        name: 'Classic Wedding Day',
-        description: `The full wedding experience, handled.
+      const classicWeddingDay = await createOrUpdatePackageWithSegment(
+        tx,
+        tenant.id,
+        fullWeddingSegment.id,
+        {
+          slug: 'classic-wedding-day',
+          name: 'Classic Wedding Day',
+          description: `The full wedding experience, handled.
 
 • Ceremony + reception at Tanglewood
 • Up to 8 hours of photography
@@ -435,15 +488,20 @@ A beautiful start to your celebration.`,
 • Day-of coordinator on site
 
 Everything you need for your perfect day.`,
-        basePrice: 450000, // $4,500
-        grouping: 'tier_2',
-        groupingOrder: 2,
-      });
+          basePrice: 450000, // $4,500
+          grouping: 'tier_2',
+          groupingOrder: 2,
+        }
+      );
 
-      const signatureAllInclusive = await createOrUpdatePackageWithSegment(tx, tenant.id, fullWeddingSegment.id, {
-        slug: 'signature-all-inclusive',
-        name: 'Signature All-Inclusive',
-        description: `White-glove support from "we're engaged" to "last dance."
+      const signatureAllInclusive = await createOrUpdatePackageWithSegment(
+        tx,
+        tenant.id,
+        fullWeddingSegment.id,
+        {
+          slug: 'signature-all-inclusive',
+          name: 'Signature All-Inclusive',
+          description: `White-glove support from "we're engaged" to "last dance."
 
 • Everything in Classic Wedding Day
 • Upgraded florals and décor throughout
@@ -453,12 +511,15 @@ Everything you need for your perfect day.`,
 • Option to add engagement or day-after session
 
 The ultimate wedding experience, fully handled.`,
-        basePrice: 750000, // $7,500
-        grouping: 'tier_3',
-        groupingOrder: 3,
-      });
+          basePrice: 750000, // $7,500
+          grouping: 'tier_3',
+          groupingOrder: 3,
+        }
+      );
 
-      logger.info(`Full wedding packages created: ${[ceremonyPortraitsFull, classicWeddingDay, signatureAllInclusive].length}`);
+      logger.info(
+        `Full wedding packages created: ${[ceremonyPortraitsFull, classicWeddingDay, signatureAllInclusive].length}`
+      );
 
       // =====================================================================
       // ADD-ONS: Global (available to all segments)
@@ -557,7 +618,7 @@ The ultimate wedding experience, fully handled.`,
       const dinnerReservation = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
         slug: 'dinner-reservation',
         name: 'Dinner Reservation Coordination',
-        description: 'We\'ll coordinate a special dinner reservation at a local restaurant.',
+        description: "We'll coordinate a special dinner reservation at a local restaurant.",
         price: 5000, // $50
       });
 
@@ -772,16 +833,16 @@ The ultimate wedding experience, fully handled.`,
       const holidays2025 = [
         { date: new Date('2025-12-24T00:00:00Z'), reason: 'Christmas Eve' },
         { date: new Date('2025-12-25T00:00:00Z'), reason: 'Christmas Day' },
-        { date: new Date('2025-12-31T00:00:00Z'), reason: 'New Year\'s Eve' },
+        { date: new Date('2025-12-31T00:00:00Z'), reason: "New Year's Eve" },
       ];
 
       const holidays2026 = [
-        { date: new Date('2026-01-01T00:00:00Z'), reason: 'New Year\'s Day' },
+        { date: new Date('2026-01-01T00:00:00Z'), reason: "New Year's Day" },
         { date: new Date('2026-07-04T00:00:00Z'), reason: 'Independence Day' },
         { date: new Date('2026-11-26T00:00:00Z'), reason: 'Thanksgiving' },
         { date: new Date('2026-12-24T00:00:00Z'), reason: 'Christmas Eve' },
         { date: new Date('2026-12-25T00:00:00Z'), reason: 'Christmas Day' },
-        { date: new Date('2026-12-31T00:00:00Z'), reason: 'New Year\'s Eve' },
+        { date: new Date('2026-12-31T00:00:00Z'), reason: "New Year's Eve" },
       ];
 
       await Promise.all(

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "271"
+issue_id: '271'
 tags: [code-review, backend-audit, health-check, monitoring, observability]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The `/health` endpoint doesn't verify connectivity to external services (Postmark, Google Calendar, Stripe). Operations team has limited visibility into service dependencies when troubleshooting issues.
 
 **Why it matters:**
+
 - No early warning when external services are down
 - Troubleshooting requires manual verification of each service
 - Load balancers may route to unhealthy instances
@@ -20,6 +21,7 @@ The `/health` endpoint doesn't verify connectivity to external services (Postmar
 ## Findings
 
 ### Agent: backend-audit
+
 - **Location:** `server/src/routes/health.routes.ts`
 - **Evidence:** Health check likely only verifies database connectivity
 - **Impact:** LOW - Operational visibility gap
@@ -27,6 +29,7 @@ The `/health` endpoint doesn't verify connectivity to external services (Postmar
 ## Proposed Solutions
 
 ### Option A: Extended Health Check Endpoint (Recommended)
+
 **Description:** Add optional deep health check that verifies external services
 
 ```typescript
@@ -56,13 +59,16 @@ router.get('/health', async (req, res) => {
 **Risk:** Low
 
 ### Option B: Separate Readiness Endpoint
+
 **Description:** Add `/ready` endpoint for external service checks
 
 **Pros:**
+
 - Clear separation of liveness vs readiness
 - Kubernetes-friendly pattern
 
 **Cons:**
+
 - Two endpoints to maintain
 
 **Effort:** Small (2-3 hours)
@@ -75,14 +81,17 @@ Implement Option A with optional deep check to avoid slowing down frequent healt
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/routes/health.routes.ts`
 
 **Health Check Methods:**
+
 - **Stripe:** `stripe.balance.retrieve()` (minimal API call)
 - **Postmark:** Postmark SDK has built-in server info endpoint
 - **Google Calendar:** Attempt to list calendars or check auth
 
 **Caching:**
+
 - Cache external service status for 30-60 seconds to avoid rate limiting
 
 ## Acceptance Criteria
@@ -95,9 +104,9 @@ Implement Option A with optional deep check to avoid slowing down frequent healt
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2025-12-05 | Created from backend audit | Nice-to-have for operations |
+| Date       | Action                         | Learnings                                                          |
+| ---------- | ------------------------------ | ------------------------------------------------------------------ |
+| 2025-12-05 | Created from backend audit     | Nice-to-have for operations                                        |
 | 2025-12-06 | Implemented deep health checks | Created HealthCheckService with 60s caching, 5s timeouts per check |
 
 ## Resources

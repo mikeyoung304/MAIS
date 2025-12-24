@@ -197,16 +197,12 @@ export async function validateDatabaseUrl(
 
     // Check for SSL mode
     if (!databaseUrl.includes('sslmode=')) {
-      warnings.push(
-        'Consider adding sslmode=require for secure connections'
-      );
+      warnings.push('Consider adding sslmode=require for secure connections');
     }
 
     // Check for connection timeout
     if (!databaseUrl.includes('connect_timeout=')) {
-      warnings.push(
-        'Consider adding connect_timeout=10 to prevent hanging on network issues'
-      );
+      warnings.push('Consider adding connect_timeout=10 to prevent hanging on network issues');
     }
   }
 
@@ -218,7 +214,7 @@ export async function validateDatabaseUrl(
   } else if (connectivity.family === 6) {
     warnings.push(
       `Database resolved to IPv6 (${connectivity.resolvedAddress}). ` +
-      'If connections fail, your network may not support IPv6.'
+        'If connections fail, your network may not support IPv6.'
     );
   }
 
@@ -243,9 +239,7 @@ const DATABASE_CONNECTIVITY_CHECK: EnvCheck = {
   description: 'Database host reachability and IPv4/IPv6 resolution',
 };
 
-async function checkDatabaseConnectivity(
-  databaseUrl: string
-): Promise<CheckResult> {
+async function checkDatabaseConnectivity(databaseUrl: string): Promise<CheckResult> {
   if (!databaseUrl) {
     return {
       key: 'DATABASE_CONNECTIVITY',
@@ -411,7 +405,7 @@ DIRECT_URL="postgresql://postgres.[project-ref]:[password]@db.[project-ref].supa
 
 Run through this checklist in order:
 
-```markdown
+````markdown
 ## Quick Diagnostic Checklist
 
 1. [ ] **Check error message type:**
@@ -421,6 +415,7 @@ Run through this checklist in order:
    - `authentication failed`? -> Wrong credentials
 
 2. [ ] **Test DNS resolution:**
+
    ```bash
    # Check what addresses your system resolves
    dig db.xxxx.supabase.co
@@ -431,8 +426,10 @@ Run through this checklist in order:
    # Force IPv6 lookup
    dig db.xxxx.supabase.co AAAA
    ```
+````
 
 3. [ ] **Test database connectivity:**
+
    ```bash
    # Test with psql (uses system DNS)
    psql "$DATABASE_URL" -c "SELECT 1;"
@@ -442,6 +439,7 @@ Run through this checklist in order:
    ```
 
 4. [ ] **Check network configuration:**
+
    ```bash
    # Check if IPv6 is working
    curl -6 https://ipv6.google.com/ --max-time 5
@@ -456,6 +454,7 @@ Run through this checklist in order:
    - Add `?pgbouncer=true` to URL
 
 6. [ ] **Use local PostgreSQL as fallback:**
+
    ```bash
    # Start local PostgreSQL
    brew services start postgresql@16
@@ -466,7 +465,8 @@ Run through this checklist in order:
    # Update .env
    DATABASE_URL="postgresql://localhost/mais_dev"
    ```
-```
+
+````
 
 ### Automated Diagnostic Command
 
@@ -478,7 +478,7 @@ Add to `package.json`:
     "db:diagnose": "tsx server/scripts/diagnose-database.ts"
   }
 }
-```
+````
 
 Create `server/scripts/diagnose-database.ts`:
 
@@ -567,13 +567,17 @@ async function main() {
     // System default lookup
     try {
       const result = await lookup(host);
-      console.log(color(`  → System prefers: ${result.address} (IPv${result.family})`, colors.cyan));
+      console.log(
+        color(`  → System prefers: ${result.address} (IPv${result.family})`, colors.cyan)
+      );
 
       if (result.family === 6) {
-        console.log(color(
-          '  ⚠ System prefers IPv6 - may fail if your network doesn\'t support IPv6',
-          colors.yellow
-        ));
+        console.log(
+          color(
+            "  ⚠ System prefers IPv6 - may fail if your network doesn't support IPv6",
+            colors.yellow
+          )
+        );
       }
     } catch (err) {
       console.log(color(`  ❌ DNS lookup failed: ${err}`, colors.red));
@@ -585,10 +589,9 @@ async function main() {
     console.log(color('\n🔧 Supabase Recommendations:', colors.bold));
 
     if (!host.includes('pooler.supabase.com')) {
-      console.log(color(
-        '  ⚠ Using direct connection - consider using connection pooler',
-        colors.yellow
-      ));
+      console.log(
+        color('  ⚠ Using direct connection - consider using connection pooler', colors.yellow)
+      );
       console.log('    pooler.supabase.com provides more reliable connections');
     } else {
       console.log(color('  ✓ Using connection pooler', colors.green));
@@ -610,7 +613,9 @@ async function main() {
     await execAsync('curl -6 https://ipv6.google.com/ --max-time 5 -s -o /dev/null');
     console.log(color('  ✓ IPv6 network connectivity available', colors.green));
   } catch {
-    console.log(color('  ⚠ IPv6 network not available (common, usually not a problem)', colors.yellow));
+    console.log(
+      color('  ⚠ IPv6 network not available (common, usually not a problem)', colors.yellow)
+    );
   }
 
   // Actual Database Connection Test
@@ -628,7 +633,9 @@ async function main() {
     const latency = Date.now() - startTime;
     console.log(color(`  ✓ Connected successfully (${latency}ms)`, colors.green));
   } catch (err) {
-    console.log(color(`  ❌ Connection failed: ${err instanceof Error ? err.message : err}`, colors.red));
+    console.log(
+      color(`  ❌ Connection failed: ${err instanceof Error ? err.message : err}`, colors.red)
+    );
 
     // Provide specific remediation advice
     const errorMessage = err instanceof Error ? err.message : String(err);
@@ -733,13 +740,13 @@ DATABASE_URL="postgresql://user:pass@db.xxxx.supabase.co:5432/db"
 
 ### Environment Parity Guidelines
 
-| Aspect | CI | Local (Mock) | Local (Real) | Production |
-|--------|-----|--------------|--------------|------------|
-| Database Host | localhost:5432 | N/A | pooler.supabase.com:6543 | pooler.supabase.com:6543 |
-| SSL Mode | Not required | N/A | require | require |
-| IPv6 Required | No | N/A | No (use pooler) | No (use pooler) |
-| Connection Timeout | 10s | N/A | 10s | 10s |
-| PgBouncer | No | N/A | Yes | Yes |
+| Aspect             | CI             | Local (Mock) | Local (Real)             | Production               |
+| ------------------ | -------------- | ------------ | ------------------------ | ------------------------ |
+| Database Host      | localhost:5432 | N/A          | pooler.supabase.com:6543 | pooler.supabase.com:6543 |
+| SSL Mode           | Not required   | N/A          | require                  | require                  |
+| IPv6 Required      | No             | N/A          | No (use pooler)          | No (use pooler)          |
+| Connection Timeout | 10s            | N/A          | 10s                      | 10s                      |
+| PgBouncer          | No             | N/A          | Yes                      | Yes                      |
 
 ### Code Review Checklist for Database Configuration
 

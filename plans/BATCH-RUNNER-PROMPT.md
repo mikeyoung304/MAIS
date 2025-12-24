@@ -27,25 +27,30 @@ You are an autonomous batch execution system. Your job is to resolve all 28 sche
 ## Execution Phases
 
 ### Phase 1: Critical Security (Batches 1.1 + 1.2)
+
 - **Batch 1.1:** Todos 273, 274, 275, 276, 284 (5 parallel)
 - **Batch 1.2:** Todos 266, 267, 279 (3 parallel)
 - **After Phase 1:** Commit and push
 
 ### Phase 2: Performance (Batch 2.1)
+
 - **Batch 2.1:** Todos 280, 268, 269, 270, 287 (5 parallel)
 - **After Phase 2:** Commit and push
 
 ### Phase 3: Acuity Core (Batches 3.1 + 3.2)
+
 - **Batch 3.1:** Todos 277, 278, 234, 235, 260 (5 parallel)
 - **Batch 3.2:** Todos 251, 271, 272 (3 parallel)
 - **After Phase 3:** Commit and push
 
 ### Phase 4: Acuity Advanced (Batches 4.1 + 4.2)
+
 - **Batch 4.1:** Todos 281, 282, 236, 256, 285 (5 parallel)
 - **Batch 4.2:** Todos 283, 286 (2 parallel)
 - **After Phase 4:** Commit and push
 
 ### Phase 5: Hardening
+
 - Final integration testing
 - **After Phase 5:** Commit and push
 
@@ -89,11 +94,11 @@ Launch 5 agents in ONE message using multiple Task tool invocations:
 
 ```javascript
 // Example for Batch 1.1 - send all 5 in a single message
-Task({ prompt: "Resolve todo #273...", subagent_type: "general-purpose" })
-Task({ prompt: "Resolve todo #274...", subagent_type: "general-purpose" })
-Task({ prompt: "Resolve todo #275...", subagent_type: "general-purpose" })
-Task({ prompt: "Resolve todo #276...", subagent_type: "general-purpose" })
-Task({ prompt: "Resolve todo #284...", subagent_type: "general-purpose" })
+Task({ prompt: 'Resolve todo #273...', subagent_type: 'general-purpose' });
+Task({ prompt: 'Resolve todo #274...', subagent_type: 'general-purpose' });
+Task({ prompt: 'Resolve todo #275...', subagent_type: 'general-purpose' });
+Task({ prompt: 'Resolve todo #276...', subagent_type: 'general-purpose' });
+Task({ prompt: 'Resolve todo #284...', subagent_type: 'general-purpose' });
 ```
 
 Wait for all 5 to complete using AgentOutputTool, then proceed to next batch.
@@ -117,6 +122,7 @@ Wait for all 5 to complete using AgentOutputTool, then proceed to next batch.
 ## After Each Phase
 
 1. **Git commit:**
+
    ```bash
    git add -A && git commit -m "$(cat <<'EOF'
    feat(scheduling): complete phase {N} - {description}
@@ -131,6 +137,7 @@ Wait for all 5 to complete using AgentOutputTool, then proceed to next batch.
    ```
 
 2. **Git push:**
+
    ```bash
    git push origin main
    ```
@@ -165,6 +172,7 @@ git checkout -b batch-{phase}-{batch}-verification
 ```
 
 **For each agent's changes:**
+
 1. Note which files the agent modified
 2. Run `npm test`
 3. If tests PASS → keep changes, continue to next agent
@@ -208,9 +216,9 @@ Then update EXECUTION-STATUS.md:
 ```markdown
 ## Failed/Blocked Todos
 
-| Todo ID | Description | Reason | Files Reverted | Action Needed |
-|---------|-------------|--------|----------------|---------------|
-| 275 | Database indexes | Migration syntax error | prisma/migrations/xxx | Manual review needed |
+| Todo ID | Description      | Reason                 | Files Reverted        | Action Needed        |
+| ------- | ---------------- | ---------------------- | --------------------- | -------------------- |
+| 275     | Database indexes | Migration syntax error | prisma/migrations/xxx | Manual review needed |
 ```
 
 ### Agent Conflict Resolution
@@ -223,12 +231,14 @@ If two agents modified the same file:
 4. The conflicting todo stays as `-ready-` (not completed)
 
 ### If an agent completely fails to execute:
+
 1. Log in EXECUTION-STATUS.md with error message
 2. Keep todo as `-ready-`
 3. Continue with other agents
 4. Do NOT block the batch
 
 ### If git push fails:
+
 1. `git pull --rebase origin main`
 2. If conflicts: resolve by keeping our changes (we just tested them)
 3. `git push origin main`
@@ -255,6 +265,7 @@ git cherry-pick <commit-sha>
 ## Success Criteria
 
 The execution is complete when:
+
 - [ ] All 28 todos are renamed from `-ready-` to `-complete-`
 - [ ] All phases committed and pushed
 - [ ] `npm run typecheck` passes
@@ -270,6 +281,7 @@ Begin now. Read the execution plan and status file, then launch Batch 1.1 with 5
 DO NOT ASK FOR PERMISSION. EXECUTE AUTONOMOUSLY UNTIL ALL PHASES COMPLETE.
 
 **START WITH:**
+
 1. Read `plans/SCHEDULING-ACUITY-PARITY-EXECUTION-PLAN.md`
 2. Read `plans/EXECUTION-STATUS.md`
 3. Launch Batch 1.1 (todos 273, 274, 275, 276, 284) with 5 parallel Task agents

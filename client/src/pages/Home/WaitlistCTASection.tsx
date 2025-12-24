@@ -56,7 +56,7 @@ export function WaitlistCTASection() {
                              transition-all duration-200
                              focus:outline-none focus:ring-4 focus:ring-white/30"
                   aria-label="Email address"
-                  aria-describedby={error ? "email-error" : undefined}
+                  aria-describedby={error ? 'email-error' : undefined}
                   aria-invalid={!!error}
                 />
                 <Button

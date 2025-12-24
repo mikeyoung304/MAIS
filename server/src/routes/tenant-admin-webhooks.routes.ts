@@ -246,10 +246,7 @@ export function createTenantAdminWebhookRoutes(
 
       await webhookSubscriptionRepo.delete(tenantId, id);
 
-      logger.info(
-        { tenantId, subscriptionId: id },
-        'Webhook subscription deleted by tenant admin'
-      );
+      logger.info({ tenantId, subscriptionId: id }, 'Webhook subscription deleted by tenant admin');
 
       res.status(204).send();
     } catch (error) {

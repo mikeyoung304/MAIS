@@ -1,7 +1,7 @@
 ---
 status: wontfix
 priority: p2
-issue_id: "300"
+issue_id: '300'
 tags: [code-review, architecture, layering, early-access]
 dependencies: []
 resolution_date: 2025-12-06
@@ -18,6 +18,7 @@ resolution_rationale: |
 The early-access route handler (`/v1/auth/early-access`) directly calls `prisma.earlyAccessRequest.create()` instead of going through a service or repository layer. This violates the project's layered architecture pattern.
 
 **Why it matters:**
+
 1. Bypasses business logic layer, making testing harder
 2. Inconsistent with other endpoints that use service layer
 3. Cannot easily swap implementations (mock vs real)
@@ -45,6 +46,7 @@ router.post('/early-access', signupLimiter, async (req, res, next) => {
 ```
 
 **Expected pattern (from CLAUDE.md):**
+
 ```
 routes/          → HTTP handlers (thin, validation only)
   ↓
@@ -56,6 +58,7 @@ adapters/        → External integrations (prisma, ...)
 ## Proposed Solutions
 
 ### Option A: Create EarlyAccessService (Recommended)
+
 **Pros:** Consistent with architecture, testable, single responsibility
 **Cons:** More files to maintain
 **Effort:** Medium (45 min)
@@ -89,6 +92,7 @@ export class EarlyAccessService {
 ```
 
 ### Option B: Add to Existing AuthService
+
 **Pros:** Reuses existing service, less new code
 **Cons:** May bloat AuthService
 **Effort:** Small (20 min)
@@ -102,6 +106,7 @@ async requestEarlyAccess(data: EarlyAccessData): Promise<void> {
 ```
 
 ### Option C: Accept Current Pattern (Document Exception)
+
 **Pros:** No code changes
 **Cons:** Technical debt, inconsistent patterns
 **Effort:** Minimal
@@ -114,6 +119,7 @@ Implement Option B - add method to existing AuthService since early-access is au
 ## Technical Details
 
 **Affected files:**
+
 - `server/src/routes/auth.routes.ts` (refactor to use service)
 - `server/src/services/auth.service.ts` (add method)
 - `server/src/adapters/prisma/early-access.repository.ts` (create if needed)
@@ -131,8 +137,8 @@ Implement Option B - add method to existing AuthService since early-access is au
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                             |
+| ---------- | ------------------------ | ----------------------------------------------------- |
 | 2025-12-06 | Created from code review | Architecture-strategist identified layering violation |
 
 ## Resources

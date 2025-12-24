@@ -1,8 +1,11 @@
 # P1: Duplicate Email Validation Logic
 
 ## Priority: P1 Critical
+
 ## Status: pending
+
 ## Feature: DATE Booking Flow
+
 ## Category: Code Simplicity
 
 ## Issue
@@ -52,7 +55,7 @@ import { CreateDateBookingDtoSchema } from '@macon/contracts';
 
 // Validate using existing schema
 const result = CreateDateBookingDtoSchema.pick({
-  customerEmail: true
+  customerEmail: true,
 }).safeParse({ customerEmail: email });
 ```
 
@@ -67,4 +70,5 @@ const result = CreateDateBookingDtoSchema.pick({
 - #312 (Use Zod Schemas for Validation) - Alternative approach
 
 ## Review Reference
+
 - Code Simplicity Review Finding P1-1 (Duplicate Email Validation Logic)

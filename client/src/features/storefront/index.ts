@@ -37,11 +37,7 @@ export {
 } from './utils';
 
 // Export hooks
-export {
-  useTenant,
-  useTierDisplayName,
-  getTierDisplayNameWithFallback,
-} from './hooks';
+export { useTenant, useTierDisplayName, getTierDisplayNameWithFallback } from './hooks';
 
 // Export shared styles
 export { cardStyles } from './cardStyles';

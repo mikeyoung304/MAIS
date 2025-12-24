@@ -276,6 +276,7 @@ DATABASE_URL=postgresql://postgres.[REF]:[PASS]@aws-1-us-east-2.pooler.supabase.
 ```
 
 **Key differences:**
+
 - Hostname: `db.[REF].supabase.co` → `aws-1-[REGION].pooler.supabase.com`
 - Username: `postgres` → `postgres.[REF]`
 - Add: `?pgbouncer=true&connection_limit=5`

@@ -61,7 +61,11 @@ export function StorefrontSection() {
               <TierCard
                 name="Core"
                 tagline="Get booked consistently"
-                features={['Custom multi-page site', 'Optimized booking + deposit', 'Automated follow-ups']}
+                features={[
+                  'Custom multi-page site',
+                  'Optimized booking + deposit',
+                  'Automated follow-ups',
+                ]}
                 emphasized={true}
               />
             </div>
@@ -71,7 +75,11 @@ export function StorefrontSection() {
               <TierCard
                 name="Premium"
                 tagline="Get leverage"
-                features={['Offer & pricing refinement', 'Conversion optimization', 'Advanced automations']}
+                features={[
+                  'Offer & pricing refinement',
+                  'Conversion optimization',
+                  'Advanced automations',
+                ]}
                 emphasized={false}
               />
             </div>
@@ -83,7 +91,9 @@ export function StorefrontSection() {
           <p className="text-sm md:text-base text-text-muted">
             Need a new site? We&apos;ll build it. Already have one? We&apos;ll plug right in.
           </p>
-          <p className="text-sm text-text-primary/80">Your brand. Your bookings. Zero tech headaches.</p>
+          <p className="text-sm text-text-primary/80">
+            Your brand. Your bookings. Zero tech headaches.
+          </p>
         </div>
       </Container>
     </section>
@@ -127,7 +137,6 @@ function TierCard({ name, tagline, features, emphasized }: TierCardProps) {
           </li>
         ))}
       </ul>
-
     </div>
   );
 }

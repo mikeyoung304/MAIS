@@ -69,12 +69,14 @@ Verification Task (4 todos)
 When reviewing todos, distinguish between:
 
 **✅ Type A: Already Implemented**
+
 - Verify code exists and works
 - Cite file locations and line numbers (evidence)
 - Mark complete with "Verified in commit X"
 - No code changes needed
 
 Example - TODO-246:
+
 ```
 | Plan Says | Reality |
 |-----------|---------|
@@ -84,12 +86,14 @@ Example - TODO-246:
 ```
 
 **❌ Type B: Needs Implementation**
+
 - Identify what's missing
 - Propose solution with effort estimate
 - Mark as "pending" or "ready"
 - Add to sprint/backlog
 
 Example - TODO-234:
+
 ```
 Missing: EditableImage component
 Found: TenantStorefront expects component at /components/EditableImage.tsx
@@ -136,9 +140,11 @@ No implementation work needed.
 When reviewing a set of todos, categorize by effort/approach:
 
 #### Category 1: Verify Complete (5-15 min)
+
 Code exists and works. Just needs verification and documentation.
 
 **Examples from session:**
+
 - TODO-246: Backend endpoints exist → document in todo, close
 - TODO-247: Hook batching exists → verify in tests, close
 - TODO-248: Section exists → check component hierarchy, close
@@ -149,6 +155,7 @@ Code exists and works. Just needs verification and documentation.
 - TODO-261: Hook extraction already complete → cite hook files, close
 
 **Verification Checklist:**
+
 ```typescript
 // 1. Find code
 rg 'function useSomething|const useSomething' src/hooks/
@@ -168,9 +175,11 @@ npm test -- src/hooks/useSomething.test.ts
 **Effort:** 10-20 min per todo (parallel = 30-50 min total for 4 todos)
 
 #### Category 2: Quick Wins (20-45 min)
+
 Small, self-contained implementation with no architectural changes.
 
 **Examples from session:**
+
 - TODO-264: Create ErrorAlert component (20 min)
 - TODO-265: Add React.memo to StatusBadge and EmptyState (15 min)
 
@@ -205,15 +214,18 @@ Closes TODO-265.
 **Effort:** 2-5 min per todo when done in batch (10 quick wins = 20-30 min total)
 
 #### Category 3: Deferral (larger refactoring)
+
 Architectural changes requiring coordination, significant refactoring, or new endpoints.
 
 **Examples from session:**
+
 - TODO-234: EditableImage component + backend endpoints (4-6 hours)
 - TODO-235: Image upload endpoints (6-8 hours)
 - TODO-260: React Query integration (8-12 hours)
 - TODO-256: Simplify/reuse display components (6-8 hours)
 
 **Deferral Decision Checklist:**
+
 - [ ] Requires new files/endpoints (not just changes to existing)
 - [ ] Affects multiple features/routes
 - [ ] Needs new database tables/columns
@@ -288,6 +300,7 @@ Three dashboard components had identical error display markup:
 ```
 
 **Problems:**
+
 - DRY violation (3x duplication)
 - Maintenance risk (change requires 3 edits)
 - Inconsistent styling if patterns diverge
@@ -318,6 +331,7 @@ export function ErrorAlert({ message }: ErrorAlertProps) {
 ```
 
 **Key Features:**
+
 - Null-safe (returns null if no message)
 - Single responsibility
 - Reusable across all components
@@ -329,15 +343,17 @@ Replace in each component:
 
 ```tsx
 // BEFORE
-{error && (
-  <div className="p-4 bg-danger-50 border border-danger-100 rounded-xl flex items-start gap-3">
-    <AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
-    <span className="text-sm text-danger-700">{error}</span>
-  </div>
-)}
+{
+  error && (
+    <div className="p-4 bg-danger-50 border border-danger-100 rounded-xl flex items-start gap-3">
+      <AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+      <span className="text-sm text-danger-700">{error}</span>
+    </div>
+  );
+}
 
 // AFTER
-<ErrorAlert message={error} />
+<ErrorAlert message={error} />;
 ```
 
 ### Implementation Notes
@@ -357,6 +373,7 @@ Use this pattern whenever you see:
 - **Low likelihood of differentiation** between instances
 
 **Good candidates:**
+
 - Error/success messages
 - Empty states
 - Loading skeletons
@@ -364,6 +381,7 @@ Use this pattern whenever you see:
 - Status indicators
 
 **Don't extract:**
+
 - One-off unique components
 - Heavily customized per location
 - Tightly coupled to parent logic
@@ -420,6 +438,7 @@ export const StatusBadge = memo(({ ... }) => { ... });
 **2. When to Use React.memo**
 
 ✅ Use when:
+
 - Pure component (no side effects, no hooks except useMemo/useCallback)
 - Receives primitive props (strings, booleans, numbers) OR
 - Receives memoized object/function props (from useCallback/useMemo)
@@ -427,6 +446,7 @@ export const StatusBadge = memo(({ ... }) => { ... });
 - Parent re-renders frequently
 
 ❌ Don't use when:
+
 - Component has useState/useEffect (not pure)
 - Props change on every parent render
 - Parent is simple/low-render-frequency
@@ -547,6 +567,7 @@ async discardLandingPageDraft(tenantId: string): Promise<{ success: boolean }> {
 ```
 
 **Risks:**
+
 - User clicks "Discard Draft"
 - Network fails after READ but before WRITE
 - Draft remains partially intact
@@ -610,12 +631,14 @@ return await this.prisma.$transaction(async (tx) => {
 **2. When to Use Transactions**
 
 ✅ Use transactions when:
+
 - Read-then-write patterns (check then update)
 - Multiple tables must be updated together
 - Concurrent operations on same resource
 - Data consistency is critical
 
 Common patterns:
+
 - Discard draft: read current state, update with null draft
 - Create with dependent records: create parent, create children
 - Payment + booking: charge card, create booking (rollback both on failure)
@@ -750,6 +773,7 @@ For each P1 todo:
 ```
 
 Result:
+
 - 4 todos marked "complete" (already implemented)
 - 6 todos marked "ready" (quick wins)
 - 4 todos marked "pending" (defer)
@@ -849,6 +873,7 @@ rg "deferred_reason:" todos/ | cut -d: -f3 | sort | uniq -c | sort -rn
 ```
 
 Schedule review:
+
 - Weekly: Check if any deferred items should move up in priority
 - Monthly: Reassess effort estimates, dependencies
 - Quarterly: Complete or close deferred items
@@ -910,7 +935,7 @@ No action needed.
 
 ### Quick Win Template
 
-```yaml
+````yaml
 ---
 status: complete
 priority: pX
@@ -932,7 +957,7 @@ Size: ~LINES_CHANGED
 ```bash
 npm test -- FILE
 npm run typecheck
-```
+````
 
 ## Commit
 
@@ -943,7 +968,8 @@ Long description...
 
 Closes TODO-XXX
 ```
-```
+
+````
 
 ### Deferral Template
 
@@ -970,7 +996,7 @@ estimated_sprint: '2025-XX-XX'
 
 1. [First action]
 2. [Second action]
-```
+````
 
 ---
 
@@ -987,6 +1013,7 @@ This session established patterns for efficiently resolving todos through:
 7. **Deferral strategy** for larger features
 
 **These patterns reduce todo resolution from days to hours** by:
+
 - Parallelizing verification work
 - Batching small changes
 - Clearly documenting decisions

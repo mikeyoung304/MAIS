@@ -1,12 +1,12 @@
 ---
 status: wontfix
 priority: p3
-issue_id: "287"
+issue_id: '287'
 tags: [code-review, refactoring, architecture, code-quality]
 dependencies: []
-resolved_at: "2025-12-23"
+resolved_at: '2025-12-23'
 resolution: duplicate
-duplicate_of: "155"
+duplicate_of: '155'
 ---
 
 # BookingService Too Large (1,171 LOC) - SRP Violation
@@ -24,6 +24,7 @@ TODO-155 already tracks the BookingService refactoring work with the same scope 
 The BookingService is 1,171 lines of code handling 7+ responsibilities. This violates Single Responsibility Principle and makes the code hard to maintain and test.
 
 **Why it matters:**
+
 - Hard to understand full service behavior
 - Changes in one area risk breaking others
 - Testing requires mocking many dependencies
@@ -33,6 +34,7 @@ The BookingService is 1,171 lines of code handling 7+ responsibilities. This vio
 ## Findings
 
 ### Agent: code-simplicity-reviewer
+
 - **Location:** `server/src/services/booking.service.ts` (1,171 LOC)
 - **Responsibilities Found:**
   1. Wedding package bookings (DATE type)
@@ -46,6 +48,7 @@ The BookingService is 1,171 lines of code handling 7+ responsibilities. This vio
 ## Proposed Solutions
 
 ### Option A: Extract Domain-Specific Services (Recommended)
+
 **Description:** Split into focused services by domain
 
 ```
@@ -71,6 +74,7 @@ reminder.service.ts (100 LOC)
 **Risk:** Low
 
 ### Option B: Delete Unused TIMESLOT Code
+
 **Description:** If TIMESLOT bookings not in production, remove ~600 LOC
 
 **Effort:** Small (4 hours)
@@ -79,6 +83,7 @@ reminder.service.ts (100 LOC)
 ## Recommended Action
 
 Check production database: `SELECT COUNT(*) FROM bookings WHERE bookingType = 'TIMESLOT'`
+
 - If zero: Implement Option B (delete unused code)
 - If non-zero: Implement Option A (extract services)
 
@@ -91,8 +96,8 @@ Check production database: `SELECT COUNT(*) FROM bookings WHERE bookingType = 'T
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                             | Learnings                |
+| ---------- | ---------------------------------- | ------------------------ |
 | 2025-12-05 | Created from simplification review | Technical debt reduction |
 
 ## Resources

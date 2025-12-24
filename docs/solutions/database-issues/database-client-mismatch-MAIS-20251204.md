@@ -540,7 +540,7 @@ Questions? Ask in #architecture channel
 
 ### Code Review Comment Template
 
-```markdown
+````markdown
 ### Database Client Issue Detected
 
 This PR uses `supabase.from()` for database operations, which:
@@ -559,9 +559,11 @@ const { data } = await supabase.from('Tenant').select('*');
 // After ✅
 const data = await prisma.tenant.findMany();
 ```
+````
 
 See [Database Client Guide](../../docs/solutions/PREVENTION-STRATEGY-DATABASE-CLIENT-MISMATCH.md)
-```
+
+````
 
 ---
 
@@ -585,7 +587,7 @@ grep -r "supabase\.from(" server/src --include="*.ts" \
   | grep -v "storage" | wc -l
 
 # Expected output: 0 (zero findings)
-```
+````
 
 ---
 

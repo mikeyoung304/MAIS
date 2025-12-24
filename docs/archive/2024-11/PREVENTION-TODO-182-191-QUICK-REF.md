@@ -8,7 +8,6 @@ archived: 2025-12-04
 archived_reason: Sprint-specific documentation from November 2024
 ---
 
-
 > **ARCHIVED:** This document was archived on 2025-12-04 as part of the PREVENTION files migration (Phase 3).
 > This was sprint-specific documentation from November 2024.
 
@@ -18,6 +17,7 @@ archived_reason: Sprint-specific documentation from November 2024
 
 archived: 2025-12-04
 archived_reason: Sprint-specific documentation from November 2024
+
 ---
 
 ## 1. Information Disclosure (182)
@@ -48,6 +48,7 @@ const metrics = {
 
 archived: 2025-12-04
 archived_reason: Sprint-specific documentation from November 2024
+
 ---
 
 ## 2. Transaction Atomicity (183)
@@ -83,6 +84,7 @@ if (secretKey) logger.warn(`Secret Key: ${secretKey}`);
 
 archived: 2025-12-04
 archived_reason: Sprint-specific documentation from November 2024
+
 ---
 
 ## 3. Memory Leak - Event Systems (184)
@@ -117,6 +119,7 @@ unsub(); // Clean removal
 
 archived: 2025-12-04
 archived_reason: Sprint-specific documentation from November 2024
+
 ---
 
 ## 4. Type DRY Principle (185)
@@ -149,6 +152,7 @@ export type BookingStatus = z.infer<typeof BookingDtoSchema>['status'];
 
 archived: 2025-12-04
 archived_reason: Sprint-specific documentation from November 2024
+
 ---
 
 ## 5. Exhaustiveness Checking (186)
@@ -190,6 +194,7 @@ function getStatusVariant(status: BookingStatus): string {
 
 archived: 2025-12-04
 archived_reason: Sprint-specific documentation from November 2024
+
 ---
 
 ## 6. Documentation Requirements (187)
@@ -217,6 +222,7 @@ private readonly advisoryLockId = 42424242; // See docs/reference/ADVISORY_LOCKS
 
 archived: 2025-12-04
 archived_reason: Sprint-specific documentation from November 2024
+
 ---
 
 ## 7. React Hook Cleanup (188)
@@ -252,6 +258,7 @@ export function useConfirmDialog() {
 
 archived: 2025-12-04
 archived_reason: Sprint-specific documentation from November 2024
+
 ---
 
 ## 8. Test Coverage - Infrastructure (189)
@@ -278,6 +285,7 @@ server/test/type-safety-verification.ts (this is documentation, not a test!)
 
 archived: 2025-12-04
 archived_reason: Sprint-specific documentation from November 2024
+
 ---
 
 ## 9. Observability - Transaction Logging (190)
@@ -319,6 +327,7 @@ logger.info(
 
 archived: 2025-12-04
 archived_reason: Sprint-specific documentation from November 2024
+
 ---
 
 ## 10. File Organization (191)
@@ -345,6 +354,7 @@ archived_reason: Sprint-specific documentation from November 2024
 
 archived: 2025-12-04
 archived_reason: Sprint-specific documentation from November 2024
+
 ---
 
 ## Testing Each Category
@@ -426,6 +436,7 @@ describe('TODO 182-191 Prevention', () => {
 
 archived: 2025-12-04
 archived_reason: Sprint-specific documentation from November 2024
+
 ---
 
 ## Code Review Checklist (Copy-Paste)
@@ -496,6 +507,7 @@ archived_reason: Sprint-specific documentation from November 2024
 
 archived: 2025-12-04
 archived_reason: Sprint-specific documentation from November 2024
+
 ---
 
 ## Common Violations
@@ -572,6 +584,7 @@ find server/test -name "*.ts" -exec grep -l "Example\|Documentation" {} \;
 
 archived: 2025-12-04
 archived_reason: Sprint-specific documentation from November 2024
+
 ---
 
 ## Implementation Timeline
@@ -584,6 +597,7 @@ archived_reason: Sprint-specific documentation from November 2024
 
 archived: 2025-12-04
 archived_reason: Sprint-specific documentation from November 2024
+
 ---
 
 **Print this out and keep it on your desk!**

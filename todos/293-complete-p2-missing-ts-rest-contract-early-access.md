@@ -1,11 +1,11 @@
 ---
 status: resolved
 priority: p2
-issue_id: "293"
+issue_id: '293'
 tags: [code-review, architecture, type-safety, early-access]
 dependencies: []
 resolved_at: 2025-12-06
-resolution: "Added EarlyAccessRequestDtoSchema and EarlyAccessResponseDtoSchema to dto.ts, requestEarlyAccess contract to api.v1.ts, updated api.ts to use ts-rest client"
+resolution: 'Added EarlyAccessRequestDtoSchema and EarlyAccessResponseDtoSchema to dto.ts, requestEarlyAccess contract to api.v1.ts, updated api.ts to use ts-rest client'
 ---
 
 # Missing ts-rest Contract for Early Access Endpoint
@@ -33,6 +33,7 @@ api.requestEarlyAccess = async (email: string) => {
 ```
 
 **All other endpoints use ts-rest:**
+
 ```typescript
 // Example from packages/contracts/src/api.v1.ts
 tenantSignup: {
@@ -46,6 +47,7 @@ tenantSignup: {
 ## Proposed Solutions
 
 ### Option A: Add ts-rest Contract (Recommended)
+
 **Pros:** Type safety, consistent patterns, runtime validation via Zod
 **Cons:** Requires contract boilerplate
 **Effort:** Small (30 min)
@@ -81,6 +83,7 @@ Add contract definition and migrate to type-safe client.
 ## Technical Details
 
 **Affected files:**
+
 - `packages/contracts/src/dto.ts` (add schemas)
 - `packages/contracts/src/api.v1.ts` (add contract)
 - `client/src/lib/api.ts` (remove manual fetch)
@@ -95,8 +98,8 @@ Add contract definition and migrate to type-safe client.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                     |
+| ---------- | ------------------------ | --------------------------------------------- |
 | 2025-12-06 | Created from code review | Architecture agent identified type safety gap |
 
 ## Resources

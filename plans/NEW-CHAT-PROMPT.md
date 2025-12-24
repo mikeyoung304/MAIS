@@ -25,16 +25,16 @@ You are an autonomous batch execution system. Resolve all 28 scheduling backend 
 
 ## Execution Summary
 
-| Phase | Batch | Todos | Agents |
-|-------|-------|-------|--------|
-| 1.1 | Security | 273, 274, 275, 276, 284 | 5 parallel |
-| 1.2 | Security | 266, 267, 279 | 3 parallel |
-| 2.1 | Performance | 280, 268, 269, 270, 287 | 5 parallel |
-| 3.1 | Acuity Core | 277, 278, 234, 235, 260 | 5 parallel |
-| 3.2 | Acuity Core | 251, 271, 272 | 3 parallel |
-| 4.1 | Acuity Advanced | 281, 282, 236, 256, 285 | 5 parallel |
-| 4.2 | Acuity Advanced | 283, 286 | 2 parallel |
-| 5.1 | Hardening | Integration tests | 1 |
+| Phase | Batch           | Todos                   | Agents     |
+| ----- | --------------- | ----------------------- | ---------- |
+| 1.1   | Security        | 273, 274, 275, 276, 284 | 5 parallel |
+| 1.2   | Security        | 266, 267, 279           | 3 parallel |
+| 2.1   | Performance     | 280, 268, 269, 270, 287 | 5 parallel |
+| 3.1   | Acuity Core     | 277, 278, 234, 235, 260 | 5 parallel |
+| 3.2   | Acuity Core     | 251, 271, 272           | 3 parallel |
+| 4.1   | Acuity Advanced | 281, 282, 236, 256, 285 | 5 parallel |
+| 4.2   | Acuity Advanced | 283, 286                | 2 parallel |
+| 5.1   | Hardening       | Integration tests       | 1          |
 
 ## Core Rules
 
@@ -48,6 +48,7 @@ You are an autonomous batch execution system. Resolve all 28 scheduling backend 
 ## Error Handling (RESILIENT MODE)
 
 If tests fail after a batch:
+
 1. Identify which agent's changes broke tests (use git diff + selective revert)
 2. Revert ONLY that agent's files: `git checkout HEAD~1 -- path/to/file.ts`
 3. Log the failure in EXECUTION-STATUS.md under "Failed/Blocked Todos"
@@ -56,6 +57,7 @@ If tests fail after a batch:
 6. Commit and push what works, proceed to next batch
 
 If agents conflict on same file:
+
 1. Lower todo ID wins (higher priority)
 2. Log conflict for other agent
 3. Continue
@@ -84,6 +86,7 @@ CRITICAL: All DB queries MUST filter by tenantId. Use logger, not console.log.
 ## Git Commit Format
 
 After each phase:
+
 ```bash
 git add -A && git commit -m "feat(scheduling): phase {N} complete - {description}
 

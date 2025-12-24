@@ -62,7 +62,7 @@ export class StripeConnectWebhooksController {
     }
 
     logger.info(
-      { eventId: event.id, type: event.type, accountId: (event.account as string) },
+      { eventId: event.id, type: event.type, accountId: event.account as string },
       'Stripe Connect webhook received'
     );
 

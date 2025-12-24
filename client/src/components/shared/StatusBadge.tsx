@@ -67,7 +67,11 @@ function getVariantFromStatus(status: string): StatusVariant {
  * <StatusBadge status="custom" variant="success" />
  * ```
  */
-export const StatusBadge = memo(function StatusBadge({ status, variant, className }: StatusBadgeProps) {
+export const StatusBadge = memo(function StatusBadge({
+  status,
+  variant,
+  className,
+}: StatusBadgeProps) {
   const resolvedVariant = variant || getVariantFromStatus(status);
   const displayText = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
   const Icon = variantIcons[resolvedVariant];

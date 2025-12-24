@@ -365,10 +365,7 @@ export interface WebhookSubscriptionRepository {
   /**
    * Find active subscriptions for a specific event type
    */
-  findActiveByEvent(
-    tenantId: string,
-    eventType: string
-  ): Promise<WebhookSubscriptionForDelivery[]>;
+  findActiveByEvent(tenantId: string, eventType: string): Promise<WebhookSubscriptionForDelivery[]>;
 
   /**
    * Update webhook subscription
@@ -603,11 +600,7 @@ export interface CalendarProvider {
    * @param endDate - End of time range to check
    * @returns Array of busy time blocks, or empty array on error/not supported
    */
-  getBusyTimes?(
-    tenantId: string,
-    startDate: Date,
-    endDate: Date
-  ): Promise<BusyTimeBlock[]>;
+  getBusyTimes?(tenantId: string, startDate: Date, endDate: Date): Promise<BusyTimeBlock[]>;
 }
 
 /**

@@ -30,12 +30,12 @@ Auto-save features that debounce user input can lose data when saves fire out-of
 // BAD: No version tracking - last write wins (even if stale)
 const handleChange = async (field: string, value: string) => {
   setConfig({ ...config, [field]: value });
-  debouncedSave({ ...config, [field]: value });  // Closure captures stale config!
+  debouncedSave({ ...config, [field]: value }); // Closure captures stale config!
 };
 
 // BAD: Fire-and-forget without conflict detection
 const debouncedSave = debounce(async (data) => {
-  await api.saveDraft(data);  // No version check - overwrites blindly
+  await api.saveDraft(data); // No version check - overwrites blindly
 }, 1000);
 ```
 

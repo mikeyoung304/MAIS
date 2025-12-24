@@ -1,8 +1,11 @@
 # P2: ID vs Slug Impedance Mismatch
 
 ## Priority: P2 Important
+
 ## Status: pending
+
 ## Feature: DATE Booking Flow
+
 ## Category: Architecture
 
 ## Issue
@@ -71,4 +74,5 @@ When implementing `BookingService.createDateBooking()`, use ID consistently.
 - #305 (Layered Architecture Violation) - Could resolve this as part of that refactor
 
 ## Review Reference
+
 - Architecture Review Finding P2 (ID vs Slug Impedance Mismatch)

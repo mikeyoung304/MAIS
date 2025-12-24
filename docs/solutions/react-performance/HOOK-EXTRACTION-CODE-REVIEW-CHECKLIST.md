@@ -30,6 +30,7 @@ Use this checklist when reviewing PRs that extract custom hooks.
 - [ ] All types co-located in hook file or properly imported
 
 **Comment if issue:**
+
 ```markdown
 Hook location: Please move to `hooks/` directory and name as `use{Feature}.ts`
 ```
@@ -42,7 +43,8 @@ Hook location: Please move to `hooks/` directory and name as `use{Feature}.ts`
 - [ ] Comment documents return object structure (or references interface)
 
 **Comment if missing:**
-```markdown
+
+````markdown
 Please add JSDoc comment:
 
 ```typescript
@@ -59,7 +61,9 @@ Please add JSDoc comment:
  * return <Component status={manager.status} />;
  */
 ```
-```
+````
+
+````
 
 ### Type Definitions
 
@@ -80,8 +84,9 @@ export interface UseRemindersManagerResult {
   fetchStatus: () => Promise<void>;
   handleProcess: () => Promise<void>;
 }
-```
-```
+````
+
+````
 
 ---
 
@@ -104,7 +109,7 @@ State organization: Group related state together:
 - UI state: showDialog, expanded
 
 Currently they're scattered. Please group them.
-```
+````
 
 ### State Semantics
 
@@ -114,8 +119,10 @@ Currently they're scattered. Please group them.
 - [ ] Loading states are consistent (loading, isLoading, fetching)
 
 **Comment if issue:**
+
 ```markdown
 State naming: Use semantic names:
+
 - ❌ data → ✅ status or results
 - ❌ show → ✅ showDialog
 - ❌ err → ✅ error
@@ -136,7 +143,8 @@ State naming: Use semantic names:
 - [ ] Cleanup functions present if needed (FileReader, listeners, timers)
 
 **Comment if issue:**
-```markdown
+
+````markdown
 useEffect dependencies: ESLint is warning about missing dependency. Check:
 
 ```typescript
@@ -149,7 +157,9 @@ useEffect(() => {
   loadPackages();
 }, [activeTab, loadPackages]); // ← Add loadPackages
 ```
-```
+````
+
+````
 
 ### Callback Memoization
 
@@ -168,8 +178,9 @@ const handleSave = (data) => api.save(data);
 
 // ✅ This is stable
 const handleSave = useCallback((data) => api.save(data), []);
-```
-```
+````
+
+````
 
 ### Callback Dependencies
 
@@ -186,8 +197,9 @@ const handleSave = useCallback(async () => {
   // Implementation
 }, [status, loading, error, form, validation, api, logger, util]);
 // ↑ Too many! These should be part of hook state.
-```
-```
+````
+
+````
 
 ---
 
@@ -212,8 +224,9 @@ const grouped = segments.map(s => ({ ...s, packages: ... }));
 const grouped = useMemo(() =>
   segments.map(s => ({ ...s, packages: ... }))
 , [segments, packages]);
-```
-```
+````
+
+````
 
 ### API Call Optimization
 
@@ -236,8 +249,9 @@ const [p1, p2] = await Promise.all([
   api.getPackages(),
   api.getSegments(),
 ]);
-```
-```
+````
+
+````
 
 ---
 
@@ -260,8 +274,9 @@ setError('Failed');
 
 // ✅ Descriptive
 setError('Failed to save calendar configuration. Please try again.');
-```
-```
+````
+
+````
 
 ### Error Recovery
 
@@ -278,8 +293,9 @@ const handleRetry = useCallback(async () => {
   setError(null); // ← Clear error first
   const result = await api.retry();
 }, []);
-```
-```
+````
+
+````
 
 ---
 
@@ -301,7 +317,7 @@ Tests: Please add test file `hooks/useRemindersManager.test.ts` with tests for:
 - Edge cases
 
 Aim for 80%+ coverage.
-```
+````
 
 ### Test Coverage
 
@@ -312,8 +328,10 @@ Aim for 80%+ coverage.
 - [ ] Edge cases covered
 
 **Comment if incomplete:**
+
 ```markdown
 Test coverage: Please add tests for:
+
 - [ ] What happens when API returns 500?
 - [ ] What happens when network fails?
 - [ ] What if user closes dialog mid-save?
@@ -329,7 +347,8 @@ Test coverage: Please add tests for:
 - [ ] Tests are deterministic (no flakiness)
 
 **Comment if issue:**
-```markdown
+
+````markdown
 Test quality: Use proper async patterns:
 
 ```typescript
@@ -345,7 +364,9 @@ it('loads data', async () => {
   await waitFor(() => expect(result.current.data).toBeDefined());
 });
 ```
-```
+````
+
+````
 
 ---
 
@@ -367,11 +388,13 @@ git show HEAD:path/to/Component.tsx | wc -l
 git show HEAD~1:path/to/Component.tsx | wc -l
 
 # Should see 50%+ reduction
-```
+````
 
 **Comment if insufficient:**
+
 ```markdown
 Component simplification: Component is still too complex. After extraction:
+
 - Remove state management
 - Remove API calls
 - Remove business logic conditionals
@@ -388,7 +411,8 @@ Current: 200 lines, should be ~100 lines after full extraction.
 - [ ] Component JSX is clean and readable
 
 **Comment if issue:**
-```markdown
+
+````markdown
 Component clarity: Remove business logic:
 
 ```typescript
@@ -408,7 +432,9 @@ const handleSave = async () => {
 // ✅ All in hook, component just calls it
 const handleSave = () => manager.handleSaveConfig();
 ```
-```
+````
+
+````
 
 ---
 
@@ -436,8 +462,9 @@ function Component() {
 function Component() {
   return <ChildComponent useHook={useHook} />;
 }
-```
-```
+````
+
+````
 
 ### Props vs Hook Usage
 
@@ -458,8 +485,9 @@ export function RemindersCard() {
   const manager = useRemindersManager();
   // ...
 }
-```
-```
+````
+
+````
 
 ---
 
@@ -482,8 +510,9 @@ Documentation: Please add comment explaining why:
 // - Parallel loading is faster (no waterfall)
 // - Both endpoints are independent
 const [packages, segments] = await Promise.all([...]);
-```
-```
+````
+
+````
 
 ### README/Component Documentation
 
@@ -518,8 +547,9 @@ return (
     <button onClick={manager.handleProcess}>Process</button>
   </div>
 );
-```
-```
+````
+
+````
 
 ---
 
@@ -542,8 +572,9 @@ return { user, apiKey, password };
 
 // ✅ Only return needed data
 return { user: { id, email, name } };
-```
-```
+````
+
+````
 
 ### Validation
 
@@ -563,8 +594,9 @@ const handleFile = (file) => {
   }
   // Safe to process
 };
-```
-```
+````
+
+````
 
 ---
 
@@ -601,7 +633,7 @@ Before approving, verify:
 - [ ] ✅ Approve - All required items met
 - [ ] 🔄 Request Changes - Items marked above need fixes
 - [ ] 💬 Comment - Questions before approval
-```
+````
 
 ---
 

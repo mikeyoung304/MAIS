@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "268"
+issue_id: '268'
 tags: [code-review, backend-audit, google-calendar, events, sync]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 When a booking is cancelled, the corresponding Google Calendar event is not deleted. Events remain on the calendar even after cancellation, causing confusion for tenants who rely on Google Calendar for scheduling.
 
 **Why it matters:**
+
 - Calendar shows cancelled bookings as still scheduled
 - Tenants may double-book dates thinking they're busy
 - Manual calendar cleanup required
@@ -21,6 +22,7 @@ When a booking is cancelled, the corresponding Google Calendar event is not dele
 ## Findings
 
 ### Agent: backend-audit
+
 - **Location:** `server/src/di.ts` (event subscriptions), `server/src/services/google-calendar.service.ts`
 - **Evidence:** `BookingEvents.CANCELLED` not subscribed in `di.ts`; no `deleteAppointmentEvent` call on cancellation
 - **Impact:** MEDIUM - Calendar becomes out of sync with actual bookings
@@ -28,6 +30,7 @@ When a booking is cancelled, the corresponding Google Calendar event is not dele
 ## Proposed Solutions
 
 ### Option A: Add Cancellation Event Subscription (Recommended)
+
 **Description:** Subscribe to `BookingEvents.CANCELLED` and delete calendar event
 
 ```typescript
@@ -35,10 +38,7 @@ When a booking is cancelled, the corresponding Google Calendar event is not dele
 eventEmitter.subscribe(BookingEvents.CANCELLED, async (payload) => {
   try {
     if (payload.googleEventId) {
-      await googleCalendarService.deleteAppointmentEvent(
-        payload.tenantId,
-        payload.googleEventId
-      );
+      await googleCalendarService.deleteAppointmentEvent(payload.tenantId, payload.googleEventId);
       logger.info(
         { bookingId: payload.bookingId, googleEventId: payload.googleEventId },
         'Deleted calendar event for cancelled booking'
@@ -58,13 +58,16 @@ eventEmitter.subscribe(BookingEvents.CANCELLED, async (payload) => {
 **Risk:** Low
 
 ### Option B: Batch Calendar Sync Job
+
 **Description:** Periodic job to reconcile calendar events with booking status
 
 **Pros:**
+
 - Catches any missed deletions
 - Handles edge cases
 
 **Cons:**
+
 - Not real-time
 - More complex implementation
 
@@ -78,10 +81,12 @@ Implement Option A - event-driven deletion is simpler and consistent with existi
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/di.ts` - Add `BookingEvents.CANCELLED` subscription
 - `server/src/lib/core/events.ts` - Verify `CANCELLED` event payload includes `googleEventId`
 
 **Prerequisites:**
+
 - Ensure `googleEventId` is stored in booking record (already implemented in `BookingRepository.updateGoogleEventId`)
 - Ensure cancellation event payload includes `googleEventId`
 
@@ -95,8 +100,8 @@ Implement Option A - event-driven deletion is simpler and consistent with existi
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                     | Learnings                                 |
+| ---------- | -------------------------- | ----------------------------------------- |
 | 2025-12-05 | Created from backend audit | Completes one-way calendar sync lifecycle |
 
 ## Resources

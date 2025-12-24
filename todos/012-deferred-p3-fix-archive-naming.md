@@ -6,7 +6,7 @@ tags: [documentation, archive, compliance]
 dependencies: ['001', '002', '005', '006']
 deferred_until: '2026-Q1'
 deferred_reason: 'Batch migration of 220+ files requires dedicated documentation cleanup sprint'
-resolved_at: "2025-12-23"
+resolved_at: '2025-12-23'
 resolution: yagni
 ---
 

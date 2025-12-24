@@ -1,8 +1,11 @@
 # P2: Missing Validation of package.active Status
 
 ## Priority: P2 Important
+
 ## Status: ready
+
 ## Feature: DATE Booking Flow
+
 ## Category: Data Integrity
 
 ## Issue
@@ -56,16 +59,17 @@ if (!pkg.active) {
 - Deactivate a package and try to book it
 - Verify appropriate error message is returned
 
-
-
 ## Work Log
 
 ### 2025-12-21 - Approved for Work
+
 **By:** Claude Triage System
 **Actions:**
+
 - Issue approved during triage session (bulk approval)
 - Status changed from pending → ready
 - Ready to be picked up and worked on
 
 ## Review Reference
+
 - Data Integrity Review Finding P2-001 (Missing validation of package.active)

@@ -34,15 +34,15 @@ Currently, tenants cannot customize their landing pages without manual database 
 
 All endpoints are implemented at `server/src/routes/tenant-admin-landing-page.routes.ts`:
 
-| Endpoint | Method | Status | Description |
-|----------|--------|--------|-------------|
-| `/v1/tenant-admin/landing-page` | GET | ✅ Complete | Get published config |
-| `/v1/tenant-admin/landing-page` | PUT | ✅ Complete | Update full config |
-| `/v1/tenant-admin/landing-page/sections` | PATCH | ✅ Complete | Toggle section visibility |
-| `/v1/tenant-admin/landing-page/draft` | GET | ✅ Complete | Get draft + published config |
-| `/v1/tenant-admin/landing-page/draft` | PUT | ✅ Complete | Save draft (auto-save target) |
-| `/v1/tenant-admin/landing-page/publish` | POST | ✅ Complete | Publish draft to live |
-| `/v1/tenant-admin/landing-page/draft` | DELETE | ✅ Complete | Discard draft |
+| Endpoint                                 | Method | Status      | Description                   |
+| ---------------------------------------- | ------ | ----------- | ----------------------------- |
+| `/v1/tenant-admin/landing-page`          | GET    | ✅ Complete | Get published config          |
+| `/v1/tenant-admin/landing-page`          | PUT    | ✅ Complete | Update full config            |
+| `/v1/tenant-admin/landing-page/sections` | PATCH  | ✅ Complete | Toggle section visibility     |
+| `/v1/tenant-admin/landing-page/draft`    | GET    | ✅ Complete | Get draft + published config  |
+| `/v1/tenant-admin/landing-page/draft`    | PUT    | ✅ Complete | Save draft (auto-save target) |
+| `/v1/tenant-admin/landing-page/publish`  | POST   | ✅ Complete | Publish draft to live         |
+| `/v1/tenant-admin/landing-page/draft`    | DELETE | ✅ Complete | Discard draft                 |
 
 ### Existing Repository Methods
 
@@ -60,6 +60,7 @@ All contracts defined at `packages/contracts/src/tenant-admin/landing-page.contr
 ### Database Schema
 
 Uses nested JSON wrapper in `Tenant.landingPageConfig`:
+
 ```typescript
 {
   draft: LandingPageConfig | null,
@@ -472,9 +473,7 @@ export const SECTION_DEFAULTS = {
   },
   gallery: {
     headline: 'Our Gallery',
-    images: [
-      { url: 'https://via.placeholder.com/600x400', alt: 'Sample image' },
-    ],
+    images: [{ url: 'https://via.placeholder.com/600x400', alt: 'Sample image' }],
     instagramHandle: undefined,
   },
   faq: {
@@ -714,13 +713,13 @@ export function EditorToolbar({
 
 ## Risk Analysis & Mitigation
 
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|------------|------------|
-| Draft data loss on browser crash | Medium | Low | localStorage backup (TODO-253) |
-| Race conditions during rapid editing | High | Medium | Batching + saveInProgress flag (TODO-247) |
-| Concurrent editing conflicts | Low | Low | localStorage tab warning (TODO-242) |
-| Large image uploads slow editor | Medium | Medium | Aspect-ratio containers, loading states |
-| Large config payloads exceed 500ms | Medium | Medium | Accept for MVP, optimize later (TODO-250) |
+| Risk                                 | Impact | Likelihood | Mitigation                                |
+| ------------------------------------ | ------ | ---------- | ----------------------------------------- |
+| Draft data loss on browser crash     | Medium | Low        | localStorage backup (TODO-253)            |
+| Race conditions during rapid editing | High   | Medium     | Batching + saveInProgress flag (TODO-247) |
+| Concurrent editing conflicts         | Low    | Low        | localStorage tab warning (TODO-242)       |
+| Large image uploads slow editor      | Medium | Medium     | Aspect-ratio containers, loading states   |
+| Large config payloads exceed 500ms   | Medium | Medium     | Accept for MVP, optimize later (TODO-250) |
 
 ---
 
@@ -765,13 +764,13 @@ server/src/routes/tenant-admin-landing-page.routes.ts # Add rate limiting (TODO-
 
 ## Estimated Effort
 
-| Phase | Duration | Notes |
-|-------|----------|-------|
-| Phase 1: Core Infrastructure | 1-2 days | Route, layout, sidebar, hook with batching |
-| Phase 2: Editable Sections | 2-3 days | 8 section components, EditableImage, EditableList |
-| Phase 3: API Integration | 0.5-1 day | Wire to existing backend, localStorage backup |
-| Phase 4: Polish & Testing | 1 day | E2E tests, edge cases, error handling |
-| **Total** | **4.5-7 days** | Reduced from 5-9 days (backend already complete) |
+| Phase                        | Duration       | Notes                                             |
+| ---------------------------- | -------------- | ------------------------------------------------- |
+| Phase 1: Core Infrastructure | 1-2 days       | Route, layout, sidebar, hook with batching        |
+| Phase 2: Editable Sections   | 2-3 days       | 8 section components, EditableImage, EditableList |
+| Phase 3: API Integration     | 0.5-1 day      | Wire to existing backend, localStorage backup     |
+| Phase 4: Polish & Testing    | 1 day          | E2E tests, edge cases, error handling             |
+| **Total**                    | **4.5-7 days** | Reduced from 5-9 days (backend already complete)  |
 
 ---
 

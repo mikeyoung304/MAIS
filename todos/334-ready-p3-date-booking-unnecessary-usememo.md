@@ -1,8 +1,11 @@
 # P3: Unnecessary useMemo in DateBookingWizard
 
 ## Priority: P3 Nice-to-have
+
 ## Status: ready
+
 ## Feature: DATE Booking Flow
+
 ## Category: Performance
 
 ## Issue
@@ -22,8 +25,8 @@ const steps: Step[] = useMemo(() => {
 
   return stepList.map((step, index) => ({
     ...step,
-    status: index < currentStepIndex ? 'complete' :
-            index === currentStepIndex ? 'current' : 'upcoming',
+    status:
+      index < currentStepIndex ? 'complete' : index === currentStepIndex ? 'current' : 'upcoming',
   }));
 }, [currentStepIndex]);
 ```
@@ -42,23 +45,23 @@ const STEP_LABELS = ['Confirm', 'Date', 'Details', 'Pay'];
 
 const steps: Step[] = STEP_LABELS.map((label, index) => ({
   label,
-  status: index < currentStepIndex ? 'complete'
-        : index === currentStepIndex ? 'current'
-        : 'upcoming'
+  status:
+    index < currentStepIndex ? 'complete' : index === currentStepIndex ? 'current' : 'upcoming',
 }));
 ```
-
-
 
 ## Work Log
 
 ### 2025-12-21 - Approved for Work
+
 **By:** Claude Triage System
 **Actions:**
+
 - Issue approved during triage session (bulk approval)
 - Status changed from pending → ready
 - Ready to be picked up and worked on
 
 ## Review Reference
+
 - Performance Review Finding P3 (Unused Callback useMemo)
 - Code Simplicity Review Finding P3-10 (Over-Engineered Steps Array)

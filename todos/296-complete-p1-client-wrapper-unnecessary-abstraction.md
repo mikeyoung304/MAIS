@@ -1,11 +1,11 @@
 ---
 status: resolved
 priority: p1
-issue_id: "296"
+issue_id: '296'
 tags: [code-review, architecture, simplification, early-access]
 dependencies: []
 resolved_at: 2025-12-06
-resolution: "Removed api.requestEarlyAccess wrapper from api.ts, updated WaitlistCTASection.tsx to call ts-rest contract directly with proper type inference"
+resolution: 'Removed api.requestEarlyAccess wrapper from api.ts, updated WaitlistCTASection.tsx to call ts-rest contract directly with proper type inference'
 ---
 
 # Unnecessary Client Wrapper Defeats Type Safety
@@ -29,12 +29,13 @@ api.requestEarlyAccess = async (email: string) => {
 
   return {
     status: result.status,
-    body: result.body as { message: string } | { error: string } | null,  // TYPE CAST!
+    body: result.body as { message: string } | { error: string } | null, // TYPE CAST!
   };
 };
 ```
 
 **Problems:**
+
 1. `as ReturnType<typeof initClient>` type cast bypasses TypeScript checking
 2. `as { message: string } | { error: string } | null` - manual type loses Zod inference
 3. Wrapper adds no value - just passes through the ts-rest call
@@ -43,6 +44,7 @@ api.requestEarlyAccess = async (email: string) => {
 ## Proposed Solutions
 
 ### Option A: Remove Wrapper, Call Contract Directly (Recommended)
+
 **Pros:** Simplest, uses ts-rest type inference
 **Cons:** Requires updating calling code
 **Effort:** Small (30 min)
@@ -60,6 +62,7 @@ if (result.status === 200) {
 ```
 
 ### Option B: Fix Wrapper Types with Proper Inference
+
 **Pros:** Keeps API surface consistent
 **Cons:** Still an unnecessary layer
 **Effort:** Small (15 min)
@@ -79,6 +82,7 @@ Implement Option A - remove wrapper entirely, update component to call contract 
 ## Technical Details
 
 **Affected files:**
+
 - `client/src/lib/api.ts` (lines 218-232)
 - `client/src/pages/Home/WaitlistCTASection.tsx` (line 26)
 
@@ -92,8 +96,8 @@ Implement Option A - remove wrapper entirely, update component to call contract 
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                              |
+| ---------- | ------------------------ | ------------------------------------------------------ |
 | 2025-12-06 | Created from code review | Simplicity-reviewer identified unnecessary abstraction |
 
 ## Resources

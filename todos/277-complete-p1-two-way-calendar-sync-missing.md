@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "277"
+issue_id: '277'
 tags: [code-review, feature-gap, calendar, google-calendar, acuity-parity]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 MAIS only has ONE-WAY calendar sync (MAIS -> Google Calendar). Acuity has TWO-WAY sync that reads busy times FROM Google Calendar to block availability. This is a critical feature gap for service providers who manage their schedule in Google Calendar.
 
 **Why it matters:**
+
 - Providers with existing Google Calendar events will show as "available" in MAIS
 - Double-bookings across MAIS and external calendar appointments
 - Users EXPECT Acuity-like behavior from any scheduling tool
@@ -21,6 +22,7 @@ MAIS only has ONE-WAY calendar sync (MAIS -> Google Calendar). Acuity has TWO-WA
 ## Findings
 
 ### Agent: architecture-strategist
+
 - **Location:** `server/src/services/google-calendar.service.ts` (193 LOC)
 - **Evidence:** Only `createAppointmentEvent()` and `cancelAppointmentEvent()` methods exist
 - **Missing:** No `getBusyTimes()` or `checkAvailability()` method
@@ -28,17 +30,18 @@ MAIS only has ONE-WAY calendar sync (MAIS -> Google Calendar). Acuity has TWO-WA
 
 ### Current vs Expected:
 
-| Capability | Acuity | MAIS |
-|------------|--------|------|
-| Create events in Google | Yes | Yes |
-| Delete events in Google | Yes | Yes |
-| Read busy times from Google | Yes | **NO** |
-| Block availability from Google events | Yes | **NO** |
-| Sync multiple calendars | Yes | **NO** |
+| Capability                            | Acuity | MAIS   |
+| ------------------------------------- | ------ | ------ |
+| Create events in Google               | Yes    | Yes    |
+| Delete events in Google               | Yes    | Yes    |
+| Read busy times from Google           | Yes    | **NO** |
+| Block availability from Google events | Yes    | **NO** |
+| Sync multiple calendars               | Yes    | **NO** |
 
 ## Proposed Solutions
 
 ### Option A: Google Calendar FreeBusy API Integration (Recommended)
+
 **Description:** Use Google Calendar FreeBusy API to check availability before showing slots
 
 ```typescript
@@ -78,11 +81,13 @@ async getAvailableSlots(...) {
 ```
 
 **Pros:**
+
 - Single API call for entire day's busy times
 - Efficient (FreeBusy is faster than listing events)
 - Achieves Acuity parity for basic sync
 
 **Cons:**
+
 - Adds latency to availability checks (~200-500ms)
 - Requires caching strategy for performance
 - Google Calendar credentials required per tenant
@@ -91,12 +96,14 @@ async getAvailableSlots(...) {
 **Risk:** Medium (API rate limits, latency)
 
 ### Option B: Background Sync with Cache
+
 **Description:** Periodically sync Google Calendar events to local database
 
 **Effort:** Very Large (1-2 weeks)
 **Risk:** High (eventual consistency, cache invalidation)
 
 ### Option C: Webhook-Based Real-Time Sync
+
 **Description:** Use Google Calendar push notifications for instant updates
 
 **Effort:** Very Large (1-2 weeks)
@@ -109,12 +116,14 @@ Implement Option A first for MVP parity, then evaluate Options B/C based on perf
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/services/google-calendar.service.ts`
 - `server/src/services/scheduling-availability.service.ts`
 - `server/src/lib/ports.ts` (add interface)
 
 **Schema Changes:**
 Consider caching busy times:
+
 ```prisma
 model CalendarBusyTime {
   id        String   @id @default(cuid())
@@ -129,6 +138,7 @@ model CalendarBusyTime {
 ```
 
 **Performance Consideration:**
+
 - Cache busy times for 5 minutes
 - Prefetch next 7 days on tenant dashboard load
 - Lazy load on specific date selection
@@ -145,9 +155,9 @@ model CalendarBusyTime {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2025-12-05 | Created from Acuity comparison | #1 feature gap for scheduling tools |
+| Date       | Action                              | Learnings                                                                                                                                                                                                              |
+| ---------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-12-05 | Created from Acuity comparison      | #1 feature gap for scheduling tools                                                                                                                                                                                    |
 | 2025-12-06 | Implemented Option A (FreeBusy API) | Added `getBusyTimes()` to CalendarProvider interface, GoogleCalendarSyncAdapter, GoogleCalendarService. Integrated with SchedulingAvailabilityService with 5-minute caching. All tests pass with graceful degradation. |
 
 ## Resources

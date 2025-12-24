@@ -19,6 +19,7 @@ Schema drift caused **189 test failures** by creating an inconsistency between `
 4. **Test Configuration** - Ensure all test environments have complete configuration
 
 The previous incident had three independent failures:
+
 - Empty migration directory created without `migration.sql` inside
 - Database missing `landingPageConfig` column that schema expected
 - Test configurations missing `DATABASE_CONNECTION_LIMIT` (causing "undefined" in connection strings)
@@ -299,312 +300,312 @@ echo "To manually install: bash scripts/install-hooks.sh"
 
 Add to `.github/workflows/main-pipeline.yml`:
 
-```yaml
-  # Schema Drift Detection Job
-  schema-validation:
-    name: Schema Consistency Check
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    if: github.event_name == 'pull_request' || contains(github.ref, 'refs/heads/main')
+````yaml
+# Schema Drift Detection Job
+schema-validation:
+  name: Schema Consistency Check
+  runs-on: ubuntu-latest
+  timeout-minutes: 5
+  if: github.event_name == 'pull_request' || contains(github.ref, 'refs/heads/main')
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+    - name: Install dependencies
+      run: npm ci
 
-      - name: Validate schema.prisma syntax
-        run: |
-          cd server
-          npx prisma validate --schema=./prisma/schema.prisma
+    - name: Validate schema.prisma syntax
+      run: |
+        cd server
+        npx prisma validate --schema=./prisma/schema.prisma
 
-      - name: Check for empty migrations
-        run: |
-          cd server
+    - name: Check for empty migrations
+      run: |
+        cd server
 
-          echo "🔍 Checking for empty migration directories..."
+        echo "🔍 Checking for empty migration directories..."
 
-          # Count empty migration directories
-          empty_count=0
-          while IFS= read -r migration_dir; do
-            if [ -z "$(find "$migration_dir" -type f)" ]; then
-              echo "❌ Empty migration directory: $migration_dir"
-              ((empty_count++))
-            fi
-          done < <(find prisma/migrations -maxdepth 1 -type d ! -name migrations)
+        # Count empty migration directories
+        empty_count=0
+        while IFS= read -r migration_dir; do
+          if [ -z "$(find "$migration_dir" -type f)" ]; then
+            echo "❌ Empty migration directory: $migration_dir"
+            ((empty_count++))
+          fi
+        done < <(find prisma/migrations -maxdepth 1 -type d ! -name migrations)
 
-          if [ $empty_count -gt 0 ]; then
-            echo "FAILED: $empty_count empty migration directories found"
+        if [ $empty_count -gt 0 ]; then
+          echo "FAILED: $empty_count empty migration directories found"
+          exit 1
+        fi
+
+        echo "✅ No empty migration directories"
+
+    - name: Check for empty migration files
+      run: |
+        cd server
+
+        echo "🔍 Checking for empty migration SQL files..."
+
+        # Check .sql files in root migrations directory
+        for file in prisma/migrations/*.sql; do
+          if [ -f "$file" ] && [ ! -s "$file" ]; then
+            echo "❌ Empty SQL file: $file"
             exit 1
           fi
+        done
 
-          echo "✅ No empty migration directories"
-
-      - name: Check for empty migration files
-        run: |
-          cd server
-
-          echo "🔍 Checking for empty migration SQL files..."
-
-          # Check .sql files in root migrations directory
-          for file in prisma/migrations/*.sql; do
-            if [ -f "$file" ] && [ ! -s "$file" ]; then
-              echo "❌ Empty SQL file: $file"
-              exit 1
-            fi
-          done
-
-          # Check migration.sql in timestamped directories
-          for file in prisma/migrations/*/migration.sql; do
-            if [ -f "$file" ] && [ ! -s "$file" ]; then
-              echo "❌ Empty migration.sql: $file"
-              exit 1
-            fi
-          done
-
-          echo "✅ All migration files have content"
-
-      - name: Verify required database models
-        run: |
-          cd server
-
-          echo "🔍 Verifying required database models..."
-
-          schema_file="prisma/schema.prisma"
-          required_models=("Tenant" "User" "Package" "Booking" "Customer" "Service")
-
-          for model in "${required_models[@]}"; do
-            if ! grep -q "^model $model " "$schema_file"; then
-              echo "❌ Missing required model: $model"
-              exit 1
-            fi
-          done
-
-          echo "✅ All required models present"
-
-      - name: Verify tenant isolation patterns
-        run: |
-          cd server
-
-          echo "🔍 Verifying tenant isolation patterns..."
-
-          schema_file="prisma/schema.prisma"
-          multi_tenant_models=("Package" "Booking" "Customer" "Venue" "Service")
-
-          for model in "${multi_tenant_models[@]}"; do
-            if grep -q "^model $model " "$schema_file"; then
-              model_block=$(sed -n "/^model $model /,/^}/p" "$schema_file")
-
-              if ! echo "$model_block" | grep -q "tenantId.*String"; then
-                echo "⚠️ WARNING: $model missing tenantId field"
-                echo "   This may compromise multi-tenant isolation"
-              fi
-            fi
-          done
-
-          echo "✅ Tenant isolation check complete"
-
-      - name: Compare schema and migrations
-        run: |
-          cd server
-
-          echo "🔍 Checking for schema drift between migrations and schema.prisma..."
-
-          # Get count of migration files
-          migration_count=$(find prisma/migrations -type f \( -name "*.sql" -o -name "migration.sql" \) | wc -l)
-          echo "Found $migration_count migration files"
-
-          # Basic sanity check: schema file should be recent if migrations were recent
-          schema_mtime=$(stat -f '%m' prisma/schema.prisma 2>/dev/null || stat -c '%Y' prisma/schema.prisma 2>/dev/null)
-          echo "Schema last modified: $(date -r $schema_mtime 2>/dev/null || date)"
-
-          if [ $migration_count -eq 0 ]; then
-            echo "⚠️ WARNING: No migration files found. First deployment?"
+        # Check migration.sql in timestamped directories
+        for file in prisma/migrations/*/migration.sql; do
+          if [ -f "$file" ] && [ ! -s "$file" ]; then
+            echo "❌ Empty migration.sql: $file"
+            exit 1
           fi
+        done
 
-          echo "✅ Schema drift check complete"
+        echo "✅ All migration files have content"
 
-      - name: Comment PR on schema validation failure
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '❌ **Schema consistency check failed**\n\n' +
-                    'Please fix schema or migration issues:\n' +
-                    '```bash\n' +
-                    '# Check for problems\n' +
-                    'cd server && npx prisma validate\n' +
-                    '\n' +
-                    '# Create missing migration if needed\n' +
-                    'npm exec prisma migrate dev --name descriptive_name\n' +
-                    '```\n\n' +
-                    'See `docs/solutions/database-issues/SCHEMA_DRIFT_PREVENTION_COMPREHENSIVE.md`'
-            })
-```
+    - name: Verify required database models
+      run: |
+        cd server
+
+        echo "🔍 Verifying required database models..."
+
+        schema_file="prisma/schema.prisma"
+        required_models=("Tenant" "User" "Package" "Booking" "Customer" "Service")
+
+        for model in "${required_models[@]}"; do
+          if ! grep -q "^model $model " "$schema_file"; then
+            echo "❌ Missing required model: $model"
+            exit 1
+          fi
+        done
+
+        echo "✅ All required models present"
+
+    - name: Verify tenant isolation patterns
+      run: |
+        cd server
+
+        echo "🔍 Verifying tenant isolation patterns..."
+
+        schema_file="prisma/schema.prisma"
+        multi_tenant_models=("Package" "Booking" "Customer" "Venue" "Service")
+
+        for model in "${multi_tenant_models[@]}"; do
+          if grep -q "^model $model " "$schema_file"; then
+            model_block=$(sed -n "/^model $model /,/^}/p" "$schema_file")
+
+            if ! echo "$model_block" | grep -q "tenantId.*String"; then
+              echo "⚠️ WARNING: $model missing tenantId field"
+              echo "   This may compromise multi-tenant isolation"
+            fi
+          fi
+        done
+
+        echo "✅ Tenant isolation check complete"
+
+    - name: Compare schema and migrations
+      run: |
+        cd server
+
+        echo "🔍 Checking for schema drift between migrations and schema.prisma..."
+
+        # Get count of migration files
+        migration_count=$(find prisma/migrations -type f \( -name "*.sql" -o -name "migration.sql" \) | wc -l)
+        echo "Found $migration_count migration files"
+
+        # Basic sanity check: schema file should be recent if migrations were recent
+        schema_mtime=$(stat -f '%m' prisma/schema.prisma 2>/dev/null || stat -c '%Y' prisma/schema.prisma 2>/dev/null)
+        echo "Schema last modified: $(date -r $schema_mtime 2>/dev/null || date)"
+
+        if [ $migration_count -eq 0 ]; then
+          echo "⚠️ WARNING: No migration files found. First deployment?"
+        fi
+
+        echo "✅ Schema drift check complete"
+
+    - name: Comment PR on schema validation failure
+      if: failure() && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '❌ **Schema consistency check failed**\n\n' +
+                  'Please fix schema or migration issues:\n' +
+                  '```bash\n' +
+                  '# Check for problems\n' +
+                  'cd server && npx prisma validate\n' +
+                  '\n' +
+                  '# Create missing migration if needed\n' +
+                  'npm exec prisma migrate dev --name descriptive_name\n' +
+                  '```\n\n' +
+                  'See `docs/solutions/database-issues/SCHEMA_DRIFT_PREVENTION_COMPREHENSIVE.md`'
+          })
+````
 
 ### 2.2 Migration Testing Job
 
 Add to `.github/workflows/main-pipeline.yml`:
 
-```yaml
-  # Migration Dry-Run Testing
-  migration-dry-run:
-    name: Migration Dry-Run Test
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    if: github.event_name == 'pull_request'
+````yaml
+# Migration Dry-Run Testing
+migration-dry-run:
+  name: Migration Dry-Run Test
+  runs-on: ubuntu-latest
+  timeout-minutes: 10
+  if: github.event_name == 'pull_request'
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: mais_migration_dryrun
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+  services:
+    postgres:
+      image: postgres:16
+      env:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: mais_migration_dryrun
+      ports:
+        - 5432:5432
+      options: >-
+        --health-cmd pg_isready
+        --health-interval 10s
+        --health-timeout 5s
+        --health-retries 5
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+    - name: Install dependencies
+      run: npm ci
 
-      - name: Dry-run migrations on clean database
-        run: |
-          cd server
-          npx prisma migrate deploy --schema=./prisma/schema.prisma
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_migration_dryrun
-          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_migration_dryrun
+    - name: Dry-run migrations on clean database
+      run: |
+        cd server
+        npx prisma migrate deploy --schema=./prisma/schema.prisma
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_migration_dryrun
+        DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_migration_dryrun
 
-      - name: Generate Prisma Client
-        run: npm run --workspace=server prisma:generate
+    - name: Generate Prisma Client
+      run: npm run --workspace=server prisma:generate
 
-      - name: Verify schema matches database
-        run: |
-          cd server
+    - name: Verify schema matches database
+      run: |
+        cd server
 
-          # Introspect database to check for drift
-          npx prisma db pull --schema=./prisma/schema.prisma --force 2>&1 | head -50
+        # Introspect database to check for drift
+        npx prisma db pull --schema=./prisma/schema.prisma --force 2>&1 | head -50
 
-          # Check if schema changed (would indicate drift)
-          if git diff --quiet prisma/schema.prisma; then
-            echo "✅ Schema matches database"
-          else
-            echo "⚠️ Warning: Schema changes detected after introspection"
-            git diff prisma/schema.prisma | head -20
-          fi
+        # Check if schema changed (would indicate drift)
+        if git diff --quiet prisma/schema.prisma; then
+          echo "✅ Schema matches database"
+        else
+          echo "⚠️ Warning: Schema changes detected after introspection"
+          git diff prisma/schema.prisma | head -20
+        fi
 
-      - name: Report migration issues
-        if: failure()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '❌ **Migration dry-run failed**\n\n' +
-                    'One or more migrations failed on a clean database.\n\n' +
-                    'This indicates:\n' +
-                    '1. Migration SQL has syntax errors\n' +
-                    '2. Migrations depend on missing data\n' +
-                    '3. Schema drift in migrations directory\n\n' +
-                    'Run locally to debug:\n' +
-                    '```bash\n' +
-                    'cd server && npx prisma migrate deploy\n' +
-                    '```'
-            })
-```
+    - name: Report migration issues
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '❌ **Migration dry-run failed**\n\n' +
+                  'One or more migrations failed on a clean database.\n\n' +
+                  'This indicates:\n' +
+                  '1. Migration SQL has syntax errors\n' +
+                  '2. Migrations depend on missing data\n' +
+                  '3. Schema drift in migrations directory\n\n' +
+                  'Run locally to debug:\n' +
+                  '```bash\n' +
+                  'cd server && npx prisma migrate deploy\n' +
+                  '```'
+          })
+````
 
 ### 2.3 Environment Configuration Validation
 
 Add validation to `main-pipeline.yml` for environment configs:
 
 ```yaml
-  # Environment Configuration Check
-  env-config-validation:
-    name: Environment Configuration Check
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+# Environment Configuration Check
+env-config-validation:
+  name: Environment Configuration Check
+  runs-on: ubuntu-latest
+  timeout-minutes: 5
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Validate .env.example consistency
-        run: |
-          echo "🔍 Checking environment variable consistency..."
+    - name: Validate .env.example consistency
+      run: |
+        echo "🔍 Checking environment variable consistency..."
 
-          # Required database connection variables
-          required_env_vars=(
-            "DATABASE_URL"
-            "DIRECT_URL"
-            "DATABASE_CONNECTION_LIMIT"
-            "JWT_SECRET"
-            "TENANT_SECRETS_ENCRYPTION_KEY"
-          )
+        # Required database connection variables
+        required_env_vars=(
+          "DATABASE_URL"
+          "DIRECT_URL"
+          "DATABASE_CONNECTION_LIMIT"
+          "JWT_SECRET"
+          "TENANT_SECRETS_ENCRYPTION_KEY"
+        )
 
-          missing_vars=()
-          for var in "${required_env_vars[@]}"; do
-            if ! grep -q "$var" server/.env.example; then
-              missing_vars+=("$var")
-            fi
-          done
+        missing_vars=()
+        for var in "${required_env_vars[@]}"; do
+          if ! grep -q "$var" server/.env.example; then
+            missing_vars+=("$var")
+          fi
+        done
 
-          if [ ${#missing_vars[@]} -gt 0 ]; then
-            echo "❌ Missing environment variables in .env.example:"
-            printf '  - %s\n' "${missing_vars[@]}"
-            exit 1
+        if [ ${#missing_vars[@]} -gt 0 ]; then
+          echo "❌ Missing environment variables in .env.example:"
+          printf '  - %s\n' "${missing_vars[@]}"
+          exit 1
+        fi
+
+        echo "✅ All required environment variables in .env.example"
+
+    - name: Verify DATABASE_CONNECTION_LIMIT is documented
+      run: |
+        echo "🔍 Checking DATABASE_CONNECTION_LIMIT documentation..."
+
+        files_to_check=(
+          "server/.env.example"
+          "server/src/config/env.schema.ts"
+          "ENV_VARIABLES.md"
+        )
+
+        for file in "${files_to_check[@]}"; do
+          if [ ! -f "$file" ]; then
+            continue
           fi
 
-          echo "✅ All required environment variables in .env.example"
+          if ! grep -q "DATABASE_CONNECTION_LIMIT" "$file"; then
+            echo "⚠️ WARNING: DATABASE_CONNECTION_LIMIT not found in $file"
+          fi
+        done
 
-      - name: Verify DATABASE_CONNECTION_LIMIT is documented
-        run: |
-          echo "🔍 Checking DATABASE_CONNECTION_LIMIT documentation..."
-
-          files_to_check=(
-            "server/.env.example"
-            "server/src/config/env.schema.ts"
-            "ENV_VARIABLES.md"
-          )
-
-          for file in "${files_to_check[@]}"; do
-            if [ ! -f "$file" ]; then
-              continue
-            fi
-
-            if ! grep -q "DATABASE_CONNECTION_LIMIT" "$file"; then
-              echo "⚠️ WARNING: DATABASE_CONNECTION_LIMIT not found in $file"
-            fi
-          done
-
-          echo "✅ DATABASE_CONNECTION_LIMIT documentation check complete"
+        echo "✅ DATABASE_CONNECTION_LIMIT documentation check complete"
 ```
 
 ---
@@ -615,7 +616,7 @@ Add validation to `main-pipeline.yml` for environment configs:
 
 **File:** `docs/guides/SAFE_MIGRATION_WORKFLOW.md` (Create New)
 
-```markdown
+````markdown
 # Safe Schema Migration Workflow
 
 ## Before You Start
@@ -641,6 +642,7 @@ npm exec prisma migrate dev --name add_my_new_column
 # 3. Apply migration to local database
 # 4. Regenerate Prisma Client
 ```
+````
 
 ### Step 2: Verify Migration
 
@@ -870,7 +872,8 @@ npm test -- server/test/schema-consistency.test.ts
 - [ ] Commit message mentions migration
 
 See also: `docs/solutions/SCHEMA_DRIFT_PREVENTION.md` for detailed patterns and ADRs.
-```
+
+````
 
 ### 3.2 Development Setup Validation
 
@@ -1028,7 +1031,7 @@ section('Database Configuration', async () => {
     logCheck(check.name, result);
   }
 });
-```
+````
 
 ---
 
@@ -1056,10 +1059,12 @@ export function validateEnv(): Env {
   // NEW: Validate DATABASE_CONNECTION_LIMIT is properly configured
   if (env.DATABASE_URL) {
     const connectionLimit = process.env.DATABASE_CONNECTION_LIMIT;
-    if (connectionLimit === undefined || connectionLimit === '' || connectionLimit === 'undefined') {
-      logger.warn(
-        'DATABASE_CONNECTION_LIMIT not set. Using default: 1',
-      );
+    if (
+      connectionLimit === undefined ||
+      connectionLimit === '' ||
+      connectionLimit === 'undefined'
+    ) {
+      logger.warn('DATABASE_CONNECTION_LIMIT not set. Using default: 1');
       // For serverless environments, this is OK. Just warn the user.
     } else {
       try {
@@ -1179,7 +1184,7 @@ function validateTestEnvironment() {
           JWT_SECRET: process.env.JWT_SECRET ? '***set***' : 'NOT_SET',
         },
       },
-      'Test environment validation failed',
+      'Test environment validation failed'
     );
     throw new Error(`Test environment invalid: ${errors.join(', ')}`);
   }
@@ -1192,25 +1197,25 @@ function validateTestEnvironment() {
 
 ## Summary: Prevention Layers
 
-| Layer | Mechanism | Catches | Owner |
-|-------|-----------|---------|-------|
-| **Pre-Commit** | `.claude/hooks/validate-schema.sh` | Empty migrations, missing models, isolation patterns | Developer |
-| **CI/CD** | `schema-validation` job | Syntax errors, broken migrations, drift | CI System |
-| **CI/CD** | `migration-dry-run` job | Migrations that fail on clean database | CI System |
-| **CI/CD** | `env-config-validation` job | Missing env vars, incomplete config | CI System |
-| **Development** | `SAFE_MIGRATION_WORKFLOW.md` | Wrong migration pattern, incomplete commits | Developer |
-| **Test Setup** | Environment validation | Undefined connection strings, missing secrets | Test Runner |
+| Layer           | Mechanism                          | Catches                                              | Owner       |
+| --------------- | ---------------------------------- | ---------------------------------------------------- | ----------- |
+| **Pre-Commit**  | `.claude/hooks/validate-schema.sh` | Empty migrations, missing models, isolation patterns | Developer   |
+| **CI/CD**       | `schema-validation` job            | Syntax errors, broken migrations, drift              | CI System   |
+| **CI/CD**       | `migration-dry-run` job            | Migrations that fail on clean database               | CI System   |
+| **CI/CD**       | `env-config-validation` job        | Missing env vars, incomplete config                  | CI System   |
+| **Development** | `SAFE_MIGRATION_WORKFLOW.md`       | Wrong migration pattern, incomplete commits          | Developer   |
+| **Test Setup**  | Environment validation             | Undefined connection strings, missing secrets        | Test Runner |
 
 ## Incident Prevention Matrix
 
-| Root Cause | Prevention Layer | How It's Caught |
-|------------|-----------------|-----------------|
-| Empty migration directory | Pre-commit + CI | Hook checks `find migrationdir -type f` count |
-| Missing landingPageConfig column | Pre-commit | Hook verifies required models exist |
-| DATABASE_CONNECTION_LIMIT undefined | Test setup + env validation | URL checked for literal "undefined" |
-| Empty migration.sql file | Pre-commit + CI | `-s` test checks file size > 0 |
-| Schema without migrations | Pre-commit | Detects staged schema changes without migration files |
-| Test environment misconfiguration | Test initialization | validateTestEnvironment() called before any tests |
+| Root Cause                          | Prevention Layer            | How It's Caught                                       |
+| ----------------------------------- | --------------------------- | ----------------------------------------------------- |
+| Empty migration directory           | Pre-commit + CI             | Hook checks `find migrationdir -type f` count         |
+| Missing landingPageConfig column    | Pre-commit                  | Hook verifies required models exist                   |
+| DATABASE_CONNECTION_LIMIT undefined | Test setup + env validation | URL checked for literal "undefined"                   |
+| Empty migration.sql file            | Pre-commit + CI             | `-s` test checks file size > 0                        |
+| Schema without migrations           | Pre-commit                  | Detects staged schema changes without migration files |
+| Test environment misconfiguration   | Test initialization         | validateTestEnvironment() called before any tests     |
 
 ## Implementation Checklist
 
@@ -1230,12 +1235,14 @@ function validateTestEnvironment() {
 ## Quick Reference: What to Do When...
 
 **...you modify schema.prisma:**
+
 1. `npm exec prisma migrate dev --name descriptive_name`
 2. Verify `.sql` file was created and not empty
 3. Run integration tests: `npm run test:integration`
 4. Commit both `schema.prisma` and migrations folder
 
 **...you need to add an enum or index:**
+
 1. Create manual SQL file: `server/prisma/migrations/NN_name.sql`
 2. Use `IF EXISTS` / `IF NOT EXISTS` for idempotency
 3. Test locally: `psql $DATABASE_URL < migrations/NN_name.sql`
@@ -1243,12 +1250,14 @@ function validateTestEnvironment() {
 5. Update `schema.prisma` to match (for generation)
 
 **...integration tests fail with "column X does not exist":**
+
 1. Check if you edited schema without running `npm exec prisma migrate dev`
 2. Check if migration file is empty
 3. Revert schema changes and try again
 4. Or run manual migration from migrations/ directory
 
 **...pre-commit hook blocks your commit:**
+
 1. Read the error message carefully
 2. Run the suggested fix command
 3. Re-try commit

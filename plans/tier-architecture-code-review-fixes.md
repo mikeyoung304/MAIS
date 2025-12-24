@@ -12,22 +12,22 @@ Addressed the critical findings from the code review of commit `1a3711d`. Based 
 
 ### What Was Done
 
-| Item | Status | Lines Changed |
-|------|--------|---------------|
-| Fix La Petit Mariage seed (canonical tier names) | ✅ Done | 9 edits |
-| Add production guard to LPM seed | ✅ Done | 8 lines |
-| Write 5 smoke tests for `normalizeGrouping()` | ✅ Done | 32 lines |
-| Add 1 parameterized E2E test for legacy redirects | ✅ Done | 16 lines |
+| Item                                              | Status  | Lines Changed |
+| ------------------------------------------------- | ------- | ------------- |
+| Fix La Petit Mariage seed (canonical tier names)  | ✅ Done | 9 edits       |
+| Add production guard to LPM seed                  | ✅ Done | 8 lines       |
+| Write 5 smoke tests for `normalizeGrouping()`     | ✅ Done | 32 lines      |
+| Add 1 parameterized E2E test for legacy redirects | ✅ Done | 16 lines      |
 
 ### What Was Cut (Based on Reviews)
 
-| Item | Reason |
-|------|--------|
-| Phase 2 React optimizations (P2-3, P2-4, P2-5, P2-6) | Premature optimization - no measured perf issue |
-| 100+ unit tests for utils.ts | E2E tests already cover behavior - 5 smoke tests suffice |
-| Deprecation plan for LEGACY_TIER_ALIASES | Documentation theater - aliases work fine |
-| Migration rollback docs | Migration already applied - too late for rollback docs |
-| 8 E2E redirect tests | 1 parameterized test covers all cases |
+| Item                                                 | Reason                                                   |
+| ---------------------------------------------------- | -------------------------------------------------------- |
+| Phase 2 React optimizations (P2-3, P2-4, P2-5, P2-6) | Premature optimization - no measured perf issue          |
+| 100+ unit tests for utils.ts                         | E2E tests already cover behavior - 5 smoke tests suffice |
+| Deprecation plan for LEGACY_TIER_ALIASES             | Documentation theater - aliases work fine                |
+| Migration rollback docs                              | Migration already applied - too late for rollback docs   |
+| 8 E2E redirect tests                                 | 1 parameterized test covers all cases                    |
 
 ---
 
@@ -58,13 +58,8 @@ Added to `seedLaPetitMarriage()` function (mirrors LBHF pattern):
 
 ```typescript
 // Production guard - prevent accidental data destruction
-if (
-  process.env.NODE_ENV === 'production' &&
-  process.env.ALLOW_PRODUCTION_SEED !== 'true'
-) {
-  throw new Error(
-    'Production seed blocked. Set ALLOW_PRODUCTION_SEED=true to override.'
-  );
+if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
+  throw new Error('Production seed blocked. Set ALLOW_PRODUCTION_SEED=true to override.');
 }
 ```
 
@@ -108,11 +103,11 @@ test.describe('Legacy Tier URL Redirects', () => {
 
 ## Test Results
 
-| Suite | Status |
-|-------|--------|
-| Server tests (1132) | ✅ All pass |
-| Client smoke tests (5) | ✅ All pass |
-| TypeScript | ✅ No errors |
+| Suite                  | Status       |
+| ---------------------- | ------------ |
+| Server tests (1132)    | ✅ All pass  |
+| Client smoke tests (5) | ✅ All pass  |
+| TypeScript             | ✅ No errors |
 
 **Note:** Pre-existing failing test in `EditableImage.test.tsx` is unrelated to this change.
 
@@ -121,16 +116,19 @@ test.describe('Legacy Tier URL Redirects', () => {
 ## Reviewer Recommendations Applied
 
 ### DHH (Rails Philosophy)
+
 > "This plan is 70% ceremony, 30% value. Fix the LPM seed bug and move on."
 
 ✅ Applied - Fixed the bug, added minimal tests, skipped ceremony.
 
 ### Practical Implementation
+
 > "Must verify LPM production data before changes."
 
 ✅ Applied - User confirmed app is still demo mode, no production bookings.
 
 ### Code Simplicity
+
 > "The best code is no code. Code is working (1132 tests passing). Only ONE actual bug: LPM seed."
 
 ✅ Applied - Total changes: ~65 lines across 3 files.
@@ -161,8 +159,8 @@ These items were reviewed and intentionally not implemented:
 
 ## Original Code Review Reference
 
-| Priority | Count | Description | Action |
-|----------|-------|-------------|--------|
-| P1 Critical | 2 | Test coverage, unmapped tiers | ✅ Fixed |
-| P2 Important | 6 | React opts, error handling | ⏭️ Skipped (YAGNI) |
-| P3 Nice-to-Have | 4 | Minor opts, documentation | ⏭️ Skipped (YAGNI) |
+| Priority        | Count | Description                   | Action             |
+| --------------- | ----- | ----------------------------- | ------------------ |
+| P1 Critical     | 2     | Test coverage, unmapped tiers | ✅ Fixed           |
+| P2 Important    | 6     | React opts, error handling    | ⏭️ Skipped (YAGNI) |
+| P3 Nice-to-Have | 4     | Minor opts, documentation     | ⏭️ Skipped (YAGNI) |

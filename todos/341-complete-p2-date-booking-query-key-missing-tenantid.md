@@ -1,8 +1,11 @@
 # P2: Query Key Missing tenantId - Cache Pollution Risk
 
 ## Priority: P2 Important
+
 ## Status: complete
+
 ## Feature: DATE Booking Flow
+
 ## Category: Multi-Tenant Security
 
 ## Issue
@@ -22,6 +25,7 @@ const { data: unavailableDatesData, isLoading: isLoadingDates } = useQuery({
 ## Impact
 
 While the API call includes tenant context via headers, the cache key doesn't differentiate between tenants. If a user somehow accessed multiple tenant storefronts in the same browser session:
+
 - Cached unavailable dates from Tenant A could be shown for Tenant B
 - This is a multi-tenant data isolation concern
 
@@ -50,16 +54,17 @@ queryKey: ['unavailable-dates', pkg.id, today.toISOString().split('T')[0]],
 - Verify cache isolation between tenants
 - Test switching between storefronts
 
-
-
 ## Work Log
 
 ### 2025-12-21 - Approved for Work
+
 **By:** Claude Triage System
 **Actions:**
+
 - Issue approved during triage session (bulk approval)
 - Status changed from pending → ready
 - Ready to be picked up and worked on
 
 ## Review Reference
+
 - Code Review PR: feat/date-booking-hardening (ce6443d)

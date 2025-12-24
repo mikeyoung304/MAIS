@@ -1,8 +1,11 @@
 # P3: Use Typed API Client Instead of Raw Fetch
 
 ## Priority: P3 Nice-to-have
+
 ## Status: complete
+
 ## Feature: DATE Booking Flow
+
 ## Category: Code Simplicity
 
 ## Issue
@@ -56,16 +59,17 @@ if (result.status === 200) {
 
 - #332 (Missing Contract Registration) - Must be done first
 
-
-
 ## Work Log
 
 ### 2025-12-21 - Approved for Work
+
 **By:** Claude Triage System
 **Actions:**
+
 - Issue approved during triage session (bulk approval)
 - Status changed from pending → ready
 - Ready to be picked up and worked on
 
 ## Review Reference
+
 - Code Simplicity Review Finding P3-9 (Inconsistent Error Handling in Fetch)

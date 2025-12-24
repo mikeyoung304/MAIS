@@ -76,11 +76,7 @@ export function DepositSettingsCard() {
 
   // ... more API call handlers, validation logic mixed with JSX
 
-  return (
-    <div className="...">
-      {/* Business logic intertwined with UI */}
-    </div>
-  );
+  return <div className="...">{/* Business logic intertwined with UI */}</div>;
 }
 ```
 
@@ -262,18 +258,12 @@ export function DepositSettingsCard() {
       {manager.saved && <SuccessAlert />}
 
       {/* Pure UI - just bind values from manager */}
-      <Switch
-        checked={manager.depositsEnabled}
-        onCheckedChange={manager.setDepositsEnabled}
-      />
+      <Switch checked={manager.depositsEnabled} onCheckedChange={manager.setDepositsEnabled} />
       <Input
         value={manager.depositPercent}
         onChange={(e) => manager.setDepositPercent(e.target.value)}
       />
-      <Button
-        onClick={manager.handleSave}
-        disabled={manager.saving || !manager.hasChanges()}
-      >
+      <Button onClick={manager.handleSave} disabled={manager.saving || !manager.hasChanges()}>
         {manager.saving ? 'Saving...' : 'Save Changes'}
       </Button>
     </div>
@@ -342,6 +332,7 @@ export function DepositSettingsPage() {
 ### 3. Separation of Concerns
 
 Clear division between:
+
 - **Hook**: State, data fetching, business logic, validation
 - **Component**: UI rendering, layout, styling
 
@@ -420,6 +411,7 @@ When extracting business logic into a custom hook:
 **Hook**: `/Users/mikeyoung/CODING/MAIS/client/src/features/tenant-admin/TenantDashboard/hooks/useDepositSettingsManager.ts`
 
 **Key Features**:
+
 - Form state management (deposits enabled, percentage, balance due days)
 - Validation (0-100% range, 1-90 days range)
 - Save indicator timeout with cleanup
@@ -432,6 +424,7 @@ When extracting business logic into a custom hook:
 **Hook**: `/Users/mikeyoung/CODING/MAIS/client/src/features/tenant-admin/TenantDashboard/hooks/useRemindersManager.ts`
 
 **Key Features**:
+
 - Fetch reminder status on mount
 - Process reminders with loading/error states
 - Date formatting utilities
@@ -444,6 +437,7 @@ When extracting business logic into a custom hook:
 **Hook**: `/Users/mikeyoung/CODING/MAIS/client/src/features/tenant-admin/TenantDashboard/hooks/useCalendarConfigManager.ts`
 
 **Key Features**:
+
 - File upload handling with validation
 - Dialog state management (config, delete dialogs)
 - Test connection functionality
@@ -557,6 +551,6 @@ export function useDepositSettingsManager() {
 
 ## Revision History
 
-| Date | Author | Changes |
-|------|--------|---------|
+| Date       | Author      | Changes                       |
+| ---------- | ----------- | ----------------------------- |
 | 2025-12-05 | Claude Code | Initial pattern documentation |

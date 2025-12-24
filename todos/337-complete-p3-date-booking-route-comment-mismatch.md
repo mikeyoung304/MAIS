@@ -1,8 +1,11 @@
 # P3: Backend Route Comment Mismatch
 
 ## Priority: P3 Nice-to-have
+
 ## Status: pending
+
 ## Feature: DATE Booking Flow
+
 ## Category: Code Simplicity
 
 ## Issue
@@ -24,7 +27,9 @@ Misleading comment suggests a workaround that may confuse future developers.
 ## Recommendation
 
 Either:
+
 1. **Clarify the comment:**
+
    ```typescript
    // BookingService.createCheckout expects package slug (not ID) for
    // backward compatibility with existing booking flows. We fetch by ID
@@ -38,4 +43,5 @@ Either:
 - #317 (ID vs Slug Impedance Mismatch) - Root cause
 
 ## Review Reference
+
 - Code Simplicity Review Finding P3-11 (Backend Route Comment Mismatch)

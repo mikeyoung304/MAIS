@@ -1,13 +1,17 @@
 # P1: Insufficient Date Validation in DATE Booking DTO
 
 ## Priority: P1 Critical
+
 ## Status: pending
+
 ## Feature: DATE Booking Flow
+
 ## Category: Security
 
 ## Issue
 
 The `CreateDateBookingDtoSchema` only validates date format (YYYY-MM-DD regex) but does NOT validate:
+
 - Date is in the future (allows booking past dates)
 - Date is within reasonable bounds (allows year 9999)
 - Date is a valid calendar date (allows 2025-02-30)
@@ -60,5 +64,6 @@ date: z.string()
 - Test past dates, invalid dates, far-future dates
 
 ## Review Reference
+
 - Security Review Finding P1-002
 - Data Integrity Review Finding P3-002

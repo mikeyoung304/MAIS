@@ -1,8 +1,11 @@
 # P2: Database N+1 Query Risk in Booking Service
 
 ## Priority: P2 Important
+
 ## Status: ready
+
 ## Feature: DATE Booking Flow
+
 ## Category: Performance
 
 ## Issue
@@ -65,16 +68,17 @@ The pattern already exists at lines 383-421 in `catalog.repository.ts` for `getP
 2. `server/src/lib/ports.ts` - Add to interface
 3. `server/src/services/booking.service.ts` - Use new method
 
-
-
 ## Work Log
 
 ### 2025-12-21 - Approved for Work
+
 **By:** Claude Triage System
 **Actions:**
+
 - Issue approved during triage session (bulk approval)
 - Status changed from pending → ready
 - Ready to be picked up and worked on
 
 ## Review Reference
+
 - Performance Review Finding P2 (Database N+1 Query Risk)

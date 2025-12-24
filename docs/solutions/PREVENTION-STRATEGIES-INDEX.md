@@ -318,6 +318,7 @@ Item.displayName = 'Item';
 ```
 
 **When to Use:**
+
 - Building list/grid components with 10+ items
 - Components receiving callback props
 - Computing filtered/sorted arrays or objects
@@ -407,10 +408,12 @@ export function useBookingTotal(basePriceCents, selectedAddOnIds) {
 - Components becoming hard to understand
 
 **Quick References:**
+
 - [REACT-HOOK-EXTRACTION-QUICK-REFERENCE.md](./react-performance/REACT-HOOK-EXTRACTION-QUICK-REFERENCE.md) (print & pin!)
 - [HOOK-EXTRACTION-CODE-REVIEW-CHECKLIST.md](./react-performance/HOOK-EXTRACTION-CODE-REVIEW-CHECKLIST.md) (for PR reviews)
 
 **Related Hooks in Codebase:**
+
 - `useRemindersManager` - Reminder status + processing operations
 - `useCalendarConfigManager` - Calendar config form + file upload + dialogs
 - `useDepositSettingsManager` - Deposit settings form + validation
@@ -1018,6 +1021,7 @@ async function ensureLoggedIn(page) {
 - Use React DevTools Profiler to measure effectiveness
 
 **When to read:**
+
 - Building list/grid components
 - Performance testing before production
 - Code reviewing React components
@@ -1250,12 +1254,14 @@ Prevention Strategies Index (you are here)
 **When to read:** Before conducting plan reviews or code reviews
 
 **Problem Solved:**
+
 - Creating todos for already-implemented features
 - 30+ second timing gaps between implementation and todo creation
 - 3+ hours wasted verifying/closing stale todos
 - Confusion about what work remains
 
 **Key Learning (2025-12-05):**
+
 ```
 22:59:24 → Implementation complete (commit 1647a40)
 22:59:54 → Todos created describing same work (commit c4c8baf)
@@ -1266,6 +1272,7 @@ Cost: 3+ hours of verification work in next session
 ```
 
 **Prevention Strategies:**
+
 1. Verify before creating (always search code first)
 2. Distinguish implementation/verification/audit todos
 3. Use parallel agent workflow with verification-first
@@ -1280,7 +1287,8 @@ Cost: 3+ hours of verification work in next session
 
 ```markdown
 Before creating TODO from plan:
-- [ ] glob '**/*ComponentName*'
+
+- [ ] glob '\**/*ComponentName\*'
 - [ ] grep -r 'functionName'
 - [ ] git log -p -S 'ComponentName' (last 50)
 - [ ] Check: Is code < 24h old? → SKIP
@@ -1298,6 +1306,7 @@ Before creating TODO from plan:
 **When to read:** Before running `/workflows:plan`, `/workflows:review`, `/workflows:work` in sequence
 
 **Problem Solved:**
+
 - Information asymmetry between review agent and implementation agent
 - Agents creating todos based on assumptions, not code reality
 - Duplicate verification work across multiple agents
@@ -1338,6 +1347,7 @@ Before creating TODO from plan:
 **When to use:** Before creating any todo from a plan or review
 
 **Contains:**
+
 - 5-minute decision tree
 - Quick checklist
 - Git commands (copy-paste ready)
@@ -1358,6 +1368,7 @@ Are you creating a todo based on a plan?
 ```
 
 **Quick Status Codes:**
+
 - `pending` = Code doesn't exist, needs implementation
 - `verify` = Code exists, verify it matches plan
 - `audit` = Code exists, compliance/pattern check

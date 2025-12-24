@@ -55,9 +55,7 @@ export function CalendarConfigCard() {
             <h2 className="font-serif text-2xl font-bold text-text-primary">
               Google Calendar Integration
             </h2>
-            <p className="text-text-muted text-sm mt-1">
-              Sync bookings to your Google Calendar
-            </p>
+            <p className="text-text-muted text-sm mt-1">Sync bookings to your Google Calendar</p>
           </div>
         </div>
 
@@ -207,8 +205,8 @@ export function CalendarConfigCard() {
           <DialogHeader>
             <DialogTitle>Remove Calendar Configuration</DialogTitle>
             <DialogDescription>
-              Are you sure you want to remove your Google Calendar configuration? New bookings
-              will no longer be added to your calendar.
+              Are you sure you want to remove your Google Calendar configuration? New bookings will
+              no longer be added to your calendar.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -1,8 +1,11 @@
 # P2: Inconsistent Date Formatting
 
 ## Priority: P2 Important
+
 ## Status: ready
+
 ## Feature: DATE Booking Flow
+
 ## Category: Code Simplicity
 
 ## Issue
@@ -13,20 +16,24 @@ Identical date formatting logic duplicated twice in the same component.
 
 ```typescript
 // Line 254-259
-{selectedDate.toLocaleDateString('en-US', {
-  weekday: 'long',
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-})}
+{
+  selectedDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
 
 // Line 364-369 (duplicate)
-{selectedDate.toLocaleDateString('en-US', {
-  weekday: 'long',
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-})}
+{
+  selectedDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
 ```
 
 ## Impact
@@ -43,7 +50,9 @@ The `formatDate()` utility already exists in `client/src/lib/utils.ts:28-39`.
 import { formatDate } from '@/lib/utils';
 
 // Replace both instances with:
-{formatDate(selectedDate)}
+{
+  formatDate(selectedDate);
+}
 ```
 
 Or create a specific date format for booking displays:
@@ -64,16 +73,17 @@ export function formatBookingDate(date: Date): string {
 
 1. `client/src/features/storefront/DateBookingWizard.tsx` - Use utility
 
-
-
 ## Work Log
 
 ### 2025-12-21 - Approved for Work
+
 **By:** Claude Triage System
 **Actions:**
+
 - Issue approved during triage session (bulk approval)
 - Status changed from pending → ready
 - Ready to be picked up and worked on
 
 ## Review Reference
+
 - Code Simplicity Review Finding P2-5 (Inconsistent Date Formatting)

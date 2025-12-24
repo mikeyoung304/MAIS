@@ -1,11 +1,11 @@
 ---
 status: pending
 priority: p3
-issue_id: "285"
+issue_id: '285'
 tags: [deferred, code-review, feature-gap, sms, reminders, acuity-parity]
 dependencies: []
-next_review: "2026-01-23"
-revisit_trigger: "3 customer requests"
+next_review: '2026-01-23'
+revisit_trigger: '3 customer requests'
 ---
 
 # SMS Reminders Not Implemented (Acuity Parity)
@@ -15,6 +15,7 @@ revisit_trigger: "3 customer requests"
 Acuity supports SMS reminders in addition to email. MAIS only has email notifications via Postmark. SMS reminders have higher engagement rates and reduce no-shows.
 
 **Why it matters:**
+
 - SMS open rates: 98% vs email: 20%
 - Reduces no-shows by 30-50%
 - Expected feature for modern scheduling
@@ -23,6 +24,7 @@ Acuity supports SMS reminders in addition to email. MAIS only has email notifica
 ## Findings
 
 ### Agent: architecture-strategist
+
 - **Location:** `server/src/lib/ports.ts` (NotificationProvider interface)
 - **Evidence:** Only email provider exists, no SMS interface
 - **Acuity:** Up to 3 email reminders + 1 SMS reminder per appointment
@@ -30,9 +32,11 @@ Acuity supports SMS reminders in addition to email. MAIS only has email notifica
 ## Proposed Solutions
 
 ### Option A: Twilio SMS Integration (Recommended)
+
 **Description:** Add Twilio adapter for SMS notifications
 
 **Interface:**
+
 ```typescript
 // lib/ports.ts
 interface SmsProvider {
@@ -53,6 +57,7 @@ class TwilioSmsAdapter implements SmsProvider {
 ```
 
 **Schema:**
+
 ```prisma
 model Booking {
   // Existing fields...
@@ -71,6 +76,7 @@ model TenantConfig {
 **Risk:** Low
 
 ### Option B: AWS SNS Integration
+
 **Description:** Use AWS SNS for SMS (cheaper at scale)
 
 **Effort:** Medium (2-3 days)
@@ -91,8 +97,8 @@ Defer to Phase 3. Focus on core booking flow first.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                         | Learnings        |
+| ---------- | ------------------------------ | ---------------- |
 | 2025-12-05 | Created from Acuity comparison | Defer to Phase 3 |
 
 ## Resources

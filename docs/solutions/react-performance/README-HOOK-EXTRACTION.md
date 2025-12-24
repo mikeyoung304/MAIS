@@ -19,6 +19,7 @@
 **Start Here:** [HOOK-EXTRACTION-CODE-REVIEW-CHECKLIST.md](./HOOK-EXTRACTION-CODE-REVIEW-CHECKLIST.md)
 
 Use the 11-point checklist:
+
 1. Hook structure
 2. State management
 3. Effects & callbacks
@@ -36,6 +37,7 @@ Use the 11-point checklist:
 **Start Here:** [REACT-HOOK-EXTRACTION-PREVENTION.md](./REACT-HOOK-EXTRACTION-PREVENTION.md) (comprehensive)
 
 Read all 8 parts:
+
 1. Code review checklist (when to extract)
 2. Warning signs for code reviews
 3. Testing requirements
@@ -49,12 +51,12 @@ Read all 8 parts:
 
 ## Document Overview
 
-| Document | Purpose | Length | Audience |
-|----------|---------|--------|----------|
-| [REACT-HOOK-EXTRACTION-PREVENTION.md](./REACT-HOOK-EXTRACTION-PREVENTION.md) | Comprehensive implementation guide | 1,357 lines | Engineers, Tech Leads |
-| [REACT-HOOK-EXTRACTION-QUICK-REFERENCE.md](./REACT-HOOK-EXTRACTION-QUICK-REFERENCE.md) | Quick reference for daily dev | 425 lines | All engineers (print & pin!) |
-| [HOOK-EXTRACTION-CODE-REVIEW-CHECKLIST.md](./HOOK-EXTRACTION-CODE-REVIEW-CHECKLIST.md) | PR review guide with templates | 668 lines | Code reviewers |
-| [HOOK-EXTRACTION-IMPLEMENTATION-SUMMARY.md](./HOOK-EXTRACTION-IMPLEMENTATION-SUMMARY.md) | Integration & rollout guide | 300 lines | Tech leads, Managers |
+| Document                                                                                 | Purpose                            | Length      | Audience                     |
+| ---------------------------------------------------------------------------------------- | ---------------------------------- | ----------- | ---------------------------- |
+| [REACT-HOOK-EXTRACTION-PREVENTION.md](./REACT-HOOK-EXTRACTION-PREVENTION.md)             | Comprehensive implementation guide | 1,357 lines | Engineers, Tech Leads        |
+| [REACT-HOOK-EXTRACTION-QUICK-REFERENCE.md](./REACT-HOOK-EXTRACTION-QUICK-REFERENCE.md)   | Quick reference for daily dev      | 425 lines   | All engineers (print & pin!) |
+| [HOOK-EXTRACTION-CODE-REVIEW-CHECKLIST.md](./HOOK-EXTRACTION-CODE-REVIEW-CHECKLIST.md)   | PR review guide with templates     | 668 lines   | Code reviewers               |
+| [HOOK-EXTRACTION-IMPLEMENTATION-SUMMARY.md](./HOOK-EXTRACTION-IMPLEMENTATION-SUMMARY.md) | Integration & rollout guide        | 300 lines   | Tech leads, Managers         |
 
 ---
 
@@ -86,6 +88,7 @@ Read all 8 parts:
 ### Code Review Standards
 
 11-point review system covering:
+
 - Hook structure (files, types, documentation)
 - State management (organization, semantics)
 - Performance (memoization, optimization)
@@ -97,12 +100,14 @@ Read all 8 parts:
 ## Real Examples in MAIS
 
 ### useRemindersManager
+
 Location: `client/src/features/tenant-admin/TenantDashboard/hooks/useRemindersManager.ts`
 Pattern: Manager hook (state + actions)
 Size: ~120 lines
 Component: RemindersCard (~80 lines)
 
 **What it does:**
+
 ```typescript
 const manager = useRemindersManager();
 // ← Manages: status, loading, error, processing
@@ -110,12 +115,14 @@ const manager = useRemindersManager();
 ```
 
 ### useCalendarConfigManager
+
 Location: `client/src/features/tenant-admin/TenantDashboard/hooks/useCalendarConfigManager.ts`
 Pattern: Complex form state hook
 Size: ~300 lines
 Component: CalendarConfigCard
 
 **What it does:**
+
 ```typescript
 const manager = useCalendarConfigManager();
 // ← Manages: form state, dialogs, file uploads, validation
@@ -123,12 +130,14 @@ const manager = useCalendarConfigManager();
 ```
 
 ### useDashboardData
+
 Location: `client/src/features/tenant-admin/TenantDashboard/useDashboardData.ts`
 Pattern: Data fetching hook with parallel loading
 Size: ~150 lines
 Component: TenantDashboard
 
 **What it does:**
+
 ```typescript
 const { packages, segments, grouped, isLoading } = useDashboardData(activeTab);
 // ← Loads packages & segments in parallel
@@ -177,6 +186,7 @@ const { packages, segments, grouped, isLoading } = useDashboardData(activeTab);
 ## Common Mistakes to Avoid
 
 ### ❌ Over-Extraction
+
 ```typescript
 // DON'T extract simple toggles
 function useToggle() {
@@ -186,14 +196,16 @@ function useToggle() {
 ```
 
 ### ❌ Missing Dependencies
+
 ```typescript
 // DON'T forget dependencies in useEffect
 useEffect(() => {
-  loadData();  // ← loadData not in deps
+  loadData(); // ← loadData not in deps
 }, [activeTab]); // ❌ ESLint warning
 ```
 
 ### ❌ Not Memoizing Callbacks
+
 ```typescript
 // DON'T recreate callbacks every render
 const fetch = async () => { ... };  // ❌ New function every render
@@ -201,6 +213,7 @@ useEffect(() => { fetch(); }, [fetch]); // ❌ Infinite loop!
 ```
 
 ### ❌ Missing Tests
+
 ```typescript
 // DON'T extract without testing
 export function useHook() { ... }
@@ -212,19 +225,23 @@ export function useHook() { ... }
 ## Next Steps
 
 ### 1. Read (5-10 min)
+
 - Quick Reference: [REACT-HOOK-EXTRACTION-QUICK-REFERENCE.md](./REACT-HOOK-EXTRACTION-QUICK-REFERENCE.md)
 
 ### 2. Practice
+
 - Identify component needing extraction
 - Choose pattern from comprehensive guide
 - Follow implementation pattern
 - Write tests using template
 
 ### 3. Review
+
 - Use Code Review Checklist for your own code
 - Ask reviewer to use checklist too
 
 ### 4. Share
+
 - Print quick reference
 - Add code review checklist to PR template
 - Enable ESLint rules
@@ -243,15 +260,19 @@ export function useHook() { ... }
 ## Questions?
 
 ### "Should I extract this component?"
+
 → Check 30-second decision tree in Quick Reference
 
 ### "How do I test this hook?"
+
 → See Testing Requirements section in Comprehensive Guide
 
 ### "What pattern should I use?"
+
 → See Hook Implementation Patterns (Part 4) in Comprehensive Guide
 
 ### "How do I review this PR?"
+
 → Use Code Review Checklist with templates
 
 ---

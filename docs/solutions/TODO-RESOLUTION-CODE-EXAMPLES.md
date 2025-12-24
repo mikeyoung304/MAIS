@@ -27,33 +27,41 @@ All code shown here was implemented on 2025-12-05. Copy-paste ready.
 **Problem:** Three components had identical error display markup (7-10 lines each)
 
 **Before:**
+
 ```tsx
 // CalendarConfigCard.tsx
-{error && (
-  <div className="p-4 bg-danger-50 border border-danger-100 rounded-xl flex items-start gap-3">
-    <AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
-    <span className="text-sm text-danger-700">{error}</span>
-  </div>
-)}
+{
+  error && (
+    <div className="p-4 bg-danger-50 border border-danger-100 rounded-xl flex items-start gap-3">
+      <AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+      <span className="text-sm text-danger-700">{error}</span>
+    </div>
+  );
+}
 
 // DepositSettingsCard.tsx
-{error && (
-  <div className="p-4 bg-danger-50 border border-danger-100 rounded-xl flex items-start gap-3">
-    <AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
-    <span className="text-sm text-danger-700">{error}</span>
-  </div>
-)}
+{
+  error && (
+    <div className="p-4 bg-danger-50 border border-danger-100 rounded-xl flex items-start gap-3">
+      <AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+      <span className="text-sm text-danger-700">{error}</span>
+    </div>
+  );
+}
 
 // StripeConnectCard.tsx
-{error && (
-  <div className="p-4 bg-danger-50 border border-danger-100 rounded-xl flex items-start gap-3">
-    <AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
-    <span className="text-sm text-danger-700">{error}</span>
-  </div>
-)}
+{
+  error && (
+    <div className="p-4 bg-danger-50 border border-danger-100 rounded-xl flex items-start gap-3">
+      <AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+      <span className="text-sm text-danger-700">{error}</span>
+    </div>
+  );
+}
 ```
 
 **After:**
+
 ```typescript
 import { AlertCircle } from 'lucide-react';
 
@@ -74,6 +82,7 @@ export function ErrorAlert({ message }: ErrorAlertProps) {
 ```
 
 **Usage in components:**
+
 ```tsx
 import { ErrorAlert } from '@/components/shared/ErrorAlert';
 
@@ -90,6 +99,7 @@ export function CalendarConfigCard() {
 ```
 
 **Key Features:**
+
 - ✅ Null-safe (returns null if no message)
 - ✅ Single responsibility
 - ✅ Accessible (aria-hidden on icon)
@@ -97,6 +107,7 @@ export function CalendarConfigCard() {
 - ✅ Reusable across all components
 
 **Cost Savings:**
+
 - Removed 3 × 7 lines = 21 lines of duplication
 - Single source of truth for error styling
 - Future changes to error display only touch 1 file
@@ -110,6 +121,7 @@ export function CalendarConfigCard() {
 **Problem:** Pure component rendered in lists (packages, bookings). Re-renders unnecessarily when parent state changes.
 
 **Before:**
+
 ```typescript
 interface StatusBadgeProps {
   status: string;
@@ -145,7 +157,8 @@ export function StatusBadge({ status, variant, className }: StatusBadgeProps) {
 ```
 
 **After:**
-```typescript
+
+````typescript
 import { memo } from 'react';
 import { Check, Clock, X, AlertCircle, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -224,20 +237,23 @@ export const StatusBadge = memo(function StatusBadge({
     </span>
   );
 });
-```
+````
 
 **Key Changes:**
+
 - ✅ Wrapped in `memo()` with named function
 - ✅ JSDoc explaining purpose and performance benefit
 - ✅ displayName implicit (named function syntax)
 - ✅ All prop types unchanged (safe to memoize)
 
 **Performance Impact:**
+
 - ✅ Prevents re-renders when parent state changes
 - ✅ Only re-renders if props actually change
 - ✅ Significant in lists with 10+ items
 
 **Testing:**
+
 ```typescript
 // React DevTools Profiler verification
 // 1. Open DevTools > Profiler
@@ -256,6 +272,7 @@ export const StatusBadge = memo(function StatusBadge({
 **Problem:** Same as StatusBadge - pure component re-renders unnecessarily
 
 **Before:**
+
 ```typescript
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -290,7 +307,8 @@ export function EmptyState({
 ```
 
 **After:**
-```typescript
+
+````typescript
 import { memo } from 'react';
 import { type LucideIcon } from 'lucide-react';
 
@@ -348,9 +366,10 @@ export const EmptyState = memo(function EmptyState({
     </div>
   );
 });
-```
+````
 
 **Key Changes:**
+
 - ✅ Wrapped in `memo()` with named function
 - ✅ JSDoc explaining memo benefit
 - ✅ Note about parent needing to memoize `action` prop
@@ -392,6 +411,7 @@ function PackagesList() {
 **Problem:** Read-modify-write without transaction. If network fails between read and write, draft left in partial state.
 
 **Before:**
+
 ```typescript
 async discardLandingPageDraft(tenantId: string): Promise<{ success: boolean }> {
   // READ - separate operation
@@ -426,6 +446,7 @@ async discardLandingPageDraft(tenantId: string): Promise<{ success: boolean }> {
 ```
 
 **After:**
+
 ```typescript
 async discardLandingPageDraft(tenantId: string): Promise<{ success: boolean }> {
   // TRANSACTION: All operations atomic (all succeed or all fail)
@@ -461,12 +482,14 @@ async discardLandingPageDraft(tenantId: string): Promise<{ success: boolean }> {
 ```
 
 **Key Changes:**
+
 - ✅ Wrapped entire method in `await this.prisma.$transaction(async (tx) => { ... })`
 - ✅ Changed all `this.prisma` calls to `tx` inside transaction
 - ✅ All operations now atomic (all succeed together or all fail together)
 - ✅ Return value moved inside transaction
 
 **Critical Rule:**
+
 ```typescript
 // ✅ CORRECT - Use tx inside transaction
 await this.prisma.$transaction(async (tx) => {
@@ -543,6 +566,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 **Files Changed (11 total):**
+
 ```
 client/src/components/shared/ErrorAlert.tsx          (new)
 client/src/components/shared/StatusBadge.tsx         (modified)
@@ -576,6 +600,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 **Files Changed (1 total):**
+
 ```
 client/src/components/shared/StatusBadge.tsx         (modified)
 client/src/components/shared/EmptyState.tsx          (modified)
@@ -586,14 +611,15 @@ todos/265-complete-p3-missing-memoization.md        (status updated)
 
 ## Summary Table
 
-| What | File | Lines | Pattern | Benefit |
-|------|------|-------|---------|---------|
-| **ErrorAlert** | `shared/ErrorAlert.tsx` | 16 | Shared component | -21 duplicated lines |
-| **StatusBadge** | `shared/StatusBadge.tsx` | ~80 | React.memo | Prevents cascading re-renders |
-| **EmptyState** | `shared/EmptyState.tsx` | ~40 | React.memo | Prevents cascading re-renders |
-| **discardDraft** | `tenant.repository.ts` | ~20 | Transaction | Atomic read-write operations |
+| What             | File                     | Lines | Pattern          | Benefit                       |
+| ---------------- | ------------------------ | ----- | ---------------- | ----------------------------- |
+| **ErrorAlert**   | `shared/ErrorAlert.tsx`  | 16    | Shared component | -21 duplicated lines          |
+| **StatusBadge**  | `shared/StatusBadge.tsx` | ~80   | React.memo       | Prevents cascading re-renders |
+| **EmptyState**   | `shared/EmptyState.tsx`  | ~40   | React.memo       | Prevents cascading re-renders |
+| **discardDraft** | `tenant.repository.ts`   | ~20   | Transaction      | Atomic read-write operations  |
 
 **Total Changes:**
+
 - New files: 1
 - Modified files: 4
 - Lines added: ~150

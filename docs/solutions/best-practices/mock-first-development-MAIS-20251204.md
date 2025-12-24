@@ -31,7 +31,7 @@ Implementing real adapters (Prisma, Stripe, external APIs) before mock adapters 
 // BAD: Service directly uses Prisma
 export class BookingService {
   async createBooking(data: BookingInput) {
-    return await prisma.booking.create({ data });  // Untestable without DB
+    return await prisma.booking.create({ data }); // Untestable without DB
   }
 }
 
@@ -74,9 +74,10 @@ export class BookingService {
 }
 
 // 4. DI wiring based on ADAPTERS_PRESET
-const bookingRepo = process.env.ADAPTERS_PRESET === 'mock'
-  ? new MockBookingRepository()
-  : new PrismaBookingRepository(prisma);
+const bookingRepo =
+  process.env.ADAPTERS_PRESET === 'mock'
+    ? new MockBookingRepository()
+    : new PrismaBookingRepository(prisma);
 ```
 
 ## Implementation Checklist

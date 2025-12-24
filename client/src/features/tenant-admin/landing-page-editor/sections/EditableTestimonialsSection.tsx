@@ -130,9 +130,7 @@ export const EditableTestimonialsSection = memo(function EditableTestimonialsSec
                   />
                   <EditableText
                     value={item.role ?? ''}
-                    onChange={(value) =>
-                      handleUpdateItem(index, { role: value || undefined })
-                    }
+                    onChange={(value) => handleUpdateItem(index, { role: value || undefined })}
                     placeholder="Role (optional)"
                     disabled={disabled}
                     className="text-sm text-neutral-500"

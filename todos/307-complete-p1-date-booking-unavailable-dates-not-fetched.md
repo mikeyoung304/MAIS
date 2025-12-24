@@ -1,8 +1,11 @@
 # P1: Missing Unavailable Dates Fetch in DateBookingWizard
 
 ## Priority: P1 Critical
+
 ## Status: pending
+
 ## Feature: DATE Booking Flow
+
 ## Category: Performance / UX
 
 ## Issue
@@ -41,15 +44,14 @@ const { data: unavailableDatesData } = useQuery({
   queryKey: ['unavailableDates', pkg.id],
   queryFn: async () => {
     const startDate = new Date().toISOString().split('T')[0];
-    const endDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-      .toISOString().split('T')[0];
+    const endDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     const response = await api.getUnavailableDates({
-      query: { startDate, endDate }
+      query: { startDate, endDate },
     });
 
     if (response.status === 200) {
-      return response.body.dates.map(d => new Date(d));
+      return response.body.dates.map((d) => new Date(d));
     }
     return [];
   },
@@ -78,5 +80,6 @@ const unavailableDates = unavailableDatesData ?? [];
 - Verify 409 handling still works as fallback
 
 ## Review Reference
+
 - Performance Review Finding P1 (Missing Unavailable Dates Fetch)
 - Code Simplicity Review Finding P3-8 (Unused State Variable)

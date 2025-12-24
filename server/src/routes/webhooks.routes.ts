@@ -145,12 +145,7 @@ export class WebhooksController {
 
     // Process synchronously - validation errors are still thrown
     // to maintain proper error behavior and security test compatibility
-    await this.processor.processSynchronously(
-      rawBody,
-      signature,
-      event.id,
-      effectiveTenantId
-    );
+    await this.processor.processSynchronously(rawBody, signature, event.id, effectiveTenantId);
   }
 
   /**

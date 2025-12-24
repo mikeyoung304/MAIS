@@ -1,11 +1,11 @@
 ---
 status: resolved
 priority: p2
-issue_id: "292"
+issue_id: '292'
 tags: [code-review, configuration, early-access]
 dependencies: []
 resolved_at: 2025-12-06
-resolution: "Added EARLY_ACCESS_NOTIFICATION_EMAIL to config.ts with fallback, updated auth.routes.ts to use config value, documented in .env.example"
+resolution: 'Added EARLY_ACCESS_NOTIFICATION_EMAIL to config.ts with fallback, updated auth.routes.ts to use config value, documented in .env.example'
 ---
 
 # Hardcoded Admin Email in Early Access
@@ -29,6 +29,7 @@ await mailProvider.sendEmail({
 ## Proposed Solutions
 
 ### Option A: Environment Variable (Recommended)
+
 **Pros:** Standard pattern, easy to change
 **Cons:** Requires env var documentation
 **Effort:** Small (10 min)
@@ -36,13 +37,13 @@ await mailProvider.sendEmail({
 
 ```typescript
 // server/src/lib/core/config.ts
-earlyAccessNotificationEmail: process.env.EARLY_ACCESS_NOTIFICATION_EMAIL || 'mike@maconheadshots.com',
-
-// server/src/routes/auth.routes.ts
-await mailProvider.sendEmail({
-  to: config.earlyAccessNotificationEmail,
-  // ...
-});
+earlyAccessNotificationEmail: (process.env.EARLY_ACCESS_NOTIFICATION_EMAIL ||
+  'mike@maconheadshots.com',
+  // server/src/routes/auth.routes.ts
+  await mailProvider.sendEmail({
+    to: config.earlyAccessNotificationEmail,
+    // ...
+  }));
 ```
 
 ## Recommended Action
@@ -52,6 +53,7 @@ Implement Option A - add to config with fallback to current email.
 ## Technical Details
 
 **Affected files:**
+
 - `server/src/lib/core/config.ts`
 - `server/src/routes/auth.routes.ts`
 
@@ -66,8 +68,8 @@ Implement Option A - add to config with fallback to current email.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                      |
+| ---------- | ------------------------ | ---------------------------------------------- |
 | 2025-12-06 | Created from code review | Architecture agent identified config violation |
 
 ## Resources

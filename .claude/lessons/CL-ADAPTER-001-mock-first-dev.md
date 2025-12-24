@@ -47,9 +47,10 @@ export class MockBookingRepository implements BookingRepository {
 }
 
 // CORRECT: DI wiring based on ADAPTERS_PRESET
-const bookingRepo = process.env.ADAPTERS_PRESET === 'mock'
-  ? new MockBookingRepository()
-  : new PrismaBookingRepository(prisma);
+const bookingRepo =
+  process.env.ADAPTERS_PRESET === 'mock'
+    ? new MockBookingRepository()
+    : new PrismaBookingRepository(prisma);
 ```
 
 ## Prevention Checklist

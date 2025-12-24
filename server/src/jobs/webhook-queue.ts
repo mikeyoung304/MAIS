@@ -11,12 +11,10 @@
  * - Graceful shutdown support
  */
 
-import { Queue, Worker, Job, type QueueEvents } from 'bullmq';
+import { Queue, Worker, Job } from 'bullmq';
 import type { Redis } from 'ioredis';
 import IORedis from 'ioredis';
 import { logger } from '../lib/core/logger';
-import type { WebhookRepository, PaymentProvider } from '../lib/ports';
-import type { BookingService } from '../services/booking.service';
 
 // Job data structure for webhook processing
 export interface WebhookJobData {
@@ -45,13 +43,6 @@ export class WebhookQueue {
   private worker: Worker<WebhookJobData> | null = null;
   private connection: Redis | null = null;
   private isRedisAvailable = false;
-  private processorFn: ((job: Job<WebhookJobData>) => Promise<void>) | null = null;
-
-  constructor(
-    private readonly webhookRepo: WebhookRepository,
-    private readonly paymentProvider: PaymentProvider,
-    private readonly bookingService: BookingService
-  ) {}
 
   /**
    * Initialize the queue with Redis connection
@@ -139,9 +130,6 @@ export class WebhookQueue {
       return;
     }
 
-    // Store processor for potential sync fallback
-    this.processorFn = processor;
-
     // Create worker with same connection
     this.worker = new Worker<WebhookJobData>(
       QUEUE_NAME,
@@ -176,6 +164,9 @@ export class WebhookQueue {
         connection: this.connection,
         concurrency: 5, // Process up to 5 webhooks concurrently
         autorun: true,
+        // Stalled job detection - recover jobs if worker crashes mid-processing
+        stalledInterval: 30000, // Check for stalled jobs every 30s
+        lockDuration: 30000, // Job lock expires after 30s if worker crashes
       }
     );
 
@@ -331,12 +322,8 @@ export class WebhookQueue {
  * Create the webhook queue (synchronous)
  * Call initialize() separately to connect to Redis
  */
-export function createWebhookQueue(
-  webhookRepo: WebhookRepository,
-  paymentProvider: PaymentProvider,
-  bookingService: BookingService
-): WebhookQueue {
-  return new WebhookQueue(webhookRepo, paymentProvider, bookingService);
+export function createWebhookQueue(): WebhookQueue {
+  return new WebhookQueue();
 }
 
 /**

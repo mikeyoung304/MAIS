@@ -160,9 +160,7 @@ export function PackageForm({
                 className="bg-macon-navy-900 border-white/20 text-white placeholder:text-white/50 focus:border-white/30 text-lg h-12"
                 required
               />
-              <p className="text-base text-white/70">
-                Enter the package price in dollars
-              </p>
+              <p className="text-base text-white/70">Enter the package price in dollars</p>
             </div>
           </div>
 

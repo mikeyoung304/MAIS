@@ -86,8 +86,7 @@ test.describe('Early Access Waitlist', () => {
 
     // Wait for API request to complete
     await page.waitForResponse(
-      (response) =>
-        response.url().includes('/v1/auth/early-access') && response.status() === 200,
+      (response) => response.url().includes('/v1/auth/early-access') && response.status() === 200,
       { timeout: 10000 }
     );
 
@@ -140,10 +139,9 @@ test.describe('Early Access Waitlist', () => {
     await expect(spinner).toBeVisible({ timeout: 2000 });
 
     // Wait for submission to complete
-    await page.waitForResponse(
-      (response) => response.url().includes('/v1/auth/early-access'),
-      { timeout: 10000 }
-    );
+    await page.waitForResponse((response) => response.url().includes('/v1/auth/early-access'), {
+      timeout: 10000,
+    });
 
     // Verify success message eventually appears
     await expect(page.locator('#waitlist-cta [role="status"]')).toBeVisible({ timeout: 5000 });
@@ -183,8 +181,7 @@ test.describe('Early Access Waitlist', () => {
 
     // Set up response promise BEFORE clicking submit
     const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('/v1/auth/early-access') && response.status() === 400,
+      (response) => response.url().includes('/v1/auth/early-access') && response.status() === 400,
       { timeout: 5000 }
     );
 
@@ -241,8 +238,7 @@ test.describe('Early Access Waitlist', () => {
 
     // Set up response promise BEFORE clicking submit
     const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('/v1/auth/early-access') && response.status() === 500,
+      (response) => response.url().includes('/v1/auth/early-access') && response.status() === 500,
       { timeout: 5000 }
     );
 
@@ -299,8 +295,7 @@ test.describe('Early Access Waitlist', () => {
 
     // Set up response promise BEFORE clicking submit
     const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('/v1/auth/early-access') && response.status() === 429,
+      (response) => response.url().includes('/v1/auth/early-access') && response.status() === 429,
       { timeout: 5000 }
     );
 
@@ -412,8 +407,7 @@ test.describe('Early Access Waitlist', () => {
 
     // Wait for success
     await page.waitForResponse(
-      (response) =>
-        response.url().includes('/v1/auth/early-access') && response.status() === 200,
+      (response) => response.url().includes('/v1/auth/early-access') && response.status() === 200,
       { timeout: 10000 }
     );
     await expect(page.locator('#waitlist-cta [role="status"]')).toBeVisible({ timeout: 5000 });
@@ -430,8 +424,7 @@ test.describe('Early Access Waitlist', () => {
 
     // Should still succeed (upsert behavior)
     await page.waitForResponse(
-      (response) =>
-        response.url().includes('/v1/auth/early-access') && response.status() === 200,
+      (response) => response.url().includes('/v1/auth/early-access') && response.status() === 200,
       { timeout: 10000 }
     );
     await expect(page.locator('#waitlist-cta [role="status"]')).toBeVisible({ timeout: 5000 });
@@ -485,8 +478,7 @@ test.describe('Early Access Waitlist', () => {
 
     // Should now succeed
     await page.waitForResponse(
-      (response) =>
-        response.url().includes('/v1/auth/early-access') && response.status() === 200,
+      (response) => response.url().includes('/v1/auth/early-access') && response.status() === 200,
       { timeout: 10000 }
     );
     await expect(page.locator('#waitlist-cta [role="status"]')).toBeVisible({ timeout: 5000 });
@@ -558,8 +550,7 @@ test.describe('Early Access Waitlist', () => {
 
     // Set up response promise BEFORE pressing Enter
     const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('/v1/auth/early-access') && response.status() === 200,
+      (response) => response.url().includes('/v1/auth/early-access') && response.status() === 200,
       { timeout: 10000 }
     );
 

@@ -32,6 +32,7 @@ The plan specifies 1-2s debounce on auto-save but doesn't specify "flush on blur
 ### Missing Event Handlers
 
 Current plan's hook specification doesn't include:
+
 - `beforeunload` event handler (page close/refresh)
 - `visibilitychange` event handler (tab switch)
 - Flush mechanism for pending debounced saves
@@ -46,6 +47,7 @@ Current plan's hook specification doesn't include:
 ## Proposed Solutions
 
 ### Option A: Add Tab Blur + Unload Handlers (Recommended)
+
 - **Effort:** 1-2 hours
 - **Risk:** Low
 - Add `visibilitychange` listener to flush on tab background
@@ -54,6 +56,7 @@ Current plan's hook specification doesn't include:
 - **Cons:** Slight complexity
 
 ### Option B: Accept Data Loss Risk
+
 - **Effort:** 0 hours
 - **Risk:** High
 - Document as known limitation
@@ -124,8 +127,8 @@ const flushPendingSave = useCallback(() => {
 
 ## Work Log
 
-| Date       | Action  | Notes                                           |
-|------------|---------|------------------------------------------------|
+| Date       | Action  | Notes                                          |
+| ---------- | ------- | ---------------------------------------------- |
 | 2025-12-04 | Created | Data integrity review identified tab blur risk |
 
 ## Tags

@@ -5,6 +5,7 @@
 This plan organizes 28 ready todos into 6 phases, with 5 parallel agents per batch to manage RAM usage. Each phase builds on the previous, with dependencies carefully ordered.
 
 **Goals:**
+
 - Production-ready code quality
 - Acuity Scheduling feature parity
 - 5 parallel agents per batch (RAM-safe)
@@ -22,27 +23,28 @@ This plan organizes 28 ready todos into 6 phases, with 5 parallel agents per bat
 
 ### Batch 1.1 (5 agents in parallel)
 
-| Agent | Todo ID | Description | Effort | Dependencies |
-|-------|---------|-------------|--------|--------------|
-| Agent 1 | 273 | Webhook rate limiting missing | 30 min | None |
-| Agent 2 | 274 | JWT secret reuse vulnerability | 15 min | None |
-| Agent 3 | 275 | Missing database indexes | 1 hour | None |
-| Agent 4 | 276 | Appointments endpoint unbounded | 30 min | None |
-| Agent 5 | 284 | Booking token revocation missing | 2 hours | None |
+| Agent   | Todo ID | Description                      | Effort  | Dependencies |
+| ------- | ------- | -------------------------------- | ------- | ------------ |
+| Agent 1 | 273     | Webhook rate limiting missing    | 30 min  | None         |
+| Agent 2 | 274     | JWT secret reuse vulnerability   | 15 min  | None         |
+| Agent 3 | 275     | Missing database indexes         | 1 hour  | None         |
+| Agent 4 | 276     | Appointments endpoint unbounded  | 30 min  | None         |
+| Agent 5 | 284     | Booking token revocation missing | 2 hours | None         |
 
 **Why these together:** All independent, all security/stability focused, no shared files.
 
 ### Batch 1.2 (3 agents - remaining P1 security)
 
-| Agent | Todo ID | Description | Effort | Dependencies |
-|-------|---------|-------------|--------|--------------|
-| Agent 1 | 266 | Missing payment_failed webhook | 2-3 hours | None |
-| Agent 2 | 267 | Missing Stripe Connect webhooks | 3-4 hours | None |
-| Agent 3 | 279 | Async webhook processing | 4-6 hours | 273 (rate limiting) |
+| Agent   | Todo ID | Description                     | Effort    | Dependencies        |
+| ------- | ------- | ------------------------------- | --------- | ------------------- |
+| Agent 1 | 266     | Missing payment_failed webhook  | 2-3 hours | None                |
+| Agent 2 | 267     | Missing Stripe Connect webhooks | 3-4 hours | None                |
+| Agent 3 | 279     | Async webhook processing        | 4-6 hours | 273 (rate limiting) |
 
 **Why these together:** All webhook-related, Agent 3 waits for 273 completion.
 
 ### Phase 1 Verification
+
 ```bash
 npm run typecheck
 npm test
@@ -60,20 +62,22 @@ npm test
 
 ### Batch 2.1 (5 agents in parallel)
 
-| Agent | Todo ID | Description | Effort | Dependencies |
-|-------|---------|-------------|--------|--------------|
-| Agent 1 | 280 | Slot generation algorithm optimization | 4-8 hours | 275 (indexes) |
-| Agent 2 | 268 | Booking cancellation calendar sync | 2-3 hours | None |
-| Agent 3 | 269 | Verify reminder cron job | 1-2 hours | None |
-| Agent 4 | 270 | Google Calendar timezone handling | 2-3 hours | None |
-| Agent 5 | 287 | BookingService refactor (split large file) | 4-6 hours | None |
+| Agent   | Todo ID | Description                                | Effort    | Dependencies  |
+| ------- | ------- | ------------------------------------------ | --------- | ------------- |
+| Agent 1 | 280     | Slot generation algorithm optimization     | 4-8 hours | 275 (indexes) |
+| Agent 2 | 268     | Booking cancellation calendar sync         | 2-3 hours | None          |
+| Agent 3 | 269     | Verify reminder cron job                   | 1-2 hours | None          |
+| Agent 4 | 270     | Google Calendar timezone handling          | 2-3 hours | None          |
+| Agent 5 | 287     | BookingService refactor (split large file) | 4-6 hours | None          |
 
 **Why these together:**
+
 - 280 depends on indexes (275) from Phase 1
 - 268, 269, 270 are all calendar/reminder related but different files
 - 287 is isolated refactoring work
 
 ### Phase 2 Verification
+
 ```bash
 npm run typecheck
 npm test
@@ -92,29 +96,31 @@ npm run test:e2e
 
 ### Batch 3.1 (2 major features + 3 supporting)
 
-| Agent | Todo ID | Description | Effort | Dependencies |
-|-------|---------|-------------|--------|--------------|
-| Agent 1 | 277 | Two-way calendar sync (FreeBusy API) | 3-5 days | 270 (timezone) |
-| Agent 2 | 278 | Tenant webhook subscriptions | 3-5 days | 279 (async processing) |
-| Agent 3 | 234 | Editable image optimization | 2-3 hours | None |
-| Agent 4 | 235 | Image upload endpoints | 2-3 hours | None |
-| Agent 5 | 260 | Missing React Query | 2-3 hours | None |
+| Agent   | Todo ID | Description                          | Effort    | Dependencies           |
+| ------- | ------- | ------------------------------------ | --------- | ---------------------- |
+| Agent 1 | 277     | Two-way calendar sync (FreeBusy API) | 3-5 days  | 270 (timezone)         |
+| Agent 2 | 278     | Tenant webhook subscriptions         | 3-5 days  | 279 (async processing) |
+| Agent 3 | 234     | Editable image optimization          | 2-3 hours | None                   |
+| Agent 4 | 235     | Image upload endpoints               | 2-3 hours | None                   |
+| Agent 5 | 260     | Missing React Query                  | 2-3 hours | None                   |
 
 **Why these together:**
+
 - 277 and 278 are the BIG features, can work in parallel (different domains)
 - 234, 235, 260 are quick wins that don't conflict
 
 ### Batch 3.2 (Continue major features + cleanup)
 
-| Agent | Todo ID | Description | Effort | Dependencies |
-|-------|---------|-------------|--------|--------------|
-| Agent 1 | 277 | (Continued if not complete) | - | - |
-| Agent 2 | 278 | (Continued if not complete) | - | - |
-| Agent 3 | 251 | Missing component specs | 2-3 hours | None |
-| Agent 4 | 271 | External service health checks | 2-3 hours | None |
-| Agent 5 | 272 | Postmark retry logic | 2-3 hours | None |
+| Agent   | Todo ID | Description                    | Effort    | Dependencies |
+| ------- | ------- | ------------------------------ | --------- | ------------ |
+| Agent 1 | 277     | (Continued if not complete)    | -         | -            |
+| Agent 2 | 278     | (Continued if not complete)    | -         | -            |
+| Agent 3 | 251     | Missing component specs        | 2-3 hours | None         |
+| Agent 4 | 271     | External service health checks | 2-3 hours | None         |
+| Agent 5 | 272     | Postmark retry logic           | 2-3 hours | None         |
 
 ### Phase 3 Verification
+
 ```bash
 npm run typecheck
 npm test
@@ -134,15 +140,16 @@ npm run test:e2e
 
 ### Batch 4.1 (Recurring + Group + UI cleanup)
 
-| Agent | Todo ID | Description | Effort | Dependencies |
-|-------|---------|-------------|--------|--------------|
-| Agent 1 | 281 | Recurring appointments (RRULE) | 1-2 weeks | 280 (algorithm) |
-| Agent 2 | 282 | Group classes/capacity | 3-5 days | None |
-| Agent 3 | 236 | Simplify section components | 2-3 hours | None |
-| Agent 4 | 256 | Simplify reuse display components | 2-3 hours | None |
-| Agent 5 | 285 | SMS reminders (Twilio) | 2-3 days | None |
+| Agent   | Todo ID | Description                       | Effort    | Dependencies    |
+| ------- | ------- | --------------------------------- | --------- | --------------- |
+| Agent 1 | 281     | Recurring appointments (RRULE)    | 1-2 weeks | 280 (algorithm) |
+| Agent 2 | 282     | Group classes/capacity            | 3-5 days  | None            |
+| Agent 3 | 236     | Simplify section components       | 2-3 hours | None            |
+| Agent 4 | 256     | Simplify reuse display components | 2-3 hours | None            |
+| Agent 5 | 285     | SMS reminders (Twilio)            | 2-3 days  | None            |
 
 **Why these together:**
+
 - 281 is the biggest feature, needs dedicated agent
 - 282 is independent (different booking type)
 - 236, 256 are quick UI cleanup
@@ -150,14 +157,15 @@ npm run test:e2e
 
 ### Batch 4.2 (Continue + Package system)
 
-| Agent | Todo ID | Description | Effort | Dependencies |
-|-------|---------|-------------|--------|--------------|
-| Agent 1 | 281 | (Continued if not complete) | - | - |
-| Agent 2 | 283 | Packages/prepaid bundles | 1-2 weeks | None |
-| Agent 3 | 286 | Intake forms (JSON schema) | 3-5 days | None |
-| (Agents 4-5 available for support/testing) | - | - | - | - |
+| Agent                                      | Todo ID | Description                 | Effort    | Dependencies |
+| ------------------------------------------ | ------- | --------------------------- | --------- | ------------ |
+| Agent 1                                    | 281     | (Continued if not complete) | -         | -            |
+| Agent 2                                    | 283     | Packages/prepaid bundles    | 1-2 weeks | None         |
+| Agent 3                                    | 286     | Intake forms (JSON schema)  | 3-5 days  | None         |
+| (Agents 4-5 available for support/testing) | -       | -                           | -         | -            |
 
 ### Phase 4 Verification
+
 ```bash
 npm run typecheck
 npm test
@@ -178,13 +186,14 @@ npm run test:e2e
 
 ### Batch 5.1 (Final items)
 
-| Agent | Todo ID | Description | Effort | Dependencies |
-|-------|---------|-------------|--------|--------------|
-| Agent 1 | 283 | (Continued if not complete) | - | - |
-| Agent 2 | 286 | (Continued if not complete) | - | - |
-| Agent 3 | - | Integration testing across all features | 1 day | All above |
+| Agent   | Todo ID | Description                             | Effort | Dependencies |
+| ------- | ------- | --------------------------------------- | ------ | ------------ |
+| Agent 1 | 283     | (Continued if not complete)             | -      | -            |
+| Agent 2 | 286     | (Continued if not complete)             | -      | -            |
+| Agent 3 | -       | Integration testing across all features | 1 day  | All above    |
 
 ### Phase 5 Verification
+
 ```bash
 npm run typecheck
 npm test
@@ -264,6 +273,7 @@ Phase 5 (Hardening)
 ## Success Criteria
 
 ### Production Ready Checklist
+
 - [ ] All P1 security issues resolved
 - [ ] All tests passing (unit, integration, E2E)
 - [ ] Type checking passes with no errors
@@ -273,6 +283,7 @@ Phase 5 (Hardening)
 - [ ] Database indexes verified with EXPLAIN ANALYZE
 
 ### Acuity Parity Checklist
+
 - [ ] Two-way Google Calendar sync working
 - [ ] Tenant can register custom webhooks
 - [ ] Recurring appointments (weekly, bi-weekly, monthly)

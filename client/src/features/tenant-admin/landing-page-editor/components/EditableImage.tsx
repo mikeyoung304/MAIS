@@ -225,12 +225,7 @@ export const EditableImage = memo(function EditableImage({
         {/* Image preview with lazy loading */}
         {currentUrl && !isUploading ? (
           <>
-            <img
-              src={currentUrl}
-              alt={alt}
-              loading="lazy"
-              className="w-full h-full object-cover"
-            />
+            <img src={currentUrl} alt={alt} loading="lazy" className="w-full h-full object-cover" />
 
             {/* Hover overlay with actions */}
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 z-10">

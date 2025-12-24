@@ -1,8 +1,11 @@
 # P1: Missing AvailabilityService Dependency in BookingService
 
 ## Priority: P1 Critical
+
 ## Status: pending
+
 ## Feature: DATE Booking Flow
+
 ## Category: Architecture
 
 ## Issue
@@ -48,7 +51,7 @@ export class BookingService {
     private readonly idempotencyService: IdempotencyService,
     private readonly schedulingAvailabilityService?: SchedulingAvailabilityService,
     private readonly serviceRepo?: ServiceRepository,
-    private readonly availabilityService?: AvailabilityService  // ✅ Add this
+    private readonly availabilityService?: AvailabilityService // ✅ Add this
   ) {}
 }
 ```
@@ -66,7 +69,7 @@ const bookingService = new BookingService(
   idempotencyService,
   schedulingAvailabilityService,
   serviceRepo,
-  availabilityService  // ✅ Inject AvailabilityService
+  availabilityService // ✅ Inject AvailabilityService
 );
 ```
 
@@ -80,4 +83,5 @@ const bookingService = new BookingService(
 - #305 (Layered Architecture Violation) - This blocks that fix
 
 ## Review Reference
+
 - Architecture Review Finding P1 (Missing Dependency in DI Container)

@@ -1,11 +1,11 @@
 ---
 status: resolved
 priority: p2
-issue_id: "298"
+issue_id: '298'
 tags: [code-review, security, logging, early-access]
 dependencies: []
 resolved_at: 2025-12-06
-resolution: "Already resolved in prior commit - all logger calls in early-access endpoint already use sanitizedEmail (lines 851, 861, 873, 883)"
+resolution: 'Already resolved in prior commit - all logger calls in early-access endpoint already use sanitizedEmail (lines 851, 861, 873, 883)'
 ---
 
 # Unsanitized Email Logged - Log Injection Risk
@@ -28,13 +28,14 @@ const sanitizedEmail = sanitizePlainText(normalizedEmail);
 logger.info(
   {
     event: 'early_access_request',
-    email: normalizedEmail,  // NOT sanitizedEmail
+    email: normalizedEmail, // NOT sanitizedEmail
   },
   'Early access email sent'
 );
 ```
 
 **Attack vector:**
+
 ```
 POST /v1/auth/early-access
 { "email": "<script>alert(document.cookie)</script>@example.com" }
@@ -46,6 +47,7 @@ POST /v1/auth/early-access
 ## Proposed Solutions
 
 ### Option A: Sanitize Before Logging (Recommended)
+
 **Pros:** Simple one-line fix
 **Cons:** None
 **Effort:** Small (5 min)
@@ -55,13 +57,14 @@ POST /v1/auth/early-access
 logger.info(
   {
     event: 'early_access_request',
-    email: sanitizedEmail,  // Use sanitized version
+    email: sanitizedEmail, // Use sanitized version
   },
   'Early access email sent'
 );
 ```
 
 ### Option B: Log Email Hash Instead
+
 **Pros:** Privacy-friendly, no injection risk
 **Cons:** Harder to debug specific requests
 **Effort:** Small (10 min)
@@ -86,6 +89,7 @@ Implement Option A - use `sanitizedEmail` in log output.
 ## Technical Details
 
 **Affected files:**
+
 - `server/src/routes/auth.routes.ts` (lines 832-839)
 
 **OWASP Category:** A03:2021 – Injection (Log Injection)
@@ -99,8 +103,8 @@ Implement Option A - use `sanitizedEmail` in log output.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                       |
+| ---------- | ------------------------ | ----------------------------------------------- |
 | 2025-12-06 | Created from code review | Security-sentinel identified log injection risk |
 
 ## Resources

@@ -18,17 +18,18 @@ A generic, reusable list editor component that provides add/remove/update operat
 
 ```typescript
 interface EditableListProps<T> {
-  items: T[];                      // Current list of items
-  onUpdate: (items: T[]) => void;  // Callback when list changes
-  renderItem: (                    // Custom render function for each item
+  items: T[]; // Current list of items
+  onUpdate: (items: T[]) => void; // Callback when list changes
+  renderItem: (
+    // Custom render function for each item
     item: T,
     index: number,
     onChange: (updated: T) => void
   ) => React.ReactNode;
-  createNewItem: () => T;          // Factory for creating new items
-  maxItems?: number;               // Max items allowed (default: 20)
-  emptyMessage?: string;           // Empty state text (default: 'No items yet')
-  disabled?: boolean;              // Disable editing (default: false)
+  createNewItem: () => T; // Factory for creating new items
+  maxItems?: number; // Max items allowed (default: 20)
+  emptyMessage?: string; // Empty state text (default: 'No items yet')
+  disabled?: boolean; // Disable editing (default: false)
 }
 ```
 
@@ -209,6 +210,7 @@ onUpdate(items.map((item, i) => (i === index ? updated : item)));
 ### Factory Function Pattern
 
 The `createNewItem` prop is a factory function that ensures:
+
 - Consistent default values
 - Type safety for new items
 - Flexibility for different initialization logic
@@ -216,18 +218,21 @@ The `createNewItem` prop is a factory function that ensures:
 ## Styling & UX
 
 ### Remove Button
+
 - Positioned absolutely in top-right corner
 - Hidden by default, shown on hover via `group-hover:opacity-100`
 - Red color scheme for destructive action
 - Icon-only for minimal visual noise
 
 ### Add Button
+
 - Centered below list
 - Dashed border to indicate "add zone"
 - Hidden when max items reached
 - Plus icon with label for clarity
 
 ### Empty State
+
 - Centered text with muted color
 - Generous padding for visual balance
 - Customizable message for context

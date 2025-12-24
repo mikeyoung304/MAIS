@@ -138,11 +138,7 @@ export class SchedulingAvailabilityService {
 
     // 6. Filter out slots that conflict with Google Calendar events (two-way sync)
     if (this.googleCalendarService) {
-      availableSlots = await this.filterGoogleCalendarConflicts(
-        tenantId,
-        date,
-        availableSlots
-      );
+      availableSlots = await this.filterGoogleCalendarConflicts(tenantId, date, availableSlots);
     }
 
     return availableSlots;

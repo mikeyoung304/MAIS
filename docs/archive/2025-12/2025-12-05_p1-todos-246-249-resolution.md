@@ -12,12 +12,12 @@ This plan addresses 4 P1 pending todos (246-249) discovered during a plan review
 
 ## Executive Summary
 
-| Todo | Issue | Status | Evidence |
-|------|-------|--------|----------|
+| Todo    | Issue                                 | Status      | Evidence                                                          |
+| ------- | ------------------------------------- | ----------- | ----------------------------------------------------------------- |
 | **246** | Plan specifies redundant backend work | ✅ RESOLVED | Backend complete at `tenant-admin-landing-page.routes.ts:168-304` |
-| **247** | Hook missing batching/rollback | ✅ RESOLVED | Full implementation at `useLandingPageEditor.ts:147-557` |
-| **248** | Missing EditableAccommodationSection | ✅ RESOLVED | Component at `EditableAccommodationSection.tsx:1-182` |
-| **249** | No rate limiting on draft endpoints | ✅ RESOLVED | `draftAutosaveLimiter` at `rateLimiter.ts:133-147` |
+| **247** | Hook missing batching/rollback        | ✅ RESOLVED | Full implementation at `useLandingPageEditor.ts:147-557`          |
+| **248** | Missing EditableAccommodationSection  | ✅ RESOLVED | Component at `EditableAccommodationSection.tsx:1-182`             |
+| **249** | No rate limiting on draft endpoints   | ✅ RESOLVED | `draftAutosaveLimiter` at `rateLimiter.ts:133-147`                |
 
 ---
 
@@ -40,12 +40,12 @@ The plan vs codebase is now **out of sync in the opposite direction**—the code
 **Todo Claims:** Plan proposes creating 4 draft endpoints that don't exist
 **Reality:** All 4 endpoints are production-ready
 
-| Endpoint | Location | Lines |
-|----------|----------|-------|
-| `GET /draft` | `server/src/routes/tenant-admin-landing-page.routes.ts` | 168-186 |
-| `PUT /draft` | Same file | 201-234 |
-| `POST /publish` | Same file | 249-272 |
-| `DELETE /draft` | Same file | 286-304 |
+| Endpoint        | Location                                                | Lines   |
+| --------------- | ------------------------------------------------------- | ------- |
+| `GET /draft`    | `server/src/routes/tenant-admin-landing-page.routes.ts` | 168-186 |
+| `PUT /draft`    | Same file                                               | 201-234 |
+| `POST /publish` | Same file                                               | 249-272 |
+| `DELETE /draft` | Same file                                               | 286-304 |
 
 **Contracts:** Defined at `packages/contracts/src/tenant-admin/landing-page.contract.ts:146-227`
 
@@ -69,6 +69,7 @@ const saveInProgress = useRef<boolean>(false);
 ```
 
 **Additional Features Beyond Todo Requirements:**
+
 - localStorage recovery (lines 76-111)
 - Tab blur/close flush (lines 513-536)
 - Performance monitoring (lines 277-285)
@@ -84,6 +85,7 @@ const saveInProgress = useRef<boolean>(false);
 **Location:** `client/src/features/tenant-admin/landing-page-editor/sections/EditableAccommodationSection.tsx` (182 lines)
 
 **Features Implemented:**
+
 - Headline & description editing (lines 80-99)
 - Highlights array with add/remove (lines 101-140, max 8)
 - CTA URL input with validation (lines 142-156)
@@ -113,6 +115,7 @@ export const draftAutosaveLimiter = rateLimit({
 ```
 
 **Applied to Routes:**
+
 - `PUT /draft` - line 201
 - `POST /publish` - line 249
 - `DELETE /draft` - line 286
@@ -149,21 +152,25 @@ npm run test:e2e -- e2e/tests/landing-page-editor.spec.ts
 Update each todo file with resolution evidence:
 
 #### todos/246-pending-p1-plan-backend-already-exists.md
+
 - Change `status: pending` → `status: complete`
 - Add work log entry with evidence paths
 - Note: "Backend was already complete at time of todo creation"
 
 #### todos/247-pending-p1-hook-missing-batching-rollback.md
+
 - Change `status: pending` → `status: complete`
 - Add work log entry citing `useLandingPageEditor.ts:147-557`
 - Note: "Hook implements full patterns from useVisualEditor"
 
 #### todos/248-pending-p1-missing-accommodation-section.md
+
 - Change `status: pending` → `status: complete`
 - Add work log entry citing component path
 - Note: "Component exists at EditableAccommodationSection.tsx"
 
 #### todos/249-pending-p1-rate-limiting-draft-endpoints.md
+
 - Change `status: pending` → `status: complete`
 - Add work log entry citing rateLimiter.ts
 - Note: "draftAutosaveLimiter applied to all 3 endpoints"
@@ -193,22 +200,24 @@ Update `plans/feat-landing-page-visual-editor.md` to reflect reality:
 
 ## Risk Analysis
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Tests fail during verification | Low | Medium | Run full test suite first |
-| Rate limiter not actually applied | Low | High | grep routes file to confirm |
-| Accommodation section incomplete | Low | Medium | Manual UI verification |
+| Risk                              | Likelihood | Impact | Mitigation                  |
+| --------------------------------- | ---------- | ------ | --------------------------- |
+| Tests fail during verification    | Low        | Medium | Run full test suite first   |
+| Rate limiter not actually applied | Low        | High   | grep routes file to confirm |
+| Accommodation section incomplete  | Low        | Medium | Manual UI verification      |
 
 ---
 
 ## Decision: Why Close Instead of Implement?
 
 **Option A: Implement What Todos Describe** (NOT recommended)
+
 - Todos describe work that already exists
 - Would create duplicate/conflicting code
 - Waste of 6-10 hours
 
 **Option B: Close Todos With Evidence** (RECOMMENDED)
+
 - Work is already done
 - Just needs verification and documentation
 - 1-2 hours total
@@ -220,6 +229,7 @@ Update `plans/feat-landing-page-visual-editor.md` to reflect reality:
 ## References
 
 ### Internal Files
+
 - `server/src/routes/tenant-admin-landing-page.routes.ts:168-304` - Draft endpoints
 - `server/src/middleware/rateLimiter.ts:133-147` - draftAutosaveLimiter
 - `client/src/features/tenant-admin/landing-page-editor/hooks/useLandingPageEditor.ts:147-557` - Hook with batching
@@ -227,10 +237,12 @@ Update `plans/feat-landing-page-visual-editor.md` to reflect reality:
 - `packages/contracts/src/tenant-admin/landing-page.contract.ts:146-227` - API contracts
 
 ### Related Commits
+
 - `1647a40` - feat(landing-page): add visual editor with 8 editable sections
 - `b4598f8` - feat(landing-page-editor): add localStorage recovery, layout shift prevention
 
 ### Original Todos
+
 - `todos/246-pending-p1-plan-backend-already-exists.md`
 - `todos/247-pending-p1-hook-missing-batching-rollback.md`
 - `todos/248-pending-p1-missing-accommodation-section.md`

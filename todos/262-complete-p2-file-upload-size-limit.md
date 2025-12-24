@@ -1,11 +1,11 @@
 ---
 status: resolved
 priority: p2
-issue_id: "262"
+issue_id: '262'
 tags: [code-review, security, validation, tenant-dashboard]
 dependencies: []
-resolved_at: "2025-12-23"
-resolved_by: "client already had validation, added backend 50KB limit validation"
+resolved_at: '2025-12-23'
+resolved_by: 'client already had validation, added backend 50KB limit validation'
 ---
 
 # Missing File Upload Size Validation
@@ -15,6 +15,7 @@ resolved_by: "client already had validation, added backend 50KB limit validation
 CalendarConfigCard accepts JSON file uploads without size validation. A malicious actor could upload a multi-MB JSON file causing client-side DoS or memory exhaustion.
 
 **Why it matters:**
+
 - Client-side DoS potential
 - Memory exhaustion from parsing large JSON
 - Wasted bandwidth on invalid uploads
@@ -22,11 +23,13 @@ CalendarConfigCard accepts JSON file uploads without size validation. A maliciou
 ## Findings
 
 ### Agent: security-sentinel
+
 - **Location:** CalendarConfigCard.tsx:129-149
 - **Evidence:** `reader.readAsText(file)` with no size check
 - **Impact:** IMPORTANT - Client-side DoS prevention
 
 ### Agent: security-sentinel (backend)
+
 - **Location:** tenant-admin-calendar.routes.ts:102-112
 - **Evidence:** Backend also lacks JSON size validation
 - **Impact:** IMPORTANT - Backend DoS, database bloat
@@ -34,13 +37,15 @@ CalendarConfigCard accepts JSON file uploads without size validation. A maliciou
 ## Proposed Solutions
 
 ### Option A: Add Client + Backend Validation (Recommended)
+
 **Description:** Validate file size on both client and server
 
 **Client (CalendarConfigCard.tsx):**
+
 ```typescript
 const MAX_FILE_SIZE = 50 * 1024; // 50KB
 if (file.size > MAX_FILE_SIZE) {
-  setConfigErrors(prev => ({
+  setConfigErrors((prev) => ({
     ...prev,
     serviceAccountJson: 'File too large. Maximum size is 50KB.',
   }));
@@ -49,6 +54,7 @@ if (file.size > MAX_FILE_SIZE) {
 ```
 
 **Backend (tenant-admin-calendar.routes.ts):**
+
 ```typescript
 const MAX_JSON_SIZE = 50 * 1024;
 if (serviceAccountJson.length > MAX_JSON_SIZE) {
@@ -58,6 +64,7 @@ if (serviceAccountJson.length > MAX_JSON_SIZE) {
 ```
 
 **Pros:**
+
 - Defense in depth
 - Better UX (early validation)
 - Prevents backend abuse
@@ -72,6 +79,7 @@ if (serviceAccountJson.length > MAX_JSON_SIZE) {
 ## Technical Details
 
 ### Affected Files
+
 - `client/src/features/tenant-admin/TenantDashboard/CalendarConfigCard.tsx`
 - `server/src/routes/tenant-admin-calendar.routes.ts`
 
@@ -84,8 +92,8 @@ if (serviceAccountJson.length > MAX_JSON_SIZE) {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                     |
+| ---------- | ------------------------ | --------------------------------------------- |
 | 2025-12-05 | Created from code review | Google service account JSON is typically ~2KB |
 
 ## Resources

@@ -1,8 +1,11 @@
 # P2: No React Query Cache Configuration
 
 ## Priority: P2 Important
+
 ## Status: complete
+
 ## Feature: DATE Booking Flow
+
 ## Category: Performance
 
 ## Issue
@@ -12,7 +15,11 @@ The package data query lacks `staleTime` and `gcTime` configuration, causing unn
 **File:** `client/src/pages/DateBookingPage.tsx:26-37`
 
 ```typescript
-const { data: packageData, isLoading, error } = useQuery({
+const {
+  data: packageData,
+  isLoading,
+  error,
+} = useQuery({
   queryKey: ['package', packageSlug],
   queryFn: async () => {
     // ... fetch logic
@@ -31,12 +38,18 @@ const { data: packageData, isLoading, error } = useQuery({
 ## Recommended Fix
 
 ```typescript
-const { data: packageData, isLoading, error } = useQuery({
+const {
+  data: packageData,
+  isLoading,
+  error,
+} = useQuery({
   queryKey: ['package', packageSlug],
-  queryFn: async () => { /* ... */ },
+  queryFn: async () => {
+    /* ... */
+  },
   enabled: !!packageSlug,
-  staleTime: 5 * 60 * 1000,    // 5 minutes (package data is relatively static)
-  gcTime: 30 * 60 * 1000,       // 30 minutes (keep in cache for navigation)
+  staleTime: 5 * 60 * 1000, // 5 minutes (package data is relatively static)
+  gcTime: 30 * 60 * 1000, // 30 minutes (keep in cache for navigation)
 });
 ```
 
@@ -46,16 +59,17 @@ const { data: packageData, isLoading, error } = useQuery({
 - Verify no refetch occurs within staleTime
 - Check Network tab for request frequency
 
-
-
 ## Work Log
 
 ### 2025-12-21 - Approved for Work
+
 **By:** Claude Triage System
 **Actions:**
+
 - Issue approved during triage session (bulk approval)
 - Status changed from pending → ready
 - Ready to be picked up and worked on
 
 ## Review Reference
+
 - Performance Review Finding P2 (No React Query Cache Configuration)

@@ -192,7 +192,7 @@ export function createMultiTenantSetup(
       where: { slug: { in: slugs } },
       select: { id: true },
     });
-    const tenantIds = tenants.map(t => t.id);
+    const tenantIds = tenants.map((t) => t.id);
 
     if (tenantIds.length === 0) return;
 

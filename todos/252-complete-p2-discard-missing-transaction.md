@@ -78,6 +78,7 @@ async saveLandingPageDraft(tenantId: string, config: LandingPageConfig) {
 ## Proposed Solutions
 
 ### Option A: Wrap in Transaction (Recommended)
+
 - **Effort:** 30 minutes
 - **Risk:** Low
 - Add `$transaction` wrapper to `discardLandingPageDraft`
@@ -86,6 +87,7 @@ async saveLandingPageDraft(tenantId: string, config: LandingPageConfig) {
 - **Cons:** Slightly more complex
 
 ### Option B: Use Single UPDATE Query
+
 - **Effort:** 15 minutes
 - **Risk:** Low
 - Skip the read, use JSONB update to clear draft fields directly
@@ -138,8 +140,8 @@ async discardLandingPageDraft(tenantId: string): Promise<{ success: boolean }> {
 
 ## Work Log
 
-| Date       | Action  | Notes                                               |
-|------------|---------|-----------------------------------------------------|
+| Date       | Action  | Notes                                                |
+| ---------- | ------- | ---------------------------------------------------- |
 | 2025-12-04 | Created | Data integrity review identified missing transaction |
 
 ## Tags

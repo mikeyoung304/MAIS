@@ -8,7 +8,11 @@ import { Container } from '@/ui/Container';
  */
 export function ProblemSection() {
   return (
-    <section id="problem" aria-labelledby="problem-heading" className="py-28 md:py-36 bg-neutral-50">
+    <section
+      id="problem"
+      aria-labelledby="problem-heading"
+      className="py-28 md:py-36 bg-neutral-50"
+    >
       <Container>
         <div className="max-w-3xl mx-auto text-center">
           {/* Headline - the real problem */}
@@ -21,8 +25,8 @@ export function ProblemSection() {
 
           {/* Body - the DIY trap */}
           <p className="text-lg md:text-xl text-text-muted leading-relaxed font-light">
-            Disconnected tools turn simple bookings into ongoing work. Mais replaces the stack with one
-            clean system, built and managed for you.
+            Disconnected tools turn simple bookings into ongoing work. Mais replaces the stack with
+            one clean system, built and managed for you.
           </p>
         </div>
       </Container>

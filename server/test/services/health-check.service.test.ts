@@ -99,36 +99,32 @@ describe('HealthCheckService', () => {
       expect(result2.lastChecked).toBe(result1.lastChecked);
     });
 
-    it(
-      'should timeout after 5 seconds',
-      async () => {
-        const mockStripeAdapter = {
-          stripe: {
-            balance: {
-              retrieve: vi.fn().mockImplementation(
-                () =>
-                  new Promise((resolve) => {
-                    setTimeout(resolve, 10000); // 10 second delay
-                  })
-              ),
-            },
+    it('should timeout after 5 seconds', async () => {
+      const mockStripeAdapter = {
+        stripe: {
+          balance: {
+            retrieve: vi.fn().mockImplementation(
+              () =>
+                new Promise((resolve) => {
+                  setTimeout(resolve, 10000); // 10 second delay
+                })
+            ),
           },
-        } as unknown as StripePaymentAdapter;
+        },
+      } as unknown as StripePaymentAdapter;
 
-        const service = new HealthCheckService({
-          stripeAdapter: mockStripeAdapter,
-          mailAdapter: undefined,
-          calendarAdapter: undefined,
-        });
+      const service = new HealthCheckService({
+        stripeAdapter: mockStripeAdapter,
+        mailAdapter: undefined,
+        calendarAdapter: undefined,
+      });
 
-        const result = await service.checkStripe();
+      const result = await service.checkStripe();
 
-        expect(result.status).toBe('unhealthy');
-        expect(result.error).toContain('Timeout');
-        expect(result.latency).toBeLessThan(6000); // Should timeout before 6s
-      },
-      10000
-    ); // 10 second test timeout to allow for 5s check timeout
+      expect(result.status).toBe('unhealthy');
+      expect(result.error).toContain('Timeout');
+      expect(result.latency).toBeLessThan(6000); // Should timeout before 6s
+    }, 10000); // 10 second test timeout to allow for 5s check timeout
   });
 
   describe('checkPostmark', () => {

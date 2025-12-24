@@ -1,11 +1,11 @@
 ---
 status: resolved
 priority: p1
-issue_id: "295"
+issue_id: '295'
 tags: [code-review, architecture, validation, early-access]
 dependencies: []
 resolved_at: 2025-12-06
-resolution: "Replaced manual regex with EarlyAccessRequestDtoSchema.safeParse() in auth.routes.ts. Zod .email() now validates format and blocks CRLF injection."
+resolution: 'Replaced manual regex with EarlyAccessRequestDtoSchema.safeParse() in auth.routes.ts. Zod .email() now validates format and blocks CRLF injection.'
 ---
 
 # Zod Validation Contract Not Enforced on Backend Route
@@ -19,6 +19,7 @@ The `/v1/auth/early-access` endpoint has a ts-rest contract with Zod validation 
 ## Findings
 
 **Contract defined (packages/contracts/src/api.v1.ts:279-290):**
+
 ```typescript
 requestEarlyAccess: {
   method: 'POST',
@@ -29,6 +30,7 @@ requestEarlyAccess: {
 ```
 
 **Route implementation (server/src/routes/auth.routes.ts:793-868):**
+
 ```typescript
 router.post('/early-access', signupLimiter, async (req, res, next) => {
   // Uses manual regex, NOT Zod schema
@@ -45,6 +47,7 @@ router.post('/early-access', signupLimiter, async (req, res, next) => {
 ## Proposed Solutions
 
 ### Option A: Add Zod Validation at Route Start (Recommended)
+
 **Pros:** Quick fix, uses existing schema
 **Cons:** Manual parse call
 **Effort:** Small (15 min)
@@ -69,6 +72,7 @@ router.post('/early-access', signupLimiter, async (req, res, next) => {
 ```
 
 ### Option B: Wire Route Through tsRestExpress
+
 **Pros:** Full contract enforcement, consistent with other endpoints
 **Cons:** Larger refactor, changes route registration
 **Effort:** Medium (1 hour)
@@ -81,11 +85,12 @@ const earlyAccessRouter = tsRestExpress(contract.requestEarlyAccess, {
     // body is already validated by Zod
     const { email } = body;
     // ...
-  }
+  },
 });
 ```
 
 ### Option C: Remove Unused Zod Schema (Simplification)
+
 **Pros:** Removes dead code, keeps current validation
 **Cons:** Loses potential validation benefits
 **Effort:** Small (10 min)
@@ -100,6 +105,7 @@ Implement Option A - add Zod parse at route start for immediate validation impro
 ## Technical Details
 
 **Affected files:**
+
 - `server/src/routes/auth.routes.ts` (lines 793-868)
 - `packages/contracts/src/dto.ts` (lines 197-207)
 - `packages/contracts/src/api.v1.ts` (lines 279-290)
@@ -114,8 +120,8 @@ Implement Option A - add Zod parse at route start for immediate validation impro
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                                           |
+| ---------- | ------------------------ | ------------------------------------------------------------------- |
 | 2025-12-06 | Created from code review | Security-sentinel and architecture agents identified validation gap |
 
 ## Resources

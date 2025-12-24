@@ -1,7 +1,7 @@
 ---
 status: ready
 priority: p1
-issue_id: "276"
+issue_id: '276'
 tags: [code-review, security, api, dos-prevention, pagination]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The `/v1/tenant-admin/appointments` endpoint has no default limit, allowing queries that return ALL appointments. This creates a DoS vector and can crash the server with memory exhaustion.
 
 **Why it matters:**
+
 - If `limit` is not provided, query returns all appointments (could be 100k+ records)
 - Memory exhaustion on large datasets
 - API response timeout
@@ -21,8 +22,10 @@ The `/v1/tenant-admin/appointments` endpoint has no default limit, allowing quer
 ## Findings
 
 ### Agent: api-design-reviewer
+
 - **Location:** `server/src/routes/tenant-admin-scheduling.routes.ts:598`
 - **Evidence:**
+
 ```typescript
 router.get('/appointments', async (req, res) => {
   const appointments = await bookingRepo.findAppointments(tenantId, {
@@ -31,11 +34,13 @@ router.get('/appointments', async (req, res) => {
     offset: parsedOffset
   });
 ```
+
 - **Severity:** HIGH - DoS risk, memory exhaustion
 
 ## Proposed Solutions
 
 ### Option A: Add Default Limit with Maximum Cap (Recommended)
+
 **Description:** Enforce pagination defaults at route and contract level
 
 ```typescript
@@ -43,30 +48,31 @@ router.get('/appointments', async (req, res) => {
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 500;
 
-const limit = parsedLimit
-  ? Math.min(parsedLimit, MAX_LIMIT)
-  : DEFAULT_LIMIT;
+const limit = parsedLimit ? Math.min(parsedLimit, MAX_LIMIT) : DEFAULT_LIMIT;
 
 // In contracts/dto.ts
 query: z.object({
   limit: z.coerce.number().int().min(1).max(500).default(50),
   offset: z.coerce.number().int().min(0).default(0),
   // ...existing params
-})
+});
 ```
 
 **Pros:**
+
 - Prevents unbounded queries
 - Backwards compatible (adds defaults, doesn't break existing clients)
 - MAX_LIMIT prevents abuse even with explicit limit
 
 **Cons:**
+
 - Clients expecting full results need to paginate
 
 **Effort:** Small (30 minutes)
 **Risk:** Low
 
 ### Option B: Cursor-Based Pagination
+
 **Description:** Replace offset pagination with cursor-based for large datasets
 
 **Effort:** Large (4-8 hours)
@@ -79,11 +85,13 @@ Implement Option A immediately. Consider Option B for future scalability.
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/routes/tenant-admin-scheduling.routes.ts`
 - `packages/contracts/src/dto.ts`
 - `server/src/adapters/prisma/booking.repository.ts`
 
 **Response Enhancement:**
+
 ```typescript
 // Add pagination metadata to response
 {
@@ -108,8 +116,8 @@ Implement Option A immediately. Consider Option B for future scalability.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                  | Learnings                     |
+| ---------- | ----------------------- | ----------------------------- |
 | 2025-12-05 | Created from API review | DoS vector in admin endpoints |
 
 ## Resources

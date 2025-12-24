@@ -4,7 +4,7 @@ priority: p3
 issue_id: '220'
 tags: [documentation, storybook, components, landing-page]
 dependencies: []
-resolved_at: "2025-12-23"
+resolved_at: '2025-12-23'
 resolution: no-infrastructure
 ---
 

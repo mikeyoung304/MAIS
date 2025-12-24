@@ -1,8 +1,11 @@
 # P1: Layered Architecture Violation in DATE Booking Route
 
 ## Priority: P1 Critical
+
 ## Status: pending
+
 ## Feature: DATE Booking Flow
+
 ## Category: Architecture
 
 ## Issue
@@ -81,4 +84,5 @@ async createDateBooking(
 4. `server/src/routes/index.ts` - Remove `repositories.catalog` from route factory
 
 ## Review Reference
+
 - Architecture Review Finding P1 (Violation of Layered Architecture)

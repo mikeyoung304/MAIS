@@ -38,6 +38,7 @@ The plan references `EditableImage` and `EditableList` components (line 266) but
 ### EditableList Requirements
 
 Different structures for different sections:
+
 - **Testimonials**: `{ quote, author, role?, imageUrl?, rating }`
 - **FAQ**: `{ question, answer }`
 - **SocialProofBar**: `{ icon, text }`
@@ -55,6 +56,7 @@ Cannot reuse as-is for landing page images.
 ## Proposed Solutions
 
 ### Option A: Define Concrete Component Specs (Recommended)
+
 - **Effort:** 1-2 hours documentation, 4-6 hours implementation
 - **Risk:** Low
 - Add detailed component specifications to plan
@@ -64,6 +66,7 @@ Cannot reuse as-is for landing page images.
 - **Cons:** Plan gets longer
 
 ### Option B: Use Generic Patterns
+
 - **Effort:** 30 minutes documentation
 - **Risk:** Medium
 - Reference existing patterns without full specs
@@ -194,9 +197,9 @@ export function EditableList<T>({
 
 ## Work Log
 
-| Date       | Action  | Notes                                              |
-|------------|---------|---------------------------------------------------|
-| 2025-12-04 | Created | Plan review identified missing component specs    |
+| Date       | Action  | Notes                                          |
+| ---------- | ------- | ---------------------------------------------- |
+| 2025-12-04 | Created | Plan review identified missing component specs |
 
 ## Tags
 

@@ -312,8 +312,8 @@ export function LandingPageEditor() {
               <Card className="border-dashed border-2 bg-muted/20 max-w-4xl mx-auto">
                 <CardContent className="p-8 text-center">
                   <p className="text-muted-foreground">
-                    No sections enabled yet. Add sections from the sidebar to customize your
-                    landing page.
+                    No sections enabled yet. Add sections from the sidebar to customize your landing
+                    page.
                   </p>
                 </CardContent>
               </Card>

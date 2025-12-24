@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "272"
+issue_id: '272'
 tags: [code-review, backend-audit, postmark, email, reliability]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 The Postmark adapter throws immediately on failure without retry. Transient network issues or Postmark rate limits cause permanent email delivery failure.
 
 **Why it matters:**
+
 - Confirmation emails may not be sent on temporary failures
 - Password reset emails silently fail
 - No visibility into retry-able vs permanent failures
@@ -20,6 +21,7 @@ The Postmark adapter throws immediately on failure without retry. Transient netw
 ## Findings
 
 ### Agent: backend-audit
+
 - **Location:** `server/src/adapters/postmark.adapter.ts:42-46`
 - **Evidence:** Direct throw on Postmark API error, no retry mechanism
 - **Impact:** LOW - Occasional email delivery failures
@@ -27,6 +29,7 @@ The Postmark adapter throws immediately on failure without retry. Transient netw
 ## Proposed Solutions
 
 ### Option A: Simple Retry with Exponential Backoff (Recommended)
+
 **Description:** Add retry logic with 3 attempts
 
 ```typescript
@@ -71,13 +74,16 @@ private isRetryableError(error: any): boolean {
 **Risk:** Low
 
 ### Option B: Queue-Based Email Delivery
+
 **Description:** Use a message queue for email delivery with automatic retries
 
 **Pros:**
+
 - More robust, handles process restarts
 - Better for high volume
 
 **Cons:**
+
 - Adds infrastructure complexity
 - Overkill for current scale
 
@@ -91,9 +97,11 @@ Implement Option A - simple retry is sufficient for current scale.
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/adapters/postmark.adapter.ts`
 
 **Retry Strategy:**
+
 - 3 attempts with exponential backoff (1s, 2s, 4s)
 - Only retry network/rate limit/server errors
 - Don't retry validation errors (4xx except 429)
@@ -108,9 +116,9 @@ Implement Option A - simple retry is sufficient for current scale.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2025-12-05 | Created from backend audit | Minor reliability improvement |
+| Date       | Action                                        | Learnings                                                                                                                                         |
+| ---------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-12-05 | Created from backend audit                    | Minor reliability improvement                                                                                                                     |
 | 2025-12-06 | Implemented Option A with exponential backoff | Added retry logic to all 4 email methods (sendEmail, sendBookingConfirm, sendPasswordReset, sendBookingReminder) with proper error classification |
 
 ## Resources

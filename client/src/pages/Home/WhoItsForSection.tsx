@@ -17,8 +17,8 @@ export function WhoItsForSection() {
               Designed for independent professionals
             </h2>
             <p className="text-lg text-text-muted leading-relaxed">
-              Mais is built for creative service businesses who sell time, taste, and expertise — and
-              want fewer tools between interest and booked work.
+              Mais is built for creative service businesses who sell time, taste, and expertise —
+              and want fewer tools between interest and booked work.
             </p>
           </div>
 

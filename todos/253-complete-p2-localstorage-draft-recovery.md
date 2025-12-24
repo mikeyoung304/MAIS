@@ -52,6 +52,7 @@ Result: 4 seconds of typing lost (unacceptable for 500-word content)
 ### No Current Recovery Mechanism
 
 Plan mentions auto-save but no mention of:
+
 - localStorage backup on every edit
 - IndexedDB for larger content
 - Recovery flow on page load
@@ -60,6 +61,7 @@ Plan mentions auto-save but no mention of:
 ## Proposed Solutions
 
 ### Option A: localStorage Backup on Every Edit (Recommended)
+
 - **Effort:** 2-3 hours
 - **Risk:** Low
 - Save to localStorage immediately on every edit (no debounce)
@@ -68,6 +70,7 @@ Plan mentions auto-save but no mention of:
 - **Cons:** localStorage size limits (5MB)
 
 ### Option B: IndexedDB for Large Content
+
 - **Effort:** 4-6 hours
 - **Risk:** Medium
 - Use IndexedDB for unlimited storage
@@ -118,16 +121,13 @@ useEffect(() => {
         : 0;
 
       if (localTime > serverTime) {
-        toast.warning(
-          'Found unsaved local changes from previous session.',
-          {
-            action: {
-              label: 'Recover',
-              onClick: () => setDraftConfig(localConfig),
-            },
-            duration: 10000,
-          }
-        );
+        toast.warning('Found unsaved local changes from previous session.', {
+          action: {
+            label: 'Recover',
+            onClick: () => setDraftConfig(localConfig),
+          },
+          duration: 10000,
+        });
       } else {
         // Server is fresher, clear local backup
         localStorage.removeItem(DRAFT_KEY);
@@ -156,9 +156,9 @@ const onServerSaveSuccess = () => {
 
 ## Work Log
 
-| Date       | Action  | Notes                                                 |
-|------------|---------|------------------------------------------------------|
-| 2025-12-04 | Created | Data integrity review identified browser crash risk  |
+| Date       | Action  | Notes                                               |
+| ---------- | ------- | --------------------------------------------------- |
+| 2025-12-04 | Created | Data integrity review identified browser crash risk |
 
 ## Tags
 

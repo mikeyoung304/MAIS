@@ -43,23 +43,25 @@ Does custom hook return callback/computed value?
 
 ```tsx
 // ❌ BAD: Creates new function every render
-<ChildComponent onChange={(e) => setState(e.target.value)} />
+<ChildComponent onChange={(e) => setState(e.target.value)} />;
 
 // ✅ GOOD: Stable reference
 const handleChange = useCallback((e) => setState(e.target.value), []);
-<ChildComponent onChange={handleChange} />
+<ChildComponent onChange={handleChange} />;
 ```
 
 ### Pattern 2: List Items
 
 ```tsx
 // ❌ BAD: All 100 items re-render when any parent state changes
-{packages.map(pkg => <PackageCard key={pkg.id} package={pkg} />)}
+{
+  packages.map((pkg) => <PackageCard key={pkg.id} package={pkg} />);
+}
 
 // ✅ GOOD: Only affected items re-render
-{packages.map(pkg => (
-  <MemoizedPackageCard key={pkg.id} package={pkg} />
-))}
+{
+  packages.map((pkg) => <MemoizedPackageCard key={pkg.id} package={pkg} />);
+}
 
 const MemoizedPackageCard = React.memo(function PackageCard({ package }) {
   return <div>{package.title}</div>;
@@ -71,11 +73,11 @@ MemoizedPackageCard.displayName = 'PackageCard';
 
 ```tsx
 // ❌ BAD: New array created every render
-const available = dates.filter(d => !unavailable.includes(d));
+const available = dates.filter((d) => !unavailable.includes(d));
 
 // ✅ GOOD: Memoized until dependencies change
 const available = useMemo(
-  () => dates.filter(d => !unavailable.includes(d)),
+  () => dates.filter((d) => !unavailable.includes(d)),
   [dates, unavailable]
 );
 ```
@@ -101,25 +103,30 @@ const user = useMemo(() => ({ id, name }), [id, name]);
 Before approving React component PRs:
 
 **Callbacks:**
+
 - [ ] `onChange={(e) => ...}` converted to `useCallback()`?
 - [ ] `onSelect={(item) => ...}` converted to `useCallback()`?
 - [ ] Dependency array complete (ESLint passes)?
 
 **Derived Values:**
+
 - [ ] `.filter()` wrapped in `useMemo()`?
 - [ ] `.map()` wrapped in `useMemo()`?
 - [ ] `.sort()` wrapped in `useMemo()`?
 
 **List Components:**
+
 - [ ] Components in `map()` wrapped in `React.memo()`?
 - [ ] Has `displayName` for DevTools?
 
 **Dependencies:**
+
 - [ ] All used variables in deps array?
 - [ ] No missing deps warnings from ESLint?
 - [ ] No infinite loops from deps?
 
 **Performance:**
+
 - [ ] Profiled with React DevTools?
 - [ ] No unexpected cascading re-renders?
 - [ ] Render time < 50ms per component?
@@ -128,21 +135,22 @@ Before approving React component PRs:
 
 ## Common Mistakes
 
-| Mistake | Problem | Fix |
-|---------|---------|-----|
-| `const cb = () => {}` in JSX | New function every render | Wrap in `useCallback()` |
-| `.filter()` in render | New array every render | Wrap in `useMemo()` |
-| `{ a, b }` object prop | New object every render | Wrap in `useMemo()` |
-| `React.memo()` no displayName | Hard to debug | Add `Component.displayName = 'Name'` |
-| `useCallback([], [])` | Stale dependency | Add all used variables to array |
-| Over-memoizing | Slow code, false optimization | Only memoize when needed |
-| `key={index}` | Lost component state | Use stable ID: `key={item.id}` |
+| Mistake                       | Problem                       | Fix                                  |
+| ----------------------------- | ----------------------------- | ------------------------------------ |
+| `const cb = () => {}` in JSX  | New function every render     | Wrap in `useCallback()`              |
+| `.filter()` in render         | New array every render        | Wrap in `useMemo()`                  |
+| `{ a, b }` object prop        | New object every render       | Wrap in `useMemo()`                  |
+| `React.memo()` no displayName | Hard to debug                 | Add `Component.displayName = 'Name'` |
+| `useCallback([], [])`         | Stale dependency              | Add all used variables to array      |
+| Over-memoizing                | Slow code, false optimization | Only memoize when needed             |
+| `key={index}`                 | Lost component state          | Use stable ID: `key={item.id}`       |
 
 ---
 
 ## ESLint Errors & Fixes
 
 **Error: "missing dependency"**
+
 ```tsx
 // ❌ Missing 'value'
 const handleChange = useCallback(() => {
@@ -156,6 +164,7 @@ const handleChange = useCallback(() => {
 ```
 
 **Error: "inline function"** (from custom rule)
+
 ```tsx
 // ❌ Inline in JSX
 <Button onClick={() => handleClick()} />
@@ -244,11 +253,11 @@ test('component does not re-render on parent update', () => {
 
   // Re-render with same props
   rerender(<MemoComponent prop="value1" />);
-  expect(renderCount).toBe(1);  // Should NOT increment
+  expect(renderCount).toBe(1); // Should NOT increment
 
   // Re-render with new props
   rerender(<MemoComponent prop="value2" />);
-  expect(renderCount).toBe(2);  // Should increment
+  expect(renderCount).toBe(2); // Should increment
 });
 
 test('callback is stable across renders', () => {
@@ -287,6 +296,7 @@ test('callback is stable across renders', () => {
 ## File Locations
 
 **Current status:**
+
 - Main guide: `/docs/solutions/react-performance/REACT-MEMOIZATION-PREVENTION-STRATEGY.md`
 - This quick reference: `/docs/solutions/react-performance/REACT-MEMOIZATION-QUICK-REFERENCE.md`
 - ESLint config: `.eslintrc.cjs` (root)

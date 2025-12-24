@@ -1,8 +1,11 @@
 # P3: Add CAPTCHA for Production
 
 ## Priority: P3 Nice-to-have
+
 ## Status: ready
+
 ## Feature: DATE Booking Flow
+
 ## Category: Security
 
 ## Issue
@@ -42,16 +45,17 @@ if (input.captchaToken) {
 2. **hCaptcha** - Privacy-focused alternative
 3. **Turnstile** - Cloudflare's privacy-preserving option
 
-
-
 ## Work Log
 
 ### 2025-12-21 - Approved for Work
+
 **By:** Claude Triage System
 **Actions:**
+
 - Issue approved during triage session (bulk approval)
 - Status changed from pending → ready
 - Ready to be picked up and worked on
 
 ## Review Reference
+
 - Security Review Finding P3-002 (Add CAPTCHA)

@@ -1,6 +1,7 @@
 # 📋 Phased Plan: Resolve All Pending TODOs
 
 > **Revision 2** - Updated based on multi-agent review feedback
+>
 > - Removed TODO-300 (over-engineering for simple CRUD)
 > - Simplified TODO-303 (shared hook approach per user preference)
 > - Verified all TODOs still pending as of Dec 6, 2025
@@ -85,13 +86,14 @@ const htmlBody = `
   - Check that it handles: `<`, `>`, `&`, `"`, `'`
 
 - [ ] **Add security test cases** (`server/test/http/early-access.http.spec.ts`)
+
   ```typescript
   describe('XSS prevention in email template', () => {
     it.each([
       ['<script>alert("xss")</script>@example.com'],
       ['" onload="alert(1)"@example.com'],
-      ['&lt;script&gt;@example.com'],  // pre-encoded
-      ['admin@maсon.com'],  // Cyrillic homoglyph
+      ['&lt;script&gt;@example.com'], // pre-encoded
+      ['admin@maсon.com'], // Cyrillic homoglyph
     ])('should sanitize malicious email: %s', async (email) => {
       // Verify email is escaped in template
     });
@@ -109,10 +111,10 @@ const htmlBody = `
 
 #### Files to Modify
 
-| File | Changes |
-|------|---------|
-| `server/src/lib/sanitization.ts` | Verify `escape()` coverage |
-| `server/test/http/early-access.http.spec.ts` | Add XSS test vectors |
+| File                                         | Changes                    |
+| -------------------------------------------- | -------------------------- |
+| `server/src/lib/sanitization.ts`             | Verify `escape()` coverage |
+| `server/test/http/early-access.http.spec.ts` | Add XSS test vectors       |
 
 ---
 
@@ -141,6 +143,7 @@ const form = page.getByRole('form', { name: 'Early access request form' });
 - [ ] **Add unique test IDs** to both forms:
 
   **HeroSection.tsx (~line 75):**
+
   ```tsx
   <form
     data-testid="hero-waitlist-form"
@@ -150,6 +153,7 @@ const form = page.getByRole('form', { name: 'Early access request form' });
   ```
 
   **WaitlistCTASection.tsx (~line 72):**
+
   ```tsx
   <form
     data-testid="cta-waitlist-form"
@@ -159,6 +163,7 @@ const form = page.getByRole('form', { name: 'Early access request form' });
   ```
 
 - [ ] **Update E2E selectors** to use test IDs:
+
   ```typescript
   // Before
   const form = page.getByRole('form', { name: 'Early access request form' });
@@ -179,11 +184,11 @@ const form = page.getByRole('form', { name: 'Early access request form' });
 
 #### Files to Modify
 
-| File | Changes |
-|------|---------|
-| `client/src/pages/Home/HeroSection.tsx` | Add `data-testid` |
+| File                                           | Changes           |
+| ---------------------------------------------- | ----------------- |
+| `client/src/pages/Home/HeroSection.tsx`        | Add `data-testid` |
 | `client/src/pages/Home/WaitlistCTASection.tsx` | Add `data-testid` |
-| `e2e/tests/early-access-waitlist.spec.ts` | Update selectors |
+| `e2e/tests/early-access-waitlist.spec.ts`      | Update selectors  |
 
 ---
 
@@ -201,6 +206,7 @@ E2E tests use `page.route('**/v1/auth/early-access', ...)` to mock API responses
 #### Implementation Steps
 
 - [ ] **Add debug logging** to verify interception:
+
   ```typescript
   let intercepted = false;
   await page.route('**/v1/auth/early-access', async (route) => {
@@ -211,6 +217,7 @@ E2E tests use `page.route('**/v1/auth/early-access', ...)` to mock API responses
   ```
 
 - [ ] **Add method filtering** for POST requests:
+
   ```typescript
   await page.route('**/v1/auth/early-access', async (route) => {
     if (route.request().method() !== 'POST') {
@@ -226,6 +233,7 @@ E2E tests use `page.route('**/v1/auth/early-access', ...)` to mock API responses
   ```
 
 - [ ] **Add interception verification** in tests:
+
   ```typescript
   // After test action
   expect(intercepted).toBe(true); // Fails loudly if mock not triggered
@@ -245,8 +253,8 @@ E2E tests use `page.route('**/v1/auth/early-access', ...)` to mock API responses
 
 #### Files to Modify
 
-| File | Changes |
-|------|---------|
+| File                                      | Changes           |
+| ----------------------------------------- | ----------------- |
 | `e2e/tests/early-access-waitlist.spec.ts` | Fix route mocking |
 
 ---
@@ -278,6 +286,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 #### Implementation Steps
 
 - [ ] **Create shared hook** (`client/src/hooks/useWaitlistForm.ts`):
+
   ```typescript
   import { useState } from 'react';
   import { api } from '@/lib/api';
@@ -326,6 +335,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   ```
 
 - [ ] **Update HeroSection** to use hook:
+
   ```typescript
   import { useWaitlistForm } from '@/hooks/useWaitlistForm';
 
@@ -336,6 +346,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   ```
 
 - [ ] **Update WaitlistCTASection** to use hook (DRY):
+
   ```typescript
   import { useWaitlistForm } from '@/hooks/useWaitlistForm';
 
@@ -346,6 +357,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   ```
 
 - [ ] **Add E2E tests** for hero form:
+
   ```typescript
   test('hero form should submit to API', async ({ page }) => {
     await page.goto('/');
@@ -375,12 +387,12 @@ const handleSubmit = async (e: React.FormEvent) => {
 
 #### Files to Create/Modify
 
-| File | Changes |
-|------|---------|
-| `client/src/hooks/useWaitlistForm.ts` | **CREATE** - shared hook |
-| `client/src/pages/Home/HeroSection.tsx` | Use shared hook |
-| `client/src/pages/Home/WaitlistCTASection.tsx` | Use shared hook |
-| `e2e/tests/early-access-waitlist.spec.ts` | Add hero form tests |
+| File                                           | Changes                  |
+| ---------------------------------------------- | ------------------------ |
+| `client/src/hooks/useWaitlistForm.ts`          | **CREATE** - shared hook |
+| `client/src/pages/Home/HeroSection.tsx`        | Use shared hook          |
+| `client/src/pages/Home/WaitlistCTASection.tsx` | Use shared hook          |
+| `e2e/tests/early-access-waitlist.spec.ts`      | Add hero form tests      |
 
 ---
 
@@ -422,22 +434,22 @@ const handleSubmit = async (e: React.FormEvent) => {
 
 ## Risk Mitigation
 
-| Risk | Impact | Mitigation |
-|------|--------|-----------|
-| Security fix incomplete | High | Add XSS test vectors to verify existing sanitization |
-| E2E still flaky | Medium | Run with `--repeat-each=3` and `--retries=1` |
-| Lost signups during migration | Low | Both forms use same API - no data loss |
+| Risk                          | Impact | Mitigation                                           |
+| ----------------------------- | ------ | ---------------------------------------------------- |
+| Security fix incomplete       | High   | Add XSS test vectors to verify existing sanitization |
+| E2E still flaky               | Medium | Run with `--repeat-each=3` and `--retries=1`         |
+| Lost signups during migration | Low    | Both forms use same API - no data loss               |
 
 ---
 
 ## Timeline Estimate
 
-| Phase | Duration | Tasks |
-|-------|----------|-------|
-| Phase 1 | 15 min | TODO-299 security verification |
-| Phase 2 | 1 hr | TODO-301 + TODO-302 test infrastructure |
-| Phase 3 | 45 min | TODO-303 shared hook + hero form API |
-| **Total** | **~2 hours** | 4 TODOs resolved, 1 closed as wontfix |
+| Phase     | Duration     | Tasks                                   |
+| --------- | ------------ | --------------------------------------- |
+| Phase 1   | 15 min       | TODO-299 security verification          |
+| Phase 2   | 1 hr         | TODO-301 + TODO-302 test infrastructure |
+| Phase 3   | 45 min       | TODO-303 shared hook + hero form API    |
+| **Total** | **~2 hours** | 4 TODOs resolved, 1 closed as wontfix   |
 
 ---
 
@@ -454,13 +466,16 @@ const handleSubmit = async (e: React.FormEvent) => {
 ## References
 
 ### Internal Documentation
+
 - `docs/solutions/CODE-REVIEW-ANY-TYPE-CHECKLIST.md` - Type safety patterns
 - `docs/solutions/COMPREHENSIVE-PREVENTION-STRATEGIES.md` - Security checklists
 - `server/src/services/booking.service.ts` - Service layer reference implementation
 
 ### External Resources
+
 - [Playwright Locators Best Practices](https://playwright.dev/docs/locators#locate-by-test-id)
 - [OWASP XSS Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html)
 
 ### Related TODOs (Resolved)
+
 - TODO-288-298: Early-access security and accessibility fixes (all resolved)

@@ -22,7 +22,7 @@ describe('Performance Indexes Migration (TODO-275)', () => {
     expect(indexes).toHaveLength(3);
 
     // Verify each index by name
-    const indexNames = indexes.map(i => i.indexname);
+    const indexNames = indexes.map((i) => i.indexname);
     expect(indexNames).toContain('Booking_tenantId_bookingType_startTime_endTime_idx');
     expect(indexNames).toContain('Booking_tenantId_serviceId_startTime_idx');
     expect(indexNames).toContain('Booking_tenantId_bookingType_startTime_status_idx');

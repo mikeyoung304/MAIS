@@ -57,6 +57,7 @@ Use this checklist to decide if a component needs hook extraction:
 #### 1. Multiple useState Calls (>5)
 
 **Warning Sign:**
+
 ```typescript
 // ❌ BAD - Multiple unrelated state values
 function RemindersCard() {
@@ -72,6 +73,7 @@ function RemindersCard() {
 ```
 
 **Solution:**
+
 ```typescript
 // ✅ GOOD - Business logic extracted, UI remains clean
 function RemindersCard() {
@@ -84,6 +86,7 @@ function RemindersCard() {
 ```
 
 **Checklist:**
+
 - [ ] Component has 6+ useState calls
 - [ ] States logically group together (all API-related, all form-related)
 - [ ] Extract to hook named `use{ComponentName}Manager` or `use{Feature}State`
@@ -93,6 +96,7 @@ function RemindersCard() {
 #### 2. API Calls Directly in Component
 
 **Warning Sign:**
+
 ```typescript
 // ❌ BAD - API logic mixed with JSX
 function CalendarConfigCard() {
@@ -100,7 +104,7 @@ function CalendarConfigCard() {
 
   useEffect(() => {
     // Direct API calls in component
-    api.tenantAdminGetCalendarStatus().then(result => {
+    api.tenantAdminGetCalendarStatus().then((result) => {
       if (result.status === 200) {
         setStatus(result.body);
       }
@@ -109,13 +113,14 @@ function CalendarConfigCard() {
 
   const handleSave = async () => {
     const result = await api.tenantAdminSaveCalendarConfig({
-      body: { calendarId, serviceAccountJson }
+      body: { calendarId, serviceAccountJson },
     });
   };
 }
 ```
 
 **Solution:**
+
 ```typescript
 // ✅ GOOD - API calls abstracted to hook
 function CalendarConfigCard() {
@@ -130,6 +135,7 @@ function CalendarConfigCard() {
 ```
 
 **Checklist:**
+
 - [ ] Component calls API directly (not through hook or service)
 - [ ] API calls mixed with UI logic
 - [ ] Extract to hook with clear method names (fetchStatus, handleSave, etc.)
@@ -139,6 +145,7 @@ function CalendarConfigCard() {
 #### 3. Complex useEffect with Cleanup
 
 **Warning Sign:**
+
 ```typescript
 // ❌ BAD - Multiple useEffect calls with complex dependencies
 function CalendarConfigCard() {
@@ -170,6 +177,7 @@ function CalendarConfigCard() {
 ```
 
 **Solution:**
+
 ```typescript
 // ✅ GOOD - useEffect logic encapsulated in hook
 function useCalendarConfigManager() {
@@ -198,6 +206,7 @@ function useCalendarConfigManager() {
 ```
 
 **Checklist:**
+
 - [ ] Component has 3+ useEffect calls
 - [ ] useEffect dependencies are complex (4+ dependencies)
 - [ ] Cleanup logic is non-trivial (FileReader, event listeners, timers)
@@ -208,6 +217,7 @@ function useCalendarConfigManager() {
 #### 4. Business Logic Mixed with JSX
 
 **Warning Sign:**
+
 ```typescript
 // ❌ BAD - Business logic scattered in JSX
 function RemindersCard() {
@@ -245,6 +255,7 @@ function RemindersCard() {
 ```
 
 **Solution:**
+
 ```typescript
 // ✅ GOOD - Business logic encapsulated, component focused on UI
 function useRemindersManager() {
@@ -289,6 +300,7 @@ function RemindersCard() {
 ```
 
 **Checklist:**
+
 - [ ] Component has async operations (API calls, data transformation)
 - [ ] Business logic takes up >30% of component code
 - [ ] Extract business logic to hook
@@ -314,6 +326,7 @@ grep -n "useState" component.tsx | wc -l
 This component has 7 useState calls. Consider extracting related state to a custom hook:
 
 ✅ Suggested extraction:
+
 - Server state (status, loading, error) → useDataFetching()
 - Form state (values, errors) → useForm()
 - UI state (showDialog, expanded) → remains in component
@@ -332,17 +345,20 @@ grep -n "api\." component.tsx
 
 **Code review comment:**
 
-```markdown
+````markdown
 API calls should not be in components. Extract to hook:
 
 ❌ Before:
+
 ```typescript
 useEffect(() => {
   api.getStatus().then(setStatus);
 }, []);
 ```
+````
 
 ✅ After:
+
 ```typescript
 function useStatusManager() {
   const [status, setStatus] = useState(null);
@@ -352,7 +368,8 @@ function useStatusManager() {
   return { status };
 }
 ```
-```
+
+````
 
 ### C. Complex useEffect Chains
 
@@ -361,7 +378,7 @@ function useStatusManager() {
 ```bash
 grep -c "useEffect" component.tsx
 # If > 3, review each effect for necessity
-```
+````
 
 **Code review comment:**
 
@@ -369,6 +386,7 @@ grep -c "useEffect" component.tsx
 This component has 4 useEffect calls. Review for consolidation:
 
 **Potential consolidations:**
+
 1. Effects with same dependencies → merge
 2. Related state updates → extract to hook
 3. Cleanup logic → extract to hook method
@@ -391,6 +409,7 @@ wc -l component.tsx
 This component is 250 lines. After extracting the data management hook, it should be <150.
 
 **Suggested extractions:**
+
 - useRemindersManager (50 lines) ← all state and API calls
 - RemindersCard (100 lines) ← UI only
 ```
@@ -444,11 +463,11 @@ describe('useRemindersManager - actions', () => {
   it('handleProcessReminders updates state correctly', async () => {
     api.tenantAdminProcessReminders = jest.fn().mockResolvedValue({
       status: 200,
-      body: { processed: 3, failed: 0 }
+      body: { processed: 3, failed: 0 },
     });
     api.tenantAdminGetReminderStatus = jest.fn().mockResolvedValue({
       status: 200,
-      body: { pendingCount: 0 }
+      body: { pendingCount: 0 },
     });
 
     const { result, waitForNextUpdate } = renderHook(() => useRemindersManager());
@@ -468,7 +487,7 @@ describe('useRemindersManager - actions', () => {
   it('clears error on successful fetch', async () => {
     api.tenantAdminGetReminderStatus = jest.fn().mockResolvedValue({
       status: 200,
-      body: { pendingCount: 5 }
+      body: { pendingCount: 5 },
     });
 
     const { result, waitForNextUpdate } = renderHook(() => useRemindersManager());
@@ -494,8 +513,7 @@ describe('useRemindersManager - actions', () => {
 ```typescript
 describe('useRemindersManager - error handling', () => {
   it('sets error on API failure', async () => {
-    api.tenantAdminProcessReminders = jest.fn()
-      .mockRejectedValue(new Error('Network error'));
+    api.tenantAdminProcessReminders = jest.fn().mockRejectedValue(new Error('Network error'));
 
     const { result, waitForNextUpdate } = renderHook(() => useRemindersManager());
 
@@ -511,7 +529,7 @@ describe('useRemindersManager - error handling', () => {
   it('handles non-200 status codes gracefully', async () => {
     api.tenantAdminGetReminderStatus = jest.fn().mockResolvedValue({
       status: 500,
-      body: null
+      body: null,
     });
 
     const { result, waitForNextUpdate } = renderHook(() => useRemindersManager());
@@ -651,7 +669,7 @@ export function useRemindersManager(): UseRemindersManagerResult {
 
   const handleProcessReminders = useCallback(async () => {
     // Implementation...
-  }, [fetchStatus]);  // Depends on fetchStatus
+  }, [fetchStatus]); // Depends on fetchStatus
 
   // 4. Utility functions
   const formatDate = useCallback((dateStr: string) => {
@@ -908,9 +926,12 @@ Add to `.eslintrc.json` to enforce good hook practices:
     "react-hooks/rules-of-hooks": "error",
 
     // Enforce complete dependency arrays
-    "react-hooks/exhaustive-deps": ["warn", {
-      "additionalHooks": "(useRemindersManager|useCalendarConfigManager|useDashboardData)"
-    }],
+    "react-hooks/exhaustive-deps": [
+      "warn",
+      {
+        "additionalHooks": "(useRemindersManager|useCalendarConfigManager|useDashboardData)"
+      }
+    ],
 
     // Custom: No useState in extracted hooks without memoization
     "no-restricted-syntax": [
@@ -943,9 +964,11 @@ module.exports = {
     create(context) {
       return {
         FunctionDeclaration(node) {
-          if (node.parent.type === 'ExportNamedDeclaration' &&
-              node.name.startsWith('use') &&
-              !node.name.match(/^use[A-Z]/)) {
+          if (
+            node.parent.type === 'ExportNamedDeclaration' &&
+            node.name.startsWith('use') &&
+            !node.name.match(/^use[A-Z]/)
+          ) {
             context.report({
               node,
               messageId: 'badName',
@@ -1029,38 +1052,45 @@ module.exports = {
 ## Hook Extraction Checklist
 
 ### Structure
+
 - [ ] Hook file named correctly (`use{Feature}{Manager|State|Hook}.ts`)
 - [ ] Hook is 30+ lines (not premature extraction)
 - [ ] JSDoc comment present
 - [ ] Return type explicitly defined
 
 ### State Management
+
 - [ ] Related states grouped together
 - [ ] No useState in conditionals/loops
 - [ ] Default values sensible
 
 ### Effects & Callbacks
+
 - [ ] All effects have clear purpose
 - [ ] Dependency arrays complete (ESLint passes)
 - [ ] All callbacks use useCallback
 - [ ] Callback dependencies complete
 
 ### Performance
+
 - [ ] Derived values use useMemo
 - [ ] No unnecessary object/array creation
 - [ ] Parallel operations use Promise.all
 
 ### Testing
+
 - [ ] .test.ts file exists
 - [ ] Covers: init, all methods, errors
 - [ ] Coverage >= 80%
 
 ### Component Usage
+
 - [ ] Component simplified by 50%+ lines
 - [ ] Only UI concerns in component
 - [ ] Component passes minimal props
 
 ### Documentation
+
 - [ ] JSDoc complete
 - [ ] Return type documented
 - [ ] Complex methods have comments
@@ -1107,6 +1137,7 @@ Start: Is this component getting complex?
 ### Mistake 1: Over-Extraction
 
 **❌ Wrong:**
+
 ```typescript
 // Too simple to extract
 function useToggle() {
@@ -1123,6 +1154,7 @@ function Component() {
 ```
 
 **✅ Correct:**
+
 ```typescript
 // Simple state stays in component
 function Component() {
@@ -1150,6 +1182,7 @@ function useRemindersManager() {
 ### Mistake 2: Incomplete Dependency Arrays
 
 **❌ Wrong:**
+
 ```typescript
 function useRemindersManager() {
   const [status, setStatus] = useState(null);
@@ -1168,6 +1201,7 @@ function useRemindersManager() {
 ```
 
 **✅ Correct:**
+
 ```typescript
 function useRemindersManager() {
   const [status, setStatus] = useState(null);
@@ -1188,6 +1222,7 @@ function useRemindersManager() {
 ### Mistake 3: Not Memoizing Callbacks Used as Dependencies
 
 **❌ Wrong:**
+
 ```typescript
 function useCalendarManager() {
   const [status, setStatus] = useState(null);
@@ -1208,6 +1243,7 @@ function useCalendarManager() {
 ```
 
 **✅ Correct:**
+
 ```typescript
 function useCalendarManager() {
   const [status, setStatus] = useState(null);
@@ -1230,6 +1266,7 @@ function useCalendarManager() {
 ### Mistake 4: Not Testing the Hook
 
 **❌ Wrong:**
+
 ```typescript
 // Hook written but not tested
 function useRemindersManager() {
@@ -1239,6 +1276,7 @@ function useRemindersManager() {
 ```
 
 **✅ Correct:**
+
 ```typescript
 // useRemindersManager.ts - Hook implementation
 export function useRemindersManager() { ... }
@@ -1255,6 +1293,7 @@ describe('useRemindersManager', () => {
 ### Mistake 5: Exposing Too Much State
 
 **❌ Wrong:**
+
 ```typescript
 function useRemindersManager() {
   // ❌ Exposes internal state directly
@@ -1280,6 +1319,7 @@ function RemindersCard() {
 ```
 
 **✅ Correct:**
+
 ```typescript
 function useRemindersManager() {
   // ✅ Keep state private, expose only methods

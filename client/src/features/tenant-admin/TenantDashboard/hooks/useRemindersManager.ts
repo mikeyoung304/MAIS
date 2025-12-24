@@ -90,7 +90,7 @@ export function useRemindersManager(): UseRemindersManagerResult {
     onError: (err: Error) => {
       logger.error('Error processing reminders:', {
         error: err,
-        component: 'useRemindersManager'
+        component: 'useRemindersManager',
       });
       setError(err.message);
     },

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "270"
+issue_id: '270'
 tags: [code-review, backend-audit, google-calendar, timezone]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 Event creation in `google-calendar-sync.adapter.ts` uses hardcoded `timeZone: 'UTC'` regardless of the tenant's or client's timezone. This causes calendar events to display at wrong times for users in non-UTC timezones.
 
 **Why it matters:**
+
 - Events show at wrong local time on Google Calendar
 - Tenants in US timezones see events 4-8 hours off
 - Potential for missed appointments due to confusion
@@ -20,6 +21,7 @@ Event creation in `google-calendar-sync.adapter.ts` uses hardcoded `timeZone: 'U
 ## Findings
 
 ### Agent: backend-audit
+
 - **Location:** `server/src/adapters/google-calendar-sync.adapter.ts:100-107`
 - **Evidence:**
   ```typescript
@@ -33,6 +35,7 @@ Event creation in `google-calendar-sync.adapter.ts` uses hardcoded `timeZone: 'U
 ## Proposed Solutions
 
 ### Option A: Use Client Timezone (Recommended)
+
 **Description:** Pass client's timezone from booking and use for calendar event
 
 ```typescript
@@ -59,13 +62,16 @@ async createEvent(input: {
 **Risk:** Low
 
 ### Option B: Use Tenant Default Timezone
+
 **Description:** Store default timezone in tenant settings, use for all events
 
 **Pros:**
+
 - Consistent per tenant
 - Simpler - no per-booking timezone needed
 
 **Cons:**
+
 - Doesn't handle multi-timezone clients
 
 **Effort:** Medium (2-3 hours)
@@ -78,10 +84,12 @@ Implement Option A - use `clientTimezone` from booking record (already captured 
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/adapters/google-calendar-sync.adapter.ts`
 - `server/src/di.ts` (pass timezone in event payload)
 
 **Data Flow:**
+
 1. Booking created with `clientTimezone` field
 2. `AppointmentEvents.BOOKED` payload includes timezone
 3. `GoogleCalendarSyncAdapter.createEvent` uses timezone for calendar event
@@ -95,8 +103,8 @@ Implement Option A - use `clientTimezone` from booking record (already captured 
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                     | Learnings                   |
+| ---------- | -------------------------- | --------------------------- |
 | 2025-12-05 | Created from backend audit | Minor but user-facing issue |
 
 ## Resources

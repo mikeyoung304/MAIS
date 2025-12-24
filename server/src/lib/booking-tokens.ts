@@ -91,7 +91,14 @@ export interface TokenValidationResult {
 
 export interface TokenValidationError {
   valid: false;
-  error: 'expired' | 'invalid' | 'wrong_action' | 'malformed' | 'booking_not_found' | 'booking_canceled' | 'booking_completed';
+  error:
+    | 'expired'
+    | 'invalid'
+    | 'wrong_action'
+    | 'malformed'
+    | 'booking_not_found'
+    | 'booking_canceled'
+    | 'booking_completed';
   message: string;
 }
 

@@ -70,9 +70,7 @@ describe('Scheduler', () => {
     const { initializeScheduler } = await import('../src/scheduler');
 
     // Mock validate to return false for custom schedule, true for default
-    vi.mocked(cron.validate)
-      .mockReturnValueOnce(false)
-      .mockReturnValueOnce(true);
+    vi.mocked(cron.validate).mockReturnValueOnce(false).mockReturnValueOnce(true);
 
     initializeScheduler(mockContainer, 'invalid-cron');
 

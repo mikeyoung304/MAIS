@@ -1,8 +1,11 @@
 # P1: Missing bookingType Field in Booking Creation
 
 ## Priority: P1 Critical
+
 ## Status: complete
+
 ## Feature: DATE Booking Flow
+
 ## Category: Data Integrity
 
 ## Issue
@@ -23,7 +26,7 @@ const created = await tx.booking.create({
     status: this.mapToPrismaStatus(booking.status),
     // ... other fields ...
     // ❌ MISSING: bookingType field
-  }
+  },
 });
 ```
 
@@ -41,7 +44,7 @@ const created = await tx.booking.create({
   data: {
     // ... existing fields ...
     bookingType: booking.bookingType || 'DATE', // Explicit value
-  }
+  },
 });
 ```
 
@@ -57,16 +60,17 @@ const created = await tx.booking.create({
 - Create TIMESLOT booking, verify `bookingType` is stored as 'TIMESLOT'
 - Query bookings and verify type is correct
 
-
-
 ## Work Log
 
 ### 2025-12-21 - Approved for Work
+
 **By:** Claude Triage System
 **Actions:**
+
 - Issue approved during triage session (bulk approval)
 - Status changed from pending → ready
 - Ready to be picked up and worked on
 
 ## Review Reference
+
 - Data Integrity Review Finding P1-001 (Missing bookingType field in creation)

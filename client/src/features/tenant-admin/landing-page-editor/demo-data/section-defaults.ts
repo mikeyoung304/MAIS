@@ -32,7 +32,8 @@ export const SECTION_DEFAULTS = {
 
   about: {
     headline: 'About Us',
-    content: 'Tell your story here. What makes your business special? Share your passion, experience, and what clients can expect when they work with you.',
+    content:
+      'Tell your story here. What makes your business special? Share your passion, experience, and what clients can expect when they work with you.',
     imageUrl: undefined,
     imagePosition: 'right',
   } satisfies AboutSectionConfig,
@@ -52,7 +53,8 @@ export const SECTION_DEFAULTS = {
 
   accommodation: {
     headline: 'Local Accommodations',
-    description: 'We partner with excellent local accommodations to make your stay comfortable and convenient.',
+    description:
+      'We partner with excellent local accommodations to make your stay comfortable and convenient.',
     imageUrl: undefined,
     ctaText: 'View Accommodations',
     ctaUrl: 'https://airbnb.com',
@@ -62,8 +64,14 @@ export const SECTION_DEFAULTS = {
   gallery: {
     headline: 'Our Gallery',
     images: [
-      { url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&h=400&fit=crop', alt: 'Sample image 1' },
-      { url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&h=400&fit=crop', alt: 'Sample image 2' },
+      {
+        url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&h=400&fit=crop',
+        alt: 'Sample image 1',
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&h=400&fit=crop',
+        alt: 'Sample image 2',
+      },
     ],
     instagramHandle: undefined,
   } satisfies GallerySectionConfig,
@@ -73,11 +81,13 @@ export const SECTION_DEFAULTS = {
     items: [
       {
         question: 'How do I book?',
-        answer: 'Simply browse our offerings and click "Book Now" on any package that interests you. You can also contact us directly for custom arrangements.',
+        answer:
+          'Simply browse our offerings and click "Book Now" on any package that interests you. You can also contact us directly for custom arrangements.',
       },
       {
         question: 'What is your cancellation policy?',
-        answer: 'Contact us at least 48 hours before your appointment for a full refund. Late cancellations may be subject to a fee.',
+        answer:
+          'Contact us at least 48 hours before your appointment for a full refund. Late cancellations may be subject to a fee.',
       },
     ],
   } satisfies FaqSectionConfig,

@@ -63,6 +63,7 @@ $ dig A db.gpyvdknhmevcfdbgtqir.supabase.co +short
 ```
 
 Many networks don't support IPv6:
+
 - Corporate firewalls often block IPv6
 - Home ISPs may not provide IPv6
 - Some VPNs tunnel IPv4 only
@@ -105,12 +106,14 @@ $ dig A aws-1-us-east-2.pooler.supabase.com +short
 ### Step 2: Update Environment Variables
 
 **Before (IPv6-only, fails on many networks):**
+
 ```bash
 DATABASE_URL=postgresql://postgres:%40Orangegoat11@db.gpyvdknhmevcfdbgtqir.supabase.co:5432/postgres
 DIRECT_URL=postgresql://postgres:%40Orangegoat11@db.gpyvdknhmevcfdbgtqir.supabase.co:5432/postgres
 ```
 
 **After (IPv4 + IPv6, works everywhere):**
+
 ```bash
 # Session Pooler for application connections
 DATABASE_URL=postgresql://postgres.gpyvdknhmevcfdbgtqir:%40Orangegoat11@aws-1-us-east-2.pooler.supabase.com:5432/postgres?pgbouncer=true&connection_limit=5
@@ -122,13 +125,13 @@ DIRECT_URL=postgresql://postgres:%40Orangegoat11@db.gpyvdknhmevcfdbgtqir.supabas
 
 ### Step 3: Key Configuration Differences
 
-| Setting | Direct Connection | Session Pooler |
-|---------|-------------------|----------------|
-| Hostname | `db.[REF].supabase.co` | `aws-1-[REGION].pooler.supabase.com` |
-| Username | `postgres` | `postgres.[REF]` |
-| IPv4 Support | No | Yes |
-| IPv6 Support | Yes | Yes |
-| Prisma Flag | Not needed | `?pgbouncer=true` |
+| Setting      | Direct Connection      | Session Pooler                       |
+| ------------ | ---------------------- | ------------------------------------ |
+| Hostname     | `db.[REF].supabase.co` | `aws-1-[REGION].pooler.supabase.com` |
+| Username     | `postgres`             | `postgres.[REF]`                     |
+| IPv4 Support | No                     | Yes                                  |
+| IPv6 Support | Yes                    | Yes                                  |
+| Prisma Flag  | Not needed             | `?pgbouncer=true`                    |
 
 ### Step 4: Verify Connection
 
@@ -151,6 +154,7 @@ FATAL: MaxClientsInSessionMode: max clients reached
 ```
 
 **Solution:** Add `connection_limit=5` to prevent exhaustion:
+
 ```bash
 DATABASE_URL=...?pgbouncer=true&connection_limit=5
 ```
@@ -158,6 +162,7 @@ DATABASE_URL=...?pgbouncer=true&connection_limit=5
 ### 2. Password URL Encoding
 
 Special characters must be URL-encoded:
+
 - `@` → `%40`
 - `#` → `%23`
 - `%` → `%25`
@@ -166,8 +171,8 @@ Special characters must be URL-encoded:
 
 The pooler hostname includes your project's region:
 
-| Region | Pooler Hostname |
-|--------|-----------------|
+| Region    | Pooler Hostname                       |
+| --------- | ------------------------------------- |
 | US East 1 | `aws-1-us-east-1.pooler.supabase.com` |
 | US East 2 | `aws-1-us-east-2.pooler.supabase.com` |
 | US West 1 | `aws-1-us-west-1.pooler.supabase.com` |
@@ -191,6 +196,7 @@ DATABASE_URL=postgresql://...@pooler.supabase.com:5432/postgres?pgbouncer=true
 ### 1. Document in CLAUDE.md
 
 Add to the Environment Setup section:
+
 ```markdown
 **Supabase Connection:** If you can't connect to Supabase, your network may not support IPv6.
 Use Session Pooler URL instead of Direct Connection. See docs/solutions/database-issues/supabase-ipv6-session-pooler-connection.md
@@ -199,6 +205,7 @@ Use Session Pooler URL instead of Direct Connection. See docs/solutions/database
 ### 2. Add Diagnostic to Doctor Script
 
 The `npm run doctor` command should check:
+
 - DNS resolution for DATABASE_URL hostname
 - IPv4 vs IPv6 availability
 - Actual database connectivity
@@ -206,6 +213,7 @@ The `npm run doctor` command should check:
 ### 3. Use Local PostgreSQL for Development
 
 Match CI behavior by using local PostgreSQL:
+
 ```bash
 # Install
 brew install postgresql@16
@@ -252,9 +260,9 @@ psql "$DATABASE_URL" -c "SELECT 1;"
 
 ## Resolution Summary
 
-| Before | After |
-|--------|-------|
+| Before                                | After                                   |
+| ------------------------------------- | --------------------------------------- |
 | Direct connection: `db.*.supabase.co` | Session Pooler: `*.pooler.supabase.com` |
-| IPv6 only | IPv4 + IPv6 |
-| Fails on many networks | Works everywhere |
-| Username: `postgres` | Username: `postgres.[PROJECT-REF]` |
+| IPv6 only                             | IPv4 + IPv6                             |
+| Fails on many networks                | Works everywhere                        |
+| Username: `postgres`                  | Username: `postgres.[PROJECT-REF]`      |

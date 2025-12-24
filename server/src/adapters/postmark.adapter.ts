@@ -93,10 +93,7 @@ export class PostmarkMailAdapter implements EmailProvider {
 
         // Success
         if (attempt > 1) {
-          logger.info(
-            { attempt, to, context },
-            `Postmark ${context} send succeeded after retry`
-          );
+          logger.info({ attempt, to, context }, `Postmark ${context} send succeeded after retry`);
         }
         return;
       } catch (error: any) {
@@ -108,7 +105,10 @@ export class PostmarkMailAdapter implements EmailProvider {
         }
 
         const delay = this.baseDelayMs * Math.pow(2, attempt - 1);
-        logger.warn({ attempt, delay, to, error: error.message, context }, `Retrying Postmark ${context} send`);
+        logger.warn(
+          { attempt, delay, to, error: error.message, context },
+          `Retrying Postmark ${context} send`
+        );
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }

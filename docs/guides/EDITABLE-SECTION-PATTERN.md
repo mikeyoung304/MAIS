@@ -17,9 +17,9 @@ Add three optional props to the existing section component:
 ```typescript
 interface SectionProps {
   config: SectionConfig;
-  editable?: boolean;           // Enable inline editing mode
-  onUpdate?: (updates: Partial<SectionConfig>) => void;  // Callback for updates
-  disabled?: boolean;           // Disable editing during save operations
+  editable?: boolean; // Enable inline editing mode
+  onUpdate?: (updates: Partial<SectionConfig>) => void; // Callback for updates
+  disabled?: boolean; // Disable editing during save operations
 }
 ```
 
@@ -37,7 +37,7 @@ export const SectionComponent = memo(function SectionComponent({
   config,
   editable = false,
   onUpdate,
-  disabled = false
+  disabled = false,
 }: SectionProps) {
   // Component logic...
 });
@@ -69,7 +69,7 @@ For each editable field, use this pattern:
 
 Document the new props and add examples for both modes:
 
-```typescript
+````typescript
 /**
  * Section description...
  *
@@ -95,7 +95,7 @@ Document the new props and add examples for both modes:
  * @param props.onUpdate - Callback when content is updated in editable mode
  * @param props.disabled - Disable editing in editable mode (e.g., during save)
  */
-```
+````
 
 ## Complete Examples
 
@@ -104,6 +104,7 @@ Document the new props and add examples for both modes:
 **File**: `/Users/mikeyoung/CODING/MAIS/client/src/features/storefront/landing/sections/HeroSection.tsx`
 
 #### Props Interface
+
 ```typescript
 interface HeroSectionProps {
   config: HeroConfig;
@@ -114,6 +115,7 @@ interface HeroSectionProps {
 ```
 
 #### Editable Headline
+
 ```typescript
 {editable ? (
   <EditableText
@@ -133,6 +135,7 @@ interface HeroSectionProps {
 ```
 
 #### Optional Field (Subheadline)
+
 ```typescript
 {editable ? (
   <EditableText
@@ -158,6 +161,7 @@ interface HeroSectionProps {
 **File**: `/Users/mikeyoung/CODING/MAIS/client/src/features/storefront/landing/sections/AboutSection.tsx`
 
 #### Multiline Content
+
 ```typescript
 {editable ? (
   <EditableText
@@ -183,6 +187,7 @@ interface HeroSectionProps {
 ```
 
 #### Interactive Controls (Image Position Toggle)
+
 ```typescript
 {editable && (
   <div className="flex items-center gap-2">
@@ -216,18 +221,18 @@ The `EditableText` component provides the inline editing functionality:
 
 ### Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `value` | `string` | Yes | Current text value |
-| `onChange` | `(value: string) => void` | Yes | Callback when value changes |
-| `placeholder` | `string` | No | Placeholder text |
-| `disabled` | `boolean` | No | Disable editing |
-| `className` | `string` | No | Classes for display mode |
-| `inputClassName` | `string` | No | Classes for edit mode input |
-| `multiline` | `boolean` | No | Use textarea instead of input |
-| `rows` | `number` | No | Rows for textarea (default: 3) |
-| `maxLength` | `number` | No | Maximum character length |
-| `aria-label` | `string` | No | Accessibility label |
+| Prop             | Type                      | Required | Description                    |
+| ---------------- | ------------------------- | -------- | ------------------------------ |
+| `value`          | `string`                  | Yes      | Current text value             |
+| `onChange`       | `(value: string) => void` | Yes      | Callback when value changes    |
+| `placeholder`    | `string`                  | No       | Placeholder text               |
+| `disabled`       | `boolean`                 | No       | Disable editing                |
+| `className`      | `string`                  | No       | Classes for display mode       |
+| `inputClassName` | `string`                  | No       | Classes for edit mode input    |
+| `multiline`      | `boolean`                 | No       | Use textarea instead of input  |
+| `rows`           | `number`                  | No       | Rows for textarea (default: 3) |
+| `maxLength`      | `number`                  | No       | Maximum character length       |
+| `aria-label`     | `string`                  | No       | Accessibility label            |
 
 ### Behavior
 

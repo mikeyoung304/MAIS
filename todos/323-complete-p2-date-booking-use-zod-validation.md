@@ -1,8 +1,11 @@
 # P2: Validation Logic Should Use Zod Schemas
 
 ## Priority: P2 Important
+
 ## Status: pending
+
 ## Feature: DATE Booking Flow
+
 ## Category: Code Simplicity
 
 ## Issue
@@ -73,4 +76,5 @@ const validateStep2WithErrors = () => {
 - Type-safe validation
 
 ## Review Reference
+
 - Code Simplicity Review Finding P2-6 (Validation Logic Should Use Zod)

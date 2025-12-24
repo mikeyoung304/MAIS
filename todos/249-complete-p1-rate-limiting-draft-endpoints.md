@@ -32,9 +32,9 @@ The landing page draft endpoints (`PUT /draft`, `POST /publish`, `DELETE /draft`
 
 ```typescript
 // server/src/routes/tenant-admin-landing-page.routes.ts
-PUT  /v1/tenant-admin/landing-page/draft     // No rate limiting
-POST /v1/tenant-admin/landing-page/publish   // No rate limiting
-DELETE /v1/tenant-admin/landing-page/draft   // No rate limiting
+PUT / v1 / tenant - admin / landing - page / draft; // No rate limiting
+POST / v1 / tenant - admin / landing - page / publish; // No rate limiting
+DELETE / v1 / tenant - admin / landing - page / draft; // No rate limiting
 ```
 
 ### Attack Scenario
@@ -51,6 +51,7 @@ DELETE /v1/tenant-admin/landing-page/draft   // No rate limiting
 ### Existing Rate Limiting Patterns
 
 The codebase already uses rate limiters:
+
 ```typescript
 // server/src/middleware/rate-limiter.ts
 export const signupLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5 });
@@ -60,6 +61,7 @@ export const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
 ## Proposed Solutions
 
 ### Option A: Apply uploadLimiter Pattern (Recommended)
+
 - **Effort:** 30 minutes
 - **Risk:** Low
 - Create `draftLimiter` with reasonable limits
@@ -68,6 +70,7 @@ export const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
 - **Cons:** None
 
 ### Option B: Per-Tenant Rate Limiting
+
 - **Effort:** 2 hours
 - **Risk:** Low
 - Create tenant-aware rate limiter using `res.locals.tenantAuth.tenantId`
@@ -106,9 +109,9 @@ router.delete('/draft', draftLimiterIP, async (req, res) => { ... });
 
 ## Work Log
 
-| Date       | Action  | Notes                                      |
-|------------|---------|-------------------------------------------|
-| 2025-12-04 | Created | Security review identified DoS risk       |
+| Date       | Action  | Notes                                                                         |
+| ---------- | ------- | ----------------------------------------------------------------------------- |
+| 2025-12-04 | Created | Security review identified DoS risk                                           |
 | 2025-12-05 | Closed  | Verified: draftAutosaveLimiter at rateLimiter.ts:133, applied to all 3 routes |
 
 ## Tags

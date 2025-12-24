@@ -72,7 +72,7 @@ export const AboutSection = memo(function AboutSection({
   config,
   editable = false,
   onUpdate,
-  disabled = false
+  disabled = false,
 }: AboutSectionProps) {
   const imagePosition = config.imagePosition || 'right';
 

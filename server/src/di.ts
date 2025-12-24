@@ -537,10 +537,7 @@ export function buildContainer(config: Config): Container {
   const reminderService = new ReminderService(bookingRepo, catalogRepo, eventEmitter);
 
   // Create WebhookDeliveryService for outbound webhook delivery (TODO-278)
-  const webhookDeliveryService = new WebhookDeliveryService(
-    webhookSubscriptionRepo,
-    eventEmitter
-  );
+  const webhookDeliveryService = new WebhookDeliveryService(webhookSubscriptionRepo, eventEmitter);
 
   // Create HealthCheckService with real adapters
   const healthCheckService = new HealthCheckService({
@@ -646,7 +643,7 @@ export function buildContainer(config: Config): Container {
   });
 
   // Create webhook queue for async processing (will be initialized in index.ts)
-  const webhookQueue = createWebhookQueue(webhookRepo, paymentProvider, bookingService);
+  const webhookQueue = createWebhookQueue();
 
   // Build controllers
   const controllers = {

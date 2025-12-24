@@ -1,8 +1,11 @@
 # P2: Timezone Mismatch Between Client and Server Date Validation
 
 ## Priority: P2 Important
+
 ## Status: ready
+
 ## Feature: DATE Booking Flow
+
 ## Category: Data Integrity
 
 ## Issue
@@ -10,6 +13,7 @@
 The date validation uses different timezone handling between client and server, which could cause dates to be valid on one side but invalid on the other near midnight.
 
 **Server (packages/contracts/src/dto.ts:170-183):**
+
 ```typescript
 .refine((val) => {
   const date = new Date(val + 'T00:00:00Z');  // ← UTC
@@ -24,6 +28,7 @@ The date validation uses different timezone handling between client and server, 
 ```
 
 **Client (client/src/features/storefront/DateBookingWizard.tsx:83):**
+
 ```typescript
 return unavailableDatesData.map((dateStr) => new Date(dateStr + 'T00:00:00')); // ← Local time
 ```
@@ -56,16 +61,17 @@ return unavailableDatesData.map((dateStr) => new Date(dateStr + 'T00:00:00Z'));
 - Test booking at 11:30pm in different timezones
 - Verify calendar disabled dates match server validation
 
-
-
 ## Work Log
 
 ### 2025-12-21 - Approved for Work
+
 **By:** Claude Triage System
 **Actions:**
+
 - Issue approved during triage session (bulk approval)
 - Status changed from pending → ready
 - Ready to be picked up and worked on
 
 ## Review Reference
+
 - Code Review PR: feat/date-booking-hardening (ce6443d)

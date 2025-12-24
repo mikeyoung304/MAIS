@@ -1,11 +1,11 @@
 ---
 status: resolved
 priority: p2
-issue_id: "284"
+issue_id: '284'
 tags: [code-review, security, jwt, tokens, booking-management]
 dependencies: []
-resolved_at: "2025-12-23"
-resolved_by: "added pay_balance state validation with 9 new tests"
+resolved_at: '2025-12-23'
+resolved_by: 'added pay_balance state validation with 9 new tests'
 ---
 
 # Missing Token Revocation for Booking Management Links
@@ -15,6 +15,7 @@ resolved_by: "added pay_balance state validation with 9 new tests"
 JWT tokens for booking management are stateless with no revocation mechanism. If a customer cancels their booking, the old reschedule link remains valid for 7 days. This creates business logic bypass risks.
 
 **Why it matters:**
+
 - Canceled bookings can be "un-canceled" via old link
 - Modified bookings accessible via outdated cached links
 - No way to invalidate compromised tokens
@@ -23,17 +24,21 @@ JWT tokens for booking management are stateless with no revocation mechanism. If
 ## Findings
 
 ### Agent: security-sentinel
+
 - **Location:** `server/src/lib/booking-tokens.ts`
 - **Evidence:**
+
 ```typescript
 export function validateBookingToken(token: string): ValidateTokenResult {
   const payload = jwt.verify(token, getBookingTokenSecret(config));
   return { valid: true, payload }; // No check if token was revoked or booking state changed
 }
 ```
+
 - **Severity:** MEDIUM - Business logic bypass
 
 ### Attack Scenario:
+
 1. Customer books wedding for June 15
 2. Receives reschedule link (valid 7 days)
 3. Cancels booking on June 2
@@ -43,6 +48,7 @@ export function validateBookingToken(token: string): ValidateTokenResult {
 ## Proposed Solutions
 
 ### Option A: State Validation on Token Use (Recommended)
+
 **Description:** Validate booking state when token is used, not just signature
 
 ```typescript
@@ -88,11 +94,13 @@ export async function validateBookingToken(
 ```
 
 **Pros:**
+
 - No database schema changes
 - Validates against real-time booking state
 - Granular control per action type
 
 **Cons:**
+
 - Adds database query to token validation
 - Slight latency increase
 
@@ -100,6 +108,7 @@ export async function validateBookingToken(
 **Risk:** Low
 
 ### Option B: Token Versioning
+
 **Description:** Add version counter to booking, invalidate tokens when version changes
 
 ```prisma
@@ -123,6 +132,7 @@ if (payload.version !== booking.tokenVersion) {
 **Risk:** Low
 
 ### Option C: Reduce Token Expiry
+
 **Description:** Reduce token validity from 7 days to 48 hours
 
 **Effort:** Small (15 minutes)
@@ -135,6 +145,7 @@ Implement Option A (state validation) with Option C (reduced expiry) as defense 
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/lib/booking-tokens.ts`
 - `server/src/routes/public-booking-management.routes.ts`
 - `server/src/middleware/booking-token.middleware.ts` (if exists)
@@ -161,8 +172,8 @@ Implement Option A (state validation) with Option C (reduced expiry) as defense 
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                       | Learnings                  |
+| ---------- | ---------------------------- | -------------------------- |
 | 2025-12-05 | Created from security review | Business logic bypass risk |
 
 ## Resources

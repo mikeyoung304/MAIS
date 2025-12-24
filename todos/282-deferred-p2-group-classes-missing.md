@@ -1,11 +1,11 @@
 ---
 status: pending
 priority: p2
-issue_id: "282"
+issue_id: '282'
 tags: [deferred, code-review, feature-gap, group-classes, capacity, acuity-parity]
 dependencies: []
-next_review: "2026-01-23"
-revisit_trigger: "3 customer requests"
+next_review: '2026-01-23'
+revisit_trigger: '3 customer requests'
 ---
 
 # Group Classes/Sessions Not Implemented (Acuity Parity)
@@ -15,6 +15,7 @@ revisit_trigger: "3 customer requests"
 Acuity supports group classes where multiple clients book the same timeslot up to a capacity limit. MAIS only supports 1:1 appointments. This is a significant gap for fitness instructors, workshop hosts, and educators.
 
 **Why it matters:**
+
 - Yoga instructors need 20-person classes
 - Workshop hosts need group registration
 - Music teachers offer group lessons
@@ -23,12 +24,14 @@ Acuity supports group classes where multiple clients book the same timeslot up t
 ## Findings
 
 ### Agent: architecture-strategist
+
 - **Location:** `server/prisma/schema.prisma` (Service model)
 - **Evidence:** No `capacity` field in Service model, no multi-booking per slot logic
 - **Current:** Unique constraint prevents multiple bookings per timeslot
 - **Needed:** Capacity tracking, waitlist support, group management
 
 ### Acuity Group Features:
+
 - Set max capacity per class (e.g., 20 spots)
 - Show remaining spots to customers
 - Waitlist when full
@@ -38,9 +41,11 @@ Acuity supports group classes where multiple clients book the same timeslot up t
 ## Proposed Solutions
 
 ### Option A: Capacity-Based Group Bookings (Recommended)
+
 **Description:** Add capacity to Service model, track registered count per timeslot
 
 **Schema Changes:**
+
 ```prisma
 model Service {
   // Existing fields...
@@ -68,6 +73,7 @@ model Booking {
 ```
 
 **Service Logic:**
+
 ```typescript
 async checkGroupAvailability(
   tenantId: string,
@@ -103,6 +109,7 @@ async checkGroupAvailability(
 ```
 
 **API Response:**
+
 ```json
 {
   "slots": [
@@ -118,11 +125,13 @@ async checkGroupAvailability(
 ```
 
 **Pros:**
+
 - Enables group class use case
 - Revenue multiplier for service providers
 - Waitlist for demand management
 
 **Cons:**
+
 - Complex availability calculation
 - UI changes for group vs 1:1
 - Payment split considerations
@@ -131,6 +140,7 @@ async checkGroupAvailability(
 **Risk:** Medium
 
 ### Option B: Simple Capacity Without Waitlist
+
 **Description:** Add capacity only, no waitlist support
 
 **Effort:** Medium (2-3 days)
@@ -143,6 +153,7 @@ Defer to Phase 2. Implement Option B first, add waitlist in Phase 3.
 ## Technical Details
 
 **Affected Files:**
+
 - `server/prisma/schema.prisma` (Service, Booking models)
 - `server/src/services/scheduling-availability.service.ts`
 - `server/src/services/booking.service.ts`
@@ -150,6 +161,7 @@ Defer to Phase 2. Implement Option B first, add waitlist in Phase 3.
 - Client UI components
 
 **Database Considerations:**
+
 - Remove or modify unique constraint on `(tenantId, serviceId, startTime)` for group classes
 - Add composite index: `(tenantId, serviceId, startTime, isWaitlisted)` for counting
 
@@ -164,8 +176,8 @@ Defer to Phase 2. Implement Option B first, add waitlist in Phase 3.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                         | Learnings        |
+| ---------- | ------------------------------ | ---------------- |
 | 2025-12-05 | Created from Acuity comparison | Defer to Phase 2 |
 
 ## Resources

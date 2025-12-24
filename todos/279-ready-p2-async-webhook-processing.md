@@ -1,7 +1,7 @@
 ---
 status: pending
 priority: p2
-issue_id: "279"
+issue_id: '279'
 tags: [code-review, performance, webhooks, async, stripe]
 dependencies: []
 ---
@@ -13,6 +13,7 @@ dependencies: []
 Stripe webhook processing is synchronous - the endpoint waits for booking creation, advisory lock acquisition, and payment record creation before responding. This can cause Stripe timeouts under load.
 
 **Why it matters:**
+
 - Stripe expects response within 5 seconds
 - Advisory lock contention can cause delays beyond 5 seconds
 - Stripe marks webhooks as "failed" and retries, creating a cascade
@@ -21,6 +22,7 @@ Stripe webhook processing is synchronous - the endpoint waits for booking creati
 ## Findings
 
 ### Agent: performance-oracle
+
 - **Location:** `server/src/routes/webhooks.routes.ts:118-399`
 - **Processing Time Breakdown:**
   - Signature verification: ~10ms
@@ -33,7 +35,7 @@ Stripe webhook processing is synchronous - the endpoint waits for booking creati
 ### Load Metrics:
 
 | Webhooks/sec | Processing Time | Timeout Rate |
-|--------------|-----------------|--------------|
+| ------------ | --------------- | ------------ |
 | 10/sec       | 75ms avg        | 0%           |
 | 50/sec       | 120ms avg       | 2-5%         |
 | 100/sec      | 200-300ms avg   | 10-15%       |
@@ -41,6 +43,7 @@ Stripe webhook processing is synchronous - the endpoint waits for booking creati
 ## Proposed Solutions
 
 ### Option A: Async Webhook Processing with Job Queue (Recommended)
+
 **Description:** Record webhook immediately, process in background
 
 ```typescript
@@ -72,12 +75,14 @@ async processWebhookJob(eventId: string): Promise<void> {
 ```
 
 **Pros:**
+
 - Guaranteed fast response to Stripe
 - No timeout risk under any load
 - Automatic retry with exponential backoff
 - Decouples webhook receipt from processing
 
 **Cons:**
+
 - Requires job queue infrastructure (BullMQ, pg-boss)
 - Slightly delayed booking creation (seconds, not ms)
 - More complex debugging
@@ -86,6 +91,7 @@ async processWebhookJob(eventId: string): Promise<void> {
 **Risk:** Low
 
 ### Option B: Fire-and-Forget Processing (Simpler)
+
 **Description:** Process asynchronously without awaiting
 
 ```typescript
@@ -103,10 +109,12 @@ async handleStripeWebhook(...): Promise<void> {
 ```
 
 **Pros:**
+
 - Very quick to implement (1 hour)
 - No additional infrastructure
 
 **Cons:**
+
 - No automatic retry on failure
 - Harder to track processing status
 - Potential memory issues with many concurrent processes
@@ -121,11 +129,13 @@ Implement Option B immediately for quick win, then migrate to Option A for produ
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/routes/webhooks.routes.ts`
 - NEW: `server/src/jobs/webhook-processor.job.ts` (for Option A)
 - `server/src/adapters/prisma/webhook.repository.ts`
 
 **Job Queue Options:**
+
 - BullMQ (Redis-based, production-ready)
 - pg-boss (PostgreSQL-based, no new infrastructure)
 - Simple database polling (minimal, works for MVP)
@@ -140,8 +150,8 @@ Implement Option B immediately for quick win, then migrate to Option A for produ
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                          | Learnings               |
+| ---------- | ------------------------------- | ----------------------- |
 | 2025-12-05 | Created from performance review | Timeout risk under load |
 
 ## Resources

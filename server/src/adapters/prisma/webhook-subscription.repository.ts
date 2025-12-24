@@ -206,10 +206,7 @@ export class PrismaWebhookSubscriptionRepository implements WebhookSubscriptionR
       },
     });
 
-    logger.info(
-      { tenantId, subscriptionId: id, url: updated.url },
-      'Webhook subscription updated'
-    );
+    logger.info({ tenantId, subscriptionId: id, url: updated.url }, 'Webhook subscription updated');
 
     return updated;
   }

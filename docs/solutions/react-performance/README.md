@@ -7,6 +7,7 @@ This directory contains prevention strategies for React performance issues, part
 ## Documents
 
 ### 1. REACT-MEMOIZATION-PREVENTION-STRATEGY.md (Main Guide)
+
 **892 lines | Complete Reference**
 
 Comprehensive prevention strategy covering:
@@ -21,12 +22,14 @@ Comprehensive prevention strategy covering:
 - **Implementation Checklist** - 10-item checklist before submitting PRs
 
 **When to read:**
+
 - During onboarding (React developers)
 - When implementing list/grid components
 - When code reviewing React components
 - When investigating performance issues
 
 ### 2. REACT-MEMOIZATION-QUICK-REFERENCE.md (Cheat Sheet)
+
 **307 lines | Print & Pin**
 
 Quick reference card with:
@@ -42,6 +45,7 @@ Quick reference card with:
 - **Test template** - Example tests
 
 **When to read:**
+
 - Before every React component commit
 - During code review (faster reference)
 - When debugging ESLint warnings
@@ -80,39 +84,44 @@ Quick reference card with:
 ## Key Patterns Summary
 
 ### Pattern 1: Callback Props
+
 ```tsx
 // ❌ BAD: Creates new function every render
-<ChildComponent onChange={(e) => setState(e.target.value)} />
+<ChildComponent onChange={(e) => setState(e.target.value)} />;
 
 // ✅ GOOD: Stable reference
 const handleChange = useCallback((e) => setState(e.target.value), []);
-<ChildComponent onChange={handleChange} />
+<ChildComponent onChange={handleChange} />;
 ```
 
 ### Pattern 2: Derived Values
+
 ```tsx
 // ❌ BAD: New array created every render
-const filtered = items.filter(i => i.active);
+const filtered = items.filter((i) => i.active);
 
 // ✅ GOOD: Memoized until dependencies change
-const filtered = useMemo(
-  () => items.filter(i => i.active),
-  [items]
-);
+const filtered = useMemo(() => items.filter((i) => i.active), [items]);
 ```
 
 ### Pattern 3: List Items
+
 ```tsx
 // ❌ BAD: All items re-render when any parent state changes
-{items.map(item => <Item key={item.id} item={item} />)}
+{
+  items.map((item) => <Item key={item.id} item={item} />);
+}
 
 // ✅ GOOD: Only affected items re-render
-{items.map(item => <MemoizedItem key={item.id} item={item} />)}
+{
+  items.map((item) => <MemoizedItem key={item.id} item={item} />);
+}
 const MemoizedItem = React.memo(Item);
 MemoizedItem.displayName = 'Item';
 ```
 
 ### Pattern 4: Complete Dependencies
+
 ```tsx
 // ❌ BAD: Stale closure (callback never sees new prop)
 const callback = useCallback(() => process(prop), []);
@@ -132,6 +141,7 @@ const callback = useCallback(() => process(prop), [prop]);
 3. Fix violations with: `npm run format`
 
 **Critical rules:**
+
 - `react-hooks/rules-of-hooks` - Hooks only in components/hooks
 - `react-hooks/exhaustive-deps` - Complete dependency arrays (warnings OK, not errors)
 - `react/no-unstable-nested-components` - Move components out of render
@@ -149,10 +159,12 @@ const callback = useCallback(() => process(prop), [prop]);
 6. Check "Render count" for unexpected re-renders
 
 **Good result:**
+
 - List item: 1 render (only that item changed)
 - Form input: 1-2 renders (input + debounced parent)
 
 **Bad result:**
+
 - List item: 100 renders (all items re-rendered)
 - Form input: 5+ renders (cascade through component tree)
 
@@ -160,26 +172,26 @@ const callback = useCallback(() => process(prop), [prop]);
 
 ## Performance Targets
 
-| Component Type | Target Render Time | Notes |
-|---|---|---|
-| Simple component | < 5ms | Button, badge, label |
-| Complex component | < 20ms | Form, card, dialog |
-| List item (memoized) | < 10ms | Per item render time |
-| List (100 items) | < 50ms total | Should be 1-2 re-renders |
-| Commit duration | < 16ms | 60 FPS target |
+| Component Type       | Target Render Time | Notes                    |
+| -------------------- | ------------------ | ------------------------ |
+| Simple component     | < 5ms              | Button, badge, label     |
+| Complex component    | < 20ms             | Form, card, dialog       |
+| List item (memoized) | < 10ms             | Per item render time     |
+| List (100 items)     | < 50ms total       | Should be 1-2 re-renders |
+| Commit duration      | < 16ms             | 60 FPS target            |
 
 ---
 
 ## When to Use What
 
-| Situation | Tool | Example |
-|---|---|---|
-| Callback passed to child | `useCallback()` | `onChange`, `onSelect`, `onDelete` |
-| Array/object computed from props | `useMemo()` | `.filter()`, `.map()`, `{ a: b, c: d }` |
-| List item (10+ items) | `React.memo()` | `<PackageCard>` in `items.map()` |
-| Hook returns callback | `useCallback()` | Custom hook for handlers |
-| Hook returns computed value | `useMemo()` | Custom hook for derived state |
-| Simple calculation | Skip | `const sum = a + b` |
+| Situation                        | Tool            | Example                                 |
+| -------------------------------- | --------------- | --------------------------------------- |
+| Callback passed to child         | `useCallback()` | `onChange`, `onSelect`, `onDelete`      |
+| Array/object computed from props | `useMemo()`     | `.filter()`, `.map()`, `{ a: b, c: d }` |
+| List item (10+ items)            | `React.memo()`  | `<PackageCard>` in `items.map()`        |
+| Hook returns callback            | `useCallback()` | Custom hook for handlers                |
+| Hook returns computed value      | `useMemo()`     | Custom hook for derived state           |
+| Simple calculation               | Skip            | `const sum = a + b`                     |
 
 ---
 

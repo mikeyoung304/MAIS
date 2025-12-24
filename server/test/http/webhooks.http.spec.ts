@@ -176,7 +176,12 @@ describe('POST /v1/webhooks/stripe - HTTP Tests', () => {
     });
 
     it('should handle payment_intent.payment_failed with various error codes', async () => {
-      const errorCodes = ['card_declined', 'insufficient_funds', 'expired_card', 'processing_error'];
+      const errorCodes = [
+        'card_declined',
+        'insufficient_funds',
+        'expired_card',
+        'processing_error',
+      ];
 
       for (const errorCode of errorCodes) {
         const paymentFailedEvent = {

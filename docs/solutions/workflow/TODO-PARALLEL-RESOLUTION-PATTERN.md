@@ -41,11 +41,11 @@ Task(Explore): "Check if TODO-249 rate limiting applied"
 
 ### Step 2: Categorize Todos
 
-| Category | Action | Time |
-|----------|--------|------|
-| **Already Complete** | Update status, add evidence | 5 min |
-| **Quick Win** | Implement (< 1 hour) | 20-45 min |
-| **Deferred** | Document scope, dependencies | 10 min |
+| Category             | Action                       | Time      |
+| -------------------- | ---------------------------- | --------- |
+| **Already Complete** | Update status, add evidence  | 5 min     |
+| **Quick Win**        | Implement (< 1 hour)         | 20-45 min |
+| **Deferred**         | Document scope, dependencies | 10 min    |
 
 ### Step 3: Batch Similar Work
 
@@ -130,12 +130,13 @@ When closing a todo as "already implemented":
 ```markdown
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action | Notes                                                 |
+| ---------- | ------ | ----------------------------------------------------- |
 | 2025-12-05 | Closed | Verified: [what exists] at [file:line], commit [hash] |
 ```
 
 Example:
+
 ```markdown
 | 2025-12-05 | Closed | Verified: draftAutosaveLimiter at rateLimiter.ts:133, commit 1647a40 |
 ```
@@ -158,6 +159,7 @@ git log --oneline -10  # Check recent commits
 ### 2. Use Time-Aware Deferral
 
 If code was committed < 24 hours ago, defer creating todos:
+
 - Implementation likely still in progress
 - Tests haven't been written yet
 - Plan vs reality gap not yet visible
@@ -165,6 +167,7 @@ If code was committed < 24 hours ago, defer creating todos:
 ### 3. Categorize Before Acting
 
 Decision tree:
+
 ```
 Is code already there?
   → YES: Mark complete with evidence
@@ -177,14 +180,14 @@ Is code already there?
 
 ## Metrics
 
-| Metric | Value |
-|--------|-------|
-| Todos reviewed | 15 |
-| Already complete | 9 (60%) |
-| Quick wins implemented | 3 |
-| Deferred | 6 |
-| Total time | ~90 minutes |
-| Time saved by verification | ~6 hours |
+| Metric                     | Value       |
+| -------------------------- | ----------- |
+| Todos reviewed             | 15          |
+| Already complete           | 9 (60%)     |
+| Quick wins implemented     | 3           |
+| Deferred                   | 6           |
+| Total time                 | ~90 minutes |
+| Time saved by verification | ~6 hours    |
 
 ---
 
@@ -232,4 +235,4 @@ Deferred:
 
 ---
 
-*Created: 2025-12-05 | Session: Todo Parallel Resolution*
+_Created: 2025-12-05 | Session: Todo Parallel Resolution_

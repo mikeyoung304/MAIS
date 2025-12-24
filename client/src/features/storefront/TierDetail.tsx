@@ -83,9 +83,7 @@ export function TierDetail({
   // DATE packages: Go to date booking wizard with package slug
   // TIMESLOT packages: Go to appointment scheduling
   const bookingType = (pkg as PackageDto & { bookingType?: string }).bookingType || 'DATE';
-  const bookingLink = bookingType === 'DATE'
-    ? `../book/date/${pkg.slug}`
-    : '../book';
+  const bookingLink = bookingType === 'DATE' ? `../book/date/${pkg.slug}` : '../book';
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -216,8 +214,7 @@ export function TierDetail({
                     Ready to book?
                   </h3>
                   <p className="text-neutral-600 mb-6">
-                    Secure your spot with this {getDisplayName(tierLevel).toLowerCase()}{' '}
-                    package.
+                    Secure your spot with this {getDisplayName(tierLevel).toLowerCase()} package.
                   </p>
 
                   <div className="space-y-3">

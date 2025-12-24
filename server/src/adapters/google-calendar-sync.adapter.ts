@@ -286,11 +286,7 @@ export class GoogleCalendarSyncAdapter extends GoogleCalendarAdapter implements 
    * // ]
    * ```
    */
-  async getBusyTimes(
-    tenantId: string,
-    startDate: Date,
-    endDate: Date
-  ): Promise<BusyTimeBlock[]> {
+  async getBusyTimes(tenantId: string, startDate: Date, endDate: Date): Promise<BusyTimeBlock[]> {
     try {
       // Parse service account JSON from base64
       const serviceAccountJson = JSON.parse(

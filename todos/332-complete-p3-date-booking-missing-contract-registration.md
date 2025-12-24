@@ -1,8 +1,11 @@
 # P3: Missing Contract Registration in ts-rest Router
 
 ## Priority: P3 Nice-to-have
+
 ## Status: complete
+
 ## Feature: DATE Booking Flow
+
 ## Category: Architecture
 
 ## Issue
@@ -12,6 +15,7 @@ The `createDateBooking` endpoint is defined in the contract but NOT registered i
 **File:** `server/src/routes/index.ts:604-612`
 
 **Current State:**
+
 - Contract exists at line 1372 in `api.v1.ts`
 - Express router mounted at line 610 in `index.ts`
 - But ts-rest router (lines 153-407) doesn't implement the contract endpoint
@@ -23,6 +27,7 @@ The `createDateBooking` endpoint is defined in the contract but NOT registered i
 - Loses type safety benefits of contract-first design
 
 **Client Workaround (DateBookingWizard.tsx:127-128):**
+
 ```typescript
 // Make direct fetch call to the new endpoint since ts-rest may not have picked it up yet
 const response = await fetch(`${baseUrl}/v1/public/bookings/date`, { ... });
@@ -31,7 +36,9 @@ const response = await fetch(`${baseUrl}/v1/public/bookings/date`, { ... });
 ## Recommendation
 
 Either:
+
 1. **Implement contract in ts-rest router** (recommended):
+
    ```typescript
    // In ts-rest router
    createDateBooking: async ({ body, req }) => {
@@ -47,16 +54,17 @@ Either:
 1. `server/src/routes/index.ts` - Add to ts-rest router
 2. `client/src/features/storefront/DateBookingWizard.tsx` - Use typed API client
 
-
-
 ## Work Log
 
 ### 2025-12-21 - Approved for Work
+
 **By:** Claude Triage System
 **Actions:**
+
 - Issue approved during triage session (bulk approval)
 - Status changed from pending → ready
 - Ready to be picked up and worked on
 
 ## Review Reference
+
 - Architecture Review Finding P3 (Missing Contract Registration)

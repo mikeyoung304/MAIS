@@ -1,11 +1,11 @@
 ---
 status: pending
 priority: p3
-issue_id: "286"
+issue_id: '286'
 tags: [deferred, code-review, feature-gap, intake-forms, custom-fields, acuity-parity]
 dependencies: []
-next_review: "2026-01-23"
-revisit_trigger: "3 customer requests"
+next_review: '2026-01-23'
+revisit_trigger: '3 customer requests'
 ---
 
 # Custom Intake Forms Not Implemented (Acuity Parity)
@@ -15,6 +15,7 @@ revisit_trigger: "3 customer requests"
 Acuity supports custom intake forms/questionnaires that clients fill during booking. MAIS only collects basic contact info. Service providers need custom questions for their specific needs.
 
 **Why it matters:**
+
 - Therapists need health history before first session
 - Photographers need event details (location, style)
 - Consultants need project scope information
@@ -23,6 +24,7 @@ Acuity supports custom intake forms/questionnaires that clients fill during book
 ## Findings
 
 ### Agent: architecture-strategist
+
 - **Location:** Booking model in `schema.prisma`
 - **Evidence:** Only `notes` field exists, no structured custom fields
 - **Acuity Features:**
@@ -35,9 +37,11 @@ Acuity supports custom intake forms/questionnaires that clients fill during book
 ## Proposed Solutions
 
 ### Option A: JSON-Based Custom Fields (Recommended for MVP)
+
 **Description:** Store form schema and responses in JSON columns
 
 **Schema:**
+
 ```prisma
 model Service {
   // Existing fields...
@@ -51,6 +55,7 @@ model Booking {
 ```
 
 **Form Schema Structure:**
+
 ```json
 {
   "fields": [
@@ -79,6 +84,7 @@ model Booking {
 **Risk:** Low
 
 ### Option B: Normalized Form Fields Table
+
 **Description:** Separate tables for form definitions and responses
 
 **Effort:** Large (1 week)
@@ -99,8 +105,8 @@ Defer to Phase 3. Implement Option A for MVP, migrate to Option B if needed.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                         | Learnings        |
+| ---------- | ------------------------------ | ---------------- |
 | 2025-12-05 | Created from Acuity comparison | Defer to Phase 3 |
 
 ## Resources

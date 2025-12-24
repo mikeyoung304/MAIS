@@ -51,6 +51,7 @@ export const GalleryImageSchema = z.object({
 ## Proposed Solutions
 
 ### Option A: Store Image Dimensions in Schema (Recommended)
+
 - **Effort:** 2-3 hours
 - **Risk:** Low
 - Add `width` and `height` fields to image schemas
@@ -60,6 +61,7 @@ export const GalleryImageSchema = z.object({
 - **Cons:** Schema change, needs dimension extraction
 
 ### Option B: Fixed Aspect Ratio Containers
+
 - **Effort:** 1 hour
 - **Risk:** Medium
 - Use fixed aspect ratios (16:9 for hero, 1:1 for gallery)
@@ -68,6 +70,7 @@ export const GalleryImageSchema = z.object({
 - **Cons:** Images may be cropped awkwardly
 
 ### Option C: Skeleton Loading Only
+
 - **Effort:** 30 minutes
 - **Risk:** Medium
 - Show gray skeleton until image loads
@@ -99,7 +102,7 @@ const SECTION_ASPECT_RATIOS = {
     className="absolute inset-0 w-full h-full object-cover"
     loading="lazy"
   />
-</div>
+</div>;
 ```
 
 **Post-MVP:** Consider Option A for better quality:
@@ -133,9 +136,9 @@ await uploadImage({ url, width: dimensions.width, height: dimensions.height });
 
 ## Work Log
 
-| Date       | Action  | Notes                                             |
-|------------|---------|--------------------------------------------------|
-| 2025-12-04 | Created | Performance review identified layout shift risk  |
+| Date       | Action  | Notes                                           |
+| ---------- | ------- | ----------------------------------------------- |
+| 2025-12-04 | Created | Performance review identified layout shift risk |
 
 ## Tags
 

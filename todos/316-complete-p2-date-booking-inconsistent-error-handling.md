@@ -1,8 +1,11 @@
 # P2: Inconsistent Error Handling Pattern in Route
 
 ## Priority: P2 Important
+
 ## Status: pending
+
 ## Feature: DATE Booking Flow
+
 ## Category: Architecture
 
 ## Issue
@@ -69,4 +72,5 @@ if (error instanceof InvalidBookingTypeError) {
 3. Error middleware if needed
 
 ## Review Reference
+
 - Architecture Review Finding P2 (Inconsistent Error Handling Pattern)

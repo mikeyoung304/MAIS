@@ -7,15 +7,7 @@
  * Design: Matches landing page aesthetic with sage accents
  */
 
-import {
-  Bell,
-  Loader2,
-  AlertCircle,
-  Calendar,
-  Mail,
-  CheckCircle2,
-  RefreshCw,
-} from 'lucide-react';
+import { Bell, Loader2, AlertCircle, Calendar, Mail, CheckCircle2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { StatusBadge } from '@/components/shared/StatusBadge';
@@ -41,9 +33,7 @@ export function RemindersCard() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-serif text-2xl font-bold text-text-primary">Booking Reminders</h2>
-            <p className="text-text-muted text-sm mt-1">
-              Automated reminders sent before events
-            </p>
+            <p className="text-text-muted text-sm mt-1">Automated reminders sent before events</p>
           </div>
           <Button
             variant="ghost"
@@ -53,7 +43,10 @@ export function RemindersCard() {
             className="text-text-muted hover:text-sage"
             aria-label="Refresh reminders"
           >
-            <RefreshCw className={`w-4 h-4 ${manager.loading ? 'animate-spin' : ''}`} aria-hidden="true" />
+            <RefreshCw
+              className={`w-4 h-4 ${manager.loading ? 'animate-spin' : ''}`}
+              aria-hidden="true"
+            />
           </Button>
         </div>
 
@@ -72,7 +65,8 @@ export function RemindersCard() {
         <div>
           <h2 className="font-serif text-2xl font-bold text-text-primary">Booking Reminders</h2>
           <p className="text-text-muted text-sm mt-1">
-            {manager.status.pendingCount} pending reminder{manager.status.pendingCount !== 1 ? 's' : ''} to send
+            {manager.status.pendingCount} pending reminder
+            {manager.status.pendingCount !== 1 ? 's' : ''} to send
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -88,7 +82,10 @@ export function RemindersCard() {
             className="text-text-muted hover:text-sage"
             aria-label="Refresh reminders"
           >
-            <RefreshCw className={`w-4 h-4 ${manager.loading ? 'animate-spin' : ''}`} aria-hidden="true" />
+            <RefreshCw
+              className={`w-4 h-4 ${manager.loading ? 'animate-spin' : ''}`}
+              aria-hidden="true"
+            />
           </Button>
         </div>
       </div>
@@ -105,12 +102,10 @@ export function RemindersCard() {
 
       {manager.processResult && (
         <div className="p-4 bg-sage/10 border border-sage/20 rounded-xl flex items-start gap-3">
-          <CheckCircle2
-            className="w-5 h-5 text-sage flex-shrink-0 mt-0.5"
-            aria-hidden="true"
-          />
+          <CheckCircle2 className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" aria-hidden="true" />
           <span className="text-sm text-text-primary">
-            Processed {manager.processResult.processed} reminder{manager.processResult.processed !== 1 ? 's' : ''}
+            Processed {manager.processResult.processed} reminder
+            {manager.processResult.processed !== 1 ? 's' : ''}
             {manager.processResult.failed > 0 && ` (${manager.processResult.failed} failed)`}
           </span>
         </div>
@@ -142,9 +137,7 @@ export function RemindersCard() {
               <div className="text-right">
                 <span
                   className={`text-sm font-medium ${
-                    reminder.daysUntilEvent <= 7
-                      ? 'text-warning-600'
-                      : 'text-text-muted'
+                    reminder.daysUntilEvent <= 7 ? 'text-warning-600' : 'text-text-muted'
                   }`}
                 >
                   {reminder.daysUntilEvent} days until event

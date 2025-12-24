@@ -60,6 +60,7 @@ async saveLandingPageDraft(tenantId: string, config: LandingPageConfig) {
 ## Proposed Solutions
 
 ### Option A: Accept Current Performance (MVP)
+
 - **Effort:** 0 hours
 - **Risk:** Medium (may exceed target on slow connections)
 - Current approach is functional
@@ -68,6 +69,7 @@ async saveLandingPageDraft(tenantId: string, config: LandingPageConfig) {
 - **Cons:** May need to optimize later
 
 ### Option B: Implement Partial Updates with PATCH
+
 - **Effort:** 4-6 hours
 - **Risk:** Low
 - Add `PATCH /draft/:section` endpoint for single-section updates
@@ -76,6 +78,7 @@ async saveLandingPageDraft(tenantId: string, config: LandingPageConfig) {
 - **Cons:** More complex API
 
 ### Option C: PostgreSQL JSONB Atomic Updates
+
 - **Effort:** 2-3 hours
 - **Risk:** Medium
 - Use `jsonb_set()` to update specific paths
@@ -116,7 +119,7 @@ router.patch('/draft/:section', async (req, res) => {
 ## Work Log
 
 | Date       | Action  | Notes                                           |
-|------------|---------|------------------------------------------------|
+| ---------- | ------- | ----------------------------------------------- |
 | 2025-12-04 | Created | Performance review identified payload size risk |
 
 ## Tags

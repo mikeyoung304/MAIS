@@ -28,12 +28,24 @@ import { logger } from '../src/lib/core/logger';
 
 const prisma = new PrismaClient();
 
-type SeedMode = 'production' | 'e2e' | 'demo' | 'dev' | 'all' | 'la-petit-mariage' | 'little-bit-farm';
+type SeedMode =
+  | 'production'
+  | 'e2e'
+  | 'demo'
+  | 'dev'
+  | 'all'
+  | 'la-petit-mariage'
+  | 'little-bit-farm';
 
 function getSeedMode(): SeedMode {
   // Explicit SEED_MODE takes priority
   const explicitMode = process.env.SEED_MODE as SeedMode | undefined;
-  if (explicitMode && ['production', 'e2e', 'demo', 'dev', 'all', 'la-petit-mariage', 'little-bit-farm'].includes(explicitMode)) {
+  if (
+    explicitMode &&
+    ['production', 'e2e', 'demo', 'dev', 'all', 'la-petit-mariage', 'little-bit-farm'].includes(
+      explicitMode
+    )
+  ) {
     return explicitMode;
   }
 

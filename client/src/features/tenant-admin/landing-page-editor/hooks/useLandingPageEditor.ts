@@ -167,7 +167,8 @@ export function useLandingPageEditor(): UseLandingPageEditorReturn {
       const { status, body } = await api.getDraft();
 
       if (status !== 200 || !body) {
-        const errorMessage = (body as { error?: string })?.error || `Failed to load config: ${status}`;
+        const errorMessage =
+          (body as { error?: string })?.error || `Failed to load config: ${status}`;
         throw new Error(errorMessage);
       }
 
@@ -177,7 +178,9 @@ export function useLandingPageEditor(): UseLandingPageEditorReturn {
       // Check for localStorage recovery (TODO-253)
       const localBackup = loadLocalDraft();
       if (localBackup) {
-        const serverUpdatedAt = draftState.draftUpdatedAt ? new Date(draftState.draftUpdatedAt).getTime() : 0;
+        const serverUpdatedAt = draftState.draftUpdatedAt
+          ? new Date(draftState.draftUpdatedAt).getTime()
+          : 0;
         const localUpdatedAt = new Date(localBackup.savedAt).getTime();
 
         // If local is fresher (saved after server version), offer recovery

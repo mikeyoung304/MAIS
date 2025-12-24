@@ -232,40 +232,44 @@ export function createTenantAdminLandingPageRoutes(landingPageService: LandingPa
    * @returns 429 - Rate limit exceeded
    * @returns 500 - Internal server error
    */
-  router.put('/draft', draftAutosaveLimiter, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
-      }
-      const { tenantId } = tenantAuth;
+  router.put(
+    '/draft',
+    draftAutosaveLimiter,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantAuth = res.locals.tenantAuth;
+        if (!tenantAuth) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
+        const { tenantId } = tenantAuth;
 
-      // Validate request body against schema
-      const data = LandingPageConfigSchema.parse(req.body);
+        // Validate request body against schema
+        const data = LandingPageConfigSchema.parse(req.body);
 
-      // Service handles sanitization and save
-      const result = await landingPageService.saveDraft(tenantId, data);
-      res.json(result);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
+        // Service handles sanitization and save
+        const result = await landingPageService.saveDraft(tenantId, data);
+        res.json(result);
+      } catch (error) {
+        if (error instanceof ZodError) {
+          res.status(400).json({
+            error: 'Validation error',
+            details: error.issues,
+          });
+          return;
+        }
+        if (error instanceof NotFoundError) {
+          res.status(404).json({ error: error.message });
+          return;
+        }
+        if (error instanceof ValidationError) {
+          res.status(400).json({ error: error.message });
+          return;
+        }
+        next(error);
       }
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
-      if (error instanceof ValidationError) {
-        res.status(400).json({ error: error.message });
-        return;
-      }
-      next(error);
     }
-  });
+  );
 
   /**
    * POST /v1/tenant-admin/landing-page/publish
@@ -280,30 +284,34 @@ export function createTenantAdminLandingPageRoutes(landingPageService: LandingPa
    * @returns 429 - Rate limit exceeded
    * @returns 500 - Internal server error
    */
-  router.post('/publish', draftAutosaveLimiter, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
-      }
-      const { tenantId } = tenantAuth;
+  router.post(
+    '/publish',
+    draftAutosaveLimiter,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantAuth = res.locals.tenantAuth;
+        if (!tenantAuth) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
+        const { tenantId } = tenantAuth;
 
-      const result = await landingPageService.publish(tenantId);
-      res.json(result);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
+        const result = await landingPageService.publish(tenantId);
+        res.json(result);
+      } catch (error) {
+        if (error instanceof NotFoundError) {
+          res.status(404).json({ error: error.message });
+          return;
+        }
+        if (error instanceof ValidationError) {
+          // "No draft to publish" error
+          res.status(400).json({ error: error.message });
+          return;
+        }
+        next(error);
       }
-      if (error instanceof ValidationError) {
-        // "No draft to publish" error
-        res.status(400).json({ error: error.message });
-        return;
-      }
-      next(error);
     }
-  });
+  );
 
   /**
    * DELETE /v1/tenant-admin/landing-page/draft
@@ -317,25 +325,29 @@ export function createTenantAdminLandingPageRoutes(landingPageService: LandingPa
    * @returns 429 - Rate limit exceeded
    * @returns 500 - Internal server error
    */
-  router.delete('/draft', draftAutosaveLimiter, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
-      }
-      const { tenantId } = tenantAuth;
+  router.delete(
+    '/draft',
+    draftAutosaveLimiter,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantAuth = res.locals.tenantAuth;
+        if (!tenantAuth) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
+        const { tenantId } = tenantAuth;
 
-      const result = await landingPageService.discardDraft(tenantId);
-      res.json(result);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
+        const result = await landingPageService.discardDraft(tenantId);
+        res.json(result);
+      } catch (error) {
+        if (error instanceof NotFoundError) {
+          res.status(404).json({ error: error.message });
+          return;
+        }
+        next(error);
       }
-      next(error);
     }
-  });
+  );
 
   // ============================================================================
   // Image Upload Endpoint (TODO-235)
@@ -385,10 +397,7 @@ export function createTenantAdminLandingPageRoutes(landingPageService: LandingPa
           tenantId
         );
 
-        logger.info(
-          { tenantId, filename: uploadResult.filename },
-          'Landing page image uploaded'
-        );
+        logger.info({ tenantId, filename: uploadResult.filename }, 'Landing page image uploaded');
 
         releaseUploadConcurrency(tenantId);
         res.status(200).json(uploadResult);

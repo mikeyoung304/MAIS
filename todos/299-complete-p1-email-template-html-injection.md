@@ -2,7 +2,7 @@
 status: resolved
 resolution_date: 2025-12-06
 priority: p1
-issue_id: "299"
+issue_id: '299'
 tags: [code-review, security, xss, email-template, early-access]
 dependencies: []
 ---
@@ -34,11 +34,13 @@ const htmlBody = `
 
 **Current `sanitizePlainText` implementation:**
 The function escapes `<`, `>`, `&`, `"`, `'` characters. However:
+
 1. HTML entity encoding may be incomplete for edge cases
 2. No validation that result is safe for HTML context
 3. Defense-in-depth suggests using a dedicated HTML escaping library
 
 **Attack vectors to verify:**
+
 - Unicode homoglyphs: `admin@maсon.com` (Cyrillic 'с')
 - HTML entities: `&lt;script&gt;` pre-encoded
 - Null byte injection: `admin%00<script>@example.com`
@@ -46,6 +48,7 @@ The function escapes `<`, `>`, `&`, `"`, `'` characters. However:
 ## Proposed Solutions
 
 ### Option A: Use Dedicated HTML Escaping Library (Recommended)
+
 **Pros:** Battle-tested, covers edge cases
 **Cons:** Additional dependency
 **Effort:** Small (15 min)
@@ -61,6 +64,7 @@ const htmlBody = `<p>Email: ${htmlSafeEmail}</p>`;
 ```
 
 ### Option B: Use Text-Only Email Template
+
 **Pros:** Eliminates HTML injection entirely
 **Cons:** Less visually appealing notification
 **Effort:** Small (10 min)
@@ -77,6 +81,7 @@ await postmarkProvider.sendEmail({
 ```
 
 ### Option C: Verify and Strengthen sanitizePlainText
+
 **Pros:** No new dependencies
 **Cons:** May miss edge cases, requires security review
 **Effort:** Medium (30 min)
@@ -89,6 +94,7 @@ Implement Option A - use a dedicated HTML escaping library like `he` or `lodash.
 ## Technical Details
 
 **Affected files:**
+
 - `server/src/routes/auth.routes.ts` (email template construction)
 - `server/src/lib/sanitize.ts` (verify sanitizePlainText coverage)
 
@@ -103,8 +109,8 @@ Implement Option A - use a dedicated HTML escaping library like `he` or `lodash.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                                          |
+| ---------- | ------------------------ | ------------------------------------------------------------------ |
 | 2025-12-06 | Created from code review | Security-sentinel identified HTML injection risk in email template |
 
 ## Resources
@@ -129,6 +135,7 @@ Added comprehensive XSS test coverage to verify proper HTML escaping in email te
 All tests confirm that the validator properly escapes HTML special characters (`<`, `>`, `&`, `"`, `'`) before interpolation into email templates. The implementation uses the industry-standard `validator.escape()` function which provides defense-in-depth HTML sanitization.
 
 **Files Modified:**
+
 - `server/src/services/auth.service.test.ts` - Added 6 XSS prevention test cases
 - Email template construction confirmed safe from HTML injection attacks
 

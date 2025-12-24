@@ -194,11 +194,7 @@ export class GoogleCalendarService {
    * // ]
    * ```
    */
-  async getBusyTimes(
-    tenantId: string,
-    startDate: Date,
-    endDate: Date
-  ): Promise<BusyTimeBlock[]> {
+  async getBusyTimes(tenantId: string, startDate: Date, endDate: Date): Promise<BusyTimeBlock[]> {
     // Check if calendar provider supports busy time queries
     if (!this.calendarProvider.getBusyTimes) {
       logger.debug(

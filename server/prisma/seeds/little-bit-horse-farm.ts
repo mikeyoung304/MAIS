@@ -188,13 +188,8 @@ async function linkAddOnsToPackage(
 
 export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void> {
   // Production guard - prevent accidental data destruction
-  if (
-    process.env.NODE_ENV === 'production' &&
-    process.env.ALLOW_PRODUCTION_SEED !== 'true'
-  ) {
-    throw new Error(
-      'Production seed blocked. Set ALLOW_PRODUCTION_SEED=true to override.'
-    );
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
+    throw new Error('Production seed blocked. Set ALLOW_PRODUCTION_SEED=true to override.');
   }
 
   // Check if tenant already exists (outside transaction for read-only check)
@@ -295,10 +290,14 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
       // =====================================================================
 
       // Good: The Grounding Reset
-      const groundingReset = await createOrUpdatePackageWithSegment(tx, tenant.id, wellnessSegment.id, {
-        slug: 'grounding-reset',
-        name: 'The Grounding Reset',
-        description: `Your team needs air—not another Zoom call.
+      const groundingReset = await createOrUpdatePackageWithSegment(
+        tx,
+        tenant.id,
+        wellnessSegment.id,
+        {
+          slug: 'grounding-reset',
+          name: 'The Grounding Reset',
+          description: `Your team needs air—not another Zoom call.
 
 Includes:
 • Arrival + Intention Setting
@@ -310,24 +309,29 @@ Includes:
 
 Minimum 4 participants. Pricing is per person.
 Duration: 3.5-4 hours`,
-        basePrice: 45000, // $450
-        grouping: 'tier_1',
-        groupingOrder: 1,
-        photos: [
-          {
-            url: 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a',
-            filename: 'grounding-reset.jpg',
-            size: 0,
-            order: 0,
-          },
-        ],
-      });
+          basePrice: 45000, // $450
+          grouping: 'tier_1',
+          groupingOrder: 1,
+          photos: [
+            {
+              url: 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a',
+              filename: 'grounding-reset.jpg',
+              size: 0,
+              order: 0,
+            },
+          ],
+        }
+      );
 
       // Better: The Team Recharge
-      const teamRecharge = await createOrUpdatePackageWithSegment(tx, tenant.id, wellnessSegment.id, {
-        slug: 'team-recharge',
-        name: 'The Team Recharge',
-        description: `A real retreat without overnight logistics.
+      const teamRecharge = await createOrUpdatePackageWithSegment(
+        tx,
+        tenant.id,
+        wellnessSegment.id,
+        {
+          slug: 'team-recharge',
+          name: 'The Team Recharge',
+          description: `A real retreat without overnight logistics.
 
 Everything in The Grounding Reset, plus:
 • Yoga + Breathwork (two distinct modalities)
@@ -337,24 +341,29 @@ Everything in The Grounding Reset, plus:
 
 Minimum 4 participants. Pricing is per person.
 Duration: 6-7 hours`,
-        basePrice: 65000, // $650
-        grouping: 'tier_2',
-        groupingOrder: 2,
-        photos: [
-          {
-            url: 'https://images.unsplash.com/photo-1508672019048-805c876b67e2',
-            filename: 'team-recharge.jpg',
-            size: 0,
-            order: 0,
-          },
-        ],
-      });
+          basePrice: 65000, // $650
+          grouping: 'tier_2',
+          groupingOrder: 2,
+          photos: [
+            {
+              url: 'https://images.unsplash.com/photo-1508672019048-805c876b67e2',
+              filename: 'team-recharge.jpg',
+              size: 0,
+              order: 0,
+            },
+          ],
+        }
+      );
 
       // Best: The Executive Reset
-      const executiveReset = await createOrUpdatePackageWithSegment(tx, tenant.id, wellnessSegment.id, {
-        slug: 'executive-reset',
-        name: 'The Executive Reset',
-        description: `Leave with calm minds and Monday-ready decisions.
+      const executiveReset = await createOrUpdatePackageWithSegment(
+        tx,
+        tenant.id,
+        wellnessSegment.id,
+        {
+          slug: 'executive-reset',
+          name: 'The Executive Reset',
+          description: `Leave with calm minds and Monday-ready decisions.
 
 Everything in The Team Recharge, plus:
 • Pre-offsite intake survey + call (15-20 min)
@@ -365,18 +374,19 @@ Everything in The Team Recharge, plus:
 
 Minimum 4 participants. Pricing is per person.
 Duration: 7-8 hours + prep/recap`,
-        basePrice: 95000, // $950
-        grouping: 'tier_3',
-        groupingOrder: 3,
-        photos: [
-          {
-            url: 'https://images.unsplash.com/photo-1450052590821-8bf91254a353',
-            filename: 'executive-reset.jpg',
-            size: 0,
-            order: 0,
-          },
-        ],
-      });
+          basePrice: 95000, // $950
+          grouping: 'tier_3',
+          groupingOrder: 3,
+          photos: [
+            {
+              url: 'https://images.unsplash.com/photo-1450052590821-8bf91254a353',
+              filename: 'executive-reset.jpg',
+              size: 0,
+              order: 0,
+            },
+          ],
+        }
+      );
 
       logger.info(
         `Packages created: ${[groundingReset, teamRecharge, executiveReset].map((p) => p.name).join(', ')}`

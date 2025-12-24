@@ -1,11 +1,11 @@
 ---
 status: resolved
 priority: p1
-issue_id: "289"
+issue_id: '289'
 tags: [code-review, security, injection, early-access]
 dependencies: []
 resolved_at: 2025-12-06
-resolution: "Added ts-rest contract with Zod email validation. sanitizeEmail middleware also strips invalid emails."
+resolution: 'Added ts-rest contract with Zod email validation. sanitizeEmail middleware also strips invalid emails.'
 ---
 
 # Email Header Injection Vulnerability
@@ -29,6 +29,7 @@ if (!emailRegex.test(email)) {
 ```
 
 **Attack vector:**
+
 ```
 POST /v1/auth/early-access
 { "email": "attacker@evil.com\nBcc: victim@example.com" }
@@ -39,19 +40,25 @@ The regex passes but email contains CRLF injection.
 ## Proposed Solutions
 
 ### Option A: Add Newline Validation (Quick Fix)
+
 **Pros:** Minimal change
 **Cons:** Manual validation
 **Effort:** Small (5 min)
 **Risk:** Low
 
 ```typescript
-if (email.includes('\n') || email.includes('\r') ||
-    email.includes('%0d') || email.includes('%0a')) {
+if (
+  email.includes('\n') ||
+  email.includes('\r') ||
+  email.includes('%0d') ||
+  email.includes('%0a')
+) {
   throw new ValidationError('Invalid email format');
 }
 ```
 
 ### Option B: Use Zod Email Validation (Recommended)
+
 **Pros:** Comprehensive validation, consistent with other endpoints
 **Cons:** Slight refactor
 **Effort:** Small (15 min)
@@ -61,7 +68,7 @@ if (email.includes('\n') || email.includes('\r') ||
 import { z } from 'zod';
 
 const EarlyAccessSchema = z.object({
-  email: z.string().email().max(254).trim().toLowerCase()
+  email: z.string().email().max(254).trim().toLowerCase(),
 });
 
 const { email } = EarlyAccessSchema.parse(req.body);
@@ -74,6 +81,7 @@ Implement Option B - migrate to Zod validation for consistency with other auth e
 ## Technical Details
 
 **Affected files:**
+
 - `server/src/routes/auth.routes.ts` (lines 803-807)
 
 **OWASP Category:** A03:2021 – Injection
@@ -87,8 +95,8 @@ Implement Option B - migrate to Zod validation for consistency with other auth e
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                        |
+| ---------- | ------------------------ | ------------------------------------------------ |
 | 2025-12-06 | Created from code review | Security-sentinel identified SMTP injection risk |
 
 ## Resources

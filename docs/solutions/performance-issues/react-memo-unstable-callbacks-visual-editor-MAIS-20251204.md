@@ -1,6 +1,7 @@
 # Landing Page Visual Editor - Missing React.memo and Unstable Callbacks Causing Re-renders
 
 ---
+
 title: Landing Page Visual Editor - Missing React.memo and Unstable Callbacks Causing Re-renders
 category: performance-issues
 slug: landing-page-editor-memo-optimization
@@ -8,19 +9,21 @@ date_created: 2025-12-04
 severity: P1
 component: client/src/features/tenant-admin/landing-page-editor
 symptoms:
-  - Unnecessary re-renders of all 8 section components on parent state changes
-  - Inline arrow functions creating new references on every render
-  - renderSection function recreated on every parent render
-  - Performance degradation with large forms or frequent updates
-root_cause: Missing React.memo wrapping on section components combined with unstable callback references (inline arrow functions) being passed as props
-solution_type: code-fix
-tags:
-  - react-performance
-  - memoization
-  - callback-stability
-  - visual-editor
-  - re-render-optimization
-related_issues: []
+
+- Unnecessary re-renders of all 8 section components on parent state changes
+- Inline arrow functions creating new references on every render
+- renderSection function recreated on every parent render
+- Performance degradation with large forms or frequent updates
+  root_cause: Missing React.memo wrapping on section components combined with unstable callback references (inline arrow functions) being passed as props
+  solution_type: code-fix
+  tags:
+- react-performance
+- memoization
+- callback-stability
+- visual-editor
+- re-render-optimization
+  related_issues: []
+
 ---
 
 ## Problem
@@ -69,7 +72,7 @@ export function EditableHeroSection({ config, onUpdate, disabled = false }: Prop
 export const EditableHeroSection = memo(function EditableHeroSection({
   config,
   onUpdate,
-  disabled = false
+  disabled = false,
 }: Props) {
   // ... component implementation
 });
@@ -78,6 +81,7 @@ export const EditableHeroSection = memo(function EditableHeroSection({
 **Why this matters:** `React.memo` creates a wrapper that performs shallow equality checks on props. If all props are identical to the previous render, React skips re-rendering the component. However, this only works if props are stable references.
 
 **Files modified:**
+
 - `client/src/features/tenant-admin/landing-page-editor/sections/EditableHeroSection.tsx`
 - `client/src/features/tenant-admin/landing-page-editor/sections/EditableSocialProofBar.tsx`
 - `client/src/features/tenant-admin/landing-page-editor/sections/EditableAboutSection.tsx`
@@ -170,10 +174,12 @@ const renderSection = useCallback(
 ## Performance Impact
 
 **Before optimization:**
+
 - Parent re-render → Creates 8 new callback functions → 8 child components receive new props → All 8 children re-render
 - Result: O(8) re-renders per parent state change, even for unrelated updates
 
 **After optimization:**
+
 - Parent re-render → Callback functions stay stable (memoized) → Child components see identical props → 0 unnecessary child re-renders
 - Result: Only sections with actual data changes re-render, reducing re-render cycles by ~80-95%
 
@@ -229,12 +235,14 @@ MemoizedComponent.displayName = 'MemoizedComponent';
 ### When to Memoize (Decision Criteria)
 
 **DO memoize when:**
+
 - Component receives callback props that could be inline functions
 - Component is rendered in a list with many items
 - Component has expensive render calculations
 - Parent component has frequent state updates
 
 **DON'T over-memoize when:**
+
 - Component is simple with no callback props
 - Component only renders once (e.g., page-level components)
 - Props are already primitives (strings, numbers, booleans)
@@ -274,5 +282,6 @@ npm run typecheck  # Should pass
 ```
 
 Use React DevTools Profiler to confirm:
+
 - Section components only re-render when their specific config changes
 - No "Props changed" warnings for callback props

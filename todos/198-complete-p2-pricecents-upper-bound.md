@@ -120,9 +120,9 @@ Fixed all `priceCents` fields with Stripe-aligned upper bound validation:
 
 ## Work Log
 
-| Date       | Action                   | Learnings                                      |
-| ---------- | ------------------------ | ---------------------------------------------- |
-| 2025-12-03 | Created from code review | Always validate upper bounds on numeric inputs |
+| Date       | Action                   | Learnings                                                                              |
+| ---------- | ------------------------ | -------------------------------------------------------------------------------------- |
+| 2025-12-03 | Created from code review | Always validate upper bounds on numeric inputs                                         |
 | 2025-12-23 | Resolved                 | Apply validation to all price-related fields across contracts and tenant-admin schemas |
 
 ## Resources

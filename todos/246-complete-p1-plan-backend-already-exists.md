@@ -30,31 +30,35 @@ The feature plan (`plans/feat-landing-page-visual-editor.md`) proposes creating 
 ### Evidence of Existing Backend Implementation
 
 **1. Routes exist at `server/src/routes/tenant-admin-landing-page.routes.ts`:**
+
 - `GET /v1/tenant-admin/landing-page/draft` (line 167)
 - `PUT /v1/tenant-admin/landing-page/draft` (line 197)
 - `POST /v1/tenant-admin/landing-page/publish` (line 242)
 - `DELETE /v1/tenant-admin/landing-page/draft` (line 276)
 
 **2. Repository methods exist at `server/src/adapters/prisma/tenant.repository.ts`:**
+
 - `getLandingPageDraft()` (lines 505-540)
 - `saveLandingPageDraft()` (lines 544-601)
 - `publishLandingPageDraft()` (lines 605-640)
 - `discardLandingPageDraft()` (lines 649-677)
 
 **3. Contracts defined at `packages/contracts/src/tenant-admin/landing-page.contract.ts`:**
+
 - Lines 146-227 define all 4 draft endpoints with complete error codes (400, 401, 404, 500)
 
 ### Plan vs Reality Mismatch
 
-| Plan Says | Reality |
-|-----------|---------|
-| "Phase 3: Draft System & API Integration (1-2 days)" | Backend already complete |
-| "Add draft endpoints to landing-page.contract.ts" | Contracts already defined |
-| "Implement draft save/load in tenant.repository.ts" | Repository methods exist |
+| Plan Says                                            | Reality                   |
+| ---------------------------------------------------- | ------------------------- |
+| "Phase 3: Draft System & API Integration (1-2 days)" | Backend already complete  |
+| "Add draft endpoints to landing-page.contract.ts"    | Contracts already defined |
+| "Implement draft save/load in tenant.repository.ts"  | Repository methods exist  |
 
 ## Proposed Solutions
 
 ### Option A: Remove Backend Work from Plan (Recommended)
+
 - **Effort:** 1 hour
 - **Risk:** Low
 - Update plan to state "Backend draft system is production-ready (TODO-202 complete)"
@@ -63,6 +67,7 @@ The feature plan (`plans/feat-landing-page-visual-editor.md`) proposes creating 
 - **Cons:** None
 
 ### Option B: Mark Plan as Outdated, Create New Plan
+
 - **Effort:** 2-3 hours
 - **Risk:** Low
 - Archive current plan to `plans/archive/`
@@ -73,6 +78,7 @@ The feature plan (`plans/feat-landing-page-visual-editor.md`) proposes creating 
 ## Recommended Action
 
 **Execute Option A:** Edit `plans/feat-landing-page-visual-editor.md` to:
+
 1. Add note at top: "Backend draft system complete - frontend implementation only"
 2. Remove Phase 3 backend tasks
 3. Update Phase 3 to focus on `useLandingPageEditor` hook integration with existing API
@@ -85,9 +91,9 @@ The feature plan (`plans/feat-landing-page-visual-editor.md`) proposes creating 
 
 ## Work Log
 
-| Date       | Action  | Notes                                         |
-|------------|---------|-----------------------------------------------|
-| 2025-12-04 | Created | Plan review identified backend already exists |
+| Date       | Action  | Notes                                                                                   |
+| ---------- | ------- | --------------------------------------------------------------------------------------- |
+| 2025-12-04 | Created | Plan review identified backend already exists                                           |
 | 2025-12-05 | Closed  | Verified: endpoints at routes.ts:168-304, implementation predates todo (commit 1647a40) |
 
 ## Tags

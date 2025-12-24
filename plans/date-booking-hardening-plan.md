@@ -12,6 +12,7 @@
 - **Priority:** P0 (blocking production readiness)
 
 ### Key Changes from Review
+
 - Removed TOCTOU webhook re-check (theoretical risk, DB constraints sufficient)
 - Added integration test for race condition prevention
 - Kept service layer refactor (testability matters)
@@ -25,12 +26,13 @@
 The DATE booking flow MVP was implemented quickly. A code review identified security and architecture issues. This plan addresses the essential fixes while avoiding over-engineering.
 
 ### Critical Issues (P1 - Must Fix)
-| # | Issue | Category | Fix |
-|---|-------|----------|-----|
-| 304 | Date validation bypass | Security | Add Zod refinements |
-| 308 | Unique constraint mismatch | Data Integrity | Add bookingType filter |
-| 305 | Layered architecture violation | Architecture | Create service method |
-| 306 | Missing DI dependency | Architecture | Inject AvailabilityService |
+
+| #   | Issue                          | Category       | Fix                        |
+| --- | ------------------------------ | -------------- | -------------------------- |
+| 304 | Date validation bypass         | Security       | Add Zod refinements        |
+| 308 | Unique constraint mismatch     | Data Integrity | Add bookingType filter     |
+| 305 | Layered architecture violation | Architecture   | Create service method      |
+| 306 | Missing DI dependency          | Architecture   | Inject AvailabilityService |
 
 ---
 
@@ -69,7 +71,7 @@ const existing = await tx.booking.findFirst({
   where: {
     tenantId,
     date: new Date(booking.eventDate),
-    bookingType: booking.bookingType || 'DATE',  // Add filter
+    bookingType: booking.bookingType || 'DATE', // Add filter
   },
 });
 ```
@@ -109,12 +111,14 @@ describe('DATE Booking Race Condition Prevention', () => {
       });
 
       // Second booking for same date should fail
-      await expect(bookingRepo.create({
-        tenantId,
-        date,
-        bookingType: 'DATE',
-        // ... other fields
-      })).rejects.toThrow(/unique constraint/i);
+      await expect(
+        bookingRepo.create({
+          tenantId,
+          date,
+          bookingType: 'DATE',
+          // ... other fields
+        })
+      ).rejects.toThrow(/unique constraint/i);
     } finally {
       await cleanup();
     }
@@ -133,13 +137,15 @@ describe('DATE Booking Race Condition Prevention', () => {
       });
 
       // TIMESLOT booking on same date should succeed
-      await expect(bookingRepo.create({
-        tenantId,
-        date,
-        bookingType: 'TIMESLOT',
-        startTime: new Date('2025-06-15T14:00:00Z'),
-        endTime: new Date('2025-06-15T15:00:00Z'),
-      })).resolves.toBeDefined();
+      await expect(
+        bookingRepo.create({
+          tenantId,
+          date,
+          bookingType: 'TIMESLOT',
+          startTime: new Date('2025-06-15T14:00:00Z'),
+          endTime: new Date('2025-06-15T15:00:00Z'),
+        })
+      ).resolves.toBeDefined();
     } finally {
       await cleanup();
     }
@@ -148,6 +154,7 @@ describe('DATE Booking Race Condition Prevention', () => {
 ```
 
 ### Phase 1 Checklist
+
 - [ ] Date validation with simplified Zod refinements
 - [ ] bookingType filter in conflict check
 - [ ] bookingType passed to createCheckout
@@ -180,7 +187,7 @@ export class BookingService {
     private readonly idempotencyService: IdempotencyService,
     private readonly schedulingAvailabilityService?: SchedulingAvailabilityService,
     private readonly serviceRepo?: ServiceRepository,
-    private readonly availabilityService?: AvailabilityService  // ADD
+    private readonly availabilityService?: AvailabilityService // ADD
   ) {}
 }
 ```
@@ -198,7 +205,7 @@ const bookingService = new BookingService(
   idempotencyService,
   schedulingAvailabilityService,
   serviceRepo,
-  availabilityService  // ADD
+  availabilityService // ADD
 );
 ```
 
@@ -266,27 +273,31 @@ async createDateBooking(
 **File:** `server/src/routes/public-date-booking.routes.ts`
 
 ```typescript
-router.post('/', tenantMiddleware, async (req: TenantRequest, res: Response, next: NextFunction) => {
-  try {
-    const tenantId = req.tenantId;
-    if (!tenantId) {
-      return res.status(401).json({ error: 'Tenant context required' });
+router.post(
+  '/',
+  tenantMiddleware,
+  async (req: TenantRequest, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = req.tenantId;
+      if (!tenantId) {
+        return res.status(401).json({ error: 'Tenant context required' });
+      }
+
+      const input = CreateDateBookingDtoSchema.parse(req.body);
+      const result = await bookingService.createDateBooking(tenantId, input);
+
+      logger.info(
+        { tenantId, packageId: input.packageId, date: input.date },
+        'Date booking checkout created'
+      );
+
+      res.status(200).json(result);
+    } catch (error) {
+      // Error handling...
+      next(error);
     }
-
-    const input = CreateDateBookingDtoSchema.parse(req.body);
-    const result = await bookingService.createDateBooking(tenantId, input);
-
-    logger.info(
-      { tenantId, packageId: input.packageId, date: input.date },
-      'Date booking checkout created'
-    );
-
-    res.status(200).json(result);
-  } catch (error) {
-    // Error handling...
-    next(error);
   }
-});
+);
 ```
 
 ### 2.4 Add Unit Tests for createDateBooking()
@@ -324,6 +335,7 @@ describe('BookingService.createDateBooking', () => {
 ```
 
 ### Phase 2 Checklist
+
 - [ ] AvailabilityService injected into BookingService
 - [ ] DI container updated (real + mock modes)
 - [ ] createDateBooking() method implemented
@@ -378,14 +390,15 @@ const form = useForm({
 
 ### DEFERRED (Per Reviewer Feedback)
 
-| # | Issue | Why Deferred |
-|---|-------|--------------|
-| 321 | Component too large | Works fine at 472 lines |
-| 320 | Missing React.memo | No profiled perf issue |
-| 318 | React Query for all | Only add where needed |
-| 322 | Abstract localStorage | Over-abstraction |
+| #   | Issue                 | Why Deferred            |
+| --- | --------------------- | ----------------------- |
+| 321 | Component too large   | Works fine at 472 lines |
+| 320 | Missing React.memo    | No profiled perf issue  |
+| 318 | React Query for all   | Only add where needed   |
+| 322 | Abstract localStorage | Over-abstraction        |
 
 ### Phase 3 Checklist
+
 - [ ] Fetch unavailable dates on wizard load
 - [ ] Add Zod validation to customer form
 - [ ] Run: `npm run typecheck`
@@ -395,9 +408,11 @@ const form = useForm({
 ## Removed Items (Per Reviewer Feedback)
 
 ### Removed from Phase 1
+
 - **#309 TOCTOU webhook re-check** - Theoretical risk. Database constraints + advisory locks are sufficient. If we see actual double-bookings in production, we'll add this.
 
 ### Removed Phase 4 Entirely
+
 - Contract registration - Already works
 - Composite index - No profiled slow queries
 - Enhanced logging - Current logging is adequate
@@ -408,12 +423,14 @@ const form = useForm({
 ## Files Affected Summary
 
 ### Phase 1 (5 files)
+
 - `packages/contracts/src/dto.ts`
 - `server/src/adapters/prisma/booking.repository.ts`
 - `server/src/routes/public-date-booking.routes.ts`
 - `server/test/integration/booking-race-condition.test.ts` (new)
 
 ### Phase 2 (5 files)
+
 - `server/src/services/booking.service.ts`
 - `server/src/di.ts`
 - `server/src/routes/public-date-booking.routes.ts`
@@ -421,6 +438,7 @@ const form = useForm({
 - `server/test/services/booking.service.date.test.ts` (new)
 
 ### Phase 3 (2 files)
+
 - `client/src/features/storefront/DateBookingWizard.tsx`
 
 ---
@@ -428,15 +446,18 @@ const form = useForm({
 ## Testing Strategy
 
 ### Unit Tests (Phase 2)
+
 - `createDateBooking()` error cases
 - Package type validation
 - Availability check integration
 
 ### Integration Tests (Phase 1)
+
 - Race condition via database constraint
 - DATE vs TIMESLOT same-date behavior
 
 ### Manual Tests
+
 - Full booking flow with real Stripe
 - Invalid date submission
 - Unavailable date selection
@@ -456,12 +477,12 @@ const form = useForm({
 
 ## Effort Summary
 
-| Phase | Original | Revised | Savings |
-|-------|----------|---------|---------|
-| Phase 1 | 4-6 hrs | 4-5 hrs | - |
-| Phase 2 | 4-6 hrs | 4-5 hrs | - |
-| Phase 3 | 6-8 hrs | 2-3 hrs | 4-5 hrs |
-| Phase 4 | 4-6 hrs | 0 hrs | 4-6 hrs |
+| Phase     | Original      | Revised       | Savings  |
+| --------- | ------------- | ------------- | -------- |
+| Phase 1   | 4-6 hrs       | 4-5 hrs       | -        |
+| Phase 2   | 4-6 hrs       | 4-5 hrs       | -        |
+| Phase 3   | 6-8 hrs       | 2-3 hrs       | 4-5 hrs  |
+| Phase 4   | 4-6 hrs       | 0 hrs         | 4-6 hrs  |
 | **Total** | **18-26 hrs** | **10-13 hrs** | **~50%** |
 
 ---
@@ -474,5 +495,5 @@ const form = useForm({
 
 ---
 
-*Plan revised: 2025-12-20*
-*Approved with reviewer feedback incorporated*
+_Plan revised: 2025-12-20_
+_Approved with reviewer feedback incorporated_

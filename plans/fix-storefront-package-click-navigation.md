@@ -9,6 +9,7 @@
 **Solution:** Implement canonical tier architecture with tenant-customizable display names.
 
 **Decisions Made:**
+
 - Canonical tier names: `tier_1`, `tier_2`, `tier_3`
 - DHH approach: Migrate DB to canonical, add tenant display config
 - Fix all bugs including Kieran's rootPackages filter find
@@ -22,20 +23,26 @@
 ### Files to Modify
 
 #### 1. Export normalizeGrouping
+
 **File:** `client/src/features/storefront/utils.ts`
+
 ```typescript
 // Line 36 - Change from private to exported
 export function normalizeGrouping(grouping: string): TierLevel | null {
 ```
 
 #### 2. Add to barrel export
+
 **File:** `client/src/features/storefront/index.ts`
+
 ```typescript
 export { normalizeGrouping } from './utils';
 ```
 
 #### 3. Fix SegmentTierDetailContent (line 54)
+
 **File:** `client/src/pages/TierDetailPage.tsx`
+
 ```typescript
 // Import
 import { TierDetail, TIER_LEVELS, normalizeGrouping, type TierLevel } from '@/features/storefront';
@@ -48,7 +55,9 @@ const pkg = packages.find((p: PackageDto) => {
 ```
 
 #### 4. Fix RootTierDetailContent (line 110)
+
 **File:** `client/src/pages/TierDetailPage.tsx`
+
 ```typescript
 // Line 110 - Same fix
 const pkg = rootPackages.find((p: PackageDto) => {
@@ -58,21 +67,24 @@ const pkg = rootPackages.find((p: PackageDto) => {
 ```
 
 #### 5. Fix rootPackages filter (Kieran's critical find - line 100-107)
+
 **File:** `client/src/pages/TierDetailPage.tsx`
+
 ```typescript
 // Line 100-107 - Fix filter to use normalizeGrouping
 const rootPackages = useMemo(
   () =>
     packages.filter(
-      (p: PackageDto) =>
-        !p.segmentId && p.grouping && normalizeGrouping(p.grouping) !== null
+      (p: PackageDto) => !p.segmentId && p.grouping && normalizeGrouping(p.grouping) !== null
     ),
   [packages]
 );
 ```
 
 #### 6. Add .trim() to normalizeGrouping
+
 **File:** `client/src/features/storefront/utils.ts`
+
 ```typescript
 export function normalizeGrouping(grouping: string): TierLevel | null {
   const lower = grouping.trim().toLowerCase(); // Add .trim()
@@ -114,6 +126,7 @@ WHERE LOWER(TRIM(grouping)) IN ('luxury', 'best', 'premium', 'deluxe', 'ultimate
 ### 2.2 Update Seed Files
 
 **File:** `server/prisma/seeds/little-bit-horse-farm.ts`
+
 - Change `grouping: 'Good'` → `grouping: 'tier_1'`
 - Change `grouping: 'Better'` → `grouping: 'tier_2'`
 - Change `grouping: 'Best'` → `grouping: 'tier_3'`
@@ -121,6 +134,7 @@ WHERE LOWER(TRIM(grouping)) IN ('luxury', 'best', 'premium', 'deluxe', 'ultimate
 ### 2.3 Update TIER_LEVELS constant
 
 **File:** `client/src/features/storefront/utils.ts`
+
 ```typescript
 // Old
 export const TIER_LEVELS = ['budget', 'middle', 'luxury'] as const;
@@ -133,6 +147,7 @@ export type TierLevel = (typeof TIER_LEVELS)[number];
 ### 2.4 Update getTierDisplayName (default display names)
 
 **File:** `client/src/features/storefront/utils.ts`
+
 ```typescript
 export function getTierDisplayName(tierLevel: TierLevel): string {
   switch (tierLevel) {
@@ -149,6 +164,7 @@ export function getTierDisplayName(tierLevel: TierLevel): string {
 ### 2.5 Simplify normalizeGrouping (only canonical names now)
 
 **File:** `client/src/features/storefront/utils.ts`
+
 ```typescript
 // After migration, this becomes much simpler
 export function normalizeGrouping(grouping: string): TierLevel | null {
@@ -169,6 +185,7 @@ export function normalizeGrouping(grouping: string): TierLevel | null {
 ### 3.1 Schema Update
 
 **File:** `server/prisma/schema.prisma`
+
 ```prisma
 model Tenant {
   // ... existing fields ...
@@ -182,6 +199,7 @@ model Tenant {
 ### 3.2 Migration
 
 **File:** `server/prisma/migrations/YYYYMMDD_tenant_tier_display_names/migration.sql`
+
 ```sql
 -- Add tierDisplayNames column
 ALTER TABLE "Tenant" ADD COLUMN "tierDisplayNames" JSONB DEFAULT '{}';
@@ -195,6 +213,7 @@ WHERE slug = 'little-bit-farm';
 ### 3.3 DTO Schema
 
 **File:** `packages/contracts/src/dto.ts`
+
 ```typescript
 export const TierDisplayNamesSchema = z.object({
   tier_1: z.string().max(50).optional(),
@@ -212,6 +231,7 @@ export const TenantPublicDtoSchema = z.object({
 ### 3.4 Tenant Admin API Endpoint
 
 **File:** `packages/contracts/src/api.v1.ts`
+
 ```typescript
 updateTierDisplayNames: {
   method: 'PUT',
@@ -227,6 +247,7 @@ updateTierDisplayNames: {
 ### 3.5 Server Route Implementation
 
 **File:** `server/src/routes/tenant-admin.routes.ts`
+
 ```typescript
 // Add endpoint to update tier display names
 router.put('/settings/tier-names', async (req, res) => {
@@ -252,6 +273,7 @@ router.put('/settings/tier-names', async (req, res) => {
 ### 4.1 Update TenantStorefrontLayout to expose tier names
 
 **File:** `client/src/app/TenantStorefrontLayout.tsx`
+
 ```typescript
 // Add tierDisplayNames to context
 const tierDisplayNames = tenant?.tierDisplayNames ?? {};
@@ -260,6 +282,7 @@ const tierDisplayNames = tenant?.tierDisplayNames ?? {};
 ### 4.2 Create useTierDisplayName hook
 
 **File:** `client/src/features/storefront/hooks.ts`
+
 ```typescript
 import { useTenantContext } from '@/app/TenantStorefrontLayout';
 import { getTierDisplayName, type TierLevel } from './utils';
@@ -275,6 +298,7 @@ export function useTierDisplayName(tierLevel: TierLevel): string {
 ### 4.3 Update TierCard to use display names
 
 **File:** `client/src/features/storefront/TierCard.tsx`
+
 ```typescript
 import { useTierDisplayName } from './hooks';
 
@@ -287,6 +311,7 @@ const displayName = useTierDisplayName(tierLevel);
 ### 4.4 Update TierDetail to use display names
 
 **File:** `client/src/features/storefront/TierDetail.tsx`
+
 ```typescript
 // Similar updates to show tenant's custom tier names
 ```
@@ -294,6 +319,7 @@ const displayName = useTierDisplayName(tierLevel);
 ### 4.5 Update URL structure
 
 **File:** `client/src/router.tsx`
+
 ```typescript
 // URLs now use canonical tier names
 // /t/:tenantSlug/s/:slug/tier_1  (instead of /budget)
@@ -304,6 +330,7 @@ const displayName = useTierDisplayName(tierLevel);
 ### 4.6 Add legacy URL redirects
 
 **File:** `client/src/pages/TierDetailPage.tsx`
+
 ```typescript
 // Redirect old URLs to new canonical URLs
 const LEGACY_TIER_REDIRECTS: Record<string, TierLevel> = {
@@ -328,6 +355,7 @@ if (tier && tier in LEGACY_TIER_REDIRECTS) {
 ### 5.1 Unit Tests for normalizeGrouping
 
 **File:** `client/src/features/storefront/utils.test.ts`
+
 ```typescript
 describe('normalizeGrouping', () => {
   it('normalizes tier_1', () => {
@@ -348,6 +376,7 @@ describe('normalizeGrouping', () => {
 ### 5.2 E2E Test for Package Navigation
 
 **File:** `e2e/tests/storefront-navigation.spec.ts`
+
 ```typescript
 test('navigates from tier card to detail page', async ({ page }) => {
   await page.goto('/t/little-bit-farm/s/corporate-wellness-retreat');
@@ -383,13 +412,13 @@ test('legacy URLs redirect to canonical', async ({ page }) => {
 
 ## Implementation Order
 
-| Phase | Tasks | Parallel Agents |
-|-------|-------|-----------------|
-| **1** | Fix bug (export normalizeGrouping, fix 3 locations) | 1 agent |
-| **2** | DB migration + seed updates + TIER_LEVELS update | 2 agents |
-| **3** | Schema + API for tierDisplayNames | 2 agents |
-| **4** | Frontend updates (hooks, components, router) | 3 agents |
-| **5** | Tests + verification | 2 agents |
+| Phase | Tasks                                               | Parallel Agents |
+| ----- | --------------------------------------------------- | --------------- |
+| **1** | Fix bug (export normalizeGrouping, fix 3 locations) | 1 agent         |
+| **2** | DB migration + seed updates + TIER_LEVELS update    | 2 agents        |
+| **3** | Schema + API for tierDisplayNames                   | 2 agents        |
+| **4** | Frontend updates (hooks, components, router)        | 3 agents        |
+| **5** | Tests + verification                                | 2 agents        |
 
 ---
 

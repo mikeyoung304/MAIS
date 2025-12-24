@@ -1,11 +1,11 @@
 ---
 status: pending
 priority: p2
-issue_id: "283"
+issue_id: '283'
 tags: [deferred, code-review, feature-gap, packages, prepaid, acuity-parity]
 dependencies: []
-next_review: "2026-01-23"
-revisit_trigger: "3 customer requests"
+next_review: '2026-01-23'
+revisit_trigger: '3 customer requests'
 ---
 
 # Prepaid Package Bundles Not Implemented (Acuity Parity)
@@ -15,6 +15,7 @@ revisit_trigger: "3 customer requests"
 Acuity supports prepaid packages (e.g., "Buy 5 sessions, get 1 free") that clients purchase upfront and redeem against appointments. MAIS only supports pay-per-appointment. This is a key monetization feature.
 
 **Why it matters:**
+
 - Improves cash flow (payment upfront)
 - Increases client commitment
 - Common for personal trainers, therapists, coaches
@@ -23,6 +24,7 @@ Acuity supports prepaid packages (e.g., "Buy 5 sessions, get 1 free") that clien
 ## Findings
 
 ### Agent: architecture-strategist
+
 - **Location:** No existing implementation
 - **Evidence:** No Package model for appointment bundles (existing Package model is for wedding packages)
 - **Missing:**
@@ -32,6 +34,7 @@ Acuity supports prepaid packages (e.g., "Buy 5 sessions, get 1 free") that clien
   - Expiration handling
 
 ### Acuity Package Features:
+
 - Define package: 5 sessions for $400 (vs $100 each = $100 savings)
 - Client purchases package
 - Credit balance tracked
@@ -42,9 +45,11 @@ Acuity supports prepaid packages (e.g., "Buy 5 sessions, get 1 free") that clien
 ## Proposed Solutions
 
 ### Option A: Credit-Based Package System (Recommended)
+
 **Description:** Packages grant credits, credits redeemed against appointments
 
 **Schema:**
+
 ```prisma
 model ServicePackage {
   id            String   @id @default(cuid())
@@ -95,6 +100,7 @@ model PackageRedemption {
 ```
 
 **Service Logic:**
+
 ```typescript
 async createAppointmentWithPackage(
   input: CreateAppointmentInput,
@@ -146,6 +152,7 @@ async createAppointmentWithPackage(
 ```
 
 **API Endpoints:**
+
 ```typescript
 // List available packages
 GET /v1/public/packages?serviceId=X
@@ -163,12 +170,14 @@ POST /v1/bookings/appointment/checkout
 ```
 
 **Pros:**
+
 - Standard package/credit model
 - Flexible redemption
 - Clear audit trail
 - Supports multiple packages per customer
 
 **Cons:**
+
 - Complex schema (3 new models)
 - UI for package management
 - Expiration handling complexity
@@ -177,6 +186,7 @@ POST /v1/bookings/appointment/checkout
 **Risk:** Medium
 
 ### Option B: Simple Session Counter
+
 **Description:** Track remaining sessions without full credit system
 
 **Effort:** Large (3-5 days)
@@ -189,12 +199,14 @@ Defer to Phase 3. Focus on core booking flow and recurring appointments first.
 ## Technical Details
 
 **Affected Files:**
+
 - `server/prisma/schema.prisma` (new models)
 - NEW: `server/src/services/package.service.ts`
 - NEW: `server/src/routes/packages.routes.ts`
 - `server/src/services/booking.service.ts`
 
 **Stripe Integration:**
+
 - Use Stripe Checkout for package purchase
 - Store payment reference in PackagePurchase
 
@@ -210,8 +222,8 @@ Defer to Phase 3. Focus on core booking flow and recurring appointments first.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                         | Learnings        |
+| ---------- | ------------------------------ | ---------------- |
 | 2025-12-05 | Created from Acuity comparison | Defer to Phase 3 |
 
 ## Resources

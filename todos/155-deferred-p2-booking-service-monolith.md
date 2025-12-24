@@ -4,8 +4,8 @@ priority: p2
 issue_id: '155'
 tags: [deferred, code-review, architecture, mvp-gaps, refactoring]
 dependencies: []
-next_review: "2026-01-23"
-revisit_trigger: "Service > 2000 LOC or causes bugs"
+next_review: '2026-01-23'
+revisit_trigger: 'Service > 2000 LOC or causes bugs'
 ---
 
 # BookingService Monolithic - INVESTIGATION COMPLETE

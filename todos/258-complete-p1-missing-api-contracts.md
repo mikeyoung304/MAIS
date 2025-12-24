@@ -1,11 +1,11 @@
 ---
 status: resolved
 priority: p1
-issue_id: "258"
+issue_id: '258'
 tags: [code-review, architecture, contracts, tenant-dashboard]
 dependencies: []
-resolved_at: "2025-12-23"
-resolved_by: "contracts already existed, added missing 404 error responses"
+resolved_at: '2025-12-23'
+resolved_by: 'contracts already existed, added missing 404 error responses'
 ---
 
 # Missing API Contracts for Calendar and Deposit Endpoints
@@ -15,6 +15,7 @@ resolved_by: "contracts already existed, added missing 404 error responses"
 Calendar and deposit tenant-admin endpoints lack ts-rest contract definitions in `@macon/contracts`, forcing developers to bypass the typed API client and use raw `fetch()` calls. This breaks the project's type-safety architecture.
 
 **Why it matters:**
+
 - Loss of type safety (Zod validation bypassed)
 - Forces duplicate auth logic (see todo 257)
 - Inconsistent with existing patterns (reminders endpoints have contracts)
@@ -23,6 +24,7 @@ Calendar and deposit tenant-admin endpoints lack ts-rest contract definitions in
 ## Findings
 
 ### Agent: architecture-strategist
+
 - **Location:** `packages/contracts/src/api.v1.ts`
 - **Evidence:** Missing contracts for 6 endpoints:
   1. `GET /v1/tenant-admin/calendar/status`
@@ -34,20 +36,24 @@ Calendar and deposit tenant-admin endpoints lack ts-rest contract definitions in
 - **Impact:** HIGH - Blocks proper refactoring of dashboard components
 
 ### Agent: code-quality-reviewer
+
 - **Evidence:** Inconsistent API call patterns across components
 - **Impact:** MEDIUM - Developer confusion, maintenance burden
 
 ## Proposed Solutions
 
 ### Option A: Add Full Contracts (Recommended)
+
 **Description:** Add all 6 missing endpoint contracts with Zod schemas
 
 **Pros:**
+
 - Full type safety end-to-end
 - Enables proper refactoring of CalendarConfigCard and DepositSettingsCard
 - Consistent with existing patterns
 
 **Cons:**
+
 - Requires ~100-150 lines of contract code
 - Need to verify backend response shapes
 
@@ -55,13 +61,16 @@ Calendar and deposit tenant-admin endpoints lack ts-rest contract definitions in
 **Risk:** Low
 
 ### Option B: Add Minimal Contracts
+
 **Description:** Add only GET endpoints, keep POST/PUT/DELETE as fetch
 
 **Pros:**
+
 - Faster to implement
 - Covers most common use case (status checks)
 
 **Cons:**
+
 - Incomplete solution
 - Still requires manual fetch for mutations
 
@@ -75,10 +84,12 @@ Calendar and deposit tenant-admin endpoints lack ts-rest contract definitions in
 ## Technical Details
 
 ### Affected Files
+
 - `packages/contracts/src/api.v1.ts`
 - `packages/contracts/src/dto.ts` (may need new schemas)
 
 ### New Schemas Needed
+
 ```typescript
 // Calendar status response
 CalendarStatusSchema = z.object({
@@ -100,6 +111,7 @@ DepositSettingsSchema = z.object({
 ```
 
 ### Database Changes
+
 None
 
 ## Acceptance Criteria
@@ -116,8 +128,8 @@ None
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                                    |
+| ---------- | ------------------------ | ------------------------------------------------------------ |
 | 2025-12-05 | Created from code review | Reference existing reminder contracts at api.v1.ts:1653-1673 |
 
 ## Resources

@@ -953,14 +953,18 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
 
             // Send internal notification only for new requests
             if (isNewRequest) {
-              const notificationEmail = config.earlyAccessNotificationEmail || 'mike@maconheadshots.com';
+              const notificationEmail =
+                config.earlyAccessNotificationEmail || 'mike@maconheadshots.com';
               logger.info({ to: notificationEmail }, 'Sending internal notification email');
               await mailProvider.sendEmail({
                 to: notificationEmail,
                 subject: `Early Access: ${sanitizedEmail}`,
                 html: internalNotificationHtml,
               });
-              logger.info({ to: notificationEmail }, 'Internal notification email sent successfully');
+              logger.info(
+                { to: notificationEmail },
+                'Internal notification email sent successfully'
+              );
             }
 
             logger.info(

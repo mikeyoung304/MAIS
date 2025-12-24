@@ -75,14 +75,14 @@ Are you creating a todo based on a plan or review?
 
 ## When to Skip Creating a Todo
 
-| Situation | Skip? | Why | Alternative |
-|-----------|-------|-----|-------------|
-| Plan says "create X", X exists in code | YES | Implementation predates plan | Note: "Found at [path]" |
-| Code added < 1 hour before review | YES | Same work session | No todo needed |
-| Code added < 24 hours before review | Partial | Check if matches plan | Create VERIFY todo only |
-| Code added > 24 hours ago | NO | Different session | Create VERIFY todo |
-| Feature is E2E tested | YES | Tests imply implementation complete | Note: "Verified by E2E tests" |
-| Code exists but is incomplete | NO | Needs completion | Create TODO (partial impl) |
+| Situation                              | Skip?   | Why                                 | Alternative                   |
+| -------------------------------------- | ------- | ----------------------------------- | ----------------------------- |
+| Plan says "create X", X exists in code | YES     | Implementation predates plan        | Note: "Found at [path]"       |
+| Code added < 1 hour before review      | YES     | Same work session                   | No todo needed                |
+| Code added < 24 hours before review    | Partial | Check if matches plan               | Create VERIFY todo only       |
+| Code added > 24 hours ago              | NO      | Different session                   | Create VERIFY todo            |
+| Feature is E2E tested                  | YES     | Tests imply implementation complete | Note: "Verified by E2E tests" |
+| Code exists but is incomplete          | NO      | Needs completion                    | Create TODO (partial impl)    |
 
 ## Quick Status Codes
 
@@ -229,13 +229,16 @@ evidence: '[path to evidence, or "no code found"]'
 # TODO-XXX: [Concise Title]
 
 ## Problem
+
 [What's missing]
 
 ## Acceptance Criteria
+
 - [ ] [Specific requirement]
 - [ ] [Specific requirement]
 
 ## Estimated Effort
+
 [N hours] - No existing code
 ```
 
@@ -255,13 +258,16 @@ implementation_date: '[YYYY-MM-DD HH:MM]'
 # TODO-XXX: Verify [Component] Matches [Requirement]
 
 ## Existing Code Location
+
 [Path to implementation]
 
 ## What to Verify
+
 - [ ] [Requirement from plan]
 - [ ] [Requirement from plan]
 
 ## Estimated Effort
+
 30 minutes - Code exists, audit only
 ```
 
@@ -289,11 +295,11 @@ implementation_date: '[YYYY-MM-DD HH:MM]'
 
 ## Efficiency Gains
 
-| Scenario | Old Way | New Way | Savings |
-|----------|---------|---------|---------|
-| Create 10 todos blindly | Create + Next day verify | Verify first + Create 3 todos | 6.5 hours |
-| Review plan with 20 items | Review (30 min) + Create todos (30 min) + Verify (2 hrs) | Verify during review (30 min) | 2 hours |
-| Plan review touching 5 features | Create 20+ todos + Resolve stale ones | Create only for missing work | 4+ hours |
+| Scenario                        | Old Way                                                  | New Way                       | Savings   |
+| ------------------------------- | -------------------------------------------------------- | ----------------------------- | --------- |
+| Create 10 todos blindly         | Create + Next day verify                                 | Verify first + Create 3 todos | 6.5 hours |
+| Review plan with 20 items       | Review (30 min) + Create todos (30 min) + Verify (2 hrs) | Verify during review (30 min) | 2 hours   |
+| Plan review touching 5 features | Create 20+ todos + Resolve stale ones                    | Create only for missing work  | 4+ hours  |
 
 **Average improvement: 50-70% faster plan reviews with 80% fewer stale todos**
 

@@ -4,12 +4,12 @@ Codified lessons from multi-tenant SaaS development. These patterns prevent comm
 
 ## Quick Reference
 
-| ID | Category | Problem | Detection Signal |
-|----|----------|---------|------------------|
-| [CL-TENANT-001](./CL-TENANT-001-tenant-scoping.md) | Security | Missing tenantId in queries | Cross-tenant data leakage |
-| [CL-ADAPTER-001](./CL-ADAPTER-001-mock-first-dev.md) | Architecture | Real adapter before mock | Integration tests fail in CI |
-| [CL-SAVE-001](./CL-SAVE-001-autosave-race.md) | Data Integrity | Auto-save race conditions | Stale data overwrites recent changes |
-| [CL-SERVICE-001](./CL-SERVICE-001-service-layer.md) | Architecture | Business logic in routes | Untestable code, tight coupling |
+| ID                                                   | Category       | Problem                     | Detection Signal                     |
+| ---------------------------------------------------- | -------------- | --------------------------- | ------------------------------------ |
+| [CL-TENANT-001](./CL-TENANT-001-tenant-scoping.md)   | Security       | Missing tenantId in queries | Cross-tenant data leakage            |
+| [CL-ADAPTER-001](./CL-ADAPTER-001-mock-first-dev.md) | Architecture   | Real adapter before mock    | Integration tests fail in CI         |
+| [CL-SAVE-001](./CL-SAVE-001-autosave-race.md)        | Data Integrity | Auto-save race conditions   | Stale data overwrites recent changes |
+| [CL-SERVICE-001](./CL-SERVICE-001-service-layer.md)  | Architecture   | Business logic in routes    | Untestable code, tight coupling      |
 
 ## When to Reference
 
@@ -21,6 +21,7 @@ Codified lessons from multi-tenant SaaS development. These patterns prevent comm
 ## Format
 
 Each lesson follows a standard structure:
+
 - **Problem** - What went wrong
 - **Bug Pattern** - Code that causes the issue
 - **Fix Pattern** - Correct implementation
@@ -30,6 +31,7 @@ Each lesson follows a standard structure:
 ## Maintenance
 
 When you encounter a new incident:
+
 1. Run `/workflows:codify` to document it
 2. If it's a recurring pattern, add to this index
 3. Keep lessons under 60 lines for quick reference

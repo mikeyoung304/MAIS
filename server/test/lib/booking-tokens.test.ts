@@ -406,14 +406,22 @@ describe('Booking Tokens', () => {
       const rescheduleToken = generateBookingToken(mockBookingId, mockTenantId, 'reschedule');
 
       // Step 2: Token is valid initially
-      const validResult = await validateBookingToken(rescheduleToken, 'reschedule', mockBookingRepo);
+      const validResult = await validateBookingToken(
+        rescheduleToken,
+        'reschedule',
+        mockBookingRepo
+      );
       expect(validResult.valid).toBe(true);
 
       // Step 3: Customer cancels booking on June 2
       mockBooking.status = 'CANCELED';
 
       // Step 4: Customer tries to use old reschedule link (should fail)
-      const invalidResult = await validateBookingToken(rescheduleToken, 'reschedule', mockBookingRepo);
+      const invalidResult = await validateBookingToken(
+        rescheduleToken,
+        'reschedule',
+        mockBookingRepo
+      );
       expect(invalidResult.valid).toBe(false);
       if (!invalidResult.valid) {
         expect(invalidResult.error).toBe('booking_canceled');
@@ -564,14 +572,22 @@ describe('Booking Tokens', () => {
       const payBalanceToken = generateBookingToken(mockBookingId, mockTenantId, 'pay_balance');
 
       // Step 2: Token is valid initially
-      const validResult = await validateBookingToken(payBalanceToken, 'pay_balance', mockBookingRepo);
+      const validResult = await validateBookingToken(
+        payBalanceToken,
+        'pay_balance',
+        mockBookingRepo
+      );
       expect(validResult.valid).toBe(true);
 
       // Step 3: Customer cancels booking
       mockBooking.status = 'CANCELED';
 
       // Step 4: Customer tries to use old pay-balance link (should fail)
-      const invalidResult = await validateBookingToken(payBalanceToken, 'pay_balance', mockBookingRepo);
+      const invalidResult = await validateBookingToken(
+        payBalanceToken,
+        'pay_balance',
+        mockBookingRepo
+      );
       expect(invalidResult.valid).toBe(false);
       if (!invalidResult.valid) {
         expect(invalidResult.error).toBe('booking_canceled');

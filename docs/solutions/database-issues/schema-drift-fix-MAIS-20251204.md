@@ -80,6 +80,7 @@ This generated the complete SQL for all 18 tables with all columns, indexes, and
 **File:** `/server/prisma/migrations/20251016140827_initial_schema/migration.sql`
 
 **Before:** 34 lines creating only User table
+
 ```sql
 -- CreateEnum
 CREATE TYPE "UserRole" AS ENUM ('USER', 'ADMIN', 'PLATFORM_ADMIN', 'TENANT_ADMIN');
@@ -93,6 +94,7 @@ CREATE TABLE "User" (
 ```
 
 **After:** 498 lines creating all 18 tables with complete schema
+
 ```sql
 -- CreateEnum
 CREATE TYPE "UserRole" AS ENUM ('USER', 'ADMIN', 'PLATFORM_ADMIN', 'TENANT_ADMIN');
@@ -137,6 +139,7 @@ This migration only added `passwordHash` field, which is now included in the con
 **File:** `.github/workflows/main-pipeline.yml`
 
 **Removed:** Manual SQL migration execution steps
+
 ```bash
 # REMOVED - no longer needed
 - name: Run manual SQL migrations (multi-tenancy, indexes, etc.)
@@ -154,25 +157,27 @@ This migration only added `passwordHash` field, which is now included in the con
 **File:** `.github/workflows/main-pipeline.yml`
 
 **Added for integration tests:**
+
 ```yaml
 env:
   NODE_ENV: test
-  ADAPTERS_PRESET: mock  # Use mock adapters, not real Stripe
+  ADAPTERS_PRESET: mock # Use mock adapters, not real Stripe
   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
   DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
   JWT_SECRET: test-jwt-secret-for-ci-pipeline-only-not-for-production-use
   TENANT_SECRETS_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
   STRIPE_SECRET_KEY: sk_test_dummy_key_for_integration_tests_only
-  STRIPE_WEBHOOK_SECRET: whsec_test_dummy_webhook_secret_for_ci_only  # NEW
+  STRIPE_WEBHOOK_SECRET: whsec_test_dummy_webhook_secret_for_ci_only # NEW
 ```
 
 **Added for E2E tests:**
+
 ```yaml
 env:
   NODE_ENV: development
   ADAPTERS_PRESET: mock
   JWT_SECRET: test-jwt-secret-for-e2e-testing-only
-  TENANT_SECRETS_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef  # NEW
+  TENANT_SECRETS_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef # NEW
   API_PORT: 3001
   CORS_ORIGIN: http://localhost:5173
 ```
@@ -303,6 +308,7 @@ git commit -m "feat: add newField to Tenant model"
 ```
 
 **Never:**
+
 - ❌ Edit Prisma schema without running `prisma migrate dev`
 - ❌ Run manual SQL migrations alongside Prisma migrations
 - ❌ Create migrations directory with no migration.sql file (empty migrations cause CI failures)
@@ -310,6 +316,7 @@ git commit -m "feat: add newField to Tenant model"
 ### Migration Best Practices
 
 See `/Users/mikeyoung/CODING/MAIS/CLAUDE.md` under "When Modifying Database Schema" section for:
+
 - Pattern A: Prisma Migrations (tables/columns)
 - Pattern B: Manual Raw SQL (enums, indexes, RLS)
 - Decision guide for which pattern to use
@@ -319,14 +326,14 @@ See `/Users/mikeyoung/CODING/MAIS/CLAUDE.md` under "When Modifying Database Sche
 
 ## Files Changed
 
-| File | Change | Reason |
-|------|--------|--------|
-| `server/prisma/migrations/20251016140827_initial_schema/migration.sql` | Expanded 34 → 498 lines, added all 18 tables | Consolidate complete schema |
-| `server/prisma/migrations/20251023152454_add_password_hash/migration.sql` | Deleted | Redundant, now in consolidated migration |
-| `.github/workflows/main-pipeline.yml` | Removed manual SQL migration loops | No longer needed with Prisma consolidation |
-| `.github/workflows/main-pipeline.yml` | Added `STRIPE_WEBHOOK_SECRET` for integration tests | Required for DI container validation |
-| `.github/workflows/main-pipeline.yml` | Added `TENANT_SECRETS_ENCRYPTION_KEY` for E2E tests | Required for encryption service |
-| `server/src/config/env.schema.ts` | Added `z.preprocess` for optional Stripe vars | Handle empty strings from hosting platforms |
+| File                                                                      | Change                                              | Reason                                      |
+| ------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------- |
+| `server/prisma/migrations/20251016140827_initial_schema/migration.sql`    | Expanded 34 → 498 lines, added all 18 tables        | Consolidate complete schema                 |
+| `server/prisma/migrations/20251023152454_add_password_hash/migration.sql` | Deleted                                             | Redundant, now in consolidated migration    |
+| `.github/workflows/main-pipeline.yml`                                     | Removed manual SQL migration loops                  | No longer needed with Prisma consolidation  |
+| `.github/workflows/main-pipeline.yml`                                     | Added `STRIPE_WEBHOOK_SECRET` for integration tests | Required for DI container validation        |
+| `.github/workflows/main-pipeline.yml`                                     | Added `TENANT_SECRETS_ENCRYPTION_KEY` for E2E tests | Required for encryption service             |
+| `server/src/config/env.schema.ts`                                         | Added `z.preprocess` for optional Stripe vars       | Handle empty strings from hosting platforms |
 
 ---
 

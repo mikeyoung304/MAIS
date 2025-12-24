@@ -36,13 +36,13 @@ This document captures a real implementation from the tenant dashboard refactori
 
 Three dashboard components were refactored as part of P2 code review findings (todo 261):
 
-| Component | Before | After | Hook Created |
-|-----------|--------|-------|--------------|
-| CalendarConfigCard | 572 lines | 368 lines | useCalendarConfigManager |
-| DepositSettingsCard | 206 lines | 206 lines* | useDepositSettingsManager |
-| RemindersCard | 181 lines | 181 lines* | useRemindersManager |
+| Component           | Before    | After       | Hook Created              |
+| ------------------- | --------- | ----------- | ------------------------- |
+| CalendarConfigCard  | 572 lines | 368 lines   | useCalendarConfigManager  |
+| DepositSettingsCard | 206 lines | 206 lines\* | useDepositSettingsManager |
+| RemindersCard       | 181 lines | 181 lines\* | useRemindersManager       |
 
-*Component line count stayed similar but logic is now testable in isolation.
+\*Component line count stayed similar but logic is now testable in isolation.
 
 ## Key Fix: Memory Leak Prevention Pattern
 

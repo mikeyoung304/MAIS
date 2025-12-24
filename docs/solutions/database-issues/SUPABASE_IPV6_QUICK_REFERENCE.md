@@ -13,13 +13,13 @@ priority: P2
 
 ## Symptom Recognition
 
-| Error Message | Likely Cause | Quick Fix |
-|--------------|--------------|-----------|
-| `ENETUNREACH 2607:...` | IPv6 network not available | Use connection pooler |
-| `ETIMEDOUT [...]:5432` | IPv6 timeout | Use connection pooler |
-| `ENOTFOUND db.xxx.supabase.co` | DNS resolution failed | Check internet/VPN |
-| `connection refused` | Database not running | Check Supabase dashboard |
-| `authentication failed` | Wrong credentials | Check DATABASE_URL password |
+| Error Message                  | Likely Cause               | Quick Fix                   |
+| ------------------------------ | -------------------------- | --------------------------- |
+| `ENETUNREACH 2607:...`         | IPv6 network not available | Use connection pooler       |
+| `ETIMEDOUT [...]:5432`         | IPv6 timeout               | Use connection pooler       |
+| `ENOTFOUND db.xxx.supabase.co` | DNS resolution failed      | Check internet/VPN          |
+| `connection refused`           | Database not running       | Check Supabase dashboard    |
+| `authentication failed`        | Wrong credentials          | Check DATABASE_URL password |
 
 ---
 
@@ -72,11 +72,11 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/mais_dev"
 
 ## Environment-Specific Settings
 
-| Environment | Host | Port | Extra Params |
-|------------|------|------|--------------|
-| CI | `localhost` | 5432 | None needed |
-| Local Dev | `pooler.supabase.com` | 6543 | `pgbouncer=true` |
-| Production | `pooler.supabase.com` | 6543 | `pgbouncer=true&sslmode=require` |
+| Environment | Host                  | Port | Extra Params                     |
+| ----------- | --------------------- | ---- | -------------------------------- |
+| CI          | `localhost`           | 5432 | None needed                      |
+| Local Dev   | `pooler.supabase.com` | 6543 | `pgbouncer=true`                 |
+| Production  | `pooler.supabase.com` | 6543 | `pgbouncer=true&sslmode=require` |
 
 ---
 
@@ -123,18 +123,21 @@ cd server && npm exec prisma migrate dev
 ## CI vs Local Environment Differences
 
 **CI (GitHub Actions):**
+
 - Uses containerized PostgreSQL
 - Always localhost:5432
 - No network/DNS issues
 - IPv4 only
 
 **Local Development:**
+
 - Uses remote Supabase
 - May resolve to IPv6
 - Network-dependent
 - Use connection pooler!
 
 **Why CI works but local fails:**
+
 - CI bypasses DNS resolution (localhost)
 - CI bypasses network routing (same container network)
 - Local must traverse real network (IPv6 may fail)

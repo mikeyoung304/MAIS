@@ -20,7 +20,13 @@ interface EmptyStateProps {
  * - Prevents re-renders when parent components update
  * - Note: action prop should be memoized in parent to prevent re-renders
  */
-export const EmptyState = memo(function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
+export const EmptyState = memo(function EmptyState({
+  icon: Icon,
+  title,
+  description,
+  action,
+  className,
+}: EmptyStateProps) {
   return (
     <div
       className={`bg-surface-alt rounded-2xl border border-sage-light/20 p-12 text-center ${className || ''}`}

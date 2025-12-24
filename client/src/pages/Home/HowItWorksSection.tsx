@@ -67,12 +67,8 @@ export function HowItWorksSection() {
 
           {/* Mobile labels */}
           <div className="flex md:hidden justify-center gap-12 mt-8">
-            <span className="text-sm text-text-muted font-medium">
-              Your dashboard
-            </span>
-            <span className="text-sm text-text-muted font-medium">
-              Their storefront
-            </span>
+            <span className="text-sm text-text-muted font-medium">Your dashboard</span>
+            <span className="text-sm text-text-muted font-medium">Their storefront</span>
           </div>
         </AnimatedSection>
 

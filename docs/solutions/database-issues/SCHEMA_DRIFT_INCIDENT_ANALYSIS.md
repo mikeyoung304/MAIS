@@ -21,6 +21,7 @@ status: resolved
 ### Failure 1: Empty Migration Directory
 
 **Symptom:**
+
 ```
 migrations/20251204_add_landing_page_config/
 ├── (NO migration.sql file inside)
@@ -28,17 +29,20 @@ migrations/20251204_add_landing_page_config/
 ```
 
 **Impact:**
+
 - Prisma migration tracking failed
 - Database missing new columns
 - Type mismatch: schema.prisma expected columns that didn't exist
 
 **Root Cause:**
+
 - Developer ran `npm exec prisma migrate dev`
 - Pressed Ctrl+C before completion
 - Empty directory was created but never populated
 - No validation caught the empty directory
 
 **Lesson:**
+
 - Migration creation is NOT atomic
 - Pre-commit hooks must validate directory contents
 - CI must reject empty migration directories
@@ -46,6 +50,7 @@ migrations/20251204_add_landing_page_config/
 ### Failure 2: Missing Database Column
 
 **Symptom:**
+
 ```
 schema.prisma:
   landingPageConfig Json?
@@ -55,17 +60,20 @@ database:
 ```
 
 **Impact:**
+
 - Integration tests querying `landingPageConfig` failed
 - Application code expected field that wasn't in database
 - 42+ test failures from column not existing
 
 **Root Cause:**
+
 - Migration files (00-09) were all manual SQL
 - Prisma tracks migrations in `_prisma_migrations` table
 - The table hadn't been updated with manual migration history
 - When new schema was added, database was out of sync
 
 **Lesson:**
+
 - Manual SQL migrations (00-09) bypassed Prisma tracking
 - Hybrid migration approach needs explicit documentation
 - Integration tests must catch schema/database drift
@@ -73,6 +81,7 @@ database:
 ### Failure 3: Undefined Connection Limit in URL
 
 **Symptom:**
+
 ```
 DATABASE_URL=postgresql://user:pass@host:5432/db?connection_limit=undefined
 
@@ -80,17 +89,20 @@ Error: invalid connection_limit value
 ```
 
 **Impact:**
+
 - Test database connections failed
 - Environment variables marked as invalid
 - 100+ test failures due to database connection errors
 
 **Root Cause:**
+
 - Test configuration missing `DATABASE_CONNECTION_LIMIT` env var
 - Template included variable substitution: `connection_limit=${DATABASE_CONNECTION_LIMIT}`
 - When env var not set, literal string "undefined" appeared in URL
 - Postgres rejected the URL as invalid
 
 **Lesson:**
+
 - Environment configuration must be validated early
 - Template variables without defaults cause runtime errors
 - Test setup must validate all required variables before running tests
@@ -102,35 +114,43 @@ See: **[SCHEMA_DRIFT_PREVENTION_COMPREHENSIVE.md](./SCHEMA_DRIFT_PREVENTION_COMP
 ### Four-Layer Defense
 
 #### Layer 1: Pre-Commit Checks
+
 **File:** `.claude/hooks/validate-schema.sh`
 
 Runs before commits to catch:
+
 - Empty migration directories
 - Missing required models
 - Schema without migrations
 - Tenant isolation patterns
 
 #### Layer 2: CI/CD Pipeline
+
 **Files:** `.github/workflows/main-pipeline.yml`
 
 New jobs:
+
 - `schema-validation` - Validates schema.prisma syntax
 - `migration-dry-run` - Tests migrations on clean database
 - `env-config-validation` - Checks env vars aren't "undefined"
 
 #### Layer 3: Development Workflow
+
 **File:** `docs/guides/SAFE_MIGRATION_WORKFLOW.md`
 
 Guides developers to:
+
 - Use Pattern A (Prisma) for tables/columns
 - Use Pattern B (Manual SQL) for enums/indexes
 - Verify migration files are created
 - Test before committing
 
 #### Layer 4: Test Configuration
+
 **Files:** `server/.env.test`, `server/test/helpers/integration-setup.ts`
 
 Validates:
+
 - DATABASE_CONNECTION_LIMIT is set
 - DATABASE_URL doesn't contain literal "undefined"
 - All required env vars exist
@@ -138,13 +158,13 @@ Validates:
 
 ## Prevention Matrix
 
-| Failure | Prevented By | Check |
-|---------|-------------|-------|
-| Empty migration directory | Pre-commit hook + CI | `find dir -type f` count > 0 |
-| Empty migration.sql | Pre-commit hook + CI | `-s file` (file size > 0) |
-| Missing database column | CI + Tests | `npm run test:integration` |
-| Schema without migrations | Pre-commit hook | Detects schema changes without migration files staged |
-| Undefined env var in URL | Test setup validation | `URL.includes('undefined')` check |
+| Failure                   | Prevented By          | Check                                                 |
+| ------------------------- | --------------------- | ----------------------------------------------------- |
+| Empty migration directory | Pre-commit hook + CI  | `find dir -type f` count > 0                          |
+| Empty migration.sql       | Pre-commit hook + CI  | `-s file` (file size > 0)                             |
+| Missing database column   | CI + Tests            | `npm run test:integration`                            |
+| Schema without migrations | Pre-commit hook       | Detects schema changes without migration files staged |
+| Undefined env var in URL  | Test setup validation | `URL.includes('undefined')` check                     |
 
 ## Implementation Checklist
 
@@ -165,14 +185,14 @@ Validates:
 
 ## Time Investment
 
-| Task | Effort | Priority |
-|------|--------|----------|
-| Read prevention guide | 20 min | Critical |
-| Install pre-commit hooks | 5 min | Critical |
-| Test hook locally | 10 min | Critical |
-| Review GitHub Actions changes | 10 min | High |
-| Practice safe workflow | 15 min | High |
-| Update team documentation | 30 min | High |
+| Task                          | Effort | Priority |
+| ----------------------------- | ------ | -------- |
+| Read prevention guide         | 20 min | Critical |
+| Install pre-commit hooks      | 5 min  | Critical |
+| Test hook locally             | 10 min | Critical |
+| Review GitHub Actions changes | 10 min | High     |
+| Practice safe workflow        | 15 min | High     |
+| Update team documentation     | 30 min | High     |
 
 ## Key Takeaways
 

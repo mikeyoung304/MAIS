@@ -1,11 +1,11 @@
 ---
 status: resolved
 priority: p1
-issue_id: "291"
+issue_id: '291'
 tags: [code-review, testing, early-access]
 dependencies: []
 resolved_at: 2025-12-06
-resolution: "Created early-access.http.spec.ts with 7 test cases covering validation, XSS, CRLF injection, normalization, and rate limiting"
+resolution: 'Created early-access.http.spec.ts with 7 test cases covering validation, XSS, CRLF injection, normalization, and rate limiting'
 ---
 
 # No Unit/Integration Tests for Early Access Endpoint
@@ -19,11 +19,13 @@ The `/v1/auth/early-access` endpoint has zero test coverage despite handling use
 ## Findings
 
 **Current state:**
+
 - 771 server tests passing
 - 0 tests for early-access endpoint
 - Similar endpoints (signup, password-reset) have 14+ tests each
 
 **Untested functionality:**
+
 1. Email validation regex
 2. Rate limiting (5 requests/hour via signupLimiter)
 3. Email normalization (lowercase, trim)
@@ -33,6 +35,7 @@ The `/v1/auth/early-access` endpoint has zero test coverage despite handling use
 ## Proposed Solutions
 
 ### Option A: Add HTTP Integration Tests (Recommended)
+
 **Pros:** Matches existing test patterns
 **Cons:** Takes time to write
 **Effort:** Medium (2 hours)
@@ -52,17 +55,11 @@ describe('POST /v1/auth/early-access', () => {
   });
 
   it('should reject invalid email format', async () => {
-    await request(app)
-      .post('/v1/auth/early-access')
-      .send({ email: 'not-an-email' })
-      .expect(400);
+    await request(app).post('/v1/auth/early-access').send({ email: 'not-an-email' }).expect(400);
   });
 
   it('should reject missing email field', async () => {
-    await request(app)
-      .post('/v1/auth/early-access')
-      .send({})
-      .expect(400);
+    await request(app).post('/v1/auth/early-access').send({}).expect(400);
   });
 
   it('should normalize email (lowercase + trim)', async () => {
@@ -86,9 +83,11 @@ Create `server/test/http/early-access.http.spec.ts` with 8+ test cases following
 ## Technical Details
 
 **Files to create:**
+
 - `server/test/http/early-access.http.spec.ts`
 
 **Pattern reference:**
+
 - `server/test/http/password-reset.http.spec.ts`
 - `server/test/http/auth-signup.test.ts`
 
@@ -104,8 +103,8 @@ Create `server/test/http/early-access.http.spec.ts` with 8+ test cases following
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                            |
+| ---------- | ------------------------ | ------------------------------------ |
 | 2025-12-06 | Created from code review | Testing agent identified 0% coverage |
 
 ## Resources

@@ -72,7 +72,7 @@ export const HeroSection = memo(function HeroSection({
   config,
   editable = false,
   onUpdate,
-  disabled = false
+  disabled = false,
 }: HeroSectionProps) {
   const scrollToExperiences = () => {
     const experiencesSection = document.getElementById('experiences');

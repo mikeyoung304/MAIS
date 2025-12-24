@@ -165,9 +165,7 @@ describe('WebhooksController - payment_intent.payment_failed', () => {
     const signature = 'test-signature';
 
     (mockPaymentProvider.verifyWebhook as any).mockResolvedValue(event);
-    (mockBookingService.markPaymentFailed as any).mockRejectedValue(
-      new Error('Booking not found')
-    );
+    (mockBookingService.markPaymentFailed as any).mockRejectedValue(new Error('Booking not found'));
 
     // Act - should not throw
     await controller.handleStripeWebhook(rawBody, signature);

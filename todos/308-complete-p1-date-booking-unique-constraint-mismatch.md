@@ -1,13 +1,17 @@
 # P1: Unique Constraint Mismatch with bookingType
 
 ## Priority: P1 Critical
+
 ## Status: pending
+
 ## Feature: DATE Booking Flow
+
 ## Category: Data Integrity
 
 ## Issue
 
 The unique constraint includes `bookingType`:
+
 ```prisma
 @@unique([tenantId, date, bookingType]) // schema.prisma:358
 ```
@@ -52,7 +56,7 @@ const existing = await tx.booking.findFirst({
   where: {
     tenantId,
     date: new Date(booking.eventDate),
-    bookingType: booking.bookingType || 'DATE' // Add this filter
+    bookingType: booking.bookingType || 'DATE', // Add this filter
   },
 });
 ```
@@ -60,11 +64,7 @@ const existing = await tx.booking.findFirst({
 2. Update advisory lock to include bookingType for DATE bookings:
 
 ```typescript
-function hashTenantDateBookingType(
-  tenantId: string,
-  date: string,
-  bookingType: string
-): number {
+function hashTenantDateBookingType(tenantId: string, date: string, bookingType: string): number {
   const str = `${tenantId}:${date}:${bookingType}`;
   // ... hash implementation
 }
@@ -81,4 +81,5 @@ function hashTenantDateBookingType(
 - Test concurrent DATE booking attempts on same date
 
 ## Review Reference
+
 - Data Integrity Review Finding P1-002 (Unique constraint mismatch)

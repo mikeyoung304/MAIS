@@ -14,7 +14,13 @@
 
 import { useMemo } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
-import { TierDetail, TIER_LEVELS, LEGACY_TIER_ALIASES, normalizeGrouping, type TierLevel } from '@/features/storefront';
+import {
+  TierDetail,
+  TIER_LEVELS,
+  LEGACY_TIER_ALIASES,
+  normalizeGrouping,
+  type TierLevel,
+} from '@/features/storefront';
 import { Loading } from '@/ui/Loading';
 import { FeatureErrorBoundary } from '@/components/errors';
 import { useSegmentWithPackages, usePackages } from '@/features/catalog/hooks';
@@ -116,8 +122,7 @@ function RootTierDetailContent() {
   const rootPackages = useMemo(
     () =>
       packages.filter(
-        (p: PackageDto) =>
-          !p.segmentId && p.grouping && normalizeGrouping(p.grouping) !== null
+        (p: PackageDto) => !p.segmentId && p.grouping && normalizeGrouping(p.grouping) !== null
       ),
     [packages]
   );

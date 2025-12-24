@@ -135,7 +135,9 @@ test.describe('Landing Page Editor', () => {
     await waitForAutoSave(authenticatedPage);
 
     // Should show "Unsaved changes" indicator in sidebar (use first() to avoid strict mode violation)
-    await expect(authenticatedPage.getByText(/Unsaved changes/i).first()).toBeVisible({ timeout: 5000 });
+    await expect(authenticatedPage.getByText(/Unsaved changes/i).first()).toBeVisible({
+      timeout: 5000,
+    });
 
     // Clean up
     await discardDraftsIfAny(authenticatedPage);
@@ -186,9 +188,9 @@ test.describe('Landing Page Editor', () => {
     await discardButton.click();
 
     // Verify confirmation dialog appears
-    await expect(
-      authenticatedPage.getByRole('heading', { name: /Discard Changes/i })
-    ).toBeVisible({ timeout: 5000 });
+    await expect(authenticatedPage.getByRole('heading', { name: /Discard Changes/i })).toBeVisible({
+      timeout: 5000,
+    });
 
     // Confirm discard
     await authenticatedPage.getByRole('button', { name: /Discard All/i }).click();
@@ -270,8 +272,12 @@ test.describe('Landing Page Editor', () => {
       const sectionName = sections[i % sections.length];
 
       // Try to find Add or Remove button for this section
-      const addButton = authenticatedPage.getByRole('button', { name: new RegExp(`Add ${sectionName}`, 'i') });
-      const removeButton = authenticatedPage.getByRole('button', { name: new RegExp(`Remove ${sectionName}`, 'i') });
+      const addButton = authenticatedPage.getByRole('button', {
+        name: new RegExp(`Add ${sectionName}`, 'i'),
+      });
+      const removeButton = authenticatedPage.getByRole('button', {
+        name: new RegExp(`Remove ${sectionName}`, 'i'),
+      });
 
       const addVisible = await addButton.isVisible().catch(() => false);
 

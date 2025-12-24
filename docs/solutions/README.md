@@ -38,10 +38,10 @@ This directory contains problem-solution documentation, prevention strategies, a
 
 **New:** Network & Connection Issues
 
-| Document                                                                                                    | Purpose                         |
-| ----------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| Document                                                                                                           | Purpose                         |
+| ------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
 | [database-issues/SUPABASE_IPV6_CONNECTION_PREVENTION.md](./database-issues/SUPABASE_IPV6_CONNECTION_PREVENTION.md) | Supabase IPv6 connection issues |
-| [database-issues/SUPABASE_IPV6_QUICK_REFERENCE.md](./database-issues/SUPABASE_IPV6_QUICK_REFERENCE.md)       | Quick fix for IPv6 errors       |
+| [database-issues/SUPABASE_IPV6_QUICK_REFERENCE.md](./database-issues/SUPABASE_IPV6_QUICK_REFERENCE.md)             | Quick fix for IPv6 errors       |
 
 **Subdirectory:** [database-issues/](./database-issues/)
 

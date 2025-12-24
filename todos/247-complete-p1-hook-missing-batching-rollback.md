@@ -26,6 +26,7 @@ The proposed `useLandingPageEditor` hook (plan lines 60-96) is **dangerously ove
 **Why It Matters:**
 
 Real-world editing scenario that will fail:
+
 1. User rapidly edits hero headline → about section → FAQ items
 2. Network delays cause out-of-order responses
 3. One section save fails while another succeeds
@@ -35,16 +36,16 @@ Real-world editing scenario that will fail:
 
 ### Missing Infrastructure (Comparison)
 
-| Pattern | useVisualEditor | Plan's useLandingPageEditor |
-|---------|-----------------|----------------------------|
-| `saveTimeout` ref | Line 69 | Missing |
-| `pendingChanges` Map | Line 71 | Missing |
-| `originalStates` Map | Line 73 | Missing |
-| `saveInProgress` flag | Line 75 | Missing |
-| Batching logic | Lines 112-170 | Not specified |
-| Rollback on failure | Lines 144-157 | Not specified |
-| Flush before publish | Lines 244-248 | Incomplete |
-| Cleanup on unmount | Lines 320-330 | Not specified |
+| Pattern               | useVisualEditor | Plan's useLandingPageEditor |
+| --------------------- | --------------- | --------------------------- |
+| `saveTimeout` ref     | Line 69         | Missing                     |
+| `pendingChanges` Map  | Line 71         | Missing                     |
+| `originalStates` Map  | Line 73         | Missing                     |
+| `saveInProgress` flag | Line 75         | Missing                     |
+| Batching logic        | Lines 112-170   | Not specified               |
+| Rollback on failure   | Lines 144-157   | Not specified               |
+| Flush before publish  | Lines 244-248   | Incomplete                  |
+| Cleanup on unmount    | Lines 320-330   | Not specified               |
 
 ### Plan's Simple State (Insufficient)
 
@@ -73,6 +74,7 @@ const saveInProgress = useRef<boolean>(false);
 ## Proposed Solutions
 
 ### Option A: Copy useVisualEditor Architecture (Recommended)
+
 - **Effort:** 4-6 hours
 - **Risk:** Low (proven pattern)
 - Use `useVisualEditor.ts` as template
@@ -82,6 +84,7 @@ const saveInProgress = useRef<boolean>(false);
 - **Cons:** More code than plan estimated
 
 ### Option B: Extract Generic useDraftEditor Hook
+
 - **Effort:** 6-8 hours
 - **Risk:** Medium
 - Create `useDraftEditor<T>` generic hook with all patterns
@@ -90,6 +93,7 @@ const saveInProgress = useRef<boolean>(false);
 - **Cons:** Refactoring risk to existing working code
 
 ### Option C: Minimal Implementation Without Batching
+
 - **Effort:** 2-3 hours
 - **Risk:** HIGH - NOT RECOMMENDED
 - Implement simple version as planned
@@ -168,9 +172,9 @@ useEffect(() => {
 
 ## Work Log
 
-| Date       | Action  | Notes                                              |
-|------------|---------|---------------------------------------------------|
-| 2025-12-04 | Created | Plan review identified missing state management   |
+| Date       | Action  | Notes                                                                                |
+| ---------- | ------- | ------------------------------------------------------------------------------------ |
+| 2025-12-04 | Created | Plan review identified missing state management                                      |
 | 2025-12-05 | Closed  | Verified: all 4 refs at useLandingPageEditor.ts:147-153, copied from useVisualEditor |
 
 ## Tags

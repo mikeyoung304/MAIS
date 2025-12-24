@@ -113,13 +113,13 @@ describe('Deployment Prevention Tests', () => {
       };
 
       for (const controller of requiredServices.controllers) {
-        expect(container.controllers[controller as keyof typeof container.controllers])
-          .toBeDefined();
+        expect(
+          container.controllers[controller as keyof typeof container.controllers]
+        ).toBeDefined();
       }
 
       for (const service of requiredServices.services) {
-        expect(container.services[service as keyof typeof container.services])
-          .toBeDefined();
+        expect(container.services[service as keyof typeof container.services]).toBeDefined();
       }
     });
   });
@@ -285,13 +285,7 @@ describe('Deployment Prevention Tests', () => {
     });
 
     it('should reject invalid email formats', async () => {
-      const invalidEmails = [
-        'not-an-email',
-        'missing@domain',
-        '@example.com',
-        'test@',
-        '',
-      ];
+      const invalidEmails = ['not-an-email', 'missing@domain', '@example.com', 'test@', ''];
 
       for (const email of invalidEmails) {
         const response = await request(app)
@@ -332,10 +326,7 @@ describe('Deployment Prevention Tests', () => {
     });
 
     it('should reject requests without email field', async () => {
-      const response = await request(app)
-        .post('/v1/auth/early-access')
-        .send({})
-        .expect(400);
+      const response = await request(app).post('/v1/auth/early-access').send({}).expect(400);
 
       // Zod required validation returns "Required" message
       expect(response.body.message).toContain('Required');
@@ -352,10 +343,7 @@ describe('Deployment Prevention Tests', () => {
     });
 
     it('should handle empty request body', async () => {
-      const response = await request(app)
-        .post('/v1/auth/early-access')
-        .send('')
-        .expect(400);
+      const response = await request(app).post('/v1/auth/early-access').send('').expect(400);
 
       expect(response.body.message).toBeDefined();
     });
@@ -367,30 +355,22 @@ describe('Deployment Prevention Tests', () => {
 
   describe('Health Check Endpoint', () => {
     it('should return health check status', async () => {
-      const response = await request(app)
-        .get('/health/live')
-        .expect(200);
+      const response = await request(app).get('/health/live').expect(200);
 
       expect(response.body).toBeDefined();
     });
 
     it('should include adapter checks in health response', async () => {
-      const response = await request(app)
-        .get('/health/live')
-        .expect(200);
+      const response = await request(app).get('/health/live').expect(200);
 
       // Health check should return something
       expect(response.body).toBeDefined();
       // Might have status or checks depending on implementation
-      expect(
-        response.body.status || response.body.checks || response.body.uptime
-      ).toBeDefined();
+      expect(response.body.status || response.body.checks || response.body.uptime).toBeDefined();
     });
 
     it('should have health check endpoint available', async () => {
-      const response = await request(app)
-        .get('/health/live')
-        .expect(200);
+      const response = await request(app).get('/health/live').expect(200);
 
       // Just verify endpoint is available and returns 200
       expect(response.status).toBe(200);
@@ -403,10 +383,7 @@ describe('Deployment Prevention Tests', () => {
 
   describe('Build Artifacts', () => {
     it('should have Prisma client generated', () => {
-      const prismaClientPath = path.join(
-        __dirname,
-        '../../src/generated/prisma/index.d.ts'
-      );
+      const prismaClientPath = path.join(__dirname, '../../src/generated/prisma/index.d.ts');
 
       // Prisma client should be generated
       expect(fs.existsSync(prismaClientPath)).toBe(true);

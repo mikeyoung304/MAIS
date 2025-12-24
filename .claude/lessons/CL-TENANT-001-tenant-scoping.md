@@ -11,7 +11,7 @@ Database queries without `tenantId` filtering return data from all tenants, caus
 ```typescript
 // BROKEN: No tenant isolation - returns ALL packages across tenants
 const packages = await prisma.package.findMany({
-  where: { active: true }
+  where: { active: true },
 });
 
 // BROKEN: Cache key collision across tenants
@@ -23,7 +23,7 @@ const cacheKey = `catalog:packages`;
 ```typescript
 // CORRECT: Always scope by tenantId
 const packages = await prisma.package.findMany({
-  where: { tenantId, active: true }  // tenantId FIRST in where clause
+  where: { tenantId, active: true }, // tenantId FIRST in where clause
 });
 
 // CORRECT: Tenant-scoped cache keys

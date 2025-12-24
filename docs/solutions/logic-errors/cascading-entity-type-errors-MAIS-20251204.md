@@ -391,7 +391,7 @@ When modifying an entity interface:
 
 ### Code Review Checklist (Reviewer)
 
-```markdown
+````markdown
 ## Entity Change Review
 
 When reviewing PRs with entity modifications:
@@ -431,7 +431,9 @@ npm run typecheck  # Catches type errors
 npm test           # Catches missing mappers/fields
 npm run build      # Full build verification
 ```
-```
+````
+
+````
 
 ---
 
@@ -453,7 +455,7 @@ npm run build      # Full build verification
     "noImplicitReturns": true
   }
 }
-```
+````
 
 **Prevents:** Many optional field bugs, implicit any types
 

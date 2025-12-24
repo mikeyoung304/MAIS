@@ -1,11 +1,11 @@
 ---
 status: resolved
 priority: p1
-issue_id: "288"
+issue_id: '288'
 tags: [code-review, security, xss, early-access]
 dependencies: []
 resolved_at: 2025-12-06
-resolution: "Added sanitizePlainText() call in auth.routes.ts before injecting email into HTML template"
+resolution: 'Added sanitizePlainText() call in auth.routes.ts before injecting email into HTML template'
 ---
 
 # XSS via HTML Injection in Early Access Email
@@ -34,6 +34,7 @@ html: `
 ```
 
 **Attack vector:**
+
 ```
 POST /v1/auth/early-access
 { "email": "<img src=x onerror=alert(document.cookie)>@example.com" }
@@ -44,6 +45,7 @@ This passes email regex validation but injects malicious HTML.
 ## Proposed Solutions
 
 ### Option A: HTML Escape Function (Recommended)
+
 **Pros:** Simple, no dependencies
 **Cons:** Must remember to use everywhere
 **Effort:** Small (15 min)
@@ -59,10 +61,11 @@ function escapeHtml(text: string): string {
     .replace(/'/g, '&#039;');
 }
 
-html: `<p><strong>Email:</strong> ${escapeHtml(normalizedEmail)}</p>`
+html: `<p><strong>Email:</strong> ${escapeHtml(normalizedEmail)}</p>`;
 ```
 
 ### Option B: Use html-escaper Package
+
 **Pros:** Battle-tested library
 **Cons:** Adds dependency
 **Effort:** Small (10 min)
@@ -70,7 +73,7 @@ html: `<p><strong>Email:</strong> ${escapeHtml(normalizedEmail)}</p>`
 
 ```typescript
 import { escape } from 'html-escaper';
-html: `<p><strong>Email:</strong> ${escape(normalizedEmail)}</p>`
+html: `<p><strong>Email:</strong> ${escape(normalizedEmail)}</p>`;
 ```
 
 ## Recommended Action
@@ -80,6 +83,7 @@ Implement Option A - add escapeHtml utility function to avoid new dependency.
 ## Technical Details
 
 **Affected files:**
+
 - `server/src/routes/auth.routes.ts` (lines 817-827)
 
 **OWASP Category:** A03:2021 – Injection
@@ -93,8 +97,8 @@ Implement Option A - add escapeHtml utility function to avoid new dependency.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                   |
+| ---------- | ------------------------ | ------------------------------------------- |
 | 2025-12-06 | Created from code review | Security-sentinel agent identified XSS risk |
 
 ## Resources

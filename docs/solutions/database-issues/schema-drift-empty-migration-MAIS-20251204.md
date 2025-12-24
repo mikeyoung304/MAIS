@@ -5,7 +5,7 @@ problem_type: database_issue
 component: server/prisma/migrations, server/src/di.ts
 symptoms:
   - 189 integration tests failing with PrismaClientInitializationError
-  - "Tenant.landingPageConfig column missing from database"
+  - 'Tenant.landingPageConfig column missing from database'
   - Error code P2022 - Unknown field
   - Test config producing "?connection_limit=undefined" in DATABASE_URL
 root_cause: Empty migration directory created without migration.sql file; test configs missing required DATABASE_CONNECTION_LIMIT and DATABASE_POOL_TIMEOUT values
@@ -26,6 +26,7 @@ tags: [prisma, schema-drift, migrations, database, test-configuration, P0-critic
 **Impact:** 189 tests failing (189 failed | 695 passed)
 **Duration:** Immediate detection via test suite
 **Root Cause:** Two independent issues:
+
 1. Empty Prisma migration directory (no `migration.sql` inside)
 2. Test configs missing `DATABASE_CONNECTION_LIMIT` causing `undefined` in URL params
 
@@ -39,6 +40,7 @@ Error: P2022 - column "Tenant.landingPageConfig" does not exist
 ```
 
 Additional error in specific tests:
+
 ```
 PrismaClientInitializationError: The provided database string is invalid.
 The provided arguments are not supported in database URL.
@@ -98,8 +100,8 @@ const config = {
   JWT_SECRET,
   ADAPTERS_PRESET: process.env.ADAPTERS_PRESET || 'mock',
   DATABASE_URL: process.env.DATABASE_URL!,
-  DATABASE_CONNECTION_LIMIT: 1,  // Added
-  DATABASE_POOL_TIMEOUT: 10,     // Added
+  DATABASE_CONNECTION_LIMIT: 1, // Added
+  DATABASE_POOL_TIMEOUT: 10, // Added
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
 };
@@ -197,12 +199,12 @@ databaseUrl.searchParams.set('pool_timeout', String(poolTimeout));
 
 ## Quick Reference: Schema Drift Detection
 
-| Symptom | Likely Cause | Fix |
-|---------|--------------|-----|
-| P2022 "column does not exist" | Schema has column, DB doesn't | `npx prisma db push` |
-| "Migration not applied" | Empty migration directory | Remove dir, re-run migrate |
-| "Invalid database URL" | `undefined` in URL params | Add missing config values |
-| Tests pass locally, fail in CI | Env var differences | Check CI env configuration |
+| Symptom                        | Likely Cause                  | Fix                        |
+| ------------------------------ | ----------------------------- | -------------------------- |
+| P2022 "column does not exist"  | Schema has column, DB doesn't | `npx prisma db push`       |
+| "Migration not applied"        | Empty migration directory     | Remove dir, re-run migrate |
+| "Invalid database URL"         | `undefined` in URL params     | Add missing config values  |
+| Tests pass locally, fail in CI | Env var differences           | Check CI env configuration |
 
 ## Related Documentation
 
@@ -213,10 +215,10 @@ databaseUrl.searchParams.set('pool_timeout', String(poolTimeout));
 
 ## Work Log
 
-| Date | Action | Result |
-|------|--------|--------|
-| 2025-12-04 | Identified 189 test failures | P2022 error on landingPageConfig |
-| 2025-12-04 | Found empty migration directory | Removed, ran db push |
+| Date       | Action                           | Result                               |
+| ---------- | -------------------------------- | ------------------------------------ |
+| 2025-12-04 | Identified 189 test failures     | P2022 error on landingPageConfig     |
+| 2025-12-04 | Found empty migration directory  | Removed, ran db push                 |
 | 2025-12-04 | Fixed test config missing values | Added CONNECTION_LIMIT, POOL_TIMEOUT |
-| 2025-12-04 | Fixed createApp signature | Added config and startTime params |
-| 2025-12-04 | Verified fix | 962 tests passing |
+| 2025-12-04 | Fixed createApp signature        | Added config and startTime params    |
+| 2025-12-04 | Verified fix                     | 962 tests passing                    |

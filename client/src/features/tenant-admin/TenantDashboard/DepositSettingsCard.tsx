@@ -157,7 +157,8 @@ export function DepositSettingsCard() {
                     <li>
                       • {manager.balanceDueDays} days before event:{' '}
                       <span className="font-medium text-text-primary">
-                        ${(1000 - (parseFloat(manager.depositPercent) / 100) * 1000).toFixed(0)} balance
+                        ${(1000 - (parseFloat(manager.depositPercent) / 100) * 1000).toFixed(0)}{' '}
+                        balance
                       </span>
                     </li>
                   </ul>

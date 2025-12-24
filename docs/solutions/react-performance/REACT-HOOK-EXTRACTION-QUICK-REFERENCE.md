@@ -325,13 +325,13 @@ src/features/feature/
 
 ## Naming Convention
 
-| Pattern | Name | Example |
-|---------|------|---------|
-| Manager (state + actions) | `use{Feature}Manager` | `useRemindersManager` |
-| Data fetching | `use{Resource}` | `usePackages` |
-| Form state | `use{Feature}Form` | `useCalendarConfigForm` |
-| Computed values | `use{Adjective}{Noun}` | `useBookingTotal` |
-| Context | `use{Context}` | `useAuth` |
+| Pattern                   | Name                   | Example                 |
+| ------------------------- | ---------------------- | ----------------------- |
+| Manager (state + actions) | `use{Feature}Manager`  | `useRemindersManager`   |
+| Data fetching             | `use{Resource}`        | `usePackages`           |
+| Form state                | `use{Feature}Form`     | `useCalendarConfigForm` |
+| Computed values           | `use{Adjective}{Noun}` | `useBookingTotal`       |
+| Context                   | `use{Context}`         | `useAuth`               |
 
 ## Key Rules
 
@@ -402,16 +402,16 @@ Form state + multiple dialogs + file upload + validation.
 
 ## Quick Decision Matrix
 
-| Scenario | Extract? | Pattern |
-|----------|----------|---------|
-| 1 useState toggle | ❌ No | Keep in component |
-| 3 useState (counters) | ❌ No | Keep in component |
-| 6+ useState (grouped) | ✅ Yes | useXxxManager |
-| API call, no deps | ✅ Yes | useDataFetching |
-| Complex form (5+ fields) | ✅ Yes | useXxxForm |
-| Reused in 2+ components | ✅ Yes | useXxx |
-| Hard to test | ✅ Yes | Extract logic |
-| Component >200 lines | ✅ Yes | Extract business logic |
+| Scenario                 | Extract? | Pattern                |
+| ------------------------ | -------- | ---------------------- |
+| 1 useState toggle        | ❌ No    | Keep in component      |
+| 3 useState (counters)    | ❌ No    | Keep in component      |
+| 6+ useState (grouped)    | ✅ Yes   | useXxxManager          |
+| API call, no deps        | ✅ Yes   | useDataFetching        |
+| Complex form (5+ fields) | ✅ Yes   | useXxxForm             |
+| Reused in 2+ components  | ✅ Yes   | useXxx                 |
+| Hard to test             | ✅ Yes   | Extract logic          |
+| Component >200 lines     | ✅ Yes   | Extract business logic |
 
 ---
 
