@@ -292,6 +292,17 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
 
+      - name: Apply manual SQL migrations
+        run: |
+          # Apply all manual SQL migrations in order (00_ through 14_)
+          # These are idempotent PostgreSQL-specific migrations
+          for file in server/prisma/migrations/[0-9][0-9]_*.sql; do
+            if [ -f "$file" ]; then
+              echo "Applying: $file"
+              PGPASSWORD=postgres psql -h localhost -U postgres -d mais_test -f "$file"
+            fi
+          done
+
       - name: Run integration tests with coverage
         run: npm run test:integration -- --coverage
         env:
@@ -375,6 +386,17 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_migration_test
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_migration_test
 
+      - name: Apply manual SQL migrations
+        run: |
+          # Apply all manual SQL migrations in order (00_ through 14_)
+          # These are idempotent PostgreSQL-specific migrations
+          for file in server/prisma/migrations/[0-9][0-9]_*.sql; do
+            if [ -f "$file" ]; then
+              echo "Applying: $file"
+              PGPASSWORD=postgres psql -h localhost -U postgres -d mais_migration_test -f "$file"
+            fi
+          done
+
       - name: Generate Prisma Client
         run: npm run --workspace=server prisma:generate
 
@@ -430,6 +452,17 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_e2e_test
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_e2e_test
+
+      - name: Apply manual SQL migrations
+        run: |
+          # Apply all manual SQL migrations in order (00_ through 14_)
+          # These are idempotent PostgreSQL-specific migrations
+          for file in server/prisma/migrations/[0-9][0-9]_*.sql; do
+            if [ -f "$file" ]; then
+              echo "Applying: $file"
+              PGPASSWORD=postgres psql -h localhost -U postgres -d mais_e2e_test -f "$file"
+            fi
+          done
 
       - name: Start API server in mock mode (background)
         run: |
