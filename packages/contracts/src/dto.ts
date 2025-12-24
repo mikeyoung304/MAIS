@@ -6,6 +6,17 @@ import { z } from 'zod';
 import { LandingPageConfigSchema } from './landing-page';
 
 // ============================================================================
+// Constants
+// ============================================================================
+
+/**
+ * Maximum price in cents: $999,999.99 = 99999999 cents
+ * Aligned with Stripe's maximum amount for most currencies
+ * Prevents integer overflow issues
+ */
+const MAX_PRICE_CENTS = 99999999;
+
+// ============================================================================
 // Error Response Schemas
 // ============================================================================
 
@@ -300,13 +311,6 @@ export const PackageResponseDtoSchema = z.object({
 });
 
 export type PackageResponseDto = z.infer<typeof PackageResponseDtoSchema>;
-
-/**
- * Maximum price in cents: $999,999.99
- * Aligned with Stripe's maximum charge amount
- * @see https://stripe.com/docs/currencies#minimum-and-maximum-charge-amounts
- */
-const MAX_PRICE_CENTS = 99999999;
 
 // Admin AddOn CRUD DTOs
 export const CreateAddOnDtoSchema = z.object({
