@@ -15,6 +15,7 @@
     "start": "npx tsx src/index.ts",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run --reporter=verbose",
+    "test:serial": "vitest --pool=forks --poolOptions.forks.singleFork",
     "test:watch": "vitest",
     "test:integration": "DATABASE_URL=$DATABASE_URL_TEST vitest run test/integration/ --no-coverage",
     "test:integration:watch": "DATABASE_URL=$DATABASE_URL_TEST vitest watch test/integration/",
