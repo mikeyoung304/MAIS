@@ -235,6 +235,7 @@ export async function getTenantSegments(apiKeyPublic: string) {
 
 /**
  * Type for package data
+ * Note: Backend returns `isActive`, frontend uses `active` as alias
  */
 export interface PackageData {
   id: string;
@@ -243,7 +244,8 @@ export interface PackageData {
   description: string | null;
   priceCents: number;
   tier: 'BASIC' | 'STANDARD' | 'PREMIUM' | 'CUSTOM';
-  active: boolean;
+  active?: boolean;   // Legacy field
+  isActive?: boolean; // New field from backend
   segmentId: string | null;
   bookingType?: 'DATE' | 'APPOINTMENT';
   photoUrl?: string | null;

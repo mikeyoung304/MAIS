@@ -46,6 +46,10 @@ function mapAddOn(addOn: AddOn): AddOnDto {
  * @returns PackageDto with all fields mapped
  */
 export function mapPackageToDto(pkg: PackageWithAddOns): PackageDto {
+  // Map grouping to tier for frontend consumption
+  // Frontend uses tier for display sorting and tier label lookup
+  const tier = (pkg.grouping?.toUpperCase() ?? 'BASIC') as 'BASIC' | 'STANDARD' | 'PREMIUM' | 'CUSTOM';
+
   return {
     id: pkg.id,
     slug: pkg.slug,
@@ -59,6 +63,7 @@ export function mapPackageToDto(pkg: PackageWithAddOns): PackageDto {
     grouping: pkg.grouping ?? null,
     groupingOrder: pkg.groupingOrder ?? null,
     bookingType: pkg.bookingType ?? 'DATE',
+    tier,
     addOns: pkg.addOns.map(mapAddOn),
   };
 }

@@ -59,8 +59,9 @@ export function TenantLandingPage({ data }: TenantLandingPageProps) {
   };
 
   // Sort packages by tier for display
+  // Check isActive (new) or active (legacy) for filtering
   const sortedPackages = [...packages]
-    .filter((p) => p.active)
+    .filter((p) => p.isActive ?? p.active)
     .sort((a, b) => (TIER_ORDER[a.tier] ?? 99) - (TIER_ORDER[b.tier] ?? 99));
 
   // Get unique tiers for emphasis (middle tier is popular)

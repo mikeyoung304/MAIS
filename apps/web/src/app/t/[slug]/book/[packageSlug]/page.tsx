@@ -99,8 +99,8 @@ export default async function BookingPage({ params }: BookingPageProps) {
     );
   }
 
-  // Package not active
-  if (!pkg.active) {
+  // Package not active (isActive is new, active is legacy)
+  if (!(pkg.isActive ?? pkg.active)) {
     return (
       <div className="min-h-screen bg-neutral-50 py-12">
         <div className="container max-w-2xl mx-auto px-4">

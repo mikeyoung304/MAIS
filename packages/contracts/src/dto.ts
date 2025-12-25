@@ -138,6 +138,10 @@ export type AddOnDto = z.infer<typeof AddOnDtoSchema>;
 export const BookingTypeSchema = z.enum(['DATE', 'TIMESLOT']);
 export type BookingType = z.infer<typeof BookingTypeSchema>;
 
+// Tier enum for package categorization (BASIC, STANDARD, PREMIUM, CUSTOM)
+export const TierEnumSchema = z.enum(['BASIC', 'STANDARD', 'PREMIUM', 'CUSTOM']);
+export type TierEnum = z.infer<typeof TierEnumSchema>;
+
 // Package DTO
 export const PackageDtoSchema = z.object({
   id: z.string(),
@@ -164,6 +168,8 @@ export const PackageDtoSchema = z.object({
     .default([]),
   // Booking configuration - determines which booking flow to use
   bookingType: BookingTypeSchema.default('DATE'),
+  // Tier for frontend sorting and display (mapped from grouping)
+  tier: TierEnumSchema.default('BASIC'),
 });
 
 export type PackageDto = z.infer<typeof PackageDtoSchema>;
@@ -962,13 +968,15 @@ export const ALLOWED_FONT_FAMILIES = [
 
 /**
  * Tier display names - tenant customization for tier labels
- * Structure: {"tier_1": "The Grounding Reset", "tier_2": "The Team Recharge", "tier_3": "The Executive Reset"}
- * If not provided, defaults to Essential/Popular/Premium
+ * Structure: {"basic": "Essential", "standard": "Popular", "premium": "Elite", "custom": "Signature"}
+ * Keys match tier values (lowercased): basic, standard, premium, custom
+ * If not provided, defaults to package title
  */
 export const TierDisplayNamesSchema = z.object({
-  tier_1: z.string().max(50).optional(),
-  tier_2: z.string().max(50).optional(),
-  tier_3: z.string().max(50).optional(),
+  basic: z.string().max(50).optional(),
+  standard: z.string().max(50).optional(),
+  premium: z.string().max(50).optional(),
+  custom: z.string().max(50).optional(),
 });
 
 export type TierDisplayNames = z.infer<typeof TierDisplayNamesSchema>;

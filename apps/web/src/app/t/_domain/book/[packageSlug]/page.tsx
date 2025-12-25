@@ -120,7 +120,8 @@ export default async function DomainBookingPage({
     );
   }
 
-  if (!pkg.active) {
+  // Check isActive (new) or active (legacy)
+  if (!(pkg.isActive ?? pkg.active)) {
     return (
       <div className="min-h-screen bg-neutral-50 py-12">
         <div className="container max-w-2xl mx-auto px-4">

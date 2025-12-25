@@ -54,7 +54,8 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
       getTenantSegments(tenant.apiKeyPublic),
     ]);
 
-    const activePackages = packages.filter((p: { active: boolean }) => p.active);
+    // Filter active packages (isActive is new, active is legacy)
+    const activePackages = packages.filter((p: { isActive?: boolean; active?: boolean }) => p.isActive ?? p.active);
     const sortedPackages = [...activePackages].sort(
       (a: { tier: keyof typeof TIER_ORDER }, b: { tier: keyof typeof TIER_ORDER }) =>
         (TIER_ORDER[a.tier] ?? 99) - (TIER_ORDER[b.tier] ?? 99)

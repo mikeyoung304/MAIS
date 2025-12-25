@@ -52,8 +52,8 @@ export default async function ServicesPage({ params }: ServicesPageProps) {
   try {
     const { tenant, packages, segments } = await getTenantStorefrontData(slug);
 
-    // Filter to active packages only
-    const activePackages = packages.filter((p) => p.active);
+    // Filter to active packages only (isActive is new, active is legacy)
+    const activePackages = packages.filter((p) => p.isActive ?? p.active);
 
     // Group packages by segment
     const packagesBySegment = segments.length > 0
