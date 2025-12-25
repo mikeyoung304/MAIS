@@ -2,31 +2,28 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getTenantByDomain, getTenantPackages, getTenantSegments, TenantNotFoundError } from '@/lib/tenant';
+import {
+  getTenantByDomain,
+  getTenantPackages,
+  getTenantSegments,
+  TenantNotFoundError,
+  InvalidDomainError,
+  validateDomain,
+} from '@/lib/tenant';
 import { Button } from '@/components/ui/button';
+import { formatPrice } from '@/lib/format';
+import { TIER_ORDER } from '@/lib/packages';
 
 interface ServicesPageProps {
   searchParams: Promise<{ domain?: string }>;
 }
 
-function formatPrice(cents: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
-}
-
 export async function generateMetadata({ searchParams }: ServicesPageProps): Promise<Metadata> {
   const { domain } = await searchParams;
 
-  if (!domain) {
-    return { title: 'Services', robots: { index: false, follow: false } };
-  }
-
   try {
-    const tenant = await getTenantByDomain(domain);
+    const validatedDomain = validateDomain(domain);
+    const tenant = await getTenantByDomain(validatedDomain);
     return {
       title: `Services | ${tenant.name}`,
       description: `Explore our services and packages at ${tenant.name}.`,
@@ -39,25 +36,34 @@ export async function generateMetadata({ searchParams }: ServicesPageProps): Pro
 export default async function ServicesPage({ searchParams }: ServicesPageProps) {
   const { domain } = await searchParams;
 
-  if (!domain) {
-    notFound();
+  // Validate domain parameter
+  let validatedDomain: string;
+  try {
+    validatedDomain = validateDomain(domain);
+  } catch (error) {
+    if (error instanceof InvalidDomainError) {
+      notFound();
+    }
+    throw error;
   }
 
   try {
-    const tenant = await getTenantByDomain(domain);
+    const tenant = await getTenantByDomain(validatedDomain);
     const [packages, segments] = await Promise.all([
       getTenantPackages(tenant.apiKeyPublic),
       getTenantSegments(tenant.apiKeyPublic),
     ]);
 
     const activePackages = packages.filter((p: { active: boolean }) => p.active);
-    const tierOrder = { BASIC: 0, STANDARD: 1, PREMIUM: 2, CUSTOM: 3 };
     const sortedPackages = [...activePackages].sort(
-      (a: { tier: keyof typeof tierOrder }, b: { tier: keyof typeof tierOrder }) => tierOrder[a.tier] - tierOrder[b.tier]
+      (a: { tier: keyof typeof TIER_ORDER }, b: { tier: keyof typeof TIER_ORDER }) =>
+        (TIER_ORDER[a.tier] ?? 99) - (TIER_ORDER[b.tier] ?? 99)
     );
 
-    // For custom domains, booking links need to route back to the slug-based URLs
-    // or be handled differently. For now, use the tenant slug.
+    // For custom domains, construct links with domain param
+    const domainParam = `?domain=${validatedDomain}`;
+    const contactHref = `/contact${domainParam}`;
+    // Booking links use the slug-based path (booking flow needs full tenant context)
     const bookBasePath = `/t/${tenant.slug}`;
 
     return (
@@ -77,7 +83,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
               <div className="text-center py-16">
                 <p className="text-lg text-text-muted">No packages available at this time.</p>
                 <Button asChild variant="sage" className="mt-8">
-                  <Link href={`/contact?domain=${domain}`}>Contact Us</Link>
+                  <Link href={contactHref}>Contact Us</Link>
                 </Button>
               </div>
             ) : (
@@ -139,7 +145,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
             <h2 className="font-serif text-3xl font-bold text-text-primary sm:text-4xl">Not sure which package is right for you?</h2>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-text-muted">We&apos;re happy to help you find the perfect fit.</p>
             <Button asChild variant="sage" size="xl" className="mt-10">
-              <Link href={`/contact?domain=${domain}`}>Contact Us</Link>
+              <Link href={contactHref}>Contact Us</Link>
             </Button>
           </div>
         </section>

@@ -4,21 +4,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import type { TenantStorefrontData } from '@/lib/tenant';
+import { formatPrice } from '@/lib/format';
+import { TIER_ORDER } from '@/lib/packages';
 
 interface TenantLandingPageProps {
   data: TenantStorefrontData;
-}
-
-/**
- * Format price from cents to dollars
- */
-function formatPrice(cents: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
 }
 
 /**
@@ -69,10 +59,9 @@ export function TenantLandingPage({ data }: TenantLandingPageProps) {
   };
 
   // Sort packages by tier for display
-  const tierOrder = { BASIC: 0, STANDARD: 1, PREMIUM: 2, CUSTOM: 3 };
   const sortedPackages = [...packages]
     .filter((p) => p.active)
-    .sort((a, b) => tierOrder[a.tier] - tierOrder[b.tier]);
+    .sort((a, b) => (TIER_ORDER[a.tier] ?? 99) - (TIER_ORDER[b.tier] ?? 99));
 
   // Get unique tiers for emphasis (middle tier is popular)
   const midIndex = Math.floor(sortedPackages.length / 2);

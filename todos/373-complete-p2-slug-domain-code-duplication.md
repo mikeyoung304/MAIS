@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: '373'
 tags: [code-review, architecture, dry, refactoring]

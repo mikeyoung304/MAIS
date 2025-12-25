@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: '382'
 tags: [code-review, tenant-isolation, routing]

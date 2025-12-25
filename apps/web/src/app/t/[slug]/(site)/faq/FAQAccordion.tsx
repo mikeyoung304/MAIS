@@ -13,7 +13,8 @@ interface FAQItem {
 interface FAQAccordionProps {
   faqItems: FAQItem[];
   basePath: string;
-  tenantName: string;
+  /** Domain query parameter for custom domain routes (e.g., '?domain=example.com') */
+  domainParam?: string;
 }
 
 /**
@@ -25,7 +26,9 @@ interface FAQAccordionProps {
  * - Smooth animations with reduced motion support
  * - Empty state when no FAQs configured
  */
-export function FAQAccordion({ faqItems, basePath }: FAQAccordionProps) {
+export function FAQAccordion({ faqItems, basePath, domainParam }: FAQAccordionProps) {
+  // Build contact link with optional domain param
+  const contactHref = domainParam ? `/contact${domainParam}` : `${basePath}/contact`;
   // Accordion state - first item open by default
   const [openIndex, setOpenIndex] = useState<number>(faqItems.length > 0 ? 0 : -1);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -83,7 +86,7 @@ export function FAQAccordion({ faqItems, basePath }: FAQAccordionProps) {
                 No FAQs available yet. Have a question?
               </p>
               <Button asChild variant="sage" className="mt-6">
-                <Link href={`${basePath}/contact`}>Contact Us</Link>
+                <Link href={contactHref}>Contact Us</Link>
               </Button>
             </div>
           ) : (
@@ -124,12 +127,15 @@ export function FAQAccordion({ faqItems, basePath }: FAQAccordionProps) {
                       id={panelId}
                       role="region"
                       aria-labelledby={buttonId}
-                      className={`overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
-                        isOpen ? 'max-h-96' : 'max-h-0'
-                      }`}
+                      className="grid transition-all duration-300 motion-reduce:transition-none"
+                      style={{
+                        gridTemplateRows: isOpen ? '1fr' : '0fr',
+                      }}
                     >
-                      <div className="px-6 pb-5">
-                        <p className="text-text-muted leading-relaxed">{item.answer}</p>
+                      <div className="overflow-hidden">
+                        <div className="px-6 pb-5">
+                          <p className="text-text-muted leading-relaxed">{item.answer}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -150,7 +156,7 @@ export function FAQAccordion({ faqItems, basePath }: FAQAccordionProps) {
             We&apos;re here to help. Reach out and we&apos;ll get back to you as soon as possible.
           </p>
           <Button asChild variant="sage" size="xl" className="mt-10">
-            <Link href={`${basePath}/contact`}>Contact Us</Link>
+            <Link href={contactHref}>Contact Us</Link>
           </Button>
         </div>
       </section>

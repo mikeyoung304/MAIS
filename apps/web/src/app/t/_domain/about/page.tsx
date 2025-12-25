@@ -2,7 +2,12 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getTenantByDomain, TenantNotFoundError } from '@/lib/tenant';
+import {
+  getTenantByDomain,
+  TenantNotFoundError,
+  InvalidDomainError,
+  validateDomain,
+} from '@/lib/tenant';
 import { Button } from '@/components/ui/button';
 
 interface AboutPageProps {
@@ -12,12 +17,9 @@ interface AboutPageProps {
 export async function generateMetadata({ searchParams }: AboutPageProps): Promise<Metadata> {
   const { domain } = await searchParams;
 
-  if (!domain) {
-    return { title: 'About', robots: { index: false, follow: false } };
-  }
-
   try {
-    const tenant = await getTenantByDomain(domain);
+    const validatedDomain = validateDomain(domain);
+    const tenant = await getTenantByDomain(validatedDomain);
     const aboutContent = tenant.branding?.landingPage?.about?.content || '';
     const description = aboutContent.slice(0, 160) || `Learn more about ${tenant.name}`;
 
@@ -40,12 +42,19 @@ export async function generateMetadata({ searchParams }: AboutPageProps): Promis
 export default async function AboutPage({ searchParams }: AboutPageProps) {
   const { domain } = await searchParams;
 
-  if (!domain) {
-    notFound();
+  // Validate domain parameter
+  let validatedDomain: string;
+  try {
+    validatedDomain = validateDomain(domain);
+  } catch (error) {
+    if (error instanceof InvalidDomainError) {
+      notFound();
+    }
+    throw error;
   }
 
   try {
-    const tenant = await getTenantByDomain(domain);
+    const tenant = await getTenantByDomain(validatedDomain);
     const about = tenant.branding?.landingPage?.about;
 
     const headline = about?.headline || `About ${tenant.name}`;
@@ -53,8 +62,10 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
     const imageUrl = about?.imageUrl;
     const imagePosition = about?.imagePosition || 'left';
 
-    // For custom domains, use relative paths (no /t/[slug] prefix)
-    const basePath = '';
+    // For custom domains, construct links with domain param
+    const domainParam = `?domain=${validatedDomain}`;
+    const packagesHref = `/${domainParam}#packages`;
+    const contactHref = `/contact${domainParam}`;
 
     return (
       <div id="main-content">
@@ -92,10 +103,10 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
             <p className="mx-auto mt-6 max-w-2xl text-lg text-white/80">Let&apos;s create something beautiful together.</p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button asChild variant="outline" size="xl" className="border-white bg-white text-sage hover:bg-white/90">
-                <a href={`${basePath}/#packages`}>View Packages</a>
+                <a href={packagesHref}>View Packages</a>
               </Button>
               <Button asChild variant="outline" size="xl" className="border-white/50 bg-transparent text-white hover:bg-white/10">
-                <Link href={`${basePath}/contact?domain=${domain}`}>Get in Touch</Link>
+                <Link href={contactHref}>Get in Touch</Link>
               </Button>
             </div>
           </div>

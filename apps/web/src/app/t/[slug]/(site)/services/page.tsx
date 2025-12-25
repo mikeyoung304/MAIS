@@ -4,21 +4,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getTenantStorefrontData, TenantNotFoundError } from '@/lib/tenant';
 import { Button } from '@/components/ui/button';
+import { formatPrice } from '@/lib/format';
+import { TIER_ORDER } from '@/lib/packages';
 
 interface ServicesPageProps {
   params: Promise<{ slug: string }>;
-}
-
-/**
- * Format price from cents to dollars
- */
-function formatPrice(cents: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
 }
 
 /**
@@ -74,9 +64,8 @@ export default async function ServicesPage({ params }: ServicesPageProps) {
       : null;
 
     // Sort packages by tier for display
-    const tierOrder = { BASIC: 0, STANDARD: 1, PREMIUM: 2, CUSTOM: 3 };
     const sortedPackages = [...activePackages].sort(
-      (a, b) => tierOrder[a.tier] - tierOrder[b.tier]
+      (a, b) => (TIER_ORDER[a.tier] ?? 99) - (TIER_ORDER[b.tier] ?? 99)
     );
 
     const basePath = `/t/${slug}`;
@@ -125,7 +114,7 @@ export default async function ServicesPage({ params }: ServicesPageProps) {
                     )}
                     <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                       {segmentPackages
-                        .sort((a, b) => tierOrder[a.tier] - tierOrder[b.tier])
+                        .sort((a, b) => (TIER_ORDER[a.tier] ?? 99) - (TIER_ORDER[b.tier] ?? 99))
                         .map((pkg) => (
                           <PackageCard
                             key={pkg.id}

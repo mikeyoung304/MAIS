@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: '384'
 tags: [code-review, code-quality, cleanup]

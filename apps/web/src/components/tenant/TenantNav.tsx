@@ -1,18 +1,23 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
 import type { TenantPublicDto } from '@macon/contracts';
+import { NAV_ITEMS, buildNavHref } from './navigation';
 
 interface TenantNavProps {
   tenant: TenantPublicDto;
+  /** Base path for navigation links (e.g., '/t/jane-photography' or '') */
+  basePath?: string;
+  /** Domain query parameter for custom domain routes (e.g., '?domain=example.com') */
+  domainParam?: string;
 }
 
-interface NavItem {
+interface NavItemWithHref {
   label: string;
   href: string;
 }
@@ -28,22 +33,25 @@ interface NavItem {
  * - Route change closes mobile menu
  * - Respects prefers-reduced-motion
  */
-export function TenantNav({ tenant }: TenantNavProps) {
+export function TenantNav({ tenant, basePath: basePathProp, domainParam }: TenantNavProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const firstFocusableRef = useRef<HTMLAnchorElement>(null);
 
-  const basePath = `/t/${tenant.slug}`;
+  // Use provided basePath or default to slug-based path
+  const basePath = basePathProp ?? `/t/${tenant.slug}`;
 
-  const navItems: NavItem[] = [
-    { label: 'Home', href: basePath },
-    { label: 'Services', href: `${basePath}/services` },
-    { label: 'About', href: `${basePath}/about` },
-    { label: 'FAQ', href: `${basePath}/faq` },
-    { label: 'Contact', href: `${basePath}/contact` },
-  ];
+  // Memoize navItems (only recreate when basePath or domainParam changes)
+  const navItems = useMemo<NavItemWithHref[]>(
+    () =>
+      NAV_ITEMS.map((item) => ({
+        label: item.label,
+        href: buildNavHref(basePath, item, domainParam),
+      })),
+    [basePath, domainParam]
+  );
 
   // Close menu on route change
   useEffect(() => {
@@ -109,12 +117,29 @@ export function TenantNav({ tenant }: TenantNavProps) {
     setIsOpen((prev) => !prev);
   }, []);
 
-  const isActiveLink = (href: string) => {
-    if (href === basePath) {
-      return pathname === basePath;
-    }
-    return pathname.startsWith(href);
-  };
+  /**
+   * Determines if a navigation link is active based on current pathname.
+   *
+   * - Home link: exact match only (prevents home from being "active" on subpages)
+   * - Other links: prefix match (allows /services to match /services/foo)
+   *
+   * @param href - The navigation link href to check
+   * @returns true if the link should be styled as active
+   */
+  const isActiveLink = useCallback(
+    (href: string) => {
+      // For domain routes, extract the path from href (strip query params)
+      const hrefPath = href.split('?')[0] || '/';
+      const homeHref = domainParam ? '/' : basePath;
+
+      if (hrefPath === homeHref || hrefPath === '') {
+        // Exact match for home page
+        return pathname === homeHref || pathname === '/';
+      }
+      return pathname.startsWith(hrefPath);
+    },
+    [basePath, domainParam, pathname]
+  );
 
   return (
     <>
@@ -147,6 +172,7 @@ export function TenantNav({ tenant }: TenantNavProps) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  aria-current={isActiveLink(item.href) ? 'page' : undefined}
                   className={`text-sm font-medium transition-colors ${
                     isActiveLink(item.href)
                       ? 'text-sage'
@@ -196,6 +222,7 @@ export function TenantNav({ tenant }: TenantNavProps) {
                   key={item.href}
                   ref={index === 0 ? firstFocusableRef : undefined}
                   href={item.href}
+                  aria-current={isActiveLink(item.href) ? 'page' : undefined}
                   className={`rounded-lg px-4 py-3 text-lg font-medium transition-colors ${
                     isActiveLink(item.href)
                       ? 'bg-sage/10 text-sage'

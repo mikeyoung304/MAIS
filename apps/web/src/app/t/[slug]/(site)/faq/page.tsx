@@ -53,7 +53,6 @@ export default async function FAQPage({ params }: FAQPageProps) {
       <FAQAccordion
         faqItems={faqItems}
         basePath={basePath}
-        tenantName={tenant.name}
       />
     );
   } catch (error) {

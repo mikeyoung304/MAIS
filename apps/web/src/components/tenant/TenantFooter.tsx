@@ -1,9 +1,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { TenantPublicDto } from '@macon/contracts';
+import { NAV_ITEMS, buildNavHref } from './navigation';
 
 interface TenantFooterProps {
   tenant: TenantPublicDto;
+  /** Base path for navigation links (e.g., '/t/jane-photography' or '') */
+  basePath?: string;
+  /** Domain query parameter for custom domain routes (e.g., '?domain=example.com') */
+  domainParam?: string;
 }
 
 /**
@@ -16,17 +21,16 @@ interface TenantFooterProps {
  * - "Powered by MAIS" attribution
  * - Proper ARIA labels and roles
  */
-export function TenantFooter({ tenant }: TenantFooterProps) {
-  const basePath = `/t/${tenant.slug}`;
+export function TenantFooter({ tenant, basePath: basePathProp, domainParam }: TenantFooterProps) {
+  // Use provided basePath or default to slug-based path
+  const basePath = basePathProp ?? `/t/${tenant.slug}`;
   const currentYear = new Date().getFullYear();
 
-  const navItems = [
-    { label: 'Home', href: basePath },
-    { label: 'Services', href: `${basePath}/services` },
-    { label: 'About', href: `${basePath}/about` },
-    { label: 'FAQ', href: `${basePath}/faq` },
-    { label: 'Contact', href: `${basePath}/contact` },
-  ];
+  // Build nav items using shared configuration
+  const navItems = NAV_ITEMS.map((item) => ({
+    label: item.label,
+    href: buildNavHref(basePath, item, domainParam),
+  }));
 
   return (
     <footer role="contentinfo" className="border-t border-neutral-100 bg-white py-12">

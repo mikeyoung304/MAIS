@@ -34,6 +34,63 @@ export class TenantApiError extends Error {
 }
 
 /**
+ * Custom error for invalid domain format
+ */
+export class InvalidDomainError extends Error {
+  constructor(reason: string) {
+    super(`Invalid domain: ${reason}`);
+    this.name = 'InvalidDomainError';
+  }
+}
+
+/**
+ * Domain validation pattern
+ *
+ * Matches valid domain names with:
+ * - Alphanumeric first character
+ * - Alphanumeric characters and hyphens in labels
+ * - TLD of 2+ characters
+ * - Supports subdomains
+ */
+const DOMAIN_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9-]*(\.[a-zA-Z0-9][a-zA-Z0-9-]*)*\.[a-zA-Z]{2,}$/;
+
+/**
+ * Validate and sanitize domain parameter
+ *
+ * Validates domain format for security and returns sanitized value.
+ * Use this before calling getTenantByDomain to provide clear error messages.
+ *
+ * @param domain - Domain string to validate
+ * @returns Sanitized domain string (lowercase, trimmed)
+ * @throws InvalidDomainError if domain is invalid
+ *
+ * @example
+ * const domain = validateDomain(searchParams.domain);
+ * const tenant = await getTenantByDomain(domain);
+ */
+export function validateDomain(domain: string | undefined): string {
+  if (!domain || typeof domain !== 'string') {
+    throw new InvalidDomainError('Domain parameter is required');
+  }
+
+  const sanitized = domain.trim().toLowerCase();
+
+  if (sanitized.length === 0) {
+    throw new InvalidDomainError('Domain cannot be empty');
+  }
+
+  if (sanitized.length > 253) {
+    throw new InvalidDomainError('Domain too long (max 253 characters)');
+  }
+
+  if (!DOMAIN_PATTERN.test(sanitized)) {
+    throw new InvalidDomainError('Invalid domain format');
+  }
+
+  return sanitized;
+}
+
+/**
  * Fetch tenant public data by slug
  *
  * Used by /t/[slug] routes for tenant landing pages.
@@ -76,13 +133,14 @@ export async function getTenantBySlug(slug: string): Promise<TenantPublicDto> {
  *
  * Used by middleware rewrite for custom domain resolution.
  * Looks up tenant by their configured custom domain.
+ * Wrapped with React's cache() to deduplicate calls within the same request.
  *
  * @param domain - Custom domain (e.g., "janephotography.com")
  * @returns TenantPublicDto with branding and landing page config
  * @throws TenantNotFoundError if no tenant has this domain
  * @throws TenantApiError for other API failures
  */
-export async function getTenantByDomain(domain: string): Promise<TenantPublicDto> {
+export const getTenantByDomain = cache(async (domain: string): Promise<TenantPublicDto> => {
   // TODO: Implement domain lookup endpoint in Express API
   // For now, we'll use a fallback approach - search by domain
   // The backend endpoint would be: GET /v1/public/tenants/by-domain/:domain
@@ -113,7 +171,7 @@ export async function getTenantByDomain(domain: string): Promise<TenantPublicDto
   }
 
   return response.json();
-}
+});
 
 /**
  * Fetch tenant packages for storefront display

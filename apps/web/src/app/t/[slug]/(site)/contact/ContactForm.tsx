@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
@@ -51,6 +51,14 @@ export function ContactForm({ tenantName, basePath }: ContactFormProps) {
 
   const successRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Cleanup on unmount - abort any in-flight requests
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   // Focus management after state changes
   useEffect(() => {
@@ -122,23 +130,42 @@ export function ContactForm({ tenantName, basePath }: ContactFormProps) {
       return;
     }
 
+    // Cancel any in-flight request
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
+
     setStatus('submitting');
 
     try {
-      // Phase 1: Simulate success after 1s delay
-      // Phase 2: Replace with actual API call
+      // Phase 1: Simulate success after 1s delay with abort support
+      // Phase 2: Replace with actual API call using abortControllerRef.current.signal
       // await fetch(`${API_BASE_URL}/v1/inquiries`, {
       //   method: 'POST',
       //   headers: { 'Content-Type': 'application/json', 'X-Tenant-Key': apiKey },
       //   body: JSON.stringify(formData),
+      //   signal: abortControllerRef.current.signal,
       // });
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise<void>((resolve, reject) => {
+        const timeoutId = setTimeout(resolve, 1000);
+        abortControllerRef.current!.signal.addEventListener('abort', () => {
+          clearTimeout(timeoutId);
+          reject(new DOMException('Aborted', 'AbortError'));
+        });
+      });
+
+      // Don't update state if aborted
+      if (abortControllerRef.current?.signal.aborted) return;
+
       setStatus('success');
-    } catch {
+    } catch (error) {
+      // Silently ignore aborted requests
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return;
+      }
       setStatus('error');
     }
-  }, [formData, validateForm]);
+  }, [validateForm]);
 
   const handleReset = useCallback(() => {
     setFormData({ name: '', email: '', phone: '', message: '' });
@@ -237,7 +264,7 @@ export function ContactForm({ tenantName, basePath }: ContactFormProps) {
           autoComplete="name"
         />
         {errors.name && (
-          <p id="name-error" className="mt-1 text-sm text-red-500" role="alert">
+          <p id="name-error" className="mt-1 text-sm text-red-700" role="alert">
             {errors.name}
           </p>
         )}
@@ -268,7 +295,7 @@ export function ContactForm({ tenantName, basePath }: ContactFormProps) {
           autoComplete="email"
         />
         {errors.email && (
-          <p id="email-error" className="mt-1 text-sm text-red-500" role="alert">
+          <p id="email-error" className="mt-1 text-sm text-red-700" role="alert">
             {errors.email}
           </p>
         )}
@@ -316,7 +343,7 @@ export function ContactForm({ tenantName, basePath }: ContactFormProps) {
           placeholder={`Tell us about your project or ask a question...`}
         />
         {errors.message && (
-          <p id="message-error" className="mt-1 text-sm text-red-500" role="alert">
+          <p id="message-error" className="mt-1 text-sm text-red-700" role="alert">
             {errors.message}
           </p>
         )}

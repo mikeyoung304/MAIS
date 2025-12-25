@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: '378'
 tags: [code-review, code-quality, dry]

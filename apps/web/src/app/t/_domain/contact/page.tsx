@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getTenantByDomain, TenantNotFoundError } from '@/lib/tenant';
+import {
+  getTenantByDomain,
+  TenantNotFoundError,
+  InvalidDomainError,
+  validateDomain,
+} from '@/lib/tenant';
 import { ContactForm } from '../../[slug]/(site)/contact/ContactForm';
 
 interface ContactPageProps {
@@ -10,12 +15,9 @@ interface ContactPageProps {
 export async function generateMetadata({ searchParams }: ContactPageProps): Promise<Metadata> {
   const { domain } = await searchParams;
 
-  if (!domain) {
-    return { title: 'Contact', robots: { index: false, follow: false } };
-  }
-
   try {
-    const tenant = await getTenantByDomain(domain);
+    const validatedDomain = validateDomain(domain);
+    const tenant = await getTenantByDomain(validatedDomain);
     return {
       title: `Contact | ${tenant.name}`,
       description: `Get in touch with ${tenant.name}.`,
@@ -28,15 +30,22 @@ export async function generateMetadata({ searchParams }: ContactPageProps): Prom
 export default async function ContactPage({ searchParams }: ContactPageProps) {
   const { domain } = await searchParams;
 
-  if (!domain) {
-    notFound();
+  // Validate domain parameter
+  let validatedDomain: string;
+  try {
+    validatedDomain = validateDomain(domain);
+  } catch (error) {
+    if (error instanceof InvalidDomainError) {
+      notFound();
+    }
+    throw error;
   }
 
   try {
-    const tenant = await getTenantByDomain(domain);
+    const tenant = await getTenantByDomain(validatedDomain);
 
-    // For custom domains, use relative paths with domain param
-    const basePath = `?domain=${domain}`;
+    // For custom domains, use root path - links will be constructed with domainParam
+    const basePath = `/?domain=${validatedDomain}`;
 
     return (
       <div id="main-content">
