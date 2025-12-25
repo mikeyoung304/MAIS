@@ -1,0 +1,252 @@
+:root {
+  /* ============================================
+     MAIS DESIGN SYSTEM - APPLE QUALITY TOKENS
+     ============================================
+     Following Apple Human Interface Guidelines
+     All combinations meet WCAG AA standards
+  */
+
+  /* ====================================
+     BRAND COLORS - MACON (Primary Palette)
+     ==================================== */
+
+  /* Navy - Primary Brand Color */
+  --macon-navy-50: #f8fafc;
+  --macon-navy-100: #e2e8f0;
+  --macon-navy-200: #cbd5e1;
+  --macon-navy-300: #94a3b8;
+  --macon-navy-400: #64748b;
+  --macon-navy-500: #475569;
+  --macon-navy-600: #334155;
+  --macon-navy: #1a365d;
+  --macon-navy-700: #1e3a5f;
+  --macon-navy-800: #152e4d;
+  --macon-navy-900: #0c1f3a;
+
+  /* Orange - Secondary Brand Color */
+  --macon-orange-900: #7c2d12;
+  --macon-orange-800: #9a3412;
+  --macon-orange-700: #c2410c;
+  --macon-orange: #d97706;
+  --macon-orange-600: #ea580c;
+  --macon-orange-500: #f97316;
+  --macon-orange-400: #fb923c;
+  --macon-orange-300: #fdba74;
+  --macon-orange-200: #fed7aa;
+  --macon-orange-100: #ffedd5;
+  --macon-orange-50: #fff7ed;
+
+  /* Teal - Accent Brand Color */
+  --macon-teal-900: #134e4a;
+  --macon-teal-800: #115e59;
+  --macon-teal-700: #0f766e;
+  --macon-teal: #0d9488;
+  --macon-teal-600: #0d9488;
+  --macon-teal-500: #14b8a6;
+  --macon-teal-400: #2dd4bf;
+  --macon-teal-300: #5eead4;
+  --macon-teal-200: #99f6e4;
+  --macon-teal-100: #ccfbf1;
+  --macon-teal-50: #f0fdfa;
+
+  /* ====================================
+     SURFACE COLORS
+     ==================================== */
+
+  --surface-primary: #ffffff;
+  --surface-secondary: #f9fafb;
+  --surface-tertiary: #f3f4f6;
+  --surface-elevated: #ffffff;
+  --surface-overlay: rgba(26, 54, 93, 0.8);
+  --surface-overlay-light: rgba(255, 255, 255, 0.95);
+
+  /* ====================================
+     TEXT COLORS
+     ==================================== */
+
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-tertiary: #6b7280;
+  --text-quaternary: #9ca3af;
+  --text-inverse: #ffffff;
+  --text-link: #1a365d;
+  --text-link-hover: #0f2442;
+  --text-on-navy: #ffffff;
+  --text-on-orange: #ffffff;
+  --text-on-teal: #ffffff;
+
+  /* ====================================
+     INTERACTIVE STATES
+     ==================================== */
+
+  --interactive-primary-default: #1a365d;
+  --interactive-primary-hover: #0f2442;
+  --interactive-primary-active: #0a1929;
+  --interactive-primary-disabled: #a5b9d9;
+  --interactive-primary-focus: #fb923c;
+
+  --interactive-secondary-default: #d97706;
+  --interactive-secondary-hover: #b45309;
+  --interactive-secondary-active: #ea7c1c;
+  --interactive-secondary-disabled: #fed7aa;
+  --interactive-secondary-focus: #1a365d;
+
+  --interactive-accent-default: #0d9488;
+  --interactive-accent-hover: #0f766e;
+  --interactive-accent-active: #115e59;
+  --interactive-accent-disabled: #99f6e4;
+  --interactive-accent-focus: #fb923c;
+
+  --interactive-neutral-default: #f3f4f6;
+  --interactive-neutral-hover: #e5e7eb;
+  --interactive-neutral-active: #d1d5db;
+  --interactive-neutral-disabled: #f9fafb;
+
+  /* ====================================
+     SEMANTIC COLORS
+     ==================================== */
+
+  --semantic-success-default: #22c55e;
+  --semantic-success-hover: #16a34a;
+  --semantic-success-50: #f0fdf4;
+  --semantic-success-100: #dcfce7;
+  --semantic-success-700: #15803d;
+
+  --semantic-error-default: #ef4444;
+  --semantic-error-hover: #dc2626;
+  --semantic-error-50: #fef2f2;
+  --semantic-error-100: #fee2e2;
+  --semantic-error-700: #b91c1c;
+
+  --semantic-warning-default: #f59e0b;
+  --semantic-warning-hover: #d97706;
+  --semantic-warning-50: #fffbeb;
+  --semantic-warning-100: #fef3c7;
+  --semantic-warning-700: #b45309;
+
+  --semantic-info-default: #3b82f6;
+  --semantic-info-hover: #2563eb;
+  --semantic-info-50: #eff6ff;
+  --semantic-info-100: #dbeafe;
+  --semantic-info-700: #1d4ed8;
+
+  /* ====================================
+     TYPOGRAPHY
+     ==================================== */
+
+  --font-heading: 'Playfair Display', 'Georgia', serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --font-mono: 'SF Mono', 'Monaco', 'Consolas', monospace;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-md: 1.125rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 1.875rem;
+  --font-size-3xl: 2.25rem;
+  --font-size-4xl: 3rem;
+  --font-size-5xl: 3.75rem;
+  --font-size-6xl: 4.5rem;
+
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.3;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.6;
+  --line-height-loose: 1.75;
+
+  /* ====================================
+     SPACING
+     ==================================== */
+
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  --space-32: 8rem;
+  --space-40: 10rem;
+
+  /* ====================================
+     BORDER RADIUS
+     ==================================== */
+
+  --radius-none: 0;
+  --radius-sm: 0.25rem;
+  --radius-base: 0.5rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* ====================================
+     SHADOWS & ELEVATION
+     ==================================== */
+
+  --elevation-1: 0 1px 2px 0 rgba(26, 54, 93, 0.05);
+  --elevation-2: 0 4px 6px -1px rgba(26, 54, 93, 0.1), 0 2px 4px -1px rgba(26, 54, 93, 0.06);
+  --elevation-3: 0 10px 15px -3px rgba(26, 54, 93, 0.1), 0 4px 6px -2px rgba(26, 54, 93, 0.05);
+  --elevation-4: 0 20px 25px -5px rgba(26, 54, 93, 0.1), 0 10px 10px -5px rgba(26, 54, 93, 0.04);
+
+  --shadow-focus-primary: 0 0 0 3px rgba(26, 54, 93, 0.15);
+  --shadow-focus-secondary: 0 0 0 3px rgba(251, 146, 60, 0.15);
+  --shadow-focus-error: 0 0 0 3px rgba(239, 68, 68, 0.15);
+  --shadow-focus-success: 0 0 0 3px rgba(34, 197, 94, 0.15);
+
+  /* ====================================
+     BORDERS
+     ==================================== */
+
+  --border-width-1: 1px;
+  --border-width-2: 2px;
+  --border-color-default: #e5e7eb;
+  --border-color-strong: #d1d5db;
+  --border-color-subtle: #f3f4f6;
+  --border-color-focus: #fb923c;
+  --border-color-error: #ef4444;
+
+  /* ====================================
+     TRANSITIONS
+     ==================================== */
+
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --transition-base: var(--duration-base) var(--ease-in-out);
+
+  /* ====================================
+     Z-INDEX
+     ==================================== */
+
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

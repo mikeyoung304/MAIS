@@ -4,6 +4,7 @@
   "private": true,
   "description": "Macon AI Solutions - AI-Powered Tenant Management Platform",
   "workspaces": [
+    "apps/*",
     "client",
     "server",
     "packages/*"
