@@ -9,20 +9,21 @@ MAIS (Macon AI Solutions) is a business growth club platform that partners with 
 **Tech Stack:**
 
 - Backend: Express 4, TypeScript 5.9.3 (strict), Prisma 6, PostgreSQL
-- Frontend: React 18, Vite 6, TailwindCSS, Radix UI, TanStack Query
+- Frontend (Admin): React 18, Vite 6, TailwindCSS, Radix UI, TanStack Query
+- Frontend (Storefronts): Next.js 14 App Router, NextAuth.js v5, ISR
 - API: ts-rest + Zod for type-safe contracts
 - Testing: Vitest (unit/integration), Playwright (E2E)
 
 **Current Status:**
 
-- MVP Sprint Day 4 complete (771 server tests + 21 E2E tests)
+- Next.js migration: COMPLETE (6 phases, 14 code review fixes applied)
+- Tenant storefronts: SSR-enabled at `/t/[slug]` with custom domain support
+- 771 server tests + 114 E2E tests (22 passing after migration fixes)
 - Tenant self-signup: Backend + Frontend complete (`/signup` → `/tenant/dashboard`)
 - Password reset flow: Complete with Postmark email integration
 - Stripe Connect onboarding: Backend routes + StripeConnectCard.tsx
-- Phase 5.1 complete (package photo uploads)
-- Multi-tenant architecture: 95% complete
+- Multi-tenant architecture: 100% complete
 - Current branch: `main` (production-ready)
-- All 9 god components refactored with 70-90% size reduction
 
 ## Monorepo Structure
 
@@ -365,6 +366,8 @@ Optional (graceful fallbacks in real mode):
 - **docs/solutions/PREVENTION-STRATEGIES-INDEX.md** - Prevention strategies for avoiding critical issues
 - **docs/solutions/PREVENTION-QUICK-REFERENCE.md** - Quick reference cheat sheet (print and pin!)
 - **docs/design/BRAND_VOICE_GUIDE.md** - Brand voice, copy patterns, and UI/UX design system (MUST READ for any UI work)
+- **docs/adrs/ADR-014-nextjs-app-router-migration.md** - Next.js migration architecture decisions
+- **apps/web/README.md** - Next.js app setup, environment variables, architecture
 
 ## Documentation Conventions
 
@@ -486,6 +489,10 @@ export class BookingService {
 7. **Missing error handling:** Services should throw domain errors, routes catch and map to HTTP
 8. **Direct Prisma usage in routes:** Always go through services/repositories
 9. **Hardcoded values:** Use config or environment variables
+10. **Exposing backend tokens to client:** Use `getBackendToken()` server-side only, never include in NextAuth session
+11. **Missing Next.js error boundaries:** Every dynamic route needs `error.tsx`
+12. **Console.log in Next.js:** Use `logger` utility from `@/lib/logger`
+13. **Duplicate data fetching:** Wrap shared SSR functions with React `cache()`
 
 ## Prevention Strategies (Read These!)
 
@@ -497,6 +504,7 @@ The following links prevent common mistakes from recurring:
 - **[cascading-entity-type-errors](docs/solutions/logic-errors/cascading-entity-type-errors-MAIS-20251204.md)** - Preventing cascading type errors
 - **[database-client-mismatch](docs/solutions/database-issues/database-client-mismatch-MAIS-20251204.md)** - Database/client mismatch prevention
 - **[schema-drift-prevention](docs/solutions/database-issues/schema-drift-prevention-MAIS-20251204.md)** - Schema drift prevention (P0)
+- **[nextjs-migration-lessons-learned](docs/solutions/code-review-patterns/nextjs-migration-lessons-learned-MAIS-20251225.md)** - 10 lessons from the Next.js migration
 
 **Key insight from Commit 417b8c0:** ts-rest has type compatibility issues with Express 4.x/5.x. The `{ req: any }` in route handlers is REQUIRED and must not be removed. Document library limitations instead of trying to "fix" them.
 
