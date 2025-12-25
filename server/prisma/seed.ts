@@ -9,6 +9,7 @@
  *   npm run db:seed:dev          # Platform + Demo (typical dev setup)
  *   SEED_MODE=la-petit-mariage npm exec prisma db seed  # La Petit Mariage tenant
  *   SEED_MODE=little-bit-farm npm exec prisma db seed   # Little Bit Horse Farm tenant
+ *   SEED_MODE=upgrade-tenant-pages npm exec prisma db seed  # Upgrade tenant landing pages
  *
  * Environment Variables:
  *   SEED_MODE: 'production' | 'e2e' | 'demo' | 'dev' | 'all' | 'la-petit-mariage' | 'little-bit-farm'
@@ -24,6 +25,7 @@ import { seedE2E } from './seeds/e2e';
 import { seedDemo } from './seeds/demo';
 import { seedLaPetitMarriage } from './seeds/la-petit-mariage';
 import { seedLittleBitHorseFarm } from './seeds/little-bit-horse-farm';
+import { upgradeTenantPages } from './seeds/upgrade-tenant-pages';
 import { logger } from '../src/lib/core/logger';
 
 const prisma = new PrismaClient();
@@ -35,14 +37,15 @@ type SeedMode =
   | 'dev'
   | 'all'
   | 'la-petit-mariage'
-  | 'little-bit-farm';
+  | 'little-bit-farm'
+  | 'upgrade-tenant-pages';
 
 function getSeedMode(): SeedMode {
   // Explicit SEED_MODE takes priority
   const explicitMode = process.env.SEED_MODE as SeedMode | undefined;
   if (
     explicitMode &&
-    ['production', 'e2e', 'demo', 'dev', 'all', 'la-petit-mariage', 'little-bit-farm'].includes(
+    ['production', 'e2e', 'demo', 'dev', 'all', 'la-petit-mariage', 'little-bit-farm', 'upgrade-tenant-pages'].includes(
       explicitMode
     )
   ) {
@@ -106,6 +109,11 @@ async function main() {
       case 'little-bit-farm':
         // Little Bit Horse Farm: Corporate wellness retreats
         await seedLittleBitHorseFarm(prisma);
+        break;
+
+      case 'upgrade-tenant-pages':
+        // Upgrade existing tenants with landing page configurations
+        await upgradeTenantPages();
         break;
     }
 
