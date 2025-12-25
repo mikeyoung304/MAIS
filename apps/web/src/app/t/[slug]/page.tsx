@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-// import { notFound } from 'next/navigation'; // TODO: Uncomment when API connected
+import { notFound } from 'next/navigation';
 import { TenantLandingPage } from './TenantLandingPage';
+import { getTenantStorefrontData, TenantNotFoundError } from '@/lib/tenant';
 
 interface TenantPageProps {
   params: Promise<{ slug: string }>;
@@ -11,7 +12,7 @@ interface TenantPageProps {
  *
  * This page displays the tenant's storefront with:
  * - Hero section with transformation headline
- * - Service tier cards
+ * - Service tier cards (packages)
  * - Testimonials
  * - FAQ section
  * - Contact/booking CTAs
@@ -26,67 +27,57 @@ interface TenantPageProps {
 export async function generateMetadata({ params }: TenantPageProps): Promise<Metadata> {
   const { slug } = await params;
 
-  // TODO: Fetch tenant data from API
-  // const tenant = await getTenantPublic(slug);
+  try {
+    const data = await getTenantStorefrontData(slug);
+    const { tenant } = data;
 
-  // Placeholder until API is connected
-  const tenant = {
-    name: `Tenant ${slug}`,
-    businessType: 'Photography',
-    siteConfig: {
-      metaDescription: `Book services with ${slug}`,
-    },
-    branding: {
-      ogImage: null,
-    },
-  };
+    const metaDescription =
+      tenant.branding?.landingPage?.hero?.subheadline ||
+      `Book services with ${tenant.name}`;
 
-  return {
-    title: tenant.name,
-    description: tenant.siteConfig?.metaDescription || `Book services with ${tenant.name}`,
-    openGraph: {
+    return {
       title: tenant.name,
-      description: tenant.siteConfig?.metaDescription,
-      images: tenant.branding?.ogImage ? [tenant.branding.ogImage] : [],
-    },
-    robots: {
-      index: true,
-      follow: true,
-    },
-  };
+      description: metaDescription,
+      openGraph: {
+        title: tenant.name,
+        description: metaDescription,
+        // TODO: Add og:image from tenant branding when available
+        images: [],
+      },
+      robots: {
+        index: true,
+        follow: true,
+      },
+    };
+  } catch (error) {
+    // Return minimal metadata for error cases
+    // notFound() will be called in the page component
+    return {
+      title: 'Business Not Found',
+      description: 'The requested business could not be found.',
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
 }
 
 export default async function TenantPage({ params }: TenantPageProps) {
   const { slug } = await params;
 
-  // TODO: Fetch tenant data from API
-  // const tenant = await getTenantPublic(slug);
-  // if (!tenant) notFound();
+  try {
+    const data = await getTenantStorefrontData(slug);
+    return <TenantLandingPage data={data} />;
+  } catch (error) {
+    if (error instanceof TenantNotFoundError) {
+      notFound();
+    }
 
-  // Placeholder tenant data for initial setup
-  const tenant = {
-    id: 'placeholder',
-    slug,
-    name: `${slug.charAt(0).toUpperCase()}${slug.slice(1).replace(/-/g, ' ')}`,
-    businessType: 'Photography',
-    landingPageConfig: {
-      hero: {
-        headline: 'Capture your story.',
-        subheadline: 'Professional photography that brings your moments to life.',
-        ctaText: 'Book Now',
-      },
-      segments: [],
-      packages: [],
-      testimonials: [],
-      faqs: [],
-    },
-    branding: {
-      primaryColor: '#4A7C6F',
-      logo: null,
-    },
-  };
-
-  return <TenantLandingPage tenant={tenant} />;
+    // For other errors, log and show a generic error
+    // In production, you might want to show a proper error page
+    throw error;
+  }
 }
 
 // ISR: Revalidate every 60 seconds
