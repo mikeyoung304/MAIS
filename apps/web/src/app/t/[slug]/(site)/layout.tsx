@@ -30,7 +30,7 @@ export default async function TenantSiteLayout({
     return (
       <div className="flex min-h-screen flex-col bg-surface">
         <TenantNav tenant={tenant} />
-        <main className="flex-1">{children}</main>
+        <div className="flex-1">{children}</div>
         <TenantFooter tenant={tenant} />
       </div>
     );

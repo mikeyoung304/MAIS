@@ -63,7 +63,7 @@ export function FAQAccordion({ faqItems, basePath }: FAQAccordionProps) {
   );
 
   return (
-    <div id="main-content">
+    <div>
       {/* Hero Section */}
       <section className="py-32 md:py-40">
         <div className="mx-auto max-w-3xl px-6">
