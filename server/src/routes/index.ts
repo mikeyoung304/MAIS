@@ -58,6 +58,7 @@ import { createPublicTenantRoutes } from './public-tenant.routes';
 import { createTenantAdminWebhookRoutes } from './tenant-admin-webhooks.routes';
 import { createTenantAdminDomainsRouter } from './tenant-admin-domains.routes';
 import { DomainVerificationService } from '../services/domain-verification.service';
+import { createInternalRoutes } from './internal.routes';
 import {
   createPublicBookingManagementRouter,
   PublicBookingManagementController,
@@ -647,4 +648,12 @@ export function createV1Router(
     app.use('/v1/tenant-admin/domains', tenantAuthMiddleware, tenantAdminDomainsRouter);
     logger.info('✅ Tenant admin domain routes mounted at /v1/tenant-admin/domains');
   }
+
+  // Register internal routes (for service-to-service communication)
+  // Secured with INTERNAL_API_SECRET - not tenant authenticated
+  const internalRoutes = createInternalRoutes({
+    internalApiSecret: config.INTERNAL_API_SECRET,
+  });
+  app.use('/v1/internal', internalRoutes);
+  logger.info('✅ Internal routes mounted at /v1/internal');
 }

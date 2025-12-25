@@ -47,6 +47,8 @@ const ConfigSchema = z.object({
   GOOGLE_SERVICE_ACCOUNT_JSON_BASE64: z.string().optional(),
   // Graceful shutdown timeout (milliseconds)
   SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(30000), // 30 seconds
+  // Internal API secret for service-to-service communication
+  INTERNAL_API_SECRET: z.string().optional(),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
