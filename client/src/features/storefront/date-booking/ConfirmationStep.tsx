@@ -5,13 +5,13 @@
  * before proceeding to date selection.
  */
 
-import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { CheckCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import type { ConfirmationStepProps } from './types';
 
-const ConfirmationStep = React.memo(({ package: pkg }: ConfirmationStepProps) => {
+// P3-355 FIX: Removed React.memo - simple presentational component doesn't benefit from memoization
+export default function ConfirmationStep({ package: pkg }: ConfirmationStepProps) {
   return (
     <Card className="border-neutral-200 shadow-elevation-1">
       <CardHeader>
@@ -48,8 +48,4 @@ const ConfirmationStep = React.memo(({ package: pkg }: ConfirmationStepProps) =>
       </CardContent>
     </Card>
   );
-});
-
-ConfirmationStep.displayName = 'ConfirmationStep';
-
-export default ConfirmationStep;
+}

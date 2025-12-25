@@ -121,6 +121,7 @@ describe('BookingService - Edge Cases', () => {
         })
       ).rejects.toThrow(NotFoundError);
 
+      // P2-349: Error message now generic to prevent ID enumeration
       await expect(
         service.createCheckout('tenant_123', {
           packageId: 'nonexistent_package',
@@ -128,7 +129,7 @@ describe('BookingService - Edge Cases', () => {
           email: 'couple@example.com',
           eventDate: '2025-07-01',
         })
-      ).rejects.toThrow(/Package.*not found/);
+      ).rejects.toThrow('The requested resource was not found');
     });
   });
 

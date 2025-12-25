@@ -262,7 +262,9 @@ export class BookingService {
     // Validate package exists for this tenant
     const pkg = await this.catalogRepo.getPackageBySlug(tenantId, input.packageId);
     if (!pkg) {
-      throw new NotFoundError(`Package ${input.packageId} not found`);
+      // P2-349 FIX: Log package slug internally but return generic error message
+      logger.warn({ tenantId, packageSlug: input.packageId }, 'Package not found in checkout session');
+      throw new NotFoundError('The requested resource was not found');
     }
 
     // Fetch tenant to get Stripe account ID
@@ -705,21 +707,19 @@ export class BookingService {
     }
   ): Promise<Booking> {
     // PERFORMANCE FIX: Fetch package with add-ons in single query (eliminates N+1)
-    const pkgWithAddOns = await this.catalogRepo.getPackageBySlugWithAddOns(
-      tenantId,
-      input.packageId
-    );
-    if (!pkgWithAddOns) {
-      // P2-345 FIX: Log package ID internally but return generic error message
-      logger.warn({ tenantId, packageId: input.packageId }, 'Package not found in payment completion flow');
+    // P1-348 FIX: Variable named to clarify this is a SLUG, not an ID
+    const packageSlug = input.packageId; // TODO: Rename in input type in future refactor
+    const pkg = await this.catalogRepo.getPackageBySlugWithAddOns(tenantId, packageSlug);
+    if (!pkg) {
+      // P2-345 FIX: Log package slug internally but return generic error message
+      logger.warn({ tenantId, packageSlug }, 'Package not found in payment completion flow');
       throw new NotFoundError('The requested resource was not found');
     }
-    const pkg = pkgWithAddOns;
 
     // Extract add-on titles from the already-fetched add-ons
     const addOnTitles: string[] = [];
     if (input.addOnIds && input.addOnIds.length > 0) {
-      const selectedAddOns = pkgWithAddOns.addOns.filter((a) => input.addOnIds?.includes(a.id));
+      const selectedAddOns = pkg.addOns.filter((a) => input.addOnIds?.includes(a.id));
       addOnTitles.push(...selectedAddOns.map((a) => a.title));
     }
 

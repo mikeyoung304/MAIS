@@ -50,6 +50,14 @@ interface DateBookingWizardProps {
 // Step labels for the booking wizard - defined outside component to avoid recreation
 const STEP_LABELS = ['Confirm', 'Date', 'Details', 'Pay'] as const;
 
+// P2-350 FIX: DayPicker styles extracted to module-level constant to prevent recreation
+const DAY_PICKER_MODIFIERS_STYLES = {
+  selected: {
+    backgroundColor: '#F97316', // macon-orange
+    color: 'white',
+  },
+} as const;
+
 // =============================================================================
 // Memoized Step Components (#320: React.memo optimization)
 // These prevent unnecessary re-renders when parent state changes
@@ -128,12 +136,7 @@ const DateSelectionStep = React.memo(
               onSelect={onDateSelect}
               disabled={[{ before: new Date() }, ...unavailableDates]}
               className="border border-neutral-300 rounded-xl p-4 bg-white"
-              modifiersStyles={{
-                selected: {
-                  backgroundColor: '#F97316', // macon-orange
-                  color: 'white',
-                },
-              }}
+              modifiersStyles={DAY_PICKER_MODIFIERS_STYLES}
             />
           )}
         </div>
@@ -323,8 +326,11 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
   const sixMonthsFromNow = new Date(today);
   sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
 
-  // Get tenant key for cache isolation (P1 fix: prevent cross-tenant cache collision)
-  const tenantKey = localStorage.getItem('impersonationTenantKey') || 'default';
+  // P3-354 FIX: Memoize localStorage read to avoid repeated access on every render
+  const tenantKey = useMemo(
+    () => localStorage.getItem('impersonationTenantKey') || 'default',
+    []
+  );
 
   const { data: unavailableDatesData, isLoading: isLoadingDates } = useQuery({
     queryKey: ['unavailable-dates', tenantKey, today.toISOString().split('T')[0]],
@@ -351,17 +357,21 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
     return unavailableDatesData.map((dateStr) => new Date(dateStr + 'T00:00:00Z'));
   }, [unavailableDatesData]);
 
-  // Steps array - inline computation since it depends on currentStepIndex anyway
-  // No useMemo needed: recalculates on every step change which is expected behavior
-  const steps: Step[] = STEP_LABELS.map((label, index) => ({
-    label,
-    status:
-      index < currentStepIndex
-        ? ('complete' as const)
-        : index === currentStepIndex
-          ? ('current' as const)
-          : ('upcoming' as const),
-  }));
+  // P3-353 FIX: Memoize steps array to prevent recreation on every render
+  // Only recalculates when currentStepIndex changes (not on every keystroke)
+  const steps: Step[] = useMemo(
+    () =>
+      STEP_LABELS.map((label, index) => ({
+        label,
+        status:
+          index < currentStepIndex
+            ? ('complete' as const)
+            : index === currentStepIndex
+              ? ('current' as const)
+              : ('upcoming' as const),
+      })),
+    [currentStepIndex]
+  );
 
   // Navigation handlers
   const goToNextStep = () => {
