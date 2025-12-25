@@ -43,6 +43,76 @@ export function createPublicTenantRoutes(tenantRepository: PrismaTenantRepositor
    *
    * NEVER returns: apiKeySecret, stripeAccountId, email, encryptedSecrets
    */
+
+  /**
+   * GET /v1/public/tenants/by-domain/:domain
+   * Get public tenant info by custom domain
+   *
+   * Used by Next.js middleware for custom domain routing.
+   * Same security guarantees as slug lookup.
+   *
+   * TIMING ATTACK MITIGATION:
+   * - Same minimum response time as slug lookup
+   * - Generic error message for both not found and unverified domains
+   */
+  router.get('/by-domain/:domain', async (req, res) => {
+    const { domain } = req.params;
+    const startTime = Date.now();
+    const MIN_RESPONSE_TIME = 100;
+
+    const ensureMinResponseTime = async (): Promise<void> => {
+      const elapsed = Date.now() - startTime;
+      if (elapsed < MIN_RESPONSE_TIME) {
+        await setTimeout(MIN_RESPONSE_TIME - elapsed);
+      }
+    };
+
+    // Domain format validation (basic check)
+    if (!domain || domain.length === 0 || domain.length > 253) {
+      return res.status(400).json({
+        error: 'Invalid domain format',
+      });
+    }
+
+    try {
+      const tenant = await tenantRepository.findByDomainPublic(domain);
+
+      await ensureMinResponseTime();
+
+      if (!tenant) {
+        logger.info({ domain }, 'Domain not available for public lookup');
+        return res.status(404).json({
+          error: 'Domain not configured or not verified',
+        });
+      }
+
+      logger.info({ tenantId: tenant.id, domain }, 'Public tenant domain lookup');
+
+      return res.status(200).json(tenant);
+    } catch (error) {
+      await ensureMinResponseTime();
+      logger.error({ error, domain }, 'Error fetching tenant by domain');
+      return res.status(500).json({
+        error: 'Failed to fetch tenant',
+      });
+    }
+  });
+
+  /**
+   * GET /v1/public/tenants/:slug
+   * Get public tenant info by slug (for storefront routing)
+   *
+   * SECURITY: Only returns allowlisted fields:
+   * - id, slug, name - Public identifiers
+   * - apiKeyPublic - Read-only API key for X-Tenant-Key header
+   * - branding - Visual customization only (validated)
+   *
+   * TIMING ATTACK MITIGATION:
+   * - All responses take minimum 100ms to prevent tenant enumeration via timing
+   * - Generic error message for both not found and inactive tenants
+   *
+   * NEVER returns: apiKeySecret, stripeAccountId, email, encryptedSecrets
+   */
   router.get('/:slug', async (req, res) => {
     const { slug } = req.params;
     const startTime = Date.now();

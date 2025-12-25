@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   Users,
   Building2,
+  Globe,
 } from 'lucide-react';
 
 interface NavItem {
@@ -57,6 +58,12 @@ const tenantNavItems: NavItem[] = [
     label: 'Payments',
     icon: <CreditCard className="h-5 w-5" />,
     description: 'Stripe Connect setup',
+  },
+  {
+    href: '/tenant/domains',
+    label: 'Domains',
+    icon: <Globe className="h-5 w-5" />,
+    description: 'Custom domain setup',
   },
   {
     href: '/tenant/settings',

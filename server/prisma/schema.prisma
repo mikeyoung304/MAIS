@@ -108,10 +108,31 @@ model Tenant {
   configChangeLogs ConfigChangeLog[] // Audit trail for config changes
   services         Service[] // Scheduling services (e.g., "30-Minute Consultation")
   availabilityRules AvailabilityRule[] // Scheduling availability rules
+  domains          TenantDomain[] // Custom domains for tenant website
 
   @@index([slug])
   @@index([apiKeyPublic])
   @@index([isActive])
+}
+
+// Custom Domain Model - Allows tenants to use their own domain (e.g., janephotography.com)
+// DNS verification via TXT record: mais-verify=<verificationToken>
+model TenantDomain {
+  id                String    @id @default(cuid())
+  tenantId          String    // Tenant isolation
+  domain            String    @unique // e.g., "www.janephotography.com" (globally unique)
+  verified          Boolean   @default(false) // Has passed DNS TXT verification
+  isPrimary         Boolean   @default(false) // Is this the primary domain for the tenant
+  verificationToken String    // Token for DNS TXT verification (mais-verify=<token>)
+  verifiedAt        DateTime? // When verification was completed
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([verified]) // Query verified domains
+  @@index([tenantId, isPrimary]) // Query primary domain for tenant
 }
 
 model Customer {

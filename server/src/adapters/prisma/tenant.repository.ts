@@ -216,6 +216,76 @@ export class PrismaTenantRepository {
   }
 
   /**
+   * Find tenant by custom domain
+   * Used for custom domain routing (e.g., janephotography.com)
+   *
+   * @param domain - Custom domain (e.g., "janephotography.com")
+   * @returns TenantPublicDto or null if no verified domain found
+   */
+  async findByDomainPublic(domain: string): Promise<TenantPublicDto | null> {
+    // Look up verified domain and get tenant
+    const tenantDomain = await this.prisma.tenantDomain.findUnique({
+      where: { domain: domain.toLowerCase() },
+      include: {
+        tenant: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            apiKeyPublic: true,
+            branding: true,
+            tierDisplayNames: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+
+    // Domain must exist, be verified, and tenant must be active
+    if (!tenantDomain || !tenantDomain.verified || !tenantDomain.tenant.isActive) {
+      return null;
+    }
+
+    const tenant = tenantDomain.tenant;
+
+    // Build and validate response (same as findBySlugPublic)
+    const candidateDto = {
+      id: tenant.id,
+      slug: tenant.slug,
+      name: tenant.name,
+      apiKeyPublic: tenant.apiKeyPublic,
+      branding: tenant.branding,
+      tierDisplayNames: tenant.tierDisplayNames as
+        | { tier_1?: string; tier_2?: string; tier_3?: string }
+        | undefined,
+    };
+
+    const validationResult = TenantPublicDtoSchema.safeParse(candidateDto);
+
+    if (!validationResult.success) {
+      logger.warn(
+        {
+          tenantId: tenant.id,
+          domain,
+          errorCount: validationResult.error.issues.length,
+        },
+        'Invalid tenant data during domain lookup'
+      );
+
+      return {
+        id: tenant.id,
+        slug: tenant.slug,
+        name: tenant.name,
+        apiKeyPublic: tenant.apiKeyPublic,
+        branding: undefined,
+        tierDisplayNames: undefined,
+      };
+    }
+
+    return validationResult.data;
+  }
+
+  /**
    * Find active tenant by slug with public fields only
    * Used for public storefront routing - returns only safe fields
    *

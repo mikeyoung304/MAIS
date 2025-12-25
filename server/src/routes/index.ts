@@ -56,6 +56,8 @@ import { createPublicSchedulingRoutes } from './public-scheduling.routes';
 import { createTenantAdminSchedulingRoutes } from './tenant-admin-scheduling.routes';
 import { createPublicTenantRoutes } from './public-tenant.routes';
 import { createTenantAdminWebhookRoutes } from './tenant-admin-webhooks.routes';
+import { createTenantAdminDomainsRouter } from './tenant-admin-domains.routes';
+import { DomainVerificationService } from '../services/domain-verification.service';
 import {
   createPublicBookingManagementRouter,
   PublicBookingManagementController,
@@ -637,5 +639,12 @@ export function createV1Router(
       app.use('/v1/tenant-admin/webhooks', tenantAuthMiddleware, tenantAdminWebhookRoutes);
       logger.info('✅ Tenant admin webhook routes mounted at /v1/tenant-admin/webhooks');
     }
+
+    // Register tenant admin domain routes (for custom domain management)
+    // Requires tenant admin authentication
+    const domainVerificationService = new DomainVerificationService(prismaClient);
+    const tenantAdminDomainsRouter = createTenantAdminDomainsRouter(domainVerificationService);
+    app.use('/v1/tenant-admin/domains', tenantAuthMiddleware, tenantAdminDomainsRouter);
+    logger.info('✅ Tenant admin domain routes mounted at /v1/tenant-admin/domains');
   }
 }
