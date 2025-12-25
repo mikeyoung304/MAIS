@@ -53,7 +53,8 @@ function StarRating({ rating }: { rating: number }) {
  * 7. Gallery (optional)
  * 8. FAQ Section (optional)
  * 9. Final CTA
- * 10. Footer
+ *
+ * Note: Footer is now in the shared layout (layout.tsx)
  */
 export function TenantLandingPage({ data }: TenantLandingPageProps) {
   const { tenant, packages, segments } = data;
@@ -77,7 +78,7 @@ export function TenantLandingPage({ data }: TenantLandingPageProps) {
   const midIndex = Math.floor(sortedPackages.length / 2);
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div id="main-content">
       {/* ===== HERO SECTION ===== */}
       <section
         className="relative py-32 md:py-40"
@@ -376,37 +377,6 @@ export function TenantLandingPage({ data }: TenantLandingPageProps) {
           </div>
         </section>
       ) : null}
-
-      {/* ===== FOOTER ===== */}
-      <footer className="border-t border-neutral-100 bg-white py-12">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <div className="flex items-center gap-3">
-              {tenant.branding?.logoUrl && (
-                <div className="relative h-8 w-8 flex-shrink-0">
-                  <Image
-                    src={tenant.branding.logoUrl}
-                    alt={`${tenant.name} logo`}
-                    fill
-                    className="object-contain"
-                    sizes="32px"
-                  />
-                </div>
-              )}
-              <p className="font-semibold text-text-primary">{tenant.name}</p>
-            </div>
-            <p className="text-sm text-text-muted">
-              &copy; {new Date().getFullYear()} All rights reserved.
-            </p>
-          </div>
-          <p className="mt-4 text-center text-xs text-text-muted">
-            Powered by{' '}
-            <a href="https://maconaisolutions.com" className="underline hover:text-sage">
-              Macon AI Solutions
-            </a>
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

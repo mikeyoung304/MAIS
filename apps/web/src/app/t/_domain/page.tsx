@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { TenantLandingPage } from '../[slug]/TenantLandingPage';
+import { TenantLandingPage } from '../[slug]/(site)/TenantLandingPage';
 import { getTenantByDomain, getTenantPackages, getTenantSegments, TenantNotFoundError } from '@/lib/tenant';
 
 interface DomainPageProps {
