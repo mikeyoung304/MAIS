@@ -8,6 +8,10 @@
   "plugins": ["@typescript-eslint"],
   "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   "rules": {
+    // Prevent console.log in production code - use logger instead
+    // Allow console.warn and console.error for critical issues
+    "no-console": ["error", { "allow": ["warn", "error"] }],
+
     // Sprint 2.2 Type Safety: Prevent backsliding on `as any` usage
     // Reduced from 24 to 6 casts (75% reduction)
     // Any new `as any` requires justification + BACKLOG ticket
@@ -35,7 +39,8 @@
       // Relax rules for test files
       "files": ["**/*.spec.ts", "**/*.test.ts", "**/test/**/*.ts"],
       "rules": {
-        "@typescript-eslint/no-explicit-any": "warn"
+        "@typescript-eslint/no-explicit-any": "warn",
+        "no-console": "off"
       }
     },
     {

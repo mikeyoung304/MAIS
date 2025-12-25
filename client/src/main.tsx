@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { api } from './lib/api';
 import { initSentry } from './lib/sentry';
 import './index.css';
@@ -14,7 +15,6 @@ initSentry();
 const tenantApiKey = import.meta.env.VITE_TENANT_API_KEY;
 if (tenantApiKey) {
   api.setTenantKey(tenantApiKey);
-  console.log('[MAIS] Initialized with tenant API key');
 }
 
 const rootElement = document.getElementById('root');
@@ -24,6 +24,8 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>
 );
