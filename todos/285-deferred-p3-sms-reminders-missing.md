@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: '285'
 tags: [deferred, code-review, feature-gap, sms, reminders, acuity-parity]

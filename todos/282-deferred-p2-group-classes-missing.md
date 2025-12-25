@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: '282'
 tags: [deferred, code-review, feature-gap, group-classes, capacity, acuity-parity]

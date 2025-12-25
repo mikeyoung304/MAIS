@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: '280'
 tags: [deferred, code-review, performance, algorithm, availability, scheduling]

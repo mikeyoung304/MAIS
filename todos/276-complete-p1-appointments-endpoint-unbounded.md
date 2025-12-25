@@ -1,5 +1,5 @@
 ---
-status: ready
+status: complete
 priority: p1
 issue_id: '276'
 tags: [code-review, security, api, dos-prevention, pagination]

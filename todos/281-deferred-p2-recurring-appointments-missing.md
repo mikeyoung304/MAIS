@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: '281'
 tags: [deferred, code-review, feature-gap, recurring, appointments, acuity-parity]
