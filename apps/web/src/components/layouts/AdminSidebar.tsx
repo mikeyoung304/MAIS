@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, logout } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard,
@@ -89,12 +89,16 @@ const adminNavItems: NavItem[] = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
-  const { user, role, logout, isImpersonating, impersonation } = useAuth();
+  const { user, role, isImpersonating, impersonation } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   // Determine which nav items to show
   const navItems = isImpersonating() || role === 'TENANT_ADMIN' ? tenantNavItems : adminNavItems;
+
+  const handleLogout = async () => {
+    await logout('/login');
+  };
 
   const isActive = (href: string) => {
     if (href === '/tenant/dashboard' || href === '/admin/dashboard') {
@@ -207,7 +211,7 @@ export function AdminSidebar() {
               variant="outline"
               size={isCollapsed ? 'icon' : 'default'}
               className="w-full"
-              onClick={logout}
+              onClick={handleLogout}
             >
               <LogOut className="h-4 w-4" />
               {!isCollapsed && <span className="ml-2">Logout</span>}

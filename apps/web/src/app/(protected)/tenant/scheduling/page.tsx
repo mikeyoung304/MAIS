@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -37,7 +37,7 @@ interface Blackout {
  * Overview of bookings and blackout dates.
  */
 export default function TenantSchedulingPage() {
-  const { token } = useAuth();
+  const { backendToken } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [blackouts, setBlackouts] = useState<Blackout[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,15 +46,15 @@ export default function TenantSchedulingPage() {
 
   useEffect(() => {
     async function fetchData() {
-      if (!token) return;
+      if (!backendToken) return;
 
       try {
         const [bookingsRes, blackoutsRes] = await Promise.all([
           fetch(`${API_BASE_URL}/v1/tenant-admin/bookings`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${backendToken}` },
           }),
           fetch(`${API_BASE_URL}/v1/tenant-admin/blackouts`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${backendToken}` },
           }),
         ]);
 
@@ -75,7 +75,7 @@ export default function TenantSchedulingPage() {
     }
 
     fetchData();
-  }, [token]);
+  }, [backendToken]);
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {

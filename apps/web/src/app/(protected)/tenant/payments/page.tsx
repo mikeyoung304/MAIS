@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -55,7 +55,7 @@ const validateStripeUrl = (url: string): boolean => {
  * Displays Stripe Connect status and handles onboarding flow.
  */
 export default function TenantPaymentsPage() {
-  const { token } = useAuth();
+  const { backendToken } = useAuth();
   const [status, setStatus] = useState<StripeStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,10 +70,10 @@ export default function TenantPaymentsPage() {
 
   useEffect(() => {
     fetchStatus();
-  }, [token]);
+  }, [backendToken]);
 
   const fetchStatus = async () => {
-    if (!token) return;
+    if (!backendToken) return;
 
     setIsLoading(true);
     setError(null);
@@ -81,7 +81,7 @@ export default function TenantPaymentsPage() {
     try {
       const response = await fetch(`${API_BASE_URL}/v1/tenant-admin/stripe/status`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${backendToken}`,
         },
       });
 
@@ -123,7 +123,7 @@ export default function TenantPaymentsPage() {
       const response = await fetch(`${API_BASE_URL}/v1/tenant-admin/stripe/account`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${backendToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -158,7 +158,7 @@ export default function TenantPaymentsPage() {
       const response = await fetch(`${API_BASE_URL}/v1/tenant-admin/stripe/onboard-link`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${backendToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -189,7 +189,7 @@ export default function TenantPaymentsPage() {
       const response = await fetch(`${API_BASE_URL}/v1/tenant-admin/stripe/dashboard-link`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${backendToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({}),

@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, type UserRole } from '@/contexts/AuthContext';
+import { useAuth, type UserRole } from '@/lib/auth-client';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,6 +13,7 @@ interface ProtectedRouteProps {
  * Protected Route Component
  *
  * Wraps content that requires authentication.
+ * Uses NextAuth.js session for authentication state.
  * Redirects to login if not authenticated.
  * Redirects to appropriate dashboard if role not allowed.
  */

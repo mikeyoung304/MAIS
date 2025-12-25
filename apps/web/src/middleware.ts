@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { auth } from '@/lib/auth';
 
 /**
- * Next.js Middleware for Custom Domain Resolution
+ * Next.js Middleware for Custom Domain Resolution and Auth
  *
  * This middleware handles:
  * 1. Custom domain routing (e.g., janephotography.com → /t/jane-photography)
- * 2. Authentication token forwarding from cookies
+ * 2. NextAuth.js session-based authentication
  * 3. Protected route redirection
  *
  * NOTE: Custom domains require Vercel Pro account ($20/mo)
@@ -26,9 +27,9 @@ const KNOWN_DOMAINS = [
 const PROTECTED_ROUTES = ['/tenant', '/admin'];
 
 // Routes that are public (no auth needed)
-// const PUBLIC_ROUTES = ['/', '/login', '/signup', '/t', '/api']; // TODO: Use for public route detection
+const PUBLIC_ROUTES = ['/', '/login', '/signup', '/forgot-password', '/t', '/api/auth'];
 
-export function middleware(request: NextRequest) {
+export default auth((request) => {
   const { pathname } = request.nextUrl;
   const hostname = request.headers.get('host') || '';
 
@@ -55,31 +56,33 @@ export function middleware(request: NextRequest) {
   // ===== AUTHENTICATION CHECK =====
   // Check if this is a protected route
   const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
+  const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 
-  if (isProtectedRoute) {
-    // Check for auth token in cookies
-    const tenantToken = request.cookies.get('tenantToken')?.value;
-    const adminToken = request.cookies.get('adminToken')?.value;
+  // Get session from NextAuth
+  const session = request.auth;
 
-    // If no token, redirect to login
-    if (!tenantToken && !adminToken) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('callbackUrl', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
+  if (isProtectedRoute && !session) {
+    // Redirect to login if not authenticated
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('callbackUrl', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 
-    // For admin routes, ensure we have an admin token
-    if (pathname.startsWith('/admin') && !adminToken) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('callbackUrl', pathname);
-      loginUrl.searchParams.set('role', 'admin');
-      return NextResponse.redirect(loginUrl);
+  // For admin routes, verify admin role
+  if (pathname.startsWith('/admin') && session) {
+    const role = session.user?.role;
+    const isImpersonating = !!session.user?.impersonation;
+
+    // Only allow platform admins (not impersonating)
+    if (role !== 'PLATFORM_ADMIN' || isImpersonating) {
+      // Redirect to tenant dashboard
+      return NextResponse.redirect(new URL('/tenant/dashboard', request.url));
     }
   }
 
   // ===== CONTINUE NORMALLY =====
   return NextResponse.next();
-}
+});
 
 // Configure which routes the middleware runs on
 export const config = {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -34,19 +34,19 @@ interface PackageDto {
  * Allows tenant admins to manage their service packages.
  */
 export default function TenantPackagesPage() {
-  const { token } = useAuth();
+  const { backendToken } = useAuth();
   const [packages, setPackages] = useState<PackageDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchPackages() {
-      if (!token) return;
+      if (!backendToken) return;
 
       try {
         const response = await fetch(`${API_BASE_URL}/v1/tenant-admin/packages`, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${backendToken}`,
           },
         });
 
@@ -64,7 +64,7 @@ export default function TenantPackagesPage() {
     }
 
     fetchPackages();
-  }, [token]);
+  }, [backendToken]);
 
   const formatPrice = (price: number, currency: string) => {
     return new Intl.NumberFormat('en-US', {

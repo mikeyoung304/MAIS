@@ -1,9 +1,9 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth, type UserRole } from '@/contexts/AuthContext';
+import { login, useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,7 +19,7 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, isAuthenticated, role } = useAuth();
+  const { isAuthenticated, role, isLoading: sessionLoading } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,12 +28,28 @@ function LoginForm() {
 
   // Get callback URL from query params
   const callbackUrl = searchParams.get('callbackUrl');
-  const requestedRole = searchParams.get('role') as UserRole | null;
 
-  // If already authenticated, redirect
-  if (isAuthenticated && !isLoading) {
-    const redirectUrl = callbackUrl || (role === 'PLATFORM_ADMIN' ? '/admin/dashboard' : '/tenant/dashboard');
-    router.push(redirectUrl);
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !sessionLoading) {
+      const redirectUrl = callbackUrl || (role === 'PLATFORM_ADMIN' ? '/admin/dashboard' : '/tenant/dashboard');
+      router.push(redirectUrl);
+    }
+  }, [isAuthenticated, sessionLoading, callbackUrl, role, router]);
+
+  // Show loading while checking session
+  if (sessionLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-sage" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Don't render form if authenticated (redirect is happening)
+  if (isAuthenticated) {
     return null;
   }
 
@@ -43,20 +59,13 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      // Try to determine role from callback URL or default to tenant
-      let targetRole: UserRole = 'TENANT_ADMIN';
-      if (requestedRole === 'PLATFORM_ADMIN' || callbackUrl?.startsWith('/admin')) {
-        targetRole = 'PLATFORM_ADMIN';
-      }
+      await login(email, password);
 
-      await login(email, password, targetRole);
-
-      // Redirect after successful login
-      const redirectUrl = callbackUrl || (targetRole === 'PLATFORM_ADMIN' ? '/admin/dashboard' : '/tenant/dashboard');
-      router.push(redirectUrl);
+      // After successful login, session will update and useEffect will redirect
+      // Force a page refresh to ensure session is picked up
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };

@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, loginWithToken } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,17 +17,19 @@ import {
   Lock,
   Eye,
   EyeOff,
-  CheckCircle,
 } from 'lucide-react';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 /**
  * Signup Form Component
  *
  * Handles tenant registration with validation and error handling.
+ * Uses NextAuth.js for session management after signup.
  */
 function SignupForm() {
   const router = useRouter();
-  const { signup, isAuthenticated, role } = useAuth();
+  const { isAuthenticated, role, isLoading: sessionLoading } = useAuth();
 
   const [businessName, setBusinessName] = useState('');
   const [email, setEmail] = useState('');
@@ -41,14 +43,14 @@ function SignupForm() {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated && role) {
+    if (isAuthenticated && role && !sessionLoading) {
       if (role === 'PLATFORM_ADMIN') {
         router.push('/admin/dashboard');
       } else if (role === 'TENANT_ADMIN') {
         router.push('/tenant/dashboard');
       }
     }
-  }, [isAuthenticated, role, router]);
+  }, [isAuthenticated, role, sessionLoading, router]);
 
   /**
    * Validate form before submission
@@ -101,7 +103,33 @@ function SignupForm() {
     setIsLoading(true);
 
     try {
-      await signup(email, password, businessName);
+      // Call the signup API directly
+      const response = await fetch(`${API_BASE_URL}/v1/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, businessName }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Signup failed');
+      }
+
+      const data = await response.json();
+
+      // Create NextAuth session with the token from signup
+      await loginWithToken({
+        token: data.token,
+        email: data.email,
+        role: 'TENANT_ADMIN',
+        tenantId: data.tenantId,
+        slug: data.slug,
+      });
+
+      // Refresh to pick up the new session and redirect
+      router.refresh();
       router.push('/tenant/dashboard');
     } catch (err) {
       if (err instanceof Error) {
@@ -109,7 +137,6 @@ function SignupForm() {
       } else {
         setError('An error occurred during signup. Please try again.');
       }
-    } finally {
       setIsLoading(false);
     }
   };

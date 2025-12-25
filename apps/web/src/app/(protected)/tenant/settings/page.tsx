@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, logout } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,8 +22,12 @@ import { useState } from 'react';
  * Account settings and API key management.
  */
 export default function TenantSettingsPage() {
-  const { user, tenantId, logout } = useAuth();
+  const { user, tenantId } = useAuth();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const handleLogout = async () => {
+    await logout('/login');
+  };
 
   // Mock API keys for display (in production these would come from the API)
   const apiKeyPublic = tenantId ? `pk_live_${tenantId.slice(0, 8)}...` : 'Not available';
@@ -153,7 +157,7 @@ export default function TenantSettingsPage() {
             </div>
             <Button
               variant="outline"
-              onClick={logout}
+              onClick={handleLogout}
               className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
             >
               Sign Out

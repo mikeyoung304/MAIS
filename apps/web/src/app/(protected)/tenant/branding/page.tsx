@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -43,7 +43,7 @@ const FONT_OPTIONS = [
  * Allows tenant admins to customize their brand colors and fonts.
  */
 export default function TenantBrandingPage() {
-  const { token } = useAuth();
+  const { backendToken } = useAuth();
   const [form, setForm] = useState<BrandingForm>(DEFAULT_BRANDING);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -52,12 +52,12 @@ export default function TenantBrandingPage() {
 
   useEffect(() => {
     async function fetchBranding() {
-      if (!token) return;
+      if (!backendToken) return;
 
       try {
         const response = await fetch(`${API_BASE_URL}/v1/tenant-admin/branding`, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${backendToken}`,
           },
         });
 
@@ -80,7 +80,7 @@ export default function TenantBrandingPage() {
     }
 
     fetchBranding();
-  }, [token]);
+  }, [backendToken]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +92,7 @@ export default function TenantBrandingPage() {
       const response = await fetch(`${API_BASE_URL}/v1/tenant-admin/branding`, {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${backendToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(form),

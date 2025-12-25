@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -34,53 +34,55 @@ interface DashboardStats {
  * - Recent activity (future)
  */
 export default function TenantDashboardPage() {
-  const { token, tenantId, user } = useAuth();
+  const { backendToken, tenantId, user, slug: authSlug } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [slug, setSlug] = useState<string | null>(null);
+  const [slug, setSlug] = useState<string | null>(authSlug || null);
 
   useEffect(() => {
     async function fetchDashboardData() {
-      if (!token) return;
+      if (!backendToken) return;
 
       try {
-        // Fetch tenant info to get slug
-        const infoResponse = await fetch(`${API_BASE_URL}/v1/tenant-admin/info`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        // Fetch tenant info to get slug (if not already available from session)
+        if (!authSlug) {
+          const infoResponse = await fetch(`${API_BASE_URL}/v1/tenant-admin/info`, {
+            headers: {
+              Authorization: `Bearer ${backendToken}`,
+            },
+          });
 
-        if (infoResponse.ok) {
-          const info = await infoResponse.json();
-          setSlug(info.slug);
+          if (infoResponse.ok) {
+            const info = await infoResponse.json();
+            setSlug(info.slug);
+          }
         }
 
         // Fetch packages count
         const packagesResponse = await fetch(`${API_BASE_URL}/v1/tenant-admin/packages`, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${backendToken}`,
           },
         });
 
         // Fetch bookings count
         const bookingsResponse = await fetch(`${API_BASE_URL}/v1/tenant-admin/bookings`, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${backendToken}`,
           },
         });
 
         // Fetch blackouts count
         const blackoutsResponse = await fetch(`${API_BASE_URL}/v1/tenant-admin/blackouts`, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${backendToken}`,
           },
         });
 
         // Fetch Stripe status
         const stripeResponse = await fetch(`${API_BASE_URL}/v1/tenant-admin/stripe/status`, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${backendToken}`,
           },
         });
 
@@ -109,7 +111,7 @@ export default function TenantDashboardPage() {
     }
 
     fetchDashboardData();
-  }, [token, tenantId]);
+  }, [backendToken, tenantId, authSlug]);
 
   const statCards = [
     {
