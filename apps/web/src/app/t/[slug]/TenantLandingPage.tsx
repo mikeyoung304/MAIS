@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import type { TenantStorefrontData } from '@/lib/tenant';
 
@@ -107,8 +108,10 @@ export function TenantLandingPage({ data }: TenantLandingPageProps) {
             </p>
           )}
           <div className="mt-10">
-            <Button variant="sage" size="xl">
-              {heroConfig.ctaText}
+            <Button asChild variant="sage" size="xl">
+              <a href="#packages">
+                {heroConfig.ctaText}
+              </a>
             </Button>
           </div>
         </div>
@@ -144,7 +147,7 @@ export function TenantLandingPage({ data }: TenantLandingPageProps) {
 
       {/* ===== TIER CARDS (PACKAGES) ===== */}
       {sortedPackages.length > 0 && (
-        <section className="py-32 md:py-40">
+        <section id="packages" className="py-32 md:py-40">
           <div className="mx-auto max-w-6xl px-6">
             <div className="text-center">
               <h2 className="font-serif text-3xl font-bold text-text-primary sm:text-4xl">
@@ -193,10 +196,13 @@ export function TenantLandingPage({ data }: TenantLandingPageProps) {
                       <p className="mt-4 text-sm text-text-muted">{pkg.description}</p>
                     )}
                     <Button
+                      asChild
                       variant={isPopular ? 'sage' : 'outline'}
                       className="mt-8 w-full"
                     >
-                      Book {tierLabel}
+                      <Link href={`/t/${tenant.slug}/book/${pkg.slug}`}>
+                        Book {tierLabel}
+                      </Link>
                     </Button>
                   </div>
                 );
@@ -351,11 +357,14 @@ export function TenantLandingPage({ data }: TenantLandingPageProps) {
             )}
             <div className="mt-10">
               <Button
+                asChild
                 variant="outline"
                 size="xl"
                 className="border-white bg-white text-sage hover:bg-white/90"
               >
-                {landingConfig?.finalCta?.ctaText || 'Get Started Today'}
+                <a href="#packages">
+                  {landingConfig?.finalCta?.ctaText || 'Get Started Today'}
+                </a>
               </Button>
             </div>
           </div>
