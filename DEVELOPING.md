@@ -1,34 +1,32 @@
 # Developing
 
-## Platform Status (November 2025)
+## Platform Status (December 2025)
 
-**Current Version:** Sprint 10 Complete + Platform Admin Enhancements
-**Maturity:** 9.8/10 (Production-Ready)
-**Deployment:** Preparing for demo user production deployment
+**Current Version:** Next.js Migration Complete
+**Maturity:** 9.9/10 (Production-Ready)
+**Deployment:** Tenant storefronts deployed on Vercel
 
-**Recent Sprints:**
+**Recent Updates:**
 
-- ✅ Sprint 7: Test stabilization (95% pass rate achieved)
-- ✅ Sprint 8: UX & mobile excellence
-- ✅ Sprint 8.5: Complete UX enhancements (progress indicators, back buttons, unsaved changes)
-- ✅ Sprint 9: Package catalog & discovery system
+- ✅ Next.js 14 Migration: Complete (6 phases, 14 code review fixes)
+- ✅ Tenant Storefronts: SSR-enabled at `/t/[slug]` with custom domains
+- ✅ NextAuth.js v5: Credentials Provider with backend token isolation
+- ✅ ISR: 60-second revalidation with on-demand cache invalidation
+- ✅ E2E Tests: 114 Playwright tests (22 passing post-migration)
+
+**Previous Milestones:**
+
 - ✅ Sprint 10: Technical excellence (test stability, security, performance)
+- ✅ Sprint 9: Package catalog & discovery system
+- ✅ Sprint 8.5: Complete UX enhancements
 
-**Sprint 10 Achievements:**
+**Test Coverage:**
 
-- Test infrastructure: Retry helpers with exponential backoff (225 lines)
-- Security: OWASP 70% compliance, input sanitization, custom CSP
-- Performance: Redis caching (97.5% faster), 16 database indexes
-- Test coverage: 752/752 passing (100%), 3 skipped, 12 todo, +42 new tests
+- 771 server tests passing (100%)
+- 114 E2E tests with Playwright
+- Next.js E2E: tenant storefronts, booking flow, custom domains
 
-**November 2025 Updates:**
-
-- Platform admin "Sign In As" impersonation for tenant management
-- Fixed tenant API to include email field in responses
-- Cleaned up broken navigation routes
-- Streamlined admin dashboard with dual-action buttons (Sign In As + Settings)
-
-**Next:** Production deployment for demo users
+**Next:** Scale to production tenants
 
 ## Vibe‑coding workflow (Claude + MCP)
 
@@ -112,13 +110,35 @@ Platform admins can "sign in as" any tenant to manage their account with full ed
 
 ## Commands
 
+### Development
+
 ```bash
-npm run typecheck                 # typecheck all workspaces
-npm run lint                      # lint all workspaces
+# Typecheck & Lint
+npm run typecheck                 # Typecheck all workspaces
+npm run lint                      # Lint all workspaces
+
+# Backend API (Express)
 npm run dev:api                   # API server (mock mode by default)
-npm run dev:client                # Web client
-npm run dev:all                   # Both API + client + Stripe webhook listener
+ADAPTERS_PRESET=real npm run dev:api  # Real mode (PostgreSQL, Stripe, etc.)
+
+# Frontend - Next.js Storefronts (apps/web)
+cd apps/web && npm run dev        # Next.js dev server (port 3000)
+cd apps/web && npm run build      # Production build
+cd apps/web && npm run start      # Production server
+
+# Frontend - Legacy Admin (client/)
+npm run dev:client                # Vite dev server (port 5173)
+
+# Full Stack
+npm run dev:all                   # API + client + Stripe webhook listener
+```
+
+### Testing
+
+```bash
 npm test --workspace=server       # Run server tests
+npm run test:e2e                  # Playwright E2E tests
+npm run test:e2e:headed           # E2E with visible browser
 ```
 
 ## Database Setup ✅ COMPLETE

@@ -32,6 +32,10 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 - [ADR-011: PaymentProvider Interface](docs/adrs/ADR-011-payment-provider-interface.md) - Payment abstraction layer (Stripe)
 - [ADR-012: Full Test Coverage for Webhook Handler](docs/adrs/ADR-012-full-test-coverage-webhook-handler.md) - Testing standards for critical paths
 
+### Frontend & Multi-Tenant (ADR-014)
+
+- [ADR-014: Next.js App Router Migration](docs/adrs/ADR-014-nextjs-app-router-migration.md) - Migration from Vite SPA to Next.js 14 for tenant storefronts
+
 ## Quick Reference by Category
 
 ### Architecture Patterns
@@ -39,6 +43,7 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 - **Modular Monolith:** ADR-006
 - **Ports & Adapters:** ADR-006, ADR-011
 - **Mock-First:** ADR-007
+- **Next.js App Router:** ADR-014
 
 ### Concurrency Control
 
@@ -72,6 +77,7 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 | ADR-011 | PaymentProvider Interface      | Accepted   | P1       | Architecture  |
 | ADR-012 | Full Test Coverage (Webhooks)  | Accepted   | P0       | Testing       |
 | ADR-013 | PostgreSQL Advisory Locks      | Accepted   | P0       | Concurrency   |
+| ADR-014 | Next.js App Router Migration   | Accepted   | P0       | Frontend      |
 
 ## Decision Process
 

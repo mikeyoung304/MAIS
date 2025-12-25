@@ -2,23 +2,25 @@
 
 ## Platform Status
 
-**Current Version:** Sprint 10 Complete (January 2025)
-**Maturity Level:** 9.8/10 (Production-Ready)
-**Deployment Status:** Preparing for demo user production deployment
+**Current Version:** Next.js Migration Complete (December 2025)
+**Maturity Level:** 9.9/10 (Production-Ready)
+**Deployment Status:** Tenant storefronts deployed on Vercel
 
 **Recent Milestones:**
 
-- ✅ Sprint 9: Package catalog & discovery system
-- ✅ Sprint 8.5: Complete UX enhancements
-- ✅ Sprint 10: Technical excellence (test stability, security hardening, performance optimization)
-- 🚀 Next: Production deployment for demo users
+- ✅ Next.js 14 Migration: Complete (6 phases, 14 code review fixes) - December 2025
+- ✅ Tenant Storefronts: SSR-enabled at `/t/[slug]` with custom domain support
+- ✅ NextAuth.js v5: Credentials Provider with backend token isolation
+- ✅ ISR: 60-second revalidation with on-demand cache invalidation
+- ✅ Sprint 10: Technical excellence (test stability, security hardening)
+- 🚀 Next: Scale to production tenants
 
 **Test Coverage:**
 
-- 752/752 tests passing (100%), 3 skipped, 12 todo
-- 42 new tests added in Sprint 10 (race conditions + security)
+- 771 server tests passing (100%)
+- 114 E2E tests (22 passing post-migration)
 - Test infrastructure: Retry helpers with exponential backoff
-- Sprint 10 Phase 2: Fixed remaining 2 failing tests
+- Next.js E2E: Playwright tests for tenant storefronts, booking flow
 
 **Security Posture:**
 
@@ -109,9 +111,25 @@ Embedded widgets fetch configuration at runtime:
 
 ## Components
 
-### Frontend
+### Frontend - Tenant Storefronts (apps/web)
 
-React 18 + Vite, feature‑based (catalog, booking, admin). Uses a generated ts‑rest client and TanStack Query.
+**Next.js 14 App Router** with React Server Components:
+
+- **Rendering:** ISR with 60-second revalidation
+- **Auth:** NextAuth.js v5 with Credentials Provider
+- **Custom Domains:** Middleware-based resolution
+- **API:** ts-rest client calling Express backend
+
+Key directories:
+- `app/t/[slug]/` - Tenant landing pages
+- `app/(protected)/` - Admin routes (auth-required)
+- `lib/auth.ts` - NextAuth configuration
+- `lib/tenant.ts` - Tenant data fetching with `cache()`
+- `middleware.ts` - Custom domain resolution
+
+### Frontend - Legacy Admin (client/)
+
+React 18 + Vite, feature‑based (catalog, booking, admin). Uses a generated ts‑rest client and TanStack Query. Being gradually migrated to Next.js.
 
 ### Backend (server/)
 

@@ -41,12 +41,18 @@ This is an npm workspace monorepo. Key points:
 
 ```bash
 npm run dev:api                    # Start API server (mock mode default)
-npm run dev:client                 # Start React client (Vite)
+npm run dev:client                 # Start React client (Vite, legacy admin)
+npm run dev:web                    # Start Next.js storefronts (port 3000)
 npm run dev:all                    # API + client + Stripe webhooks
 
 # Environment modes
 ADAPTERS_PRESET=mock npm run dev:api   # In-memory, no external services
 ADAPTERS_PRESET=real npm run dev:api   # PostgreSQL, Stripe, Postmark, GCal
+
+# Next.js specific
+cd apps/web && npm run dev         # Next.js dev server (port 3000)
+cd apps/web && npm run build       # Production build
+cd apps/web && npm run start       # Production server
 ```
 
 ### Testing
@@ -99,13 +105,29 @@ npm run test:e2e -- e2e/tests/booking-mock.spec.ts
 
 ## File Naming Conventions
 
+### Backend (server/)
+
 - **Routes:** `*.routes.ts` (e.g., `packages.routes.ts`)
 - **Services:** `*.service.ts` (e.g., `booking.service.ts`)
 - **Adapters:** `*.adapter.ts` or `*.repository.ts`
 - **Tests:** `*.test.ts` or `*.spec.ts`
 - **Contracts:** Match route names in `packages/contracts/`
+
+### Frontend - Legacy (client/)
+
 - **Components:** PascalCase (e.g., `BookingForm.tsx`)
 - **Utilities:** camelCase (e.g., `formatMoney.ts`)
+
+### Frontend - Next.js (apps/web/)
+
+- **Pages:** `page.tsx` (Next.js App Router convention)
+- **Layouts:** `layout.tsx` (shared layouts per route segment)
+- **Error Boundaries:** `error.tsx` (required for all dynamic routes)
+- **Loading States:** `loading.tsx` (Suspense boundary)
+- **Not Found:** `not-found.tsx` (404 page)
+- **Route Handlers:** `route.ts` (API routes in `app/api/`)
+- **Server Components:** Default, no directive needed
+- **Client Components:** `'use client'` directive at top
 
 ## Architecture Patterns
 
@@ -513,39 +535,64 @@ The following links prevent common mistakes from recurring:
 When starting work on this codebase:
 
 1. Check environment: `npm run doctor`
-2. Start in mock mode first: `ADAPTERS_PRESET=mock npm run dev:api`
-3. Verify tenant isolation in all queries
-4. Run tests before committing: `npm test`
-5. Use contracts for all API changes
+2. Start API in mock mode: `ADAPTERS_PRESET=mock npm run dev:api`
+3. Start Next.js storefronts: `cd apps/web && npm run dev`
+4. Verify tenant isolation in all queries
+5. Run tests before committing: `npm test`
+6. Use contracts for all API changes
+
+**For Next.js work specifically:**
+
+- Read `apps/web/README.md` for Next.js patterns
+- Use `cache()` wrapper for shared data fetching
+- Add `error.tsx` to all dynamic route folders
+- Never expose backend tokens in session callbacks
 
 ## Project Structure
 
 ```
-server/                     # Express API (port 3001)
+apps/
+└── web/                        # Next.js 14 App Router (port 3000)
+    └── src/
+        ├── app/                # App Router pages
+        │   ├── t/[slug]/       # Tenant storefronts (ISR, 60s)
+        │   ├── (protected)/    # Admin routes (NextAuth middleware)
+        │   └── api/            # Next.js API routes
+        ├── components/         # React components
+        │   ├── ui/            # Shared UI (Button, Card, etc.)
+        │   └── tenant/        # Tenant-specific components
+        ├── lib/
+        │   ├── auth.ts        # NextAuth.js v5 config
+        │   ├── tenant.ts      # Tenant data fetching (with cache())
+        │   ├── api.ts         # ts-rest client for Express backend
+        │   └── logger.ts      # Structured logging utility
+        └── middleware.ts       # Custom domain resolution
+
+server/                         # Express API (port 3001)
 ├── src/
-│   ├── routes/            # HTTP handlers (@ts-rest/express)
-│   ├── services/          # Business logic
-│   ├── adapters/          # External integrations
-│   │   ├── prisma/        # Database repositories
-│   │   ├── mock/          # In-memory implementations
-│   │   └── *.adapter.ts   # Stripe, Postmark, GCal
-│   ├── middleware/        # Auth, tenant, error handling
+│   ├── routes/                # HTTP handlers (@ts-rest/express)
+│   ├── services/              # Business logic
+│   ├── adapters/              # External integrations
+│   │   ├── prisma/            # Database repositories
+│   │   ├── mock/              # In-memory implementations
+│   │   └── *.adapter.ts       # Stripe, Postmark, GCal
+│   ├── middleware/            # Auth, tenant, error handling
 │   ├── lib/
-│   │   ├── core/         # Config, logger, events
-│   │   ├── ports.ts      # Repository interfaces
-│   │   └── entities.ts   # Domain models
-│   └── di.ts             # Dependency injection container
-│
-client/                    # React app (port 5173)
+│   │   ├── core/              # Config, logger, events
+│   │   ├── ports.ts           # Repository interfaces
+│   │   └── entities.ts        # Domain models
+│   └── di.ts                  # Dependency injection container
+
+client/                         # Vite SPA (port 5173) - legacy admin
 ├── src/
-│   ├── features/         # Feature modules
-│   ├── pages/           # Route components
-│   ├── ui/              # Shared components
-│   └── lib/             # API client, utilities
-│
+│   ├── features/              # Feature modules
+│   ├── pages/                 # Route components
+│   ├── ui/                    # Shared components
+│   └── lib/                   # API client, utilities
+
 packages/
-├── contracts/           # API contracts (Zod + ts-rest)
-└── shared/             # Shared utilities
+├── contracts/                  # API contracts (Zod + ts-rest)
+└── shared/                     # Shared utilities
 ```
 
 ## Current Sprint Goals
