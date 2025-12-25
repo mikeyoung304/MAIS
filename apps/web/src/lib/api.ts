@@ -12,10 +12,7 @@
 
 import { initClient } from '@ts-rest/core';
 import { cookies } from 'next/headers';
-
-// Re-export contracts for convenience
-// Note: Import from @macon/contracts once workspace is set up
-// For now, define minimal types for initial setup
+import { Contracts } from '@macon/contracts';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -62,16 +59,7 @@ export function createApiClientWithAuth(auth: {
   adminToken?: string;
   tenantApiKey?: string;
 }) {
-  // Placeholder contract - will be replaced with @macon/contracts import
-  const placeholderContract = {
-    getHealth: {
-      method: 'GET' as const,
-      path: '/health',
-      responses: { 200: null as unknown },
-    },
-  };
-
-  return initClient(placeholderContract as never, {
+  return initClient(Contracts, {
     baseUrl: API_URL,
     baseHeaders: {},
     api: async ({ path, method, headers, body }) => {
@@ -126,15 +114,7 @@ export function createApiClientWithAuth(auth: {
 export function createClientApiClient() {
   // On the client, cookies are sent automatically with fetch
   // We just need to set credentials: 'include'
-  const placeholderContract = {
-    getHealth: {
-      method: 'GET' as const,
-      path: '/health',
-      responses: { 200: null as unknown },
-    },
-  };
-
-  return initClient(placeholderContract as never, {
+  return initClient(Contracts, {
     baseUrl: API_URL,
     baseHeaders: {},
     api: async ({ path, method, headers, body }) => {

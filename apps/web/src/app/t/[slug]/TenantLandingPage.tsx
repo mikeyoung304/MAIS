@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import type { TenantStorefrontData } from '@/lib/tenant';
 
@@ -222,12 +223,13 @@ export function TenantLandingPage({ data }: TenantLandingPageProps) {
               }`}
             >
               {landingConfig.about.imageUrl && (
-                <div className="overflow-hidden rounded-3xl">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                <div className="relative aspect-[4/3] overflow-hidden rounded-3xl">
+                  <Image
                     src={landingConfig.about.imageUrl}
-                    alt={tenant.name}
-                    className="h-full w-full object-cover"
+                    alt={`About ${tenant.name}`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 50vw"
                   />
                 </div>
               )}
@@ -261,12 +263,15 @@ export function TenantLandingPage({ data }: TenantLandingPageProps) {
                   <p className="mt-4 text-text-muted">&ldquo;{testimonial.quote}&rdquo;</p>
                   <div className="mt-4 flex items-center gap-3">
                     {testimonial.imageUrl && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={testimonial.imageUrl}
-                        alt={testimonial.author}
-                        className="h-10 w-10 rounded-full object-cover"
-                      />
+                      <div className="relative h-10 w-10 flex-shrink-0">
+                        <Image
+                          src={testimonial.imageUrl}
+                          alt={`${testimonial.author} testimonial photo`}
+                          fill
+                          className="rounded-full object-cover"
+                          sizes="40px"
+                        />
+                      </div>
                     )}
                     <div>
                       <p className="font-semibold text-text-primary">{testimonial.author}</p>
@@ -294,12 +299,13 @@ export function TenantLandingPage({ data }: TenantLandingPageProps) {
 
             <div className="mt-16 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {landingConfig.gallery.images.map((image, i) => (
-                <div key={i} className="aspect-square overflow-hidden rounded-2xl">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                <div key={i} className="relative aspect-square overflow-hidden rounded-2xl group">
+                  <Image
                     src={image.url}
                     alt={image.alt || `Gallery image ${i + 1}`}
-                    className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   />
                 </div>
               ))}
@@ -377,12 +383,15 @@ export function TenantLandingPage({ data }: TenantLandingPageProps) {
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <div className="flex items-center gap-3">
               {tenant.branding?.logoUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={tenant.branding.logoUrl}
-                  alt={tenant.name}
-                  className="h-8 w-auto"
-                />
+                <div className="relative h-8 w-8 flex-shrink-0">
+                  <Image
+                    src={tenant.branding.logoUrl}
+                    alt={`${tenant.name} logo`}
+                    fill
+                    className="object-contain"
+                    sizes="32px"
+                  />
+                </div>
               )}
               <p className="font-semibold text-text-primary">{tenant.name}</p>
             </div>

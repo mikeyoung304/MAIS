@@ -1,19 +1,8 @@
 import { MetadataRoute } from 'next';
+import { logger } from '@/lib/logger';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
-interface TenantPublic {
-  id: string;
-  slug: string;
-  name: string;
-}
-
-interface Package {
-  id: string;
-  slug: string;
-  active: boolean;
-}
 
 /**
  * Dynamic Sitemap Generation
@@ -21,7 +10,6 @@ interface Package {
  * Generates a sitemap including:
  * - Static marketing pages
  * - All active tenant storefronts
- * - All active packages for each tenant
  *
  * For SEO optimization, we:
  * - Only include verified, active tenants
@@ -54,19 +42,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let tenantPages: MetadataRoute.Sitemap = [];
 
   try {
-    // Note: We'd need a public endpoint that lists active tenant slugs
-    // For now, this is a placeholder - in production, you'd have
-    // GET /v1/public/tenants/slugs that returns active tenant slugs
+    const response = await fetch(`${API_URL}/v1/public/tenants`, {
+      next: { revalidate: 3600 }, // Cache for 1 hour
+    });
 
-    // Placeholder: In production, fetch from API
-    // const response = await fetch(`${API_BASE}/v1/public/tenants/slugs`);
-    // const tenants: TenantPublic[] = await response.json();
-
-    // For now, we'll skip dynamic tenant pages in the sitemap
-    // They'll still be crawlable via internal links
-    tenantPages = [];
+    if (response.ok) {
+      const slugs = await response.json();
+      tenantPages = slugs.map(
+        ({ slug, updatedAt }: { slug: string; updatedAt: string }) => ({
+          url: `${APP_URL}/t/${slug}`,
+          lastModified: new Date(updatedAt),
+          changeFrequency: 'weekly' as const,
+          priority: 0.8,
+        })
+      );
+    }
   } catch (error) {
-    console.error('Error fetching tenants for sitemap:', error);
+    // Log error but don't fail sitemap generation
+    // Tenant pages will still be crawlable via internal links
+    logger.error('Error fetching tenants for sitemap', error instanceof Error ? error : { error });
     tenantPages = [];
   }
 

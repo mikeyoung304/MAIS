@@ -29,6 +29,10 @@ declare module 'next-auth' {
 
   /**
    * Extended Session interface with MAIS-specific fields
+   *
+   * SECURITY: backendToken is intentionally NOT included here.
+   * It's stored server-side only in the JWT and should be accessed
+   * via getBackendToken() helper in Server Components or API routes.
    */
   interface Session {
     user: {
@@ -44,7 +48,8 @@ declare module 'next-auth' {
         startedAt: string;
       };
     };
-    backendToken: string;
+    // SECURITY: backendToken removed from client-accessible session
+    // Use getBackendToken() from auth.ts for server-side API calls
   }
 }
 

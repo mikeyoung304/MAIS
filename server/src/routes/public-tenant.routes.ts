@@ -29,6 +29,30 @@ export function createPublicTenantRoutes(tenantRepository: PrismaTenantRepositor
   const router = Router();
 
   /**
+   * GET /v1/public/tenants
+   * Get list of active tenant slugs for sitemap generation
+   *
+   * Returns minimal data: slug and updatedAt for SEO sitemap generation.
+   * Only returns active tenants to avoid exposing inactive/deleted tenants.
+   *
+   * NOTE: This is a public endpoint with no timing attack mitigation since
+   * it intentionally exposes all active tenant slugs for sitemap purposes.
+   */
+  router.get('/', async (req, res) => {
+    try {
+      const tenants = await tenantRepository.listActive();
+      const slugs = tenants.map((t) => ({
+        slug: t.slug,
+        updatedAt: t.updatedAt,
+      }));
+      return res.status(200).json(slugs);
+    } catch (error) {
+      logger.error({ error }, 'Error fetching tenant slugs');
+      return res.status(500).json({ error: 'Failed to fetch tenants' });
+    }
+  });
+
+  /**
    * GET /v1/public/tenants/:slug
    * Get public tenant info by slug (for storefront routing)
    *

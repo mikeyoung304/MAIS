@@ -1,5 +1,6 @@
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 /**
  * ISR Revalidation API Route
@@ -10,20 +11,44 @@ import { NextRequest, NextResponse } from 'next/server';
  * Security:
  * - Protected with NEXTJS_REVALIDATE_SECRET
  * - Only accepts requests with matching secret
+ * - Rate limited to 10 requests per minute per path
  *
  * Usage:
  * POST /api/revalidate?path=/t/[slug]&secret=<NEXTJS_REVALIDATE_SECRET>
  */
+
+// Simple in-memory rate limiting (resets on deployment)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 10; // requests
+const RATE_WINDOW = 60 * 1000; // 1 minute in ms
+
+function isRateLimited(key: string): boolean {
+  const now = Date.now();
+  const record = rateLimitMap.get(key);
+
+  if (!record || now > record.resetAt) {
+    rateLimitMap.set(key, { count: 1, resetAt: now + RATE_WINDOW });
+    return false;
+  }
+
+  if (record.count >= RATE_LIMIT) {
+    return true;
+  }
+
+  record.count++;
+  return false;
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const searchParams = request.nextUrl.searchParams;
   const path = searchParams.get('path');
   const secret = searchParams.get('secret');
 
-  // Validate secret
+  // Validate secret first
   const expectedSecret = process.env.NEXTJS_REVALIDATE_SECRET;
 
   if (!expectedSecret) {
-    console.error('NEXTJS_REVALIDATE_SECRET not configured');
+    logger.error('NEXTJS_REVALIDATE_SECRET not configured');
     return NextResponse.json(
       { error: 'Revalidation not configured' },
       { status: 503 }
@@ -53,11 +78,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
+  // Rate limit per path
+  const rateLimitKey = `revalidate:${path}`;
+  if (isRateLimited(rateLimitKey)) {
+    logger.warn('Rate limit exceeded for revalidation', { path });
+    return NextResponse.json(
+      { error: 'Rate limit exceeded. Try again in 1 minute.' },
+      { status: 429 }
+    );
+  }
+
   try {
     // Revalidate the specified path
     revalidatePath(path);
 
-    console.log(`Revalidated path: ${path}`);
+    logger.info('Revalidated path', { path });
 
     return NextResponse.json({
       revalidated: true,
@@ -65,7 +100,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Revalidation error:', error);
+    logger.error('Revalidation error', error instanceof Error ? error : { error });
     return NextResponse.json(
       {
         error: 'Revalidation failed',

@@ -168,6 +168,22 @@ export class PrismaTenantRepository {
   }
 
   /**
+   * List active tenant slugs for sitemap generation
+   *
+   * Returns minimal data needed for sitemap: slug and updatedAt.
+   * Only returns active tenants to avoid exposing inactive/deleted tenants.
+   *
+   * @returns Array of { slug, updatedAt } for active tenants
+   */
+  async listActive(): Promise<{ slug: string; updatedAt: Date }[]> {
+    return await this.prisma.tenant.findMany({
+      where: { isActive: true },
+      select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
+  /**
    * Deactivate tenant (soft delete)
    *
    * @param id - Tenant ID

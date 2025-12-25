@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 import { DayPicker } from 'react-day-picker';
 import { z } from 'zod';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -77,7 +78,13 @@ const ConfirmStep = React.memo(({ pkg }: ConfirmStepProps) => (
       {/* Package Hero */}
       {pkg.photoUrl && (
         <div className="relative h-48 rounded-xl overflow-hidden">
-          <img src={pkg.photoUrl} alt={pkg.title} className="w-full h-full object-cover" />
+          <Image
+            src={pkg.photoUrl}
+            alt={pkg.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 672px"
+          />
         </div>
       )}
 

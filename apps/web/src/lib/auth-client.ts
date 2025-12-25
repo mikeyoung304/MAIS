@@ -12,6 +12,11 @@ export type UserRole = 'PLATFORM_ADMIN' | 'TENANT_ADMIN';
 
 /**
  * Extended session type with MAIS-specific fields
+ *
+ * SECURITY: backendToken is intentionally NOT included here.
+ * It's stored server-side only in the JWT and should be accessed
+ * via getBackendToken() helper in Server Components or API routes.
+ * See: apps/web/src/lib/auth.ts
  */
 export interface MAISSession extends Session {
   user: {
@@ -27,12 +32,17 @@ export interface MAISSession extends Session {
       startedAt: string;
     };
   };
-  backendToken: string;
+  // SECURITY: backendToken removed from client-accessible session
+  // Use getBackendToken() from auth.ts for server-side API calls
 }
 
 /**
  * Hook to access the current auth session
  * Returns typed session with MAIS-specific fields
+ *
+ * SECURITY NOTE: backendToken is NOT available here.
+ * For server-side API calls, use getBackendToken() from auth.ts in
+ * Server Components or API routes.
  */
 export function useAuth() {
   const { data: session, status, update } = useSession();
@@ -41,7 +51,7 @@ export function useAuth() {
   return {
     session: maisSession,
     user: maisSession?.user,
-    backendToken: maisSession?.backendToken,
+    // SECURITY: backendToken removed - use getBackendToken() server-side
     role: maisSession?.user?.role,
     tenantId: maisSession?.user?.tenantId,
     slug: maisSession?.user?.slug,

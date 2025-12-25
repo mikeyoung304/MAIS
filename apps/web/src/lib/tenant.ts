@@ -5,6 +5,7 @@
  * These functions work in both Server and Client components.
  */
 
+import { cache } from 'react';
 import { TenantPublicDto } from '@macon/contracts';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -215,22 +216,27 @@ export interface TenantStorefrontData {
  * Fetch all storefront data for a tenant in parallel
  *
  * Optimized for SSR - fetches tenant, packages, and segments concurrently.
+ * Wrapped with React's cache() to deduplicate calls within the same request.
+ * This prevents duplicate API calls when both generateMetadata() and page
+ * component call this function during the same render.
  *
  * @param slug - Tenant slug
  * @returns Complete storefront data
  */
-export async function getTenantStorefrontData(slug: string): Promise<TenantStorefrontData> {
-  // First fetch tenant to get API key
-  const tenant = await getTenantBySlug(slug);
+export const getTenantStorefrontData = cache(
+  async (slug: string): Promise<TenantStorefrontData> => {
+    // First fetch tenant to get API key
+    const tenant = await getTenantBySlug(slug);
 
-  // Then fetch packages and segments in parallel
-  const [packages, segments] = await Promise.all([
-    getTenantPackages(tenant.apiKeyPublic),
-    getTenantSegments(tenant.apiKeyPublic),
-  ]);
+    // Then fetch packages and segments in parallel
+    const [packages, segments] = await Promise.all([
+      getTenantPackages(tenant.apiKeyPublic),
+      getTenantSegments(tenant.apiKeyPublic),
+    ]);
 
-  return { tenant, packages, segments };
-}
+    return { tenant, packages, segments };
+  }
+);
 
 /**
  * Fetch a single package by slug

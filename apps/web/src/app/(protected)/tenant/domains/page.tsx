@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-client';
+import { logger } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -56,7 +57,7 @@ interface VerificationResult {
  * for their storefront.
  */
 export default function DomainsPage() {
-  const { token } = useAuth();
+  const { backendToken: token } = useAuth();
   const [domains, setDomains] = useState<DomainInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -84,7 +85,7 @@ export default function DomainsPage() {
       const data = await res.json();
       setDomains(data);
     } catch (err) {
-      console.error('Error fetching domains:', err);
+      logger.error('Error fetching domains', err instanceof Error ? err : { error: err });
       setError('Failed to load domains');
     } finally {
       setLoading(false);
