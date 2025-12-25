@@ -118,14 +118,7 @@ export function TenantNav({ tenant }: TenantNavProps) {
 
   return (
     <>
-      {/* Skip link - first focusable element */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-sage focus:px-4 focus:py-2 focus:text-white focus:outline-none focus:ring-2 focus:ring-white"
-      >
-        Skip to main content
-      </a>
-
+      {/* Skip link is provided by root layout.tsx */}
       <header className="sticky top-0 z-50 border-b border-neutral-100 bg-white/80 backdrop-blur-lg">
         <nav aria-label="Main navigation" className="mx-auto max-w-6xl px-6">
           <div className="flex h-16 items-center justify-between">

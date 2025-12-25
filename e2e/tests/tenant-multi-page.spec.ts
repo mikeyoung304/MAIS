@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 /**
  * E2E Tests: Multi-Page Tenant Sites
  *
- * Tests the tenant storefront multi-page navigation:
+ * Tests the tenant storefront multi-page navigation on Next.js:
  * - Navigation between all pages (desktop and mobile)
  * - Mobile menu open/close behavior
  * - Contact form validation and submission
@@ -11,13 +11,30 @@ import { test, expect } from '@playwright/test';
  * - Skip link functionality
  * - Booking flow isolation
  * - SEO metadata
+ *
+ * Prerequisites:
+ * - Next.js app running at port 3000
+ * - API server running at port 3001
+ * - Test tenant "mais-e2e" exists with packages
+ *
+ * Run: NEXTJS_E2E=1 npx playwright test tenant-multi-page.spec.ts
  */
+
+// Next.js base URL (differs from legacy Vite client)
+const NEXTJS_BASE_URL = process.env.NEXTJS_URL || 'http://localhost:3000';
 
 // Default test tenant slug for E2E
 const TENANT_SLUG = 'mais-e2e';
-const BASE_PATH = `/t/${TENANT_SLUG}`;
+const BASE_PATH = `${NEXTJS_BASE_URL}/t/${TENANT_SLUG}`;
 
 test.describe('Tenant Multi-Page Navigation', () => {
+  test.beforeEach(async ({ page }) => {
+    // Skip if NEXTJS_E2E env var not set
+    if (!process.env.NEXTJS_E2E) {
+      test.skip();
+    }
+  });
+
   test.describe('Desktop Navigation', () => {
     test('landing page shows navigation header', async ({ page }) => {
       await page.goto(BASE_PATH);
@@ -27,12 +44,13 @@ test.describe('Tenant Multi-Page Navigation', () => {
       const nav = page.locator('nav[aria-label="Main navigation"]');
       await expect(nav).toBeVisible();
 
-      // Should show nav links
-      await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'Services' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'About' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'FAQ' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'Contact' })).toBeVisible();
+      // Should show nav links (use .first() since they also appear in footer)
+      const mainNav = page.locator('nav[aria-label="Main navigation"]');
+      await expect(mainNav.getByRole('link', { name: 'Home' })).toBeVisible();
+      await expect(mainNav.getByRole('link', { name: 'Services' })).toBeVisible();
+      await expect(mainNav.getByRole('link', { name: 'About' })).toBeVisible();
+      await expect(mainNav.getByRole('link', { name: 'FAQ' })).toBeVisible();
+      await expect(mainNav.getByRole('link', { name: 'Contact' })).toBeVisible();
     });
 
     test('can navigate to all pages', async ({ page }) => {
@@ -105,16 +123,25 @@ test.describe('Tenant Multi-Page Navigation', () => {
     });
 
     test('can open and close mobile menu', async ({ page }) => {
+      // Navigate first, then viewport size should already be mobile from beforeEach
       await page.goto(BASE_PATH);
       await page.waitForLoadState('networkidle');
 
+      // Wait a bit for React hydration
+      await page.waitForTimeout(500);
+
       // Open menu
       const menuButton = page.getByRole('button', { name: /open menu/i });
+      await expect(menuButton).toBeVisible({ timeout: 10000 });
       await menuButton.click();
 
-      // Menu should be visible
+      // Wait for animation
+      await page.waitForTimeout(300);
+
+      // Menu should be open (translated into view, aria-hidden false)
       const mobileMenu = page.locator('#mobile-menu');
-      await expect(mobileMenu).toBeVisible();
+      await expect(mobileMenu).toHaveClass(/translate-x-0/);
+      await expect(mobileMenu).toHaveAttribute('aria-hidden', 'false');
 
       // Close button should be visible
       const closeButton = page.getByRole('button', { name: /close menu/i });
@@ -171,13 +198,13 @@ test.describe('Tenant Multi-Page Navigation', () => {
       await page.goto(BASE_PATH);
       await page.waitForLoadState('networkidle');
 
-      // Skip link should be initially hidden (sr-only)
-      const skipLink = page.getByRole('link', { name: /skip to main content/i });
+      // Skip link should be initially hidden (sr-only) - use first() since there may be multiple
+      const skipLink = page.getByRole('link', { name: /skip to main content/i }).first();
 
-      // Focus the skip link
+      // Focus the skip link by tabbing
       await page.keyboard.press('Tab');
 
-      // Skip link should be visible
+      // Skip link should be visible after focus
       await expect(skipLink).toBeVisible();
     });
 
@@ -197,11 +224,20 @@ test.describe('Tenant Multi-Page Navigation', () => {
 
 test.describe('Contact Form', () => {
   test.beforeEach(async ({ page }) => {
+    // Skip if NEXTJS_E2E env var not set
+    if (!process.env.NEXTJS_E2E) {
+      test.skip();
+    }
     await page.goto(`${BASE_PATH}/contact`);
     await page.waitForLoadState('networkidle');
+    // Wait for React hydration
+    await page.waitForTimeout(500);
   });
 
   test('shows required field validation', async ({ page }) => {
+    // Wait for submit button to be visible (confirms form is loaded)
+    await expect(page.getByRole('button', { name: /send message/i })).toBeVisible({ timeout: 10000 });
+
     // Submit empty form
     await page.getByRole('button', { name: /send message/i }).click();
 
@@ -278,6 +314,10 @@ test.describe('Contact Form', () => {
 
 test.describe('FAQ Accordion', () => {
   test.beforeEach(async ({ page }) => {
+    // Skip if NEXTJS_E2E env var not set
+    if (!process.env.NEXTJS_E2E) {
+      test.skip();
+    }
     await page.goto(`${BASE_PATH}/faq`);
     await page.waitForLoadState('networkidle');
   });
@@ -312,8 +352,15 @@ test.describe('FAQ Accordion', () => {
 });
 
 test.describe('SEO Metadata', () => {
+  test.beforeEach(async ({ page }) => {
+    // Skip if NEXTJS_E2E env var not set
+    if (!process.env.NEXTJS_E2E) {
+      test.skip();
+    }
+  });
+
   const pages = [
-    { path: '', titleContains: 'mais-e2e' },
+    { path: '', titleContains: 'MAIS E2E Test Tenant' },
     { path: '/services', titleContains: 'Services' },
     { path: '/about', titleContains: 'About' },
     { path: '/faq', titleContains: 'FAQ' },
@@ -342,6 +389,13 @@ test.describe('SEO Metadata', () => {
 });
 
 test.describe('Booking Flow Isolation', () => {
+  test.beforeEach(async () => {
+    // Skip if NEXTJS_E2E env var not set
+    if (!process.env.NEXTJS_E2E) {
+      test.skip();
+    }
+  });
+
   test('booking page has its own header (no TenantNav)', async ({ page }) => {
     // First navigate to a regular site page to verify TenantNav exists
     await page.goto(BASE_PATH);
@@ -367,6 +421,13 @@ test.describe('Booking Flow Isolation', () => {
 });
 
 test.describe('Accessibility', () => {
+  test.beforeEach(async () => {
+    // Skip if NEXTJS_E2E env var not set
+    if (!process.env.NEXTJS_E2E) {
+      test.skip();
+    }
+  });
+
   test('navigation has proper ARIA labels', async ({ page }) => {
     await page.goto(BASE_PATH);
     await page.waitForLoadState('networkidle');
