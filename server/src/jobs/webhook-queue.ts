@@ -11,18 +11,16 @@
  * - Graceful shutdown support
  */
 
-import { Queue, Worker, Job } from 'bullmq';
+import type { Job } from 'bullmq';
+import { Queue, Worker } from 'bullmq';
 import type { Redis } from 'ioredis';
 import IORedis from 'ioredis';
 import { logger } from '../lib/core/logger';
+import type { WebhookJobData } from './types';
+import type { WebhookProcessor } from './webhook-processor';
 
-// Job data structure for webhook processing
-export interface WebhookJobData {
-  eventId: string;
-  tenantId: string;
-  rawPayload: string;
-  signature: string;
-}
+// Re-export for backwards compatibility
+export type { WebhookJobData } from './types';
 
 // Queue configuration
 const QUEUE_NAME = 'webhook-processing';
@@ -336,7 +334,7 @@ export function createWebhookQueue(): WebhookQueue {
  */
 export async function initializeWebhookQueue(
   queue: WebhookQueue,
-  processor: import('./webhook-processor').WebhookProcessor,
+  processor: WebhookProcessor,
   redisUrl?: string
 ): Promise<void> {
   const initialized = await queue.initialize(redisUrl);

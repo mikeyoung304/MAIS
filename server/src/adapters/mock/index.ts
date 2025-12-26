@@ -148,12 +148,12 @@ seedData();
 
 // Mock Catalog Repository
 export class MockCatalogRepository implements CatalogRepository {
-  async getAllPackages(tenantId: string): Promise<Package[]> {
+  async getAllPackages(_tenantId: string): Promise<Package[]> {
     // Mock mode: Ignore tenantId, return all packages
     return Array.from(packages.values());
   }
 
-  async getAllPackagesWithAddOns(tenantId: string): Promise<Array<Package & { addOns: AddOn[] }>> {
+  async getAllPackagesWithAddOns(_tenantId: string): Promise<Array<Package & { addOns: AddOn[] }>> {
     // Mock mode: Ignore tenantId, return all packages
     const allPackages = Array.from(packages.values());
     return allPackages.map((pkg) => ({
@@ -162,14 +162,14 @@ export class MockCatalogRepository implements CatalogRepository {
     }));
   }
 
-  async getPackageBySlug(tenantId: string, slug: string): Promise<Package | null> {
+  async getPackageBySlug(_tenantId: string, slug: string): Promise<Package | null> {
     // Mock mode: Ignore tenantId
     const pkg = Array.from(packages.values()).find((p) => p.slug === slug);
     return pkg || null;
   }
 
   async getPackageBySlugWithAddOns(
-    tenantId: string,
+    _tenantId: string,
     slug: string
   ): Promise<(Package & { addOns: AddOn[] }) | null> {
     // Mock mode: Ignore tenantId
@@ -183,27 +183,27 @@ export class MockCatalogRepository implements CatalogRepository {
     };
   }
 
-  async getPackageById(tenantId: string, id: string): Promise<Package | null> {
+  async getPackageById(_tenantId: string, id: string): Promise<Package | null> {
     // Mock mode: Ignore tenantId
     return packages.get(id) || null;
   }
 
-  async getPackagesByIds(tenantId: string, ids: string[]): Promise<Package[]> {
+  async getPackagesByIds(_tenantId: string, ids: string[]): Promise<Package[]> {
     // Mock mode: Ignore tenantId
     return ids.map((id) => packages.get(id)).filter((pkg): pkg is Package => pkg !== undefined);
   }
 
-  async getAllAddOns(tenantId: string): Promise<AddOn[]> {
+  async getAllAddOns(_tenantId: string): Promise<AddOn[]> {
     // Mock mode: Ignore tenantId, return all add-ons
     return Array.from(addOns.values());
   }
 
-  async getAddOnsByPackageId(tenantId: string, packageId: string): Promise<AddOn[]> {
+  async getAddOnsByPackageId(_tenantId: string, packageId: string): Promise<AddOn[]> {
     // Mock mode: Ignore tenantId
     return Array.from(addOns.values()).filter((a) => a.packageId === packageId);
   }
 
-  async getAddOnById(tenantId: string, id: string): Promise<AddOn | null> {
+  async getAddOnById(_tenantId: string, id: string): Promise<AddOn | null> {
     // Mock mode: Ignore tenantId
     return addOns.get(id) || null;
   }
@@ -266,7 +266,7 @@ export class MockCatalogRepository implements CatalogRepository {
     return updated;
   }
 
-  async deletePackage(tenantId: string, id: string): Promise<void> {
+  async deletePackage(_tenantId: string, id: string): Promise<void> {
     // Mock mode: Ignore tenantId
     const pkg = packages.get(id);
     if (!pkg) {
@@ -334,7 +334,7 @@ export class MockCatalogRepository implements CatalogRepository {
     return updated;
   }
 
-  async deleteAddOn(tenantId: string, id: string): Promise<void> {
+  async deleteAddOn(_tenantId: string, id: string): Promise<void> {
     // Mock mode: Ignore tenantId
     const addOn = addOns.get(id);
     if (!addOn) {
@@ -344,7 +344,7 @@ export class MockCatalogRepository implements CatalogRepository {
   }
 
   // Segment-scoped methods (Phase A - Segment Implementation)
-  async getPackagesBySegment(tenantId: string, segmentId: string): Promise<Package[]> {
+  async getPackagesBySegment(_tenantId: string, segmentId: string): Promise<Package[]> {
     // Mock mode: Return all packages (mock doesn't support segments)
     return Array.from(packages.values()).filter((p) => p.segmentId === segmentId);
   }
@@ -361,15 +361,15 @@ export class MockCatalogRepository implements CatalogRepository {
     }));
   }
 
-  async getAddOnsForSegment(tenantId: string, segmentId: string): Promise<AddOn[]> {
+  async getAddOnsForSegment(_tenantId: string, segmentId: string): Promise<AddOn[]> {
     // Mock mode: Return all add-ons for packages in segment
-    const segmentPackages = await this.getPackagesBySegment(tenantId, segmentId);
+    const segmentPackages = await this.getPackagesBySegment(_tenantId, segmentId);
     const packageIds = new Set(segmentPackages.map((p) => p.id));
     return Array.from(addOns.values()).filter((a) => packageIds.has(a.packageId));
   }
 
   // Draft methods (Visual Editor)
-  async getAllPackagesWithDrafts(tenantId: string): Promise<PackageWithDraft[]> {
+  async getAllPackagesWithDrafts(_tenantId: string): Promise<PackageWithDraft[]> {
     // Mock mode: Return packages with draft fields (all null since mock doesn't persist drafts)
     return Array.from(packages.values()).map((pkg) => ({
       id: pkg.id,
@@ -428,17 +428,17 @@ export class MockCatalogRepository implements CatalogRepository {
     };
   }
 
-  async publishDrafts(tenantId: string, packageIds?: string[]): Promise<Package[]> {
+  async publishDrafts(_tenantId: string, _packageIds?: string[]): Promise<Package[]> {
     // Mock mode: Return empty array (no drafts to publish)
     return [];
   }
 
-  async discardDrafts(tenantId: string, packageIds?: string[]): Promise<number> {
+  async discardDrafts(_tenantId: string, _packageIds?: string[]): Promise<number> {
     // Mock mode: Return 0 (no drafts to discard)
     return 0;
   }
 
-  async countDrafts(tenantId: string): Promise<number> {
+  async countDrafts(_tenantId: string): Promise<number> {
     // Mock mode: Return 0 (no drafts)
     return 0;
   }
@@ -483,23 +483,26 @@ export class MockBookingRepository implements BookingRepository {
     return booking;
   }
 
-  async findById(tenantId: string, id: string): Promise<Booking | null> {
+  async findById(_tenantId: string, id: string): Promise<Booking | null> {
     // Mock mode: Ignore tenantId
     return bookings.get(id) || null;
   }
 
-  async findAll(tenantId: string): Promise<Booking[]> {
+  async findAll(_tenantId: string, options?: { limit?: number; offset?: number }): Promise<Booking[]> {
     // Mock mode: Ignore tenantId
-    return Array.from(bookings.values());
+    const all = Array.from(bookings.values());
+    const offset = options?.offset ?? 0;
+    const limit = options?.limit ?? 100;
+    return all.slice(offset, offset + limit);
   }
 
-  async isDateBooked(tenantId: string, date: string): Promise<boolean> {
+  async isDateBooked(_tenantId: string, date: string): Promise<boolean> {
     // Mock mode: Ignore tenantId
     const dateKey = toUtcMidnight(date);
     return bookingsByDate.has(dateKey);
   }
 
-  async getUnavailableDates(tenantId: string, startDate: Date, endDate: Date): Promise<Date[]> {
+  async getUnavailableDates(_tenantId: string, startDate: Date, endDate: Date): Promise<Date[]> {
     // Mock mode: Ignore tenantId
     const unavailable: Date[] = [];
     const start = new Date(startDate);
@@ -593,7 +596,7 @@ export class MockBookingRepository implements BookingRepository {
     return booking;
   }
 
-  async reschedule(tenantId: string, bookingId: string, newDate: string): Promise<Booking> {
+  async reschedule(_tenantId: string, bookingId: string, newDate: string): Promise<Booking> {
     const booking = bookings.get(bookingId);
     if (!booking) {
       throw new Error(`Booking ${bookingId} not found`);
@@ -698,7 +701,7 @@ export class MockBookingRepository implements BookingRepository {
     return [];
   }
 
-  async findBookingsNeedingReminders(tenantId: string, limit: number = 10): Promise<Booking[]> {
+  async findBookingsNeedingReminders(_tenantId: string, limit: number = 10): Promise<Booking[]> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -724,7 +727,7 @@ export class MockBookingRepository implements BookingRepository {
     return result;
   }
 
-  async markReminderSent(tenantId: string, bookingId: string): Promise<void> {
+  async markReminderSent(_tenantId: string, bookingId: string): Promise<void> {
     const booking = bookings.get(bookingId);
     if (booking) {
       (booking as any).reminderSentAt = new Date().toISOString();
@@ -762,24 +765,24 @@ export class MockBookingRepository implements BookingRepository {
 
 // Mock Blackout Repository
 export class MockBlackoutRepository implements BlackoutRepository {
-  async isBlackoutDate(tenantId: string, date: string): Promise<boolean> {
+  async isBlackoutDate(_tenantId: string, date: string): Promise<boolean> {
     // Mock mode: Ignore tenantId
     const dateKey = toUtcMidnight(date);
     return blackouts.has(dateKey);
   }
 
-  async getAllBlackouts(tenantId: string): Promise<Array<{ date: string; reason?: string }>> {
+  async getAllBlackouts(_tenantId: string): Promise<Array<{ date: string; reason?: string }>> {
     // Mock mode: Ignore tenantId
     return Array.from(blackouts.values());
   }
 
-  async addBlackout(tenantId: string, date: string, reason?: string): Promise<void> {
+  async addBlackout(_tenantId: string, date: string, reason?: string): Promise<void> {
     // Mock mode: Ignore tenantId
     const dateKey = toUtcMidnight(date);
     blackouts.set(dateKey, { date: dateKey, reason });
   }
 
-  async deleteBlackout(tenantId: string, id: string): Promise<void> {
+  async deleteBlackout(_tenantId: string, id: string): Promise<void> {
     // Mock mode: Ignore tenantId, use date as ID
     const dateKey = toUtcMidnight(id);
     blackouts.delete(dateKey);
@@ -863,7 +866,7 @@ export class MockCalendarProvider implements CalendarProvider {
   /**
    * Delete a mock calendar event (for testing Google Calendar sync)
    */
-  async deleteEvent(tenantId: string, eventId: string): Promise<boolean> {
+  async deleteEvent(_tenantId: string, eventId: string): Promise<boolean> {
     const event = this.mockEvents.get(eventId);
 
     if (!event) {
@@ -893,20 +896,39 @@ export class MockCalendarProvider implements CalendarProvider {
 
 // Mock Payment Provider
 export class MockPaymentProvider implements PaymentProvider {
+  /**
+   * Idempotency cache for checkout sessions
+   * Simulates real Stripe behavior: same idempotency key returns same session
+   * Cache is instance-scoped (cleared when new instance is created)
+   */
+  private idempotencyCache = new Map<string, CheckoutSession>();
+
   async createCheckoutSession(input: {
     amountCents: number;
     email: string;
     metadata: Record<string, string>;
     idempotencyKey?: string;
   }): Promise<CheckoutSession> {
+    // Check idempotency cache first (simulates real Stripe behavior)
+    if (input.idempotencyKey && this.idempotencyCache.has(input.idempotencyKey)) {
+      return this.idempotencyCache.get(input.idempotencyKey)!;
+    }
+
     const sessionId = `mock_session_${Date.now()}`;
     const successUrl = input.metadata.successUrl || 'http://localhost:5173/success';
     const checkoutUrl = `${successUrl}?session_id=${sessionId}&mock=1`;
 
-    return {
+    const session: CheckoutSession = {
       url: checkoutUrl,
       sessionId,
     };
+
+    // Store in cache if idempotency key provided
+    if (input.idempotencyKey) {
+      this.idempotencyCache.set(input.idempotencyKey, session);
+    }
+
+    return session;
   }
 
   async createConnectCheckoutSession(input: {
@@ -917,14 +939,26 @@ export class MockPaymentProvider implements PaymentProvider {
     applicationFeeAmount: number;
     idempotencyKey?: string;
   }): Promise<CheckoutSession> {
+    // Check idempotency cache first (simulates real Stripe behavior)
+    if (input.idempotencyKey && this.idempotencyCache.has(input.idempotencyKey)) {
+      return this.idempotencyCache.get(input.idempotencyKey)!;
+    }
+
     const sessionId = `mock_connect_session_${Date.now()}`;
     const successUrl = input.metadata.successUrl || 'http://localhost:5173/success';
     const checkoutUrl = `${successUrl}?session_id=${sessionId}&mock=1&connect=1`;
 
-    return {
+    const session: CheckoutSession = {
       url: checkoutUrl,
       sessionId,
     };
+
+    // Store in cache if idempotency key provided
+    if (input.idempotencyKey) {
+      this.idempotencyCache.set(input.idempotencyKey, session);
+    }
+
+    return session;
   }
 
   async verifyWebhook(_payload: string, _signature: string): Promise<Stripe.Event> {
@@ -988,7 +1022,7 @@ export class MockUserRepository implements UserRepository {
 
 // Mock Webhook Repository
 export class MockWebhookRepository implements WebhookRepository {
-  async isDuplicate(tenantId: string, eventId: string): Promise<boolean> {
+  async isDuplicate(_tenantId: string, eventId: string): Promise<boolean> {
     // Mock mode: Ignore tenantId
     const existing = webhookEvents.get(eventId);
     if (existing) {
@@ -1017,7 +1051,7 @@ export class MockWebhookRepository implements WebhookRepository {
     return true; // New record
   }
 
-  async markProcessed(tenantId: string, eventId: string): Promise<void> {
+  async markProcessed(_tenantId: string, eventId: string): Promise<void> {
     // Mock mode: Ignore tenantId
     const event = webhookEvents.get(eventId);
     if (event) {
@@ -1025,7 +1059,7 @@ export class MockWebhookRepository implements WebhookRepository {
     }
   }
 
-  async markFailed(tenantId: string, eventId: string, errorMessage: string): Promise<void> {
+  async markFailed(_tenantId: string, eventId: string, errorMessage: string): Promise<void> {
     // Mock mode: Ignore tenantId
     const event = webhookEvents.get(eventId);
     if (event) {

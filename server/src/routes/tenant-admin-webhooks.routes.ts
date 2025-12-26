@@ -4,13 +4,14 @@
  * Requires tenant admin authentication via JWT
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import crypto from 'crypto';
 import { z } from 'zod';
 import type { WebhookSubscriptionRepository } from '../lib/ports';
 import type { WebhookDeliveryService } from '../services/webhook-delivery.service';
 import { logger } from '../lib/core/logger';
-import { NotFoundError, ValidationError } from '../lib/errors';
+import { NotFoundError } from '../lib/errors';
 
 /**
  * Zod schemas for request validation

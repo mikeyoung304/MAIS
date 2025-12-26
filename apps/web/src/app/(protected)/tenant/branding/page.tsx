@@ -8,8 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, AlertCircle, CheckCircle, Palette } from 'lucide-react';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
 interface BrandingForm {
   primaryColor: string;
   secondaryColor: string;
@@ -43,7 +41,7 @@ const FONT_OPTIONS = [
  * Allows tenant admins to customize their brand colors and fonts.
  */
 export default function TenantBrandingPage() {
-  const { backendToken } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [form, setForm] = useState<BrandingForm>(DEFAULT_BRANDING);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -52,14 +50,10 @@ export default function TenantBrandingPage() {
 
   useEffect(() => {
     async function fetchBranding() {
-      if (!backendToken) return;
+      if (!isAuthenticated) return;
 
       try {
-        const response = await fetch(`${API_BASE_URL}/v1/tenant-admin/branding`, {
-          headers: {
-            Authorization: `Bearer ${backendToken}`,
-          },
-        });
+        const response = await fetch('/api/tenant-admin/branding');
 
         if (response.ok) {
           const data = await response.json();
@@ -80,7 +74,7 @@ export default function TenantBrandingPage() {
     }
 
     fetchBranding();
-  }, [backendToken]);
+  }, [isAuthenticated]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,10 +83,9 @@ export default function TenantBrandingPage() {
     setSuccessMessage(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/tenant-admin/branding`, {
+      const response = await fetch('/api/tenant-admin/branding', {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${backendToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(form),

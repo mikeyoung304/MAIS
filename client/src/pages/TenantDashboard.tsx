@@ -21,7 +21,7 @@ export function TenantDashboard() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: authLoading, isImpersonating, impersonation } = useAuth();
   const [tenantInfo, setTenantInfo] = useState<TenantDto | undefined>(undefined);
-  const [isLoadingInfo, setIsLoadingInfo] = useState(true);
+  const [_isLoadingInfo, setIsLoadingInfo] = useState(true);
 
   useEffect(() => {
     // Wait for auth to load

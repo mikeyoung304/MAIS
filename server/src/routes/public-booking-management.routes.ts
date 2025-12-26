@@ -11,7 +11,7 @@ import { Router } from 'express';
 import type { BookingService } from '../services/booking.service';
 import type { CatalogService } from '../services/catalog.service';
 import type { BookingRepository } from '../lib/ports';
-import { validateBookingToken, type BookingTokenPayload } from '../lib/booking-tokens';
+import { validateBookingToken } from '../lib/booking-tokens';
 import { logger } from '../lib/core/logger';
 import { handlePublicRouteError } from '../lib/public-route-error-handler';
 
@@ -72,11 +72,11 @@ export class PublicBookingManagementController {
       booking: {
         ...booking,
         // Include extended fields if available
-        cancelledBy: (booking as any).cancelledBy,
-        cancellationReason: (booking as any).cancellationReason,
-        refundStatus: (booking as any).refundStatus || 'NONE',
-        refundAmount: (booking as any).refundAmount,
-        refundedAt: (booking as any).refundedAt,
+        cancelledBy: booking.cancelledBy,
+        cancellationReason: booking.cancellationReason,
+        refundStatus: booking.refundStatus || 'NONE',
+        refundAmount: booking.refundAmount,
+        refundedAt: booking.refundedAt,
       },
       canReschedule,
       canCancel,
@@ -106,7 +106,7 @@ export class PublicBookingManagementController {
 
     return {
       ...updated,
-      refundStatus: (updated as any).refundStatus || 'NONE',
+      refundStatus: updated.refundStatus || 'NONE',
     };
   }
 
@@ -138,7 +138,7 @@ export class PublicBookingManagementController {
       ...cancelled,
       cancelledBy: 'CUSTOMER',
       cancellationReason: reason,
-      refundStatus: (cancelled as any).refundStatus || 'NONE',
+      refundStatus: cancelled.refundStatus || 'NONE',
     };
   }
 }

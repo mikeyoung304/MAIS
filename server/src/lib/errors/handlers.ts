@@ -8,7 +8,6 @@ import {
   ConflictError,
   NotFoundError,
   ValidationError,
-  BadRequestError,
   InternalServerError,
 } from './http';
 import { PaymentError, PaymentFailedError, InsufficientFundsError } from './business';

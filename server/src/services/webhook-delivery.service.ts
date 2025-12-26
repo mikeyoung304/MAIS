@@ -278,7 +278,7 @@ export class WebhookDeliveryService {
           statusCode: response.status,
         };
       } else {
-        const errorText = await response.text();
+        const _errorText = await response.text();
         logger.error(
           { tenantId, subscriptionId, url: subscription.url, status: response.status },
           'Test webhook delivery failed'

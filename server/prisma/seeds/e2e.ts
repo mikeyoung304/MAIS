@@ -5,7 +5,7 @@
  * WARNING: Never use these keys in production - they are public knowledge
  */
 
-import { PrismaClient } from '../../src/generated/prisma';
+import type { PrismaClient } from '../../src/generated/prisma';
 import { logger } from '../../src/lib/core/logger';
 import {
   createOrUpdateTenant,

@@ -57,7 +57,6 @@ import {
   type PackagePhoto,
   type PackageWithPhotos,
 } from '@/lib/package-photo-api';
-import { ApiError } from '@/lib/api-helpers';
 
 export interface UsePackagePhotosResult {
   /** Package data including photos array */

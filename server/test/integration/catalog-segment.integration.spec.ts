@@ -232,8 +232,21 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         active: true,
       });
 
+      // Create a package to link add-ons to (required - all add-ons must have at least one package)
+      const pkg = await ctx.prisma.package.create({
+        data: {
+          tenantId: tenant.id,
+          segmentId: segment.id,
+          slug: 'wellness-pkg',
+          name: 'Wellness Package',
+          description: 'Test package',
+          basePrice: 10000,
+          active: true,
+        },
+      });
+
       // Create segment-specific add-on
-      await ctx.prisma.addOn.create({
+      const yogaAddOn = await ctx.prisma.addOn.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
@@ -244,8 +257,16 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         },
       });
 
+      // Link yoga add-on to package
+      await ctx.prisma.packageAddOn.create({
+        data: {
+          packageId: pkg.id,
+          addOnId: yogaAddOn.id,
+        },
+      });
+
       // Create global add-on (segmentId = null)
-      await ctx.prisma.addOn.create({
+      const mealsAddOn = await ctx.prisma.addOn.create({
         data: {
           tenantId: tenant.id,
           segmentId: null,
@@ -253,6 +274,14 @@ describe.sequential('Catalog Segment Integration Tests', () => {
           name: 'Farm-Fresh Meals',
           price: 15000,
           active: true,
+        },
+      });
+
+      // Link meals add-on to package (global means available to all packages, not packageless)
+      await ctx.prisma.packageAddOn.create({
+        data: {
+          packageId: pkg.id,
+          addOnId: mealsAddOn.id,
         },
       });
 
@@ -266,7 +295,20 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         active: true,
       });
 
-      await ctx.prisma.addOn.create({
+      // Create package for other segment
+      const otherPkg = await ctx.prisma.package.create({
+        data: {
+          tenantId: tenant.id,
+          segmentId: otherSegment.id,
+          slug: 'wedding-pkg',
+          name: 'Wedding Package',
+          description: 'Test package',
+          basePrice: 20000,
+          active: true,
+        },
+      });
+
+      const photoAddOn = await ctx.prisma.addOn.create({
         data: {
           tenantId: tenant.id,
           segmentId: otherSegment.id,
@@ -274,6 +316,14 @@ describe.sequential('Catalog Segment Integration Tests', () => {
           name: 'Photography',
           price: 120000,
           active: true,
+        },
+      });
+
+      // Link photography add-on to wedding package
+      await ctx.prisma.packageAddOn.create({
+        data: {
+          packageId: otherPkg.id,
+          addOnId: photoAddOn.id,
         },
       });
 
@@ -369,8 +419,21 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         active: true,
       });
 
+      // Create a package to link add-ons to (required - all add-ons must have at least one package)
+      const pkg = await ctx.prisma.package.create({
+        data: {
+          tenantId: tenant.id,
+          segmentId: segment.id,
+          slug: 'wellness-pkg',
+          name: 'Wellness Package',
+          description: 'Test package',
+          basePrice: 10000,
+          active: true,
+        },
+      });
+
       // Create active add-on
-      await ctx.prisma.addOn.create({
+      const activeAddOn = await ctx.prisma.addOn.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
@@ -381,8 +444,16 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         },
       });
 
+      // Link active add-on to package
+      await ctx.prisma.packageAddOn.create({
+        data: {
+          packageId: pkg.id,
+          addOnId: activeAddOn.id,
+        },
+      });
+
       // Create inactive add-on
-      await ctx.prisma.addOn.create({
+      const inactiveAddOn = await ctx.prisma.addOn.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
@@ -390,6 +461,14 @@ describe.sequential('Catalog Segment Integration Tests', () => {
           name: 'Inactive Add-on',
           price: 15000,
           active: false,
+        },
+      });
+
+      // Link inactive add-on to package (still needs package association even if inactive)
+      await ctx.prisma.packageAddOn.create({
+        data: {
+          packageId: pkg.id,
+          addOnId: inactiveAddOn.id,
         },
       });
 
@@ -497,7 +576,20 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         active: true,
       });
 
-      await ctx.prisma.addOn.create({
+      // Create a package to link add-on to (required - all add-ons must have at least one package)
+      const pkg = await ctx.prisma.package.create({
+        data: {
+          tenantId: tenant.id,
+          segmentId: segment.id,
+          slug: 'wellness-pkg',
+          name: 'Wellness Package',
+          description: 'Test package',
+          basePrice: 10000,
+          active: true,
+        },
+      });
+
+      const addOn = await ctx.prisma.addOn.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
@@ -505,6 +597,14 @@ describe.sequential('Catalog Segment Integration Tests', () => {
           name: 'Test Add-on',
           price: 5000,
           active: true,
+        },
+      });
+
+      // Link add-on to package
+      await ctx.prisma.packageAddOn.create({
+        data: {
+          packageId: pkg.id,
+          addOnId: addOn.id,
         },
       });
 

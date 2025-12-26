@@ -1,7 +1,6 @@
 import { Label } from './label';
 import { Input } from './input';
 import { Textarea } from './textarea';
-import type { ReactNode } from 'react';
 
 interface BaseFormFieldProps {
   id: string;

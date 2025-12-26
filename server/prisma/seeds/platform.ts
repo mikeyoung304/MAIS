@@ -5,7 +5,7 @@
  * Requires: ADMIN_EMAIL and ADMIN_DEFAULT_PASSWORD environment variables
  */
 
-import { PrismaClient } from '../../src/generated/prisma';
+import type { PrismaClient } from '../../src/generated/prisma';
 import bcrypt from 'bcryptjs';
 import { logger } from '../../src/lib/core/logger';
 

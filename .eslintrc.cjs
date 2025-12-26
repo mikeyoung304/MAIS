@@ -16,9 +16,10 @@ module.exports = {
     es2022: true,
   },
   rules: {
-    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     '@typescript-eslint/no-explicit-any': 'warn',
     'no-console': ['warn', { allow: ['warn', 'error'] }],
   },
-  ignorePatterns: ['dist', 'node_modules', 'coverage', '*.cjs', '*.js', 'generated'],
+  // Note: ignorePatterns defined in .eslintignore file
+  // Note: server/ has its own .eslintrc.json with test file overrides
 };

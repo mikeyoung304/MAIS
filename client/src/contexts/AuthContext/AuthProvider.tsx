@@ -6,7 +6,7 @@
  * Checks for token expiration on mount and periodically.
  */
 
-import { useState, useEffect, useCallback, ReactNode, useMemo } from 'react';
+import { useState, useEffect, useCallback, ReactNode } from 'react';
 import { AuthContext } from './context';
 import { authenticateUser, signupTenant, logoutUser, restoreAuthState } from './services';
 import { useTokenExpiration } from './useTokenExpiration';

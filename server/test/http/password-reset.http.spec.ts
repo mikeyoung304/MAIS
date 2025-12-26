@@ -10,13 +10,14 @@ import { loadConfig } from '../../src/lib/core/config';
 import { createApp } from '../../src/app';
 import type { Application } from 'express';
 import { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.repository';
-import { PrismaClient } from '../../src/generated/prisma';
 import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
+import { getTestPrisma } from '../helpers/global-prisma';
 
 describe('Password Reset Flow - HTTP Tests', () => {
   let app: Application;
-  let prisma: PrismaClient;
+  // Use singleton to prevent connection pool exhaustion
+  const prisma = getTestPrisma();
   let tenantRepo: PrismaTenantRepository;
   let testTenantEmail: string;
   let testTenantId: string;
@@ -27,8 +28,7 @@ describe('Password Reset Flow - HTTP Tests', () => {
     const startTime = Date.now();
     app = createApp(config, container, startTime);
 
-    // Use real Prisma for integration testing
-    prisma = new PrismaClient();
+    // Use singleton Prisma for integration testing
     tenantRepo = new PrismaTenantRepository(prisma);
 
     // Create test tenant
@@ -47,16 +47,13 @@ describe('Password Reset Flow - HTTP Tests', () => {
   });
 
   afterAll(async () => {
-    // Guard against prisma being undefined if beforeAll failed
-    if (!prisma) return;
-
     // Cleanup test tenant
     if (testTenantId) {
       await prisma.tenant.delete({ where: { id: testTenantId } }).catch(() => {
         // Ignore cleanup errors - tenant may not exist
       });
     }
-    await prisma.$disconnect();
+    // No-op: singleton handles its own lifecycle
   });
 
   describe('POST /v1/auth/forgot-password', () => {

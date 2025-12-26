@@ -7,7 +7,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { AppointmentDto, ServiceDto, CustomerDto } from '@macon/contracts';
+// AppointmentDto imported for type reference in EnrichedAppointment
 import type { AppointmentFilters, EnrichedAppointment } from './types';
 import { AppointmentFilters as Filters } from './AppointmentFilters';
 import { AppointmentsList } from './AppointmentsList';

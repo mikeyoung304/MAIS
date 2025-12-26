@@ -57,7 +57,6 @@ This project is implementing multi-tenant self-service capabilities in phases:
 
 **Key Documents:**
 
-- [SPRINT_10_FINAL_SUMMARY.md](./docs/sprints/SPRINT_10_FINAL_SUMMARY.md) - Sprint 10 completion report
 - [CACHING_ARCHITECTURE.md](./docs/performance/CACHING_ARCHITECTURE.md) - Performance optimization guide
 - [SECURITY.md](./SECURITY.md) - Security policy and vulnerability reporting
 - [OWASP_COMPLIANCE.md](./docs/security/OWASP_COMPLIANCE.md) - OWASP Top 10 compliance mapping

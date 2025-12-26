@@ -17,7 +17,7 @@ import type {
   BookingQueryParams,
   UpdateBrandingInput,
 } from '../validation/tenant-admin.schemas';
-import { NotFoundError, ValidationError } from '../lib/errors';
+import { NotFoundError } from '../lib/errors';
 
 /**
  * Package response DTO
@@ -50,7 +50,7 @@ interface BookingDto {
 /**
  * Blackout response DTO
  */
-interface BlackoutDto {
+interface _BlackoutDto {
   id: string;
   date: string;
   reason?: string;
@@ -153,7 +153,7 @@ export class TenantAdminController {
   async getBlackouts(
     tenantId: string
   ): Promise<Array<{ id: string; date: string; reason?: string }>> {
-    const blackouts = await this.blackoutRepo.getAllBlackouts(tenantId);
+    const _blackouts = await this.blackoutRepo.getAllBlackouts(tenantId);
 
     // Need to fetch full records with IDs
     // This is a workaround since getAllBlackouts doesn't return IDs

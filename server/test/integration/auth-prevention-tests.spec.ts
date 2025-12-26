@@ -14,15 +14,15 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import type { Express } from 'express';
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '../../src/generated/prisma';
 import { loadConfig } from '../../src/lib/core/config';
 import { createApp } from '../../src/app';
 import { buildContainer } from '../../src/di';
 import { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.repository';
 import type { TenantAuthService } from '../../src/services/tenant-auth.service';
+import { getTestPrisma } from '../helpers/global-prisma';
 
-// Shared test data
-const prisma = new PrismaClient();
+// Shared test data - use singleton to prevent connection pool exhaustion
+const prisma = getTestPrisma();
 let app: Express;
 let tenantRepo: PrismaTenantRepository;
 let authService: TenantAuthService;
@@ -46,7 +46,8 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await prisma.$disconnect();
+  // No-op: singleton PrismaClient is shared across all tests
+  // Global teardown handles disconnection
 });
 
 /**

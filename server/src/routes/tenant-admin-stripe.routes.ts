@@ -3,11 +3,13 @@
  * Protected routes for tenants to manage their Stripe Connect integration
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
 import type { StripeConnectService } from '../services/stripe-connect.service';
 import { logger } from '../lib/core/logger';
-import { ValidationError, NotFoundError, ConflictError } from '../lib/errors';
+// Errors for future use
+// import { ValidationError, NotFoundError, ConflictError } from '../lib/errors';
 
 // Validation schemas
 const createAccountSchema = z.object({

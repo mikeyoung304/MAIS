@@ -280,7 +280,7 @@ Learn more: [ARCHITECTURE.md](./ARCHITECTURE.md) | [MULTI_TENANT_IMPLEMENTATION_
 ### Infrastructure
 
 - **Database Hosting**: Supabase (PostgreSQL + connection pooling)
-- **Monorepo**: pnpm workspaces
+- **Monorepo**: npm workspaces
 - **Process Manager**: systemd / PM2 / Docker
 - **Deployment**: Docker containers (recommended)
 

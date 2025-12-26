@@ -198,7 +198,7 @@ export const publicBalancePaymentLimiter = rateLimit({
 });
 
 /**
- * TODO-057 FIX: Rate limiter for public scheduling endpoints
+ * Rate limiter for public scheduling endpoints
  * 100 requests per minute per tenant/IP - prevents enumeration and DoS attacks
  * Protects service listing and availability slot queries
  */
@@ -208,7 +208,7 @@ export const publicSchedulingLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   // Use tenantId if available (via tenant middleware), otherwise IP
-  keyGenerator: (req, res) => {
+  keyGenerator: (req, _res) => {
     // Type assertion for TenantRequest with tenantId property
     const tenantReq = req as Request & { tenantId?: string };
     return tenantReq.tenantId || normalizeIp(req.ip);
@@ -222,7 +222,7 @@ export const publicSchedulingLimiter = rateLimit({
 });
 
 /**
- * TODO-193 FIX: Rate limiter for add-on read operations
+ * Rate limiter for add-on read operations
  * 100 requests per minute per tenant - allows frequent catalog browsing
  */
 export const addonReadLimiter = rateLimit({
@@ -242,7 +242,7 @@ export const addonReadLimiter = rateLimit({
 });
 
 /**
- * TODO-193 FIX: Rate limiter for add-on write operations
+ * Rate limiter for add-on write operations
  * 20 requests per minute per tenant - prevents rapid creation/modification abuse
  */
 export const addonWriteLimiter = rateLimit({
@@ -262,7 +262,7 @@ export const addonWriteLimiter = rateLimit({
 });
 
 /**
- * TODO-273 FIX: Rate limiter for Stripe webhook endpoint
+ * Rate limiter for Stripe webhook endpoint
  * 100 requests per minute - prevents DoS attacks on webhook processing
  *
  * IMPORTANT: Returns HTTP 200 (not 429) on rate limit to prevent Stripe retry storms.

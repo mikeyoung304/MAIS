@@ -4,7 +4,8 @@
  * Requires tenant context via X-Tenant-Key header
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import type { Response, NextFunction } from 'express';
+import { Router } from 'express';
 import { ZodError } from 'zod';
 import type { TenantRequest } from '../middleware/tenant';
 import type { SegmentService } from '../services/segment.service';

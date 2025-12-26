@@ -90,6 +90,17 @@ function RootTierDetailContent() {
   const { tier } = useParams<{ tier: string }>();
   const { data: packages, isLoading, error } = usePackages();
 
+  // Filter to root packages (no segment) with valid tier groupings - memoized
+  // Use normalizeGrouping to handle various naming conventions (Good/Better/Best, etc.)
+  // Must be called before any early returns to comply with Rules of Hooks
+  const rootPackages = useMemo(
+    () =>
+      (packages ?? []).filter(
+        (p: PackageDto) => !p.segmentId && p.grouping && normalizeGrouping(p.grouping) !== null
+      ),
+    [packages]
+  );
+
   // Validate tier param - use ".." to go back to tiers list
   if (!tier) {
     return <Navigate to=".." replace />;
@@ -116,16 +127,6 @@ function RootTierDetailContent() {
   if (error || !packages) {
     return <Navigate to=".." replace />;
   }
-
-  // Filter to root packages (no segment) with valid tier groupings - memoized
-  // Use normalizeGrouping to handle various naming conventions (Good/Better/Best, etc.)
-  const rootPackages = useMemo(
-    () =>
-      packages.filter(
-        (p: PackageDto) => !p.segmentId && p.grouping && normalizeGrouping(p.grouping) !== null
-      ),
-    [packages]
-  );
 
   // Find the package matching this tier (using normalizeGrouping to handle naming conventions)
   const pkg = rootPackages.find((p: PackageDto) => {

@@ -2,11 +2,12 @@
  * Prisma Booking Repository Adapter
  */
 
-import { PrismaClientKnownRequestError, Decimal } from '@prisma/client/runtime/library';
+import type { Decimal } from '@prisma/client/runtime/library';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import type { PrismaClient } from '../../generated/prisma';
 import type { BookingRepository, TimeslotBooking, AppointmentDto } from '../lib/ports';
 import type { Booking } from '../lib/entities';
-import { BookingConflictError, BookingLockTimeoutError, NotFoundError } from '../../lib/errors';
+import { BookingConflictError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/core/logger';
 import { toISODate } from '../lib/date-utils';
 
@@ -362,10 +363,12 @@ export class PrismaBookingRepository implements BookingRepository {
    * console.log(`Total bookings: ${bookings.length}`);
    * ```
    */
-  async findAll(tenantId: string): Promise<Booking[]> {
+  async findAll(tenantId: string, options?: { limit?: number; offset?: number }): Promise<Booking[]> {
     const bookings = await this.prisma.booking.findMany({
       where: { tenantId },
       orderBy: { createdAt: 'desc' },
+      take: options?.limit ?? 100, // Default limit to prevent unbounded queries
+      skip: options?.offset ?? 0,
       include: {
         customer: true,
         addOns: {

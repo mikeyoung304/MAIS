@@ -9,7 +9,8 @@
  * - GET /v1/public/availability/slots
  */
 
-import { Router, Response, NextFunction } from 'express';
+import type { Response, NextFunction } from 'express';
+import { Router } from 'express';
 import { ZodError } from 'zod';
 import type { TenantRequest } from '../middleware/tenant';
 import type { ServiceRepository } from '../lib/ports';

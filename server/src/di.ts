@@ -31,7 +31,8 @@ import { PackagesController } from './routes/packages.routes';
 import { AvailabilityController } from './routes/availability.routes';
 import { BookingsController } from './routes/bookings.routes';
 import { WebhooksController } from './routes/webhooks.routes';
-import { WebhookQueue, createWebhookQueue } from './jobs/webhook-queue';
+import type { WebhookQueue} from './jobs/webhook-queue';
+import { createWebhookQueue } from './jobs/webhook-queue';
 import { AdminController } from './routes/admin.routes';
 import { BlackoutsController } from './routes/blackouts.routes';
 import { AdminPackagesController } from './routes/admin-packages.routes';
@@ -56,7 +57,6 @@ import {
 } from './adapters/prisma';
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { PostmarkMailAdapter } from './adapters/postmark.adapter';
-import { GoogleCalendarAdapter } from './adapters/gcal.adapter';
 import { GoogleCalendarSyncAdapter } from './adapters/google-calendar-sync.adapter';
 import { getSupabaseClient } from './config/database';
 import { logger } from './lib/core/logger';

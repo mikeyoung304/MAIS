@@ -8,7 +8,7 @@
  * will preserve existing keys to avoid breaking local development environments.
  */
 
-import { PrismaClient } from '../../src/generated/prisma';
+import type { PrismaClient } from '../../src/generated/prisma';
 import crypto from 'crypto';
 import { logger } from '../../src/lib/core/logger';
 import {

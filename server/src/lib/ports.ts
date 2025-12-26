@@ -117,7 +117,7 @@ export interface BookingRepository {
     }
   ): Promise<Booking>;
   findById(tenantId: string, id: string): Promise<Booking | null>;
-  findAll(tenantId: string): Promise<Booking[]>;
+  findAll(tenantId: string, options?: { limit?: number; offset?: number }): Promise<Booking[]>;
   isDateBooked(tenantId: string, date: string): Promise<boolean>;
   getUnavailableDates(tenantId: string, startDate: Date, endDate: Date): Promise<Date[]>;
   updateGoogleEventId(tenantId: string, bookingId: string, googleEventId: string): Promise<void>;

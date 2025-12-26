@@ -1,0 +1,475 @@
+{
+  "metadata": {
+    "generated": "2025-12-26T00:00:00Z",
+    "commit": "a514162",
+    "branch": "main",
+    "total_issues": 67,
+    "total_effort_hours": {
+      "min": 165,
+      "max": 370
+    }
+  },
+  "summary": {
+    "p0_critical": 5,
+    "p1_high": 10,
+    "p2_medium": 15,
+    "p3_low": 8,
+    "informational": 30
+  },
+  "waves": [
+    {
+      "id": "wave-1",
+      "name": "Immediate Fixes",
+      "timeline": "Day 1",
+      "effort_hours": 4,
+      "risk_level": "NONE",
+      "tasks": [
+        {
+          "id": "W1-01",
+          "priority": "P0",
+          "title": "Update Next.js to 14.2.32+",
+          "description": "Critical authorization bypass vulnerability in middleware",
+          "file": "apps/web/package.json",
+          "line": 32,
+          "effort": "S",
+          "risk": "NONE",
+          "command": "cd apps/web && npm install next@14.2.32"
+        },
+        {
+          "id": "W1-02",
+          "priority": "P1",
+          "title": "Delete backup files",
+          "description": "Remove 8 .bak/.backup/.old files from source tree",
+          "files": [
+            "server/src/adapters/mock/index.ts.bak",
+            "client/src/pages/Home.tsx.backup",
+            "client/src/features/admin/tenants/TenantForm.tsx.backup",
+            "server/src/lib/core/cache.ts.old",
+            "server/src/lib/validators/email.ts.old",
+            "server/src/routes/bookings.routes.ts.bak",
+            "server/src/services/booking.service.ts.bak",
+            "client/src/features/admin/AddOnManager.tsx.backup"
+          ],
+          "effort": "S",
+          "risk": "NONE"
+        },
+        {
+          "id": "W1-03",
+          "priority": "P0",
+          "title": "Fix unbounded findAll query",
+          "description": "Add pagination/limit to BookingRepository.findAll()",
+          "file": "server/src/adapters/prisma/booking.repository.ts",
+          "line": 365,
+          "effort": "S",
+          "risk": "LOW",
+          "fix": "Add 'take: 100' default limit to findMany options"
+        },
+        {
+          "id": "W1-04",
+          "priority": "P0",
+          "title": "Fix N+1 catalog query",
+          "description": "Use getPackageBySlugWithAddOns() instead of separate queries",
+          "file": "server/src/services/catalog.service.ts",
+          "line": 106,
+          "effort": "S",
+          "risk": "LOW",
+          "fix": "Replace getPackageBySlug + getAddOnsByPackageId with getPackageBySlugWithAddOns"
+        },
+        {
+          "id": "W1-05",
+          "priority": "P0",
+          "title": "Fix broken documentation links",
+          "description": "Remove or fix links to /docs/sprints/ and /docs/phases/",
+          "files": [
+            "README.md",
+            "docs/archive/*"
+          ],
+          "effort": "S",
+          "risk": "NONE"
+        },
+        {
+          "id": "W1-06",
+          "priority": "P1",
+          "title": "Fix pnpm/npm inconsistency",
+          "description": "README.md says pnpm but project uses npm",
+          "file": "README.md",
+          "effort": "S",
+          "risk": "NONE"
+        },
+        {
+          "id": "W1-07",
+          "priority": "P1",
+          "title": "Delete deprecated e2e.yml workflow",
+          "description": "Workflow uses pnpm and wrong paths, replaced by main-pipeline.yml",
+          "file": ".github/workflows/e2e.yml",
+          "effort": "S",
+          "risk": "NONE"
+        }
+      ]
+    },
+    {
+      "id": "wave-2",
+      "name": "Type Safety & Performance",
+      "timeline": "Week 1",
+      "effort_hours": 10,
+      "risk_level": "LOW",
+      "tasks": [
+        {
+          "id": "W2-01",
+          "priority": "P0",
+          "title": "Define BookingWithCancellation interface",
+          "description": "Replace 'booking: any' in public-booking-management.routes.ts",
+          "files": [
+            "server/src/routes/public-booking-management.routes.ts",
+            "server/src/lib/entities.ts"
+          ],
+          "effort": "S",
+          "risk": "LOW"
+        },
+        {
+          "id": "W2-02",
+          "priority": "P2",
+          "title": "Define TenantSecrets interface",
+          "description": "Replace 'tenant.secrets as any' pattern in calendar routes",
+          "files": [
+            "server/src/routes/tenant-admin-calendar.routes.ts",
+            "server/src/lib/entities.ts"
+          ],
+          "lines": [49, 140, 183, 220],
+          "effort": "S",
+          "risk": "LOW"
+        },
+        {
+          "id": "W2-03",
+          "priority": "P2",
+          "title": "Add BlackoutRepository interface method",
+          "description": "Add getBlackoutsWithIds() to fix type casting in controller",
+          "files": [
+            "server/src/lib/ports.ts",
+            "server/src/adapters/prisma/blackout.repository.ts"
+          ],
+          "effort": "S",
+          "risk": "LOW"
+        },
+        {
+          "id": "W2-04",
+          "priority": "P1",
+          "title": "Add React.memo to section components",
+          "description": "Wrap TextSection, GallerySection, HeroSection, ContactSection",
+          "files": [
+            "apps/web/src/components/tenant/sections/TextSection.tsx",
+            "apps/web/src/components/tenant/sections/GallerySection.tsx",
+            "apps/web/src/components/tenant/sections/HeroSection.tsx",
+            "apps/web/src/components/tenant/sections/ContactSection.tsx"
+          ],
+          "effort": "S",
+          "risk": "NONE"
+        },
+        {
+          "id": "W2-05",
+          "priority": "P1",
+          "title": "Parallelize AvailabilityService queries",
+          "description": "Use Promise.all for independent availability checks",
+          "file": "server/src/services/availability.service.ts",
+          "lines": [43, 62],
+          "effort": "S",
+          "risk": "MEDIUM"
+        },
+        {
+          "id": "W2-06",
+          "priority": "P1",
+          "title": "Replace console.log with structured logger",
+          "description": "28 occurrences in server/src/ should use logger utility",
+          "path": "server/src/",
+          "count": 28,
+          "effort": "M",
+          "risk": "LOW"
+        },
+        {
+          "id": "W2-07",
+          "priority": "P2",
+          "title": "Configure missing rate limiters",
+          "description": "Complete rate limiter configuration for 4 endpoints",
+          "file": "server/src/middleware/rateLimiter.ts",
+          "effort": "S",
+          "risk": "LOW"
+        },
+        {
+          "id": "W2-08",
+          "priority": "P1",
+          "title": "Update stale documentation",
+          "description": "Update sprint references, test counts, status sections",
+          "files": [
+            "CLAUDE.md",
+            "README.md",
+            "docs/*.md"
+          ],
+          "effort": "M",
+          "risk": "NONE"
+        },
+        {
+          "id": "W2-09",
+          "priority": "P2",
+          "title": "Extract status mapper utility",
+          "description": "Consolidate duplicate status mapping in booking.repository.ts",
+          "file": "server/src/adapters/prisma/booking.repository.ts",
+          "lines": [954, 1014],
+          "effort": "S",
+          "risk": "LOW"
+        },
+        {
+          "id": "W2-10",
+          "priority": "P2",
+          "title": "Consolidate ErrorBoundary components",
+          "description": "Merge duplicate implementations in client and apps/web",
+          "files": [
+            "client/src/components/ErrorBoundary.tsx",
+            "apps/web/src/components/ErrorBoundary.tsx"
+          ],
+          "effort": "S",
+          "risk": "LOW"
+        }
+      ]
+    },
+    {
+      "id": "wave-3",
+      "name": "Architecture Improvements",
+      "timeline": "Week 2-3",
+      "effort_hours": 25,
+      "risk_level": "MEDIUM",
+      "tasks": [
+        {
+          "id": "W3-01",
+          "priority": "P1",
+          "title": "Create TenantService",
+          "description": "Extract tenant operations from routes into dedicated service",
+          "files": [
+            "server/src/services/tenant.service.ts (new)",
+            "server/src/di.ts"
+          ],
+          "effort": "M",
+          "risk": "MEDIUM"
+        },
+        {
+          "id": "W3-02",
+          "priority": "P1",
+          "title": "Refactor routes to use TenantService",
+          "description": "Remove direct PrismaTenantRepository imports from 12 route files",
+          "files": [
+            "server/src/routes/auth.routes.ts",
+            "server/src/routes/tenant.routes.ts",
+            "server/src/routes/tenant-admin.routes.ts",
+            "server/src/routes/public-tenant.routes.ts",
+            "server/src/routes/stripe-connect-webhooks.routes.ts",
+            "server/src/routes/admin/tenants.routes.ts",
+            "server/src/routes/admin/stripe.routes.ts",
+            "server/src/routes/tenant-admin-calendar.routes.ts",
+            "server/src/routes/tenant-admin-deposits.routes.ts",
+            "server/src/routes/dev.routes.ts",
+            "server/src/routes/index.ts"
+          ],
+          "effort": "M",
+          "risk": "MEDIUM",
+          "depends_on": ["W3-01"]
+        },
+        {
+          "id": "W3-03",
+          "priority": "P1",
+          "title": "UploadService to DI pattern",
+          "description": "Remove singleton, inject via DI container",
+          "files": [
+            "server/src/services/upload.service.ts",
+            "server/src/di.ts"
+          ],
+          "effort": "M",
+          "risk": "MEDIUM"
+        },
+        {
+          "id": "W3-04",
+          "priority": "P1",
+          "title": "Implement domain lookup endpoint",
+          "description": "Complete TODO-285 for custom domain resolution",
+          "files": [
+            "server/src/routes/public-tenant.routes.ts",
+            "apps/web/src/lib/tenant.ts"
+          ],
+          "effort": "M",
+          "risk": "MEDIUM"
+        },
+        {
+          "id": "W3-05",
+          "priority": "P2",
+          "title": "Implement request-level idempotency",
+          "description": "Complete TODO-329 for booking idempotency keys",
+          "files": [
+            "server/src/routes/public-date-booking.routes.ts",
+            "server/src/services/booking.service.ts"
+          ],
+          "effort": "M",
+          "risk": "MEDIUM"
+        },
+        {
+          "id": "W3-06",
+          "priority": "P2",
+          "title": "Extract email templates",
+          "description": "Move inline HTML templates from auth.routes.ts to template files",
+          "files": [
+            "server/src/routes/auth.routes.ts",
+            "server/src/templates/emails/ (new)"
+          ],
+          "effort": "M",
+          "risk": "LOW"
+        },
+        {
+          "id": "W3-07",
+          "priority": "P1",
+          "title": "Lead magnet email integration",
+          "description": "Complete TODO-174 stub implementation",
+          "file": "server/src/routes/tenant-admin.routes.ts",
+          "line": 174,
+          "effort": "M",
+          "risk": "MEDIUM"
+        },
+        {
+          "id": "W3-08",
+          "priority": "P1",
+          "title": "Add Next.js deployment workflow",
+          "description": "Create deployment pipeline for apps/web",
+          "files": [
+            ".github/workflows/deploy-nextjs.yml (new)",
+            "apps/web/vercel.json (new)"
+          ],
+          "effort": "M",
+          "risk": "LOW"
+        }
+      ]
+    },
+    {
+      "id": "wave-4",
+      "name": "Major Refactors",
+      "timeline": "Future Sprint",
+      "effort_hours": 120,
+      "risk_level": "HIGH",
+      "tasks": [
+        {
+          "id": "W4-01",
+          "priority": "P2",
+          "title": "Split BookingService",
+          "description": "Decompose 1395-line god class into CheckoutService, AppointmentService, RefundService",
+          "file": "server/src/services/booking.service.ts",
+          "effort": "L",
+          "risk": "HIGH"
+        },
+        {
+          "id": "W4-02",
+          "priority": "P2",
+          "title": "Expand ts-rest contract coverage",
+          "description": "Add contracts for booking, catalog, availability domains",
+          "path": "packages/contracts/src/",
+          "effort": "L",
+          "risk": "MEDIUM"
+        },
+        {
+          "id": "W4-03",
+          "priority": "P1",
+          "title": "Fix ESLint errors",
+          "description": "Address 900+ pre-existing lint errors and remove continue-on-error",
+          "files": [
+            "server/src/**/*.ts",
+            ".github/workflows/main-pipeline.yml"
+          ],
+          "effort": "L",
+          "risk": "MEDIUM"
+        },
+        {
+          "id": "W4-04",
+          "priority": "P2",
+          "title": "Consolidate landing page transformation",
+          "description": "Single source of truth for legacy->pages migration",
+          "files": [
+            "apps/web/src/lib/tenant.ts",
+            "server/src/services/landing-page.service.ts"
+          ],
+          "effort": "M",
+          "risk": "MEDIUM"
+        },
+        {
+          "id": "W4-05",
+          "priority": "P3",
+          "title": "JWT refresh token implementation",
+          "description": "Add short-lived access tokens with refresh",
+          "files": [
+            "server/src/services/identity.service.ts",
+            "server/src/services/tenant-auth.service.ts"
+          ],
+          "effort": "L",
+          "risk": "HIGH"
+        },
+        {
+          "id": "W4-06",
+          "priority": "P3",
+          "title": "Database RLS implementation",
+          "description": "Add Row Level Security as defense-in-depth for tenant isolation",
+          "file": "server/prisma/schema.prisma",
+          "effort": "L",
+          "risk": "HIGH"
+        }
+      ]
+    }
+  ],
+  "quick_wins": [
+    {
+      "task": "Delete 8 backup files",
+      "impact": "HIGH",
+      "effort": "15 min",
+      "wave": 1
+    },
+    {
+      "task": "Fix unbounded findAll query",
+      "impact": "HIGH",
+      "effort": "30 min",
+      "wave": 1
+    },
+    {
+      "task": "Fix N+1 catalog query",
+      "impact": "HIGH",
+      "effort": "30 min",
+      "wave": 1
+    },
+    {
+      "task": "Update broken doc links",
+      "impact": "MEDIUM",
+      "effort": "30 min",
+      "wave": 1
+    },
+    {
+      "task": "Fix pnpm/npm inconsistency",
+      "impact": "LOW",
+      "effort": "5 min",
+      "wave": 1
+    },
+    {
+      "task": "Add React.memo to section components",
+      "impact": "MEDIUM",
+      "effort": "45 min",
+      "wave": 2
+    },
+    {
+      "task": "Update Next.js to 14.2.32+",
+      "impact": "CRITICAL",
+      "effort": "30 min",
+      "wave": 1
+    }
+  ],
+  "dependencies": {
+    "W3-02": ["W3-01"],
+    "W2-01": [],
+    "W4-01": ["W2-09"]
+  },
+  "verification": {
+    "wave_1": ["npm test", "npm run typecheck", "docs build"],
+    "wave_2": ["npm test", "manual flow testing"],
+    "wave_3": ["npm run test:e2e", "manual flow testing"],
+    "wave_4": ["full regression testing", "security review"]
+  }
+}

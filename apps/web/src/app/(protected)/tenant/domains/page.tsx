@@ -58,7 +58,7 @@ interface VerificationResult {
  * for their storefront.
  */
 export default function DomainsPage() {
-  const { backendToken: token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [domains, setDomains] = useState<DomainInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -67,17 +67,11 @@ export default function DomainsPage() {
   const [verifying, setVerifying] = useState<string | null>(null);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
   const fetchDomains = useCallback(async () => {
-    if (!token) return;
+    if (!isAuthenticated) return;
 
     try {
-      const res = await fetch(`${API_BASE}/v1/tenant-admin/domains`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch('/api/tenant-admin/domains');
 
       if (!res.ok) {
         throw new Error('Failed to fetch domains');
@@ -91,7 +85,7 @@ export default function DomainsPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, API_BASE]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     fetchDomains();
@@ -99,17 +93,16 @@ export default function DomainsPage() {
 
   const handleAddDomain = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token || !newDomain.trim()) return;
+    if (!isAuthenticated || !newDomain.trim()) return;
 
     setAdding(true);
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/v1/tenant-admin/domains`, {
+      const res = await fetch('/api/tenant-admin/domains', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ domain: newDomain.trim() }),
       });
@@ -130,19 +123,16 @@ export default function DomainsPage() {
   };
 
   const handleVerify = async (domainId: string) => {
-    if (!token) return;
+    if (!isAuthenticated) return;
 
     setVerifying(domainId);
     setError(null);
 
     try {
       const res = await fetch(
-        `${API_BASE}/v1/tenant-admin/domains/${domainId}/verify`,
+        `/api/tenant-admin/domains/${domainId}/verify`,
         {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 
@@ -169,16 +159,13 @@ export default function DomainsPage() {
   };
 
   const handleSetPrimary = async (domainId: string) => {
-    if (!token) return;
+    if (!isAuthenticated) return;
 
     try {
       const res = await fetch(
-        `${API_BASE}/v1/tenant-admin/domains/${domainId}/primary`,
+        `/api/tenant-admin/domains/${domainId}/primary`,
         {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 
@@ -194,7 +181,7 @@ export default function DomainsPage() {
   };
 
   const handleDelete = async (domainId: string) => {
-    if (!token) return;
+    if (!isAuthenticated) return;
 
     if (
       !confirm(
@@ -206,12 +193,9 @@ export default function DomainsPage() {
 
     try {
       const res = await fetch(
-        `${API_BASE}/v1/tenant-admin/domains/${domainId}`,
+        `/api/tenant-admin/domains/${domainId}`,
         {
           method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 

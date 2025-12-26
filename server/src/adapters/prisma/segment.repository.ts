@@ -3,7 +3,7 @@
  * Provides data layer for tenant segment operations (e.g., "Wellness Retreat", "Micro-Wedding")
  */
 
-import { PrismaClient, Segment } from '../../generated/prisma';
+import type { PrismaClient, Segment } from '../../generated/prisma';
 
 /**
  * Decode HTML entities in a URL string

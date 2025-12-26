@@ -14,7 +14,6 @@ import type { Package, AddOn } from '../lib/entities';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import {
   cachedOperation,
-  buildCacheKey,
   invalidateCacheKeys,
   getCatalogInvalidationKeys,
   getSegmentCatalogInvalidationKeys,
@@ -103,12 +102,12 @@ export class CatalogService {
         ttl: 900, // 15 minutes
       },
       async () => {
-        const pkg = await this.repository.getPackageBySlug(tenantId, slug);
+        // Use getPackageBySlugWithAddOns to avoid N+1 query
+        const pkg = await this.repository.getPackageBySlugWithAddOns(tenantId, slug);
         if (!pkg) {
           throw new NotFoundError(`Package with slug "${slug}" not found`);
         }
-        const addOns = await this.repository.getAddOnsByPackageId(tenantId, pkg.id);
-        return { ...pkg, addOns };
+        return pkg;
       }
     );
   }

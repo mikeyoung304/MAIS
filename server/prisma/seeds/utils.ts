@@ -5,7 +5,8 @@
  * across E2E and demo seeds.
  */
 
-import { PrismaClient, Prisma, Tenant, Package, AddOn } from '../../src/generated/prisma';
+import type { PrismaClient, Tenant, Package, AddOn } from '../../src/generated/prisma';
+import { Prisma } from '../../src/generated/prisma';
 import { apiKeyService } from '../../src/lib/api-key.service';
 
 /**

@@ -10,7 +10,7 @@
 import path from 'path';
 import crypto from 'crypto';
 import { createRequire } from 'module';
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '../lib/core/logger';
 import { TooManyRequestsError } from '../lib/errors';
 import type { StorageProvider, FileSystem, UploadedFile, UploadResult } from '../lib/ports';

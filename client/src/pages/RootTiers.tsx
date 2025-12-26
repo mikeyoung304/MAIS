@@ -21,6 +21,17 @@ import type { PackageDto } from '@macon/contracts';
 function RootTiersContent() {
   const { data: packages, isLoading, error, refetch } = usePackages();
 
+  // Filter to root packages (no segment) with valid tier groupings - memoized
+  // Must be called before any early returns to comply with Rules of Hooks
+  const rootPackages = useMemo(
+    () =>
+      (packages || []).filter(
+        (p: PackageDto) =>
+          !p.segmentId && p.grouping && TIER_LEVELS.includes(p.grouping.toLowerCase() as TierLevel)
+      ),
+    [packages]
+  );
+
   // Loading state
   if (isLoading) {
     return (
@@ -55,16 +66,6 @@ function RootTiersContent() {
       </Container>
     );
   }
-
-  // Filter to root packages (no segment) with valid tier groupings - memoized
-  const rootPackages = useMemo(
-    () =>
-      (packages || []).filter(
-        (p: PackageDto) =>
-          !p.segmentId && p.grouping && TIER_LEVELS.includes(p.grouping.toLowerCase() as TierLevel)
-      ),
-    [packages]
-  );
 
   return (
     <TierSelector

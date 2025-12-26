@@ -5,7 +5,6 @@
  */
 
 import { useState, useCallback } from 'react';
-import { captureException } from '../lib/sentry';
 import { handleError as handleErrorUtil } from '../lib/error-handler';
 import { logger } from '../lib/logger';
 

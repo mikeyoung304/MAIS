@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,8 +22,6 @@ import {
   Check,
   X,
 } from 'lucide-react';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 interface StripeStatus {
   accountId: string;
@@ -55,7 +53,7 @@ const validateStripeUrl = (url: string): boolean => {
  * Displays Stripe Connect status and handles onboarding flow.
  */
 export default function TenantPaymentsPage() {
-  const { backendToken } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [status, setStatus] = useState<StripeStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,22 +66,14 @@ export default function TenantPaymentsPage() {
   const [dialogBusinessName, setDialogBusinessName] = useState('');
   const [dialogErrors, setDialogErrors] = useState<{ email?: string; businessName?: string }>({});
 
-  useEffect(() => {
-    fetchStatus();
-  }, [backendToken]);
-
-  const fetchStatus = async () => {
-    if (!backendToken) return;
+  const fetchStatus = useCallback(async () => {
+    if (!isAuthenticated) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/tenant-admin/stripe/status`, {
-        headers: {
-          Authorization: `Bearer ${backendToken}`,
-        },
-      });
+      const response = await fetch('/api/tenant-admin/stripe/status');
 
       if (response.ok) {
         setStatus(await response.json());
@@ -97,7 +87,11 @@ export default function TenantPaymentsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    fetchStatus();
+  }, [fetchStatus]);
 
   const handleCreateAccount = async () => {
     const errors: { email?: string; businessName?: string } = {};
@@ -120,10 +114,9 @@ export default function TenantPaymentsPage() {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/tenant-admin/stripe/account`, {
+      const response = await fetch('/api/tenant-admin/stripe/account', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${backendToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -155,10 +148,9 @@ export default function TenantPaymentsPage() {
 
     try {
       const baseUrl = window.location.origin;
-      const response = await fetch(`${API_BASE_URL}/v1/tenant-admin/stripe/onboard-link`, {
+      const response = await fetch('/api/tenant-admin/stripe/onboard-link', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${backendToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -186,10 +178,9 @@ export default function TenantPaymentsPage() {
 
   const handleOpenDashboard = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/tenant-admin/stripe/dashboard-link`, {
+      const response = await fetch('/api/tenant-admin/stripe/dashboard-link', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${backendToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({}),

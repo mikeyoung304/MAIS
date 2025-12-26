@@ -28,7 +28,7 @@ import {
   getTenantId,
   type TenantRequest,
 } from '../middleware/tenant';
-import { PrismaClient } from '../generated/prisma';
+import type { PrismaClient } from '../generated/prisma';
 import { PrismaTenantRepository, PrismaBlackoutRepository } from '../adapters/prisma';
 import type {
   ServiceRepository,
@@ -39,7 +39,6 @@ import type {
   EarlyAccessRepository,
   CacheServicePort,
 } from '../lib/ports';
-import type { Request } from 'express';
 import { createAdminTenantsRoutes } from './admin/tenants.routes';
 import { createAdminStripeRoutes } from './admin/stripe.routes';
 import { createTenantAdminRoutes } from './tenant-admin.routes';
@@ -59,6 +58,7 @@ import { createTenantAdminWebhookRoutes } from './tenant-admin-webhooks.routes';
 import { createTenantAdminDomainsRouter } from './tenant-admin-domains.routes';
 import { DomainVerificationService } from '../services/domain-verification.service';
 import { createInternalRoutes } from './internal.routes';
+import { createAgentRoutes } from './agent.routes';
 import {
   createPublicBookingManagementRouter,
   PublicBookingManagementController,
@@ -294,24 +294,24 @@ export function createV1Router(
         return { status: 200 as const, body: data };
       },
 
-      platformCreateTenant: async ({ body }: { body: unknown }) => {
+      platformCreateTenant: async ({ body: _body }: { body: unknown }) => {
         // Note: Actual tenant creation is handled by the Express route
         // This is just a placeholder for ts-rest contract compliance
         // See /server/src/routes/admin/tenants.routes.ts
         throw new Error('Use Express route /api/v1/admin/tenants directly');
       },
 
-      platformGetTenant: async ({ params }: { params: { id: string } }) => {
+      platformGetTenant: async ({ params: _params }: { params: { id: string } }) => {
         // Note: Actual implementation in Express routes
         throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
       },
 
-      platformUpdateTenant: async ({ params, body }: { params: { id: string }; body: unknown }) => {
+      platformUpdateTenant: async ({ params: _params, body: _body }: { params: { id: string }; body: unknown }) => {
         // Note: Actual implementation in Express routes
         throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
       },
 
-      platformDeleteTenant: async ({ params }: { params: { id: string } }) => {
+      platformDeleteTenant: async ({ params: _params }: { params: { id: string } }) => {
         // Note: Actual implementation in Express routes
         throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
       },
@@ -647,6 +647,12 @@ export function createV1Router(
     const tenantAdminDomainsRouter = createTenantAdminDomainsRouter(domainVerificationService);
     app.use('/v1/tenant-admin/domains', tenantAuthMiddleware, tenantAdminDomainsRouter);
     logger.info('✅ Tenant admin domain routes mounted at /v1/tenant-admin/domains');
+
+    // Register agent routes (for AI agent integration)
+    // Requires tenant admin authentication - agent proposals are tied to tenant
+    const agentRoutes = createAgentRoutes(prismaClient);
+    app.use('/v1/agent', tenantAuthMiddleware, agentRoutes);
+    logger.info('✅ Agent routes mounted at /v1/agent');
   }
 
   // Register internal routes (for service-to-service communication)

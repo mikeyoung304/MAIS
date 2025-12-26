@@ -15,7 +15,7 @@
  */
 
 import Stripe from 'stripe';
-import { Prisma, PrismaClient } from '../generated/prisma';
+import type { Prisma, PrismaClient } from '../generated/prisma';
 import { encryptionService, type EncryptedData } from '../lib/encryption.service';
 import { logger } from '../lib/core/logger';
 

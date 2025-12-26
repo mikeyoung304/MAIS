@@ -29,9 +29,11 @@
  * ```
  */
 
-import { PrismaClient, Tenant, Package, AddOn } from '../../src/generated/prisma';
+import type { Tenant} from '../../src/generated/prisma';
+import { PrismaClient, Package, AddOn } from '../../src/generated/prisma';
 import { InMemoryCacheAdapter } from '../../src/adapters/mock/cache.adapter';
 import type { CreatePackageInput, CreateAddOnInput, CacheServicePort } from '../../src/lib/ports';
+import { getTestPrisma } from './global-prisma';
 
 /**
  * Integration test context with PrismaClient and cleanup
@@ -81,35 +83,23 @@ export interface CacheTestUtils {
 
 /**
  * Initialize PrismaClient for integration tests
- * Automatically uses DATABASE_URL_TEST if available
- * Configures connection pool limits to prevent P2037 exhaustion errors
+ *
+ * IMPORTANT: Uses a global singleton PrismaClient to prevent connection pool
+ * exhaustion with Supabase pgbouncer. DO NOT create new PrismaClient instances
+ * in test files - always use this function.
+ *
+ * The cleanup function is a no-op for individual tests since the singleton
+ * manages its own lifecycle. Connection is shared across all test files.
  */
 export function setupIntegrationTest(): IntegrationTestContext {
-  // Add connection pool parameters to prevent exhaustion during parallel tests
-  const baseUrl = process.env.DATABASE_URL_TEST || process.env.DATABASE_URL;
-  const urlWithPool = baseUrl?.includes('?')
-    ? `${baseUrl}&connection_limit=5&pool_timeout=10`
-    : `${baseUrl}?connection_limit=5&pool_timeout=10`;
+  // Use global singleton to prevent connection pool exhaustion
+  const prisma = getTestPrisma();
 
-  const prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: urlWithPool,
-      },
-    },
-  });
-
-  // Ensure connection is established
-  prisma.$connect().catch((err) => {
-    console.error('Failed to connect Prisma client:', err);
-  });
-
+  // Cleanup is a no-op - singleton manages its own lifecycle
+  // Individual tests should NOT disconnect the shared client
   const cleanup = async () => {
-    try {
-      await prisma.$disconnect();
-    } catch (err) {
-      console.error('Error disconnecting Prisma:', err);
-    }
+    // No-op: singleton PrismaClient is shared across all tests
+    // Disconnecting here would break subsequent test files
   };
 
   return { prisma, cleanup };

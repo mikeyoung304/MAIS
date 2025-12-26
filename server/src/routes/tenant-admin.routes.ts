@@ -4,9 +4,9 @@
  * packages, blackouts, and bookings
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import multer from 'multer';
-import { z } from 'zod';
 import { ZodError } from 'zod';
 import {
   UpdateBrandingDtoSchema,
@@ -1312,6 +1312,450 @@ export function createTenantAdminRoutes(
       }
     }
   );
+
+  // ============================================================================
+  // Agent API Endpoints (for AI agent integration)
+  // ============================================================================
+
+  /**
+   * GET /v1/tenant-admin/profile
+   * Get full tenant profile for agent context
+   *
+   * Returns business profile including:
+   * - Basic info (name, slug, email)
+   * - Branding configuration
+   * - Stripe Connect status
+   * - Setup completion indicators
+   *
+   * SECURITY: Excludes sensitive fields (apiKeySecret, passwordHash, secrets, etc.)
+   */
+  router.get('/profile', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      const tenant = await tenantRepository.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      // Return safe profile fields (exclude secrets, passwords, tokens)
+      const profile = {
+        id: tenant.id,
+        slug: tenant.slug,
+        name: tenant.name,
+        email: tenant.email,
+        emailVerified: tenant.emailVerified,
+        branding: tenant.branding,
+        primaryColor: tenant.primaryColor,
+        secondaryColor: tenant.secondaryColor,
+        accentColor: tenant.accentColor,
+        backgroundColor: tenant.backgroundColor,
+        stripeOnboarded: tenant.stripeOnboarded,
+        stripeAccountId: tenant.stripeAccountId ? true : false, // Boolean only, not the ID
+        depositPercent: tenant.depositPercent ? Number(tenant.depositPercent) : null,
+        balanceDueDays: tenant.balanceDueDays,
+        isActive: tenant.isActive,
+        createdAt: tenant.createdAt.toISOString(),
+        updatedAt: tenant.updatedAt.toISOString(),
+      };
+
+      res.json(profile);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * GET /v1/tenant-admin/dashboard
+   * Get aggregated business stats for agent context
+   *
+   * Returns:
+   * - Package count
+   * - Booking counts (total, upcoming, by status)
+   * - Revenue stats (this month, total)
+   * - Recent activity
+   */
+  router.get('/dashboard', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      // Get basic stats
+      const stats = await tenantRepository.getStats(tenantId);
+
+      // Get all bookings for detailed stats
+      const allBookings = await bookingService.getAllBookings(tenantId);
+
+      // Calculate booking breakdown
+      const now = new Date();
+      const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const next30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+      const bookingsByStatus = {
+        pending: 0,
+        depositPaid: 0,
+        paid: 0,
+        confirmed: 0,
+        canceled: 0,
+        refunded: 0,
+        fulfilled: 0,
+      };
+
+      let upcomingCount = 0;
+      let revenueThisMonth = 0;
+      let totalRevenue = 0;
+
+      for (const booking of allBookings) {
+        // Count by status
+        const statusKey = booking.status.toLowerCase().replace('_', '') as keyof typeof bookingsByStatus;
+        if (statusKey === 'depositpaid') {
+          bookingsByStatus.depositPaid++;
+        } else if (bookingsByStatus[statusKey] !== undefined) {
+          bookingsByStatus[statusKey]++;
+        }
+
+        // Count upcoming (next 30 days, not canceled/refunded)
+        const eventDate = new Date(booking.eventDate);
+        if (
+          eventDate >= now &&
+          eventDate <= next30Days &&
+          !['CANCELED', 'REFUNDED'].includes(booking.status)
+        ) {
+          upcomingCount++;
+        }
+
+        // Calculate revenue (only PAID, CONFIRMED, FULFILLED)
+        if (['PAID', 'CONFIRMED', 'FULFILLED'].includes(booking.status)) {
+          totalRevenue += booking.totalCents;
+          const bookingDate = new Date(booking.createdAt);
+          if (bookingDate >= thisMonth) {
+            revenueThisMonth += booking.totalCents;
+          }
+        }
+      }
+
+      const dashboard = {
+        packages: stats.packageCount,
+        addOns: stats.addOnCount,
+        bookings: {
+          total: stats.bookingCount,
+          upcoming: upcomingCount,
+          byStatus: bookingsByStatus,
+        },
+        revenue: {
+          thisMonthCents: revenueThisMonth,
+          totalCents: totalRevenue,
+        },
+      };
+
+      res.json(dashboard);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * GET /v1/tenant-admin/bookings/:id
+   * Get single booking with full details
+   *
+   * Returns complete booking information including customer details
+   */
+  router.get('/bookings/:id', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      const { id } = req.params;
+      const booking = await bookingService.getBookingById(tenantId, id);
+
+      if (!booking) {
+        res.status(404).json({ error: 'Booking not found' });
+        return;
+      }
+
+      // Get package details for context
+      const pkg = await catalogService.getPackageById(tenantId, booking.packageId);
+
+      const bookingDto = {
+        id: booking.id,
+        packageId: booking.packageId,
+        packageTitle: pkg?.title || 'Unknown Package',
+        coupleName: booking.coupleName,
+        email: booking.email,
+        phone: booking.phone,
+        eventDate: booking.eventDate,
+        addOnIds: booking.addOnIds,
+        totalCents: booking.totalCents,
+        status: booking.status,
+        // Deposit/balance fields
+        depositPaidAmount: booking.depositPaidAmount,
+        balanceDueDate: booking.balanceDueDate,
+        balancePaidAmount: booking.balancePaidAmount,
+        balancePaidAt: booking.balancePaidAt,
+        // Timestamps
+        createdAt: booking.createdAt,
+        updatedAt: booking.updatedAt,
+        confirmedAt: booking.confirmedAt,
+        cancelledAt: booking.cancelledAt,
+        // Cancellation details
+        cancelledBy: booking.cancelledBy,
+        cancellationReason: booking.cancellationReason,
+        // Refund details
+        refundStatus: booking.refundStatus,
+        refundAmount: booking.refundAmount,
+        refundedAt: booking.refundedAt,
+      };
+
+      res.json(bookingDto);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * POST /v1/tenant-admin/bookings/:id/cancel
+   * Cancel a booking with optional refund
+   *
+   * This is a T3 (hard confirm) operation for the agent.
+   * Requires explicit user confirmation before calling.
+   *
+   * @body reason - Optional cancellation reason
+   * @returns Cancelled booking with refund status
+   */
+  router.post('/bookings/:id/cancel', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      const { id } = req.params;
+      const { reason } = req.body || {};
+
+      // Get booking first to verify ownership
+      const booking = await bookingService.getBookingById(tenantId, id);
+      if (!booking) {
+        res.status(404).json({ error: 'Booking not found' });
+        return;
+      }
+
+      // Check if already cancelled
+      if (booking.status === 'CANCELED' || booking.status === 'REFUNDED') {
+        res.status(409).json({ error: 'Booking is already cancelled or refunded' });
+        return;
+      }
+
+      // Cancel the booking (will handle refund if applicable)
+      const cancelledBooking = await bookingService.cancelBooking(
+        tenantId,
+        id,
+        'TENANT',
+        reason || 'Cancelled by tenant'
+      );
+
+      logger.info({ tenantId, bookingId: id }, 'Booking cancelled via tenant-admin API');
+
+      res.json({
+        id: cancelledBooking.id,
+        status: cancelledBooking.status,
+        cancelledAt: cancelledBooking.cancelledAt,
+        cancelledBy: cancelledBooking.cancelledBy,
+        cancellationReason: cancelledBooking.cancellationReason,
+        refundStatus: cancelledBooking.refundStatus,
+        refundAmount: cancelledBooking.refundAmount,
+      });
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  /**
+   * POST /v1/tenant-admin/upload-url
+   * Get a presigned URL for direct file upload
+   *
+   * Used by agents to orchestrate file uploads without handling binary data.
+   * The agent gets the URL, user uploads via UI, agent confirms upload.
+   *
+   * @body fileType - Type of file: 'logo', 'package-photo', 'gallery', 'segment'
+   * @body filename - Original filename (for extension detection)
+   * @body contentType - MIME type (e.g., 'image/jpeg')
+   * @returns Presigned upload URL and metadata
+   */
+  router.post('/upload-url', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      const { fileType, filename, contentType } = req.body || {};
+
+      // Validate required fields
+      if (!fileType || !filename) {
+        res.status(400).json({
+          error: 'Missing required fields: fileType, filename',
+        });
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = ['logo', 'package-photo', 'gallery', 'segment'];
+      if (!allowedTypes.includes(fileType)) {
+        res.status(400).json({
+          error: `Invalid fileType. Must be one of: ${allowedTypes.join(', ')}`,
+        });
+        return;
+      }
+
+      // Generate presigned URL (simplified - actual implementation would use S3/Supabase SDK)
+      // For now, return instructions for direct upload endpoint
+      const uploadInfo = {
+        method: 'POST',
+        endpoint: `/v1/tenant-admin/${fileType === 'logo' ? 'logo' : fileType === 'segment' ? 'segment-image' : 'packages/{packageId}/photos'}`,
+        fieldName: fileType === 'logo' ? 'logo' : fileType === 'segment' ? 'file' : 'photo',
+        maxSizeMB: fileType === 'logo' ? 2 : 5,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
+        instructions:
+          'Upload file using multipart/form-data to the endpoint above. For package photos, replace {packageId} with the actual package ID.',
+      };
+
+      res.json(uploadInfo);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * GET /v1/tenant-admin/gallery
+   * Get all portfolio images across packages, segments, and landing page
+   *
+   * Returns aggregated list of all visual assets for agent context.
+   * Useful for suggesting existing images or understanding visual content.
+   */
+  router.get('/gallery', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      const images: Array<{
+        url: string;
+        type: 'package' | 'segment' | 'landing-page' | 'logo';
+        source: string;
+        filename?: string;
+      }> = [];
+
+      // 1. Get package photos
+      const packages = await catalogService.getAllPackages(tenantId);
+      for (const pkg of packages) {
+        if (pkg.photoUrl) {
+          images.push({
+            url: pkg.photoUrl,
+            type: 'package',
+            source: `Package: ${pkg.title}`,
+          });
+        }
+        if (pkg.photos && Array.isArray(pkg.photos)) {
+          for (const photo of pkg.photos) {
+            if (photo.url) {
+              images.push({
+                url: photo.url,
+                type: 'package',
+                source: `Package: ${pkg.title}`,
+                filename: photo.filename,
+              });
+            }
+          }
+        }
+      }
+
+      // 2. Get segment images (if segment service available)
+      if (segmentService) {
+        const segments = await segmentService.getSegments(tenantId);
+        for (const segment of segments) {
+          if (segment.heroImageUrl) {
+            images.push({
+              url: segment.heroImageUrl,
+              type: 'segment',
+              source: `Segment: ${segment.name}`,
+            });
+          }
+        }
+      }
+
+      // 3. Get landing page images
+      const landingPageConfig = await tenantRepository.getLandingPageConfig(tenantId);
+      if (landingPageConfig) {
+        // Hero background
+        if (landingPageConfig.hero?.backgroundImageUrl) {
+          images.push({
+            url: landingPageConfig.hero.backgroundImageUrl,
+            type: 'landing-page',
+            source: 'Landing Page: Hero',
+          });
+        }
+        // About image
+        if (landingPageConfig.about?.imageUrl) {
+          images.push({
+            url: landingPageConfig.about.imageUrl,
+            type: 'landing-page',
+            source: 'Landing Page: About',
+          });
+        }
+        // Gallery images
+        if (landingPageConfig.gallery?.images) {
+          for (const img of landingPageConfig.gallery.images) {
+            if (img.url) {
+              images.push({
+                url: img.url,
+                type: 'landing-page',
+                source: 'Landing Page: Gallery',
+              });
+            }
+          }
+        }
+      }
+
+      // 4. Get tenant logo
+      const tenant = await tenantRepository.findById(tenantId);
+      if (tenant?.branding && typeof tenant.branding === 'object') {
+        const branding = tenant.branding as { logo?: string };
+        if (branding.logo) {
+          images.push({
+            url: branding.logo,
+            type: 'logo',
+            source: 'Business Logo',
+          });
+        }
+      }
+
+      res.json({
+        totalImages: images.length,
+        images,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
 
   return router;
 }

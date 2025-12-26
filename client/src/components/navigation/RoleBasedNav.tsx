@@ -6,7 +6,7 @@
 
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Building2, Package, Calendar, Settings, Users, Palette, XCircle } from 'lucide-react';
+import { Building2, Users } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface NavItem {

@@ -5,8 +5,10 @@
  * and error handling for both logo and package photo uploads.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi, MockedFunction } from 'vitest';
-import { UploadService, UploadedFile } from '../../src/services/upload.service';
+import type { MockedFunction } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { UploadedFile } from '../../src/services/upload.service';
+import { UploadService } from '../../src/services/upload.service';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';

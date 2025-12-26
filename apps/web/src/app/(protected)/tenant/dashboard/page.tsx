@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
@@ -20,8 +20,6 @@ import {
 import { logger } from '@/lib/logger';
 import { getErrorMessage } from '@/lib/errors';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
 interface DashboardStats {
   packagesCount: number;
   bookingsCount: number;
@@ -38,14 +36,14 @@ interface DashboardStats {
  * - Recent activity (future)
  */
 export default function TenantDashboardPage() {
-  const { backendToken, tenantId, user, slug: authSlug } = useAuth();
+  const { tenantId, user, slug: authSlug, isAuthenticated } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [slug, setSlug] = useState<string | null>(authSlug || null);
 
-  const fetchDashboardData = async () => {
-    if (!backendToken) return;
+  const fetchDashboardData = useCallback(async () => {
+    if (!isAuthenticated) return;
 
     setIsLoading(true);
     setError(null);
@@ -53,11 +51,7 @@ export default function TenantDashboardPage() {
     try {
         // Fetch tenant info to get slug (if not already available from session)
         if (!authSlug) {
-          const infoResponse = await fetch(`${API_BASE_URL}/v1/tenant-admin/info`, {
-            headers: {
-              Authorization: `Bearer ${backendToken}`,
-            },
-          });
+          const infoResponse = await fetch('/api/tenant-admin/info');
 
           if (infoResponse.ok) {
             const info = await infoResponse.json();
@@ -65,33 +59,13 @@ export default function TenantDashboardPage() {
           }
         }
 
-        // Fetch packages count
-        const packagesResponse = await fetch(`${API_BASE_URL}/v1/tenant-admin/packages`, {
-          headers: {
-            Authorization: `Bearer ${backendToken}`,
-          },
-        });
-
-        // Fetch bookings count
-        const bookingsResponse = await fetch(`${API_BASE_URL}/v1/tenant-admin/bookings`, {
-          headers: {
-            Authorization: `Bearer ${backendToken}`,
-          },
-        });
-
-        // Fetch blackouts count
-        const blackoutsResponse = await fetch(`${API_BASE_URL}/v1/tenant-admin/blackouts`, {
-          headers: {
-            Authorization: `Bearer ${backendToken}`,
-          },
-        });
-
-        // Fetch Stripe status
-        const stripeResponse = await fetch(`${API_BASE_URL}/v1/tenant-admin/stripe/status`, {
-          headers: {
-            Authorization: `Bearer ${backendToken}`,
-          },
-        });
+        // Fetch all data in parallel
+        const [packagesResponse, bookingsResponse, blackoutsResponse, stripeResponse] = await Promise.all([
+          fetch('/api/tenant-admin/packages'),
+          fetch('/api/tenant-admin/bookings'),
+          fetch('/api/tenant-admin/blackouts'),
+          fetch('/api/tenant-admin/stripe/status'),
+        ]);
 
         const packages = packagesResponse.ok ? await packagesResponse.json() : [];
         const bookings = bookingsResponse.ok ? await bookingsResponse.json() : [];
@@ -105,18 +79,17 @@ export default function TenantDashboardPage() {
           hasStripeConnected: stripeStatus?.chargesEnabled || false,
         });
       } catch (err) {
-        logger.error('Dashboard data fetch failed', err);
+        logger.error('Dashboard data fetch failed', err instanceof Error ? err : { error: String(err) });
         setError(getErrorMessage(err));
         setStats(null);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAuthenticated, authSlug]);
 
   useEffect(() => {
     fetchDashboardData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [backendToken, tenantId, authSlug]);
+  }, [fetchDashboardData, tenantId]);
 
   const statCards = [
     {

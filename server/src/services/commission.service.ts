@@ -1,4 +1,4 @@
-import { PrismaClient } from '../generated/prisma';
+import type { PrismaClient } from '../generated/prisma';
 import { logger } from '../lib/core/logger';
 
 /**

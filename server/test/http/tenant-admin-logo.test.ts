@@ -18,14 +18,15 @@ import type { Express } from 'express';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
-import { PrismaClient } from '../../src/generated/prisma';
 import { loadConfig } from '../../src/lib/core/config';
 import { createApp } from '../../src/app';
 import { buildContainer } from '../../src/di';
+import { getTestPrisma } from '../helpers/global-prisma';
 
 describe('POST /v1/tenant-admin/logo - Logo Upload HTTP Tests', () => {
   let app: Express;
-  let prisma: PrismaClient;
+  // Use singleton to prevent connection pool exhaustion
+  const prisma = getTestPrisma();
   let testTenantId: string;
   let testTenantSlug: string;
   let anotherTenantId: string;
@@ -43,8 +44,7 @@ describe('POST /v1/tenant-admin/logo - Logo Upload HTTP Tests', () => {
   const largePdfBuffer = Buffer.alloc(3 * 1024 * 1024); // 3MB (exceeds 2MB limit)
 
   beforeAll(async () => {
-    // Setup database with test tenants
-    prisma = new PrismaClient();
+    // Setup database with test tenants (singleton already initialized)
 
     // Create test tenant with authentication
     const tenant = await prisma.tenant.upsert({

@@ -1,0 +1,32 @@
+# Build artifacts
+dist/
+node_modules/
+coverage/
+
+# Generated files
+*.cjs
+*.js
+generated/
+
+# Next.js app (has its own ESLint config)
+apps/web/
+
+# Test templates with placeholder syntax
+server/test/templates/
+
+# Utility scripts that use console.log
+server/scripts/
+**/update-tenant-passwords.ts
+server/*.ts
+server/prisma/seeds/
+
+# Documentation examples
+docs/examples/
+
+# Example files (documentation only, not production code)
+**/*.example.ts
+**/*.example.tsx
+
+# E2E test infrastructure
+e2e/
+tests/

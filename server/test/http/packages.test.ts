@@ -9,7 +9,10 @@ import type { Express } from 'express';
 import { createApp } from '../../src/app';
 import { loadConfig } from '../../src/lib/core/config';
 import { buildContainer } from '../../src/di';
-import { PrismaClient } from '../../src/generated/prisma';
+import { getTestPrisma } from '../helpers/global-prisma';
+
+// Use singleton to prevent connection pool exhaustion
+const prisma = getTestPrisma();
 
 describe('GET /v1/packages', () => {
   let app: Express;
@@ -17,8 +20,6 @@ describe('GET /v1/packages', () => {
 
   beforeAll(async () => {
     // Upsert test tenant with known API key
-    const prisma = new PrismaClient();
-
     const tenant = await prisma.tenant.upsert({
       where: { slug: 'mais-test' },
       update: {
@@ -38,7 +39,7 @@ describe('GET /v1/packages', () => {
     });
 
     testTenantApiKey = tenant.apiKeyPublic;
-    await prisma.$disconnect();
+    // No-op: singleton handles its own lifecycle
 
     const config = loadConfig();
     const container = buildContainer({ ...config, ADAPTERS_PRESET: 'mock' });
@@ -78,9 +79,7 @@ describe('GET /v1/packages/:slug', () => {
   let testTenantApiKey: string;
 
   beforeAll(async () => {
-    // Upsert test tenant with known API key
-    const prisma = new PrismaClient();
-
+    // Upsert test tenant with known API key (uses shared singleton)
     const tenant = await prisma.tenant.upsert({
       where: { slug: 'mais-test' },
       update: {
@@ -100,7 +99,7 @@ describe('GET /v1/packages/:slug', () => {
     });
 
     testTenantApiKey = tenant.apiKeyPublic;
-    await prisma.$disconnect();
+    // No-op: singleton handles its own lifecycle
 
     const config = loadConfig();
     const container = buildContainer({ ...config, ADAPTERS_PRESET: 'mock' });
