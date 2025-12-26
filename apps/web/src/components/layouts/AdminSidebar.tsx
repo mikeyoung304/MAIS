@@ -19,6 +19,7 @@ import {
   Users,
   Building2,
   Globe,
+  FileText,
 } from 'lucide-react';
 
 interface NavItem {
@@ -52,6 +53,12 @@ const tenantNavItems: NavItem[] = [
     label: 'Branding',
     icon: <Palette className="h-5 w-5" />,
     description: 'Colors, logo, and style',
+  },
+  {
+    href: '/tenant/pages',
+    label: 'Pages',
+    icon: <FileText className="h-5 w-5" />,
+    description: 'Manage website pages',
   },
   {
     href: '/tenant/payments',

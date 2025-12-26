@@ -151,9 +151,9 @@ export default function TenantDashboardPage() {
 
   const quickActions = [
     {
-      title: 'Edit Landing Page',
-      description: 'Customize your public storefront',
-      href: '/tenant/landing-page',
+      title: 'Manage Pages',
+      description: 'Configure your website pages',
+      href: '/tenant/pages',
       icon: <FileEdit className="h-5 w-5" />,
     },
     {
