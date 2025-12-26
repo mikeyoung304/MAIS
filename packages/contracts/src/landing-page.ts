@@ -2,7 +2,14 @@
  * Landing Page Configuration Types and Schemas
  *
  * Defines the structure for tenant landing page configuration.
- * All sections are optional and can be toggled on/off via tenant admin dashboard.
+ * Uses a page-level toggle system where tenants can enable/disable entire pages.
+ * Each page contains flexible sections that can be customized with content.
+ *
+ * Architecture:
+ * - 7 page types: home, about, services, faq, contact, gallery, testimonials
+ * - 7 section types: hero, text, gallery, testimonials, faq, contact, cta
+ * - Home page is always enabled
+ * - Dynamic navigation updates based on enabled pages
  */
 
 import { z } from 'zod';
@@ -215,7 +222,161 @@ export const FinalCtaSectionConfigSchema = z.object({
 export type FinalCtaSectionConfig = z.infer<typeof FinalCtaSectionConfigSchema>;
 
 // ============================================================================
-// Section Visibility Toggles
+// Flexible Section Schema (New Page-Based System)
+// ============================================================================
+
+/**
+ * Hero section - main banner with headline, subheadline, and CTA
+ */
+export const HeroSectionSchema = z.object({
+  type: z.literal('hero'),
+  headline: z.string().min(1).max(60),
+  subheadline: z.string().max(150).optional(),
+  ctaText: z.string().max(30).default('View Packages'),
+  backgroundImageUrl: SafeImageUrlOptionalSchema,
+});
+
+export type HeroSection = z.infer<typeof HeroSectionSchema>;
+
+/**
+ * Text section - content block with optional image
+ */
+export const TextSectionSchema = z.object({
+  type: z.literal('text'),
+  headline: z.string().max(60).optional(),
+  content: z.string().min(1).max(2000),
+  imageUrl: SafeImageUrlOptionalSchema,
+  imagePosition: z.enum(['left', 'right']).default('left'),
+});
+
+export type TextSection = z.infer<typeof TextSectionSchema>;
+
+/**
+ * Gallery section - image showcase with optional Instagram link
+ */
+export const GallerySectionSchema = z.object({
+  type: z.literal('gallery'),
+  headline: z.string().max(60).default('Our Work'),
+  images: z.array(z.object({
+    url: SafeImageUrlSchema,
+    alt: z.string().max(200),
+  })).max(50).default([]),
+  instagramHandle: z.string().max(30).optional(),
+});
+
+export type GallerySection = z.infer<typeof GallerySectionSchema>;
+
+/**
+ * Testimonials section - customer reviews with ratings
+ */
+export const TestimonialsSectionSchema = z.object({
+  type: z.literal('testimonials'),
+  headline: z.string().max(60).default('What Clients Say'),
+  items: z.array(z.object({
+    quote: z.string().min(10).max(300),
+    authorName: z.string().min(1).max(100),
+    authorRole: z.string().max(50).optional(),
+    authorPhotoUrl: SafeImageUrlOptionalSchema,
+    rating: z.number().int().min(1).max(5).default(5),
+  })).max(12).default([]),
+});
+
+export type TestimonialsSection = z.infer<typeof TestimonialsSectionSchema>;
+
+/**
+ * FAQ section - questions and answers
+ */
+export const FAQSectionSchema = z.object({
+  type: z.literal('faq'),
+  headline: z.string().max(60).default('FAQ'),
+  items: z.array(z.object({
+    question: z.string().min(1).max(200),
+    answer: z.string().min(1).max(1000),
+  })).max(20).default([]),
+});
+
+export type FAQSection = z.infer<typeof FAQSectionSchema>;
+
+/**
+ * Contact section - contact information display
+ */
+export const ContactSectionSchema = z.object({
+  type: z.literal('contact'),
+  headline: z.string().max(60).default('Get in Touch'),
+  email: z.string().email().optional(),
+  phone: z.string().max(20).optional(),
+  address: z.string().max(300).optional(),
+  hours: z.string().max(500).optional(),
+});
+
+export type ContactSection = z.infer<typeof ContactSectionSchema>;
+
+/**
+ * CTA section - call-to-action block
+ */
+export const CTASectionSchema = z.object({
+  type: z.literal('cta'),
+  headline: z.string().max(60),
+  subheadline: z.string().max(150).optional(),
+  ctaText: z.string().max(30).default('Get Started'),
+});
+
+export type CTASection = z.infer<typeof CTASectionSchema>;
+
+/**
+ * Discriminated union of all section types
+ * Used for flexible page composition
+ */
+export const SectionSchema = z.discriminatedUnion('type', [
+  HeroSectionSchema,
+  TextSectionSchema,
+  GallerySectionSchema,
+  TestimonialsSectionSchema,
+  FAQSectionSchema,
+  ContactSectionSchema,
+  CTASectionSchema,
+]);
+
+export type Section = z.infer<typeof SectionSchema>;
+
+// ============================================================================
+// Page Configuration Schema (New Page-Based System)
+// ============================================================================
+
+/**
+ * Page configuration - controls page visibility and content sections
+ */
+export const PageConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  sections: z.array(SectionSchema).default([]),
+});
+
+export type PageConfig = z.infer<typeof PageConfigSchema>;
+
+/**
+ * All pages configuration
+ * Home page is always enabled (literal true constraint)
+ */
+export const PagesConfigSchema = z.object({
+  home: PageConfigSchema.extend({ enabled: z.literal(true) }),
+  about: PageConfigSchema,
+  services: PageConfigSchema,
+  faq: PageConfigSchema,
+  contact: PageConfigSchema,
+  gallery: PageConfigSchema,
+  testimonials: PageConfigSchema,
+});
+
+export type PagesConfig = z.infer<typeof PagesConfigSchema>;
+
+/**
+ * Page names for iteration and type safety
+ */
+export const PAGE_NAMES = ['home', 'about', 'services', 'faq', 'contact', 'gallery', 'testimonials'] as const;
+export type PageName = typeof PAGE_NAMES[number];
+
+// ============================================================================
+// Section Visibility Toggles (Legacy - for backward compatibility)
 // ============================================================================
 
 export const LandingPageSectionsSchema = z.object({
@@ -236,8 +397,24 @@ export type LandingPageSections = z.infer<typeof LandingPageSectionsSchema>;
 // Complete Landing Page Configuration
 // ============================================================================
 
+/**
+ * Landing Page Configuration Schema
+ *
+ * Supports both legacy section-based configuration AND new page-based configuration.
+ * The `pages` field is the new system; legacy fields are kept for backward compatibility.
+ *
+ * Migration path:
+ * 1. New tenants get `pages` field populated with defaults
+ * 2. Existing tenants continue using legacy fields
+ * 3. Migration script converts legacy → pages format
+ * 4. After migration, legacy fields can be deprecated
+ */
 export const LandingPageConfigSchema = z.object({
-  sections: LandingPageSectionsSchema,
+  // New page-based configuration (preferred)
+  pages: PagesConfigSchema.optional(),
+
+  // Legacy section-based configuration (for backward compatibility)
+  sections: LandingPageSectionsSchema.optional(),
   hero: HeroSectionConfigSchema.optional(),
   socialProofBar: SocialProofBarConfigSchema.optional(),
   about: AboutSectionConfigSchema.optional(),
@@ -265,6 +442,7 @@ export type LandingPageConfigResponse = z.infer<typeof LandingPageConfigResponse
  * Partial update - only provided fields are updated
  */
 export const UpdateLandingPageConfigSchema = z.object({
+  pages: PagesConfigSchema.optional(),
   sections: LandingPageSectionsSchema.partial().optional(),
   hero: HeroSectionConfigSchema.optional(),
   socialProofBar: SocialProofBarConfigSchema.optional(),
@@ -282,6 +460,10 @@ export type UpdateLandingPageConfig = z.infer<typeof UpdateLandingPageConfigSche
 // Default Configuration for New Tenants
 // ============================================================================
 
+/**
+ * Legacy section visibility defaults
+ * @deprecated Use DEFAULT_LANDING_PAGE_CONFIG.pages instead
+ */
 export const DEFAULT_LANDING_PAGE_SECTIONS: LandingPageSections = {
   hero: false,
   socialProofBar: false,
@@ -292,4 +474,95 @@ export const DEFAULT_LANDING_PAGE_SECTIONS: LandingPageSections = {
   gallery: false,
   faq: false,
   finalCta: false,
+};
+
+/**
+ * Default page configuration for new tenants
+ * All 7 pages enabled by default with sensible placeholder content
+ */
+export const DEFAULT_PAGES_CONFIG: PagesConfig = {
+  home: {
+    enabled: true as const,
+    sections: [
+      {
+        type: 'hero',
+        headline: 'Welcome to Our Studio',
+        subheadline: 'Professional services tailored to your needs',
+        ctaText: 'View Packages',
+      },
+      {
+        type: 'cta',
+        headline: 'Ready to get started?',
+        subheadline: 'Book your session today',
+        ctaText: 'View Packages',
+      },
+    ],
+  },
+  about: {
+    enabled: true,
+    sections: [
+      {
+        type: 'text',
+        headline: 'About Us',
+        content: 'We are passionate professionals dedicated to delivering exceptional service. Our team brings years of experience and a commitment to quality that shows in every project we undertake.',
+        imagePosition: 'left',
+      },
+    ],
+  },
+  services: {
+    enabled: true,
+    sections: [], // Services page pulls from packages, not sections
+  },
+  faq: {
+    enabled: true,
+    sections: [
+      {
+        type: 'faq',
+        headline: 'Frequently Asked Questions',
+        items: [
+          { question: 'How do I book?', answer: 'Browse our services and complete the booking form. You will receive a confirmation email with all the details.' },
+          { question: 'What is your cancellation policy?', answer: 'Cancel up to 48 hours before your appointment for a full refund. Cancellations within 48 hours may be subject to a fee.' },
+          { question: 'Do you offer custom packages?', answer: 'Yes! Contact us to discuss your specific needs and we will create a customized package just for you.' },
+        ],
+      },
+    ],
+  },
+  contact: {
+    enabled: true,
+    sections: [
+      {
+        type: 'contact',
+        headline: 'Get in Touch',
+      },
+    ],
+  },
+  gallery: {
+    enabled: true,
+    sections: [
+      {
+        type: 'gallery',
+        headline: 'Our Work',
+        images: [],
+      },
+    ],
+  },
+  testimonials: {
+    enabled: true,
+    sections: [
+      {
+        type: 'testimonials',
+        headline: 'What Clients Say',
+        items: [
+          { quote: 'Wonderful experience from start to finish!', authorName: 'Happy Client', rating: 5 },
+        ],
+      },
+    ],
+  },
+};
+
+/**
+ * Complete default landing page configuration for new tenants
+ */
+export const DEFAULT_LANDING_PAGE_CONFIG: LandingPageConfig = {
+  pages: DEFAULT_PAGES_CONFIG,
 };

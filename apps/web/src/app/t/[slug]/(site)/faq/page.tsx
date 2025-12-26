@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { FAQPageContent } from '@/components/tenant';
-import { getTenantStorefrontData, TenantNotFoundError } from '@/lib/tenant';
+import { getTenantStorefrontData, TenantNotFoundError, isPageEnabled } from '@/lib/tenant';
+import type { LandingPageConfig } from '@macon/contracts';
 
 interface FAQPageProps {
   params: Promise<{ slug: string }>;
@@ -11,6 +12,7 @@ interface FAQPageProps {
  * FAQ Page - Server component for SSR and metadata
  *
  * Fetches FAQ data and renders the accessible accordion.
+ * Returns 404 if page is disabled in tenant configuration.
  */
 
 export async function generateMetadata({ params }: FAQPageProps): Promise<Metadata> {
@@ -18,6 +20,15 @@ export async function generateMetadata({ params }: FAQPageProps): Promise<Metada
 
   try {
     const { tenant } = await getTenantStorefrontData(slug);
+    const config = tenant.branding?.landingPage as LandingPageConfig | undefined;
+
+    // If page is disabled, return noindex metadata
+    if (!isPageEnabled(config, 'faq')) {
+      return {
+        title: 'Page Not Found',
+        robots: { index: false, follow: false },
+      };
+    }
 
     return {
       title: `FAQ | ${tenant.name}`,
@@ -46,7 +57,14 @@ export default async function FAQPage({ params }: FAQPageProps) {
 
   try {
     const { tenant } = await getTenantStorefrontData(slug);
-    const faqItems = tenant.branding?.landingPage?.faq?.items || [];
+    const config = tenant.branding?.landingPage as LandingPageConfig | undefined;
+
+    // Check if FAQ page is enabled
+    if (!isPageEnabled(config, 'faq')) {
+      notFound();
+    }
+
+    const faqItems = config?.faq?.items || [];
     const basePath = `/t/${slug}`;
 
     return <FAQPageContent faqItems={faqItems} basePath={basePath} />;

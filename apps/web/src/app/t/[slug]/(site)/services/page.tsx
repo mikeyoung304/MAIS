@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ServicesPageContent } from '@/components/tenant';
-import { getTenantStorefrontData, TenantNotFoundError } from '@/lib/tenant';
+import { getTenantStorefrontData, TenantNotFoundError, isPageEnabled } from '@/lib/tenant';
+import type { LandingPageConfig } from '@macon/contracts';
 
 interface ServicesPageProps {
   params: Promise<{ slug: string }>;
@@ -12,6 +13,7 @@ interface ServicesPageProps {
  *
  * Displays all active packages grouped by segment (if segments exist).
  * Shows package details including add-ons and pricing.
+ * Returns 404 if page is disabled in tenant configuration.
  */
 
 export async function generateMetadata({ params }: ServicesPageProps): Promise<Metadata> {
@@ -19,6 +21,15 @@ export async function generateMetadata({ params }: ServicesPageProps): Promise<M
 
   try {
     const { tenant } = await getTenantStorefrontData(slug);
+    const config = tenant.branding?.landingPage as LandingPageConfig | undefined;
+
+    // If page is disabled, return noindex metadata
+    if (!isPageEnabled(config, 'services')) {
+      return {
+        title: 'Page Not Found',
+        robots: { index: false, follow: false },
+      };
+    }
 
     return {
       title: `Services | ${tenant.name}`,
@@ -47,6 +58,13 @@ export default async function ServicesPage({ params }: ServicesPageProps) {
 
   try {
     const data = await getTenantStorefrontData(slug);
+    const config = data.tenant.branding?.landingPage as LandingPageConfig | undefined;
+
+    // Check if services page is enabled
+    if (!isPageEnabled(config, 'services')) {
+      notFound();
+    }
+
     const basePath = `/t/${slug}`;
 
     return <ServicesPageContent data={data} basePath={basePath} />;

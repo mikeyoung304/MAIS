@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { AboutPageContent } from '@/components/tenant';
-import { getTenantStorefrontData, TenantNotFoundError } from '@/lib/tenant';
+import { getTenantStorefrontData, TenantNotFoundError, isPageEnabled } from '@/lib/tenant';
+import type { LandingPageConfig } from '@macon/contracts';
 
 interface AboutPageProps {
   params: Promise<{ slug: string }>;
@@ -12,6 +13,7 @@ interface AboutPageProps {
  *
  * Displays the tenant's about content with optional image.
  * Falls back to default content when not configured.
+ * Returns 404 if page is disabled in tenant configuration.
  */
 
 export async function generateMetadata({ params }: AboutPageProps): Promise<Metadata> {
@@ -19,7 +21,17 @@ export async function generateMetadata({ params }: AboutPageProps): Promise<Meta
 
   try {
     const { tenant } = await getTenantStorefrontData(slug);
-    const aboutContent = tenant.branding?.landingPage?.about?.content || '';
+    const config = tenant.branding?.landingPage as LandingPageConfig | undefined;
+
+    // If page is disabled, return noindex metadata
+    if (!isPageEnabled(config, 'about')) {
+      return {
+        title: 'Page Not Found',
+        robots: { index: false, follow: false },
+      };
+    }
+
+    const aboutContent = config?.about?.content || '';
     const description = aboutContent.slice(0, 160) || `Learn more about ${tenant.name}`;
 
     return {
@@ -28,8 +40,8 @@ export async function generateMetadata({ params }: AboutPageProps): Promise<Meta
       openGraph: {
         title: `About | ${tenant.name}`,
         description,
-        images: tenant.branding?.landingPage?.about?.imageUrl
-          ? [{ url: tenant.branding.landingPage.about.imageUrl }]
+        images: config?.about?.imageUrl
+          ? [{ url: config.about.imageUrl }]
           : [],
       },
       robots: {
@@ -51,6 +63,13 @@ export default async function AboutPage({ params }: AboutPageProps) {
 
   try {
     const { tenant } = await getTenantStorefrontData(slug);
+    const config = tenant.branding?.landingPage as LandingPageConfig | undefined;
+
+    // Check if about page is enabled
+    if (!isPageEnabled(config, 'about')) {
+      notFound();
+    }
+
     const basePath = `/t/${slug}`;
 
     return <AboutPageContent tenant={tenant} basePath={basePath} />;

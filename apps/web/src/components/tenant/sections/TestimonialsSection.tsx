@@ -1,0 +1,76 @@
+import Image from 'next/image';
+import type { TestimonialsSection as TestimonialsSectionType, TenantPublicDto } from '@macon/contracts';
+import { StarRating } from '@/components/ui/star-rating';
+
+interface TestimonialsSectionProps extends TestimonialsSectionType {
+  tenant: TenantPublicDto;
+}
+
+/**
+ * Testimonials section component for customer reviews
+ *
+ * Features:
+ * - Grid of testimonial cards
+ * - Star ratings
+ * - Author info with optional photo
+ */
+export function TestimonialsSection({
+  headline = 'What Clients Say',
+  items = [],
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  tenant: _tenant,
+}: TestimonialsSectionProps) {
+  // Don't render if no testimonials
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="py-32 md:py-40">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="text-center">
+          <h2 className="font-serif text-3xl font-bold text-text-primary sm:text-4xl">
+            {headline}
+          </h2>
+        </div>
+
+        <div className="mt-16 grid gap-8 md:grid-cols-2">
+          {items.map((testimonial, i) => (
+            <div
+              key={i}
+              className="rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg"
+            >
+              <StarRating rating={testimonial.rating} />
+              <p className="mt-4 text-text-muted">
+                &ldquo;{testimonial.quote}&rdquo;
+              </p>
+              <div className="mt-4 flex items-center gap-3">
+                {testimonial.authorPhotoUrl && (
+                  <div className="relative h-10 w-10 flex-shrink-0">
+                    <Image
+                      src={testimonial.authorPhotoUrl}
+                      alt={`${testimonial.authorName} testimonial photo`}
+                      fill
+                      className="rounded-full object-cover"
+                      sizes="40px"
+                    />
+                  </div>
+                )}
+                <div>
+                  <p className="font-semibold text-text-primary">
+                    {testimonial.authorName}
+                  </p>
+                  {testimonial.authorRole && (
+                    <p className="text-sm text-text-muted">
+                      {testimonial.authorRole}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

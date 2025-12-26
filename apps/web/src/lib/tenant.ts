@@ -6,7 +6,147 @@
  */
 
 import { cache } from 'react';
-import { TenantPublicDto } from '@macon/contracts';
+import type {
+  TenantPublicDto,
+  LandingPageConfig,
+  PageName,
+  PagesConfig,
+  Section,
+} from '@macon/contracts';
+import { DEFAULT_PAGES_CONFIG } from '@macon/contracts';
+
+/**
+ * Check if a page is enabled in the tenant's landing page configuration
+ *
+ * Returns true if:
+ * - No pages config exists (legacy mode - all pages available)
+ * - Page is explicitly enabled (or enabled is not set, defaults to true)
+ *
+ * Returns false only if pages config exists AND page.enabled === false
+ *
+ * @param config - Landing page configuration (may be undefined)
+ * @param pageName - Name of the page to check
+ * @returns Whether the page should be accessible
+ *
+ * @example
+ * const config = tenant.branding?.landingPage as LandingPageConfig | undefined;
+ * if (!isPageEnabled(config, 'about')) {
+ *   notFound();
+ * }
+ */
+export function isPageEnabled(
+  config: LandingPageConfig | undefined | null,
+  pageName: Exclude<PageName, 'home'>
+): boolean {
+  // Legacy mode: no pages config means all pages are available
+  if (!config?.pages) {
+    return true;
+  }
+  // Check if page is explicitly enabled (defaults to true if not set)
+  return config.pages[pageName]?.enabled !== false;
+}
+
+/**
+ * Normalize legacy landing page config to the new pages format.
+ * Handles both legacy section-based and new page-based configs.
+ *
+ * This function provides a centralized conversion from legacy LandingPageConfig
+ * (with separate hero, about, gallery, testimonials, faq properties) to the
+ * new PagesConfig format (with pages containing sections).
+ *
+ * @param config - Landing page configuration (may be undefined/null)
+ * @returns Normalized PagesConfig with all pages populated
+ *
+ * @example
+ * const config = tenant.branding?.landingPage as LandingPageConfig | undefined;
+ * const pages = normalizeToPages(config);
+ * const galleryData = pages.gallery.sections[0] as GallerySection | undefined;
+ */
+export function normalizeToPages(config: LandingPageConfig | null | undefined): PagesConfig {
+  // If already has pages config, return it
+  if (config?.pages) {
+    return config.pages;
+  }
+
+  // Start with defaults (deep clone to avoid mutation)
+  const pages = JSON.parse(JSON.stringify(DEFAULT_PAGES_CONFIG)) as PagesConfig;
+
+  if (!config) return pages;
+
+  // Convert legacy hero to home page hero section
+  if (config.hero) {
+    const heroSection: Section = {
+      type: 'hero',
+      headline: config.hero.headline || 'Welcome',
+      subheadline: config.hero.subheadline,
+      ctaText: config.hero.ctaText || 'View Packages',
+      backgroundImageUrl: config.hero.backgroundImageUrl,
+    };
+    pages.home.sections = [heroSection];
+  }
+
+  // Convert legacy about
+  if (config.about?.content) {
+    pages.about.sections = [
+      {
+        type: 'text',
+        headline: config.about.headline || 'About Us',
+        content: config.about.content,
+        imageUrl: config.about.imageUrl,
+        imagePosition: 'left',
+      },
+    ];
+    pages.about.enabled = config.sections?.about !== false;
+  }
+
+  // Convert legacy gallery
+  if (config.gallery?.images?.length) {
+    pages.gallery.sections = [
+      {
+        type: 'gallery',
+        headline: config.gallery.headline || 'Our Work',
+        images: config.gallery.images.map((img) => ({
+          url: img.url,
+          alt: img.alt || '',
+        })),
+        instagramHandle: config.gallery.instagramHandle,
+      },
+    ];
+    pages.gallery.enabled = config.sections?.gallery !== false;
+  }
+
+  // Convert legacy testimonials
+  if (config.testimonials?.items?.length) {
+    pages.testimonials.sections = [
+      {
+        type: 'testimonials',
+        headline: config.testimonials.headline || 'What Clients Say',
+        items: config.testimonials.items.map((item) => ({
+          quote: item.quote,
+          authorName: item.author,
+          authorRole: item.role,
+          authorPhotoUrl: item.imageUrl,
+          rating: item.rating || 5,
+        })),
+      },
+    ];
+    pages.testimonials.enabled = config.sections?.testimonials !== false;
+  }
+
+  // Convert legacy FAQ
+  if (config.faq?.items?.length) {
+    pages.faq.sections = [
+      {
+        type: 'faq',
+        headline: config.faq.headline || 'FAQ',
+        items: config.faq.items,
+      },
+    ];
+    pages.faq.enabled = config.sections?.faq !== false;
+  }
+
+  return pages;
+}
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 

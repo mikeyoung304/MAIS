@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import type { TenantPublicDto } from '@macon/contracts';
-import { NAV_ITEMS, buildNavHref } from './navigation';
+import type { TenantPublicDto, LandingPageConfig } from '@macon/contracts';
+import { getNavigationItems, buildNavHref } from './navigation';
 
 interface TenantFooterProps {
   tenant: TenantPublicDto;
@@ -26,8 +26,11 @@ export function TenantFooter({ tenant, basePath: basePathProp, domainParam }: Te
   const basePath = basePathProp ?? `/t/${tenant.slug}`;
   const currentYear = new Date().getFullYear();
 
-  // Build nav items using shared configuration
-  const navItems = NAV_ITEMS.map((item) => ({
+  // Get landing page config for dynamic navigation
+  const landingPageConfig = tenant.branding?.landingPage as LandingPageConfig | undefined;
+
+  // Build nav items using dynamic navigation based on enabled pages
+  const navItems = getNavigationItems(landingPageConfig).map((item) => ({
     label: item.label,
     href: buildNavHref(basePath, item, domainParam),
   }));

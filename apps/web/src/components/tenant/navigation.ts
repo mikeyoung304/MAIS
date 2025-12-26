@@ -3,7 +3,12 @@
  *
  * Shared navigation items and utilities for TenantNav and TenantFooter.
  * Single source of truth for navigation structure.
+ *
+ * Supports both legacy static navigation and new dynamic navigation
+ * based on page configuration.
  */
+
+import type { LandingPageConfig, PageName } from '@macon/contracts';
 
 /**
  * Navigation item definition
@@ -16,12 +21,87 @@ export interface NavItem {
 }
 
 /**
- * Navigation items for tenant storefronts
+ * Page order for consistent navigation display
+ * Matches the order users expect to see in nav
+ */
+const PAGE_ORDER: PageName[] = [
+  'home',
+  'about',
+  'services',
+  'gallery',
+  'testimonials',
+  'faq',
+  'contact',
+];
+
+/**
+ * Human-readable labels for each page
+ */
+const PAGE_LABELS: Record<PageName, string> = {
+  home: 'Home',
+  about: 'About',
+  services: 'Services',
+  gallery: 'Gallery',
+  testimonials: 'Testimonials',
+  faq: 'FAQ',
+  contact: 'Contact',
+};
+
+/**
+ * URL paths for each page
+ */
+const PAGE_PATHS: Record<PageName, string> = {
+  home: '',
+  about: '/about',
+  services: '/services',
+  gallery: '/gallery',
+  testimonials: '/testimonials',
+  faq: '/faq',
+  contact: '/contact',
+};
+
+/**
+ * Get navigation items based on page configuration
+ *
+ * Returns only the pages that are enabled in the tenant's configuration.
+ * Falls back to legacy NAV_ITEMS if no pages config is present.
+ *
+ * @param config - Landing page configuration (may include pages or legacy sections)
+ * @returns Array of navigation items for enabled pages
+ *
+ * @example
+ * ```ts
+ * const navItems = getNavigationItems(tenant.branding?.landingPage);
+ * // Returns: [{ label: 'Home', path: '' }, { label: 'About', path: '/about' }, ...]
+ * ```
+ */
+export function getNavigationItems(config?: LandingPageConfig | null): NavItem[] {
+  // If new pages config exists, use it
+  if (config?.pages) {
+    return PAGE_ORDER
+      .filter((page) => {
+        const pageConfig = config.pages![page];
+        return pageConfig?.enabled !== false;
+      })
+      .map((page) => ({
+        label: PAGE_LABELS[page],
+        path: PAGE_PATHS[page],
+      }));
+  }
+
+  // Fall back to legacy static navigation
+  return NAV_ITEMS;
+}
+
+/**
+ * Legacy static navigation items for tenant storefronts
+ *
+ * @deprecated Use getNavigationItems(config) for dynamic navigation
  *
  * @remarks
  * - 'path' is relative to the basePath
  * - Empty string '' represents the home page
- * - Update this array to add/remove pages from all navigations
+ * - Kept for backward compatibility during migration
  */
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Home', path: '' },

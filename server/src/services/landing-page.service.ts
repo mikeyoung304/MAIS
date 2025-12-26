@@ -19,7 +19,7 @@
  * The repository handles data persistence and transaction management.
  */
 
-import type { LandingPageConfig } from '@macon/contracts';
+import type { LandingPageConfig, LandingPageSections } from '@macon/contracts';
 import type {
   PrismaTenantRepository,
   LandingPageDraftWrapper,
@@ -202,11 +202,15 @@ export class LandingPageService {
    * Partial update - only affects the specified section's enabled state.
    *
    * @param tenantId - Tenant ID for data isolation
-   * @param section - Section name to toggle
+   * @param section - Section name to toggle (must be a valid section key)
    * @param enabled - Whether section should be enabled
    * @returns Updated configuration
    */
-  async toggleSection(tenantId: string, section: string, enabled: boolean): Promise<any> {
+  async toggleSection(
+    tenantId: string,
+    section: keyof LandingPageSections,
+    enabled: boolean
+  ): Promise<LandingPageConfig> {
     const result = await this.tenantRepo.toggleLandingPageSection(tenantId, section, enabled);
 
     logger.info(

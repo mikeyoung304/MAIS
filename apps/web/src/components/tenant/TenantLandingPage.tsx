@@ -1,6 +1,21 @@
+/**
+ * TenantLandingPage - Main landing page component
+ *
+ * TODO: Refactor to use SectionRenderer for section display.
+ * Currently has inline section rendering that duplicates sections/*.tsx components.
+ * See TODO #410 for details.
+ *
+ * The refactor would:
+ * 1. Use normalizeToPages() from '@/lib/tenant' to convert legacy config
+ * 2. Use SectionRenderer to render home page sections
+ * 3. Remove duplicate rendering logic for hero, about, testimonials, gallery, faq
+ * 4. Keep packages/tier cards as specialized component (not a generic section)
+ */
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { StarRating } from '@/components/ui/star-rating';
 import type { TenantStorefrontData } from '@/lib/tenant';
 import { formatPrice } from '@/lib/format';
 import { TIER_ORDER } from '@/lib/packages';
@@ -11,21 +26,6 @@ interface TenantLandingPageProps {
   basePath?: string;
   /** Domain query parameter for custom domain routes (e.g., '?domain=example.com') */
   domainParam?: string;
-}
-
-/**
- * Render star icons based on rating
- */
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <div className="flex gap-1 text-macon-orange">
-      {[...Array(5)].map((_, i) => (
-        <span key={i} className={i < rating ? 'opacity-100' : 'opacity-30'}>
-          &#9733;
-        </span>
-      ))}
-    </div>
-  );
 }
 
 /**

@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ContactPageContent } from '@/components/tenant';
-import { getTenantStorefrontData, TenantNotFoundError } from '@/lib/tenant';
+import { getTenantStorefrontData, TenantNotFoundError, isPageEnabled } from '@/lib/tenant';
+import type { LandingPageConfig } from '@macon/contracts';
 
 interface ContactPageProps {
   params: Promise<{ slug: string }>;
@@ -11,6 +12,7 @@ interface ContactPageProps {
  * Contact Page - Server component for SSR and metadata
  *
  * Displays contact information and a contact form.
+ * Returns 404 if page is disabled in tenant configuration.
  */
 
 export async function generateMetadata({ params }: ContactPageProps): Promise<Metadata> {
@@ -18,6 +20,15 @@ export async function generateMetadata({ params }: ContactPageProps): Promise<Me
 
   try {
     const { tenant } = await getTenantStorefrontData(slug);
+    const config = tenant.branding?.landingPage as LandingPageConfig | undefined;
+
+    // If page is disabled, return noindex metadata
+    if (!isPageEnabled(config, 'contact')) {
+      return {
+        title: 'Page Not Found',
+        robots: { index: false, follow: false },
+      };
+    }
 
     return {
       title: `Contact | ${tenant.name}`,
@@ -46,6 +57,13 @@ export default async function ContactPage({ params }: ContactPageProps) {
 
   try {
     const { tenant } = await getTenantStorefrontData(slug);
+    const config = tenant.branding?.landingPage as LandingPageConfig | undefined;
+
+    // Check if contact page is enabled
+    if (!isPageEnabled(config, 'contact')) {
+      notFound();
+    }
+
     const basePath = `/t/${slug}`;
 
     return <ContactPageContent tenant={tenant} basePath={basePath} />;

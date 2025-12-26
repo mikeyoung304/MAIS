@@ -10,7 +10,7 @@ import {
   SafeImageUrlSchema,
   LandingPageConfigSchema,
 } from '@macon/contracts';
-import type { TenantPublicDto, LandingPageConfig } from '@macon/contracts';
+import type { TenantPublicDto, LandingPageConfig, LandingPageSections } from '@macon/contracts';
 import { logger } from '../../lib/core/logger';
 import { NotFoundError, ValidationError } from '../../lib/errors';
 
@@ -492,13 +492,27 @@ export class PrismaTenantRepository {
    * @param tenantId - Tenant ID
    * @returns Landing page config or null if not set
    */
-  async getLandingPageConfig(tenantId: string): Promise<any | null> {
+  async getLandingPageConfig(tenantId: string): Promise<LandingPageConfig | null> {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
       select: { landingPageConfig: true },
     });
 
-    return tenant?.landingPageConfig ?? null;
+    if (!tenant?.landingPageConfig) {
+      return null;
+    }
+
+    // Validate stored config matches expected schema
+    const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfig);
+    if (!result.success) {
+      logger.warn(
+        { tenantId, errors: result.error.issues.length },
+        'Invalid landing page config in database, returning null'
+      );
+      return null;
+    }
+
+    return result.data;
   }
 
   /**
@@ -508,15 +522,22 @@ export class PrismaTenantRepository {
    * @param tenantId - Tenant ID
    * @param config - Landing page configuration object
    * @returns Updated landing page config
+   * @throws ValidationError if config fails schema validation
    */
-  async updateLandingPageConfig(tenantId: string, config: any): Promise<any> {
+  async updateLandingPageConfig(
+    tenantId: string,
+    config: LandingPageConfig
+  ): Promise<LandingPageConfig> {
+    // Validate before storing
+    const validated = LandingPageConfigSchema.parse(config);
+
     const tenant = await this.prisma.tenant.update({
       where: { id: tenantId },
-      data: { landingPageConfig: config },
+      data: { landingPageConfig: validated },
       select: { landingPageConfig: true },
     });
 
-    return tenant.landingPageConfig;
+    return tenant.landingPageConfig as LandingPageConfig;
   }
 
   /**
@@ -524,37 +545,42 @@ export class PrismaTenantRepository {
    * Partial update - only affects the specified section's enabled state
    *
    * @param tenantId - Tenant ID
-   * @param section - Section name to toggle
+   * @param section - Section name to toggle (must be a valid section key)
    * @param enabled - Whether section should be enabled
    * @returns Updated landing page config
    */
   async toggleLandingPageSection(
     tenantId: string,
-    section: string,
+    section: keyof LandingPageSections,
     enabled: boolean
-  ): Promise<any> {
+  ): Promise<LandingPageConfig> {
     // Get current config
     const currentConfig = await this.getLandingPageConfig(tenantId);
 
-    // Initialize config if it doesn't exist
-    const config = currentConfig || {
-      sections: {
-        hero: false,
-        socialProofBar: false,
-        segmentSelector: true,
-        about: false,
-        testimonials: false,
-        accommodation: false,
-        gallery: false,
-        faq: false,
-        finalCta: false,
-      },
+    // Default sections configuration
+    const defaultSections: LandingPageSections = {
+      hero: false,
+      socialProofBar: false,
+      segmentSelector: true,
+      about: false,
+      testimonials: false,
+      accommodation: false,
+      gallery: false,
+      faq: false,
+      finalCta: false,
     };
 
-    // Update the specific section
+    // Initialize config if it doesn't exist
+    const config: LandingPageConfig = currentConfig || {
+      sections: defaultSections,
+    };
+
+    // Initialize sections if they don't exist
     if (!config.sections) {
-      config.sections = {};
+      config.sections = defaultSections;
     }
+
+    // Update the specific section
     config.sections[section] = enabled;
 
     // Save updated config

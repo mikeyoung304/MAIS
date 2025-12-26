@@ -6,8 +6,8 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
-import type { TenantPublicDto } from '@macon/contracts';
-import { NAV_ITEMS, buildNavHref } from './navigation';
+import type { TenantPublicDto, LandingPageConfig } from '@macon/contracts';
+import { getNavigationItems, buildNavHref } from './navigation';
 
 interface TenantNavProps {
   tenant: TenantPublicDto;
@@ -43,14 +43,17 @@ export function TenantNav({ tenant, basePath: basePathProp, domainParam }: Tenan
   // Use provided basePath or default to slug-based path
   const basePath = basePathProp ?? `/t/${tenant.slug}`;
 
-  // Memoize navItems (only recreate when basePath or domainParam changes)
+  // Get landing page config for dynamic navigation
+  const landingPageConfig = tenant.branding?.landingPage as LandingPageConfig | undefined;
+
+  // Memoize navItems - now uses dynamic navigation based on enabled pages
   const navItems = useMemo<NavItemWithHref[]>(
     () =>
-      NAV_ITEMS.map((item) => ({
+      getNavigationItems(landingPageConfig).map((item) => ({
         label: item.label,
         href: buildNavHref(basePath, item, domainParam),
       })),
-    [basePath, domainParam]
+    [basePath, domainParam, landingPageConfig]
   );
 
   // Close menu on route change

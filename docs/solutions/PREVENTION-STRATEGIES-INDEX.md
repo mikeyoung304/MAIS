@@ -936,6 +936,59 @@ async function ensureLoggedIn(page) {
 
 ---
 
+### "I'm running multi-agent code review or parallel TODO resolution"
+
+**Read:**
+
+1. [Multi-Agent Code Review Prevention Strategies](./methodology/MULTI-AGENT-CODE-REVIEW-PREVENTION-STRATEGIES.md) (20 min)
+2. [Multi-Agent Quick Reference](./methodology/MULTI-AGENT-QUICK-REFERENCE.md) (5 min, print this!)
+
+**Agent Coordination:**
+
+- [ ] All parallel agents use `run_in_background: true`
+- [ ] TaskOutput called for each agent to collect results
+- [ ] Dependent tasks run sequentially, not parallel
+- [ ] No file conflicts between parallel agents
+- [ ] Appropriate model selected (haiku/sonnet/opus)
+
+**Triage:**
+
+- [ ] Used AskUserQuestion for unclear items
+- [ ] Applied P1/P2/P3 priority matrix
+- [ ] Verified code doesn't already exist (glob/grep/git log)
+- [ ] Created TODO file with proper template
+- [ ] Set revisit triggers for deferred items
+
+**Verification:**
+
+- [ ] Run `npm run typecheck` after all fixes
+- [ ] Run `npm test` to verify no regressions
+- [ ] Update TODO files from `pending` to `complete`
+- [ ] Summarize changes for user
+- [ ] Playwright verification for UI changes
+
+**Performance Tips:**
+
+```typescript
+// Group related fixes into single agents
+Task('P3 Performance Fixes - TODOs 352-354', {
+  run_in_background: true
+});
+
+// Launch 8+ agents for independent tasks
+const agents = independentTodos.map(t =>
+  Task(`Fix ${t.id}`, { run_in_background: true })
+);
+
+// Use haiku for simple tasks
+Task('Remove unused import', {
+  subagent_type: 'haiku',
+  run_in_background: true
+});
+```
+
+---
+
 ## 🔍 By Issue Category
 
 ### Multi-Tenant Security Issues
@@ -1339,6 +1392,49 @@ Before creating TODO from plan:
 
 **Expected Benefit:** 50% faster plan reviews, 80% fewer stale todos
 
+#### [Multi-Agent Code Review Prevention Strategies](./methodology/MULTI-AGENT-CODE-REVIEW-PREVENTION-STRATEGIES.md)
+
+**Purpose:** Comprehensive prevention strategies for multi-agent code review workflow
+**Audience:** Engineers using `/workflows:review`, `/resolve_parallel`, `/triage`
+**Length:** ~6,000 words
+**Date Created:** 2025-12-25
+
+**Covers:**
+
+- Agent coordination (run_in_background, TaskOutput, dependencies)
+- Triage best practices (AskUserQuestion, P1/P2/P3 classification)
+- Fix verification (typecheck, TODO updates, summaries)
+- Performance optimization (grouping, parallelism, model selection)
+- Common pitfalls and solutions
+
+**Key Prevention Areas:**
+
+1. **Agent Coordination Issues**
+   - Always use `run_in_background: true` for parallel agents
+   - Use TaskOutput to collect results after completion
+   - Never launch dependent tasks in parallel
+   - Prevent file conflicts between agents
+
+2. **Triage Best Practices**
+   - Use AskUserQuestion for unclear items
+   - Apply P1/P2/P3 decision matrix
+   - Create file-based todos for tracking
+   - Verify before creating (prevent stale TODOs)
+
+3. **Fix Verification**
+   - Run typecheck after parallel fixes
+   - Update TODO files to mark complete
+   - Summarize changes for user
+   - Playwright verification for UI changes
+
+4. **Performance Optimization**
+   - Group related fixes into single agents
+   - Launch 8+ agents in parallel
+   - Use haiku model for simple tasks
+   - Set appropriate timeouts
+
+**Quick Reference:** [Multi-Agent Quick Reference](./methodology/MULTI-AGENT-QUICK-REFERENCE.md) (print and pin!)
+
 #### [Stale Todos Quick Reference](./STALE-TODOS-QUICK-REFERENCE.md)
 
 **Purpose:** Quick decision tree for todo creation (5-minute guide)
@@ -1399,7 +1495,7 @@ Are you creating a todo based on a plan?
 
 ---
 
-**Last Updated:** 2025-12-05
-**Recent Additions:** Todo staleness prevention, parallel agent workflow best practices (session learning)
+**Last Updated:** 2025-12-25
+**Recent Additions:** Multi-agent code review prevention strategies, multi-agent quick reference (2025-12-25)
 **Maintainer:** Tech Lead
 **Status:** Active

@@ -20,6 +20,7 @@ import multer from 'multer';
 import { ZodError } from 'zod';
 import type { LandingPageService } from '../services/landing-page.service';
 import { LandingPageConfigSchema } from '@macon/contracts';
+import type { LandingPageSections } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
 import { NotFoundError, ValidationError, TooManyRequestsError } from '../lib/errors';
 import {
@@ -179,7 +180,12 @@ export function createTenantAdminLandingPageRoutes(landingPageService: LandingPa
         return;
       }
 
-      await landingPageService.toggleSection(tenantId, section, enabled);
+      // Type assertion is safe here because validSections.includes() validates the value above
+      await landingPageService.toggleSection(
+        tenantId,
+        section as keyof LandingPageSections,
+        enabled
+      );
       res.json({ success: true });
     } catch (error) {
       next(error);
