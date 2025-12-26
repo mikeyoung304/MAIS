@@ -363,7 +363,7 @@ export class MockCatalogRepository implements CatalogRepository {
 
   async getAddOnsForSegment(_tenantId: string, segmentId: string): Promise<AddOn[]> {
     // Mock mode: Return all add-ons for packages in segment
-    const segmentPackages = await this.getPackagesBySegment(tenantId, segmentId);
+    const segmentPackages = await this.getPackagesBySegment(_tenantId, segmentId);
     const packageIds = new Set(segmentPackages.map((p) => p.id));
     return Array.from(addOns.values()).filter((a) => packageIds.has(a.packageId));
   }

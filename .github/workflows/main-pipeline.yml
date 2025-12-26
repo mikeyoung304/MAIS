@@ -90,10 +90,18 @@ jobs:
         run: npm ci
 
       - name: Run ESLint
-        run: npm run lint
-        # TODO: Remove continue-on-error after fixing pre-existing lint errors
-        # ~500 errors remain (mostly console.log in client code)
-        continue-on-error: true
+        run: npm run lint 2>&1 | tee lint-output.txt || true
+
+      - name: Check lint regression
+        if: github.event_name == 'pull_request'
+        run: |
+          BASELINE=305
+          ERROR_COUNT=$(grep -c " error " lint-output.txt 2>/dev/null || echo "0")
+          if [ "$ERROR_COUNT" -gt "$BASELINE" ]; then
+            echo "::error::Lint errors increased from $BASELINE to $ERROR_COUNT"
+            exit 1
+          fi
+          echo "Lint errors: $ERROR_COUNT (baseline: $BASELINE)"
 
       - name: Check formatting
         run: npm run format:check

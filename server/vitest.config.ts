@@ -49,19 +49,16 @@ export default defineConfig(({ mode }) => {
         ],
         all: true,
 
-        // Coverage thresholds - Starting with current baseline, targeting 80%
-        // Baseline (2025-12-26): 43.27% lines, 81.11% branches, 46.7% functions
-        // Target:  80% lines, 75% branches, 80% functions, 80% statements
-        // NOTE: Thresholds disabled in CI because unit/integration tests run separately
-        // and neither alone meets the combined threshold. Enable locally for full test runs.
-        thresholds: process.env.CI
-          ? undefined
-          : {
-              lines: 43, // Baseline: 43.27%, Target: 80%
-              branches: 75, // Baseline: 81.11%, Target: 75% ✓
-              functions: 46, // Baseline: 46.7%, Target: 80%
-              statements: 43, // Baseline: 43.27%, Target: 80%
-            },
+        // Coverage thresholds - Realistic values that each test suite can meet independently
+        // CI runs unit and integration tests separately, so thresholds must be achievable by each
+        // Local baseline (2025-12-26): 43.27% lines, 81.11% branches, 46.7% functions
+        // Target: 80% lines, 75% branches, 80% functions, 80% statements
+        thresholds: {
+          lines: 30, // Low threshold for CI (unit tests alone may not cover all lines)
+          branches: 60, // Branches typically have better coverage
+          functions: 35, // Low threshold for CI (integration tests cover different functions)
+          statements: 30, // Matches lines threshold
+        },
 
         // Additional V8 options
         reportsDirectory: './coverage',
