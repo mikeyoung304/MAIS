@@ -310,7 +310,7 @@ export async function getTenantPackageBySlug(
   apiKeyPublic: string,
   packageSlug: string
 ): Promise<PackageData | null> {
-  const url = `${API_BASE_URL}/v1/packages/slug/${encodeURIComponent(packageSlug)}`;
+  const url = `${API_BASE_URL}/v1/packages/${encodeURIComponent(packageSlug)}`;
 
   const response = await fetch(url, {
     method: 'GET',
