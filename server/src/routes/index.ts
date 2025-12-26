@@ -58,6 +58,7 @@ import { createTenantAdminWebhookRoutes } from './tenant-admin-webhooks.routes';
 import { createTenantAdminDomainsRouter } from './tenant-admin-domains.routes';
 import { DomainVerificationService } from '../services/domain-verification.service';
 import { createInternalRoutes } from './internal.routes';
+import { createAgentRoutes } from './agent.routes';
 import {
   createPublicBookingManagementRouter,
   PublicBookingManagementController,
@@ -646,6 +647,12 @@ export function createV1Router(
     const tenantAdminDomainsRouter = createTenantAdminDomainsRouter(domainVerificationService);
     app.use('/v1/tenant-admin/domains', tenantAuthMiddleware, tenantAdminDomainsRouter);
     logger.info('✅ Tenant admin domain routes mounted at /v1/tenant-admin/domains');
+
+    // Register agent routes (for AI agent integration)
+    // Requires tenant admin authentication - agent proposals are tied to tenant
+    const agentRoutes = createAgentRoutes(prismaClient);
+    app.use('/v1/agent', tenantAuthMiddleware, agentRoutes);
+    logger.info('✅ Agent routes mounted at /v1/agent');
   }
 
   // Register internal routes (for service-to-service communication)

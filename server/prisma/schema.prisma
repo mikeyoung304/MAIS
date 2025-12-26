@@ -109,6 +109,8 @@ model Tenant {
   services         Service[] // Scheduling services (e.g., "30-Minute Consultation")
   availabilityRules AvailabilityRule[] // Scheduling availability rules
   domains          TenantDomain[] // Custom domains for tenant website
+  agentProposals   AgentProposal[] // AI agent write operation proposals
+  agentAuditLogs   AgentAuditLog[] // AI agent audit trail
 
   @@index([slug])
   @@index([apiKeyPublic])
@@ -703,4 +705,90 @@ model WebhookDelivery {
   @@index([subscriptionId, status]) // Query pending/failed deliveries
   @@index([status, createdAt]) // Query deliveries by status chronologically
   @@index([subscriptionId])
+}
+
+// ============================================================================
+// AI Agent Integration Models
+// ============================================================================
+
+/// AgentProposal - Server-side storage for agent write operation proposals
+/// Implements trust tier enforcement:
+/// - T1 operations: Auto-confirmed, proposal created and immediately executed
+/// - T2 operations: Proposal created, auto-confirms after next user message (unless "wait")
+/// - T3 operations: Proposal created, requires explicit confirm_proposal() call
+///
+/// Security: Prevents prompt injection from bypassing approval - server enforces it
+model AgentProposal {
+  id              String             @id @default(cuid())
+  tenantId        String             // Tenant isolation - CRITICAL
+  sessionId       String             // Agent session identifier
+  toolName        String             // Tool that created the proposal (e.g., "upsert_package")
+  operation       String             // Human-readable operation description
+  trustTier       AgentTrustTier     // T1, T2, or T3
+  payload         Json               // The proposed change data
+  preview         Json               // What will change (for user display)
+  status          AgentProposalStatus @default(PENDING)
+  requiresApproval Boolean           @default(true)
+  expiresAt       DateTime           // 30 minutes from creation
+  confirmedAt     DateTime?          // When user confirmed
+  executedAt      DateTime?          // When proposal was executed
+  result          Json?              // Execution result (for completed proposals)
+  error           String?            // Error message if failed
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  tenant          Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, sessionId])
+  @@index([tenantId, status])
+  @@index([expiresAt]) // For cleanup of expired proposals
+  @@index([tenantId])
+}
+
+enum AgentTrustTier {
+  T1  // No confirm needed - blackouts, branding, visibility toggles
+  T2  // Soft confirm - package changes, landing page updates, pricing
+  T3  // Hard confirm - cancellations, refunds, deletes with existing bookings
+}
+
+enum AgentProposalStatus {
+  PENDING    // Awaiting confirmation
+  CONFIRMED  // User confirmed, ready to execute
+  EXECUTED   // Successfully executed
+  EXPIRED    // TTL exceeded (30 minutes)
+  REJECTED   // User said "wait" or "no"
+  FAILED     // Execution failed
+}
+
+/// AgentAuditLog - Audit trail for all agent tool calls
+/// Required for security compliance: 90 days minimum, 7 years for financial operations
+model AgentAuditLog {
+  id              String             @id @default(cuid())
+  tenantId        String             // Tenant isolation - CRITICAL
+  sessionId       String             // Agent session identifier
+  toolName        String             // Tool that was called
+  proposalId      String?            // Reference to proposal (if write operation)
+  inputSummary    String             @db.VarChar(500) // Sanitized input summary
+  outputSummary   String             @db.VarChar(500) // Sanitized output summary
+  trustTier       AgentTrustTier
+  approvalStatus  AgentApprovalStatus
+  durationMs      Int?               // Execution duration in milliseconds
+  success         Boolean            @default(true)
+  errorMessage    String?            @db.Text
+  createdAt       DateTime           @default(now())
+
+  tenant          Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, sessionId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, toolName])
+  @@index([createdAt]) // For retention cleanup
+  @@index([tenantId])
+}
+
+enum AgentApprovalStatus {
+  AUTO      // T1 - auto-approved
+  SOFT      // T2 - soft confirm (proceeds after next message)
+  EXPLICIT  // T3 - explicit user confirmation received
+  BYPASSED  // Security bypass attempt (should never happen, logged for audit)
 }

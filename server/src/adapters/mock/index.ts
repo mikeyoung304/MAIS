@@ -896,20 +896,39 @@ export class MockCalendarProvider implements CalendarProvider {
 
 // Mock Payment Provider
 export class MockPaymentProvider implements PaymentProvider {
+  /**
+   * Idempotency cache for checkout sessions
+   * Simulates real Stripe behavior: same idempotency key returns same session
+   * Cache is instance-scoped (cleared when new instance is created)
+   */
+  private idempotencyCache = new Map<string, CheckoutSession>();
+
   async createCheckoutSession(input: {
     amountCents: number;
     email: string;
     metadata: Record<string, string>;
     idempotencyKey?: string;
   }): Promise<CheckoutSession> {
+    // Check idempotency cache first (simulates real Stripe behavior)
+    if (input.idempotencyKey && this.idempotencyCache.has(input.idempotencyKey)) {
+      return this.idempotencyCache.get(input.idempotencyKey)!;
+    }
+
     const sessionId = `mock_session_${Date.now()}`;
     const successUrl = input.metadata.successUrl || 'http://localhost:5173/success';
     const checkoutUrl = `${successUrl}?session_id=${sessionId}&mock=1`;
 
-    return {
+    const session: CheckoutSession = {
       url: checkoutUrl,
       sessionId,
     };
+
+    // Store in cache if idempotency key provided
+    if (input.idempotencyKey) {
+      this.idempotencyCache.set(input.idempotencyKey, session);
+    }
+
+    return session;
   }
 
   async createConnectCheckoutSession(input: {
@@ -920,14 +939,26 @@ export class MockPaymentProvider implements PaymentProvider {
     applicationFeeAmount: number;
     idempotencyKey?: string;
   }): Promise<CheckoutSession> {
+    // Check idempotency cache first (simulates real Stripe behavior)
+    if (input.idempotencyKey && this.idempotencyCache.has(input.idempotencyKey)) {
+      return this.idempotencyCache.get(input.idempotencyKey)!;
+    }
+
     const sessionId = `mock_connect_session_${Date.now()}`;
     const successUrl = input.metadata.successUrl || 'http://localhost:5173/success';
     const checkoutUrl = `${successUrl}?session_id=${sessionId}&mock=1&connect=1`;
 
-    return {
+    const session: CheckoutSession = {
       url: checkoutUrl,
       sessionId,
     };
+
+    // Store in cache if idempotency key provided
+    if (input.idempotencyKey) {
+      this.idempotencyCache.set(input.idempotencyKey, session);
+    }
+
+    return session;
   }
 
   async verifyWebhook(_payload: string, _signature: string): Promise<Stripe.Event> {
