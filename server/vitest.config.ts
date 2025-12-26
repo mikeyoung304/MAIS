@@ -9,6 +9,13 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'node',
+      // Limit parallelism for integration tests to prevent DB connection pool exhaustion
+      poolOptions: {
+        threads: {
+          singleThread: false,
+          maxThreads: 3, // Reduce parallelism to prevent connection pool exhaustion
+        },
+      },
       // Override env to use local storage (not Supabase) for file uploads in tests
       env: { ...env, STORAGE_MODE: 'local' },
       coverage: {

@@ -14,8 +14,6 @@ import {
   CalendarX,
 } from 'lucide-react';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
 interface Booking {
   id: string;
   date: string;
@@ -37,7 +35,7 @@ interface Blackout {
  * Overview of bookings and blackout dates.
  */
 export default function TenantSchedulingPage() {
-  const { backendToken } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [blackouts, setBlackouts] = useState<Blackout[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,16 +44,12 @@ export default function TenantSchedulingPage() {
 
   useEffect(() => {
     async function fetchData() {
-      if (!backendToken) return;
+      if (!isAuthenticated) return;
 
       try {
         const [bookingsRes, blackoutsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/v1/tenant-admin/bookings`, {
-            headers: { Authorization: `Bearer ${backendToken}` },
-          }),
-          fetch(`${API_BASE_URL}/v1/tenant-admin/blackouts`, {
-            headers: { Authorization: `Bearer ${backendToken}` },
-          }),
+          fetch('/api/tenant-admin/bookings'),
+          fetch('/api/tenant-admin/blackouts'),
         ]);
 
         if (bookingsRes.ok) {
@@ -75,7 +69,7 @@ export default function TenantSchedulingPage() {
     }
 
     fetchData();
-  }, [backendToken]);
+  }, [isAuthenticated]);
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {

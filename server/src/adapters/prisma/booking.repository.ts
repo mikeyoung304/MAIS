@@ -362,10 +362,12 @@ export class PrismaBookingRepository implements BookingRepository {
    * console.log(`Total bookings: ${bookings.length}`);
    * ```
    */
-  async findAll(tenantId: string): Promise<Booking[]> {
+  async findAll(tenantId: string, options?: { limit?: number; offset?: number }): Promise<Booking[]> {
     const bookings = await this.prisma.booking.findMany({
       where: { tenantId },
       orderBy: { createdAt: 'desc' },
+      take: options?.limit ?? 100, // Default limit to prevent unbounded queries
+      skip: options?.offset ?? 0,
       include: {
         customer: true,
         addOns: {

@@ -488,9 +488,12 @@ export class MockBookingRepository implements BookingRepository {
     return bookings.get(id) || null;
   }
 
-  async findAll(tenantId: string): Promise<Booking[]> {
+  async findAll(tenantId: string, options?: { limit?: number; offset?: number }): Promise<Booking[]> {
     // Mock mode: Ignore tenantId
-    return Array.from(bookings.values());
+    const all = Array.from(bookings.values());
+    const offset = options?.offset ?? 0;
+    const limit = options?.limit ?? 100;
+    return all.slice(offset, offset + limit);
   }
 
   async isDateBooked(tenantId: string, date: string): Promise<boolean> {

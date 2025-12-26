@@ -14,8 +14,6 @@ import {
   DollarSign,
 } from 'lucide-react';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
 interface PackageDto {
   id: string;
   name: string;
@@ -34,21 +32,17 @@ interface PackageDto {
  * Allows tenant admins to manage their service packages.
  */
 export default function TenantPackagesPage() {
-  const { backendToken } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [packages, setPackages] = useState<PackageDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchPackages() {
-      if (!backendToken) return;
+      if (!isAuthenticated) return;
 
       try {
-        const response = await fetch(`${API_BASE_URL}/v1/tenant-admin/packages`, {
-          headers: {
-            Authorization: `Bearer ${backendToken}`,
-          },
-        });
+        const response = await fetch('/api/tenant-admin/packages');
 
         if (response.ok) {
           const data = await response.json();
@@ -64,7 +58,7 @@ export default function TenantPackagesPage() {
     }
 
     fetchPackages();
-  }, [backendToken]);
+  }, [isAuthenticated]);
 
   const formatPrice = (price: number, currency: string) => {
     return new Intl.NumberFormat('en-US', {
