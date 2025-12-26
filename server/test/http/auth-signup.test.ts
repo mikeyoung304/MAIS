@@ -15,13 +15,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import type { Express } from 'express';
-import { PrismaClient } from '../../src/generated/prisma';
 import { loadConfig } from '../../src/lib/core/config';
 import { createApp } from '../../src/app';
 import { buildContainer } from '../../src/di';
+import { getTestPrisma } from '../helpers/global-prisma';
 
-// Shared prisma instance for cleanup
-const prisma = new PrismaClient();
+// Shared prisma instance for cleanup - use singleton
+const prisma = getTestPrisma();
 const allTestEmails: string[] = [];
 
 // Generate unique email for each test
@@ -56,7 +56,7 @@ afterAll(async () => {
       });
     }
   }
-  await prisma.$disconnect();
+  // No-op: singleton handles its own lifecycle
 });
 
 describe('POST /v1/auth/signup - Tenant Signup', () => {

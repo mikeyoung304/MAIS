@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { api, baseUrl } from '@/lib/api';
+import { baseUrl } from '@/lib/api';
 import { logger } from '@/lib/logger';
 import type { LastCheckout } from '@/lib/types';
 import { LoadingState } from './LoadingState';

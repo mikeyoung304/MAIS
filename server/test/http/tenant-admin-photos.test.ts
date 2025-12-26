@@ -14,16 +14,17 @@ import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest';
 import request from 'supertest';
 import type { Express } from 'express';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '../../src/generated/prisma';
 import { createApp } from '../../src/app';
 import { loadConfig } from '../../src/lib/core/config';
 import { buildContainer } from '../../src/di';
 import fs from 'fs';
 import path from 'path';
+import { getTestPrisma } from '../helpers/global-prisma';
 
 describe('Package Photo Upload/Delete Endpoints', () => {
   let app: Express;
-  let prisma: PrismaClient;
+  // Use singleton to prevent connection pool exhaustion
+  const prisma = getTestPrisma();
   let testTenant1Id: string;
   let testTenant2Id: string;
   let testPackage1Id: string;
@@ -64,8 +65,7 @@ describe('Package Photo Upload/Delete Endpoints', () => {
   };
 
   beforeAll(async () => {
-    // Initialize database
-    prisma = new PrismaClient();
+    // Database singleton already initialized
 
     // Create test tenant 1
     const tenant1 = await prisma.tenant.upsert({
@@ -209,7 +209,7 @@ describe('Package Photo Upload/Delete Endpoints', () => {
         });
       }
     }
-    await prisma.$disconnect();
+    // No-op: singleton handles its own lifecycle
   });
 
   // ============================================================================

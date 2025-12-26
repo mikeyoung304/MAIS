@@ -13,11 +13,9 @@ import { Router } from 'express';
 import type { PrismaClient } from '../../generated/prisma';
 import { PrismaTenantRepository } from '../../adapters/prisma/tenant.repository';
 import { ValidationError, NotFoundError } from '../../lib/errors';
-import type {
-  StripeConnectDto,
-  StripeOnboardingLinkDto,
-  StripeAccountStatusDto,
-} from '@macon/contracts';
+// Types for documentation/reference (may be used in future implementation)
+import type {} from '@macon/contracts';
+// StripeConnectDto, StripeOnboardingLinkDto, StripeAccountStatusDto - for future use
 
 // Import StripeConnectService (will be created by another agent)
 // Assuming the service will have these methods:
@@ -38,6 +36,7 @@ export function createAdminStripeRoutes(prisma: PrismaClient): Router {
 
   try {
     // Try to import the service if it exists
+    // eslint-disable-next-line @typescript-eslint/no-var-requires -- Dynamic require for optional dependency
     const { StripeConnectService } = require('../../services/stripe-connect.service');
     stripeConnectService = new StripeConnectService(prisma);
   } catch {

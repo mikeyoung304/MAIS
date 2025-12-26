@@ -86,7 +86,7 @@ export function getRequestLogger(res: Response): ContextLogger {
 /**
  * Converts a Pino logger to ContextLogger interface
  */
-function createLoggerFromPino(pinoLogger: Logger, requestId: string): ContextLogger {
+function createLoggerFromPino(pinoLogger: Logger, _requestId: string): ContextLogger {
   return {
     info: (message: string, meta?: any) => {
       pinoLogger.info(meta || {}, message);

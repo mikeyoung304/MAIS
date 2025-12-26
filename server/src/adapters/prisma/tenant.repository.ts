@@ -6,7 +6,6 @@
 import type { PrismaClient, Tenant } from '../../generated/prisma';
 import {
   TenantPublicDtoSchema,
-  ALLOWED_FONT_FAMILIES,
   SafeImageUrlSchema,
   LandingPageConfigSchema,
 } from '@macon/contracts';

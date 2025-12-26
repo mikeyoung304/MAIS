@@ -7,7 +7,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import type { PrismaClient } from '../../generated/prisma';
 import type { BookingRepository, TimeslotBooking, AppointmentDto } from '../lib/ports';
 import type { Booking } from '../lib/entities';
-import { BookingConflictError, BookingLockTimeoutError, NotFoundError } from '../../lib/errors';
+import { BookingConflictError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/core/logger';
 import { toISODate } from '../lib/date-utils';
 

@@ -24,13 +24,10 @@ interface StorefrontContext {
  * @returns The tenant object or undefined if not in storefront context
  */
 export function useTenant(): TenantPublicDto | undefined {
-  try {
-    const { tenant } = useOutletContext<StorefrontContext>();
-    return tenant;
-  } catch {
-    // Return undefined if not in outlet context
-    return undefined;
-  }
+  // Always call the hook - React requires hooks to be called in the same order
+  // Use a wrapper to safely handle missing context
+  const context = useOutletContext<StorefrontContext | null>();
+  return context?.tenant;
 }
 
 /**

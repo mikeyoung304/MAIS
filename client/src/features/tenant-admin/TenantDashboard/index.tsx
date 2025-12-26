@@ -12,7 +12,7 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, Sparkles, Pencil, LayoutTemplate, ExternalLink } from 'lucide-react';
+import { Sparkles, Pencil, LayoutTemplate, ExternalLink } from 'lucide-react';
 import { TenantPackagesManager } from '../TenantPackagesManager';
 import { BlackoutsManager } from '../BlackoutsManager';
 import { TenantBookingList } from '../TenantBookingList';
@@ -28,7 +28,7 @@ import { useDashboardData } from './useDashboardData';
 import { ImpersonationBanner } from '../../admin/dashboard/components/ImpersonationBanner';
 import { useAuth } from '../../../contexts/AuthContext';
 import type { TenantDto } from './types';
-import { ANIMATION_TRANSITION, ANIMATION_DURATION } from '../../../lib/animation-constants';
+import { ANIMATION_TRANSITION } from '../../../lib/animation-constants';
 
 interface TenantDashboardProps {
   tenantInfo?: TenantDto;

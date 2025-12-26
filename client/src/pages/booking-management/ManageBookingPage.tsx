@@ -11,7 +11,6 @@ import { BookingDetailsCard } from './BookingDetailsCard';
 import { RescheduleDialog } from './RescheduleDialog';
 import { CancelDialog } from './CancelDialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 
 export function ManageBookingPage() {
   const [searchParams] = useSearchParams();

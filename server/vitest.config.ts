@@ -9,13 +9,22 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'node',
+      // Global teardown disconnects singleton PrismaClient after all tests
+      globalSetup: [],
+      globalTeardown: ['./test/helpers/vitest-global-teardown.ts'],
       // Limit parallelism for integration tests to prevent DB connection pool exhaustion
+      // Supabase Session mode has strict pool limits - run tests serially
       poolOptions: {
         threads: {
-          singleThread: false,
-          maxThreads: 3, // Reduce parallelism to prevent connection pool exhaustion
+          singleThread: true, // Run all tests in single thread to avoid pool exhaustion
         },
       },
+      // Run test files sequentially to prevent connection pool exhaustion
+      fileParallelism: false,
+      // Timeout for individual tests (30s) - fail fast instead of hanging
+      testTimeout: 30000,
+      // Hook timeout (10s) - prevent beforeAll/afterAll from hanging
+      hookTimeout: 10000,
       // Override env to use local storage (not Supabase) for file uploads in tests
       env: { ...env, STORAGE_MODE: 'local' },
       coverage: {

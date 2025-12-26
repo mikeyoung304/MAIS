@@ -208,7 +208,7 @@ export const publicSchedulingLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   // Use tenantId if available (via tenant middleware), otherwise IP
-  keyGenerator: (req, res) => {
+  keyGenerator: (req, _res) => {
     // Type assertion for TenantRequest with tenantId property
     const tenantReq = req as Request & { tenantId?: string };
     return tenantReq.tenantId || normalizeIp(req.ip);

@@ -4,21 +4,22 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { PrismaClient } from '../../src/generated/prisma';
 import { StripeConnectWebhooksController } from '../../src/routes/stripe-connect-webhooks.routes';
 import type Stripe from 'stripe';
+import { getTestPrisma } from '../helpers/global-prisma';
 
 describe('Stripe Connect Webhook Integration', () => {
-  let prisma: PrismaClient;
+  // Use singleton to prevent connection pool exhaustion
+  const prisma = getTestPrisma();
   let testTenantId: string;
   let testStripeAccountId: string;
 
   beforeAll(async () => {
-    prisma = new PrismaClient();
+    // No-op: singleton is already connected
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    // No-op: singleton handles its own lifecycle
   });
 
   beforeEach(async () => {

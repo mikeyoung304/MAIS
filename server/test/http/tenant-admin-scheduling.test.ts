@@ -16,13 +16,14 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import type { Express } from 'express';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '../../src/generated/prisma';
 import { createApp } from '../../src/app';
 import { buildContainer } from '../../src/di';
+import { getTestPrisma } from '../helpers/global-prisma';
 
 describe('Tenant Admin Scheduling - Availability Rules', () => {
   let app: Express;
-  let prisma: PrismaClient;
+  // Use singleton to prevent connection pool exhaustion
+  const prisma = getTestPrisma();
   let testTenantId: string;
   let testTenantSlug: string;
   let anotherTenantId: string;
@@ -33,8 +34,7 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
   const JWT_SECRET = 'test-jwt-secret-for-scheduling';
 
   beforeAll(async () => {
-    // Setup database with test tenants
-    prisma = new PrismaClient();
+    // Setup database with test tenants (singleton already initialized)
 
     // Create test tenant
     const tenant = await prisma.tenant.upsert({
@@ -161,8 +161,7 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
         slug: { in: ['scheduling-test-tenant', 'scheduling-another-tenant'] },
       },
     });
-
-    await prisma.$disconnect();
+    // No-op: singleton handles its own lifecycle
   });
 
   describe('POST /v1/tenant-admin/availability-rules', () => {

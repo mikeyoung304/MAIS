@@ -57,7 +57,6 @@ import {
 } from './adapters/prisma';
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { PostmarkMailAdapter } from './adapters/postmark.adapter';
-import { GoogleCalendarAdapter } from './adapters/gcal.adapter';
 import { GoogleCalendarSyncAdapter } from './adapters/google-calendar-sync.adapter';
 import { getSupabaseClient } from './config/database';
 import { logger } from './lib/core/logger';

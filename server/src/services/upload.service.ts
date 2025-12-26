@@ -47,6 +47,7 @@ function createUploadConfig(): UploadAdapterConfig {
   if (isRealMode) {
     // Dynamic import to avoid requiring Supabase config in mock mode
     try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires -- Dynamic require for conditional loading
       const { getSupabaseClient } = require('../config/database');
       supabaseClient = getSupabaseClient();
     } catch (error) {

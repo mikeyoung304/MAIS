@@ -5,7 +5,7 @@
  */
 
 import type { Response, NextFunction } from 'express';
-import { Router, Request } from 'express';
+import { Router } from 'express';
 import { ZodError } from 'zod';
 import type { TenantRequest } from '../middleware/tenant';
 import type { SegmentService } from '../services/segment.service';

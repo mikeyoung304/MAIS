@@ -136,7 +136,6 @@ export const FaqSection = memo(function FaqSection({ config }: FaqSectionProps) 
 
   // Defensive: ensure items is an array
   const items = config?.items ?? [];
-  if (items.length === 0) return null;
 
   const handleToggle = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -192,6 +191,9 @@ export const FaqSection = memo(function FaqSection({ config }: FaqSectionProps) 
     },
     []
   );
+
+  // Early return after all hooks
+  if (items.length === 0) return null;
 
   return (
     <section className="py-16 md:py-24 bg-neutral-50">

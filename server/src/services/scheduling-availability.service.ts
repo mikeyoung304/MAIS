@@ -19,10 +19,9 @@ import type {
   CacheServicePort,
   BusyTimeBlock,
 } from '../lib/ports';
-import type { Service } from '../lib/entities';
 import type { GoogleCalendarService } from './google-calendar.service';
 import { logger } from '../lib/core/logger';
-import { cachedOperation, buildCacheKey } from '../lib/cache-helpers';
+import { cachedOperation } from '../lib/cache-helpers';
 
 // Re-export TimeslotBooking from ports for external consumers
 export type { TimeslotBooking as TimeSlotBooking } from '../lib/ports';
@@ -418,7 +417,7 @@ export class SchedulingAvailabilityService {
     // See JSDoc above for detailed algorithm explanation.
     try {
       // Create a UTC date from the raw values
-      const localDate = new Date(dateStr);
+      const _localDate = new Date(dateStr);
 
       // Get the timezone offset by formatting the UTC date in the target timezone
       // and comparing wall-clock times to determine the offset

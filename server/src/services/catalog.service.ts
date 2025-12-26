@@ -14,7 +14,6 @@ import type { Package, AddOn } from '../lib/entities';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import {
   cachedOperation,
-  buildCacheKey,
   invalidateCacheKeys,
   getCatalogInvalidationKeys,
   getSegmentCatalogInvalidationKeys,

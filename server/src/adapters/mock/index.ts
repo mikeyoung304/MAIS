@@ -428,12 +428,12 @@ export class MockCatalogRepository implements CatalogRepository {
     };
   }
 
-  async publishDrafts(_tenantId: string, packageIds?: string[]): Promise<Package[]> {
+  async publishDrafts(_tenantId: string, _packageIds?: string[]): Promise<Package[]> {
     // Mock mode: Return empty array (no drafts to publish)
     return [];
   }
 
-  async discardDrafts(_tenantId: string, packageIds?: string[]): Promise<number> {
+  async discardDrafts(_tenantId: string, _packageIds?: string[]): Promise<number> {
     // Mock mode: Return 0 (no drafts to discard)
     return 0;
   }

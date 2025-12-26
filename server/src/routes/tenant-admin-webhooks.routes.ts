@@ -11,7 +11,7 @@ import { z } from 'zod';
 import type { WebhookSubscriptionRepository } from '../lib/ports';
 import type { WebhookDeliveryService } from '../services/webhook-delivery.service';
 import { logger } from '../lib/core/logger';
-import { NotFoundError, ValidationError } from '../lib/errors';
+import { NotFoundError } from '../lib/errors';
 
 /**
  * Zod schemas for request validation

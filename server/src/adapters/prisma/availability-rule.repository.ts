@@ -111,7 +111,7 @@ export class PrismaAvailabilityRuleRepository implements AvailabilityRuleReposit
     if (data.effectiveFrom !== undefined) updateData.effectiveFrom = data.effectiveFrom;
     if (data.effectiveTo !== undefined) updateData.effectiveTo = data.effectiveTo;
 
-    const rule = await this.prisma.availabilityRule.updateMany({
+    const _rule = await this.prisma.availabilityRule.updateMany({
       where: { id, tenantId },
       data: updateData,
     });

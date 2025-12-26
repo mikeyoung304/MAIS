@@ -1,8 +1,9 @@
 import { describe, test, expect } from 'vitest';
-import { PrismaClient } from '../../src/generated/prisma';
+import { getTestPrisma } from '../helpers/global-prisma';
 
 describe('Performance Indexes Migration (TODO-275)', () => {
-  const prisma = new PrismaClient();
+  // Use singleton to prevent connection pool exhaustion
+  const prisma = getTestPrisma();
 
   test('should verify all three performance indexes exist', async () => {
     // Query pg_indexes to verify index existence

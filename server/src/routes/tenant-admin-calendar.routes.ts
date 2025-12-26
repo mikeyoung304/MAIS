@@ -22,7 +22,7 @@ const calendarConfigSchema = z.object({
 
 export function createTenantAdminCalendarRoutes(
   tenantRepo: PrismaTenantRepository,
-  calendarProvider?: any // GoogleCalendarAdapter instance for testing connection
+  _calendarProvider?: unknown // GoogleCalendarAdapter instance for testing connection
 ): Router {
   const router = Router();
 
@@ -182,7 +182,7 @@ export function createTenantAdminCalendarRoutes(
 
       // Remove calendar config from secrets
       const currentSecrets = (tenant.secrets as any) || {};
-      const { calendar, ...remainingSecrets } = currentSecrets;
+      const { calendar: _calendar, ...remainingSecrets } = currentSecrets;
 
       await tenantRepo.update(tenantId, {
         secrets: remainingSecrets,

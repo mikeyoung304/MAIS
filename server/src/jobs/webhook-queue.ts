@@ -17,6 +17,7 @@ import type { Redis } from 'ioredis';
 import IORedis from 'ioredis';
 import { logger } from '../lib/core/logger';
 import type { WebhookJobData } from './types';
+import type { WebhookProcessor } from './webhook-processor';
 
 // Re-export for backwards compatibility
 export type { WebhookJobData } from './types';
@@ -333,7 +334,7 @@ export function createWebhookQueue(): WebhookQueue {
  */
 export async function initializeWebhookQueue(
   queue: WebhookQueue,
-  processor: import('./webhook-processor').WebhookProcessor,
+  processor: WebhookProcessor,
   redisUrl?: string
 ): Promise<void> {
   const initialized = await queue.initialize(redisUrl);

@@ -1,0 +1,221 @@
+# CORA (Code Review Observation and Resolution Archive) Schema v1.0
+# This skeleton template helps structure code review findings for documentation
+
+---
+# FRONTMATTER SECTION - Required metadata
+schema_version: "CORA-1.0"
+document_type: "pattern-analysis"  # Options: pattern-analysis, bug-report, architectural-decision, prevention-strategy
+title: "[Brief Finding Title]"
+date_created: "YYYY-MM-DD"
+date_updated: "YYYY-MM-DD"
+status: "pending|in-progress|completed|archived"  # State of finding/fix
+severity_level: "critical|high|medium|low"  # Business/technical impact
+effort_estimate_hours: 0.0  # Total effort to fix
+risk_assessment: "high|medium|low"  # Risk of change/regression
+
+# METADATA SECTION
+metadata:
+  project: "[Project Name]"
+  domain: "[code-quality|ci-cd|security|performance|etc]"
+  pattern_category: "[Category]"
+  tags:
+    - "tag1"
+    - "tag2"
+    - "tag3"
+  related_issues: []  # [123, 456, 789]
+  affected_teams: []  # [backend, frontend, devops, etc]
+  priority: "P0|P1|P2|P3"
+
+# DISCOVERY CONTEXT
+discovery_context:
+  source: "[how finding was discovered]"
+  review_agents: []  # Multi-agent review participants
+  discovery_date: "YYYY-MM-DD"
+  discovery_method: "[automated-scanning|code-review|testing|audit|etc]"
+
+# IMPLEMENTATION CONTEXT
+implementation_context:
+  commit_hash: "[abc123]"
+  parent_commit: "[def456]"
+  files_modified: 0
+  files_created: 0
+  total_changes: 0
+  implementation_time: "HH:MM"
+  implemented_by: "[Name/Role]"
+
+---
+
+# FINDING ANALYSIS
+
+## Problem Type
+**[Category]** / [Subcategory]
+
+## Severity
+**[Priority]** - [One-line business impact]
+
+## Issue ID
+**[ID]** - [Filename or reference]
+
+## Affected Component(s)
+```yaml
+component:
+  file_path: "[absolute path]"
+  class_name: "[if applicable]"
+  method_name: "[if applicable]"
+  lines: "[start-end]"
+```
+
+## Root Cause
+[2-3 paragraph explanation of why this issue exists]
+
+### Why Automated Tools Didn't Catch This
+[Explanation of why linters, type checkers, tests, etc. missed it]
+
+## Symptoms
+[Describe observable behavior / impact]
+
+```
+[Code example of problem]
+```
+
+## Fix Applied
+[Describe the fix]
+
+```
+[Code example of solution]
+```
+
+## Impact Analysis
+| Aspect | Details |
+|--------|---------|
+| Affected Code Paths | [What breaks/changes] |
+| Breaking Change | [Yes/No] |
+| User Impact | [None/Low/Medium/High] |
+| Rollback Risk | [None/Low/Medium/High] |
+| Test Coverage | [Whether tests catch this] |
+
+## Discovery Method
+**[Method Type]**
+1. [Step 1]
+2. [Step 2]
+3. [Step 3]
+
+## Effort Assessment
+- **Analysis:** [time]
+- **Implementation:** [time]
+- **Verification:** [time]
+- **Total:** [time]
+
+## Risk Assessment
+| Risk | Level | Notes |
+|------|-------|-------|
+| Breaking Change | [None/Low/Med/High] | [Details] |
+| Regression | [None/Low/Med/High] | [Details] |
+| Side Effects | [None/Low/Med/High] | [Details] |
+| Performance | [None/Low/Med/High] | [Details] |
+| Security | [None/Low/Med/High] | [Details] |
+
+## Alternative Approaches
+[Document considered options with pros/cons]
+
+### Option A: [Approach Name]
+- **Effort:** [time]
+- **Complexity:** [low/medium/high]
+- **Pros:** [...]
+- **Cons:** [...]
+
+### Option B: [Approach Name]
+- **Effort:** [time]
+- **Complexity:** [low/medium/high]
+- **Pros:** [...]
+- **Cons:** [...]
+
+## Verification Steps Completed
+- [x] Step 1
+- [x] Step 2
+- [x] Step 3
+
+## Prevention Pattern
+[General pattern to prevent similar issues in future]
+
+```
+✅ CORRECT: [Right way]
+❌ WRONG: [Wrong way]
+```
+
+**Audit Strategy:**
+1. [How to find similar issues]
+2. [Tools/techniques to use]
+3. [Review checklist]
+
+## Lesson Learned
+[Key insight from this finding]
+
+---
+
+## Summary Table
+[If analyzing multiple findings]
+
+| Finding | ID | Type | Priority | Status | Effort | Risk |
+|---------|----|----|----------|--------|--------|------|
+| Finding 1 | 001 | Type | P1 | Fixed | 1h | Low |
+| Finding 2 | 002 | Type | P2 | Fixed | 2h | Low |
+| **Total** | — | — | — | **Fixed** | **3h** | **Low** |
+
+---
+
+## Related Documentation
+- **[Link]** - [Related concept/pattern]
+- **[Link]** - [Similar finding]
+
+## Resources
+- Commit: [hash]
+- PR: [#number]
+- Ticket: [JIRA/GitHub/etc]
+- Slack thread: [link if applicable]
+
+---
+
+## CORA Metadata (Machine Readable)
+
+```yaml
+cora_metadata:
+  finding_count: 1
+  severity_distribution:
+    critical: 0
+    high: 0
+    medium: 0
+    low: 1
+
+  effort_total_hours: 0.0
+  effort_breakdown:
+    analysis: 0.0
+    implementation: 0.0
+    verification: 0.0
+
+  risk_assessment: "low"
+  success_criteria_met: "100%"
+
+  affected_domains:
+    - "code-quality"
+
+  team_impact: "low|medium|high"
+  team_areas: []
+
+  urgency: "critical|high|medium|low"
+  timeline: "immediate|this-sprint|next-sprint|backlog"
+
+  discovery_confidence: "high|medium|low"
+  fix_confidence: "high|medium|low"
+```
+
+---
+
+## Notes
+
+- **CORA Format:** This document uses the CORA schema for consistent code review documentation
+- **Audience:** Code review committee, architecture team, senior developers
+- **Versioning:** Update date_updated when changes are made
+- **Archive:** Move completed items to `docs/archive/YYYY-MM/` after resolution
+- **Related:** See `PREVENTION-STRATEGIES-INDEX.md` for pattern catalog
+

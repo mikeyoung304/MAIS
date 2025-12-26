@@ -6,7 +6,6 @@
 import type { PrismaClient } from '../../generated/prisma';
 import type { WebhookRepository } from '../../lib/ports';
 import { logger } from '../../lib/core/logger';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 export class PrismaWebhookRepository implements WebhookRepository {
   constructor(private readonly prisma: PrismaClient) {}

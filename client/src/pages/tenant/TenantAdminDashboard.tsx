@@ -28,7 +28,7 @@ type TenantDto = {
 export function TenantAdminDashboard() {
   const { user } = useAuth();
   const [tenantInfo, setTenantInfo] = useState<TenantDto | undefined>(undefined);
-  const [isLoadingInfo, setIsLoadingInfo] = useState(true);
+  const [_isLoadingInfo, setIsLoadingInfo] = useState(true);
 
   useEffect(() => {
     // Fetch tenant info using auth context

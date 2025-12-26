@@ -41,7 +41,7 @@ const CustomerNameSchema = z
   .min(2, 'Name must be at least 2 characters')
   .max(100, 'Name must be less than 100 characters')
   .regex(
-    /^[\p{L}\p{M}\p{Zs}'\-\.]+$/u,
+    /^[\p{L}\p{M}\p{Zs}'\-.]+$/u,
     'Name contains invalid characters'
   );
 

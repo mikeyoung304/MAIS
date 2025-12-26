@@ -39,7 +39,6 @@ import type {
   EarlyAccessRepository,
   CacheServicePort,
 } from '../lib/ports';
-import type { Request } from 'express';
 import { createAdminTenantsRoutes } from './admin/tenants.routes';
 import { createAdminStripeRoutes } from './admin/stripe.routes';
 import { createTenantAdminRoutes } from './tenant-admin.routes';
@@ -294,24 +293,24 @@ export function createV1Router(
         return { status: 200 as const, body: data };
       },
 
-      platformCreateTenant: async ({ body }: { body: unknown }) => {
+      platformCreateTenant: async ({ body: _body }: { body: unknown }) => {
         // Note: Actual tenant creation is handled by the Express route
         // This is just a placeholder for ts-rest contract compliance
         // See /server/src/routes/admin/tenants.routes.ts
         throw new Error('Use Express route /api/v1/admin/tenants directly');
       },
 
-      platformGetTenant: async ({ params }: { params: { id: string } }) => {
+      platformGetTenant: async ({ params: _params }: { params: { id: string } }) => {
         // Note: Actual implementation in Express routes
         throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
       },
 
-      platformUpdateTenant: async ({ params, body }: { params: { id: string }; body: unknown }) => {
+      platformUpdateTenant: async ({ params: _params, body: _body }: { params: { id: string }; body: unknown }) => {
         // Note: Actual implementation in Express routes
         throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
       },
 
-      platformDeleteTenant: async ({ params }: { params: { id: string } }) => {
+      platformDeleteTenant: async ({ params: _params }: { params: { id: string } }) => {
         // Note: Actual implementation in Express routes
         throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
       },

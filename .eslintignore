@@ -27,6 +27,10 @@ server/prisma/seeds/
 # Documentation examples
 docs/examples/
 
+# Example files (documentation only, not production code)
+**/*.example.ts
+**/*.example.tsx
+
 # E2E test infrastructure
 e2e/
 tests/

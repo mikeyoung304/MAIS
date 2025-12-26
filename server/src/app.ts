@@ -7,7 +7,6 @@ import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
 import path from 'path';
-import { randomUUID } from 'crypto';
 import swaggerUi from 'swagger-ui-express';
 import type { Config } from './lib/core/config';
 import { logger } from './lib/core/logger';

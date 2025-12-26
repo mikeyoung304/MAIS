@@ -13,10 +13,9 @@ import Stripe from 'stripe';
 import { logger } from '../lib/core/logger';
 import { WebhookValidationError } from '../lib/errors/business';
 import type { PrismaClient } from '../generated/prisma';
-import { Prisma } from '../generated/prisma';
 import { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 
-interface TenantSecrets {
+interface _TenantSecrets {
   stripe?: unknown;
   [key: string]: unknown;
 }

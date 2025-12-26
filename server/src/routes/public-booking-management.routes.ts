@@ -11,7 +11,7 @@ import { Router } from 'express';
 import type { BookingService } from '../services/booking.service';
 import type { CatalogService } from '../services/catalog.service';
 import type { BookingRepository } from '../lib/ports';
-import { validateBookingToken, type BookingTokenPayload } from '../lib/booking-tokens';
+import { validateBookingToken } from '../lib/booking-tokens';
 import { logger } from '../lib/core/logger';
 import { handlePublicRouteError } from '../lib/public-route-error-handler';
 
