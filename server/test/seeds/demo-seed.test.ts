@@ -112,7 +112,17 @@ describe('Demo Seed', () => {
       await seedDemo(mockPrisma);
 
       const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
-      expect(upsertCall.create.email).toBe('demo@example.com');
+      expect(upsertCall.create.email).toBe('demo@littlebitfarm.com');
+    });
+
+    it('should set password hash for demo login', async () => {
+      const mockPrisma = createMockPrisma(null);
+
+      await seedDemo(mockPrisma);
+
+      const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
+      // Password hash should be a bcrypt hash (starts with $2b$)
+      expect(upsertCall.create.passwordHash).toMatch(/^\$2[aby]\$/);
     });
   });
 

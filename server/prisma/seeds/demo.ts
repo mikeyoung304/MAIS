@@ -10,6 +10,7 @@
 
 import type { PrismaClient } from '../../src/generated/prisma';
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import { logger } from '../../src/lib/core/logger';
 import {
   createOrUpdateTenant,
@@ -20,6 +21,9 @@ import {
 
 // Fixed slug for demo tenant
 const DEMO_SLUG = 'little-bit-farm';
+// Demo credentials (publicly known - for demo purposes only)
+const DEMO_EMAIL = 'demo@littlebitfarm.com';
+const DEMO_PASSWORD = 'demo123!';
 
 export async function seedDemo(prisma: PrismaClient): Promise<void> {
   // Check if demo tenant already exists (outside transaction for read-only check)
@@ -52,11 +56,15 @@ export async function seedDemo(prisma: PrismaClient): Promise<void> {
         logger.info('Creating new demo tenant with generated keys');
       }
 
+      // Hash demo password for tenant admin login
+      const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
+
       // Create or update tenant using shared utility
       const tenant = await createOrUpdateTenant(tx, {
         slug: DEMO_SLUG,
         name: 'Little Bit Farm',
-        email: 'demo@example.com',
+        email: DEMO_EMAIL,
+        passwordHash, // Enable dashboard login with demo credentials
         commissionPercent: 5.0,
         apiKeyPublic: publicKey,
         apiKeySecret: secretKey ?? undefined,
@@ -208,6 +216,14 @@ export async function seedDemo(prisma: PrismaClient): Promise<void> {
     logger.warn(`Secret Key: ${secretKeyForLogging}`);
     logger.warn('SAVE THESE KEYS - they will not be regenerated on subsequent seeds!');
   }
+
+  // Log demo credentials for easy access
+  logger.info('═══════════════════════════════════════════════════════════════');
+  logger.info('DEMO LOGIN CREDENTIALS (for testing only)');
+  logger.info(`  Email:    ${DEMO_EMAIL}`);
+  logger.info(`  Password: ${DEMO_PASSWORD}`);
+  logger.info('  URL:      /login?demo=true (auto-fills credentials)');
+  logger.info('═══════════════════════════════════════════════════════════════');
 
   logger.info('Demo seed completed successfully (all operations committed)');
 }

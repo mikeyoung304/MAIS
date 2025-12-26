@@ -24,6 +24,7 @@ export interface TenantSeedOptions {
   slug: string;
   name: string;
   email?: string;
+  passwordHash?: string; // Pre-hashed password for tenant admin login
   commissionPercent?: number;
   apiKeyPublic: string;
   apiKeySecret?: string; // Only for create, not update
@@ -75,6 +76,7 @@ export async function createOrUpdateTenant(
     slug,
     name,
     email,
+    passwordHash,
     commissionPercent = 5.0,
     apiKeyPublic,
     apiKeySecret,
@@ -92,6 +94,7 @@ export async function createOrUpdateTenant(
   const updateData = {
     name,
     email,
+    passwordHash, // Update password if provided
     commissionPercent,
     primaryColor,
     secondaryColor,

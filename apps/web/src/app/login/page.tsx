@@ -11,6 +11,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
+// Demo credentials (must match server/prisma/seeds/demo.ts)
+const DEMO_EMAIL = 'demo@littlebitfarm.com';
+const DEMO_PASSWORD = 'demo123!';
+
 /**
  * Login Form Component
  *
@@ -21,8 +25,11 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const { isAuthenticated, role, isLoading: sessionLoading } = useAuth();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // Check for demo mode
+  const isDemo = searchParams.get('demo') === 'true';
+
+  const [email, setEmail] = useState(isDemo ? DEMO_EMAIL : '');
+  const [password, setPassword] = useState(isDemo ? DEMO_PASSWORD : '');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -80,6 +87,14 @@ function LoginForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {isDemo && (
+            <Alert className="bg-sage/10 border-sage/30">
+              <AlertDescription className="text-sage-dark">
+                <strong>Demo Mode:</strong> Credentials pre-filled. Click &quot;Sign in&quot; to explore.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
