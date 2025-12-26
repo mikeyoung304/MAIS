@@ -4,6 +4,7 @@
  */
 
 import * as Sentry from '@sentry/react';
+import { logger } from './logger';
 
 let sentryInitialized = false;
 
@@ -85,7 +86,7 @@ export function initSentry(config?: SentryConfig): void {
     });
 
     sentryInitialized = true;
-    console.log('Sentry initialized for client');
+    logger.info('Sentry initialized for client');
   } catch (error) {
     console.error('Failed to initialize Sentry:', error);
   }

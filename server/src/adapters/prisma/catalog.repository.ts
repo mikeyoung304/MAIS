@@ -349,7 +349,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
     }
 
     const addOn = await this.prisma.addOn.update({
-      where: { id },
+      where: { id, tenantId },
       data: {
         ...(data.title !== undefined && { name: data.title }),
         ...(data.priceCents !== undefined && { price: data.priceCents }),
@@ -386,7 +386,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
     }
 
     await this.prisma.addOn.delete({
-      where: { id },
+      where: { id, tenantId },
     });
   }
 

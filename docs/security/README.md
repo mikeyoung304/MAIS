@@ -6,6 +6,11 @@
 - [SECURITY.md](./SECURITY.md) - Security best practices and guardrails
 - [IMMEDIATE_SECURITY_ACTIONS.md](./IMMEDIATE_SECURITY_ACTIONS.md) - Urgent action items
 
+## Authentication & Authorization
+
+- [CSRF_STRATEGY.md](./CSRF_STRATEGY.md) - CSRF protection via Bearer tokens and CORS rationale
+- [NEXTAUTH_SECURITY.md](./NEXTAUTH_SECURITY.md) - NextAuth.js v5 patterns for admin auth
+
 ## Secret Management
 
 - [SECRETS.md](./SECRETS.md) - Secret management overview

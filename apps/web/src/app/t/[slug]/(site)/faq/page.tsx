@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { FAQPageContent } from '@/components/tenant';
 import { getTenantStorefrontData, TenantNotFoundError } from '@/lib/tenant';
-import { FAQAccordion } from './FAQAccordion';
 
 interface FAQPageProps {
   params: Promise<{ slug: string }>;
@@ -49,12 +49,7 @@ export default async function FAQPage({ params }: FAQPageProps) {
     const faqItems = tenant.branding?.landingPage?.faq?.items || [];
     const basePath = `/t/${slug}`;
 
-    return (
-      <FAQAccordion
-        faqItems={faqItems}
-        basePath={basePath}
-      />
-    );
+    return <FAQPageContent faqItems={faqItems} basePath={basePath} />;
   } catch (error) {
     if (error instanceof TenantNotFoundError) {
       notFound();

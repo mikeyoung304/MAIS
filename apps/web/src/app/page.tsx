@@ -1,59 +1,35 @@
-import { Button } from '@/components/ui/button';
-
 export default function HomePage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center py-32 md:py-40">
-      <div className="mx-auto max-w-4xl px-6 text-center">
-        {/* Hero Section */}
-        <h1 className="font-serif text-4xl font-bold leading-tight tracking-tight text-text-primary sm:text-5xl md:text-6xl">
-          Grow your business.
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-text-muted md:text-xl">
-          Partner with Macon AI Solutions for AI consulting, seamless booking, professional
-          websites, and marketing automation.
+    <main className="flex min-h-screen flex-col items-center justify-center bg-white py-32 md:py-40">
+      <div className="mx-auto max-w-3xl px-6 text-center">
+        {/* Brand Name */}
+        <p className="text-sm font-medium uppercase tracking-widest text-sage">
+          Business Growth Club
         </p>
 
-        {/* CTA Buttons */}
-        <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Button variant="sage" size="xl">
-            Get Started
-          </Button>
-          <Button variant="outline" size="lg">
-            Learn More
-          </Button>
+        {/* Headline */}
+        <h1 className="mt-8 font-serif text-5xl font-bold leading-[1.1] tracking-tight text-text-primary sm:text-6xl md:text-7xl">
+          Macon AI Solutions.
+        </h1>
+
+        {/* Subheadline */}
+        <p className="mx-auto mt-8 max-w-xl text-xl font-light leading-relaxed text-text-muted md:text-2xl">
+          Your business growth partner. AI consulting, seamless booking, and marketing
+          automation—so you can focus on your craft.
+        </p>
+
+        {/* Coming Soon Badge */}
+        <div className="mt-12">
+          <span className="inline-block rounded-full border border-neutral-200 bg-neutral-50 px-6 py-3 text-sm font-medium text-text-muted">
+            Launching Soon
+          </span>
         </div>
 
         {/* Trust Signal */}
         <p className="mt-16 text-sm text-text-muted">
-          Trusted by entrepreneurs and small business owners across the country.
+          Partnering with entrepreneurs and small business owners through revenue-sharing.
         </p>
       </div>
-
-      {/* Build Status */}
-      <div className="mt-24 rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg">
-        <h2 className="text-lg font-semibold text-text-primary">Next.js Migration Status</h2>
-        <ul className="mt-4 space-y-2 text-left text-sm text-text-muted">
-          <li className="flex items-center gap-2">
-            <span className="text-success-500">&#10003;</span> Next.js 14 app created
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-success-500">&#10003;</span> Tailwind CSS configured with design
-            tokens
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-success-500">&#10003;</span> Button component ported
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-warning-500">&#9675;</span> ts-rest SSR client (in progress)
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-warning-500">&#9675;</span> NextAuth.js integration (pending)
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-warning-500">&#9675;</span> Tenant site pages (pending)
-          </li>
-        </ul>
-      </div>
-    </div>
+    </main>
   );
 }

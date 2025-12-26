@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
@@ -8,6 +8,8 @@ import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 interface ContactFormProps {
   tenantName: string;
   basePath: string;
+  /** Domain query parameter for custom domain routes (e.g., '?domain=example.com') */
+  domainParam?: string;
 }
 
 interface FormData {
@@ -38,7 +40,7 @@ type FormStatus = 'idle' | 'submitting' | 'success' | 'error';
  * Phase 1: Simulates success (1s delay)
  * Phase 2: Will call POST /v1/inquiries
  */
-export function ContactForm({ tenantName, basePath }: ContactFormProps) {
+export function ContactForm({ tenantName, basePath, domainParam }: ContactFormProps) {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -52,6 +54,9 @@ export function ContactForm({ tenantName, basePath }: ContactFormProps) {
   const successRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Build home link with optional domain param
+  const homeHref = domainParam ? `/${domainParam}` : basePath;
 
   // Cleanup on unmount - abort any in-flight requests
   useEffect(() => {
@@ -199,7 +204,7 @@ export function ContactForm({ tenantName, basePath }: ContactFormProps) {
             Send Another Message
           </Button>
           <Button asChild variant="outline">
-            <Link href={basePath}>Back to Home</Link>
+            <Link href={homeHref}>Back to Home</Link>
           </Button>
         </div>
       </div>

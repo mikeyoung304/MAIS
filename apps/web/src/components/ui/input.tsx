@@ -20,7 +20,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           type={type}
           id={inputId}
           className={cn(
-            'flex h-11 w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-neutral-900',
+            'flex h-11 w-full rounded-full border bg-white px-4 py-2.5 text-sm text-neutral-900',
             'shadow-sm hover:shadow-elevation-1',
             'transition-all duration-200 ease-out',
             'hover:border-macon-navy/40',

@@ -95,13 +95,14 @@ export function validateDomain(domain: string | undefined): string {
  *
  * Used by /t/[slug] routes for tenant landing pages.
  * SSR-safe - works on server and client.
+ * Wrapped with React's cache() to deduplicate calls within the same request.
  *
  * @param slug - Tenant slug (e.g., "jane-photography")
  * @returns TenantPublicDto with branding and landing page config
  * @throws TenantNotFoundError if tenant doesn't exist
  * @throws TenantApiError for other API failures
  */
-export async function getTenantBySlug(slug: string): Promise<TenantPublicDto> {
+export const getTenantBySlug = cache(async (slug: string): Promise<TenantPublicDto> => {
   const url = `${API_BASE_URL}/v1/public/tenants/${encodeURIComponent(slug)}`;
 
   const response = await fetch(url, {
@@ -126,7 +127,7 @@ export async function getTenantBySlug(slug: string): Promise<TenantPublicDto> {
   }
 
   return response.json();
-}
+});
 
 /**
  * Fetch tenant public data by custom domain

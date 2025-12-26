@@ -39,49 +39,22 @@ const webhookEvents = new Map<
 const earlyAccessRequests = new Map<string, EarlyAccessRequest>();
 
 // Seed data on module load
+// NOTE: Package slugs MUST match demo.ts seed slugs (starter, growth, enterprise)
+// to ensure booking links work correctly across mock and real modes.
+// See TODO #396 for context on this alignment requirement.
 function seedData(): void {
   if (packages.size > 0) return; // Already seeded
 
-  // Packages
-  packages.set('pkg_basic', {
-    id: 'pkg_basic',
+  // Packages - aligned with demo.ts seed slugs for consistency
+  packages.set('pkg_starter', {
+    id: 'pkg_starter',
     tenantId: DEFAULT_TENANT,
-    slug: 'basic-elopement',
-    title: 'Basic Elopement',
-    description: 'Simple, intimate ceremony with professional photography and officiant',
-    priceCents: 99900, // $999
-    photoUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&h=600&fit=crop',
-    photos: [],
-    active: true,
-    segmentId: null,
-    grouping: null,
-    groupingOrder: null,
-  });
-
-  packages.set('pkg_micro', {
-    id: 'pkg_micro',
-    tenantId: DEFAULT_TENANT,
-    slug: 'micro-ceremony',
-    title: 'Micro Ceremony',
-    description: 'Intimate micro-wedding with up to 10 guests, photography, and champagne toast',
-    priceCents: 249900, // $2,499
-    photoUrl: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&h=600&fit=crop',
-    photos: [],
-    active: true,
-    segmentId: null,
-    grouping: null,
-    groupingOrder: null,
-  });
-
-  packages.set('pkg_garden', {
-    id: 'pkg_garden',
-    tenantId: DEFAULT_TENANT,
-    slug: 'garden-romance',
-    title: 'Garden Romance',
+    slug: 'starter',
+    title: 'Starter Package',
     description:
-      'Outdoor garden ceremony with floral arch, photography, and reception for up to 20 guests',
-    priceCents: 449900, // $4,499
-    photoUrl: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800&h=600&fit=crop',
+      'Essential business services to get you started. Perfect for solopreneurs ready to focus on their craft.',
+    priceCents: 25000, // $250
+    photoUrl: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800&h=600&fit=crop',
     photos: [],
     active: true,
     segmentId: null,
@@ -89,107 +62,72 @@ function seedData(): void {
     groupingOrder: null,
   });
 
-  packages.set('pkg_luxury', {
-    id: 'pkg_luxury',
+  packages.set('pkg_growth', {
+    id: 'pkg_growth',
     tenantId: DEFAULT_TENANT,
-    slug: 'luxury-escape',
-    title: 'Luxury Escape',
-    description:
-      'Premium all-inclusive experience with venue, catering, photography, videography, and coordinator',
-    priceCents: 899900, // $8,999
-    photoUrl: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&h=600&fit=crop',
-    photos: [],
-    active: true,
-    segmentId: null,
-    grouping: null,
-    groupingOrder: null,
-  });
-
-  packages.set('pkg_destination', {
-    id: 'pkg_destination',
-    tenantId: DEFAULT_TENANT,
-    slug: 'destination-bliss',
-    title: 'Destination Bliss',
-    description:
-      'Beachfront or mountain ceremony with travel coordination, photography, and celebration dinner',
-    priceCents: 599900, // $5,999
-    photoUrl: 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=800&h=600&fit=crop',
-    photos: [],
-    active: true,
-    segmentId: null,
-    grouping: null,
-    groupingOrder: null,
-  });
-
-  packages.set('pkg_courthouse', {
-    id: 'pkg_courthouse',
-    tenantId: DEFAULT_TENANT,
-    slug: 'courthouse-chic',
-    title: 'Courthouse Chic',
-    description:
-      'Stylish courthouse wedding with photography, marriage license assistance, and celebration lunch',
-    priceCents: 79900, // $799
-    photoUrl: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=800&h=600&fit=crop',
-    photos: [],
-    active: true,
-    segmentId: null,
-    grouping: null,
-    groupingOrder: null,
-  });
-
-  // Add-ons
-  addOns.set('addon_video', {
-    id: 'addon_video',
-    packageId: 'pkg_basic',
-    title: 'Video Recording',
-    description: 'Professional video recording of your ceremony',
+    slug: 'growth',
+    title: 'Growth Package',
+    description: 'Full-service support for growing businesses. Scale with confidence.',
     priceCents: 50000, // $500
-    photoUrl: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=400&h=300&fit=crop',
+    photoUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop',
+    photos: [],
+    active: true,
+    segmentId: null,
+    grouping: null,
+    groupingOrder: null,
   });
 
-  addOns.set('addon_flowers', {
-    id: 'addon_flowers',
-    packageId: 'pkg_basic',
-    title: 'Floral Arrangement',
-    description: 'Beautiful floral arrangements for your special day',
+  packages.set('pkg_enterprise', {
+    id: 'pkg_enterprise',
+    tenantId: DEFAULT_TENANT,
+    slug: 'enterprise',
+    title: 'Enterprise Package',
+    description:
+      'Comprehensive solutions for established businesses. Your complete back office.',
+    priceCents: 100000, // $1,000
+    photoUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop',
+    photos: [],
+    active: true,
+    segmentId: null,
+    grouping: null,
+    groupingOrder: null,
+  });
+
+  // Add-ons - aligned with demo.ts seed add-ons for consistency
+  addOns.set('addon_social_media', {
+    id: 'addon_social_media',
+    packageId: 'pkg_starter',
+    title: 'Social Media Management',
+    description: 'Monthly social media content and posting',
     priceCents: 15000, // $150
-    photoUrl: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=400&h=300&fit=crop',
+    photoUrl: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=300&fit=crop',
   });
 
-  addOns.set('addon_makeup', {
-    id: 'addon_makeup',
-    packageId: 'pkg_micro',
-    title: 'Hair & Makeup',
-    description: 'Professional hair and makeup services',
-    priceCents: 30000, // $300
-    photoUrl: 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=400&h=300&fit=crop',
+  addOns.set('addon_email_marketing', {
+    id: 'addon_email_marketing',
+    packageId: 'pkg_starter',
+    title: 'Email Marketing',
+    description: 'Automated email sequences and campaigns',
+    priceCents: 10000, // $100
+    photoUrl: 'https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=400&h=300&fit=crop',
   });
 
-  addOns.set('addon_music', {
-    id: 'addon_music',
-    packageId: 'pkg_garden',
-    title: 'Live Music (Acoustic)',
-    description: 'Live acoustic music performance',
-    priceCents: 75000, // $750
-    photoUrl: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=300&fit=crop',
+  addOns.set('addon_crm_setup', {
+    id: 'addon_crm_setup',
+    packageId: 'pkg_growth',
+    title: 'CRM Setup & Training',
+    description: 'Custom CRM configuration and onboarding',
+    priceCents: 25000, // $250
+    photoUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop',
   });
 
-  addOns.set('addon_cake', {
-    id: 'addon_cake',
-    packageId: 'pkg_garden',
-    title: 'Custom Wedding Cake',
-    description: 'Custom designed wedding cake',
-    priceCents: 35000, // $350
-    photoUrl: 'https://images.unsplash.com/photo-1535254973040-607b474cb50d?w=400&h=300&fit=crop',
-  });
-
-  addOns.set('addon_album', {
-    id: 'addon_album',
-    packageId: 'pkg_luxury',
-    title: 'Premium Photo Album',
-    description: 'Premium leather-bound photo album',
-    priceCents: 45000, // $450
-    photoUrl: 'https://images.unsplash.com/photo-1512428813834-c702c7702b78?w=400&h=300&fit=crop',
+  addOns.set('addon_dedicated_manager', {
+    id: 'addon_dedicated_manager',
+    packageId: 'pkg_enterprise',
+    title: 'Dedicated Account Manager',
+    description: 'Personal point of contact for all your needs',
+    priceCents: 50000, // $500
+    photoUrl: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&h=300&fit=crop',
   });
 
   // Admin user
@@ -202,7 +140,7 @@ function seedData(): void {
     role: 'admin',
   });
 
-  logger.debug('Mock data seeded: 6 packages, 6 add-ons, 1 admin user');
+  logger.debug('Mock data seeded: 3 packages, 4 add-ons, 1 admin user');
 }
 
 // Initialize seed data

@@ -117,7 +117,7 @@ export const BookingScenarios = {
    */
   lowCost: () =>
     createBookingWithCommission(10000, 12.0, {
-      packageId: 'pkg_basic',
+      packageId: 'pkg_starter',
       coupleName: 'Grace & Henry',
       email: 'grace.henry@example.com',
       eventDate: '2025-10-05',

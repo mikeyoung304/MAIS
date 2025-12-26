@@ -1,7 +1,14 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { TenantLandingPage } from '../[slug]/(site)/TenantLandingPage';
-import { getTenantByDomain, getTenantPackages, getTenantSegments, TenantNotFoundError } from '@/lib/tenant';
+import { TenantLandingPage } from '@/components/tenant';
+import {
+  getTenantByDomain,
+  getTenantPackages,
+  getTenantSegments,
+  TenantNotFoundError,
+  InvalidDomainError,
+  validateDomain,
+} from '@/lib/tenant';
 
 interface DomainPageProps {
   searchParams: Promise<{ domain?: string }>;
@@ -23,15 +30,9 @@ interface DomainPageProps {
 export async function generateMetadata({ searchParams }: DomainPageProps): Promise<Metadata> {
   const { domain } = await searchParams;
 
-  if (!domain) {
-    return {
-      title: 'Invalid Domain',
-      robots: { index: false, follow: false },
-    };
-  }
-
   try {
-    const tenant = await getTenantByDomain(domain);
+    const validatedDomain = validateDomain(domain);
+    const tenant = await getTenantByDomain(validatedDomain);
 
     const metaDescription =
       tenant.branding?.landingPage?.hero?.subheadline ||
@@ -62,13 +63,20 @@ export async function generateMetadata({ searchParams }: DomainPageProps): Promi
 export default async function DomainPage({ searchParams }: DomainPageProps) {
   const { domain } = await searchParams;
 
-  if (!domain) {
-    notFound();
+  // Validate domain parameter
+  let validatedDomain: string;
+  try {
+    validatedDomain = validateDomain(domain);
+  } catch (error) {
+    if (error instanceof InvalidDomainError) {
+      notFound();
+    }
+    throw error;
   }
 
   try {
     // Fetch tenant by domain
-    const tenant = await getTenantByDomain(domain);
+    const tenant = await getTenantByDomain(validatedDomain);
 
     // Fetch packages and segments in parallel
     const [packages, segments] = await Promise.all([
@@ -76,7 +84,15 @@ export default async function DomainPage({ searchParams }: DomainPageProps) {
       getTenantSegments(tenant.apiKeyPublic),
     ]);
 
-    return <TenantLandingPage data={{ tenant, packages, segments }} />;
+    const domainParam = `?domain=${validatedDomain}`;
+
+    return (
+      <TenantLandingPage
+        data={{ tenant, packages, segments }}
+        basePath=""
+        domainParam={domainParam}
+      />
+    );
   } catch (error) {
     if (error instanceof TenantNotFoundError) {
       notFound();

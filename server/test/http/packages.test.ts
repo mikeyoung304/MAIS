@@ -109,15 +109,17 @@ describe('GET /v1/packages/:slug', () => {
   });
 
   it('returns single package by slug', async () => {
+    // Uses 'starter' slug which matches both mock adapter and demo.ts seed
+    // See TODO #396 for context on slug alignment between mock and real modes
     const res = await request(app)
-      .get('/v1/packages/basic-elopement')
+      .get('/v1/packages/starter')
       .set('X-Tenant-Key', testTenantApiKey)
       .expect('Content-Type', /json/)
       .expect(200);
 
     expect(res.body).toHaveProperty('id');
     expect(res.body).toHaveProperty('slug');
-    expect(res.body.slug).toBe('basic-elopement');
+    expect(res.body.slug).toBe('starter');
   });
 
   it('returns 404 for non-existent package', async () => {

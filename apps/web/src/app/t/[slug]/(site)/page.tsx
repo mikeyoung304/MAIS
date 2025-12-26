@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { TenantLandingPage } from './TenantLandingPage';
+import { TenantLandingPage } from '@/components/tenant';
 import { getTenantStorefrontData, TenantNotFoundError } from '@/lib/tenant';
 
 interface TenantPageProps {
@@ -68,7 +68,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
 
   try {
     const data = await getTenantStorefrontData(slug);
-    return <TenantLandingPage data={data} />;
+    return <TenantLandingPage data={data} basePath={`/t/${slug}`} />;
   } catch (error) {
     if (error instanceof TenantNotFoundError) {
       notFound();

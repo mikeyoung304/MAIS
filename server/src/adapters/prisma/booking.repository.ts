@@ -845,7 +845,7 @@ export class PrismaBookingRepository implements BookingRepository {
     }
 
     const updated = await this.prisma.booking.update({
-      where: { id: bookingId },
+      where: { id: bookingId, tenantId },
       data: updateData,
       include: {
         customer: true,
@@ -856,11 +856,6 @@ export class PrismaBookingRepository implements BookingRepository {
         },
       },
     });
-
-    // Verify tenant ownership
-    if (updated.tenantId !== tenantId) {
-      throw new Error('Tenant mismatch');
-    }
 
     return this.toDomainBooking(updated);
   }

@@ -1,5 +1,3 @@
-'use client';
-
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -9,6 +7,10 @@ import { TIER_ORDER } from '@/lib/packages';
 
 interface TenantLandingPageProps {
   data: TenantStorefrontData;
+  /** Base path for links (e.g., '/t/slug' for slug routes, '' for domain routes) */
+  basePath?: string;
+  /** Domain query parameter for custom domain routes (e.g., '?domain=example.com') */
+  domainParam?: string;
 }
 
 /**
@@ -27,11 +29,10 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 /**
- * Tenant Landing Page - Monolithic Component
+ * Tenant Landing Page - Shared Component
  *
- * Following the plan's guidance: "Build monolith first, extract components later"
- * This component contains all sections inline initially.
- * After the page works end-to-end, we'll extract reusable components.
+ * Used by both [slug] and _domain routes.
+ * The basePath and domainParam props control link construction.
  *
  * Sections (shown based on landing page config):
  * 1. Hero Section
@@ -46,7 +47,7 @@ function StarRating({ rating }: { rating: number }) {
  *
  * Note: Footer is now in the shared layout (layout.tsx)
  */
-export function TenantLandingPage({ data }: TenantLandingPageProps) {
+export function TenantLandingPage({ data, basePath = '', domainParam = '' }: TenantLandingPageProps) {
   const { tenant, packages, segments } = data;
   const landingConfig = tenant.branding?.landingPage;
   const sections = landingConfig?.sections;
@@ -66,6 +67,16 @@ export function TenantLandingPage({ data }: TenantLandingPageProps) {
 
   // Get unique tiers for emphasis (middle tier is popular)
   const midIndex = Math.floor(sortedPackages.length / 2);
+
+  // Build book link based on route type
+  // For domain routes, booking still uses /t/[slug] paths
+  const getBookLink = (packageSlug: string) => {
+    if (domainParam) {
+      // Domain routes redirect to slug-based booking for full context
+      return `/t/${tenant.slug}/book/${packageSlug}`;
+    }
+    return `${basePath}/book/${packageSlug}`;
+  };
 
   return (
     <div id="main-content">
@@ -192,7 +203,7 @@ export function TenantLandingPage({ data }: TenantLandingPageProps) {
                       variant={isPopular ? 'sage' : 'outline'}
                       className="mt-8 w-full"
                     >
-                      <Link href={`/t/${tenant.slug}/book/${pkg.slug}`}>
+                      <Link href={getBookLink(pkg.slug)}>
                         Book {tierLabel}
                       </Link>
                     </Button>

@@ -226,7 +226,7 @@ describe('IdempotencyService', () => {
       // Arrange
       const tenantId = 'tenant_123';
       const email = 'john@example.com';
-      const packageId = 'pkg_basic';
+      const packageId = 'pkg_starter';
       const eventDate = '2025-07-01';
       const timestamp1 = 1700000000000; // Specific timestamp
       const timestamp2 = 1700000005000; // 5 seconds later (within 10s window)

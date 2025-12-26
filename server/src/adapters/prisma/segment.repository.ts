@@ -159,7 +159,7 @@ export class PrismaSegmentRepository {
     };
 
     return await this.prisma.segment.update({
-      where: { id },
+      where: { id, tenantId },
       data: sanitizedData,
     });
   }
@@ -183,7 +183,7 @@ export class PrismaSegmentRepository {
     }
 
     await this.prisma.segment.delete({
-      where: { id },
+      where: { id, tenantId },
     });
   }
 

@@ -7,7 +7,7 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-semibold touch-manipulation relative overflow-hidden isolate ' +
+  'inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-semibold touch-manipulation relative overflow-hidden isolate ' +
     'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-macon-navy/30 focus-visible:ring-offset-2 ' +
     'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed ' +
     'transform-gpu',
@@ -18,41 +18,41 @@ const buttonVariants = cva(
           'bg-gradient-navy text-white shadow-elevation-2 ' +
           'hover:shadow-elevation-3 hover:scale-[1.02] ' +
           'active:scale-[0.98] active:shadow-inner ' +
-          'transition-all duration-150 ease-spring ' +
+          'transition-all duration-300 ease-spring ' +
           'before:absolute before:inset-0 before:bg-gradient-to-t before:from-black/10 before:to-transparent before:opacity-0 ' +
           'hover:before:opacity-100 before:transition-opacity before:-z-10',
         destructive:
           'bg-gradient-to-br from-danger-500 to-danger-600 text-white shadow-elevation-2 ' +
           'hover:shadow-glow-urgent hover:scale-[1.02] ' +
           'active:scale-[0.98] active:shadow-inner ' +
-          'transition-all duration-150 ease-spring',
+          'transition-all duration-300 ease-spring',
         outline:
           'border-2 border-macon-navy/20 bg-transparent text-macon-navy ' +
           'hover:bg-gradient-to-br hover:from-macon-navy/5 hover:to-macon-navy/10 ' +
           'hover:border-macon-navy/30 hover:shadow-elevation-1 ' +
           'active:scale-[0.98] active:shadow-inner ' +
-          'transition-all duration-150 ease-spring',
+          'transition-all duration-300 ease-spring',
         secondary:
           'bg-gradient-orange text-white shadow-elevation-2 ' +
           'hover:shadow-glow-orange hover:scale-[1.02] ' +
           'active:scale-[0.98] active:shadow-inner ' +
-          'transition-all duration-150 ease-spring ' +
+          'transition-all duration-300 ease-spring ' +
           'before:absolute before:inset-0 before:bg-gradient-to-t before:from-black/10 before:to-transparent before:opacity-0 ' +
           'hover:before:opacity-100 before:transition-opacity before:-z-10',
         ghost:
           'text-macon-navy hover:bg-gradient-to-br hover:from-macon-navy/5 hover:to-transparent ' +
           'hover:text-macon-navy-dark ' +
           'active:scale-[0.98] active:shadow-inner ' +
-          'transition-all duration-150 ease-spring',
+          'transition-all duration-300 ease-spring',
         link:
           'text-macon-orange underline-offset-4 hover:underline hover:text-macon-orange-dark ' +
           'active:scale-[0.98] ' +
-          'transition-all duration-150 ease-spring',
+          'transition-all duration-300 ease-spring',
         teal:
           'bg-gradient-teal text-white shadow-elevation-2 ' +
           'hover:shadow-glow-teal hover:scale-[1.05] ' +
           'active:scale-[0.95] active:shadow-inner ' +
-          'transition-all duration-150 ease-spring ' +
+          'transition-all duration-300 ease-spring ' +
           'before:absolute before:inset-0 before:bg-gradient-to-t before:from-white/10 before:to-transparent before:opacity-0 ' +
           'hover:before:opacity-100 before:transition-opacity before:-z-10',
         success:

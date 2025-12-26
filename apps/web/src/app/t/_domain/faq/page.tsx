@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { FAQPageContent } from '@/components/tenant';
 import {
   getTenantByDomain,
   TenantNotFoundError,
   InvalidDomainError,
   validateDomain,
 } from '@/lib/tenant';
-import { FAQAccordion } from '../../[slug]/(site)/faq/FAQAccordion';
 
 interface FAQPageProps {
   searchParams: Promise<{ domain?: string }>;
@@ -44,16 +44,12 @@ export default async function FAQPage({ searchParams }: FAQPageProps) {
   try {
     const tenant = await getTenantByDomain(validatedDomain);
     const faqItems = tenant.branding?.landingPage?.faq?.items || [];
-
-    // For custom domains, links need domain param appended
-    // Empty basePath + domainParam results in paths like /contact?domain=example.com
-    const basePath = '';
     const domainParam = `?domain=${validatedDomain}`;
 
     return (
-      <FAQAccordion
+      <FAQPageContent
         faqItems={faqItems}
-        basePath={basePath}
+        basePath=""
         domainParam={domainParam}
       />
     );
