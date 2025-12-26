@@ -21,4 +21,5 @@ module.exports = {
     'no-console': ['warn', { allow: ['warn', 'error'] }],
   },
   // Note: ignorePatterns defined in .eslintignore file
+  // Note: server/ has its own .eslintrc.json with test file overrides
 };

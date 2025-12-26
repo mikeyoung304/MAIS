@@ -36,10 +36,13 @@
   },
   "overrides": [
     {
-      // Relax rules for test files
+      // Relax rules for test files - enable linting without breaking CI
+      // ~400+ existing warnings for any types - to be fixed incrementally
       "files": ["**/*.spec.ts", "**/*.test.ts", "**/test/**/*.ts"],
       "rules": {
         "@typescript-eslint/no-explicit-any": "warn",
+        "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+        "@typescript-eslint/consistent-type-imports": "off",
         "no-console": "off"
       }
     },

@@ -1,9 +1,11 @@
 ---
-status: ready
+status: complete
 priority: p2
 issue_id: "425"
 tags: [test, mock, stripe, idempotency]
 dependencies: []
+completed_at: "2025-12-26"
+resolution: "false-positive"
 ---
 
 # Mock Stripe Adapter Not Respecting Idempotency Keys
@@ -78,6 +80,17 @@ async createCheckoutSession(params: CreateCheckoutParams): Promise<CheckoutSessi
 - Issue identified from test failure analysis
 - Root cause: mock adapter missing idempotency simulation
 - Status: ready
+
+### 2025-12-26 - Resolved as False Positive
+**By:** Claude Code
+**Actions:**
+- Verified all 6 payment-flow.integration.spec.ts tests pass
+- Idempotency is handled at SERVICE level by `IdempotencyService`, not mock
+- Log output confirms: "Stored new idempotency key", "Updated cached response for idempotency key"
+- No mock Stripe adapter file exists at `server/src/adapters/mock/stripe.adapter.ts`
+- The mock in test file doesn't need idempotency - service layer caches the response
+
+**Resolution:** False positive. The test passes because `IdempotencyService` caches checkout responses at the service layer, making mock-level idempotency unnecessary.
 
 **Learnings:**
 - Mock adapters should simulate key behaviors of real services

@@ -1,5 +1,5 @@
 ---
-status: ready
+status: done
 priority: p2
 issue_id: "423"
 tags: [test, bug, catalog, addon]
@@ -41,9 +41,9 @@ Fix the test setup in `catalog-segment.integration.spec.ts` to properly create `
 - **Database Changes**: No
 
 ## Acceptance Criteria
-- [ ] All 3 catalog-segment tests pass
-- [ ] Test add-ons properly linked via AddOnPackage join table
-- [ ] No changes to production validation logic
+- [x] All 3 catalog-segment tests pass
+- [x] Test add-ons properly linked via PackageAddOn join table
+- [x] No changes to production validation logic
 
 ## Work Log
 
@@ -61,3 +61,17 @@ Fix the test setup in `catalog-segment.integration.spec.ts` to properly create `
 ## Notes
 Source: Triage session on 2025-12-26
 Related test output: Background task b018b77
+
+### 2025-12-26 - Completed
+**By:** Claude Code
+**Actions:**
+- Fixed all 3 failing tests by adding package and PackageAddOn entries in test setup
+- Test 1 (`should return both segment-specific and global add-ons`): Added wellness package, linked yoga and meals add-ons via PackageAddOn, added wedding package with photography add-on
+- Test 2 (`should not include inactive add-ons`): Added wellness package, linked both active and inactive add-ons via PackageAddOn
+- Test 3 (`should cache getAddOnsForSegment results`): Added wellness package, linked test add-on via PackageAddOn
+- All 11 catalog-segment tests now pass
+
+**Key insight:**
+- "Global" add-ons (segmentId = null) still require at least one package association
+- The `toDomainAddOn()` validation is correct - domain model requires packageId
+- Tests were incorrectly assuming "global" meant "no package links"
