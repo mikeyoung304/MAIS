@@ -10,8 +10,9 @@
  * - DELETE /api/v1/admin/tenants/:id   - Deactivate tenant
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '../../generated/prisma';
+import type { Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
+import type { PrismaClient } from '../../generated/prisma';
 import { PrismaTenantRepository } from '../../adapters/prisma/tenant.repository';
 import { apiKeyService } from '../../lib/api-key.service';
 import { ValidationError, NotFoundError } from '../../lib/errors';

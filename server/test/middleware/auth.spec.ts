@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
 import { createAuthMiddleware } from '../../src/middleware/auth';
-import { IdentityService } from '../../src/domains/identity/service';
+import type { IdentityService } from '../../src/domains/identity/service';
 import { UnauthorizedError } from '../../src/lib/errors';
 import type { TokenPayload } from '../../src/domains/identity/port';
 

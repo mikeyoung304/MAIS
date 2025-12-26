@@ -18,7 +18,7 @@ import { logger } from '../lib/core/logger';
 import type { PaymentProvider, WebhookRepository } from '../lib/ports';
 import type { BookingService } from '../services/booking.service';
 import { WebhookValidationError, WebhookProcessingError } from '../lib/errors';
-import type { WebhookJobData } from './webhook-queue';
+import type { WebhookJobData } from './types';
 
 // Zod schema for Stripe session (runtime validation)
 const StripeSessionSchema = z.object({

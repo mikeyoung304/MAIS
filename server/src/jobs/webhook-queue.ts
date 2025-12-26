@@ -11,18 +11,15 @@
  * - Graceful shutdown support
  */
 
-import { Queue, Worker, Job } from 'bullmq';
+import type { Job } from 'bullmq';
+import { Queue, Worker } from 'bullmq';
 import type { Redis } from 'ioredis';
 import IORedis from 'ioredis';
 import { logger } from '../lib/core/logger';
+import type { WebhookJobData } from './types';
 
-// Job data structure for webhook processing
-export interface WebhookJobData {
-  eventId: string;
-  tenantId: string;
-  rawPayload: string;
-  signature: string;
-}
+// Re-export for backwards compatibility
+export type { WebhookJobData } from './types';
 
 // Queue configuration
 const QUEUE_NAME = 'webhook-processing';

@@ -15,7 +15,8 @@
  * This follows the same pattern as booking, catalog, and scheduling.
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import multer from 'multer';
 import { ZodError } from 'zod';
 import type { LandingPageService } from '../services/landing-page.service';

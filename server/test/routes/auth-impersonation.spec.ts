@@ -6,8 +6,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { UnifiedAuthController } from '../../src/routes/auth.routes';
 import { IdentityService } from '../../src/services/identity.service';
-import { TenantAuthService } from '../../src/services/tenant-auth.service';
-import { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.repository';
+import type { TenantAuthService } from '../../src/services/tenant-auth.service';
+import type { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.repository';
 import { FakeUserRepository } from '../helpers/fakes';
 import { UnauthorizedError } from '../../src/lib/errors';
 
@@ -265,14 +265,14 @@ describe('Impersonation API Endpoints', () => {
         role: 'PLATFORM_ADMIN',
       });
 
-      let adminPayload = identityService.verifyToken(adminToken) as any;
+      const adminPayload = identityService.verifyToken(adminToken) as any;
       expect(adminPayload.impersonating).toBeUndefined();
 
       // Step 2: Start impersonation
       const impResult = await controller.startImpersonation(adminToken, 'tenant_123');
       const impToken = impResult.token;
 
-      let impPayload = identityService.verifyToken(impToken) as any;
+      const impPayload = identityService.verifyToken(impToken) as any;
       expect(impPayload.impersonating).toBeDefined();
       expect(impPayload.impersonating.tenantId).toBe('tenant_123');
 
@@ -280,7 +280,7 @@ describe('Impersonation API Endpoints', () => {
       const stopResult = await controller.stopImpersonation(impToken);
       const normalToken = stopResult.token;
 
-      let normalPayload = identityService.verifyToken(normalToken) as any;
+      const normalPayload = identityService.verifyToken(normalToken) as any;
       expect(normalPayload.impersonating).toBeUndefined();
       expect(normalPayload.userId).toBe('admin_flow');
       expect(normalPayload.email).toBe('admin@platform.com');

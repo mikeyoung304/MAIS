@@ -12,7 +12,7 @@
 import Stripe from 'stripe';
 import { logger } from '../lib/core/logger';
 import { WebhookValidationError } from '../lib/errors/business';
-import { PrismaClient } from '../generated/prisma';
+import type { PrismaClient } from '../generated/prisma';
 import { Prisma } from '../generated/prisma';
 import { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 

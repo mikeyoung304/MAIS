@@ -3,7 +3,8 @@
  * Protected routes for tenants to manage their Google Calendar configuration
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
 import { logger } from '../lib/core/logger';
 import { encryptionService } from '../lib/encryption.service';

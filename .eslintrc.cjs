@@ -20,5 +20,17 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'warn',
     'no-console': ['warn', { allow: ['warn', 'error'] }],
   },
-  ignorePatterns: ['dist', 'node_modules', 'coverage', '*.cjs', '*.js', 'generated', 'apps/web'],
+  ignorePatterns: [
+    'dist',
+    'node_modules',
+    'coverage',
+    '*.cjs',
+    '*.js',
+    'generated',
+    'apps/web',
+    '**/test/templates/**',
+    'server/scripts/**',
+    '**/update-tenant-passwords.ts',
+    'tests/**',
+  ],
 };

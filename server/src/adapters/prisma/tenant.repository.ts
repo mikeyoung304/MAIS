@@ -3,7 +3,7 @@
  * Provides data layer for multi-tenant operations
  */
 
-import { PrismaClient, Tenant } from '../../generated/prisma';
+import type { PrismaClient, Tenant } from '../../generated/prisma';
 import {
   TenantPublicDtoSchema,
   ALLOWED_FONT_FAMILIES,

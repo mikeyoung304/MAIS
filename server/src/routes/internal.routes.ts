@@ -9,7 +9,8 @@
  * - POST /v1/internal/revalidate - Trigger ISR revalidation for tenant pages
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import { z, ZodError } from 'zod';
 import { logger } from '../lib/core/logger';
 

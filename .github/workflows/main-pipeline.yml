@@ -92,12 +92,15 @@ jobs:
       - name: Run ESLint
         run: npm run lint
         # TODO: Remove continue-on-error after fixing pre-existing lint errors
-        # ESLint config was broken (required parserOptions.project but didn't provide it)
-        # This surfaced 900+ pre-existing errors that need separate cleanup
+        # ~500 errors remain (mostly console.log in client code)
         continue-on-error: true
 
       - name: Check formatting
         run: npm run format:check
+
+      - name: Check for circular dependencies (server)
+        # This check is BLOCKING - circular dependencies must be fixed
+        run: npx madge --circular --extensions ts server/src
 
       - name: Comment PR on lint failure
         if: failure() && github.event_name == 'pull_request'

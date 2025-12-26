@@ -15,9 +15,9 @@ import {
   InvalidBookingTypeError,
   PackageNotAvailableError,
 } from '../lib/errors';
-import { CommissionService } from './commission.service';
+import type { CommissionService } from './commission.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
-import { IdempotencyService } from './idempotency.service';
+import type { IdempotencyService } from './idempotency.service';
 import type { SchedulingAvailabilityService } from './scheduling-availability.service';
 import type { AvailabilityService } from './availability.service';
 import { logger } from '../lib/core/logger';

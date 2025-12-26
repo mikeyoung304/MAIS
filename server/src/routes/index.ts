@@ -28,7 +28,7 @@ import {
   getTenantId,
   type TenantRequest,
 } from '../middleware/tenant';
-import { PrismaClient } from '../generated/prisma';
+import type { PrismaClient } from '../generated/prisma';
 import { PrismaTenantRepository, PrismaBlackoutRepository } from '../adapters/prisma';
 import type {
   ServiceRepository,

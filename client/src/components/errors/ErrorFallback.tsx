@@ -72,7 +72,7 @@ export function ErrorFallback({ error, resetError }: Props) {
 /**
  * Minimal error fallback for widget mode
  */
-export function MinimalErrorFallback({ error, resetError }: Props) {
+export function MinimalErrorFallback({ error: _error, resetError }: Props) {
   return (
     <div className="p-4 text-center bg-danger-50">
       <p className="text-danger-800 mb-2">An error occurred. Please try again.</p>

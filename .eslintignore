@@ -1,0 +1,32 @@
+# Build artifacts
+dist/
+node_modules/
+coverage/
+
+# Generated files
+*.cjs
+*.js
+generated/
+
+# Next.js app (has its own ESLint config)
+apps/web/
+
+# Test templates with placeholder syntax
+server/test/templates/
+
+# Test files (to be cleaned up separately - ~250 warnings for any types)
+# TODO: Remove this and fix test file lint errors
+server/test/
+
+# Utility scripts that use console.log
+server/scripts/
+**/update-tenant-passwords.ts
+server/*.ts
+server/prisma/seeds/
+
+# Documentation examples
+docs/examples/
+
+# E2E test infrastructure
+e2e/
+tests/

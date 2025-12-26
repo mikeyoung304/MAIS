@@ -9,7 +9,8 @@
  * See: docs/setup/SUPABASE.md
  */
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import { logger } from '../lib/core/logger';
 
 let supabaseServiceClient: SupabaseClient | null = null;
