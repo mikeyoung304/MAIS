@@ -111,6 +111,7 @@ model Tenant {
   domains          TenantDomain[] // Custom domains for tenant website
   agentProposals   AgentProposal[] // AI agent write operation proposals
   agentAuditLogs   AgentAuditLog[] // AI agent audit trail
+  agentSessions    AgentSession[] // AI agent chat sessions
 
   @@index([slug])
   @@index([apiKeyPublic])
@@ -791,4 +792,19 @@ enum AgentApprovalStatus {
   SOFT      // T2 - soft confirm (proceeds after next message)
   EXPLICIT  // T3 - explicit user confirmation received
   BYPASSED  // Security bypass attempt (should never happen, logged for audit)
+}
+
+/// AgentSession - Conversation session for AI agent chat
+/// Stores message history and session state for continuity
+model AgentSession {
+  id        String   @id @default(cuid())
+  tenantId  String   // Tenant isolation - CRITICAL
+  messages  Json     @default("[]") // Array of ChatMessage objects
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, updatedAt]) // Find recent sessions for tenant
+  @@index([tenantId])
 }

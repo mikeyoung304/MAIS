@@ -59,6 +59,7 @@ import { createTenantAdminDomainsRouter } from './tenant-admin-domains.routes';
 import { DomainVerificationService } from '../services/domain-verification.service';
 import { createInternalRoutes } from './internal.routes';
 import { createAgentRoutes } from './agent.routes';
+import { registerAllExecutors } from '../agent/executors';
 import {
   createPublicBookingManagementRouter,
   PublicBookingManagementController,
@@ -653,6 +654,9 @@ export function createV1Router(
     const agentRoutes = createAgentRoutes(prismaClient);
     app.use('/v1/agent', tenantAuthMiddleware, agentRoutes);
     logger.info('✅ Agent routes mounted at /v1/agent');
+
+    // Register agent proposal executors
+    registerAllExecutors(prismaClient);
   }
 
   // Register internal routes (for service-to-service communication)

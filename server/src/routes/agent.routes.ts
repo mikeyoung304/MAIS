@@ -3,15 +3,18 @@
  * API endpoints for AI agent integration
  *
  * These routes support the MAIS Business Growth Agent:
+ * - Chat endpoint (POST /v1/agent/chat)
+ * - Session management (GET /v1/agent/session)
  * - Proposal confirmation (server-side approval mechanism)
- * - Future: Session management, context injection
  */
 
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
 import type { PrismaClient } from '../generated/prisma';
+import { Prisma } from '../generated/prisma';
 import { logger } from '../lib/core/logger';
 import { NotFoundError, ValidationError, ConflictError } from '../lib/errors';
+import { AgentOrchestrator } from '../agent/orchestrator';
 
 /**
  * Proposal executor registry
@@ -39,6 +42,9 @@ export function registerProposalExecutor(toolName: string, executor: ProposalExe
 export function createAgentRoutes(prisma: PrismaClient): Router {
   const router = Router();
 
+  // Initialize orchestrator (singleton per route instance)
+  const orchestrator = new AgentOrchestrator(prisma);
+
   /**
    * Helper to extract tenantId from authenticated request
    */
@@ -46,6 +52,170 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
     const tenantAuth = res.locals.tenantAuth;
     return tenantAuth?.tenantId ?? null;
   };
+
+  // ============================================================================
+  // Chat Endpoints
+  // ============================================================================
+
+  /**
+   * POST /v1/agent/chat
+   * Send a message to the AI agent and receive a response
+   *
+   * Request body:
+   * - message: string (required) - User's message
+   * - sessionId: string (optional) - Existing session ID to continue conversation
+   *
+   * Response:
+   * - message: string - Agent's response
+   * - sessionId: string - Session ID for future requests
+   * - proposals: array - Any pending proposals that need confirmation
+   * - toolResults: array - Results of any tools the agent used
+   */
+  router.post('/chat', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      const { message, sessionId } = req.body;
+
+      if (!message || typeof message !== 'string') {
+        res.status(400).json({ error: 'Message is required' });
+        return;
+      }
+
+      if (message.length > 10000) {
+        res.status(400).json({ error: 'Message too long (max 10000 characters)' });
+        return;
+      }
+
+      // Get or create session
+      let session;
+      if (sessionId) {
+        session = await orchestrator.getSession(tenantId, sessionId);
+        if (!session) {
+          // Invalid session ID - create new session
+          session = await orchestrator.getOrCreateSession(tenantId);
+        }
+      } else {
+        session = await orchestrator.getOrCreateSession(tenantId);
+      }
+
+      // Send message to agent
+      const response = await orchestrator.chat(tenantId, session.sessionId, message);
+
+      logger.info(
+        {
+          tenantId,
+          sessionId: session.sessionId,
+          messageLength: message.length,
+          responseLength: response.message.length,
+          toolsUsed: response.toolResults?.length ?? 0,
+          proposalsCreated: response.proposals?.length ?? 0,
+        },
+        'Agent chat completed'
+      );
+
+      res.json({
+        message: response.message,
+        sessionId: session.sessionId,
+        proposals: response.proposals,
+        toolResults: response.toolResults,
+      });
+    } catch (error) {
+      logger.error({ error }, 'Agent chat error');
+      next(error);
+    }
+  });
+
+  /**
+   * GET /v1/agent/session
+   * Get or create a session for the current tenant
+   *
+   * Query params:
+   * - sessionId: string (optional) - Get specific session by ID
+   *
+   * Response:
+   * - sessionId: string - Session identifier
+   * - greeting: string - Initial greeting based on user context
+   * - context: object - Quick stats about the business
+   */
+  router.get('/session', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      const { sessionId } = req.query;
+
+      let session;
+      if (sessionId && typeof sessionId === 'string') {
+        session = await orchestrator.getSession(tenantId, sessionId);
+        if (!session) {
+          res.status(404).json({ error: 'Session not found' });
+          return;
+        }
+      } else {
+        session = await orchestrator.getOrCreateSession(tenantId);
+      }
+
+      // Get greeting for this session
+      const greeting = await orchestrator.getGreeting(tenantId, session.sessionId);
+
+      res.json({
+        sessionId: session.sessionId,
+        greeting,
+        context: {
+          businessName: session.context.businessName,
+          businessSlug: session.context.businessSlug,
+          quickStats: session.context.quickStats,
+        },
+        createdAt: session.createdAt.toISOString(),
+        updatedAt: session.updatedAt.toISOString(),
+        messageCount: session.messages.length,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * GET /v1/agent/session/:sessionId/history
+   * Get chat history for a session
+   */
+  router.get('/session/:sessionId/history', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      const { sessionId } = req.params;
+      const session = await orchestrator.getSession(tenantId, sessionId);
+
+      if (!session) {
+        res.status(404).json({ error: 'Session not found' });
+        return;
+      }
+
+      res.json({
+        sessionId: session.sessionId,
+        messages: session.messages,
+        messageCount: session.messages.length,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ============================================================================
+  // Proposal Endpoints
+  // ============================================================================
 
   /**
    * POST /v1/agent/proposals/:id/confirm
@@ -183,7 +353,7 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
           status: 'EXECUTED',
           confirmedAt: new Date(),
           executedAt: new Date(),
-          result,
+          result: result as Prisma.JsonObject,
         },
       });
 

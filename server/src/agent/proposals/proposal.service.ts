@@ -11,6 +11,7 @@
  */
 
 import type { PrismaClient, AgentTrustTier, AgentProposalStatus } from '../../generated/prisma';
+import { Prisma } from '../../generated/prisma';
 import { logger } from '../../lib/core/logger';
 
 /**
@@ -72,8 +73,8 @@ export class ProposalService {
         toolName,
         operation,
         trustTier,
-        payload,
-        preview,
+        payload: payload as Prisma.JsonObject,
+        preview: preview as Prisma.JsonObject,
         status,
         requiresApproval: !isAutoConfirm,
         expiresAt,
@@ -280,7 +281,7 @@ export class ProposalService {
       data: {
         status: 'EXECUTED',
         executedAt: new Date(),
-        result,
+        result: result as Prisma.JsonObject,
       },
     });
 

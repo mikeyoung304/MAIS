@@ -69,7 +69,7 @@ export async function buildSessionContext(
         prisma.booking.count({
           where: {
             tenantId,
-            eventDate: { gte: now, lte: next30Days },
+            date: { gte: now, lte: next30Days },
             status: { notIn: ['CANCELED', 'REFUNDED'] },
           },
         }),
@@ -79,7 +79,7 @@ export async function buildSessionContext(
             createdAt: { gte: thisMonthStart },
             status: { in: ['PAID', 'CONFIRMED', 'FULFILLED'] },
           },
-          _sum: { totalCents: true },
+          _sum: { totalPrice: true },
         }),
       ]);
 
@@ -91,7 +91,7 @@ export async function buildSessionContext(
       packageCount,
       upcomingBookings,
       totalBookings,
-      revenueThisMonth: revenueThisMonth._sum.totalCents || 0,
+      revenueThisMonth: revenueThisMonth._sum?.totalPrice ?? 0,
     });
 
     return {
@@ -105,7 +105,7 @@ export async function buildSessionContext(
         packageCount,
         upcomingBookings,
         totalBookings,
-        revenueThisMonth: revenueThisMonth._sum.totalCents || 0,
+        revenueThisMonth: revenueThisMonth._sum?.totalPrice ?? 0,
       },
     };
   } catch (error) {

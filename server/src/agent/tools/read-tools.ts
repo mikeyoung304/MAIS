@@ -110,8 +110,8 @@ export const getDashboardTool: AgentTool = {
         prisma.booking.groupBy({
           by: ['status'],
           where: { tenantId },
-          _count: true,
-          _sum: { totalCents: true },
+          _count: { _all: true },
+          _sum: { totalPrice: true },
         }),
       ]);
 
@@ -124,7 +124,7 @@ export const getDashboardTool: AgentTool = {
       const upcomingBookings = await prisma.booking.count({
         where: {
           tenantId,
-          eventDate: { gte: now, lte: next30Days },
+          date: { gte: now, lte: next30Days },
           status: { notIn: ['CANCELED', 'REFUNDED'] },
         },
       });
@@ -132,7 +132,7 @@ export const getDashboardTool: AgentTool = {
       // Calculate revenue from confirmed bookings
       const revenueStats = bookingStats
         .filter((s) => ['PAID', 'CONFIRMED', 'FULFILLED'].includes(s.status))
-        .reduce((acc, s) => acc + (s._sum.totalCents || 0), 0);
+        .reduce((acc, s) => acc + (s._sum.totalPrice ?? 0), 0);
 
       // Get this month's revenue
       const thisMonthBookings = await prisma.booking.aggregate({
@@ -141,15 +141,15 @@ export const getDashboardTool: AgentTool = {
           createdAt: { gte: thisMonthStart },
           status: { in: ['PAID', 'CONFIRMED', 'FULFILLED'] },
         },
-        _sum: { totalCents: true },
+        _sum: { totalPrice: true },
       });
 
       // Format status counts
       const statusCounts: Record<string, number> = {};
       let totalBookings = 0;
       for (const stat of bookingStats) {
-        statusCounts[stat.status.toLowerCase()] = stat._count;
-        totalBookings += stat._count;
+        statusCounts[stat.status.toLowerCase()] = stat._count._all;
+        totalBookings += stat._count._all;
       }
 
       return {
@@ -164,7 +164,7 @@ export const getDashboardTool: AgentTool = {
           },
           revenue: {
             totalCents: revenueStats,
-            thisMonthCents: thisMonthBookings._sum.totalCents || 0,
+            thisMonthCents: thisMonthBookings._sum.totalPrice ?? 0,
           },
         },
       };
@@ -206,7 +206,7 @@ export const getPackagesTool: AgentTool = {
       if (packageId) {
         const pkg = await prisma.package.findFirst({
           where: { id: packageId, tenantId },
-          include: { addOns: true },
+          include: { addOns: { include: { addOn: true } } },
         });
 
         if (!pkg) {
@@ -224,7 +224,7 @@ export const getPackagesTool: AgentTool = {
           tenantId,
           ...(includeInactive ? {} : { active: true }),
         },
-        include: { addOns: true },
+        include: { addOns: { include: { addOn: true } } },
         orderBy: { createdAt: 'desc' },
       });
 
@@ -284,15 +284,15 @@ export const getBookingsTool: AgentTool = {
           ...(status ? { status: status as any } : {}),
           ...(fromDate || toDate
             ? {
-                eventDate: {
+                date: {
                   ...(fromDate ? { gte: new Date(fromDate) } : {}),
                   ...(toDate ? { lte: new Date(toDate) } : {}),
                 },
               }
             : {}),
         },
-        include: { package: true },
-        orderBy: { eventDate: 'asc' },
+        include: { package: true, customer: true },
+        orderBy: { date: 'asc' },
         take: Math.min(limit, 50),
       });
 
@@ -300,11 +300,11 @@ export const getBookingsTool: AgentTool = {
         success: true,
         data: bookings.map((b) => ({
           id: b.id,
-          packageTitle: sanitizeForContext(b.package?.title || 'Unknown', 50),
-          coupleName: sanitizeForContext(b.coupleName, 50),
-          email: b.email,
-          eventDate: b.eventDate.toISOString().split('T')[0],
-          totalCents: b.totalCents,
+          packageName: sanitizeForContext(b.package?.name || 'Unknown', 50),
+          customerName: sanitizeForContext(b.customer?.name || 'Unknown', 50),
+          customerEmail: b.customer?.email ?? null,
+          date: b.date.toISOString().split('T')[0],
+          totalPrice: b.totalPrice,
           status: b.status,
           createdAt: b.createdAt.toISOString(),
         })),
@@ -353,12 +353,13 @@ export const getBookingTool: AgentTool = {
         data: {
           id: booking.id,
           packageId: booking.packageId,
-          packageTitle: sanitizeForContext(booking.package?.title || 'Unknown', 50),
-          coupleName: sanitizeForContext(booking.coupleName, 50),
-          email: booking.email,
-          phone: booking.phone,
-          eventDate: booking.eventDate.toISOString().split('T')[0],
-          totalCents: booking.totalCents,
+          packageName: sanitizeForContext(booking.package?.name || 'Unknown', 50),
+          customerId: booking.customerId,
+          customerName: sanitizeForContext(booking.customer?.name || 'Unknown', 50),
+          customerEmail: booking.customer?.email ?? null,
+          customerPhone: booking.customer?.phone ?? null,
+          date: booking.date.toISOString().split('T')[0],
+          totalPrice: booking.totalPrice,
           status: booking.status,
           depositPaidAmount: booking.depositPaidAmount,
           balanceDueDate: booking.balanceDueDate?.toISOString().split('T')[0],
@@ -410,7 +411,7 @@ export const checkAvailabilityTool: AgentTool = {
       const existingBooking = await prisma.booking.findFirst({
         where: {
           tenantId,
-          eventDate: date,
+          date: date,
           status: { notIn: ['CANCELED', 'REFUNDED'] },
         },
         select: { id: true, status: true },
@@ -591,19 +592,19 @@ function formatPackage(pkg: any) {
   return {
     id: pkg.id,
     slug: pkg.slug,
-    title: sanitizeForContext(pkg.title, 100),
+    name: sanitizeForContext(pkg.name, 100),
     description: sanitizeForContext(pkg.description || '', 500),
-    priceCents: pkg.priceCents,
-    priceFormatted: `$${(pkg.priceCents / 100).toFixed(2)}`,
-    photoUrl: pkg.photoUrl,
+    basePrice: pkg.basePrice,
+    priceFormatted: `$${(pkg.basePrice / 100).toFixed(2)}`,
     photos: pkg.photos || [],
     bookingType: pkg.bookingType,
     active: pkg.active,
     segmentId: pkg.segmentId,
+    grouping: pkg.grouping,
     addOns: pkg.addOns?.map((a: any) => ({
       id: a.id,
-      title: sanitizeForContext(a.title, 50),
-      priceCents: a.priceCents,
+      name: sanitizeForContext(a.addOn?.name || '', 50),
+      price: a.addOn?.price,
     })) || [],
     createdAt: pkg.createdAt.toISOString(),
   };

@@ -16,6 +16,7 @@ import {
   FileEdit,
   AlertCircle,
   RefreshCw,
+  Bot,
 } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { getErrorMessage } from '@/lib/errors';
@@ -124,6 +125,13 @@ export default function TenantDashboardPage() {
 
   const quickActions = [
     {
+      title: 'Growth Assistant',
+      description: 'AI-powered help for your business',
+      href: '/tenant/assistant',
+      icon: <Bot className="h-5 w-5" />,
+      highlight: true,
+    },
+    {
       title: 'Manage Pages',
       description: 'Configure your website pages',
       href: '/tenant/pages',
@@ -210,17 +218,23 @@ export default function TenantDashboardPage() {
         <h2 className="font-serif text-xl font-bold text-text-primary mb-4">
           Quick Actions
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {quickActions.map((action) => (
             <Link
               key={action.title}
               href={action.href}
-              target={action.external ? '_blank' : undefined}
-              rel={action.external ? 'noopener noreferrer' : undefined}
+              target={'external' in action && action.external ? '_blank' : undefined}
+              rel={'external' in action && action.external ? 'noopener noreferrer' : undefined}
             >
-              <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer group">
+              <Card className={`transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer group ${
+                'highlight' in action && action.highlight ? 'border-2 border-sage/30 bg-sage/5' : ''
+              }`}>
                 <CardContent className="flex items-center gap-4 p-6">
-                  <div className="rounded-xl bg-sage/10 p-3 text-sage group-hover:bg-sage group-hover:text-white transition-colors">
+                  <div className={`rounded-xl p-3 transition-colors ${
+                    'highlight' in action && action.highlight
+                      ? 'bg-sage text-white group-hover:bg-sage-dark'
+                      : 'bg-sage/10 text-sage group-hover:bg-sage group-hover:text-white'
+                  }`}>
                     {action.icon}
                   </div>
                   <div className="flex-1">

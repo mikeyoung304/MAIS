@@ -38,6 +38,7 @@
     "db:diagnose": "tsx scripts/diagnose-database.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
     "@macon/contracts": "*",
     "@macon/shared": "*",
     "@prisma/client": "^6.17.1",

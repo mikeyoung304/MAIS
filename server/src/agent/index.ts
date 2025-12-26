@@ -9,6 +9,7 @@
  * - Server-side proposal mechanism for write operations
  * - Audit logging for all tool calls
  * - Context injection for session initialization
+ * - Claude API orchestration via AgentOrchestrator
  *
  * Security:
  * - TenantId from JWT, never from user input
@@ -33,6 +34,10 @@ export type { AgentSessionContext } from './context/context-builder';
 // Audit service
 export { AuditService } from './audit/audit.service';
 export type { AuditLogInput, AuditLogEntry } from './audit/audit.service';
+
+// Orchestrator (Claude API integration)
+export { AgentOrchestrator } from './orchestrator';
+export type { OrchestratorConfig, ChatMessage, SessionState, ChatResponse } from './orchestrator';
 
 /**
  * Get all agent tools (read + write)

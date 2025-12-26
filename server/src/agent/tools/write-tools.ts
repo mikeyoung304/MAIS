@@ -112,16 +112,16 @@ export const upsertPackageTool: AgentTool = {
 
       const isUpdate = !!existing;
       const operation = isUpdate
-        ? `Update package "${sanitizeForContext(existing!.title, 50)}"`
+        ? `Update package "${sanitizeForContext(existing!.name, 50)}"`
         : `Create new package "${sanitizeForContext(params.title as string, 50)}"`;
 
-      // Build payload
+      // Build payload - map from input params to Prisma field names
       const payload: Record<string, unknown> = {
         packageId,
         slug: params.slug,
-        title: params.title,
+        name: params.title, // Map title -> name (Prisma field)
         description: params.description,
-        priceCents: params.priceCents,
+        basePrice: params.priceCents, // Map priceCents -> basePrice (Prisma field)
         photoUrl: params.photoUrl,
         bookingType: params.bookingType || 'DATE',
         active: params.active ?? true,
@@ -132,7 +132,7 @@ export const upsertPackageTool: AgentTool = {
         action: isUpdate ? 'update' : 'create',
         packageName: params.title,
         price: `$${((params.priceCents as number) / 100).toFixed(2)}`,
-        ...(isUpdate ? { previousPrice: `$${(existing!.priceCents / 100).toFixed(2)}` } : {}),
+        ...(isUpdate ? { previousPrice: `$${(existing!.basePrice / 100).toFixed(2)}` } : {}),
       };
 
       return createProposal(context, 'upsert_package', operation, 'T2', payload, preview);
@@ -180,10 +180,10 @@ export const deletePackageTool: AgentTool = {
       const hasBookings = pkg._count.bookings > 0;
       const trustTier = hasBookings ? 'T3' : 'T2';
 
-      const operation = `Delete package "${sanitizeForContext(pkg.title, 50)}"`;
+      const operation = `Delete package "${sanitizeForContext(pkg.name, 50)}"`;
       const payload = { packageId };
       const preview: Record<string, unknown> = {
-        packageName: sanitizeForContext(pkg.title, 50),
+        packageName: sanitizeForContext(pkg.name, 50),
         bookingCount: pkg._count.bookings,
         ...(hasBookings
           ? { warning: 'This package has existing bookings that will be orphaned' }
@@ -444,7 +444,7 @@ export const cancelBookingTool: AgentTool = {
     try {
       const booking = await prisma.booking.findFirst({
         where: { id: bookingId, tenantId },
-        include: { package: true },
+        include: { package: true, customer: true },
       });
 
       if (!booking) {
@@ -455,14 +455,16 @@ export const cancelBookingTool: AgentTool = {
         return { success: false, error: 'Booking is already cancelled or refunded' };
       }
 
-      const operation = `Cancel booking for ${sanitizeForContext(booking.coupleName, 30)} on ${booking.eventDate.toISOString().split('T')[0]}`;
+      // Customer name from Customer relation, date from Booking.date, price from Booking.totalPrice
+      const customerName = booking.customer?.name || 'Unknown Customer';
+      const operation = `Cancel booking for ${sanitizeForContext(customerName, 30)} on ${booking.date.toISOString().split('T')[0]}`;
       const payload = { bookingId, reason: reason || 'Cancelled by tenant' };
       const preview = {
-        customerName: sanitizeForContext(booking.coupleName, 30),
-        eventDate: booking.eventDate.toISOString().split('T')[0],
-        packageTitle: sanitizeForContext(booking.package?.title || 'Unknown', 50),
-        totalCents: booking.totalCents,
-        refundAmount: `$${(booking.totalCents / 100).toFixed(2)}`,
+        customerName: sanitizeForContext(customerName, 30),
+        eventDate: booking.date.toISOString().split('T')[0],
+        packageName: sanitizeForContext(booking.package?.name || 'Unknown', 50),
+        totalPrice: booking.totalPrice,
+        refundAmount: `$${(booking.totalPrice / 100).toFixed(2)}`,
         warning: 'Customer will be notified and refund will be processed',
       };
 
