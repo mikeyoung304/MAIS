@@ -1,6 +1,6 @@
 # ADR-014: Next.js App Router Migration for Tenant Storefronts
 
-**Status:** Accepted
+**Status:** Implemented
 **Date:** 2025-12-25
 **Deciders:** Mike Young, Claude Code Review Agents
 **Context:** Multi-tenant SaaS platform requiring SEO-optimized tenant websites
@@ -170,6 +170,79 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ revalidated: true });
 }
 ```
+
+### Section Components Architecture
+
+The tenant storefront uses a modular section-based architecture for dynamic page composition:
+
+**7 Section Components** (`apps/web/src/components/tenant/sections/`):
+
+| Component | Purpose |
+|-----------|---------|
+| `HeroSection` | Primary hero with headline, subheadline, and CTA |
+| `TextSection` | Rich text content blocks |
+| `GallerySection` | Image gallery with optional Instagram link |
+| `TestimonialsSection` | Customer reviews with ratings |
+| `FAQSection` | Collapsible FAQ items |
+| `ContactSection` | Contact form and business info |
+| `CTASection` | Call-to-action blocks with buttons |
+
+**SectionRenderer** (`apps/web/src/components/tenant/SectionRenderer.tsx`):
+- Renders an array of sections based on discriminated union types
+- Uses exhaustive switch checking for type safety
+- Passes tenant context and basePath to each section
+
+```typescript
+// Type-safe section rendering with exhaustive check
+switch (section.type) {
+  case 'hero':
+    return <HeroSection {...section} tenant={tenant} basePath={basePath} />;
+  case 'text':
+    return <TextSection {...section} tenant={tenant} />;
+  // ... other cases
+  default: {
+    const _exhaustive: never = section;
+    return _exhaustive;  // Compile error if new type not handled
+  }
+}
+```
+
+### Dual Routing Pattern
+
+The tenant storefront supports two access patterns via middleware routing:
+
+| Pattern | Route Structure | Use Case |
+|---------|----------------|----------|
+| **Slug Routes** | `/t/[slug]/*` | Standard access via MAIS domain |
+| **Domain Routes** | `/t/_domain/*` | Custom domain access |
+
+**Middleware Behavior** (`apps/web/src/middleware.ts`):
+
+```typescript
+// Custom domain detection and rewrite
+if (!isKnownDomain) {
+  // Rewrite: janephotography.com/about → /t/_domain/about?domain=janephotography.com
+  url.pathname = `/t/_domain${tenantPath}`;
+  url.searchParams.set('domain', hostname);
+  return NextResponse.rewrite(url);
+}
+```
+
+**Route Parity**: Both route structures mirror each other exactly:
+- `[slug]/(site)/` and `_domain/` contain identical page sets
+- Same components used via shared imports
+- ISR configuration (60s) applied consistently
+
+**Supported Routes** (complete as of implementation):
+- Home (`/`)
+- About (`/about`)
+- Services (`/services`)
+- Gallery (`/gallery`)
+- Testimonials (`/testimonials`)
+- FAQ (`/faq`)
+- Contact (`/contact`)
+- Book (`/book/[packageSlug]`)
+- Book Success (`/book/success`)
 
 ---
 

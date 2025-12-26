@@ -127,6 +127,106 @@ Key directories:
 - `lib/tenant.ts` - Tenant data fetching with `cache()`
 - `middleware.ts` - Custom domain resolution
 
+### Locked Template System
+
+The tenant storefronts use a **section-based locked template architecture** that provides flexibility within controlled boundaries. Tenants can customize content but cannot break the layout or inject arbitrary code.
+
+**Architecture:**
+
+- **7 Page Types:** home, about, services, faq, contact, gallery, testimonials
+- **7 Section Types:** hero, text, gallery, testimonials, faq, contact, cta
+- **Home page is always enabled** (enforced by schema: `enabled: z.literal(true)`)
+- **Dynamic navigation** updates based on which pages are enabled
+
+**Section Components:**
+
+Each section is a self-contained component that receives typed props from the configuration:
+
+```typescript
+// SectionRenderer uses discriminated union for type-safe rendering
+switch (section.type) {
+  case 'hero':
+    return <HeroSection {...section} tenant={tenant} basePath={basePath} />;
+  case 'text':
+    return <TextSection {...section} tenant={tenant} />;
+  case 'gallery':
+    return <GallerySection {...section} tenant={tenant} />;
+  // ... exhaustive matching
+}
+```
+
+**Key Files:**
+
+- `components/tenant/sections/` - Section components (HeroSection, TextSection, etc.)
+- `components/tenant/SectionRenderer.tsx` - Discriminated union renderer
+- `packages/contracts/src/landing-page.ts` - Zod schemas for all section types
+
+**Security:**
+
+- All URLs validated with `SafeUrlSchema` (blocks `javascript:`, `data:` protocols)
+- Instagram handles validated with regex pattern
+- Max length constraints prevent DoS via oversized content
+
+### Dual Routing Pattern
+
+Tenant storefronts support two access methods: slug-based routes and custom domain routes.
+
+**Slug-Based Routes (`/t/[slug]/`):**
+
+Standard routing using tenant slug in the URL path:
+
+```
+/t/jane-photography/           → Home page
+/t/jane-photography/about      → About page
+/t/jane-photography/services   → Services page
+```
+
+**Custom Domain Routes (`/t/_domain/`):**
+
+Custom domains are rewritten by middleware to a special `_domain` route:
+
+```
+janephotography.com/           → /t/_domain?domain=janephotography.com
+janephotography.com/about      → /t/_domain/about?domain=janephotography.com
+```
+
+**Middleware Resolution:**
+
+```typescript
+// middleware.ts - Custom domain detection
+if (!isKnownDomain) {
+  // Rewrite custom domain to _domain route
+  url.pathname = `/t/_domain${tenantPath}`;
+  url.searchParams.set('domain', hostname);
+  return NextResponse.rewrite(url);
+}
+```
+
+**Component Props:**
+
+Page components receive routing context via props:
+
+- `basePath`: Link prefix (`/t/slug` for slug routes, empty for custom domains)
+- `domainParam`: Custom domain hostname (only present for custom domain requests)
+
+```tsx
+// Example page component
+export default async function AboutPage({ searchParams }: Props) {
+  const domainParam = searchParams.domain;
+  const basePath = domainParam ? '' : `/t/${slug}`;
+
+  return <SectionRenderer sections={sections} tenant={tenant} basePath={basePath} />;
+}
+```
+
+**Known Domains:**
+
+The middleware maintains a list of MAIS domains that bypass custom domain resolution:
+
+- `maconaisolutions.com`, `www.maconaisolutions.com`, `app.maconaisolutions.com`
+- `*.vercel.app` (preview deployments)
+- `localhost` (development)
+
 ### Frontend - Legacy Admin (client/)
 
 React 18 + Vite, feature‑based (catalog, booking, admin). Uses a generated ts‑rest client and TanStack Query. Being gradually migrated to Next.js.
@@ -450,6 +550,47 @@ const paymentIntent = await stripe.paymentIntents.create(
 - **User**(id, email\*, passwordHash, role)
 - **WebhookEvent**(id, tenantId, eventId\*, eventType, payload, status, attempts, lastError?, processedAt?)
 
+### Landing Page Configuration (Tenant.landingPageConfig JSON)
+
+**PagesConfig Schema:**
+
+The `pages` field in `landingPageConfig` controls which pages are enabled and their section content:
+
+```typescript
+// PagesConfig - 7 page types with enabled toggles
+{
+  home: { enabled: true, sections: [...] },     // Always enabled (literal true)
+  about: { enabled: boolean, sections: [...] },
+  services: { enabled: boolean, sections: [...] },
+  faq: { enabled: boolean, sections: [...] },
+  contact: { enabled: boolean, sections: [...] },
+  gallery: { enabled: boolean, sections: [...] },
+  testimonials: { enabled: boolean, sections: [...] },
+}
+```
+
+**Section Discriminated Union:**
+
+Each section has a `type` field that determines its shape:
+
+```typescript
+// Section types (discriminated by 'type' field)
+type Section =
+  | { type: 'hero'; headline: string; subheadline?: string; ctaText: string; backgroundImageUrl?: string }
+  | { type: 'text'; headline?: string; content: string; imageUrl?: string; imagePosition: 'left' | 'right' }
+  | { type: 'gallery'; headline: string; images: { url: string; alt: string }[]; instagramHandle?: string }
+  | { type: 'testimonials'; headline: string; items: { quote: string; authorName: string; rating: number }[] }
+  | { type: 'faq'; headline: string; items: { question: string; answer: string }[] }
+  | { type: 'contact'; headline: string; email?: string; phone?: string; address?: string; hours?: string }
+  | { type: 'cta'; headline: string; subheadline?: string; ctaText: string };
+```
+
+**Key Constraints:**
+
+- Home page `enabled` must be `true` (enforced by Zod schema)
+- Navigation dynamically renders links only for enabled pages
+- Default configuration provided for new tenants (`DEFAULT_PAGES_CONFIG`)
+
 ## Backing services
 
 - **Mock mode:** in‑memory repos, console "emails", fake checkout URL.
@@ -656,6 +797,18 @@ curl https://app.maconaisolutions.com/v1/packages \
 **Next Phase:** After successful demo user deployment, expand to 10+ production tenants with full feature set.
 
 ## Migration History
+
+**Locked Template System (December 2025)**: Implemented section-based tenant storefronts:
+
+- Added 7 page types (home, about, services, faq, contact, gallery, testimonials) with enabled toggles
+- Implemented 7 section types (hero, text, gallery, testimonials, faq, contact, cta) as discriminated union
+- Created SectionRenderer component for type-safe section rendering
+- Added dual routing pattern: slug-based (`/t/[slug]/`) and custom domain (`/t/_domain/`)
+- Middleware rewrites custom domains to `_domain` route with domain query parameter
+- Zod schemas with SafeUrlSchema for XSS prevention on all URL fields
+- Home page enforced as always-enabled via `z.literal(true)` constraint
+- Dynamic navigation based on enabled pages
+- Default configuration (`DEFAULT_PAGES_CONFIG`) for new tenant onboarding
 
 **Phase 2B (2024-10-29)**: Integrated Supabase as production database:
 

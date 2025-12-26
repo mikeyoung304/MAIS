@@ -128,6 +128,7 @@ npm run test:e2e -- e2e/tests/booking-mock.spec.ts
 - **Route Handlers:** `route.ts` (API routes in `app/api/`)
 - **Server Components:** Default, no directive needed
 - **Client Components:** `'use client'` directive at top
+- **Section Components:** PascalCase with Section suffix (e.g., `HeroSection.tsx`)
 
 ## Architecture Patterns
 
@@ -271,6 +272,60 @@ const key = 'catalog:packages';
 ```
 
 **Note:** HTTP-level cache middleware was removed (security vulnerability). Only use `CacheService` for application-level caching.
+
+### Page-Based Landing Page Configuration
+
+Tenant landing pages use a config-driven page and section system for flexible content management.
+
+**7 Page Types:**
+
+- `home` - Main landing page
+- `about` - About the business
+- `services` - Service offerings
+- `faq` - Frequently asked questions
+- `contact` - Contact information
+- `gallery` - Portfolio/gallery
+- `testimonials` - Customer testimonials
+
+**7 Section Types:**
+
+- `hero` - Hero banner with CTA
+- `text` - Rich text content block
+- `gallery` - Image gallery grid
+- `testimonials` - Customer testimonial carousel
+- `faq` - Accordion FAQ list
+- `contact` - Contact form/info
+- `cta` - Call-to-action banner
+
+**Key Files:**
+
+- `packages/contracts/src/schemas/landing-page.schema.ts` - Page and section Zod schemas
+- `apps/web/src/lib/tenant.ts` - `normalizeToPages()` helper for legacy config migration
+- `apps/web/src/components/tenant/SectionRenderer.tsx` - Dynamic section component dispatcher
+- `apps/web/src/components/tenant/sections/` - Modular section components
+
+**Usage Pattern:**
+
+```typescript
+// In tenant.ts - normalize config to pages
+import { normalizeToPages } from '@/lib/tenant';
+
+const pages = normalizeToPages(tenant.landingPageConfig);
+const homePage = pages.find(p => p.type === 'home');
+
+// In page component - render sections dynamically
+import { SectionRenderer } from '@/components/tenant/SectionRenderer';
+
+export default function TenantHomePage({ sections }) {
+  return (
+    <main>
+      {sections.map((section, i) => (
+        <SectionRenderer key={i} section={section} tenant={tenant} />
+      ))}
+    </main>
+  );
+}
+```
 
 ## Development Workflow
 
@@ -555,15 +610,19 @@ apps/
 └── web/                        # Next.js 14 App Router (port 3000)
     └── src/
         ├── app/                # App Router pages
-        │   ├── t/[slug]/       # Tenant storefronts (ISR, 60s)
+        │   ├── t/
+        │   │   ├── [slug]/     # Tenant storefronts by slug
+        │   │   └── _domain/    # Custom domain routes
         │   ├── (protected)/    # Admin routes (NextAuth middleware)
         │   └── api/            # Next.js API routes
         ├── components/         # React components
         │   ├── ui/            # Shared UI (Button, Card, etc.)
         │   └── tenant/        # Tenant-specific components
+        │       ├── sections/  # Modular section components
+        │       └── SectionRenderer.tsx
         ├── lib/
         │   ├── auth.ts        # NextAuth.js v5 config
-        │   ├── tenant.ts      # Tenant data fetching (with cache())
+        │   ├── tenant.ts      # Tenant data fetching (with cache(), normalizeToPages())
         │   ├── api.ts         # ts-rest client for Express backend
         │   └── logger.ts      # Structured logging utility
         └── middleware.ts       # Custom domain resolution

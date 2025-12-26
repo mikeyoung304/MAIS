@@ -23,24 +23,82 @@ npm run --workspace=@macon/web-next start
 ```
 apps/web/
 ├── src/
-│   ├── app/                    # Next.js App Router
-│   │   ├── (marketing)/        # MAIS platform pages
-│   │   ├── (tenant)/           # Tenant storefront pages
-│   │   │   └── t/[slug]/       # Dynamic tenant routes
-│   │   ├── (admin)/            # Protected admin pages
-│   │   ├── api/                # API routes (BFF)
-│   │   ├── layout.tsx          # Root layout
-│   │   ├── page.tsx            # Homepage
-│   │   └── providers.tsx       # Client providers
+│   ├── app/                        # Next.js App Router
+│   │   ├── (marketing)/            # MAIS platform pages
+│   │   ├── t/                      # Tenant storefront pages
+│   │   │   ├── [slug]/             # Slug-based routes (/t/jane-photography)
+│   │   │   │   ├── (site)/         # Site pages with shared layout
+│   │   │   │   │   ├── page.tsx        # Homepage
+│   │   │   │   │   ├── layout.tsx      # Shared nav/footer
+│   │   │   │   │   ├── error.tsx       # Error boundary
+│   │   │   │   │   ├── loading.tsx     # Loading state
+│   │   │   │   │   ├── about/          # About page
+│   │   │   │   │   ├── services/       # Services page
+│   │   │   │   │   ├── gallery/        # Gallery page
+│   │   │   │   │   ├── testimonials/   # Testimonials page
+│   │   │   │   │   ├── faq/            # FAQ page
+│   │   │   │   │   └── contact/        # Contact page
+│   │   │   │   └── book/           # Booking flow (no shared layout)
+│   │   │   │       ├── [packageSlug]/
+│   │   │   │       │   ├── page.tsx
+│   │   │   │       │   ├── error.tsx
+│   │   │   │       │   └── loading.tsx
+│   │   │   │       └── success/
+│   │   │   └── _domain/            # Custom domain routes
+│   │   │       ├── page.tsx        # Homepage
+│   │   │       ├── layout.tsx      # Shared nav/footer
+│   │   │       ├── error.tsx       # Error boundary
+│   │   │       ├── loading.tsx     # Loading state
+│   │   │       ├── about/          # About page
+│   │   │       ├── services/       # Services page
+│   │   │       ├── gallery/        # Gallery page
+│   │   │       ├── testimonials/   # Testimonials page
+│   │   │       ├── faq/            # FAQ page
+│   │   │       ├── contact/        # Contact page (with error/loading)
+│   │   │       └── book/           # Booking flow
+│   │   ├── (admin)/                # Protected admin pages
+│   │   ├── api/                    # API routes (BFF)
+│   │   ├── layout.tsx              # Root layout
+│   │   ├── page.tsx                # Homepage
+│   │   └── providers.tsx           # Client providers
 │   │
 │   ├── components/
-│   │   ├── ui/                 # Shared UI components
-│   │   └── tenant-site/        # Tenant-specific components
+│   │   ├── ui/                     # Shared UI components (Button, Card, etc.)
+│   │   ├── auth/                   # Auth components (ProtectedRoute)
+│   │   ├── layouts/                # Layout components (AdminSidebar)
+│   │   ├── booking/                # Booking components (DateBookingWizard)
+│   │   └── tenant/                 # Tenant storefront components
+│   │       ├── TenantNav.tsx           # Navigation bar
+│   │       ├── TenantFooter.tsx        # Footer
+│   │       ├── TenantLandingPage.tsx   # Main landing page
+│   │       ├── SectionRenderer.tsx     # Dynamic section rendering
+│   │       ├── ContactForm.tsx         # Contact form
+│   │       ├── FAQAccordion.tsx        # FAQ accordion
+│   │       ├── pages/                  # Page content components
+│   │       │   ├── AboutPageContent.tsx
+│   │       │   ├── ContactPageContent.tsx
+│   │       │   ├── FAQPageContent.tsx
+│   │       │   └── ServicesPageContent.tsx
+│   │       └── sections/               # Section components
+│   │           ├── HeroSection.tsx
+│   │           ├── TextSection.tsx
+│   │           ├── GallerySection.tsx
+│   │           ├── TestimonialsSection.tsx
+│   │           ├── FAQSection.tsx
+│   │           ├── ContactSection.tsx
+│   │           └── CTASection.tsx
 │   │
 │   ├── lib/
 │   │   ├── api.ts              # SSR-aware ts-rest client
+│   │   ├── auth.ts             # NextAuth.js v5 configuration
+│   │   ├── auth-client.ts      # Client-side auth utilities
+│   │   ├── tenant.ts           # Tenant data fetching (SSR-safe)
+│   │   ├── packages.ts         # Package utilities
+│   │   ├── logger.ts           # Structured logging utility
+│   │   ├── errors.ts           # Error handling utilities
+│   │   ├── format.ts           # Formatting utilities
 │   │   ├── query-client.ts     # React Query setup
-│   │   └── utils.ts            # Utility functions
+│   │   └── utils.ts            # General utility functions
 │   │
 │   ├── styles/
 │   │   ├── globals.css         # Global styles
@@ -97,11 +155,40 @@ function ClientComponent() {
 
 ### Tenant Landing Pages
 
-Dynamic tenant pages at `/t/[slug]`:
+Dynamic tenant pages with SSR and ISR (60-second revalidation):
 
-- SSR with ISR (60-second revalidation)
-- SEO metadata generation
-- Custom domain support via middleware
+**Slug-based routes** (`/t/[slug]`):
+
+| Route | Description |
+|-------|-------------|
+| `/t/[slug]` | Homepage with hero, packages |
+| `/t/[slug]/about` | About page |
+| `/t/[slug]/services` | Services/packages page |
+| `/t/[slug]/gallery` | Photo gallery |
+| `/t/[slug]/testimonials` | Client testimonials |
+| `/t/[slug]/faq` | Frequently asked questions |
+| `/t/[slug]/contact` | Contact form |
+| `/t/[slug]/book/[packageSlug]` | Booking wizard |
+| `/t/[slug]/book/success` | Booking confirmation |
+
+**Custom domain routes** (`/t/_domain`):
+
+| Route | Description |
+|-------|-------------|
+| `/` | Homepage (via middleware rewrite) |
+| `/about` | About page |
+| `/services` | Services/packages page |
+| `/gallery` | Photo gallery |
+| `/testimonials` | Client testimonials |
+| `/faq` | Frequently asked questions |
+| `/contact` | Contact form |
+| `/book/[packageSlug]` | Booking wizard |
+| `/book/success` | Booking confirmation |
+
+Features:
+- SEO metadata generation per page
+- Error boundaries on all dynamic routes
+- Loading states with skeleton UI
 - Mobile-responsive design
 
 ### Custom Domains
@@ -113,6 +200,67 @@ Tenants can use custom domains (requires Vercel Pro):
 3. Middleware routes custom domain to tenant page
 
 See: `docs/operations/VERCEL_CUSTOM_DOMAINS.md`
+
+### Section-Based Page Rendering
+
+Tenant pages use a section-based architecture for flexible content composition.
+
+**SectionRenderer Component:**
+
+The `SectionRenderer` component dynamically renders an array of sections based on their type:
+
+```tsx
+import { SectionRenderer } from '@/components/tenant/SectionRenderer';
+
+// In a page component
+<SectionRenderer
+  sections={config.pages.home.sections}
+  tenant={tenant}
+  basePath="/t/my-studio"
+/>
+```
+
+**Available Section Types:**
+
+| Type | Component | Description |
+|------|-----------|-------------|
+| `hero` | `HeroSection` | Hero banner with headline, CTA, background image |
+| `text` | `TextSection` | Rich text content with optional image |
+| `gallery` | `GallerySection` | Photo grid with lightbox, optional Instagram link |
+| `testimonials` | `TestimonialsSection` | Client testimonials with star ratings |
+| `faq` | `FAQSection` | Accordion-style FAQ items |
+| `contact` | `ContactSection` | Contact form with validation |
+| `cta` | `CTASection` | Call-to-action banner |
+
+**normalizeToPages() Helper:**
+
+Converts legacy landing page config to the new pages-based format:
+
+```tsx
+import { normalizeToPages } from '@/lib/tenant';
+
+// In a Server Component
+const config = tenant.branding?.landingPage as LandingPageConfig | undefined;
+const pages = normalizeToPages(config);
+
+// Access page-specific sections
+const heroSection = pages.home.sections[0];
+const galleryData = pages.gallery.sections[0];
+```
+
+**Tenant Library (`lib/tenant.ts`) Exports:**
+
+| Export | Description |
+|--------|-------------|
+| `getTenantBySlug(slug)` | Fetch tenant by slug (cached, ISR 60s) |
+| `getTenantByDomain(domain)` | Fetch tenant by custom domain |
+| `getTenantStorefrontData(slug)` | Fetch tenant + packages + segments in parallel |
+| `isPageEnabled(config, pageName)` | Check if a page is enabled in config |
+| `normalizeToPages(config)` | Convert legacy config to pages format |
+| `validateDomain(domain)` | Validate and sanitize domain parameter |
+| `getTenantPackages(apiKey)` | Fetch tenant packages |
+| `getTenantSegments(apiKey)` | Fetch tenant segments |
+| `getTenantPackageBySlug(apiKey, slug)` | Fetch single package by slug |
 
 ## Development
 

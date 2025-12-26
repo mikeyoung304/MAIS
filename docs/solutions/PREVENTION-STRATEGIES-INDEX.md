@@ -546,6 +546,128 @@ const handleEdit = useCallback(
 className = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-sage';
 ```
 
+#### [Multi-Agent Parallel Code Review Workflow](./code-review-patterns/multi-agent-parallel-code-review-workflow-MAIS-20251225.md)
+
+**Purpose:** Workflow for 6 parallel review agents + 8 parallel fix agents with interactive triage
+**Audience:** Engineers using multi-agent code review workflows
+**Date Created:** 2025-12-25
+**Key Patterns:** Parallel agent coordination, priority classification, interactive triage
+
+**Covers:**
+
+- 6 parallel code review agents for comprehensive analysis
+- 8 parallel fix agents for efficient resolution
+- Interactive triage with P1/P2/P3 priority classification
+- Agent coordination and result aggregation
+- Fix verification and validation workflow
+
+**Quick Reference:**
+
+```bash
+# Phase 1: Launch 6 parallel review agents
+Task('Review API contracts', { run_in_background: true })
+Task('Review tenant isolation', { run_in_background: true })
+Task('Review error handling', { run_in_background: true })
+# ... 3 more agents
+
+# Phase 2: Triage findings with user interaction
+AskUserQuestion('Classify 15 findings by priority (P1/P2/P3)')
+
+# Phase 3: Launch 8 parallel fix agents
+independentFixes.forEach(fix =>
+  Task(`Fix ${fix.id}`, { run_in_background: true })
+)
+```
+
+#### [Next.js Migration Lessons Learned](./code-review-patterns/nextjs-migration-lessons-learned-MAIS-20251225.md)
+
+**Purpose:** 10 key lessons from Next.js migration with prevention checklist
+**Audience:** Engineers performing framework migrations
+**Date Created:** 2025-12-25
+**Key Patterns:** Framework migration patterns, ISR caching, error boundaries
+
+**Covers:**
+
+- 10 key lessons from Next.js 14 App Router migration
+- Prevention checklist for framework migrations
+- ISR cache strategies and pitfalls
+- API contract consistency across SSR/client
+- Error boundary requirements for dynamic routes
+
+**Quick Rules:**
+
+```typescript
+// 1. Wrap shared SSR data fetching with cache()
+import { cache } from 'react';
+const getTenantData = cache(async (slug: string) => { ... });
+
+// 2. Add error.tsx to all dynamic routes
+export default function Error({ error, reset }: ErrorBoundaryProps) { ... }
+
+// 3. Never expose backend tokens in NextAuth session
+// Use getBackendToken() server-side only
+
+// 4. Use logger utility, never console.log
+import { logger } from '@/lib/logger';
+```
+
+#### [Code Review Quick Reference (2025-12-25)](./code-review-patterns/CODE-REVIEW-QUICK-REFERENCE-20251225.md)
+
+**Purpose:** Quick reference for 10 common P2/P3 code review patterns
+**Audience:** Code reviewers, engineers submitting PRs
+**Date Created:** 2025-12-25
+**Length:** ~2,000 words (print-friendly)
+
+**Contains:**
+
+- 10 most common P2/P3 patterns with one-liner fixes
+- Copy-paste ready code examples
+- ESLint rules to enforce patterns
+- Grep commands for self-review
+
+**Quick Reference Table:**
+
+| Pattern | Issue | Fix |
+|---------|-------|-----|
+| Missing useCallback | Callback recreated on every render | Wrap in useCallback() |
+| No error boundary | Unhandled errors crash page | Add error.tsx |
+| Console.log | Debug code in production | Use logger utility |
+| window.confirm | Blocks UI thread | Use AlertDialog |
+| Missing ISR revalidate | Stale data in production | Add revalidate: 60 |
+
+#### [Batch P2/P3 Resolution for Tenant Multi-Page Sites](./code-review-patterns/batch-p2-p3-resolution-tenant-multipage-MAIS-20251225.md)
+
+**Purpose:** Batch resolution guide for tenant multi-page site P2/P3 findings
+**Audience:** Engineers resolving code review findings across tenant pages
+**Date Created:** 2025-12-25
+**Key Patterns:** Batch resolution, tenant page consistency, parallel fixes
+
+**Covers:**
+
+- Batch resolution workflow for multi-page tenant sites
+- Consistency patterns across /t/[slug]/* pages
+- Parallel agent assignment by page/component
+- Verification checklist for batch fixes
+- Common multi-page patterns and fixes
+
+**Quick Workflow:**
+
+```bash
+# 1. Group findings by page
+/t/[slug]/page.tsx - 3 findings
+/t/[slug]/book/page.tsx - 5 findings
+/t/[slug]/services/page.tsx - 2 findings
+
+# 2. Launch parallel agents per page
+Task('Fix /t/[slug]/page.tsx P2/P3s', { run_in_background: true })
+Task('Fix /t/[slug]/book/page.tsx P2/P3s', { run_in_background: true })
+Task('Fix /t/[slug]/services/page.tsx P2/P3s', { run_in_background: true })
+
+# 3. Verify consistency
+npm run typecheck
+npm run test:e2e -- --grep "tenant"
+```
+
 ---
 
 ### 3. Testing Guides
@@ -1435,6 +1557,45 @@ Before creating TODO from plan:
 
 **Quick Reference:** [Multi-Agent Quick Reference](./methodology/MULTI-AGENT-QUICK-REFERENCE.md) (print and pin!)
 
+#### [Parallel TODO Resolution with Playwright Verification](./methodology/parallel-todo-resolution-with-playwright-verification-MAIS-20251225.md)
+
+**Purpose:** Parallel TODO resolution with Playwright MCP verification and ISR cache clearing
+**Audience:** Engineers resolving TODOs with UI verification requirements
+**Date Created:** 2025-12-25
+**Key Patterns:** Parallel TODO resolution, Playwright verification, ISR cache management
+
+**Covers:**
+
+- Parallel TODO resolution workflow using multi-agent architecture
+- Playwright MCP integration for UI verification
+- ISR cache clearing after data changes
+- Verification patterns for tenant storefront changes
+- Coordination between fix agents and verification agents
+
+**Key Workflow:**
+
+```bash
+# 1. Launch parallel fix agents for independent TODOs
+Task('Fix TODO-001: Add error boundary', { run_in_background: true })
+Task('Fix TODO-002: Add loading state', { run_in_background: true })
+Task('Fix TODO-003: Fix API contract', { run_in_background: true })
+
+# 2. After fixes complete, verify with Playwright
+mcp__playwright__browser_navigate({ url: 'http://localhost:3000/t/demo' })
+mcp__playwright__browser_snapshot({})
+
+# 3. Clear ISR cache after data changes
+# Trigger revalidation by visiting page or calling revalidate API
+fetch('/api/revalidate?path=/t/demo', { method: 'POST' })
+```
+
+**When to Use:**
+
+- Resolving multiple independent TODOs in parallel
+- Changes affecting tenant storefront pages
+- Fixes that require visual verification
+- After modifying ISR-cached pages
+
 #### [Stale Todos Quick Reference](./STALE-TODOS-QUICK-REFERENCE.md)
 
 **Purpose:** Quick decision tree for todo creation (5-minute guide)
@@ -1496,6 +1657,12 @@ Are you creating a todo based on a plan?
 ---
 
 **Last Updated:** 2025-12-25
-**Recent Additions:** Multi-agent code review prevention strategies, multi-agent quick reference (2025-12-25)
+**Recent Additions (2025-12-25):**
+- Multi-agent parallel code review workflow (6 review agents + 8 fix agents with interactive triage)
+- Next.js migration lessons learned (10 key lessons + prevention checklist)
+- Parallel TODO resolution with Playwright verification (ISR cache clearing after data changes)
+- Code review quick reference (10 common P2/P3 patterns)
+- Batch P2/P3 resolution for tenant multi-page sites
+
 **Maintainer:** Tech Lead
 **Status:** Active
