@@ -10,6 +10,7 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '../../generated/prisma';
+import { PrismaTenantRepository } from '../../adapters/prisma/tenant.repository';
 import { ValidationError, NotFoundError } from '../../lib/errors';
 import type {
   StripeConnectDto,
@@ -29,6 +30,7 @@ import type {
  */
 export function createAdminStripeRoutes(prisma: PrismaClient): Router {
   const router = Router();
+  const tenantRepo = new PrismaTenantRepository(prisma);
 
   // Placeholder service import - will be replaced when service is created
   let stripeConnectService: any;
@@ -70,9 +72,7 @@ export function createAdminStripeRoutes(prisma: PrismaClient): Router {
         }
 
         // Verify tenant exists
-        const tenant = await prisma.tenant.findUnique({
-          where: { id: tenantId },
-        });
+        const tenant = await tenantRepo.findById(tenantId);
 
         if (!tenant) {
           throw new NotFoundError(`Tenant not found: ${tenantId}`);
@@ -124,9 +124,7 @@ export function createAdminStripeRoutes(prisma: PrismaClient): Router {
         }
 
         // Verify tenant exists
-        const tenant = await prisma.tenant.findUnique({
-          where: { id: tenantId },
-        });
+        const tenant = await tenantRepo.findById(tenantId);
 
         if (!tenant) {
           throw new NotFoundError(`Tenant not found: ${tenantId}`);
@@ -180,9 +178,7 @@ export function createAdminStripeRoutes(prisma: PrismaClient): Router {
         }
 
         // Verify tenant exists
-        const tenant = await prisma.tenant.findUnique({
-          where: { id: tenantId },
-        });
+        const tenant = await tenantRepo.findById(tenantId);
 
         if (!tenant) {
           throw new NotFoundError(`Tenant not found: ${tenantId}`);

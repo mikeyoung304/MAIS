@@ -14,6 +14,7 @@ import { logger } from '../lib/core/logger';
 import { WebhookValidationError } from '../lib/errors/business';
 import { PrismaClient } from '../generated/prisma';
 import { Prisma } from '../generated/prisma';
+import { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 
 interface TenantSecrets {
   stripe?: unknown;
@@ -22,12 +23,14 @@ interface TenantSecrets {
 
 export class StripeConnectWebhooksController {
   private stripe: Stripe;
+  private readonly tenantRepo: PrismaTenantRepository;
 
   constructor(
     private readonly prisma: PrismaClient,
     private readonly stripeSecretKey: string,
     private readonly connectWebhookSecret: string
   ) {
+    this.tenantRepo = new PrismaTenantRepository(prisma);
     // Initialize Stripe client with the same API version as payment adapter
     this.stripe = new Stripe(stripeSecretKey, {
       apiVersion: '2025-10-29.clover',
@@ -120,10 +123,7 @@ export class StripeConnectWebhooksController {
     );
 
     // Find tenant by Stripe account ID
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { stripeAccountId },
-      select: { id: true, slug: true, stripeOnboarded: true },
-    });
+    const tenant = await this.tenantRepo.findByStripeAccountId(stripeAccountId);
 
     if (!tenant) {
       logger.warn(
@@ -138,10 +138,7 @@ export class StripeConnectWebhooksController {
 
     if (tenant.stripeOnboarded !== newOnboardedStatus) {
       // Update tenant stripeOnboarded flag
-      await this.prisma.tenant.update({
-        where: { id: tenant.id },
-        data: { stripeOnboarded: newOnboardedStatus },
-      });
+      await this.tenantRepo.update(tenant.id, { stripeOnboarded: newOnboardedStatus });
 
       logger.info(
         {
@@ -185,10 +182,7 @@ export class StripeConnectWebhooksController {
     );
 
     // Find tenant by Stripe account ID
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { stripeAccountId },
-      select: { id: true, slug: true },
-    });
+    const tenant = await this.tenantRepo.findByStripeAccountId(stripeAccountId);
 
     if (!tenant) {
       logger.warn(
@@ -199,13 +193,10 @@ export class StripeConnectWebhooksController {
     }
 
     // Clear Stripe account data and encrypted secrets
-    await this.prisma.tenant.update({
-      where: { id: tenant.id },
-      data: {
-        stripeAccountId: null,
-        stripeOnboarded: false,
-        secrets: {} as Prisma.InputJsonValue, // Clear encrypted Stripe keys
-      },
+    await this.tenantRepo.update(tenant.id, {
+      stripeAccountId: undefined, // Will be set to null by Prisma
+      stripeOnboarded: false,
+      secrets: {}, // Clear encrypted Stripe keys
     });
 
     logger.warn(

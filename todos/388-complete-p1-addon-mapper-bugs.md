@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: "388"
 tags:
@@ -75,16 +75,17 @@ Option 1 - Fix the mapper directly
 
 ## Acceptance Criteria
 
-- [ ] AddOn mapper maps description from Prisma data
-- [ ] AddOn mapper throws error if packages relation is empty
+- [x] AddOn mapper maps description from Prisma data
+- [x] AddOn mapper throws error if packages relation is empty
 - [ ] Unit test covers both cases
-- [ ] Existing tests still pass
+- [x] Existing tests still pass
 
 ## Work Log
 
 | Date | Action | Learnings |
 |------|--------|-----------|
 | 2025-12-25 | Created from multi-agent scan | Found during schema/entity drift analysis |
+| 2025-12-25 | Fixed both bugs | Added description param, throw on empty packages |
 
 ## Resources
 

@@ -168,6 +168,116 @@ export class PrismaTenantRepository {
   }
 
   /**
+   * List all tenants with stats for admin dashboard
+   *
+   * @returns Array of tenants with booking/package/addon counts
+   */
+  async listWithStats(): Promise<TenantWithStats[]> {
+    const tenants = await this.prisma.tenant.findMany({
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        email: true,
+        apiKeyPublic: true,
+        commissionPercent: true,
+        stripeOnboarded: true,
+        stripeAccountId: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            bookings: true,
+            packages: true,
+            addOns: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return tenants.map((t) => ({
+      id: t.id,
+      slug: t.slug,
+      name: t.name,
+      email: t.email,
+      apiKeyPublic: t.apiKeyPublic,
+      commissionPercent: Number(t.commissionPercent),
+      stripeOnboarded: t.stripeOnboarded,
+      stripeAccountId: t.stripeAccountId,
+      isActive: t.isActive,
+      createdAt: t.createdAt,
+      updatedAt: t.updatedAt,
+      stats: {
+        bookings: t._count.bookings,
+        packages: t._count.packages,
+        addOns: t._count.addOns,
+      },
+    }));
+  }
+
+  /**
+   * Find tenant by ID with full stats for admin detail view
+   *
+   * @param id - Tenant ID
+   * @returns Tenant with stats or null
+   */
+  async findByIdWithStats(id: string): Promise<TenantWithDetailStats | null> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            bookings: true,
+            packages: true,
+            addOns: true,
+            blackoutDates: true,
+          },
+        },
+      },
+    });
+
+    if (!tenant) {
+      return null;
+    }
+
+    return {
+      id: tenant.id,
+      slug: tenant.slug,
+      name: tenant.name,
+      email: tenant.email,
+      apiKeyPublic: tenant.apiKeyPublic,
+      commissionPercent: Number(tenant.commissionPercent),
+      branding: tenant.branding,
+      stripeOnboarded: tenant.stripeOnboarded,
+      stripeAccountId: tenant.stripeAccountId,
+      isActive: tenant.isActive,
+      createdAt: tenant.createdAt,
+      updatedAt: tenant.updatedAt,
+      stats: {
+        bookings: tenant._count.bookings,
+        packages: tenant._count.packages,
+        addOns: tenant._count.addOns,
+        blackoutDates: tenant._count.blackoutDates,
+      },
+    };
+  }
+
+  /**
+   * Find tenant by Stripe account ID
+   * Used for Stripe Connect webhook processing
+   *
+   * @param stripeAccountId - Stripe Connect account ID (acct_*)
+   * @returns Tenant or null
+   */
+  async findByStripeAccountId(stripeAccountId: string): Promise<Tenant | null> {
+    return await this.prisma.tenant.findUnique({
+      where: { stripeAccountId },
+    });
+  }
+
+  /**
    * List active tenant slugs for sitemap generation
    *
    * Returns minimal data needed for sitemap: slug and updatedAt.
@@ -797,4 +907,50 @@ export interface LandingPageDraftWrapper {
   published: LandingPageConfig | null;
   draftUpdatedAt: string | null;
   publishedAt: string | null;
+}
+
+/**
+ * Tenant with stats for admin list view
+ */
+export interface TenantWithStats {
+  id: string;
+  slug: string;
+  name: string;
+  email: string | null;
+  apiKeyPublic: string;
+  commissionPercent: number;
+  stripeOnboarded: boolean;
+  stripeAccountId: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  stats: {
+    bookings: number;
+    packages: number;
+    addOns: number;
+  };
+}
+
+/**
+ * Tenant with detailed stats for admin detail view
+ */
+export interface TenantWithDetailStats {
+  id: string;
+  slug: string;
+  name: string;
+  email: string | null;
+  apiKeyPublic: string;
+  commissionPercent: number;
+  branding: any;
+  stripeOnboarded: boolean;
+  stripeAccountId: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  stats: {
+    bookings: number;
+    packages: number;
+    addOns: number;
+    blackoutDates: number;
+  };
 }

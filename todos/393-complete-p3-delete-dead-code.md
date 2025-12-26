@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: "393"
 tags:
@@ -85,18 +85,19 @@ grep -r "getTierOrder" apps/web/src --include="*.ts" --include="*.tsx"
 
 ## Acceptance Criteria
 
-- [ ] `formatPrice` deleted from format.ts
-- [ ] `sortPackagesByTier` deleted from packages.ts
-- [ ] `getTierOrder` deleted from packages.ts
-- [ ] `TIER_ORDER` still works in 3 locations
-- [ ] TypeScript compiles without errors
-- [ ] Decision made on client/ directory
+- [x] `formatPrice` - KEPT (actually in use in 3 locations)
+- [x] `sortPackagesByTier` deleted from packages.ts
+- [x] `getTierOrder` deleted from packages.ts
+- [x] `TIER_ORDER` still works in 3 locations
+- [x] TypeScript compiles without errors
+- [ ] Decision made on client/ directory (deferred - separate issue)
 
 ## Work Log
 
 | Date | Action | Learnings |
 |------|--------|-----------|
 | 2025-12-25 | Created from multi-agent scan | Found during dead code analysis |
+| 2025-12-25 | Completed | formatPrice was in use, kept; deleted sortPackagesByTier and getTierOrder |
 
 ## Resources
 

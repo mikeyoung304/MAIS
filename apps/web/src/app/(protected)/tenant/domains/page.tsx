@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-client';
 import { logger } from '@/lib/logger';
+import { getErrorMessage } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -121,8 +122,8 @@ export default function DomainsPage() {
 
       setDomains((prev) => [...prev, data]);
       setNewDomain('');
-    } catch (err: any) {
-      setError(err.message || 'Failed to add domain');
+    } catch (error) {
+      setError(getErrorMessage(error) || 'Failed to add domain');
     } finally {
       setAdding(false);
     }
@@ -160,8 +161,8 @@ export default function DomainsPage() {
             'Verification failed. Make sure the TXT record is properly configured.'
         );
       }
-    } catch (err: any) {
-      setError(err.message || 'Verification failed');
+    } catch (error) {
+      setError(getErrorMessage(error) || 'Verification failed');
     } finally {
       setVerifying(null);
     }
@@ -187,8 +188,8 @@ export default function DomainsPage() {
       }
 
       await fetchDomains();
-    } catch (err: any) {
-      setError(err.message || 'Failed to set primary domain');
+    } catch (error) {
+      setError(getErrorMessage(error) || 'Failed to set primary domain');
     }
   };
 
@@ -219,8 +220,8 @@ export default function DomainsPage() {
       }
 
       setDomains((prev) => prev.filter((d) => d.id !== domainId));
-    } catch (err: any) {
-      setError(err.message || 'Failed to remove domain');
+    } catch (error) {
+      setError(getErrorMessage(error) || 'Failed to remove domain');
     }
   };
 

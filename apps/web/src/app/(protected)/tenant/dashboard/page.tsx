@@ -14,7 +14,11 @@ import {
   ExternalLink,
   Palette,
   FileEdit,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
+import { logger } from '@/lib/logger';
+import { getErrorMessage } from '@/lib/errors';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -37,13 +41,16 @@ export default function TenantDashboardPage() {
   const { backendToken, tenantId, user, slug: authSlug } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [slug, setSlug] = useState<string | null>(authSlug || null);
 
-  useEffect(() => {
-    async function fetchDashboardData() {
-      if (!backendToken) return;
+  const fetchDashboardData = async () => {
+    if (!backendToken) return;
 
-      try {
+    setIsLoading(true);
+    setError(null);
+
+    try {
         // Fetch tenant info to get slug (if not already available from session)
         if (!authSlug) {
           const infoResponse = await fetch(`${API_BASE_URL}/v1/tenant-admin/info`, {
@@ -97,20 +104,18 @@ export default function TenantDashboardPage() {
           blackoutsCount: Array.isArray(blackouts) ? blackouts.length : 0,
           hasStripeConnected: stripeStatus?.chargesEnabled || false,
         });
-      } catch (error) {
-        // Silently fail - stats will show 0
-        setStats({
-          packagesCount: 0,
-          bookingsCount: 0,
-          blackoutsCount: 0,
-          hasStripeConnected: false,
-        });
-      } finally {
-        setIsLoading(false);
-      }
+      } catch (err) {
+        logger.error('Dashboard data fetch failed', err);
+        setError(getErrorMessage(err));
+        setStats(null);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
+  useEffect(() => {
     fetchDashboardData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backendToken, tenantId, authSlug]);
 
   const statCards = [
@@ -177,6 +182,30 @@ export default function TenantDashboardPage() {
           Here&apos;s an overview of your business.
         </p>
       </div>
+
+      {/* Error State */}
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <AlertCircle className="h-6 w-6 text-red-500 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-medium text-red-800">Failed to load dashboard</p>
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchDashboardData}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

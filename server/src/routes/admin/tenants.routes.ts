@@ -30,48 +30,13 @@ export function createAdminTenantsRoutes(prisma: PrismaClient): Router {
    */
   router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const tenants = await prisma.tenant.findMany({
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-          email: true,
-          apiKeyPublic: true,
-          commissionPercent: true,
-          stripeOnboarded: true,
-          stripeAccountId: true,
-          isActive: true,
-          createdAt: true,
-          updatedAt: true,
-          _count: {
-            select: {
-              bookings: true,
-              packages: true,
-              addOns: true,
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-      });
+      const tenants = await tenantRepo.listWithStats();
 
       res.json({
         tenants: tenants.map((t) => ({
-          id: t.id,
-          slug: t.slug,
-          name: t.name,
-          email: t.email,
-          apiKeyPublic: t.apiKeyPublic,
-          commissionPercent: Number(t.commissionPercent),
-          stripeOnboarded: t.stripeOnboarded,
-          stripeAccountId: t.stripeAccountId,
-          isActive: t.isActive,
+          ...t,
           createdAt: t.createdAt.toISOString(),
           updatedAt: t.updatedAt.toISOString(),
-          stats: {
-            bookings: t._count.bookings,
-            packages: t._count.packages,
-            addOns: t._count.addOns,
-          },
         })),
       });
     } catch (error) {
@@ -149,19 +114,7 @@ export function createAdminTenantsRoutes(prisma: PrismaClient): Router {
     try {
       const { id } = req.params;
 
-      const tenant = await prisma.tenant.findUnique({
-        where: { id },
-        include: {
-          _count: {
-            select: {
-              bookings: true,
-              packages: true,
-              addOns: true,
-              blackoutDates: true,
-            },
-          },
-        },
-      });
+      const tenant = await tenantRepo.findByIdWithStats(id);
 
       if (!tenant) {
         throw new NotFoundError(`Tenant not found: ${id}`);
@@ -169,24 +122,9 @@ export function createAdminTenantsRoutes(prisma: PrismaClient): Router {
 
       res.json({
         tenant: {
-          id: tenant.id,
-          slug: tenant.slug,
-          name: tenant.name,
-          email: tenant.email,
-          apiKeyPublic: tenant.apiKeyPublic,
-          commissionPercent: Number(tenant.commissionPercent),
-          branding: tenant.branding,
-          stripeOnboarded: tenant.stripeOnboarded,
-          stripeAccountId: tenant.stripeAccountId,
-          isActive: tenant.isActive,
+          ...tenant,
           createdAt: tenant.createdAt.toISOString(),
           updatedAt: tenant.updatedAt.toISOString(),
-          stats: {
-            bookings: tenant._count.bookings,
-            packages: tenant._count.packages,
-            addOns: tenant._count.addOns,
-            blackoutDates: tenant._count.blackoutDates,
-          },
         },
       });
     } catch (error) {

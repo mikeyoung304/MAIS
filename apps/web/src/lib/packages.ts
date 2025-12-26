@@ -21,39 +21,3 @@ export const TIER_ORDER: Record<string, number> = {
   premium: 2,
   custom: 3,
 };
-
-/**
- * Package with tier information
- */
-interface PackageWithTier {
-  tier: 'BASIC' | 'STANDARD' | 'PREMIUM' | 'CUSTOM';
-}
-
-/**
- * Sort packages by tier for display
- *
- * Orders packages from Basic → Standard → Premium → Custom.
- *
- * @param packages - Array of packages with tier property
- * @returns New sorted array (does not mutate original)
- *
- * @example
- * const sorted = sortPackagesByTier(packages);
- */
-export function sortPackagesByTier<T extends PackageWithTier>(packages: T[]): T[] {
-  return [...packages].sort((a, b) => {
-    const orderA = TIER_ORDER[a.tier] ?? 99;
-    const orderB = TIER_ORDER[b.tier] ?? 99;
-    return orderA - orderB;
-  });
-}
-
-/**
- * Get tier order value for a tier string
- *
- * @param tier - Tier name (case-insensitive)
- * @returns Numeric order (0-3), or 99 if unknown
- */
-export function getTierOrder(tier: string): number {
-  return TIER_ORDER[tier] ?? TIER_ORDER[tier.toUpperCase()] ?? 99;
-}

@@ -48,6 +48,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
         this.toDomainAddOn({
           id: pa.addOn.id,
           name: pa.addOn.name,
+          description: pa.addOn.description,
           price: pa.addOn.price,
           packages: [{ packageId: pkg.id }],
         })
@@ -98,6 +99,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
         this.toDomainAddOn({
           id: pa.addOn.id,
           name: pa.addOn.name,
+          description: pa.addOn.description,
           price: pa.addOn.price,
           packages: [{ packageId: pkg.id }],
         })
@@ -455,6 +457,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
           this.toDomainAddOn({
             id: pa.addOn.id,
             name: pa.addOn.name,
+            description: pa.addOn.description,
             price: pa.addOn.price,
             packages: [{ packageId: pkg.id }],
           })
@@ -683,14 +686,19 @@ export class PrismaCatalogRepository implements CatalogRepository {
   private toDomainAddOn(addOn: {
     id: string;
     name: string;
+    description?: string | null;
     price: number;
     packages: { packageId: string }[];
   }): AddOn {
+    if (addOn.packages.length === 0 || !addOn.packages[0]?.packageId) {
+      throw new Error(`AddOn ${addOn.id} has no associated package`);
+    }
+
     return {
       id: addOn.id,
-      packageId: addOn.packages[0]?.packageId || '',
+      packageId: addOn.packages[0].packageId,
       title: addOn.name,
-      description: null,
+      description: addOn.description ?? null,
       priceCents: addOn.price,
       photoUrl: undefined,
     };

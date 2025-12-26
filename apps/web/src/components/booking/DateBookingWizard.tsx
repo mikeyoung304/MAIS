@@ -384,12 +384,19 @@ export function DateBookingWizard({
 
     const dateStr = date.toISOString().split('T')[0];
 
-    // Double-check availability with API
-    const isAvailable = await checkDateAvailability(tenantApiKey, dateStr);
-    if (isAvailable) {
-      setSelectedDate(date);
-    } else {
-      setSubmitError('This date is no longer available. Please select another date.');
+    try {
+      // Double-check availability with API
+      const isAvailable = await checkDateAvailability(tenantApiKey, dateStr);
+      if (isAvailable) {
+        setSelectedDate(date);
+        setSubmitError(null);
+      } else {
+        setSubmitError('This date is no longer available. Please select another date.');
+        setSelectedDate(null);
+      }
+    } catch {
+      // Network error - show user-friendly message
+      setSubmitError('Unable to check date availability. Please try again.');
       setSelectedDate(null);
     }
   }, [tenantApiKey]);
