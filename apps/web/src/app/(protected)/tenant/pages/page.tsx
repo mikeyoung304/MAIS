@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import Link from 'next/link';
 import {
   FileText,
   Home,
@@ -18,6 +19,9 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
+  Eye,
+  Pencil,
+  Layers,
 } from 'lucide-react';
 import type { LandingPageConfig, PagesConfig } from '@macon/contracts';
 import { DEFAULT_PAGES_CONFIG } from '@macon/contracts';
@@ -138,6 +142,17 @@ export default function TenantPagesPage() {
     return config?.pages?.[pageKey]?.enabled !== false;
   };
 
+  // Get section count for a page
+  const getSectionCount = (pageKey: keyof PagesConfig): number => {
+    return config?.pages?.[pageKey]?.sections?.length ?? 0;
+  };
+
+  // Get page path for preview link
+  const getPagePath = (pageKey: keyof PagesConfig): string => {
+    if (pageKey === 'home') return '';
+    return `/${pageKey}`;
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
@@ -215,22 +230,49 @@ export default function TenantPagesPage() {
                 <Home className="h-5 w-5 text-sage" />
               </div>
               <div>
-                <p className="font-medium text-text-primary">Home</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-text-primary">Home</p>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-sage/10 px-2 py-0.5 text-xs text-sage">
+                    <Layers className="h-3 w-3" />
+                    {getSectionCount('home')}
+                  </span>
+                </div>
                 <p className="text-sm text-text-muted">Your main landing page</p>
               </div>
             </div>
-            <span className="text-sm font-medium text-sage">Always On</span>
+            <div className="flex items-center gap-2">
+              {slug && (
+                <a
+                  href={`/t/${slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 bg-white text-text-muted transition-colors hover:bg-neutral-50 hover:text-sage"
+                  title="Preview page"
+                >
+                  <Eye className="h-4 w-4" />
+                </a>
+              )}
+              <Link
+                href="/tenant/pages/home"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 text-sm font-medium text-text-muted transition-colors hover:bg-neutral-50 hover:text-sage"
+              >
+                <Pencil className="h-4 w-4" />
+                Edit
+              </Link>
+              <span className="ml-2 text-sm font-medium text-sage">Always On</span>
+            </div>
           </div>
 
           {/* Other Pages */}
           {PAGE_CONFIGS.map((page) => {
             const Icon = page.icon;
             const enabled = isPageEnabled(page.key);
+            const sectionCount = getSectionCount(page.key);
 
             return (
               <div
                 key={page.key}
-                className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${
+                className={`flex flex-col gap-3 rounded-lg border p-4 transition-colors sm:flex-row sm:items-center sm:justify-between ${
                   enabled
                     ? 'border-neutral-100 bg-white'
                     : 'border-neutral-100 bg-neutral-50/50'
@@ -238,7 +280,7 @@ export default function TenantPagesPage() {
               >
                 <div className="flex items-center gap-4">
                   <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors ${
                       enabled ? 'bg-sage/10' : 'bg-neutral-200'
                     }`}
                   >
@@ -248,29 +290,61 @@ export default function TenantPagesPage() {
                       }`}
                     />
                   </div>
-                  <div>
-                    <p
-                      className={`font-medium transition-colors ${
-                        enabled ? 'text-text-primary' : 'text-text-muted'
-                      }`}
-                    >
-                      {page.label}
-                    </p>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p
+                        className={`font-medium transition-colors ${
+                          enabled ? 'text-text-primary' : 'text-text-muted'
+                        }`}
+                      >
+                        {page.label}
+                      </p>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${
+                          enabled ? 'bg-sage/10 text-sage' : 'bg-neutral-200 text-neutral-500'
+                        }`}
+                      >
+                        <Layers className="h-3 w-3" />
+                        {sectionCount}
+                      </span>
+                    </div>
                     <p className="text-sm text-text-muted">{page.description}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Label
-                    htmlFor={`toggle-${page.key}`}
-                    className={`text-sm ${enabled ? 'text-sage' : 'text-text-muted'}`}
-                  >
-                    {enabled ? 'ON' : 'OFF'}
-                  </Label>
-                  <Switch
-                    id={`toggle-${page.key}`}
-                    checked={enabled}
-                    onCheckedChange={(checked) => handleToggle(page.key, checked)}
-                  />
+                <div className="flex items-center gap-2 sm:gap-3">
+                  {slug && enabled && (
+                    <a
+                      href={`/t/${slug}${getPagePath(page.key)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 bg-white text-text-muted transition-colors hover:bg-neutral-50 hover:text-sage"
+                      title="Preview page"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </a>
+                  )}
+                  {enabled && (
+                    <Link
+                      href={`/tenant/pages/${page.key}`}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 text-sm font-medium text-text-muted transition-colors hover:bg-neutral-50 hover:text-sage"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      <span className="hidden sm:inline">Edit</span>
+                    </Link>
+                  )}
+                  <div className="flex items-center gap-2 border-l border-neutral-200 pl-2 sm:gap-3 sm:pl-3">
+                    <Label
+                      htmlFor={`toggle-${page.key}`}
+                      className={`text-sm ${enabled ? 'text-sage' : 'text-text-muted'}`}
+                    >
+                      {enabled ? 'ON' : 'OFF'}
+                    </Label>
+                    <Switch
+                      id={`toggle-${page.key}`}
+                      checked={enabled}
+                      onCheckedChange={(checked) => handleToggle(page.key, checked)}
+                    />
+                  </div>
                 </div>
               </div>
             );
@@ -287,6 +361,24 @@ export default function TenantPagesPage() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Warning when all optional pages are disabled */}
+      {PAGE_CONFIGS.every((p) => !isPageEnabled(p.key)) && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="py-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />
+              <div>
+                <p className="font-medium text-amber-800">All optional pages are disabled</p>
+                <p className="mt-1 text-sm text-amber-700">
+                  Your website currently only shows the Home page. Enable additional pages to provide
+                  more information to your visitors.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
