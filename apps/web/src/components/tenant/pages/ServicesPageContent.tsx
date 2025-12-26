@@ -99,12 +99,16 @@ export function ServicesPageContent({ data, basePath, domainParam }: ServicesPag
   const activePackages = packages.filter((p) => p.isActive ?? p.active);
 
   // Group packages by segment
-  const packagesBySegment = segments.length > 0
+  // Only use grouped view if segments exist AND packages have matching segmentIds
+  const groupedPackages = segments.length > 0
     ? segments.map((segment) => ({
         segment,
         packages: activePackages.filter((p) => p.segmentId === segment.id),
       })).filter((group) => group.packages.length > 0)
-    : null;
+    : [];
+
+  // Fall back to flat list if no packages match any segment
+  const packagesBySegment = groupedPackages.length > 0 ? groupedPackages : null;
 
   // Sort packages by tier for display
   const sortedPackages = [...activePackages].sort(
