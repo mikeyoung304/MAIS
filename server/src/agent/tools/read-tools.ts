@@ -763,6 +763,88 @@ function formatCustomer(c: CustomerWithCount) {
 }
 
 /**
+ * get_segments - Service segments
+ *
+ * Returns: segments with package counts
+ */
+export const getSegmentsTool: AgentTool = {
+  name: 'get_segments',
+  description: 'Get service segments that organize packages',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      segmentId: {
+        type: 'string',
+        description: 'Get single segment by ID',
+      },
+      includeInactive: {
+        type: 'boolean',
+        description: 'Include inactive segments',
+      },
+    },
+    required: [],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const segmentId = params.segmentId as string | undefined;
+    const includeInactive = (params.includeInactive as boolean) || false;
+
+    try {
+      if (segmentId) {
+        const segment = await prisma.segment.findFirst({
+          where: { id: segmentId, tenantId },
+          include: { _count: { select: { packages: true } } },
+        });
+        if (!segment) {
+          return { success: false, error: 'Segment not found' };
+        }
+        return { success: true, data: formatSegment(segment) };
+      }
+
+      const segments = await prisma.segment.findMany({
+        where: { tenantId, ...(includeInactive ? {} : { active: true }) },
+        include: { _count: { select: { packages: true } } },
+        orderBy: { sortOrder: 'asc' },
+      });
+
+      return { success: true, data: segments.map(formatSegment) };
+    } catch (error) {
+      logger.error({ error, tenantId }, 'Error in get_segments tool');
+      return { success: false, error: 'Failed to fetch segments' };
+    }
+  },
+};
+
+/**
+ * Helper to format segment for agent context
+ */
+type SegmentWithCount = {
+  id: string;
+  slug: string;
+  name: string;
+  heroTitle: string;
+  heroSubtitle: string | null;
+  description: string | null;
+  sortOrder: number;
+  active: boolean;
+  _count: { packages: number };
+};
+
+function formatSegment(s: SegmentWithCount) {
+  return {
+    id: s.id,
+    slug: s.slug,
+    name: sanitizeForContext(s.name, 100),
+    heroTitle: sanitizeForContext(s.heroTitle, 200),
+    heroSubtitle: s.heroSubtitle ? sanitizeForContext(s.heroSubtitle, 200) : null,
+    description: s.description ? sanitizeForContext(s.description, 500) : null,
+    sortOrder: s.sortOrder,
+    active: s.active,
+    packageCount: s._count.packages,
+  };
+}
+
+/**
  * Helper to format package for agent context
  */
 function formatPackage(pkg: any) {
@@ -790,6 +872,56 @@ function formatPackage(pkg: any) {
 /**
  * All read tools exported as array for registration
  */
+/**
+ * get_trial_status - Trial and subscription status
+ *
+ * Returns: trial status, days remaining, subscription status
+ */
+export const getTrialStatusTool: AgentTool = {
+  name: 'get_trial_status',
+  description: 'Get trial and subscription status for the business',
+  inputSchema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+  async execute(context: ToolContext): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+
+    try {
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { trialEndsAt: true, subscriptionStatus: true },
+      });
+
+      if (!tenant) {
+        return { success: false, error: 'Tenant not found' };
+      }
+
+      const now = new Date();
+      const trialActive =
+        tenant.subscriptionStatus === 'TRIALING' &&
+        tenant.trialEndsAt !== null &&
+        tenant.trialEndsAt > now;
+
+      return {
+        success: true,
+        data: {
+          trialActive,
+          trialEndsAt: tenant.trialEndsAt?.toISOString() || null,
+          subscriptionStatus: tenant.subscriptionStatus,
+          daysRemaining: trialActive
+            ? Math.ceil((tenant.trialEndsAt!.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+            : null,
+        },
+      };
+    } catch (error) {
+      logger.error({ error, tenantId }, 'Error in get_trial_status tool');
+      return { success: false, error: 'Failed to fetch trial status' };
+    }
+  },
+};
+
 export const readTools: AgentTool[] = [
   getTenantTool,
   getDashboardTool,
@@ -802,4 +934,6 @@ export const readTools: AgentTool[] = [
   getLandingPageTool,
   getStripeStatusTool,
   getCustomersTool,
+  getSegmentsTool,
+  getTrialStatusTool,
 ];

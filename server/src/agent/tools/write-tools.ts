@@ -823,8 +823,400 @@ export const processRefundTool: AgentTool = {
 };
 
 /**
+ * upsert_segment - Create or update segment
+ *
+ * Trust Tier: T2 (soft confirm)
+ */
+export const upsertSegmentTool: AgentTool = {
+  name: 'upsert_segment',
+  description: 'Create a new segment or update an existing one. Segments organize packages.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      segmentId: {
+        type: 'string',
+        description: 'Segment ID to update (omit for new segment)',
+      },
+      slug: {
+        type: 'string',
+        description: 'URL-safe identifier (e.g., "wellness-retreat")',
+      },
+      name: {
+        type: 'string',
+        description: 'Display name',
+      },
+      heroTitle: {
+        type: 'string',
+        description: 'Hero section title',
+      },
+      heroSubtitle: {
+        type: 'string',
+        description: 'Hero section subtitle',
+      },
+      description: {
+        type: 'string',
+        description: 'Segment description',
+      },
+      sortOrder: {
+        type: 'number',
+        description: 'Display order',
+      },
+      active: {
+        type: 'boolean',
+        description: 'Visibility',
+      },
+    },
+    required: ['slug', 'name', 'heroTitle'],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const segmentId = params.segmentId as string | undefined;
+
+    try {
+      // Check if updating existing segment
+      const existing = segmentId
+        ? await prisma.segment.findFirst({ where: { id: segmentId, tenantId } })
+        : null;
+
+      const isUpdate = !!existing;
+      const operation = isUpdate
+        ? `Update segment "${sanitizeForContext(existing!.name, 50)}"`
+        : `Create new segment "${sanitizeForContext(params.name as string, 50)}"`;
+
+      // Build payload
+      const payload: Record<string, unknown> = {
+        segmentId,
+        slug: params.slug,
+        name: params.name,
+        heroTitle: params.heroTitle,
+        heroSubtitle: params.heroSubtitle,
+        description: params.description,
+        sortOrder: params.sortOrder,
+        active: params.active ?? true,
+      };
+
+      // Build preview
+      const preview: Record<string, unknown> = {
+        action: isUpdate ? 'update' : 'create',
+        segmentName: params.name,
+        slug: params.slug,
+      };
+
+      return createProposal(context, 'upsert_segment', operation, 'T2', payload, preview);
+    } catch (error) {
+      logger.error({ error, tenantId }, 'Error in upsert_segment tool');
+      return { success: false, error: 'Failed to create segment proposal' };
+    }
+  },
+};
+
+/**
+ * delete_segment - Remove segment
+ *
+ * Trust Tier: T2 (soft confirm), T3 if has packages
+ */
+export const deleteSegmentTool: AgentTool = {
+  name: 'delete_segment',
+  description: 'Delete a segment (soft delete - marks as inactive). Requires confirmation if segment has packages.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      segmentId: {
+        type: 'string',
+        description: 'Segment ID to delete',
+      },
+    },
+    required: ['segmentId'],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const segmentId = params.segmentId as string;
+
+    try {
+      const segment = await prisma.segment.findFirst({
+        where: { id: segmentId, tenantId },
+        include: { _count: { select: { packages: true } } },
+      });
+
+      if (!segment) {
+        return { success: false, error: 'Segment not found' };
+      }
+
+      const hasPackages = segment._count.packages > 0;
+      const trustTier = hasPackages ? 'T3' : 'T2';
+
+      const operation = `Delete segment "${sanitizeForContext(segment.name, 50)}"`;
+      const payload = { segmentId };
+      const preview: Record<string, unknown> = {
+        segmentName: sanitizeForContext(segment.name, 50),
+        packageCount: segment._count.packages,
+        ...(hasPackages
+          ? { warning: 'This segment has packages that will be orphaned' }
+          : {}),
+      };
+
+      return createProposal(context, 'delete_segment', operation, trustTier, payload, preview);
+    } catch (error) {
+      logger.error({ error, tenantId, segmentId }, 'Error in delete_segment tool');
+      return { success: false, error: 'Failed to create delete proposal' };
+    }
+  },
+};
+
+/**
+ * update_booking - Update booking details
+ *
+ * Trust Tier: T3 for date changes, T2 for notes/status only
+ */
+export const updateBookingTool: AgentTool = {
+  name: 'update_booking',
+  description: 'Update booking: reschedule, add notes, or change status. Date changes require confirmation.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      bookingId: {
+        type: 'string',
+        description: 'Booking ID (required)',
+      },
+      newDate: {
+        type: 'string',
+        description: 'New date YYYY-MM-DD (requires confirmation)',
+      },
+      notes: {
+        type: 'string',
+        description: 'Internal notes',
+      },
+      status: {
+        type: 'string',
+        description: 'Status update',
+        enum: ['CONFIRMED', 'FULFILLED'],
+      },
+    },
+    required: ['bookingId'],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const bookingId = params.bookingId as string;
+    const newDate = params.newDate as string | undefined;
+    const notes = params.notes as string | undefined;
+    const status = params.status as string | undefined;
+
+    try {
+      // Verify ownership
+      const booking = await prisma.booking.findFirst({
+        where: { id: bookingId, tenantId },
+        include: {
+          package: { select: { name: true } },
+          customer: { select: { name: true } },
+        },
+      });
+
+      if (!booking) {
+        return { success: false, error: 'Booking not found' };
+      }
+
+      // Determine trust tier
+      // - newDate changes → T3 (affects customer)
+      // - notes only → T2
+      // - status progression → T2
+      const hasDateChange = !!newDate;
+      const trustTier = hasDateChange ? 'T3' : 'T2';
+
+      // If date change, check availability
+      if (newDate) {
+        const dateObj = new Date(newDate);
+        if (isNaN(dateObj.getTime())) {
+          return { success: false, error: 'Invalid date format' };
+        }
+
+        const conflict = await prisma.booking.findFirst({
+          where: {
+            tenantId,
+            date: dateObj,
+            id: { not: bookingId },
+            status: { notIn: ['CANCELED', 'REFUNDED'] },
+          },
+        });
+
+        if (conflict) {
+          return { success: false, error: `Date ${newDate} is already booked` };
+        }
+
+        // Check for blackout
+        const blackout = await prisma.blackoutDate.findFirst({
+          where: { tenantId, date: dateObj },
+        });
+
+        if (blackout) {
+          return { success: false, error: `Date ${newDate} is blocked${blackout.reason ? `: ${blackout.reason}` : ''}` };
+        }
+      }
+
+      const payload = { bookingId, newDate, notes, status };
+      const changes: Record<string, string> = {};
+
+      if (newDate) {
+        changes.date = `${booking.date.toISOString().split('T')[0]} → ${newDate}`;
+      }
+      if (notes !== undefined) {
+        changes.notes = 'updated';
+      }
+      if (status) {
+        changes.status = `${booking.status} → ${status}`;
+      }
+
+      const operation = `Update booking for ${sanitizeForContext(booking.customer?.name || 'Unknown', 30)}`;
+      const preview = {
+        action: 'update_booking',
+        booking: `${sanitizeForContext(booking.package?.name || 'Unknown', 30)} - ${sanitizeForContext(booking.customer?.name || 'Unknown', 30)}`,
+        currentDate: booking.date.toISOString().split('T')[0],
+        changes,
+      };
+
+      return createProposal(context, 'update_booking', operation, trustTier as 'T2' | 'T3', payload, preview);
+    } catch (error) {
+      logger.error({ error, tenantId, bookingId }, 'Error in update_booking tool');
+      return { success: false, error: 'Failed to create update booking proposal' };
+    }
+  },
+};
+
+/**
  * All write tools exported as array for registration
  */
+/**
+ * update_deposit_settings - Configure deposit requirements
+ *
+ * Trust Tier: T2 (soft confirm)
+ */
+export const updateDepositSettingsTool: AgentTool = {
+  name: 'update_deposit_settings',
+  description: 'Configure deposit requirements for bookings. Set percentage (0-100) or null for full payment.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      depositPercent: {
+        type: 'number',
+        description: 'Deposit percentage (0-100), or null for full payment upfront',
+      },
+      balanceDueDays: {
+        type: 'number',
+        description: 'Days before event that balance is due',
+      },
+    },
+    required: [],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const depositPercent = params.depositPercent as number | null | undefined;
+    const balanceDueDays = params.balanceDueDays as number | undefined;
+
+    try {
+      // Validate depositPercent if provided
+      if (depositPercent !== null && depositPercent !== undefined) {
+        if (depositPercent < 0 || depositPercent > 100) {
+          return { success: false, error: 'Deposit percent must be between 0 and 100' };
+        }
+      }
+
+      // Validate balanceDueDays if provided
+      if (balanceDueDays !== undefined && balanceDueDays < 0) {
+        return { success: false, error: 'Balance due days cannot be negative' };
+      }
+
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { depositPercent: true, balanceDueDays: true },
+      });
+
+      if (!tenant) {
+        return { success: false, error: 'Tenant not found' };
+      }
+
+      const changes: string[] = [];
+      const payload: Record<string, unknown> = {};
+
+      if (depositPercent !== undefined) {
+        payload.depositPercent = depositPercent;
+        const currentPercent = tenant.depositPercent ? Number(tenant.depositPercent) : null;
+        changes.push(`deposit: ${currentPercent ?? 'full payment'} → ${depositPercent ?? 'full payment'}%`);
+      }
+
+      if (balanceDueDays !== undefined) {
+        payload.balanceDueDays = balanceDueDays;
+        changes.push(`balance due: ${tenant.balanceDueDays ?? 'unset'} → ${balanceDueDays} days before`);
+      }
+
+      if (changes.length === 0) {
+        return { success: false, error: 'No changes specified' };
+      }
+
+      const operation = `Update deposit settings`;
+      const preview = {
+        action: 'update_deposit_settings',
+        changes,
+      };
+
+      return createProposal(context, 'update_deposit_settings', operation, 'T2', payload, preview);
+    } catch (error) {
+      logger.error({ error, tenantId }, 'Error in update_deposit_settings tool');
+      return { success: false, error: 'Failed to create deposit settings proposal' };
+    }
+  },
+};
+
+/**
+ * start_trial - Start 14-day trial
+ *
+ * Trust Tier: T2 (soft confirm)
+ */
+export const startTrialTool: AgentTool = {
+  name: 'start_trial',
+  description: 'Start a 14-day trial for the business. Only available if no trial has been started.',
+  inputSchema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+  async execute(context: ToolContext): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+
+    try {
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { subscriptionStatus: true, trialEndsAt: true },
+      });
+
+      if (!tenant) {
+        return { success: false, error: 'Tenant not found' };
+      }
+
+      // Only allow starting trial if status is NONE
+      if (tenant.subscriptionStatus !== 'NONE') {
+        return {
+          success: false,
+          error: `Cannot start trial - current status is ${tenant.subscriptionStatus}`,
+        };
+      }
+
+      const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+
+      const operation = 'Start 14-day trial';
+      const payload = { trialEndsAt: trialEndsAt.toISOString() };
+      const preview = {
+        action: 'start_trial',
+        trialEndsAt: trialEndsAt.toISOString().split('T')[0],
+        daysUntilExpiry: 14,
+      };
+
+      return createProposal(context, 'start_trial', operation, 'T2', payload, preview);
+    } catch (error) {
+      logger.error({ error, tenantId }, 'Error in start_trial tool');
+      return { success: false, error: 'Failed to create trial proposal' };
+    }
+  },
+};
+
 export const writeTools: AgentTool[] = [
   upsertPackageTool,
   upsertAddOnTool,
@@ -837,4 +1229,9 @@ export const writeTools: AgentTool[] = [
   cancelBookingTool,
   createBookingTool,
   processRefundTool,
+  updateBookingTool,
+  upsertSegmentTool,
+  deleteSegmentTool,
+  updateDepositSettingsTool,
+  startTrialTool,
 ];

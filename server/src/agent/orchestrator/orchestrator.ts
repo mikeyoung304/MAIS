@@ -325,7 +325,8 @@ export class AgentOrchestrator {
       response,
       tenantId,
       sessionId,
-      messages
+      messages,
+      session.context
     );
 
     // Update session with new messages
@@ -433,6 +434,7 @@ export class AgentOrchestrator {
 
   /**
    * Process Claude response, executing tool calls as needed.
+   * @param cachedContext - Pre-built session context to avoid redundant rebuilds
    * @param depth - Current recursion depth (prevents unbounded tool call loops)
    */
   private async processResponse(
@@ -440,6 +442,7 @@ export class AgentOrchestrator {
     tenantId: string,
     sessionId: string,
     messages: MessageParam[],
+    cachedContext: AgentSessionContext,
     depth: number = 0
   ): Promise<{
     finalMessage: string;
@@ -600,14 +603,14 @@ export class AgentOrchestrator {
       { role: 'user', content: toolResultBlocks },
     ];
 
-    // Get final response from Claude
+    // Get final response from Claude (use cached context to avoid redundant rebuilds)
     const finalResponse = await this.anthropic.messages.create({
       model: this.config.model,
       max_tokens: this.config.maxTokens,
       temperature: this.config.temperature,
       system: SYSTEM_PROMPT_TEMPLATE.replace(
         '{BUSINESS_CONTEXT}',
-        (await this.buildContext(tenantId, sessionId)).contextPrompt
+        cachedContext.contextPrompt
       ),
       messages: continuedMessages,
       tools: this.buildToolsForAPI(),
@@ -621,6 +624,7 @@ export class AgentOrchestrator {
         tenantId,
         sessionId,
         continuedMessages,
+        cachedContext,
         depth + 1
       );
       return {

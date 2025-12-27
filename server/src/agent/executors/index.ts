@@ -10,10 +10,54 @@
  * 3. Returns the result for storage and display
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient, BookingStatus } from '../../generated/prisma';
 import { Prisma } from '../../generated/prisma';
 import { registerProposalExecutor } from '../../routes/agent.routes';
 import { logger } from '../../lib/core/logger';
+
+/**
+ * Generate deterministic lock ID from tenantId + date for PostgreSQL advisory locks
+ * Uses FNV-1a hash algorithm to convert string to 32-bit integer
+ */
+function hashTenantDate(tenantId: string, date: string): number {
+  const str = `${tenantId}:${date}`;
+  let hash = 2166136261; // FNV offset basis
+
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 16777619); // FNV prime
+  }
+
+  // Convert to 32-bit signed integer (PostgreSQL bigint range)
+  return hash | 0;
+}
+
+/**
+ * Verify tenant ownership of an entity before mutation.
+ * CRITICAL: Prevents cross-tenant access.
+ *
+ * @param prisma - Prisma client instance
+ * @param model - Model name to query
+ * @param id - Entity ID
+ * @param tenantId - Tenant ID to verify ownership against
+ * @returns The entity if found and owned by tenant
+ * @throws Error if entity not found or not owned by tenant
+ */
+async function verifyOwnership<T>(
+  prisma: PrismaClient,
+  model: 'package' | 'addOn' | 'booking' | 'segment' | 'customer',
+  id: string,
+  tenantId: string
+): Promise<T> {
+  const entity = await (prisma[model] as any).findFirst({
+    where: { id, tenantId },
+  });
+  if (!entity) {
+    const modelName = model.charAt(0).toUpperCase() + model.slice(1);
+    throw new Error(`${modelName} not found or access denied`);
+  }
+  return entity as T;
+}
 
 /**
  * Register all proposal executors
@@ -544,6 +588,223 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       refundType: isFullRefund ? 'full' : 'partial',
       status: 'PENDING',
       note: 'Refund will be processed via Stripe. Customer will be notified.',
+    };
+  });
+
+  // upsert_segment - Create or update segment
+  registerProposalExecutor('upsert_segment', async (tenantId, payload) => {
+    const { segmentId, slug, name, heroTitle, heroSubtitle, description, sortOrder, active } = payload as {
+      segmentId?: string;
+      slug: string;
+      name: string;
+      heroTitle: string;
+      heroSubtitle?: string;
+      description?: string;
+      sortOrder?: number;
+      active?: boolean;
+    };
+
+    if (segmentId) {
+      // CRITICAL: Verify tenant ownership before update
+      const existingSegment = await prisma.segment.findFirst({
+        where: { id: segmentId, tenantId },
+      });
+
+      if (!existingSegment) {
+        throw new Error('Segment not found or access denied');
+      }
+
+      // Update existing segment
+      const updated = await prisma.segment.update({
+        where: { id: segmentId },
+        data: {
+          slug,
+          name,
+          heroTitle,
+          ...(heroSubtitle !== undefined && { heroSubtitle }),
+          ...(description !== undefined && { description }),
+          ...(sortOrder !== undefined && { sortOrder }),
+          ...(active !== undefined && { active }),
+        },
+      });
+
+      logger.info({ tenantId, segmentId }, 'Segment updated via agent');
+      return {
+        action: 'updated',
+        segmentId: updated.id,
+        name: updated.name,
+        slug: updated.slug,
+      };
+    }
+
+    // Create new segment
+    const created = await prisma.segment.create({
+      data: {
+        tenantId,
+        slug,
+        name,
+        heroTitle,
+        heroSubtitle: heroSubtitle || null,
+        description: description || null,
+        sortOrder: sortOrder ?? 0,
+        active: active ?? true,
+      },
+    });
+
+    logger.info({ tenantId, segmentId: created.id }, 'Segment created via agent');
+    return {
+      action: 'created',
+      segmentId: created.id,
+      name: created.name,
+      slug: created.slug,
+    };
+  });
+
+  // delete_segment - Soft delete segment
+  registerProposalExecutor('delete_segment', async (tenantId, payload) => {
+    const { segmentId } = payload as { segmentId: string };
+
+    // CRITICAL: Verify tenant ownership before delete
+    const existingSegment = await prisma.segment.findFirst({
+      where: { id: segmentId, tenantId },
+    });
+
+    if (!existingSegment) {
+      throw new Error('Segment not found or access denied');
+    }
+
+    // Soft delete by deactivating
+    const deleted = await prisma.segment.update({
+      where: { id: segmentId },
+      data: { active: false },
+    });
+
+    logger.info({ tenantId, segmentId }, 'Segment deactivated via agent');
+    return {
+      action: 'deactivated',
+      segmentId: deleted.id,
+      name: deleted.name,
+    };
+  });
+
+  // update_booking - Update booking details (reschedule, notes, status)
+  registerProposalExecutor('update_booking', async (tenantId, payload) => {
+    const { bookingId, newDate, notes, status } = payload as {
+      bookingId: string;
+      newDate?: string;
+      notes?: string;
+      status?: string;
+    };
+
+    // Verify ownership
+    const booking = await prisma.booking.findFirst({
+      where: { id: bookingId, tenantId },
+    });
+
+    if (!booking) {
+      throw new Error('Booking not found or access denied');
+    }
+
+    const updates: Prisma.BookingUpdateInput = {};
+
+    if (newDate) {
+      // Use advisory lock for date changes to prevent race conditions
+      const lockId = hashTenantDate(tenantId, newDate);
+      await prisma.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
+
+      updates.date = new Date(newDate);
+      // Update reminder due date (7 days before event)
+      updates.reminderDueDate = new Date(new Date(newDate).getTime() - 7 * 24 * 60 * 60 * 1000);
+      // Clear reminder sent flag since date changed
+      updates.reminderSentAt = null;
+    }
+
+    if (notes !== undefined) {
+      updates.notes = notes;
+    }
+
+    if (status) {
+      updates.status = status as BookingStatus;
+    }
+
+    const updated = await prisma.booking.update({
+      where: { id: bookingId },
+      data: updates,
+    });
+
+    logger.info({ tenantId, bookingId, changes: Object.keys(updates) }, 'Booking updated via agent');
+
+    return {
+      action: 'updated',
+      bookingId: updated.id,
+      changes: Object.keys(updates),
+      newDate: newDate || undefined,
+      newStatus: status || undefined,
+    };
+  });
+
+  // update_deposit_settings - Update deposit and balance due settings
+  registerProposalExecutor('update_deposit_settings', async (tenantId, payload) => {
+    const { depositPercent, balanceDueDays } = payload as {
+      depositPercent?: number | null;
+      balanceDueDays?: number;
+    };
+
+    const updates: Prisma.TenantUpdateInput = {};
+
+    if (depositPercent !== undefined) {
+      updates.depositPercent = depositPercent;
+    }
+
+    if (balanceDueDays !== undefined) {
+      updates.balanceDueDays = balanceDueDays;
+    }
+
+    await prisma.tenant.update({
+      where: { id: tenantId },
+      data: updates,
+    });
+
+    logger.info({ tenantId, depositPercent, balanceDueDays }, 'Deposit settings updated via agent');
+    return {
+      action: 'updated',
+      depositPercent: depositPercent ?? undefined,
+      balanceDueDays: balanceDueDays ?? undefined,
+    };
+  });
+
+  // start_trial - Start 14-day trial
+  registerProposalExecutor('start_trial', async (tenantId, payload) => {
+    const { trialEndsAt } = payload as { trialEndsAt: string };
+
+    // Verify tenant exists
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { subscriptionStatus: true },
+    });
+
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+
+    // Double-check status (race condition protection)
+    if (tenant.subscriptionStatus !== 'NONE') {
+      throw new Error(`Cannot start trial - status is ${tenant.subscriptionStatus}`);
+    }
+
+    await prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        subscriptionStatus: 'TRIALING',
+        trialEndsAt: new Date(trialEndsAt),
+      },
+    });
+
+    logger.info({ tenantId, trialEndsAt }, 'Trial started via agent');
+    return {
+      action: 'trial_started',
+      trialEndsAt,
+      subscriptionStatus: 'TRIALING',
     };
   });
 

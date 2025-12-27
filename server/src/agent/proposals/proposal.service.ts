@@ -206,6 +206,9 @@ export class ProposalService {
     sessionId: string,
     userMessage: string
   ): Promise<string[]> {
+    // Normalize unicode before pattern matching (prevent lookalike character bypass)
+    const normalizedMessage = userMessage.normalize('NFKC');
+
     // Check for rejection keywords
     const rejectionPatterns = [
       /\bwait\b/i,
@@ -217,7 +220,7 @@ export class ProposalService {
       /\bdon'?t\b/i,
     ];
 
-    const isRejection = rejectionPatterns.some((p) => p.test(userMessage));
+    const isRejection = rejectionPatterns.some((p) => p.test(normalizedMessage));
 
     if (isRejection) {
       // Reject all pending T2 proposals
