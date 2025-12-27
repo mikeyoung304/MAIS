@@ -1641,6 +1641,36 @@ Before creating TODO from plan:
 
 **Expected Benefit:** 50% faster plan reviews, 80% fewer stale todos
 
+#### [Compound-Engineering Documentation Migration](./workflow/compound-engineering-documentation-migration-MAIS-20251227.md)
+
+**Purpose:** Migrate legacy documentation systems to compound-engineering native format
+**Audience:** Engineers maintaining documentation, tech leads
+**Length:** ~1,500 words
+**Date Created:** 2025-12-27
+
+**Problem Solved:**
+
+- Legacy "lessons" system existing alongside compound-engineering docs
+- Documentation systems referencing non-existent commands
+- Redundant content across multiple locations
+- Stale CLAUDE.md content not archived
+
+**Key Actions:**
+
+1. Delete legacy `.claude/lessons/` folder (redundant with docs/solutions/)
+2. Create `mais-critical-patterns.md` as "Required Reading" for all agents
+3. Archive stale sprint goals from CLAUDE.md
+4. Fix broken documentation links
+5. Configure Context7 MCP for framework docs
+
+**Prevention Checklist:**
+
+- [ ] Check compound-engineering compatibility before adding new doc systems
+- [ ] Verify location should be `docs/solutions/` (compound-native)
+- [ ] Search existing docs before creating new content
+- [ ] Use YAML frontmatter for searchability
+- [ ] Index in PREVENTION-STRATEGIES-INDEX.md
+
 #### [Multi-Agent Code Review Prevention Strategies](./methodology/MULTI-AGENT-CODE-REVIEW-PREVENTION-STRATEGIES.md)
 
 **Purpose:** Comprehensive prevention strategies for multi-agent code review workflow
