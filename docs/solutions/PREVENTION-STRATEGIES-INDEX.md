@@ -764,6 +764,18 @@ cp server/test/templates/tenant-isolation.test.ts \
 
 **Quick Summary:** [TEST-FAILURE-PATTERNS-SUMMARY.md](./TEST-FAILURE-PATTERNS-SUMMARY.md) (5 min read)
 
+#### Test Tenant Cleanup (Orphan Accumulation)
+
+**Location:** `docs/solutions/test-failures/TEST-SUITE-HANG-ORPHANED-TENANTS-20251227.md`
+
+**Problem:** Test suite hangs for 11+ minutes due to orphaned test tenants accumulating from interrupted test runs. The reminder scheduler processes ALL tenants (~250ms each), causing exponential slowdown.
+
+**Solution:** Vitest global setup hook cleans orphaned test tenants BEFORE tests start.
+
+**Quick Reference:** [QUICK-REFERENCE-TEST-CLEANUP.md](./QUICK-REFERENCE-TEST-CLEANUP.md) (3 min read)
+
+**When to read:** When tests hang or slow down progressively, when investigating test infrastructure
+
 ---
 
 ### 4. Code Quality Automation
