@@ -9,6 +9,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getBackendToken } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 
+// Force dynamic rendering - this route uses cookies for authentication
+export const dynamic = 'force-dynamic';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 /**
