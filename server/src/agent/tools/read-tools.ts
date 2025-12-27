@@ -586,6 +586,88 @@ export const getStripeStatusTool: AgentTool = {
 };
 
 /**
+ * get_addons - All add-ons
+ *
+ * Returns: array of add-ons or single add-on if ID provided
+ */
+export const getAddonsTool: AgentTool = {
+  name: 'get_addons',
+  description: 'Get all add-ons or a single add-on by ID. Add-ons are optional extras that can be added to packages.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      addOnId: {
+        type: 'string',
+        description: 'Optional add-on ID to get a single add-on',
+      },
+      includeInactive: {
+        type: 'boolean',
+        description: 'Include inactive add-ons (default: false)',
+      },
+    },
+    required: [],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const addOnId = params.addOnId as string | undefined;
+    const includeInactive = params.includeInactive as boolean | undefined;
+
+    try {
+      if (addOnId) {
+        const addOn = await prisma.addOn.findFirst({
+          where: { id: addOnId, tenantId },
+          include: { segment: { select: { id: true, name: true } } },
+        });
+
+        if (!addOn) {
+          return { success: false, error: 'Add-on not found' };
+        }
+
+        return {
+          success: true,
+          data: formatAddOn(addOn),
+        };
+      }
+
+      const addOns = await prisma.addOn.findMany({
+        where: {
+          tenantId,
+          ...(includeInactive ? {} : { active: true }),
+        },
+        include: { segment: { select: { id: true, name: true } } },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return {
+        success: true,
+        data: addOns.map(formatAddOn),
+      };
+    } catch (error) {
+      logger.error({ error, tenantId }, 'Error in get_addons tool');
+      return { success: false, error: 'Failed to fetch add-ons' };
+    }
+  },
+};
+
+/**
+ * Helper to format add-on for agent context
+ */
+function formatAddOn(addOn: any) {
+  return {
+    id: addOn.id,
+    slug: addOn.slug,
+    name: sanitizeForContext(addOn.name, 100),
+    description: sanitizeForContext(addOn.description || '', 500),
+    price: addOn.price,
+    priceFormatted: `$${(addOn.price / 100).toFixed(2)}`,
+    active: addOn.active,
+    segmentId: addOn.segmentId,
+    segmentName: addOn.segment ? sanitizeForContext(addOn.segment.name, 50) : null,
+    createdAt: addOn.createdAt.toISOString(),
+  };
+}
+
+/**
  * Helper to format package for agent context
  */
 function formatPackage(pkg: any) {
@@ -617,6 +699,7 @@ export const readTools: AgentTool[] = [
   getTenantTool,
   getDashboardTool,
   getPackagesTool,
+  getAddonsTool,
   getBookingsTool,
   getBookingTool,
   checkAvailabilityTool,

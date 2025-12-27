@@ -262,6 +262,35 @@ export const addonWriteLimiter = rateLimit({
 });
 
 /**
+ * Rate limiter for AI agent chat endpoints
+ * 30 messages per 5 minutes per tenant - balances UX with API cost protection
+ * Prevents:
+ * - Claude API token exhaustion (each message costs ~$0.01-0.10)
+ * - Denial of service via unbounded agent conversations
+ * - Abuse of costly AI capabilities
+ */
+export const agentChatLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: isTestEnvironment ? 500 : 30, // 30 messages per 5 minutes per tenant
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Key by tenantId for per-tenant limiting
+  keyGenerator: (_req, res) => res.locals.tenantAuth?.tenantId || normalizeIp(_req.ip),
+  skip: (_req, res) => !res.locals.tenantAuth, // Only apply to authenticated requests
+  validate: false, // Disable validation - we handle IPv6 with normalizeIp()
+  handler: (_req: Request, res: Response) => {
+    logger.warn(
+      { tenantId: res.locals.tenantAuth?.tenantId },
+      'Agent chat rate limit exceeded'
+    );
+    res.status(429).json({
+      error: 'too_many_agent_requests',
+      message: 'You\'ve reached the message limit. Please wait a few minutes before sending more messages.',
+    });
+  },
+});
+
+/**
  * Rate limiter for Stripe webhook endpoint
  * 100 requests per minute - prevents DoS attacks on webhook processing
  *

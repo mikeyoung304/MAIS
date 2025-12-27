@@ -75,6 +75,7 @@ import {
   publicTenantLookupLimiter,
   publicBookingActionsLimiter,
   publicBalancePaymentLimiter,
+  agentChatLimiter,
 } from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
 import { apiKeyService } from '../lib/api-key.service';
@@ -662,9 +663,10 @@ export function createV1Router(
 
     // Register agent routes (for AI agent integration)
     // Requires tenant admin authentication - agent proposals are tied to tenant
+    // Rate limited to 30 messages per 5 minutes per tenant to protect Claude API costs
     const agentRoutes = createAgentRoutes(prismaClient);
-    app.use('/v1/agent', tenantAuthMiddleware, agentRoutes);
-    logger.info('✅ Agent routes mounted at /v1/agent');
+    app.use('/v1/agent', tenantAuthMiddleware, agentChatLimiter, agentRoutes);
+    logger.info('✅ Agent routes mounted at /v1/agent (with rate limiting)');
 
     // Register agent proposal executors
     registerAllExecutors(prismaClient);

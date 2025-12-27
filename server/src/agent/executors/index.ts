@@ -34,7 +34,16 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     };
 
     if (packageId) {
-      // Update existing package
+      // CRITICAL: Verify tenant ownership before update (prevent cross-tenant access)
+      const existingPackage = await prisma.package.findFirst({
+        where: { id: packageId, tenantId },
+      });
+
+      if (!existingPackage) {
+        throw new Error('Package not found or access denied');
+      }
+
+      // Update existing package (now safe after tenant verification)
       const updated = await prisma.package.update({
         where: { id: packageId },
         data: {
@@ -85,7 +94,16 @@ export function registerAllExecutors(prisma: PrismaClient): void {
   registerProposalExecutor('delete_package', async (tenantId, payload) => {
     const { packageId } = payload as { packageId: string };
 
-    // Soft delete by deactivating (safer than hard delete)
+    // CRITICAL: Verify tenant ownership before update (prevent cross-tenant access)
+    const existingPackage = await prisma.package.findFirst({
+      where: { id: packageId, tenantId },
+    });
+
+    if (!existingPackage) {
+      throw new Error('Package not found or access denied');
+    }
+
+    // Soft delete by deactivating (safer than hard delete, now safe after tenant verification)
     const deleted = await prisma.package.update({
       where: { id: packageId },
       data: { active: false },
@@ -249,6 +267,102 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     };
   });
 
+  // upsert_addon - Create or update add-on
+  registerProposalExecutor('upsert_addon', async (tenantId, payload) => {
+    const { addOnId, slug, name, description, price, segmentId, active } = payload as {
+      addOnId?: string;
+      slug?: string;
+      name: string;
+      description?: string;
+      price: number;
+      segmentId?: string;
+      active?: boolean;
+    };
+
+    if (addOnId) {
+      // CRITICAL: Verify tenant ownership before update (prevent cross-tenant access)
+      const existingAddOn = await prisma.addOn.findFirst({
+        where: { id: addOnId, tenantId },
+      });
+
+      if (!existingAddOn) {
+        throw new Error('Add-on not found or access denied');
+      }
+
+      // Update existing add-on (now safe after tenant verification)
+      const updated = await prisma.addOn.update({
+        where: { id: addOnId },
+        data: {
+          ...(slug && { slug }),
+          name,
+          ...(description !== undefined && { description }),
+          price,
+          ...(segmentId !== undefined && { segmentId: segmentId || null }),
+          ...(active !== undefined && { active }),
+        },
+      });
+
+      logger.info({ tenantId, addOnId }, 'Add-on updated via agent');
+      return {
+        action: 'updated',
+        addOnId: updated.id,
+        name: updated.name,
+        price: updated.price,
+      };
+    }
+
+    // Create new add-on - generate slug if not provided
+    const generatedSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+    const created = await prisma.addOn.create({
+      data: {
+        tenantId,
+        slug: generatedSlug,
+        name,
+        description: description || null,
+        price,
+        segmentId: segmentId || null,
+        active: active ?? true,
+      },
+    });
+
+    logger.info({ tenantId, addOnId: created.id }, 'Add-on created via agent');
+    return {
+      action: 'created',
+      addOnId: created.id,
+      name: created.name,
+      price: created.price,
+      slug: created.slug,
+    };
+  });
+
+  // delete_addon - Remove add-on (soft delete)
+  registerProposalExecutor('delete_addon', async (tenantId, payload) => {
+    const { addOnId } = payload as { addOnId: string };
+
+    // CRITICAL: Verify tenant ownership before update (prevent cross-tenant access)
+    const existingAddOn = await prisma.addOn.findFirst({
+      where: { id: addOnId, tenantId },
+    });
+
+    if (!existingAddOn) {
+      throw new Error('Add-on not found or access denied');
+    }
+
+    // Soft delete by deactivating (safer than hard delete, now safe after tenant verification)
+    const deleted = await prisma.addOn.update({
+      where: { id: addOnId },
+      data: { active: false },
+    });
+
+    logger.info({ tenantId, addOnId }, 'Add-on deactivated via agent');
+    return {
+      action: 'deactivated',
+      addOnId: deleted.id,
+      name: deleted.name,
+    };
+  });
+
   // cancel_booking - Cancel and initiate refund
   registerProposalExecutor('cancel_booking', async (tenantId, payload) => {
     const { bookingId, reason } = payload as {
@@ -294,6 +408,142 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       date: booking.date.toISOString().split('T')[0],
       refundStatus: 'PENDING',
       note: 'Refund will be processed automatically',
+    };
+  });
+
+  // create_booking - Manual booking creation
+  registerProposalExecutor('create_booking', async (tenantId, payload) => {
+    const { packageId, date, customerName, customerEmail, customerPhone, notes, totalPrice } = payload as {
+      packageId: string;
+      date: string;
+      customerName: string;
+      customerEmail: string;
+      customerPhone?: string;
+      notes?: string;
+      totalPrice: number;
+    };
+
+    // CRITICAL: Verify package ownership before creating booking
+    const pkg = await prisma.package.findFirst({
+      where: { id: packageId, tenantId, active: true },
+    });
+
+    if (!pkg) {
+      throw new Error('Package not found or access denied');
+    }
+
+    // Double-check availability (race condition protection)
+    const bookingDate = new Date(date);
+    const existingBooking = await prisma.booking.findFirst({
+      where: {
+        tenantId,
+        date: bookingDate,
+        status: { notIn: ['CANCELED', 'REFUNDED'] },
+      },
+    });
+
+    if (existingBooking) {
+      throw new Error(`Date ${date} is already booked - please choose another date`);
+    }
+
+    // Find or create customer
+    let customer = await prisma.customer.findFirst({
+      where: { tenantId, email: customerEmail },
+    });
+
+    if (!customer) {
+      customer = await prisma.customer.create({
+        data: {
+          tenantId,
+          email: customerEmail,
+          name: customerName,
+          phone: customerPhone || null,
+        },
+      });
+      logger.info({ tenantId, customerId: customer.id }, 'Customer created via agent booking');
+    }
+
+    // Create the booking
+    const booking = await prisma.booking.create({
+      data: {
+        tenantId,
+        customerId: customer.id,
+        packageId,
+        date: bookingDate,
+        totalPrice,
+        status: 'CONFIRMED', // Manual bookings are immediately confirmed
+        bookingType: 'DATE',
+        notes: notes ? `[Manual booking via agent] ${notes}` : '[Manual booking via agent]',
+      },
+    });
+
+    logger.info({ tenantId, bookingId: booking.id }, 'Manual booking created via agent');
+
+    return {
+      action: 'created',
+      bookingId: booking.id,
+      customerId: customer.id,
+      customerName,
+      date,
+      totalPrice,
+      formattedPrice: `$${(totalPrice / 100).toFixed(2)}`,
+      status: 'CONFIRMED',
+      note: 'Booking confirmed. Remember to collect payment separately if needed.',
+    };
+  });
+
+  // process_refund - Process refund for a booking
+  registerProposalExecutor('process_refund', async (tenantId, payload) => {
+    const { bookingId, refundAmount, isFullRefund, reason } = payload as {
+      bookingId: string;
+      refundAmount: number;
+      isFullRefund: boolean;
+      reason: string;
+    };
+
+    // Get booking to verify ownership
+    const booking = await prisma.booking.findFirst({
+      where: { id: bookingId, tenantId },
+      include: { customer: true },
+    });
+
+    if (!booking) {
+      throw new Error('Booking not found');
+    }
+
+    // Verify refund is still valid
+    if (booking.refundStatus === 'COMPLETED') {
+      throw new Error('Booking has already been fully refunded');
+    }
+
+    const existingRefundAmount = booking.refundAmount || 0;
+    const newTotalRefund = existingRefundAmount + refundAmount;
+
+    // Update booking with refund info
+    // Note: Actual Stripe refund would be processed by a background job
+    // that monitors PENDING refunds
+    const updated = await prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        refundStatus: isFullRefund ? 'PENDING' : 'PENDING', // Mark as pending for Stripe processing
+        refundAmount: newTotalRefund,
+        cancellationReason: reason,
+        ...(isFullRefund ? { status: 'REFUNDED' } : {}),
+      },
+    });
+
+    logger.info({ tenantId, bookingId, refundAmount, isFullRefund }, 'Refund initiated via agent');
+
+    return {
+      action: 'refund_initiated',
+      bookingId: updated.id,
+      customerName: booking.customer?.name || 'Unknown',
+      refundAmount,
+      totalRefunded: newTotalRefund,
+      formattedRefund: `$${(refundAmount / 100).toFixed(2)}`,
+      refundType: isFullRefund ? 'full' : 'partial',
+      status: 'PENDING',
+      note: 'Refund will be processed via Stripe. Customer will be notified.',
     };
   });
 

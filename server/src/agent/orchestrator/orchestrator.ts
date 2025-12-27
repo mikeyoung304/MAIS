@@ -113,6 +113,12 @@ const DEFAULT_CONFIG: OrchestratorConfig = {
 };
 
 /**
+ * Maximum recursion depth for tool calls.
+ * Prevents unbounded API costs and stack overflow from malicious prompts.
+ */
+const MAX_RECURSION_DEPTH = 5;
+
+/**
  * Chat message for conversation history
  */
 export interface ChatMessage {
@@ -426,13 +432,15 @@ export class AgentOrchestrator {
   }
 
   /**
-   * Process Claude response, executing tool calls as needed
+   * Process Claude response, executing tool calls as needed.
+   * @param depth - Current recursion depth (prevents unbounded tool call loops)
    */
   private async processResponse(
     response: Anthropic.Messages.Message,
     tenantId: string,
     sessionId: string,
-    messages: MessageParam[]
+    messages: MessageParam[],
+    depth: number = 0
   ): Promise<{
     finalMessage: string;
     toolResults?: {
@@ -448,6 +456,17 @@ export class AgentOrchestrator {
       requiresApproval: boolean;
     }[];
   }> {
+    // Check recursion depth limit
+    if (depth >= MAX_RECURSION_DEPTH) {
+      logger.warn(
+        { tenantId, sessionId, depth },
+        'Tool recursion depth limit reached - preventing further tool calls'
+      );
+      return {
+        finalMessage: "I've reached my limit for tool operations in a single request. Let me summarize what I've done so far. If you need more actions, please send another message.",
+      };
+    }
+
     // Check if response has tool calls
     const toolUseBlocks = response.content.filter(
       (block): block is ToolUseBlock => block.type === 'tool_use'
@@ -594,14 +613,15 @@ export class AgentOrchestrator {
       tools: this.buildToolsForAPI(),
     });
 
-    // Check for more tool calls (recursive, but limited depth)
+    // Check for more tool calls (recursive with depth limit)
     if (finalResponse.content.some((block) => block.type === 'tool_use')) {
-      // Recursively handle more tool calls (with depth limit)
+      // Recursively handle more tool calls (increment depth to enforce limit)
       const recursiveResult = await this.processResponse(
         finalResponse,
         tenantId,
         sessionId,
-        continuedMessages
+        continuedMessages,
+        depth + 1
       );
       return {
         finalMessage: recursiveResult.finalMessage,

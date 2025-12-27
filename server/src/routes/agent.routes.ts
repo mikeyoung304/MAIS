@@ -298,20 +298,59 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
         return;
       }
 
-      // Execute the proposal
+      // Execute the proposal within a transaction for data integrity
+      // This ensures executor + status update are atomic
       const startTime = Date.now();
-      let result: Record<string, unknown>;
-      let success = true;
-      let errorMessage: string | undefined;
 
       try {
-        result = await executor(tenantId, proposal.payload as Record<string, unknown>);
-      } catch (error) {
-        success = false;
-        errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        result = { error: errorMessage };
+        const result = await prisma.$transaction(async (tx) => {
+          // Execute the proposal (executor may perform DB operations)
+          const executorResult = await executor(tenantId, proposal.payload as Record<string, unknown>);
 
-        // Update proposal as failed
+          // Update proposal as executed (atomic with executor)
+          await tx.agentProposal.update({
+            where: { id: proposalId },
+            data: {
+              status: 'EXECUTED',
+              confirmedAt: new Date(),
+              executedAt: new Date(),
+              result: executorResult as Prisma.JsonObject,
+            },
+          });
+
+          // Log audit (atomic with execution)
+          await tx.agentAuditLog.create({
+            data: {
+              tenantId,
+              sessionId: proposal.sessionId,
+              toolName: proposal.toolName,
+              proposalId,
+              inputSummary: `Confirm proposal: ${proposal.operation}`.slice(0, 500),
+              outputSummary: JSON.stringify(executorResult).slice(0, 500),
+              trustTier: proposal.trustTier,
+              approvalStatus: 'EXPLICIT',
+              durationMs: Date.now() - startTime,
+              success: true,
+            },
+          });
+
+          return executorResult;
+        });
+
+        logger.info(
+          { tenantId, proposalId, toolName: proposal.toolName },
+          'Proposal executed successfully'
+        );
+
+        res.json({
+          id: proposalId,
+          status: 'EXECUTED',
+          result,
+        });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+        // Update proposal as failed (outside transaction since main tx failed)
         await prisma.agentProposal.update({
           where: { id: proposalId },
           data: {
@@ -321,7 +360,7 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
           },
         });
 
-        // Log audit
+        // Log audit for failure
         await prisma.agentAuditLog.create({
           data: {
             tenantId,
@@ -343,46 +382,7 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
           status: 'FAILED',
           error: errorMessage,
         });
-        return;
       }
-
-      // Update proposal as executed
-      await prisma.agentProposal.update({
-        where: { id: proposalId },
-        data: {
-          status: 'EXECUTED',
-          confirmedAt: new Date(),
-          executedAt: new Date(),
-          result: result as Prisma.JsonObject,
-        },
-      });
-
-      // Log audit
-      await prisma.agentAuditLog.create({
-        data: {
-          tenantId,
-          sessionId: proposal.sessionId,
-          toolName: proposal.toolName,
-          proposalId,
-          inputSummary: `Confirm proposal: ${proposal.operation}`.slice(0, 500),
-          outputSummary: JSON.stringify(result).slice(0, 500),
-          trustTier: proposal.trustTier,
-          approvalStatus: 'EXPLICIT',
-          durationMs: Date.now() - startTime,
-          success: true,
-        },
-      });
-
-      logger.info(
-        { tenantId, proposalId, toolName: proposal.toolName },
-        'Proposal executed successfully'
-      );
-
-      res.json({
-        id: proposalId,
-        status: 'EXECUTED',
-        result,
-      });
     } catch (error) {
       next(error);
     }

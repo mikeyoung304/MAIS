@@ -144,6 +144,136 @@ export const upsertPackageTool: AgentTool = {
 };
 
 /**
+ * upsert_addon - Create or update add-on
+ *
+ * Trust Tier: T2 (soft confirm)
+ */
+export const upsertAddOnTool: AgentTool = {
+  name: 'upsert_addon',
+  description: 'Create a new add-on or update an existing one. Add-ons are optional extras for packages.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      addOnId: {
+        type: 'string',
+        description: 'Add-on ID to update (omit for new add-on)',
+      },
+      slug: {
+        type: 'string',
+        description: 'URL-safe identifier (e.g., "extra-hour")',
+      },
+      name: {
+        type: 'string',
+        description: 'Add-on display name',
+      },
+      description: {
+        type: 'string',
+        description: 'Add-on description',
+      },
+      priceCents: {
+        type: 'number',
+        description: 'Price in cents (e.g., 5000 for $50.00)',
+      },
+      segmentId: {
+        type: 'string',
+        description: 'Optional segment ID to restrict add-on availability',
+      },
+      active: {
+        type: 'boolean',
+        description: 'Whether add-on is available (default: true)',
+      },
+    },
+    required: ['name', 'priceCents'],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const addOnId = params.addOnId as string | undefined;
+
+    try {
+      // Check if updating existing add-on
+      const existing = addOnId
+        ? await prisma.addOn.findFirst({ where: { id: addOnId, tenantId } })
+        : null;
+
+      const isUpdate = !!existing;
+      const operation = isUpdate
+        ? `Update add-on "${sanitizeForContext(existing!.name, 50)}"`
+        : `Create new add-on "${sanitizeForContext(params.name as string, 50)}"`;
+
+      // Build payload
+      const payload: Record<string, unknown> = {
+        addOnId,
+        slug: params.slug,
+        name: params.name,
+        description: params.description,
+        price: params.priceCents,
+        segmentId: params.segmentId,
+        active: params.active ?? true,
+      };
+
+      // Build preview
+      const preview: Record<string, unknown> = {
+        action: isUpdate ? 'update' : 'create',
+        addOnName: params.name,
+        price: `$${((params.priceCents as number) / 100).toFixed(2)}`,
+        ...(isUpdate ? { previousPrice: `$${(existing!.price / 100).toFixed(2)}` } : {}),
+      };
+
+      return createProposal(context, 'upsert_addon', operation, 'T2', payload, preview);
+    } catch (error) {
+      logger.error({ error, tenantId }, 'Error in upsert_addon tool');
+      return { success: false, error: 'Failed to create add-on proposal' };
+    }
+  },
+};
+
+/**
+ * delete_addon - Remove add-on
+ *
+ * Trust Tier: T2 (soft confirm)
+ */
+export const deleteAddOnTool: AgentTool = {
+  name: 'delete_addon',
+  description: 'Delete an add-on (soft delete - marks as inactive).',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      addOnId: {
+        type: 'string',
+        description: 'Add-on ID to delete',
+      },
+    },
+    required: ['addOnId'],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const addOnId = params.addOnId as string;
+
+    try {
+      const addOn = await prisma.addOn.findFirst({
+        where: { id: addOnId, tenantId },
+      });
+
+      if (!addOn) {
+        return { success: false, error: 'Add-on not found' };
+      }
+
+      const operation = `Delete add-on "${sanitizeForContext(addOn.name, 50)}"`;
+      const payload = { addOnId };
+      const preview = {
+        addOnName: sanitizeForContext(addOn.name, 50),
+        price: `$${(addOn.price / 100).toFixed(2)}`,
+      };
+
+      return createProposal(context, 'delete_addon', operation, 'T2', payload, preview);
+    } catch (error) {
+      logger.error({ error, tenantId, addOnId }, 'Error in delete_addon tool');
+      return { success: false, error: 'Failed to create delete proposal' };
+    }
+  },
+};
+
+/**
  * delete_package - Remove package
  *
  * Trust Tier: T2 (soft confirm), upgrades to T3 if has bookings
@@ -477,14 +607,234 @@ export const cancelBookingTool: AgentTool = {
 };
 
 /**
+ * create_booking - Manual booking creation
+ *
+ * Trust Tier: T3 (hard confirm) - ALWAYS requires explicit confirmation
+ * This is for phone orders, walk-ins, and manual booking entry
+ */
+export const createBookingTool: AgentTool = {
+  name: 'create_booking',
+  description: 'Create a manual booking (for phone orders, walk-ins). ALWAYS requires explicit confirmation. Checks availability before creating.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      packageId: {
+        type: 'string',
+        description: 'Package ID to book',
+      },
+      date: {
+        type: 'string',
+        description: 'Booking date (YYYY-MM-DD format)',
+      },
+      customerName: {
+        type: 'string',
+        description: 'Customer full name',
+      },
+      customerEmail: {
+        type: 'string',
+        description: 'Customer email address',
+      },
+      customerPhone: {
+        type: 'string',
+        description: 'Customer phone number (optional)',
+      },
+      notes: {
+        type: 'string',
+        description: 'Booking notes (optional)',
+      },
+      priceCents: {
+        type: 'number',
+        description: 'Override price in cents (optional, defaults to package price)',
+      },
+    },
+    required: ['packageId', 'date', 'customerName', 'customerEmail'],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const packageId = params.packageId as string;
+    const dateStr = params.date as string;
+    const customerName = params.customerName as string;
+    const customerEmail = params.customerEmail as string;
+    const customerPhone = params.customerPhone as string | undefined;
+    const notes = params.notes as string | undefined;
+    const priceCentsOverride = params.priceCents as number | undefined;
+
+    try {
+      // Validate package exists and belongs to tenant
+      const pkg = await prisma.package.findFirst({
+        where: { id: packageId, tenantId, active: true },
+      });
+
+      if (!pkg) {
+        return { success: false, error: 'Package not found or inactive' };
+      }
+
+      // Check availability (prevent double-booking)
+      const bookingDate = new Date(dateStr);
+      const existingBooking = await prisma.booking.findFirst({
+        where: {
+          tenantId,
+          date: bookingDate,
+          status: { notIn: ['CANCELED', 'REFUNDED'] },
+        },
+      });
+
+      if (existingBooking) {
+        return {
+          success: false,
+          error: `Date ${dateStr} is already booked. Please choose another date.`
+        };
+      }
+
+      // Check for blackout
+      const blackout = await prisma.blackoutDate.findFirst({
+        where: { tenantId, date: bookingDate },
+      });
+
+      if (blackout) {
+        return {
+          success: false,
+          error: `Date ${dateStr} is blocked${blackout.reason ? `: ${blackout.reason}` : ''}`
+        };
+      }
+
+      // Determine price
+      const totalPrice = priceCentsOverride ?? pkg.basePrice;
+
+      const operation = `Create manual booking for ${sanitizeForContext(customerName, 30)} on ${dateStr}`;
+      const payload = {
+        packageId,
+        date: dateStr,
+        customerName,
+        customerEmail,
+        customerPhone,
+        notes,
+        totalPrice,
+      };
+      const preview = {
+        customerName: sanitizeForContext(customerName, 30),
+        customerEmail: sanitizeForContext(customerEmail, 50),
+        eventDate: dateStr,
+        packageName: sanitizeForContext(pkg.name, 50),
+        price: `$${(totalPrice / 100).toFixed(2)}`,
+        note: 'This creates a confirmed booking. No payment will be processed - handle payment separately.',
+      };
+
+      return createProposal(context, 'create_booking', operation, 'T3', payload, preview);
+    } catch (error) {
+      logger.error({ error, tenantId, packageId }, 'Error in create_booking tool');
+      return { success: false, error: 'Failed to create booking proposal' };
+    }
+  },
+};
+
+/**
+ * process_refund - Process refund for a booking
+ *
+ * Trust Tier: T3 (hard confirm) - ALWAYS requires explicit confirmation
+ * This is for processing refunds independently of cancellation
+ */
+export const processRefundTool: AgentTool = {
+  name: 'process_refund',
+  description: 'Process a refund for a booking. Can do full or partial refund. ALWAYS requires explicit confirmation.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      bookingId: {
+        type: 'string',
+        description: 'Booking ID to refund',
+      },
+      amountCents: {
+        type: 'number',
+        description: 'Amount to refund in cents (omit for full refund)',
+      },
+      reason: {
+        type: 'string',
+        description: 'Reason for the refund',
+      },
+    },
+    required: ['bookingId'],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const bookingId = params.bookingId as string;
+    const amountCents = params.amountCents as number | undefined;
+    const reason = params.reason as string | undefined;
+
+    try {
+      const booking = await prisma.booking.findFirst({
+        where: { id: bookingId, tenantId },
+        include: { package: true, customer: true },
+      });
+
+      if (!booking) {
+        return { success: false, error: 'Booking not found' };
+      }
+
+      // Check if already fully refunded
+      if (booking.refundStatus === 'COMPLETED') {
+        return { success: false, error: 'Booking has already been fully refunded' };
+      }
+
+      // Calculate refund amount
+      const paidAmount = (booking.depositPaidAmount || 0) + (booking.balancePaidAmount || 0);
+      const alreadyRefunded = booking.refundAmount || 0;
+      const maxRefundable = paidAmount - alreadyRefunded;
+
+      if (maxRefundable <= 0) {
+        return { success: false, error: 'No refundable amount available for this booking' };
+      }
+
+      const refundAmount = amountCents
+        ? Math.min(amountCents, maxRefundable)
+        : maxRefundable;
+
+      const isFullRefund = refundAmount >= maxRefundable;
+      const customerName = booking.customer?.name || 'Unknown Customer';
+
+      const operation = isFullRefund
+        ? `Process full refund for ${sanitizeForContext(customerName, 30)}`
+        : `Process partial refund ($${(refundAmount / 100).toFixed(2)}) for ${sanitizeForContext(customerName, 30)}`;
+
+      const payload = {
+        bookingId,
+        refundAmount,
+        isFullRefund,
+        reason: reason || 'Refund processed by business owner',
+      };
+
+      const preview = {
+        customerName: sanitizeForContext(customerName, 30),
+        eventDate: booking.date.toISOString().split('T')[0],
+        packageName: sanitizeForContext(booking.package?.name || 'Unknown', 50),
+        totalPaid: `$${(paidAmount / 100).toFixed(2)}`,
+        previouslyRefunded: alreadyRefunded > 0 ? `$${(alreadyRefunded / 100).toFixed(2)}` : null,
+        refundAmount: `$${(refundAmount / 100).toFixed(2)}`,
+        refundType: isFullRefund ? 'Full refund' : 'Partial refund',
+        warning: 'Refund will be processed via Stripe. This cannot be undone.',
+      };
+
+      return createProposal(context, 'process_refund', operation, 'T3', payload, preview);
+    } catch (error) {
+      logger.error({ error, tenantId, bookingId }, 'Error in process_refund tool');
+      return { success: false, error: 'Failed to create refund proposal' };
+    }
+  },
+};
+
+/**
  * All write tools exported as array for registration
  */
 export const writeTools: AgentTool[] = [
   upsertPackageTool,
+  upsertAddOnTool,
+  deleteAddOnTool,
   deletePackageTool,
   manageBlackoutTool,
   updateBrandingTool,
   updateLandingPageTool,
   requestFileUploadTool,
   cancelBookingTool,
+  createBookingTool,
+  processRefundTool,
 ];
