@@ -623,14 +623,14 @@ export class BookingService {
 
 The following links prevent common mistakes from recurring:
 
+- **[mais-critical-patterns](docs/solutions/patterns/mais-critical-patterns.md)** - Required reading for all agents (10 critical patterns)
 - **[ts-rest-any-type-library-limitations](docs/solutions/best-practices/ts-rest-any-type-library-limitations-MAIS-20251204.md)** - When `any` is acceptable (library limitations)
 - **[any-types-quick-reference](docs/solutions/best-practices/any-types-quick-reference-MAIS-20251204.md)** - 30-second decision tree
-- **[CODE-REVIEW-ANY-TYPE-CHECKLIST.md](docs/solutions/CODE-REVIEW-ANY-TYPE-CHECKLIST.md)** - Detailed code review process
 - **[cascading-entity-type-errors](docs/solutions/logic-errors/cascading-entity-type-errors-MAIS-20251204.md)** - Preventing cascading type errors
 - **[database-client-mismatch](docs/solutions/database-issues/database-client-mismatch-MAIS-20251204.md)** - Database/client mismatch prevention
 - **[schema-drift-prevention](docs/solutions/database-issues/schema-drift-prevention-MAIS-20251204.md)** - Schema drift prevention (P0)
 - **[nextjs-migration-lessons-learned](docs/solutions/code-review-patterns/nextjs-migration-lessons-learned-MAIS-20251225.md)** - 10 lessons from the Next.js migration
-- **[vercel-nextjs-npm-workspaces](docs/solutions/deployment-issues/vercel-nextjs-npm-workspaces-root-directory.md)** - Vercel deployment fix for npm workspaces monorepos
+- **[vercel-nextjs-npm-workspaces](docs/solutions/deployment-issues/vercel-nextjs-npm-workspaces-root-directory-MAIS-20251226.md)** - Vercel deployment fix for npm workspaces monorepos
 
 **Key insight from Commit 417b8c0:** ts-rest has type compatibility issues with Express 4.x/5.x. The `{ req: any }` in route handlers is REQUIRED and must not be removed. Document library limitations instead of trying to "fix" them.
 
@@ -702,50 +702,6 @@ packages/
 ├── contracts/                  # API contracts (Zod + ts-rest)
 └── shared/                     # Shared utilities
 ```
-
-## Current Sprint Goals
-
-**MVP Sprint Status:** Day 4 Complete (5-day aggressive timeline)
-
-**Day 1 Status:** ✅ COMPLETE (November 25, 2025)
-
-- ✅ Tenant self-signup backend (`POST /v1/auth/signup`)
-- ✅ Password reset scaffolding (forgot-password, reset-password endpoints)
-- ✅ Schema updates: emailVerified, passwordResetToken, passwordResetExpires
-- ✅ API contracts: TenantSignupDto, TenantSignupResponse, ForgotPasswordDto, ResetPasswordDto
-- ✅ Rate limiting: signupLimiter (5/hour per IP)
-- ✅ 759 tests passing (up from 752)
-
-**Day 2 Status:** ✅ COMPLETE
-
-- ✅ Password reset email flow with Postmark (HTML template, SHA-256 token hashing)
-- ✅ Stripe Connect onboarding backend routes (`/v1/tenant-admin/stripe/*`)
-- ✅ StripeConnectCard.tsx component with status dashboard
-- ✅ 14 password reset tests added
-- ✅ 771 tests passing
-
-**Day 3 Status:** ✅ COMPLETE
-
-- ✅ SignupPage.tsx at `/signup` route
-- ✅ SignupForm.tsx with full validation (business name, email, password)
-- ✅ AuthContext integration with signup() method
-- ✅ Success flow: JWT storage → redirect to tenant dashboard
-
-**Day 4 Status:** ✅ COMPLETE
-
-- ✅ tenant-signup.spec.ts (12 E2E test cases)
-- ✅ password-reset.spec.ts (9 E2E test cases)
-- ✅ Total: 771 server tests + 21 new E2E tests
-
-**Day 5 Goals:** Deploy + Documentation
-
-- Production deployment
-- User documentation
-- Monitoring setup
-
-**Known Issues:**
-
-- Pre-existing TypeScript compilation errors in contracts (Zod/ts-rest version mismatch, no runtime impact)
 
 ## Troubleshooting Guide
 
