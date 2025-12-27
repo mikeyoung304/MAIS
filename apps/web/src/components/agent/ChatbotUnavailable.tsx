@@ -1,6 +1,6 @@
 'use client';
 
-import { Sparkles } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -46,35 +46,40 @@ interface ChatbotUnavailableProps {
  * ChatbotUnavailable - Graceful degradation when chatbot can't load
  *
  * Shows HANDLED-voice error messages instead of generic "failed to initialize"
+ * Styled to match HANDLED brand: warm, minimal, professional
  */
 export function ChatbotUnavailable({ reason, onRetry }: ChatbotUnavailableProps) {
   const errorInfo = errorMessages[reason || 'generic'] || errorMessages.generic;
 
   return (
-    <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-sage/10 flex items-center justify-center mb-6">
-        <Sparkles className="w-8 h-8 text-sage" />
+    <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-surface">
+      <div className="w-14 h-14 rounded-2xl bg-sage/10 flex items-center justify-center mb-6">
+        <Bot className="w-7 h-7 text-sage" />
       </div>
 
-      <h2 className="font-serif text-2xl font-bold text-text-primary mb-3">
+      <h2 className="font-serif text-xl sm:text-2xl font-semibold text-text-primary mb-3">
         {errorInfo.title}
       </h2>
 
-      <p className="text-text-muted max-w-md leading-relaxed mb-6">
+      <p className="text-text-muted max-w-sm leading-relaxed mb-8 text-sm sm:text-base">
         {errorInfo.description}
       </p>
 
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         {onRetry && (
           <Button
             onClick={onRetry}
             variant="outline"
-            className="rounded-full"
+            className="rounded-full px-6 hover:bg-neutral-50 transition-all duration-300"
           >
             Try Again
           </Button>
         )}
-        <Button asChild variant="sage" className="rounded-full">
+        <Button
+          asChild
+          variant="sage"
+          className="rounded-full px-6 shadow-md hover:shadow-lg transition-all duration-300"
+        >
           <Link href="/tenant/dashboard">Go to Dashboard</Link>
         </Button>
       </div>

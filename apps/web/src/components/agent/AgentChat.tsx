@@ -315,17 +315,25 @@ export function AgentChat({
     }
   };
 
-  // Loading state
+  // Loading state - matches HANDLED card pattern
   if (isCheckingHealth) {
     return (
       <div
         className={cn(
-          'flex flex-col h-full bg-white rounded-2xl shadow-lg border border-neutral-100 overflow-hidden items-center justify-center',
+          'flex flex-col h-full bg-surface rounded-3xl shadow-lg border border-neutral-100 overflow-hidden items-center justify-center',
           className
         )}
       >
-        <Loader2 className="w-8 h-8 text-sage animate-spin" />
-        <p className="text-text-muted mt-4">Loading your assistant...</p>
+        <div className="w-12 h-12 rounded-2xl bg-sage/10 flex items-center justify-center mb-4">
+          <Bot className="w-6 h-6 text-sage" />
+        </div>
+        {/* Typing indicator dots */}
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-sage/60 animate-pulse" style={{ animationDelay: '0ms' }} />
+          <div className="w-2 h-2 rounded-full bg-sage/60 animate-pulse" style={{ animationDelay: '150ms' }} />
+          <div className="w-2 h-2 rounded-full bg-sage/60 animate-pulse" style={{ animationDelay: '300ms' }} />
+        </div>
+        <p className="text-text-muted mt-4 text-sm">Loading your assistant...</p>
       </div>
     );
   }
@@ -335,7 +343,7 @@ export function AgentChat({
     return (
       <div
         className={cn(
-          'flex flex-col h-full bg-white rounded-2xl shadow-lg border border-neutral-100 overflow-hidden',
+          'flex flex-col h-full bg-surface rounded-3xl shadow-lg border border-neutral-100 overflow-hidden',
           className
         )}
       >
@@ -347,27 +355,27 @@ export function AgentChat({
   return (
     <div
       className={cn(
-        'flex flex-col h-full bg-white rounded-2xl shadow-lg border border-neutral-100 overflow-hidden',
+        'flex flex-col h-full bg-surface rounded-3xl shadow-lg border border-neutral-100 overflow-hidden',
         className
       )}
     >
-      {/* Header */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-neutral-100 bg-gradient-to-r from-sage/5 to-transparent">
-        <div className="p-2 rounded-full bg-sage/10">
+      {/* Header - subtle gradient, matches brand */}
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-neutral-100/80 bg-white/60">
+        <div className="w-10 h-10 rounded-2xl bg-sage/10 flex items-center justify-center">
           <Bot className="w-5 h-5 text-sage" />
         </div>
         <div>
-          <h3 className="font-semibold text-neutral-900">Business Growth Assistant</h3>
+          <h3 className="font-serif font-semibold text-text-primary">AI Assistant</h3>
           {context && (
-            <p className="text-sm text-neutral-500">
-              Helping {context.businessName}
+            <p className="text-sm text-text-muted">
+              {context.businessName}
             </p>
           )}
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+      {/* Messages - warm cream background with smooth scrolling */}
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 scroll-smooth">
         {messages.map((message, index) => (
           <MessageBubble
             key={index}
@@ -377,16 +385,25 @@ export function AgentChat({
           />
         ))}
 
+        {/* Typing indicator while loading */}
         {isLoading && (
-          <div className="flex items-center gap-2 text-neutral-500">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-sm">Thinking...</span>
+          <div className="flex gap-3">
+            <div className="w-8 h-8 rounded-full bg-sage/10 flex items-center justify-center shrink-0">
+              <Bot className="w-4 h-4 text-sage" />
+            </div>
+            <div className="bg-white border border-neutral-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-sage/50 animate-pulse" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 rounded-full bg-sage/50 animate-pulse" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 rounded-full bg-sage/50 animate-pulse" style={{ animationDelay: '300ms' }} />
+              </div>
+            </div>
           </div>
         )}
 
         {error && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 text-red-700">
-            <AlertTriangle className="w-4 h-4" />
+          <div className="flex items-center gap-2 p-4 rounded-2xl bg-red-50 border border-red-100 text-red-700">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
             <span className="text-sm">{error}</span>
           </div>
         )}
@@ -396,7 +413,7 @@ export function AgentChat({
 
       {/* Pending Proposals Banner */}
       {pendingProposals.length > 0 && (
-        <div className="px-6 py-3 bg-amber-50 border-t border-amber-100">
+        <div className="px-6 py-3 bg-amber-50/80 border-t border-amber-100">
           <p className="text-sm text-amber-800">
             {pendingProposals.length} action{pendingProposals.length > 1 ? 's' : ''} awaiting
             your confirmation
@@ -404,8 +421,8 @@ export function AgentChat({
         </div>
       )}
 
-      {/* Input */}
-      <div className="px-6 py-4 border-t border-neutral-100 bg-neutral-50">
+      {/* Input - matches HANDLED form pattern */}
+      <div className="px-6 py-4 border-t border-neutral-100/80 bg-white/60">
         <div className="flex gap-3">
           <textarea
             ref={inputRef}
@@ -414,10 +431,11 @@ export function AgentChat({
             onKeyDown={handleKeyDown}
             placeholder="Ask me anything about your business..."
             className={cn(
-              'flex-1 resize-none rounded-xl border border-neutral-200 px-4 py-3',
-              'focus:outline-none focus:ring-2 focus:ring-sage/50 focus:border-sage',
-              'placeholder:text-neutral-400 text-neutral-900',
-              'min-h-[48px] max-h-[120px]'
+              'flex-1 resize-none rounded-full border-2 border-neutral-200 px-5 py-3',
+              'focus:outline-none focus:border-sage focus:ring-4 focus:ring-sage/10',
+              'placeholder:text-neutral-400 text-text-primary bg-white',
+              'min-h-[48px] max-h-[120px]',
+              'transition-all duration-200 hover:border-neutral-300'
             )}
             rows={1}
             disabled={isLoading || !sessionId}
@@ -426,8 +444,7 @@ export function AgentChat({
             onClick={sendMessage}
             disabled={!inputValue.trim() || isLoading || !sessionId}
             variant="sage"
-            size="icon"
-            className="h-12 w-12 shrink-0"
+            className="h-12 w-12 shrink-0 rounded-full shadow-md hover:shadow-lg transition-all duration-300"
           >
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -436,7 +453,7 @@ export function AgentChat({
             )}
           </Button>
         </div>
-        <p className="mt-2 text-xs text-neutral-400 text-center">
+        <p className="mt-2 text-xs text-text-muted text-center">
           Press Enter to send, Shift+Enter for new line
         </p>
       </div>
@@ -446,6 +463,7 @@ export function AgentChat({
 
 /**
  * Individual message bubble component
+ * Styled to match HANDLED brand: warm, professional, minimal
  */
 function MessageBubble({
   message,
@@ -464,27 +482,27 @@ function MessageBubble({
       <div
         className={cn(
           'shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
-          isUser ? 'bg-neutral-100' : 'bg-sage/10'
+          isUser ? 'bg-neutral-200' : 'bg-sage/10'
         )}
       >
         {isUser ? (
-          <User className="w-4 h-4 text-neutral-600" />
+          <User className="w-4 h-4 text-text-muted" />
         ) : (
           <Bot className="w-4 h-4 text-sage" />
         )}
       </div>
 
       {/* Content */}
-      <div className={cn('flex-1 max-w-[80%]', isUser && 'flex flex-col items-end')}>
+      <div className={cn('flex-1 max-w-[85%]', isUser && 'flex flex-col items-end')}>
         <div
           className={cn(
-            'rounded-2xl px-4 py-3',
+            'rounded-2xl px-4 py-3 shadow-sm',
             isUser
               ? 'bg-sage text-white rounded-br-sm'
-              : 'bg-neutral-100 text-neutral-900 rounded-bl-sm'
+              : 'bg-white text-text-primary border border-neutral-100 rounded-bl-sm'
           )}
         >
-          <p className="whitespace-pre-wrap">{message.content}</p>
+          <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
         </div>
 
         {/* Tool Results */}
@@ -494,10 +512,10 @@ function MessageBubble({
               <div
                 key={idx}
                 className={cn(
-                  'flex items-center gap-2 text-xs px-3 py-1 rounded-full',
+                  'inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border',
                   result.success
-                    ? 'bg-green-50 text-green-700'
-                    : 'bg-red-50 text-red-700'
+                    ? 'bg-green-50 text-green-700 border-green-100'
+                    : 'bg-red-50 text-red-700 border-red-100'
                 )}
               >
                 {result.success ? (
@@ -525,7 +543,7 @@ function MessageBubble({
             ))}
 
         {/* Timestamp */}
-        <span className="text-xs text-neutral-400 mt-1">
+        <span className="text-xs text-text-muted/60 mt-1.5 px-1">
           {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>
       </div>
@@ -535,6 +553,7 @@ function MessageBubble({
 
 /**
  * Proposal confirmation card
+ * Styled to match HANDLED brand with warm amber tones
  */
 function ProposalCard({
   proposal,
@@ -546,11 +565,11 @@ function ProposalCard({
   onReject: () => void;
 }) {
   return (
-    <div className="mt-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
+    <div className="mt-3 p-4 rounded-2xl bg-amber-50/80 border border-amber-200/60 shadow-sm">
       <p className="font-medium text-amber-900 mb-2">{proposal.operation}</p>
 
       {/* Preview of what will change */}
-      <div className="text-sm text-amber-800 mb-3 space-y-1">
+      <div className="text-sm text-amber-800/90 mb-4 space-y-1">
         {Object.entries(proposal.preview).map(([key, value]) => (
           <div key={key} className="flex gap-2">
             <span className="font-medium">{key}:</span>
@@ -559,19 +578,23 @@ function ProposalCard({
         ))}
       </div>
 
-      {/* Confirmation buttons */}
+      {/* Confirmation buttons - follow HANDLED button patterns */}
       <div className="flex gap-2">
         <Button
           onClick={onConfirm}
-          variant="default"
+          variant="sage"
           size="sm"
-          className="bg-green-600 hover:bg-green-700"
+          className="rounded-full px-4"
         >
-          <CheckCircle className="w-4 h-4 mr-1" />
+          <CheckCircle className="w-4 h-4 mr-1.5" />
           Confirm
         </Button>
-        <Button onClick={onReject} variant="outline" size="sm">
-          <XCircle className="w-4 h-4 mr-1" />
+        <Button
+          onClick={onReject}
+          variant="outline"
+          size="sm"
+          className="rounded-full px-4"
+        >
           Cancel
         </Button>
       </div>
