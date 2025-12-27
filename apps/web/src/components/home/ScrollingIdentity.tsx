@@ -47,27 +47,37 @@ const identities = [
 export function ScrollingIdentity() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [rotationCount, setRotationCount] = useState(0);
 
   useEffect(() => {
+    // First few rotations are faster so users quickly realize it's dynamic
+    // Then settle into a comfortable reading pace
+    const getInterval = () => {
+      if (rotationCount < 2) return 1800; // Fast start - establish pattern quickly
+      if (rotationCount < 5) return 2200; // Medium pace
+      return 2500; // Settled pace for readers who stick around
+    };
+
     const interval = setInterval(() => {
       setIsAnimating(true);
       setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % identities.length);
+        setRotationCount((prev) => prev + 1);
         setIsAnimating(false);
-      }, 300);
-    }, 2500);
+      }, 250); // Snappy 250ms transition
+    }, getInterval());
 
     return () => clearInterval(interval);
-  }, []);
+  }, [rotationCount]);
 
   const current = identities[currentIndex];
 
   return (
     <span className="inline-block min-w-[320px] sm:min-w-[480px] md:min-w-[600px]">
       <span
-        className={`inline-block transition-all duration-300 ${
+        className={`inline-block transition-all duration-200 ease-out ${
           isAnimating
-            ? 'opacity-0 translate-y-2'
+            ? 'opacity-0 -translate-y-1'
             : 'opacity-100 translate-y-0'
         }`}
       >
@@ -75,6 +85,8 @@ export function ScrollingIdentity() {
         <span className="text-text-primary">, so </span>
         <span className="text-sage">{current.verb}</span>
       </span>
+      {/* Blinking cursor signals dynamic text */}
+      <span className="animate-pulse text-sage/70 font-light">|</span>
     </span>
   );
 }
