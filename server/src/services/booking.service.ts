@@ -137,7 +137,7 @@ export class BookingService {
         this.checkoutFactory,
         this.weddingDepositService,
         options.catalogRepo,
-        { checkAvailability: async () => ({ available: true }) } as AvailabilityService
+        { checkAvailability: async () => ({ available: true }) } as unknown as AvailabilityService
       );
     }
 

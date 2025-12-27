@@ -1414,11 +1414,12 @@ export function createTenantAdminRoutes(
       let totalRevenue = 0;
 
       for (const booking of allBookings) {
-        // Count by status
-        const statusKey = booking.status.toLowerCase().replace('_', '') as keyof typeof bookingsByStatus;
-        if (statusKey === 'depositpaid') {
+        // Count by status - normalize to lowercase without underscores
+        const normalizedStatus = booking.status.toLowerCase().replace('_', '');
+        if (normalizedStatus === 'depositpaid') {
           bookingsByStatus.depositPaid++;
-        } else if (bookingsByStatus[statusKey] !== undefined) {
+        } else if (normalizedStatus in bookingsByStatus) {
+          const statusKey = normalizedStatus as keyof typeof bookingsByStatus;
           bookingsByStatus[statusKey]++;
         }
 
@@ -1692,9 +1693,9 @@ export function createTenantAdminRoutes(
       if (segmentService) {
         const segments = await segmentService.getSegments(tenantId);
         for (const segment of segments) {
-          if (segment.heroImageUrl) {
+          if (segment.heroImage) {
             images.push({
-              url: segment.heroImageUrl,
+              url: segment.heroImage,
               type: 'segment',
               source: `Segment: ${segment.name}`,
             });

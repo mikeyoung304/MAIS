@@ -723,7 +723,7 @@ export class MockBookingRepository implements BookingRepository {
       }
     }
 
-    logger.debug({ tenantId, count: result.length }, 'findBookingsNeedingReminders called');
+    logger.debug({ tenantId: _tenantId, count: result.length }, 'findBookingsNeedingReminders called');
     return result;
   }
 
