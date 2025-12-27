@@ -668,6 +668,101 @@ function formatAddOn(addOn: any) {
 }
 
 /**
+ * get_customers - Customer list with booking counts
+ *
+ * Returns: customers with search and booking count
+ */
+export const getCustomersTool: AgentTool = {
+  name: 'get_customers',
+  description: 'Get customers with booking counts. Supports search by email/name.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      customerId: {
+        type: 'string',
+        description: 'Get single customer by ID',
+      },
+      search: {
+        type: 'string',
+        description: 'Search by email or name',
+      },
+      limit: {
+        type: 'number',
+        description: 'Max results (default 20, max 50)',
+      },
+    },
+    required: [],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const customerId = params.customerId as string | undefined;
+    const search = params.search as string | undefined;
+    const limit = Math.min((params.limit as number) || 20, 50);
+
+    try {
+      // Single customer lookup
+      if (customerId) {
+        const customer = await prisma.customer.findFirst({
+          where: { id: customerId, tenantId },
+          include: { _count: { select: { bookings: true } } },
+        });
+        if (!customer) {
+          return { success: false, error: 'Customer not found' };
+        }
+        return { success: true, data: formatCustomer(customer) };
+      }
+
+      // Search or list
+      const where: { tenantId: string; OR?: { email?: { contains: string; mode: 'insensitive' }; name?: { contains: string; mode: 'insensitive' } }[] } = {
+        tenantId,
+      };
+
+      if (search) {
+        where.OR = [
+          { email: { contains: search, mode: 'insensitive' } },
+          { name: { contains: search, mode: 'insensitive' } },
+        ];
+      }
+
+      const customers = await prisma.customer.findMany({
+        where: where as any,
+        include: { _count: { select: { bookings: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+      });
+
+      return { success: true, data: customers.map(formatCustomer) };
+    } catch (error) {
+      logger.error({ error, tenantId }, 'Error in get_customers tool');
+      return { success: false, error: 'Failed to fetch customers' };
+    }
+  },
+};
+
+/**
+ * Helper to format customer for agent context
+ */
+type CustomerWithCount = {
+  id: string;
+  email: string | null;
+  phone: string | null;
+  name: string;
+  createdAt: Date;
+  _count: { bookings: number };
+};
+
+function formatCustomer(c: CustomerWithCount) {
+  return {
+    id: c.id,
+    email: c.email,
+    phone: c.phone,
+    name: sanitizeForContext(c.name, 100),
+    bookingCount: c._count.bookings,
+    createdAt: c.createdAt.toISOString(),
+  };
+}
+
+/**
  * Helper to format package for agent context
  */
 function formatPackage(pkg: any) {
@@ -706,4 +801,5 @@ export const readTools: AgentTool[] = [
   getBlackoutsTool,
   getLandingPageTool,
   getStripeStatusTool,
+  getCustomersTool,
 ];

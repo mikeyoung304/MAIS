@@ -10,6 +10,7 @@
     "packages/*"
   ],
   "scripts": {
+    "vercel-build": "npm run build -w @macon/contracts && npm run build -w @macon/shared && cd apps/web && next build",
     "doctor": "tsx server/scripts/doctor.ts",
     "lint": "eslint . --ext .ts,.tsx --ignore-pattern 'apps/web/**'",
     "lint:web": "npm run lint --workspace=apps/web",
