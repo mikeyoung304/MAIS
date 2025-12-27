@@ -9,8 +9,9 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'node',
+      // Global setup cleans orphaned test tenants before running tests
       // Global teardown disconnects singleton PrismaClient after all tests
-      globalSetup: [],
+      globalSetup: ['./test/helpers/vitest-global-setup.ts'],
       globalTeardown: ['./test/helpers/vitest-global-teardown.ts'],
       // Limit parallelism for integration tests to prevent DB connection pool exhaustion
       // Supabase Session mode has strict pool limits - run tests serially
