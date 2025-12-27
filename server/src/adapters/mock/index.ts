@@ -645,7 +645,7 @@ export class MockBookingRepository implements BookingRepository {
   async findTimeslotBookings(
     _tenantId: string,
     date: Date,
-    _serviceId?: string
+    serviceId?: string
   ): Promise<TimeslotBooking[]> {
     // Mock mode: Return empty array for now
     // Real TIMESLOT bookings would need to be stored with startTime/endTime
@@ -661,7 +661,7 @@ export class MockBookingRepository implements BookingRepository {
     _tenantId: string,
     startDate: Date,
     endDate: Date,
-    _serviceId?: string
+    serviceId?: string
   ): Promise<TimeslotBooking[]> {
     // Mock mode: Return empty array for now
     // Real TIMESLOT bookings would need to be stored with startTime/endTime
@@ -678,7 +678,7 @@ export class MockBookingRepository implements BookingRepository {
   }
 
   async findAppointments(
-    _tenantId: string,
+    tenantId: string,
     filters?: {
       status?: string;
       serviceId?: string;
@@ -742,7 +742,7 @@ export class MockBookingRepository implements BookingRepository {
   async completeBalancePayment(
     _tenantId: string,
     bookingId: string,
-    _balanceAmountCents: number
+    balanceAmountCents: number
   ): Promise<Booking | null> {
     const booking = bookings.get(bookingId);
     if (!booking) {
