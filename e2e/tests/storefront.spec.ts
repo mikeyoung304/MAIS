@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
  * - Image fallback handling
  * - Grid layout responsiveness
  *
- * Note: The E2E test tenant (mais-e2e) is configured via VITE_TENANT_API_KEY
+ * Note: The E2E test tenant (handled-e2e) is configured via VITE_TENANT_API_KEY
  * and has minimal seed data (starter/growth packages, no segments).
  */
 test.describe('Storefront Navigation', () => {
@@ -59,15 +59,15 @@ test.describe('Storefront Navigation', () => {
   test.describe('Tenant Storefront Routes', () => {
     test('white-label route /t/:slug loads storefront', async ({ page }) => {
       // Access storefront via white-label route
-      await page.goto('/t/mais-e2e');
+      await page.goto('/t/handled-e2e');
       await page.waitForLoadState('networkidle');
 
       // With 0 segments, should redirect to tiers
-      await expect(page).toHaveURL('/t/mais-e2e/tiers');
+      await expect(page).toHaveURL('/t/handled-e2e/tiers');
     });
 
     test('/t/:slug/tiers displays tier cards', async ({ page }) => {
-      await page.goto('/t/mais-e2e/tiers');
+      await page.goto('/t/handled-e2e/tiers');
       await page.waitForLoadState('networkidle');
 
       // Should see tier cards

@@ -17,17 +17,17 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Macon AI Solutions - Business Growth Platform',
-    template: '%s | Macon AI Solutions',
+    default: 'HANDLED - Stay Ahead Without the Overwhelm',
+    template: '%s | HANDLED',
   },
   description:
-    'Partner with entrepreneurs through AI consulting, seamless booking, professional websites, and marketing automation.',
-  keywords: ['business growth', 'AI consulting', 'booking platform', 'small business'],
-  authors: [{ name: 'Macon AI Solutions' }],
+    'Done-for-you tech plus done-with-you education for service professionals. We handle the tech so you can focus on what you do best.',
+  keywords: ['service professionals', 'AI', 'booking platform', 'photographers', 'coaches', 'therapists'],
+  authors: [{ name: 'HANDLED' }],
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    siteName: 'Macon AI Solutions',
+    siteName: 'HANDLED',
   },
   robots: {
     index: true,

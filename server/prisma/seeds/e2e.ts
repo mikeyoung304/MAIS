@@ -16,9 +16,9 @@ import {
 
 // Fixed keys for E2E tests - NEVER use in production
 // These are intentionally predictable for test automation
-const E2E_TENANT_SLUG = 'mais-e2e';
-const E2E_PUBLIC_KEY = 'pk_live_mais-e2e_0000000000000000'; // 16 hex chars
-const E2E_SECRET_KEY = 'sk_live_mais-e2e_00000000000000000000000000000000'; // 32 hex chars
+const E2E_TENANT_SLUG = 'handled-e2e';
+const E2E_PUBLIC_KEY = 'pk_live_handled-e2e_0000000000000000'; // 16 hex chars
+const E2E_SECRET_KEY = 'sk_live_handled-e2e_00000000000000000000000000000000'; // 32 hex chars
 
 export async function seedE2E(prisma: PrismaClient): Promise<void> {
   // CRITICAL: Block E2E seed in production
@@ -39,7 +39,7 @@ export async function seedE2E(prisma: PrismaClient): Promise<void> {
       // Create test tenant using shared utility
       const tenant = await createOrUpdateTenant(tx, {
         slug: E2E_TENANT_SLUG,
-        name: 'MAIS E2E Test Tenant',
+        name: 'Handled E2E Test Tenant',
         commissionPercent: 5.0,
         apiKeyPublic: E2E_PUBLIC_KEY,
         apiKeySecret: E2E_SECRET_KEY,

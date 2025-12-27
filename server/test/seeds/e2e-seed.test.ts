@@ -104,14 +104,14 @@ describe('E2E Seed', () => {
       process.env.NODE_ENV = 'test';
     });
 
-    it('should create tenant with slug "mais-e2e"', async () => {
+    it('should create tenant with slug "handled-e2e"', async () => {
       const mockPrisma = createMockPrisma();
 
       await seedE2E(mockPrisma);
 
       expect(mockPrisma.tenant.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { slug: 'mais-e2e' },
+          where: { slug: 'handled-e2e' },
         })
       );
     });
@@ -122,7 +122,7 @@ describe('E2E Seed', () => {
       await seedE2E(mockPrisma);
 
       const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
-      expect(upsertCall.create.apiKeyPublic).toBe('pk_live_mais-e2e_0000000000000000');
+      expect(upsertCall.create.apiKeyPublic).toBe('pk_live_handled-e2e_0000000000000000');
     });
 
     it('should hash the secret key before storing', async () => {
@@ -132,7 +132,7 @@ describe('E2E Seed', () => {
       await seedE2E(mockPrisma);
 
       expect(apiKeyService.hashSecretKey).toHaveBeenCalledWith(
-        'sk_live_mais-e2e_00000000000000000000000000000000'
+        'sk_live_handled-e2e_00000000000000000000000000000000'
       );
     });
 
@@ -227,15 +227,15 @@ describe('E2E Seed', () => {
 
   describe('Exported Keys', () => {
     it('should export E2E_KEYS with correct tenant slug', () => {
-      expect(E2E_KEYS.tenantSlug).toBe('mais-e2e');
+      expect(E2E_KEYS.tenantSlug).toBe('handled-e2e');
     });
 
     it('should export E2E_KEYS with correct public key', () => {
-      expect(E2E_KEYS.publicKey).toBe('pk_live_mais-e2e_0000000000000000');
+      expect(E2E_KEYS.publicKey).toBe('pk_live_handled-e2e_0000000000000000');
     });
 
     it('should export E2E_KEYS with correct secret key', () => {
-      expect(E2E_KEYS.secretKey).toBe('sk_live_mais-e2e_00000000000000000000000000000000');
+      expect(E2E_KEYS.secretKey).toBe('sk_live_handled-e2e_00000000000000000000000000000000');
     });
   });
 });
@@ -246,8 +246,8 @@ describe('E2E Seed', () => {
 function createMockPrisma(): PrismaClient {
   const mockTenant = {
     id: 'tenant-e2e-123',
-    slug: 'mais-e2e',
-    name: 'MAIS E2E Test Tenant',
+    slug: 'handled-e2e',
+    name: 'Handled E2E Test Tenant',
   };
 
   const mockPackage = {

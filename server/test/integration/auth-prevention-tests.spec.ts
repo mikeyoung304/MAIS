@@ -75,7 +75,7 @@ describe('Issue 1: Password Hash Synchronization', () => {
     });
 
     it('should have test tenant available from seed data', async () => {
-      const testTenantEmail = 'test@mais-e2e.com';
+      const testTenantEmail = 'test@handled-e2e.com';
       const testTenantPassword = 'TestPassword123!';
 
       const response = await request(app).post('/v1/auth/login').send({
@@ -456,7 +456,7 @@ describe('Issue 3: Demo/Dev Credentials Sync', () => {
   describe('Seeded Credential Availability', () => {
     it('should have seeded test tenant available', async () => {
       // The seed script should create a test tenant with known credentials
-      const testTenantSlug = 'mais-e2e';
+      const testTenantSlug = 'handled-e2e';
 
       const tenant = await tenantRepo.findBySlug(testTenantSlug);
 
@@ -471,7 +471,7 @@ describe('Issue 3: Demo/Dev Credentials Sync', () => {
 
     it('should allow login with seeded test tenant credentials', async () => {
       // If test tenant was seeded, these credentials should work
-      const testTenantEmail = 'test@mais-e2e.com';
+      const testTenantEmail = 'test@handled-e2e.com';
       const testTenantPassword = 'TestPassword123!';
 
       // Try to login - should succeed if seeded

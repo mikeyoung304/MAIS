@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MAIS (Macon AI Solutions) is a business growth club platform that partners with entrepreneurs and small business owners through revenue-sharing partnerships. Built as a multi-tenant modular monolith with Express + React, featuring complete data isolation, config-driven architecture, and mock-first development. The platform provides AI consulting, seamless booking/scheduling, professional websites, and marketing automation.
+HANDLED (gethandled.ai) is a membership platform for service professionals — photographers, coaches, therapists, wedding planners — combining done-for-you tech with done-with-you education. Built as a multi-tenant modular monolith with Express + React, featuring complete data isolation, config-driven architecture, and mock-first development. Members get professional websites, booking/payments, AI chatbots, plus monthly newsletters and Zoom calls about what's worth knowing in AI.
 
 **Tech Stack:**
 
@@ -351,7 +351,7 @@ Invoke the skill by name. The skill's SKILL.md loads automatically and provides:
 
 **For UI work (`apps/web/`, `client/`, any component):**
 1. FIRST: Load `frontend-design` skill (universal design excellence)
-2. THEN: Read `docs/design/BRAND_VOICE_GUIDE.md` (MAIS brand identity)
+2. THEN: Read `docs/design/BRAND_VOICE_GUIDE.md` (HANDLED brand identity)
 3. Apply both: distinctive design + sage green/serif/transformation voice
 
 **For AI agent features:**

@@ -92,8 +92,8 @@ export function createTenantAdminDomainsRouter(
         ...domainInfo,
         verificationInstructions: {
           recordType: 'TXT',
-          recordName: `_mais-verify.${domain}`,
-          recordValue: `mais-verify=${domainInfo.verificationToken}`,
+          recordName: `_handled-verify.${domain}`,
+          recordValue: `handled-verify=${domainInfo.verificationToken}`,
           description:
             'Add this TXT record to your DNS configuration, then click "Verify Domain".',
         },

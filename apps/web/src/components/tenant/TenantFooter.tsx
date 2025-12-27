@@ -18,7 +18,7 @@ interface TenantFooterProps {
  * - Tenant logo and name
  * - Navigation links to all pages
  * - Copyright with dynamic year
- * - "Powered by MAIS" attribution
+ * - "Powered by HANDLED" attribution
  * - Proper ARIA labels and roles
  */
 export function TenantFooter({ tenant, basePath: basePathProp, domainParam }: TenantFooterProps) {
@@ -81,12 +81,12 @@ export function TenantFooter({ tenant, basePath: basePathProp, domainParam }: Te
           <p className="text-xs text-text-muted">
             Powered by{' '}
             <a
-              href="https://maconaisolutions.com"
+              href="https://gethandled.ai"
               target="_blank"
               rel="noopener noreferrer"
               className="underline transition-colors hover:text-sage"
             >
-              Macon AI Solutions
+              HANDLED
             </a>
           </p>
         </div>

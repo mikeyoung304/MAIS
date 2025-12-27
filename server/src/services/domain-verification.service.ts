@@ -2,13 +2,13 @@
  * Domain Verification Service
  *
  * Handles custom domain verification for tenant websites.
- * Tenants add a TXT record to their domain: mais-verify=<token>
+ * Tenants add a TXT record to their domain: handled-verify=<token>
  * We verify by querying DNS for the TXT record.
  *
  * Example:
  * - Tenant wants to use: janephotography.com
  * - We generate token: abc123
- * - Tenant adds TXT record: _mais-verify.janephotography.com TXT "mais-verify=abc123"
+ * - Tenant adds TXT record: _handled-verify.janephotography.com TXT "handled-verify=abc123"
  * - We verify by checking DNS
  */
 
@@ -45,8 +45,8 @@ export interface DomainInfo {
  */
 export class DomainVerificationService {
   private readonly prisma: PrismaClient;
-  private readonly txtPrefix: string = '_mais-verify';
-  private readonly tokenPrefix: string = 'mais-verify=';
+  private readonly txtPrefix: string = '_handled-verify';
+  private readonly tokenPrefix: string = 'handled-verify=';
 
   constructor(prisma: PrismaClient) {
     this.prisma = prisma;

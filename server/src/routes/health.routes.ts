@@ -33,7 +33,7 @@ export function registerHealthRoutes(app: Express, deps: HealthCheckDeps): void 
       status: 'ok',
       timestamp: new Date().toISOString(),
       uptime,
-      service: 'mais-api',
+      service: 'handled-api',
       version: process.env.npm_package_version || 'unknown',
     });
   });

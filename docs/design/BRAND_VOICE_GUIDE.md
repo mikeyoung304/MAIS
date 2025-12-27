@@ -1,69 +1,81 @@
-# MaconAI Brand Voice & Design Guide
+# HANDLED Brand Voice & Design Guide
 
-> The definitive guide for maintaining Apple-quality copy and design across all MaconAI surfaces.
+> The definitive guide for maintaining Apple-quality copy and design across all HANDLED surfaces.
 
 ---
 
 ## Brand Positioning
 
-**Who we serve:** Creative professionals—photographers, wedding planners, event coordinators, artists—who'd rather be creating than administrating.
+**Who we serve:** Service professionals—photographers, coaches, therapists, wedding planners, consultants—who are curious about AI but don't have time to become tech experts.
 
-**What we do:** Handle the business side (bookings, payments, follow-ups) so they can focus on their craft.
+**What we do:** Done-for-you tech (website, booking, payments, AI chatbot) plus done-with-you education (monthly newsletter, monthly Zoom calls).
 
-**How we sound:** Confident, warm, respectful. Like a trusted colleague who happens to be really good at systems.
+**How we sound:** Cheeky but professional, self-aware, anti-hype. Like the calm friend who's already figured this out.
+
+**Tagline:** "Stay ahead without the overwhelm."
 
 ---
 
 ## Voice Principles
 
-### 1. Lead with Transformation, Not Features
+### 1. Be Self-Aware About AI
+
+We're an AI company. We own it. But we're not obnoxious about it.
 
 ```
-❌ "Our platform offers automated invoice generation and calendar sync"
-✅ "You get a text when someone books. That's it."
+❌ "Revolutionary AI-powered business transformation platform"
+✅ "Yes, it's .ai. The robots do the boring parts."
 
-❌ "3-tier pricing system with customizable packages"
-✅ "Your packages. Your pricing. Clients book and pay instantly."
+❌ "Leverage cutting-edge artificial intelligence to optimize your workflow"
+✅ "A chatbot trained on your business. Works while you sleep."
 ```
 
-### 2. Speak to Identity, Not Pain
+### 2. Speak to Badass Professionals, Not Beginners
+
+Our audience is excellent at their job. They just don't want to also be IT.
 
 ```
-❌ "Tired of chasing payments?"
-✅ "You're a photographer, not a bookkeeper."
+❌ "We make tech simple for anyone, even if you're scared of computers!"
+✅ "You didn't start your business to debug a website."
 
-❌ "Stop wasting time on admin"
-✅ "Every hour on admin is an hour you're not behind the lens."
+❌ "Don't worry, we'll hold your hand through every step!"
+✅ "We handle the tech. You stay focused on what you're actually good at."
 ```
 
-### 3. Be Specific, Not Generic
+### 3. Anti-Hype, Pro-Shortcut
+
+We cut through the noise. We're the shortcut, not another thing to learn.
 
 ```
-❌ "Handle client communications"
-✅ "Instagram DM to final gallery delivery"
+❌ "This game-changing solution will revolutionize your business!"
+✅ "Here's what actually matters this month. Nothing else."
 
-❌ "Manage your schedule"
-✅ "Calendar Tetris. Deposit tracking."
+❌ "Join our transformative community experience!"
+✅ "Real talk with other pros about what's working. No pitch."
 ```
 
-### 4. Confidence Without Arrogance
+### 4. Honest About the Problem
+
+The tech IS moving fast. It IS overwhelming. Don't pretend otherwise.
 
 ```
-❌ "The best booking platform ever built"
-✅ "One link. Complete booking system."
+❌ "Managing your business has never been easier!"
+✅ "The tech keeps changing. Every week there's something new you 'should' be learning. It's exhausting."
 
-❌ "Revolutionary AI-powered automation"
-✅ "We handle the emails, invoices, and follow-ups."
+❌ "Seamlessly integrated solutions"
+✅ "We watch the tech so you don't have to."
 ```
 
-### 5. Respect Their Intelligence
+### 5. Cheeky, Not Corny
+
+Playful humor that respects intelligence. Never dad jokes, never corporate.
 
 ```
-❌ "Easy-to-use interface anyone can understand!"
-✅ [Just show it working]
+❌ "We're like a tech team, but fun! 🎉"
+✅ "Done-for-you tech. Done-with-you education. For people who have better things to do."
 
-❌ "Don't worry, it's simple!"
-✅ "Clients pick. Book. Pay. Done."
+❌ "Your success is our passion!"
+✅ "We earn your business every month."
 ```
 
 ---
@@ -73,20 +85,20 @@
 ### Headlines
 
 - **Serif font** (`font-serif`) for warmth
-- **Short, punchy** (3-6 words ideal)
+- **Punchy and honest** — state reality, not aspirations
 - **Period at the end** for confidence
 - **Line breaks** for rhythm
 
 ```tsx
 // Good
 <h1 className="font-serif">
-  Book more clients.
+  The tech is moving fast.
   <br />
-  Build your business.
+  You don't have to.
 </h1>
 
 // Avoid
-<h1>Book More Clients And Build Your Business Today!</h1>
+<h1>Transform Your Business With Revolutionary AI Solutions!</h1>
 ```
 
 ### Subheadlines
@@ -98,26 +110,27 @@
 ```tsx
 // Good
 <p className="text-xl font-light text-text-muted">
-  The booking platform for creative professionals who'd rather be creating.
+  Done-for-you websites, booking, and AI — plus monthly updates on what's
+  actually worth knowing.
 </p>
 
 // Avoid
 <p>
-  MaconAI is the all-in-one booking platform designed specifically
-  for creative professionals who want to spend less time on admin
-  and more time doing what they love.
+  HANDLED is the comprehensive all-in-one platform designed specifically for
+  service professionals who want to leverage AI while focusing on what they love.
 </p>
 ```
 
 ### CTAs
 
 - **Action-oriented** but not pushy
-- **Consistent phrasing** across the site
+- **On-brand phrasing**
 
 ```
-Primary: "Request Early Access"
-Secondary: "Learn More"
-Success: "Welcome. We'll be in touch soon."
+Primary: "Get Handled"
+Secondary: "See How It Works"
+Pricing: "Get Started" / "Join Now" / "Book a Call"
+Success: "You're in. We'll be in touch."
 ```
 
 ### Microcopy
@@ -129,6 +142,7 @@ Success: "Welcome. We'll be in touch soon."
 Form placeholder: "Your email"
 Error: "Please enter a valid email"
 Loading: [spinner only, no text]
+Cancel note: "No contracts. Cancel anytime."
 ```
 
 ---
@@ -137,20 +151,21 @@ Loading: [spinner only, no text]
 
 | Use                    | Instead of                      |
 | ---------------------- | ------------------------------- |
-| book                   | schedule, reserve               |
+| service pros           | small businesses, entrepreneurs |
+| handle / handled       | manage, streamline, optimize    |
 | clients                | customers, users                |
-| craft                  | work, job, services             |
-| creative professionals | small businesses, entrepreneurs |
-| platform               | software, tool, solution        |
-| instantly              | automatically, seamlessly       |
+| what's worth knowing   | insights, learnings             |
+| actually               | seamlessly, effortlessly        |
+| no pitch               | no obligation, risk-free        |
 
 ## Words to Avoid
 
-- Revolutionary, game-changing, cutting-edge
-- Easy, simple, effortless (show, don't tell)
-- Just, really, very, quite (qualifiers)
-- Leverage, utilize, optimize (corporate speak)
+- Revolutionary, game-changing, cutting-edge, disruptive
+- Solutions, synergy, leverage, optimize
+- Easy, simple (feels condescending)
 - Amazing, incredible, awesome (hype)
+- Just, really, very, quite (qualifiers)
+- Overwhelmed, struggling, stressed (don't punch down)
 
 ---
 
@@ -225,7 +240,7 @@ shadow-lg border border-neutral-100
 // Cards on hover
 hover:shadow-xl hover:-translate-y-1
 
-// Emphasized elements (Core tier)
+// Emphasized elements
 shadow-2xl ring-2 ring-sage/20
 
 // Ambient effects
@@ -290,7 +305,7 @@ transition-all duration-200
                    px-10 py-4 h-14 rounded-full
                    transition-all duration-300 ease-out
                    hover:shadow-xl hover:-translate-y-0.5">
-  Request Early Access
+  Get Handled
 </Button>
 
 // Secondary (on dark background)
@@ -298,7 +313,7 @@ transition-all duration-200
                    px-10 py-4 h-14 rounded-full
                    transition-all duration-300 ease-out
                    hover:shadow-xl hover:-translate-y-0.5">
-  Get Started
+  See How It Works
 </Button>
 ```
 
@@ -313,16 +328,6 @@ transition-all duration-200
 />
 ```
 
-### Ambient Decoration Pattern
-
-```tsx
-// Use sparingly - one or two per section max
-<div
-  className="absolute top-1/4 right-[15%] w-96 h-96 bg-sage/8 rounded-full blur-3xl"
-  style={{ animation: 'pulse 6s ease-in-out infinite' }}
-/>
-```
-
 ---
 
 ## Page Templates
@@ -331,31 +336,33 @@ transition-all duration-200
 
 ```
 1. Hero (min-h-screen)
-   - Overline: Category identifier
-   - Headline: Transformation promise
-   - Subheadline: One-sentence expansion
-   - CTA: Email capture
-   - Trust line: Social proof hint
+   - Headline: "The tech is moving fast. You don't have to."
+   - Subheadline: Value prop + audience
+   - Primary CTA: "Get Handled"
+   - Secondary CTA: "See How It Works"
 
 2. Problem (py-32 md:py-40, bg-neutral-50)
    - Headline: Identity statement
-   - Body: Specific relatable details
+   - Body: Honest description of the overwhelm
    - Close: Emotional validation
 
 3. Solution (py-32 md:py-40, bg-white)
-   - Headline: Clear value prop
-   - Body: How it works (brief)
-   - Visual: Product representation
-   - Close: Outcome statement
+   - Headline: "We handle the tech. We keep you current. You stay focused."
+   - Features grid with icons
+   - Both done-for-you AND done-with-you
 
-4. Social Proof (py-32 md:py-40, bg-neutral-50)
-   - Headline: Aspirational framing
-   - Content: Testimonials or trust indicators
+4. Pricing (py-32 md:py-40, bg-neutral-50)
+   - Headline: "Pick your level of handled."
+   - Three tiers: Handled / Fully Handled / Completely Handled
 
-5. CTA (py-32 md:py-48, bg-sage)
-   - Headline: Emotional close question
-   - Subline: FOMO/aspiration
-   - Form: Email capture (duplicate from hero)
+5. FAQ (py-32 md:py-40, bg-white)
+   - Common questions
+   - Honest, conversational answers
+
+6. Final CTA (py-32 md:py-48, bg-sage)
+   - Headline: "Ready to stop being your own IT department?"
+   - Subline: Aspirational + specific
+   - CTA: "Get Handled"
 ```
 
 ---
@@ -366,12 +373,12 @@ Before shipping any new page or component:
 
 ### Copy
 
-- [ ] Headlines are 3-6 words with periods
-- [ ] No hype words (revolutionary, amazing, etc.)
+- [ ] Headlines are punchy with periods (not exclamation marks)
+- [ ] No hype words (revolutionary, game-changing, etc.)
 - [ ] No qualifiers (really, very, just)
-- [ ] Speaks to identity, not pain
-- [ ] Specific details, not generic claims
-- [ ] Active voice throughout
+- [ ] Speaks to competent pros, not beginners
+- [ ] Honest about the problem
+- [ ] Cheeky where appropriate
 
 ### Design
 
@@ -392,54 +399,60 @@ Before shipping any new page or component:
 
 ---
 
-## Examples from Current Landing Page
+## Examples from HANDLED Landing Page
 
 ### Hero Headline
 
 ```
-Book more clients.
-Build your business.
+The tech is moving fast.
+You don't have to.
 ```
 
-_Why it works: Transformation promise, parallel structure, periods for confidence_
+_Why it works: Acknowledges reality, promises relief, no hype_
 
 ### Problem Section
 
 ```
-You're a photographer, not a bookkeeper.
+You didn't start your business to debug a website.
 
-But somewhere between the Instagram DM and the final gallery delivery,
-you became both.
+You became a photographer because you see the world differently.
+A therapist because you help people heal. A coach because you unlock potential.
+
+The tech keeps changing. Every week there's something new you 'should' be learning.
+It's exhausting.
 ```
 
-_Why it works: Identity statement, specific details (Instagram DM, gallery delivery), empathy without dwelling_
+_Why it works: Identity-first, honest about the problem, validates without pitying_
 
 ### Solution Section
 
 ```
-One link. Complete booking system.
+We handle the tech. We keep you current. You stay focused.
 
-Your clients choose a package, pick a date, and pay—all in one flow.
-You get a text when someone books. That's it.
+A membership that combines done-for-you tech with done-with-you education.
 ```
 
-_Why it works: Clear value prop, client benefit, outcome focus, confidence ("That's it.")_
+_Why it works: Clear value prop, both sides of the offering, no jargon_
 
 ### CTA
 
 ```
-Ready to get back to your craft?
+Ready to stop being your own IT department?
 ```
 
-_Why it works: Question format creates momentum, echoes their core desire_
+_Why it works: Cheeky callback to the problem, question format creates momentum_
 
 ---
 
 ## Maintaining This Standard
 
 1. **Reference this guide** before writing any customer-facing copy
-2. **Review against checklist** before merging UI changes
-3. **When in doubt, remove** - Apple's mantra applies here
-4. **Show, don't tell** - if you have to explain quality, you've lost
+2. **Reference HANDLED_BRAND_POSITIONING.md** for strategic context
+3. **Review against checklist** before merging UI changes
+4. **When in doubt, remove** - Apple's mantra applies here
+5. **Show, don't tell** - if you have to explain quality, you've lost
+
+---
 
 _Last updated: December 2025_
+_Brand: HANDLED (gethandled.ai)_

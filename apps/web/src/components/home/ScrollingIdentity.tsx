@@ -13,32 +13,26 @@ const identities = [
   // === PHASE 1: Normal (0-10 seconds, ~4 items) ===
   { profession: 'photographer', verb: 'shoot' },
   { profession: 'therapist', verb: 'listen' },
-  { profession: 'chef', verb: 'cook' },
+  { profession: 'coach', verb: 'coach' },
   { profession: 'wedding planner', verb: 'orchestrate chaos' },
 
   // === PHASE 2: Getting Weird (10-20 seconds) ===
-  { profession: 'dog walker', verb: 'get dragged around' },
+  { profession: 'reluctant IT department', verb: 'google error messages' },
+  { profession: 'accidental accountant', verb: 'stare at spreadsheets' },
   { profession: 'chaos gremlin', verb: 'gremlin' },
-  { profession: 'vibe archaeologist', verb: 'excavate vibes' },
-  { profession: 'silence consultant', verb: '...' },
 
   // === PHASE 3: Why Are You Still Here (20-30 seconds) ===
   { profession: 'person still reading this', verb: 'keep reading' },
-  { profession: 'loop observer', verb: 'observe loops' },
-  { profession: 'scroll completionist', verb: 'see every option' },
-  { profession: 'pattern recognizer', verb: 'notice this repeats' },
+  { profession: 'easter egg hunter', verb: 'find the weird ones' },
 
   // === PHASE 4: Existential Dread (30-40 seconds) ===
-  { profession: 'mortal', verb: 'experience linear time' },
-  { profession: 'temporary arrangement of atoms', verb: 'briefly cohere' },
   { profession: 'future skeleton', verb: 'delay the inevitable' },
-  { profession: 'witness to entropy', verb: 'witness' },
+  { profession: 'temporary arrangement of atoms', verb: 'briefly cohere' },
 
   // === PHASE 5: Fourth Wall Break (40+ seconds) ===
-  { profession: 'person who should sign up', verb: 'sign up' },
-  { profession: 'hero of your own story', verb: 'click the button' },
-  { profession: 'legend', verb: 'join the club already' },
-  { profession: 'the main character', verb: 'act like it' },
+  { profession: 'person who should sign up', verb: 'get handled' },
+  { profession: 'legend', verb: 'join already' },
+  { profession: 'hire us already', verb: '(please)' },
 ];
 
 export function ScrollingIdentity() {

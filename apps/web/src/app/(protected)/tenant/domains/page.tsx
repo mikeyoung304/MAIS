@@ -210,7 +210,7 @@ export default function DomainsPage() {
   };
 
   const handleCopyToken = (domain: DomainInfo) => {
-    const recordValue = `mais-verify=${domain.verificationToken}`;
+    const recordValue = `handled-verify=${domain.verificationToken}`;
     navigator.clipboard.writeText(recordValue);
     setCopiedToken(domain.id);
     setTimeout(() => setCopiedToken(null), 2000);
@@ -371,7 +371,7 @@ export default function DomainsPage() {
                                   Record Name
                                 </p>
                                 <p className="font-mono text-sm truncate">
-                                  _mais-verify.{domain.domain}
+                                  _handled-verify.{domain.domain}
                                 </p>
                               </div>
                             </div>
@@ -381,7 +381,7 @@ export default function DomainsPage() {
                                   Record Value
                                 </p>
                                 <p className="font-mono text-sm truncate">
-                                  mais-verify={domain.verificationToken}
+                                  handled-verify={domain.verificationToken}
                                 </p>
                               </div>
                               <Button

@@ -12,13 +12,13 @@ import { test, expect, Page } from '@playwright/test';
  * Prerequisites:
  * - Next.js app running at port 3000
  * - Express API running at port 3001
- * - Test tenant "mais-e2e" exists with packages
+ * - Test tenant "handled-e2e" exists with packages
  *
  * Run: NEXTJS_E2E=1 npx playwright test nextjs-booking-flow.spec.ts
  */
 
 const NEXTJS_BASE_URL = process.env.NEXTJS_URL || 'http://localhost:3000';
-const TEST_TENANT_SLUG = 'mais-e2e';
+const TEST_TENANT_SLUG = 'handled-e2e';
 
 // Skip these tests unless explicitly enabled (Next.js migration is in progress)
 test.describe.configure({ mode: 'parallel' });

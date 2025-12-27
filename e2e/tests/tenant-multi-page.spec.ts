@@ -15,7 +15,7 @@ import { test, expect } from '@playwright/test';
  * Prerequisites:
  * - Next.js app running at port 3000
  * - API server running at port 3001
- * - Test tenant "mais-e2e" exists with packages
+ * - Test tenant "handled-e2e" exists with packages
  *
  * Run: NEXTJS_E2E=1 npx playwright test tenant-multi-page.spec.ts
  */
@@ -24,7 +24,7 @@ import { test, expect } from '@playwright/test';
 const NEXTJS_BASE_URL = process.env.NEXTJS_URL || 'http://localhost:3000';
 
 // Default test tenant slug for E2E
-const TENANT_SLUG = 'mais-e2e';
+const TENANT_SLUG = 'handled-e2e';
 const BASE_PATH = `${NEXTJS_BASE_URL}/t/${TENANT_SLUG}`;
 
 test.describe('Tenant Multi-Page Navigation', () => {
@@ -360,7 +360,7 @@ test.describe('SEO Metadata', () => {
   });
 
   const pages = [
-    { path: '', titleContains: 'MAIS E2E Test Tenant' },
+    { path: '', titleContains: 'Handled E2E Test Tenant' },
     { path: '/services', titleContains: 'Services' },
     { path: '/about', titleContains: 'About' },
     { path: '/faq', titleContains: 'FAQ' },

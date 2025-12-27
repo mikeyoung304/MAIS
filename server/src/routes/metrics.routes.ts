@@ -39,7 +39,7 @@ export function registerMetricsRoutes(app: Express, deps: MetricsDeps): void {
         cpu_usage: process.cpuUsage(),
 
         // Service metadata
-        service: 'mais-api',
+        service: 'handled-api',
       };
 
       res.status(200).json(metrics);

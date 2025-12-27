@@ -13,13 +13,11 @@ import { auth } from '@/lib/auth';
  * See: docs/operations/VERCEL_CUSTOM_DOMAINS.md
  */
 
-// Known HANDLED/MAIS domains that should use normal routing
+// Known HANDLED domains that should use normal routing
 const KNOWN_DOMAINS = [
   'gethandled.ai',
   'www.gethandled.ai',
-  'maconaisolutions.com',
-  'www.maconaisolutions.com',
-  'app.maconaisolutions.com',
+  'app.gethandled.ai',
   'vercel.app',
   'localhost',
 ];
