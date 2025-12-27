@@ -62,6 +62,15 @@ const buttonVariants = cva(
           'bg-sage hover:bg-sage-hover text-white rounded-full shadow-lg ' +
           'hover:shadow-xl hover:-translate-y-0.5 ' +
           'transition-all duration-300',
+        terracotta:
+          'bg-terracotta hover:bg-terracotta-hover text-white rounded-full shadow-lg ' +
+          'hover:shadow-xl hover:-translate-y-0.5 hover:scale-[1.02] ' +
+          'active:scale-[0.98] ' +
+          'transition-all duration-300 ease-spring',
+        forest:
+          'bg-forest hover:bg-forest-hover text-white rounded-full shadow-lg ' +
+          'hover:shadow-xl hover:-translate-y-0.5 ' +
+          'transition-all duration-300',
       },
       size: {
         default: 'h-11 px-6 py-2 min-w-[44px]',
@@ -92,7 +101,9 @@ export interface ButtonProps
     | 'link'
     | 'teal'
     | 'success'
-    | 'sage';
+    | 'sage'
+    | 'terracotta'
+    | 'forest';
   isLoading?: boolean;
   loadingText?: string;
 }

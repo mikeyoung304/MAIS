@@ -7,14 +7,34 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Earth tone palette for landing page redesign (WCAG AA compliant)
-        surface: '#FFFBF8',
-        'surface-alt': '#F5F1EE',
+        // HANDLED Brand Palette - Terracotta Primary (2024 Rebrand)
+        // Warm, craft-forward, human. Differentiates from cold tech blues.
+        surface: '#FBF8F3',
+        'surface-alt': '#F3EDE6',
+
+        // Primary: Terracotta - warmth, craft, authenticity
+        'terracotta': '#C4725A',
+        'terracotta-hover': '#B5634B',
+        'terracotta-light': '#D4937F',
+
+        // Secondary: Deep Forest - gravitas and trust
+        'forest': '#2D4A3E',
+        'forest-hover': '#1F3A2F',
+        'forest-light': '#4A6B5C',
+
+        // Accent: Soft Gold - premium signal, used sparingly
+        'gold': '#D4A853',
+        'gold-hover': '#C49843',
+        'gold-light': '#E4C87A',
+
+        // Legacy sage (for gradual migration)
         'sage': '#4A7C6F',
         'sage-hover': '#3D6B5F',
         'sage-light': '#8FAA9E',
-        'text-primary': '#1A1815',
-        'text-muted': '#4A4440',
+
+        // Text colors - softened for warmth
+        'text-primary': '#2C2420',
+        'text-muted': '#6B6560',
 
         // Macon Brand Colors
         'macon-navy': {

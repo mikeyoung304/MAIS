@@ -6,13 +6,15 @@
 
 ## Brand Positioning
 
-**Who we serve:** Service professionals—photographers, coaches, therapists, wedding planners, consultants—who are curious about AI but don't have time to become tech experts.
+**Who we serve:** Service professionals—photographers, coaches, therapists, wedding planners, consultants—who are excellent at their work but exhausted by the tech treadmill.
 
 **What we do:** Done-for-you tech (website, booking, payments, AI chatbot) plus done-with-you education (monthly newsletter, monthly Zoom calls).
 
-**How we sound:** Cheeky but professional, self-aware, anti-hype. Like the calm friend who's already figured this out.
+**How we sound:** Cheeky but professional, self-aware, anti-hype. Warm and human, not cold and corporate.
 
-**Tagline:** "Stay ahead without the overwhelm."
+**Tagline:** "The rest is Handled."
+
+**Hero Pattern:** "You're a [profession], so [verb]." — Identity-first marketing that makes visitors feel seen.
 
 ---
 
@@ -85,17 +87,23 @@ Playful humor that respects intelligence. Never dad jokes, never corporate.
 ### Headlines
 
 - **Serif font** (`font-serif`) for warmth
-- **Punchy and honest** — state reality, not aspirations
+- **Identity-first** — lead with who they are, not what we do
 - **Period at the end** for confidence
-- **Line breaks** for rhythm
+- **"The rest is Handled"** as the payoff line
 
 ```tsx
-// Good
+// Hero pattern (scrolling identity)
 <h1 className="font-serif">
-  The tech is moving fast.
-  <br />
-  You don't have to.
+  You're a <ScrollingIdentity />
 </h1>
+<p className="font-serif text-forest">
+  The rest is handled.
+</p>
+
+// Section headlines
+<h2 className="font-serif">
+  What you get. What you skip.
+</h2>
 
 // Avoid
 <h1>Transform Your Business With Revolutionary AI Solutions!</h1>
@@ -188,23 +196,47 @@ Cancel note: "No contracts. Cancel anytime."
 
 ### Color Usage
 
-**80% neutral, 20% accent.** Sage is precious—use sparingly.
+**Terracotta Primary Palette** (2024 Rebrand)
+
+The warm terracotta evokes craft, authenticity, and human touch—differentiating us from cold tech blues.
 
 ```tsx
-// Backgrounds (in order of usage)
-bg - white; // Primary
-bg - neutral - 50; // Alternating sections
-bg - sage; // CTA sections only
+// Primary colors
+terracotta: '#C4725A'    // Primary brand color (CTAs, icons, accents)
+terracotta-hover: '#B5634B'
+forest: '#2D4A3E'        // Secondary (headlines, footer, serious elements)
+gold: '#D4A853'          // Accent (premium signals, used very sparingly)
+
+// Backgrounds
+surface: '#FBF8F3'       // Warm cream (page background)
+surface-alt: '#F3EDE6'   // Linen (alternating sections)
+white                    // Cards, clean areas
 
 // Text
-text - text - primary; // Headlines, important text
-text - text - muted; // Body copy
-text - sage; // Accents, links
-text - white; // On dark backgrounds
+text-primary: '#2C2420'  // Espresso (softer than pure black)
+text-muted: '#6B6560'    // Warm gray (body copy)
 
-// Accents
-bg - sage / 10; // Subtle backgrounds
-ring - sage / 20; // Focus states
+// Usage ratios
+85% neutral (cream, white, warm grays)
+15% color (terracotta for CTAs/icons, forest for headers/footer)
+```
+
+**Color Application:**
+
+```tsx
+// Buttons
+variant="terracotta"     // Primary CTAs
+variant="forest"         // Secondary actions
+
+// Icons & accents
+bg-terracotta/10         // Icon backgrounds
+text-terracotta          // Accent text, checkmarks
+
+// Section backgrounds
+bg-surface               // Default
+bg-surface-alt           // Alternating
+bg-terracotta            // Final CTA section
+bg-forest                // Footer
 ```
 
 ### Typography Scale
@@ -300,20 +332,21 @@ transition-all duration-200
 ### Button Pattern
 
 ```tsx
-// Primary
-<Button className="bg-sage hover:bg-sage-hover text-white font-semibold
-                   px-10 py-4 h-14 rounded-full
-                   transition-all duration-300 ease-out
-                   hover:shadow-xl hover:-translate-y-0.5">
+// Primary (terracotta)
+<Button variant="terracotta" className="rounded-full px-10 py-6 text-lg">
   Get Handled
 </Button>
 
-// Secondary (on dark background)
-<Button className="bg-white hover:bg-white/95 text-sage font-semibold
-                   px-10 py-4 h-14 rounded-full
-                   transition-all duration-300 ease-out
-                   hover:shadow-xl hover:-translate-y-0.5">
-  See How It Works
+// Secondary (outline with forest accents)
+<Button variant="outline" className="rounded-full px-10 py-6 text-lg
+                                      border-forest/20 text-forest hover:bg-forest/5">
+  See What's Included
+</Button>
+
+// On dark background (terracotta CTA section)
+<Button className="bg-white text-terracotta hover:bg-neutral-100
+                   rounded-full px-10 py-6 text-lg shadow-lg">
+  Get Handled
 </Button>
 ```
 
@@ -335,34 +368,39 @@ transition-all duration-200
 ### Landing Page Structure
 
 ```
-1. Hero (min-h-screen)
-   - Headline: "The tech is moving fast. You don't have to."
-   - Subheadline: Value prop + audience
-   - Primary CTA: "Get Handled"
-   - Secondary CTA: "See How It Works"
+1. Hero (pt-32 pb-20 md:pt-40 md:pb-32)
+   - Headline: "You're a [scrolling identity], so [verb]."
+   - Tagline: "The rest is handled." (in forest green)
+   - Subheadline: Fragment-style value prop
+   - Primary CTA: "Get Handled" (terracotta)
+   - Secondary CTA: "See What's Included" (outline/forest)
 
-2. Problem (py-32 md:py-40, bg-neutral-50)
-   - Headline: Identity statement
-   - Body: Honest description of the overwhelm
-   - Close: Emotional validation
+2. Problem (py-20 md:py-32, bg-white)
+   - Headline: "You didn't start your business to debug a website."
+   - Body: Identity statements + honest problem description
+   - Close: Validation without pity
 
-3. Solution (py-32 md:py-40, bg-white)
-   - Headline: "We handle the tech. We keep you current. You stay focused."
-   - Features grid with icons
-   - Both done-for-you AND done-with-you
+3. Features (py-20 md:py-32, bg-surface)
+   - Headline: "What you get. What you skip."
+   - Subheadline: One sentence value prop
+   - 6 feature cards with terracotta icons
 
-4. Pricing (py-32 md:py-40, bg-neutral-50)
-   - Headline: "Pick your level of handled."
+4. Pricing (py-20 md:py-32, bg-surface-alt)
+   - Headline: "Pick a plan. Skip the tech anxiety."
    - Three tiers: Handled / Fully Handled / Completely Handled
+   - Most Popular tag in terracotta
 
-5. FAQ (py-32 md:py-40, bg-white)
-   - Common questions
-   - Honest, conversational answers
+5. FAQ (py-20 md:py-32, bg-surface)
+   - Headline: "Questions? Answers."
+   - Accordion with honest, conversational answers
 
-6. Final CTA (py-32 md:py-48, bg-sage)
-   - Headline: "Ready to stop being your own IT department?"
-   - Subline: Aspirational + specific
-   - CTA: "Get Handled"
+6. Final CTA (py-20 md:py-32, bg-terracotta)
+   - Headline: "Your clients hired you for your expertise."
+   - Subline: "Not your ability to configure a payment processor."
+   - CTA: "Get Handled" (white button)
+
+7. Footer (py-12, bg-forest)
+   - Logo, nav links, copyright
 ```
 
 ---
@@ -382,13 +420,14 @@ Before shipping any new page or component:
 
 ### Design
 
-- [ ] Section spacing is py-32 md:py-40 minimum
+- [ ] Section spacing is py-20 md:py-32 minimum
 - [ ] Max-width constraints applied to all content
-- [ ] Sage used as accent only (not primary background except CTA)
+- [ ] Terracotta used for CTAs and icons (15% of page)
+- [ ] Forest used for headlines, footer, secondary elements
 - [ ] Cards use rounded-3xl with shadow-lg
-- [ ] Buttons use rounded-full
+- [ ] Buttons use rounded-full with variant="terracotta"
 - [ ] Hover states include translate-y and shadow change
-- [ ] No more than 2 ambient blur elements per section
+- [ ] Surface colors are warm (#FBF8F3, #F3EDE6)
 
 ### Accessibility
 
@@ -401,46 +440,47 @@ Before shipping any new page or component:
 
 ## Examples from HANDLED Landing Page
 
-### Hero Headline
+### Hero (Scrolling Identity Pattern)
 
 ```
-The tech is moving fast.
-You don't have to.
+You're a photographer, so capture moments.
+You're a therapist, so hold space.
+You're a coach, so unlock potential.
+
+The rest is handled.
 ```
 
-_Why it works: Acknowledges reality, promises relief, no hype_
+_Why it works: Identity-first, makes them feel SEEN, "so [verb]" gives permission to focus on their craft_
 
-### Problem Section
-
-```
-You didn't start your business to debug a website.
-
-You became a photographer because you see the world differently.
-A therapist because you help people heal. A coach because you unlock potential.
-
-The tech keeps changing. Every week there's something new you 'should' be learning.
-It's exhausting.
-```
-
-_Why it works: Identity-first, honest about the problem, validates without pitying_
-
-### Solution Section
+### Subheadline
 
 ```
-We handle the tech. We keep you current. You stay focused.
-
-A membership that combines done-for-you tech with done-with-you education.
+Websites. Booking. Payments. AI.
+Plus a monthly filter for what's actually worth knowing.
+For people with better things to do.
 ```
 
-_Why it works: Clear value prop, both sides of the offering, no jargon_
+_Why it works: Fragment structure mirrors punchy voice, ends with identity-based hook_
 
-### CTA
+### Features Section
 
 ```
-Ready to stop being your own IT department?
+What you get. What you skip.
+
+One membership. Website, booking, payments, AI assistant.
+We set it up. You show up for clients.
 ```
 
-_Why it works: Cheeky callback to the problem, question format creates momentum_
+_Why it works: Contrast structure, action-oriented, ends with what they care about (clients)_
+
+### Final CTA
+
+```
+Your clients hired you for your expertise.
+Not your ability to configure a payment processor.
+```
+
+_Why it works: Specific pain point (payment processor config is viscerally annoying), validates their expertise_
 
 ---
 

@@ -11,15 +11,16 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ScrollingIdentity } from '@/components/home/ScrollingIdentity';
 
 export const metadata: Metadata = {
-  title: 'HANDLED - Stay Ahead Without the Overwhelm',
+  title: 'HANDLED - The Rest is Handled',
   description:
-    "Done-for-you websites, booking, and AI — plus monthly updates on what's actually worth knowing. For service pros who'd rather stay ahead than burn out.",
+    "You're a photographer, so capture moments. You're a coach, so unlock potential. The rest is handled. Done-for-you websites, booking, and AI for service professionals.",
   openGraph: {
-    title: 'HANDLED - Stay Ahead Without the Overwhelm',
+    title: 'HANDLED - The Rest is Handled',
     description:
-      "Done-for-you websites, booking, and AI — plus monthly updates on what's actually worth knowing.",
+      "Done-for-you websites, booking, and AI. For people with better things to do.",
     type: 'website',
   },
 };
@@ -154,7 +155,7 @@ export default function HomePage() {
           </Link>
           <div className="hidden md:flex items-center gap-8">
             <Link href="#features" className="text-text-muted hover:text-text-primary transition-colors">
-              Features
+              What&apos;s Included
             </Link>
             <Link href="#pricing" className="text-text-muted hover:text-text-primary transition-colors">
               Pricing
@@ -165,8 +166,8 @@ export default function HomePage() {
             <Link href="/login" className="text-text-muted hover:text-text-primary transition-colors">
               Sign In
             </Link>
-            <Button asChild variant="sage" className="rounded-full px-6">
-              <Link href="/signup">Get Started</Link>
+            <Button asChild variant="terracotta" className="rounded-full px-6">
+              <Link href="/signup">Get Handled</Link>
             </Button>
           </div>
         </div>
@@ -176,18 +177,19 @@ export default function HomePage() {
       <section className="pt-32 pb-20 md:pt-40 md:pb-32 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary leading-[1.1] tracking-tight">
-            The tech is moving fast.
-            <br />
-            <span className="text-sage">You don&apos;t have to.</span>
+            You&apos;re a <ScrollingIdentity />
           </h1>
+          <p className="mt-6 font-serif text-2xl sm:text-3xl md:text-4xl font-semibold text-forest">
+            The rest is handled.
+          </p>
           <p className="mt-8 text-lg md:text-xl text-text-muted max-w-2xl mx-auto leading-relaxed">
-            Done-for-you websites, booking, and AI — plus monthly updates on what&apos;s
-            actually worth knowing. For service pros who&apos;d rather stay ahead than burn out.
+            Websites. Booking. Payments. AI. Plus a monthly filter for what&apos;s
+            actually worth knowing. For people with better things to do.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               asChild
-              variant="sage"
+              variant="terracotta"
               className="rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
             >
               <Link href="/signup">Get Handled</Link>
@@ -195,9 +197,9 @@ export default function HomePage() {
             <Button
               asChild
               variant="outline"
-              className="rounded-full px-10 py-6 text-lg hover:bg-neutral-50 transition-all duration-300"
+              className="rounded-full px-10 py-6 text-lg border-forest/20 text-forest hover:bg-forest/5 transition-all duration-300"
             >
-              <Link href="#features">See How It Works</Link>
+              <Link href="#features">See What&apos;s Included</Link>
             </Button>
           </div>
         </div>
@@ -232,10 +234,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="font-serif text-3xl md:text-4xl font-bold text-text-primary">
-              We handle the tech. We keep you current. You stay focused.
+              What you get. What you skip.
             </h2>
             <p className="mt-4 text-lg text-text-muted">
-              A membership that combines done-for-you tech with done-with-you education.
+              One membership. Website, booking, payments, AI assistant. We set it up. You show up for clients.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -244,8 +246,8 @@ export default function HomePage() {
                 key={feature.title}
                 className="bg-white rounded-3xl p-8 shadow-sm border border-neutral-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
               >
-                <div className="w-12 h-12 rounded-2xl bg-sage/10 flex items-center justify-center mb-6">
-                  <feature.icon className="w-6 h-6 text-sage" />
+                <div className="w-12 h-12 rounded-2xl bg-terracotta/10 flex items-center justify-center mb-6">
+                  <feature.icon className="w-6 h-6 text-terracotta" />
                 </div>
                 <h3 className="font-serif text-xl font-semibold text-text-primary mb-3">
                   {feature.title}
@@ -258,11 +260,11 @@ export default function HomePage() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 md:py-32 px-6 bg-neutral-50 scroll-mt-20">
+      <section id="pricing" className="py-20 md:py-32 px-6 bg-surface-alt scroll-mt-20">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="font-serif text-3xl md:text-4xl font-bold text-text-primary">
-              Pick your level of handled.
+              Pick a plan. Skip the tech anxiety.
             </h2>
             <p className="mt-4 text-lg text-text-muted">
               No contracts. No hidden fees. Cancel anytime.
@@ -273,11 +275,11 @@ export default function HomePage() {
               <div
                 key={tier.name}
                 className={`bg-white rounded-3xl p-8 shadow-sm border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
-                  tier.isPopular ? 'border-sage ring-2 ring-sage' : 'border-neutral-100'
+                  tier.isPopular ? 'border-terracotta ring-2 ring-terracotta' : 'border-neutral-100'
                 }`}
               >
                 {tier.isPopular && (
-                  <span className="inline-block bg-sage text-white text-sm font-medium px-3 py-1 rounded-full mb-4">
+                  <span className="inline-block bg-terracotta text-white text-sm font-medium px-3 py-1 rounded-full mb-4">
                     Most Popular
                   </span>
                 )}
@@ -292,15 +294,15 @@ export default function HomePage() {
                 <ul className="mt-6 space-y-3">
                   {tier.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                      <Check className="w-5 h-5 text-terracotta flex-shrink-0 mt-0.5" />
                       <span className="text-text-primary">{feature}</span>
                     </li>
                   ))}
                 </ul>
                 <Button
                   asChild
-                  variant={tier.isPopular ? 'sage' : 'outline'}
-                  className="w-full mt-8 rounded-full py-5"
+                  variant={tier.isPopular ? 'terracotta' : 'outline'}
+                  className={`w-full mt-8 rounded-full py-5 ${!tier.isPopular ? 'border-forest/20 text-forest hover:bg-forest/5' : ''}`}
                 >
                   <Link href={tier.ctaHref}>{tier.ctaText}</Link>
                 </Button>
@@ -334,17 +336,17 @@ export default function HomePage() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-20 md:py-32 px-6 bg-sage text-white">
+      <section className="py-20 md:py-32 px-6 bg-terracotta text-white">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="font-serif text-3xl md:text-4xl font-bold leading-tight">
-            Ready to stop being your own IT department?
+            Your clients hired you for your expertise.
           </h2>
-          <p className="mt-4 text-lg text-white/80">
-            Join service pros who&apos;d rather focus on being great at their job.
+          <p className="mt-4 text-lg text-white/90">
+            Not your ability to configure a payment processor.
           </p>
           <Button
             asChild
-            className="mt-8 bg-white text-sage hover:bg-neutral-100 rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+            className="mt-8 bg-white text-terracotta hover:bg-neutral-100 rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
           >
             <Link href="/signup">Get Handled</Link>
           </Button>
@@ -352,7 +354,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 bg-text-primary text-white/60">
+      <footer className="py-12 px-6 bg-forest text-white/60">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="font-serif text-xl font-bold text-white">HANDLED</div>
           <div className="flex items-center gap-6 text-sm">
