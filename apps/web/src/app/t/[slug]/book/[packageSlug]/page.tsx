@@ -84,7 +84,7 @@ export default async function BookingPage({ params }: BookingPageProps) {
               Package Not Found
             </h1>
             <p className="text-neutral-600 mb-6">
-              The package you're looking for doesn't exist or has been removed.
+              The package you&apos;re looking for doesn&apos;t exist or has been removed.
             </p>
             <Link
               href={`/t/${slug}`}

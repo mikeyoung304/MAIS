@@ -80,8 +80,13 @@ export const getTenantTool: AgentTool = {
         },
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in get_tenant tool');
-      return { success: false, error: 'Failed to fetch tenant profile' };
+      return {
+        success: false,
+        error: `Failed to fetch business profile: ${errorMessage}. Try refreshing your session or contact support if the issue persists.`,
+        code: 'GET_TENANT_ERROR',
+      };
     }
   },
 };
@@ -169,8 +174,13 @@ export const getDashboardTool: AgentTool = {
         },
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in get_dashboard tool');
-      return { success: false, error: 'Failed to fetch dashboard' };
+      return {
+        success: false,
+        error: `Failed to fetch dashboard data: ${errorMessage}. This may be a temporary database issue. Try again in a few moments.`,
+        code: 'GET_DASHBOARD_ERROR',
+      };
     }
   },
 };
@@ -233,8 +243,13 @@ export const getPackagesTool: AgentTool = {
         data: packages.map(formatPackage),
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in get_packages tool');
-      return { success: false, error: 'Failed to fetch packages' };
+      return {
+        success: false,
+        error: `Failed to fetch packages: ${errorMessage}. Verify your session is valid and try again.`,
+        code: 'GET_PACKAGES_ERROR',
+      };
     }
   },
 };
@@ -306,12 +321,18 @@ export const getBookingsTool: AgentTool = {
           date: b.date.toISOString().split('T')[0],
           totalPrice: b.totalPrice,
           status: b.status,
+          notes: b.notes ? sanitizeForContext(b.notes, 500) : null,
           createdAt: b.createdAt.toISOString(),
         })),
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in get_bookings tool');
-      return { success: false, error: 'Failed to fetch bookings' };
+      return {
+        success: false,
+        error: `Failed to fetch bookings: ${errorMessage}. Check that date filters are in YYYY-MM-DD format and try again.`,
+        code: 'GET_BOOKINGS_ERROR',
+      };
     }
   },
 };
@@ -361,6 +382,7 @@ export const getBookingTool: AgentTool = {
           date: booking.date.toISOString().split('T')[0],
           totalPrice: booking.totalPrice,
           status: booking.status,
+          notes: booking.notes ? sanitizeForContext(booking.notes, 500) : null,
           depositPaidAmount: booking.depositPaidAmount,
           balanceDueDate: booking.balanceDueDate?.toISOString().split('T')[0],
           balancePaidAmount: booking.balancePaidAmount,
@@ -376,8 +398,13 @@ export const getBookingTool: AgentTool = {
         },
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId, bookingId }, 'Error in get_booking tool');
-      return { success: false, error: 'Failed to fetch booking' };
+      return {
+        success: false,
+        error: `Failed to fetch booking "${bookingId}": ${errorMessage}. Verify the booking ID is correct and belongs to your business.`,
+        code: 'GET_BOOKING_ERROR',
+      };
     }
   },
 };
@@ -442,8 +469,13 @@ export const checkAvailabilityTool: AgentTool = {
         },
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId, date: dateStr }, 'Error in check_availability tool');
-      return { success: false, error: 'Failed to check availability' };
+      return {
+        success: false,
+        error: `Failed to check availability for date "${dateStr}": ${errorMessage}. Ensure the date is in YYYY-MM-DD format.`,
+        code: 'CHECK_AVAILABILITY_ERROR',
+      };
     }
   },
 };
@@ -500,8 +532,13 @@ export const getBlackoutsTool: AgentTool = {
         })),
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in get_blackouts tool');
-      return { success: false, error: 'Failed to fetch blackouts' };
+      return {
+        success: false,
+        error: `Failed to fetch blackout dates: ${errorMessage}. Check that any date filters are in YYYY-MM-DD format.`,
+        code: 'GET_BLACKOUTS_ERROR',
+      };
     }
   },
 };
@@ -537,8 +574,13 @@ export const getLandingPageTool: AgentTool = {
         data: tenant.landingPageConfig || { sections: {} },
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in get_landing_page tool');
-      return { success: false, error: 'Failed to fetch landing page config' };
+      return {
+        success: false,
+        error: `Failed to fetch landing page configuration: ${errorMessage}. Try refreshing your session.`,
+        code: 'GET_LANDING_PAGE_ERROR',
+      };
     }
   },
 };
@@ -579,8 +621,13 @@ export const getStripeStatusTool: AgentTool = {
         },
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in get_stripe_status tool');
-      return { success: false, error: 'Failed to fetch Stripe status' };
+      return {
+        success: false,
+        error: `Failed to fetch payment setup status: ${errorMessage}. This may be a temporary issue with the payment system.`,
+        code: 'GET_STRIPE_STATUS_ERROR',
+      };
     }
   },
 };
@@ -643,8 +690,13 @@ export const getAddonsTool: AgentTool = {
         data: addOns.map(formatAddOn),
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in get_addons tool');
-      return { success: false, error: 'Failed to fetch add-ons' };
+      return {
+        success: false,
+        error: `Failed to fetch add-ons: ${errorMessage}. Verify your session is valid and try again.`,
+        code: 'GET_ADDONS_ERROR',
+      };
     }
   },
 };
@@ -733,8 +785,13 @@ export const getCustomersTool: AgentTool = {
 
       return { success: true, data: customers.map(formatCustomer) };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in get_customers tool');
-      return { success: false, error: 'Failed to fetch customers' };
+      return {
+        success: false,
+        error: `Failed to fetch customers: ${errorMessage}. If searching, try a simpler search term.`,
+        code: 'GET_CUSTOMERS_ERROR',
+      };
     }
   },
 };
@@ -809,8 +866,13 @@ export const getSegmentsTool: AgentTool = {
 
       return { success: true, data: segments.map(formatSegment) };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in get_segments tool');
-      return { success: false, error: 'Failed to fetch segments' };
+      return {
+        success: false,
+        error: `Failed to fetch service segments: ${errorMessage}. Verify your session is valid and try again.`,
+        code: 'GET_SEGMENTS_ERROR',
+      };
     }
   },
 };
@@ -916,8 +978,13 @@ export const getTrialStatusTool: AgentTool = {
         },
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in get_trial_status tool');
-      return { success: false, error: 'Failed to fetch trial status' };
+      return {
+        success: false,
+        error: `Failed to fetch trial and subscription status: ${errorMessage}. Try refreshing your session.`,
+        code: 'GET_TRIAL_STATUS_ERROR',
+      };
     }
   },
 };

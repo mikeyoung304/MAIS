@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
@@ -44,7 +44,6 @@ const PAGE_METADATA: Record<PageName, { label: string; description: string }> = 
  */
 export default function PageEditorPage() {
   const params = useParams();
-  const _router = useRouter();
   const { slug } = useAuth();
   const pageType = params.pageType as PageName;
 

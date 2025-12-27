@@ -54,13 +54,44 @@ async function createProposal(
 }
 
 /**
+ * Threshold for significant price changes that require T3 confirmation
+ */
+const SIGNIFICANT_PRICE_CHANGE_THRESHOLD = {
+  relativePercent: 20, // >20% change
+  absoluteCents: 10000, // >$100 change
+};
+
+/**
+ * Check if a price change is significant enough to require T3 confirmation
+ * Returns true if:
+ * - Relative change exceeds 20% OR
+ * - Absolute change exceeds $100 (10000 cents)
+ */
+function isSignificantPriceChange(oldPriceCents: number, newPriceCents: number): boolean {
+  if (oldPriceCents === 0) {
+    // If old price was 0, any non-zero new price is significant
+    return newPriceCents > SIGNIFICANT_PRICE_CHANGE_THRESHOLD.absoluteCents;
+  }
+
+  const absoluteChange = Math.abs(newPriceCents - oldPriceCents);
+  const relativeChange = (absoluteChange / oldPriceCents) * 100;
+
+  return (
+    relativeChange > SIGNIFICANT_PRICE_CHANGE_THRESHOLD.relativePercent ||
+    absoluteChange > SIGNIFICANT_PRICE_CHANGE_THRESHOLD.absoluteCents
+  );
+}
+
+/**
  * upsert_package - Create or update package
  *
- * Trust Tier: T2 (soft confirm)
+ * Trust Tier:
+ * - T2 (soft confirm) for new packages or minor price changes
+ * - T3 (hard confirm) for significant price changes (>20% or >$100)
  */
 export const upsertPackageTool: AgentTool = {
   name: 'upsert_package',
-  description: 'Create a new package or update an existing one. Includes title, description, pricing, and photos.',
+  description: 'Create a new package or update an existing one. Includes title, description, pricing, and photos. Large price changes (>20% or >$100) require additional confirmation.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -103,6 +134,7 @@ export const upsertPackageTool: AgentTool = {
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
     const { tenantId, prisma } = context;
     const packageId = params.packageId as string | undefined;
+    const newPriceCents = params.priceCents as number;
 
     try {
       // Check if updating existing package
@@ -115,13 +147,33 @@ export const upsertPackageTool: AgentTool = {
         ? `Update package "${sanitizeForContext(existing!.name, 50)}"`
         : `Create new package "${sanitizeForContext(params.title as string, 50)}"`;
 
+      // Determine trust tier based on price change significance
+      // - New packages: T2
+      // - Updates with significant price change (>20% or >$100): T3
+      // - Updates with minor or no price change: T2
+      let trustTier: 'T2' | 'T3' = 'T2';
+      let priceChangeWarning: string | undefined;
+
+      if (isUpdate && existing) {
+        const oldPriceCents = existing.basePrice;
+        if (isSignificantPriceChange(oldPriceCents, newPriceCents)) {
+          trustTier = 'T3';
+          const absoluteChange = Math.abs(newPriceCents - oldPriceCents);
+          const relativeChange = oldPriceCents > 0
+            ? ((absoluteChange / oldPriceCents) * 100).toFixed(1)
+            : 'N/A';
+          const direction = newPriceCents > oldPriceCents ? 'increase' : 'decrease';
+          priceChangeWarning = `Significant price ${direction}: $${(absoluteChange / 100).toFixed(2)} (${relativeChange}%)`;
+        }
+      }
+
       // Build payload - map from input params to Prisma field names
       const payload: Record<string, unknown> = {
         packageId,
         slug: params.slug,
         name: params.title, // Map title -> name (Prisma field)
         description: params.description,
-        basePrice: params.priceCents, // Map priceCents -> basePrice (Prisma field)
+        basePrice: newPriceCents, // Map priceCents -> basePrice (Prisma field)
         photoUrl: params.photoUrl,
         bookingType: params.bookingType || 'DATE',
         active: params.active ?? true,
@@ -131,14 +183,20 @@ export const upsertPackageTool: AgentTool = {
       const preview: Record<string, unknown> = {
         action: isUpdate ? 'update' : 'create',
         packageName: params.title,
-        price: `$${((params.priceCents as number) / 100).toFixed(2)}`,
+        price: `$${(newPriceCents / 100).toFixed(2)}`,
         ...(isUpdate ? { previousPrice: `$${(existing!.basePrice / 100).toFixed(2)}` } : {}),
+        ...(priceChangeWarning ? { warning: priceChangeWarning } : {}),
       };
 
-      return createProposal(context, 'upsert_package', operation, 'T2', payload, preview);
+      return createProposal(context, 'upsert_package', operation, trustTier, payload, preview);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in upsert_package tool');
-      return { success: false, error: 'Failed to create package proposal' };
+      return {
+        success: false,
+        error: `Failed to create package proposal: ${errorMessage}. Verify the package details (title required, price must be in cents) and try again.`,
+        code: 'UPSERT_PACKAGE_ERROR',
+      };
     }
   },
 };
@@ -221,8 +279,13 @@ export const upsertAddOnTool: AgentTool = {
 
       return createProposal(context, 'upsert_addon', operation, 'T2', payload, preview);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in upsert_addon tool');
-      return { success: false, error: 'Failed to create add-on proposal' };
+      return {
+        success: false,
+        error: `Failed to create add-on proposal: ${errorMessage}. Verify the add-on details (name required, price must be in cents) and try again.`,
+        code: 'UPSERT_ADDON_ERROR',
+      };
     }
   },
 };
@@ -230,11 +293,11 @@ export const upsertAddOnTool: AgentTool = {
 /**
  * delete_addon - Remove add-on
  *
- * Trust Tier: T2 (soft confirm)
+ * Trust Tier: T2 (soft confirm), upgrades to T3 if has bookings
  */
 export const deleteAddOnTool: AgentTool = {
   name: 'delete_addon',
-  description: 'Delete an add-on (soft delete - marks as inactive).',
+  description: 'Delete an add-on (soft delete - marks as inactive). Requires confirmation if add-on has existing bookings.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -252,23 +315,38 @@ export const deleteAddOnTool: AgentTool = {
     try {
       const addOn = await prisma.addOn.findFirst({
         where: { id: addOnId, tenantId },
+        include: {
+          _count: { select: { bookingRefs: true } },
+        },
       });
 
       if (!addOn) {
         return { success: false, error: 'Add-on not found' };
       }
 
+      const hasBookings = addOn._count.bookingRefs > 0;
+      const trustTier = hasBookings ? 'T3' : 'T2';
+
       const operation = `Delete add-on "${sanitizeForContext(addOn.name, 50)}"`;
       const payload = { addOnId };
-      const preview = {
+      const preview: Record<string, unknown> = {
         addOnName: sanitizeForContext(addOn.name, 50),
         price: `$${(addOn.price / 100).toFixed(2)}`,
+        bookingCount: addOn._count.bookingRefs,
+        ...(hasBookings
+          ? { warning: 'This add-on has existing bookings that reference it' }
+          : {}),
       };
 
-      return createProposal(context, 'delete_addon', operation, 'T2', payload, preview);
+      return createProposal(context, 'delete_addon', operation, trustTier, payload, preview);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId, addOnId }, 'Error in delete_addon tool');
-      return { success: false, error: 'Failed to create delete proposal' };
+      return {
+        success: false,
+        error: `Failed to create delete proposal for add-on "${addOnId}": ${errorMessage}. Verify the add-on ID is correct.`,
+        code: 'DELETE_ADDON_ERROR',
+      };
     }
   },
 };
@@ -322,8 +400,13 @@ export const deletePackageTool: AgentTool = {
 
       return createProposal(context, 'delete_package', operation, trustTier, payload, preview);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId, packageId }, 'Error in delete_package tool');
-      return { success: false, error: 'Failed to create delete proposal' };
+      return {
+        success: false,
+        error: `Failed to create delete proposal for package "${packageId}": ${errorMessage}. Verify the package ID is correct.`,
+        code: 'DELETE_PACKAGE_ERROR',
+      };
     }
   },
 };
@@ -376,8 +459,13 @@ export const manageBlackoutTool: AgentTool = {
 
       return createProposal(context, 'manage_blackout', operation, 'T1', payload, preview);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in manage_blackout tool');
-      return { success: false, error: 'Failed to create blackout proposal' };
+      return {
+        success: false,
+        error: `Failed to create blackout proposal for date "${dateStr}": ${errorMessage}. Ensure the date is in YYYY-MM-DD format.`,
+        code: 'MANAGE_BLACKOUT_ERROR',
+      };
     }
   },
 };
@@ -433,8 +521,13 @@ export const updateBrandingTool: AgentTool = {
 
       return createProposal(context, 'update_branding', operation, 'T1', payload, preview);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in update_branding tool');
-      return { success: false, error: 'Failed to create branding proposal' };
+      return {
+        success: false,
+        error: `Failed to create branding proposal: ${errorMessage}. Ensure colors are valid hex codes (e.g., "#1a365d").`,
+        code: 'UPDATE_BRANDING_ERROR',
+      };
     }
   },
 };
@@ -488,8 +581,13 @@ export const updateLandingPageTool: AgentTool = {
 
       return createProposal(context, 'update_landing_page', operation, 'T2', payload, preview);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in update_landing_page tool');
-      return { success: false, error: 'Failed to create landing page proposal' };
+      return {
+        success: false,
+        error: `Failed to create landing page proposal: ${errorMessage}. Verify the section data is properly formatted.`,
+        code: 'UPDATE_LANDING_PAGE_ERROR',
+      };
     }
   },
 };
@@ -600,8 +698,13 @@ export const cancelBookingTool: AgentTool = {
 
       return createProposal(context, 'cancel_booking', operation, 'T3', payload, preview);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId, bookingId }, 'Error in cancel_booking tool');
-      return { success: false, error: 'Failed to create cancellation proposal' };
+      return {
+        success: false,
+        error: `Failed to create cancellation proposal for booking "${bookingId}": ${errorMessage}. Verify the booking ID is correct and belongs to your business.`,
+        code: 'CANCEL_BOOKING_ERROR',
+      };
     }
   },
 };
@@ -722,8 +825,13 @@ export const createBookingTool: AgentTool = {
 
       return createProposal(context, 'create_booking', operation, 'T3', payload, preview);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId, packageId }, 'Error in create_booking tool');
-      return { success: false, error: 'Failed to create booking proposal' };
+      return {
+        success: false,
+        error: `Failed to create booking proposal: ${errorMessage}. Verify the package ID is correct, date is in YYYY-MM-DD format, and customer email is valid.`,
+        code: 'CREATE_BOOKING_ERROR',
+      };
     }
   },
 };
@@ -816,8 +924,13 @@ export const processRefundTool: AgentTool = {
 
       return createProposal(context, 'process_refund', operation, 'T3', payload, preview);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId, bookingId }, 'Error in process_refund tool');
-      return { success: false, error: 'Failed to create refund proposal' };
+      return {
+        success: false,
+        error: `Failed to create refund proposal for booking "${bookingId}": ${errorMessage}. Verify the booking ID is correct and has paid amounts to refund.`,
+        code: 'PROCESS_REFUND_ERROR',
+      };
     }
   },
 };
@@ -904,8 +1017,13 @@ export const upsertSegmentTool: AgentTool = {
 
       return createProposal(context, 'upsert_segment', operation, 'T2', payload, preview);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in upsert_segment tool');
-      return { success: false, error: 'Failed to create segment proposal' };
+      return {
+        success: false,
+        error: `Failed to create segment proposal: ${errorMessage}. Verify required fields (slug, name, heroTitle) are provided.`,
+        code: 'UPSERT_SEGMENT_ERROR',
+      };
     }
   },
 };
@@ -1017,10 +1135,12 @@ export const updateBookingTool: AgentTool = {
 
       // Determine trust tier
       // - newDate changes → T3 (affects customer)
+      // - CANCELED status → T3 (high-impact operation requiring explicit confirmation)
       // - notes only → T2
-      // - status progression → T2
+      // - status progression (non-cancel) → T2
       const hasDateChange = !!newDate;
-      const trustTier = hasDateChange ? 'T3' : 'T2';
+      const isCancellation = status?.toUpperCase() === 'CANCELED' || status?.toUpperCase() === 'CANCELLED';
+      const trustTier = (hasDateChange || isCancellation) ? 'T3' : 'T2';
 
       // If date change, check availability
       if (newDate) {
@@ -1087,7 +1207,7 @@ export const updateBookingTool: AgentTool = {
 /**
  * update_deposit_settings - Configure deposit requirements
  *
- * Trust Tier: T2 (soft confirm)
+ * Trust Tier: T3 (hard confirm) - financial configuration changes
  */
 export const updateDepositSettingsTool: AgentTool = {
   name: 'update_deposit_settings',
@@ -1157,7 +1277,7 @@ export const updateDepositSettingsTool: AgentTool = {
         changes,
       };
 
-      return createProposal(context, 'update_deposit_settings', operation, 'T2', payload, preview);
+      return createProposal(context, 'update_deposit_settings', operation, 'T3', payload, preview);
     } catch (error) {
       logger.error({ error, tenantId }, 'Error in update_deposit_settings tool');
       return { success: false, error: 'Failed to create deposit settings proposal' };

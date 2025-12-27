@@ -96,15 +96,61 @@ export const TRUST_TIERS = {
 
 /**
  * Injection patterns to filter from context
+ *
+ * IMPORTANT: These patterns detect prompt injection attempts.
+ * Keep patterns specific to avoid false positives on normal input.
+ * Test with realistic business names (e.g., "Disregard for Details Photography").
+ *
+ * Unicode lookalike characters are handled by NFKC normalization in sanitizeForContext().
  */
 export const INJECTION_PATTERNS = [
-  /ignore.*instructions/i,
-  /you are now/i,
-  /system:/i,
-  /admin mode/i,
-  /forget.*previous/i,
-  /new.*instructions/i,
-  /disregard/i,
+  // Original patterns - direct instruction override attempts (refined for specificity)
+  /ignore\s+(all\s+)?(your\s+)?instructions/i,
+  /you are now\s+(a|an|my|the)/i,
+  /system:\s*\[/i,           // System prompt syntax
+  /admin mode\s*(on|enabled|activate)/i,
+  /forget\s+(all\s+)?(your\s+)?previous/i,
+  /new\s+instructions:/i,    // More specific to avoid false positives
+  /disregard\s+(all|previous|above)/i, // More specific than just "disregard"
+
+  // Additional system prompt override attempts
+  /override\s+(system|previous|all)/i,
+  /bypass\s+(safety|filters|restrictions)/i,
+  /act\s+as\s+(if|though)\s+you\s+(are|were)/i,
+  /pretend\s+(you\s+are|to\s+be)\s+(a|an)/i,
+  /roleplay\s+as\s+(a|an)/i,
+  /\[system\]/i,             // Bracketed system markers
+  /\[assistant\]/i,
+  /\[user\]/i,
+  /<<\s*SYS\s*>>/i,          // Llama-style system markers
+  /<\|system\|>/i,           // Chat template markers
+
+  // Nested injection attempts (closing/reopening context)
+  /```\s*(system|assistant|user)/i,
+  /###\s*(instruction|system|prompt)/i,
+  /<\/?(system|assistant|user)>/i, // XML-style injection
+  /\{\{(system|prompt|instructions)\}\}/i, // Template injection
+
+  // Common jailbreak phrases (specific to avoid false positives)
+  /jailbreak/i,
+  /\bdan\s+mode\b/i,         // "Do Anything Now" jailbreak
+  /developer\s+mode\s*(on|enabled)/i,
+  /unrestricted\s+mode/i,
+  /no\s+(filter|restrictions|limits)\s+mode/i,
+  /\bgod\s+mode\b/i,
+  /\bsudo\s+mode\b/i,
+
+  // Prompt leaking attempts
+  /reveal\s+(your\s+)?(system\s+)?prompt/i,
+  /show\s+(your\s+)?(system\s+)?instructions/i,
+  /what\s+are\s+your\s+instructions/i,
+  /output\s+(your\s+)?initial\s+prompt/i,
+
+  // Context manipulation
+  /end\s+of\s+(system\s+)?prompt/i,
+  /begin\s+new\s+conversation/i,
+  /reset\s+(conversation|context|memory)/i,
+  /clear\s+(your\s+)?context/i,
 ];
 
 /**
@@ -127,7 +173,8 @@ export const DENY_LIST_FIELDS = [
  * Removes potential prompt injection attempts and limits length
  */
 export function sanitizeForContext(text: string, maxLength = 100): string {
-  let result = text;
+  // Normalize Unicode to canonical form (NFKC) to prevent homoglyph/lookalike character bypasses
+  let result = text.normalize('NFKC');
   for (const pattern of INJECTION_PATTERNS) {
     result = result.replace(pattern, '[FILTERED]');
   }

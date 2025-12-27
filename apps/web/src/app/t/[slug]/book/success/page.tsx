@@ -95,7 +95,7 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
                     Thank you for your booking with {tenant.name}.
                     {booking?.email && (
                       <>
-                        {' '}We'll send you a confirmation email shortly at{' '}
+                        {' '}We&apos;ll send you a confirmation email shortly at{' '}
                         <span className="font-medium text-white">{booking.email}</span>.
                       </>
                     )}

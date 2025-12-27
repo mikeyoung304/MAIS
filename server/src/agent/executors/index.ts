@@ -456,6 +456,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
   });
 
   // create_booking - Manual booking creation
+  // Uses advisory lock + transaction to prevent double-booking race conditions (ADR-013)
   registerProposalExecutor('create_booking', async (tenantId, payload) => {
     const { packageId, date, customerName, customerEmail, customerPhone, notes, totalPrice } = payload as {
       packageId: string;
@@ -467,73 +468,83 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       totalPrice: number;
     };
 
-    // CRITICAL: Verify package ownership before creating booking
-    const pkg = await prisma.package.findFirst({
-      where: { id: packageId, tenantId, active: true },
-    });
-
-    if (!pkg) {
-      throw new Error('Package not found or access denied');
-    }
-
-    // Double-check availability (race condition protection)
     const bookingDate = new Date(date);
-    const existingBooking = await prisma.booking.findFirst({
-      where: {
-        tenantId,
-        date: bookingDate,
-        status: { notIn: ['CANCELED', 'REFUNDED'] },
-      },
-    });
 
-    if (existingBooking) {
-      throw new Error(`Date ${date} is already booked - please choose another date`);
-    }
+    // Wrap entire booking creation in transaction with advisory lock
+    // to prevent double-booking race conditions
+    return await prisma.$transaction(async (tx) => {
+      // Acquire advisory lock for this specific tenant+date combination
+      // Lock is automatically released when transaction ends
+      const lockId = hashTenantDate(tenantId, date);
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-    // Find or create customer
-    let customer = await prisma.customer.findFirst({
-      where: { tenantId, email: customerEmail },
-    });
+      // CRITICAL: Verify package ownership before creating booking
+      const pkg = await tx.package.findFirst({
+        where: { id: packageId, tenantId, active: true },
+      });
 
-    if (!customer) {
-      customer = await prisma.customer.create({
-        data: {
+      if (!pkg) {
+        throw new Error('Package not found or access denied');
+      }
+
+      // Check availability AFTER acquiring lock (prevents race condition)
+      const existingBooking = await tx.booking.findFirst({
+        where: {
           tenantId,
-          email: customerEmail,
-          name: customerName,
-          phone: customerPhone || null,
+          date: bookingDate,
+          status: { notIn: ['CANCELED', 'REFUNDED'] },
         },
       });
-      logger.info({ tenantId, customerId: customer.id }, 'Customer created via agent booking');
-    }
 
-    // Create the booking
-    const booking = await prisma.booking.create({
-      data: {
-        tenantId,
+      if (existingBooking) {
+        throw new Error(`Date ${date} is already booked - please choose another date`);
+      }
+
+      // Find or create customer within transaction
+      let customer = await tx.customer.findFirst({
+        where: { tenantId, email: customerEmail },
+      });
+
+      if (!customer) {
+        customer = await tx.customer.create({
+          data: {
+            tenantId,
+            email: customerEmail,
+            name: customerName,
+            phone: customerPhone || null,
+          },
+        });
+        logger.info({ tenantId, customerId: customer.id }, 'Customer created via agent booking');
+      }
+
+      // Create the booking within same transaction
+      const booking = await tx.booking.create({
+        data: {
+          tenantId,
+          customerId: customer.id,
+          packageId,
+          date: bookingDate,
+          totalPrice,
+          status: 'CONFIRMED', // Manual bookings are immediately confirmed
+          bookingType: 'DATE',
+          notes: notes ? `[Manual booking via agent] ${notes}` : '[Manual booking via agent]',
+        },
+      });
+
+      logger.info({ tenantId, bookingId: booking.id }, 'Manual booking created via agent');
+
+      return {
+        action: 'created',
+        bookingId: booking.id,
         customerId: customer.id,
-        packageId,
-        date: bookingDate,
+        customerName,
+        date,
         totalPrice,
-        status: 'CONFIRMED', // Manual bookings are immediately confirmed
-        bookingType: 'DATE',
-        notes: notes ? `[Manual booking via agent] ${notes}` : '[Manual booking via agent]',
-      },
+        formattedPrice: `$${(totalPrice / 100).toFixed(2)}`,
+        status: 'CONFIRMED',
+        note: 'Booking confirmed. Remember to collect payment separately if needed.',
+      };
     });
-
-    logger.info({ tenantId, bookingId: booking.id }, 'Manual booking created via agent');
-
-    return {
-      action: 'created',
-      bookingId: booking.id,
-      customerId: customer.id,
-      customerName,
-      date,
-      totalPrice,
-      formattedPrice: `$${(totalPrice / 100).toFixed(2)}`,
-      status: 'CONFIRMED',
-      note: 'Booking confirmed. Remember to collect payment separately if needed.',
-    };
   });
 
   // process_refund - Process refund for a booking
@@ -705,19 +716,64 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       throw new Error('Booking not found or access denied');
     }
 
-    const updates: Prisma.BookingUpdateInput = {};
-
+    // If newDate is set, wrap in transaction with advisory lock and availability check
     if (newDate) {
-      // Use advisory lock for date changes to prevent race conditions
-      const lockId = hashTenantDate(tenantId, newDate);
-      await prisma.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
+      return await prisma.$transaction(async (tx) => {
+        // Acquire advisory lock for the new date to prevent race conditions
+        const lockId = hashTenantDate(tenantId, newDate);
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-      updates.date = new Date(newDate);
-      // Update reminder due date (7 days before event)
-      updates.reminderDueDate = new Date(new Date(newDate).getTime() - 7 * 24 * 60 * 60 * 1000);
-      // Clear reminder sent flag since date changed
-      updates.reminderSentAt = null;
+        // Check if the new date is already booked (exclude current booking from conflict check)
+        const newDateObj = new Date(newDate);
+        const conflictingBooking = await tx.booking.findFirst({
+          where: {
+            tenantId,
+            date: newDateObj,
+            id: { not: bookingId }, // Exclude current booking
+            status: { notIn: ['CANCELED', 'REFUNDED'] },
+          },
+        });
+
+        if (conflictingBooking) {
+          throw new Error(`Date ${newDate} is already booked - please choose another date`);
+        }
+
+        // Build updates
+        const updates: Prisma.BookingUpdateInput = {
+          date: newDateObj,
+          // Update reminder due date (7 days before event)
+          reminderDueDate: new Date(newDateObj.getTime() - 7 * 24 * 60 * 60 * 1000),
+          // Clear reminder sent flag since date changed
+          reminderSentAt: null,
+        };
+
+        if (notes !== undefined) {
+          updates.notes = notes;
+        }
+
+        if (status) {
+          updates.status = status as BookingStatus;
+        }
+
+        const updated = await tx.booking.update({
+          where: { id: bookingId },
+          data: updates,
+        });
+
+        logger.info({ tenantId, bookingId, changes: Object.keys(updates) }, 'Booking updated via agent');
+
+        return {
+          action: 'updated',
+          bookingId: updated.id,
+          changes: Object.keys(updates),
+          newDate,
+          newStatus: status || undefined,
+        };
+      });
     }
+
+    // No date change - simple update without transaction
+    const updates: Prisma.BookingUpdateInput = {};
 
     if (notes !== undefined) {
       updates.notes = notes;
@@ -738,7 +794,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       action: 'updated',
       bookingId: updated.id,
       changes: Object.keys(updates),
-      newDate: newDate || undefined,
+      newDate: undefined,
       newStatus: status || undefined,
     };
   });

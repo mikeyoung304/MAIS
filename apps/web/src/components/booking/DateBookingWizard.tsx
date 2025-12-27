@@ -107,7 +107,7 @@ const ConfirmStep = React.memo(({ pkg }: ConfirmStepProps) => (
         <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
         <div>
           <p className="font-medium text-green-900">Great choice!</p>
-          <p className="text-sm text-green-700">Click "Continue" to select your event date.</p>
+          <p className="text-sm text-green-700">Click &quot;Continue&quot; to select your event date.</p>
         </div>
       </div>
     </CardContent>
@@ -173,7 +173,7 @@ const DetailsStep = React.memo(
       <CardHeader>
         <CardTitle className="text-2xl">Your Information</CardTitle>
         <p className="text-neutral-500 text-base mt-1">
-          We'll use this to send your confirmation
+          We&apos;ll use this to send your confirmation
         </p>
       </CardHeader>
       <CardContent>
@@ -272,7 +272,7 @@ const ReviewStep = React.memo(({ pkg, selectedDate, customerDetails }: ReviewSte
           <p className="text-neutral-600">{customerDetails.email}</p>
           {customerDetails.phone && <p className="text-neutral-600">{customerDetails.phone}</p>}
           {customerDetails.notes && (
-            <p className="text-neutral-600 mt-2 text-sm italic">"{customerDetails.notes}"</p>
+            <p className="text-neutral-600 mt-2 text-sm italic">&quot;{customerDetails.notes}&quot;</p>
           )}
         </div>
 
