@@ -192,7 +192,7 @@ export default function HomePage() {
           <p className="mt-6 font-serif text-2xl sm:text-3xl md:text-4xl font-semibold text-sage">
             The rest is handled.
           </p>
-          <p className="mt-8 text-lg md:text-xl text-text-muted max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-8 text-lg md:text-xl text-text-muted font-light max-w-2xl mx-auto leading-relaxed">
             Websites. Booking. Payments. AI. Plus a monthly filter for what&apos;s
             actually worth knowing. For people with better things to do.
           </p>
@@ -223,7 +223,7 @@ export default function HomePage() {
       </section>
 
       {/* Problem Section */}
-      <section className="py-20 md:py-32 px-6 bg-white">
+      <section className="py-32 md:py-40 px-6 bg-white">
         <div className="max-w-3xl mx-auto">
           <h2 className="font-serif text-3xl md:text-4xl font-bold text-text-primary leading-tight">
             You didn&apos;t start your business to debug a website.
@@ -248,13 +248,13 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 md:py-32 px-6 scroll-mt-20">
+      <section id="features" aria-labelledby="features-heading" className="py-32 md:py-40 px-6 scroll-mt-20">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-text-primary">
+            <h2 id="features-heading" className="font-serif text-3xl md:text-4xl font-bold text-text-primary">
               What you get. What you skip.
             </h2>
-            <p className="mt-4 text-lg text-text-muted">
+            <p className="mt-4 text-lg text-text-muted font-light">
               One membership. Website, booking, payments, AI assistant. We set it up. You show up for clients.
             </p>
           </div>
@@ -262,7 +262,7 @@ export default function HomePage() {
             {features.map((feature) => (
               <div
                 key={feature.title}
-                className="bg-white rounded-3xl p-8 shadow-sm border border-neutral-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
               >
                 <div className="w-12 h-12 rounded-2xl bg-sage/10 flex items-center justify-center mb-6">
                   <feature.icon className="w-6 h-6 text-sage" />
@@ -278,13 +278,13 @@ export default function HomePage() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 md:py-32 px-6 bg-neutral-50 scroll-mt-20">
+      <section id="pricing" aria-labelledby="pricing-heading" className="py-32 md:py-40 px-6 bg-neutral-50 scroll-mt-20">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-text-primary">
+            <h2 id="pricing-heading" className="font-serif text-3xl md:text-4xl font-bold text-text-primary">
               Pick a plan. Skip the tech anxiety.
             </h2>
-            <p className="mt-4 text-lg text-text-muted">
+            <p className="mt-4 text-lg text-text-muted font-light">
               No contracts. No hidden fees. Cancel anytime.
             </p>
             {/* Trust badges */}
@@ -307,7 +307,7 @@ export default function HomePage() {
             {tiers.map((tier) => (
               <div
                 key={tier.name}
-                className={`bg-white rounded-3xl p-8 shadow-sm border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
+                className={`bg-white rounded-3xl p-8 shadow-lg border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
                   tier.isPopular ? 'border-sage ring-2 ring-sage' : 'border-neutral-100'
                 }`}
               >
@@ -346,16 +346,16 @@ export default function HomePage() {
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="py-20 md:py-32 px-6 scroll-mt-20">
+      <section id="faq" aria-labelledby="faq-heading" className="py-32 md:py-40 px-6 scroll-mt-20">
         <div className="max-w-3xl mx-auto">
-          <h2 className="font-serif text-3xl md:text-4xl font-bold text-text-primary text-center mb-12">
+          <h2 id="faq-heading" className="font-serif text-3xl md:text-4xl font-bold text-text-primary text-center mb-12">
             Questions? Answers.
           </h2>
           <div className="space-y-4">
             {faqs.map((faq, index) => (
               <details
                 key={index}
-                className="group bg-white rounded-2xl border border-neutral-100 overflow-hidden"
+                className="group bg-white rounded-3xl border border-neutral-100 overflow-hidden"
               >
                 <summary className="flex items-center justify-between cursor-pointer p-6 list-none">
                   <span className="font-medium text-text-primary pr-4">{faq.question}</span>
@@ -369,7 +369,7 @@ export default function HomePage() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-20 md:py-32 px-6 bg-sage text-white">
+      <section className="py-32 md:py-48 px-6 bg-sage text-white">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="font-serif text-3xl md:text-4xl font-bold leading-tight">
             Your clients hired you for your expertise.

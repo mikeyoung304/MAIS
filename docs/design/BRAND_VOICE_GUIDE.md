@@ -96,7 +96,7 @@ Playful humor that respects intelligence. Never dad jokes, never corporate.
 <h1 className="font-serif">
   You're a <ScrollingIdentity />
 </h1>
-<p className="font-serif text-forest">
+<p className="font-serif text-sage">
   The rest is handled.
 </p>
 
@@ -196,47 +196,44 @@ Cancel note: "No contracts. Cancel anytime."
 
 ### Color Usage
 
-**Terracotta Primary Palette** (2024 Rebrand)
+**Sage Primary Palette**
 
-The warm terracotta evokes craft, authenticity, and human touch—differentiating us from cold tech blues.
+The sage green evokes calm professionalism and natural warmth—differentiating us from cold tech blues while signaling trust and growth.
 
 ```tsx
 // Primary colors
-terracotta: '#C4725A'    // Primary brand color (CTAs, icons, accents)
-terracotta-hover: '#B5634B'
-forest: '#2D4A3E'        // Secondary (headlines, footer, serious elements)
-gold: '#D4A853'          // Accent (premium signals, used very sparingly)
+sage: '#7B9E87'          // Primary brand color (CTAs, icons, accents)
+sage-hover: '#6B8E77'    // Hover state
 
 // Backgrounds
-surface: '#FBF8F3'       // Warm cream (page background)
-surface-alt: '#F3EDE6'   // Linen (alternating sections)
+surface: '#FFFBF8'       // Warm cream (page background)
 white                    // Cards, clean areas
 
 // Text
-text-primary: '#2C2420'  // Espresso (softer than pure black)
-text-muted: '#6B6560'    // Warm gray (body copy)
+text-primary: '#1A1815'  // Near-black
+text-muted: '#4A4440'    // Warm gray (body copy)
 
 // Usage ratios
 85% neutral (cream, white, warm grays)
-15% color (terracotta for CTAs/icons, forest for headers/footer)
+15% color (sage for CTAs/icons/accents)
 ```
 
 **Color Application:**
 
 ```tsx
 // Buttons
-variant="terracotta"     // Primary CTAs
-variant="forest"         // Secondary actions
+variant="sage"           // Primary CTAs
+variant="outline"        // Secondary actions
 
 // Icons & accents
-bg-terracotta/10         // Icon backgrounds
-text-terracotta          // Accent text, checkmarks
+bg-sage/10               // Icon backgrounds
+text-sage                // Accent text, checkmarks
 
 // Section backgrounds
 bg-surface               // Default
-bg-surface-alt           // Alternating
-bg-terracotta            // Final CTA section
-bg-forest                // Footer
+bg-neutral-50            // Alternating sections
+bg-sage                  // Final CTA section
+bg-text-primary          // Footer
 ```
 
 ### Typography Scale
@@ -332,19 +329,19 @@ transition-all duration-200
 ### Button Pattern
 
 ```tsx
-// Primary (terracotta)
-<Button variant="terracotta" className="rounded-full px-10 py-6 text-lg">
+// Primary (sage)
+<Button variant="sage" className="rounded-full px-10 py-6 text-lg">
   Get Handled
 </Button>
 
-// Secondary (outline with forest accents)
+// Secondary (outline)
 <Button variant="outline" className="rounded-full px-10 py-6 text-lg
-                                      border-forest/20 text-forest hover:bg-forest/5">
+                                      hover:bg-neutral-50">
   See What's Included
 </Button>
 
-// On dark background (terracotta CTA section)
-<Button className="bg-white text-terracotta hover:bg-neutral-100
+// On dark background (sage CTA section)
+<Button className="bg-white text-sage hover:bg-neutral-100
                    rounded-full px-10 py-6 text-lg shadow-lg">
   Get Handled
 </Button>
@@ -370,36 +367,36 @@ transition-all duration-200
 ```
 1. Hero (pt-32 pb-20 md:pt-40 md:pb-32)
    - Headline: "You're a [scrolling identity], so [verb]."
-   - Tagline: "The rest is handled." (in forest green)
+   - Tagline: "The rest is handled." (in sage green)
    - Subheadline: Fragment-style value prop
-   - Primary CTA: "Get Handled" (terracotta)
-   - Secondary CTA: "See What's Included" (outline/forest)
+   - Primary CTA: "Get Handled" (sage)
+   - Secondary CTA: "See What's Included" (outline)
 
-2. Problem (py-20 md:py-32, bg-white)
+2. Problem (py-32 md:py-40, bg-white)
    - Headline: "You didn't start your business to debug a website."
    - Body: Identity statements + honest problem description
    - Close: Validation without pity
 
-3. Features (py-20 md:py-32, bg-surface)
+3. Features (py-32 md:py-40, bg-surface)
    - Headline: "What you get. What you skip."
-   - Subheadline: One sentence value prop
-   - 6 feature cards with terracotta icons
+   - Subheadline: One sentence value prop (font-light)
+   - 6 feature cards with sage icons, shadow-lg
 
-4. Pricing (py-20 md:py-32, bg-surface-alt)
+4. Pricing (py-32 md:py-40, bg-neutral-50)
    - Headline: "Pick a plan. Skip the tech anxiety."
    - Three tiers: Handled / Fully Handled / Completely Handled
-   - Most Popular tag in terracotta
+   - Most Popular tag in sage
 
-5. FAQ (py-20 md:py-32, bg-surface)
+5. FAQ (py-32 md:py-40, bg-surface)
    - Headline: "Questions? Answers."
-   - Accordion with honest, conversational answers
+   - Accordion with honest, conversational answers (rounded-3xl)
 
-6. Final CTA (py-20 md:py-32, bg-terracotta)
+6. Final CTA (py-32 md:py-48, bg-sage)
    - Headline: "Your clients hired you for your expertise."
    - Subline: "Not your ability to configure a payment processor."
    - CTA: "Get Handled" (white button)
 
-7. Footer (py-12, bg-forest)
+7. Footer (py-12, bg-text-primary)
    - Logo, nav links, copyright
 ```
 
@@ -420,14 +417,13 @@ Before shipping any new page or component:
 
 ### Design
 
-- [ ] Section spacing is py-20 md:py-32 minimum
+- [ ] Section spacing is py-32 md:py-40 minimum
 - [ ] Max-width constraints applied to all content
-- [ ] Terracotta used for CTAs and icons (15% of page)
-- [ ] Forest used for headlines, footer, secondary elements
+- [ ] Sage used for CTAs and icons (15% of page)
 - [ ] Cards use rounded-3xl with shadow-lg
-- [ ] Buttons use rounded-full with variant="terracotta"
+- [ ] Buttons use rounded-full with variant="sage"
 - [ ] Hover states include translate-y and shadow change
-- [ ] Surface colors are warm (#FBF8F3, #F3EDE6)
+- [ ] Surface colors are warm (#FFFBF8)
 
 ### Accessibility
 
