@@ -592,6 +592,8 @@ const SECTION_TYPE_LABELS: Record<Section['type'], string> = {
   faq: 'FAQ Section',
   contact: 'Contact Section',
   cta: 'Call to Action Section',
+  features: 'Features Section',
+  pricing: 'Pricing Section',
 };
 
 /**
@@ -665,6 +667,10 @@ export function SectionEditorDialog({
             onChange={(s) => setEditedSection(s)}
           />
         );
+      case 'features':
+        return <p className="text-text-muted italic">Features editor coming soon. Edit via seed data.</p>;
+      case 'pricing':
+        return <p className="text-text-muted italic">Pricing editor coming soon. Edit via seed data.</p>;
       default:
         return <p>Unknown section type</p>;
     }

@@ -324,6 +324,61 @@ export const CTASectionSchema = z.object({
 export type CTASection = z.infer<typeof CTASectionSchema>;
 
 /**
+ * Pricing tier - individual pricing card
+ */
+export const PricingTierSchema = z.object({
+  name: z.string().min(1).max(50),
+  price: z.union([z.string(), z.number()]),
+  priceSubtext: z.string().max(30).optional(),
+  description: z.string().max(200).optional(),
+  features: z.array(z.string().max(100)).max(10),
+  ctaText: z.string().max(30).optional(),
+  ctaHref: z.string().max(200).optional(),
+  isPopular: z.boolean().optional(),
+  variant: z.enum(['standard', 'enterprise']).optional(),
+});
+
+export type PricingTier = z.infer<typeof PricingTierSchema>;
+
+/**
+ * Pricing section - tier-based pricing cards
+ */
+export const PricingSectionSchema = z.object({
+  type: z.literal('pricing'),
+  headline: z.string().max(60),
+  subheadline: z.string().max(150).optional(),
+  tiers: z.array(PricingTierSchema).min(1).max(5),
+  backgroundColor: z.enum(['white', 'neutral']).optional(),
+});
+
+export type PricingSection = z.infer<typeof PricingSectionSchema>;
+
+/**
+ * Feature item - icon + title + description
+ */
+export const FeatureItemSchema = z.object({
+  icon: z.string().min(1).max(30),
+  title: z.string().min(1).max(60),
+  description: z.string().min(1).max(300),
+});
+
+export type FeatureItem = z.infer<typeof FeatureItemSchema>;
+
+/**
+ * Features section - icon + text feature grid
+ */
+export const FeaturesSectionSchema = z.object({
+  type: z.literal('features'),
+  headline: z.string().max(60),
+  subheadline: z.string().max(150).optional(),
+  features: z.array(FeatureItemSchema).min(1).max(12),
+  columns: z.union([z.literal(2), z.literal(3), z.literal(4)]).optional(),
+  backgroundColor: z.enum(['white', 'neutral']).optional(),
+});
+
+export type FeaturesSection = z.infer<typeof FeaturesSectionSchema>;
+
+/**
  * Discriminated union of all section types
  * Used for flexible page composition
  */
@@ -335,6 +390,8 @@ export const SectionSchema = z.discriminatedUnion('type', [
   FAQSectionSchema,
   ContactSectionSchema,
   CTASectionSchema,
+  PricingSectionSchema,
+  FeaturesSectionSchema,
 ]);
 
 export type Section = z.infer<typeof SectionSchema>;

@@ -7,6 +7,8 @@ import {
   FAQSection,
   ContactSection,
   CTASection,
+  PricingSection,
+  FeaturesSection,
 } from './sections';
 
 interface SectionRendererProps {
@@ -104,6 +106,22 @@ export function SectionRenderer({
                 {...section}
                 tenant={tenant}
                 basePath={basePath}
+              />
+            );
+          case 'pricing':
+            return (
+              <PricingSection
+                key={`pricing-${index}`}
+                {...section}
+                tenant={tenant}
+              />
+            );
+          case 'features':
+            return (
+              <FeaturesSection
+                key={`features-${index}`}
+                {...section}
+                tenant={tenant}
               />
             );
           default: {

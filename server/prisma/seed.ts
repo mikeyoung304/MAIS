@@ -10,10 +10,11 @@
  *   SEED_MODE=la-petit-mariage npm exec prisma db seed  # La Petit Mariage tenant
  *   SEED_MODE=little-bit-farm npm exec prisma db seed   # Little Bit Horse Farm tenant
  *   SEED_MODE=plate npm exec prisma db seed              # Plate catering tenant
+ *   SEED_MODE=mais npm exec prisma db seed               # MAIS "Tenant Zero" (dogfooding)
  *   SEED_MODE=upgrade-tenant-pages npm exec prisma db seed  # Upgrade tenant landing pages
  *
  * Environment Variables:
- *   SEED_MODE: 'production' | 'e2e' | 'demo' | 'dev' | 'all' | 'la-petit-mariage' | 'little-bit-farm' | 'plate'
+ *   SEED_MODE: 'production' | 'e2e' | 'demo' | 'dev' | 'all' | 'la-petit-mariage' | 'little-bit-farm' | 'plate' | 'mais'
  *   NODE_ENV: Used as fallback if SEED_MODE not set
  *   ADMIN_EMAIL: Required for production/dev seeds
  *   ADMIN_DEFAULT_PASSWORD: Required for production/dev seeds (min 12 chars)
@@ -27,6 +28,7 @@ import { seedDemo } from './seeds/demo';
 import { seedLaPetitMarriage } from './seeds/la-petit-mariage';
 import { seedLittleBitHorseFarm } from './seeds/little-bit-horse-farm';
 import { seedPlate } from './seeds/plate';
+import { seedMAIS } from './seeds/mais';
 import { upgradeTenantPages } from './seeds/upgrade-tenant-pages';
 import { logger } from '../src/lib/core/logger';
 
@@ -41,6 +43,7 @@ type SeedMode =
   | 'la-petit-mariage'
   | 'little-bit-farm'
   | 'plate'
+  | 'mais'
   | 'upgrade-tenant-pages';
 
 function getSeedMode(): SeedMode {
@@ -48,7 +51,7 @@ function getSeedMode(): SeedMode {
   const explicitMode = process.env.SEED_MODE as SeedMode | undefined;
   if (
     explicitMode &&
-    ['production', 'e2e', 'demo', 'dev', 'all', 'la-petit-mariage', 'little-bit-farm', 'plate', 'upgrade-tenant-pages'].includes(
+    ['production', 'e2e', 'demo', 'dev', 'all', 'la-petit-mariage', 'little-bit-farm', 'plate', 'mais', 'upgrade-tenant-pages'].includes(
       explicitMode
     )
   ) {
@@ -103,6 +106,7 @@ async function main() {
         await seedLaPetitMarriage(prisma);
         await seedLittleBitHorseFarm(prisma);
         await seedPlate(prisma);
+        await seedMAIS(prisma);
         break;
 
       case 'la-petit-mariage':
@@ -118,6 +122,11 @@ async function main() {
       case 'plate':
         // Plate: Premium catering services
         await seedPlate(prisma);
+        break;
+
+      case 'mais':
+        // MAIS: Tenant Zero - dogfooding our own platform
+        await seedMAIS(prisma);
         break;
 
       case 'upgrade-tenant-pages':

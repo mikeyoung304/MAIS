@@ -11,6 +11,8 @@ import {
   Mail,
   Zap,
   Star,
+  Grid,
+  CreditCard,
 } from 'lucide-react';
 import type { Section } from '@macon/contracts';
 
@@ -35,6 +37,8 @@ const SECTION_TYPE_META: Record<
   faq: { icon: HelpCircle, label: 'FAQ', color: 'bg-green-100 text-green-700' },
   contact: { icon: Mail, label: 'Contact', color: 'bg-cyan-100 text-cyan-700' },
   cta: { icon: Zap, label: 'Call to Action', color: 'bg-orange-100 text-orange-700' },
+  features: { icon: Grid, label: 'Features', color: 'bg-indigo-100 text-indigo-700' },
+  pricing: { icon: CreditCard, label: 'Pricing', color: 'bg-emerald-100 text-emerald-700' },
 };
 
 /**
@@ -56,8 +60,10 @@ function getSectionSummary(section: Section): string {
       return section.headline || 'Contact information';
     case 'cta':
       return section.headline || 'No headline';
-    default:
-      return '';
+    case 'features':
+      return `${section.features?.length || 0} features`;
+    case 'pricing':
+      return `${section.tiers?.length || 0} pricing tiers`;
   }
 }
 
