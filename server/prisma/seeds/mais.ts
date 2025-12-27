@@ -15,7 +15,7 @@ import { createOrUpdateTenant } from './utils';
 
 // Fixed slug for MAIS tenant
 const MAIS_SLUG = 'mais';
-const MAIS_EMAIL = 'hello@maconaisolutions.com';
+const MAIS_EMAIL = 'mike@maconheadshots.com';
 
 // Production guard: require explicit password in production
 const isProduction = process.env.NODE_ENV === 'production';
