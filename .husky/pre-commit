@@ -1,3 +1,16 @@
+#!/bin/sh
+set -e  # Exit on first error
+
+# Check if Prisma schema changed and regenerate client
+if git diff --cached --name-only | grep -q "server/prisma/schema.prisma"; then
+  echo "Prisma schema changed, regenerating client..."
+  (cd server && npm exec prisma generate)
+  # Stage the regenerated client if it changed
+  if [ -d "server/src/generated/prisma" ]; then
+    git add server/src/generated/prisma
+  fi
+fi
+
 # Run documentation validation
 echo "Validating documentation standards..."
 ./scripts/validate-docs.sh

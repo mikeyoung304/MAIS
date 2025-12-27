@@ -1308,12 +1308,16 @@ Task('Remove unused import', {
 **Prevention docs:**
 
 - [Prisma TypeScript Build Failure Prevention](./PRISMA-TYPESCRIPT-BUILD-PREVENTION.md)
+- [TypeScript Build Errors Resolution (2025-12-27)](./TYPESCRIPT-BUILD-ERRORS-RESOLUTION-20251227.md) - Property name mismatches, type assertions, stub service patterns
 
 **Key patterns:**
 
 - Correct Prisma imports (value, not type-only)
 - JSON field casting with `Prisma.InputJsonValue`
 - Null handling with `Prisma.JsonNull`
+- Property names: Verify against source schema (e.g., `heroImage` vs `heroImageUrl`)
+- Type assertions: Validate key exists before asserting with `in` operator
+- Stub services: Use `as unknown as Type` for partial implementations
 
 ---
 
@@ -1779,8 +1783,12 @@ Are you creating a todo based on a plan?
 
 ---
 
-**Last Updated:** 2025-12-25
-**Recent Additions (2025-12-25):**
+**Last Updated:** 2025-12-27
+**Recent Additions (2025-12-27):**
+- TypeScript Build Errors Resolution - property name mismatches, type assertions, stub service patterns (Render deployment fix)
+- MAIS Tenant Zero seed email correction
+
+**Previous Additions (2025-12-25):**
 - Multi-agent parallel code review workflow (6 review agents + 8 fix agents with interactive triage)
 - Next.js migration lessons learned (10 key lessons + prevention checklist)
 - Parallel TODO resolution with Playwright verification (ISR cache clearing after data changes)
