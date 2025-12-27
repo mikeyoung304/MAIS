@@ -119,14 +119,14 @@ export default function TenantDashboardPage() {
       title: 'Bookings',
       value: stats?.bookingsCount ?? 0,
       icon: <Calendar className="h-5 w-5" />,
-      href: '/tenant/bookings',
+      href: '/tenant/scheduling',
       color: 'text-macon-teal',
     },
     {
       title: 'Blackout Dates',
       value: stats?.blackoutsCount ?? 0,
       icon: <Users className="h-5 w-5" />,
-      href: '/tenant/blackouts',
+      href: '/tenant/scheduling',
       color: 'text-macon-orange',
     },
     {
