@@ -6,7 +6,7 @@
     "dev": "next dev --turbo --port 3000",
     "build": "next build",
     "build:deps": "npm run build -w @macon/contracts && npm run build -w @macon/shared",
-    "vercel-build": "npm run build:deps --prefix=../.. && next build",
+    "vercel-build": "cd ../.. && npm run build -w @macon/contracts && npm run build -w @macon/shared && cd apps/web && next build",
     "start": "next start",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit"
