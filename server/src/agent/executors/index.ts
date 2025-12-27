@@ -54,7 +54,7 @@ async function verifyOwnership<T>(
   });
   if (!entity) {
     const modelName = model.charAt(0).toUpperCase() + model.slice(1);
-    throw new Error(`${modelName} not found or access denied`);
+    throw new Error(`${modelName} "${id}" not found or you do not have permission to access it. Verify the ${model} ID belongs to your business.`);
   }
   return entity as T;
 }
@@ -84,7 +84,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       });
 
       if (!existingPackage) {
-        throw new Error('Package not found or access denied');
+        throw new Error(`Package "${packageId}" not found or you do not have permission to modify it. Verify the package ID and try again.`);
       }
 
       // Update existing package (now safe after tenant verification)
@@ -144,7 +144,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     });
 
     if (!existingPackage) {
-      throw new Error('Package not found or access denied');
+      throw new Error(`Package "${packageId}" not found or you do not have permission to delete it. Verify the package ID belongs to your business.`);
     }
 
     // Soft delete by deactivating (safer than hard delete, now safe after tenant verification)
@@ -330,7 +330,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       });
 
       if (!existingAddOn) {
-        throw new Error('Add-on not found or access denied');
+        throw new Error(`Add-on "${addOnId}" not found or you do not have permission to modify it. Verify the add-on ID and try again.`);
       }
 
       // Update existing add-on (now safe after tenant verification)
@@ -390,7 +390,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     });
 
     if (!existingAddOn) {
-      throw new Error('Add-on not found or access denied');
+      throw new Error(`Add-on "${addOnId}" not found or you do not have permission to delete it. Verify the add-on ID belongs to your business.`);
     }
 
     // Soft delete by deactivating (safer than hard delete, now safe after tenant verification)
@@ -421,11 +421,11 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     });
 
     if (!booking) {
-      throw new Error('Booking not found');
+      throw new Error(`Booking "${bookingId}" not found or you do not have permission to cancel it. Verify the booking ID belongs to your business.`);
     }
 
     if (booking.status === 'CANCELED' || booking.status === 'REFUNDED') {
-      throw new Error('Booking is already cancelled or refunded');
+      throw new Error(`Booking "${bookingId}" is already ${booking.status.toLowerCase()}. No further cancellation is needed.`);
     }
 
     // Update booking status
@@ -484,7 +484,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       });
 
       if (!pkg) {
-        throw new Error('Package not found or access denied');
+        throw new Error(`Package "${packageId}" not found, inactive, or you do not have permission to book it. Use get_packages to find available packages.`);
       }
 
       // Check availability AFTER acquiring lock (prevents race condition)
@@ -497,7 +497,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       });
 
       if (existingBooking) {
-        throw new Error(`Date ${date} is already booked - please choose another date`);
+        throw new Error(`Date ${date} is already booked. Use check_availability to find an open date, then try again.`);
       }
 
       // Find or create customer within transaction
@@ -563,12 +563,12 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     });
 
     if (!booking) {
-      throw new Error('Booking not found');
+      throw new Error(`Booking "${bookingId}" not found or you do not have permission to refund it. Verify the booking ID belongs to your business.`);
     }
 
     // Verify refund is still valid
     if (booking.refundStatus === 'COMPLETED') {
-      throw new Error('Booking has already been fully refunded');
+      throw new Error(`Booking "${bookingId}" has already been fully refunded. No additional refund is possible.`);
     }
 
     const existingRefundAmount = booking.refundAmount || 0;
@@ -622,7 +622,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       });
 
       if (!existingSegment) {
-        throw new Error('Segment not found or access denied');
+        throw new Error(`Segment "${segmentId}" not found or you do not have permission to modify it. Verify the segment ID and try again.`);
       }
 
       // Update existing segment
@@ -681,7 +681,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     });
 
     if (!existingSegment) {
-      throw new Error('Segment not found or access denied');
+      throw new Error(`Segment "${segmentId}" not found or you do not have permission to delete it. Verify the segment ID belongs to your business.`);
     }
 
     // Soft delete by deactivating
@@ -713,7 +713,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     });
 
     if (!booking) {
-      throw new Error('Booking not found or access denied');
+      throw new Error(`Booking "${bookingId}" not found or you do not have permission to update it. Verify the booking ID belongs to your business.`);
     }
 
     // If newDate is set, wrap in transaction with advisory lock and availability check
@@ -735,7 +735,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
         });
 
         if (conflictingBooking) {
-          throw new Error(`Date ${newDate} is already booked - please choose another date`);
+          throw new Error(`Date ${newDate} is already booked. Use check_availability to find an open date, then try again.`);
         }
 
         // Build updates
@@ -840,12 +840,12 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     });
 
     if (!tenant) {
-      throw new Error('Tenant not found');
+      throw new Error('Business profile not found. This is an unexpected error - please contact support.');
     }
 
     // Double-check status (race condition protection)
     if (tenant.subscriptionStatus !== 'NONE') {
-      throw new Error(`Cannot start trial - status is ${tenant.subscriptionStatus}`);
+      throw new Error(`Cannot start trial: your current subscription status is "${tenant.subscriptionStatus}". Trial is only available for new accounts with status "NONE".`);
     }
 
     await prisma.tenant.update({

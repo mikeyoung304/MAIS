@@ -1075,8 +1075,13 @@ export const deleteSegmentTool: AgentTool = {
 
       return createProposal(context, 'delete_segment', operation, trustTier, payload, preview);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId, segmentId }, 'Error in delete_segment tool');
-      return { success: false, error: 'Failed to create delete proposal' };
+      return {
+        success: false,
+        error: `Failed to create delete proposal for segment "${segmentId}": ${errorMessage}. Verify the segment ID is correct.`,
+        code: 'DELETE_SEGMENT_ERROR',
+      };
     }
   },
 };
@@ -1195,8 +1200,13 @@ export const updateBookingTool: AgentTool = {
 
       return createProposal(context, 'update_booking', operation, trustTier as 'T2' | 'T3', payload, preview);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId, bookingId }, 'Error in update_booking tool');
-      return { success: false, error: 'Failed to create update booking proposal' };
+      return {
+        success: false,
+        error: `Failed to create update proposal for booking "${bookingId}": ${errorMessage}. Verify the booking ID is correct and any new date is in YYYY-MM-DD format.`,
+        code: 'UPDATE_BOOKING_ERROR',
+      };
     }
   },
 };
@@ -1279,8 +1289,13 @@ export const updateDepositSettingsTool: AgentTool = {
 
       return createProposal(context, 'update_deposit_settings', operation, 'T3', payload, preview);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in update_deposit_settings tool');
-      return { success: false, error: 'Failed to create deposit settings proposal' };
+      return {
+        success: false,
+        error: `Failed to create deposit settings proposal: ${errorMessage}. Ensure deposit percent is 0-100 and balance due days is non-negative.`,
+        code: 'UPDATE_DEPOSIT_SETTINGS_ERROR',
+      };
     }
   },
 };
@@ -1331,8 +1346,13 @@ export const startTrialTool: AgentTool = {
 
       return createProposal(context, 'start_trial', operation, 'T2', payload, preview);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in start_trial tool');
-      return { success: false, error: 'Failed to create trial proposal' };
+      return {
+        success: false,
+        error: `Failed to create trial proposal: ${errorMessage}. Trial can only be started if subscription status is NONE.`,
+        code: 'START_TRIAL_ERROR',
+      };
     }
   },
 };

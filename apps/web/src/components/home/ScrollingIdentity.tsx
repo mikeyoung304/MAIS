@@ -10,21 +10,33 @@ import { useEffect, useState } from 'react';
  */
 
 const identities = [
-  { profession: 'photographer', verb: 'photograph' },
-  { profession: 'life coach', verb: 'coach' },
-  { profession: 'chef', verb: 'chef' },
-  { profession: 'consultant', verb: 'consult' },
-  { profession: 'wedding planner', verb: 'plan' },
-  { profession: 'therapist', verb: 'heal' },
-  { profession: 'personal trainer', verb: 'train' },
-  { profession: 'artist', verb: 'create' },
-  { profession: 'musician', verb: 'play' },
-  { profession: 'yoga instructor', verb: 'flow' },
-  { profession: 'pirate', verb: 'pirate' },
-  { profession: 'dog walker', verb: 'walk' },
-  { profession: 'realtor', verb: 'sell' },
-  { profession: 'designer', verb: 'design' },
-  { profession: 'developer', verb: 'ship' },
+  // Real professions with satisfying verbs
+  { profession: 'photographer', verb: 'shoot' },
+  { profession: 'therapist', verb: 'listen' },
+  { profession: 'chef', verb: 'cook' },
+  { profession: 'yoga instructor', verb: 'breathe' },
+  { profession: 'wedding planner', verb: 'orchestrate chaos' },
+  { profession: 'personal trainer', verb: 'yell encouragingly' },
+  { profession: 'life coach', verb: 'ask powerful questions' },
+  { profession: 'realtor', verb: 'unlock doors' },
+  { profession: 'tattoo artist', verb: 'make permanent decisions' },
+  { profession: 'dog walker', verb: 'get dragged around' },
+  // Slightly absurd
+  { profession: 'cat whisperer', verb: 'be ignored' },
+  { profession: 'spreadsheet wizard', verb: 'vlookup' },
+  { profession: 'vibe curator', verb: 'curate vibes' },
+  { profession: 'chaos coordinator', verb: 'coordinate chaos' },
+  { profession: 'professional overthinker', verb: 'overthink' },
+  // Tech-adjacent humor
+  { profession: 'developer', verb: 'google things' },
+  { profession: 'designer', verb: 'move pixels' },
+  { profession: 'consultant', verb: 'make decks' },
+  // The classics, reimagined
+  { profession: 'musician', verb: 'make sounds' },
+  { profession: 'artist', verb: 'stare at walls' },
+  { profession: 'writer', verb: 'procrastinate' },
+  // Wildcard
+  { profession: 'pirate', verb: 'arrr' },
 ];
 
 export function ScrollingIdentity() {
