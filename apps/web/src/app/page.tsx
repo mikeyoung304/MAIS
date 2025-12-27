@@ -4,17 +4,24 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Check, Calendar, CreditCard, MessageSquare, Loader2 } from 'lucide-react';
+import { ScrollingIdentity } from '@/components/home/ScrollingIdentity';
+import {
+  Check,
+  Globe,
+  Users,
+  Sparkles,
+  Calendar,
+  CreditCard,
+  Phone,
+  Loader2,
+  ArrowRight,
+} from 'lucide-react';
 
 /**
- * MAIS Landing Page
+ * MAIS Landing Page v2
  *
- * Structure follows Brand Voice Guide:
- * 1. Hero - Transformation promise + email capture
- * 2. Problem - Identity statement + specific details
- * 3. Solution - Value prop + how it works
- * 4. Social Proof - Aspirational framing
- * 5. CTA - Question format close
+ * Positioning: AI Growth Club + Marketing Firm + Tech Consulting
+ * 3-tier pricing: Starter ($40) | Growth Club ($99) | Private Consulting
  */
 export default function HomePage() {
   const [email, setEmail] = useState('');
@@ -39,7 +46,7 @@ export default function HomePage() {
         className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden"
         aria-labelledby="hero-heading"
       >
-        {/* Ambient decoration - subtle */}
+        {/* Ambient decoration */}
         <div
           className="absolute top-1/4 right-[15%] w-96 h-96 bg-sage/8 rounded-full blur-3xl pointer-events-none"
           aria-hidden="true"
@@ -49,65 +56,58 @@ export default function HomePage() {
           aria-hidden="true"
         />
 
-        <div className="relative max-w-3xl mx-auto text-center">
+        <div className="relative max-w-4xl mx-auto text-center">
           {/* Overline */}
           <p className="text-sm font-medium uppercase tracking-widest text-sage">
-            Business Growth Club
+            AI Growth Club
           </p>
 
-          {/* Headline */}
+          {/* Headline with scrolling animation */}
           <h1
             id="hero-heading"
-            className="mt-8 font-serif text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.1] tracking-tight text-text-primary"
+            className="mt-8 font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.15] tracking-tight text-text-primary"
           >
-            Book more clients.
+            You didn&apos;t start this
             <br />
-            Build your business.
+            to become a tech expert.
           </h1>
 
-          {/* Subheadline */}
-          <p className="mx-auto mt-8 max-w-xl text-xl md:text-2xl font-light leading-relaxed text-text-muted">
-            The booking platform for creative professionals who&apos;d rather be creating.
+          {/* Scrolling identity */}
+          <p className="mt-8 text-xl sm:text-2xl md:text-3xl font-light text-text-muted">
+            You&apos;re a <ScrollingIdentity />
           </p>
 
-          {/* Email Capture Form */}
-          <form onSubmit={handleSubmit} className="mt-12 flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-            {submitted ? (
-              <div className="flex items-center justify-center gap-2 w-full py-4 text-sage font-medium">
-                <Check className="h-5 w-5" />
-                <span>Welcome. We&apos;ll be in touch soon.</span>
-              </div>
-            ) : (
-              <>
-                <Input
-                  type="email"
-                  placeholder="Your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="flex-1 h-14 px-6 text-lg border-2 border-neutral-200 focus:border-sage focus:ring-4 focus:ring-sage/10"
-                  aria-label="Email address"
-                />
-                <Button
-                  type="submit"
-                  variant="sage"
-                  size="xl"
-                  disabled={isSubmitting}
-                  className="whitespace-nowrap"
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    'Request Early Access'
-                  )}
-                </Button>
-              </>
-            )}
-          </form>
+          {/* Subheadline */}
+          <p className="mx-auto mt-8 max-w-2xl text-lg md:text-xl font-light leading-relaxed text-text-muted">
+            We handle the tech, the marketing, and the AI—so you can focus on what you actually started this for.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">
+            <Button
+              variant="sage"
+              size="xl"
+              asChild
+            >
+              <Link href="/signup">
+                Join the Club
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+            <Button
+              variant="outline"
+              size="xl"
+              asChild
+            >
+              <Link href="#pricing">
+                See Pricing
+              </Link>
+            </Button>
+          </div>
 
           {/* Trust Signal */}
           <p className="mt-16 text-sm text-text-muted">
-            Partnering with creative professionals through revenue-sharing.
+            Marketing firm. Tech consulting. AI strategy. All in one membership.
           </p>
         </div>
 
@@ -127,18 +127,22 @@ export default function HomePage() {
         <div className="max-w-3xl mx-auto text-center">
           <h2
             id="problem-heading"
-            className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-[1.1] tracking-tight"
+            className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-[1.15] tracking-tight"
           >
-            You&apos;re a photographer, not a bookkeeper.
+            Running a business shouldn&apos;t require
+            <br />
+            a computer science degree.
           </h2>
 
           <p className="mt-8 text-xl md:text-2xl font-light leading-relaxed text-text-muted">
-            But somewhere between the Instagram DM and the final gallery delivery,
-            you became both. Calendar Tetris. Deposit tracking. Invoice chasing.
+            Website builders. Payment processors. Email marketing. Social media schedulers.
+            CRM systems. AI tools. The tech stack keeps growing.
           </p>
 
           <p className="mt-8 text-xl md:text-2xl font-light leading-relaxed text-text-muted">
-            Every hour on admin is an hour you&apos;re not behind the lens.
+            You didn&apos;t sign up to manage subscriptions.
+            <br />
+            You signed up to build something meaningful.
           </p>
         </div>
       </section>
@@ -151,28 +155,40 @@ export default function HomePage() {
         <div className="max-w-3xl mx-auto text-center mb-16">
           <h2
             id="solution-heading"
-            className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-[1.1] tracking-tight"
+            className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-[1.15] tracking-tight"
           >
-            One link. Complete booking system.
+            Your growth team. On demand.
           </h2>
 
           <p className="mt-8 text-xl md:text-2xl font-light leading-relaxed text-text-muted">
-            Your clients choose a package, pick a date, and pay&mdash;all in one flow.
-            You get a text when someone books. That&apos;s it.
+            MAIS is a marketing firm, tech consultancy, and AI strategy partner—wrapped
+            into one membership. We give you the tools and the guidance to grow.
           </p>
         </div>
 
-        {/* Feature Cards */}
-        <div className="max-w-5xl mx-auto grid gap-6 md:grid-cols-3">
+        {/* What you get */}
+        <div className="max-w-5xl mx-auto grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div className="w-12 h-12 rounded-2xl bg-sage/10 flex items-center justify-center mb-6">
+              <Globe className="h-6 w-6 text-sage" />
+            </div>
+            <h3 className="font-semibold text-lg text-text-primary mb-2">
+              Professional Storefront
+            </h3>
+            <p className="text-text-muted">
+              A beautiful booking site that makes you look as professional as you are.
+            </p>
+          </div>
+
           <div className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
             <div className="w-12 h-12 rounded-2xl bg-sage/10 flex items-center justify-center mb-6">
               <Calendar className="h-6 w-6 text-sage" />
             </div>
             <h3 className="font-semibold text-lg text-text-primary mb-2">
-              Instant Booking
+              Booking & Scheduling
             </h3>
             <p className="text-text-muted">
-              Clients pick a date from your availability. No back-and-forth emails.
+              Clients pick a time, book, and pay. No back-and-forth.
             </p>
           </div>
 
@@ -184,56 +200,185 @@ export default function HomePage() {
               Automatic Payments
             </h3>
             <p className="text-text-muted">
-              Deposits collected upfront. Final payments processed automatically.
+              Deposits, invoices, and payment processing—handled.
             </p>
           </div>
 
           <div className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
             <div className="w-12 h-12 rounded-2xl bg-sage/10 flex items-center justify-center mb-6">
-              <MessageSquare className="h-6 w-6 text-sage" />
+              <Sparkles className="h-6 w-6 text-sage" />
             </div>
             <h3 className="font-semibold text-lg text-text-primary mb-2">
               AI Growth Assistant
             </h3>
             <p className="text-text-muted">
-              Get personalized advice to grow your business. Like a consultant, but always available.
+              Get personalized advice on growing your business, powered by AI.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div className="w-12 h-12 rounded-2xl bg-sage/10 flex items-center justify-center mb-6">
+              <Users className="h-6 w-6 text-sage" />
+            </div>
+            <h3 className="font-semibold text-lg text-text-primary mb-2">
+              Monthly AI Masterclass
+            </h3>
+            <p className="text-text-muted">
+              Group Zoom calls where we share the latest AI tools and strategies.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div className="w-12 h-12 rounded-2xl bg-sage/10 flex items-center justify-center mb-6">
+              <Phone className="h-6 w-6 text-sage" />
+            </div>
+            <h3 className="font-semibold text-lg text-text-primary mb-2">
+              Real Human Support
+            </h3>
+            <p className="text-text-muted">
+              Questions? We answer them. No chatbots, no tickets—just help.
             </p>
           </div>
         </div>
       </section>
 
-      {/* ===== SOCIAL PROOF SECTION ===== */}
+      {/* ===== PRICING SECTION ===== */}
       <section
+        id="pricing"
         className="py-32 md:py-40 bg-neutral-50 px-6"
-        aria-labelledby="proof-heading"
+        aria-labelledby="pricing-heading"
       >
-        <div className="max-w-3xl mx-auto text-center">
+        <div className="max-w-3xl mx-auto text-center mb-16">
           <h2
-            id="proof-heading"
-            className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-[1.1] tracking-tight"
+            id="pricing-heading"
+            className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-[1.15] tracking-tight"
           >
-            Built for creatives who mean business.
+            Simple, honest pricing.
           </h2>
 
           <p className="mt-8 text-xl md:text-2xl font-light leading-relaxed text-text-muted">
-            Photographers. Wedding planners. Event coordinators. Artists.
-            If you&apos;d rather be creating than administrating, you&apos;re in the right place.
+            No hidden fees. No annual contracts. Cancel anytime.
           </p>
+        </div>
 
-          {/* Trust indicators */}
-          <div className="mt-16 flex flex-wrap justify-center gap-8 text-text-muted">
-            <div className="flex items-center gap-2">
-              <Check className="h-5 w-5 text-sage" />
-              <span>No setup fees</span>
+        {/* Pricing Cards */}
+        <div className="max-w-5xl mx-auto grid gap-8 lg:grid-cols-3">
+          {/* Starter */}
+          <div className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100">
+            <h3 className="font-semibold text-lg text-text-primary">Starter</h3>
+            <p className="mt-2 text-text-muted text-sm">The essentials to get going</p>
+
+            <div className="mt-6 flex items-baseline gap-1">
+              <span className="text-4xl font-bold text-text-primary">$40</span>
+              <span className="text-text-muted">/month</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Check className="h-5 w-5 text-sage" />
-              <span>14-day free trial</span>
+
+            <ul className="mt-8 space-y-4">
+              <li className="flex items-start gap-3">
+                <Check className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
+                <span className="text-text-muted">Professional storefront</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
+                <span className="text-text-muted">Online booking & scheduling</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
+                <span className="text-text-muted">Payment processing</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
+                <span className="text-text-muted">Email notifications</span>
+              </li>
+            </ul>
+
+            <Button variant="outline" className="w-full mt-8" asChild>
+              <Link href="/signup">Get Started</Link>
+            </Button>
+          </div>
+
+          {/* Growth Club - HERO */}
+          <div className="bg-white rounded-3xl p-8 shadow-2xl border-2 border-sage relative lg:-mt-4 lg:mb-4">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+              <span className="bg-sage text-white text-sm font-medium px-4 py-1 rounded-full">
+                Most Popular
+              </span>
             </div>
-            <div className="flex items-center gap-2">
-              <Check className="h-5 w-5 text-sage" />
-              <span>Cancel anytime</span>
+
+            <h3 className="font-semibold text-lg text-text-primary">Growth Club</h3>
+            <p className="mt-2 text-text-muted text-sm">Everything + AI community</p>
+
+            <div className="mt-6 flex items-baseline gap-1">
+              <span className="text-4xl font-bold text-text-primary">$99</span>
+              <span className="text-text-muted">/month</span>
             </div>
+
+            <ul className="mt-8 space-y-4">
+              <li className="flex items-start gap-3">
+                <Check className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
+                <span className="text-text-muted">Everything in Starter</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
+                <span className="text-text-muted">AI Growth Assistant</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
+                <span className="text-text-muted font-medium text-text-primary">Monthly AI Masterclass (Zoom)</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
+                <span className="text-text-muted">Custom branding</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
+                <span className="text-text-muted">Priority support</span>
+              </li>
+            </ul>
+
+            <Button variant="sage" className="w-full mt-8" asChild>
+              <Link href="/signup">
+                Join the Club
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+
+          {/* Private Consulting */}
+          <div className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100">
+            <h3 className="font-semibold text-lg text-text-primary">Private Consulting</h3>
+            <p className="mt-2 text-text-muted text-sm">Hands-on AI strategy for your business</p>
+
+            <div className="mt-6 flex items-baseline gap-1">
+              <span className="text-4xl font-bold text-text-primary">Custom</span>
+            </div>
+
+            <ul className="mt-8 space-y-4">
+              <li className="flex items-start gap-3">
+                <Check className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
+                <span className="text-text-muted">Everything in Growth Club</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
+                <span className="text-text-muted">1-on-1 AI consulting sessions</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
+                <span className="text-text-muted">Custom AI tool development</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
+                <span className="text-text-muted">Marketing strategy sessions</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
+                <span className="text-text-muted">Dedicated account manager</span>
+              </li>
+            </ul>
+
+            <Button variant="outline" className="w-full mt-8" asChild>
+              <Link href="/contact">Book a Call</Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -246,21 +391,21 @@ export default function HomePage() {
         <div className="max-w-3xl mx-auto text-center">
           <h2
             id="cta-heading"
-            className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-[1.1] tracking-tight"
+            className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-[1.15] tracking-tight"
           >
-            Ready to get back to your craft?
+            Ready to stop being the IT department?
           </h2>
 
           <p className="mt-8 text-xl md:text-2xl font-light leading-relaxed text-white/80">
-            Join creative professionals who&apos;ve reclaimed their time.
+            Join business owners who&apos;ve traded tech headaches for growth.
           </p>
 
-          {/* CTA Form */}
+          {/* Email Capture */}
           <form onSubmit={handleSubmit} className="mt-12 flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
             {submitted ? (
               <div className="flex items-center justify-center gap-2 w-full py-4 text-white font-medium">
                 <Check className="h-5 w-5" />
-                <span>You&apos;re on the list!</span>
+                <span>You&apos;re in. We&apos;ll be in touch.</span>
               </div>
             ) : (
               <>
@@ -276,12 +421,12 @@ export default function HomePage() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-white hover:bg-white/95 text-sage font-semibold px-10 py-4 h-14 rounded-full transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 whitespace-nowrap"
+                  className="bg-white hover:bg-white/95 text-sage font-semibold px-8 py-4 h-14 rounded-full transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 whitespace-nowrap"
                 >
                   {isSubmitting ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
-                    'Get Started'
+                    'Join the Club'
                   )}
                 </Button>
               </>
@@ -290,7 +435,7 @@ export default function HomePage() {
 
           {/* Already have account */}
           <p className="mt-8 text-white/70">
-            Already have an account?{' '}
+            Already a member?{' '}
             <Link href="/login" className="text-white underline hover:no-underline">
               Sign in
             </Link>
@@ -301,9 +446,14 @@ export default function HomePage() {
       {/* ===== FOOTER ===== */}
       <footer className="py-12 bg-white border-t border-neutral-100 px-6">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="font-serif text-xl font-bold text-text-primary">
-            MAIS
-          </p>
+          <div>
+            <p className="font-serif text-xl font-bold text-text-primary">
+              MAIS
+            </p>
+            <p className="text-sm text-text-muted mt-1">
+              AI Growth Club
+            </p>
+          </div>
           <nav className="flex gap-6 text-sm text-text-muted">
             <Link href="/login" className="hover:text-sage transition-colors">
               Login
