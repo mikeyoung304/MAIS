@@ -342,7 +342,8 @@ export async function seedHandled(prisma: PrismaClient): Promise<void> {
   logger.info('═══════════════════════════════════════════════════════════════');
   logger.info('HANDLED TENANT ZERO - DOGFOODING COMPLETE');
   logger.info(`  Slug:     ${HANDLED_SLUG}`);
-  logger.info(`  URL:      /t/handled (or root / via redirect)`);
+  logger.info(`  URL:      /t/handled (tenant storefront)`);
   logger.info(`  Email:    ${HANDLED_EMAIL}`);
+  logger.info('  Note:     Company homepage is static at / (not a tenant)');
   logger.info('═══════════════════════════════════════════════════════════════');
 }
