@@ -174,7 +174,7 @@ export function AdminSidebar() {
           <div className="flex items-center justify-between border-b border-neutral-100 p-4">
             {!isCollapsed && (
               <Link href="/" className="font-serif text-xl font-bold text-text-primary">
-                MAIS
+                HANDLED
               </Link>
             )}
             <button

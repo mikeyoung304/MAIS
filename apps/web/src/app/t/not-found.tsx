@@ -26,7 +26,7 @@ export default function TenantNotFound() {
       <p className="mt-16 text-center text-sm text-text-muted">
         Are you a business owner?{' '}
         <Link href="/signup" className="text-sage underline hover:no-underline">
-          Get started with MAIS
+          Get started with HANDLED
         </Link>
       </p>
     </div>

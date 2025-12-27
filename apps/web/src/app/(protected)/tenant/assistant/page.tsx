@@ -6,7 +6,7 @@ import { AgentChat } from '@/components/agent';
  * Business Growth Assistant Page
  *
  * AI-powered chat interface for tenant admins to manage their business.
- * Uses the MAIS Business Growth Agent to help with:
+ * Uses the HANDLED Business Growth Agent to help with:
  * - Package management
  * - Pricing strategy
  * - Booking management

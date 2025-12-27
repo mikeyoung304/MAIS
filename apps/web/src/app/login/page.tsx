@@ -204,7 +204,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="mb-8 text-center">
           <Link href="/" className="font-serif text-3xl font-bold text-text-primary">
-            MAIS
+            HANDLED
           </Link>
           <p className="mt-2 text-text-muted">Sign in to your account</p>
         </div>

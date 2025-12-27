@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
             <Link href="/" className="font-serif text-3xl font-bold text-text-primary">
-              MAIS
+              HANDLED
             </Link>
           </div>
 

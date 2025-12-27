@@ -76,7 +76,7 @@ export default function TenantSettingsPage() {
             API Keys
           </CardTitle>
           <CardDescription>
-            Use these keys to integrate with the MAIS API
+            Use these keys to integrate with the HANDLED API
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

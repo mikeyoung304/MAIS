@@ -108,7 +108,7 @@ export default function BillingPage() {
       <div>
         <h1 className="font-serif text-3xl font-bold text-text-primary">Billing</h1>
         <p className="mt-2 text-text-muted">
-          Manage your MAIS subscription
+          Manage your HANDLED subscription
         </p>
       </div>
 
@@ -140,7 +140,7 @@ export default function BillingPage() {
               Active Subscription
             </CardTitle>
             <CardDescription>
-              You&apos;re subscribed to MAIS Professional
+              You&apos;re subscribed to HANDLED Professional
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -161,7 +161,7 @@ export default function BillingPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5 text-sage" />
-              MAIS Professional
+              HANDLED Professional
             </CardTitle>
             <CardDescription>
               Everything you need to grow your business

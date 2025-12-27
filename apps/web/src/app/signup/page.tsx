@@ -146,7 +146,7 @@ function SignupForm() {
       <CardHeader>
         <CardTitle>Create your account</CardTitle>
         <CardDescription>
-          Start growing your business with MAIS
+          Start growing your business with HANDLED
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -339,7 +339,7 @@ function SignupFormSkeleton() {
 /**
  * Signup Page
  *
- * Allows new businesses to sign up for the MAIS platform.
+ * Allows new businesses to sign up for the HANDLED platform.
  */
 export default function SignupPage() {
   return (
@@ -348,7 +348,7 @@ export default function SignupPage() {
         {/* Logo */}
         <div className="mb-8 text-center">
           <Link href="/" className="font-serif text-3xl font-bold text-text-primary">
-            MAIS
+            HANDLED
           </Link>
           <p className="mt-2 text-text-muted">Create your business account</p>
         </div>
