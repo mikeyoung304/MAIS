@@ -15,6 +15,15 @@ import { sanitizeForContext, DENY_LIST_FIELDS } from '../tools/types';
 import { logger } from '../../lib/core/logger';
 
 /**
+ * Onboarding state - used for health check and greeting logic
+ */
+export type OnboardingState =
+  | 'needs_stripe'
+  | 'needs_packages'
+  | 'needs_bookings'
+  | 'ready';
+
+/**
  * Agent session context
  */
 export interface AgentSessionContext {
@@ -159,7 +168,62 @@ For current details, use your read tools.`;
 }
 
 /**
+ * Detect onboarding state from context
+ * Used by health check and greeting logic
+ */
+export function detectOnboardingState(context: AgentSessionContext): OnboardingState {
+  const { quickStats } = context;
+
+  if (!quickStats.stripeConnected) {
+    return 'needs_stripe';
+  }
+
+  if (quickStats.packageCount === 0) {
+    return 'needs_packages';
+  }
+
+  if (quickStats.totalBookings === 0) {
+    return 'needs_bookings';
+  }
+
+  return 'ready';
+}
+
+/**
+ * Get HANDLED-voice greeting based on context
+ * Matches brand voice: cheeky, professional, direct
+ */
+export function getHandledGreeting(context: AgentSessionContext): string {
+  const { quickStats } = context;
+
+  // Needs Stripe
+  if (!quickStats.stripeConnected) {
+    return `Your Stripe isn't connected yet. I can handle that — takes about 3 minutes, then you never touch it again. Want to knock it out?`;
+  }
+
+  // Has Stripe, no packages
+  if (quickStats.packageCount === 0) {
+    return `Stripe's connected. ✓ Now you need something to sell. What do you offer — sessions, packages, something else?`;
+  }
+
+  // Has packages, no bookings
+  if (quickStats.totalBookings === 0) {
+    return `You've got ${quickStats.packageCount} package${quickStats.packageCount > 1 ? 's' : ''} ready to go. Now let's get some clients booking. Want me to help you share your booking link?`;
+  }
+
+  // Returning user with upcoming bookings
+  const upcoming = quickStats.upcomingBookings;
+  if (upcoming > 0) {
+    return `${upcoming} client${upcoming > 1 ? 's' : ''} coming up. What should we work on?`;
+  }
+
+  // Active user, no upcoming
+  return `What should we knock out today?`;
+}
+
+/**
  * Detect user type and suggest onboarding path
+ * @deprecated Use getHandledGreeting() for HANDLED voice
  */
 export function detectOnboardingPath(context: AgentSessionContext): {
   userType: 'new' | 'returning' | 'needs_stripe';
@@ -170,23 +234,20 @@ export function detectOnboardingPath(context: AgentSessionContext): {
   if (!quickStats.stripeConnected) {
     return {
       userType: 'needs_stripe',
-      suggestedMessage: `Before you can accept payments, we'll need to connect your Stripe account. Want me to walk you through that?`,
+      suggestedMessage: getHandledGreeting(context),
     };
   }
 
   if (quickStats.packageCount === 0 && quickStats.totalBookings === 0) {
     return {
       userType: 'new',
-      suggestedMessage: `Welcome! I can help you get set up. Are you:
-1. Starting fresh - I'll guide you through everything
-2. Migrating from another platform - we'll import your services
-3. Just exploring - I'll show you around`,
+      suggestedMessage: getHandledGreeting(context),
     };
   }
 
   return {
     userType: 'returning',
-    suggestedMessage: `Welcome back! I see you have ${quickStats.packageCount} packages set up${quickStats.upcomingBookings > 0 ? ` and ${quickStats.upcomingBookings} upcoming bookings` : ''}. What would you like to work on today?`,
+    suggestedMessage: getHandledGreeting(context),
   };
 }
 

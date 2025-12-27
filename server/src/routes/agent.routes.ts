@@ -15,6 +15,8 @@ import { Prisma } from '../generated/prisma';
 import { logger } from '../lib/core/logger';
 import { NotFoundError, ValidationError, ConflictError } from '../lib/errors';
 import { AgentOrchestrator } from '../agent/orchestrator';
+import { buildSessionContext, detectOnboardingState } from '../agent/context/context-builder';
+import type { OnboardingState } from '../agent/context/context-builder';
 
 /**
  * Proposal executor registry
@@ -52,6 +54,69 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
     const tenantAuth = res.locals.tenantAuth;
     return tenantAuth?.tenantId ?? null;
   };
+
+  // ============================================================================
+  // Health Check
+  // ============================================================================
+
+  /**
+   * GET /v1/agent/health
+   * Pre-flight check for chatbot availability
+   *
+   * Returns:
+   * - available: boolean - Whether the chatbot is ready to use
+   * - reason: string | null - Why it's unavailable (if applicable)
+   * - onboardingState: string - Current onboarding stage
+   * - capabilities: string[] - What the chatbot can help with
+   */
+  router.get('/health', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+
+      // Check 1: API key configured
+      const apiKeyConfigured = !!process.env.ANTHROPIC_API_KEY;
+
+      // Check 2: Can we build context for this tenant?
+      let contextAvailable = false;
+      let onboardingState: OnboardingState = 'needs_stripe';
+
+      if (tenantId) {
+        try {
+          const context = await buildSessionContext(prisma, tenantId, 'health-check');
+          contextAvailable = true;
+          onboardingState = detectOnboardingState(context);
+        } catch (err) {
+          logger.warn({ tenantId, error: err }, 'Failed to build context for health check');
+          contextAvailable = false;
+        }
+      }
+
+      // Determine availability reason
+      let reason: string | null = null;
+      if (!apiKeyConfigured) {
+        reason = 'missing_api_key';
+      } else if (!tenantId) {
+        reason = 'not_authenticated';
+      } else if (!contextAvailable) {
+        reason = 'context_unavailable';
+      }
+
+      res.json({
+        available: apiKeyConfigured && contextAvailable,
+        reason,
+        onboardingState,
+        capabilities: [
+          'chat',
+          'create_packages',
+          'manage_bookings',
+          'stripe_onboarding',
+        ],
+      });
+    } catch (error) {
+      logger.error({ error }, 'Health check error');
+      next(error);
+    }
+  });
 
   // ============================================================================
   // Chat Endpoints

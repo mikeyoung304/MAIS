@@ -5,6 +5,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Send, Loader2, CheckCircle, XCircle, Bot, User, AlertTriangle } from 'lucide-react';
+import { ChatbotUnavailable } from './ChatbotUnavailable';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -55,6 +56,16 @@ interface SessionContext {
   };
 }
 
+/**
+ * Health check response from backend
+ */
+interface HealthCheckResponse {
+  available: boolean;
+  reason: string | null;
+  onboardingState: 'needs_stripe' | 'needs_packages' | 'needs_bookings' | 'ready';
+  capabilities: string[];
+}
+
 interface AgentChatProps {
   /** Initial greeting to display (optional, will fetch from API if not provided) */
   initialGreeting?: string;
@@ -89,6 +100,11 @@ export function AgentChat({
   const [error, setError] = useState<string | null>(null);
   const [pendingProposals, setPendingProposals] = useState<Proposal[]>([]);
 
+  // Health check state
+  const [isCheckingHealth, setIsCheckingHealth] = useState(true);
+  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+  const [unavailableReason, setUnavailableReason] = useState<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -101,39 +117,70 @@ export function AgentChat({
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  // Initialize session on mount
-  useEffect(() => {
-    const initSession = async () => {
-      try {
-        const response = await fetch(`${API_URL}/v1/agent/session`, {
-          credentials: 'include',
-        });
+  // Health check and session initialization
+  const initializeChat = useCallback(async () => {
+    setIsCheckingHealth(true);
+    setError(null);
 
-        if (!response.ok) {
-          throw new Error('Failed to initialize chat session');
+    try {
+      // Step 1: Pre-flight health check
+      const healthResponse = await fetch(`${API_URL}/v1/agent/health`, {
+        credentials: 'include',
+      });
+
+      if (!healthResponse.ok) {
+        // Network error - try to proceed anyway
+        console.warn('Health check failed, attempting session init...');
+      } else {
+        const health: HealthCheckResponse = await healthResponse.json();
+
+        if (!health.available) {
+          setIsAvailable(false);
+          setUnavailableReason(health.reason);
+          setIsCheckingHealth(false);
+          return;
         }
-
-        const data = await response.json();
-        setSessionId(data.sessionId);
-        setContext(data.context);
-        onSessionStart?.(data.sessionId);
-
-        // Add greeting message
-        const greeting = initialGreeting || data.greeting;
-        setMessages([
-          {
-            role: 'assistant',
-            content: greeting,
-            timestamp: new Date(),
-          },
-        ]);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to start chat');
+        // onboardingState is available in health.onboardingState for future use
+        // (e.g., showing progress indicators)
       }
-    };
 
-    initSession();
+      // Step 2: Initialize session
+      const sessionResponse = await fetch(`${API_URL}/v1/agent/session`, {
+        credentials: 'include',
+      });
+
+      if (!sessionResponse.ok) {
+        throw new Error('Failed to initialize chat session');
+      }
+
+      const data = await sessionResponse.json();
+      setSessionId(data.sessionId);
+      setContext(data.context);
+      setIsAvailable(true);
+      onSessionStart?.(data.sessionId);
+
+      // Add greeting message
+      const greeting = initialGreeting || data.greeting;
+      setMessages([
+        {
+          role: 'assistant',
+          content: greeting,
+          timestamp: new Date(),
+        },
+      ]);
+    } catch (err) {
+      setIsAvailable(false);
+      setUnavailableReason('context_unavailable');
+      setError(err instanceof Error ? err.message : 'Failed to start chat');
+    } finally {
+      setIsCheckingHealth(false);
+    }
   }, [initialGreeting, onSessionStart]);
+
+  // Initialize on mount
+  useEffect(() => {
+    initializeChat();
+  }, [initializeChat]);
 
   // Send a message to the agent
   const sendMessage = async () => {
@@ -267,6 +314,35 @@ export function AgentChat({
       sendMessage();
     }
   };
+
+  // Loading state
+  if (isCheckingHealth) {
+    return (
+      <div
+        className={cn(
+          'flex flex-col h-full bg-white rounded-2xl shadow-lg border border-neutral-100 overflow-hidden items-center justify-center',
+          className
+        )}
+      >
+        <Loader2 className="w-8 h-8 text-sage animate-spin" />
+        <p className="text-text-muted mt-4">Loading your assistant...</p>
+      </div>
+    );
+  }
+
+  // Unavailable state
+  if (isAvailable === false) {
+    return (
+      <div
+        className={cn(
+          'flex flex-col h-full bg-white rounded-2xl shadow-lg border border-neutral-100 overflow-hidden',
+          className
+        )}
+      >
+        <ChatbotUnavailable reason={unavailableReason} onRetry={initializeChat} />
+      </div>
+    );
+  }
 
   return (
     <div
