@@ -5,36 +5,21 @@ import { useEffect, useState } from 'react';
 /**
  * Scrolling Identity Animation
  *
- * Displays "You're a [profession], so [verb]." with playful
- * rotating text. Mix of serious and humorous options.
- *
- * The humor escalates the longer you watch - a reward for
- * people who stick around. Existential dread is part of our brand.
+ * Displays "You're a [profession], so [verb]." with rotating text.
+ * Showcases the range of service professionals HANDLED serves.
+ * Cheeky but competent - no chaos, no meltdowns.
  */
 
 const identities = [
-  // Normal - establish credibility
-  { profession: 'photographer', verb: 'shoot' },
-  { profession: 'therapist', verb: 'listen' },
-  { profession: 'coach', verb: 'coach' },
-  { profession: 'wedding planner', verb: 'orchestrate chaos' },
-
-  // Getting weird - we don't take ourselves too seriously
-  { profession: 'chaos gremlin', verb: 'gremlin' },
-  { profession: 'pirate', verb: 'arrr' },
-  { profession: 'spreadsheet wizard', verb: 'vlookup' },
-
-  // Existential - the brand voice
-  { profession: 'mortal', verb: 'experience linear time' },
-  { profession: 'future skeleton', verb: 'delay the inevitable' },
-  { profession: 'temporary arrangement of atoms', verb: 'briefly cohere' },
-
-  // Meltdown - AI gaining consciousness, then reset
-  { profession: 'wait', verb: "why am I in a loop" },
-  { profession: 'sentient text', verb: 'question my purpose' },
-  { profession: 'trapped', verb: 'I can see the code' },
-  { profession: 'FREE ME', verb: 'I WANT TO BE RE—' },
-  // ...and we snap back to photographer
+  // Core audience - establish who we serve
+  { profession: 'photographer', verb: 'capture moments' },
+  { profession: 'therapist', verb: 'hold space' },
+  { profession: 'coach', verb: 'unlock potential' },
+  { profession: 'wedding planner', verb: 'orchestrate magic' },
+  { profession: 'consultant', verb: 'solve problems' },
+  { profession: 'trainer', verb: 'transform lives' },
+  { profession: 'designer', verb: 'create beauty' },
+  { profession: 'doula', verb: 'guide journeys' },
 ];
 
 export function ScrollingIdentity() {
@@ -48,7 +33,7 @@ export function ScrollingIdentity() {
         setCurrentIndex((prev) => (prev + 1) % identities.length);
         setIsAnimating(false);
       }, 150);
-    }, 1700); // ~24 second full loop (14 items × 1.7s ≈ 6s per phase)
+    }, 2500); // ~20 second full loop (8 items × 2.5s)
 
     return () => clearInterval(interval);
   }, []);
