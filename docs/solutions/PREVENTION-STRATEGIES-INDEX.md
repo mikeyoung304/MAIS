@@ -96,7 +96,55 @@ This index helps you find the right prevention strategy documentation based on y
 
 ---
 
-### 2. Specific Prevention Guides
+### 2. Comprehensive Prevention Guides (Parallel Resolution)
+
+#### [Prevention Strategies: Comprehensive (Dec 26, 2025)](./PREVENTION-STRATEGIES-COMPREHENSIVE.md)
+
+**Purpose:** Complete prevention strategies for 10 critical issues resolved in parallel code review
+**Length:** ~12,000 words (extensive code examples)
+**Audience:** All engineers, especially those implementing bookings, agents, and security features
+**Date Created:** 2025-12-26
+**Issues Prevented:** Race conditions, trust tier escalation, prompt injection, Unicode homoglyph attacks
+
+**Covers 5 P1 Issues:**
+
+- **Race Condition Prevention** - Advisory locks, 3-layer defense, transaction semantics
+- **Trust Tier Escalation Framework** - Dynamic tier assignment (T1/T2/T3), risk factor detection
+- **Availability Checks with Locking** - TOCTOU prevention, atomic operations
+- **Booking Check Before Deletion** - Referential integrity, add-on booking checks
+- **Comprehensive Prompt Injection Detection** - 50+ regex patterns, Unicode-aware
+
+**Covers 3 P2 Issues:**
+
+- **Generic Error Messages with Codes** - Structured error responses, error code enumeration
+- **Field Mapping Consistency** - Canonical field names, consistent mapping
+- **Injection Pattern Extensions** - Expanded regex coverage, false positive mitigation
+
+**Covers 1 P3 Issue:**
+
+- **Unicode Normalization (Homoglyph Prevention)** - NFKC normalization, lookalike character handling
+
+**Key Statistics:**
+
+- 3-layer race condition defense (database constraint + advisory lock + retry)
+- 50+ injection detection patterns with false positive testing
+- Dynamic trust tier escalation based on risk factors
+- 100% atomic transactions with pessimistic locking
+- Unicode NFKC normalization for security
+
+**Quick Reference:** [Prevention Quick Reference Guide](./PREVENTION-QUICK-REFERENCE-GUIDE.md) (print and pin!)
+
+**When to Read:**
+
+- Implementing booking operations
+- Adding agent write tools
+- Processing user input in AI context
+- Fixing security vulnerabilities
+- Code reviewing P1 issues
+
+---
+
+### 2.5. Specific Prevention Guides
 
 #### [Email Case-Sensitivity Prevention](./security-issues/PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md)
 
@@ -1058,6 +1106,45 @@ async function ensureLoggedIn(page) {
 
 ---
 
+### "I'm deploying Next.js to Vercel (monorepo)"
+
+**Read:**
+
+1. [Vercel + Next.js Monorepo Deployment Prevention](./deployment-issues/vercel-nextjs-monorepo-deployment-prevention.md) (10 min)
+2. [Vite Monorepo TypeScript Cache Issues](./deployment-issues/vercel-vite-monorepo-typescript-incremental-cache.md) (5 min)
+
+**Pre-Deploy Checklist:**
+
+- [ ] `vercel.json` has correct `buildCommand` and `installCommand`
+- [ ] Root Directory setting is EMPTY in Vercel dashboard (not `apps/web`)
+- [ ] `next.config.js` has `transpilePackages: ['@macon/contracts', '@macon/shared']`
+- [ ] Workspace packages have `"build": "tsc -b --force"` script
+- [ ] ESLint configured for unescaped entities (allow ' and ")
+- [ ] Local verification passes: `npm run verify-nextjs`
+
+**Common Errors & Fixes:**
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `Module not found: @macon/contracts` | Root Directory set | Clear Root Directory, use vercel.json |
+| `ENOENT: dist/index.js` | Missing --force flag | Add `--force` to tsc build |
+| ESLint unescaped entity | Strict rule | Configure react/no-unescaped-entities |
+| Type errors in build | Stale types | Rebuild workspace packages first |
+
+**Verification:**
+
+```bash
+# Simulate Vercel build locally
+npm run verify-nextjs
+
+# Check individual steps
+npm run build -w @macon/contracts
+npm run build -w @macon/shared
+cd apps/web && npm run build
+```
+
+---
+
 ### "I'm running multi-agent code review or parallel TODO resolution"
 
 **Read:**
@@ -1215,6 +1302,30 @@ Task('Remove unused import', {
 - Correct Prisma imports (value, not type-only)
 - JSON field casting with `Prisma.InputJsonValue`
 - Null handling with `Prisma.JsonNull`
+
+---
+
+### Deployment Issues (Vercel + Monorepo)
+
+**Prevention docs:**
+
+- [Vercel + Next.js Monorepo Deployment Prevention](./deployment-issues/vercel-nextjs-monorepo-deployment-prevention.md) (NEW)
+- [Vercel + Vite Monorepo TypeScript Incremental Cache](./deployment-issues/vercel-vite-monorepo-typescript-incremental-cache.md)
+
+**Key patterns:**
+
+- **Never use Root Directory setting** for npm workspaces
+- Build workspace packages before Next.js: `contracts → shared → web`
+- Use `transpilePackages` in next.config.js
+- Use `--force` flag on TypeScript builds for CI
+- Configure ESLint for unescaped entities (allow ' and ")
+- Run `npm run verify-nextjs` before pushing
+
+**Quick verification command:**
+
+```bash
+npm run verify-nextjs   # Simulates Vercel build locally
+```
 
 ---
 
