@@ -1,9 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build --workspace=@macon/contracts && npm run build --workspace=@macon/shared && npm run build --workspace=@macon/web-next",
+  "outputDirectory": "apps/web/.next",
   "framework": "nextjs",
   "installCommand": "npm ci --workspaces --include-workspace-root",
-  "buildCommand": "npm run build --workspace=@macon/contracts && npm run build --workspace=@macon/shared && npm run build --workspace=@macon/web",
-  "outputDirectory": "apps/web/.next",
   "headers": [
     {
       "source": "/(.*)",
