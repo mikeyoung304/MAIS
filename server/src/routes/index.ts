@@ -43,6 +43,7 @@ import { createAdminTenantsRoutes } from './admin/tenants.routes';
 import { createAdminStripeRoutes } from './admin/stripe.routes';
 import { createTenantAdminRoutes } from './tenant-admin.routes';
 import { createTenantAdminStripeRoutes } from './tenant-admin-stripe.routes';
+import { createTenantAdminBillingRoutes } from './tenant-admin-billing.routes';
 import { createTenantAdminReminderRoutes } from './tenant-admin-reminders.routes';
 import { createTenantAdminCalendarRoutes } from './tenant-admin-calendar.routes';
 import { createTenantAdminDepositRoutes } from './tenant-admin-deposits.routes';
@@ -78,6 +79,7 @@ import {
 import { logger } from '../lib/core/logger';
 import { apiKeyService } from '../lib/api-key.service';
 import type { StripeConnectService } from '../services/stripe-connect.service';
+import type { StripePaymentAdapter } from '../adapters/stripe.adapter';
 import type { SchedulingAvailabilityService } from '../services/scheduling-availability.service';
 import type { PackageDraftService } from '../services/package-draft.service';
 import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
@@ -134,7 +136,8 @@ export function createV1Router(
   },
   prisma?: PrismaClient,
   repositories?: Repositories,
-  cacheAdapter?: CacheServicePort
+  cacheAdapter?: CacheServicePort,
+  stripeAdapter?: StripePaymentAdapter
 ): void {
   // Require PrismaClient from DI - fail fast if misconfigured
   if (!prisma) {
@@ -566,6 +569,14 @@ export function createV1Router(
       const tenantAdminStripeRoutes = createTenantAdminStripeRoutes(services.stripeConnect);
       app.use('/v1/tenant-admin/stripe', tenantAuthMiddleware, tenantAdminStripeRoutes);
       logger.info('✅ Tenant admin Stripe Connect routes mounted at /v1/tenant-admin/stripe');
+    }
+
+    // Register tenant admin billing routes (for subscription management)
+    // Requires tenant admin authentication
+    if (stripeAdapter) {
+      const tenantAdminBillingRoutes = createTenantAdminBillingRoutes(stripeAdapter, tenantRepo);
+      app.use('/v1/tenant-admin/billing', tenantAuthMiddleware, tenantAdminBillingRoutes);
+      logger.info('✅ Tenant admin billing routes mounted at /v1/tenant-admin/billing');
     }
 
     // Register tenant admin reminder routes (for lazy reminder evaluation)

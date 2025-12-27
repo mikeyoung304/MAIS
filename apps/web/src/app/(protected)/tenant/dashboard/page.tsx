@@ -20,12 +20,20 @@ import {
 } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { getErrorMessage } from '@/lib/errors';
+import { StartTrialCard, TrialBanner } from '@/components/trial';
 
 interface DashboardStats {
   packagesCount: number;
   bookingsCount: number;
   blackoutsCount: number;
   hasStripeConnected: boolean;
+}
+
+interface TrialStatus {
+  status: 'NONE' | 'TRIALING' | 'ACTIVE' | 'EXPIRED';
+  daysRemaining: number | null;
+  canStartTrial: boolean;
+  hasPackages: boolean;
 }
 
 /**
@@ -39,6 +47,7 @@ interface DashboardStats {
 export default function TenantDashboardPage() {
   const { tenantId, user, slug: authSlug, isAuthenticated } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [trialStatus, setTrialStatus] = useState<TrialStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [slug, setSlug] = useState<string | null>(authSlug || null);
@@ -60,18 +69,20 @@ export default function TenantDashboardPage() {
           }
         }
 
-        // Fetch all data in parallel
-        const [packagesResponse, bookingsResponse, blackoutsResponse, stripeResponse] = await Promise.all([
+        // Fetch all data in parallel (including trial status)
+        const [packagesResponse, bookingsResponse, blackoutsResponse, stripeResponse, trialResponse] = await Promise.all([
           fetch('/api/tenant-admin/packages'),
           fetch('/api/tenant-admin/bookings'),
           fetch('/api/tenant-admin/blackouts'),
           fetch('/api/tenant-admin/stripe/status'),
+          fetch('/api/tenant-admin/trial/status'),
         ]);
 
         const packages = packagesResponse.ok ? await packagesResponse.json() : [];
         const bookings = bookingsResponse.ok ? await bookingsResponse.json() : [];
         const blackouts = blackoutsResponse.ok ? await blackoutsResponse.json() : [];
         const stripeStatus = stripeResponse.ok ? await stripeResponse.json() : null;
+        const trial = trialResponse.ok ? await trialResponse.json() : null;
 
         setStats({
           packagesCount: Array.isArray(packages) ? packages.length : 0,
@@ -79,6 +90,10 @@ export default function TenantDashboardPage() {
           blackoutsCount: Array.isArray(blackouts) ? blackouts.length : 0,
           hasStripeConnected: stripeStatus?.chargesEnabled || false,
         });
+
+        if (trial) {
+          setTrialStatus(trial);
+        }
       } catch (err) {
         logger.error('Dashboard data fetch failed', err instanceof Error ? err : { error: String(err) });
         setError(getErrorMessage(err));
@@ -154,6 +169,14 @@ export default function TenantDashboardPage() {
 
   return (
     <div className="space-y-8 animate-fade-in-up">
+      {/* Trial Banner - Show at top if trialing or expired */}
+      {trialStatus && (trialStatus.status === 'TRIALING' || trialStatus.status === 'EXPIRED') && (
+        <TrialBanner
+          status={trialStatus.status}
+          daysRemaining={trialStatus.daysRemaining ?? 0}
+        />
+      )}
+
       {/* Header */}
       <div>
         <h1 className="font-serif text-3xl font-bold text-text-primary">
@@ -163,6 +186,11 @@ export default function TenantDashboardPage() {
           Here&apos;s an overview of your business.
         </p>
       </div>
+
+      {/* Start Trial Card - Show if has packages but no trial started */}
+      {trialStatus && trialStatus.canStartTrial && (
+        <StartTrialCard onTrialStarted={fetchDashboardData} />
+      )}
 
       {/* Error State */}
       {error && (

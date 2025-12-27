@@ -108,6 +108,7 @@ export interface Container {
   prisma?: PrismaClient; // Export Prisma instance for shutdown
   eventEmitter?: InProcessEventEmitter; // Export event emitter for cleanup
   webhookQueue?: WebhookQueue; // Export webhook queue for shutdown
+  stripeAdapter?: StripePaymentAdapter; // Export Stripe adapter for billing routes
   /**
    * Cleanup method to properly dispose of services and close connections
    * Call this during application shutdown to prevent memory leaks
@@ -243,7 +244,8 @@ export function buildContainer(config: Config): Container {
         adapters.paymentProvider,
         bookingService,
         adapters.webhookRepo,
-        undefined // No queue in mock mode - sync processing
+        undefined, // No queue in mock mode - sync processing
+        mockTenantRepo // For subscription checkout processing
       ),
       admin: new AdminController(identityService, bookingService),
       blackouts: new BlackoutsController(adapters.blackoutRepo),
@@ -329,6 +331,7 @@ export function buildContainer(config: Config): Container {
       prisma: mockPrisma,
       eventEmitter,
       webhookQueue: undefined, // No queue in mock mode
+      stripeAdapter: undefined, // No Stripe in mock mode
       cleanup,
     };
   }
@@ -650,7 +653,7 @@ export function buildContainer(config: Config): Container {
     packages: new PackagesController(catalogService),
     availability: new AvailabilityController(availabilityService),
     bookings: new BookingsController(bookingService),
-    webhooks: new WebhooksController(paymentProvider, bookingService, webhookRepo, webhookQueue),
+    webhooks: new WebhooksController(paymentProvider, bookingService, webhookRepo, webhookQueue, tenantRepo),
     admin: new AdminController(identityService, bookingService),
     blackouts: new BlackoutsController(blackoutRepo),
     adminPackages: new AdminPackagesController(catalogService),
@@ -739,6 +742,7 @@ export function buildContainer(config: Config): Container {
     prisma,
     eventEmitter,
     webhookQueue,
+    stripeAdapter: paymentProvider, // For billing routes
     cleanup,
   };
 }

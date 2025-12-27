@@ -42,6 +42,10 @@ export interface UpdateTenantInput {
   passwordResetExpires?: Date | null;
   // Landing page configuration
   landingPageConfig?: any;
+  // Trial & Subscription fields (Product-Led Growth)
+  trialEndsAt?: Date;
+  subscriptionStatus?: 'NONE' | 'TRIALING' | 'ACTIVE' | 'EXPIRED';
+  stripeCustomerId?: string;
 }
 
 /**

@@ -17,8 +17,15 @@ import { z } from 'zod';
 import { logger } from '../lib/core/logger';
 import type { PaymentProvider, WebhookRepository } from '../lib/ports';
 import type { BookingService } from '../services/booking.service';
+import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import { WebhookValidationError, WebhookProcessingError } from '../lib/errors';
 import type { WebhookJobData } from './types';
+
+// Zod schema for subscription checkout metadata (Product-Led Growth)
+const SubscriptionMetadataSchema = z.object({
+  tenantId: z.string(),
+  checkoutType: z.literal('subscription'),
+});
 
 // Zod schema for Stripe session (runtime validation)
 const StripeSessionSchema = z.object({
@@ -65,7 +72,8 @@ export class WebhookProcessor {
   constructor(
     private readonly paymentProvider: PaymentProvider,
     private readonly bookingService: BookingService,
-    private readonly webhookRepo: WebhookRepository
+    private readonly webhookRepo: WebhookRepository,
+    private readonly tenantRepo?: PrismaTenantRepository
   ) {}
 
   /**
@@ -167,7 +175,18 @@ export class WebhookProcessor {
     event: Stripe.Event,
     effectiveTenantId: string
   ): Promise<void> {
-    // Validate and parse session data
+    // Get raw session object for initial type detection
+    const rawSession = event.data.object as Stripe.Checkout.Session;
+    const metadata = rawSession.metadata || {};
+
+    // Check if this is a subscription checkout (Product-Led Growth)
+    const subscriptionResult = SubscriptionMetadataSchema.safeParse(metadata);
+    if (subscriptionResult.success) {
+      await this.processSubscriptionCheckout(event, rawSession, subscriptionResult.data.tenantId);
+      return;
+    }
+
+    // Validate and parse session data for booking checkouts
     const sessionResult = StripeSessionSchema.safeParse(event.data.object);
     if (!sessionResult.success) {
       logger.error(
@@ -425,5 +444,52 @@ export class WebhookProcessor {
         'Payment failed during checkout - no booking created'
       );
     }
+  }
+
+  /**
+   * Process subscription checkout completion (Product-Led Growth)
+   *
+   * When a tenant completes checkout for the $99/month subscription:
+   * 1. Update subscriptionStatus to ACTIVE
+   * 2. Store stripeCustomerId for future reference
+   */
+  private async processSubscriptionCheckout(
+    event: Stripe.Event,
+    session: Stripe.Checkout.Session,
+    tenantId: string
+  ): Promise<void> {
+    if (!this.tenantRepo) {
+      logger.error(
+        { eventId: event.id, tenantId },
+        'TenantRepository not available - cannot process subscription checkout'
+      );
+      throw new WebhookProcessingError('TenantRepository not configured for subscription processing');
+    }
+
+    const customerId = typeof session.customer === 'string'
+      ? session.customer
+      : session.customer?.id;
+
+    logger.info(
+      {
+        eventId: event.id,
+        sessionId: session.id,
+        tenantId,
+        customerId,
+        subscriptionId: session.subscription,
+      },
+      'Processing subscription checkout completion'
+    );
+
+    // Update tenant subscription status to ACTIVE
+    await this.tenantRepo.update(tenantId, {
+      subscriptionStatus: 'ACTIVE',
+      stripeCustomerId: customerId || undefined,
+    });
+
+    logger.info(
+      { tenantId, eventId: event.id },
+      'Tenant subscription activated successfully'
+    );
   }
 }

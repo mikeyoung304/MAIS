@@ -12,6 +12,7 @@
 import type { PaymentProvider, WebhookRepository } from '../lib/ports';
 import type { BookingService } from '../services/booking.service';
 import type { WebhookQueue } from '../jobs/webhook-queue';
+import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import { WebhookProcessor } from '../jobs/webhook-processor';
 import { logger } from '../lib/core/logger';
 import { WebhookValidationError } from '../lib/errors';
@@ -24,9 +25,10 @@ export class WebhooksController {
     private readonly paymentProvider: PaymentProvider,
     private readonly bookingService: BookingService,
     private readonly webhookRepo: WebhookRepository,
-    private readonly webhookQueue?: WebhookQueue
+    private readonly webhookQueue?: WebhookQueue,
+    private readonly tenantRepo?: PrismaTenantRepository
   ) {
-    this.processor = new WebhookProcessor(paymentProvider, bookingService, webhookRepo);
+    this.processor = new WebhookProcessor(paymentProvider, bookingService, webhookRepo, tenantRepo);
   }
 
   /**

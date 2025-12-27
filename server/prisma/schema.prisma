@@ -66,6 +66,11 @@ model Tenant {
   stripeAccountId String? @unique // Stripe Connected Account ID
   stripeOnboarded Boolean @default(false) // Has completed Stripe onboarding
 
+  // Trial & Subscription (Product-Led Growth)
+  trialEndsAt        DateTime?          // When 14-day trial expires (null = no trial started)
+  subscriptionStatus SubscriptionStatus @default(NONE) // Current subscription state
+  stripeCustomerId   String?            @unique // Stripe Customer ID for Checkout
+
   // Encrypted Secrets Storage
   secrets Json @default("{}") // {stripe: {ciphertext, iv, authTag}}
 
@@ -548,6 +553,14 @@ enum PaymentStatus {
   CAPTURED
   CANCELED
   FAILED
+}
+
+/// Subscription status for tenant billing
+enum SubscriptionStatus {
+  NONE      // Signed up, no trial started
+  TRIALING  // In 14-day trial
+  ACTIVE    // Paid customer
+  EXPIRED   // Trial ended, didn't pay (soft lock)
 }
 
 model BlackoutDate {

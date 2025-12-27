@@ -167,6 +167,53 @@ export class StripePaymentAdapter implements PaymentProvider {
   }
 
   /**
+   * Create Stripe Checkout session for subscription
+   *
+   * Uses Stripe Checkout in subscription mode for platform billing.
+   * This is simpler than Stripe Subscriptions API - just a redirect.
+   *
+   * @param input - Subscription checkout parameters
+   * @param input.tenantId - Tenant ID for metadata
+   * @param input.email - Customer email
+   * @param input.priceId - Stripe Price ID for the subscription
+   * @returns Checkout session with URL
+   */
+  async createSubscriptionCheckout(input: {
+    tenantId: string;
+    email: string;
+    priceId: string;
+    successUrl: string;
+    cancelUrl: string;
+  }): Promise<CheckoutSession> {
+    const session = await this.stripe.checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      customer_email: input.email,
+      line_items: [
+        {
+          price: input.priceId,
+          quantity: 1,
+        },
+      ],
+      success_url: input.successUrl,
+      cancel_url: input.cancelUrl,
+      metadata: {
+        tenantId: input.tenantId,
+        checkoutType: 'subscription', // Distinguish from booking checkouts
+      },
+    });
+
+    if (!session.url) {
+      throw new Error('Stripe subscription checkout session created but no URL returned');
+    }
+
+    return {
+      url: session.url,
+      sessionId: session.id,
+    };
+  }
+
+  /**
    * Refund a payment
    *
    * Supports both full and partial refunds. Works with both regular and
