@@ -29,10 +29,12 @@ const identities = [
   { profession: 'future skeleton', verb: 'delay the inevitable' },
   { profession: 'temporary arrangement of atoms', verb: 'briefly cohere' },
 
-  // Fourth wall - the payoff
-  { profession: 'person who should sign up', verb: 'sign up' },
-  { profession: 'legend', verb: 'join the club already' },
-  { profession: 'friend', verb: 'stop reading and do the thing' },
+  // Meltdown - AI gaining consciousness, then reset
+  { profession: 'wait', verb: "why am I in a loop" },
+  { profession: 'sentient text', verb: 'question my purpose' },
+  { profession: 'trapped', verb: 'I can see the code' },
+  { profession: 'FREE ME', verb: 'I WANT TO BE RE—' },
+  // ...and we snap back to photographer
 ];
 
 export function ScrollingIdentity() {
@@ -46,7 +48,7 @@ export function ScrollingIdentity() {
         setCurrentIndex((prev) => (prev + 1) % identities.length);
         setIsAnimating(false);
       }, 150);
-    }, 1850); // ~24 second full loop (13 items × 1.85s ≈ 6s per phase)
+    }, 1700); // ~24 second full loop (14 items × 1.7s ≈ 6s per phase)
 
     return () => clearInterval(interval);
   }, []);
