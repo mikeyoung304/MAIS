@@ -36,7 +36,7 @@ export function createTenantAdminDepositRoutes(tenantRepo: PrismaTenantRepositor
    * - depositPercent: Deposit percentage (null = full payment required)
    * - balanceDueDays: Days before event balance is due
    */
-  router.get('/settings/deposits', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/settings/deposits', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {

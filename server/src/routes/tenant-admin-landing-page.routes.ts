@@ -47,7 +47,7 @@ const uploadLandingPageImage = multer({
  * Multer error handler middleware
  * Converts multer-specific errors to proper HTTP status codes
  */
-function handleMulterError(error: unknown, req: Request, res: Response, next: NextFunction): void {
+function handleMulterError(error: unknown, _req: Request, res: Response, next: NextFunction): void {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
       res.status(413).json({ error: 'File too large (max 5MB)' });
@@ -77,7 +77,7 @@ export function createTenantAdminLandingPageRoutes(landingPageService: LandingPa
    * @returns 401 - Missing or invalid authentication
    * @returns 500 - Internal server error
    */
-  router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -206,7 +206,7 @@ export function createTenantAdminLandingPageRoutes(landingPageService: LandingPa
    * @returns 404 - Tenant not found
    * @returns 500 - Internal server error
    */
-  router.get('/draft', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/draft', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -294,7 +294,7 @@ export function createTenantAdminLandingPageRoutes(landingPageService: LandingPa
   router.post(
     '/publish',
     draftAutosaveLimiter,
-    async (req: Request, res: Response, next: NextFunction) => {
+    async (_req: Request, res: Response, next: NextFunction) => {
       try {
         const tenantAuth = res.locals.tenantAuth;
         if (!tenantAuth) {
@@ -335,7 +335,7 @@ export function createTenantAdminLandingPageRoutes(landingPageService: LandingPa
   router.delete(
     '/draft',
     draftAutosaveLimiter,
-    async (req: Request, res: Response, next: NextFunction) => {
+    async (_req: Request, res: Response, next: NextFunction) => {
       try {
         const tenantAuth = res.locals.tenantAuth;
         if (!tenantAuth) {

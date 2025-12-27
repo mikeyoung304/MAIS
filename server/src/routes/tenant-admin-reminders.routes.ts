@@ -31,7 +31,7 @@ export function createTenantAdminReminderRoutes(reminderService: ReminderService
    * - pendingCount: Number of pending reminders
    * - upcomingReminders: Array of upcoming reminders (preview)
    */
-  router.get('/status', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/status', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {

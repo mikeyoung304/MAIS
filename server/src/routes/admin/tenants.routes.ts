@@ -29,7 +29,7 @@ export function createAdminTenantsRoutes(prisma: PrismaClient): Router {
    * GET /api/v1/admin/tenants
    * List all tenants with stats
    */
-  router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenants = await tenantRepo.listWithStats();
 

@@ -15,7 +15,7 @@ import { logger, type Logger } from '../core/logger';
  * Adds a unique request ID to each request and response
  * This extends the existing requestLogger middleware with X-Request-ID header
  */
-export function requestIdMiddleware(req: Request, res: Response, next: NextFunction): void {
+export function requestIdMiddleware(_req: Request, res: Response, next: NextFunction): void {
   const requestId = randomUUID();
 
   // Set response header for client tracking

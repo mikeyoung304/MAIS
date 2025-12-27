@@ -29,7 +29,7 @@ export function createTenantAdminBillingRoutes(
    * Redirects tenant to Stripe Checkout for payment.
    * On success, checkout.session.completed webhook updates subscriptionStatus to ACTIVE.
    */
-  router.post('/checkout', async (req: Request, res: Response, next: NextFunction) => {
+  router.post('/checkout', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -83,7 +83,7 @@ export function createTenantAdminBillingRoutes(
    *
    * Returns subscription status, trial info, and billing details.
    */
-  router.get('/status', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/status', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {

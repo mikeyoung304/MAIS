@@ -36,7 +36,7 @@ import { NotFoundError, ValidationError } from '../lib/errors';
 export function createTenantAdminSchedulingRoutes(
   serviceRepo: ServiceRepository,
   availabilityRuleRepo: AvailabilityRuleRepository,
-  bookingService: BookingService,
+  _bookingService: BookingService,
   bookingRepo: BookingRepository
 ): Router {
   const router = Router();
@@ -54,7 +54,7 @@ export function createTenantAdminSchedulingRoutes(
    * @returns 401 - Missing or invalid authentication
    * @returns 500 - Internal server error
    */
-  router.get('/services', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/services', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {

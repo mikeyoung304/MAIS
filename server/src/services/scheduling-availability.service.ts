@@ -507,7 +507,7 @@ export class SchedulingAvailabilityService {
    */
   async isSlotAvailable(
     tenantId: string,
-    serviceId: string,
+    _serviceId: string,
     startTime: Date,
     endTime: Date
   ): Promise<boolean> {

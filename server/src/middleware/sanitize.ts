@@ -31,7 +31,7 @@ export interface SanitizeOptions {
  * ```
  */
 export function sanitizeInput(options: SanitizeOptions = {}) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     if (options.skip) {
       return next();
     }

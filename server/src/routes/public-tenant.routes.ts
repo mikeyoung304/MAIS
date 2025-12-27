@@ -38,7 +38,7 @@ export function createPublicTenantRoutes(tenantRepository: PrismaTenantRepositor
    * NOTE: This is a public endpoint with no timing attack mitigation since
    * it intentionally exposes all active tenant slugs for sitemap purposes.
    */
-  router.get('/', async (req, res) => {
+  router.get('/', async (_req, res) => {
     try {
       const tenants = await tenantRepository.listActive();
       const slugs = tenants.map((t) => ({

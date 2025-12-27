@@ -43,7 +43,7 @@ export function createTenantAdminDomainsRouter(
    * @returns 401 - Missing or invalid authentication
    * @returns 500 - Internal server error
    */
-  router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {

@@ -188,7 +188,7 @@ export class PostmarkMailAdapter implements EmailProvider {
     );
   }
 
-  async sendPasswordReset(to: string, resetToken: string, resetUrl: string): Promise<void> {
+  async sendPasswordReset(to: string, _resetToken: string, resetUrl: string): Promise<void> {
     const subject = 'Reset your password';
     const htmlBody = `
       <!DOCTYPE html>

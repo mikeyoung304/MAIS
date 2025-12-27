@@ -122,7 +122,7 @@ export function createTenantAdminStripeRoutes(stripeConnectService: StripeConnec
    * GET /v1/tenant-admin/stripe/status
    * Get Stripe Connect account status
    */
-  router.get('/status', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/status', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -164,7 +164,7 @@ export function createTenantAdminStripeRoutes(stripeConnectService: StripeConnec
    * POST /v1/tenant-admin/stripe/dashboard
    * Get Stripe Express dashboard login link
    */
-  router.post('/dashboard', async (req: Request, res: Response, next: NextFunction) => {
+  router.post('/dashboard', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {

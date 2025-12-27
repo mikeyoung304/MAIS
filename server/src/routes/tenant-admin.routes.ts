@@ -67,7 +67,7 @@ const uploadPackagePhoto = multer({
  * Multer error handler middleware
  * Converts multer-specific errors (file size, field count, etc.) to proper HTTP status codes
  */
-function handleMulterError(error: unknown, req: Request, res: Response, next: NextFunction): void {
+function handleMulterError(error: unknown, _req: Request, res: Response, next: NextFunction): void {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
       res.status(413).json({ error: 'File too large (max 5MB)' });
@@ -226,7 +226,7 @@ export class TenantAdminController {
    * Get branding (for tenant admin)
    * GET /v1/tenant/branding
    */
-  async getBranding(req: Request, res: Response): Promise<void> {
+  async getBranding(_req: Request, res: Response): Promise<void> {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -293,7 +293,7 @@ export function createTenantAdminRoutes(
    * GET /v1/tenant-admin/packages
    * List all packages for authenticated tenant
    */
-  router.get('/packages', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/packages', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -336,7 +336,7 @@ export function createTenantAdminRoutes(
   router.get(
     '/packages/drafts',
     draftAutosaveLimiter,
-    async (req: Request, res: Response, next: NextFunction) => {
+    async (_req: Request, res: Response, next: NextFunction) => {
       try {
         const tenantAuth = res.locals.tenantAuth;
         if (!tenantAuth) {
@@ -891,7 +891,7 @@ export function createTenantAdminRoutes(
    * GET /v1/tenant-admin/blackouts
    * List all blackout dates for authenticated tenant
    */
-  router.get('/blackouts', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/blackouts', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -1085,7 +1085,7 @@ export function createTenantAdminRoutes(
   router.get(
     '/addons',
     addonReadLimiter,
-    async (req: Request, res: Response, next: NextFunction) => {
+    async (_req: Request, res: Response, next: NextFunction) => {
       try {
         const tenantId = getTenantId(res);
         if (!tenantId) {
@@ -1329,7 +1329,7 @@ export function createTenantAdminRoutes(
    *
    * SECURITY: Excludes sensitive fields (apiKeySecret, passwordHash, secrets, etc.)
    */
-  router.get('/profile', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/profile', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantId = getTenantId(res);
       if (!tenantId) {
@@ -1380,7 +1380,7 @@ export function createTenantAdminRoutes(
    * - Revenue stats (this month, total)
    * - Recent activity
    */
-  router.get('/dashboard', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/dashboard', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantId = getTenantId(res);
       if (!tenantId) {
@@ -1650,7 +1650,7 @@ export function createTenantAdminRoutes(
    * Returns aggregated list of all visual assets for agent context.
    * Useful for suggesting existing images or understanding visual content.
    */
-  router.get('/gallery', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/gallery', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantId = getTenantId(res);
       if (!tenantId) {
@@ -1772,7 +1772,7 @@ export function createTenantAdminRoutes(
    * - canStartTrial: boolean (has packages but no trial started)
    * - hasPackages: boolean
    */
-  router.get('/trial/status', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/trial/status', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantId = getTenantId(res);
       if (!tenantId) {
@@ -1827,7 +1827,7 @@ export function createTenantAdminRoutes(
    * Idempotent: Returns existing trial if already started
    * Requires: At least one package created
    */
-  router.post('/trial/start', async (req: Request, res: Response, next: NextFunction) => {
+  router.post('/trial/start', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantId = getTenantId(res);
       if (!tenantId) {

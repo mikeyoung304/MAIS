@@ -615,7 +615,7 @@ export const requestFileUploadTool: AgentTool = {
     },
     required: ['fileType', 'filename'],
   },
-  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+  async execute(_context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
     const fileType = params.fileType as string;
     const filename = params.filename as string;
 

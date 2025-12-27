@@ -30,7 +30,7 @@ export function createTenantAdminCalendarRoutes(
    * GET /v1/tenant-admin/calendar/status
    * Returns current calendar configuration status (configured/not, calendar ID masked)
    */
-  router.get('/status', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/status', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -164,7 +164,7 @@ export function createTenantAdminCalendarRoutes(
    * DELETE /v1/tenant-admin/calendar/config
    * Remove calendar configuration
    */
-  router.delete('/config', async (req: Request, res: Response, next: NextFunction) => {
+  router.delete('/config', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -201,7 +201,7 @@ export function createTenantAdminCalendarRoutes(
    * POST /v1/tenant-admin/calendar/test
    * Test connection by attempting to authenticate with Google Calendar API
    */
-  router.post('/test', async (req: Request, res: Response, next: NextFunction) => {
+  router.post('/test', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {

@@ -107,7 +107,7 @@ export function createTenantAuthRoutes(tenantAuthService: TenantAuthService): Ro
   router.get(
     '/me',
     tenantAuthMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
+    async (_req: Request, res: Response, next: NextFunction) => {
       try {
         const tenantAuth = (res.locals as any).tenantAuth;
 

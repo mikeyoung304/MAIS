@@ -281,7 +281,7 @@ export class MockCatalogRepository implements CatalogRepository {
   }
 
   async createAddOn(
-    tenantId: string,
+    _tenantId: string,
     data: {
       packageId: string;
       title: string;
@@ -304,7 +304,7 @@ export class MockCatalogRepository implements CatalogRepository {
   }
 
   async updateAddOn(
-    tenantId: string,
+    _tenantId: string,
     id: string,
     data: {
       packageId?: string;
@@ -395,7 +395,7 @@ export class MockCatalogRepository implements CatalogRepository {
   }
 
   async updateDraft(
-    tenantId: string,
+    _tenantId: string,
     packageId: string,
     draft: UpdatePackageDraftInput
   ): Promise<PackageWithDraft> {
@@ -447,7 +447,7 @@ export class MockCatalogRepository implements CatalogRepository {
 // Mock Booking Repository
 export class MockBookingRepository implements BookingRepository {
   async create(
-    tenantId: string,
+    _tenantId: string,
     booking: Booking,
     paymentData?: {
       amount: number;
@@ -523,7 +523,7 @@ export class MockBookingRepository implements BookingRepository {
   }
 
   async updateGoogleEventId(
-    tenantId: string,
+    _tenantId: string,
     bookingId: string,
     googleEventId: string
   ): Promise<void> {
@@ -537,7 +537,7 @@ export class MockBookingRepository implements BookingRepository {
   }
 
   async update(
-    tenantId: string,
+    _tenantId: string,
     bookingId: string,
     data: {
       eventDate?: string;
@@ -643,9 +643,9 @@ export class MockBookingRepository implements BookingRepository {
   }
 
   async findTimeslotBookings(
-    tenantId: string,
+    _tenantId: string,
     date: Date,
-    serviceId?: string
+    _serviceId?: string
   ): Promise<TimeslotBooking[]> {
     // Mock mode: Return empty array for now
     // Real TIMESLOT bookings would need to be stored with startTime/endTime
@@ -658,10 +658,10 @@ export class MockBookingRepository implements BookingRepository {
   }
 
   async findTimeslotBookingsInRange(
-    tenantId: string,
+    _tenantId: string,
     startDate: Date,
     endDate: Date,
-    serviceId?: string
+    _serviceId?: string
   ): Promise<TimeslotBooking[]> {
     // Mock mode: Return empty array for now
     // Real TIMESLOT bookings would need to be stored with startTime/endTime
@@ -678,7 +678,7 @@ export class MockBookingRepository implements BookingRepository {
   }
 
   async findAppointments(
-    tenantId: string,
+    _tenantId: string,
     filters?: {
       status?: string;
       serviceId?: string;
@@ -740,9 +740,9 @@ export class MockBookingRepository implements BookingRepository {
    * P1-147 FIX: Mock implementation - in-memory is naturally atomic
    */
   async completeBalancePayment(
-    tenantId: string,
+    _tenantId: string,
     bookingId: string,
-    balanceAmountCents: number
+    _balanceAmountCents: number
   ): Promise<Booking | null> {
     const booking = bookings.get(bookingId);
     if (!booking) {
@@ -789,7 +789,7 @@ export class MockBlackoutRepository implements BlackoutRepository {
   }
 
   async findBlackoutById(
-    tenantId: string,
+    _tenantId: string,
     id: string
   ): Promise<{ id: string; date: string; reason?: string } | null> {
     // Mock mode: Ignore tenantId, use date as ID
