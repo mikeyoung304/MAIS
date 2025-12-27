@@ -17,13 +17,15 @@ import { createOrUpdateTenant } from './utils';
 const HANDLED_SLUG = 'handled';
 const HANDLED_EMAIL = 'hello@gethandled.ai';
 
-// Production guard: require explicit password in production
-const isProduction = process.env.NODE_ENV === 'production';
-const envPassword = process.env.HANDLED_ADMIN_PASSWORD;
-if (isProduction && !envPassword) {
-  throw new Error('HANDLED_ADMIN_PASSWORD environment variable is required in production');
+// Password from env or fallback for development
+function getHandledPassword(): string {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const envPassword = process.env.HANDLED_ADMIN_PASSWORD;
+  if (isProduction && !envPassword) {
+    throw new Error('HANDLED_ADMIN_PASSWORD environment variable is required in production');
+  }
+  return envPassword || 'handled-admin-2025!';
 }
-const HANDLED_PASSWORD = envPassword || 'handled-admin-2025!';
 
 export async function seedHandled(prisma: PrismaClient): Promise<void> {
   const existingTenant = await prisma.tenant.findUnique({
@@ -50,7 +52,7 @@ export async function seedHandled(prisma: PrismaClient): Promise<void> {
         logger.info('Creating new HANDLED tenant with generated keys');
       }
 
-      const passwordHash = await bcrypt.hash(HANDLED_PASSWORD, 10);
+      const passwordHash = await bcrypt.hash(getHandledPassword(), 10);
 
       // HANDLED branding: sage green, serif fonts
       const tenant = await createOrUpdateTenant(tx, {

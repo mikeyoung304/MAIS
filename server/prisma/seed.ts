@@ -78,8 +78,10 @@ async function main() {
   try {
     switch (mode) {
       case 'production':
-        // Production: Only platform admin, requires env vars
+        // Production: Platform admin + HANDLED "Tenant Zero" (company website)
+        // HANDLED tenant is required for www.gethandled.ai to work
         await seedPlatform(prisma);
+        await seedHandled(prisma);
         break;
 
       case 'e2e':
