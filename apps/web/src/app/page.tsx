@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation';
+import { permanentRedirect } from 'next/navigation';
 
 /**
  * Root page redirect to MAIS tenant storefront
@@ -7,8 +7,10 @@ import { redirect } from 'next/navigation';
  * the same config-driven architecture we sell to clients. This redirect
  * ensures the root URL serves the MAIS tenant storefront.
  *
+ * Uses permanentRedirect (308) for SEO benefits and browser caching.
+ *
  * @see plans/feat-mais-tenant-zero-dogfooding.md
  */
 export default function HomePage() {
-  redirect('/t/mais');
+  permanentRedirect('/t/mais');
 }

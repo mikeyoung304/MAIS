@@ -333,7 +333,10 @@ export const PricingTierSchema = z.object({
   description: z.string().max(200).optional(),
   features: z.array(z.string().max(100)).max(10),
   ctaText: z.string().max(30).optional(),
-  ctaHref: z.string().max(200).optional(),
+  ctaHref: z.union([
+    SafeUrlSchema, // Absolute URLs must be http/https
+    z.string().regex(/^\/[a-zA-Z0-9\-_.~/?#[\]@!$&'()*+,;=%]*$/, 'Relative URLs must start with / and contain valid path characters'),
+  ]).optional(),
   isPopular: z.boolean().optional(),
   variant: z.enum(['standard', 'enterprise']).optional(),
 });

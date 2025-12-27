@@ -16,7 +16,14 @@ import { createOrUpdateTenant } from './utils';
 // Fixed slug for MAIS tenant
 const MAIS_SLUG = 'mais';
 const MAIS_EMAIL = 'hello@maconaisolutions.com';
-const MAIS_PASSWORD = process.env.MAIS_ADMIN_PASSWORD || 'mais-admin-2025!';
+
+// Production guard: require explicit password in production
+const isProduction = process.env.NODE_ENV === 'production';
+const envPassword = process.env.MAIS_ADMIN_PASSWORD;
+if (isProduction && !envPassword) {
+  throw new Error('MAIS_ADMIN_PASSWORD environment variable is required in production');
+}
+const MAIS_PASSWORD = envPassword || 'mais-admin-2025!';
 
 export async function seedMAIS(prisma: PrismaClient): Promise<void> {
   const existingTenant = await prisma.tenant.findUnique({
@@ -79,7 +86,7 @@ export async function seedMAIS(prisma: PrismaClient): Promise<void> {
                   },
                   {
                     type: 'text',
-                    headline: "Running a business shouldn't require a computer science degree.",
+                    headline: "You shouldn't need a tech degree to run one.",
                     content: "Website builders. Payment processors. Email marketing. Social media schedulers. CRM systems. AI tools. The tech stack keeps growing.\n\nYou didn't sign up to manage subscriptions. You signed up to build something meaningful.",
                     imagePosition: 'left',
                   },
