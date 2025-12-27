@@ -35,6 +35,7 @@
     "dev:e2e": "concurrently -n server,client -c cyan,magenta \"npm run dev:api\" \"npm run dev:client\"",
     "wait-for-servers": "node e2e/wait-for-servers.js",
     "verify-build": "bash scripts/verify-build.sh",
+    "verify-nextjs": "bash scripts/verify-nextjs-build.sh",
     "prepare": "node -e \"if (process.env.CI || process.env.RENDER) process.exit(0)\" && husky || true"
   },
   "devDependencies": {

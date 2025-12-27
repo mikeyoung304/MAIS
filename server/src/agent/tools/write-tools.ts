@@ -1089,7 +1089,10 @@ export const deleteSegmentTool: AgentTool = {
 /**
  * update_booking - Update booking details
  *
- * Trust Tier: T3 for date changes, T2 for notes/status only
+ * Trust Tier:
+ * - T3 for date changes (affects customer)
+ * - T3 for CANCELED status (high-impact operation)
+ * - T2 for notes or other status changes
  */
 export const updateBookingTool: AgentTool = {
   name: 'update_booking',

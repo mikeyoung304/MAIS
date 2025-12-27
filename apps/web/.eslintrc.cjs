@@ -32,6 +32,17 @@ module.exports = {
     'react/react-in-jsx-scope': 'off', // Not needed in Next.js
     'react/prop-types': 'off', // Using TypeScript for prop types
     'no-console': ['warn', { allow: ['warn', 'error'] }],
+    // Allow apostrophes and quotes in JSX text (React 17+ handles escaping)
+    // Only forbid < and > which could be misinterpreted as JSX tags
+    'react/no-unescaped-entities': [
+      'error',
+      {
+        forbid: [
+          { char: '>', alternatives: ['&gt;'] },
+          { char: '<', alternatives: ['&lt;'] },
+        ],
+      },
+    ],
   },
   ignorePatterns: ['node_modules', '.next', 'out'],
 };
