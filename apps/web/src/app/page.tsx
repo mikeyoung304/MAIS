@@ -174,8 +174,18 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 md:pt-40 md:pb-32 px-6">
-        <div className="max-w-4xl mx-auto text-center">
+      <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 px-6 overflow-hidden min-h-[90vh] flex flex-col justify-center">
+        {/* Ambient decorations */}
+        <div
+          className="absolute top-1/4 right-[15%] w-96 h-96 bg-sage/8 rounded-full blur-3xl pointer-events-none"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute bottom-1/4 left-[10%] w-64 h-64 bg-sage/5 rounded-full blur-3xl pointer-events-none"
+          aria-hidden="true"
+        />
+
+        <div className="relative max-w-4xl mx-auto text-center">
           <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary leading-[1.1] tracking-tight">
             You&apos;re a <ScrollingIdentity />
           </h1>
@@ -203,6 +213,13 @@ export default function HomePage() {
             </Button>
           </div>
         </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+          <div className="w-6 h-10 rounded-full border-2 border-neutral-300 flex items-start justify-center p-2">
+            <div className="w-1.5 h-3 bg-neutral-400 rounded-full" />
+          </div>
+        </div>
       </section>
 
       {/* Problem Section */}
@@ -217,8 +234,9 @@ export default function HomePage() {
               because you help people heal. A coach because you unlock potential.
             </p>
             <p>
-              Not because you wanted to spend your evenings comparing payment processors,
-              watching website tutorials, or figuring out which AI tools are actually worth using.
+              But somewhere between the first DM and the final delivery, you became your own
+              IT department. Calendar Tetris. Payment chasing. Tutorial watching. The AI tool
+              of the week that promises to &quot;revolutionize&quot; everything.
             </p>
             <p>
               The tech keeps changing. Every week there&apos;s something new you &quot;should&quot; be
@@ -269,6 +287,21 @@ export default function HomePage() {
             <p className="mt-4 text-lg text-text-muted">
               No contracts. No hidden fees. Cancel anytime.
             </p>
+            {/* Trust badges */}
+            <div className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-text-muted">
+              <div className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-sage" />
+                <span>No setup fees</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-sage" />
+                <span>Cancel anytime</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-sage" />
+                <span>Humans answer</span>
+              </div>
+            </div>
           </div>
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {tiers.map((tier) => (
