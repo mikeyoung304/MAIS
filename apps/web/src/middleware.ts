@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import type { NextRequest as _NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 
 /**
@@ -56,7 +56,7 @@ export default auth((request) => {
   // ===== AUTHENTICATION CHECK =====
   // Check if this is a protected route
   const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
-  const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
+  const _isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 
   // Get session from NextAuth
   const session = request.auth;

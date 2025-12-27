@@ -44,7 +44,7 @@ const PAGE_METADATA: Record<PageName, { label: string; description: string }> = 
  */
 export default function PageEditorPage() {
   const params = useParams();
-  const router = useRouter();
+  const _router = useRouter();
   const { slug } = useAuth();
   const pageType = params.pageType as PageName;
 

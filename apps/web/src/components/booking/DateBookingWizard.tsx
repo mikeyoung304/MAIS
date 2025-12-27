@@ -299,7 +299,7 @@ ReviewStep.displayName = 'ReviewStep';
 export function DateBookingWizard({
   package: pkg,
   tenantApiKey,
-  tenantSlug,
+  tenantSlug: _tenantSlug,
   onBookingStart
 }: DateBookingWizardProps) {
   // State management

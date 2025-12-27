@@ -40,7 +40,7 @@ type FormStatus = 'idle' | 'submitting' | 'success' | 'error';
  * Phase 1: Simulates success (1s delay)
  * Phase 2: Will call POST /v1/inquiries
  */
-export function ContactForm({ tenantName, basePath, domainParam }: ContactFormProps) {
+export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: ContactFormProps) {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -78,11 +78,12 @@ export function ContactForm({ tenantName, basePath, domainParam }: ContactFormPr
         if (!value.trim()) return 'Name is required';
         if (value.trim().length < 2) return 'Name must be at least 2 characters';
         return undefined;
-      case 'email':
+      case 'email': {
         if (!value.trim()) return 'Email is required';
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(value)) return 'Please enter a valid email';
         return undefined;
+      }
       case 'message':
         if (!value.trim()) return 'Message is required';
         if (value.trim().length < 10) return 'Message must be at least 10 characters';

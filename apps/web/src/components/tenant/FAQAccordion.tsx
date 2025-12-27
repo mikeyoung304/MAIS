@@ -42,16 +42,18 @@ export function FAQAccordion({ faqItems, basePath, domainParam }: FAQAccordionPr
       if (faqItems.length === 0) return;
 
       switch (e.key) {
-        case 'ArrowDown':
+        case 'ArrowDown': {
           e.preventDefault();
           const nextIndex = (index + 1) % faqItems.length;
           itemRefs.current[nextIndex]?.focus();
           break;
-        case 'ArrowUp':
+        }
+        case 'ArrowUp': {
           e.preventDefault();
           const prevIndex = (index - 1 + faqItems.length) % faqItems.length;
           itemRefs.current[prevIndex]?.focus();
           break;
+        }
         case 'Home':
           e.preventDefault();
           itemRefs.current[0]?.focus();
