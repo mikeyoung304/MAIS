@@ -23,4 +23,23 @@ npm run test:unit
 echo "Running TypeScript type check..."
 npm run typecheck
 
+# Check for unused variables in Next.js (matches production build strictness)
+# This catches issues that would fail on Render/Vercel but pass locally
+echo "Checking Next.js unused variable strictness..."
+if git diff --cached --name-only | grep -q "apps/web/"; then
+  (cd apps/web && npx tsc --noEmit --noUnusedLocals --noUnusedParameters 2>&1) || {
+    echo ""
+    echo "ERROR: Unused variables detected in apps/web/"
+    echo "Production builds enforce noUnusedLocals and noUnusedParameters."
+    echo ""
+    echo "Fix options:"
+    echo "  1. Remove truly unused variables"
+    echo "  2. Use the variable (don't just prefix with _)"
+    echo "  3. Only prefix with _ if variable is TRULY unused"
+    echo ""
+    echo "See: docs/solutions/build-errors/typescript-unused-variables-build-failure-MAIS-20251227.md"
+    exit 1
+  }
+fi
+
 echo "Pre-commit checks passed!"

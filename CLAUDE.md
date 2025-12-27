@@ -618,6 +618,7 @@ export class BookingService {
 12. **Console.log in Next.js:** Use `logger` utility from `@/lib/logger`
 13. **Duplicate data fetching:** Wrap shared SSR functions with React `cache()`
 14. **Vercel Root Directory setting:** Never set Root Directory for npm workspaces monorepos - it breaks dependency hoisting
+15. **Wrong underscore prefix for unused vars:** Only prefix with `_` if variable is TRULY unused - variables passed to logger, used in assignments, or conditionals are NOT unused
 
 ## Prevention Strategies (Read These!)
 
@@ -631,8 +632,11 @@ The following links prevent common mistakes from recurring:
 - **[schema-drift-prevention](docs/solutions/database-issues/schema-drift-prevention-MAIS-20251204.md)** - Schema drift prevention (P0)
 - **[nextjs-migration-lessons-learned](docs/solutions/code-review-patterns/nextjs-migration-lessons-learned-MAIS-20251225.md)** - 10 lessons from the Next.js migration
 - **[vercel-nextjs-npm-workspaces](docs/solutions/deployment-issues/vercel-nextjs-npm-workspaces-root-directory-MAIS-20251226.md)** - Vercel deployment fix for npm workspaces monorepos
+- **[typescript-unused-variables-build-failure](docs/solutions/build-errors/typescript-unused-variables-build-failure-MAIS-20251227.md)** - Unused variable build errors and underscore prefix decision tree
 
 **Key insight from Commit 417b8c0:** ts-rest has type compatibility issues with Express 4.x/5.x. The `{ req: any }` in route handlers is REQUIRED and must not be removed. Document library limitations instead of trying to "fix" them.
+
+**Key insight from Unused Variables Fix:** Only prefix with `_` if the variable is TRULY unused. Variables passed to logger calls, used in assignments, or referenced in conditionals are NOT unused - they are used.
 
 ## Quick Start Checklist
 

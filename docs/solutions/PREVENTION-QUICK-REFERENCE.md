@@ -540,6 +540,41 @@ const tenant = await repo.findByEmail(email.toLowerCase().trim());
 
 ---
 
+## TypeScript Unused Variables (CRITICAL)
+
+```typescript
+// Only prefix with _ if TRULY unused in function body
+
+// ✅ CORRECT - error IS used (passed to logger)
+catch (error) {
+  logger.error({ error }, 'Failed');  // error is USED here!
+  throw new Error('Failed');
+}
+
+// ❌ WRONG - don't prefix used variables
+catch (_error) {  // WRONG! _error implies unused
+  logger.error({ _error }, 'Failed');
+}
+
+// ✅ CORRECT - truly unused callback parameter
+array.map((_item, index) => index);
+
+// ✅ CORRECT - remove unused instead of prefixing
+const { id, name } = entity;  // Only destructure what you use
+```
+
+### Underscore Prefix Decision Tree
+
+```
+Is variable used ANYWHERE in function body?
+├── YES → DO NOT prefix with _
+└── NO (truly never referenced)
+    ├── Required callback parameter? → Prefix with _
+    └── Otherwise → REMOVE IT entirely
+```
+
+---
+
 ## 📞 When in Doubt
 
 1. Check similar code in codebase
@@ -555,10 +590,11 @@ const tenant = await repo.findByEmail(email.toLowerCase().trim());
 - [Comprehensive Prevention Strategies](./COMPREHENSIVE-PREVENTION-STRATEGIES.md)
 - [Multi-Tenant Implementation Guide](../multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md)
 - [Email Case-Sensitivity Prevention](./security-issues/PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md)
+- [TypeScript Unused Variables Prevention](./build-errors/typescript-unused-variables-build-failure-MAIS-20251227.md)
 - [CLAUDE.md](../../CLAUDE.md)
 
 ---
 
-**Keep this handy! Print it out! 📄**
+**Keep this handy! Print it out!**
 
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-12-27

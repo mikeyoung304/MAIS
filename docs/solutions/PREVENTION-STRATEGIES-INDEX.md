@@ -1309,6 +1309,7 @@ Task('Remove unused import', {
 
 - [Prisma TypeScript Build Failure Prevention](./PRISMA-TYPESCRIPT-BUILD-PREVENTION.md)
 - [TypeScript Build Errors Resolution (2025-12-27)](./TYPESCRIPT-BUILD-ERRORS-RESOLUTION-20251227.md) - Property name mismatches, type assertions, stub service patterns
+- [TypeScript Unused Variable Underscore Prefix (TS6133)](./build-errors/typescript-unused-variable-underscore-prefix-MAIS-20251227.md) - When to prefix unused parameters with `_`
 
 **Key patterns:**
 
@@ -1815,6 +1816,7 @@ Are you creating a todo based on a plan?
 
 **Last Updated:** 2025-12-27
 **Recent Additions (2025-12-27):**
+- TypeScript Unused Variable Underscore Prefix (TS6133) - when to use `_` prefix for unused params (Render deployment fix)
 - TypeScript Build Errors Resolution - property name mismatches, type assertions, stub service patterns (Render deployment fix)
 - MAIS Tenant Zero seed email correction
 

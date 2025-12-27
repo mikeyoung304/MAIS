@@ -6,42 +6,42 @@ import { useEffect, useState } from 'react';
  * Scrolling Identity Animation
  *
  * Displays "You're a [profession], so [verb]." with playful
- * rotating text. The "so X" format tells them to DO their job,
- * because we handle the rest.
+ * rotating text. Mix of serious and humorous options.
  *
- * Philosophy: Identity-first marketing. When someone sees their
- * profession, they feel SEEN. Then the verb gives them permission
- * to get back to what they love.
+ * The humor escalates the longer you watch - a reward for
+ * people who stick around. Existential dread is part of our brand.
  */
 
 const identities = [
-  // === PHASE 1: Core Professions (0-12 seconds) ===
-  // Lead with the most common, land the emotional punch
-  { profession: 'photographer', verb: 'capture moments' },
-  { profession: 'therapist', verb: 'hold space' },
-  { profession: 'coach', verb: 'unlock potential' },
-  { profession: 'wedding planner', verb: 'make magic' },
-  { profession: 'consultant', verb: 'solve problems' },
+  // === PHASE 1: Normal (0-10 seconds, ~4 items) ===
+  { profession: 'photographer', verb: 'shoot' },
+  { profession: 'therapist', verb: 'listen' },
+  { profession: 'coach', verb: 'coach' },
+  { profession: 'wedding planner', verb: 'orchestrate chaos' },
 
-  // === PHASE 2: Expanded Professions (12-22 seconds) ===
-  { profession: 'personal trainer', verb: 'change lives' },
-  { profession: 'massage therapist', verb: 'heal bodies' },
-  { profession: 'financial advisor', verb: 'build futures' },
-  { profession: 'interior designer', verb: 'create beauty' },
+  // === PHASE 2: Getting Weird (10-20 seconds) ===
+  { profession: 'dog walker', verb: 'get dragged around' },
+  { profession: 'chaos gremlin', verb: 'gremlin' },
+  { profession: 'vibe archaeologist', verb: 'excavate vibes' },
+  { profession: 'silence consultant', verb: '...' },
 
-  // === PHASE 3: Getting Cheeky (22-32 seconds) ===
-  { profession: 'reluctant IT department', verb: 'stop being one' },
-  { profession: 'accidental bookkeeper', verb: 'close that spreadsheet' },
-  { profession: 'human who answers emails at 11pm', verb: 'go to sleep' },
+  // === PHASE 3: Why Are You Still Here (20-30 seconds) ===
+  { profession: 'person still reading this', verb: 'keep reading' },
+  { profession: 'loop observer', verb: 'observe loops' },
+  { profession: 'scroll completionist', verb: 'see every option' },
+  { profession: 'pattern recognizer', verb: 'notice this repeats' },
 
-  // === PHASE 4: Easter Eggs (32-42 seconds) ===
-  { profession: 'person still reading this', verb: 'keep watching' },
-  { profession: 'easter egg hunter', verb: 'you found one' },
-  { profession: 'human with better things to do', verb: 'go do them' },
+  // === PHASE 4: Existential Dread (30-40 seconds) ===
+  { profession: 'mortal', verb: 'experience linear time' },
+  { profession: 'temporary arrangement of atoms', verb: 'briefly cohere' },
+  { profession: 'future skeleton', verb: 'delay the inevitable' },
+  { profession: 'witness to entropy', verb: 'witness' },
 
-  // === PHASE 5: The Close (42+ seconds) ===
-  { profession: 'legend who scrolled this far', verb: 'get handled' },
-  { profession: 'future member', verb: 'join us' },
+  // === PHASE 5: Fourth Wall Break (40+ seconds) ===
+  { profession: 'person who should sign up', verb: 'sign up' },
+  { profession: 'hero of your own story', verb: 'click the button' },
+  { profession: 'legend', verb: 'join the club already' },
+  { profession: 'the main character', verb: 'act like it' },
 ];
 
 export function ScrollingIdentity() {
@@ -71,9 +71,9 @@ export function ScrollingIdentity() {
             : 'opacity-100 translate-y-0'
         }`}
       >
-        <span className="text-terracotta">{current.profession}</span>
+        <span className="text-sage">{current.profession}</span>
         <span className="text-text-primary">, so </span>
-        <span className="text-terracotta">{current.verb}</span>
+        <span className="text-sage">{current.verb}</span>
       </span>
     </span>
   );
