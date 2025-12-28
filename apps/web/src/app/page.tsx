@@ -12,9 +12,7 @@ import {
   MessageSquare,
   FileText,
   Sparkles,
-  Camera,
   Heart,
-  Palette,
   ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -330,11 +328,10 @@ export default function HomePage() {
             />
 
             <div className="relative max-w-5xl mx-auto">
-              {/* Headline - static punch, straight to contrast */}
+              {/* Headline - time is the emotional hook */}
               <div className="text-center mb-12">
                 <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight">
-                  You didn&apos;t start this to become a{' '}
-                  <span className="text-sage">tech expert.</span>
+                  10 hours a week. <span className="text-sage">Gone.</span>
                 </h2>
               </div>
 
@@ -347,7 +344,7 @@ export default function HomePage() {
                       <Clock className="w-5 h-5 text-neutral-400" />
                     </div>
                     <span className="text-sm font-medium text-neutral-400 uppercase tracking-wide">
-                      Your time now
+                      Where it goes
                     </span>
                   </div>
                   <ul className="space-y-4">
@@ -355,7 +352,7 @@ export default function HomePage() {
                       { icon: MessageSquare, text: 'Responding to DMs at 11pm' },
                       { icon: FileText, text: 'Chasing unpaid invoices' },
                       { icon: Calendar, text: 'Back-and-forth on scheduling' },
-                      { icon: Mail, text: 'Explaining pricing for the 100th time' },
+                      { icon: Mail, text: 'Explaining pricing' },
                     ].map((item) => (
                       <li key={item.text} className="flex items-center gap-3">
                         <item.icon className="w-5 h-5 text-neutral-500 flex-shrink-0" />
@@ -365,7 +362,7 @@ export default function HomePage() {
                   </ul>
                 </div>
 
-                {/* What you should be doing */}
+                {/* What you get back */}
                 <div className="bg-sage/10 rounded-3xl p-8 border border-sage/30 relative overflow-hidden">
                   <div
                     className="absolute -top-10 -right-10 w-32 h-32 bg-sage/10 rounded-full blur-2xl pointer-events-none"
@@ -377,15 +374,15 @@ export default function HomePage() {
                         <Sparkles className="w-5 h-5 text-sage" />
                       </div>
                       <span className="text-sm font-medium text-sage uppercase tracking-wide">
-                        What you love
+                        What you get back
                       </span>
                     </div>
                     <ul className="space-y-4">
                       {[
-                        { icon: Camera, text: 'Capturing that perfect moment' },
-                        { icon: Heart, text: 'Changing lives in your sessions' },
-                        { icon: Palette, text: "Creating work you're proud of" },
-                        { icon: Users, text: 'Being present with your clients' },
+                        { icon: Calendar, text: 'Weekends without the laptop' },
+                        { icon: Users, text: 'Dinner with your family, not your inbox' },
+                        { icon: Sparkles, text: 'Energy for the work you actually love' },
+                        { icon: Heart, text: "Rest that doesn't feel like falling behind" },
                       ].map((item) => (
                         <li key={item.text} className="flex items-center gap-3">
                           <item.icon className="w-5 h-5 text-sage flex-shrink-0" />
@@ -400,7 +397,7 @@ export default function HomePage() {
               {/* Transition statement + CTA */}
               <div className="text-center">
                 <p className="text-2xl md:text-3xl font-serif font-medium text-text-primary mb-8">
-                  What if you could get back to the work that matters?
+                  Get your time back.
                 </p>
                 <Button
                   asChild
