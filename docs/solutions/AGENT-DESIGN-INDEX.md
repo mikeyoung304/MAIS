@@ -183,6 +183,110 @@
 
 ---
 
+### 5. **AGENT-TOOL-ADDITION-PREVENTION.md** (NEW - 456 lines)
+
+**The Operational Pattern** - Use when adding features to UI or agent
+
+**Contents:**
+
+1.  **Problem Pattern**
+    - Hardcoded error messages in frontend
+    - Action parity gaps (UI-only actions)
+
+2.  **Prevention Strategy #1: Backend-Driven Error Messages**
+    - Service layer domain errors with reason codes
+    - Route mapping errors to HTTP responses
+    - Contract definition for error schemas
+    - Frontend reading backend error reasons
+    - Agent tools receiving same error format
+    - System prompt explaining error meanings
+
+3.  **Prevention Strategy #2: Action Parity Checklist**
+    - Audit: List all UI actions
+    - Verification: Create missing tools
+    - Testing: Full integration tests
+    - When NOT to create tools (cosmetics, navigation)
+
+4.  **Prevention Strategy #3: Trust Tier Guidelines**
+    - T1 (Auto): No confirmation, safe operations
+    - T2 (Soft): Soft confirmation for reversible changes
+    - T3 (Hard): Explicit confirmation for irreversible changes
+    - Error handling for each tier
+
+5.  **Code Examples**
+    - Complete pattern: Feature with dynamic errors
+    - Pattern: Tool for previously UI-only action
+
+6.  **Quick Checklist & Decision Tree**
+    - 7-step verification process
+    - Decision tree for "should this be a tool?"
+
+**Best For:**
+
+- Adding new features to UI
+- Creating new agent tools
+- Fixing hardcoded error messages
+- Ensuring action parity
+- New team members learning the pattern
+
+**Time to Use:** 15 minutes planning + implementation time
+
+---
+
+### 6. **AGENT-TOOL-ADDITION-QUICK-CHECKLIST.md** (NEW - 234 lines)
+
+**The Quick Reference** - Print and use daily
+
+**Contents:**
+
+1.  **Pre-Implementation (15 min)**
+    - Feature discovery questions
+    - Action parity audit
+    - Trust tier assignment
+
+2.  **Backend Error Messages Pattern**
+    - Step 1: Service domain error
+    - Step 2: Route mapping
+    - Step 3: Contract definition
+    - Step 4: Frontend usage
+    - Step 5: Agent tool usage
+    - Step 6: System prompt
+
+3.  **Agent Tool Addition Checklist**
+    - Planning (30 min)
+    - Implementation (coding)
+    - Testing (before PR)
+    - Documentation
+
+4.  **Action Parity Verification Template**
+    - UI actions listed
+    - Tools created
+    - Error scenarios documented
+
+5.  **Error Message Pattern Quick Ref**
+    - What NOT to do
+    - What to do correctly
+
+6.  **Common Mistakes**
+    - Hardcoded error messages
+    - Missing agent tools
+    - Different error messages (UI vs agent)
+    - Inconsistent confirmation flows
+    - Sensitive data in errors
+
+**Best For:**
+
+- Daily reference while implementing
+- Ensuring consistency
+- Quick verification before commit
+- Onboarding new developers
+
+**Time to Use:** 5 minutes per feature + reference during work
+
+**Print:** Yes - pin to desk
+
+---
+
 ## Quick Navigation
 
 ### "I need to design a new agent system"
@@ -226,6 +330,30 @@
 1. Start: AGENT-DESIGN-SUMMARY.md (core concepts section)
 2. Real example: plans/MAIS-BUSINESS-ADVISOR-SYSTEM.md
 3. Detailed: AGENT-DESIGN-PREVENTION-STRATEGIES.md (any section)
+
+### "I need to add a new feature to an agent or UI"
+
+1. Start: AGENT-TOOL-ADDITION-QUICK-CHECKLIST.md (5 min orientation)
+2. Plan: Use "Pre-Implementation" section
+3. Code: Follow "Backend Error Messages Pattern" (6-step flow)
+4. Verify: Use "Action Parity Verification Template"
+5. Reference: AGENT-TOOL-ADDITION-PREVENTION.md (complete code examples)
+6. Pin: AGENT-TOOL-ADDITION-QUICK-CHECKLIST.md to desk for daily use
+
+### "I'm fixing hardcoded error messages"
+
+1. Understand: AGENT-TOOL-ADDITION-PREVENTION.md → "Strategy #1"
+2. Follow: Step 1-6 pattern (Service → Route → Contract → Frontend → Agent → Prompt)
+3. Check: "Common Pitfalls" section for what you might have missed
+4. Verify: Error message appears consistently in UI and agent
+
+### "I discovered a missing agent tool"
+
+1. Verify: Action parity using AGENT-TOOL-ADDITION-QUICK-CHECKLIST.md
+2. Implement: Use "Agent Tool Addition Checklist" section
+3. Reference: AGENT-TOOL-ADDITION-PREVENTION.md → "Pattern: Tool for previously UI-only action"
+4. Test: Include error handling for all error scenarios
+5. Document: Add to system prompt
 
 ---
 
@@ -279,49 +407,44 @@ Architecture → Tools orchestrated by prompts, verified action parity
 
 ## Document Statistics
 
-| Document              | Lines     | Size     | Focus                  | Read Time      |
-| --------------------- | --------- | -------- | ---------------------- | -------------- |
-| Summary               | 463       | 13KB     | Navigation & concepts  | 30 min         |
-| Quick Checklist       | 443       | 13KB     | Day-to-day reference   | 20 min         |
-| Prevention Strategies | 1,488     | 39KB     | Comprehensive playbook | 2-3 hours      |
-| Decision Tree         | 565       | 17KB     | Tool evaluation        | 10-15 min/tool |
-| **TOTAL**             | **2,959** | **82KB** | Complete system        | 3-4 hours      |
+| Document                      | Lines     | Size      | Focus                        | Read Time      |
+| ----------------------------- | --------- | --------- | ---------------------------- | -------------- |
+| Summary                       | 463       | 13KB      | Navigation & concepts        | 30 min         |
+| Quick Checklist               | 443       | 13KB      | Day-to-day reference         | 20 min         |
+| Prevention Strategies         | 1,488     | 39KB      | Comprehensive playbook       | 2-3 hours      |
+| Decision Tree                 | 565       | 17KB      | Tool evaluation              | 10-15 min/tool |
+| Tool Addition Prevention      | 456       | 14KB      | Feature addition patterns    | 30 min         |
+| Tool Addition Quick Checklist | 234       | 7KB       | Daily feature reference      | 5 min          |
+| **TOTAL**                     | **3,649** | **103KB** | Complete system + operations | 3.5-4 hours    |
 
 ---
 
 ## How These Documents Work Together
 
 ```
-┌─────────────────────────────────────────────────────┐
-│     Agent Design Prevention Strategies System        │
-├─────────────────────────────────────────────────────┤
-│                                                      │
-│  ENTRY POINT: SUMMARY.md                           │
-│  └─ What is this? Core concepts? How to use?      │
-│                                                      │
-│  DAILY REFERENCE: QUICK-CHECKLIST.md               │
-│  └─ Pre-design, design, review, impl, test, launch│
-│     (Keep pinned to desk)                          │
-│                                                      │
-│  DEEP DIVES: PREVENTION-STRATEGIES.md              │
-│  ├─ Security (isolation, injection, approval)     │
-│  ├─ UX (tiers, onboarding, errors)                │
-│  ├─ Simplicity (tools, deferral, context)        │
-│  ├─ Architecture (primitives, parity, proposals)  │
-│  ├─ Pitfalls & recovery (4 scenarios)             │
-│  ├─ Implementation patterns (6 code patterns)      │
-│  ├─ Multi-agent review (6-person process)         │
-│  └─ Templates (checklists, specifications)        │
-│                                                      │
-│  TOOL DECISIONS: DECISION-TREE.md                  │
-│  └─ Is this tool essential? Build or defer?       │
-│     (Use for each new tool proposed)               │
-│                                                      │
-│  REAL EXAMPLES: plans/MAIS-BUSINESS-ADVISOR-*.md  │
-│  └─ See all principles applied in real 3-agent    │
-│     system (Onboarding, Builder, Advisor)         │
-│                                                      │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│        Agent Design Prevention Strategies System (Complete)       │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  DESIGNING NEW AGENTS:                                           │
+│  ├─ ENTRY POINT: SUMMARY.md (overview)                          │
+│  ├─ DAILY REFERENCE: QUICK-CHECKLIST.md (pinned to desk)       │
+│  ├─ DEEP DIVES: PREVENTION-STRATEGIES.md (playbook)            │
+│  ├─ DECISIONS: DECISION-TREE.md (tool decisions)                │
+│  └─ REAL EXAMPLE: plans/MAIS-BUSINESS-ADVISOR-*.md             │
+│                                                                   │
+│  ADDING FEATURES TO AGENTS:                                      │
+│  ├─ QUICK START: TOOL-ADDITION-QUICK-CHECKLIST.md (pinned)     │
+│  ├─ PATTERNS: TOOL-ADDITION-PREVENTION.md (code examples)       │
+│  ├─ STRATEGY #1: Backend-driven error messages (6 steps)        │
+│  ├─ STRATEGY #2: Action parity audit & tools                    │
+│  └─ STRATEGY #3: Trust tier guidelines                          │
+│                                                                   │
+│  When designing: QUICK-CHECKLIST + PREVENTION-STRATEGIES        │
+│  When adding features: TOOL-ADDITION-QUICK-CHECKLIST + examples │
+│  When stuck: Check relevant "Common Pitfalls & Recovery"        │
+│                                                                   │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -480,6 +603,10 @@ Key insight from the design process: **Multi-agent review (Architecture, Securit
 
 ---
 
+## Document Links
+
+### Agent Design (New Systems)
+
 **Start here:** [AGENT-DESIGN-SUMMARY.md](./AGENT-DESIGN-SUMMARY.md)
 
 **Daily reference:** [AGENT-DESIGN-QUICK-CHECKLIST.md](./AGENT-DESIGN-QUICK-CHECKLIST.md) (print & pin)
@@ -488,9 +615,17 @@ Key insight from the design process: **Multi-agent review (Architecture, Securit
 
 **Tool decisions:** [AGENT-TOOL-DESIGN-DECISION-TREE.md](./AGENT-TOOL-DESIGN-DECISION-TREE.md)
 
-**Real example:** [MAIS Business Advisor System](../../plans/MAIS-BUSINESS-ADVISOR-SYSTEM.md)
+### Agent Tool Addition (Adding Features)
+
+**Quick start:** [AGENT-TOOL-ADDITION-QUICK-CHECKLIST.md](./AGENT-TOOL-ADDITION-QUICK-CHECKLIST.md) (print & pin)
+
+**Full patterns:** [AGENT-TOOL-ADDITION-PREVENTION.md](./AGENT-TOOL-ADDITION-PREVENTION.md)
+
+### Real Examples
+
+**Complete system:** [MAIS Business Advisor System](../../plans/MAIS-BUSINESS-ADVISOR-SYSTEM.md)
 
 ---
 
-_Last Updated: 2025-12-26_
-_Status: Foundation documentation for all future MAIS agent work_
+_Last Updated: 2025-12-28_
+_Status: Complete system (design + operations) for all MAIS agent work_
