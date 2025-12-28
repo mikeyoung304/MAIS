@@ -534,16 +534,14 @@ export default function HomePage() {
           <section className="py-32 md:py-48 px-6 bg-sage text-white">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold leading-tight">
-                Your clients hired you for your expertise.
+                Do what you love.
               </h2>
-              <p className="mt-4 text-lg text-white/80">
-                Not your ability to configure a payment processor.
-              </p>
+              <p className="mt-4 text-xl text-white/80">The rest?</p>
               <Button
                 asChild
                 className="mt-8 bg-white text-sage hover:bg-neutral-100 rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                <Link href="/signup">Get Handled</Link>
+                <Link href="#pricing">Get Handled</Link>
               </Button>
             </div>
           </section>
