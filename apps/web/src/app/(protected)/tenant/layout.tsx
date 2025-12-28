@@ -3,12 +3,13 @@
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AdminSidebar } from '@/components/layouts/AdminSidebar';
 import { ImpersonationBanner } from '@/components/layouts/ImpersonationBanner';
+import { GrowthAssistantPanel } from '@/components/agent/GrowthAssistantPanel';
 
 /**
  * Tenant Admin Layout
  *
  * Protected layout for all /tenant/* routes.
- * Includes sidebar navigation and requires TENANT_ADMIN role.
+ * Includes sidebar navigation, Growth Assistant panel, and requires TENANT_ADMIN role.
  * Shows impersonation banner when a PLATFORM_ADMIN is impersonating.
  */
 export default function TenantLayout({ children }: { children: React.ReactNode }) {
@@ -20,6 +21,8 @@ export default function TenantLayout({ children }: { children: React.ReactNode }
         <main className="lg:pl-72 transition-all duration-300">
           <div className="p-6 lg:p-8">{children}</div>
         </main>
+        {/* Growth Assistant - always visible side panel */}
+        <GrowthAssistantPanel />
       </div>
     </ProtectedRoute>
   );
