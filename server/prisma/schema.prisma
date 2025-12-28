@@ -408,6 +408,7 @@ model Booking {
   @@index([tenantId, bookingType, startTime, endTime]) // Timeslot availability queries
   @@index([tenantId, serviceId, startTime]) // Service-specific queries
   @@index([tenantId, bookingType, startTime, status]) // Appointment pagination
+  @@index([tenantId, createdAt, status]) // Revenue queries (TODO-456) - agent dashboard/refresh_context
 }
 
 enum BookingStatus {
