@@ -60,7 +60,7 @@ const tiers = [
     name: 'Handled',
     price: '$49',
     priceSubtext: '/month',
-    description: 'Tech sorted. You show up.',
+    description: 'Tech sorted. Do what you do.',
     features: [
       'Professional website',
       'Online booking',
@@ -74,7 +74,7 @@ const tiers = [
     name: 'Fully Handled',
     price: '$149',
     priceSubtext: '/month',
-    description: 'Tech + AI + education.',
+    description: 'Tech + AI growth club + chatbot.',
     features: [
       'Everything in Handled',
       'AI chatbot for your business',
@@ -90,7 +90,7 @@ const tiers = [
     name: 'Completely Handled',
     price: 'Custom',
     priceSubtext: '',
-    description: 'We run your tech team.',
+    description: 'Personalized consulting.',
     features: [
       'Everything in Fully Handled',
       '1-on-1 strategy sessions',
