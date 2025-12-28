@@ -419,26 +419,11 @@ export default function HomePage() {
                   id="pricing-heading"
                   className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary"
                 >
-                  Pick a plan. Skip the tech anxiety.
+                  Pick a plan.
                 </h2>
                 <p className="mt-4 text-xl md:text-2xl text-text-muted font-light">
-                  No contracts. No hidden fees. Cancel anytime.
+                  No contracts. No surprises. Cancel anytime.
                 </p>
-                {/* Trust badges */}
-                <div className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-text-muted">
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-sage" />
-                    <span>No setup fees</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-sage" />
-                    <span>Cancel anytime</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-sage" />
-                    <span>Humans answer</span>
-                  </div>
-                </div>
               </div>
               <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                 {tiers.map((tier) => (

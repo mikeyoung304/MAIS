@@ -43,6 +43,8 @@ const ConfigSchema = z.object({
   POSTMARK_SERVER_TOKEN: z.string().optional(),
   POSTMARK_FROM_EMAIL: z.string().email().optional(),
   EARLY_ACCESS_NOTIFICATION_EMAIL: z.string().email().optional().default('mike@maconheadshots.com'),
+  // Admin notification for tenant signups - receives email when new tenant registers
+  ADMIN_NOTIFICATION_EMAIL: z.string().email().optional().default('mike@maconheadshots.com'),
   GOOGLE_CALENDAR_ID: z.string().optional(),
   GOOGLE_SERVICE_ACCOUNT_JSON_BASE64: z.string().optional(),
   // Graceful shutdown timeout (milliseconds)

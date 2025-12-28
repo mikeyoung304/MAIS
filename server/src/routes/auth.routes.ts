@@ -29,6 +29,7 @@ export interface UnifiedAuthRoutesOptions {
   apiKeyService: ApiKeyService;
   config: {
     earlyAccessNotificationEmail?: string;
+    adminNotificationEmail?: string;
   };
   mailProvider?: {
     sendPasswordReset: (to: string, resetToken: string, resetUrl: string) => Promise<void>;
@@ -471,6 +472,86 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
         },
         'New tenant signup'
       );
+
+      // Send admin notification - best effort, don't fail signup if email fails
+      if (mailProvider) {
+        try {
+          const adminEmail = config.adminNotificationEmail || 'mike@maconheadshots.com';
+          const signupDate = new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZoneName: 'short',
+          });
+
+          await mailProvider.sendEmail({
+            to: adminEmail,
+            subject: `New Signup: ${businessName}`,
+            html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background-color: #f9fafb;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px;">
+          <tr>
+            <td style="padding: 32px;">
+              <h1 style="font-family: Georgia, serif; font-size: 28px; font-weight: 700; color: #1A1815; margin: 0 0 24px 0;">
+                New Tenant Signup
+              </h1>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #F5F1EE; border-radius: 12px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 8px 0; font-size: 15px; color: #4A4440;">
+                      <strong>Business:</strong> ${sanitizePlainText(businessName)}
+                    </p>
+                    <p style="margin: 0 0 8px 0; font-size: 15px; color: #4A4440;">
+                      <strong>Email:</strong> ${sanitizePlainText(normalizedEmail)}
+                    </p>
+                    <p style="margin: 0 0 8px 0; font-size: 15px; color: #4A4440;">
+                      <strong>Slug:</strong> ${tenant.slug}
+                    </p>
+                    <p style="margin: 0; font-size: 15px; color: #4A4440;">
+                      <strong>Time:</strong> ${signupDate}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 24px 0 0 0; font-size: 12px; color: #9ca3af;">
+                Reply to this email to reach out directly.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+          });
+          logger.info(
+            { tenantId: tenant.id, email: normalizedEmail },
+            'Tenant signup notification sent'
+          );
+        } catch (notificationError) {
+          // Log warning but don't fail signup - notification is best-effort
+          logger.warn(
+            {
+              tenantId: tenant.id,
+              error:
+                notificationError instanceof Error ? notificationError.message : 'Unknown error',
+            },
+            'Failed to send signup notification'
+          );
+        }
+      }
 
       res.status(201).json({
         token,

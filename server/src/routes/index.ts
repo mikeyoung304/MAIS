@@ -507,6 +507,7 @@ export function createV1Router(
       apiKeyService,
       config: {
         earlyAccessNotificationEmail: config.EARLY_ACCESS_NOTIFICATION_EMAIL,
+        adminNotificationEmail: config.ADMIN_NOTIFICATION_EMAIL,
       },
       mailProvider,
       tenantOnboardingService: services?.tenantOnboarding,
