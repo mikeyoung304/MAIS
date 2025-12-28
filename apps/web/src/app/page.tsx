@@ -15,17 +15,18 @@ import { Button } from '@/components/ui/button';
 import { ScrollingIdentity } from '@/components/home/ScrollingIdentity';
 
 export const metadata: Metadata = {
-  title: 'HANDLED - The Rest is Handled',
+  title: 'HANDLED - AI That Runs Your Business',
   description:
-    "You're a photographer, so capture moments. You're a coach, so unlock potential. The rest is handled. Done-for-you websites, booking, and AI for service professionals.",
+    'An AI assistant that books clients, answers questions, and handles scheduling — while you do the work you love. Plus the tech foundation to make it all work.',
   openGraph: {
-    title: 'HANDLED - The Rest is Handled',
-    description: 'Done-for-you websites, booking, and AI. For people with better things to do.',
+    title: 'HANDLED - AI That Runs Your Business',
+    description:
+      'Your AI assistant handles client inquiries, booking, and scheduling 24/7. For service professionals with better things to do.',
     type: 'website',
   },
 };
 
-// Done-for-you tech - commodity infrastructure (set it and forget it)
+// Done-for-you tech - the foundation that enables AI
 const techFeatures = [
   {
     icon: Globe,
@@ -41,11 +42,6 @@ const techFeatures = [
     icon: CreditCard,
     title: 'Payments',
     description: 'Invoices sent. Money collected. Done.',
-  },
-  {
-    icon: Bot,
-    title: 'AI Chatbot',
-    description: 'Answers questions. Books sessions. 24/7.',
   },
 ];
 
@@ -316,8 +312,8 @@ export default function HomePage() {
                 The rest is handled.
               </p>
               <p className="mt-6 text-base md:text-lg text-text-muted font-light max-w-xl mx-auto leading-relaxed">
-                Websites. Booking. Payments. AI. Plus a monthly filter for what&apos;s actually
-                worth knowing. For people with better things to do.
+                An AI assistant that books your clients, answers their questions, and runs your
+                business — while you do what you actually started this for.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
@@ -349,60 +345,157 @@ export default function HomePage() {
           <section className="py-32 md:py-40 px-6 bg-surface-alt">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight">
-                You didn&apos;t start this to become a tech expert.
+                You didn&apos;t start this to answer emails at midnight.
               </h2>
               <div className="mt-8 space-y-6 text-xl text-text-muted leading-relaxed">
-                <p>Somewhere along the way, you became an IT department.</p>
                 <p>
-                  Every day you hear about a new AI tool that&apos;s going to
-                  &quot;revolutionize&quot; your industry.
+                  Clients message at 11pm. Booking requests pile up. You spend more time on admin
+                  than on the work you love.
                 </p>
-                <p className="text-2xl font-medium text-text-primary">Are you exhausted?</p>
+                <p>
+                  Meanwhile, AI is changing everything — and you don&apos;t have time to figure out
+                  which tools actually matter.
+                </p>
+                <p className="text-2xl font-medium text-text-primary">What if AI worked for you?</p>
               </div>
               <Button
                 asChild
                 variant="sage"
                 className="mt-10 rounded-full px-12 py-6 text-xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                <Link href="#pricing">Join the club.</Link>
+                <Link href="#pricing">See how it works</Link>
               </Button>
             </div>
           </section>
 
-          {/* Tech Stack Section - Done-for-you infrastructure */}
+          {/* Tech Stack Section - The foundation */}
           <section
             id="features"
             aria-labelledby="tech-heading"
-            className="py-24 md:py-32 px-6 scroll-mt-20"
+            className="py-20 md:py-24 px-6 scroll-mt-20"
           >
-            <div className="max-w-5xl mx-auto">
-              <div className="text-center mb-12">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-10">
                 <h2
                   id="tech-heading"
-                  className="font-serif text-3xl md:text-4xl font-bold text-text-primary"
+                  className="font-serif text-2xl md:text-3xl font-bold text-text-primary"
                 >
-                  Set it. Forget it.
+                  The foundation. Handled.
                 </h2>
-                <p className="mt-3 text-lg text-text-muted font-light">
-                  We build and run your tech stack. You never touch it.
+                <p className="mt-2 text-base text-text-muted font-light">
+                  Website. Booking. Payments. Built and maintained for you.
                 </p>
               </div>
-              {/* 4-column grid on desktop, 2x2 on tablet, stack on mobile */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* 3-column grid on desktop */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
                 {techFeatures.map((feature) => (
                   <div
                     key={feature.title}
-                    className="bg-surface-alt rounded-2xl p-6 border border-neutral-700 hover:border-neutral-600 transition-colors duration-200"
+                    className="bg-surface-alt rounded-2xl p-5 border border-neutral-700 hover:border-neutral-600 transition-colors duration-200 text-center"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-sage/10 flex items-center justify-center mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-sage/10 flex items-center justify-center mb-3 mx-auto">
                       <feature.icon className="w-5 h-5 text-sage" />
                     </div>
-                    <h3 className="font-medium text-text-primary text-base mb-1">
-                      {feature.title}
-                    </h3>
-                    <p className="text-text-muted text-sm leading-relaxed">{feature.description}</p>
+                    <h3 className="font-medium text-text-primary text-sm mb-1">{feature.title}</h3>
+                    <p className="text-text-muted text-xs leading-relaxed">{feature.description}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+          </section>
+
+          {/* AI Assistant Section - The core product */}
+          <section
+            aria-labelledby="ai-heading"
+            className="py-24 md:py-32 px-6 bg-gradient-to-b from-surface to-surface-alt"
+          >
+            <div className="max-w-4xl mx-auto">
+              <div className="grid md:grid-cols-2 gap-12 items-center">
+                {/* Left: Copy */}
+                <div>
+                  <span className="inline-block bg-sage/15 text-sage text-xs font-semibold px-3 py-1.5 rounded-full mb-6 tracking-wide uppercase">
+                    Your AI Assistant
+                  </span>
+                  <h2
+                    id="ai-heading"
+                    className="font-serif text-4xl md:text-5xl font-bold text-text-primary leading-tight"
+                  >
+                    An AI that works for you. 24/7.
+                  </h2>
+                  <p className="mt-6 text-lg text-text-muted leading-relaxed">
+                    Your clients interact with an AI trained on your business. It answers questions,
+                    handles scheduling, and books sessions — while you sleep, travel, or do the work
+                    you love.
+                  </p>
+                  <ul className="mt-8 space-y-3">
+                    {[
+                      'Lives on your storefront, ready to help',
+                      'Knows your services, pricing, and availability',
+                      'Books appointments and collects payments',
+                      'Learns and improves over time',
+                    ].map((item) => (
+                      <li key={item} className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                        <span className="text-text-primary">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                {/* Right: Visual */}
+                <div className="relative">
+                  <div className="bg-surface-alt rounded-3xl p-8 border border-sage/30 shadow-2xl relative overflow-hidden">
+                    {/* Glow effect */}
+                    <div
+                      className="absolute -top-20 -right-20 w-40 h-40 bg-sage/15 rounded-full blur-3xl pointer-events-none"
+                      aria-hidden="true"
+                    />
+                    <div
+                      className="absolute -bottom-20 -left-20 w-40 h-40 bg-sage/10 rounded-full blur-3xl pointer-events-none"
+                      aria-hidden="true"
+                    />
+                    <div className="relative space-y-4">
+                      {/* Chat bubble - client */}
+                      <div className="flex justify-end">
+                        <div className="bg-neutral-700 rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%]">
+                          <p className="text-sm text-text-primary">
+                            Do you have availability this Saturday for a portrait session?
+                          </p>
+                        </div>
+                      </div>
+                      {/* Chat bubble - AI */}
+                      <div className="flex justify-start">
+                        <div className="bg-sage/20 border border-sage/30 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%]">
+                          <p className="text-sm text-text-primary">
+                            Yes! I have openings at 10am and 2pm. The 2-hour portrait session is
+                            $350. Would you like me to book one of those times?
+                          </p>
+                        </div>
+                      </div>
+                      {/* Chat bubble - client */}
+                      <div className="flex justify-end">
+                        <div className="bg-neutral-700 rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%]">
+                          <p className="text-sm text-text-primary">2pm works. Book it!</p>
+                        </div>
+                      </div>
+                      {/* Chat bubble - AI */}
+                      <div className="flex justify-start">
+                        <div className="bg-sage/20 border border-sage/30 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%]">
+                          <p className="text-sm text-text-primary">
+                            Done! I&apos;ve sent you a confirmation email with all the details. See
+                            you Saturday at 2pm!
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    {/* AI indicator */}
+                    <div className="mt-6 pt-4 border-t border-neutral-700 flex items-center gap-2">
+                      <Bot className="w-4 h-4 text-sage" />
+                      <span className="text-xs text-text-muted">
+                        AI Assistant · Trained on your business
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
@@ -593,15 +686,16 @@ export default function HomePage() {
           </section>
 
           {/* Final CTA Section */}
-          <section className="py-32 md:py-48 px-6 bg-sage text-white">
+          <section className="py-32 md:py-48 px-6 bg-gradient-to-br from-neutral-800 to-neutral-900 border-t border-sage/20">
             <div className="max-w-3xl mx-auto text-center">
-              <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold leading-tight">
+              <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold leading-tight text-text-primary">
                 Do what you love.
               </h2>
-              <p className="mt-4 text-xl text-white/80">The rest?</p>
+              <p className="mt-4 text-xl text-sage">The rest?</p>
               <Button
                 asChild
-                className="mt-8 bg-surface-alt text-sage hover:bg-neutral-700 rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                variant="sage"
+                className="mt-8 rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 <Link href="#pricing">Get Handled</Link>
               </Button>
