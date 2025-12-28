@@ -166,9 +166,18 @@ export class UnifiedAuthController {
    */
   async startImpersonation(currentToken: string, tenantId: string): Promise<UnifiedLoginResponse> {
     // Verify caller is platform admin
-    const payload = this.identityService.verifyToken(currentToken);
+    const payload = this.identityService.verifyToken(currentToken) as {
+      userId?: string;
+      email: string;
+      impersonating?: { tenantId: string };
+    };
     if (!payload.userId) {
       throw new UnauthorizedError('Only platform admins can impersonate tenants');
+    }
+
+    // Prevent nested impersonation (security: avoid impersonation chains)
+    if (payload.impersonating) {
+      throw new UnauthorizedError('Cannot impersonate while already impersonating. Exit current impersonation first.');
     }
 
     // Get tenant details

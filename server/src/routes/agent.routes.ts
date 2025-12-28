@@ -69,7 +69,7 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
    * - onboardingState: string - Current onboarding stage
    * - capabilities: string[] - What the chatbot can help with
    */
-  router.get('/health', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/health', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantId = getTenantId(res);
 

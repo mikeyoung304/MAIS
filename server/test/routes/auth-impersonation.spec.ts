@@ -340,13 +340,10 @@ describe('Impersonation API Endpoints', () => {
       });
 
       // Act: Try to start another impersonation while already impersonating
-      // This should work - creates nested impersonation with latest tenant
-      const result = await controller.startImpersonation(impToken, 'tenant_123');
-
-      // Assert: new token created (latest impersonation overwrites)
-      expect(result.token).toBeDefined();
-      const decoded = identityService.verifyToken(result.token) as any;
-      expect(decoded.impersonating.tenantId).toBe('tenant_123');
+      // This should be blocked - nested impersonation is a security risk
+      await expect(controller.startImpersonation(impToken, 'tenant_123')).rejects.toThrow(
+        'Cannot impersonate while already impersonating'
+      );
     });
   });
 });
