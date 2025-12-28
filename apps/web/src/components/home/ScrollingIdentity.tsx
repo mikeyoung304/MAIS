@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
  *
  * Displays "You're a [profession], so [verb]." with rotating text.
  * Direct verb matching - photographer photographs, therapist therapizes.
- * Fast, punchy, slightly absurd. The "..." pause adds thinking moment.
+ * Fast, punchy, slightly absurd. Clean swap - both words change together.
  */
 
 const identities = [
@@ -27,24 +27,19 @@ const identities = [
 
 export function ScrollingIdentity() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [showEllipsis, setShowEllipsis] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      // First show ellipsis (thinking)
-      setShowEllipsis(true);
+      // Fade out
+      setIsVisible(false);
 
-      // Then animate out and change
+      // Change text and fade in
       setTimeout(() => {
-        setIsAnimating(true);
-        setTimeout(() => {
-          setCurrentIndex((prev) => (prev + 1) % identities.length);
-          setIsAnimating(false);
-          setShowEllipsis(false);
-        }, 100);
-      }, 400);
-    }, 1400); // Fast cycle - ~17 second full loop
+        setCurrentIndex((prev) => (prev + 1) % identities.length);
+        setIsVisible(true);
+      }, 200);
+    }, 1800);
 
     return () => clearInterval(interval);
   }, []);
@@ -52,16 +47,15 @@ export function ScrollingIdentity() {
   const current = identities[currentIndex];
 
   return (
-    <span className="inline-block min-w-[320px] sm:min-w-[480px] md:min-w-[600px]">
+    <span className="inline-block min-w-[280px] sm:min-w-[400px] md:min-w-[500px]">
       <span
-        className={`inline-block transition-all duration-150 ease-out ${
-          isAnimating ? 'opacity-0 -translate-y-1' : 'opacity-100 translate-y-0'
+        className={`inline-block transition-opacity duration-200 ${
+          isVisible ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <span className="text-sage">{current.profession}</span>
         <span className="text-text-primary">, so </span>
         <span className="text-sage">{current.verb}</span>
-        {showEllipsis && <span className="text-text-muted/60 ml-1">...</span>}
       </span>
     </span>
   );

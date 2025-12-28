@@ -288,40 +288,40 @@ export default function HomePage() {
 
         <main>
           {/* Hero Section */}
-          <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 px-6 overflow-hidden min-h-[90vh] flex flex-col justify-center">
+          <section className="relative pt-32 pb-24 md:pt-44 md:pb-36 px-6 overflow-hidden min-h-[70vh] flex flex-col justify-center">
             {/* Ambient decorations */}
             <div
-              className="absolute top-1/4 right-[15%] w-96 h-96 bg-sage/8 rounded-full blur-3xl pointer-events-none"
+              className="absolute top-1/4 right-[15%] w-72 h-72 bg-sage/6 rounded-full blur-3xl pointer-events-none"
               aria-hidden="true"
             />
             <div
-              className="absolute bottom-1/4 left-[10%] w-64 h-64 bg-sage/5 rounded-full blur-3xl pointer-events-none"
+              className="absolute bottom-1/4 left-[10%] w-48 h-48 bg-sage/4 rounded-full blur-3xl pointer-events-none"
               aria-hidden="true"
             />
 
-            <div className="relative max-w-4xl mx-auto text-center">
-              <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-text-primary leading-[1.1] tracking-tight">
+            <div className="relative max-w-3xl mx-auto text-center">
+              <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-text-primary leading-[1.15] tracking-tight">
                 You&apos;re a <ScrollingIdentity />
               </h1>
-              <p className="mt-6 font-serif text-2xl sm:text-3xl md:text-4xl font-semibold text-sage">
+              <p className="mt-5 font-serif text-xl sm:text-2xl md:text-3xl font-semibold text-sage">
                 The rest is handled.
               </p>
-              <p className="mt-8 text-lg md:text-xl text-text-muted font-light max-w-2xl mx-auto leading-relaxed">
+              <p className="mt-6 text-base md:text-lg text-text-muted font-light max-w-xl mx-auto leading-relaxed">
                 Websites. Booking. Payments. AI. Plus a monthly filter for what&apos;s actually
                 worth knowing. For people with better things to do.
               </p>
-              <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
                 <Button
                   asChild
                   variant="sage"
-                  className="rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="rounded-full px-8 py-5 text-base shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <Link href="/signup">Get Handled</Link>
                 </Button>
                 <Button
                   asChild
                   variant="outline"
-                  className="rounded-full px-10 py-6 text-lg hover:bg-neutral-50 transition-all duration-300"
+                  className="rounded-full px-8 py-5 text-base hover:bg-neutral-50 transition-all duration-300"
                 >
                   <Link href="#features">See What&apos;s Included</Link>
                 </Button>
@@ -329,9 +329,9 @@ export default function HomePage() {
             </div>
 
             {/* Scroll indicator */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-              <div className="w-6 h-10 rounded-full border-2 border-neutral-300 flex items-start justify-center p-2">
-                <div className="w-1.5 h-3 bg-neutral-400 rounded-full" />
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 animate-bounce">
+              <div className="w-5 h-8 rounded-full border-2 border-neutral-300 flex items-start justify-center p-1.5">
+                <div className="w-1 h-2 bg-neutral-400 rounded-full" />
               </div>
             </div>
           </section>
