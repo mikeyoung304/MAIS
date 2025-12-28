@@ -338,26 +338,25 @@ export default function HomePage() {
 
           {/* Problem Section */}
           <section className="py-32 md:py-40 px-6 bg-white">
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-3xl mx-auto text-center">
               <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight">
-                You didn&apos;t start your business to debug a website.
+                You didn&apos;t start this to become a tech expert.
               </h2>
-              <div className="mt-8 space-y-6 text-lg text-text-muted leading-relaxed">
+              <div className="mt-8 space-y-6 text-xl text-text-muted leading-relaxed">
+                <p>Somewhere along the way, you became an IT department.</p>
                 <p>
-                  You became a photographer because you see the world differently. A therapist
-                  because you help people heal. A coach because you unlock potential.
+                  Every day you hear about a new AI tool that&apos;s going to
+                  &quot;revolutionize&quot; your industry.
                 </p>
-                <p>
-                  But somewhere between the first DM and the final delivery, you became your own IT
-                  department. Calendar Tetris. Payment chasing. Tutorial watching. The AI tool of
-                  the week that promises to &quot;revolutionize&quot; everything.
-                </p>
-                <p>
-                  The tech keeps changing. Every week there&apos;s something new you
-                  &quot;should&quot; be learning. It&apos;s exhausting. And it&apos;s stealing time
-                  from the work that actually matters.
-                </p>
+                <p className="text-2xl font-medium text-text-primary">Are you exhausted?</p>
               </div>
+              <Button
+                asChild
+                variant="sage"
+                className="mt-10 rounded-full px-12 py-6 text-xl shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                <Link href="#pricing">Join the club.</Link>
+              </Button>
             </div>
           </section>
 
