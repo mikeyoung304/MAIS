@@ -500,7 +500,6 @@ export default function HomePage() {
                     className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                   >
                     <div className="flex items-center gap-4 mb-6">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={testimonial.image}
                         alt={testimonial.name}
