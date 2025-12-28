@@ -146,6 +146,31 @@ const faqs = [
   },
 ];
 
+// Mock testimonials - replace with real ones when available
+const testimonials = [
+  {
+    quote: "Back in '82, I could throw a football over them mountains. Now HANDLED throws my invoices over the internet. Same energy.",
+    name: 'Rico Dynamite',
+    title: 'Former Football Star, Current Life Coach',
+    // Placeholder: older guy with mustache, aviator glasses
+    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rico&accessories=prescription02&facialHair=beardMajestic&top=shortFlat',
+  },
+  {
+    quote: "I don't always understand technology. But when I do, it's because someone else is handling it. Stay booked, my friends.",
+    name: 'Fernando Interessante',
+    title: 'World\'s Most Interesting Therapist',
+    // Placeholder: distinguished gentleman
+    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Fernando&facialHair=beardLight&top=shortCurly&accessories=round',
+  },
+  {
+    quote: "I tried to set up my own website once. I woke up three days later in a Best Buy parking lot. Never again. HANDLED saved my life.",
+    name: 'Brenda Chaos',
+    title: 'Feng Shui Consultant & Alpaca Whisperer',
+    // Placeholder: quirky woman
+    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Brenda&top=longHairCurvy&accessories=sunglasses&clotheColor=pink',
+  },
+];
+
 export default function HomePage() {
   // JSON-LD structured data for SEO and agent accessibility
   const organizationSchema = {
@@ -426,6 +451,44 @@ export default function HomePage() {
                 >
                   <Link href={tier.ctaHref}>{tier.ctaText}</Link>
                 </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-32 md:py-40 px-6 bg-surface">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary">
+              Real talk from real pros.*
+            </h2>
+            <p className="mt-4 text-xl md:text-2xl text-text-muted font-light">
+              *Names changed to protect the technologically overwhelmed.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {testimonials.map((testimonial) => (
+              <div
+                key={testimonial.name}
+                className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              >
+                <div className="flex items-center gap-4 mb-6">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={testimonial.image}
+                    alt={testimonial.name}
+                    className="w-14 h-14 rounded-full bg-sage/10"
+                  />
+                  <div>
+                    <p className="font-semibold text-text-primary">{testimonial.name}</p>
+                    <p className="text-sm text-text-muted">{testimonial.title}</p>
+                  </div>
+                </div>
+                <blockquote className="text-text-muted leading-relaxed italic">
+                  &ldquo;{testimonial.quote}&rdquo;
+                </blockquote>
               </div>
             ))}
           </div>
