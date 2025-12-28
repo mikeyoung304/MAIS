@@ -61,21 +61,27 @@ export class CheckoutSessionFactory {
     const { tenantId, amountCents, email, metadata, applicationFeeAmount, idempotencyKeyParts } =
       params;
 
-    // Fetch tenant to get Stripe account ID
-    const tenant = await this.tenantRepo.findById(tenantId);
-    if (!tenant) {
-      logger.warn({ tenantId }, 'Tenant not found in checkout flow');
-      throw new NotFoundError('The requested resource was not found');
-    }
-
-    // Generate idempotency key for checkout session
+    // Generate idempotency key first (synchronous operation)
     const idempotencyKey = this.idempotencyService.generateCheckoutKey(...idempotencyKeyParts);
 
-    // Check if this request has already been processed
-    const cachedResponse = await this.idempotencyService.getStoredResponse(idempotencyKey);
+    // Parallelize independent database calls:
+    // - Fetch tenant to get Stripe account ID
+    // - Check if this request has already been processed
+    const [tenant, cachedResponse] = await Promise.all([
+      this.tenantRepo.findById(tenantId),
+      this.idempotencyService.getStoredResponse(idempotencyKey),
+    ]);
+
+    // Return cached response if available (check before tenant validation for efficiency)
     if (cachedResponse) {
       const data = cachedResponse.data as { url: string };
       return { checkoutUrl: data.url };
+    }
+
+    // Validate tenant exists
+    if (!tenant) {
+      logger.warn({ tenantId }, 'Tenant not found in checkout flow');
+      throw new NotFoundError('The requested resource was not found');
     }
 
     // Store idempotency key before making Stripe call

@@ -55,12 +55,5 @@ export type { AuditLogInput, AuditLogEntry } from './audit/audit.service';
 export { AgentOrchestrator } from './orchestrator';
 export type { OrchestratorConfig, ChatMessage, SessionState, ChatResponse } from './orchestrator';
 
-/**
- * Get all agent tools (read + write)
- */
-import { readTools } from './tools/read-tools';
-import { writeTools } from './tools/write-tools';
-
-export function getAllTools() {
-  return [...readTools, ...writeTools];
-}
+// Re-export getAllTools from consolidated module
+export { getAllTools } from './tools/all-tools';

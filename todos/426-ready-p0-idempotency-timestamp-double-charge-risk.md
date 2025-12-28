@@ -1,10 +1,16 @@
 ---
-status: ready
+status: complete
 priority: p0
 issue_id: '426'
 tags: [security, payments, idempotency, stripe, critical]
 dependencies: []
+completed_at: '2025-12-27'
+resolution: 'fixed'
 ---
+
+> **FIXED** on 2025-12-27: Removed timestamp from idempotency keys.
+> generateCheckoutKey, generateRefundKey, and generateTransferKey now use deterministic keys
+> based on operation identity only (not request timing). This prevents double-charge risk.
 
 # CRITICAL: Idempotency Key Timestamp Causes Double-Charge Risk
 

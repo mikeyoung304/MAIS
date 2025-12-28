@@ -5,4 +5,4 @@
 # Mass formatting with prettier (Dec 2025)
 # Run: npm run format on entire codebase to enforce consistent code style
 # This commit touches 400+ files but only changes whitespace/formatting
-be2b0d1
+49d290a

@@ -1,10 +1,20 @@
 ---
-status: ready
+status: complete
 priority: p1
 issue_id: '427'
 tags: [frontend, auth, user-flow, nextjs]
 dependencies: []
+completed_at: '2025-12-27'
+resolution: 'fixed'
 ---
+
+> **FIXED** on 2025-12-27: Created /reset-password page with full password reset flow.
+>
+> - Token extraction from URL params
+> - Password validation (min 8 chars, confirmation match)
+> - API integration with backend POST /v1/auth/reset-password
+> - Error handling for invalid/expired tokens
+> - Success state with redirect to login
 
 # Missing /reset-password Page Breaks Password Reset Flow
 

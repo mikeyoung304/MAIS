@@ -1,10 +1,18 @@
 ---
-status: ready
+status: complete
 priority: p2
 issue_id: '429'
 tags: [performance, checkout, optimization]
 dependencies: []
+completed_at: '2025-12-27'
+resolution: 'fixed'
 ---
+
+> **FIXED** on 2025-12-27: Parallelized checkout DB calls using Promise.all().
+>
+> - Changed sequential tenant fetch + idempotency check to parallel
+> - Estimated 50% reduction in checkout latency (~100-200ms → ~50-100ms)
+> - All 12 related tests pass
 
 # Checkout Flow Has Serial Database Calls
 

@@ -362,13 +362,20 @@ export class IdempotencyService {
    * Generate checkout session idempotency key
    *
    * Creates a deterministic key for checkout session creation.
-   * Includes timestamp to allow retries after a reasonable delay.
+   * Key is based ONLY on booking identity (tenant + email + package + date),
+   * NOT on request timing. This prevents double-charges when requests
+   * straddle time boundaries.
+   *
+   * SECURITY: Removing timestamp means the same booking attempt always gets
+   * the same checkout session. This is the correct behavior - customers
+   * should not be able to create multiple checkout sessions for the same
+   * booking by retrying quickly.
    *
    * @param tenantId - Tenant ID
    * @param email - Customer email
    * @param packageId - Package ID
    * @param eventDate - Event date
-   * @param timestamp - Request timestamp (use Date.now())
+   * @param _timestamp - DEPRECATED: Ignored for safety (kept for API compatibility)
    * @returns Idempotency key
    */
   generateCheckoutKey(
@@ -376,60 +383,55 @@ export class IdempotencyService {
     email: string,
     packageId: string,
     eventDate: string,
-    timestamp: number
+    _timestamp?: number
   ): string {
-    // Round timestamp to nearest 10 seconds to allow brief retry window
-    const roundedTimestamp = Math.floor(timestamp / 10000) * 10000;
-    return this.generateKey(
-      'checkout',
-      tenantId,
-      email,
-      packageId,
-      eventDate,
-      String(roundedTimestamp)
-    );
+    // CRITICAL: Do NOT include timestamp in idempotency key.
+    // Including timestamp causes double-charge risk when requests straddle
+    // time bucket boundaries (e.g., T=9.9s vs T=10.1s get different keys).
+    // The key should be deterministic based on the BOOKING IDENTITY only.
+    return this.generateKey('checkout', tenantId, email, packageId, eventDate);
   }
 
   /**
    * Generate refund idempotency key
    *
+   * Key is deterministic based on refund identity (payment intent + amount).
+   * This prevents duplicate refunds when requests straddle time boundaries.
+   *
    * @param paymentIntentId - Stripe PaymentIntent ID
    * @param amountCents - Refund amount (optional for full refund)
-   * @param timestamp - Request timestamp
+   * @param _timestamp - DEPRECATED: Ignored for safety (kept for API compatibility)
    * @returns Idempotency key
    */
   generateRefundKey(
     paymentIntentId: string,
     amountCents: number | undefined,
-    timestamp: number
+    _timestamp?: number
   ): string {
-    const roundedTimestamp = Math.floor(timestamp / 10000) * 10000;
+    // Do NOT include timestamp - key should be deterministic for same refund attempt
     const amount = amountCents ? String(amountCents) : 'full';
-    return this.generateKey('refund', paymentIntentId, amount, String(roundedTimestamp));
+    return this.generateKey('refund', paymentIntentId, amount);
   }
 
   /**
    * Generate transfer idempotency key
    *
+   * Key is deterministic based on transfer identity (tenant + amount + destination).
+   * This prevents duplicate transfers when requests straddle time boundaries.
+   *
    * @param tenantId - Tenant ID
    * @param amountCents - Transfer amount
    * @param destination - Destination account ID
-   * @param timestamp - Request timestamp
+   * @param _timestamp - DEPRECATED: Ignored for safety (kept for API compatibility)
    * @returns Idempotency key
    */
   generateTransferKey(
     tenantId: string,
     amountCents: number,
     destination: string,
-    timestamp: number
+    _timestamp?: number
   ): string {
-    const roundedTimestamp = Math.floor(timestamp / 10000) * 10000;
-    return this.generateKey(
-      'transfer',
-      tenantId,
-      String(amountCents),
-      destination,
-      String(roundedTimestamp)
-    );
+    // Do NOT include timestamp - key should be deterministic for same transfer attempt
+    return this.generateKey('transfer', tenantId, String(amountCents), destination);
   }
 }

@@ -222,29 +222,60 @@ describe('IdempotencyService', () => {
   });
 
   describe('generateCheckoutKey - Specialized Keys', () => {
-    it('should include timestamp rounding', () => {
+    it('should generate deterministic key based on booking identity only (timestamp ignored)', () => {
       // Arrange
       const tenantId = 'tenant_123';
       const email = 'john@example.com';
       const packageId = 'pkg_starter';
       const eventDate = '2025-07-01';
-      const timestamp1 = 1700000000000; // Specific timestamp
-      const timestamp2 = 1700000005000; // 5 seconds later (within 10s window)
 
-      // Act
-      const key1 = service.generateCheckoutKey(tenantId, email, packageId, eventDate, timestamp1);
-      const key2 = service.generateCheckoutKey(tenantId, email, packageId, eventDate, timestamp2);
+      // Act - Generate keys with different timestamps (or no timestamp)
+      const key1 = service.generateCheckoutKey(
+        tenantId,
+        email,
+        packageId,
+        eventDate,
+        1700000000000
+      );
+      const key2 = service.generateCheckoutKey(
+        tenantId,
+        email,
+        packageId,
+        eventDate,
+        1700000005000
+      );
+      const key3 = service.generateCheckoutKey(
+        tenantId,
+        email,
+        packageId,
+        eventDate,
+        1700000015000
+      );
+      const keyNoTimestamp = service.generateCheckoutKey(tenantId, email, packageId, eventDate);
 
-      // Assert - Same key because timestamps round to same 10-second window
+      // Assert - ALL keys should be identical because timestamp is DEPRECATED and ignored
+      // This prevents double-charge risk when requests straddle time boundaries
       expect(key1).toBe(key2);
+      expect(key2).toBe(key3);
+      expect(key3).toBe(keyNoTimestamp);
       expect(key1).toMatch(/^checkout_[a-f0-9]{32}$/);
 
-      // Different timestamp (outside 10s window)
-      const timestamp3 = 1700000015000; // 15 seconds later
-      const key3 = service.generateCheckoutKey(tenantId, email, packageId, eventDate, timestamp3);
+      // Different booking identity should produce different key
+      const keyDifferentEmail = service.generateCheckoutKey(
+        tenantId,
+        'different@example.com',
+        packageId,
+        eventDate
+      );
+      expect(keyDifferentEmail).not.toBe(key1);
 
-      // Should be different key
-      expect(key3).not.toBe(key1);
+      const keyDifferentPackage = service.generateCheckoutKey(
+        tenantId,
+        email,
+        'pkg_premium',
+        eventDate
+      );
+      expect(keyDifferentPackage).not.toBe(key1);
     });
   });
 
