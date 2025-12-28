@@ -1,26 +1,23 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    './src/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
+  content: ['./src/**/*.{js,ts,jsx,tsx,mdx}', './app/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
       colors: {
-        // HANDLED Landing Page Palette (WCAG AA compliant)
-        // Sage-forward, warm cream backgrounds, earthy and professional
-        surface: '#FFFBF8',
-        'surface-alt': '#F5F1EE',
+        // HANDLED Landing Page Palette - GRAPHITE DARK MODE PREVIEW
+        // Dark graphite backgrounds with Electric Sage accent
+        surface: '#18181B', // Dark graphite background
+        'surface-alt': '#27272A', // Slightly lighter graphite for sections
 
-        // Primary: Sage - growth, trust, professionalism
-        // Matches Brand Voice Guide: #7B9E87 (calmer, more muted sage)
-        'sage': '#7B9E87',
-        'sage-hover': '#6B8E77',
-        'sage-light': '#A3BBA9',
+        // Primary: Electric Sage accent on dark
+        sage: '#45B37F', // Electric Sage - pops on dark
+        'sage-hover': '#5CC98F', // Lighter on hover for dark mode
+        'sage-light': '#6BC495', // Decorative
+        'sage-text': '#45B37F', // Sage is readable on dark backgrounds
 
-        // Text colors
-        'text-primary': '#1A1815',
-        'text-muted': '#4A4440',
+        // Text colors for dark mode
+        'text-primary': '#FAFAFA', // Near-white text
+        'text-muted': '#A1A1AA', // Muted gray text
 
         // Macon Brand Colors
         'macon-navy': {
@@ -132,36 +129,39 @@ module.exports = {
         serif: ['Playfair Display', 'Georgia', 'serif'],
       },
       fontSize: {
-        'hero': ['4.5rem', { lineHeight: '1.15', fontWeight: '700' }],
-        'h1': ['3.75rem', { lineHeight: '1.2', fontWeight: '700' }],
-        'h2': ['3rem', { lineHeight: '1.25', fontWeight: '700' }],
-        'h3': ['2rem', { lineHeight: '1.3', fontWeight: '700' }],
-        'subtitle': ['1.375rem', { lineHeight: '1.5', fontWeight: '400' }],
-        'body': ['1.125rem', { lineHeight: '1.6', fontWeight: '400' }],
+        hero: ['4.5rem', { lineHeight: '1.15', fontWeight: '700' }],
+        h1: ['3.75rem', { lineHeight: '1.2', fontWeight: '700' }],
+        h2: ['3rem', { lineHeight: '1.25', fontWeight: '700' }],
+        h3: ['2rem', { lineHeight: '1.3', fontWeight: '700' }],
+        subtitle: ['1.375rem', { lineHeight: '1.5', fontWeight: '400' }],
+        body: ['1.125rem', { lineHeight: '1.6', fontWeight: '400' }],
       },
       spacing: {
-        '18': '4.5rem',
-        '88': '22rem',
-        '128': '32rem',
+        18: '4.5rem',
+        88: '22rem',
+        128: '32rem',
       },
       borderRadius: {
         DEFAULT: '10px',
-        'lg': '12px',
-        'xl': '16px',
+        lg: '12px',
+        xl: '16px',
         '2xl': '20px',
         '3xl': '24px',
       },
       boxShadow: {
-        'subtle': '0 2px 4px rgba(0, 0, 0, 0.2)',
-        'elegant': '0 4px 6px -1px rgba(0, 0, 0, 0.15), 0 2px 4px -1px rgba(0, 0, 0, 0.1)',
-        'lifted': '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15)',
+        subtle: '0 2px 4px rgba(0, 0, 0, 0.2)',
+        elegant: '0 4px 6px -1px rgba(0, 0, 0, 0.15), 0 2px 4px -1px rgba(0, 0, 0, 0.1)',
+        lifted: '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15)',
         'elevation-1': '0 1px 3px rgba(10, 37, 64, 0.12), 0 1px 2px rgba(10, 37, 64, 0.24)',
-        'elevation-2': '0 4px 6px -1px rgba(10, 37, 64, 0.1), 0 2px 4px -1px rgba(10, 37, 64, 0.06)',
-        'elevation-3': '0 10px 15px -3px rgba(10, 37, 64, 0.1), 0 4px 6px -2px rgba(10, 37, 64, 0.05)',
-        'elevation-4': '0 20px 25px -5px rgba(10, 37, 64, 0.1), 0 10px 10px -5px rgba(10, 37, 64, 0.04)',
-        'soft': '0 2px 8px -2px rgba(10, 37, 64, 0.06), 0 2px 4px -2px rgba(10, 37, 64, 0.04)',
-        'medium': '0 8px 16px -4px rgba(10, 37, 64, 0.08), 0 4px 8px -4px rgba(10, 37, 64, 0.06)',
-        'large': '0 16px 32px -8px rgba(10, 37, 64, 0.10), 0 8px 16px -8px rgba(10, 37, 64, 0.08)',
+        'elevation-2':
+          '0 4px 6px -1px rgba(10, 37, 64, 0.1), 0 2px 4px -1px rgba(10, 37, 64, 0.06)',
+        'elevation-3':
+          '0 10px 15px -3px rgba(10, 37, 64, 0.1), 0 4px 6px -2px rgba(10, 37, 64, 0.05)',
+        'elevation-4':
+          '0 20px 25px -5px rgba(10, 37, 64, 0.1), 0 10px 10px -5px rgba(10, 37, 64, 0.04)',
+        soft: '0 2px 8px -2px rgba(10, 37, 64, 0.06), 0 2px 4px -2px rgba(10, 37, 64, 0.04)',
+        medium: '0 8px 16px -4px rgba(10, 37, 64, 0.08), 0 4px 8px -4px rgba(10, 37, 64, 0.06)',
+        large: '0 16px 32px -8px rgba(10, 37, 64, 0.10), 0 8px 16px -8px rgba(10, 37, 64, 0.08)',
         'glow-orange': '0 0 20px rgba(217, 119, 6, 0.4)',
         'glow-teal': '0 0 20px rgba(13, 148, 136, 0.4)',
         'glow-success': '0 0 20px rgba(34, 197, 94, 0.4)',
@@ -171,8 +171,8 @@ module.exports = {
         DEFAULT: '300ms',
       },
       transitionTimingFunction: {
-        'spring': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-        'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
+        spring: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+        smooth: 'cubic-bezier(0.4, 0, 0.2, 1)',
       },
       backgroundImage: {
         'gradient-navy': 'linear-gradient(135deg, #1a365d 0%, #2d4a7c 100%)',

@@ -196,26 +196,37 @@ Cancel note: "No contracts. Cancel anytime."
 
 ### Color Usage
 
-**Sage Primary Palette**
+**Graphite Dark Theme with Electric Sage** _(Updated 2025-12-28)_
 
-The sage green evokes calm professionalism and natural warmth—differentiating us from cold tech blues while signaling trust and growth.
+Bold, modern, tech-confident. Dark graphite backgrounds with Electric Sage accent creates a Linear/Vercel-inspired aesthetic that aligns with our punchy, self-aware copy voice. The sage pops dramatically on dark.
 
 ```tsx
-// Primary colors
-sage: '#7B9E87'          // Primary brand color (CTAs, icons, accents)
-sage-hover: '#6B8E77'    // Hover state
+// Backgrounds (Graphite Dark)
+surface: '#18181B'       // Dark graphite (page background)
+surface-alt: '#27272A'   // Lighter graphite (cards, sections)
 
-// Backgrounds
-surface: '#FFFBF8'       // Warm cream (page background)
-white                    // Cards, clean areas
+// Primary colors (Electric Sage on dark)
+sage: '#45B37F'          // Primary brand color - pops on dark
+sage-hover: '#5CC98F'    // Lighter on hover for dark mode
+sage-light: '#6BC495'    // Decorative
+sage-text: '#45B37F'     // Readable on dark backgrounds
 
-// Text
-text-primary: '#1A1815'  // Near-black
-text-muted: '#4A4440'    // Warm gray (body copy)
+// Text (for dark mode)
+text-primary: '#FAFAFA'  // Near-white
+text-muted: '#A1A1AA'    // Muted gray
+
+// Border colors (dark mode)
+border: '#3F3F46'        // Neutral 700 equivalent
+border-light: '#52525B'  // Neutral 600 equivalent
 
 // Usage ratios
-85% neutral (cream, white, warm grays)
-15% color (sage for CTAs/icons/accents)
+85% dark neutrals (graphite, dark gray)
+15% Electric Sage (CTAs, icons, accents)
+
+// WCAG Accessibility Notes
+// - #45B37F on #18181B = 6.5:1 (excellent contrast, OK for all text)
+// - #FAFAFA on #18181B = 17.4:1 (excellent contrast)
+// - Dark mode is inherently high-contrast and accessible
 ```
 
 **Color Application:**

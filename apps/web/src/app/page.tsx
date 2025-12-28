@@ -249,7 +249,7 @@ export default function HomePage() {
       />
       <div className="min-h-screen bg-surface">
         {/* Navigation */}
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-neutral-100">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-md border-b border-neutral-800">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <Link href="/" className="font-serif text-2xl font-bold text-text-primary">
               HANDLED
@@ -337,7 +337,7 @@ export default function HomePage() {
           </section>
 
           {/* Problem Section */}
-          <section className="py-32 md:py-40 px-6 bg-white">
+          <section className="py-32 md:py-40 px-6 bg-surface-alt">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight">
                 You didn&apos;t start this to become a tech expert.
@@ -385,7 +385,7 @@ export default function HomePage() {
                     className={`rounded-3xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ${
                       feature.highlight
                         ? 'bg-sage/5 border-2 border-sage/30 ring-1 ring-sage/10'
-                        : 'bg-white border border-neutral-100'
+                        : 'bg-surface-alt border border-neutral-700'
                     }`}
                   >
                     {feature.highlight && (
@@ -410,7 +410,7 @@ export default function HomePage() {
           <section
             id="pricing"
             aria-labelledby="pricing-heading"
-            className="py-32 md:py-40 px-6 bg-neutral-50 scroll-mt-20"
+            className="py-32 md:py-40 px-6 bg-surface scroll-mt-20"
           >
             <div className="max-w-7xl mx-auto">
               <div className="text-center max-w-3xl mx-auto mb-16">
@@ -428,8 +428,8 @@ export default function HomePage() {
                 {tiers.map((tier) => (
                   <div
                     key={tier.name}
-                    className={`bg-white rounded-3xl p-8 shadow-lg border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
-                      tier.isPopular ? 'border-sage ring-2 ring-sage' : 'border-neutral-100'
+                    className={`bg-surface-alt rounded-3xl p-8 shadow-lg border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+                      tier.isPopular ? 'border-sage ring-2 ring-sage' : 'border-neutral-700'
                     }`}
                   >
                     {tier.isPopular && (
@@ -478,7 +478,7 @@ export default function HomePage() {
                 {testimonials.map((testimonial) => (
                   <div
                     key={testimonial.name}
-                    className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                    className="bg-surface-alt rounded-3xl p-8 shadow-lg border border-neutral-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                   >
                     <div className="flex items-center gap-4 mb-6">
                       <img
@@ -517,7 +517,7 @@ export default function HomePage() {
                 {faqs.map((faq, index) => (
                   <details
                     key={index}
-                    className="group bg-white rounded-3xl border border-neutral-100 overflow-hidden"
+                    className="group bg-surface-alt rounded-3xl border border-neutral-700 overflow-hidden"
                   >
                     <summary className="flex items-center justify-between cursor-pointer p-6 list-none">
                       <span className="font-medium text-text-primary pr-4">{faq.question}</span>
@@ -539,7 +539,7 @@ export default function HomePage() {
               <p className="mt-4 text-xl text-white/80">The rest?</p>
               <Button
                 asChild
-                className="mt-8 bg-white text-sage hover:bg-neutral-100 rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                className="mt-8 bg-surface-alt text-sage hover:bg-neutral-700 rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 <Link href="#pricing">Get Handled</Link>
               </Button>

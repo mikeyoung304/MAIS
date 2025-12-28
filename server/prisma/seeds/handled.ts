@@ -54,7 +54,7 @@ export async function seedHandled(prisma: PrismaClient): Promise<void> {
 
       const passwordHash = await bcrypt.hash(getHandledPassword(), 10);
 
-      // HANDLED branding: sage green, serif fonts
+      // HANDLED branding: Electric Sage (brand refresh 2025-12-28)
       const tenant = await createOrUpdateTenant(tx, {
         slug: HANDLED_SLUG,
         name: 'Handled',
@@ -63,9 +63,9 @@ export async function seedHandled(prisma: PrismaClient): Promise<void> {
         commissionPercent: 0, // Self - no commission
         apiKeyPublic: publicKey,
         apiKeySecret: secretKey ?? undefined,
-        primaryColor: '#7B9E87', // sage
+        primaryColor: '#45B37F', // Electric Sage - brighter, confident
         secondaryColor: '#ffffff',
-        accentColor: '#7B9E87',
+        accentColor: '#45B37F',
         backgroundColor: '#ffffff',
         fontFamily: 'Georgia, serif',
         isActive: true,
