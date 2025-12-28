@@ -46,6 +46,13 @@ export interface ProposalResult {
 const PROPOSAL_TTL_MS = 30 * 60 * 1000;
 
 /**
+ * T2 soft-confirm window in milliseconds (2 minutes)
+ * T2 proposals only auto-confirm if created within this window.
+ * This prevents accidental confirmations when user changes topics.
+ */
+const T2_SOFT_CONFIRM_WINDOW_MS = 2 * 60 * 1000;
+
+/**
  * Agent Proposal Service
  */
 export class ProposalService {
@@ -236,14 +243,18 @@ export class ProposalService {
       return [];
     }
 
-    // Get pending T2 proposals
+    const now = new Date();
+    const softConfirmCutoff = new Date(now.getTime() - T2_SOFT_CONFIRM_WINDOW_MS);
+
+    // Get pending T2 proposals created within the soft-confirm window
     const proposals = await this.prisma.agentProposal.findMany({
       where: {
         tenantId,
         sessionId,
         status: 'PENDING',
         trustTier: 'T2',
-        expiresAt: { gt: new Date() },
+        expiresAt: { gt: now },
+        createdAt: { gte: softConfirmCutoff }, // Only confirm if within 2-minute window
       },
     });
 
@@ -251,7 +262,7 @@ export class ProposalService {
       return [];
     }
 
-    // Auto-confirm all pending T2 proposals
+    // Auto-confirm T2 proposals within the window
     const proposalIds = proposals.map((p) => p.id);
 
     await this.prisma.agentProposal.updateMany({

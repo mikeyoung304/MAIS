@@ -1729,7 +1729,7 @@ export const writeTools: AgentTool[] = [
   upsertAddOnTool,
   deleteAddOnTool,
   deletePackageTool,
-  manageBlackoutTool,
+  // Note: manageBlackoutTool removed - superseded by add/remove_blackout_date (TODO #452)
   addBlackoutDateTool,
   removeBlackoutDateTool,
   updateBrandingTool,

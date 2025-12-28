@@ -12,8 +12,22 @@
 
 import type { AgentTool, ToolContext, AgentToolResult } from './types';
 import { sanitizeForContext } from './types';
-import { PrismaTenantRepository } from '../../adapters/prisma';
 import { logger } from '../../lib/core/logger';
+import { BookingStatus, Prisma } from '../../generated/prisma';
+import {
+  handleToolError,
+  buildDateRangeFilter,
+  formatPrice,
+  formatDateISO,
+  formatPriceLocale,
+} from './utils';
+
+/**
+ * Type guard for BookingStatus enum
+ */
+function isValidBookingStatus(status: string): status is BookingStatus {
+  return Object.values(BookingStatus).includes(status as BookingStatus);
+}
 
 /**
  * get_tenant - Business profile
@@ -237,6 +251,7 @@ export const getPackagesTool: AgentTool = {
         },
         include: { addOns: { include: { addOn: true } } },
         orderBy: { createdAt: 'desc' },
+        take: 50, // Limit to prevent token bloat
       });
 
       return {
@@ -294,18 +309,19 @@ export const getBookingsTool: AgentTool = {
     const limit = (params.limit as number) || 20;
 
     try {
+      // Validate status if provided
+      if (status && !isValidBookingStatus(status)) {
+        return {
+          success: false,
+          error: `Invalid status "${status}". Valid values: ${Object.values(BookingStatus).join(', ')}`,
+        };
+      }
+
       const bookings = await prisma.booking.findMany({
         where: {
           tenantId,
-          ...(status ? { status: status as any } : {}),
-          ...(fromDate || toDate
-            ? {
-                date: {
-                  ...(fromDate ? { gte: new Date(fromDate) } : {}),
-                  ...(toDate ? { lte: new Date(toDate) } : {}),
-                },
-              }
-            : {}),
+          ...(status && isValidBookingStatus(status) ? { status } : {}),
+          ...buildDateRangeFilter(fromDate, toDate),
         },
         include: { package: true, customer: true },
         orderBy: { date: 'asc' },
@@ -435,24 +451,24 @@ export const checkAvailabilityTool: AgentTool = {
     try {
       const date = new Date(dateStr);
 
-      // Check for existing booking
-      const existingBooking = await prisma.booking.findFirst({
-        where: {
-          tenantId,
-          date: date,
-          status: { notIn: ['CANCELED', 'REFUNDED'] },
-        },
-        select: { id: true, status: true },
-      });
-
-      // Check for blackout
-      const blackout = await prisma.blackoutDate.findFirst({
-        where: {
-          tenantId,
-          date,
-        },
-        select: { reason: true },
-      });
+      // Check for existing booking and blackout in parallel
+      const [existingBooking, blackout] = await Promise.all([
+        prisma.booking.findFirst({
+          where: {
+            tenantId,
+            date: date,
+            status: { notIn: ['CANCELED', 'REFUNDED'] },
+          },
+          select: { id: true, status: true },
+        }),
+        prisma.blackoutDate.findFirst({
+          where: {
+            tenantId,
+            date,
+          },
+          select: { reason: true },
+        }),
+      ]);
 
       const isAvailable = !existingBooking && !blackout;
       const conflict = existingBooking
@@ -515,34 +531,27 @@ export const getBlackoutsTool: AgentTool = {
       const blackouts = await prisma.blackoutDate.findMany({
         where: {
           tenantId,
-          ...(fromDate || toDate
-            ? {
-                date: {
-                  ...(fromDate ? { gte: new Date(fromDate) } : {}),
-                  ...(toDate ? { lte: new Date(toDate) } : {}),
-                },
-              }
-            : {}),
+          ...buildDateRangeFilter(fromDate, toDate),
         },
         orderBy: { date: 'asc' },
+        take: 100, // Limit to prevent token bloat
       });
 
       return {
         success: true,
         data: blackouts.map((b) => ({
           id: b.id,
-          date: b.date.toISOString().split('T')[0],
+          date: formatDateISO(b.date),
           reason: b.reason ? sanitizeForContext(b.reason, 100) : null,
         })),
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in get_blackouts tool');
-      return {
-        success: false,
-        error: `Failed to fetch blackout dates: ${errorMessage}. Check that any date filters are in YYYY-MM-DD format.`,
-        code: 'GET_BLACKOUTS_ERROR',
-      };
+      return handleToolError(
+        error,
+        'get_blackouts',
+        tenantId,
+        'Failed to fetch blackout dates. Check that any date filters are in YYYY-MM-DD format'
+      );
     }
   },
 };
@@ -688,6 +697,7 @@ export const getAddonsTool: AgentTool = {
         },
         include: { segment: { select: { id: true, name: true } } },
         orderBy: { createdAt: 'desc' },
+        take: 50, // Limit to prevent token bloat
       });
 
       return {
@@ -707,16 +717,24 @@ export const getAddonsTool: AgentTool = {
 };
 
 /**
+ * Type for AddOn with optional segment include.
+ * Uses Prisma.AddOn type for proper type safety.
+ */
+type AddOnWithSegment = Prisma.AddOnGetPayload<{
+  include: { segment: { select: { id: true; name: true } } };
+}>;
+
+/**
  * Helper to format add-on for agent context
  */
-function formatAddOn(addOn: any) {
+function formatAddOn(addOn: AddOnWithSegment) {
   return {
     id: addOn.id,
     slug: addOn.slug,
     name: sanitizeForContext(addOn.name, 100),
     description: sanitizeForContext(addOn.description || '', 500),
     price: addOn.price,
-    priceFormatted: `$${(addOn.price / 100).toFixed(2)}`,
+    priceFormatted: formatPrice(addOn.price),
     active: addOn.active,
     segmentId: addOn.segmentId,
     segmentName: addOn.segment ? sanitizeForContext(addOn.segment.name, 50) : null,
@@ -803,14 +821,8 @@ export const getCustomersTool: AgentTool = {
         if (endDate) bookingDateFilter.date.lte = new Date(endDate);
       }
 
-      // Build customer search filter
-      const customerSearchFilter: {
-        tenantId: string;
-        OR?: {
-          email?: { contains: string; mode: 'insensitive' };
-          name?: { contains: string; mode: 'insensitive' };
-        }[];
-      } = { tenantId };
+      // Build customer search filter using Prisma's proper types
+      const customerSearchFilter: Prisma.CustomerWhereInput = { tenantId };
 
       if (search) {
         customerSearchFilter.OR = [
@@ -866,7 +878,7 @@ export const getCustomersTool: AgentTool = {
 
       // No date range - get customers with their all-time stats
       const customers = await prisma.customer.findMany({
-        where: customerSearchFilter as any,
+        where: customerSearchFilter,
         orderBy: { createdAt: 'desc' },
         take: limit,
       });
@@ -982,6 +994,7 @@ export const getSegmentsTool: AgentTool = {
         where: { tenantId, ...(includeInactive ? {} : { active: true }) },
         include: { _count: { select: { packages: true } } },
         orderBy: { sortOrder: 'asc' },
+        take: 25, // Limit to prevent token bloat
       });
 
       return { success: true, data: segments.map(formatSegment) };
@@ -1027,24 +1040,34 @@ function formatSegment(s: SegmentWithCount) {
 }
 
 /**
+ * Type for Package with addOns include.
+ * Uses Prisma.Package type for proper type safety.
+ */
+type PackageWithAddOns = Prisma.PackageGetPayload<{
+  include: { addOns: { include: { addOn: true } } };
+}>;
+
+/**
  * Helper to format package for agent context
  */
-function formatPackage(pkg: any) {
+function formatPackage(pkg: PackageWithAddOns) {
+  // Cast photos from JsonValue to string[] (safe, validated at insert)
+  const photos = Array.isArray(pkg.photos) ? (pkg.photos as string[]) : [];
   return {
     id: pkg.id,
     slug: pkg.slug,
     name: sanitizeForContext(pkg.name, 100),
     description: sanitizeForContext(pkg.description || '', 500),
     basePrice: pkg.basePrice,
-    priceFormatted: `$${(pkg.basePrice / 100).toFixed(2)}`,
-    photos: pkg.photos || [],
+    priceFormatted: formatPrice(pkg.basePrice),
+    photos,
     bookingType: pkg.bookingType,
     active: pkg.active,
     segmentId: pkg.segmentId,
     grouping: pkg.grouping,
     addOns:
-      pkg.addOns?.map((a: any) => ({
-        id: a.id,
+      pkg.addOns?.map((a) => ({
+        id: a.addOnId, // Use addOnId from join table
         name: sanitizeForContext(a.addOn?.name || '', 50),
         price: a.addOn?.price,
       })) || [],
@@ -1313,22 +1336,16 @@ export const getBlackoutDatesTool: AgentTool = {
       const blackouts = await prisma.blackoutDate.findMany({
         where: {
           tenantId,
-          ...(fromDate || toDate
-            ? {
-                date: {
-                  ...(fromDate ? { gte: new Date(fromDate) } : {}),
-                  ...(toDate ? { lte: new Date(toDate) } : {}),
-                },
-              }
-            : {}),
+          ...buildDateRangeFilter(fromDate, toDate),
         },
         orderBy: { date: 'asc' },
+        take: 100, // Limit to prevent token bloat
       });
 
       // Format blackout dates with all relevant info
       const formattedBlackouts = blackouts.map((b) => ({
         id: b.id,
-        date: b.date.toISOString().split('T')[0],
+        date: formatDateISO(b.date),
         reason: b.reason ? sanitizeForContext(b.reason, 100) : null,
       }));
 
@@ -1340,13 +1357,12 @@ export const getBlackoutDatesTool: AgentTool = {
         },
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in get_blackout_dates tool');
-      return {
-        success: false,
-        error: `Failed to fetch blackout dates: ${errorMessage}. Check that any date filters are in YYYY-MM-DD format.`,
-        code: 'GET_BLACKOUT_DATES_ERROR',
-      };
+      return handleToolError(
+        error,
+        'get_blackout_dates',
+        tenantId,
+        'Failed to fetch blackout dates. Check that any date filters are in YYYY-MM-DD format'
+      );
     }
   },
 };
@@ -1359,7 +1375,7 @@ export const readTools: AgentTool[] = [
   getBookingsTool,
   getBookingTool,
   checkAvailabilityTool,
-  getBlackoutsTool,
+  // Note: getBlackoutsTool removed - duplicate of getBlackoutDatesTool (TODO #452)
   getBlackoutDatesTool,
   getLandingPageTool,
   getStripeStatusTool,
