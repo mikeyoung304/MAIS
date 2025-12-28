@@ -58,8 +58,8 @@ export function useGrowthAssistant(): UseGrowthAssistantReturn {
   }, []);
 
   return {
-    // Default to false during SSR/initial render
-    isOpen: isOpen ?? false,
+    // Default to true during SSR to avoid CLS (panel defaults open)
+    isOpen: isOpen ?? true,
     setIsOpen,
     toggle,
     isFirstVisit,

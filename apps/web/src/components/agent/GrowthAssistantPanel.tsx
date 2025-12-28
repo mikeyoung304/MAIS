@@ -1,12 +1,11 @@
 'use client';
 
-import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChevronRight, ChevronLeft, Sparkles, MessageCircle } from 'lucide-react';
 import { PanelAgentChat } from './PanelAgentChat';
-import { useGrowthAssistant } from '@/hooks/useGrowthAssistant';
+import { useGrowthAssistantContext } from '@/contexts/GrowthAssistantContext';
 
 const WELCOME_MESSAGE =
   'Salutations. Are you ready to get handled? Tell me a little about yourself.';
@@ -26,7 +25,7 @@ interface GrowthAssistantPanelProps {
  * - Integrates PanelAgentChat for messaging
  */
 export function GrowthAssistantPanel({ className }: GrowthAssistantPanelProps) {
-  const { isOpen, setIsOpen, isFirstVisit, markWelcomed } = useGrowthAssistant();
+  const { isOpen, setIsOpen, isFirstVisit, markWelcomed } = useGrowthAssistantContext();
   const [isMounted, setIsMounted] = useState(false);
 
   // Prevent hydration mismatch
@@ -57,8 +56,7 @@ export function GrowthAssistantPanel({ className }: GrowthAssistantPanelProps) {
             'fixed right-0 top-1/2 -translate-y-1/2 z-40',
             'h-auto py-4 px-2 rounded-l-xl rounded-r-none',
             'shadow-lg hover:shadow-xl transition-all duration-300',
-            'flex flex-col items-center gap-2',
-            className
+            'flex flex-col items-center gap-2'
           )}
           aria-label="Open Growth Assistant"
         >
